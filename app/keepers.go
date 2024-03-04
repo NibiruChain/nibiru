@@ -372,6 +372,18 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 	)
 
+	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
+		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ScopedTransferKeeper,
+	)
+
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
@@ -441,21 +453,6 @@ func (app *NibiruApp) InitKeepers(
 		app.slashingKeeper,
 	)
 
-	/* Create IBC module and a static IBC router */
-	ibcRouter := porttypes.NewRouter()
-
-	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
-		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
-		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.ScopedTransferKeeper,
-	)
-
 	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// not replicate if you do not need to test core IBC or light clients.
@@ -471,6 +468,8 @@ func (app *NibiruApp) InitKeepers(
 	// transfer stack contains (from top to bottom):
 	// - IBC Fee Middleware
 	// - Transfer
+
+	ibcRouter := porttypes.NewRouter()
 
 	// create IBC module from bottom to top of stack
 	var transferStack porttypes.IBCModule
