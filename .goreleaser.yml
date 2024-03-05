@@ -40,6 +40,7 @@ builds:
       - ledger
       - static
       - rocksdb
+      - pebbledb
       - static_wasm
       - grocksdb_no_link
 
@@ -79,6 +80,7 @@ builds:
       - ledger
       - static
       - rocksdb
+      - pebbledb
       - muslc
 
 universal_binaries:
