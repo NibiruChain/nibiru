@@ -39,7 +39,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo ledger static rocksdb
+build_tags = netgo osusergo ledger static rocksdb pebbledb
 ifeq ($(OS_NAME),darwin)
 	build_tags += static_wasm grocksdb_no_link
 else
