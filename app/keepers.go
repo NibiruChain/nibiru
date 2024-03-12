@@ -4,6 +4,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+
 	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -76,6 +83,7 @@ import (
 	// ---------------------------------------------------------------
 	// IBC imports
 
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
@@ -158,11 +166,15 @@ type AppKeepers struct {
 	ibcKeeper    *ibckeeper.Keeper
 	ibcFeeKeeper ibcfeekeeper.Keeper
 	/* ibcTransferKeeper is for cross-chain fungible token transfers. */
-	ibcTransferKeeper ibctransferkeeper.Keeper
+	ibcTransferKeeper   ibctransferkeeper.Keeper
+	icaControllerKeeper icacontrollerkeeper.Keeper
+	icaHostKeeper       icahostkeeper.Keeper
 
 	// make scoped keepers public for test purposes
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router
@@ -210,6 +222,8 @@ func initStoreKeys() (
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcexported.StoreKey,
+		icahosttypes.StoreKey,
+		icacontrollertypes.StoreKey,
 
 		// nibiru x/ keys
 		spottypes.StoreKey,
@@ -258,6 +272,8 @@ func (app *NibiruApp) InitKeepers(
 		memKeys[capabilitytypes.MemStoreKey],
 	)
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
+	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	app.ScopedICAHostKeeper = app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	// scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
 	app.ScopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
@@ -423,6 +439,28 @@ func (app *NibiruApp) InitKeepers(
 		app.ScopedTransferKeeper,
 	)
 
+	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
+		appCodec, keys[icacontrollertypes.StoreKey],
+		app.GetSubspace(icacontrollertypes.SubModuleName),
+		app.ibcFeeKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.ScopedICAControllerKeeper,
+		app.MsgServiceRouter(),
+	)
+
+	app.icaHostKeeper = icahostkeeper.NewKeeper(
+		appCodec,
+		keys[icahosttypes.StoreKey],
+		app.GetSubspace(icahosttypes.SubModuleName),
+		app.ibcFeeKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.ScopedICAHostKeeper,
+		app.MsgServiceRouter(),
+	)
+
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
@@ -513,8 +551,11 @@ func (app *NibiruApp) InitKeepers(
 	transferStack = ibctransfer.NewIBCModule(app.ibcTransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
 
+	// Create the second stack for ICA
+	icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
+
 	// Add transfer stack to IBC Router
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).AddRoute(ibctransfertypes.ModuleName, transferStack)
 
 	// Create Mock IBC Fee module stack for testing
 	// SendPacket, since it is originating from the application to core IBC:
@@ -603,6 +644,7 @@ func (app *NibiruApp) initAppModules(
 		ibc.NewAppModule(app.ibcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
+		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 
 		// wasm
 		wasm.NewAppModule(
@@ -673,6 +715,7 @@ func orderedModuleNames() []string {
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
 		ibcfeetypes.ModuleName,
+		icatypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// CosmWasm
@@ -775,6 +818,7 @@ func ModuleBasicManager() module.BasicManager {
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
+		ica.AppModuleBasic{},
 		// native x/
 		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -802,6 +846,7 @@ func ModuleAccPerms() map[string][]string {
 		oracletypes.ModuleName:         {},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
+		icatypes.ModuleName:            {},
 
 		perptypes.ModuleName:                 {},
 		perptypes.VaultModuleAccount:         {},
@@ -840,6 +885,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(devgastypes.ModuleName)
