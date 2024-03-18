@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.0.3](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.3) - To be defined
+## [v1.0.3](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.3) - 2024-03-18
 
 ### Fix
 
