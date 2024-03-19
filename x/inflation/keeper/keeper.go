@@ -89,3 +89,13 @@ func NewKeeper(
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
+
+func (k Keeper) Burn(ctx sdk.Context, coins sdk.Coins, sender sdk.AccAddress) error {
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, sender, types.ModuleName, coins,
+	); err != nil {
+		return err
+	}
+
+	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+}
