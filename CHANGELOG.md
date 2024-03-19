@@ -69,11 +69,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
 * [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
 
-## v1.0.2
+## [v1.0.3](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.3) - 2024-03-18
+
+### Fix
+
+* [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
+
+### CLI
+
+* [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
+* [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
+
+## [v1.0.2](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.2) - 2024-03-03
 
 ### Dependencies
 
-* [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
+* [65c06ba](https://github.com/NibiruChain/nibiru/commit/65c06ba774c260ece942131ad7a93de0e162266e) - Bump `cosmos-sdk` to v0.47.10
 
 ## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1) - 2024-02-09
 
