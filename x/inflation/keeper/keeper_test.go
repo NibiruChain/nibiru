@@ -33,8 +33,13 @@ func TestBurn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
-			nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(tc.burnCoin))
-			nibiruApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.burnCoin))
+			require.NoError(t,
+				nibiruApp.BankKeeper.MintCoins(
+					ctx, types.ModuleName, sdk.NewCoins(tc.burnCoin)))
+			require.NoError(t,
+				nibiruApp.BankKeeper.SendCoinsFromModuleToAccount(
+					ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.burnCoin)),
+			)
 
 			// Burn coins
 			err := nibiruApp.InflationKeeper.Burn(ctx, sdk.NewCoins(tc.burnCoin), tc.sender)

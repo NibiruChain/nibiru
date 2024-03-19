@@ -74,8 +74,10 @@ func TestMsgEditInflationParams(t *testing.T) {
 func TestMsgBurn(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	sender := testutil.AccAddress()
-	app.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
-	app.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	err := app.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	require.NoError(t, err)
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	require.NoError(t, err)
 
 	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
 
@@ -84,6 +86,6 @@ func TestMsgBurn(t *testing.T) {
 		Coin:   sdk.NewCoin("unibi", sdk.NewInt(100)),
 	}
 
-	_, err := msgServer.Burn(ctx, &msg)
+	_, err = msgServer.Burn(ctx, &msg)
 	require.NoError(t, err)
 }
