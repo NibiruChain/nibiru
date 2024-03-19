@@ -70,3 +70,20 @@ func TestMsgEditInflationParams(t *testing.T) {
 	params = app.InflationKeeper.GetParams(ctx)
 	require.EqualValues(t, params.EpochsPerPeriod, 42)
 }
+
+func TestMsgBurn(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+	sender := testutil.AccAddress()
+	app.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	app.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+
+	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
+
+	msg := types.MsgBurn{
+		Sender: sender.String(),
+		Coin:   sdk.NewCoin("unibi", sdk.NewInt(100)),
+	}
+
+	_, err := msgServer.Burn(ctx, &msg)
+	require.NoError(t, err)
+}
