@@ -134,16 +134,12 @@ func (m MsgBurn) ValidateBasic() error {
 		return err
 	}
 
-	if m.Coin.Denom == "" {
-		return fmt.Errorf("coin denom should not be empty")
+	if err := m.Coin.Validate(); err != nil {
+		return err
 	}
 
 	if m.Coin.Amount.IsZero() {
 		return fmt.Errorf("coin amount should not be zero")
-	}
-
-	if m.Coin.IsNil() {
-		return fmt.Errorf("coin should not be nil")
 	}
 
 	return nil
