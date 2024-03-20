@@ -20,25 +20,36 @@ func TestBurn(t *testing.T) {
 	testCases := []struct {
 		name        string
 		sender      sdk.AccAddress
+		mintCoin    sdk.Coin
 		burnCoin    sdk.Coin
 		expectedErr error
 	}{
 		{
 			name:        "pass",
 			sender:      testutil.AccAddress(),
-			burnCoin:    sdk.NewCoin("nibiru", sdk.NewInt(100)),
+			mintCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
 			expectedErr: nil,
+		},
+		{
+			name:        "not enough coins",
+			sender:      testutil.AccAddress(),
+			mintCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", sdk.NewInt(101)),
+			expectedErr: fmt.Errorf("spendable balance 100unibi is smaller than 101unibi: insufficient funds"),
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+			// mint and send money to the sender
 			require.NoError(t,
 				nibiruApp.BankKeeper.MintCoins(
-					ctx, types.ModuleName, sdk.NewCoins(tc.burnCoin)))
+					ctx, types.ModuleName, sdk.NewCoins(tc.mintCoin)))
 			require.NoError(t,
 				nibiruApp.BankKeeper.SendCoinsFromModuleToAccount(
-					ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.burnCoin)),
+					ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.mintCoin)),
 			)
 
 			// Burn coins

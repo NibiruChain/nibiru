@@ -89,3 +89,22 @@ func TestMsgBurn(t *testing.T) {
 	_, err = msgServer.Burn(ctx, &msg)
 	require.NoError(t, err)
 }
+
+func TestMsgBurn_NotEnoughCoins(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+	sender := testutil.AccAddress()
+	err := app.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	require.NoError(t, err)
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	require.NoError(t, err)
+
+	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
+
+	msg := types.MsgBurn{
+		Sender: sender.String(),
+		Coin:   sdk.NewCoin("unibi", sdk.NewInt(101)),
+	}
+
+	_, err = msgServer.Burn(ctx, &msg)
+	require.EqualError(t, err, "spendable balance 100unibi is smaller than 101unibi: insufficient funds")
+}
