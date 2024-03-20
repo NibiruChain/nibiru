@@ -39,6 +39,7 @@ func TestBurn(t *testing.T) {
 			expectedErr: fmt.Errorf("spendable balance 100unibi is smaller than 101unibi: insufficient funds"),
 		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
@@ -52,12 +53,18 @@ func TestBurn(t *testing.T) {
 					ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.mintCoin)),
 			)
 
+			supply := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
+			require.Equal(t, tc.mintCoin.Amount, supply.Amount)
+
 			// Burn coins
 			err := nibiruApp.InflationKeeper.Burn(ctx, sdk.NewCoins(tc.burnCoin), tc.sender)
+			supply = nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
+				require.Equal(t, tc.mintCoin.Amount, supply.Amount)
 			} else {
 				require.NoError(t, err)
+				require.Equal(t, sdk.ZeroInt(), supply.Amount)
 			}
 		})
 	}

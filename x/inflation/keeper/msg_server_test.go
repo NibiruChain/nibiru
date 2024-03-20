@@ -88,6 +88,8 @@ func TestMsgBurn(t *testing.T) {
 
 	_, err = msgServer.Burn(ctx, &msg)
 	require.NoError(t, err)
+	supply := app.BankKeeper.GetSupply(ctx, "unibi")
+	require.Equal(t, sdk.ZeroInt(), supply.Amount)
 }
 
 func TestMsgBurn_NotEnoughCoins(t *testing.T) {
@@ -107,4 +109,6 @@ func TestMsgBurn_NotEnoughCoins(t *testing.T) {
 
 	_, err = msgServer.Burn(ctx, &msg)
 	require.EqualError(t, err, "spendable balance 100unibi is smaller than 101unibi: insufficient funds")
+	supply := app.BankKeeper.GetSupply(ctx, "unibi")
+	require.Equal(t, sdk.NewInt(100), supply.Amount)
 }
