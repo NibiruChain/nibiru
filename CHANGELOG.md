@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
+- [#1774](https://github.com/NibiruChain/nibiru/pull/1774) - chore: update cosmos sdk v0.47.7
+- [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
+- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
+- [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
+- [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
+- [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
+- [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
+- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
+- [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
+- [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
 
 #### Dapp modules: perp, spot, etc
 
@@ -110,6 +120,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.1.0
 
+Nibiru v1.1.0 is the minor release used to add inflation to the network.
+
+### State Machine Breaking
+
+- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
+- [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
+- [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
+- [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
+
+### Bug Fixes
+
+- [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
+- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
+- [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation): make default inflation allocation follow tokenomics
+
 ### Features
 
 - [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
@@ -117,19 +142,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
 
-### Bug Fixes
-
-- [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation): make default inflation allocation follow tokenomics
-- [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
-- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
-- [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
-- [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
-- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
-
 ### Improvements
 
 - [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
-- [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 - [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
 - [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
 
@@ -157,6 +172,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
+
+Nibiru v1.0.0 is the major release used for the genesis of the mainnet network,
+`cataclysm-1`. It includes all of the general purpose modules such
+as `devgas`, `sudo`, `wasm`, `tokenfactory`, and the defaults from Cosmos SDK
+v0.47.5.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.0.0)]
+- [tag:v1.0.0](https://github.com/NibiruChain/nibiru/commits/v1.0.0) epic(v1.0.0): Remove unneeded Dapp modules for smooth upgrades.
+  - chore!: [Date: 2023-10-16] Remove inflation, perp, stablecoin, and spot
+    modules and related protobufs. This will make it easier to add the store keys
+    layer if we have breaking changes before the Dapps go live without blocking
+    the mainnet deployment.  
+    Commits:
+    [#1667](https://github.com/NibiruChain/nibiru/pull/1667)
+    [6a01abe](https://github.com/NibiruChain/nibiru/commit/6a01abe5c99e26a1d17d96f359d06d61bc1e6e70)
+    [2a250a3](https://github.com/NibiruChain/nibiru/commit/2a250a3c4c60c58c5526ac7d75ce5b9e13889471)
+    [d713f41](https://github.com/NibiruChain/nibiru/commit/d713f41dfe17d6d29451ade4d2f0e6d950ce7c59)
+    [011f1ed](https://github.com/NibiruChain/nibiru/commit/011f1ed431d92899d01583e5e6110e663eceaa24)
 
 ### Features
 
@@ -188,7 +222,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-
 - Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.5.0 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629), [#1657](https://github.com/NibiruChain/nibiru/pull/1657))
