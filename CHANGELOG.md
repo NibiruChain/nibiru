@@ -106,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `codecov/codecov-action` from 3 to 4 ([#1784](https://github.com/NibiruChain/nibiru/pull/1784))
 - Bump `golangci/golangci-lint-action` from 3 to 4 ([#1791](https://github.com/NibiruChain/nibiru/pull/1791))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
-- Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
+- Bump `google.golang.org/protobuf` from 1.31.0 to 1.33.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756), [#1822](https://github.com/NibiruChain/nibiru/pull/1822))
 - Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
