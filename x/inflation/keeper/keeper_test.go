@@ -42,9 +42,12 @@ func TestBurn(t *testing.T) {
 			)
 
 			// Burn coins
+			supplyBefore := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
 			err := nibiruApp.InflationKeeper.Burn(ctx, sdk.NewCoins(tc.burnCoin), tc.sender)
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
+				supplyAfter := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
+				require.EqualValues(t, tc.burnCoin, supplyBefore.Sub(supplyAfter))
 			} else {
 				require.NoError(t, err)
 			}
