@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
 - Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
-- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.29.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777))
+- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.30.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777), [#1819](https://github.com/NibiruChain/nibiru/pull/1819))
 - Bump `cosmossdk.io/errors` from 1.0.0 to 1.0.1 ([#1768](https://github.com/NibiruChain/nibiru/pull/1768))
 - Bump `robinraju/release-downloader` from 1.8 to 1.9 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783))
 - Bump `codecov/codecov-action` from 3 to 4 ([#1784](https://github.com/NibiruChain/nibiru/pull/1784))
