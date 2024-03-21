@@ -150,7 +150,7 @@ func (k Keeper) mint(
 	}
 
 	coins := sdk.NewCoins(coin)
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, coins)
 	if err != nil {
 		return err
 	}
@@ -160,12 +160,12 @@ func (k Keeper) mint(
 		return err
 	}
 
-	if k.bankKeeper.BlockedAddr(mintToAddr) {
+	if k.BankKeeper.BlockedAddr(mintToAddr) {
 		return types.ErrBlockedAddress.Wrapf(
 			"failed to mint to %s", mintToAddr)
 	}
 
-	return k.bankKeeper.SendCoinsFromModuleToAccount(
+	return k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx, types.ModuleName, mintToAddr, coins,
 	)
 }
@@ -225,19 +225,19 @@ func (k Keeper) burn(
 		return err
 	}
 
-	if k.bankKeeper.BlockedAddr(burnFromAddr) {
+	if k.BankKeeper.BlockedAddr(burnFromAddr) {
 		return types.ErrBlockedAddress.Wrapf(
 			"failed to burn from %s", burnFromAddr)
 	}
 
 	coins := sdk.NewCoins(coin)
-	if err = k.bankKeeper.SendCoinsFromAccountToModule(
+	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx, burnFromAddr, types.ModuleName, coins,
 	); err != nil {
 		return err
 	}
 
-	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+	return k.BankKeeper.BurnCoins(ctx, types.ModuleName, coins)
 }
 
 // SetDenomMetadata: Message handler for the abci.Msg: MsgSetDenomMetadata
@@ -265,7 +265,7 @@ func (k Keeper) SetDenomMetadata(
 		)
 	}
 
-	k.bankKeeper.SetDenomMetaData(ctx, txMsg.Metadata)
+	k.BankKeeper.SetDenomMetaData(ctx, txMsg.Metadata)
 
 	return &types.MsgSetDenomMetadataResponse{}, ctx.EventManager().
 		EmitTypedEvent(&types.EventSetDenomMetadata{

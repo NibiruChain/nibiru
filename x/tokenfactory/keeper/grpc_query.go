@@ -64,7 +64,7 @@ func (k Keeper) QueryDenomInfo(
 		return resp, err
 	}
 
-	bankMetadata, _ := k.bankKeeper.GetDenomMetaData(ctx, denom)
+	bankMetadata, _ := k.BankKeeper.GetDenomMetaData(ctx, denom)
 	return &types.QueryDenomInfoResponse{
 		Admin:    tfMetadata.Admin,
 		Metadata: bankMetadata,

@@ -177,9 +177,16 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc sdkcodec.JSONCodec) json.
 	return cdc.MustMarshalJSON(gs)
 }
 
+// AppModuleSimulation functions
+
 // GenerateGenesisState implements module.AppModuleSimulation.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
+}
+
+// ProposalMsgs returns msgs used for governance proposals for simulations.
+func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+	return simulation.ProposalMsgs()
 }
 
 // RegisterStoreDecoder implements module.AppModuleSimulation.
@@ -187,6 +194,6 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 }
 
 // WeightedOperations implements module.AppModuleSimulation.
-func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return []simtypes.WeightedOperation{}
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(&simState, am.keeper, am.ak)
 }

@@ -23,7 +23,7 @@ type Keeper struct {
 	Store StoreAPI
 
 	// interfaces with other modules
-	bankKeeper          tftypes.BankKeeper
+	BankKeeper          tftypes.BankKeeper
 	accountKeeper       tftypes.AccountKeeper
 	communityPoolKeeper tftypes.CommunityPoolKeeper
 
@@ -61,7 +61,7 @@ func NewKeeper(
 			bankKeeper: bk,
 		},
 		cdc:                 cdc,
-		bankKeeper:          bk,
+		BankKeeper:          bk,
 		accountKeeper:       ak,
 		communityPoolKeeper: communityPoolKeeper,
 		authority:           authority,
