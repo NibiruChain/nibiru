@@ -3,11 +3,9 @@ package ante_test
 import (
 	"testing"
 
-	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/ante"
@@ -15,13 +13,14 @@ import (
 )
 
 func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
-	// nextAnteHandler: A no-op next handler to make this a unit test.
+	// Define a no-op next handler to make this a unit test.
 	var nextAnteHandler sdk.AnteHandler = func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,
 	) (newCtx sdk.Context, err error) {
 		return ctx, nil
 	}
 
+	// Mock description for testing.
 	mockDescription := stakingtypes.Description{
 		Moniker:         "mock-moniker",
 		Identity:        "mock-identity",
@@ -30,49 +29,47 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 		Details:         "mock-details",
 	}
 
+	// Define validator address.
 	valAddr := sdk.ValAddress(testutil.AccAddress()).String()
-	commissionRatePointer := new(sdk.Dec)
-	*commissionRatePointer = sdk.NewDecWithPrec(10, 2)
+
+	// Define commission rate.
+	commissionRate := sdk.NewDecWithPrec(10, 2)
+
+	// Define happy messages.
 	happyMsgs := []sdk.Msg{
 		&stakingtypes.MsgCreateValidator{
-			Description: mockDescription,
-			Commission: stakingtypes.CommissionRates{
-				Rate:          sdk.NewDecWithPrec(6, 2), // 6%
-				MaxRate:       sdk.NewDec(420),
-				MaxChangeRate: sdk.NewDec(420),
-			},
+			Description:       mockDescription,
+			Commission:        stakingtypes.CommissionRates{Rate: sdk.NewDecWithPrec(6, 2)},
 			MinSelfDelegation: sdk.NewInt(1),
 			DelegatorAddress:  testutil.AccAddress().String(),
 			ValidatorAddress:  valAddr,
-			Pubkey:            &codectypes.Any{},
+			Pubkey:            nil,
 			Value:             sdk.NewInt64Coin("unibi", 1),
 		},
 		&stakingtypes.MsgEditValidator{
-			Description:       mockDescription,
-			ValidatorAddress:  valAddr,
-			CommissionRate:    commissionRatePointer, // 10%
-			MinSelfDelegation: nil,
+			Description:      mockDescription,
+			ValidatorAddress: valAddr,
+			CommissionRate:   &commissionRate,
 		},
 	}
 
+	// Define function to create sad messages.
 	createSadMsgs := func() []sdk.Msg {
-		sadMsgCreateVal := new(stakingtypes.MsgCreateValidator)
-		*sadMsgCreateVal = *(happyMsgs[0]).(*stakingtypes.MsgCreateValidator)
+		sadMsgCreateVal := *(happyMsgs[0]).(*stakingtypes.MsgCreateValidator)
 		sadMsgCreateVal.Commission.Rate = sdk.NewDecWithPrec(26, 2)
 
-		sadMsgEditVal := new(stakingtypes.MsgEditValidator)
-		*sadMsgEditVal = *(happyMsgs[1]).(*stakingtypes.MsgEditValidator)
-		newCommissionRate := new(sdk.Dec)
-		*newCommissionRate = sdk.NewDecWithPrec(26, 2)
-		sadMsgEditVal.CommissionRate = newCommissionRate
+		sadMsgEditVal := *(happyMsgs[1]).(*stakingtypes.MsgEditValidator)
+		newCommissionRate := sdk.NewDecWithPrec(26, 2)
+		sadMsgEditVal.CommissionRate = &newCommissionRate
 
 		return []sdk.Msg{
-			sadMsgCreateVal,
-			sadMsgEditVal,
+			&sadMsgCreateVal,
+			&sadMsgEditVal,
 		}
 	}
 	sadMsgs := createSadMsgs()
 
+	// Test cases.
 	for _, tc := range []struct {
 		name    string
 		txMsgs  []sdk.Msg
@@ -115,7 +112,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 			)
 
 			encCfg := app.MakeEncodingConfig()
-			txBuilder, err := sdkclienttx.Factory{}.
+			txBuilder, err := tx.Factory{}.
 				WithFees(txGasCoins.String()).
 				WithChainID(s.ctx.ChainID()).
 				WithTxConfig(encCfg.TxConfig).
