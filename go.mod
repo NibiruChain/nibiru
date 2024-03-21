@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.3.0
 	github.com/CosmWasm/wasmd v0.44.0
-	github.com/CosmWasm/wasmvm v1.5.0
+	github.com/CosmWasm/wasmvm v1.5.2
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/NibiruChain/collections v0.4.0
 	github.com/armon/go-metrics v0.4.1
