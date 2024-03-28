@@ -19,7 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
@@ -54,7 +53,6 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
-	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
 	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx

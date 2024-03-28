@@ -16,8 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
@@ -92,55 +90,9 @@ func ExecQuery(
 	}
 }
 
-func QueryMarketsV2(
-	clientCtx client.Context,
-) (*perpv2types.QueryMarketsResponse, error) {
-	queryResp := new(perpv2types.QueryMarketsResponse)
-	if err := ExecQuery(clientCtx, perpv2cli.CmdQueryMarkets(), []string{}, queryResp); err != nil {
-		return nil, err
-	}
-	return queryResp, nil
-}
-
-func QueryMarketV2(
-	clientCtx client.Context, pair asset.Pair,
-) (*perpv2types.AmmMarket, error) {
-	queryResp, err := QueryMarketsV2(clientCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	ammMarket := new(perpv2types.AmmMarket)
-	found := false
-	for _, duo := range queryResp.AmmMarkets {
-		if duo.Amm.Pair == pair {
-			*ammMarket = duo
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		jsonBz := clientCtx.Codec.MustMarshalJSON(queryResp)
-
-		return nil, fmt.Errorf(
-			`expected market "%s" in response\nqueryResp: %s`,
-			pair, jsonBz)
-	}
-	return ammMarket, nil
-}
-
 func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracletypes.QueryExchangeRateResponse, error) {
 	var queryResp oracletypes.QueryExchangeRateResponse
 	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
-		return nil, err
-	}
-	return &queryResp, nil
-}
-
-func QueryPositionV2(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*perpv2types.QueryPositionResponse, error) {
-	var queryResp perpv2types.QueryPositionResponse
-	if err := ExecQuery(ctx, perpv2cli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
