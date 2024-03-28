@@ -58,9 +58,6 @@ echo_info "Parsing flags for the script..."
 #   behavior of the script is to run make install if the flag --no-build is not present.
 FLAG_NO_BUILD=false
 
-# $FLAG_PERP: Feature flag for x/perp. Enabled with `--features perp`.
-FLAG_PERP=false
-
 # $FLAG_SPOT: Feature flag for x/spot. Enabled with `--features spot`.
 FLAG_SPOT=false
 
@@ -77,27 +74,26 @@ build_from_source() {
 # enable_feature_flag: Enables feature flags variables if present
 enable_feature_flag() {
   case $1 in
-    perp) FLAG_PERP=true ;;
-    spot) FLAG_SPOT=true ;;
-    *) echo_error "Unknown feature: $1" ;;
+  spot) FLAG_SPOT=true ;;
+  *) echo_error "Unknown feature: $1" ;;
   esac
 }
 
 # Iterate over flags, handling the cases: "--no-build" and "--features"
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --no-build)
-      FLAG_NO_BUILD=true
-      shift
-      ;;
-    --features)
-      shift # Remove '--features' from arguments
-      while [[ $# -gt 0 && $1 != --* ]]; do
-        enable_feature_flag "$1"
-        shift # Remove the feature name from arguments
-      done
-      ;;
-    *) shift ;; # Unknown arg
+  --no-build)
+    FLAG_NO_BUILD=true
+    shift
+    ;;
+  --features)
+    shift # Remove '--features' from arguments
+    while [[ $# -gt 0 && $1 != --* ]]; do
+      enable_feature_flag "$1"
+      shift # Remove the feature name from arguments
+    done
+    ;;
+  *) shift ;; # Unknown arg
   esac
 done
 
@@ -108,7 +104,6 @@ fi
 
 echo_info "Features flags:"
 echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
-echo "FLAG_PERP: $FLAG_PERP"
 echo "FLAG_SPOT: $FLAG_SPOT"
 
 SEDOPTION=""
@@ -192,20 +187,6 @@ add_genesis_param() {
 }
 
 echo_info "Configuring genesis params"
-
-if $FLAG_PERP; then
-  curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-  source "$curr_dir/feat-perp.sh"
-
-  if add_genesis_perp_markets_with_coingecko_prices; then
-    echo_success "set perp markets with coingecko prices"
-  elif add_genesis_perp_markets_offline; then
-    echo_success "set perp markets with offline defaults"
-  else
-    echo_error "failed to set genesis perp markets"
-    exit 1
-  fi
-fi
 
 # if $FLAG_SPOT; then
 #   # Perform any actions specific to the x/spot feature
