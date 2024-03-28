@@ -40,7 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
+
+Nibiru v1.2.0 adds a burn method to the x/inflation module that allows senders to burn tokens.
+
+* [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0)]
+* [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.2.0)]
+
+### Features
+
+* [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
+
 ## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2024-03-19
+
+Nibiru v1.1.0 is the minor release that adds inflation to the network.
 
 * [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)]
 * [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.1.0)]
