@@ -39,7 +39,7 @@ lint:
 
   golangci-lint run --allow-parallel-runners --fix
 
-# Runs a Nibiru local network. Ex: "just localnet --features spot" 
+# Runs a Nibiru local network. Ex: "just localnet 
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
 

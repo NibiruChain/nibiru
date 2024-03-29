@@ -88,8 +88,6 @@ fi
 
 echo_info "Features flags:"
 echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
-echo "FLAG_PERP: $FLAG_PERP"
-echo "FLAG_SPOT: $FLAG_SPOT"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -225,10 +223,6 @@ add_genesis_param() {
 }
 
 echo_info "Configuring genesis params"
-
-# if $FLAG_SPOT; then
-#   # Perform any actions specific to the x/spot feature
-# fi
 
 # set validator as sudoer
 add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
