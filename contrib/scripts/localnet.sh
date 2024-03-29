@@ -24,7 +24,7 @@ console_log_text_color() {
 }
 
 if [ console_log_text_color ]; then
-  echo "successfully toggled console coloring"
+  echo "succesfully toggled console coloring"
 else
   # For Ubuntu and Debian. MacOS has tput by default.
   apt-get install libncurses5-dbg -y
@@ -58,8 +58,6 @@ echo_info "Parsing flags for the script..."
 #   behavior of the script is to run make install if the flag --no-build is not present.
 FLAG_NO_BUILD=false
 
-# $FLAG_SPOT: Feature flag for x/spot. Enabled with `--features spot`.
-FLAG_SPOT=false
 
 build_from_source() {
   echo_info "Building from source..."
@@ -71,31 +69,17 @@ build_from_source() {
   fi
 }
 
-# enable_feature_flag: Enables feature flags variables if present
-enable_feature_flag() {
-  case $1 in
-  spot) FLAG_SPOT=true ;;
-  *) echo_error "Unknown feature: $1" ;;
-  esac
-}
-
-# Iterate over flags, handling the cases: "--no-build" and "--features"
+# Iterate over flags, handling the case: "--no-build"
 while [[ $# -gt 0 ]]; do
   case $1 in
-  --no-build)
-    FLAG_NO_BUILD=true
-    shift
-    ;;
-  --features)
-    shift # Remove '--features' from arguments
-    while [[ $# -gt 0 && $1 != --* ]]; do
-      enable_feature_flag "$1"
-      shift # Remove the feature name from arguments
-    done
-    ;;
-  *) shift ;; # Unknown arg
+    --no-build)
+      FLAG_NO_BUILD=true
+      shift
+      ;;
+    *) shift ;; # Unknown arg
   esac
 done
+
 
 # Check if FLAG_NO_BUILD was set to true
 if ! $FLAG_NO_BUILD; then
@@ -104,6 +88,7 @@ fi
 
 echo_info "Features flags:"
 echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
+echo "FLAG_PERP: $FLAG_PERP"
 echo "FLAG_SPOT: $FLAG_SPOT"
 
 SEDOPTION=""
@@ -139,36 +124,89 @@ else
   echo_error "Failed to initialize $CHAIN_ID"
 fi
 
-# nibid config
-echo_info "Updating nibid config..."
-$BINARY config keyring-backend test
-$BINARY config chain-id $CHAIN_ID
-$BINARY config broadcast-mode sync
-$BINARY config output json
-$BINARY config # Prints config.
+# Configure keyring-backend to "test"
+echo_info "Configuring keyring-backend..."
+if $BINARY config keyring-backend test; then
+  echo_success "Successfully configured keyring-backend"
+else
+  echo_error "Failed to configure keyring-backend"
+fi
+
+# Configure chain-id
+echo_info "Configuring chain-id..."
+if $BINARY config chain-id $CHAIN_ID; then
+  echo_success "Successfully configured chain-id"
+else
+  echo_error "Failed to configure chain-id"
+fi
+
+# Configure broadcast mode
+echo_info "Configuring broadcast mode..."
+if $BINARY config broadcast-mode sync; then
+  echo_success "Successfully configured broadcast-mode"
+else
+  echo_error "Failed to configure broadcast mode"
+fi
+
+# Configure output mode
+echo_info "Configuring output mode..."
+if $BINARY config output json; then
+  echo_success "Successfully configured output mode"
+else
+  echo_error "Failed to configure output mode"
+fi
 
 # Enable API Server
-echo_info "config/app.toml: Enabling API server"
-sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+echo_info "Enabling API server"
+if sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled API server"
+else
+  echo_error "Failed to enable API server"
+fi
 
 # Enable Swagger Docs
-echo_info "config/app.toml: Enabling Swagger Docs"
-sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml
+echo_info "Enabling Swagger Docs"
+if sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled Swagger Docs"
+else
+  echo_error "Failed to enable Swagger Docs"
+fi
 
 # Enable CORS for localnet
-echo_info "config/app.toml: Enabling CORS"
-sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml
+echo_info "Enabling CORS"
+if sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
+  echo_success "Successfully enabled CORS"
+else
+  echo_error "Failed to enable CORS"
+fi
 
 echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
 echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
-$BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
-echo_success "Successfully added genesis account: $val_key_name"
+if $BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS; then
+  echo_success "Successfully added genesis account: $val_key_name"
+else
+  echo_error "Failed to add genesis account: $val_key_name"
+fi
 
 val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
+
+echo_info "Adding gentx validator..."
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
+  echo_success "Successfully added gentx"
+else
+  echo_error "Failed to add gentx"
+fi
+
+echo_info "Collecting gentx..."
+if $BINARY genesis collect-gentxs; then
+  echo_success "Successfully collected genesis txs into genesis.json"
+else
+  echo_error "Failed to collect genesis txs"
+fi
 
 # ------------------------------------------------------------------------
 # Configure genesis params
@@ -200,32 +238,9 @@ price_btc="50000"
 price_eth="2000"
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uuusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
 
-add_genesis_param '.app_state.inflation.params.inflation_enabled = false'
-
-# ------------------------------------------------------------------------
-# Gentx
-# ------------------------------------------------------------------------
-
-echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
-  echo_success "Successfully added gentx"
-else
-  echo_error "Failed to add gentx"
-fi
-
-echo_info "Collecting gentx..."
-if $BINARY genesis collect-gentxs; then
-  echo_success "Successfully collected genesis txs into genesis.json"
-else
-  echo_error "Failed to collect genesis txs"
-fi
-
-# ------------------------------------------------------------------------
 # Start the network
-# ------------------------------------------------------------------------
-
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 $BINARY start --home "$CHAIN_DIR" --pruning nothing
