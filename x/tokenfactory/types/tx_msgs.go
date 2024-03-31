@@ -273,8 +273,6 @@ func (m MsgBurnNative) ValidateBasic() error {
 
 	if err := validateCoin(m.Coin); err != nil {
 		return err
-	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
-		return err
 	}
 
 	return nil
