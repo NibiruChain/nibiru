@@ -10,8 +10,13 @@ import (
 // MsgCreateDenom
 
 var (
-	_ sdk.Msg            = &MsgCreateDenom{}
 	_ legacytx.LegacyMsg = &MsgCreateDenom{}
+	_ legacytx.LegacyMsg = &MsgChangeAdmin{}
+	_ legacytx.LegacyMsg = &MsgUpdateModuleParams{}
+	_ legacytx.LegacyMsg = &MsgMint{}
+	_ legacytx.LegacyMsg = &MsgBurn{}
+	_ legacytx.LegacyMsg = &MsgSetDenomMetadata{}
+	_ legacytx.LegacyMsg = &MsgBurnNative{}
 )
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
@@ -55,11 +60,6 @@ func (m MsgCreateDenom) GetSignBytes() []byte {
 // ----------------------------------------------------------------
 // MsgChangeAdmin
 
-var (
-	_ sdk.Msg            = &MsgChangeAdmin{}
-	_ legacytx.LegacyMsg = &MsgChangeAdmin{}
-)
-
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgChangeAdmin) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Sender)
@@ -99,8 +99,6 @@ func (m MsgChangeAdmin) GetSignBytes() []byte {
 // ----------------------------------------------------------------
 // MsgMint
 
-var _ sdk.Msg = &MsgMint{}
-
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgMint) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Sender)
@@ -139,10 +137,21 @@ func validateCoin(coin sdk.Coin) error {
 	return nil
 }
 
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgMint) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgMint) Type() string { return "mint" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgMint) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
 // ----------------------------------------------------------------
 // MsgBurn
-
-var _ sdk.Msg = &MsgBurn{}
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgBurn) ValidateBasic() error {
@@ -175,10 +184,21 @@ func (m MsgBurn) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgBurn) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgBurn) Type() string { return "burn" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgBurn) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
 // ----------------------------------------------------------------
 // MsgUpdateModuleParams
-
-var _ sdk.Msg = &MsgUpdateModuleParams{}
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgUpdateModuleParams) ValidateBasic() error {
@@ -195,10 +215,21 @@ func (m MsgUpdateModuleParams) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgUpdateModuleParams) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgUpdateModuleParams) Type() string { return "update_module_params" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgUpdateModuleParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
 // ----------------------------------------------------------------
 // MsgSetDenomMetadata
-
-var _ sdk.Msg = &MsgSetDenomMetadata{}
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgSetDenomMetadata) ValidateBasic() error {
@@ -214,4 +245,56 @@ func (m MsgSetDenomMetadata) ValidateBasic() error {
 func (m MsgSetDenomMetadata) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
+}
+
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgSetDenomMetadata) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgSetDenomMetadata) Type() string { return "set_denom_metadata" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgSetDenomMetadata) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+// ----------------------------------------------------------------
+// MsgBurnNative
+
+// ValidateBasic performs stateless validation checks. Impl sdk.Msg.
+func (m MsgBurnNative) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid sender (%s): %s", m.Sender, err)
+	}
+
+	if err := validateCoin(m.Coin); err != nil {
+		return err
+	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetSigners: Impl sdk.Msg.
+func (m MsgBurnNative) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgBurnNative) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgBurnNative) Type() string { return "burn_native" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgBurnNative) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
