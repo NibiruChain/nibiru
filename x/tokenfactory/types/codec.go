@@ -34,6 +34,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgUpdateModuleParams{},
 		&MsgMint{},
 		&MsgBurn{},
+		&MsgBurnNative{},
 		&MsgSetDenomMetadata{},
 	)
 
