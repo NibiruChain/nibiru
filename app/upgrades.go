@@ -7,10 +7,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/upgrades"
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_1_0"
+	"github.com/NibiruChain/nibiru/app/upgrades/v1_2_0"
 )
 
 var Upgrades = []upgrades.Upgrade{
 	v1_1_0.Upgrade,
+	v1_2_0.Upgrade,
 }
 
 func (app *NibiruApp) setupUpgrades() {

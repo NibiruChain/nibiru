@@ -19,10 +19,6 @@ service Msg {
       returns (MsgEditInflationParamsResponse) {
     option (google.api.http).post = "/nibiru/inflation/edit-inflation-params";
   };
-
-  rpc Burn(MsgBurn) returns (MsgBurnResponse) {
-    option (google.api.http).post = "/nibiru/inflation/v1/burn";
-  };
 }
 
 // MsgToggleInflation defines a message to enable or disable inflation.
