@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This script is used in tandem with `contrib/docker/chaosnet.Dockerfile` to
-# run nodes for Nibiru Chain networks inside docker containers. 
+# run nodes for Nibiru Chain networks inside docker containers.
 # - See CHAOSNET.md for usage instructions.
 set -e
 
@@ -27,7 +27,6 @@ sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/
 sed -i "s/localhost:1317/0.0.0.0:$LCD_PORT/" $HOME/.nibid/config/app.toml
 sed -i "s/localhost:9090/0.0.0.0:$GRPC_PORT/" $HOME/.nibid/config/app.toml
 
-
 # ------------------------------------------------------------------------
 # Configure genesis params
 # ------------------------------------------------------------------------
@@ -44,9 +43,7 @@ add_genesis_param() {
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
 
-curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source "$curr_dir/feat-perp.sh"
-add_genesis_perp_markets_offline
+curr_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # recover mnemonic
 echo "$MNEMONIC" | nibid keys add validator --recover

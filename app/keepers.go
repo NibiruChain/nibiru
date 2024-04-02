@@ -110,9 +110,6 @@ import (
 	oracle "github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	perpmodule "github.com/NibiruChain/nibiru/x/perp/v2/module"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
@@ -172,7 +169,6 @@ type AppKeepers struct {
 	// Nibiru keepers
 	// ---------------
 	EpochsKeeper       epochskeeper.Keeper
-	PerpKeeperV2       perpkeeper.Keeper
 	SpotKeeper         spotkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
@@ -215,7 +211,6 @@ func initStoreKeys() (
 		spottypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
-		perptypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
 		wasmtypes.StoreKey,
@@ -371,12 +366,6 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[epochstypes.StoreKey],
 	)
 
-	app.PerpKeeperV2 = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
-		app.SudoKeeper,
-	)
-
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
@@ -384,7 +373,6 @@ func (app *NibiruApp) InitKeepers(
 
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
-			app.PerpKeeperV2.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),
@@ -437,8 +425,8 @@ func (app *NibiruApp) InitKeepers(
 	// NOTE: This keeper depends on all of pointers to the the Keepers to which
 	// it binds. Thus, it must be instantiated after those keepers have been
 	// assigned.
-	// For example, if there are bindings for the x/perp module, then the app
-	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
+	// For example, if there are bindings for the x/inflation module, then the app
+	// passed to GetWasmOpts must already have a non-nil InflationKeeper.
 	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -593,7 +581,6 @@ func (app *NibiruApp) initAppModules(
 		spot.NewAppModule(appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
-		perpmodule.NewAppModule(appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
 		sudo.NewAppModule(appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
@@ -664,7 +651,6 @@ func orderedModuleNames() []string {
 		epochstypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
-		perptypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
 
@@ -779,7 +765,6 @@ func ModuleBasicManager() module.BasicManager {
 		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
-		perpmodule.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -803,13 +788,6 @@ func ModuleAccPerms() map[string][]string {
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
 
-		perptypes.ModuleName:                 {},
-		perptypes.VaultModuleAccount:         {},
-		perptypes.PerpFundModuleAccount:      {},
-		perptypes.FeePoolModuleAccount:       {},
-		perptypes.DNRAllocationModuleAccount: {},
-		perptypes.DNREscrowModuleAccount:     {},
-
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
 		common.TreasuryPoolModuleAccount: {},
@@ -818,7 +796,6 @@ func ModuleAccPerms() map[string][]string {
 	}
 }
 
-// initParamsKeeper init params perpammkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey,

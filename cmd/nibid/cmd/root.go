@@ -29,7 +29,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
-	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -156,7 +155,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		genesisCommand(
 			encodingConfig,
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
-			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
 			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
 		),
 		queryCommand(),
