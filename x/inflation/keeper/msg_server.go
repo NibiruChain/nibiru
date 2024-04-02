@@ -46,17 +46,3 @@ func (ms msgServer) ToggleInflation(
 	resp = &types.MsgToggleInflationResponse{}
 	return resp, err
 }
-
-func (ms msgServer) Burn(
-	goCtx context.Context, msg *types.MsgBurn,
-) (resp *types.MsgBurnResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ms.Keeper.Burn(ctx, sdk.NewCoins(msg.Coin), sender)
-	return &types.MsgBurnResponse{}, err
-}
