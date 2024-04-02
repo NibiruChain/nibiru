@@ -274,3 +274,29 @@ func (k Keeper) SetDenomMetadata(
 			Caller:   txMsg.Sender,
 		})
 }
+
+func (k Keeper) BurnNative(
+	goCtx context.Context, msg *types.MsgBurnNative,
+) (resp *types.MsgBurnNativeResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+
+	coins := sdk.NewCoins(msg.Coin)
+
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, sender, types.ModuleName, coins,
+	); err != nil {
+		return nil, err
+	}
+
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgBurnNativeResponse{}, err
+}

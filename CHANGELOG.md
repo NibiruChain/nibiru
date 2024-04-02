@@ -49,7 +49,7 @@ Nibiru v1.2.0 adds a burn method to the x/inflation module that allows senders t
 
 ### Features
 
-* [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
+* [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
 
 ## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2024-03-19
 
