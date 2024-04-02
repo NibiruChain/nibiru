@@ -48,6 +48,7 @@ func TX_MSG_TYPE_URLS() []string {
 		"/nibiru.tokenfactory.v1.MsgUpdateModuleParams",
 		"/nibiru.tokenfactory.v1.MsgMint",
 		"/nibiru.tokenfactory.v1.MsgBurn",
+		"/nibiru.tokenfactory.v1.MsgBurnNative",
 		"/nibiru.tokenfactory.v1.MsgSetDenomMetadata",
 	}
 }
