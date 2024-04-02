@@ -2,18 +2,16 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/spf13/cobra"
-
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
-
-	"github.com/MakeNowJust/heredoc/v2"
 )
 
 // NewTxCmd returns the transaction commands for this module
@@ -32,6 +30,7 @@ func NewTxCmd() *cobra.Command {
 		CmdChangeAdmin(),
 		CmdMint(),
 		CmdBurn(),
+		CmdBurnNative(),
 		// CmdModifyDenomMetadata(), // CosmWasm only
 	)
 
@@ -211,5 +210,44 @@ func CmdBurn() *cobra.Command {
 
 	cmd.Flags().String("burn-from", "", "Address to burn from")
 	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdBurnNative() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn-native [amount]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Burn native tokens.",
+		Long: strings.TrimSpace(`
+Burn native tokens.
+
+$ nibid tx tokenfactory burn-native 100unibi
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			burnCoin, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgBurnNative{
+				Sender: clientCtx.GetFromAddress().String(),
+				Coin:   burnCoin,
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }

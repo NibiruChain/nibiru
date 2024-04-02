@@ -24,6 +24,9 @@ service Msg {
   rpc Burn(MsgBurn) returns (MsgBurnResponse);
   rpc SetDenomMetadata(MsgSetDenomMetadata)
       returns (MsgSetDenomMetadataResponse);
+
+  // burns a native token such as unibi
+  rpc BurnNative(MsgBurnNative) returns (MsgBurnNativeResponse) {};
 }
 
 // MsgCreateDenom: sdk.Msg that registers an a token factory denom.
@@ -114,3 +117,12 @@ message MsgSetDenomMetadata {
 }
 
 message MsgSetDenomMetadataResponse {}
+
+// Burn a native token such as unibi
+message MsgBurnNative {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+}
+
+message MsgBurnNativeResponse {}

@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
 - [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
 - [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
+- [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
 
 #### Dapp modules: perp, spot, etc
 

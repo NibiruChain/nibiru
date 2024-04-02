@@ -636,3 +636,90 @@ func (s *TestSuite) TestSetDenomMetadata() {
 		})
 	}
 }
+
+func (s *TestSuite) TestBurnNative() {
+	_, addrs := testutil.PrivKeyAddressPairs(4)
+	tfModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+
+	testCases := []TestCaseTx{
+		{
+			Name:      "happy: burn",
+			SetupMsgs: []sdk.Msg{},
+			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(123)))
+				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
+				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgBurnNative{
+						Sender: addrs[0].String(),
+						Coin:   sdk.NewCoin("unibi", sdk.NewInt(123)),
+					},
+					WantErr: "",
+				},
+			},
+			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.Equal(
+					sdk.NewInt(0), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+				)
+
+				s.Equal(
+					sdk.NewInt(0),
+					s.app.BankKeeper.GetBalance(s.ctx, tfModuleAddr, "unibi").Amount,
+				)
+
+				s.Equal(
+					sdk.NewInt(0),
+					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
+				)
+			},
+		},
+
+		{
+			Name:      "sad: not enough funds",
+			SetupMsgs: []sdk.Msg{},
+			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(123)))
+				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
+				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgBurnNative{
+						Sender: addrs[0].String(),
+						Coin:   sdk.NewCoin("unibi", sdk.NewInt(124)),
+					},
+					WantErr: "spendable balance 123unibi is smaller than 124unibi: insufficient funds",
+				},
+			},
+			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.Equal(
+					sdk.NewInt(123), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+				)
+
+				s.Equal(
+					sdk.NewInt(123),
+					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
+				)
+			},
+		},
+
+		{
+			Name: "sad: nil msg",
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: (*types.MsgSetDenomMetadata)(nil),
+					WantErr: "nil msg",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.Name, func() {
+			s.SetupTest()
+			tc.RunTest(s)
+		})
+	}
+}
