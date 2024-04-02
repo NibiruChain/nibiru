@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddGenesisPricefeederDelegation(t *testing.T) {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
