@@ -763,7 +763,7 @@ func ModuleAccPerms() map[string][]string {
 	return map[string][]string{
 		authtypes.FeeCollectorName:     nil,
 		distrtypes.ModuleName:          nil,
-		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+		inflationtypes.ModuleName:      {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},

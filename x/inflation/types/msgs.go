@@ -11,14 +11,12 @@ import (
 var (
 	_ legacytx.LegacyMsg = &MsgEditInflationParams{}
 	_ legacytx.LegacyMsg = &MsgToggleInflation{}
-	_ legacytx.LegacyMsg = &MsgBurn{}
 )
 
 // oracle message types
 const (
 	TypeMsgEditInflationParams = "edit_inflation_params"
 	TypeMsgToggleInflation     = "toggle_inflation"
-	TypeMsgBurn                = "msg_burn"
 )
 
 // Route implements legacytx.LegacyMsg
@@ -103,44 +101,5 @@ func (m MsgToggleInflation) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
 	}
-	return nil
-}
-
-// -------------------------------------------------
-// MsgBurn
-// Route implements legacytx.LegacyMsg
-func (msg MsgBurn) Route() string { return RouterKey }
-
-// Type implements legacytx.LegacyMsg
-func (msg MsgBurn) Type() string { return TypeMsgBurn }
-
-// GetSignBytes implements legacytx.LegacyMsg
-func (msg MsgBurn) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
-// GetSigners implements legacytx.LegacyMsg
-func (msg MsgBurn) GetSigners() []sdk.AccAddress {
-	feeder, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		panic(err)
-	}
-
-	return []sdk.AccAddress{feeder}
-}
-
-func (m MsgBurn) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return err
-	}
-
-	if err := m.Coin.Validate(); err != nil {
-		return err
-	}
-
-	if m.Coin.Amount.IsZero() {
-		return fmt.Errorf("coin amount should not be zero")
-	}
-
 	return nil
 }
