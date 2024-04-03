@@ -63,7 +63,7 @@ func (m *Sudoers) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Sudoers proto.InternalMessageInfo
 
-func (m *Sudoers) GetRootAddr() string {
+func (m *Sudoers) GetRoot() string {
 	if m != nil {
 		return m.Root
 	}
