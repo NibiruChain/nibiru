@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 

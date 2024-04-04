@@ -11,13 +11,13 @@ option go_package = "github.com/NibiruChain/nibiru/x/spot/types";
 // Configuration parameters for the pool.
 message PoolParams {
   string swap_fee = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.moretags) = "yaml:\"swap_fee\"",
     (gogoproto.nullable) = false
   ];
 
   string exit_fee = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.moretags) = "yaml:\"exit_fee\"",
     (gogoproto.nullable) = false
   ];
@@ -28,7 +28,7 @@ message PoolParams {
   // together may be best with a higher value. This is only used if the
   // pool_type is set to 1 (stableswap)
   string A = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.moretags) = "yaml:\"amplification\"",
     (gogoproto.nullable) = false
   ];
@@ -54,7 +54,7 @@ message PoolAsset {
       [ (gogoproto.moretags) = "yaml:\"token\"", (gogoproto.nullable) = false ];
   // Weight that is not normalized. This weight must be less than 2^50
   string weight = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.moretags) = "yaml:\"weight\"",
     (gogoproto.nullable) = false
   ];
@@ -84,7 +84,7 @@ message Pool {
 
   // sum of all non-normalized pool weights
   string total_weight = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.moretags) = "yaml:\"total_weight\"",
     (gogoproto.nullable) = false
   ];

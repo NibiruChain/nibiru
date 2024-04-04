@@ -1,6 +1,7 @@
 package cli
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -156,22 +157,22 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		return
 	}
 
-	sqrtDepth, err := sdk.NewDecFromStr(sqrtDepthStr)
+	sqrtDepth, err := sdkmath.LegacyNewDecFromStr(sqrtDepthStr)
 	if err != nil {
 		return
 	}
 
-	maintenanceMarginRatio, err := sdk.NewDecFromStr(mmrAsString)
+	maintenanceMarginRatio, err := sdkmath.LegacyNewDecFromStr(mmrAsString)
 	if err != nil {
 		return
 	}
 
-	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
+	maxLeverage, err := sdkmath.LegacyNewDecFromStr(maxLeverageStr)
 	if err != nil {
 		return
 	}
 
-	maxFundingRate, err := sdk.NewDecFromStr(maxFundingRateStr)
+	maxFundingRate, err := sdkmath.LegacyNewDecFromStr(maxFundingRateStr)
 	if err != nil {
 		return
 	}
@@ -181,7 +182,7 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		return
 	}
 
-	priceMultiplier, err := sdk.NewDecFromStr(priceMultiplierStr)
+	priceMultiplier, err := sdkmath.LegacyNewDecFromStr(priceMultiplierStr)
 	if err != nil {
 		return
 	}
@@ -191,11 +192,11 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		Enabled:                         true,
 		MaintenanceMarginRatio:          maintenanceMarginRatio,
 		MaxLeverage:                     maxLeverage,
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
-		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
-		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
+		LatestCumulativePremiumFraction: sdkmath.LegacyZeroDec(),
+		ExchangeFeeRatio:                sdkmath.LegacyMustNewDecFromStr("0.0010"),
+		EcosystemFundFeeRatio:           sdkmath.LegacyMustNewDecFromStr("0.0010"),
+		LiquidationFeeRatio:             sdkmath.LegacyMustNewDecFromStr("0.0500"),
+		PartialLiquidationRatio:         sdkmath.LegacyMustNewDecFromStr("0.5"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		MaxFundingRate:                  maxFundingRate,
 		TwapLookbackWindow:              time.Minute * 30,
@@ -212,8 +213,8 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		QuoteReserve:    sqrtDepth,
 		SqrtDepth:       sqrtDepth,
 		PriceMultiplier: priceMultiplier,
-		TotalLong:       sdk.ZeroDec(),
-		TotalShort:      sdk.ZeroDec(),
+		TotalLong:       sdkmath.LegacyZeroDec(),
+		TotalShort:      sdkmath.LegacyZeroDec(),
 	}
 	if err := amm.Validate(); err != nil {
 		return types.Market{}, types.AMM{}, err

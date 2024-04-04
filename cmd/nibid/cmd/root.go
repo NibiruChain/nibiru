@@ -5,11 +5,12 @@ import (
 	"io"
 	"os"
 
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/libs/log"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -144,15 +145,15 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
-		config.Cmd(),
-		pruning.PruningCmd(a.newApp),
+		confixcmd.GetCommand(),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
-		rpc.StatusCommand(),
+		server.StatusCommand(),
 		genesisCommand(
 			encodingConfig,
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
@@ -161,7 +162,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		keys.Commands(),
 	)
 
 	// TODO add rosettaj
@@ -197,9 +198,8 @@ func queryCommand() *cobra.Command {
 	}
 
 	rootQueryCmd.AddCommand(
-		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
+		server.QueryBlockCmd(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 	)

@@ -1,17 +1,16 @@
 package keeper
 
 import (
+	"cosmossdk.io/log"
 	"fmt"
-
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/cometbft/cometbft/libs/log"
-
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
@@ -50,7 +49,7 @@ type Keeper struct {
 
 // NewKeeper creates new instances of the fees Keeper
 func NewKeeper(
-	storeKey storetypes.StoreKey,
+	storeKey *storetypes.KVStoreKey,
 	cdc codec.BinaryCodec,
 	bk devgastypes.BankKeeper,
 	wk wasmkeeper.Keeper,
@@ -58,6 +57,9 @@ func NewKeeper(
 	feeCollector string,
 	authority string,
 ) Keeper {
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
@@ -68,8 +70,10 @@ func NewKeeper(
 		authority:        authority,
 		DevGasStore:      NewDevGasStore(storeKey, cdc),
 		ModuleParams: collections.NewItem(
-			storeKey, devgastypes.KeyPrefixParams,
-			collections.ProtoValueEncoder[devgastypes.ModuleParams](cdc),
+			sb,
+			collections.NewPrefix(int(devgastypes.KeyPrefixParams)),
+			storeKey.String(),
+			codec.CollValue[devgastypes.ModuleParams](cdc),
 		),
 	}
 }

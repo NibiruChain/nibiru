@@ -6,7 +6,7 @@ import (
 
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -21,7 +21,7 @@ import (
 func SetupClientCtx(t *testing.T) context.Context {
 	home := t.TempDir()
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
 	appCodec := moduletestutil.MakeTestEncodingConfig().Codec

@@ -281,7 +281,7 @@ func (k Keeper) CancelFeeShare(
 		return nil, err
 	}
 
-	err = k.DevGasStore.Delete(ctx, fee.GetContractAddress())
+	err = k.DevGasStore.Remove(ctx, fee.GetContractAddress())
 	if err != nil {
 		return nil, err
 	}

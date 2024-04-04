@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,7 +14,6 @@ import (
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -153,24 +153,22 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return errors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &tmtypes.GenesisDoc{}
+			appGenesis := &genutiltypes.AppGenesis{}
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
 				}
 			} else {
-				genDoc, err = tmtypes.GenesisDocFromFile(genFile)
+				appGenesis, err = genutiltypes.AppGenesisFromFile(config.GenesisFile())
 				if err != nil {
 					return errors.Wrap(err, "Failed to read genesis doc from file")
 				}
+				appGenesis.AppState = appState
+				appGenesis.ChainID = chainID
+				appGenesis.InitialHeight = initHeight
 			}
 
-			genDoc.ChainID = chainID
-			genDoc.Validators = nil
-			genDoc.AppState = appState
-			genDoc.InitialHeight = initHeight
-
-			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
+			if err = genutil.ExportGenesisFile(appGenesis, genFile); err != nil {
 				return errors.Wrap(err, "Failed to export genesis file")
 			}
 

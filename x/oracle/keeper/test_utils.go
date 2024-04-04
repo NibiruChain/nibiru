@@ -2,25 +2,29 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	"cosmossdk.io/log"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -133,20 +137,21 @@ type TestFixture struct {
 // CreateTestFixture nolint
 // Creates a base app, with 5 accounts,
 func CreateTestFixture(t *testing.T) TestFixture {
-	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
-	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
-	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
-	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
-	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
-	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
-	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
-	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
+	keyAcc := storetypes.NewKVStoreKey(authtypes.StoreKey)
+	keyBank := storetypes.NewKVStoreKey(banktypes.StoreKey)
+	keyParams := storetypes.NewKVStoreKey(paramstypes.StoreKey)
+	tKeyParams := storetypes.NewTransientStoreKey(paramstypes.TStoreKey)
+	keyOracle := storetypes.NewKVStoreKey(types.StoreKey)
+	keyStaking := storetypes.NewKVStoreKey(stakingtypes.StoreKey)
+	keyDistr := storetypes.NewKVStoreKey(distrtypes.StoreKey)
+	keySudo := storetypes.NewKVStoreKey(sudotypes.StoreKey)
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC(), Height: 1}, false, log.NewNopLogger())
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
+	logger := log.NewTestLogger(t)
 
 	ms.MountStoreWithDB(keyAcc, storetypes.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyBank, storetypes.StoreTypeIAVL, db)
@@ -174,21 +179,23 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		distrtypes.ModuleName:          nil,
 		types.ModuleName:               nil,
 	}
-
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
-		keyAcc,
+		runtime.NewKVStoreService(keyAcc),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
-		sdk.GetConfig().GetBech32AccountAddrPrefix(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
-		keyBank,
+		runtime.NewKVStoreService(keyBank),
 		accountKeeper,
 		blackListAddrs,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
+		logger,
 	)
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
@@ -196,10 +203,12 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
-		keyStaking,
+		runtime.NewKVStoreService(keyStaking),
 		accountKeeper,
 		bankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 
 	stakingParams := stakingtypes.DefaultParams()
@@ -208,18 +217,20 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
-		keyDistr,
+		runtime.NewKVStoreService(keyDistr),
 		accountKeeper, bankKeeper, stakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
+	// TODO: set fee pool properly
+	//distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
-	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
-	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
-	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)
-	distrKeeper.SetParams(ctx, distrParams)
+	distrParams.CommunityTax = sdkmath.LegacyNewDecWithPrec(2, 2)
+	distrParams.BaseProposerReward = sdkmath.LegacyNewDecWithPrec(1, 2)
+	distrParams.BonusProposerReward = sdkmath.LegacyNewDecWithPrec(4, 2)
+	// TODO: set params properly
+	//distrKeeper.SetParams(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
 
 	feeCollectorAcc := authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
@@ -260,7 +271,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	defaults := types.DefaultParams()
 
 	for _, pair := range defaults.Whitelist {
-		keeper.WhitelistedPairs.Insert(ctx, pair)
+		keeper.WhitelistedPairs.Set(ctx, pair)
 	}
 
 	keeper.Params.Set(ctx, defaults)
@@ -276,12 +287,12 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 // NewTestMsgCreateValidator test msg creator
 func NewTestMsgCreateValidator(
-	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int,
+	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdkmath.Int,
 ) *stakingtypes.MsgCreateValidator {
-	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
-		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
-		stakingtypes.Description{}, commission, sdk.OneInt(),
+		address.String(), pubKey, sdk.NewCoin(denoms.NIBI, amt),
+		stakingtypes.Description{}, commission, sdkmath.OneInt(),
 	)
 
 	return msg
@@ -305,7 +316,7 @@ func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePer
 
 var (
 	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	testExchangeRate = sdk.NewDec(1700)
+	testExchangeRate = sdkmath.LegacyNewDec(1700)
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
@@ -333,7 +344,8 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], testStakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	// TODO: check the endblocker
+	//staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	return fixture, h
 }

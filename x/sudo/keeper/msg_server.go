@@ -3,11 +3,10 @@ package keeper
 import (
 	"context"
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	collcodec "cosmossdk.io/collections/codec"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -79,8 +78,8 @@ func (m MsgServer) validateRootPermissions(pbSudoers sudotypes.Sudoers, msg *sud
 // Encoder for the Sudoers type
 // ————————————————————————————————————————————————————————————————————————————
 
-func SudoersValueEncoder(cdc codec.BinaryCodec) collections.ValueEncoder[sudotypes.Sudoers] {
-	return collections.ProtoValueEncoder[sudotypes.Sudoers](cdc)
+func SudoersValueEncoder(cdc codec.BinaryCodec) collcodec.ValueCodec[sudotypes.Sudoers] {
+	return codec.CollValue[sudotypes.Sudoers](cdc)
 }
 
 type Sudoers struct {

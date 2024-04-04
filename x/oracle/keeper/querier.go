@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -84,7 +84,18 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates types.ExchangeRateTuples
-	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
+	iter, err := q.Keeper.ExchangeRates.Iterate(ctx, &collections.Range[asset.Pair]{})
+	if err != nil {
+		q.Logger(ctx).Error("failed to iterate exchange rates", "error", err)
+		return nil, err
+	}
+	kv, err := iter.KeyValues()
+	if err != nil {
+		q.Logger(ctx).Error("failed to get exchange rates key values", "error", err)
+		return nil, err
+	}
+
+	for _, er := range kv {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
 			Pair:         er.Key,
 			ExchangeRate: er.Value.ExchangeRate,
@@ -96,7 +107,19 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 
 // Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
-	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[asset.Pair]{}).Keys()}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+
+	iter, err := q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), &collections.Range[asset.Pair]{})
+	if err != nil {
+		q.Logger(ctx).Error("failed to iterate exchange rates", "error", err)
+		return nil, err
+	}
+	keys, err := iter.Keys()
+	if err != nil {
+		q.Logger(ctx).Error("failed to get exchange rates keys", "error", err)
+		return nil, err
+	}
+	return &types.QueryActivesResponse{Actives: keys}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period
@@ -117,8 +140,12 @@ func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDeleg
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	delegations, err := q.Keeper.FeederDelegations.Get(ctx, valAddr)
+	if delegations == nil {
+		delegations = sdk.AccAddress(valAddr)
+	}
 	return &types.QueryFeederDelegationResponse{
-		FeederAddr: q.Keeper.FeederDelegations.GetOr(ctx, valAddr, sdk.AccAddress(valAddr)).String(),
+		FeederAddr: delegations.String(),
 	}, nil
 }
 
@@ -134,8 +161,12 @@ func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterReque
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	missCounter, err := q.MissCounters.Get(ctx, valAddr)
+	if err != nil {
+		missCounter = 0
+	}
 	return &types.QueryMissCounterResponse{
-		MissCounter: q.MissCounters.GetOr(ctx, valAddr, 0),
+		MissCounter: missCounter,
 	}, nil
 }
 
@@ -163,7 +194,18 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 
 // AggregatePrevotes queries aggregate prevotes of all validators
 func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
-	return &types.QueryAggregatePrevotesResponse{AggregatePrevotes: q.Prevotes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	iter, err := q.Prevotes.Iterate(sdk.UnwrapSDKContext(c), &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		q.Logger(ctx).Error("failed to iterate prevotes", "error", err)
+		return nil, err
+	}
+	values, err := iter.Values()
+	if err != nil {
+		q.Logger(ctx).Error("failed to get prevotes values", "error", err)
+		return nil, err
+	}
+	return &types.QueryAggregatePrevotesResponse{AggregatePrevotes: values}, nil
 }
 
 // AggregateVote queries an aggregate vote of a validator
@@ -190,5 +232,16 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 
 // AggregateVotes queries aggregate votes of all validators
 func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-	return &types.QueryAggregateVotesResponse{AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	iter, err := q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		q.Logger(ctx).Error("failed to iterate votes", "error", err)
+		return nil, err
+	}
+	values, err := iter.Values()
+	if err != nil {
+		q.Logger(ctx).Error("failed to get votes values", "error", err)
+		return nil, err
+	}
+	return &types.QueryAggregateVotesResponse{AggregateVotes: values}, nil
 }

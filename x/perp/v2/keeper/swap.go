@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -8,7 +9,7 @@ import (
 
 // checkUserLimits checks if the limit is violated by the amount.
 // returns error if it does
-func checkUserLimits(limit, amount sdk.Dec, dir types.Direction) error {
+func checkUserLimits(limit, amount sdkmath.LegacyDec, dir types.Direction) error {
 	if limit.IsZero() {
 		return nil
 	}
@@ -53,16 +54,16 @@ func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
 	amm types.AMM,
 	dir types.Direction,
-	quoteAssetAmt sdk.Dec, // unsigned
-	baseAssetLimit sdk.Dec, // unsigned
-) (updatedAMM *types.AMM, baseAssetDelta sdk.Dec, err error) {
+	quoteAssetAmt sdkmath.LegacyDec, // unsigned
+	baseAssetLimit sdkmath.LegacyDec, // unsigned
+) (updatedAMM *types.AMM, baseAssetDelta sdkmath.LegacyDec, err error) {
 	baseAssetDelta, err = amm.SwapQuoteAsset(quoteAssetAmt, dir)
 	if err != nil {
-		return nil, sdk.Dec{}, err
+		return nil, sdkmath.LegacyDec{}, err
 	}
 
 	if err := checkUserLimits(baseAssetLimit, baseAssetDelta, dir); err != nil {
-		return nil, sdk.Dec{}, err
+		return nil, sdkmath.LegacyDec{}, err
 	}
 
 	k.SaveAMM(ctx, amm)
@@ -91,20 +92,20 @@ func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
 	amm types.AMM,
 	dir types.Direction,
-	baseAssetAmt sdk.Dec,
-	quoteAssetLimit sdk.Dec,
-) (updatedAMM *types.AMM, quoteAssetDelta sdk.Dec, err error) {
+	baseAssetAmt sdkmath.LegacyDec,
+	quoteAssetLimit sdkmath.LegacyDec,
+) (updatedAMM *types.AMM, quoteAssetDelta sdkmath.LegacyDec, err error) {
 	if baseAssetAmt.IsZero() {
-		return &amm, sdk.ZeroDec(), nil
+		return &amm, sdkmath.LegacyZeroDec(), nil
 	}
 
 	quoteAssetDelta, err = amm.SwapBaseAsset(baseAssetAmt, dir)
 	if err != nil {
-		return nil, sdk.Dec{}, err
+		return nil, sdkmath.LegacyDec{}, err
 	}
 
 	if err := checkUserLimits(quoteAssetLimit, quoteAssetDelta, dir); err != nil {
-		return nil, sdk.Dec{}, err
+		return nil, sdkmath.LegacyDec{}, err
 	}
 
 	k.SaveAMM(ctx, amm)

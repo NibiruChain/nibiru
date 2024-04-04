@@ -72,7 +72,7 @@ func NewPool(
 		Address:     poolAccountAddr.String(),
 		PoolParams:  poolParams,
 		PoolAssets:  nil,
-		TotalWeight: sdk.ZeroInt(),
+		TotalWeight: sdkmath.ZeroInt(),
 		TotalShares: sdk.NewCoin(GetPoolShareBaseDenom(poolId), InitPoolSharesSupply),
 	}
 
@@ -130,12 +130,12 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 		numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
 	}
 	if err != nil {
-		return sdk.ZeroInt(), sdk.Coins{}, err
+		return sdkmath.ZeroInt(), sdk.Coins{}, err
 	}
 
 	tokensIn.Sort()
 	if err := pool.incrementBalances(numShares, tokensIn.Sub(remCoins...)); err != nil {
-		return sdk.ZeroInt(), sdk.Coins{}, err
+		return sdkmath.ZeroInt(), sdk.Coins{}, err
 	}
 
 	return numShares, remCoins, nil
@@ -167,7 +167,7 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	if tokensIn.Len() > 1 {
 		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
 	} else {
-		numShares = sdk.ZeroInt()
+		numShares = sdkmath.ZeroInt()
 	}
 
 	if remCoins.Empty() {
@@ -244,7 +244,7 @@ func (pool *Pool) updatePoolAssetBalances(tokens ...sdk.Coin) (err error) {
 	// Ensures that there are no duplicate denoms, all denom's are valid,
 	// and amount is > 0
 	for _, coin := range tokens {
-		if coin.Amount.LT(sdk.ZeroInt()) {
+		if coin.Amount.LT(sdkmath.ZeroInt()) {
 			return fmt.Errorf("provided coins are invalid, %v", tokens)
 		}
 		assetIndex, existingAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
@@ -265,7 +265,7 @@ func (pool *Pool) updatePoolAssetBalances(tokens ...sdk.Coin) (err error) {
 func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	exists := make(map[string]bool)
 
-	newTotalWeight := sdk.ZeroInt()
+	newTotalWeight := sdkmath.ZeroInt()
 	scaledPoolAssets := make([]PoolAsset, 0, len(poolAssets))
 
 	for _, asset := range poolAssets {
@@ -500,5 +500,5 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		}
 	}
 
-	return sdk.NewIntFromUint64(y.Uint64()), nil
+	return sdkmath.NewIntFromUint64(y.Uint64()), nil
 }

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -48,7 +49,7 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair asset.Pair, version uint64,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_Settlement,
-		sdk.ZeroInt(),
+		sdkmath.ZeroInt(),
 		position,
 	); err != nil {
 		return nil, err
@@ -64,20 +65,20 @@ func (k Keeper) settlePosition(ctx sdk.Context, market types.Market, amm types.A
 
 	resp = &types.PositionResp{
 		ExchangedPositionSize: position.Size_.Neg(),
-		PositionNotional:      sdk.ZeroDec(),
+		PositionNotional:      sdkmath.LegacyZeroDec(),
 		FundingPayment:        FundingPayment(position, market.LatestCumulativePremiumFraction),
 		RealizedPnl:           UnrealizedPnl(position, positionNotional),
-		UnrealizedPnlAfter:    sdk.ZeroDec(),
+		UnrealizedPnlAfter:    sdkmath.LegacyZeroDec(),
 	}
 
 	remainingMargin := position.Margin.Add(resp.RealizedPnl).Sub(resp.FundingPayment)
 
 	if remainingMargin.IsPositive() {
-		resp.BadDebt = sdk.ZeroDec()
+		resp.BadDebt = sdkmath.LegacyZeroDec()
 		resp.MarginToVault = remainingMargin.Neg()
 	} else {
 		resp.BadDebt = remainingMargin.Abs()
-		resp.MarginToVault = sdk.ZeroDec()
+		resp.MarginToVault = sdkmath.LegacyZeroDec()
 	}
 
 	var dir types.Direction
@@ -92,7 +93,7 @@ func (k Keeper) settlePosition(ctx sdk.Context, market types.Market, amm types.A
 		amm,
 		dir,
 		position.Size_.Abs(),
-		sdk.ZeroDec(),
+		sdkmath.LegacyZeroDec(),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -102,9 +103,9 @@ func (k Keeper) settlePosition(ctx sdk.Context, market types.Market, amm types.A
 	resp.Position = types.Position{
 		TraderAddress:                   position.TraderAddress,
 		Pair:                            position.Pair,
-		Size_:                           sdk.ZeroDec(),
-		Margin:                          sdk.ZeroDec(),
-		OpenNotional:                    sdk.ZeroDec(),
+		Size_:                           sdkmath.LegacyZeroDec(),
+		Margin:                          sdkmath.LegacyZeroDec(),
+		OpenNotional:                    sdkmath.LegacyZeroDec(),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}

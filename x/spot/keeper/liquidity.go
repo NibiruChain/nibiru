@@ -5,7 +5,7 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 
@@ -32,7 +32,7 @@ func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdkmath
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(spottypes.GetDenomLiquidityPrefix(denom))
 	if bz == nil {
-		return sdk.ZeroInt(), nil
+		return sdkmath.ZeroInt(), nil
 	}
 
 	if err := amount.Unmarshal(bz); err != nil {

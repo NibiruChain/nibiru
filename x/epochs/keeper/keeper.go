@@ -1,9 +1,11 @@
 package keeper
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	corestoretypes "cosmossdk.io/core/store"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -11,19 +13,28 @@ import (
 )
 
 type Keeper struct {
-	cdc      codec.Codec
-	storeKey storetypes.StoreKey
-	hooks    types.EpochHooks
+	cdc          codec.Codec
+	storeService corestoretypes.KVStoreService
+	hooks        types.EpochHooks
 
 	Epochs collections.Map[string, types.EpochInfo]
 }
 
-func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey) Keeper {
-	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
+func NewKeeper(cdc codec.Codec, storeKey *storetypes.KVStoreKey) Keeper {
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
 
-		Epochs: collections.NewMap[string, types.EpochInfo](storeKey, 1, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.EpochInfo](cdc)),
+	return Keeper{
+		cdc:          cdc,
+		storeService: storeService,
+
+		Epochs: collections.NewMap[string, types.EpochInfo](
+			sb,
+			collections.NewPrefix(1),
+			storeKey.String(),
+			collections.StringKey,
+			codec.CollValue[types.EpochInfo](cdc),
+		),
 	}
 }
 

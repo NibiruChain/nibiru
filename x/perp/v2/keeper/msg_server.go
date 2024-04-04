@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,7 +47,7 @@ func (m msgServer) MarketOrder(goCtx context.Context, req *types.MsgMarketOrder,
 		traderAddr,
 		req.QuoteAssetAmount,
 		req.Leverage,
-		sdk.NewDecFromInt(req.BaseAssetAmountLimit),
+		sdkmath.LegacyNewDecFromInt(req.BaseAssetAmountLimit),
 	)
 	if err != nil {
 		return nil, err

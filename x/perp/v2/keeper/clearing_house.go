@@ -6,7 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -33,8 +33,8 @@ func (k Keeper) MarketOrder(
 	dir types.Direction,
 	traderAddr sdk.AccAddress,
 	quoteAssetAmt sdkmath.Int,
-	leverage sdk.Dec,
-	baseAmtLimit sdk.Dec,
+	leverage sdkmath.LegacyDec,
+	baseAmtLimit sdkmath.LegacyDec,
 ) (positionResp *types.PositionResp, err error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
@@ -89,7 +89,7 @@ func (k Keeper) MarketOrder(
 			return nil, err
 		}
 	} else {
-		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmtMinusFees)
+		quoteAssetAmtToDec := sdkmath.LegacyNewDecFromInt(quoteAssetAmtMinusFees)
 		updatedAMM, positionResp, err = k.openReversePosition(
 			ctx,
 			market,
@@ -159,9 +159,9 @@ func (k Keeper) increasePosition(
 	amm types.AMM,
 	currentPosition types.Position,
 	dir types.Direction,
-	increasedNotional sdk.Dec, // unsigned
-	baseAmtLimit sdk.Dec, // unsigned
-	leverage sdk.Dec, // unsigned
+	increasedNotional sdkmath.LegacyDec, // unsigned
+	baseAmtLimit sdkmath.LegacyDec, // unsigned
+	leverage sdkmath.LegacyDec, // unsigned
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
@@ -169,7 +169,7 @@ func (k Keeper) increasePosition(
 	}
 
 	positionResp = &types.PositionResp{
-		RealizedPnl:            sdk.ZeroDec(),
+		RealizedPnl:            sdkmath.LegacyZeroDec(),
 		MarginToVault:          increasedNotional.Quo(leverage),                                         // unsigned
 		FundingPayment:         FundingPayment(currentPosition, market.LatestCumulativePremiumFraction), // signed
 		ExchangedNotionalValue: increasedNotional,                                                       // unsigned
@@ -195,12 +195,12 @@ func (k Keeper) increasePosition(
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
-	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	positionResp.BadDebt = sdkmath.LegacyMinDec(sdkmath.LegacyZeroDec(), remainingMargin).Abs()
 	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMargin).Abs(),
+		Margin:                          sdkmath.LegacyMaxDec(sdkmath.LegacyZeroDec(), remainingMargin).Abs(),
 		OpenNotional:                    currentPosition.OpenNotional.Add(increasedNotional),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
@@ -231,9 +231,9 @@ func (k Keeper) openReversePosition(
 	market types.Market,
 	amm types.AMM,
 	currentPosition types.Position,
-	quoteAssetAmount sdk.Dec,
-	leverage sdk.Dec,
-	baseAmtLimit sdk.Dec,
+	quoteAssetAmount sdkmath.LegacyDec,
+	leverage sdkmath.LegacyDec,
+	baseAmtLimit sdkmath.LegacyDec,
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, err := PositionNotionalSpot(amm, currentPosition)
@@ -291,8 +291,8 @@ func (k Keeper) decreasePosition(
 	market types.Market,
 	amm types.AMM,
 	currentPosition types.Position,
-	decreasedNotional sdk.Dec,
-	baseAmtLimit sdk.Dec,
+	decreasedNotional sdkmath.LegacyDec,
+	baseAmtLimit sdkmath.LegacyDec,
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
@@ -311,7 +311,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	positionResp = &types.PositionResp{
-		MarginToVault: sdk.ZeroDec(),
+		MarginToVault: sdkmath.LegacyZeroDec(),
 	}
 
 	currentPositionNotional, err := PositionNotionalSpot(amm, currentPosition)
@@ -345,7 +345,7 @@ func (k Keeper) decreasePosition(
 	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
 	remainingMargin := currentPosition.Margin.Add(positionResp.RealizedPnl).Sub(fundingPayment)
 
-	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	positionResp.BadDebt = sdkmath.LegacyMinDec(sdkmath.LegacyZeroDec(), remainingMargin).Abs()
 	positionResp.FundingPayment = fundingPayment
 	positionResp.UnrealizedPnlAfter = currentUnrealizedPnl.Sub(positionResp.RealizedPnl)
 	positionResp.ExchangedNotionalValue = decreasedNotional
@@ -355,7 +355,7 @@ func (k Keeper) decreasePosition(
 	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
 	// short: unrealizedPnl = openNotional - positionNotional => openNotional = positionNotional + unrealizedPnl
 	// positionNotional = oldPositionNotional - notionalValueToDecrease
-	var remainOpenNotional sdk.Dec
+	var remainOpenNotional sdkmath.LegacyDec
 	if currentPosition.Size_.IsPositive() {
 		remainOpenNotional = positionResp.PositionNotional.Sub(positionResp.UnrealizedPnlAfter)
 	} else {
@@ -370,14 +370,14 @@ func (k Keeper) decreasePosition(
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMargin).Abs(),
+		Margin:                          sdkmath.LegacyMaxDec(sdkmath.LegacyZeroDec(), remainingMargin).Abs(),
 		OpenNotional:                    remainOpenNotional,
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
 
 	if positionResp.Position.Size_.IsZero() {
-		err := k.Positions.Delete(ctx, collections.Join(collections.Join(currentPosition.Pair, amm.Version), trader))
+		err := k.Positions.Remove(ctx, collections.Join(collections.Join(currentPosition.Pair, amm.Version), trader))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -409,9 +409,9 @@ func (k Keeper) closeAndOpenReversePosition(
 	market types.Market,
 	amm types.AMM,
 	existingPosition types.Position,
-	quoteAssetAmount sdk.Dec,
-	leverage sdk.Dec,
-	baseAmtLimit sdk.Dec,
+	quoteAssetAmount sdkmath.LegacyDec,
+	leverage sdkmath.LegacyDec,
+	baseAmtLimit sdkmath.LegacyDec,
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
 	if err != nil {
@@ -423,7 +423,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		market,
 		amm,
 		existingPosition,
-		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* quoteAssetAmountLimit */ sdkmath.LegacyZeroDec(),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -501,7 +501,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		FundingPayment:         closePositionResp.FundingPayment.Add(increasePositionResp.FundingPayment),
 		RealizedPnl:            closePositionResp.RealizedPnl.Add(increasePositionResp.RealizedPnl),
 		MarginToVault:          closePositionResp.MarginToVault.Add(increasePositionResp.MarginToVault),
-		UnrealizedPnlAfter:     sdk.ZeroDec(),
+		UnrealizedPnlAfter:     sdkmath.LegacyZeroDec(),
 	}
 
 	return updatedAMM, positionResp, nil
@@ -516,11 +516,11 @@ func (k Keeper) closeAndOpenReversePosition(
 // args:
 // - market: the market where the position will be opened
 // - quoteAssetAmt: the amount of quote asset
-// - leverage: the amount of leverage to take, as sdk.Dec
+// - leverage: the amount of leverage to take, as math.LegacyDec
 //
 // returns:
 // - error: if any of the requirements is not met
-func checkMarketOrderRequirements(market types.Market, quoteAssetAmt sdkmath.Int, userLeverage sdk.Dec) error {
+func checkMarketOrderRequirements(market types.Market, quoteAssetAmt sdkmath.Int, userLeverage sdkmath.LegacyDec) error {
 	if !quoteAssetAmt.IsPositive() {
 		return types.ErrInputQuoteAmtNegative
 	}
@@ -574,7 +574,7 @@ func (k Keeper) afterPositionUpdate(
 	// calculate positionNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl
 	// short: unrealizedPnl = openNotional - positionNotional => positionNotional = openNotional - unrealizedPnl
-	positionNotional := sdk.ZeroDec()
+	positionNotional := sdkmath.LegacyZeroDec()
 	if positionResp.Position.Size_.IsPositive() {
 		positionNotional = positionResp.Position.OpenNotional.Add(positionResp.UnrealizedPnlAfter)
 	} else if positionResp.Position.Size_.IsNegative() {
@@ -621,11 +621,11 @@ func (k Keeper) checkMarginRatio(ctx sdk.Context, market types.Market, amm types
 	if err != nil {
 		return
 	}
-	var preferredPositionNotional sdk.Dec
+	var preferredPositionNotional sdkmath.LegacyDec
 	if position.Size_.IsPositive() {
-		preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
+		preferredPositionNotional = sdkmath.LegacyMaxDec(spotNotional, twapNotional)
 	} else {
-		preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
+		preferredPositionNotional = sdkmath.LegacyMinDec(spotNotional, twapNotional)
 	}
 
 	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
@@ -650,9 +650,9 @@ func (k Keeper) transferFee(
 	ctx sdk.Context,
 	pair asset.Pair,
 	trader sdk.AccAddress,
-	positionNotional sdk.Dec,
-	exchangeFeeRatio sdk.Dec,
-	ecosystemFundFeeRatio sdk.Dec,
+	positionNotional sdkmath.LegacyDec,
+	exchangeFeeRatio sdkmath.LegacyDec,
+	ecosystemFundFeeRatio sdkmath.LegacyDec,
 ) (fees sdkmath.Int, err error) {
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
@@ -736,7 +736,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		market,
 		amm,
 		position,
-		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* quoteAssetAmountLimit */ sdkmath.LegacyZeroDec(),
 	)
 	if err != nil {
 		return nil, err
@@ -758,7 +758,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_ClosePosition,
-		sdk.ZeroInt(),
+		sdkmath.ZeroInt(),
 		position,
 	); err != nil {
 		return nil, err
@@ -786,7 +786,7 @@ func (k Keeper) closePositionEntirely(
 	market types.Market,
 	amm types.AMM,
 	currentPosition types.Position,
-	quoteAssetAmountLimit sdk.Dec,
+	quoteAssetAmountLimit sdkmath.LegacyDec,
 ) (updatedAMM *types.AMM, resp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("zero position size")
@@ -803,20 +803,20 @@ func (k Keeper) closePositionEntirely(
 
 	resp = &types.PositionResp{
 		ExchangedPositionSize: currentPosition.Size_.Neg(),
-		PositionNotional:      sdk.ZeroDec(),
+		PositionNotional:      sdkmath.LegacyZeroDec(),
 		FundingPayment:        FundingPayment(currentPosition, market.LatestCumulativePremiumFraction),
 		RealizedPnl:           UnrealizedPnl(currentPosition, positionNotional),
-		UnrealizedPnlAfter:    sdk.ZeroDec(),
+		UnrealizedPnlAfter:    sdkmath.LegacyZeroDec(),
 	}
 
 	remainingMargin := currentPosition.Margin.Add(resp.RealizedPnl).Sub(resp.FundingPayment)
 
 	if remainingMargin.IsPositive() {
-		resp.BadDebt = sdk.ZeroDec()
+		resp.BadDebt = sdkmath.LegacyZeroDec()
 		resp.MarginToVault = remainingMargin.Neg()
 	} else {
 		resp.BadDebt = remainingMargin.Abs()
-		resp.MarginToVault = sdk.ZeroDec()
+		resp.MarginToVault = sdkmath.LegacyZeroDec()
 	}
 
 	var dir types.Direction
@@ -841,9 +841,9 @@ func (k Keeper) closePositionEntirely(
 	resp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
-		Size_:                           sdk.ZeroDec(),
-		Margin:                          sdk.ZeroDec(),
-		OpenNotional:                    sdk.ZeroDec(),
+		Size_:                           sdkmath.LegacyZeroDec(),
+		Margin:                          sdkmath.LegacyZeroDec(),
+		OpenNotional:                    sdkmath.LegacyZeroDec(),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
@@ -860,7 +860,7 @@ func (k Keeper) PartialClose(
 	ctx sdk.Context,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-	sizeAmt sdk.Dec, // unsigned
+	sizeAmt sdkmath.LegacyDec, // unsigned
 ) (*types.PositionResp, error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
@@ -909,7 +909,7 @@ func (k Keeper) PartialClose(
 
 	reverseNotionalAmtWithoutFees := reverseNotionalAmt.Sub(feesTransferred.ToLegacyDec())
 
-	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmtWithoutFees, sdk.ZeroDec())
+	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmtWithoutFees, sdkmath.LegacyZeroDec())
 	if err != nil {
 		return nil, err
 	}

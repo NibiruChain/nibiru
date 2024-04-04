@@ -1,6 +1,7 @@
 package ante
 
 import (
+	"cosmossdk.io/math"
 	"encoding/json"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -168,7 +169,7 @@ func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(ctx sdk.Context, msg
 // FeePayLogic takes the total fees and splits them based on the governance
 // params and the number of contracts we are executing on. This returns the
 // amount of fees each contract developer should get. tested in ante_test.go
-func FeePayLogic(fees sdk.Coins, govPercent sdk.Dec, numPairs int) sdk.Coins {
+func FeePayLogic(fees sdk.Coins, govPercent math.LegacyDec, numPairs int) sdk.Coins {
 	var splitFees sdk.Coins
 	for _, c := range fees.Sort() {
 		rewardAmount := govPercent.MulInt(c.Amount).QuoInt64(int64(numPairs)).RoundInt()

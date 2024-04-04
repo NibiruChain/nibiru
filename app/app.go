@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	"io"
 	"net/http"
 	"os"
@@ -13,22 +14,22 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	//_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -36,12 +37,11 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/types"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	"github.com/cosmos/ibc-go/v8/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
@@ -138,7 +138,8 @@ func NewNibiruApp(
 	txConfig := encodingConfig.TxConfig
 
 	bApp := baseapp.NewBaseApp(
-		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...,
+	)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -192,11 +193,11 @@ func NewNibiruApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
 		},
-		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
-		WasmConfig:        &wasmConfig,
-		DevGasKeeper:      &app.DevGasKeeper,
-		DevGasBankKeeper:  app.BankKeeper,
+		IBCKeeper:             app.ibcKeeper,
+		TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		WasmConfig:            &wasmConfig,
+		DevGasKeeper:          &app.DevGasKeeper,
+		DevGasBankKeeper:      app.BankKeeper,
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
@@ -245,23 +246,27 @@ func NewNibiruApp(
 func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.ModuleManager.BeginBlock(ctx, req)
+func (app *NibiruApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	return app.ModuleManager.BeginBlock(ctx)
 }
 
 // EndBlocker application updates every end block
-func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.ModuleManager.EndBlock(ctx, req)
+func (app *NibiruApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	return app.ModuleManager.EndBlock(ctx)
 }
 
 // InitChainer application update at chain initialization
-func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *NibiruApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
 	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.upgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	err := app.upgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	if err != nil {
+		panic(err)
+	}
+	response, err := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	return response, err
 }
 
 // LoadHeight loads a particular height
@@ -269,8 +274,8 @@ func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-func (app *NibiruApp) RegisterNodeService(clientCtx client.Context) {
-	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
+func (app *NibiruApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
@@ -348,7 +353,7 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
-	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	cmtservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register legacy and grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
@@ -368,7 +373,7 @@ func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(
+	cmtservice.RegisterTendermintService(
 		clientCtx,
 		app.BaseApp.GRPCQueryRouter(),
 		app.interfaceRegistry,

@@ -26,7 +26,7 @@ message Params {
   // polynomial_factors takes in the variables to calculate polynomial
   // inflation
   repeated string polynomial_factors = 2[
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // inflation_distribution of the minted denom
@@ -39,7 +39,7 @@ message Params {
   // periods_per_year is the number of periods that occur in a year
   uint64 periods_per_year = 5;
 
-  // max_period is the maximum number of periods that have inflation being 
+  // max_period is the maximum number of periods that have inflation being
   // paid off. After this period, inflation will be disabled.
   uint64 max_period = 6;
 

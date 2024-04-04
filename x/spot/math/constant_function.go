@@ -1,7 +1,7 @@
 package math
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 )
 
 // solveConstantFunctionInvariant solves the constant function of an AMM
@@ -22,8 +22,8 @@ func SolveConstantProductInvariant(
 	xAfter,
 	/*unused*/ _xWeight,
 	yPrior,
-	/*unused*/ _yWeight sdk.Dec,
-) (deltaY sdk.Dec) {
+	/*unused*/ _yWeight math.LegacyDec,
+) (deltaY math.LegacyDec) {
 	// // weightRatio = (xWeight/yWeight)
 	// weightRatio := xWeight.Quo(yWeight)
 
@@ -36,5 +36,5 @@ func SolveConstantProductInvariant(
 	// rToWeightRatio := sdk.MustNewDecFromStr(
 	// 	fmt.Sprintf("%f", math.Pow(r.MustFloat64(), weightRatio.MustFloat64())),
 	// )
-	return yPrior.Mul(sdk.OneDec().Sub(r))
+	return yPrior.Mul(math.LegacyOneDec().Sub(r))
 }

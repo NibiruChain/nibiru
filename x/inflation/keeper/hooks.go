@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/hashicorp/go-metrics"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -55,7 +55,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 			h.K.NumSkippedEpochs.Set(ctx, epochNumber)
 			prevSkippedEpochs = epochNumber
 		} else {
-			prevSkippedEpochs = h.K.NumSkippedEpochs.Next(ctx)
+			prevSkippedEpochs, _ = h.K.NumSkippedEpochs.Next(ctx)
 		}
 
 		h.K.Logger(ctx).Debug(
@@ -69,9 +69,13 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 	}
 
 	// mint coins, update supply
-	period := h.K.CurrentPeriod.Peek(ctx)
-	epochsPerPeriod := h.K.GetEpochsPerPeriod(ctx)
+	period, err := h.K.CurrentPeriod.Peek(ctx)
+	if err != nil {
+		h.K.Logger(ctx).Error("failed to get current peiod", "error", err)
+		return
+	}
 
+	epochsPerPeriod := h.K.GetEpochsPerPeriod(ctx)
 	epochMintProvision := types.CalculateEpochMintProvision(
 		params,
 		period,
@@ -114,12 +118,20 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 	//  Given, epochNumber = 42099, period = 0, epochPerPeriod = 30, skippedEpochs = 42069
 	//    => 42099 - 0 * 30 - 42069 >= 30
 	//    => a period has ended! we set a new period
-	numSkippedEpochs := h.K.NumSkippedEpochs.Peek(ctx)
+	numSkippedEpochs, err := h.K.NumSkippedEpochs.Peek(ctx)
+	if err != nil {
+		h.K.Logger(ctx).Error("failed to get num skipped epochs", "error", err)
+		return
+	}
+
 	if int64(epochNumber)-
 		int64(epochsPerPeriod*period)-
 		int64(numSkippedEpochs) >= int64(epochsPerPeriod) {
-		periodBeforeIncrement := h.K.CurrentPeriod.Next(ctx)
-
+		periodBeforeIncrement, err := h.K.CurrentPeriod.Next(ctx)
+		if err != nil {
+			h.K.Logger(ctx).Error("failed to get current peiod", "error", err)
+			return
+		}
 		h.K.Logger(ctx).Info(fmt.Sprintf("setting new period: %d", periodBeforeIncrement+1))
 	}
 

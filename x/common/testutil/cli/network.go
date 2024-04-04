@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,11 +15,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"cosmossdk.io/log"
+	"cosmossdk.io/store/pruning/types"
+	sdknetwork "github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	dbm "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
@@ -239,7 +241,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 				apiListenAddr = cfg.APIAddress
 			} else {
 				var err error
-				apiListenAddr, _, err = server.FreeTCPAddr()
+				apiListenAddr, _, _, err = sdknetwork.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -255,7 +257,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			if cfg.RPCAddress != "" {
 				tmCfg.RPC.ListenAddress = cfg.RPCAddress
 			} else {
-				rpcAddr, _, err := server.FreeTCPAddr()
+				rpcAddr, _, _, err := sdknetwork.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -265,7 +267,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			if cfg.GRPCAddress != "" {
 				appCfg.GRPC.Address = cfg.GRPCAddress
 			} else {
-				_, grpcPort, err := server.FreeTCPAddr()
+				_, grpcPort, _, err := sdknetwork.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -273,17 +275,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			}
 			appCfg.GRPC.Enable = true
 
-			_, grpcWebPort, err := server.FreeTCPAddr()
-			if err != nil {
-				return nil, err
-			}
-			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
+			// TODO: fix
+			//_, grpcWebPort, _, err := sdknetwork.FreeTCPAddr()
+			//if err != nil {
+			//	return nil, err
+			//}
+			//appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
 		}
 
 		loggerNoOp := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			loggerNoOp = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			loggerNoOp = log.NewLogger(os.Stdout)
 		}
 
 		ctx.Logger = loggerNoOp
@@ -307,13 +310,13 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		tmCfg.Moniker = nodeDirName
 		monikers[i] = nodeDirName
 
-		proxyAddr, _, err := server.FreeTCPAddr()
+		proxyAddr, _, _, err := sdknetwork.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
 		tmCfg.ProxyApp = proxyAddr
 
-		p2pAddr, _, err := server.FreeTCPAddr()
+		p2pAddr, _, _, err := sdknetwork.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
@@ -374,18 +377,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		commission, err := sdk.NewDecFromStr("0.05")
+		commission, err := sdkmath.LegacyNewDecFromStr("0.05")
 		if err != nil {
 			return nil, err
 		}
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
+			addr.String(),
 			valPubKeys[i],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
-			sdk.OneInt(),
+			stakingtypes.NewCommissionRates(commission, sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec()),
+			sdkmath.OneInt(),
 		)
 		if err != nil {
 			return nil, err
@@ -397,7 +400,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), sdk.ZeroInt()))
+		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), sdkmath.ZeroInt()))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {
@@ -414,7 +417,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			WithKeybase(kb).
 			WithTxConfig(cfg.TxConfig)
 
-		err = tx.Sign(txFactory, nodeDirName, txBuilder, true)
+		clientCtx := client.Context{}.
+			WithKeyringDir(clientDir).
+			WithKeyring(kb).
+			WithHomeDir(tmCfg.RootDir).
+			WithChainID(cfg.ChainID).
+			WithInterfaceRegistry(cfg.InterfaceRegistry).
+			WithCodec(cfg.Codec).
+			WithLegacyAmino(cfg.LegacyAmino).
+			WithTxConfig(cfg.TxConfig).
+			WithAccountRetriever(cfg.AccountRetriever)
+
+		err = tx.Sign(clientCtx.CmdContext, txFactory, nodeDirName, txBuilder, true)
 		if err != nil {
 			return nil, err
 		}
@@ -429,17 +443,6 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		serverconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
-
-		clientCtx := client.Context{}.
-			WithKeyringDir(clientDir).
-			WithKeyring(kb).
-			WithHomeDir(tmCfg.RootDir).
-			WithChainID(cfg.ChainID).
-			WithInterfaceRegistry(cfg.InterfaceRegistry).
-			WithCodec(cfg.Codec).
-			WithLegacyAmino(cfg.LegacyAmino).
-			WithTxConfig(cfg.TxConfig).
-			WithAccountRetriever(cfg.AccountRetriever)
 
 		network.Validators[i] = &Validator{
 			AppConfig:      appCfg,
@@ -485,7 +488,9 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
 	// any defer in a test would not be called.
-	server.TrapSignal(network.Cleanup)
+
+	// TODO: fix
+	//server.TrapSignal(network.Cleanup)
 
 	return network, err
 }

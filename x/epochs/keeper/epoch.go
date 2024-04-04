@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -47,14 +47,14 @@ func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
 
 	epoch.CurrentEpochStartHeight = ctx.BlockHeight()
 
-	k.Epochs.Insert(ctx, epoch.Identifier, epoch)
+	k.Epochs.Set(ctx, epoch.Identifier, epoch)
 
 	return nil
 }
 
 // DeleteEpochInfo delete epoch info.
 func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) (err error) {
-	err = k.Epochs.Delete(ctx, identifier)
+	err = k.Epochs.Remove(ctx, identifier)
 	return
 }
 
@@ -63,11 +63,11 @@ func (k Keeper) IterateEpochInfo(
 	ctx sdk.Context,
 	fn func(index int64, epochInfo types.EpochInfo) (stop bool),
 ) {
-	iterate := k.Epochs.Iterate(ctx, &collections.Range[string]{})
+	iterate, _ := k.Epochs.Iterate(ctx, &collections.Range[string]{})
 	i := int64(0)
 
 	for ; iterate.Valid(); iterate.Next() {
-		epoch := iterate.Value()
+		epoch, _ := iterate.Value()
 		stop := fn(i, epoch)
 
 		if stop {

@@ -23,7 +23,7 @@ func (k Keeper) GetFeeShare(
 // over every registered Indexer and instructs them to create the relationship
 // between the primary key PK and the object v.
 func (k Keeper) SetFeeShare(ctx sdk.Context, feeshare types.FeeShare) {
-	k.DevGasStore.Insert(ctx, feeshare.ContractAddress, feeshare)
+	k.DevGasStore.Set(ctx, feeshare.ContractAddress, feeshare)
 }
 
 // IsFeeShareRegistered checks if a contract was registered for receiving

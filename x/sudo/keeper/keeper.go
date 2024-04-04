@@ -2,11 +2,12 @@ package keeper
 
 import (
 	"context"
+	storetypes "cosmossdk.io/store/types"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
@@ -19,10 +20,19 @@ type Keeper struct {
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey types.StoreKey,
+	storeKey *storetypes.KVStoreKey,
 ) Keeper {
+
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return Keeper{
-		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),
+		Sudoers: collections.NewItem(
+			sb,
+			collections.NewPrefix(1),
+			storeKey.String(),
+			SudoersValueEncoder(cdc),
+		),
 	}
 }
 

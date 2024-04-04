@@ -1,9 +1,10 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"time"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -23,7 +24,7 @@ args:
   - lookbackInterval: how far back to calculate TWAP
 
 ret:
-  - price: TWAP as sdk.Dec
+  - price: TWAP as sdkmath.LegacyDec
   - err: error
 */
 func (k Keeper) CalcTwap(
@@ -31,24 +32,21 @@ func (k Keeper) CalcTwap(
 	pair asset.Pair,
 	twapCalcOption types.TwapCalcOption,
 	direction types.Direction,
-	assetAmt sdk.Dec,
+	assetAmt sdkmath.LegacyDec,
 	lookbackInterval time.Duration,
-) (price sdk.Dec, err error) {
+) (price sdkmath.LegacyDec, err error) {
 	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-1 * lookbackInterval).UnixMilli()
 
 	// fetch snapshots from state
 	var snapshots []types.ReserveSnapshot
-	iter := k.ReserveSnapshots.Iterate(
+	iter, _ := k.ReserveSnapshots.Iterate(
 		ctx,
-		collections.PairRange[asset.Pair, time.Time]{}.
-			Prefix(pair).
-			EndInclusive(ctx.BlockTime()).
-			Descending(),
+		collections.NewPrefixedPairRange[asset.Pair, time.Time](pair).EndInclusive(ctx.BlockTime()).Descending(),
 	)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		s := iter.Value()
+		s, _ := iter.Value()
 		snapshots = append(snapshots, s)
 		if s.TimestampMs <= lowerLimitTimestampMs {
 			break
@@ -56,7 +54,7 @@ func (k Keeper) CalcTwap(
 	}
 
 	if len(snapshots) == 0 {
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+		return sdkmath.LegacyOneDec().Neg(), types.ErrNoValidTWAP
 	}
 
 	// circuit-breaker when there's only one snapshot to process
@@ -73,7 +71,7 @@ func (k Keeper) CalcTwap(
 
 	// else, iterate over all snapshots and calculate TWAP
 	prevTimestampMs := ctx.BlockTime().UnixMilli()
-	cumulativePrice := sdk.ZeroDec()
+	cumulativePrice := sdkmath.LegacyZeroDec()
 	cumulativePeriodMs := int64(0)
 
 	for _, snapshot := range snapshots {
@@ -92,7 +90,7 @@ func (k Keeper) CalcTwap(
 			},
 		)
 		if err != nil {
-			return sdk.Dec{}, err
+			return sdkmath.LegacyDec{}, err
 		}
 
 		var timeElapsedMs int64
@@ -138,7 +136,7 @@ BASE_ASSET_SWAP: price when swapping x amount of base assets
 type snapshotPriceOps struct {
 	twapCalcOption types.TwapCalcOption
 	direction      types.Direction
-	assetAmt       sdk.Dec
+	assetAmt       sdkmath.LegacyDec
 }
 
 /*
@@ -156,13 +154,13 @@ args:
   - assetAmount: the amount of base or quote asset; only required for QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
 
 ret:
-  - price: the price as sdk.Dec
+  - price: the price as sdkmath.LegacyDec
   - err: error
 */
 func getPriceWithSnapshot(
 	snapshot types.ReserveSnapshot,
 	opts snapshotPriceOps,
-) (price sdk.Dec, err error) {
+) (price sdkmath.LegacyDec, err error) {
 	priceMult := snapshot.Amm.PriceMultiplier
 	switch opts.twapCalcOption {
 	case types.TwapCalcOption_SPOT:
@@ -175,10 +173,10 @@ func getPriceWithSnapshot(
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
 		quoteReserve, err := snapshot.Amm.GetQuoteReserveAmt(opts.assetAmt, opts.direction)
 		if err != nil {
-			return sdk.Dec{}, err
+			return sdkmath.LegacyDec{}, err
 		}
 		return types.QuoteReserveToAsset(quoteReserve, priceMult), nil
 	}
 
-	return sdk.ZeroDec(), nil
+	return sdkmath.LegacyZeroDec(), nil
 }

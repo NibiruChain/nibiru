@@ -28,7 +28,7 @@ message GenesisState {
     string trader = 1;
     uint64 epoch = 2;
     string volume = 3 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
       (gogoproto.nullable) = false
     ];
   }
@@ -40,11 +40,11 @@ message GenesisState {
 
   message Discount {
     string fee = 1 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
       (gogoproto.nullable) = false
     ];
     string volume = 2 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
       (gogoproto.nullable) = false
     ];
   }
@@ -63,14 +63,15 @@ message GenesisState {
 
   repeated GlobalVolume global_volumes = 13 [ (gogoproto.nullable) = false ];
 
-  repeated DNRAllocation rebates_allocations = 12 [ (gogoproto.nullable) = false ];
+  repeated DNRAllocation rebates_allocations = 12
+      [ (gogoproto.nullable) = false ];
 
   string dnr_epoch_name = 14;
 
   message GlobalVolume {
     uint64 epoch = 1;
     string volume = 2 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.customtype) = "cosmossdk.io/math.Int",
       (gogoproto.nullable) = false
     ];
   }

@@ -1,9 +1,12 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
+	collindexes "cosmossdk.io/collections/indexes"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -44,7 +47,7 @@ func (api StoreAPI) InsertDenom(
 	api.unsafeInsertDenom(ctx, denom, admin)
 
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, key, tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Set(ctx, key, tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	return nil
@@ -56,10 +59,10 @@ func (api StoreAPI) unsafeInsertDenom(
 	ctx sdk.Context, denom tftypes.TFDenom, admin string,
 ) {
 	denomStr := denom.String()
-	api.Denoms.Insert(ctx, denomStr, denom)
-	api.creator.Insert(ctx, denom.Creator)
+	api.Denoms.Set(ctx, denomStr, denom)
+	api.creator.Set(ctx, denom.Creator)
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, denomStr, tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Set(ctx, denomStr, tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	_ = ctx.EventManager().EmitTypedEvent(&tftypes.EventCreateDenom{
@@ -89,7 +92,9 @@ func (api StoreAPI) HasDenom(
 }
 
 func (api StoreAPI) HasCreator(ctx sdk.Context, creator string) bool {
-	return api.creator.Has(ctx, creator)
+	hasCreator, _ := api.creator.Has(ctx, creator)
+	return hasCreator
+
 }
 
 // GetDenomAuthorityMetadata returns the admin (authority metadata) for a
@@ -126,22 +131,31 @@ type (
 // NewTFDenomStore: Creates an indexed map over token facotry denoms indexed
 // by creator address.
 func NewTFDenomStore(
-	storeKey storetypes.StoreKey, cdc sdkcodec.BinaryCodec,
+	storeKey *storetypes.KVStoreKey, cdc sdkcodec.BinaryCodec,
 ) collections.IndexedMap[storePKType, storeVType, IndexesTokenFactory] {
-	primaryKeyEncoder := collections.StringKeyEncoder
-	valueEncoder := collections.ProtoValueEncoder[tftypes.TFDenom](cdc)
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
 
-	var namespace collections.Namespace = tftypes.KeyPrefixDenom
-	var namespaceCreatorIdx collections.Namespace = tftypes.KeyPrefixCreatorIndexer
+	primaryKeyEncoder := collections.StringKey
+	valueEncoder := codec.CollValue[tftypes.TFDenom](cdc)
 
-	return collections.NewIndexedMap[storePKType, storeVType](
-		storeKey, namespace, primaryKeyEncoder, valueEncoder,
+	var namespace uint8 = tftypes.KeyPrefixDenom
+	var namespaceCreatorIdx uint8 = tftypes.KeyPrefixCreatorIndexer
+
+	return *collections.NewIndexedMap[storePKType, storeVType](
+		sb,
+		collections.NewPrefix(int(namespace)),
+		storeKey.String(),
+		primaryKeyEncoder,
+		valueEncoder,
 		IndexesTokenFactory{
-			Creator: collections.NewMultiIndex[string, storePKType, storeVType](
-				storeKey, namespaceCreatorIdx,
-				collections.StringKeyEncoder, // index key (IK)
-				collections.StringKeyEncoder, // primary key (PK)
-				func(v tftypes.TFDenom) string { return v.Creator },
+			Creator: *collindexes.NewMulti[string, storePKType, storeVType](
+				sb,
+				collections.NewPrefix(int(namespaceCreatorIdx)),
+				storeKey.String(),
+				collections.StringKey, // index key (IK)
+				collections.StringKey, // primary key (PK)
+				func(pk string, v tftypes.TFDenom) (string, error) { return v.Creator, nil },
 			),
 		},
 	)
@@ -153,11 +167,11 @@ type IndexesTokenFactory struct {
 	//  - indexing key (IK): bech32 address of the creator of TF denom.
 	//  - primary key (PK): full TF denom of the form 'factory/{creator}/{subdenom}'
 	//  - value (V): struct version of TF denom with validate function
-	Creator collections.MultiIndex[string, string, storeVType]
+	Creator collindexes.Multi[string, string, storeVType]
 }
 
-func (idxs IndexesTokenFactory) IndexerList() []collections.Indexer[string, storeVType] {
-	return []collections.Indexer[string, storeVType]{
-		idxs.Creator,
+func (idxs IndexesTokenFactory) IndexesList() []collections.Index[string, storeVType] {
+	return []collections.Index[string, storeVType]{
+		&idxs.Creator,
 	}
 }

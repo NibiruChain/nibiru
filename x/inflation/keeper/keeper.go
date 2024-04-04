@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/collections"
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -55,7 +56,7 @@ type Keeper struct {
 // NewKeeper creates a new mint Keeper instance
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeKey *storetypes.KVStoreKey,
 	paramspace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -69,6 +70,9 @@ func NewKeeper(
 		panic("the inflation module account has not been set")
 	}
 
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
@@ -79,9 +83,9 @@ func NewKeeper(
 		stakingKeeper:    stakingKeeper,
 		sudoKeeper:       sudoKeeper,
 		feeCollectorName: feeCollectorName,
-		CurrentPeriod:    collections.NewSequence(storeKey, 0),
-		NumSkippedEpochs: collections.NewSequence(storeKey, 1),
-		Params:           collections.NewItem(storeKey, 2, collections.ProtoValueEncoder[types.Params](cdc)),
+		CurrentPeriod:    collections.NewSequence(sb, collections.NewPrefix(0), storeKey.String()),
+		NumSkippedEpochs: collections.NewSequence(sb, collections.NewPrefix(1), storeKey.String()),
+		Params:           collections.NewItem(sb, collections.NewPrefix(2), storeKey.String(), codec.CollValue[types.Params](cdc)),
 	}
 }
 

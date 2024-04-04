@@ -38,16 +38,18 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 		return tokenOut, fee, err
 	}
 
-	var tokenAmountInAfterFee sdk.Dec
+	var tokenAmountInAfterFee sdkmath.LegacyDec
 	if noFee {
-		tokenAmountInAfterFee = sdk.NewDecFromInt(tokenIn.Amount)
+		tokenAmountInAfterFee = sdkmath.LegacyNewDecFromInt(tokenIn.Amount)
 	} else {
-		tokenAmountInAfterFee = sdk.NewDecFromInt(tokenIn.Amount).Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
+		tokenAmountInAfterFee = sdkmath.LegacyNewDecFromInt(tokenIn.Amount).Mul(
+			sdkmath.LegacyOneDec().Sub(pool.PoolParams.SwapFee),
+		)
 	}
-	feeAmount := sdk.NewDecFromInt(tokenIn.Amount).Sub(tokenAmountInAfterFee)
+	feeAmount := sdkmath.LegacyNewDecFromInt(tokenIn.Amount).Sub(tokenAmountInAfterFee)
 	fee = sdk.NewCoin(tokenIn.Denom, feeAmount.TruncateInt())
 
-	poolTokenInBalance := sdk.NewDecFromInt(poolAssetIn.Token.Amount)
+	poolTokenInBalance := sdkmath.LegacyNewDecFromInt(poolAssetIn.Token.Amount)
 	poolTokenInBalancePostSwap := poolTokenInBalance.Add(tokenAmountInAfterFee)
 
 	// deduct swapfee on the in asset
@@ -63,9 +65,9 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 		tokenAmountOut = math.SolveConstantProductInvariant(
 			/*xPrior=*/ poolTokenInBalance,
 			/*xAfter=*/ poolTokenInBalancePostSwap,
-			/*xWeight=*/ sdk.NewDecFromInt(poolAssetIn.Weight),
-			/*yPrior=*/ sdk.NewDecFromInt(poolAssetOut.Token.Amount),
-			/*yWeight=*/ sdk.NewDecFromInt(poolAssetOut.Weight),
+			/*xWeight=*/ sdkmath.LegacyNewDecFromInt(poolAssetIn.Weight),
+			/*yPrior=*/ sdkmath.LegacyNewDecFromInt(poolAssetOut.Token.Amount),
+			/*yWeight=*/ sdkmath.LegacyNewDecFromInt(poolAssetOut.Weight),
 		).TruncateInt()
 	}
 
@@ -139,22 +141,22 @@ func (pool Pool) CalcInAmtGivenOutBalancer(tokenOut sdk.Coin, tokenInDenom strin
 	}
 
 	// assuming the user wishes to withdraw 'tokenOut', the balance of 'tokenOut' post swap will be lower
-	poolTokenOutBalance := sdk.NewDecFromInt(poolAssetOut.Token.Amount)
-	poolTokenOutBalancePostSwap := poolTokenOutBalance.Sub(sdk.NewDecFromInt(tokenOut.Amount))
+	poolTokenOutBalance := sdkmath.LegacyNewDecFromInt(poolAssetOut.Token.Amount)
+	poolTokenOutBalancePostSwap := poolTokenOutBalance.Sub(sdkmath.LegacyNewDecFromInt(tokenOut.Amount))
 	// (x_0)(y_0) = (x_0 + in)(y_0 - out)
 	tokenAmountIn := math.SolveConstantProductInvariant(
 		/*xPrior=*/ poolTokenOutBalance,
 		/*xAfter=*/ poolTokenOutBalancePostSwap,
-		/*xWeight=*/ sdk.NewDecFromInt(poolAssetOut.Weight),
-		/*yPrior=*/ sdk.NewDecFromInt(poolAssetIn.Token.Amount),
-		/*yWeight=*/ sdk.NewDecFromInt(poolAssetIn.Weight),
+		/*xWeight=*/ sdkmath.LegacyNewDecFromInt(poolAssetOut.Weight),
+		/*yPrior=*/ sdkmath.LegacyNewDecFromInt(poolAssetIn.Token.Amount),
+		/*yWeight=*/ sdkmath.LegacyNewDecFromInt(poolAssetIn.Weight),
 	).Neg()
 
 	// We deduct a swap fee on the input asset. The swap happens by following the invariant curve on the input * (1 - swap fee)
 	// and then the swap fee is added to the pool.
 	// Thus in order to give X amount out, we solve the invariant for the invariant input. However invariant input = (1 - swapfee) * trade input.
 	// Therefore we divide by (1 - swapfee) here
-	tokenAmountInBeforeFee := tokenAmountIn.Quo(sdk.OneDec().Sub(pool.PoolParams.SwapFee)).Ceil().TruncateInt()
+	tokenAmountInBeforeFee := tokenAmountIn.Quo(sdkmath.LegacyOneDec().Sub(pool.PoolParams.SwapFee)).Ceil().TruncateInt()
 	return sdk.NewCoin(tokenInDenom, tokenAmountInBeforeFee), nil
 }
 
@@ -169,10 +171,10 @@ ret:
   - err: error if any
 */
 func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
-	if tokenIn.Amount.LTE(sdk.ZeroInt()) {
+	if tokenIn.Amount.LTE(sdkmath.ZeroInt()) {
 		return fmt.Errorf("tokenIn (%s) cannot be zero", tokenIn.Denom)
 	}
-	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
+	if tokenOut.Amount.LTE(sdkmath.ZeroInt()) {
 		return fmt.Errorf("tokenOut (%s) cannot be zero", tokenOut.Denom)
 	}
 

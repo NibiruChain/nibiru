@@ -6,7 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"

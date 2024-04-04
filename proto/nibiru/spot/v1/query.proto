@@ -238,7 +238,7 @@ message QueryJoinExactAmountInResponse {
 
   // amount of pool shares returned to user after join
   string pool_shares_out = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.moretags) = "yaml:\"pool_shares_out\"",
     (gogoproto.nullable) = false
   ];
@@ -258,7 +258,7 @@ message QueryExitExactAmountInRequest {
   uint64 pool_id = 1;
   // amount of pool shares to return to pool
   string pool_shares_in = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.moretags) = "yaml:\"pool_shares_in\"",
     (gogoproto.nullable) = false
   ];

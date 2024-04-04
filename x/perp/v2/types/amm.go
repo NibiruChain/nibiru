@@ -6,26 +6,24 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func (amm AMM) Validate() error {
-	if amm.BaseReserve.LTE(sdk.ZeroDec()) {
+	if amm.BaseReserve.LTE(sdkmath.LegacyZeroDec()) {
 		return ErrAmmBaseSupplyNonpositive
 	}
 
-	if amm.QuoteReserve.LTE(sdk.ZeroDec()) {
+	if amm.QuoteReserve.LTE(sdkmath.LegacyZeroDec()) {
 		return ErrAmmQuoteSupplyNonpositive
 	}
 
-	if amm.PriceMultiplier.LTE(sdk.ZeroDec()) {
+	if amm.PriceMultiplier.LTE(sdkmath.LegacyZeroDec()) {
 		return ErrAmmNonPositivePegMult
 	}
 
-	if amm.SqrtDepth.LTE(sdk.ZeroDec()) {
+	if amm.SqrtDepth.LTE(sdkmath.LegacyZeroDec()) {
 		return ErrAmmNonPositiveSwapInvariant
 	}
 
@@ -34,7 +32,7 @@ func (amm AMM) Validate() error {
 		return err
 	}
 
-	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.OneDec()) {
+	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdkmath.LegacyOneDec()) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + amm.String())
 	}
@@ -58,7 +56,7 @@ func (amm AMM) Validate() error {
 //   - newAmm: The AMM that results from closing all positions together. Note that
 //     this should have a bias, or skew, of 0.
 //   - err: Errors if it's impossible to swap away the open interest bias.
-func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
+func (amm AMM) ComputeSettlementPrice() (sdkmath.LegacyDec, AMM, error) {
 	// bias: open interest (base) skew in the AMM.
 	bias := amm.Bias()
 	if bias.IsZero() {
@@ -74,7 +72,7 @@ func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
 
 	quoteAssetDelta, err := amm.SwapBaseAsset(bias.Abs(), dir)
 	if err != nil {
-		return sdk.Dec{}, AMM{}, err
+		return sdkmath.LegacyDec{}, AMM{}, err
 	}
 	price := quoteAssetDelta.Abs().Quo(bias.Abs())
 
@@ -82,12 +80,12 @@ func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
 }
 
 // QuoteReserveToAsset converts quote reserves to assets\
-func (amm AMM) QuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
+func (amm AMM) QuoteReserveToAsset(quoteReserve sdkmath.LegacyDec) sdkmath.LegacyDec {
 	return QuoteReserveToAsset(quoteReserve, amm.PriceMultiplier)
 }
 
 // QuoteAssetToReserve converts quote assets to reserves
-func (amm AMM) QuoteAssetToReserve(quoteAssets sdk.Dec) sdk.Dec {
+func (amm AMM) QuoteAssetToReserve(quoteAssets sdkmath.LegacyDec) sdkmath.LegacyDec {
 	return QuoteAssetToReserve(quoteAssets, amm.PriceMultiplier)
 }
 
@@ -95,7 +93,7 @@ func (amm AMM) QuoteAssetToReserve(quoteAssets sdk.Dec) sdk.Dec {
 // convention, "assets" are liquid funds that change hands, whereas reserves
 // are simply a number field on the DAMM. The reason for this distinction is to
 // account for the AMM.PriceMultiplier.
-func QuoteAssetToReserve(quoteAsset, priceMult sdk.Dec) sdk.Dec {
+func QuoteAssetToReserve(quoteAsset, priceMult sdkmath.LegacyDec) sdkmath.LegacyDec {
 	return quoteAsset.Quo(priceMult)
 }
 
@@ -103,7 +101,7 @@ func QuoteAssetToReserve(quoteAsset, priceMult sdk.Dec) sdk.Dec {
 // convention, "assets" are liquid funds that change hands, whereas reserves
 // are simply a number field on the DAMM. The reason for this distinction is to
 // account for the AMM.PriceMultiplier.
-func QuoteReserveToAsset(quoteReserve, priceMult sdk.Dec) sdk.Dec {
+func QuoteReserveToAsset(quoteReserve, priceMult sdkmath.LegacyDec) sdkmath.LegacyDec {
 	return quoteReserve.Mul(priceMult)
 }
 
@@ -120,16 +118,16 @@ func QuoteReserveToAsset(quoteReserve, priceMult sdk.Dec) sdk.Dec {
 // NOTE: baseReserveDelta is always positive
 // Throws an error if input quoteReserveAmt is negative, or if the final quote reserve is not positive
 func (amm AMM) GetBaseReserveAmt(
-	quoteReserveAmt sdk.Dec, // unsigned
+	quoteReserveAmt sdkmath.LegacyDec, // unsigned
 	dir Direction,
-) (baseReserveDelta sdk.Dec, err error) {
+) (baseReserveDelta sdkmath.LegacyDec, err error) {
 	if quoteReserveAmt.IsNegative() {
-		return sdk.Dec{}, ErrInputQuoteAmtNegative
+		return sdkmath.LegacyDec{}, ErrInputQuoteAmtNegative
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
-	var quoteReservesAfter sdk.Dec
+	var quoteReservesAfter sdkmath.LegacyDec
 	if dir == Direction_LONG {
 		quoteReservesAfter = amm.QuoteReserve.Add(quoteReserveAmt)
 	} else {
@@ -137,7 +135,7 @@ func (amm AMM) GetBaseReserveAmt(
 	}
 
 	if !quoteReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrAmmNonpositiveReserves
+		return sdkmath.LegacyDec{}, ErrAmmNonpositiveReserves
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
@@ -158,19 +156,19 @@ func (amm AMM) GetBaseReserveAmt(
 //
 // NOTE: quoteReserveDelta is always positive
 func (amm AMM) GetQuoteReserveAmt(
-	baseReserveAmt sdk.Dec,
+	baseReserveAmt sdkmath.LegacyDec,
 	dir Direction,
-) (quoteReserveDelta sdk.Dec, err error) {
+) (quoteReserveDelta sdkmath.LegacyDec, err error) {
 	if baseReserveAmt.IsNegative() {
-		return sdk.Dec{}, ErrInputBaseAmtNegative
+		return sdkmath.LegacyDec{}, ErrInputBaseAmtNegative
 	}
 	if baseReserveAmt.IsZero() {
-		return sdk.ZeroDec(), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
-	var baseReservesAfter sdk.Dec
+	var baseReservesAfter sdkmath.LegacyDec
 	if dir == Direction_LONG {
 		baseReservesAfter = amm.BaseReserve.Sub(baseReserveAmt)
 	} else {
@@ -178,7 +176,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	}
 
 	if !baseReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrAmmNonpositiveReserves.Wrapf(
+		return sdkmath.LegacyDec{}, ErrAmmNonpositiveReserves.Wrapf(
 			"base assets below zero (%s) after trying to swap %s base assets",
 			baseReservesAfter.String(),
 			baseReserveAmt.String(),
@@ -194,23 +192,23 @@ func (amm AMM) GetQuoteReserveAmt(
 // InstMarkPrice returns the instantaneous mark price of the trading pair.
 // This is the price if the AMM has zero slippage, or equivalently, if there's
 // infinite liquidity depth with the same ratio of reserves.
-func (amm AMM) InstMarkPrice() sdk.Dec {
+func (amm AMM) InstMarkPrice() sdkmath.LegacyDec {
 	if amm.BaseReserve.IsNil() || amm.BaseReserve.IsZero() ||
 		amm.QuoteReserve.IsNil() || amm.QuoteReserve.IsZero() {
-		return sdk.ZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
 }
 
 // ComputeSqrtDepth returns the sqrt of the product of the reserves
-func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
+func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdkmath.LegacyDec, err error) {
 	liqDepthBigInt := new(big.Int).Mul(
 		amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt(),
 	)
 	chopped := common.ChopPrecisionAndRound(liqDepthBigInt)
 	if chopped.BitLen() > common.MaxDecBitLen {
-		return sdk.Dec{}, ErrAmmLiquidityDepthOverflow
+		return sdkmath.LegacyDec{}, ErrAmmLiquidityDepthOverflow
 	}
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
@@ -221,32 +219,32 @@ func (amm *AMM) WithPair(pair asset.Pair) *AMM {
 	return amm
 }
 
-func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
+func (amm *AMM) WithBaseReserve(baseReserve sdkmath.LegacyDec) *AMM {
 	amm.BaseReserve = baseReserve
 	return amm
 }
 
-func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
+func (amm *AMM) WithQuoteReserve(quoteReserve sdkmath.LegacyDec) *AMM {
 	amm.QuoteReserve = quoteReserve
 	return amm
 }
 
-func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
+func (amm *AMM) WithPriceMultiplier(priceMultiplier sdkmath.LegacyDec) *AMM {
 	amm.PriceMultiplier = priceMultiplier
 	return amm
 }
 
-func (amm *AMM) WithTotalLong(totalLong sdk.Dec) *AMM {
+func (amm *AMM) WithTotalLong(totalLong sdkmath.LegacyDec) *AMM {
 	amm.TotalLong = totalLong
 	return amm
 }
 
-func (amm *AMM) WithTotalShort(totalShort sdk.Dec) *AMM {
+func (amm *AMM) WithTotalShort(totalShort sdkmath.LegacyDec) *AMM {
 	amm.TotalShort = totalShort
 	return amm
 }
 
-func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
+func (amm *AMM) WithSqrtDepth(sqrtDepth sdkmath.LegacyDec) *AMM {
 	amm.SqrtDepth = sqrtDepth
 	return amm
 }
@@ -263,13 +261,13 @@ func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 //
 // NOTE: baseAssetDelta is always positive
 func (amm *AMM) SwapQuoteAsset(
-	quoteAssetAmt sdk.Dec, // unsigned
+	quoteAssetAmt sdkmath.LegacyDec, // unsigned
 	dir Direction,
-) (baseAssetDelta sdk.Dec, err error) {
+) (baseAssetDelta sdkmath.LegacyDec, err error) {
 	quoteReserveAmt := QuoteAssetToReserve(quoteAssetAmt, amm.PriceMultiplier)
 	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.LegacyDec{}, err
 	}
 
 	if dir == Direction_LONG {
@@ -294,10 +292,10 @@ func (amm *AMM) SwapQuoteAsset(
 // returns:
 //   - quoteAssetDelta: amount of quote asset received. Always positive
 //   - err: error if any
-func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDelta sdk.Dec, err error) {
+func (amm *AMM) SwapBaseAsset(baseAssetAmt sdkmath.LegacyDec, dir Direction) (quoteAssetDelta sdkmath.LegacyDec, err error) {
 	quoteReserveDelta, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.LegacyDec{}, err
 	}
 
 	if dir == Direction_LONG {
@@ -316,14 +314,14 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 // Bias returns the bias, or open interest skew, of the market in the base
 // units. Bias is the net amount of long perpetual contracts minus the net
 // amount of shorts.
-func (amm *AMM) Bias() (bias sdk.Dec) {
+func (amm *AMM) Bias() (bias sdkmath.LegacyDec) {
 	return amm.TotalLong.Sub(amm.TotalShort)
 }
 
 /*
 CalcRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
 */
-func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err error) {
+func (amm AMM) CalcRepegCost(newPriceMultiplier sdkmath.LegacyDec) (cost sdkmath.Int, err error) {
 	if !newPriceMultiplier.IsPositive() {
 		return sdkmath.Int{}, ErrAmmNonPositivePegMult
 	}
@@ -331,7 +329,7 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 	bias := amm.Bias()
 
 	if bias.IsZero() {
-		return sdk.ZeroInt(), nil
+		return sdkmath.ZeroInt(), nil
 	}
 
 	var dir Direction
@@ -358,11 +356,11 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 // GetMarketValue returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
 // positive value means the amm has to pay out quote assets
 // negative value means the amm has to receive quote assets
-func (amm AMM) GetMarketValue() (sdk.Dec, error) {
+func (amm AMM) GetMarketValue() (sdkmath.LegacyDec, error) {
 	bias := amm.Bias()
 
 	if bias.IsZero() {
-		return sdk.ZeroDec(), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 
 	var dir Direction
@@ -374,7 +372,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 
 	marketValueInReserves, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.LegacyDec{}, err
 	}
 
 	if bias.IsNegative() {
@@ -387,7 +385,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 /*
 CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
 */
-func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.Int, error) {
+func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdkmath.LegacyDec) (sdkmath.Int, error) {
 	if newSwapInvariant.IsNil() {
 		return sdkmath.Int{}, ErrNilSwapInvariant
 	}
@@ -417,7 +415,7 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.In
 }
 
 // UpdateSwapInvariant updates the swap invariant of the amm
-func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
+func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdkmath.LegacyDec) (err error) {
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price

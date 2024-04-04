@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	fmt "fmt"
 	"time"
 
@@ -9,8 +10,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-func isPercent(v sdk.Dec) bool {
-	return v.GTE(sdk.ZeroDec()) && v.LTE(sdk.OneDec())
+func isPercent(v sdkmath.LegacyDec) bool {
+	return v.GTE(sdkmath.LegacyZeroDec()) && v.LTE(sdkmath.LegacyOneDec())
 }
 
 func (market Market) Validate() error {
@@ -34,15 +35,15 @@ func (market Market) Validate() error {
 		return fmt.Errorf("partial liquidation ratio must be 0 <= ratio <= 1")
 	}
 
-	if market.MaxLeverage.LTE(sdk.ZeroDec()) {
+	if market.MaxLeverage.LTE(sdkmath.LegacyZeroDec()) {
 		return fmt.Errorf("max leverage must be > 0")
 	}
 
-	if market.MaxFundingRate.LT(sdk.ZeroDec()) {
+	if market.MaxFundingRate.LT(sdkmath.LegacyZeroDec()) {
 		return fmt.Errorf("max funding rate must be >= 0")
 	}
 
-	if sdk.OneDec().Quo(market.MaxLeverage).LT(market.MaintenanceMarginRatio) {
+	if sdkmath.LegacyOneDec().Quo(market.MaxLeverage).LT(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
 	}
 
@@ -53,32 +54,32 @@ func (market Market) Validate() error {
 	return nil
 }
 
-func (market Market) WithMaintenanceMarginRatio(value sdk.Dec) Market {
+func (market Market) WithMaintenanceMarginRatio(value sdkmath.LegacyDec) Market {
 	market.MaintenanceMarginRatio = value
 	return market
 }
 
-func (market Market) WithMaxLeverage(value sdk.Dec) Market {
+func (market Market) WithMaxLeverage(value sdkmath.LegacyDec) Market {
 	market.MaxLeverage = value
 	return market
 }
 
-func (market Market) WithEcosystemFee(value sdk.Dec) Market {
+func (market Market) WithEcosystemFee(value sdkmath.LegacyDec) Market {
 	market.EcosystemFundFeeRatio = value
 	return market
 }
 
-func (market Market) WithExchangeFee(value sdk.Dec) Market {
+func (market Market) WithExchangeFee(value sdkmath.LegacyDec) Market {
 	market.ExchangeFeeRatio = value
 	return market
 }
 
-func (market Market) WithLiquidationFee(value sdk.Dec) Market {
+func (market Market) WithLiquidationFee(value sdkmath.LegacyDec) Market {
 	market.LiquidationFeeRatio = value
 	return market
 }
 
-func (market Market) WithPartialLiquidationRatio(value sdk.Dec) Market {
+func (market Market) WithPartialLiquidationRatio(value sdkmath.LegacyDec) Market {
 	market.PartialLiquidationRatio = value
 	return market
 }
@@ -88,7 +89,7 @@ func (market Market) WithFundingRateEpochId(value string) Market {
 	return market
 }
 
-func (market Market) WithMaxFundingRate(value sdk.Dec) Market {
+func (market Market) WithMaxFundingRate(value sdkmath.LegacyDec) Market {
 	market.MaxFundingRate = value
 	return market
 }
@@ -103,22 +104,22 @@ func (market Market) WithOraclePair(value asset.Pair) Market {
 	return market
 }
 
-func (market Market) WithLatestCumulativePremiumFraction(value sdk.Dec) Market {
+func (market Market) WithLatestCumulativePremiumFraction(value sdkmath.LegacyDec) Market {
 	market.LatestCumulativePremiumFraction = value
 	return market
 }
 
-func (market Market) WithEcosystemFundFeeRatio(value sdk.Dec) Market {
+func (market Market) WithEcosystemFundFeeRatio(value sdkmath.LegacyDec) Market {
 	market.EcosystemFundFeeRatio = value
 	return market
 }
 
-func (market Market) WithExchangeFeeRatio(value sdk.Dec) Market {
+func (market Market) WithExchangeFeeRatio(value sdkmath.LegacyDec) Market {
 	market.ExchangeFeeRatio = value
 	return market
 }
 
-func (market Market) WithLiquidationFeeRatio(value sdk.Dec) Market {
+func (market Market) WithLiquidationFeeRatio(value sdkmath.LegacyDec) Market {
 	market.LiquidationFeeRatio = value
 	return market
 }

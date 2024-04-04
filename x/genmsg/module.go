@@ -79,3 +79,13 @@ func (a AppModule) ConsensusVersion() uint64 { return 0 }
 func (a AppModule) RegisterLegacyAminoCodec(_ *codec.LegacyAmino) {}
 
 func (a AppModule) RegisterInterfaces(_ types.InterfaceRegistry) {}
+
+func (am AppModule) IsOnePerModuleType() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (am AppModule) IsAppModule() {
+	//TODO implement me
+	panic("implement me")
+}

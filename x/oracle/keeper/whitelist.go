@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/set"
@@ -11,12 +11,23 @@ import (
 
 // IsWhitelistedPair returns existence of a pair in the voting target list
 func (k Keeper) IsWhitelistedPair(ctx sdk.Context, pair asset.Pair) bool {
-	return k.WhitelistedPairs.Has(ctx, pair)
+	pairs, _ := k.WhitelistedPairs.Has(ctx, pair)
+	return pairs
 }
 
 // GetWhitelistedPairs returns the whitelisted pairs list on current vote period
 func (k Keeper) GetWhitelistedPairs(ctx sdk.Context) []asset.Pair {
-	return k.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys()
+	iter, err := k.WhitelistedPairs.Iterate(ctx, &collections.Range[asset.Pair]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate whitelister pairs", "error", err)
+		return nil
+	}
+	keys, err := iter.Keys()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get whitelisted pairs keys", "error", err)
+		return nil
+	}
+	return keys
 }
 
 // refreshWhitelist updates the whitelist by detecting possible changes between
@@ -37,11 +48,21 @@ func (k Keeper) refreshWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, cu
 	}
 
 	if updateRequired {
-		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-			k.WhitelistedPairs.Delete(ctx, p)
+		iter, err := k.WhitelistedPairs.Iterate(ctx, &collections.Range[asset.Pair]{})
+		if err != nil {
+			k.Logger(ctx).Error("failed to iterate whitelister pairs", "error", err)
+			return
+		}
+		keys, err := iter.Keys()
+		if err != nil {
+			k.Logger(ctx).Error("failed to get whitelisted pairs keys", "error", err)
+			return
+		}
+		for _, p := range keys {
+			k.WhitelistedPairs.Remove(ctx, p)
 		}
 		for _, pair := range nextWhitelist {
-			k.WhitelistedPairs.Insert(ctx, pair)
+			k.WhitelistedPairs.Set(ctx, pair)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cosmossdk.io/math"
 	"encoding/json"
 	"sort"
 
@@ -16,13 +17,13 @@ import (
 // ExchangeRateVote is a convenience wrapper to reduce redundant lookup cost
 type ExchangeRateVote struct {
 	Pair         asset.Pair
-	ExchangeRate sdk.Dec // aka price
+	ExchangeRate math.LegacyDec // aka price
 	Voter        sdk.ValAddress
 	Power        int64 // how much tendermint consensus power this vote should have
 }
 
 // NewExchangeRateVote returns a new ExchangeRateVote instance
-func NewExchangeRateVote(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
+func NewExchangeRateVote(rate math.LegacyDec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
 	return ExchangeRateVote{
 		ExchangeRate: rate,
 		Pair:         pair,
@@ -35,8 +36,8 @@ func NewExchangeRateVote(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, po
 type ExchangeRateVotes []ExchangeRateVote
 
 // ToMap return organized exchange rate map by validator
-func (pb ExchangeRateVotes) ToMap() map[string]sdk.Dec {
-	validatorExchangeRateMap := make(map[string]sdk.Dec)
+func (pb ExchangeRateVotes) ToMap() map[string]math.LegacyDec {
+	validatorExchangeRateMap := make(map[string]math.LegacyDec)
 	for _, vote := range pb {
 		if vote.ExchangeRate.IsPositive() {
 			validatorExchangeRateMap[string(vote.Voter)] = vote.ExchangeRate
@@ -47,7 +48,7 @@ func (pb ExchangeRateVotes) ToMap() map[string]sdk.Dec {
 }
 
 // ToCrossRate return cross_rate(base/exchange_rate) votes
-func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateVotes) {
+func (pb ExchangeRateVotes) ToCrossRate(bases map[string]math.LegacyDec) (cb ExchangeRateVotes) {
 	for i := range pb {
 		vote := pb[i]
 
@@ -55,7 +56,7 @@ func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRa
 			vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
 		} else {
 			// If we can't get reference exchange rate, we just convert the vote as abstain vote
-			vote.ExchangeRate = sdk.ZeroDec()
+			vote.ExchangeRate = math.LegacyZeroDec()
 			vote.Power = 0
 		}
 
@@ -88,7 +89,7 @@ func (v ExchangeRateVotes) Power() int64 {
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
 // CONTRACT: votes must be sorted
-func (votes ExchangeRateVotes) WeightedMedian() sdk.Dec {
+func (votes ExchangeRateVotes) WeightedMedian() math.LegacyDec {
 	totalPower := votes.Power()
 	if votes.Len() > 0 {
 		pivot := int64(0)
@@ -101,11 +102,11 @@ func (votes ExchangeRateVotes) WeightedMedian() sdk.Dec {
 			}
 		}
 	}
-	return sdk.ZeroDec()
+	return math.LegacyZeroDec()
 }
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
-func (pb ExchangeRateVotes) WeightedMedianWithAssertion() sdk.Dec {
+func (pb ExchangeRateVotes) WeightedMedianWithAssertion() math.LegacyDec {
 	sort.Sort(pb)
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
@@ -119,22 +120,22 @@ func (pb ExchangeRateVotes) WeightedMedianWithAssertion() sdk.Dec {
 			}
 		}
 	}
-	return sdk.ZeroDec()
+	return math.LegacyZeroDec()
 }
 
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
-func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
+func (pb ExchangeRateVotes) StandardDeviation(median math.LegacyDec) (standardDeviation math.LegacyDec) {
 	if len(pb) == 0 {
-		return sdk.ZeroDec()
+		return math.LegacyZeroDec()
 	}
 
 	defer func() {
 		if e := recover(); e != nil {
-			standardDeviation = sdk.ZeroDec()
+			standardDeviation = math.LegacyZeroDec()
 		}
 	}()
 
-	sum := sdk.ZeroDec()
+	sum := math.LegacyZeroDec()
 	n := 0
 	for _, v := range pb {
 		// ignore abstain votes in std dev calculation
@@ -149,7 +150,7 @@ func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation
 
 	standardDeviation, err := common.SqrtDec(variance)
 	if err != nil {
-		return sdk.ZeroDec()
+		return math.LegacyZeroDec()
 	}
 
 	return

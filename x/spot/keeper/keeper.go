@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -185,7 +185,7 @@ func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string)
 FetchAllPools fetch all pools from the store and returns them.
 */
 func (k Keeper) FetchAllPools(ctx sdk.Context) (pools []types.Pool) {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.KeyPrefixPools)
+	iterator := storetypes.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.KeyPrefixPools)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		var pool types.Pool
@@ -565,7 +565,7 @@ func (k Keeper) ExitPool(
 	}
 
 	if poolSharesOut.Amount.GT(pool.TotalShares.Amount) ||
-		poolSharesOut.Amount.LTE(sdk.ZeroInt()) {
+		poolSharesOut.Amount.LTE(sdkmath.ZeroInt()) {
 		return sdk.Coins{}, fmt.Errorf(
 			"invalid number of pool shares %s must be between 0 and %s",
 			poolSharesOut.Amount, pool.TotalShares.Amount,

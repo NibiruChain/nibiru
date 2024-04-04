@@ -5,17 +5,15 @@ import (
 	fmt "fmt"
 
 	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Validates a PoolAsset amount and weights.
 func (poolAsset PoolAsset) Validate() error {
-	if poolAsset.Token.Amount.LTE(sdk.ZeroInt()) {
+	if poolAsset.Token.Amount.LTE(sdkmath.ZeroInt()) {
 		return fmt.Errorf("can't add the zero or negative balance of token")
 	}
 
-	if poolAsset.Weight.LTE(sdk.ZeroInt()) {
+	if poolAsset.Weight.LTE(sdkmath.ZeroInt()) {
 		return fmt.Errorf("a token's weight in the pool must be greater than 0")
 	}
 
@@ -31,7 +29,7 @@ Subtracts an amount of coins from a pool's assets.
 Throws an error if the final amount is less than zero.
 */
 func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdkmath.Int) (err error) {
-	if subAmt.LT(sdk.ZeroInt()) {
+	if subAmt.LT(sdkmath.ZeroInt()) {
 		return errors.New("can't subtract a negative amount")
 	}
 
@@ -42,7 +40,7 @@ func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdkmath.Int
 
 	// Update the supply of the asset
 	poolAsset.Token.Amount = poolAsset.Token.Amount.Sub(subAmt)
-	if poolAsset.Token.Amount.LT(sdk.ZeroInt()) {
+	if poolAsset.Token.Amount.LT(sdkmath.ZeroInt()) {
 		return errors.New("can't set the pool's balance of a token to be zero or negative")
 	}
 	pool.PoolAssets[index] = poolAsset

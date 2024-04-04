@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/app/upgrades"
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_1_0"
@@ -20,7 +20,7 @@ func (app *NibiruApp) setupUpgrades() {
 
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
-		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler(app.ModuleManager, app.configurator))
+		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler(*app.ModuleManager, app.configurator))
 	}
 }
 

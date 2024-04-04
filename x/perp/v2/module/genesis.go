@@ -3,8 +3,8 @@ package perp
 import (
 	"time"
 
-	"cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -29,14 +29,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, g := range genState.MarketLastVersions {
-		k.MarketLastVersion.Insert(ctx, g.Pair, types.MarketLastVersion{Version: g.Version})
+		k.MarketLastVersion.Set(ctx, g.Pair, types.MarketLastVersion{Version: g.Version})
 	}
 
 	for _, amm := range genState.Amms {
 		pair := amm.Pair
 		k.SaveAMM(ctx, amm)
 		timestampMs := ctx.BlockTime().UnixMilli()
-		k.ReserveSnapshots.Insert(
+		k.ReserveSnapshots.Set(
 			ctx,
 			collections.Join(pair, time.UnixMilli(timestampMs)),
 			types.ReserveSnapshot{
@@ -51,14 +51,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, vol := range genState.TraderVolumes {
-		k.TraderVolumes.Insert(
+		k.TraderVolumes.Set(
 			ctx,
 			collections.Join(sdk.MustAccAddressFromBech32(vol.Trader), vol.Epoch),
 			vol.Volume,
 		)
 	}
 	for _, globalDiscount := range genState.GlobalDiscount {
-		k.GlobalDiscounts.Insert(
+		k.GlobalDiscounts.Set(
 			ctx,
 			globalDiscount.Volume,
 			globalDiscount.Fee,
@@ -66,7 +66,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, customDiscount := range genState.CustomDiscounts {
-		k.TraderDiscounts.Insert(
+		k.TraderDiscounts.Set(
 			ctx,
 			collections.Join(sdk.MustAccAddressFromBech32(customDiscount.Trader), customDiscount.Discount.Volume),
 			customDiscount.Discount.Fee,
@@ -81,7 +81,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, globalVolume := range genState.GlobalVolumes {
-		k.GlobalVolumes.Insert(
+		k.GlobalVolumes.Set(
 			ctx,
 			globalVolume.Epoch,
 			globalVolume.Volume,
@@ -89,7 +89,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, rebateAlloc := range genState.RebatesAllocations {
-		k.EpochRebateAllocations.Insert(
+		k.EpochRebateAllocations.Set(
 			ctx,
 			rebateAlloc.Epoch,
 			types.DNRAllocation{
@@ -104,9 +104,30 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := new(types.GenesisState)
 
-	genesis.Markets = k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
+	iterMarkets, err := k.Markets.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	valuesMarkets, err := iterMarkets.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed getting max markets", "error", err)
+		return nil
+	}
+	genesis.Markets = valuesMarkets
+	if err != nil {
+		k.Logger(ctx).Error("failed to get market values", "error", err)
+		return nil
+	}
 
-	kv := k.MarketLastVersion.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues()
+	iterMarketLastVersion, err := k.MarketLastVersion.Iterate(ctx, &collections.Range[asset.Pair]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to get market last version", "error", err)
+		return nil
+	}
+	kviterMarketLastVersion, err := iterMarketLastVersion.KeyValues()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get market last version key values", "error", err)
+		return nil
+	}
+
+	kv := kviterMarketLastVersion
 	for _, kv := range kv {
 		genesis.MarketLastVersions = append(genesis.MarketLastVersions, types.GenesisMarketLastVersion{
 			Pair:    kv.Key,
@@ -114,8 +135,30 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		})
 	}
 
-	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
-	pkv := k.Positions.Iterate(ctx, collections.PairRange[collections.Pair[asset.Pair, uint64], sdk.AccAddress]{}).KeyValues()
+	iterAmms, err := k.AMMs.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to get amms", "error", err)
+		return nil
+	}
+	valuesAmms, err := iterAmms.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get amm values", "error", err)
+		return nil
+	}
+	genesis.Amms = valuesAmms
+
+	iterPairRange, err := k.Positions.Iterate(ctx, &collections.PairRange[collections.Pair[asset.Pair, uint64], sdk.AccAddress]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate pair ranges", "error", err)
+		return nil
+	}
+	kvPairRange, err := iterPairRange.KeyValues()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get pair range key values", "error", err)
+		return nil
+	}
+
+	pkv := kvPairRange
 	for _, kv := range pkv {
 		genesis.Positions = append(genesis.Positions, types.GenesisPosition{
 			Pair:     kv.Key.K1().K1(),
@@ -123,42 +166,75 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 			Position: kv.Value,
 		})
 	}
-	genesis.ReserveSnapshots = k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}).Values()
-	genesis.DnrEpoch = k.DnREpoch.GetOr(ctx, 0)
-	genesis.DnrEpochName = k.DnREpochName.GetOr(ctx, "")
+
+	iterReserveSnapshots, err := k.ReserveSnapshots.Iterate(ctx, &collections.PairRange[asset.Pair, time.Time]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to get iterate reserve snapshots", "error", err)
+		return nil
+	}
+	valuesReserveSnapshots, err := iterReserveSnapshots.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get reserve snapshots values", "error", err)
+		return nil
+	}
+
+	genesis.ReserveSnapshots = valuesReserveSnapshots
+	genesis.DnrEpoch, err = k.DnREpoch.Get(ctx)
+	if err != nil {
+		genesis.DnrEpoch = 0
+	}
+	genesis.DnrEpochName, err = k.DnREpochName.Get(ctx)
+	if err != nil {
+		genesis.DnrEpochName = ""
+	}
 
 	// export volumes
-	volumes := k.TraderVolumes.Iterate(ctx, collections.PairRange[sdk.AccAddress, uint64]{})
+	volumes, err := k.TraderVolumes.Iterate(ctx, &collections.PairRange[sdk.AccAddress, uint64]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate trader volumes", "error", err)
+		return nil
+	}
 	defer volumes.Close()
 	for ; volumes.Valid(); volumes.Next() {
-		key := volumes.Key()
+		key, _ := volumes.Key()
+		value, _ := volumes.Value()
 		genesis.TraderVolumes = append(genesis.TraderVolumes, types.GenesisState_TraderVolume{
 			Trader: key.K1().String(),
 			Epoch:  key.K2(),
-			Volume: volumes.Value(),
+			Volume: value,
 		})
 	}
 
 	// export global discounts
-	discounts := k.GlobalDiscounts.Iterate(ctx, collections.Range[math.Int]{})
+	discounts, err := k.GlobalDiscounts.Iterate(ctx, &collections.Range[sdkmath.Int]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate discounts", "error", err)
+		return nil
+	}
 	defer discounts.Close()
 	for ; discounts.Valid(); discounts.Next() {
+		key, _ := discounts.Key()
+		value, _ := discounts.Value()
 		genesis.GlobalDiscount = append(genesis.GlobalDiscount, types.GenesisState_Discount{
-			Fee:    discounts.Value(),
-			Volume: discounts.Key(),
+			Fee:    value,
+			Volume: key,
 		})
 	}
 
 	// export custom discounts
-	customDiscounts := k.TraderDiscounts.Iterate(ctx, collections.PairRange[sdk.AccAddress, math.Int]{})
+	customDiscounts, err := k.TraderDiscounts.Iterate(ctx, &collections.PairRange[sdk.AccAddress, sdkmath.Int]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate custom discounts", "error", err)
+		return nil
+	}
 	defer customDiscounts.Close()
 
 	for ; customDiscounts.Valid(); customDiscounts.Next() {
-		key := customDiscounts.Key()
+		key, _ := customDiscounts.Key()
 		genesis.CustomDiscounts = append(genesis.CustomDiscounts, types.GenesisState_CustomDiscount{
 			Trader: key.K1().String(),
 			Discount: &types.GenesisState_Discount{
-				Fee:    sdk.Dec{},
+				Fee:    sdkmath.LegacyDec{},
 				Volume: key.K2(),
 			},
 		})
@@ -171,17 +247,28 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.CollateralDenom = collateral
 
 	// export global volumes
-	globalVolumes := k.GlobalVolumes.Iterate(ctx, collections.Range[uint64]{})
+	globalVolumes, err := k.GlobalVolumes.Iterate(ctx, &collections.Range[uint64]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate global volumes", "error", err)
+		return nil
+	}
 	defer globalVolumes.Close()
 	for ; globalVolumes.Valid(); globalVolumes.Next() {
+		key, _ := globalVolumes.Key()
+		value, _ := globalVolumes.Value()
 		genesis.GlobalVolumes = append(genesis.GlobalVolumes, types.GenesisState_GlobalVolume{
-			Epoch:  globalVolumes.Key(),
-			Volume: globalVolumes.Value(),
+			Epoch:  key,
+			Volume: value,
 		})
 	}
 
 	// export rebates allocations
-	genesis.RebatesAllocations = k.EpochRebateAllocations.Iterate(ctx, collections.Range[uint64]{}).Values()
+	iter, err := k.EpochRebateAllocations.Iterate(ctx, &collections.Range[uint64]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate rebates allocations", "error", err)
+		return nil
+	}
+	genesis.RebatesAllocations, err = iter.Values()
 
 	return genesis
 }

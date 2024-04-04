@@ -2,10 +2,9 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/collections"
 
-	"github.com/NibiruChain/collections"
-
-	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
+	storeprefix "cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
@@ -41,7 +40,14 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
+	iter, err := q.k.Markets.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	if err != nil {
+		return nil, err
+	}
+	markets, err := iter.Values()
+	if err != nil {
+		return nil, err
+	}
 
 	var positions []types.QueryPositionResponse
 	for _, market := range markets {
@@ -95,7 +101,7 @@ func (q queryServer) QueryPositionStore(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	store := storeprefix.NewStore(ctx.KVStore(q.k.storeKey), NamespacePositions.Prefix())
+	store := storeprefix.NewStore(ctx.KVStore(q.k.storeKey), collections.NewPrefix(int(NamespacePositions)))
 
 	pagination, _, err := common.ParsePagination(req.Pagination)
 	if err != nil {
@@ -169,7 +175,15 @@ func (q queryServer) QueryMarkets(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var ammMarkets []types.AmmMarket
-	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
+	iter, err := q.k.Markets.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	if err != nil {
+		return nil, err
+	}
+	values, err := iter.Values()
+	if err != nil {
+		return nil, err
+	}
+	markets := values
 	for _, market := range markets {
 		// disabled markets are not returned
 		if !req.Versioned && !market.Enabled {
@@ -195,7 +209,11 @@ func (q queryServer) QueryCollateral(
 	goCtx context.Context, req *types.QueryCollateralRequest,
 ) (*types.QueryCollateralResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	denom := q.k.Collateral.GetOr(ctx, "")
+	denom, err := q.k.Collateral.Get(ctx)
+	if err != nil {
+		denom = ""
+	}
+
 	return &types.QueryCollateralResponse{
 		CollateralDenom: denom,
 	}, nil

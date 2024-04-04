@@ -314,8 +314,8 @@ Where pool.json contains:
 				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolAssets,
 				&types.PoolParams{
-					SwapFee:  sdk.MustNewDecFromStr(pool.SwapFee),
-					ExitFee:  sdk.MustNewDecFromStr(pool.ExitFee),
+					SwapFee:  sdkmath.LegacyMustNewDecFromStr(pool.SwapFee),
+					ExitFee:  sdkmath.LegacyMustNewDecFromStr(pool.ExitFee),
 					PoolType: poolType,
 					A:        amplification,
 				},

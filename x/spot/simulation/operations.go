@@ -87,7 +87,6 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
-				MsgType:         msg.Type(),
 				Context:         ctx,
 				SimAccount:      simAccount,
 				AccountKeeper:   ak,
@@ -141,7 +140,6 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
-				MsgType:         msg.Type(),
 				Context:         ctx,
 				SimAccount:      simAccount,
 				AccountKeeper:   ak,
@@ -163,7 +161,7 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msg := &types.MsgJoinPool{}
 		// run only 1/3 of the time
-		if simtypes.RandomDecAmount(r, sdk.OneDec()).GTE(sdk.MustNewDecFromStr("0.33")) {
+		if simtypes.RandomDecAmount(r, sdkmath.LegacyOneDec()).GTE(sdkmath.LegacyMustNewDecFromStr("0.33")) {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No join pool done"), nil, nil
 		}
 
@@ -176,16 +174,16 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool existing yet for tokens in account"), nil, nil
 		}
 
-		intensityFactorToken0 := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
-		intensityFactorToken1 := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
+		intensityFactorToken0 := simtypes.RandomDecAmount(r, sdkmath.LegacyMustNewDecFromStr("0.499")).Add(sdkmath.LegacyMustNewDecFromStr("0.5"))
+		intensityFactorToken1 := simtypes.RandomDecAmount(r, sdkmath.LegacyMustNewDecFromStr("0.499")).Add(sdkmath.LegacyMustNewDecFromStr("0.5"))
 
 		tokensIn := sdk.NewCoins(
 			sdk.NewCoin(
 				pool.PoolAssets[0].Token.Denom,
-				intensityFactorToken0.Mul(sdk.NewDecFromInt(spendableCoins[index1].Amount)).TruncateInt()),
+				intensityFactorToken0.Mul(sdkmath.LegacyNewDecFromInt(spendableCoins[index1].Amount)).TruncateInt()),
 			sdk.NewCoin(
 				pool.PoolAssets[1].Token.Denom,
-				intensityFactorToken1.Mul(sdk.NewDecFromInt(spendableCoins[index2].Amount)).TruncateInt()),
+				intensityFactorToken1.Mul(sdkmath.LegacyNewDecFromInt(spendableCoins[index2].Amount)).TruncateInt()),
 		)
 
 		msg = &types.MsgJoinPool{
@@ -206,7 +204,6 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
-				MsgType:         msg.Type(),
 				Context:         ctx,
 				SimAccount:      simAccount,
 				AccountKeeper:   ak,
@@ -246,14 +243,14 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No pool share token found in wallet"), nil, nil
 		}
 
-		intensityFactor := simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("0.499")).Add(sdk.MustNewDecFromStr("0.5"))
+		intensityFactor := simtypes.RandomDecAmount(r, sdkmath.LegacyMustNewDecFromStr("0.499")).Add(sdkmath.LegacyMustNewDecFromStr("0.5"))
 		shareTokensIn := sdk.NewCoin(
 			shareTokens.Denom,
 			intensityFactor.MulInt(shareTokens.Amount).TruncateInt(),
 		)
 
 		// Ugly but does the job
-		poolId := sdk.MustNewDecFromStr(strings.Replace(shareTokensIn.Denom, "nibiru/pool/", "", 1)).TruncateInt().Uint64()
+		poolId := sdkmath.LegacyMustNewDecFromStr(strings.Replace(shareTokensIn.Denom, "nibiru/pool/", "", 1)).TruncateInt().Uint64()
 
 		// check if there are enough tokens to withdraw
 		pool, err := k.FetchPool(ctx, poolId)
@@ -283,7 +280,6 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
-				MsgType:         msg.Type(),
 				Context:         ctx,
 				SimAccount:      simAccount,
 				AccountKeeper:   ak,
@@ -311,7 +307,7 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 	// swapFee := sdk.NewDecWithPrec(swapFeeInt, 6)
 
 	exitFeeInt := int64(r.Intn(1e5))
-	exitFee := sdk.NewDecWithPrec(exitFeeInt, 6)
+	exitFee := sdkmath.LegacyNewDecWithPrec(exitFeeInt, 6)
 	isBalancer := r.Intn(2)
 
 	var poolType types.PoolType
@@ -321,11 +317,11 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 		poolType = types.PoolType_STABLESWAP
 	}
 
-	A := sdk.NewInt(int64(r.Intn(4_000) + 1))
+	A := sdkmath.NewInt(int64(r.Intn(4_000) + 1))
 
 	// Create swap fee between 0% and 5%
 	swapFeeFloat := r.Float64() * .05
-	swapFee := sdk.MustNewDecFromStr(fmt.Sprintf("%.5f", swapFeeFloat))
+	swapFee := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.5f", swapFeeFloat))
 
 	return types.PoolParams{
 		SwapFee:  swapFee,
@@ -352,7 +348,7 @@ func genPoolAssets(
 			reserveAmt := sdk.NewCoin(denom, amt)
 
 			// Weight is useless for stableswap pools.
-			weight := sdk.NewInt(r.Int63n(9) + 1)
+			weight := sdkmath.NewInt(r.Int63n(9) + 1)
 			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
 
 			if len(assets) == 2 {
@@ -369,9 +365,9 @@ func genPoolAssets(
 func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.BankKeeper) {
 	million := 1 * common.TO_MICRO
 	newTokens := sdk.NewCoins(
-		sdk.NewCoin(denoms.NIBI, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(denoms.USDC, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.USDC, sdkmath.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NUSD, sdkmath.NewInt(int64(10*million))),
 	)
 
 	err := bk.MintCoins(ctx, types.ModuleName, newTokens)
@@ -410,7 +406,7 @@ func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, spendableCoins sdk.C
 		}
 	}
 
-	return "", "", 0, sdk.ZeroInt()
+	return "", "", 0, sdkmath.ZeroInt()
 }
 
 // findRandomPoolWithDenomPair search one pool available from a pair of coins of simCoins

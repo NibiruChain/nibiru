@@ -2,12 +2,12 @@ package cli
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
@@ -81,7 +81,7 @@ func CmdGetPool() *cobra.Command {
 				return err
 			}
 
-			poolId, _ := sdk.NewIntFromString(args[0])
+			poolId, _ := sdkmath.NewIntFromString(args[0])
 
 			queryClient := types.NewQueryClient(clientCtx)
 
@@ -174,7 +174,7 @@ $ %s query spot pool-liquidity 1
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
-			poolId, _ := sdk.NewIntFromString(args[0])
+			poolId, _ := sdkmath.NewIntFromString(args[0])
 
 			res, err := queryClient.TotalPoolLiquidity(
 				context.Background(),

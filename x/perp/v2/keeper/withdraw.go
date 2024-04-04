@@ -91,7 +91,7 @@ func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, am
 
 // ZeroPrepaidBadDebt out the prepaid bad debt
 func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market types.Market) {
-	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
+	market.PrepaidBadDebt.Amount = sdkmath.ZeroInt()
 	k.SaveMarket(ctx, market)
 }
 

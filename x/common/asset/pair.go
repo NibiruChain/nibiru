@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"cosmossdk.io/collections/codec"
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -138,19 +138,79 @@ func (pair Pair) Size() int {
 	return len(pair)
 }
 
-var PairKeyEncoder collections.KeyEncoder[Pair] = pairKeyEncoder{}
+var PairKeyEncoder codec.KeyCodec[Pair] = pairKeyEncoder{}
 
 type pairKeyEncoder struct{}
 
-func (pairKeyEncoder) Stringify(a Pair) string { return a.String() }
-func (pairKeyEncoder) Encode(a Pair) []byte {
-	return collections.StringKeyEncoder.Encode(a.String())
+func (e pairKeyEncoder) Encode(buffer []byte, key Pair) (int, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (pairKeyEncoder) Decode(b []byte) (int, Pair) {
-	i, s := collections.StringKeyEncoder.Decode(b)
-	return i, MustNewPair(s)
+func (e pairKeyEncoder) Decode(buffer []byte) (int, Pair, error) {
+	//TODO implement me
+	panic("implement me")
 }
+
+func (e pairKeyEncoder) Size(key Pair) int {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) EncodeJSON(value Pair) ([]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) DecodeJSON(b []byte) (Pair, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) Stringify(key Pair) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) KeyType() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) EncodeNonTerminal(buffer []byte, key Pair) (int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) DecodeNonTerminal(buffer []byte) (int, Pair, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e pairKeyEncoder) SizeNonTerminal(key Pair) int {
+	//TODO implement me
+	panic("implement me")
+}
+
+//
+//func (pairKeyEncoder) Stringify(a Pair) string { return a.String() }
+//func (pairKeyEncoder) Encode(a Pair) []byte {
+//	stringCodec := codec.NewUntypedValueCodec(codec.KeyToValueCodec(codec.NewStringKeyCodec[string]()))
+//	bytes, err := stringCodec.Encode(a.String())
+//	if err != nil {
+//		return nil
+//	}
+//	return bytes
+//}
+//
+//func (pairKeyEncoder) Decode(b []byte) (int, Pair) {
+//	stringCodec := codec.NewStringKeyCodec[string]()
+//	i, s, err := stringCodec.Decode(b)
+//	if err != nil {
+//		panic(err)
+//	}
+//	return i, MustNewPair(s)
+//}
 
 // MustNewPairs constructs a new asset pair set. A panic will occur if one of
 // the provided pair names is invalid.

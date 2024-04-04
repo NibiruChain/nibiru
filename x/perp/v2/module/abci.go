@@ -1,10 +1,11 @@
 package perp
 
 import (
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -13,7 +14,18 @@ import (
 
 // EndBlocker Called every block to store a snapshot of the perpamm.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
+	iter, err := k.AMMs.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed iterating amms", "error", err)
+		return []abci.ValidatorUpdate{}
+	}
+	values, err := iter.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed getting amm values", "error", err)
+		return []abci.ValidatorUpdate{}
+	}
+
+	for _, amm := range values {
 		market, err := k.GetMarket(ctx, amm.Pair)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
@@ -29,9 +41,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			Amm:         amm,
 			TimestampMs: ctx.BlockTime().UnixMilli(),
 		}
-		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
+		k.ReserveSnapshots.Set(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
 
-		markTwap, err := k.CalcTwap(ctx, amm.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
+		markTwap, err := k.CalcTwap(ctx, amm.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdkmath.LegacyZeroDec(), market.TwapLookbackWindow)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
 			continue
@@ -42,11 +54,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			continue
 		}
 
-		var indexTwap sdk.Dec
+		var indexTwap sdkmath.LegacyDec
 		indexTwap, err = k.OracleKeeper.GetExchangeRateTwap(ctx, market.OraclePair)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch twap index price", "market.Pair", market.Pair, "market.OraclePair", market.OraclePair, "error", err)
-			indexTwap = sdk.OneDec().Neg()
+			indexTwap = sdkmath.LegacyOneDec().Neg()
 		}
 
 		if indexTwap.IsNil() {

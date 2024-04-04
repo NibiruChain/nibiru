@@ -1,6 +1,7 @@
 package cli
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"strconv"
 	"strings"
@@ -122,14 +123,14 @@ func MarketOrderCmd() *cobra.Command {
 				return err
 			}
 
-			leverage := sdk.MustNewDecFromStr(args[2])
+			leverage := sdkmath.LegacyMustNewDecFromStr(args[2])
 
-			amount, ok := sdk.NewIntFromString(args[3])
+			amount, ok := sdkmath.NewIntFromString(args[3])
 			if !ok {
 				return fmt.Errorf("invalid quote amount: %s", args[3])
 			}
 
-			baseAmtLimit := sdk.MustNewDecFromStr(args[4])
+			baseAmtLimit := sdkmath.LegacyMustNewDecFromStr(args[4])
 
 			msg := &types.MsgMarketOrder{
 				Sender:               clientCtx.GetFromAddress().String(),
@@ -202,7 +203,7 @@ func PartialCloseCmd() *cobra.Command {
 				return err
 			}
 
-			size, err := sdk.NewDecFromStr(args[1])
+			size, err := sdkmath.LegacyNewDecFromStr(args[1])
 			if err != nil {
 				return err
 			}

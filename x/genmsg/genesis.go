@@ -11,14 +11,16 @@ import (
 )
 
 func anyToMsg(ir types.InterfaceRegistry, anyMsg *types.Any) (sdk.Msg, error) {
-	var sdkMsg sdk.Msg
+	var sdkMsg sdk.LegacyMsg
 	err := ir.UnpackAny(anyMsg, &sdkMsg)
 	if err != nil {
 		return nil, err
 	}
-	if err = sdkMsg.ValidateBasic(); err != nil {
-		return nil, err
-	}
+
+	// IMPORTANT: https://docs.cosmos.network/v0.50/build/rfc/rfc-001-tx-validation
+	//if err = sdkMsg.ValidateBasic(); err != nil {
+	//	return nil, err
+	//}
 	return sdkMsg, nil
 }
 

@@ -3,6 +3,7 @@ package ante
 // Interfaces needed for the for the Nibiru Chain ante handler
 
 import (
+	"context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
@@ -10,11 +11,11 @@ import (
 
 type BankKeeper interface {
 	SendCoinsFromAccountToModule(
-		ctx sdk.Context, senderAddr sdk.AccAddress,
+		ctx context.Context, senderAddr sdk.AccAddress,
 		recipientModule string, amt sdk.Coins,
 	) error
 	SendCoinsFromModuleToAccount(
-		ctx sdk.Context, senderModule string,
+		ctx context.Context, senderModule string,
 		recipientAddr sdk.AccAddress, amt sdk.Coins,
 	) error
 }

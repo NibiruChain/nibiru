@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"time"
 
@@ -10,11 +11,11 @@ import (
 )
 
 // PositionNotionalSpot returns the position's notional value based on the spot price.
-func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotional sdk.Dec, err error) {
+func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotional sdkmath.LegacyDec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
 	if position.Size_.IsNil() {
-		return sdk.Dec{}, fmt.Errorf("input base amt is nil")
+		return sdkmath.LegacyDec{}, fmt.Errorf("input base amt is nil")
 	}
 
 	var dir types.Direction
@@ -26,7 +27,7 @@ func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotio
 
 	quoteReserve, err := amm.GetQuoteReserveAmt(position.Size_.Abs(), dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.LegacyDec{}, err
 	}
 	return amm.QuoteReserveToAsset(quoteReserve), nil
 }
@@ -35,7 +36,7 @@ func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotio
 func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
 	position types.Position,
 	twapLookbackWindow time.Duration,
-) (positionNotional sdk.Dec, err error) {
+) (positionNotional sdkmath.LegacyDec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
 	var dir types.Direction
@@ -56,7 +57,7 @@ func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
 }
 
 // UnrealizedPnl calculates the unrealized profits and losses (PnL) of a position.
-func UnrealizedPnl(position types.Position, positionNotional sdk.Dec) (unrealizedPnlSigned sdk.Dec) {
+func UnrealizedPnl(position types.Position, positionNotional sdkmath.LegacyDec) (unrealizedPnlSigned sdkmath.LegacyDec) {
 	if position.Size_.IsPositive() {
 		// LONG
 		return positionNotional.Sub(position.OpenNotional)
@@ -69,11 +70,11 @@ func UnrealizedPnl(position types.Position, positionNotional sdk.Dec) (unrealize
 // MarginRatio Given a position and it's notional value, returns the margin ratio.
 func MarginRatio(
 	position types.Position,
-	positionNotional sdk.Dec,
-	marketLatestCumulativePremiumFraction sdk.Dec,
-) sdk.Dec {
+	positionNotional sdkmath.LegacyDec,
+	marketLatestCumulativePremiumFraction sdkmath.LegacyDec,
+) sdkmath.LegacyDec {
 	if position.Size_.IsZero() || positionNotional.IsZero() {
-		return sdk.ZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
@@ -91,7 +92,7 @@ func MarginRatio(
 //
 // returns:
 //   - fundingPayment: the funding payment of the position, signed
-func FundingPayment(position types.Position, marketLatestCumulativePremiumFraction sdk.Dec) sdk.Dec {
+func FundingPayment(position types.Position, marketLatestCumulativePremiumFraction sdkmath.LegacyDec) sdkmath.LegacyDec {
 	return marketLatestCumulativePremiumFraction.
 		Sub(position.LatestCumulativePremiumFraction).
 		Mul(position.Size_)

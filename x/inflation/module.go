@@ -123,15 +123,15 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
-// BeginBlock returns the begin blocker for the inflation module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {
-}
-
-// EndBlock returns the end blocker for the inflation module. It returns no validator
-// updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
-}
+//// BeginBlock returns the begin blocker for the inflation module.
+//func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {
+//}
+//
+//// EndBlock returns the end blocker for the inflation module. It returns no validator
+//// updates.
+//func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+//	return []abci.ValidatorUpdate{}
+//}
 
 // InitGenesis performs genesis initialization for the inflation module. It returns
 // no validator updates.
@@ -165,10 +165,14 @@ func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.Weight
 }
 
 // RegisterStoreDecoder registers a decoder for inflation module's types.
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {
 }
 
 // WeightedOperations doesn't return any inflation module operation.
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
 }
+
+func (am AppModule) IsOnePerModuleType() {}
+
+func (am AppModule) IsAppModule() {}

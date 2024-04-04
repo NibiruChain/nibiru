@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +49,7 @@ func (k Keeper) AddMargin(
 	}
 
 	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
-	remainingMargin := position.Margin.Add(sdk.NewDecFromInt(marginToAdd.Amount)).Sub(fundingPayment)
+	remainingMargin := position.Margin.Add(sdkmath.LegacyNewDecFromInt(marginToAdd.Amount)).Sub(fundingPayment)
 
 	if remainingMargin.IsNegative() {
 		return nil, types.ErrBadDebt.Wrapf("applying funding payment would result in negative remaining margin: %s", remainingMargin)
@@ -81,9 +82,9 @@ func (k Keeper) AddMargin(
 			&types.PositionChangedEvent{
 				FinalPosition:    position,
 				PositionNotional: positionNotional,
-				TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
-				RealizedPnl:      sdk.ZeroDec(),                          // always zero when adding margin
-				BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
+				TransactionFee:   sdk.NewCoin(collateral, sdkmath.ZeroInt()), // always zero when adding margin
+				RealizedPnl:      sdkmath.LegacyZeroDec(),                    // always zero when adding margin
+				BadDebt:          sdk.NewCoin(collateral, sdkmath.ZeroInt()), // always zero when adding margin
 				FundingPayment:   fundingPayment,
 				BlockHeight:      ctx.BlockHeight(),
 				MarginToUser:     marginToAdd.Amount.Neg(),
@@ -147,7 +148,7 @@ func (k Keeper) RemoveMargin(
 	if err != nil {
 		return nil, err
 	}
-	minPositionNotional := sdk.MinDec(spotNotional, twapNotional)
+	minPositionNotional := sdkmath.LegacyMinDec(spotNotional, twapNotional)
 
 	// account for funding payment
 	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
@@ -159,14 +160,14 @@ func (k Keeper) RemoveMargin(
 		remainingMargin = remainingMargin.Add(unrealizedPnl)
 	}
 
-	if remainingMargin.LT(sdk.NewDecFromInt(marginToRemove.Amount)) {
+	if remainingMargin.LT(sdkmath.LegacyNewDecFromInt(marginToRemove.Amount)) {
 		return nil, types.ErrBadDebt.Wrapf(
 			"not enough free collateral to remove margin; remainingMargin %s, marginToRemove %s", remainingMargin, marginToRemove,
 		)
 	}
 
 	// apply funding payment and remove margin
-	position.Margin = position.Margin.Sub(fundingPayment).Sub(sdk.NewDecFromInt(marginToRemove.Amount))
+	position.Margin = position.Margin.Sub(fundingPayment).Sub(sdkmath.LegacyNewDecFromInt(marginToRemove.Amount))
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
 
@@ -187,9 +188,9 @@ func (k Keeper) RemoveMargin(
 			&types.PositionChangedEvent{
 				FinalPosition:    position,
 				PositionNotional: spotNotional,
-				TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
-				RealizedPnl:      sdk.ZeroDec(),                          // always zero when removing margin
-				BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
+				TransactionFee:   sdk.NewCoin(collateral, sdkmath.ZeroInt()), // always zero when removing margin
+				RealizedPnl:      sdkmath.LegacyZeroDec(),                    // always zero when removing margin
+				BadDebt:          sdk.NewCoin(collateral, sdkmath.ZeroInt()), // always zero when removing margin
 				FundingPayment:   fundingPayment,
 				BlockHeight:      ctx.BlockHeight(),
 				MarginToUser:     marginToRemove.Amount,

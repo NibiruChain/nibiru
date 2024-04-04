@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/collections"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,9 +36,10 @@ func (q Querier) FeeShares(
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	iter := q.DevGasStore.Indexes.Deployer.ExactMatch(ctx, req.Deployer)
+	iter, _ := q.DevGasStore.Indexes.Deployer.MatchExact(ctx, req.Deployer)
+
 	return &types.QueryFeeSharesResponse{
-		Feeshare: q.DevGasStore.Collect(ctx, iter),
+		Feeshare: getFeeShares(ctx, iter, q.DevGasStore),
 	}, nil
 }
 
@@ -93,8 +95,26 @@ func (q Querier) FeeSharesByWithdrawer( // nolint: dupl
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	iter := q.DevGasStore.Indexes.Withdrawer.ExactMatch(ctx, req.WithdrawerAddress)
+	iter, _ := q.DevGasStore.Indexes.Withdrawer.MatchExact(ctx, req.WithdrawerAddress)
 	return &types.QueryFeeSharesByWithdrawerResponse{
-		Feeshare: q.DevGasStore.Collect(ctx, iter),
+		Feeshare: getFeeShares(ctx, iter, q.DevGasStore),
 	}, nil
+}
+
+// getFeeShares replacement of nibiru collections Collect()
+func getFeeShares(
+	ctx sdk.Context,
+	iter interface{ PrimaryKeys() ([]string, error) },
+	coll collections.IndexedMap[string, types.FeeShare, DevGasIndexes],
+) []types.FeeShare {
+	contracts, _ := iter.PrimaryKeys()
+	shares := make([]types.FeeShare, len(contracts))
+	for index, contract := range contracts {
+		v, err := coll.Get(ctx, contract)
+		if err != nil {
+			panic(err)
+		}
+		shares[index] = v
+	}
+	return shares
 }

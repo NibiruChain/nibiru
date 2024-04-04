@@ -1,22 +1,24 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"cosmossdk.io/math"
+)
 
 // CalcSpotPrice calculates the spot price based on weight.
 // spotPrice = (BalanceIn / WeightIn) / (BalanceOut / WeightOut)
-func (pool Pool) CalcSpotPrice(tokenIn, tokenOut string) (sdk.Dec, error) {
+func (pool Pool) CalcSpotPrice(tokenIn, tokenOut string) (math.LegacyDec, error) {
 	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn)
 	if err != nil {
-		return sdk.Dec{}, err
+		return math.LegacyDec{}, err
 	}
 
 	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut)
 	if err != nil {
-		return sdk.Dec{}, err
+		return math.LegacyDec{}, err
 	}
 
-	weightedBalanceIn := sdk.NewDecFromInt(poolAssetIn.Token.Amount).Quo(sdk.NewDecFromInt(poolAssetIn.Weight))
-	weightedBalanceOut := sdk.NewDecFromInt(poolAssetOut.Token.Amount).Quo(sdk.NewDecFromInt(poolAssetOut.Weight))
+	weightedBalanceIn := math.LegacyNewDecFromInt(poolAssetIn.Token.Amount).Quo(math.LegacyNewDecFromInt(poolAssetIn.Weight))
+	weightedBalanceOut := math.LegacyNewDecFromInt(poolAssetOut.Token.Amount).Quo(math.LegacyNewDecFromInt(poolAssetOut.Weight))
 
 	return weightedBalanceIn.Quo(weightedBalanceOut), nil
 }

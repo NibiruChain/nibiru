@@ -1,7 +1,8 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -15,8 +16,8 @@ func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins
 		votePeriodCoins[i] = newCoin
 	}
 
-	id := k.RewardsID.Next(ctx)
-	k.Rewards.Insert(ctx, id, types.Rewards{
+	id, _ := k.RewardsID.Next(ctx)
+	k.Rewards.Set(ctx, id, types.Rewards{
 		Id:          id,
 		VotePeriods: votePeriods,
 		Coins:       votePeriodCoins,
@@ -42,12 +43,12 @@ func (k Keeper) rewardWinners(
 
 	var distributedRewards sdk.Coins
 	for _, validatorPerformance := range validatorPerformances {
-		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
+		validator, _ := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
 		if validator == nil {
 			continue
 		}
 
-		rewardPortion, _ := totalRewards.MulDec(sdk.NewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
+		rewardPortion, _ := totalRewards.MulDec(sdkmath.LegacyNewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
 		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
 		distributedRewards = distributedRewards.Add(rewardPortion...)
 	}
@@ -63,7 +64,18 @@ func (k Keeper) rewardWinners(
 func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 	coins := sdk.NewCoins()
 	// iterate over
-	for _, rewardId := range k.Rewards.Iterate(ctx, collections.Range[uint64]{}).Keys() {
+	iter, err := k.Rewards.Iterate(ctx, &collections.Range[uint64]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate rewards", "error", err)
+		return nil
+	}
+	keys, err := iter.Keys()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get rewards keys", "error", err)
+		return nil
+	}
+
+	for _, rewardId := range keys {
 		pairReward, err := k.Rewards.Get(ctx, rewardId)
 		if err != nil {
 			k.Logger(ctx).Error("Failed to get reward", "err", err)
@@ -75,12 +87,12 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 		pairReward.VotePeriods -= 1
 		if pairReward.VotePeriods == 0 {
 			// If the distribution period count drops to 0: the reward instance is removed.
-			err := k.Rewards.Delete(ctx, rewardId)
+			err := k.Rewards.Remove(ctx, rewardId)
 			if err != nil {
 				k.Logger(ctx).Error("Failed to delete pair reward", "err", err)
 			}
 		} else {
-			k.Rewards.Insert(ctx, rewardId, pairReward)
+			k.Rewards.Set(ctx, rewardId, pairReward)
 		}
 	}
 

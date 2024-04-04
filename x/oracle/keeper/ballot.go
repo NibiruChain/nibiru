@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/omap"
@@ -26,7 +26,17 @@ func (k Keeper) groupVotesByPair(
 ) (pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	pairVotes = map[asset.Pair]types.ExchangeRateVotes{}
 
-	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+	iter, err := k.Votes.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate votes", "error", err)
+		return
+	}
+	kv, err := iter.KeyValues()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get votes key values", "error", err)
+		return
+	}
+	for _, value := range kv {
 		voterAddr, aggregateVote := value.Key, value.Value
 
 		// skip votes from inactive validators
@@ -60,10 +70,21 @@ func (k Keeper) groupVotesByPair(
 // clearVotesAndPrevotes clears all tallied prevotes and votes from the store
 func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
-	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+	iterPrevotes, err := k.Prevotes.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate prevotes", "error", err)
+		return
+	}
+	kvPrevotes, err := iterPrevotes.KeyValues()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get prevotes key values", "error", err)
+		return
+	}
+
+	for _, prevote := range kvPrevotes {
 		valAddr, aggregatePrevote := prevote.Key, prevote.Value
 		if ctx.BlockHeight() >= int64(aggregatePrevote.SubmitBlock+votePeriod) {
-			err := k.Prevotes.Delete(ctx, valAddr)
+			err := k.Prevotes.Remove(ctx, valAddr)
 			if err != nil {
 				k.Logger(ctx).Error("failed to delete prevote", "error", err)
 			}
@@ -71,8 +92,18 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 	}
 
 	// Clear all aggregate votes
-	for _, valAddr := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
-		err := k.Votes.Delete(ctx, valAddr)
+	iterVotes, err := k.Votes.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate votes", "error", err)
+		return
+	}
+	keyVotes, err := iterVotes.Keys()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get votes keys", "error", err)
+		return
+	}
+	for _, valAddr := range keyVotes {
+		err := k.Votes.Remove(ctx, valAddr)
 		if err != nil {
 			k.Logger(ctx).Error("failed to delete vote", "error", err)
 		}
@@ -83,7 +114,7 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 func isPassingVoteThreshold(
 	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
-	totalPower := sdk.NewInt(votes.Power())
+	totalPower := sdkmath.NewInt(votes.Power())
 	if totalPower.IsZero() {
 		return false
 	}
@@ -111,8 +142,14 @@ func (k Keeper) removeInvalidVotes(
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	whitelistedPairs set.Set[asset.Pair],
 ) {
+	totalBondedTokens, err := k.StakingKeeper.TotalBondedTokens(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get total bonded tokens", "error", err)
+		return
+	}
+
 	totalBondedPower := sdk.TokensToConsensusPower(
-		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
+		totalBondedTokens, k.StakingKeeper.PowerReduction(ctx),
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
@@ -146,9 +183,9 @@ func (k Keeper) removeInvalidVotes(
 // made by the validators.
 func Tally(
 	votes types.ExchangeRateVotes,
-	rewardBand sdk.Dec,
+	rewardBand sdkmath.LegacyDec,
 	validatorPerformances types.ValidatorPerformances,
-) sdk.Dec {
+) sdkmath.LegacyDec {
 	weightedMedian := votes.WeightedMedianWithAssertion()
 	standardDeviation := votes.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))

@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"time"
 
@@ -54,17 +55,17 @@ func DefaultMarket(pair asset.Pair) Market {
 		Pair:                            pair,
 		Enabled:                         false,
 		Version:                         1,
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
-		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
-		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
+		LatestCumulativePremiumFraction: sdkmath.LegacyZeroDec(),
+		ExchangeFeeRatio:                sdkmath.LegacyMustNewDecFromStr("0.0010"),
+		EcosystemFundFeeRatio:           sdkmath.LegacyMustNewDecFromStr("0.0010"),
+		LiquidationFeeRatio:             sdkmath.LegacyMustNewDecFromStr("0.0500"),
+		PartialLiquidationRatio:         sdkmath.LegacyMustNewDecFromStr("0.5000"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-		MaxFundingRate:                  sdk.NewDec(1),
+		MaxFundingRate:                  sdkmath.LegacyNewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
-		PrepaidBadDebt:                  sdk.NewCoin(TestingCollateralDenomNUSD, sdk.ZeroInt()),
-		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:                     sdk.NewDec(10),
+		PrepaidBadDebt:                  sdk.NewCoin(TestingCollateralDenomNUSD, sdkmath.ZeroInt()),
+		MaintenanceMarginRatio:          sdkmath.LegacyMustNewDecFromStr("0.0625"),
+		MaxLeverage:                     sdkmath.LegacyNewDec(10),
 		OraclePair:                      asset.NewPair(pair.BaseDenom(), denoms.USD),
 	}
 }

@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -59,7 +60,7 @@ func startInProcess(cfg Config, val *Validator) error {
 		nodeKey,
 		proxy.NewLocalClientCreator(app),
 		genDocProvider,
-		node.DefaultDBProvider,
+		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
 		logger.With("module", val.Moniker),
 	)

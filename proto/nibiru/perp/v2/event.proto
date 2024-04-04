@@ -17,7 +17,7 @@ message PositionChangedEvent {
   // Position notional (in quote units) after the change. In general,
   // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
   string position_notional = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -29,7 +29,7 @@ message PositionChangedEvent {
 
   // realize profits and losses after the change
   string realized_pnl = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -44,7 +44,7 @@ message PositionChangedEvent {
   (average price on major exchanges).
     */
   string funding_payment = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -55,7 +55,7 @@ message PositionChangedEvent {
   // the position change. A positve value indicates that the trader received
   // funds, while a negative value indicates that the trader spent funds.
   string margin_to_user = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
@@ -75,7 +75,7 @@ message PositionChangedEvent {
   // increased, while a negative value indicates that the position size
   // decreased.
   string exchanged_size = 10 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -84,7 +84,7 @@ message PositionChangedEvent {
   // notional increased, while a negative value indicates that the position
   // notional decreased.
   string exchanged_notional = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
@@ -142,19 +142,19 @@ message FundingRateChangedEvent {
 
   // The mark price of the pair.
   string mark_price_twap = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // The oracle index price of the pair.
   string index_price_twap = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // The latest premium fraction just calculated.
   string premium_fraction = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -163,7 +163,7 @@ message FundingRateChangedEvent {
   // value and the latest cumulative premium fraction on the position,
   // multiplied by the position size.
   string cumulative_premium_fraction = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
@@ -211,13 +211,13 @@ message AmmUpdatedEvent {
 
   // The mark price of the pair.
   string mark_price_twap = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // The oracle index price of the pair.
   string index_price_twap = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
@@ -238,11 +238,11 @@ message MarketUpdatedEvent {
 // EventShiftPegMultiplier: ABCI event emitted from MsgShiftPegMultiplier
 message EventShiftPegMultiplier {
   string old_peg_multiplier = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   string new_peg_multiplier = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];
@@ -251,11 +251,11 @@ message EventShiftPegMultiplier {
 // EventShiftSwapInvariant: ABCI event emitted from MsgShiftSwapInvariant
 message EventShiftSwapInvariant {
   string old_swap_invariant = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string new_swap_invariant = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];

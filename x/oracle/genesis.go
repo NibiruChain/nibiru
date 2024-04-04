@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
@@ -26,7 +26,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.FeederDelegations.Insert(ctx, voter, feeder)
+		keeper.FeederDelegations.Set(ctx, voter, feeder)
 	}
 
 	for _, ex := range data.ExchangeRates {
@@ -39,7 +39,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.MissCounters.Insert(ctx, operator, missCounter.MissCounter)
+		keeper.MissCounters.Set(ctx, operator, missCounter.MissCounter)
 	}
 
 	for _, aggregatePrevote := range data.AggregateExchangeRatePrevotes {
@@ -48,7 +48,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.Prevotes.Insert(ctx, valAddr, aggregatePrevote)
+		keeper.Prevotes.Set(ctx, valAddr, aggregatePrevote)
 	}
 
 	for _, aggregateVote := range data.AggregateExchangeRateVotes {
@@ -57,21 +57,21 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 			panic(err)
 		}
 
-		keeper.Votes.Insert(ctx, valAddr, aggregateVote)
+		keeper.Votes.Set(ctx, valAddr, aggregateVote)
 	}
 
 	if len(data.Pairs) > 0 {
 		for _, tt := range data.Pairs {
-			keeper.WhitelistedPairs.Insert(ctx, tt)
+			keeper.WhitelistedPairs.Set(ctx, tt)
 		}
 	} else {
 		for _, item := range data.Params.Whitelist {
-			keeper.WhitelistedPairs.Insert(ctx, item)
+			keeper.WhitelistedPairs.Set(ctx, item)
 		}
 	}
 
 	for _, pr := range data.Rewards {
-		keeper.Rewards.Insert(ctx, pr.Id, pr)
+		keeper.Rewards.Set(ctx, pr.Id, pr)
 	}
 
 	// set last ID based on the last pair reward
@@ -97,20 +97,50 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	feederDelegations := []types.FeederDelegation{}
-	for _, kv := range keeper.FeederDelegations.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+	iterFeederDelegations, err := keeper.FeederDelegations.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating feeder delegations", "error", err)
+		return nil
+	}
+	kvFeederDelegations, err := iterFeederDelegations.KeyValues()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting feeder delegations key values", "error", err)
+		return nil
+	}
+	for _, kv := range kvFeederDelegations {
 		feederDelegations = append(feederDelegations, types.FeederDelegation{
 			FeederAddress:    kv.Value.String(),
 			ValidatorAddress: kv.Key.String(),
 		})
 	}
 
+	iterExchangeRates, err := keeper.ExchangeRates.Iterate(ctx, &collections.Range[asset.Pair]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating exchange rates", "error", err)
+		return nil
+	}
+	kvExchangeRates, err := iterExchangeRates.KeyValues()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting exchange rates key values", "error", err)
+		return nil
+	}
 	exchangeRates := []types.ExchangeRateTuple{}
-	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
+	for _, er := range kvExchangeRates {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: er.Key, ExchangeRate: er.Value.ExchangeRate})
 	}
 
+	iterMissCounters, err := keeper.MissCounters.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating miss counters", "error", err)
+		return nil
+	}
+	kvMissCounters, err := iterMissCounters.KeyValues()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting miss counters values", "error", err)
+		return nil
+	}
 	missCounters := []types.MissCounter{}
-	for _, mc := range keeper.MissCounters.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
+	for _, mc := range kvMissCounters {
 		missCounters = append(missCounters, types.MissCounter{
 			ValidatorAddress: mc.Key.String(),
 			MissCounter:      mc.Value,
@@ -118,16 +148,60 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	var pairs []asset.Pair
-	pairs = append(pairs, keeper.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys()...)
+	iterWhitelisterdPairs, err := keeper.WhitelistedPairs.Iterate(ctx, &collections.Range[asset.Pair]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating exchange rates", "error", err)
+		return nil
+	}
+	keysWhitelisterdPairs, err := iterWhitelisterdPairs.Keys()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting exchange rates key values", "error", err)
+		return nil
+	}
+
+	pairs = append(pairs, keysWhitelisterdPairs...)
+
+	iterPrevotes, err := keeper.Prevotes.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating prevotes", "error", err)
+		return nil
+	}
+	valuesPrevotes, err := iterPrevotes.Values()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting prevotes values", "error", err)
+		return nil
+	}
+
+	iterVotes, err := keeper.Votes.Iterate(ctx, &collections.Range[sdk.ValAddress]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating votes", "error", err)
+		return nil
+	}
+	valuesVotes, err := iterVotes.Values()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting votes values", "error", err)
+		return nil
+	}
+
+	iterRewards, err := keeper.Rewards.Iterate(ctx, &collections.Range[uint64]{})
+	if err != nil {
+		keeper.Logger(ctx).Error("failed iterating rewards", "error", err)
+		return nil
+	}
+	valuesRewards, err := iterRewards.Values()
+	if err != nil {
+		keeper.Logger(ctx).Error("failed getting rewards values", "error", err)
+		return nil
+	}
 
 	return types.NewGenesisState(
 		params,
 		exchangeRates,
 		feederDelegations,
 		missCounters,
-		keeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
-		keeper.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
+		valuesPrevotes,
+		valuesVotes,
 		pairs,
-		keeper.Rewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
+		valuesRewards,
 	)
 }

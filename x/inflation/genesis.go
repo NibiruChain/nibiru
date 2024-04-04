@@ -32,9 +32,11 @@ func InitGenesis(
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	period, _ := k.CurrentPeriod.Peek(ctx)
+	numSkippedEpochs, _ := k.NumSkippedEpochs.Peek(ctx)
 	return &types.GenesisState{
 		Params:        k.GetParams(ctx),
-		Period:        k.CurrentPeriod.Peek(ctx),
-		SkippedEpochs: k.NumSkippedEpochs.Peek(ctx),
+		Period:        period,
+		SkippedEpochs: numSkippedEpochs,
 	}
 }

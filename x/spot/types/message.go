@@ -2,6 +2,8 @@ package types
 
 import (
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -139,7 +141,7 @@ func (msg *MsgSwapAssets) ValidateBasic() error {
 		return ErrInvalidPoolId.Wrapf("pool id cannot be %d", msg.PoolId)
 	}
 
-	if msg.TokenIn.Amount.LTE(sdk.ZeroInt()) {
+	if msg.TokenIn.Amount.LTE(math.ZeroInt()) {
 		return ErrInvalidTokenIn.Wrapf("invalid argument %s", msg.TokenIn.String())
 	}
 
@@ -195,16 +197,16 @@ func (msg *MsgCreatePool) ValidateBasic() error {
 	}
 
 	for _, asset := range msg.PoolAssets {
-		if asset.Weight.LTE(sdk.ZeroInt()) {
+		if asset.Weight.LTE(sdkmath.ZeroInt()) {
 			return ErrInvalidTokenWeight.Wrapf("invalid token weight %d for denom %s", asset.Weight, asset.Token.Denom)
 		}
 	}
 
-	if msg.PoolParams.SwapFee.LT(sdk.ZeroDec()) || msg.PoolParams.SwapFee.GT(sdk.OneDec()) {
+	if msg.PoolParams.SwapFee.LT(math.LegacyZeroDec()) || msg.PoolParams.SwapFee.GT(math.LegacyOneDec()) {
 		return ErrInvalidSwapFee.Wrapf("invalid swap fee: %s", msg.PoolParams.SwapFee)
 	}
 
-	if msg.PoolParams.ExitFee.LT(sdk.ZeroDec()) || msg.PoolParams.ExitFee.GT(sdk.OneDec()) {
+	if msg.PoolParams.ExitFee.LT(math.LegacyZeroDec()) || msg.PoolParams.ExitFee.GT(math.LegacyOneDec()) {
 		return ErrInvalidExitFee.Wrapf("invalid exit fee: %s", msg.PoolParams.ExitFee)
 	}
 

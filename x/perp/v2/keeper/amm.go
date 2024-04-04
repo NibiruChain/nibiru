@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -93,7 +93,7 @@ func (k Keeper) GetMarketByPairAndVersion(ctx sdk.Context, pair asset.Pair, vers
 
 // SaveMarket saves the market by pair and version.
 func (k Keeper) SaveMarket(ctx sdk.Context, market types.Market) {
-	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+	k.Markets.Set(ctx, collections.Join(market.Pair, market.Version), market)
 }
 
 // GetAMM returns the amm with last version.
@@ -123,5 +123,5 @@ func (k Keeper) GetAMMByPairAndVersion(ctx sdk.Context, pair asset.Pair, version
 
 // SaveAMM saves the amm by pair and version.
 func (k Keeper) SaveAMM(ctx sdk.Context, amm types.AMM) {
-	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)
+	k.AMMs.Set(ctx, collections.Join(amm.Pair, amm.Version), amm)
 }

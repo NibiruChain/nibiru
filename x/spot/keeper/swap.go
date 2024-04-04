@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +88,7 @@ func (k Keeper) SwapExactAmountIn(
 	if err != nil {
 		return sdk.Coin{}, err
 	}
-	if tokenOut.Amount.LTE(sdk.ZeroInt()) {
+	if tokenOut.Amount.LTE(sdkmath.ZeroInt()) {
 		return sdk.Coin{}, errors.New("tokenOut amount must be greater than zero")
 	}
 

@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -16,13 +16,16 @@ import (
 // This method is invoked by the AfterEpochEnd hook.
 func (k Keeper) maybeUpdateDnREpoch(ctx sdk.Context, epochIdentifier string, number uint64) {
 	// if epoch name is empty, we just assume DnR is not enabled.
-	referenceEpochName := k.DnREpochName.GetOr(ctx, "")
+	referenceEpochName, err := k.DnREpochName.Get(ctx)
+	if err != nil {
+		referenceEpochName = ""
+	}
 	if referenceEpochName != epochIdentifier {
 		return
 	}
 	// kickstart new epoch
 	k.Logger(ctx).Info("updating dnr epoch", "epochIdentifier", epochIdentifier, "number", number)
-	err := k.StartNewEpoch(ctx, number)
+	err = k.StartNewEpoch(ctx, number)
 	if err != nil {
 		// in case of error we panic in this case, because state may have been updated
 		// in a corrupted way.
@@ -44,7 +47,7 @@ func (k Keeper) StartNewEpoch(ctx sdk.Context, identifier uint64) error {
 	if err != nil {
 		return err
 	}
-	k.EpochRebateAllocations.Insert(ctx, previousEpoch, types.DNRAllocation{
+	k.EpochRebateAllocations.Set(ctx, previousEpoch, types.DNRAllocation{
 		Epoch:  previousEpoch,
 		Amount: allocationBalance,
 	})
@@ -53,53 +56,66 @@ func (k Keeper) StartNewEpoch(ctx sdk.Context, identifier uint64) error {
 
 // IncreaseTraderVolume adds the volume to the user's volume for the current epoch.
 // It also increases the global volume for the current epoch.
-func (k Keeper) IncreaseTraderVolume(ctx sdk.Context, currentEpoch uint64, user sdk.AccAddress, volume math.Int) {
-	currentVolume := k.TraderVolumes.GetOr(ctx, collections.Join(user, currentEpoch), math.ZeroInt())
+func (k Keeper) IncreaseTraderVolume(ctx sdk.Context, currentEpoch uint64, user sdk.AccAddress, volume sdkmath.Int) {
+	currentVolume, err := k.TraderVolumes.Get(ctx, collections.Join(user, currentEpoch))
+	if err != nil {
+		currentVolume = sdkmath.ZeroInt()
+	}
 	newVolume := currentVolume.Add(volume)
-	k.TraderVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
-	k.GlobalVolumes.Insert(ctx, currentEpoch, k.GlobalVolumes.GetOr(ctx, currentEpoch, math.ZeroInt()).Add(volume))
+	k.TraderVolumes.Set(ctx, collections.Join(user, currentEpoch), newVolume)
+	globalVolume, err := k.GlobalVolumes.Get(ctx, currentEpoch)
+	if err != nil {
+		globalVolume = sdkmath.ZeroInt()
+	}
+	k.GlobalVolumes.Set(ctx, currentEpoch, globalVolume.Add(volume))
 }
 
 // GetTraderVolumeLastEpoch returns the user's volume for the last epoch.
 // Returns zero if the user has no volume for the last epoch.
-func (k Keeper) GetTraderVolumeLastEpoch(ctx sdk.Context, currentEpoch uint64, user sdk.AccAddress) math.Int {
+func (k Keeper) GetTraderVolumeLastEpoch(ctx sdk.Context, currentEpoch uint64, user sdk.AccAddress) sdkmath.Int {
 	// if it's the first epoch, we do not have any user volume.
 	if currentEpoch == 0 {
-		return math.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 	// return the user's volume for the last epoch, or zero.
-	return k.TraderVolumes.GetOr(ctx, collections.Join(user, currentEpoch-1), math.ZeroInt())
+	traderVolumes, err := k.TraderVolumes.Get(ctx, collections.Join(user, currentEpoch-1))
+	if err != nil {
+		traderVolumes = sdkmath.ZeroInt()
+	}
+	return traderVolumes
 }
 
 // GetTraderDiscount will check if the trader has a custom discount for the given volume.
 // If it does not have a custom discount, it will return the global discount for the given volume.
 // The discount is the nearest left entry of the trader volume.
-func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume math.Int) (math.LegacyDec, bool) {
+func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume sdkmath.Int) (sdkmath.LegacyDec, bool) {
 	// we try to see if the trader has a custom discount.
-	customDiscountRng := collections.PairRange[sdk.AccAddress, math.Int]{}.
-		Prefix(trader).
+	customDiscountRng := collections.NewPrefixedPairRange[sdk.AccAddress, sdkmath.Int](trader).
 		EndInclusive(volume).
 		Descending()
 
-	customDiscount := k.TraderDiscounts.Iterate(ctx, customDiscountRng)
+	customDiscount, _ := k.TraderDiscounts.Iterate(ctx, customDiscountRng)
 	defer customDiscount.Close()
 
 	if customDiscount.Valid() {
-		return customDiscount.Value(), true
+		value, _ := customDiscount.Value()
+		return value, true
 	}
 
 	// if it does not have a custom discount we try with global ones
-	globalDiscountRng := collections.Range[math.Int]{}.
+	globalDiscount := collections.Range[sdkmath.Int]{}
+	globalDiscountRng := globalDiscount.
 		EndInclusive(volume).
 		Descending()
 
-	globalDiscounts := k.GlobalDiscounts.Iterate(ctx, globalDiscountRng)
+	globalDiscounts, _ := k.GlobalDiscounts.Iterate(ctx, globalDiscountRng)
 	defer globalDiscounts.Close()
 
 	if globalDiscounts.Valid() {
-		return globalDiscounts.Value(), true
+		value, _ := globalDiscounts.Value()
+		return value, true
 	}
-	return math.LegacyZeroDec(), false
+	return sdkmath.LegacyZeroDec(), false
 }
 
 // calculateDiscount applies the discount to the given exchange fee ratio.
@@ -109,9 +125,9 @@ func (k Keeper) calculateDiscount(
 	ctx sdk.Context,
 	_ asset.Pair,
 	trader sdk.AccAddress,
-	positionNotional math.LegacyDec,
-	feeRatio sdk.Dec,
-) (sdk.Dec, error) {
+	positionNotional sdkmath.LegacyDec,
+	feeRatio sdkmath.LegacyDec,
+) (sdkmath.LegacyDec, error) {
 	// update user volume
 	dnrEpoch, err := k.DnREpoch.Get(ctx)
 	if err != nil {
@@ -172,21 +188,24 @@ func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.Acc
 
 	// garbage collect user volume. This ensures state is not bloated,
 	// and that the user cannot claim from the same allocation twice.
-	return distrCoins, k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
+	return distrCoins, k.TraderVolumes.Remove(ctx, collections.Join(addr, epoch))
 }
 
 // computeUserWeight computes the user's weight for the given epoch.
-func (k Keeper) computeUserWeight(ctx sdk.Context, addr sdk.AccAddress, epoch uint64) (math.LegacyDec, error) {
+func (k Keeper) computeUserWeight(ctx sdk.Context, addr sdk.AccAddress, epoch uint64) (sdkmath.LegacyDec, error) {
 	// get user volume for the epoch
-	userVolume := k.TraderVolumes.GetOr(ctx, collections.Join(addr, epoch), math.ZeroInt())
+	userVolume, err := k.TraderVolumes.Get(ctx, collections.Join(addr, epoch))
+	if err != nil {
+		userVolume = sdkmath.ZeroInt()
+	}
 	if userVolume.IsZero() {
-		return math.LegacyZeroDec(), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 
 	// calculate the user's share
 	globalVolume, err := k.GlobalVolumes.Get(ctx, epoch)
 	if err != nil {
-		return math.LegacyDec{}, err
+		return sdkmath.LegacyDec{}, err
 	}
 	weight := userVolume.ToLegacyDec().Quo(globalVolume.ToLegacyDec())
 	return weight, nil

@@ -3,11 +3,11 @@ package simulation
 // DONTCOVER
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
@@ -17,14 +17,14 @@ const (
 	DeveloperFeeShare = "developer_fee_share"
 )
 
-func GenDeveloperFeeShare(r *rand.Rand) sdk.Dec {
-	return sdk.NewDecWithPrec(int64(r.Intn(100)), 2)
+func GenDeveloperFeeShare(r *rand.Rand) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDecWithPrec(int64(r.Intn(100)), 2)
 }
 
 func RandomizedGenState(simState *module.SimulationState) {
-	var developerFeeShare sdk.Dec
+	var developerFeeShare sdkmath.LegacyDec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, DeveloperFeeShare, &developerFeeShare, simState.Rand,
+		DeveloperFeeShare, &developerFeeShare, simState.Rand,
 		func(r *rand.Rand) { developerFeeShare = GenDeveloperFeeShare(r) },
 	)
 

@@ -67,8 +67,8 @@ func (k sudoExtension) WithdrawFromPerpFund(
 
 type ArgsCreateMarket struct {
 	Pair            asset.Pair
-	PriceMultiplier sdk.Dec
-	SqrtDepth       sdk.Dec
+	PriceMultiplier sdkmath.LegacyDec
+	SqrtDepth       sdkmath.LegacyDec
 	Market          *types.Market // pointer makes it optional
 	// EnableMarket: Optionally enable the default market without explicitly passing
 	// in each field as an argument. If 'Market' is present, this field is ignored.
@@ -100,7 +100,10 @@ func (k sudoExtension) CreateMarket(
 		return err
 	}
 
-	lastVersion := k.MarketLastVersion.GetOr(ctx, pair, types.MarketLastVersion{Version: 0})
+	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
+	if err != nil {
+		lastVersion = types.MarketLastVersion{Version: 0}
+	}
 	lastVersion.Version += 1
 	market.Version = lastVersion.Version
 
@@ -112,8 +115,8 @@ func (k sudoExtension) CreateMarket(
 		QuoteReserve:    quoteReserve,
 		SqrtDepth:       sqrtDepth,
 		PriceMultiplier: args.PriceMultiplier,
-		TotalLong:       sdk.ZeroDec(),
-		TotalShort:      sdk.ZeroDec(),
+		TotalLong:       sdkmath.LegacyZeroDec(),
+		TotalShort:      sdkmath.LegacyZeroDec(),
 	}
 	if err := amm.Validate(); err != nil {
 		return err
@@ -121,7 +124,7 @@ func (k sudoExtension) CreateMarket(
 
 	k.SaveMarket(ctx, market)
 	k.SaveAMM(ctx, amm)
-	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
+	k.MarketLastVersion.Set(ctx, pair, lastVersion)
 
 	return nil
 }
@@ -192,7 +195,7 @@ func (k sudoExtension) UnsafeChangeCollateralDenom(
 func (k sudoExtension) ShiftPegMultiplier(
 	ctx sdk.Context,
 	pair asset.Pair,
-	newPriceMultiplier sdk.Dec,
+	newPriceMultiplier sdkmath.LegacyDec,
 	sender sdk.AccAddress,
 ) error {
 	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {

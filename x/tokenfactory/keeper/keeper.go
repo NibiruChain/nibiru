@@ -2,14 +2,15 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -34,29 +35,38 @@ type Keeper struct {
 
 // NewKeeper: creates a Keeper instance for the module.
 func NewKeeper(
-	storeKey storetypes.StoreKey,
+	storeKey *storetypes.KVStoreKey,
 	cdc codec.BinaryCodec,
 	bk tftypes.BankKeeper,
 	ak tftypes.AccountKeeper,
 	communityPoolKeeper tftypes.CommunityPoolKeeper,
 	authority string,
 ) Keeper {
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return Keeper{
 		storeKey: storeKey,
 		Store: StoreAPI{
 			Denoms: NewTFDenomStore(storeKey, cdc),
 			ModuleParams: collections.NewItem(
-				storeKey, tftypes.KeyPrefixModuleParams,
-				collections.ProtoValueEncoder[tftypes.ModuleParams](cdc),
+				sb,
+				collections.NewPrefix(int(tftypes.KeyPrefixModuleParams)),
+				storeKey.String(),
+				codec.CollValue[tftypes.ModuleParams](cdc),
 			),
 			creator: collections.NewKeySet[string](
-				storeKey, tftypes.KeyPrefixCreator,
-				collections.StringKeyEncoder,
+				sb,
+				collections.NewPrefix(int(tftypes.KeyPrefixCreator)),
+				storeKey.String(),
+				collections.StringKey,
 			),
 			denomAdmins: collections.NewMap[storePKType, tftypes.DenomAuthorityMetadata](
-				storeKey, tftypes.KeyPrefixDenomAdmin,
-				collections.StringKeyEncoder,
-				collections.ProtoValueEncoder[tftypes.DenomAuthorityMetadata](cdc),
+				sb,
+				collections.NewPrefix(int(tftypes.KeyPrefixDenomAdmin)),
+				storeKey.String(),
+				collections.StringKey,
+				codec.CollValue[tftypes.DenomAuthorityMetadata](cdc),
 			),
 			bankKeeper: bk,
 		},

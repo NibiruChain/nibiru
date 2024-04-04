@@ -40,7 +40,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			EpochStartTime: epochInfo.CurrentEpochStartTime,
 		})
 
-		k.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
+		k.Epochs.Set(ctx, epochInfo.Identifier, epochInfo)
 		k.BeforeEpochStart(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 
 		return false

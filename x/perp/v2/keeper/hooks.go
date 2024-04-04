@@ -1,9 +1,10 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"time"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,7 +19,18 @@ func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, number uint64) {
 	k.maybeUpdateDnREpoch(ctx, epochIdentifier, number)
-	for _, market := range k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
+	iter, err := k.Markets.Iterate(ctx, &collections.Range[collections.Pair[asset.Pair, uint64]]{})
+	if err != nil {
+		k.Logger(ctx).Error("failed iterating markets", "error", err)
+		return
+	}
+	value, err := iter.Values()
+	if err != nil {
+		k.Logger(ctx).Error("failed getting markets values", "error", err)
+		return
+	}
+
+	for _, market := range value {
 		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
 			return
 		}
@@ -33,7 +45,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, number ui
 			continue
 		}
 
-		markTwap, err := k.CalcTwap(ctx, market.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
+		markTwap, err := k.CalcTwap(ctx, market.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdkmath.LegacyZeroDec(), market.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
 			continue

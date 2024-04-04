@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,10 +13,10 @@ func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddre
 	return Position{
 		TraderAddress:                   traderAddr.String(),
 		Pair:                            tokenPair,
-		Size_:                           sdk.ZeroDec(),
-		Margin:                          sdk.ZeroDec(),
-		OpenNotional:                    sdk.ZeroDec(),
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+		Size_:                           sdkmath.LegacyZeroDec(),
+		Margin:                          sdkmath.LegacyZeroDec(),
+		OpenNotional:                    sdkmath.LegacyZeroDec(),
+		LatestCumulativePremiumFraction: sdkmath.LegacyZeroDec(),
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
 }
@@ -58,26 +59,26 @@ func PositionsAreEqual(expected, actual *Position) error {
 type PositionResp struct {
 	Position Position
 	// The amount of quote assets exchanged.
-	ExchangedNotionalValue sdk.Dec
+	ExchangedNotionalValue sdkmath.LegacyDec
 	// The amount of base assets exchanged. Signed, positive represents long and negative represents short from the user's perspective.
-	ExchangedPositionSize sdk.Dec
+	ExchangedPositionSize sdkmath.LegacyDec
 	// The amount of bad debt accrued during this position change.
 	// Measured in absolute value of quote units.
 	// If greater than zero, then the position change event will likely fail.
-	BadDebt sdk.Dec
+	BadDebt sdkmath.LegacyDec
 	// The funding payment applied on this position change.
-	FundingPayment sdk.Dec
+	FundingPayment sdkmath.LegacyDec
 	// The amount of PnL realized on this position changed, measured in quote
 	// units.
-	RealizedPnl sdk.Dec
+	RealizedPnl sdkmath.LegacyDec
 	// The unrealized PnL in the position after the position change.
-	UnrealizedPnlAfter sdk.Dec
+	UnrealizedPnlAfter sdkmath.LegacyDec
 	// The amount of margin the trader has to give to the vault.
 	// A negative value means the vault pays the trader.
-	MarginToVault sdk.Dec
+	MarginToVault sdkmath.LegacyDec
 	// The position's notional value after the position change, measured in quote
 	// units.
-	PositionNotional sdk.Dec
+	PositionNotional sdkmath.LegacyDec
 }
 
 func (m *Position) Validate() error {
@@ -118,22 +119,22 @@ func (position *Position) WithPair(value asset.Pair) *Position {
 	return position
 }
 
-func (position *Position) WithSize_(value sdk.Dec) *Position {
+func (position *Position) WithSize_(value sdkmath.LegacyDec) *Position {
 	position.Size_ = value
 	return position
 }
 
-func (position *Position) WithMargin(value sdk.Dec) *Position {
+func (position *Position) WithMargin(value sdkmath.LegacyDec) *Position {
 	position.Margin = value
 	return position
 }
 
-func (position *Position) WithOpenNotional(value sdk.Dec) *Position {
+func (position *Position) WithOpenNotional(value sdkmath.LegacyDec) *Position {
 	position.OpenNotional = value
 	return position
 }
 
-func (position *Position) WithLatestCumulativePremiumFraction(value sdk.Dec) *Position {
+func (position *Position) WithLatestCumulativePremiumFraction(value sdkmath.LegacyDec) *Position {
 	position.LatestCumulativePremiumFraction = value
 	return position
 }

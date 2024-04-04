@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,7 +89,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			panic(err)
 		}
 		// compute not bonded balance
-		notBondedTokens := sdk.ZeroInt()
+		notBondedTokens := sdkmath.ZeroInt()
 		for _, val := range stakingState.Validators {
 			if val.Status != stakingtypes.Unbonded {
 				continue
@@ -151,11 +151,11 @@ func AppStateRandomizedFn(
 	// number of bonded accounts
 	var initialStake, numInitiallyBonded int64
 	appParams.GetOrGenerate(
-		cdc, sims.StakePerAccount, &initialStake, r,
+		sims.StakePerAccount, &initialStake, r,
 		func(r *rand.Rand) { initialStake = r.Int63n(1e12) },
 	)
 	appParams.GetOrGenerate(
-		cdc, sims.InitiallyBondedValidators, &numInitiallyBonded, r,
+		sims.InitiallyBondedValidators, &numInitiallyBonded, r,
 		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(300)) },
 	)
 
@@ -178,7 +178,7 @@ func AppStateRandomizedFn(
 		Rand:         r,
 		GenState:     genesisState,
 		Accounts:     accs,
-		InitialStake: math.NewIntFromUint64(uint64(initialStake)),
+		InitialStake: sdkmath.NewIntFromUint64(uint64(initialStake)),
 		NumBonded:    numInitiallyBonded,
 		GenTimestamp: genesisTimestamp,
 	}

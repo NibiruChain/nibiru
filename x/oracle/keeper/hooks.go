@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -44,7 +45,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 
 		balances := h.bankKeeper.GetAllBalances(ctx, account.GetAddress())
 		for _, balance := range balances {
-			oracleRewards := sdk.NewDecFromInt(balance.Amount).Mul(params.ValidatorFeeRatio).TruncateInt()
+			oracleRewards := sdkmath.LegacyNewDecFromInt(balance.Amount).Mul(params.ValidatorFeeRatio).TruncateInt()
 			remainder := balance.Amount.Sub(oracleRewards)
 
 			if !oracleRewards.IsZero() {

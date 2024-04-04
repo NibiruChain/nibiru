@@ -1,19 +1,20 @@
 package testutil
 
 import (
+	storemetrics "cosmossdk.io/store/metrics"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	tmdb "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"cosmossdk.io/log"
+	dbm "github.com/cosmos/cosmos-db"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -53,9 +54,9 @@ func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddr
 }
 
 func BlankContext(storeKeyName string) sdk.Context {
-	storeKey := sdk.NewKVStoreKey(storeKeyName)
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
+	storeKey := types.NewKVStoreKey(storeKeyName)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), storemetrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, types.StoreTypeIAVL, db)
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 	return ctx

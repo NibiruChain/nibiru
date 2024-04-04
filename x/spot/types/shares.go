@@ -26,18 +26,19 @@ ret:
 func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	numShares sdkmath.Int, remCoins sdk.Coins, err error,
 ) {
-	coinShareRatios := make([]sdk.Dec, len(tokensIn))
-	minShareRatio := sdk.MaxSortableDec
-	maxShareRatio := sdk.ZeroDec()
+	coinShareRatios := make([]sdkmath.LegacyDec, len(tokensIn))
+	minShareRatio := sdkmath.LegacyMaxSortableDec
+	maxShareRatio := sdkmath.LegacyZeroDec()
 
 	poolLiquidity := pool.PoolBalances()
 	if len(tokensIn) == 1 {
 		// From balancer whitepaper, for 2 assets with the same weight, the shares issued are:
 		// P_{supply} * (sqrt(1+((1-f/2) * x_{in})/X)-1)
 
-		one := sdk.OneDec()
+		one := sdkmath.LegacyOneDec()
 
-		joinShare := sdk.NewDecFromInt(tokensIn[0].Amount).Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
+		joinShare := sdkmath.LegacyNewDecFromInt(tokensIn[0].Amount).Mul(
+			one.Sub(pool.PoolParams.SwapFee.Quo(sdkmath.LegacyNewDec(2)))).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
 		).Add(one)
 
@@ -51,7 +52,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	}
 
 	for i, coin := range tokensIn {
-		shareRatio := sdk.NewDecFromInt(coin.Amount).QuoInt(
+		shareRatio := sdkmath.LegacyNewDecFromInt(coin.Amount).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(coin.Denom),
 		)
 		if shareRatio.LT(minShareRatio) {
@@ -63,12 +64,12 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 		coinShareRatios[i] = shareRatio
 	}
 
-	if minShareRatio.Equal(sdk.MaxSortableDec) {
-		return sdk.ZeroInt(), sdk.NewCoins(), errors.New("unexpected error in balancer maximalExactRatioJoin")
+	if minShareRatio.Equal(sdkmath.LegacyMaxSortableDec) {
+		return sdkmath.ZeroInt(), sdk.NewCoins(), errors.New("unexpected error in balancer maximalExactRatioJoin")
 	}
 
 	if minShareRatio.IsZero() {
-		return sdk.ZeroInt(), tokensIn, nil
+		return sdkmath.ZeroInt(), tokensIn, nil
 	}
 
 	numShares = minShareRatio.MulInt(pool.TotalShares.Amount).TruncateInt()
@@ -121,7 +122,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	if err != nil {
 		return
 	}
-	D0 := sdk.NewInt(int64(D.Uint64()))
+	D0 := sdkmath.NewInt(int64(D.Uint64()))
 
 	var newPoolAssets []PoolAsset
 
@@ -141,7 +142,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	if err != nil {
 		return
 	}
-	D1 := sdk.NewInt(int64(newD.Uint64()))
+	D1 := sdkmath.NewInt(int64(newD.Uint64()))
 	if D1.LT(D0) {
 		// Should not happen
 		err = ErrInvariantLowerAfterJoining
@@ -175,11 +176,11 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdkmath.Int) (
 		return nil, nil, errors.New("num shares in must be greater than zero")
 	}
 
-	shareRatio := sdk.NewDecFromInt(numSharesIn).QuoInt(pool.TotalShares.Amount)
+	shareRatio := sdkmath.LegacyNewDecFromInt(numSharesIn).QuoInt(pool.TotalShares.Amount)
 	if shareRatio.IsZero() {
 		return nil, nil, errors.New("share ratio must be greater than zero")
 	}
-	if shareRatio.GT(sdk.OneDec()) {
+	if shareRatio.GT(sdkmath.LegacyOneDec()) {
 		return nil, nil, errors.New("share ratio cannot be greater than one")
 	}
 
@@ -190,7 +191,7 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdkmath.Int) (
 		// tokenOut = shareRatio * poolTokenAmt * (1 - exitFee)
 		tokenAmount := shareRatio.MulInt(coin.Amount)
 		tokenOutAmt := tokenAmount.Mul(
-			sdk.OneDec().Sub(pool.PoolParams.ExitFee),
+			sdkmath.LegacyOneDec().Sub(pool.PoolParams.ExitFee),
 		).TruncateInt()
 		tokensOut[i] = sdk.NewCoin(coin.Denom, tokenOutAmt)
 		fees[i] = sdk.NewCoin(coin.Denom, tokenAmount.TruncateInt().Sub(tokenOutAmt))
@@ -205,10 +206,12 @@ Compute the minimum number of shares a user need to provide to get at least one 
 func (pool Pool) MinSharesInForTokensOut() (minShares sdkmath.Int) {
 	poolLiquidity := pool.PoolBalances()
 
-	minShares = sdk.ZeroInt()
+	minShares = sdkmath.ZeroInt()
 
 	for _, coin := range poolLiquidity {
-		shareRatio := sdk.MustNewDecFromStr("2").Quo(sdk.NewDecFromInt(coin.Amount).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee)))
+		shareRatio := sdkmath.LegacyMustNewDecFromStr("2").Quo(
+			sdkmath.LegacyNewDecFromInt(coin.Amount).Quo(sdkmath.LegacyOneDec().Sub(pool.PoolParams.ExitFee)),
+		)
 
 		shares := shareRatio.MulInt(pool.TotalShares.Amount).TruncateInt()
 

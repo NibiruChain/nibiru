@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	"github.com/cometbft/cometbft/abci/types"
@@ -60,7 +61,7 @@ type execTxOptions struct {
 }
 
 var DEFAULT_TX_OPTIONS = execTxOptions{
-	Fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000))),
+	Fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(1000))),
 	Gas:              2000000,
 	SkipConfirmation: true,
 	BroadcastMode:    flags.BroadcastSync,
@@ -140,7 +141,7 @@ func (chain *Network) BroadcastMsgs(
 		return nil, err
 	}
 
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1000))))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdkmath.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
 
 	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
@@ -157,7 +158,7 @@ func (chain *Network) BroadcastMsgs(
 		WithAccountNumber(acc.GetAccountNumber()).
 		WithSequence(acc.GetSequence())
 
-	err = tx.Sign(txFactory, info.Name, txBuilder, true)
+	err = tx.Sign(context.Background(), txFactory, info.Name, txBuilder, true)
 	if err != nil {
 		return nil, err
 	}

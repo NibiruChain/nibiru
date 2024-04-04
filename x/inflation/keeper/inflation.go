@@ -127,11 +127,11 @@ func (k Keeper) AllocatePolynomialInflation(
 func (k Keeper) GetProportions(
 	_ sdk.Context,
 	coin sdk.Coin,
-	proportion sdk.Dec,
+	proportion sdkmath.LegacyDec,
 ) sdk.Coin {
 	return sdk.Coin{
 		Denom:  coin.Denom,
-		Amount: sdk.NewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
+		Amount: sdkmath.LegacyNewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
 	}
 }
 
@@ -142,30 +142,30 @@ func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.
 }
 
 // GetInflationRate returns the inflation rate for the current period.
-func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
+func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdkmath.LegacyDec {
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	if epochMintProvision.IsZero() {
-		return sdk.ZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, mintDenom)
 	if circulatingSupply.IsZero() {
-		return sdk.ZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
-	circulatingSupplyToDec := sdk.NewDecFromInt(circulatingSupply)
+	circulatingSupplyToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
 	return epochMintProvision.
 		MulInt64(int64(k.GetEpochsPerPeriod(ctx))).
 		MulInt64(int64(k.GetPeriodsPerYear(ctx))).
 		Quo(circulatingSupplyToDec).
-		Mul(sdk.NewDec(100))
+		Mul(sdkmath.LegacyNewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage
 // and calculate EpochMintProvision
-func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdk.Dec {
-	peek := k.CurrentPeriod.Peek(ctx)
+func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdkmath.LegacyDec {
+	peek, _ := k.CurrentPeriod.Peek(ctx)
 
 	return types.CalculateEpochMintProvision(
 		k.GetParams(ctx),

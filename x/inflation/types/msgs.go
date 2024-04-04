@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,11 +59,11 @@ func (m MsgEditInflationParams) ValidateBasic() error {
 			return fmt.Errorf("inflation distribution strategic reserves should not be nil")
 		}
 
-		sum := sdk.NewDec(0)
+		sum := sdkmath.LegacyNewDec(0)
 		sum = sum.Add(m.InflationDistribution.CommunityPool)
 		sum = sum.Add(m.InflationDistribution.StakingRewards)
 		sum = sum.Add(m.InflationDistribution.StrategicReserves)
-		if !sum.Equal(sdk.OneDec()) {
+		if !sum.Equal(sdkmath.LegacyOneDec()) {
 			return fmt.Errorf("inflation distribution sum should be 1, got %s", sum)
 		}
 	}

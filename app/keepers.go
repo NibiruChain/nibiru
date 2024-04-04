@@ -1,6 +1,8 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"path/filepath"
 	"strings"
 
@@ -8,15 +10,21 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+
+	"cosmossdk.io/store/types"
+	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/evidence"
+	evidencekeeper "cosmossdk.io/x/evidence/keeper"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	"cosmossdk.io/x/feegrant"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
+	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -29,9 +37,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -40,12 +45,6 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -54,9 +53,11 @@ import (
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	"github.com/cosmos/ibc-go/modules/capability"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -68,29 +69,27 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"cosmossdk.io/x/upgrade"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	// ---------------------------------------------------------------
 	// IBC imports
 
-	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v8/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v8/modules/core/02-client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
+	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibcmock "github.com/cosmos/ibc-go/v8/testing/mock"
 	"github.com/spf13/cast"
 
 	// ---------------------------------------------------------------
@@ -190,7 +189,7 @@ func initStoreKeys() (
 	tkeys map[string]*types.TransientStoreKey,
 	memKeys map[string]*types.MemoryStoreKey,
 ) {
-	keys = sdk.NewKVStoreKeys(
+	keys = storetypes.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		stakingtypes.StoreKey,
@@ -222,8 +221,8 @@ func initStoreKeys() (
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
 	)
-	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
+	memKeys = storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
 
@@ -245,8 +244,13 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], govModuleAddr)
-	bApp.SetParamStore(&app.ConsensusParamsKeeper)
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]),
+		govModuleAddr,
+		runtime.EventService{},
+	)
+	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
 	   This allows authentication of object-capability permissions for each of
@@ -271,29 +275,33 @@ func (app *NibiruApp) InitKeepers(
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
-		keys[authtypes.StoreKey],
+		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		govModuleAddr,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
-		keys[banktypes.StoreKey],
+		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		app.AccountKeeper,
 		BlockedAddresses(),
 		govModuleAddr,
+		bApp.Logger(),
 	)
 	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
-		keys[stakingtypes.StoreKey],
+		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		govModuleAddr,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
-		keys[distrtypes.StoreKey],
+		runtime.NewKVStoreService(keys[distrtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
@@ -304,14 +312,18 @@ func (app *NibiruApp) InitKeepers(
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
 	app.crisisKeeper = *crisiskeeper.NewKeeper(
 		appCodec,
-		keys[crisistypes.StoreKey],
+		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
 		invCheckPeriod,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
 		govModuleAddr,
+		app.AccountKeeper.AddressCodec(),
 	)
-
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[feegrant.StoreKey]),
+		app.AccountKeeper,
+	)
 
 	// get skipUpgradeHeights from the app options
 	skipUpgradeHeights := map[int64]bool{}
@@ -323,7 +335,7 @@ func (app *NibiruApp) InitKeepers(
 	/*upgradeKeeper must be created before ibcKeeper. */
 	app.upgradeKeeper = *upgradekeeper.NewKeeper(
 		skipUpgradeHeights,
-		keys[upgradetypes.StoreKey],
+		runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
 		appCodec,
 		homePath,
 		app.BaseApp,
@@ -335,7 +347,7 @@ func (app *NibiruApp) InitKeepers(
 	app.slashingKeeper = slashingkeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
-		keys[slashingtypes.StoreKey],
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
 		app.stakingKeeper,
 		govModuleAddr,
 	)
@@ -345,7 +357,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.authzKeeper = authzkeeper.NewKeeper(
-		keys[authzkeeper.StoreKey],
+		runtime.NewKVStoreService(keys[authzkeeper.StoreKey]),
 		appCodec,
 		app.BaseApp.MsgServiceRouter(),
 		app.AccountKeeper,
@@ -354,15 +366,25 @@ func (app *NibiruApp) InitKeepers(
 	// ---------------------------------- Nibiru Chain x/ keepers
 
 	app.SpotKeeper = spotkeeper.NewKeeper(
-		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
+		appCodec,
+		keys[spottypes.StoreKey],
+		app.GetSubspace(spottypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+	)
 
 	app.SudoKeeper = keeper.NewKeeper(
 		appCodec, keys[sudotypes.StoreKey],
 	)
 
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper,
+	app.OracleKeeper = oraclekeeper.NewKeeper(
+		appCodec,
+		keys[oracletypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		app.stakingKeeper,
 		app.SudoKeeper,
 		distrtypes.ModuleName,
 	)
@@ -372,14 +394,25 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.PerpKeeperV2 = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
+		appCodec,
+		keys[perptypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.OracleKeeper,
+		app.EpochsKeeper,
 		app.SudoKeeper,
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
-		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
+		appCodec,
+		keys[inflationtypes.StoreKey],
+		app.GetSubspace(inflationtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		app.stakingKeeper,
+		app.SudoKeeper,
+		authtypes.FeeCollectorName,
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -399,6 +432,7 @@ func (app *NibiruApp) InitKeepers(
 		app.stakingKeeper,
 		app.upgradeKeeper,
 		app.ScopedIBCKeeper,
+		govModuleAddr,
 	)
 
 	// IBC Fee Module keeper
@@ -406,7 +440,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[ibcfeetypes.StoreKey],
 		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 	)
@@ -417,10 +451,11 @@ func (app *NibiruApp) InitKeepers(
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		/* ibctransfertypes.PortKeeper */ app.ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ScopedTransferKeeper,
+		govModuleAddr,
 	)
 
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
@@ -442,14 +477,14 @@ func (app *NibiruApp) InitKeepers(
 	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasmtypes.StoreKey],
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.ibcFeeKeeper, // ISC4 Wrapper: fee IBC middleware
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		app.ScopedWasmKeeper,
 		app.ibcTransferKeeper,
 		app.MsgServiceRouter(),
@@ -486,8 +521,12 @@ func (app *NibiruApp) InitKeepers(
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
 	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], app.stakingKeeper,
+		appCodec,
+		runtime.NewKVStoreService(keys[evidencetypes.StoreKey]),
+		app.stakingKeeper,
 		app.slashingKeeper,
+		app.AccountKeeper.AddressCodec(),
+		runtime.ProvideCometInfoService(),
 	)
 
 	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
@@ -541,16 +580,19 @@ func (app *NibiruApp) InitKeepers(
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		// AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
+		// TODO: find NewSoftwareUpgradeProposalHandler
+		//AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
 	govConfig := govtypes.DefaultConfig()
+
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
-		keys[govtypes.StoreKey],
+		runtime.NewKVStoreService(keys[govtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
+		app.DistrKeeper,
 		app.MsgServiceRouter(),
 		govConfig,
 		govModuleAddr,
@@ -571,21 +613,23 @@ func (app *NibiruApp) initAppModules(
 	appCodec := app.appCodec
 
 	return []module.AppModule{
-		// core modules
 		genutil.NewAppModule(
-			app.AccountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx,
+			app.AccountKeeper,
+			app.stakingKeeper,
+			app,
 			encodingConfig.TxConfig,
 		),
+		// core modules
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
-		upgrade.NewAppModule(&app.upgradeKeeper),
+		upgrade.NewAppModule(&app.upgradeKeeper, app.AccountKeeper.AddressCodec()),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
@@ -705,8 +749,9 @@ func (app *NibiruApp) initModuleManager(
 	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
+	appModules := app.initAppModules(encodingConfig, skipGenesisInvariants)
 	app.ModuleManager = module.NewManager(
-		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
+		appModules...,
 	)
 
 	orderedModules := orderedModuleNames()
@@ -755,13 +800,14 @@ func ModuleBasicManager() module.BasicManager {
 		capability.AppModuleBasic{},
 		StakingModule{},
 		distr.AppModuleBasic{},
-		NewGovModuleBasic(
-			paramsclient.ProposalHandler,
-			upgradeclient.LegacyProposalHandler,
-			upgradeclient.LegacyCancelProposalHandler,
-			ibcclientclient.UpdateClientProposalHandler,
-			ibcclientclient.UpgradeProposalHandler,
-		),
+		// TODO: implement legacy proposal handlers
+		//NewGovModuleBasic(
+		//	paramsclient.ProposalHandler,
+		//	upgradeclient.LegacyProposalHandler,
+		//	upgradeclient.LegacyCancelProposalHandler,
+		//	ibcclientclient.UpdateClientProposalHandler,
+		//	ibcclientclient.UpgradeProposalHandler,
+		//),
 		params.AppModuleBasic{},
 		CrisisModule{},
 		slashing.AppModuleBasic{},

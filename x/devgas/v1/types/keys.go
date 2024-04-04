@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/NibiruChain/collections"
-)
-
 // constants
 const (
 	// module name
@@ -19,7 +15,7 @@ const (
 // KVStore key and mutli-index prefixes
 // prefix bytes for the fees persistent store
 const (
-	KeyPrefixFeeShare collections.Namespace = iota + 1
+	KeyPrefixFeeShare uint8 = iota + 1
 	KeyPrefixDeployer
 	KeyPrefixWithdrawer
 	KeyPrefixParams

@@ -44,19 +44,20 @@ message Market {
   // whether or not the market is enabled
   bool enabled = 2;
 
-  // the version of the Market, only one market can exist per pair, when one is closed it cannot be reactivated,
-  // so a new market must be created, this is the version of the market
+  // the version of the Market, only one market can exist per pair, when one is
+  // closed it cannot be reactivated, so a new market must be created, this is
+  // the version of the market
   uint64 version = 14;
 
   // the minimum margin ratio which a user must maintain on this market
   string maintenance_margin_ratio = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the maximum leverage a user is able to be taken on this market
   string max_leverage = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -65,20 +66,20 @@ message Market {
   // A premium fraction is the difference between mark and index, divided by the
   // number of payments per day. (mark - index) / # payments in a day
   string latest_cumulative_premium_fraction = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the percentage of the notional given to the exchange when trading
   string exchange_fee_ratio = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the percentage of the notional transferred to the ecosystem fund when
   // trading
   string ecosystem_fund_fee_ratio = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -86,14 +87,14 @@ message Market {
   // given to out as a reward. Half of the liquidation fee is given to the
   // liquidator, and the other half is given to the ecosystem fund.
   string liquidation_fee_ratio = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the portion of the position size we try to liquidate if the available
   // margin is higher than liquidation fee
   string partial_liquidation_ratio = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -112,7 +113,7 @@ message Market {
   // amount of funding that can be paid out per epoch as a percentage of the
   // position size
   string max_funding_rate = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.stdduration) = true,
     (gogoproto.nullable) = false
   ];
@@ -140,49 +141,50 @@ message AMM {
     (gogoproto.nullable) = false
   ];
 
-  // the version of the AMM, only one AMM can exist per pair, when one is closed it cannot be reactivated,
-  // so a new AMM must be created, this is the version of the AMM
+  // the version of the AMM, only one AMM can exist per pair, when one is closed
+  // it cannot be reactivated, so a new AMM must be created, this is the version
+  // of the AMM
   uint64 version = 8;
 
   // the amount of base reserves this AMM has
   string base_reserve = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the amount of quote reserves this AMM has
   string quote_reserve = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // sqrt(k)
   string sqrt_depth = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // the price multiplier of the dynamic AMM
   string price_multiplier = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Total long refers to the sum of long open notional in base.
   string total_long = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Total short refers to the sum of short open notional in base.
   string total_short = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // The settlement price if the AMM is settled.
   string settlement_price = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.stdduration) = true,
     (gogoproto.nullable) = false
   ];
@@ -201,26 +203,26 @@ message Position {
 
   // the position size
   string size = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // amount of margin remaining in the position
   string margin = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // value of position in quote assets when opened
   string open_notional = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // The most recent cumulative premium fraction this position has.
   // Used to calculate the next funding payment.
   string latest_cumulative_premium_fraction = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 

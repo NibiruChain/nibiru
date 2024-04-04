@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"strings"
 
@@ -49,7 +50,7 @@ func (v AggregateExchangeRateVote) String() string {
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdk.Dec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdkmath.LegacyDec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -101,7 +102,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
 
-	dec, err := sdk.NewDecFromStr(split[1])
+	dec, err := sdkmath.LegacyNewDecFromStr(split[1])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid decimal %s: %w", split[1], err)
 	}
@@ -115,8 +116,8 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 // ExchangeRateTuples - array of ExchangeRateTuple
 type ExchangeRateTuples []ExchangeRateTuple
 
-func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdk.Dec) {
-	exchangeRateMap = make(map[asset.Pair]sdk.Dec)
+func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdkmath.LegacyDec) {
+	exchangeRateMap = make(map[asset.Pair]sdkmath.LegacyDec)
 	for _, tuple := range tuples {
 		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
 	}

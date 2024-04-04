@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"

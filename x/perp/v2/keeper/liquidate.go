@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -199,11 +200,11 @@ func (k Keeper) liquidate(
 	}
 
 	// give the user the preferred position notional
-	var preferredPositionNotional sdk.Dec
+	var preferredPositionNotional sdkmath.LegacyDec
 	if position.Size_.IsPositive() {
-		preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
+		preferredPositionNotional = sdkmath.LegacyMaxDec(spotNotional, twapNotional)
 	} else {
-		preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
+		preferredPositionNotional = sdkmath.LegacyMinDec(spotNotional, twapNotional)
 	}
 
 	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
@@ -253,7 +254,7 @@ func (k Keeper) executeFullLiquidation(
 		market,
 		amm,
 		/* currentPosition */ *position,
-		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
+		/* quoteAssetAmountLimit */ sdkmath.LegacyZeroDec(),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -269,7 +270,7 @@ func (k Keeper) executeFullLiquidation(
 	if liquidatorFeeAmount.GT(remainMargin) {
 		// if the remainMargin is not enough for liquidationFee, count it as bad debt
 		totalBadDebt = totalBadDebt.Add(liquidatorFeeAmount.Sub(remainMargin))
-		remainMargin = sdk.ZeroDec()
+		remainMargin = sdkmath.LegacyZeroDec()
 	} else {
 		// Otherwise, the remaining margin will be transferred to ecosystemFund
 		remainMargin = remainMargin.Sub(liquidatorFeeAmount)
@@ -286,7 +287,7 @@ func (k Keeper) executeFullLiquidation(
 		}
 	}
 
-	ecosystemFundFeeAmount := sdk.ZeroDec()
+	ecosystemFundFeeAmount := sdkmath.LegacyZeroDec()
 	if remainMargin.IsPositive() {
 		ecosystemFundFeeAmount = remainMargin
 	}
@@ -314,12 +315,12 @@ func (k Keeper) executeFullLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdkmath.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
 			BadDebt:          sdk.NewCoin(collateral, totalBadDebt.RoundInt()),
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     sdk.ZeroInt(), // no margin to user for full liquidation
+			MarginToUser:     sdkmath.ZeroInt(), // no margin to user for full liquidation
 			ChangeReason:     types.ChangeReason_FullLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
@@ -358,7 +359,7 @@ func (k Keeper) executePartialLiquidation(
 		amm,
 		/* currentPosition */ *position,
 		/* quoteAssetAmount */ quoteAssetDelta,
-		/* baseAmtLimit */ sdk.ZeroDec(),
+		/* baseAmtLimit */ sdkmath.LegacyZeroDec(),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -390,12 +391,12 @@ func (k Keeper) executePartialLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdkmath.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // no bad debt for partial liquidation
+			BadDebt:          sdk.NewCoin(collateral, sdkmath.ZeroInt()), // no bad debt for partial liquidation
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     sdk.ZeroInt(), // no margin to user for partial liquidation
+			MarginToUser:     sdkmath.ZeroInt(), // no margin to user for partial liquidation
 			ChangeReason:     types.ChangeReason_PartialLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),

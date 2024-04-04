@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/omap"
@@ -54,9 +54,13 @@ func (k Keeper) incrementMissCounters(
 ) {
 	for _, validatorPerformance := range validatorPerformances {
 		if int(validatorPerformance.MissCount) > 0 {
-			k.MissCounters.Insert(
+			missCounters, err := k.MissCounters.Get(ctx, validatorPerformance.ValAddress)
+			if err != nil {
+				missCounters = uint64(0)
+			}
+			k.MissCounters.Set(
 				ctx, validatorPerformance.ValAddress,
-				k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+uint64(validatorPerformance.MissCount),
+				missCounters+uint64(validatorPerformance.MissCount),
 			)
 
 			k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
@@ -111,13 +115,25 @@ func (k Keeper) getPairVotes(
 func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
 
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
+	iter, err := k.ExchangeRates.Iterate(ctx, &collections.Range[asset.Pair]{})
+	defer iter.Close()
+
+	if err != nil {
+		k.Logger(ctx).Error("failed to iterate exchange rates", "error", err)
+		return
+	}
+	keys, err := iter.Keys()
+	if err != nil {
+		k.Logger(ctx).Error("failed to get exchange rate keys", "error", err)
+		return
+	}
+	for _, key := range keys {
 		_, isValid := pairVotes[key]
 		previousExchangeRate, _ := k.ExchangeRates.Get(ctx, key)
 		isExpired := previousExchangeRate.CreatedBlock+params.ExpirationBlocks <= uint64(ctx.BlockHeight())
 
 		if isValid || isExpired {
-			err := k.ExchangeRates.Delete(ctx, key)
+			err := k.ExchangeRates.Remove(ctx, key)
 			if err != nil {
 				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)
 			}
@@ -130,14 +146,28 @@ func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]typ
 func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerformances {
 	validatorPerformances := make(map[string]types.ValidatorPerformance)
 
-	maxValidators := k.StakingKeeper.MaxValidators(ctx)
+	maxValidators, err := k.StakingKeeper.MaxValidators(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed getting max validators", "error", err)
+		return validatorPerformances
+	}
+
 	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
-	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	iterator, err := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed getting validators power store iterator", "error", err)
+		return validatorPerformances
+	}
+
 	defer iterator.Close()
 
 	for i := 0; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
+		validator, err := k.StakingKeeper.Validator(ctx, iterator.Value())
+		if err != nil {
+			k.Logger(ctx).Error("failed getting validator", "error", err)
+			return validatorPerformances
+		}
 
 		// exclude not bonded
 		if !validator.IsBonded() {
@@ -145,8 +175,8 @@ func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerform
 		}
 
 		valAddr := validator.GetOperator()
-		validatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
-			validator.GetConsensusPower(powerReduction), valAddr,
+		validatorPerformances[valAddr] = types.NewValidatorPerformance(
+			validator.GetConsensusPower(powerReduction), sdk.ValAddress(valAddr),
 		)
 		i++
 	}

@@ -2,13 +2,14 @@ package simulation
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	gogotypes "github.com/cosmos/gogoproto/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -19,7 +20,9 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch kvA.Key[0] {
 		case 1:
-			return fmt.Sprintf("%v\n%v", collections.DecValueEncoder.Decode(kvA.Value), collections.DecValueEncoder.Decode(kvB.Value))
+			kvAValue, _ := common.LegacyDecValue.Decode(kvA.Value)
+			kvBValue, _ := common.LegacyDecValue.Decode(kvB.Value)
+			return fmt.Sprintf("%v\n%v", kvAValue, kvBValue)
 		case 2:
 			return fmt.Sprintf("%v\n%v", sdk.AccAddress(kvA.Value), sdk.AccAddress(kvB.Value))
 		case 3:
@@ -38,8 +41,8 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			cdc.MustUnmarshal(kvB.Value, &voteB)
 			return fmt.Sprintf("%v\n%v", voteA, voteB)
 		case 6:
-			_, a := collections.StringKeyEncoder.Decode(kvA.Key[1:])
-			_, b := collections.StringKeyEncoder.Decode(kvB.Key[1:])
+			_, a, _ := collections.StringKey.Decode(kvA.Key[1:])
+			_, b, _ := collections.StringKey.Decode(kvB.Key[1:])
 			return fmt.Sprintf("%s\n%s", a, b)
 		default:
 			panic(fmt.Sprintf("invalid oracle key prefix %X", kvA.Key[:1]))

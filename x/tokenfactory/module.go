@@ -36,8 +36,8 @@ var (
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModule           = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
-	_ module.BeginBlockAppModule = AppModule{}
-	_ module.EndBlockAppModule   = AppModule{}
+	//_ module.BeginBlockAppModule = AppModule{}
+	//_ module.EndBlockAppModule   = AppModule{}
 )
 
 // ConsensusVersion defines the current module consensus version.
@@ -152,12 +152,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the fees module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {
+func (am AppModule) BeginBlock(_ sdk.Context) {
 }
 
 // EndBlock executes all ABCI EndBlock logic respective to the fee-share module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(_ sdk.Context) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
 
@@ -183,10 +183,20 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // RegisterStoreDecoder implements module.AppModuleSimulation.
-func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
+func (AppModule) RegisterStoreDecoder(simtypes.StoreDecoderRegistry) {
 }
 
 // WeightedOperations implements module.AppModuleSimulation.
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
+}
+
+func (am AppModule) IsOnePerModuleType() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (am AppModule) IsAppModule() {
+	//TODO implement me
+	panic("implement me")
 }

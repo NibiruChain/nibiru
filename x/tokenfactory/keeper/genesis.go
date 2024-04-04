@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -30,10 +30,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genDenoms := []types.GenesisDenom{}
 	// iterator := k.GetAllDenomsIterator(ctx)
-	iter := k.Store.Denoms.Iterate(ctx, collections.Range[string]{})
+	iter, _ := k.Store.Denoms.Iterate(ctx, &collections.Range[string]{})
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		denom := iter.Value()
+		denom, _ := iter.Value()
 
 		authorityMetadata, err := k.Store.GetDenomAuthorityMetadata(
 			ctx, denom.String())

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

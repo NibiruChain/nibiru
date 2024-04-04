@@ -3,7 +3,7 @@ package devgas
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	"github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
@@ -29,8 +29,16 @@ func InitGenesis(
 
 // ExportGenesis export module state
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	iter, err := k.DevGasStore.Iterate(ctx, &collections.Range[string]{})
+	if err != nil {
+		return nil
+	}
+	values, err := iter.Values()
+	if err != nil {
+		return nil
+	}
 	return &types.GenesisState{
 		Params:   k.GetParams(ctx),
-		FeeShare: k.DevGasStore.Iterate(ctx, collections.Range[string]{}).Values(),
+		FeeShare: values,
 	}
 }

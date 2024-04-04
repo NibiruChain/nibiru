@@ -1,6 +1,7 @@
 package mock
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/spot/types"
@@ -12,20 +13,20 @@ func SpotPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 	for i, asset := range assets {
 		poolAssets[i] = types.PoolAsset{
 			Token:  asset,
-			Weight: sdk.OneInt(),
+			Weight: sdkmath.OneInt(),
 		}
 	}
 	return types.Pool{
 		Id: poolId,
 		PoolParams: types.PoolParams{
-			SwapFee:  sdk.SmallestDec(),
-			ExitFee:  sdk.SmallestDec(),
+			SwapFee:  sdkmath.LegacySmallestDec(),
+			ExitFee:  sdkmath.LegacySmallestDec(),
 			PoolType: types.PoolType_BALANCER,
-			A:        sdk.ZeroInt(),
+			A:        sdkmath.ZeroInt(),
 		},
 		PoolAssets:  poolAssets,
 		TotalShares: sdk.NewInt64Coin(types.GetPoolShareBaseDenom(poolId), shares),
-		TotalWeight: sdk.NewInt(2),
+		TotalWeight: sdkmath.NewInt(2),
 	}
 }
 
@@ -35,19 +36,19 @@ func SpotStablePool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 	for i, asset := range assets {
 		poolAssets[i] = types.PoolAsset{
 			Token:  asset,
-			Weight: sdk.OneInt(),
+			Weight: sdkmath.OneInt(),
 		}
 	}
 	return types.Pool{
 		Id: poolId,
 		PoolParams: types.PoolParams{
-			SwapFee:  sdk.ZeroDec(),
-			ExitFee:  sdk.ZeroDec(),
+			SwapFee:  sdkmath.LegacyZeroDec(),
+			ExitFee:  sdkmath.LegacyZeroDec(),
 			PoolType: types.PoolType_STABLESWAP,
-			A:        sdk.NewInt(100),
+			A:        sdkmath.NewInt(100),
 		},
 		PoolAssets:  poolAssets,
 		TotalShares: sdk.NewInt64Coin(types.GetPoolShareBaseDenom(poolId), shares),
-		TotalWeight: sdk.NewInt(2),
+		TotalWeight: sdkmath.NewInt(2),
 	}
 }

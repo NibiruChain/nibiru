@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

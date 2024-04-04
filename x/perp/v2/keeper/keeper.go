@@ -2,18 +2,21 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -22,8 +25,8 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	BankKeeper    types.BankKeeper
-	AccountKeeper types.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
 	SudoKeeper    types.SudoKeeper
@@ -47,10 +50,10 @@ type Keeper struct {
 // NewKeeper Creates a new x/perp Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeKey *storetypes.KVStoreKey,
 
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
+	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 	oracleKeeper types.OracleKeeper,
 	epochKeeper types.EpochKeeper,
 	sudoKeeper types.SudoKeeper,
@@ -59,6 +62,9 @@ func NewKeeper(
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
 		panic("The x/perp module account has not been set")
 	}
+
+	storeService := runtime.NewKVStoreService(storeKey)
+	sb := collections.NewSchemaBuilder(storeService)
 
 	return Keeper{
 		cdc:           cdc,
@@ -69,72 +75,98 @@ func NewKeeper(
 		EpochKeeper:   epochKeeper,
 		SudoKeeper:    sudoKeeper,
 		MarketLastVersion: collections.NewMap(
-			storeKey, NamespaceMarketLastVersion,
+			sb,
+			collections.NewPrefix(int(NamespaceMarketLastVersion)),
+			storeKey.String(),
 			asset.PairKeyEncoder,
-			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
+			codec.CollValue[types.MarketLastVersion](cdc),
 		),
 		Markets: collections.NewMap(
-			storeKey, NamespaceMarkets,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
-			collections.ProtoValueEncoder[types.Market](cdc),
+			sb,
+			collections.NewPrefix(int(NamespaceMarkets)),
+			storeKey.String(),
+			collections.PairKeyCodec(asset.PairKeyEncoder, collections.Uint64Key),
+			codec.CollValue[types.Market](cdc),
 		),
 		AMMs: collections.NewMap(
-			storeKey, NamespaceAmms,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
-			collections.ProtoValueEncoder[types.AMM](cdc),
+			sb,
+			collections.NewPrefix(int(NamespaceAmms)),
+			storeKey.String(),
+			collections.PairKeyCodec(asset.PairKeyEncoder, collections.Uint64Key),
+			codec.CollValue[types.AMM](cdc),
 		),
 		Positions: collections.NewMap(
-			storeKey, NamespacePositions,
-			collections.PairKeyEncoder(collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder), collections.AccAddressKeyEncoder),
-			collections.ProtoValueEncoder[types.Position](cdc),
+			sb,
+			collections.NewPrefix(int(NamespacePositions)),
+			storeKey.String(),
+			collections.PairKeyCodec(collections.PairKeyCodec(asset.PairKeyEncoder, collections.Uint64Key), sdk.AccAddressKey),
+			codec.CollValue[types.Position](cdc),
 		),
 		ReserveSnapshots: collections.NewMap(
-			storeKey, NamespaceReserveSnapshots,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
-			collections.ProtoValueEncoder[types.ReserveSnapshot](cdc),
+			sb,
+			collections.NewPrefix(int(NamespaceReserveSnapshots)),
+			storeKey.String(),
+			collections.PairKeyCodec(asset.PairKeyEncoder, sdk.TimeKey),
+			codec.CollValue[types.ReserveSnapshot](cdc),
 		),
 		DnREpoch: collections.NewItem(
-			storeKey, NamespaceDnrEpoch,
-			collections.Uint64ValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceDnrEpoch)),
+			storeKey.String(),
+			collections.Uint64Value,
 		),
 		GlobalVolumes: collections.NewMap(
-			storeKey, NamespaceGlobalVolumes,
-			collections.Uint64KeyEncoder,
-			collections.IntValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceGlobalVolumes)),
+			storeKey.String(),
+			collections.Uint64Key,
+			sdk.IntValue,
 		),
 		TraderVolumes: collections.NewMap(
-			storeKey, NamespaceUserVolumes,
-			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
-			collections.IntValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceUserVolumes)),
+			storeKey.String(),
+			collections.PairKeyCodec(sdk.AccAddressKey, collections.Uint64Key),
+			sdk.IntValue,
 		),
 		GlobalDiscounts: collections.NewMap(
-			storeKey, NamespaceGlobalDiscounts,
-			collections.IntKeyEncoder,
-			collections.DecValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceGlobalDiscounts)),
+			storeKey.String(),
+			common.SdkIntKey,
+			common.LegacyDecValue,
 		),
 		TraderDiscounts: collections.NewMap(
-			storeKey, NamespaceUserDiscounts,
-			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.IntKeyEncoder),
-			collections.DecValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceUserDiscounts)),
+			storeKey.String(),
+			collections.PairKeyCodec(sdk.AccAddressKey, common.SdkIntKey),
+			common.LegacyDecValue,
 		),
 		EpochRebateAllocations: collections.NewMap(
-			storeKey, NamespaceRebatesAllocations,
-			collections.Uint64KeyEncoder,
-			collections.ProtoValueEncoder[types.DNRAllocation](cdc),
+			sb,
+			collections.NewPrefix(int(NamespaceRebatesAllocations)),
+			storeKey.String(),
+			collections.Uint64Key,
+			codec.CollValue[types.DNRAllocation](cdc),
 		),
 		Collateral: collections.NewItem(
-			storeKey, NamespaceCollateral,
-			common.StringValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceCollateral)),
+			storeKey.String(),
+			collections.StringValue,
 		),
 		DnREpochName: collections.NewItem(
-			storeKey, NamespaceDnrEpochName,
-			common.StringValueEncoder,
+			sb,
+			collections.NewPrefix(int(NamespaceDnrEpochName)),
+			storeKey.String(),
+			collections.StringValue,
 		),
 	}
 }
 
 const (
-	NamespaceMarkets collections.Namespace = iota + 11 // == 11 because iota starts from 0
+	NamespaceMarkets uint8 = iota + 11 // == 11 because iota starts from 0
 	NamespaceAmms
 	NamespacePositions
 	NamespaceReserveSnapshots

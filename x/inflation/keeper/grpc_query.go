@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,7 +37,11 @@ func (k Keeper) Period(
 	_ *types.QueryPeriodRequest,
 ) (*types.QueryPeriodResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	period := k.CurrentPeriod.Peek(ctx)
+	period, err := k.CurrentPeriod.Peek(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get current period", "error", err)
+		return nil, err
+	}
 	return &types.QueryPeriodResponse{Period: period}, nil
 }
 
@@ -57,7 +62,11 @@ func (k Keeper) SkippedEpochs(
 	_ *types.QuerySkippedEpochsRequest,
 ) (*types.QuerySkippedEpochsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	skippedEpochs := k.NumSkippedEpochs.Peek(ctx)
+	skippedEpochs, err := k.NumSkippedEpochs.Peek(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get num skipped epochs", "error", err)
+		return nil, err
+	}
 	return &types.QuerySkippedEpochsResponse{SkippedEpochs: skippedEpochs}, nil
 }
 
@@ -80,7 +89,7 @@ func (k Keeper) CirculatingSupply(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
-	circulatingToDec := sdk.NewDecFromInt(circulatingSupply)
+	circulatingToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
 	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
