@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
 - [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
 
+#### Nibiru EVM
+
+- [#1837](https://github.com/NibiruChain/nibiru/pull/1837) - feat(eth): protos, eth types, and evm module types
+
 #### Dapp modules: perp, spot, etc
 
 - [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
