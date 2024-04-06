@@ -7,9 +7,10 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/eth/types"
 	"github.com/ethereum/go-ethereum/common"
 	geth "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/eth/types"
 )
 
 func NewLegacyTx(tx *geth.Transaction) (*LegacyTx, error) {

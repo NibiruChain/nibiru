@@ -5,10 +5,11 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
 var (

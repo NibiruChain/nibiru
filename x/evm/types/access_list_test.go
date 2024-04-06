@@ -1,9 +1,10 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	geth "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (suite *TxDataTestSuite) TestTestNewAccessList() {

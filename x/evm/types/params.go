@@ -12,11 +12,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
-	"github.com/NibiruChain/nibiru/eth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/exp/slices"
+
+	"github.com/NibiruChain/nibiru/eth/types"
 )
 
 var (

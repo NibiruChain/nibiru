@@ -11,8 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
 
-	ethtypes "github.com/NibiruChain/nibiru/eth/types"
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
+
+	ethtypes "github.com/NibiruChain/nibiru/eth/types"
 )
 
 type aminoMessage struct {

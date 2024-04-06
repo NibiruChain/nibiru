@@ -2,13 +2,15 @@
 package types
 
 import (
+	"math/big"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/eth/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	geth "github.com/ethereum/go-ethereum/core/types"
-	"math/big"
+
+	"github.com/NibiruChain/nibiru/eth/types"
 )
 
 // AccessList is an EIP-2930 access list that represents the slice of

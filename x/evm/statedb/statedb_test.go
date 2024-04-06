@@ -4,13 +4,14 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
 var (

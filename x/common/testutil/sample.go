@@ -6,9 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 

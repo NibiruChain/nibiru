@@ -3,8 +3,9 @@ package hd
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/eth/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
+	"github.com/NibiruChain/nibiru/eth/types"
 )
 
 func BenchmarkEthSecp256k1Algo_Derive(b *testing.B) {

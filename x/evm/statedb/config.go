@@ -4,9 +4,10 @@ package statedb
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
+
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // TxConfig encapulates the readonly information of current tx for `StateDB`.

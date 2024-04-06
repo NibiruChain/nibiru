@@ -8,25 +8,28 @@ import (
 	"cosmossdk.io/math"
 
 	chainparams "cosmossdk.io/simapp/params"
-	"github.com/NibiruChain/nibiru/eth/ethereum/eip712"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/eth/ethereum/eip712"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/cmd/ethclient"
 
-	"github.com/NibiruChain/nibiru/eth/encoding"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/eth/encoding"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
