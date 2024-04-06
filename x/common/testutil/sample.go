@@ -6,6 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/types"
 
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -32,6 +36,19 @@ func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
 	pubKey := privKey.PubKey()
 	addr := pubKey.Address()
 	return privKey, sdk.AccAddress(addr)
+}
+
+func PrivKeyEth() (common.Address, *ethsecp256k1.PrivKey) {
+	privkey, _ := ethsecp256k1.GenerateKey()
+	privKeyE, _ := privkey.ToECDSA()
+	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
+	return ethAddr, privkey
+}
+
+// NewEthAddr generates an Ethereum address.
+func NewEthAddr() common.Address {
+	addr, _ := PrivKeyEth()
+	return addr
 }
 
 // PrivKeyAddressPairs generates (deterministically) a total of n private keys
