@@ -39,6 +39,7 @@ func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
 	return privKey, sdk.AccAddress(addr)
 }
 
+// PrivKeyEth returns an Ethereum private key and corresponding Eth address.
 func PrivKeyEth() (common.Address, *ethsecp256k1.PrivKey) {
 	privkey, _ := ethsecp256k1.GenerateKey()
 	privKeyE, _ := privkey.ToECDSA()
