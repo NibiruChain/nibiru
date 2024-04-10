@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_1_1"
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
