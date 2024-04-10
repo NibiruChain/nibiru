@@ -13,6 +13,7 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/NibiruChain/nibiru/app/upgrades"
 )
@@ -37,16 +38,15 @@ var Upgrade = upgrades.Upgrade{
 				AllowMessages: []string{
 					sdk.MsgTypeURL(&banktypes.MsgSend{}),
 					sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}),
+					sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}),
 					sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}),
-					sdk.MsgTypeURL(&stakingtypes.MsgCreateValidator{}),
-					sdk.MsgTypeURL(&stakingtypes.MsgEditValidator{}),
 					sdk.MsgTypeURL(&distrtypes.MsgWithdrawDelegatorReward{}),
 					sdk.MsgTypeURL(&distrtypes.MsgSetWithdrawAddress{}),
-					sdk.MsgTypeURL(&distrtypes.MsgWithdrawValidatorCommission{}),
 					sdk.MsgTypeURL(&distrtypes.MsgFundCommunityPool{}),
 					sdk.MsgTypeURL(&authz.MsgExec{}),
 					sdk.MsgTypeURL(&authz.MsgGrant{}),
 					sdk.MsgTypeURL(&authz.MsgRevoke{}),
+					sdk.MsgTypeURL(&ibctransfertypes.MsgTransfer{}),
 				},
 			}
 
