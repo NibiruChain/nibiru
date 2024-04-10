@@ -4,9 +4,9 @@ package nibiru.inflation.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "nibiru/inflation/v1/inflation.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
-
 
 service Msg {
   // ToggleInflation defines a method to enable or disable inflation.
@@ -15,10 +15,10 @@ service Msg {
   };
 
   // EditInflationParams defines a method to edit the inflation params.
-  rpc EditInflationParams(MsgEditInflationParams) 
-  returns (MsgEditInflationParamsResponse) {
+  rpc EditInflationParams(MsgEditInflationParams)
+      returns (MsgEditInflationParamsResponse) {
     option (google.api.http).post = "/nibiru/inflation/edit-inflation-params";
-  };    
+  };
 }
 
 // MsgToggleInflation defines a message to enable or disable inflation.
@@ -33,16 +33,16 @@ message MsgToggleInflation {
 message MsgEditInflationParams {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-  
+
   string sender = 1;
   bool inflation_enabled = 2;
-  repeated string polynomial_factors = 3[
+  repeated string polynomial_factors = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = true
   ];
   InflationDistribution inflation_distribution = 4
       [ (gogoproto.nullable) = true ];
-      
+
   string epochs_per_period = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = true
@@ -57,8 +57,15 @@ message MsgEditInflationParams {
   ];
 }
 
-message MsgToggleInflationResponse {
+message MsgToggleInflationResponse {}
+
+message MsgEditInflationParamsResponse {}
+
+// MsgBurn: allows burning of any token
+message MsgBurn {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
 }
 
-message MsgEditInflationParamsResponse {
-}
+message MsgBurnResponse {}

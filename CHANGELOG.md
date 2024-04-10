@@ -40,19 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Improvements
-
-- [#1770](https://github.com/NibiruChain/nibiru/pull/1770) - refactor(params)!: Update ts buf gen
-
 ### State Machine Breaking
 
 #### For next mainnet version
 
-- [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation)!: make default inflation allocation follow tokenomics
-- [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
-- [#1706](https://github.com/NibiruChain/nibiru/pull/1706) - fix: `v1.1.0` upgrade handler
-- [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
-- [#1713](https://github.com/NibiruChain/nibiru/pull/1713) - chore(build-release): use new rocksdb libraries and link required libs
 - [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1774](https://github.com/NibiruChain/nibiru/pull/1774) - chore: update cosmos sdk v0.47.7
@@ -64,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
 - [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
 - [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
+- [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
+- [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
 
 #### Dapp modules: perp, spot, etc
 
@@ -89,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
 - [#1690](https://github.com/NibiruChain/nibiru/pull/1690) - docs(CHANGELOG.md): Correct the change log, providing clarity on what's released.
-- [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 - [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - fix(sudo): Make blank sudoers root invalid at genesis time.
 - [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
 - [#1714](https://github.com/NibiruChain/nibiru/pull/1714) - ci(localnet.sh): Fix script, simplify, and test in CI.
@@ -98,10 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1728](https://github.com/NibiruChain/nibiru/pull/1728) - test(devgas-cli): CLI tests for devgas txs
 - [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
 - [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
-- [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all cusom modules
-- [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
-- [#1769](https://github.com/NibiruChain/nibiru/pull/1769) - feat: cherrypick GetBuildWasmMsg() to main branch
-- [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
+- [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all custom modules
 - [#1799](https://github.com/NibiruChain/nibiru/pull/1799) - refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
 - [#1810](https://github.com/NibiruChain/nibiru/pull/1810) - chore(ci): use ubuntu-latest-m for goreleaser
 - [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
@@ -112,12 +101,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
 - Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
-- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.29.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777))
+- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.30.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777), [#1819](https://github.com/NibiruChain/nibiru/pull/1819))
 - Bump `cosmossdk.io/errors` from 1.0.0 to 1.0.1 ([#1768](https://github.com/NibiruChain/nibiru/pull/1768))
 - Bump `robinraju/release-downloader` from 1.8 to 1.9 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783))
 - Bump `codecov/codecov-action` from 3 to 4 ([#1784](https://github.com/NibiruChain/nibiru/pull/1784))
 - Bump `golangci/golangci-lint-action` from 3 to 4 ([#1791](https://github.com/NibiruChain/nibiru/pull/1791))
-
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 - Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
 - Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
@@ -130,19 +118,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
-- [#1809](https://github.com/NibiruChain/nibiru/pull/1809) - chore: bump grocksdb to v1.8.12
-- [#1812](https://github.com/NibiruChain/nibiru/pull/1812) - chore(deps): bump `cosmos-sdk` to v0.47.10
 
-## [v1.1.0] - 2023-11-20
+## v1.1.0
 
-- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)]
-  [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.1.0)]
+Nibiru v1.1.0 is the minor release used to add inflation to the network.
 
 ### State Machine Breaking
 
-- [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation)!: Make inflation follow polynomial distribution from the tokenomics
+- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
+- [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
+- [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
+- [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 
-## [v1.0.0] - 2023-11-07
+### Bug Fixes
+
+- [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
+- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
+- [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation): make default inflation allocation follow tokenomics
+
+### Features
+
+- [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
+- [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
+- [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
+- [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
+
+### Improvements
+
+- [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
+- [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
+- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+
+## [v1.0.3](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.3) - 2024-03-18
+
+### Fix
+
+- [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
+
+### CLI
+
+- [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
+- [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
+
+## [v1.0.2](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.2) - 2024-03-03
+
+### Dependencies
+
+- [65c06ba](https://github.com/NibiruChain/nibiru/commit/65c06ba774c260ece942131ad7a93de0e162266e) - Bump `cosmos-sdk` to v0.47.10
+
+## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1) - 2024-02-09
+
+### Dependencies
+
+- [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
+
+## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
 Nibiru v1.0.0 is the major release used for the genesis of the mainnet network,
 `cataclysm-1`. It includes all of the general purpose modules such
@@ -150,13 +180,7 @@ as `devgas`, `sudo`, `wasm`, `tokenfactory`, and the defaults from Cosmos SDK
 v0.47.5.
 
 - [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)]
-  [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.0.0)]
-
-### State Machine Breaking
-
-- [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory): State transitions, collections, genesis import and export, and app wiring
-  - [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams
-  - [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.0.0)]
 - [tag:v1.0.0](https://github.com/NibiruChain/nibiru/commits/v1.0.0) epic(v1.0.0): Remove unneeded Dapp modules for smooth upgrades.
   - chore!: [Date: 2023-10-16] Remove inflation, perp, stablecoin, and spot
     modules and related protobufs. This will make it easier to add the store keys
@@ -168,43 +192,51 @@ v0.47.5.
     [2a250a3](https://github.com/NibiruChain/nibiru/commit/2a250a3c4c60c58c5526ac7d75ce5b9e13889471)
     [d713f41](https://github.com/NibiruChain/nibiru/commit/d713f41dfe17d6d29451ade4d2f0e6d950ce7c59)
     [011f1ed](https://github.com/NibiruChain/nibiru/commit/011f1ed431d92899d01583e5e6110e663eceaa24)
-- [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
-- [#1646](https://github.com/NibiruChain/nibiru/pull/1646) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
-- [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
-- [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
-- [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
-- [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante handler to add a maximum commission rate of 25% for validators.
-- [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+
+### Features
+
+- [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory): State transitions, collections, genesis import and export, and app wiring
+- [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams
+- [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
+- [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+
+### State Machine Breaking
+
 - [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
+- [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+- [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante handler to add a maximum commission rate of 25% for validators.
+- [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
+- [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
+- [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
+- [#1646](https://github.com/NibiruChain/nibiru/pull/1646) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
+- [#1667](https://github.com/NibiruChain/nibiru/pull/1667) - chore(inflation)!: unwire x/inflation
 
-### Non-breaking/Compatible Improvements
+### Improvements
 
-- [#1659](https://github.com/NibiruChain/nibiru/pull/1659) - refactor(oracle): curate oracle default whitelist
-- [#1652](https://github.com/NibiruChain/nibiru/pull/1652) - test: refactors cli.network suites with 'Integration' to use common function
-- [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
-- [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
-- [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
-- [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
-- [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
-- [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
 - [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
-- [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
-- [#1700](https://github.com/NibiruChain/nibiru/pull/1700) - fix(oracle): remove non deterministic sqrt calculation
+- [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
+- [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
+- [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
+- [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
+- [#1659](https://github.com/NibiruChain/nibiru/pull/1659) - refactor(oracle): curate oracle default whitelist
 
 ### Dependencies
 
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.28.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641), [#1654](https://github.com/NibiruChain/nibiru/pull/1654), [#1671](https://github.com/NibiruChain/nibiru/pull/1671), [#1673](https://github.com/NibiruChain/nibiru/pull/1673))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.5.0 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629), [#1657](https://github.com/NibiruChain/nibiru/pull/1657))
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.59.0 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633), [#1643](https://github.com/NibiruChain/nibiru/pull/1643))
 - Bump `golang.org/x/net` from 0.12.0 to 0.17.0 ([#1634](https://github.com/NibiruChain/nibiru/pull/1634))
-- feat(tools): Ignite CLI Open API spec generation -> Bump `github.com/grpc-ecosystem/grpc-gateway/v2` to v2.18.0 ([#1651](https://github.com/NibiruChain/nibiru/pull/1651))
 - Bump `github.com/cosmos/ibc-go/v7` from 7.3.0 to 7.3.1 ([#1647](https://github.com/NibiruChain/nibiru/pull/1647))
 - Bump `github.com/CosmWasm/wasmd` from 0.40.2 to 0.43.0 ([#1660](https://github.com/NibiruChain/nibiru/pull/1660))
 - Bump `github.com/CosmWasm/wasmd` from 0.43.0 to 0.44.0 ([#1666](https://github.com/NibiruChain/nibiru/pull/1666))
-- Bump `github.com/spf13/cobra` from 1.7.0 to 1.8.0 ([#1664](https://github.com/NibiruChain/nibiru/pull/1664))
-- Bump `github.com/gorilla/mux` from 1.8.0 to 1.8.1 ([#1665](https://github.com/NibiruChain/nibiru/pull/1665))
+
+### Bug Fixes
+
+- [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
+- [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
+- [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
 
 ## [v0.21.11] - 2023-10-02
 
