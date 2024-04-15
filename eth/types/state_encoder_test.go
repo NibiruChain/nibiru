@@ -4,38 +4,12 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-	cmtdb "github.com/cometbft/cometbft-db"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	ethtypes "github.com/NibiruChain/nibiru/eth/types"
-
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
-	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdkstore "github.com/cosmos/cosmos-sdk/store"
-	sdkstoretypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// encoderDeps: Initializes a database and KV store useful for testing
-// abstractions over merklized storage like the `collections.Map` and
-// `collections.Item`.
-func encoderDeps() (sdkstoretypes.StoreKey, sdk.Context, sdkcodec.BinaryCodec) {
-	sk := sdk.NewKVStoreKey("mock")
-	dbm := cmtdb.NewMemDB()
-	ms := sdkstore.NewCommitMultiStore(dbm)
-	ms.MountStoreWithDB(sk, sdkstoretypes.StoreTypeIAVL, dbm)
-	if err := ms.LoadLatestVersion(); err != nil {
-		panic(err)
-	}
-
-	return sk,
-		sdk.Context{}.
-			WithMultiStore(ms).
-			WithGasMeter(sdk.NewGasMeter(1_000_000_000)),
-		sdkcodec.NewProtoCodec(sdkcodectypes.NewInterfaceRegistry())
-}
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {
 	encodedKey := encoder.Encode(key)
