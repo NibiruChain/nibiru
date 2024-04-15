@@ -1,4 +1,4 @@
-// Copyright 2023 Unique Divine and Nibi, Inc.
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 package ethsecp256k1
 
