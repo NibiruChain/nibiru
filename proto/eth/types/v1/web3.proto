@@ -1,4 +1,4 @@
-// Copyright Nibi, Inc.
+// Copyright (c) 2023-2024 Nibi, Inc.
 syntax = "proto3";
 package eth.types.v1;
 
