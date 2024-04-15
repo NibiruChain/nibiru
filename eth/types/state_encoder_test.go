@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-	ethtypes "github.com/NibiruChain/nibiru/eth/types"
 	cmtdb "github.com/cometbft/cometbft-db"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	ethtypes "github.com/NibiruChain/nibiru/eth/types"
 
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
