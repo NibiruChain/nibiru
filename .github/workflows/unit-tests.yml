@@ -2,7 +2,7 @@ name: Unit Tests
 
 on:
   pull_request:
-    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
+    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum", "contrib/docker/*"]
 
 # Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
