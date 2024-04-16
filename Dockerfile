@@ -2,7 +2,10 @@ FROM golang:1.21 AS builder
 
 WORKDIR /nibiru
 
-COPY go.sum go.mod ./
+# copy go.mod, go.sum to WORKDIR
+COPY go.sum go.mod ./  
+# copy geth to WORKDIR/geth
+COPY geth ./geth       
 RUN go mod download
 COPY . .
 
