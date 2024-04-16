@@ -207,20 +207,6 @@ fi
 val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
-echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
-  echo_success "Successfully added gentx"
-else
-  echo_error "Failed to add gentx"
-fi
-
-echo_info "Collecting gentx..."
-if $BINARY genesis collect-gentxs; then
-  echo_success "Successfully collected genesis txs into genesis.json"
-else
-  echo_error "Failed to collect genesis txs"
-fi
-
 # ------------------------------------------------------------------------
 # Configure genesis params
 # ------------------------------------------------------------------------
@@ -249,6 +235,21 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
+
+
+echo_info "Adding gentx validator..."
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
+  echo_success "Successfully added gentx"
+else
+  echo_error "Failed to add gentx"
+fi
+
+echo_info "Collecting gentx..."
+if $BINARY genesis collect-gentxs; then
+  echo_success "Successfully collected genesis txs into genesis.json"
+else
+  echo_error "Failed to collect genesis txs"
+fi
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
