@@ -1,0 +1,13 @@
+// Copyright (c) 2023-2024 Nibi, Inc.
+syntax = "proto3";
+package eth.types.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/eth/types";
+
+// ExtensionOptionDynamicFeeTx is an extension option that specifies the maxPrioPrice for cosmos tx
+message ExtensionOptionDynamicFeeTx {
+  // max_priority_price is the same as `max_priority_fee_per_gas` in eip-1559 spec
+  string max_priority_price = 1 [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.nullable) = false];
+}
