@@ -69,14 +69,29 @@ build_from_source() {
   fi
 }
 
-# Iterate over flags, handling the case: "--no-build"
+# enable_feature_flag: Enables feature flags variables if present
+enable_feature_flag() {
+  case $1 in
+  spot) FLAG_SPOT=true ;;
+  *) echo_error "Unknown feature: $1" ;;
+  esac
+}
+
+# Iterate over flags, handling the cases: "--no-build" and "--features"
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --no-build)
-      FLAG_NO_BUILD=true
-      shift
-      ;;
-    *) shift ;; # Unknown arg
+  --no-build)
+    FLAG_NO_BUILD=true
+    shift
+    ;;
+  --features)
+    shift # Remove '--features' from arguments
+    while [[ $# -gt 0 && $1 != --* ]]; do
+      enable_feature_flag "$1"
+      shift # Remove the feature name from arguments
+    done
+    ;;
+  *) shift ;; # Unknown arg
   esac
 done
 
