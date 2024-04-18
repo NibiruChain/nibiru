@@ -1,4 +1,4 @@
-package v1_2_1
+package v1_3_0
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/types"
@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/app/upgrades"
 )
 
-const UpgradeName = "v1.2.1"
+const UpgradeName = "v1.3.0"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
