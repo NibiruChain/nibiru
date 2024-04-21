@@ -24,7 +24,7 @@ console_log_text_color() {
 }
 
 if [ console_log_text_color ]; then
-  echo "successfully toggled console coloring"
+  echo "succesfully toggled console coloring"
 else
   # For Ubuntu and Debian. MacOS has tput by default.
   apt-get install libncurses5-dbg -y
@@ -58,8 +58,6 @@ echo_info "Parsing flags for the script..."
 #   behavior of the script is to run make install if the flag --no-build is not present.
 FLAG_NO_BUILD=false
 
-# $FLAG_SPOT: Feature flag for x/spot. Enabled with `--features spot`.
-FLAG_SPOT=false
 
 build_from_source() {
   echo_info "Building from source..."
@@ -97,6 +95,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
 # Check if FLAG_NO_BUILD was set to true
 if ! $FLAG_NO_BUILD; then
   build_from_source
@@ -104,7 +103,6 @@ fi
 
 echo_info "Features flags:"
 echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
-echo "FLAG_SPOT: $FLAG_SPOT"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -188,10 +186,6 @@ add_genesis_param() {
 
 echo_info "Configuring genesis params"
 
-# if $FLAG_SPOT; then
-#   # Perform any actions specific to the x/spot feature
-# fi
-
 # set validator as sudoer
 add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 
@@ -202,8 +196,6 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
-
-add_genesis_param '.app_state.inflation.params.inflation_enabled = false'
 
 # ------------------------------------------------------------------------
 # Gentx
