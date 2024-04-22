@@ -125,9 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
+- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
-- Bump golang.org/x/net from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
-
 
 ## v1.1.0
 
