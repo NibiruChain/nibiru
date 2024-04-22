@@ -11,7 +11,8 @@ test-sim-nondeterminism:
 		-BlockSize=200 \
 		-Commit=true \
 		-Period=0 \
-		-Verbose=true
+		-Verbose=true \
+		-timeout 30m
 
 .PHONY: test-sim-default-genesis-fast
 test-sim-default-genesis-fast:
@@ -24,7 +25,8 @@ test-sim-default-genesis-fast:
 		-BlockSize=200 \
 		-Commit=true \
 		-Seed=99 \
-		-Period=0
+		-Period=0 \
+		-timeout 30m
 
 .PHONY: test-sim-import-export
 test-sim-import-export:
@@ -36,7 +38,8 @@ test-sim-import-export:
 		-NumBlocks=100 \
 		-Commit=true \
 		-Seed=99 \
-		-Period=5
+		-Period=5 \
+		-timeout 30m
 
 .PHONY: test-sim-after-import
 test-sim-after-import:
@@ -48,4 +51,5 @@ test-sim-after-import:
 		-NumBlocks=50 \
 		-Commit=true \
 		-Seed=99 \
-		-Period=5
+		-Period=5 \
+		-timeout 30m
