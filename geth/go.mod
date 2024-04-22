@@ -14,7 +14,7 @@ require (
 	github.com/consensys/gnark-crypto v0.4.1-0.20210426202927-39ac3d4b3f1f
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v1.8.0
-	github.com/docker/docker v1.6.2
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/dop251/goja v0.0.0-20220405120441-9037c2b61cbf
 	github.com/edsrzf/mmap-go v1.0.0
 	github.com/fatih/color v1.7.0
@@ -78,6 +78,7 @@ require (
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
@@ -97,4 +98,5 @@ require (
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gotest.tools/v3 v3.5.1 // indirect
 )
