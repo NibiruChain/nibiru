@@ -110,13 +110,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
 - Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.30.1 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777), [#1819](https://github.com/NibiruChain/nibiru/pull/1819), [#1834](https://github.com/NibiruChain/nibiru/pull/1834))
 - Bump `cosmossdk.io/errors` from 1.0.0 to 1.0.1 ([#1768](https://github.com/NibiruChain/nibiru/pull/1768))
-- Bump `robinraju/release-downloader` from 1.8 to 1.9 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783))
+- Bump `robinraju/release-downloader` from 1.8 to 1.10 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839))
 - Bump `codecov/codecov-action` from 3 to 4 ([#1784](https://github.com/NibiruChain/nibiru/pull/1784))
 - Bump `golangci/golangci-lint-action` from 3 to 4 ([#1791](https://github.com/NibiruChain/nibiru/pull/1791))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 - Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
 - Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
-- Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724))
+- Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724), [#1843](https://github.com/NibiruChain/nibiru/pull/1843))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 - Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
 - Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
@@ -125,6 +125,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
+- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
+- Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
+- Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 
 ## v1.1.0
 
