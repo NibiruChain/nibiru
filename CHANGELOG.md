@@ -40,6 +40,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-04-23
+
+Nibiru v1.3.0 adds interchain accounts.
+
+* [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0)]
+* [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.3.0)]
+
+### Features
+
+* [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
+
 ## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
 
 Nibiru v1.2.0 adds a burn method to the x/inflation module that allows senders to burn tokens.
