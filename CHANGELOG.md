@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
 - [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
+- [#1853](https://github.com/NibiruChain/nibiru/pull/1853) - feat: add swagger docs
 
 #### Nibiru EVM
 
