@@ -1,0 +1,58 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Nibiru Chain - gRPC Gateway docs",
+    "description": "A REST interface for state queries",
+    "version": "1.0.0"
+  },
+  "apis": [
+    {
+      "url": "./tmp-swagger-gen/nibiru/devgas/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "DevgasParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/nibiru/epochs/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "EpochsParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/nibiru/inflation/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "InflationParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/nibiru/oracle/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "OracleParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/nibiru/sudo/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "SudoParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/nibiru/tokenfactory/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "TokenfactoryParams"
+        }
+      }
+    }
+  ]
+}

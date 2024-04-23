@@ -1,0 +1,3113 @@
+swagger: '2.0'
+info:
+  title: Nibiru Chain - gRPC Gateway docs
+  description: A REST interface for state queries
+  version: 1.0.0
+paths:
+  /nibiru/devgas/v1/fee_shares/{contract_address}:
+    get:
+      summary: FeeShare retrieves a registered FeeShare for a given contract address
+      operationId: FeeShare
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              feeshare:
+                title: FeeShare is a stored Reveneue for the queried contract
+                type: object
+                properties:
+                  contract_address:
+                    type: string
+                    title: >-
+                      contract_address is the bech32 address of a registered
+                      contract in string
+
+                      form
+                  deployer_address:
+                    type: string
+                    description: >-
+                      deployer_address is the bech32 address of message sender.
+                      It must be the
+
+                      same as the contracts admin address.
+                  withdrawer_address:
+                    type: string
+                    description: >-
+                      withdrawer_address is the bech32 address of account
+                      receiving the
+
+                      transaction fees.
+            description: >-
+              QueryFeeShareResponse is the response type for the Query/FeeShare
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: contract_address
+          description: contract_address of a registered contract in bech32 format
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/devgas/v1/fee_shares/{deployer}:
+    get:
+      summary: |-
+        FeeShares retrieves all FeeShares that a deployer has
+        registered
+      operationId: FeeShares
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              feeshare:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contract_address:
+                      type: string
+                      title: >-
+                        contract_address is the bech32 address of a registered
+                        contract in string
+
+                        form
+                    deployer_address:
+                      type: string
+                      description: >-
+                        deployer_address is the bech32 address of message
+                        sender. It must be the
+
+                        same as the contracts admin address.
+                    withdrawer_address:
+                      type: string
+                      description: >-
+                        withdrawer_address is the bech32 address of account
+                        receiving the
+
+                        transaction fees.
+                  title: >-
+                    FeeShare defines an instance that organizes fee distribution
+                    conditions for
+
+                    the owner of a given smart contract
+                title: FeeShare is the slice of all stored Reveneue for the deployer
+            description: >-
+              QueryFeeSharesResponse is the response type for the
+              Query/FeeShares RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: deployer
+          description: |-
+            TODO feat(devgas): re-implement the paginated version
+            TODO feat(colletions): add automatic pagination generation
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/devgas/v1/fee_shares/{withdrawer_address}:
+    get:
+      summary: |-
+        FeeSharesByWithdrawer retrieves all FeeShares with a given withdrawer
+        address
+      operationId: FeeSharesByWithdrawer
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              feeshare:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contract_address:
+                      type: string
+                      title: >-
+                        contract_address is the bech32 address of a registered
+                        contract in string
+
+                        form
+                    deployer_address:
+                      type: string
+                      description: >-
+                        deployer_address is the bech32 address of message
+                        sender. It must be the
+
+                        same as the contracts admin address.
+                    withdrawer_address:
+                      type: string
+                      description: >-
+                        withdrawer_address is the bech32 address of account
+                        receiving the
+
+                        transaction fees.
+                  title: >-
+                    FeeShare defines an instance that organizes fee distribution
+                    conditions for
+
+                    the owner of a given smart contract
+            description: |-
+              QueryFeeSharesByWithdrawerResponse is the response type for the
+              Query/FeeSharesByWithdrawer RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: withdrawer_address
+          description: withdrawer_address in bech32 format
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/devgas/v1/params:
+    get:
+      summary: Params retrieves the module params
+      operationId: DevgasParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                title: params is the returned FeeShare parameter
+                type: object
+                properties:
+                  enable_fee_share:
+                    type: boolean
+                    title: >-
+                      enable_feeshare defines a parameter to enable the feeshare
+                      module
+                  developer_shares:
+                    type: string
+                    title: >-
+                      developer_shares defines the proportion of the transaction
+                      fees to be
+
+                      distributed to the registered contract owner
+                  allowed_denoms:
+                    type: array
+                    items:
+                      type: string
+                    description: >-
+                      allowed_denoms defines the list of denoms that are allowed
+                      to be paid to
+
+                      the contract withdraw addresses. If said denom is not in
+                      the list, the fees
+
+                      will ONLY be sent to the community pool.
+
+                      If this list is empty, all denoms are allowed.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/epochs/v1beta1/current_epoch:
+    get:
+      summary: CurrentEpoch provide current epoch of specified identifier
+      operationId: CurrentEpoch
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              current_epoch:
+                type: string
+                format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: identifier
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/epochs/v1beta1/epochs:
+    get:
+      summary: EpochInfos provide running epochInfos
+      operationId: EpochInfos
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epochs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    identifier:
+                      type: string
+                      title: >-
+                        A string identifier for the epoch. e.g. "15min" or
+                        "1hour"
+                    start_time:
+                      type: string
+                      format: date-time
+                      description: When the epoch repetitino should start.
+                    duration:
+                      type: string
+                      description: How long each epoch lasts for.
+                    current_epoch:
+                      type: string
+                      format: uint64
+                      description: The current epoch number, starting from 1.
+                    current_epoch_start_time:
+                      type: string
+                      format: date-time
+                      description: The start timestamp of the current epoch.
+                    epoch_counting_started:
+                      type: boolean
+                      description: >-
+                        Whether or not this epoch has started. Set to true if
+                        current blocktime >=
+
+                        start_time.
+                    current_epoch_start_height:
+                      type: string
+                      format: int64
+                      description: The block height at which the current epoch started at.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/circulating_supply:
+    get:
+      summary: |-
+        CirculatingSupply retrieves the total number of tokens that are in
+        circulation (i.e. excluding unvested tokens).
+      operationId: CirculatingSupply
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              circulating_supply:
+                title: circulating_supply is the total amount of coins in circulation
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  DecCoin defines a token with a denomination and a decimal
+                  amount.
+
+
+                  NOTE: The amount field is an Dec which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+            description: |-
+              QueryCirculatingSupplyResponse is the response type for the
+              Query/CirculatingSupply RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/epoch_mint_provision:
+    get:
+      summary: EpochMintProvision retrieves current minting epoch provision value.
+      operationId: EpochMintProvision
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epoch_mint_provision:
+                description: >-
+                  epoch_mint_provision is the current minting per epoch
+                  provision value.
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+            description: |-
+              QueryEpochMintProvisionResponse is the response type for the
+              Query/EpochMintProvision RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/inflation_rate:
+    get:
+      summary: InflationRate retrieves the inflation rate of the current period.
+      operationId: InflationRate
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              inflation_rate:
+                type: string
+                title: >-
+                  inflation_rate by which the total supply increases within one
+                  period
+            description: >-
+              QueryInflationRateResponse is the response type for the
+              Query/InflationRate
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/params:
+    get:
+      summary: Params retrieves the total set of minting parameters.
+      operationId: InflationParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  inflation_enabled:
+                    type: boolean
+                    title: >-
+                      inflation_enabled is the parameter that enables inflation
+                      and halts
+
+                      increasing the skipped_epochs
+                  polynomial_factors:
+                    type: array
+                    items:
+                      type: string
+                    title: >-
+                      polynomial_factors takes in the variables to calculate
+                      polynomial
+
+                      inflation
+                  inflation_distribution:
+                    title: inflation_distribution of the minted denom
+                    type: object
+                    properties:
+                      staking_rewards:
+                        type: string
+                        title: >-
+                          staking_rewards defines the proportion of the
+                          minted_denom that is
+
+                          to be allocated as staking rewards
+                      community_pool:
+                        type: string
+                        title: >-
+                          community_pool defines the proportion of the
+                          minted_denom that is to
+
+                          be allocated to the community pool
+                      strategic_reserves:
+                        type: string
+                        title: >-
+                          strategic_reserves defines the proportion of the
+                          minted_denom that
+
+                          is to be allocated to the strategic reserves module
+                          address
+                    description: >-
+                      InflationDistribution defines the distribution in which
+                      inflation is
+
+                      allocated through minting on each epoch (staking,
+                      community, strategic). It
+
+                      excludes the team vesting distribution.
+                  epochs_per_period:
+                    type: string
+                    format: uint64
+                    title: >-
+                      epochs_per_period is the number of epochs that must pass
+                      before a new
+
+                      period is created
+                  periods_per_year:
+                    type: string
+                    format: uint64
+                    title: >-
+                      periods_per_year is the number of periods that occur in a
+                      year
+                  max_period:
+                    type: string
+                    format: uint64
+                    description: >-
+                      max_period is the maximum number of periods that have
+                      inflation being 
+
+                      paid off. After this period, inflation will be disabled.
+                  has_inflation_started:
+                    type: boolean
+                    title: >-
+                      has_inflation_started is the parameter that indicates if
+                      inflation has
+
+                      started. It's set to false at the starts, and stays at
+                      true when we toggle
+
+                      inflation on. It's used to track num skipped epochs
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/period:
+    get:
+      summary: Period retrieves current period.
+      operationId: Period
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              period:
+                type: string
+                format: uint64
+                description: period is the current minting per epoch provision value.
+            description: >-
+              QueryPeriodResponse is the response type for the Query/Period RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/inflation/v1/skipped_epochs:
+    get:
+      summary: SkippedEpochs retrieves the total number of skipped epochs.
+      operationId: SkippedEpochs
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              skipped_epochs:
+                type: string
+                format: uint64
+                description: >-
+                  skipped_epochs is the number of epochs that the inflation
+                  module has been
+
+                  disabled.
+            description: >-
+              QuerySkippedEpochsResponse is the response type for the
+              Query/SkippedEpochs
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/exchange_rate:
+    get:
+      summary: ExchangeRate returns exchange rate of a pair
+      operationId: ExchangeRate
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              exchange_rate:
+                type: string
+                title: >-
+                  exchange_rate defines the exchange rate of assets voted by
+                  validators
+            description: |-
+              QueryExchangeRateResponse is response type for the
+              Query/ExchangeRate RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair
+          description: pair defines the pair to query for.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/exchange_rate_twap:
+    get:
+      summary: ExchangeRateTwap returns twap exchange rate of a pair
+      operationId: ExchangeRateTwap
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              exchange_rate:
+                type: string
+                title: >-
+                  exchange_rate defines the exchange rate of assets voted by
+                  validators
+            description: |-
+              QueryExchangeRateResponse is response type for the
+              Query/ExchangeRate RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pair
+          description: pair defines the pair to query for.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/pairs/actives:
+    get:
+      summary: Actives returns all active pairs
+      operationId: Actives
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              actives:
+                type: array
+                items:
+                  type: string
+                description: >-
+                  actives defines a list of the pair which oracle prices agreed
+                  upon.
+            description: |-
+              QueryActivesResponse is response type for the
+              Query/Actives RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/pairs/exchange_rates:
+    get:
+      summary: ExchangeRates returns exchange rates of all pairs
+      operationId: ExchangeRates
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              exchange_rates:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pair:
+                      type: string
+                    exchange_rate:
+                      type: string
+                  title: >-
+                    ExchangeRateTuple - struct to store interpreted exchange
+                    rates data to store
+                description: >-
+                  exchange_rates defines a list of the exchange rate for all
+                  whitelisted
+
+                  pairs.
+            description: |-
+              QueryExchangeRatesResponse is response type for the
+              Query/ExchangeRates RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/pairs/vote_targets:
+    get:
+      summary: VoteTargets returns all vote target for pairs
+      operationId: VoteTargets
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              vote_targets:
+                type: array
+                items:
+                  type: string
+                description: |-
+                  vote_targets defines a list of the pairs in which everyone
+                  should vote in the current vote period.
+            description: |-
+              QueryVoteTargetsResponse is response type for the
+              Query/VoteTargets RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/params:
+    get:
+      summary: Params queries all parameters.
+      operationId: OracleParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  vote_period:
+                    type: string
+                    format: uint64
+                    description: >-
+                      VotePeriod defines the number of blocks during which
+                      voting takes place.
+                  vote_threshold:
+                    type: string
+                    description: >-
+                      VoteThreshold specifies the minimum proportion of votes
+                      that must be
+
+                      received for a ballot to pass.
+                  reward_band:
+                    type: string
+                    title: "RewardBand defines a maxium divergence that a price vote can have from the\nweighted median in the ballot. If a vote lies within the valid range\ndefined by:\n\tμ := weightedMedian,\n\tvalidRange := μ ± (μ * rewardBand / 2),\nthen rewards are added to the validator performance.\nNote that if the reward band is smaller than 1 standard\ndeviation, the band is taken to be 1 standard deviation.a price"
+                  whitelist:
+                    type: array
+                    items:
+                      type: string
+                    title: >-
+                      The set of whitelisted markets, or asset pairs, for the
+                      module.
+
+                      Ex. '["unibi:uusd","ubtc:uusd"]'
+                  slash_fraction:
+                    type: string
+                    description: >-
+                      SlashFraction returns the proportion of an oracle's stake
+                      that gets
+
+                      slashed in the event of slashing. `SlashFraction`
+                      specifies the exact
+
+                      penalty for failing a voting period.
+                  slash_window:
+                    type: string
+                    format: uint64
+                    description: >-
+                      SlashWindow returns the number of voting periods that
+                      specify a
+
+                      "slash window". After each slash window, all oracles that
+                      have missed more
+
+                      than the penalty threshold are slashed. Missing the
+                      penalty threshold is
+
+                      synonymous with submitting fewer valid votes than
+                      `MinValidPerWindow`.
+                  min_valid_per_window:
+                    type: string
+                  twap_lookback_window:
+                    type: string
+                    description: >-
+                      Amount of time to look back for TWAP calculations.
+
+                      Ex: "900.000000069s" corresponds to 900 seconds and 69
+                      nanoseconds in JSON.
+                  min_voters:
+                    type: string
+                    format: uint64
+                    description: >-
+                      The minimum number of voters (i.e. oracle validators) per
+                      pair for it to be
+
+                      considered a passing ballot. Recommended at least 4.
+                  validator_fee_ratio:
+                    type: string
+                    description: >-
+                      The validator fee ratio that is given to validators every
+                      epoch.
+                  expiration_blocks:
+                    type: string
+                    format: uint64
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/valdiators/{validator_addr}/aggregate_vote:
+    get:
+      summary: AggregateVote returns an aggregate vote of a validator
+      operationId: AggregateVote
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              aggregate_vote:
+                title: >-
+                  aggregate_vote defines oracle aggregate vote submitted by a
+                  validator in
+
+                  the current vote period
+                type: object
+                properties:
+                  exchange_rate_tuples:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pair:
+                          type: string
+                        exchange_rate:
+                          type: string
+                      title: >-
+                        ExchangeRateTuple - struct to store interpreted exchange
+                        rates data to store
+                  voter:
+                    type: string
+                description: |-
+                  MsgAggregateExchangeRateVote - struct for voting on
+                  the exchange rates different assets.
+            description: |-
+              QueryAggregateVoteResponse is response type for the
+              Query/AggregateVote RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_addr
+          description: validator defines the validator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/validators/aggregate_prevotes:
+    get:
+      summary: AggregatePrevotes returns aggregate prevotes of all validators
+      operationId: AggregatePrevotes
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              aggregate_prevotes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    hash:
+                      type: string
+                    voter:
+                      type: string
+                    submit_block:
+                      type: string
+                      format: uint64
+                  title: >-
+                    Struct for aggregate prevoting on the ExchangeRateVote.
+
+                    The purpose of aggregate prevote is to hide vote exchange
+                    rates with hash
+
+                    which is formatted as hex string in
+
+                    SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
+                title: >-
+                  aggregate_prevotes defines all oracle aggregate prevotes
+                  submitted in the
+
+                  current vote period
+            description: |-
+              QueryAggregatePrevotesResponse is response type for the
+              Query/AggregatePrevotes RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/validators/aggregate_votes:
+    get:
+      summary: AggregateVotes returns aggregate votes of all validators
+      operationId: AggregateVotes
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              aggregate_votes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    exchange_rate_tuples:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          pair:
+                            type: string
+                          exchange_rate:
+                            type: string
+                        title: >-
+                          ExchangeRateTuple - struct to store interpreted
+                          exchange rates data to store
+                    voter:
+                      type: string
+                  description: |-
+                    MsgAggregateExchangeRateVote - struct for voting on
+                    the exchange rates different assets.
+                title: >-
+                  aggregate_votes defines all oracle aggregate votes submitted
+                  in the current
+
+                  vote period
+            description: |-
+              QueryAggregateVotesResponse is response type for the
+              Query/AggregateVotes RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/validators/{validator_addr}/aggregate_prevote:
+    get:
+      summary: AggregatePrevote returns an aggregate prevote of a validator
+      operationId: AggregatePrevote
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              aggregate_prevote:
+                type: object
+                properties:
+                  hash:
+                    type: string
+                  voter:
+                    type: string
+                  submit_block:
+                    type: string
+                    format: uint64
+                title: >-
+                  Struct for aggregate prevoting on the ExchangeRateVote.
+
+                  The purpose of aggregate prevote is to hide vote exchange
+                  rates with hash
+
+                  which is formatted as hex string in
+
+                  SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
+            description: |-
+              QueryAggregatePrevoteResponse is response type for the
+              Query/AggregatePrevote RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_addr
+          description: validator defines the validator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/validators/{validator_addr}/feeder:
+    get:
+      summary: FeederDelegation returns feeder delegation of a validator
+      operationId: FeederDelegation
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              feeder_addr:
+                type: string
+                title: feeder_addr defines the feeder delegation of a validator
+            description: |-
+              QueryFeederDelegationResponse is response type for the
+              Query/FeederDelegation RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_addr
+          description: validator defines the validator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/oracle/v1beta1/validators/{validator_addr}/miss:
+    get:
+      summary: MissCounter returns oracle miss counter of a validator
+      operationId: MissCounter
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              miss_counter:
+                type: string
+                format: uint64
+                title: miss_counter defines the oracle miss counter of a validator
+            description: |-
+              QueryMissCounterResponse is response type for the
+              Query/MissCounter RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_addr
+          description: validator defines the validator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/sudo/sudoers:
+    get:
+      operationId: QuerySudoers
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              sudoers:
+                type: object
+                properties:
+                  root:
+                    type: string
+                    description: 'Root: The "root" user.'
+                  contracts:
+                    type: array
+                    items:
+                      type: string
+                    description: 'Contracts: The set of contracts with elevated permissions.'
+            description: >-
+              QuerySudoersResponse indicates the successful execution of
+              MsgEditSudeors.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /nibiru/tokenfactory/v1/denom-info/{denom}:
+    get:
+      summary: DenomInfo retrieves the denom metadata and admin info
+      operationId: DenomInfo
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              admin:
+                type: string
+                title: Admin of the token factory denom
+              metadata:
+                description: >-
+                  Metadata: Official x/bank metadata for the denom. All token
+                  factory denoms
+
+                  are standard, native assets.
+                type: object
+                properties:
+                  description:
+                    type: string
+                  denom_units:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          description: >-
+                            denom represents the string name of the given denom
+                            unit (e.g uatom).
+                        exponent:
+                          type: integer
+                          format: int64
+                          description: >-
+                            exponent represents power of 10 exponent that one
+                            must
+
+                            raise the base_denom to in order to equal the given
+                            DenomUnit's denom
+
+                            1 denom = 10^exponent base_denom
+
+                            (e.g. with a base_denom of uatom, one can create a
+                            DenomUnit of 'atom' with
+
+                            exponent = 6, thus: 1 atom = 10^6 uatom).
+                        aliases:
+                          type: array
+                          items:
+                            type: string
+                          title: >-
+                            aliases is a list of string aliases for the given
+                            denom
+                      description: |-
+                        DenomUnit represents a struct that describes a given
+                        denomination unit of the basic token.
+                    title: >-
+                      denom_units represents the list of DenomUnit's for a given
+                      coin
+                  base:
+                    type: string
+                    description: >-
+                      base represents the base denom (should be the DenomUnit
+                      with exponent = 0).
+                  display:
+                    type: string
+                    description: |-
+                      display indicates the suggested denom that should be
+                      displayed in clients.
+                  name:
+                    type: string
+                    description: 'Since: cosmos-sdk 0.43'
+                    title: 'name defines the name of the token (eg: Cosmos Atom)'
+                  symbol:
+                    type: string
+                    description: >-
+                      symbol is the token symbol usually shown on exchanges (eg:
+                      ATOM). This can
+
+                      be the same as the display.
+
+
+                      Since: cosmos-sdk 0.43
+                  uri:
+                    type: string
+                    description: >-
+                      URI to a document (on or off-chain) that contains
+                      additional information. Optional.
+
+
+                      Since: cosmos-sdk 0.46
+                  uri_hash:
+                    type: string
+                    description: >-
+                      URIHash is a sha256 hash of a document pointed by URI.
+                      It's used to verify that
+
+                      the document didn't change. Optional.
+
+
+                      Since: cosmos-sdk 0.46
+            title: 'QueryDenomInfoResponse: All registered denoms for a creator'
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: denom
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/tokenfactory/v1/denoms/{creator}:
+    get:
+      summary: Denoms retrieves all registered denoms for a given creator
+      operationId: Denoms
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              denoms:
+                type: array
+                items:
+                  type: string
+            title: 'QueryDenomsResponse: All registered denoms for a creator'
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: creator
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /nibiru/tokenfactory/v1/params:
+    get:
+      summary: Params retrieves the module params
+      operationId: TokenfactoryParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                title: Module parameters stored in state
+                type: object
+                properties:
+                  denom_creation_gas_consume:
+                    type: string
+                    format: uint64
+                    description: >-
+                      Adds gas consumption to the execution of `MsgCreateDenom`
+                      as a method of
+
+                      spam prevention. Defaults to 10 NIBI.
+                description: >-
+                  ModuleParams defines the parameters for the tokenfactory
+                  module.
+
+
+                  ### On Denom Creation Costs
+
+
+                  We'd like for fees to be paid by the user/signer of a
+                  ransaction, but in many
+
+                  casess, token creation is abstracted away behind a smart
+                  contract. Setting a
+
+                  nonzero `denom_creation_fee` would force each contract to
+                  handle collecting
+
+                  and paying a fees for denom
+                  (factory/{contract-addr}/{subdenom}) creation on
+
+                  behalf of the end user.
+
+
+                  For IBC token transfers, it's unclear who should pay the
+                  fee—the contract,
+
+                  the relayer, or the original sender?
+
+                  > "Charging fees will mess up composability, the same way
+                  Terra transfer tax
+                    caused all kinds of headaches for contract devs." - @ethanfrey
+
+                  ### Recommended Solution
+
+
+                  Have the end user (signer) pay fees directly in the form of
+                  higher gas costs.
+
+                  This way, contracts won't need to handle collecting or paying
+                  fees. And for
+
+                  IBC, the gas costs are already paid by the original sender and
+                  can be
+
+                  estimated by the relayer. It's easier to tune gas costs to
+                  make spam
+
+                  prohibitively expensive since there are per-transaction and
+                  per-block gas
+
+                  limits.
+
+
+                  See https://github.com/CosmWasm/token-factory/issues/11 for
+                  the initial
+
+                  discussion of the issue with @ethanfrey and @valardragon.
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+definitions:
+  google.protobuf.Any:
+    type: object
+    properties:
+      type_url:
+        type: string
+      value:
+        type: string
+        format: byte
+  grpc.gateway.runtime.Error:
+    type: object
+    properties:
+      error:
+        type: string
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          properties:
+            type_url:
+              type: string
+            value:
+              type: string
+              format: byte
+  nibiru.devgas.v1.FeeShare:
+    type: object
+    properties:
+      contract_address:
+        type: string
+        title: >-
+          contract_address is the bech32 address of a registered contract in
+          string
+
+          form
+      deployer_address:
+        type: string
+        description: >-
+          deployer_address is the bech32 address of message sender. It must be
+          the
+
+          same as the contracts admin address.
+      withdrawer_address:
+        type: string
+        description: |-
+          withdrawer_address is the bech32 address of account receiving the
+          transaction fees.
+    title: >-
+      FeeShare defines an instance that organizes fee distribution conditions
+      for
+
+      the owner of a given smart contract
+  nibiru.devgas.v1.ModuleParams:
+    type: object
+    properties:
+      enable_fee_share:
+        type: boolean
+        title: enable_feeshare defines a parameter to enable the feeshare module
+      developer_shares:
+        type: string
+        title: |-
+          developer_shares defines the proportion of the transaction fees to be
+          distributed to the registered contract owner
+      allowed_denoms:
+        type: array
+        items:
+          type: string
+        description: >-
+          allowed_denoms defines the list of denoms that are allowed to be paid
+          to
+
+          the contract withdraw addresses. If said denom is not in the list, the
+          fees
+
+          will ONLY be sent to the community pool.
+
+          If this list is empty, all denoms are allowed.
+    title: ModuleParams defines the params for the devgas module
+  nibiru.devgas.v1.QueryFeeShareResponse:
+    type: object
+    properties:
+      feeshare:
+        title: FeeShare is a stored Reveneue for the queried contract
+        type: object
+        properties:
+          contract_address:
+            type: string
+            title: >-
+              contract_address is the bech32 address of a registered contract in
+              string
+
+              form
+          deployer_address:
+            type: string
+            description: >-
+              deployer_address is the bech32 address of message sender. It must
+              be the
+
+              same as the contracts admin address.
+          withdrawer_address:
+            type: string
+            description: |-
+              withdrawer_address is the bech32 address of account receiving the
+              transaction fees.
+    description: >-
+      QueryFeeShareResponse is the response type for the Query/FeeShare RPC
+      method.
+  nibiru.devgas.v1.QueryFeeSharesByWithdrawerResponse:
+    type: object
+    properties:
+      feeshare:
+        type: array
+        items:
+          type: object
+          properties:
+            contract_address:
+              type: string
+              title: >-
+                contract_address is the bech32 address of a registered contract
+                in string
+
+                form
+            deployer_address:
+              type: string
+              description: >-
+                deployer_address is the bech32 address of message sender. It
+                must be the
+
+                same as the contracts admin address.
+            withdrawer_address:
+              type: string
+              description: >-
+                withdrawer_address is the bech32 address of account receiving
+                the
+
+                transaction fees.
+          title: >-
+            FeeShare defines an instance that organizes fee distribution
+            conditions for
+
+            the owner of a given smart contract
+    description: |-
+      QueryFeeSharesByWithdrawerResponse is the response type for the
+      Query/FeeSharesByWithdrawer RPC method.
+  nibiru.devgas.v1.QueryFeeSharesResponse:
+    type: object
+    properties:
+      feeshare:
+        type: array
+        items:
+          type: object
+          properties:
+            contract_address:
+              type: string
+              title: >-
+                contract_address is the bech32 address of a registered contract
+                in string
+
+                form
+            deployer_address:
+              type: string
+              description: >-
+                deployer_address is the bech32 address of message sender. It
+                must be the
+
+                same as the contracts admin address.
+            withdrawer_address:
+              type: string
+              description: >-
+                withdrawer_address is the bech32 address of account receiving
+                the
+
+                transaction fees.
+          title: >-
+            FeeShare defines an instance that organizes fee distribution
+            conditions for
+
+            the owner of a given smart contract
+        title: FeeShare is the slice of all stored Reveneue for the deployer
+    description: |-
+      QueryFeeSharesResponse is the response type for the Query/FeeShares RPC
+      method.
+  nibiru.devgas.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        title: params is the returned FeeShare parameter
+        type: object
+        properties:
+          enable_fee_share:
+            type: boolean
+            title: enable_feeshare defines a parameter to enable the feeshare module
+          developer_shares:
+            type: string
+            title: >-
+              developer_shares defines the proportion of the transaction fees to
+              be
+
+              distributed to the registered contract owner
+          allowed_denoms:
+            type: array
+            items:
+              type: string
+            description: >-
+              allowed_denoms defines the list of denoms that are allowed to be
+              paid to
+
+              the contract withdraw addresses. If said denom is not in the list,
+              the fees
+
+              will ONLY be sent to the community pool.
+
+              If this list is empty, all denoms are allowed.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  nibiru.epochs.v1.EpochInfo:
+    type: object
+    properties:
+      identifier:
+        type: string
+        title: A string identifier for the epoch. e.g. "15min" or "1hour"
+      start_time:
+        type: string
+        format: date-time
+        description: When the epoch repetitino should start.
+      duration:
+        type: string
+        description: How long each epoch lasts for.
+      current_epoch:
+        type: string
+        format: uint64
+        description: The current epoch number, starting from 1.
+      current_epoch_start_time:
+        type: string
+        format: date-time
+        description: The start timestamp of the current epoch.
+      epoch_counting_started:
+        type: boolean
+        description: >-
+          Whether or not this epoch has started. Set to true if current
+          blocktime >=
+
+          start_time.
+      current_epoch_start_height:
+        type: string
+        format: int64
+        description: The block height at which the current epoch started at.
+  nibiru.epochs.v1.QueryCurrentEpochResponse:
+    type: object
+    properties:
+      current_epoch:
+        type: string
+        format: uint64
+  nibiru.epochs.v1.QueryEpochInfosResponse:
+    type: object
+    properties:
+      epochs:
+        type: array
+        items:
+          type: object
+          properties:
+            identifier:
+              type: string
+              title: A string identifier for the epoch. e.g. "15min" or "1hour"
+            start_time:
+              type: string
+              format: date-time
+              description: When the epoch repetitino should start.
+            duration:
+              type: string
+              description: How long each epoch lasts for.
+            current_epoch:
+              type: string
+              format: uint64
+              description: The current epoch number, starting from 1.
+            current_epoch_start_time:
+              type: string
+              format: date-time
+              description: The start timestamp of the current epoch.
+            epoch_counting_started:
+              type: boolean
+              description: >-
+                Whether or not this epoch has started. Set to true if current
+                blocktime >=
+
+                start_time.
+            current_epoch_start_height:
+              type: string
+              format: int64
+              description: The block height at which the current epoch started at.
+  cosmos.base.v1beta1.DecCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+      amount:
+        type: string
+    description: |-
+      DecCoin defines a token with a denomination and a decimal amount.
+
+      NOTE: The amount field is an Dec which implements the custom method
+      signatures required by gogoproto.
+  nibiru.inflation.v1.InflationDistribution:
+    type: object
+    properties:
+      staking_rewards:
+        type: string
+        title: |-
+          staking_rewards defines the proportion of the minted_denom that is
+          to be allocated as staking rewards
+      community_pool:
+        type: string
+        title: |-
+          community_pool defines the proportion of the minted_denom that is to
+          be allocated to the community pool
+      strategic_reserves:
+        type: string
+        title: |-
+          strategic_reserves defines the proportion of the minted_denom that
+          is to be allocated to the strategic reserves module address
+    description: >-
+      InflationDistribution defines the distribution in which inflation is
+
+      allocated through minting on each epoch (staking, community, strategic).
+      It
+
+      excludes the team vesting distribution.
+  nibiru.inflation.v1.Params:
+    type: object
+    properties:
+      inflation_enabled:
+        type: boolean
+        title: |-
+          inflation_enabled is the parameter that enables inflation and halts
+          increasing the skipped_epochs
+      polynomial_factors:
+        type: array
+        items:
+          type: string
+        title: |-
+          polynomial_factors takes in the variables to calculate polynomial
+          inflation
+      inflation_distribution:
+        title: inflation_distribution of the minted denom
+        type: object
+        properties:
+          staking_rewards:
+            type: string
+            title: |-
+              staking_rewards defines the proportion of the minted_denom that is
+              to be allocated as staking rewards
+          community_pool:
+            type: string
+            title: >-
+              community_pool defines the proportion of the minted_denom that is
+              to
+
+              be allocated to the community pool
+          strategic_reserves:
+            type: string
+            title: |-
+              strategic_reserves defines the proportion of the minted_denom that
+              is to be allocated to the strategic reserves module address
+        description: >-
+          InflationDistribution defines the distribution in which inflation is
+
+          allocated through minting on each epoch (staking, community,
+          strategic). It
+
+          excludes the team vesting distribution.
+      epochs_per_period:
+        type: string
+        format: uint64
+        title: |-
+          epochs_per_period is the number of epochs that must pass before a new
+          period is created
+      periods_per_year:
+        type: string
+        format: uint64
+        title: periods_per_year is the number of periods that occur in a year
+      max_period:
+        type: string
+        format: uint64
+        description: |-
+          max_period is the maximum number of periods that have inflation being 
+          paid off. After this period, inflation will be disabled.
+      has_inflation_started:
+        type: boolean
+        title: >-
+          has_inflation_started is the parameter that indicates if inflation has
+
+          started. It's set to false at the starts, and stays at true when we
+          toggle
+
+          inflation on. It's used to track num skipped epochs
+    description: Params holds parameters for the inflation module.
+  nibiru.inflation.v1.QueryCirculatingSupplyResponse:
+    type: object
+    properties:
+      circulating_supply:
+        title: circulating_supply is the total amount of coins in circulation
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+        description: |-
+          DecCoin defines a token with a denomination and a decimal amount.
+
+          NOTE: The amount field is an Dec which implements the custom method
+          signatures required by gogoproto.
+    description: |-
+      QueryCirculatingSupplyResponse is the response type for the
+      Query/CirculatingSupply RPC method.
+  nibiru.inflation.v1.QueryEpochMintProvisionResponse:
+    type: object
+    properties:
+      epoch_mint_provision:
+        description: epoch_mint_provision is the current minting per epoch provision value.
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+    description: |-
+      QueryEpochMintProvisionResponse is the response type for the
+      Query/EpochMintProvision RPC method.
+  nibiru.inflation.v1.QueryInflationRateResponse:
+    type: object
+    properties:
+      inflation_rate:
+        type: string
+        title: inflation_rate by which the total supply increases within one period
+    description: >-
+      QueryInflationRateResponse is the response type for the
+      Query/InflationRate
+
+      RPC method.
+  nibiru.inflation.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          inflation_enabled:
+            type: boolean
+            title: >-
+              inflation_enabled is the parameter that enables inflation and
+              halts
+
+              increasing the skipped_epochs
+          polynomial_factors:
+            type: array
+            items:
+              type: string
+            title: |-
+              polynomial_factors takes in the variables to calculate polynomial
+              inflation
+          inflation_distribution:
+            title: inflation_distribution of the minted denom
+            type: object
+            properties:
+              staking_rewards:
+                type: string
+                title: >-
+                  staking_rewards defines the proportion of the minted_denom
+                  that is
+
+                  to be allocated as staking rewards
+              community_pool:
+                type: string
+                title: >-
+                  community_pool defines the proportion of the minted_denom that
+                  is to
+
+                  be allocated to the community pool
+              strategic_reserves:
+                type: string
+                title: >-
+                  strategic_reserves defines the proportion of the minted_denom
+                  that
+
+                  is to be allocated to the strategic reserves module address
+            description: >-
+              InflationDistribution defines the distribution in which inflation
+              is
+
+              allocated through minting on each epoch (staking, community,
+              strategic). It
+
+              excludes the team vesting distribution.
+          epochs_per_period:
+            type: string
+            format: uint64
+            title: >-
+              epochs_per_period is the number of epochs that must pass before a
+              new
+
+              period is created
+          periods_per_year:
+            type: string
+            format: uint64
+            title: periods_per_year is the number of periods that occur in a year
+          max_period:
+            type: string
+            format: uint64
+            description: >-
+              max_period is the maximum number of periods that have inflation
+              being 
+
+              paid off. After this period, inflation will be disabled.
+          has_inflation_started:
+            type: boolean
+            title: >-
+              has_inflation_started is the parameter that indicates if inflation
+              has
+
+              started. It's set to false at the starts, and stays at true when
+              we toggle
+
+              inflation on. It's used to track num skipped epochs
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  nibiru.inflation.v1.QueryPeriodResponse:
+    type: object
+    properties:
+      period:
+        type: string
+        format: uint64
+        description: period is the current minting per epoch provision value.
+    description: QueryPeriodResponse is the response type for the Query/Period RPC method.
+  nibiru.inflation.v1.QuerySkippedEpochsResponse:
+    type: object
+    properties:
+      skipped_epochs:
+        type: string
+        format: uint64
+        description: >-
+          skipped_epochs is the number of epochs that the inflation module has
+          been
+
+          disabled.
+    description: >-
+      QuerySkippedEpochsResponse is the response type for the
+      Query/SkippedEpochs
+
+      RPC method.
+  nibiru.oracle.v1.AggregateExchangeRatePrevote:
+    type: object
+    properties:
+      hash:
+        type: string
+      voter:
+        type: string
+      submit_block:
+        type: string
+        format: uint64
+    title: >-
+      Struct for aggregate prevoting on the ExchangeRateVote.
+
+      The purpose of aggregate prevote is to hide vote exchange rates with hash
+
+      which is formatted as hex string in
+
+      SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
+  nibiru.oracle.v1.AggregateExchangeRateVote:
+    type: object
+    properties:
+      exchange_rate_tuples:
+        type: array
+        items:
+          type: object
+          properties:
+            pair:
+              type: string
+            exchange_rate:
+              type: string
+          title: >-
+            ExchangeRateTuple - struct to store interpreted exchange rates data
+            to store
+      voter:
+        type: string
+    description: |-
+      MsgAggregateExchangeRateVote - struct for voting on
+      the exchange rates different assets.
+  nibiru.oracle.v1.ExchangeRateTuple:
+    type: object
+    properties:
+      pair:
+        type: string
+      exchange_rate:
+        type: string
+    title: >-
+      ExchangeRateTuple - struct to store interpreted exchange rates data to
+      store
+  nibiru.oracle.v1.Params:
+    type: object
+    properties:
+      vote_period:
+        type: string
+        format: uint64
+        description: >-
+          VotePeriod defines the number of blocks during which voting takes
+          place.
+      vote_threshold:
+        type: string
+        description: |-
+          VoteThreshold specifies the minimum proportion of votes that must be
+          received for a ballot to pass.
+      reward_band:
+        type: string
+        title: "RewardBand defines a maxium divergence that a price vote can have from the\nweighted median in the ballot. If a vote lies within the valid range\ndefined by:\n\tμ := weightedMedian,\n\tvalidRange := μ ± (μ * rewardBand / 2),\nthen rewards are added to the validator performance.\nNote that if the reward band is smaller than 1 standard\ndeviation, the band is taken to be 1 standard deviation.a price"
+      whitelist:
+        type: array
+        items:
+          type: string
+        title: |-
+          The set of whitelisted markets, or asset pairs, for the module.
+          Ex. '["unibi:uusd","ubtc:uusd"]'
+      slash_fraction:
+        type: string
+        description: |-
+          SlashFraction returns the proportion of an oracle's stake that gets
+          slashed in the event of slashing. `SlashFraction` specifies the exact
+          penalty for failing a voting period.
+      slash_window:
+        type: string
+        format: uint64
+        description: >-
+          SlashWindow returns the number of voting periods that specify a
+
+          "slash window". After each slash window, all oracles that have missed
+          more
+
+          than the penalty threshold are slashed. Missing the penalty threshold
+          is
+
+          synonymous with submitting fewer valid votes than `MinValidPerWindow`.
+      min_valid_per_window:
+        type: string
+      twap_lookback_window:
+        type: string
+        description: >-
+          Amount of time to look back for TWAP calculations.
+
+          Ex: "900.000000069s" corresponds to 900 seconds and 69 nanoseconds in
+          JSON.
+      min_voters:
+        type: string
+        format: uint64
+        description: >-
+          The minimum number of voters (i.e. oracle validators) per pair for it
+          to be
+
+          considered a passing ballot. Recommended at least 4.
+      validator_fee_ratio:
+        type: string
+        description: The validator fee ratio that is given to validators every epoch.
+      expiration_blocks:
+        type: string
+        format: uint64
+    description: Params defines the module parameters for the x/oracle module.
+  nibiru.oracle.v1.QueryActivesResponse:
+    type: object
+    properties:
+      actives:
+        type: array
+        items:
+          type: string
+        description: actives defines a list of the pair which oracle prices agreed upon.
+    description: |-
+      QueryActivesResponse is response type for the
+      Query/Actives RPC method.
+  nibiru.oracle.v1.QueryAggregatePrevoteResponse:
+    type: object
+    properties:
+      aggregate_prevote:
+        type: object
+        properties:
+          hash:
+            type: string
+          voter:
+            type: string
+          submit_block:
+            type: string
+            format: uint64
+        title: >-
+          Struct for aggregate prevoting on the ExchangeRateVote.
+
+          The purpose of aggregate prevote is to hide vote exchange rates with
+          hash
+
+          which is formatted as hex string in
+
+          SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
+    description: |-
+      QueryAggregatePrevoteResponse is response type for the
+      Query/AggregatePrevote RPC method.
+  nibiru.oracle.v1.QueryAggregatePrevotesResponse:
+    type: object
+    properties:
+      aggregate_prevotes:
+        type: array
+        items:
+          type: object
+          properties:
+            hash:
+              type: string
+            voter:
+              type: string
+            submit_block:
+              type: string
+              format: uint64
+          title: >-
+            Struct for aggregate prevoting on the ExchangeRateVote.
+
+            The purpose of aggregate prevote is to hide vote exchange rates with
+            hash
+
+            which is formatted as hex string in
+
+            SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
+        title: >-
+          aggregate_prevotes defines all oracle aggregate prevotes submitted in
+          the
+
+          current vote period
+    description: |-
+      QueryAggregatePrevotesResponse is response type for the
+      Query/AggregatePrevotes RPC method.
+  nibiru.oracle.v1.QueryAggregateVoteResponse:
+    type: object
+    properties:
+      aggregate_vote:
+        title: >-
+          aggregate_vote defines oracle aggregate vote submitted by a validator
+          in
+
+          the current vote period
+        type: object
+        properties:
+          exchange_rate_tuples:
+            type: array
+            items:
+              type: object
+              properties:
+                pair:
+                  type: string
+                exchange_rate:
+                  type: string
+              title: >-
+                ExchangeRateTuple - struct to store interpreted exchange rates
+                data to store
+          voter:
+            type: string
+        description: |-
+          MsgAggregateExchangeRateVote - struct for voting on
+          the exchange rates different assets.
+    description: |-
+      QueryAggregateVoteResponse is response type for the
+      Query/AggregateVote RPC method.
+  nibiru.oracle.v1.QueryAggregateVotesResponse:
+    type: object
+    properties:
+      aggregate_votes:
+        type: array
+        items:
+          type: object
+          properties:
+            exchange_rate_tuples:
+              type: array
+              items:
+                type: object
+                properties:
+                  pair:
+                    type: string
+                  exchange_rate:
+                    type: string
+                title: >-
+                  ExchangeRateTuple - struct to store interpreted exchange rates
+                  data to store
+            voter:
+              type: string
+          description: |-
+            MsgAggregateExchangeRateVote - struct for voting on
+            the exchange rates different assets.
+        title: >-
+          aggregate_votes defines all oracle aggregate votes submitted in the
+          current
+
+          vote period
+    description: |-
+      QueryAggregateVotesResponse is response type for the
+      Query/AggregateVotes RPC method.
+  nibiru.oracle.v1.QueryExchangeRateResponse:
+    type: object
+    properties:
+      exchange_rate:
+        type: string
+        title: exchange_rate defines the exchange rate of assets voted by validators
+    description: |-
+      QueryExchangeRateResponse is response type for the
+      Query/ExchangeRate RPC method.
+  nibiru.oracle.v1.QueryExchangeRatesResponse:
+    type: object
+    properties:
+      exchange_rates:
+        type: array
+        items:
+          type: object
+          properties:
+            pair:
+              type: string
+            exchange_rate:
+              type: string
+          title: >-
+            ExchangeRateTuple - struct to store interpreted exchange rates data
+            to store
+        description: |-
+          exchange_rates defines a list of the exchange rate for all whitelisted
+          pairs.
+    description: |-
+      QueryExchangeRatesResponse is response type for the
+      Query/ExchangeRates RPC method.
+  nibiru.oracle.v1.QueryFeederDelegationResponse:
+    type: object
+    properties:
+      feeder_addr:
+        type: string
+        title: feeder_addr defines the feeder delegation of a validator
+    description: |-
+      QueryFeederDelegationResponse is response type for the
+      Query/FeederDelegation RPC method.
+  nibiru.oracle.v1.QueryMissCounterResponse:
+    type: object
+    properties:
+      miss_counter:
+        type: string
+        format: uint64
+        title: miss_counter defines the oracle miss counter of a validator
+    description: |-
+      QueryMissCounterResponse is response type for the
+      Query/MissCounter RPC method.
+  nibiru.oracle.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          vote_period:
+            type: string
+            format: uint64
+            description: >-
+              VotePeriod defines the number of blocks during which voting takes
+              place.
+          vote_threshold:
+            type: string
+            description: >-
+              VoteThreshold specifies the minimum proportion of votes that must
+              be
+
+              received for a ballot to pass.
+          reward_band:
+            type: string
+            title: "RewardBand defines a maxium divergence that a price vote can have from the\nweighted median in the ballot. If a vote lies within the valid range\ndefined by:\n\tμ := weightedMedian,\n\tvalidRange := μ ± (μ * rewardBand / 2),\nthen rewards are added to the validator performance.\nNote that if the reward band is smaller than 1 standard\ndeviation, the band is taken to be 1 standard deviation.a price"
+          whitelist:
+            type: array
+            items:
+              type: string
+            title: |-
+              The set of whitelisted markets, or asset pairs, for the module.
+              Ex. '["unibi:uusd","ubtc:uusd"]'
+          slash_fraction:
+            type: string
+            description: >-
+              SlashFraction returns the proportion of an oracle's stake that
+              gets
+
+              slashed in the event of slashing. `SlashFraction` specifies the
+              exact
+
+              penalty for failing a voting period.
+          slash_window:
+            type: string
+            format: uint64
+            description: >-
+              SlashWindow returns the number of voting periods that specify a
+
+              "slash window". After each slash window, all oracles that have
+              missed more
+
+              than the penalty threshold are slashed. Missing the penalty
+              threshold is
+
+              synonymous with submitting fewer valid votes than
+              `MinValidPerWindow`.
+          min_valid_per_window:
+            type: string
+          twap_lookback_window:
+            type: string
+            description: >-
+              Amount of time to look back for TWAP calculations.
+
+              Ex: "900.000000069s" corresponds to 900 seconds and 69 nanoseconds
+              in JSON.
+          min_voters:
+            type: string
+            format: uint64
+            description: >-
+              The minimum number of voters (i.e. oracle validators) per pair for
+              it to be
+
+              considered a passing ballot. Recommended at least 4.
+          validator_fee_ratio:
+            type: string
+            description: The validator fee ratio that is given to validators every epoch.
+          expiration_blocks:
+            type: string
+            format: uint64
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
+  nibiru.oracle.v1.QueryVoteTargetsResponse:
+    type: object
+    properties:
+      vote_targets:
+        type: array
+        items:
+          type: string
+        description: |-
+          vote_targets defines a list of the pairs in which everyone
+          should vote in the current vote period.
+    description: |-
+      QueryVoteTargetsResponse is response type for the
+      Query/VoteTargets RPC method.
+  nibiru.sudo.v1.QuerySudoersResponse:
+    type: object
+    properties:
+      sudoers:
+        type: object
+        properties:
+          root:
+            type: string
+            description: 'Root: The "root" user.'
+          contracts:
+            type: array
+            items:
+              type: string
+            description: 'Contracts: The set of contracts with elevated permissions.'
+    description: QuerySudoersResponse indicates the successful execution of MsgEditSudeors.
+  nibiru.sudo.v1.Sudoers:
+    type: object
+    properties:
+      root:
+        type: string
+        description: 'Root: The "root" user.'
+      contracts:
+        type: array
+        items:
+          type: string
+        description: 'Contracts: The set of contracts with elevated permissions.'
+  cosmos.bank.v1beta1.DenomUnit:
+    type: object
+    properties:
+      denom:
+        type: string
+        description: denom represents the string name of the given denom unit (e.g uatom).
+      exponent:
+        type: integer
+        format: int64
+        description: >-
+          exponent represents power of 10 exponent that one must
+
+          raise the base_denom to in order to equal the given DenomUnit's denom
+
+          1 denom = 10^exponent base_denom
+
+          (e.g. with a base_denom of uatom, one can create a DenomUnit of 'atom'
+          with
+
+          exponent = 6, thus: 1 atom = 10^6 uatom).
+      aliases:
+        type: array
+        items:
+          type: string
+        title: aliases is a list of string aliases for the given denom
+    description: |-
+      DenomUnit represents a struct that describes a given
+      denomination unit of the basic token.
+  cosmos.bank.v1beta1.Metadata:
+    type: object
+    properties:
+      description:
+        type: string
+      denom_units:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+              description: >-
+                denom represents the string name of the given denom unit (e.g
+                uatom).
+            exponent:
+              type: integer
+              format: int64
+              description: >-
+                exponent represents power of 10 exponent that one must
+
+                raise the base_denom to in order to equal the given DenomUnit's
+                denom
+
+                1 denom = 10^exponent base_denom
+
+                (e.g. with a base_denom of uatom, one can create a DenomUnit of
+                'atom' with
+
+                exponent = 6, thus: 1 atom = 10^6 uatom).
+            aliases:
+              type: array
+              items:
+                type: string
+              title: aliases is a list of string aliases for the given denom
+          description: |-
+            DenomUnit represents a struct that describes a given
+            denomination unit of the basic token.
+        title: denom_units represents the list of DenomUnit's for a given coin
+      base:
+        type: string
+        description: >-
+          base represents the base denom (should be the DenomUnit with exponent
+          = 0).
+      display:
+        type: string
+        description: |-
+          display indicates the suggested denom that should be
+          displayed in clients.
+      name:
+        type: string
+        description: 'Since: cosmos-sdk 0.43'
+        title: 'name defines the name of the token (eg: Cosmos Atom)'
+      symbol:
+        type: string
+        description: >-
+          symbol is the token symbol usually shown on exchanges (eg: ATOM). This
+          can
+
+          be the same as the display.
+
+
+          Since: cosmos-sdk 0.43
+      uri:
+        type: string
+        description: >-
+          URI to a document (on or off-chain) that contains additional
+          information. Optional.
+
+
+          Since: cosmos-sdk 0.46
+      uri_hash:
+        type: string
+        description: >-
+          URIHash is a sha256 hash of a document pointed by URI. It's used to
+          verify that
+
+          the document didn't change. Optional.
+
+
+          Since: cosmos-sdk 0.46
+    description: |-
+      Metadata represents a struct that describes
+      a basic token.
+  nibiru.tokenfactory.v1.ModuleParams:
+    type: object
+    properties:
+      denom_creation_gas_consume:
+        type: string
+        format: uint64
+        description: >-
+          Adds gas consumption to the execution of `MsgCreateDenom` as a method
+          of
+
+          spam prevention. Defaults to 10 NIBI.
+    description: >-
+      ModuleParams defines the parameters for the tokenfactory module.
+
+
+      ### On Denom Creation Costs
+
+
+      We'd like for fees to be paid by the user/signer of a ransaction, but in
+      many
+
+      casess, token creation is abstracted away behind a smart contract. Setting
+      a
+
+      nonzero `denom_creation_fee` would force each contract to handle
+      collecting
+
+      and paying a fees for denom (factory/{contract-addr}/{subdenom}) creation
+      on
+
+      behalf of the end user.
+
+
+      For IBC token transfers, it's unclear who should pay the fee—the contract,
+
+      the relayer, or the original sender?
+
+      > "Charging fees will mess up composability, the same way Terra transfer
+      tax
+        caused all kinds of headaches for contract devs." - @ethanfrey
+
+      ### Recommended Solution
+
+
+      Have the end user (signer) pay fees directly in the form of higher gas
+      costs.
+
+      This way, contracts won't need to handle collecting or paying fees. And
+      for
+
+      IBC, the gas costs are already paid by the original sender and can be
+
+      estimated by the relayer. It's easier to tune gas costs to make spam
+
+      prohibitively expensive since there are per-transaction and per-block gas
+
+      limits.
+
+
+      See https://github.com/CosmWasm/token-factory/issues/11 for the initial
+
+      discussion of the issue with @ethanfrey and @valardragon.
+  nibiru.tokenfactory.v1.QueryDenomInfoResponse:
+    type: object
+    properties:
+      admin:
+        type: string
+        title: Admin of the token factory denom
+      metadata:
+        description: >-
+          Metadata: Official x/bank metadata for the denom. All token factory
+          denoms
+
+          are standard, native assets.
+        type: object
+        properties:
+          description:
+            type: string
+          denom_units:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                  description: >-
+                    denom represents the string name of the given denom unit
+                    (e.g uatom).
+                exponent:
+                  type: integer
+                  format: int64
+                  description: >-
+                    exponent represents power of 10 exponent that one must
+
+                    raise the base_denom to in order to equal the given
+                    DenomUnit's denom
+
+                    1 denom = 10^exponent base_denom
+
+                    (e.g. with a base_denom of uatom, one can create a DenomUnit
+                    of 'atom' with
+
+                    exponent = 6, thus: 1 atom = 10^6 uatom).
+                aliases:
+                  type: array
+                  items:
+                    type: string
+                  title: aliases is a list of string aliases for the given denom
+              description: |-
+                DenomUnit represents a struct that describes a given
+                denomination unit of the basic token.
+            title: denom_units represents the list of DenomUnit's for a given coin
+          base:
+            type: string
+            description: >-
+              base represents the base denom (should be the DenomUnit with
+              exponent = 0).
+          display:
+            type: string
+            description: |-
+              display indicates the suggested denom that should be
+              displayed in clients.
+          name:
+            type: string
+            description: 'Since: cosmos-sdk 0.43'
+            title: 'name defines the name of the token (eg: Cosmos Atom)'
+          symbol:
+            type: string
+            description: >-
+              symbol is the token symbol usually shown on exchanges (eg: ATOM).
+              This can
+
+              be the same as the display.
+
+
+              Since: cosmos-sdk 0.43
+          uri:
+            type: string
+            description: >-
+              URI to a document (on or off-chain) that contains additional
+              information. Optional.
+
+
+              Since: cosmos-sdk 0.46
+          uri_hash:
+            type: string
+            description: >-
+              URIHash is a sha256 hash of a document pointed by URI. It's used
+              to verify that
+
+              the document didn't change. Optional.
+
+
+              Since: cosmos-sdk 0.46
+    title: 'QueryDenomInfoResponse: All registered denoms for a creator'
+  nibiru.tokenfactory.v1.QueryDenomsResponse:
+    type: object
+    properties:
+      denoms:
+        type: array
+        items:
+          type: string
+    title: 'QueryDenomsResponse: All registered denoms for a creator'
+  nibiru.tokenfactory.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        title: Module parameters stored in state
+        type: object
+        properties:
+          denom_creation_gas_consume:
+            type: string
+            format: uint64
+            description: >-
+              Adds gas consumption to the execution of `MsgCreateDenom` as a
+              method of
+
+              spam prevention. Defaults to 10 NIBI.
+        description: >-
+          ModuleParams defines the parameters for the tokenfactory module.
+
+
+          ### On Denom Creation Costs
+
+
+          We'd like for fees to be paid by the user/signer of a ransaction, but
+          in many
+
+          casess, token creation is abstracted away behind a smart contract.
+          Setting a
+
+          nonzero `denom_creation_fee` would force each contract to handle
+          collecting
+
+          and paying a fees for denom (factory/{contract-addr}/{subdenom})
+          creation on
+
+          behalf of the end user.
+
+
+          For IBC token transfers, it's unclear who should pay the fee—the
+          contract,
+
+          the relayer, or the original sender?
+
+          > "Charging fees will mess up composability, the same way Terra
+          transfer tax
+            caused all kinds of headaches for contract devs." - @ethanfrey
+
+          ### Recommended Solution
+
+
+          Have the end user (signer) pay fees directly in the form of higher gas
+          costs.
+
+          This way, contracts won't need to handle collecting or paying fees.
+          And for
+
+          IBC, the gas costs are already paid by the original sender and can be
+
+          estimated by the relayer. It's easier to tune gas costs to make spam
+
+          prohibitively expensive since there are per-transaction and per-block
+          gas
+
+          limits.
+
+
+          See https://github.com/CosmWasm/token-factory/issues/11 for the
+          initial
+
+          discussion of the issue with @ethanfrey and @valardragon.
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
