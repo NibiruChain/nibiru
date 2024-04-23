@@ -46,24 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
-- [#1774](https://github.com/NibiruChain/nibiru/pull/1774) - chore: update cosmos sdk v0.47.7
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
-- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
-- [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
-- [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
-- [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
-- [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
-- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
 - [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
-- [#1823](https://github.com/NibiruChain/nibiru/pull/1823) - feat(inflation): add burn method
-- [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
 - [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
 
 #### Nibiru EVM
 
 - [#1837](https://github.com/NibiruChain/nibiru/pull/1837) - feat(eth): protos, eth types, and evm module types
 - [#1838](https://github.com/NibiruChain/nibiru/pull/1838) - feat(eth): Go-ethereum, crypto, encoding, and unit tests for evm/types
-- [#1841](https://github.com/NibiruChain/nibiru/pull/1841) - feat(eth): Collections encoders for bytes, Ethereum addresses, and Ethereum hashes 
+- [#1841](https://github.com/NibiruChain/nibiru/pull/1841) - feat(eth): Collections encoders for bytes, Ethereum addresses, and Ethereum hashes
 - [#1847](https://github.com/NibiruChain/nibiru/pull/1847) - fix(docker-chaosnet): release snapshot docker build failed CI.
 
 #### Dapp modules: perp, spot, etc
@@ -105,18 +96,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-- Bump `github.com/cometbft/cometbft-db` from 0.9.0 to 0.9.1 ([#1760](https://github.com/NibiruChain/nibiru/pull/1760))
-- Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
-- Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
-- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.30.1 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777), [#1819](https://github.com/NibiruChain/nibiru/pull/1819), [#1834](https://github.com/NibiruChain/nibiru/pull/1834))
-- Bump `cosmossdk.io/errors` from 1.0.0 to 1.0.1 ([#1768](https://github.com/NibiruChain/nibiru/pull/1768))
 - Bump `robinraju/release-downloader` from 1.8 to 1.10 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839))
-- Bump `codecov/codecov-action` from 3 to 4 ([#1784](https://github.com/NibiruChain/nibiru/pull/1784))
-- Bump `golangci/golangci-lint-action` from 3 to 4 ([#1791](https://github.com/NibiruChain/nibiru/pull/1791))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
-- Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
-- Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724), [#1843](https://github.com/NibiruChain/nibiru/pull/1843))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 - Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
@@ -130,7 +112,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 
-## v1.1.0
+## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
+
+Nibiru v1.2.0 adds a burn method to the x/inflation module that allows senders to burn tokens.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.2.0)]
+
+### Features
+
+- [#1832](https://github.com/NibiruChain/nibiru/pull/1832) - feat(tokenfactory): add burn method for native tokens
+
+## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2024-03-19
 
 Nibiru v1.1.0 is the minor release used to add inflation to the network.
 
