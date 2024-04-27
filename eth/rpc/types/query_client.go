@@ -23,6 +23,11 @@ type QueryClient struct {
 }
 
 // NewQueryClient creates a new gRPC query client
+//
+// TODO:🔗 https://github.com/NibiruChain/nibiru/issues/1857
+// test(eth): Test GetProof (rpc/types/query_client.go) in a similar manner to
+// cosmos-sdk/client/rpc/rpc_test.go using a network after EVM is wired into the
+// app keepers:
 func NewQueryClient(clientCtx client.Context) *QueryClient {
 	return &QueryClient{
 		ServiceClient: tx.NewServiceClient(clientCtx),

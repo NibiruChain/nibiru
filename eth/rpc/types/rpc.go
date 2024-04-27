@@ -24,8 +24,9 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 )
 
-// ErrExceedBlockGasLimit defines the error message when tx execution exceeds the block gas limit.
-// The tx fee is deducted in ante handler, so it shouldn't be ignored in JSON-RPC API.
+// ErrExceedBlockGasLimit defines the error message when tx execution exceeds the
+// block gas limit. The tx fee is deducted in ante handler, so it shouldn't be
+// ignored in JSON-RPC API.
 const ErrExceedBlockGasLimit = "out of gas in location: block gas meter; gasWanted:"
 
 // ErrStateDBCommit defines the error message when commit after executing EVM
