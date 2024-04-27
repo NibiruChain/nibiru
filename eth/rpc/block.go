@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package rpc
 
 import (
 	"context"

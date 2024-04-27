@@ -1,4 +1,4 @@
-package types_test
+package rpc_test
 
 import (
 	"sync"
@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	rpc "github.com/NibiruChain/nibiru/eth/rpc/types"
+	rpc "github.com/NibiruChain/nibiru/eth/rpc"
 )
 
 type SuiteAddrLocker struct {
