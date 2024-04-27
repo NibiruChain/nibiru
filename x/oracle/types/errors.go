@@ -2,10 +2,9 @@ package types
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
-
-	"sync/atomic"
 
 	sdkerrors "cosmossdk.io/errors"
 )
