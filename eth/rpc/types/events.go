@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/NibiruChain/nibiru/eth/types"
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/eth/types"
+	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // EventFormat is an enum type for an ethereum tx event. Each event format

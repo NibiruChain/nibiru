@@ -4,10 +4,11 @@ import (
 	"math/big"
 	"testing"
 
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
+	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func TestParseTxResult(t *testing.T) {

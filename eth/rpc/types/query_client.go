@@ -43,7 +43,7 @@ func (QueryClient) GetProof(
 	// Base app does not support queries for height less than or equal to 1, and
 	// the base app uses 0 indexing.
 	//
-	// Ethereum uses 1 indexing for the intial block height, therefore <= 2 means
+	// Ethereum uses 1 indexing for the initial block height, therefore <= 2 means
 	// <= (Eth) height 3.
 	if height <= 2 {
 		return nil, nil, fmt.Errorf(
