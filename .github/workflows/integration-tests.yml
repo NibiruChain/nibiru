@@ -4,6 +4,8 @@ on:
   workflow_dispatch: # Runs on manual calls
   schedule:
     - cron: "0 0 * * *" # Runs automatically every day
+  push:
+    branches: ["main"]
   pull_request:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
