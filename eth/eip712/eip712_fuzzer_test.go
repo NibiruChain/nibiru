@@ -9,7 +9,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
-	"github.com/NibiruChain/nibiru/eth/ethereum/eip712"
+	"github.com/NibiruChain/nibiru/eth/eip712"
 )
 
 type EIP712FuzzTestParams struct {

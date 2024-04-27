@@ -16,6 +16,8 @@ const maxBitLen = 256
 func SafeNewIntFromBigInt(i *big.Int) (sdkmath.Int, error) {
 	if !IsValidInt256(i) {
 		return sdkmath.NewInt(0), fmt.Errorf("big int out of bound: %s", i)
+	} else if i == nil {
+		return sdkmath.Int{}, fmt.Errorf("received nil pointer for *big.Int")
 	}
 	return sdkmath.NewIntFromBigInt(i), nil
 }

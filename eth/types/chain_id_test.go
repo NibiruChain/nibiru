@@ -52,6 +52,9 @@ func TestParseChainID(t *testing.T) {
 			"invalid eip155 chain-id, cannot invalid base", "nibiru_0x212-1", true, nil,
 		},
 		{
+			"invalid eip155 chain-id, cannot invalid base", "nibiru_1-0x212", true, nil,
+		},
+		{
 			"invalid eip155 chain-id, non-integer", "nibiru_nibiru_9000-1", true, nil,
 		},
 		{
