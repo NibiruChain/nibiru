@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package evm
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -124,7 +124,7 @@ func newMsgEthereumTx(
 }
 
 // FromEthereumTx populates the message fields from the given ethereum transaction
-func (msg *MsgEthereumTx) FromEthereumTx(tx *geth.Transaction) error {
+func (msg *MsgEthereumTx) FromEthereumTx(tx *gethcore.Transaction) error {
 	txData, err := NewTxDataFromTx(tx)
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func (msg MsgEthereumTx) GetSignBytes() []byte {
 // fields of the Transaction's Signature.
 // The function will fail if the sender address is not defined for the msg or if
 // the sender is not registered on the keyring
-func (msg *MsgEthereumTx) Sign(ethSigner geth.Signer, keyringSigner keyring.Signer) error {
+func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.Signer) error {
 	from := msg.GetFrom()
 	if from.Empty() {
 		return fmt.Errorf("sender address not defined for message")
@@ -290,23 +290,23 @@ func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
-func (msg MsgEthereumTx) AsTransaction() *geth.Transaction {
+func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
 	}
 
-	return geth.NewTx(txData.AsEthereumData())
+	return gethcore.NewTx(txData.AsEthereumData())
 }
 
 // AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(signer geth.Signer, baseFee *big.Int) (core.Message, error) {
+func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFee *big.Int) (core.Message, error) {
 	return msg.AsTransaction().AsMessage(signer, baseFee)
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
 func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (common.Address, error) {
-	signer := geth.LatestSignerForChainID(chainID)
+	signer := gethcore.LatestSignerForChainID(chainID)
 	from, err := signer.Sender(msg.AsTransaction())
 	if err != nil {
 		return common.Address{}, err
@@ -323,7 +323,7 @@ func (msg MsgEthereumTx) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error
 
 // UnmarshalBinary decodes the canonical encoding of transactions.
 func (msg *MsgEthereumTx) UnmarshalBinary(b []byte) error {
-	tx := &geth.Transaction{}
+	tx := &gethcore.Transaction{}
 	if err := tx.UnmarshalBinary(b); err != nil {
 		return err
 	}

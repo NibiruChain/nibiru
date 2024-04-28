@@ -1,4 +1,4 @@
-package types_test
+package evm_test
 
 import (
 	"math/big"
@@ -8,10 +8,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm/types"
+	"github.com/NibiruChain/nibiru/x/evm"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -60,17 +60,17 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 	testCases := []struct {
 		name     string
 		expError bool
-		tx       *geth.Transaction
+		tx       *gethcore.Transaction
 	}{
 		{
 			"non-empty tx",
 			false,
-			geth.NewTx(&geth.DynamicFeeTx{
+			gethcore.NewTx(&gethcore.DynamicFeeTx{
 				Nonce:      1,
 				Data:       []byte("data"),
 				Gas:        100,
 				Value:      big.NewInt(1),
-				AccessList: geth.AccessList{},
+				AccessList: gethcore.AccessList{},
 				To:         &suite.addr,
 				V:          suite.bigInt,
 				R:          suite.bigInt,
@@ -80,12 +80,12 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 		{
 			"value out of bounds tx",
 			true,
-			geth.NewTx(&geth.DynamicFeeTx{
+			gethcore.NewTx(&gethcore.DynamicFeeTx{
 				Nonce:      1,
 				Data:       []byte("data"),
 				Gas:        100,
 				Value:      suite.overflowBigInt,
-				AccessList: geth.AccessList{},
+				AccessList: gethcore.AccessList{},
 				To:         &suite.addr,
 				V:          suite.bigInt,
 				R:          suite.bigInt,
@@ -95,13 +95,13 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 		{
 			"gas fee cap out of bounds tx",
 			true,
-			geth.NewTx(&geth.DynamicFeeTx{
+			gethcore.NewTx(&gethcore.DynamicFeeTx{
 				Nonce:      1,
 				Data:       []byte("data"),
 				Gas:        100,
 				GasFeeCap:  suite.overflowBigInt,
 				Value:      big.NewInt(1),
-				AccessList: geth.AccessList{},
+				AccessList: gethcore.AccessList{},
 				To:         &suite.addr,
 				V:          suite.bigInt,
 				R:          suite.bigInt,
@@ -111,13 +111,13 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 		{
 			"gas tip cap out of bounds tx",
 			true,
-			geth.NewTx(&geth.DynamicFeeTx{
+			gethcore.NewTx(&gethcore.DynamicFeeTx{
 				Nonce:      1,
 				Data:       []byte("data"),
 				Gas:        100,
 				GasTipCap:  suite.overflowBigInt,
 				Value:      big.NewInt(1),
-				AccessList: geth.AccessList{},
+				AccessList: gethcore.AccessList{},
 				To:         &suite.addr,
 				V:          suite.bigInt,
 				R:          suite.bigInt,
@@ -126,7 +126,7 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 		},
 	}
 	for _, tc := range testCases {
-		tx, err := types.NewDynamicFeeTx(tc.tx)
+		tx, err := evm.NewDynamicFeeTx(tc.tx)
 
 		if tc.expError {
 			suite.Require().Error(err)
@@ -139,25 +139,25 @@ func (suite *TxDataTestSuite) TestNewDynamicFeeTx() {
 }
 
 func (suite *TxDataTestSuite) TestDynamicFeeTxAsEthereumData() {
-	feeConfig := &geth.DynamicFeeTx{
+	feeConfig := &gethcore.DynamicFeeTx{
 		Nonce:      1,
 		Data:       []byte("data"),
 		Gas:        100,
 		Value:      big.NewInt(1),
-		AccessList: geth.AccessList{},
+		AccessList: gethcore.AccessList{},
 		To:         &suite.addr,
 		V:          suite.bigInt,
 		R:          suite.bigInt,
 		S:          suite.bigInt,
 	}
 
-	tx := geth.NewTx(feeConfig)
+	tx := gethcore.NewTx(feeConfig)
 
-	dynamicFeeTx, err := types.NewDynamicFeeTx(tx)
+	dynamicFeeTx, err := evm.NewDynamicFeeTx(tx)
 	suite.Require().NoError(err)
 
 	res := dynamicFeeTx.AsEthereumData()
-	resTx := geth.NewTx(res)
+	resTx := gethcore.NewTx(res)
 
 	suite.Require().Equal(feeConfig.Nonce, resTx.Nonce())
 	suite.Require().Equal(feeConfig.Data, resTx.Data())
@@ -168,29 +168,29 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxAsEthereumData() {
 }
 
 func (suite *TxDataTestSuite) TestDynamicFeeTxCopy() {
-	tx := &types.DynamicFeeTx{}
+	tx := &evm.DynamicFeeTx{}
 	txCopy := tx.Copy()
 
-	suite.Require().Equal(&types.DynamicFeeTx{}, txCopy)
+	suite.Require().Equal(&evm.DynamicFeeTx{}, txCopy)
 	// TODO: Test for different pointers
 }
 
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetChainID() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *big.Int
 	}{
 		{
 			"empty chainID",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				ChainID: nil,
 			},
 			nil,
 		},
 		{
 			"non-empty chainID",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				ChainID: &suite.sdkInt,
 			},
 			(&suite.sdkInt).BigInt(),
@@ -207,34 +207,34 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetChainID() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetAccessList() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
-		exp  geth.AccessList
+		tx   evm.DynamicFeeTx
+		exp  gethcore.AccessList
 	}{
 		{
 			"empty accesses",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				Accesses: nil,
 			},
 			nil,
 		},
 		{
 			"nil",
-			types.DynamicFeeTx{
-				Accesses: types.NewAccessList(nil),
+			evm.DynamicFeeTx{
+				Accesses: evm.NewAccessList(nil),
 			},
 			nil,
 		},
 		{
 			"non-empty accesses",
-			types.DynamicFeeTx{
-				Accesses: types.AccessList{
+			evm.DynamicFeeTx{
+				Accesses: evm.AccessList{
 					{
 						Address:     suite.hexAddr,
 						StorageKeys: []string{},
 					},
 				},
 			},
-			geth.AccessList{
+			gethcore.AccessList{
 				{
 					Address:     suite.addr,
 					StorageKeys: []common.Hash{},
@@ -253,11 +253,11 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetAccessList() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetData() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 	}{
 		{
 			"non-empty transaction",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				Data: nil,
 			},
 		},
@@ -273,12 +273,12 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetData() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetGas() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  uint64
 	}{
 		{
 			"non-empty gas",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasLimit: suite.uint64,
 			},
 			suite.uint64,
@@ -295,12 +295,12 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetGas() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasPrice() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *big.Int
 	}{
 		{
 			"non-empty gasFeeCap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasFeeCap: &suite.sdkInt,
 			},
 			(&suite.sdkInt).BigInt(),
@@ -317,19 +317,19 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasPrice() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasTipCap() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *big.Int
 	}{
 		{
 			"empty gasTipCap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: nil,
 			},
 			nil,
 		},
 		{
 			"non-empty gasTipCap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 			},
 			(&suite.sdkInt).BigInt(),
@@ -346,19 +346,19 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasTipCap() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasFeeCap() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *big.Int
 	}{
 		{
 			"empty gasFeeCap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasFeeCap: nil,
 			},
 			nil,
 		},
 		{
 			"non-empty gasFeeCap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasFeeCap: &suite.sdkInt,
 			},
 			(&suite.sdkInt).BigInt(),
@@ -375,19 +375,19 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasFeeCap() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetValue() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *big.Int
 	}{
 		{
 			"empty amount",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				Amount: nil,
 			},
 			nil,
 		},
 		{
 			"non-empty amount",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				Amount: &suite.sdkInt,
 			},
 			(&suite.sdkInt).BigInt(),
@@ -404,12 +404,12 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetValue() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetNonce() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  uint64
 	}{
 		{
 			"non-empty nonce",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				Nonce: suite.uint64,
 			},
 			suite.uint64,
@@ -426,19 +426,19 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetNonce() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxGetTo() {
 	testCases := []struct {
 		name string
-		tx   types.DynamicFeeTx
+		tx   evm.DynamicFeeTx
 		exp  *common.Address
 	}{
 		{
 			"empty suite.address",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				To: "",
 			},
 			nil,
 		},
 		{
 			"non-empty suite.address",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				To: suite.hexAddr,
 			},
 			&suite.addr,
@@ -477,7 +477,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxSetSignatureValues() {
 	}
 
 	for _, tc := range testCases {
-		tx := &types.DynamicFeeTx{}
+		tx := &evm.DynamicFeeTx{}
 		tx.SetSignatureValues(tc.chainID, tc.v, tc.r, tc.s)
 
 		v, r, s := tx.GetRawSignatureValues()
@@ -493,31 +493,31 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxSetSignatureValues() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 	testCases := []struct {
 		name     string
-		tx       types.DynamicFeeTx
+		tx       evm.DynamicFeeTx
 		expError bool
 	}{
 		{
 			"empty",
-			types.DynamicFeeTx{},
+			evm.DynamicFeeTx{},
 			true,
 		},
 		{
 			"gas tip cap is nil",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: nil,
 			},
 			true,
 		},
 		{
 			"gas fee cap is nil",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkZeroInt,
 			},
 			true,
 		},
 		{
 			"gas tip cap is negative",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkMinusOneInt,
 				GasFeeCap: &suite.sdkZeroInt,
 			},
@@ -525,7 +525,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"gas tip cap is negative",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkZeroInt,
 				GasFeeCap: &suite.sdkMinusOneInt,
 			},
@@ -533,7 +533,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"gas fee cap < gas tip cap",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkZeroInt,
 			},
@@ -541,7 +541,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"amount is negative",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				Amount:    &suite.sdkMinusOneInt,
@@ -550,7 +550,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"to suite.address is invalid",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				Amount:    &suite.sdkInt,
@@ -560,7 +560,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"chain ID not present on AccessList txs",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				Amount:    &suite.sdkInt,
@@ -571,7 +571,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 		},
 		{
 			"no errors",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				Amount:    &suite.sdkInt,
@@ -597,13 +597,13 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxValidate() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveGasPrice() {
 	testCases := []struct {
 		name    string
-		tx      types.DynamicFeeTx
+		tx      evm.DynamicFeeTx
 		baseFee *big.Int
 		exp     *big.Int
 	}{
 		{
 			"non-empty dynamic fee tx",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 			},
@@ -622,13 +622,13 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveGasPrice() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveFee() {
 	testCases := []struct {
 		name    string
-		tx      types.DynamicFeeTx
+		tx      evm.DynamicFeeTx
 		baseFee *big.Int
 		exp     *big.Int
 	}{
 		{
 			"non-empty dynamic fee tx",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				GasLimit:  uint64(1),
@@ -648,13 +648,13 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveFee() {
 func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveCost() {
 	testCases := []struct {
 		name    string
-		tx      types.DynamicFeeTx
+		tx      evm.DynamicFeeTx
 		baseFee *big.Int
 		exp     *big.Int
 	}{
 		{
 			"non-empty dynamic fee tx",
-			types.DynamicFeeTx{
+			evm.DynamicFeeTx{
 				GasTipCap: &suite.sdkInt,
 				GasFeeCap: &suite.sdkInt,
 				GasLimit:  uint64(1),
@@ -673,7 +673,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxEffectiveCost() {
 }
 
 func (suite *TxDataTestSuite) TestDynamicFeeTxFeeCost() {
-	tx := &types.DynamicFeeTx{}
+	tx := &evm.DynamicFeeTx{}
 	suite.Require().Panics(func() { tx.Fee() }, "should panic")
 	suite.Require().Panics(func() { tx.Cost() }, "should panic")
 }

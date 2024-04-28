@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 // Copied the Account and StorageResult types since they are registered under an
@@ -48,7 +48,7 @@ type RPCTransaction struct {
 	TransactionIndex *hexutil.Uint64      `json:"transactionIndex"`
 	Value            *hexutil.Big         `json:"value"`
 	Type             hexutil.Uint64       `json:"type"`
-	Accesses         *ethtypes.AccessList `json:"accessList,omitempty"`
+	Accesses         *gethcore.AccessList `json:"accessList,omitempty"`
 	ChainID          *hexutil.Big         `json:"chainId,omitempty"`
 	V                *hexutil.Big         `json:"v"`
 	R                *hexutil.Big         `json:"r"`
@@ -82,7 +82,7 @@ type FeeHistoryResult struct {
 // SignTransactionResult represents a RLP encoded signed transaction.
 type SignTransactionResult struct {
 	Raw hexutil.Bytes         `json:"raw"`
-	Tx  *ethtypes.Transaction `json:"tx"`
+	Tx  *gethcore.Transaction `json:"tx"`
 }
 
 type OneFeeHistory struct {

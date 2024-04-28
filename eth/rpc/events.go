@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth/types"
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
+	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 // EventFormat is an enum type for an ethereum tx event. Each event format
@@ -49,7 +49,7 @@ const (
 )
 
 // ParsedTx is eth tx info parsed from ABCI events. Each `ParsedTx` corresponds
-// to one eth tx msg ([evmtypes.MsgEthereumTx]).
+// to one eth tx msg ([evm.MsgEthereumTx]).
 type ParsedTx struct {
 	MsgIndex int
 
@@ -76,7 +76,7 @@ type ParsedTxs struct {
 }
 
 // ParseTxResult: parses eth tx info from the ABCI events of Eth tx msgs
-// ([evmtypes.MsgEthereumTx]). It supports each [EventFormat].
+// ([evm.MsgEthereumTx]). It supports each [EventFormat].
 func ParseTxResult(
 	result *abci.ResponseDeliverTx, tx sdk.Tx,
 ) (*ParsedTxs, error) {
@@ -88,7 +88,7 @@ func ParseTxResult(
 		TxHashes: make(map[common.Hash]int),
 	}
 	for _, event := range result.Events {
-		if event.Type != evmtypes.EventTypeEthereumTx {
+		if event.Type != evm.EventTypeEthereumTx {
 			continue
 		}
 
@@ -135,7 +135,7 @@ func ParseTxResult(
 			p.Txs[i].Failed = true
 
 			// replace gasUsed with gasLimit because that's what's actually deducted.
-			gasLimit := tx.GetMsgs()[i].(*evmtypes.MsgEthereumTx).GetGas()
+			gasLimit := tx.GetMsgs()[i].(*evm.MsgEthereumTx).GetGas()
 			p.Txs[i].GasUsed = gasLimit
 		}
 	}
@@ -235,21 +235,21 @@ func (p *ParsedTxs) AccumulativeGasUsed(msgIndex int) (result uint64) {
 // index, but more stable against event format changes.
 func fillTxAttribute(tx *ParsedTx, key string, value string) error {
 	switch key {
-	case evmtypes.AttributeKeyEthereumTxHash:
+	case evm.AttributeKeyEthereumTxHash:
 		tx.Hash = common.HexToHash(value)
-	case evmtypes.AttributeKeyTxIndex:
+	case evm.AttributeKeyTxIndex:
 		txIndex, err := strconv.ParseUint(value, 10, 31) // #nosec G701
 		if err != nil {
 			return err
 		}
 		tx.EthTxIndex = int32(txIndex) // #nosec G701
-	case evmtypes.AttributeKeyTxGasUsed:
+	case evm.AttributeKeyTxGasUsed:
 		gasUsed, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
 			return err
 		}
 		tx.GasUsed = gasUsed
-	case evmtypes.AttributeKeyEthereumTxFailed:
+	case evm.AttributeKeyEthereumTxFailed:
 		tx.Failed = len(value) > 0
 	}
 	return nil

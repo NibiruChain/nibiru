@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package evm
 
 import (
 	"math/big"
@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/eth/types"
 )
@@ -19,7 +19,7 @@ type AccessList []AccessTuple
 
 // NewAccessList creates a new protobuf-compatible AccessList from an ethereum
 // core AccessList type
-func NewAccessList(ethAccessList *geth.AccessList) AccessList {
+func NewAccessList(ethAccessList *gethcore.AccessList) AccessList {
 	if ethAccessList == nil {
 		return nil
 	}
@@ -43,8 +43,8 @@ func NewAccessList(ethAccessList *geth.AccessList) AccessList {
 
 // ToEthAccessList is an utility function to convert the protobuf compatible
 // AccessList to eth core AccessList from go-ethereum
-func (al AccessList) ToEthAccessList() *geth.AccessList {
-	var ethAccessList geth.AccessList
+func (al AccessList) ToEthAccessList() *gethcore.AccessList {
+	var ethAccessList gethcore.AccessList
 
 	for _, tuple := range al {
 		storageKeys := make([]common.Hash, len(tuple.StorageKeys))
@@ -53,7 +53,7 @@ func (al AccessList) ToEthAccessList() *geth.AccessList {
 			storageKeys[i] = common.HexToHash(tuple.StorageKeys[i])
 		}
 
-		ethAccessList = append(ethAccessList, geth.AccessTuple{
+		ethAccessList = append(ethAccessList, gethcore.AccessTuple{
 			Address:     common.HexToAddress(tuple.Address),
 			StorageKeys: storageKeys,
 		})
@@ -64,7 +64,7 @@ func (al AccessList) ToEthAccessList() *geth.AccessList {
 
 // AccessListTx
 
-func newAccessListTx(tx *geth.Transaction) (*AccessListTx, error) {
+func newAccessListTx(tx *gethcore.Transaction) (*AccessListTx, error) {
 	txData := &AccessListTx{
 		Nonce:    tx.Nonce(),
 		Data:     tx.Data(),
@@ -103,7 +103,7 @@ func newAccessListTx(tx *geth.Transaction) (*AccessListTx, error) {
 
 // TxType returns the tx type
 func (tx *AccessListTx) TxType() uint8 {
-	return geth.AccessListTxType
+	return gethcore.AccessListTxType
 }
 
 // Copy returns an instance with the same field values
@@ -133,7 +133,7 @@ func (tx *AccessListTx) GetChainID() *big.Int {
 }
 
 // GetAccessList returns the AccessList field.
-func (tx *AccessListTx) GetAccessList() geth.AccessList {
+func (tx *AccessListTx) GetAccessList() gethcore.AccessList {
 	if tx.Accesses == nil {
 		return nil
 	}
@@ -191,9 +191,9 @@ func (tx *AccessListTx) GetTo() *common.Address {
 
 // AsEthereumData returns an AccessListTx transaction tx from the proto-formatted
 // TxData defined on the Cosmos EVM.
-func (tx *AccessListTx) AsEthereumData() geth.TxData {
+func (tx *AccessListTx) AsEthereumData() gethcore.TxData {
 	v, r, s := tx.GetRawSignatureValues()
-	return &geth.AccessListTx{
+	return &gethcore.AccessListTx{
 		ChainID:    tx.GetChainID(),
 		Nonce:      tx.GetNonce(),
 		GasPrice:   tx.GetGasPrice(),

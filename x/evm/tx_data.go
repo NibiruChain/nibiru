@@ -1,11 +1,11 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package evm
 
 import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 var (
@@ -22,7 +22,7 @@ type TxData interface {
 	TxType() byte
 	Copy() TxData
 	GetChainID() *big.Int
-	GetAccessList() geth.AccessList
+	GetAccessList() gethcore.AccessList
 	GetData() []byte
 	GetNonce() uint64
 	GetGas() uint64
@@ -35,7 +35,7 @@ type TxData interface {
 	GetRawSignatureValues() (v, r, s *big.Int)
 	SetSignatureValues(chainID, v, r, s *big.Int)
 
-	AsEthereumData() geth.TxData
+	AsEthereumData() gethcore.TxData
 	Validate() error
 
 	// static fee
@@ -50,13 +50,13 @@ type TxData interface {
 
 // NOTE: All non-protected transactions (i.e non EIP155 signed) will fail if the
 // AllowUnprotectedTxs parameter is disabled.
-func NewTxDataFromTx(tx *geth.Transaction) (TxData, error) {
+func NewTxDataFromTx(tx *gethcore.Transaction) (TxData, error) {
 	var txData TxData
 	var err error
 	switch tx.Type() {
-	case geth.DynamicFeeTxType:
+	case gethcore.DynamicFeeTxType:
 		txData, err = NewDynamicFeeTx(tx)
-	case geth.AccessListTxType:
+	case gethcore.AccessListTxType:
 		txData, err = newAccessListTx(tx)
 	default:
 		txData, err = NewLegacyTx(tx)

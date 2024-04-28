@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
+	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 // QueryClient defines a gRPC Client used for:
@@ -19,7 +19,7 @@ import (
 //   - EVM module queries
 type QueryClient struct {
 	tx.ServiceClient
-	evmtypes.QueryClient
+	evm.QueryClient
 }
 
 // NewQueryClient creates a new gRPC query client
@@ -31,7 +31,7 @@ type QueryClient struct {
 func NewQueryClient(clientCtx client.Context) *QueryClient {
 	return &QueryClient{
 		ServiceClient: tx.NewServiceClient(clientCtx),
-		QueryClient:   evmtypes.NewQueryClient(clientCtx),
+		QueryClient:   evm.NewQueryClient(clientCtx),
 	}
 }
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package evm
 
 import (
 	"math"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	errorsmod "cosmossdk.io/errors"
@@ -30,7 +30,7 @@ type EvmTxArgs struct {
 	Amount    *big.Int
 	GasTipCap *big.Int
 	To        *common.Address
-	Accesses  *geth.AccessList
+	Accesses  *gethcore.AccessList
 }
 
 // DefaultPriorityReduction is the default amount of price values required for 1 unit of priority.
@@ -85,7 +85,7 @@ func (m *MsgEthereumTxResponse) Revert() []byte {
 	return common.CopyBytes(m.Ret)
 }
 
-func NewDynamicFeeTx(tx *geth.Transaction) (*DynamicFeeTx, error) {
+func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	txData := &DynamicFeeTx{
 		Nonce:    tx.Nonce(),
 		Data:     tx.Data(),
@@ -132,7 +132,7 @@ func NewDynamicFeeTx(tx *geth.Transaction) (*DynamicFeeTx, error) {
 
 // TxType returns the tx type
 func (tx *DynamicFeeTx) TxType() uint8 {
-	return geth.DynamicFeeTxType
+	return gethcore.DynamicFeeTxType
 }
 
 // Copy returns an instance with the same field values
@@ -163,7 +163,7 @@ func (tx *DynamicFeeTx) GetChainID() *big.Int {
 }
 
 // GetAccessList returns the AccessList field.
-func (tx *DynamicFeeTx) GetAccessList() geth.AccessList {
+func (tx *DynamicFeeTx) GetAccessList() gethcore.AccessList {
 	if tx.Accesses == nil {
 		return nil
 	}
@@ -224,9 +224,9 @@ func (tx *DynamicFeeTx) GetTo() *common.Address {
 
 // AsEthereumData returns an DynamicFeeTx transaction tx from the proto-formatted
 // TxData defined on the Cosmos EVM.
-func (tx *DynamicFeeTx) AsEthereumData() geth.TxData {
+func (tx *DynamicFeeTx) AsEthereumData() gethcore.TxData {
 	v, r, s := tx.GetRawSignatureValues()
-	return &geth.DynamicFeeTx{
+	return &gethcore.DynamicFeeTx{
 		ChainID:    tx.GetChainID(),
 		Nonce:      tx.GetNonce(),
 		GasTipCap:  tx.GetGasTipCap(),

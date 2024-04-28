@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package evm
 
 import (
 	"math/big"
@@ -8,12 +8,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/eth/types"
 )
 
-func NewLegacyTx(tx *geth.Transaction) (*LegacyTx, error) {
+func NewLegacyTx(tx *gethcore.Transaction) (*LegacyTx, error) {
 	txData := &LegacyTx{
 		Nonce:    tx.Nonce(),
 		Data:     tx.Data(),
@@ -47,7 +47,7 @@ func NewLegacyTx(tx *geth.Transaction) (*LegacyTx, error) {
 
 // TxType returns the tx type
 func (tx *LegacyTx) TxType() uint8 {
-	return geth.LegacyTxType
+	return gethcore.LegacyTxType
 }
 
 // Copy returns an instance with the same field values
@@ -72,7 +72,7 @@ func (tx *LegacyTx) GetChainID() *big.Int {
 }
 
 // GetAccessList returns nil
-func (tx *LegacyTx) GetAccessList() geth.AccessList {
+func (tx *LegacyTx) GetAccessList() gethcore.AccessList {
 	return nil
 }
 
@@ -126,9 +126,9 @@ func (tx *LegacyTx) GetTo() *common.Address {
 
 // AsEthereumData returns an LegacyTx transaction tx from the proto-formatted
 // TxData defined on the Cosmos EVM.
-func (tx *LegacyTx) AsEthereumData() geth.TxData {
+func (tx *LegacyTx) AsEthereumData() gethcore.TxData {
 	v, r, s := tx.GetRawSignatureValues()
-	return &geth.LegacyTx{
+	return &gethcore.LegacyTx{
 		Nonce:    tx.GetNonce(),
 		GasPrice: tx.GetGasPrice(),
 		Gas:      tx.GetGas(),

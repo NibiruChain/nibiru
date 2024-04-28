@@ -15,12 +15,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
+	"github.com/NibiruChain/nibiru/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
-	gethcoretypes "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 )
 
@@ -37,17 +37,17 @@ const ErrExceedBlockGasLimit = "out of gas in location: block gas meter; gasWant
 const ErrStateDBCommit = "failed to commit stateDB"
 
 // RawTxToEthTx returns a evm MsgEthereum transaction from raw tx bytes.
-func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evmtypes.MsgEthereumTx, error) {
+func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereumTx, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBz)
 	if err != nil {
 		return nil, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, err.Error())
 	}
 
-	ethTxs := make([]*evmtypes.MsgEthereumTx, len(tx.GetMsgs()))
+	ethTxs := make([]*evm.MsgEthereumTx, len(tx.GetMsgs()))
 	for i, msg := range tx.GetMsgs() {
-		ethTx, ok := msg.(*evmtypes.MsgEthereumTx)
+		ethTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return nil, fmt.Errorf("invalid message type %T, expected %T", msg, &evmtypes.MsgEthereumTx{})
+			return nil, fmt.Errorf("invalid message type %T, expected %T", msg, &evm.MsgEthereumTx{})
 		}
 		ethTx.Hash = ethTx.AsTransaction().Hash().Hex()
 		ethTxs[i] = ethTx
@@ -57,21 +57,21 @@ func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evmtypes.MsgEth
 
 // EthHeaderFromTendermint: Converts a Tendermint block header to an Eth header.
 func EthHeaderFromTendermint(
-	header tmtypes.Header, bloom gethcoretypes.Bloom, baseFee *big.Int,
-) *gethcoretypes.Header {
-	txHash := gethcoretypes.EmptyRootHash
+	header tmtypes.Header, bloom gethcore.Bloom, baseFee *big.Int,
+) *gethcore.Header {
+	txHash := gethcore.EmptyRootHash
 	if len(header.DataHash) == 0 {
 		txHash = gethcommon.BytesToHash(header.DataHash)
 	}
 
 	time := uint64(header.Time.UTC().Unix()) // #nosec G701
-	return &gethcoretypes.Header{
+	return &gethcore.Header{
 		ParentHash:  gethcommon.BytesToHash(header.LastBlockID.Hash.Bytes()),
-		UncleHash:   gethcoretypes.EmptyUncleHash,
+		UncleHash:   gethcore.EmptyUncleHash,
 		Coinbase:    gethcommon.BytesToAddress(header.ProposerAddress),
 		Root:        gethcommon.BytesToHash(header.AppHash),
 		TxHash:      txHash,
-		ReceiptHash: gethcoretypes.EmptyRootHash,
+		ReceiptHash: gethcore.EmptyRootHash,
 		Bloom:       bloom,
 		Difficulty:  big.NewInt(0),
 		Number:      big.NewInt(header.Height),
@@ -80,7 +80,7 @@ func EthHeaderFromTendermint(
 		Time:        time,
 		Extra:       []byte{},
 		MixDigest:   gethcommon.Hash{},
-		Nonce:       gethcoretypes.BlockNonce{},
+		Nonce:       gethcore.BlockNonce{},
 		BaseFee:     baseFee,
 	}
 }
@@ -115,12 +115,12 @@ func BlockMaxGasFromConsensusParams(
 // transactions.
 func FormatBlock(
 	header tmtypes.Header, size int, gasLimit int64,
-	gasUsed *big.Int, transactions []interface{}, bloom gethcoretypes.Bloom,
+	gasUsed *big.Int, transactions []interface{}, bloom gethcore.Bloom,
 	validatorAddr gethcommon.Address, baseFee *big.Int,
 ) map[string]interface{} {
 	var transactionsRoot gethcommon.Hash
 	if len(transactions) == 0 {
-		transactionsRoot = gethcoretypes.EmptyRootHash
+		transactionsRoot = gethcore.EmptyRootHash
 	} else {
 		transactionsRoot = gethcommon.BytesToHash(header.DataHash)
 	}
@@ -129,8 +129,8 @@ func FormatBlock(
 		"number":           hexutil.Uint64(header.Height),
 		"hash":             hexutil.Bytes(header.Hash()),
 		"parentHash":       gethcommon.BytesToHash(header.LastBlockID.Hash.Bytes()),
-		"nonce":            gethcoretypes.BlockNonce{},   // PoW specific
-		"sha3Uncles":       gethcoretypes.EmptyUncleHash, // No uncles in Tendermint
+		"nonce":            gethcore.BlockNonce{},   // PoW specific
+		"sha3Uncles":       gethcore.EmptyUncleHash, // No uncles in Tendermint
 		"logsBloom":        bloom,
 		"stateRoot":        hexutil.Bytes(header.AppHash),
 		"miner":            validatorAddr,
@@ -142,7 +142,7 @@ func FormatBlock(
 		"gasUsed":          (*hexutil.Big)(gasUsed),
 		"timestamp":        hexutil.Uint64(header.Time.Unix()),
 		"transactionsRoot": transactionsRoot,
-		"receiptsRoot":     gethcoretypes.EmptyRootHash,
+		"receiptsRoot":     gethcore.EmptyRootHash,
 
 		"uncles":          []gethcommon.Hash{},
 		"transactions":    transactions,
@@ -159,7 +159,7 @@ func FormatBlock(
 // NewRpcTxFromMsg returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func NewRpcTxFromMsg(
-	msg *evmtypes.MsgEthereumTx,
+	msg *evm.MsgEthereumTx,
 	blockHash gethcommon.Hash,
 	blockNumber, index uint64,
 	baseFee *big.Int,
@@ -172,7 +172,7 @@ func NewRpcTxFromMsg(
 // NewTransactionFromData returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func NewRpcTxFromEthTx(
-	tx *gethcoretypes.Transaction,
+	tx *gethcore.Transaction,
 	blockHash gethcommon.Hash,
 	blockNumber,
 	index uint64,
@@ -184,13 +184,13 @@ func NewRpcTxFromEthTx(
 	// with old transactions. For non-protected transactions, the homestead
 	// signer is used because the return value of ChainId is zero for unprotected
 	// transactions.
-	var signer gethcoretypes.Signer
+	var signer gethcore.Signer
 	if tx.Protected() {
-		signer = gethcoretypes.LatestSignerForChainID(tx.ChainId())
+		signer = gethcore.LatestSignerForChainID(tx.ChainId())
 	} else {
-		signer = gethcoretypes.HomesteadSigner{}
+		signer = gethcore.HomesteadSigner{}
 	}
-	from, _ := gethcoretypes.Sender(signer, tx) // #nosec G703
+	from, _ := gethcore.Sender(signer, tx) // #nosec G703
 	v, r, s := tx.RawSignatureValues()
 	result := &RPCTransaction{
 		Type:     hexutil.Uint64(tx.Type()),
@@ -213,11 +213,11 @@ func NewRpcTxFromEthTx(
 		result.TransactionIndex = (*hexutil.Uint64)(&index)
 	}
 	switch tx.Type() {
-	case gethcoretypes.AccessListTxType:
+	case gethcore.AccessListTxType:
 		al := tx.AccessList()
 		result.Accesses = &al
 		result.ChainID = (*hexutil.Big)(tx.ChainId())
-	case gethcoretypes.DynamicFeeTxType:
+	case gethcore.DynamicFeeTxType:
 		al := tx.AccessList()
 		result.Accesses = &al
 		result.ChainID = (*hexutil.Big)(tx.ChainId())
