@@ -3,9 +3,12 @@ package eip712_test
 import (
 	"bytes"
 	"fmt"
+	"math/big"
+	"reflect"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 
 	chainparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -15,6 +18,8 @@ import (
 	"github.com/tidwall/sjson"
 
 	"github.com/NibiruChain/nibiru/eth/eip712"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/evm"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,7 +29,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/cmd/ethclient"
 
-	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -57,7 +62,7 @@ type EIP712TestSuite struct {
 }
 
 type EIP712TestParams struct {
-	fee           txtypes.Fee
+	fee           sdktx.Fee
 	address       sdk.AccAddress
 	accountNumber uint64
 	sequence      uint64
@@ -107,7 +112,7 @@ func (suite *EIP712TestSuite) createTestKeyPair() (*ethsecp256k1.PrivKey, *ethse
 }
 
 // makeCoins helps create an instance of sdk.Coins[] with single coin
-func (suite *EIP712TestSuite) makeCoins(denom string, amount math.Int) sdk.Coins {
+func (suite *EIP712TestSuite) makeCoins(denom string, amount sdkmath.Int) sdk.Coins {
 	return sdk.NewCoins(
 		sdk.NewCoin(
 			denom,
@@ -125,8 +130,8 @@ func (suite *EIP712TestSuite) TestEIP712() {
 	}
 
 	params := EIP712TestParams{
-		fee: txtypes.Fee{
-			Amount:   suite.makeCoins(suite.denom, math.NewInt(2000)),
+		fee: sdktx.Fee{
+			Amount:   suite.makeCoins(suite.denom, sdkmath.NewInt(2000)),
 			GasLimit: 20000,
 		},
 		address:       suite.createTestAddress(),
@@ -148,7 +153,7 @@ func (suite *EIP712TestSuite) TestEIP712() {
 				banktypes.NewMsgSend(
 					suite.createTestAddress(),
 					suite.createTestAddress(),
-					suite.makeCoins(suite.denom, math.NewInt(1)),
+					suite.makeCoins(suite.denom, sdkmath.NewInt(1)),
 				),
 			},
 			expectSuccess: true,
@@ -170,7 +175,7 @@ func (suite *EIP712TestSuite) TestEIP712() {
 				stakingtypes.NewMsgDelegate(
 					suite.createTestAddress(),
 					sdk.ValAddress(suite.createTestAddress()),
-					suite.makeCoins(suite.denom, math.NewInt(1))[0],
+					suite.makeCoins(suite.denom, sdkmath.NewInt(1))[0],
 				),
 			},
 			expectSuccess: true,
@@ -191,12 +196,12 @@ func (suite *EIP712TestSuite) TestEIP712() {
 				stakingtypes.NewMsgDelegate(
 					params.address,
 					sdk.ValAddress(suite.createTestAddress()),
-					suite.makeCoins(suite.denom, math.NewInt(1))[0],
+					suite.makeCoins(suite.denom, sdkmath.NewInt(1))[0],
 				),
 				stakingtypes.NewMsgDelegate(
 					params.address,
 					sdk.ValAddress(suite.createTestAddress()),
-					suite.makeCoins(suite.denom, math.NewInt(5))[0],
+					suite.makeCoins(suite.denom, sdkmath.NewInt(5))[0],
 				),
 			},
 			expectSuccess: true,
@@ -224,7 +229,7 @@ func (suite *EIP712TestSuite) TestEIP712() {
 				banktypes.NewMsgSend(
 					params.address,
 					suite.createTestAddress(),
-					suite.makeCoins(suite.denom, math.NewInt(50)),
+					suite.makeCoins(suite.denom, sdkmath.NewInt(50)),
 				),
 			},
 			expectSuccess: !suite.useLegacyEIP712TypedData,
@@ -299,21 +304,21 @@ func (suite *EIP712TestSuite) TestEIP712() {
 					[]banktypes.Input{
 						banktypes.NewInput(
 							suite.createTestAddress(),
-							suite.makeCoins(suite.denom, math.NewInt(50)),
+							suite.makeCoins(suite.denom, sdkmath.NewInt(50)),
 						),
 						banktypes.NewInput(
 							suite.createTestAddress(),
-							suite.makeCoins(suite.denom, math.NewInt(50)),
+							suite.makeCoins(suite.denom, sdkmath.NewInt(50)),
 						),
 					},
 					[]banktypes.Output{
 						banktypes.NewOutput(
 							suite.createTestAddress(),
-							suite.makeCoins(suite.denom, math.NewInt(50)),
+							suite.makeCoins(suite.denom, sdkmath.NewInt(50)),
 						),
 						banktypes.NewOutput(
 							suite.createTestAddress(),
-							suite.makeCoins(suite.denom, math.NewInt(50)),
+							suite.makeCoins(suite.denom, sdkmath.NewInt(50)),
 						),
 					},
 				),
@@ -619,18 +624,100 @@ func (suite *EIP712TestSuite) TestTypedDataEdgeCases() {
 }
 
 // TestTypedDataGeneration tests certain qualities about the output Types representation.
-func (suite *EIP712TestSuite) TestTypedDataGeneration() {
+func (s *EIP712TestSuite) TestTypedDataGeneration() {
 	// Multiple messages with the same schema should share one type
 	payloadRaw := `{ "msgs": [{ "type": "msgType", "value": { "field1": 10 }}, { "type": "msgType", "value": { "field1": 20 }}] }`
 
 	typedData, err := eip712.WrapTxToTypedData(0, []byte(payloadRaw))
-	suite.Require().NoError(err)
-	suite.Require().True(typedData.Types["TypemsgType1"] == nil)
+	s.Require().NoError(err)
+	s.Require().True(typedData.Types["TypemsgType1"] == nil)
 
 	// Multiple messages with different schemas should have different types
 	payloadRaw = `{ "msgs": [{ "type": "msgType", "value": { "field1": 10 }}, { "type": "msgType", "value": { "field2": 20 }}] }`
 
 	typedData, err = eip712.WrapTxToTypedData(0, []byte(payloadRaw))
-	suite.Require().NoError(err)
-	suite.Require().False(typedData.Types["TypemsgType1"] == nil)
+	s.Require().NoError(err)
+	s.Require().False(typedData.Types["TypemsgType1"] == nil)
+}
+
+func (s *EIP712TestSuite) TestTypToEth() {
+	cases := []struct {
+		want  string
+		given any
+	}{
+		{want: "string", given: "string"},
+		{want: "int8", given: int8(0)},
+		{want: "int16", given: int16(0)},
+		{want: "int32", given: int32(0)},
+		{want: "int64", given: int64(0)},
+
+		{want: "uint64", given: uint(0)},
+		{want: "uint8", given: uint8(0)},
+		{want: "uint16", given: uint16(0)},
+		{want: "uint32", given: uint32(0)},
+		{want: "uint64", given: uint64(0)},
+		{want: "bool", given: false},
+
+		// slice and array cases
+		{want: "uint64[]", given: []uint64{1, 2, 3}},
+		{want: "string[]", given: []string{"1", "2"}},
+		{want: "int8[]", given: [3]int8{3, 2, 1}},
+
+		// pointer cases
+		{want: "string", given: sdkmath.NewInt(1)},
+		{want: "string", given: big.NewInt(1)},
+		{want: "string", given: sdkmath.LegacyNewDec(1)},
+	}
+
+	for _, tc := range cases {
+		fnInp := reflect.TypeOf(tc.given)
+		result := eip712.TypToEth(fnInp)
+		s.Equal(tc.want, result,
+			"Type conversion did not match for %v with input %s", tc.given, fnInp)
+	}
+}
+
+func (s *EIP712TestSuite) TestUnpackAny() {
+	_, addr := testutil.PrivKey()
+	cases := []struct {
+		wantWrappedType string
+		wantType        string
+		given           sdk.Msg
+		wantErr         bool
+	}{
+		{
+			wantWrappedType: "*eip712.CosmosAnyWrapper",
+			wantType:        "/cosmos.bank.v1beta1.MsgSend",
+			given:           banktypes.NewMsgSend(addr, addr, sdk.NewCoins(sdk.NewInt64Coin("unibi", 25))),
+		},
+		{
+			wantWrappedType: "*eip712.CosmosAnyWrapper",
+			wantType:        "/eth.evm.v1.MsgEthereumTx",
+			given:           new(evm.MsgEthereumTx),
+		},
+		{
+			given:   nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		anyGiven, err := sdkcodec.NewAnyWithValue(tc.given)
+		if tc.wantErr {
+			s.Require().Error(err)
+			continue
+		}
+		s.NoError(err)
+
+		reflectVal := reflect.ValueOf(anyGiven)
+		gotReflectType, gotReflectVal, err := eip712.UnpackAny(s.config.Codec, reflectVal)
+		s.Require().NoError(err,
+			"got reflect.Type %s, got reflect.Value %s",
+			gotReflectType, gotReflectVal)
+
+		s.Equal(tc.wantWrappedType, gotReflectType.String())
+		if gotWrappedAny := gotReflectVal.Interface().(*eip712.CosmosAnyWrapper); gotWrappedAny != nil {
+			s.EqualValues(gotWrappedAny.Type, tc.wantType)
+		}
+	}
 }

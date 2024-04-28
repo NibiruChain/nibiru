@@ -8,7 +8,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	ethtypes "github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 const maxInt64 = 9223372036854775807
@@ -46,7 +46,7 @@ func (s *SuiteSafeMath) TestSafeNewIntFromBigInt() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			result, err := ethtypes.SafeNewIntFromBigInt(tc.input)
+			result, err := eth.SafeNewIntFromBigInt(tc.input)
 			if tc.expectErr {
 				s.Error(err, fmt.Sprintf("result: %s", result))
 			} else {
@@ -82,7 +82,7 @@ func (s *SuiteSafeMath) TestIsValidInt256() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			result := ethtypes.IsValidInt256(tc.input)
+			result := eth.IsValidInt256(tc.input)
 			s.Equal(tc.expectValid, result, "Validity check did not match expected")
 		})
 	}
@@ -108,7 +108,7 @@ func (s *SuiteSafeMath) TestSafeInt64() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			result, err := ethtypes.SafeInt64(tc.input)
+			result, err := eth.SafeInt64(tc.input)
 			if tc.expectErr {
 				s.Error(err, "Expected an error due to overflow but did not get one")
 			} else {

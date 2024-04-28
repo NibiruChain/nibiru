@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	ethtypes "github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {
@@ -55,8 +55,8 @@ func (s *SuiteEncoders) TestEncoderBytes() {
 	for _, tc := range testCases {
 		s.Run("bijectivity: []byte encoders "+tc.name, func() {
 			given := []byte(tc.value)
-			assertBijectiveKey(s.T(), ethtypes.KeyEncoderBytes, given)
-			assertBijectiveValue(s.T(), ethtypes.ValueEncoderBytes, given)
+			assertBijectiveKey(s.T(), eth.KeyEncoderBytes, given)
+			assertBijectiveValue(s.T(), eth.ValueEncoderBytes, given)
 		})
 	}
 }
@@ -64,28 +64,28 @@ func (s *SuiteEncoders) TestEncoderBytes() {
 func (s *SuiteEncoders) TestEncoderEthAddr() {
 	testCases := []struct {
 		name      string
-		given     ethtypes.EthAddr
+		given     eth.EthAddr
 		wantPanic bool
 	}{
 		{
 			name:  "Nibiru EVM addr",
-			given: ethcommon.BytesToAddress([]byte("0xA52c829E935C30F4C7dcD66739Cf91BF79dD9253")),
+			given: gethcommon.BytesToAddress([]byte("0xA52c829E935C30F4C7dcD66739Cf91BF79dD9253")),
 		},
 		{
 			name:  "Nibiru EVM addr length above 20 bytes",
-			given: ethcommon.BytesToAddress([]byte("0xA52c829E935C30F4C7dcD66739Cf91BF79dD92532456BF123421")),
+			given: gethcommon.BytesToAddress([]byte("0xA52c829E935C30F4C7dcD66739Cf91BF79dD92532456BF123421")),
 		},
 		{
 			name:  "Nibiru Bech 32 addr (hypothetically)",
-			given: ethtypes.EthAddr([]byte("nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l")),
+			given: eth.EthAddr([]byte("nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l")),
 		},
 	}
 	for _, tc := range testCases {
 		s.Run("bijectivity: []byte encoders "+tc.name, func() {
 			given := tc.given
 			runTest := func() {
-				assertBijectiveKey(s.T(), ethtypes.KeyEncoderEthAddr, given)
-				assertBijectiveValue(s.T(), ethtypes.ValueEncoderEthAddr, given)
+				assertBijectiveKey(s.T(), eth.KeyEncoderEthAddr, given)
+				assertBijectiveValue(s.T(), eth.ValueEncoderEthAddr, given)
 			}
 			if tc.wantPanic {
 				s.Require().Panics(runTest)

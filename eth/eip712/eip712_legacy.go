@@ -17,7 +17,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
@@ -29,8 +29,8 @@ const (
 	typeDefPrefix = "_"
 )
 
-// LegacyWrapTxToTypedData is an ultimate method that wraps Amino-encoded Cosmos Tx JSON data
-// into an EIP712-compatible TypedData request.
+// LegacyWrapTxToTypedData is an ultimate method that wraps Amino-encoded Cosmos
+// Tx JSON data into an EIP712-compatible TypedData request.
 func LegacyWrapTxToTypedData(
 	cdc codectypes.AnyUnpacker,
 	chainID uint64,
@@ -47,7 +47,7 @@ func LegacyWrapTxToTypedData(
 	domain := apitypes.TypedDataDomain{
 		Name:              "Cosmos Web3",
 		Version:           "1.0.0",
-		ChainId:           math.NewHexOrDecimal256(int64(chainID)),
+		ChainId:           gethmath.NewHexOrDecimal256(int64(chainID)),
 		VerifyingContract: "cosmos",
 		Salt:              "0",
 	}
@@ -160,53 +160,76 @@ func walkFields(cdc codectypes.AnyUnpacker, typeMap apitypes.Types, rootType str
 	return legacyTraverseFields(cdc, typeMap, rootType, typeDefPrefix, t, v)
 }
 
-type cosmosAnyWrapper struct {
+type CosmosAnyWrapper struct {
 	Type  string      `json:"type"`
 	Value interface{} `json:"value"`
 }
 
+// legacyTraverseFields: Recursively inspects the fields of a given
+// `reflect.Type` (t) and `reflect.Value`(v) and maps them to an
+// Ethereum-compatible type description compliant with EIP-712. For operations
+// like EIP-712 signing, complex Go structs need to be translated into a flat
+// list of types that can be understood in Ethereum's type system.
 func legacyTraverseFields(
+	// cdc: A codec capable of unpackaing protobuf
+	// `"github.com/cosmos/cosmos-sdk/codec/types".Any` types into Go
+	// structs.
 	cdc codectypes.AnyUnpacker,
+	// typeMap: map storing type descriptions
 	typeMap apitypes.Types,
+	// rootType: name of the root type processed
 	rootType string,
+	// prefix: Namespace prefix to avoid name collisions in `typeMap`
 	prefix string,
+	// t: reflect type of the data to process
 	t reflect.Type,
+	// v: reflect value of the data to process
 	v reflect.Value,
 ) error {
-	n := t.NumField()
-
+	// Setup: Check that the number of fields in `typeMap` for the `rootType`
+	// or a sanitized version of `prefix` matches the number of fields in
+	// type `t`. If they match, the type has already been processed, so we
+	// return early.
+	numFieldsT := t.NumField()
 	if prefix == typeDefPrefix {
-		if len(typeMap[rootType]) == n {
+		if len(typeMap[rootType]) == numFieldsT {
 			return nil
 		}
 	} else {
 		typeDef := sanitizeTypedef(prefix)
-		if len(typeMap[typeDef]) == n {
+		if len(typeMap[typeDef]) == numFieldsT {
 			return nil
 		}
 	}
 
-	for i := 0; i < n; i++ {
+	// Field Iteration: Iterate over each field of tpye `t`,
+	// (1) extracting the type and value of the field,
+	// (2) unpacking in the event the field is an `Any`,
+	// (3) and skipping empty fields.
+	// INFO: If a field is a struct, unpack each field recursively to handle
+	// nested data structures.
+	for fieldIdx := 0; fieldIdx < numFieldsT; fieldIdx++ {
 		var (
 			field reflect.Value
 			err   error
 		)
 
 		if v.IsValid() {
-			field = v.Field(i)
+			field = v.Field(fieldIdx)
 		}
 
-		fieldType := t.Field(i).Type
-		fieldName := jsonNameFromTag(t.Field(i).Tag)
+		fieldType := t.Field(fieldIdx).Type
+		fieldName := jsonNameFromTag(t.Field(fieldIdx).Tag)
 
-		if fieldType == cosmosAnyType {
+		if fieldType == typeCosmAny {
 			// Unpack field, value as Any
-			if fieldType, field, err = unpackAny(cdc, field); err != nil {
+			if fieldType, field, err = UnpackAny(cdc, field); err != nil {
 				return err
 			}
 		}
 
-		// If field is an empty value, do not include in types, since it will not be present in the object
+		// If field is an empty value, do not include in types, since it will not
+		// be present in the object
 		if field.IsZero() {
 			continue
 		}
@@ -246,8 +269,8 @@ func legacyTraverseFields(
 			field = field.Index(0)
 			isCollection = true
 
-			if fieldType == cosmosAnyType {
-				if fieldType, field, err = unpackAny(cdc, field); err != nil {
+			if fieldType == typeCosmAny {
+				if fieldType, field, err = UnpackAny(cdc, field); err != nil {
 					return err
 				}
 			}
@@ -279,7 +302,7 @@ func legacyTraverseFields(
 
 		fieldPrefix := fmt.Sprintf("%s.%s", prefix, fieldName)
 
-		ethTyp := typToEth(fieldType)
+		ethTyp := TypToEth(fieldType)
 
 		if len(ethTyp) > 0 {
 			// Support array of uint64
@@ -343,13 +366,13 @@ func jsonNameFromTag(tag reflect.StructTag) string {
 }
 
 // Unpack the given Any value with Type/Value deconstruction
-func unpackAny(cdc codectypes.AnyUnpacker, field reflect.Value) (reflect.Type, reflect.Value, error) {
+func UnpackAny(cdc codectypes.AnyUnpacker, field reflect.Value) (reflect.Type, reflect.Value, error) {
 	anyData, ok := field.Interface().(*codectypes.Any)
 	if !ok {
 		return nil, reflect.Value{}, errorsmod.Wrapf(errortypes.ErrPackAny, "%T", field.Interface())
 	}
 
-	anyWrapper := &cosmosAnyWrapper{
+	anyWrapper := &CosmosAnyWrapper{
 		Type: anyData.TypeUrl,
 	}
 
@@ -364,19 +387,19 @@ func unpackAny(cdc codectypes.AnyUnpacker, field reflect.Value) (reflect.Type, r
 }
 
 var (
-	hashType      = reflect.TypeOf(common.Hash{})
-	addressType   = reflect.TypeOf(common.Address{})
-	bigIntType    = reflect.TypeOf(big.Int{})
-	cosmIntType   = reflect.TypeOf(sdkmath.Int{})
-	cosmDecType   = reflect.TypeOf(sdkmath.LegacyDec{})
-	timeType      = reflect.TypeOf(time.Time{})
-	cosmosAnyType = reflect.TypeOf(&codectypes.Any{})
-	edType        = reflect.TypeOf(ed25519.PubKey{})
+	typeEthHash = reflect.TypeOf(common.Hash{})
+	typeEthAddr = reflect.TypeOf(common.Address{})
+	typeBigInt  = reflect.TypeOf(big.Int{})
+	typeCosmInt = reflect.TypeOf(sdkmath.Int{})
+	typeCosmDec = reflect.TypeOf(sdkmath.LegacyDec{})
+	typeTime    = reflect.TypeOf(time.Time{})
+	typeCosmAny = reflect.TypeOf(&codectypes.Any{})
+	typeEd25519 = reflect.TypeOf(ed25519.PubKey{})
 )
 
-// typToEth supports only basic types and arrays of basic types.
+// TypToEth supports only basic types and arrays of basic types.
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
-func typToEth(typ reflect.Type) string {
+func TypToEth(typ reflect.Type) string {
 	const str = "string"
 
 	switch typ.Kind() {
@@ -405,31 +428,31 @@ func typToEth(typ reflect.Type) string {
 	case reflect.Uint64:
 		return "uint64"
 	case reflect.Slice:
-		ethName := typToEth(typ.Elem())
+		ethName := TypToEth(typ.Elem())
 		if len(ethName) > 0 {
 			return ethName + "[]"
 		}
 	case reflect.Array:
-		ethName := typToEth(typ.Elem())
+		ethName := TypToEth(typ.Elem())
 		if len(ethName) > 0 {
 			return ethName + "[]"
 		}
 	case reflect.Ptr:
-		if typ.Elem().ConvertibleTo(bigIntType) ||
-			typ.Elem().ConvertibleTo(timeType) ||
-			typ.Elem().ConvertibleTo(edType) ||
-			typ.Elem().ConvertibleTo(cosmDecType) ||
-			typ.Elem().ConvertibleTo(cosmIntType) {
+		if typ.Elem().ConvertibleTo(typeBigInt) ||
+			typ.Elem().ConvertibleTo(typeTime) ||
+			typ.Elem().ConvertibleTo(typeEd25519) ||
+			typ.Elem().ConvertibleTo(typeCosmDec) ||
+			typ.Elem().ConvertibleTo(typeCosmInt) {
 			return str
 		}
 	case reflect.Struct:
-		if typ.ConvertibleTo(hashType) ||
-			typ.ConvertibleTo(addressType) ||
-			typ.ConvertibleTo(bigIntType) ||
-			typ.ConvertibleTo(edType) ||
-			typ.ConvertibleTo(timeType) ||
-			typ.ConvertibleTo(cosmDecType) ||
-			typ.ConvertibleTo(cosmIntType) {
+		if typ.ConvertibleTo(typeEthHash) ||
+			typ.ConvertibleTo(typeEthAddr) ||
+			typ.ConvertibleTo(typeBigInt) ||
+			typ.ConvertibleTo(typeEd25519) ||
+			typ.ConvertibleTo(typeTime) ||
+			typ.ConvertibleTo(typeCosmDec) ||
+			typ.ConvertibleTo(typeCosmInt) {
 			return str
 		}
 	}

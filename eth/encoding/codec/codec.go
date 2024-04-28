@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cryptocodec "github.com/NibiruChain/nibiru/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/eth"
+	cryptocodec "github.com/NibiruChain/nibiru/eth/crypto/codec"
 )
 
 // RegisterLegacyAminoCodec registers Interfaces from types, crypto, and SDK std.
