@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package types
+package eth
 
 import (
 	ethaccounts "github.com/ethereum/go-ethereum/accounts"

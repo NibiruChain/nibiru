@@ -2,7 +2,7 @@
 // source: eth/evm/v1/tx.proto
 
 /*
-Package types is a reverse proxy.
+Package evm is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */

@@ -1,4 +1,4 @@
-package types_test
+package eth_test
 
 import (
 	fmt "fmt"
@@ -8,7 +8,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	ethtypes "github.com/NibiruChain/nibiru/eth/types"
+	ethtypes "github.com/NibiruChain/nibiru/eth"
 )
 
 const maxInt64 = 9223372036854775807

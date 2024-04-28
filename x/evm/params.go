@@ -17,7 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/exp/slices"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 var (
@@ -242,7 +242,7 @@ func ValidatePrecompiles(i interface{}) error {
 			return fmt.Errorf("duplicate precompile %s", precompile)
 		}
 
-		if err := types.ValidateAddress(precompile); err != nil {
+		if err := eth.ValidateAddress(precompile); err != nil {
 			return fmt.Errorf("invalid precompile %s", precompile)
 		}
 

@@ -18,7 +18,7 @@ import (
 
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 // BlockNumber represents a decoded hex string for a block number.
@@ -191,7 +191,7 @@ func (bnh *BlockNumberOrHash) decodeFromString(input string) error {
 			return err
 		}
 
-		bnInt, err := types.SafeInt64(blockNumber)
+		bnInt, err := eth.SafeInt64(blockNumber)
 		if err != nil {
 			return err
 		}

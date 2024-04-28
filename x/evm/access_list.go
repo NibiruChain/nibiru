@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 // AccessList is an EIP-2930 access list that represents the slice of
@@ -77,7 +77,7 @@ func newAccessListTx(tx *gethcore.Transaction) (*AccessListTx, error) {
 	}
 
 	if tx.Value() != nil {
-		amountInt, err := types.SafeNewIntFromBigInt(tx.Value())
+		amountInt, err := eth.SafeNewIntFromBigInt(tx.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func newAccessListTx(tx *gethcore.Transaction) (*AccessListTx, error) {
 	}
 
 	if tx.GasPrice() != nil {
-		gasPriceInt, err := types.SafeNewIntFromBigInt(tx.GasPrice())
+		gasPriceInt, err := eth.SafeNewIntFromBigInt(tx.GasPrice())
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +237,7 @@ func (tx AccessListTx) Validate() error {
 	if gasPrice == nil {
 		return errorsmod.Wrap(ErrInvalidGasPrice, "cannot be nil")
 	}
-	if !types.IsValidInt256(gasPrice) {
+	if !eth.IsValidInt256(gasPrice) {
 		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
 	}
 
@@ -250,16 +250,16 @@ func (tx AccessListTx) Validate() error {
 	if amount != nil && amount.Sign() == -1 {
 		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
 	}
-	if !types.IsValidInt256(amount) {
+	if !eth.IsValidInt256(amount) {
 		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
 	}
 
-	if !types.IsValidInt256(tx.Fee()) {
+	if !eth.IsValidInt256(tx.Fee()) {
 		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	if tx.To != "" {
-		if err := types.ValidateAddress(tx.To); err != nil {
+		if err := eth.ValidateAddress(tx.To); err != nil {
 			return errorsmod.Wrap(err, "invalid to address")
 		}
 	}

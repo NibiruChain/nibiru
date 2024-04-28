@@ -1,4 +1,4 @@
-package types_test
+package eth_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	ethtypes "github.com/NibiruChain/nibiru/eth/types"
+	ethtypes "github.com/NibiruChain/nibiru/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {

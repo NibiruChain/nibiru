@@ -15,7 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.
@@ -98,7 +98,7 @@ func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	}
 
 	if tx.Value() != nil {
-		amountInt, err := types.SafeNewIntFromBigInt(tx.Value())
+		amountInt, err := eth.SafeNewIntFromBigInt(tx.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	}
 
 	if tx.GasFeeCap() != nil {
-		gasFeeCapInt, err := types.SafeNewIntFromBigInt(tx.GasFeeCap())
+		gasFeeCapInt, err := eth.SafeNewIntFromBigInt(tx.GasFeeCap())
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +114,7 @@ func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	}
 
 	if tx.GasTipCap() != nil {
-		gasTipCapInt, err := types.SafeNewIntFromBigInt(tx.GasTipCap())
+		gasTipCapInt, err := eth.SafeNewIntFromBigInt(tx.GasTipCap())
 		if err != nil {
 			return nil, err
 		}
@@ -283,11 +283,11 @@ func (tx DynamicFeeTx) Validate() error {
 		return errorsmod.Wrapf(ErrInvalidGasCap, "gas fee cap cannot be negative %s", tx.GasFeeCap)
 	}
 
-	if !types.IsValidInt256(tx.GetGasTipCap()) {
+	if !eth.IsValidInt256(tx.GetGasTipCap()) {
 		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
-	if !types.IsValidInt256(tx.GetGasFeeCap()) {
+	if !eth.IsValidInt256(tx.GetGasFeeCap()) {
 		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
@@ -298,7 +298,7 @@ func (tx DynamicFeeTx) Validate() error {
 		)
 	}
 
-	if !types.IsValidInt256(tx.Fee()) {
+	if !eth.IsValidInt256(tx.Fee()) {
 		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
@@ -307,12 +307,12 @@ func (tx DynamicFeeTx) Validate() error {
 	if amount != nil && amount.Sign() == -1 {
 		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
 	}
-	if !types.IsValidInt256(amount) {
+	if !eth.IsValidInt256(amount) {
 		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
 	}
 
 	if tx.To != "" {
-		if err := types.ValidateAddress(tx.To); err != nil {
+		if err := eth.ValidateAddress(tx.To); err != nil {
 			return errorsmod.Wrap(err, "invalid to address")
 		}
 	}

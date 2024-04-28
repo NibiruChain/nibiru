@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -150,7 +150,7 @@ func (msg MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
 // checks of a Transaction. If returns an error if validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
 	if msg.From != "" {
-		if err := types.ValidateAddress(msg.From); err != nil {
+		if err := eth.ValidateAddress(msg.From); err != nil {
 			return errorsmod.Wrap(err, "invalid from address")
 		}
 	}

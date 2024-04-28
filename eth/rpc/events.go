@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth/types"
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -145,7 +145,7 @@ func ParseTxResult(
 // ParseTxIndexerResult parse tm tx result to a format compatible with the custom tx indexer.
 func ParseTxIndexerResult(
 	txResult *tmrpctypes.ResultTx, tx sdk.Tx, getter func(*ParsedTxs) *ParsedTx,
-) (*types.TxResult, error) {
+) (*eth.TxResult, error) {
 	txs, err := ParseTxResult(&txResult.TxResult, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse tx events: block %d, index %d, %v", txResult.Height, txResult.Index, err)
@@ -156,7 +156,7 @@ func ParseTxIndexerResult(
 		return nil, fmt.Errorf("ethereum tx not found in msgs: block %d, index %d", txResult.Height, txResult.Index)
 	}
 	index := uint32(parsedTx.MsgIndex) // #nosec G701
-	return &types.TxResult{
+	return &eth.TxResult{
 		Height:            txResult.Height,
 		TxIndex:           txResult.Index,
 		MsgIndex:          index,
