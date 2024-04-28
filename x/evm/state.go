@@ -48,8 +48,8 @@ func (s Storage) Copy() Storage {
 	return cpy
 }
 
-// Validate performs a basic validation of the State fields.
-// NOTE: state value can be empty
+// Validate performs a basic validation of the State fields. Note that [State]
+// can be empty.
 func (s State) Validate() error {
 	if strings.TrimSpace(s.Key) == "" {
 		return errorsmod.Wrap(ErrInvalidState, "state key hash cannot be blank")
@@ -58,8 +58,8 @@ func (s State) Validate() error {
 	return nil
 }
 
-// NewState creates a new State instance
-func NewState(key, value common.Hash) State {
+// NewStateFromEthHashes creates a [State] struct from Eth hashes.
+func NewStateFromEthHashes(key, value common.Hash) State {
 	return State{
 		Key:   key.String(),
 		Value: value.String(),
