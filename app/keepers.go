@@ -340,7 +340,8 @@ func (app *NibiruApp) InitKeepers(
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.slashingKeeper,
+		distrtypes.ModuleName,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
