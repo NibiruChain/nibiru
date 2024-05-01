@@ -23,10 +23,11 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	AccountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	distrKeeper   types.DistributionKeeper
-	StakingKeeper types.StakingKeeper
+	AccountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	distrKeeper    types.DistributionKeeper
+	StakingKeeper  types.StakingKeeper
+	slashingKeeper types.SlashingKeeper
 
 	distrModuleName string
 
@@ -47,8 +48,12 @@ type Keeper struct {
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
-	stakingKeeper types.StakingKeeper, distrName string,
+	bankKeeper types.BankKeeper,
+	distrKeeper types.DistributionKeeper,
+	stakingKeeper types.StakingKeeper,
+	slashingKeeper types.SlashingKeeper,
+
+	distrName string,
 ) Keeper {
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -62,6 +67,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
+		slashingKeeper:    slashingKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
 		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.DatedPrice](cdc)),
