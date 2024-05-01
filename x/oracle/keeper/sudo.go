@@ -30,7 +30,7 @@ func (k sudoExtension) EditOracleParams(
 	ctx sdk.Context, newParams oracletypes.MsgEditOracleParams,
 	sender sdk.AccAddress,
 ) (paramsAfter oracletypes.Params, err error) {
-	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+	if err := k.sudoKeeper.CheckPermissions(sender, ctx); err != nil {
 		return paramsAfter, err
 	}
 
