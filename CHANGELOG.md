@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.2.0.post1](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0.post1) - 2024-05-01
+
+### Improvements
+
+* [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
+
 ## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
 
 Nibiru v1.2.0 adds a burn method to the x/inflation module that allows senders to burn tokens.
