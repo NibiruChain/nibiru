@@ -363,7 +363,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper,
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.slashingKeeper,
 		app.SudoKeeper,
 		distrtypes.ModuleName,
 	)

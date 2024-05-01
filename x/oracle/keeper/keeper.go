@@ -23,11 +23,12 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	AccountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	distrKeeper   types.DistributionKeeper
-	StakingKeeper types.StakingKeeper
-	SudoKeeper    types.SudoKeeper
+	AccountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	distrKeeper    types.DistributionKeeper
+	StakingKeeper  types.StakingKeeper
+	slashingKeeper types.SlashingKeeper
+	SudoKeeper     types.SudoKeeper
 
 	distrModuleName string
 
@@ -57,6 +58,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper,
+	slashingKeeper types.SlashingKeeper,
 	sudoKeeper types.SudoKeeper,
 
 	distrName string,
@@ -73,6 +75,7 @@ func NewKeeper(
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
+		slashingKeeper:    slashingKeeper,
 		SudoKeeper:        sudoKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
