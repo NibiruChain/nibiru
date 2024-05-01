@@ -18,6 +18,11 @@ type StakingKeeper interface {
 	PowerReduction(ctx sdk.Context) (res sdkmath.Int)
 }
 
+type SlashingKeeper interface {
+	Slash(ctx sdk.Context, consAddr sdk.ConsAddress, fraction sdk.Dec, power int64, height int64)
+	Jail(sdk.Context, sdk.ConsAddress)
+}
+
 // DistributionKeeper is expected keeper for distribution module
 type DistributionKeeper interface {
 	AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.ValidatorI, tokens sdk.DecCoins)
