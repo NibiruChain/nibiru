@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-04-23
+## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-01
 
 Nibiru v1.3.0 adds interchain accounts.
 
@@ -50,6 +50,10 @@ Nibiru v1.3.0 adds interchain accounts.
 ### Features
 
 * [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
+
+### Improvements
+
+* [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 
 ## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
 
