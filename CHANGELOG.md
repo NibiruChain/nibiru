@@ -44,10 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### For next mainnet version
 
-- [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
-- [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
 - [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
 
 #### Nibiru EVM
@@ -55,10 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1837](https://github.com/NibiruChain/nibiru/pull/1837) - feat(eth): protos, eth types, and evm module types
 - [#1838](https://github.com/NibiruChain/nibiru/pull/1838) - feat(eth): Go-ethereum, crypto, encoding, and unit tests for evm/types
 - [#1841](https://github.com/NibiruChain/nibiru/pull/1841) - feat(eth): Collections encoders for bytes, Ethereum addresses, and Ethereum hashes
-- [#1847](https://github.com/NibiruChain/nibiru/pull/1847) - fix(docker-chaosnet): release snapshot docker build failed CI.
 - [#1855](https://github.com/NibiruChain/nibiru/pull/1855) - feat(eth-pubsub): Implement in-memory EventBus for real-time topic management and event distribution
 
-#### Dapp modules: perp, spot, etc
+#### Dapp modules: perp, spot, oracle, etc
 
 - [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 - [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
@@ -71,28 +68,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
 - [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
 - [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
-- [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
+- [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix(perp): fees does not require additional funds
 - [#1734](https://github.com/NibiruChain/nibiru/pull/1734) - feat(perp): MsgDonateToPerpFund sudo call as part of #1642
 - [#1749](https://github.com/NibiruChain/nibiru/pull/1749) - feat(perp): move close market from Wasm Binding to MsgCloseMarket
 - [#1752](https://github.com/NibiruChain/nibiru/pull/1752) - feat(oracle): MsgEditOracleParams sudo tx msg as part of #1642
 - [#1755](https://github.com/NibiruChain/nibiru/pull/1755) - feat(oracle): Add more events on validator's performance
 - [#1764](https://github.com/NibiruChain/nibiru/pull/1764) - fix(perp): make updateswapinvariant aware of total short supply to avoid panics
+- [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
 
 ### Non-breaking/Compatible Improvements
 
-- [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
-- [#1690](https://github.com/NibiruChain/nibiru/pull/1690) - docs(CHANGELOG.md): Correct the change log, providing clarity on what's released.
-- [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - fix(sudo): Make blank sudoers root invalid at genesis time.
-- [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
-- [#1714](https://github.com/NibiruChain/nibiru/pull/1714) - ci(localnet.sh): Fix script, simplify, and test in CI.
-- [#1719](https://github.com/NibiruChain/nibiru/pull/1719) - refactor(test): add is not mandatory interface to action
-- [#1723](https://github.com/NibiruChain/nibiru/pull/1723) - ci(e2e-wasm.yml): rm unused workflow
-- [#1728](https://github.com/NibiruChain/nibiru/pull/1728) - test(devgas-cli): CLI tests for devgas txs
-- [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
-- [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
-- [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all custom modules
-- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) - refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
-- [#1810](https://github.com/NibiruChain/nibiru/pull/1810) - chore(ci): use ubuntu-latest-m for goreleaser
 - [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
 - [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 
