@@ -17,7 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/server"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
@@ -48,8 +48,9 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:   "nibid",
-		Short: "Nibiru app",
+		Use:     "nibid",
+		Short:   "Nibiru blockchain node CLI",
+		Aliases: []string{"nibiru"},
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
@@ -74,7 +75,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 			customAppTemplate, customAppConfig := initAppConfig()
 			tmCfg := customTendermintConfig()
 
-			return server.InterceptConfigsPreRunHandler(
+			return sdkserver.InterceptConfigsPreRunHandler(
 				cmd,
 				customAppTemplate,
 				customAppConfig,
@@ -147,7 +148,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		pruning.PruningCmd(a.newApp),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
+	sdkserver.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -241,7 +242,7 @@ type appCreator struct {
 
 // newApp is an appCreator
 func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
-	baseappOptions := server.DefaultBaseappOptions(appOpts)
+	baseappOptions := sdkserver.DefaultBaseappOptions(appOpts)
 
 	return app.NewNibiruApp(
 		logger, db, traceStore, true,

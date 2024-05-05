@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
@@ -316,7 +316,7 @@ func (suite *StateDBTestSuite) TestRevertSnapshot() {
 			suite.Require().True(db.Suicide(address))
 		}},
 		{"add log", func(db vm.StateDB) {
-			db.AddLog(&ethtypes.Log{
+			db.AddLog(&gethcore.Log{
 				Address: address,
 			})
 		}},
@@ -436,7 +436,7 @@ func (suite *StateDBTestSuite) TestAccessList() {
 			suite.Require().True(slotPresent)
 		}},
 		{"prepare access list", func(db vm.StateDB) {
-			al := ethtypes.AccessList{{
+			al := gethcore.AccessList{{
 				Address:     address3,
 				StorageKeys: []common.Hash{value1},
 			}}
@@ -475,14 +475,14 @@ func (suite *StateDBTestSuite) TestLog() {
 	)
 	db := statedb.New(sdk.Context{}, NewMockKeeper(), txConfig)
 	data := []byte("hello world")
-	db.AddLog(&ethtypes.Log{
+	db.AddLog(&gethcore.Log{
 		Address:     address,
 		Topics:      []common.Hash{},
 		Data:        data,
 		BlockNumber: 1,
 	})
 	suite.Require().Equal(1, len(db.Logs()))
-	expecedLog := &ethtypes.Log{
+	expecedLog := &gethcore.Log{
 		Address:     address,
 		Topics:      []common.Hash{},
 		Data:        data,
@@ -494,7 +494,7 @@ func (suite *StateDBTestSuite) TestLog() {
 	}
 	suite.Require().Equal(expecedLog, db.Logs()[0])
 
-	db.AddLog(&ethtypes.Log{
+	db.AddLog(&gethcore.Log{
 		Address:     address,
 		Topics:      []common.Hash{},
 		Data:        data,
