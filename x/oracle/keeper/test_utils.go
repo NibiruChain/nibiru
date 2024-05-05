@@ -39,6 +39,8 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -139,8 +141,11 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
+	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
 	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
+
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -201,10 +206,11 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
 	stakingParams := stakingtypes.DefaultParams()
 	stakingParams.BondDenom = denoms.NIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
+
+	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, keySlashing, stakingKeeper, govModuleAddr)
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
@@ -253,6 +259,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		bankKeeper,
 		distrKeeper,
 		stakingKeeper,
+		slashingKeeper,
 		sudoKeeper,
 		distrtypes.ModuleName,
 	)
