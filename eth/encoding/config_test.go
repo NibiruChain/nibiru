@@ -6,19 +6,19 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth/encoding"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
+	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 func TestTxEncoding(t *testing.T) {
 	addr, key := testutil.PrivKeyEth()
 	signer := testutil.NewSigner(key)
 
-	ethTxParams := evmtypes.EvmTxArgs{
+	ethTxParams := evm.EvmTxArgs{
 		ChainID:   big.NewInt(1),
 		Nonce:     1,
 		Amount:    big.NewInt(10),
@@ -27,10 +27,10 @@ func TestTxEncoding(t *testing.T) {
 		GasTipCap: big.NewInt(1),
 		Input:     []byte{},
 	}
-	msg := evmtypes.NewTx(&ethTxParams)
+	msg := evm.NewTx(&ethTxParams)
 	msg.From = addr.Hex()
 
-	ethSigner := ethtypes.LatestSignerForChainID(big.NewInt(1))
+	ethSigner := gethcore.LatestSignerForChainID(big.NewInt(1))
 	err := msg.Sign(ethSigner, signer)
 	require.NoError(t, err)
 
