@@ -20,7 +20,7 @@ import (
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.
 // This includes LegacyTx, DynamicFeeTx and AccessListTx
-type EvmTxArgs struct {
+type EvmTxArgs struct { //revive:disable-line:exported
 	Nonce     uint64
 	GasLimit  uint64
 	Input     []byte

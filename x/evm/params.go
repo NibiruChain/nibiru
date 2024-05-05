@@ -22,7 +22,7 @@ import (
 
 var (
 	// DefaultEVMDenom defines the default EVM denomination
-	DefaultEVMDenom = "anibi"
+	DefaultEVMDenom = "unibi"
 	// DefaultAllowUnprotectedTxs rejects all unprotected txs (i.e false)
 	DefaultAllowUnprotectedTxs = false
 	// DefaultEnableCreate enables contract creation (i.e true)
@@ -30,24 +30,9 @@ var (
 	// DefaultEnableCall enables contract calls (i.e true)
 	DefaultEnableCall = true
 	// AvailableEVMExtensions defines the default active precompiles
-	AvailableEVMExtensions = []string{
-		"0x0000000000000000000000000000000000000400", // Bech32 precompile
-		"0x0000000000000000000000000000000000000800", // Staking precompile
-		"0x0000000000000000000000000000000000000801", // Distribution precompile
-		"0x0000000000000000000000000000000000000802", // ICS20 transfer precompile
-		"0x0000000000000000000000000000000000000803", // Vesting precompile
-		"0x0000000000000000000000000000000000000804", // Bank precompile
-		"0x0000000000000000000000000000000000000900", // Stride outpost
-		"0x0000000000000000000000000000000000000901", // Osmosis outpost
-	}
-	// DefaultExtraEIPs defines the default extra EIPs to be included
-	// On v15, EIP 3855 was enabled
-	DefaultExtraEIPs   = []int64{3855}
-	DefaultEVMChannels = []string{
-		"channel-10", // Injective
-		"channel-31", // Cronos
-		"channel-83", // Kava
-	}
+	AvailableEVMExtensions = []string{}
+	DefaultExtraEIPs       = []int64{}
+	DefaultEVMChannels     = []string{}
 )
 
 // NewParams creates a new Params instance

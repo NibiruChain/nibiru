@@ -16,7 +16,7 @@ func BytesToHex(bz []byte) string {
 type EthAddr = ethcommon.Address
 
 // EthHash: (alias) 32 byte Keccak256 hash of arbitrary data.
-type EthHash = ethcommon.Hash
+type EthHash = ethcommon.Hash //revive:disable-line:exported
 
 var (
 	// Implements a `collections.ValueEncoder` for the `[]byte` type
