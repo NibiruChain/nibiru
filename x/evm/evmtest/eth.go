@@ -8,16 +8,32 @@ import (
 	cmt "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/eth/encoding"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
+
+// NewEthAddr generates an Ethereum address.
+func NewEthAddr() gethcommon.Address {
+	addr, _ := PrivKeyEth()
+	return addr
+}
+
+// PrivKeyEth returns an Ethereum private key and corresponding Eth address.
+func PrivKeyEth() (gethcommon.Address, *ethsecp256k1.PrivKey) {
+	privkey, _ := ethsecp256k1.GenerateKey()
+	privKeyE, _ := privkey.ToECDSA()
+	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
+	return ethAddr, privkey
+}
 
 // NewEthTxMsg: Helper that returns a valid instance of [*evm.MsgEthereumTx].
 func NewEthTxMsg() *evm.MsgEthereumTx {
@@ -25,7 +41,7 @@ func NewEthTxMsg() *evm.MsgEthereumTx {
 }
 
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
-	ethAddr := testutil.NewEthAddr()
+	ethAddr := NewEthAddr()
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
 		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{

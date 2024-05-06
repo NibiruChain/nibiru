@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -35,7 +36,7 @@ import (
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
-	app.SetPrefixes(app.AccountAddressPrefix)
+	app.SetPrefixes(appconst.AccountAddressPrefix)
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).

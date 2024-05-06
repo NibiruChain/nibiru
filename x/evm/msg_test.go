@@ -20,10 +20,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth/encoding"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 type MsgsSuite struct {
@@ -43,11 +45,11 @@ func TestMsgsSuite(t *testing.T) {
 }
 
 func (s *MsgsSuite) SetupTest() {
-	from, privFrom := testutil.PrivKeyEth()
+	from, privFrom := evmtest.PrivKeyEth()
 
-	s.signer = testutil.NewSigner(privFrom)
+	s.signer = evmtest.NewSigner(privFrom)
 	s.from = from
-	s.to = testutil.NewEthAddr()
+	s.to = evmtest.NewEthAddr()
 	s.chainID = big.NewInt(1)
 	s.hundredBigInt = big.NewInt(100)
 
@@ -920,4 +922,64 @@ func assertEqualTxs(orig *gethcore.Transaction, cpy *gethcore.Transaction) error
 		}
 	}
 	return nil
+}
+
+func (s *MsgsSuite) TestUnwrapEthererumMsg() {
+	_, err := evm.UnwrapEthereumMsg(nil, common.Hash{})
+	s.NotNil(err)
+
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig)
+	builder, _ := clientCtx.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
+
+	tx := builder.GetTx().(sdk.Tx)
+	_, err = evm.UnwrapEthereumMsg(&tx, common.Hash{})
+	s.NotNil(err)
+
+	evmTxParams := &evm.EvmTxArgs{
+		ChainID:  big.NewInt(1),
+		Nonce:    0,
+		To:       &common.Address{},
+		Amount:   big.NewInt(0),
+		GasLimit: 0,
+		GasPrice: big.NewInt(0),
+		Input:    []byte{},
+	}
+
+	msg := evm.NewTx(evmTxParams)
+	err = builder.SetMsgs(msg)
+	s.Nil(err)
+
+	tx = builder.GetTx().(sdk.Tx)
+	unwrappedMsg, err := evm.UnwrapEthereumMsg(&tx, msg.AsTransaction().Hash())
+	s.Nil(err)
+	s.Equal(unwrappedMsg, msg)
+}
+
+func (s *MsgsSuite) TestTransactionLogsEncodeDecode() {
+	addr := evmtest.NewEthAddr().String()
+
+	txLogs := evm.TransactionLogs{
+		Hash: common.BytesToHash([]byte("tx_hash")).String(),
+		Logs: []*evm.Log{
+			{
+				Address:     addr,
+				Topics:      []string{common.BytesToHash([]byte("topic")).String()},
+				Data:        []byte("data"),
+				BlockNumber: 1,
+				TxHash:      common.BytesToHash([]byte("tx_hash")).String(),
+				TxIndex:     1,
+				BlockHash:   common.BytesToHash([]byte("block_hash")).String(),
+				Index:       1,
+				Removed:     false,
+			},
+		},
+	}
+
+	txLogsEncoded, encodeErr := evm.EncodeTransactionLogs(&txLogs)
+	s.Nil(encodeErr)
+
+	txLogsEncodedDecoded, decodeErr := evm.DecodeTransactionLogs(txLogsEncoded)
+	s.Nil(decodeErr)
+	s.Equal(txLogs, txLogsEncodedDecoded)
 }

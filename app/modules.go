@@ -17,6 +17,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 )
 
 // BankModule defines a custom wrapper around the x/bank module's AppModuleBasic
@@ -29,13 +31,13 @@ type BankModule struct {
 func (BankModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	denomMetadata := banktypes.Metadata{
 		Description: "The native staking token of the Nibiru network.",
-		Base:        BondDenom,
+		Base:        appconst.BondDenom,
 		Name:        DisplayDenom,
 		Display:     DisplayDenom,
 		Symbol:      DisplayDenom,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    BondDenom,
+				Denom:    appconst.BondDenom,
 				Exponent: 0,
 				Aliases: []string{
 					"micronibi",
@@ -65,7 +67,7 @@ var _ module.HasGenesisBasics = (*StakingModule)(nil)
 // DefaultGenesis returns custom Nibiru x/staking module genesis state.
 func (StakingModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := stakingtypes.DefaultGenesisState()
-	genState.Params.BondDenom = BondDenom
+	genState.Params.BondDenom = appconst.BondDenom
 	genState.Params.MinCommissionRate = sdk.MustNewDecFromStr("0.05")
 	return cdc.MustMarshalJSON(genState)
 }
@@ -99,7 +101,7 @@ type CrisisModule struct {
 // DefaultGenesis returns custom Nibiru x/crisis module genesis state.
 func (CrisisModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := crisistypes.DefaultGenesisState()
-	genState.ConstantFee = sdk.NewCoin(BondDenom, genState.ConstantFee.Amount)
+	genState.ConstantFee = sdk.NewCoin(appconst.BondDenom, genState.ConstantFee.Amount)
 	return cdc.MustMarshalJSON(genState)
 }
 
@@ -113,7 +115,7 @@ type GovModule struct {
 func (GovModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := govtypes.DefaultGenesisState()
 	genState.Params.MinDeposit = sdk.NewCoins(
-		sdk.NewCoin(BondDenom, govtypes.DefaultMinDepositTokens))
+		sdk.NewCoin(appconst.BondDenom, govtypes.DefaultMinDepositTokens))
 	return cdc.MustMarshalJSON(genState)
 }
 

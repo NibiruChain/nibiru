@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
@@ -386,4 +388,61 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 // GetSignBytes implements the LegacyMsg interface.
 func (m MsgUpdateParams) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
+
+// UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
+func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
+	if tx == nil {
+		return nil, fmt.Errorf("invalid tx: nil")
+	}
+
+	for _, msg := range (*tx).GetMsgs() {
+		ethMsg, ok := msg.(*MsgEthereumTx)
+		if !ok {
+			return nil, fmt.Errorf("invalid tx type: %T", tx)
+		}
+		txHash := ethMsg.AsTransaction().Hash()
+		ethMsg.Hash = txHash.Hex()
+		if txHash == ethHash {
+			return ethMsg, nil
+		}
+	}
+
+	return nil, fmt.Errorf("eth tx not found: %s", ethHash)
+}
+
+// EncodeTransactionLogs encodes TransactionLogs slice into a protobuf-encoded
+// byte slice.
+func EncodeTransactionLogs(res *TransactionLogs) ([]byte, error) {
+	return proto.Marshal(res)
+}
+
+// DecodeTransactionLogs decodes an protobuf-encoded byte slice into
+// TransactionLogs
+func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
+	var logs TransactionLogs
+	err := proto.Unmarshal(data, &logs)
+	if err != nil {
+		return TransactionLogs{}, err
+	}
+	return logs, nil
+}
+
+// DecodeTxResponse decodes an protobuf-encoded byte slice into TxResponse
+func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
+	var txMsgData sdk.TxMsgData
+	if err := proto.Unmarshal(in, &txMsgData); err != nil {
+		return nil, err
+	}
+
+	if len(txMsgData.MsgResponses) == 0 {
+		return &MsgEthereumTxResponse{}, nil
+	}
+
+	var res MsgEthereumTxResponse
+	if err := proto.Unmarshal(txMsgData.MsgResponses[0].Value, &res); err != nil {
+		return nil, errorsmod.Wrap(err, "failed to unmarshal tx response message data")
+	}
+
+	return &res, nil
 }

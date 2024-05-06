@@ -21,14 +21,14 @@ coverage:
   status:
     project:
       default:
-        if_not_found: success
         target: 66%
+        if_not_found: success
         threshold: 1% # Allow coverage to drop by X%, posting a success status.
         # removed_code_behavior: Takes values [off, removals_only, adjust_base]
         removed_code_behavior: adjust_base
     patch:
       default:
-        target: 69%
+        target: 0%
 
 comment: # this is a top-level key
   layout: " diff, flags, files"

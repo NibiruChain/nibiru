@@ -32,8 +32,8 @@ type StorageResult struct {
 	Proof []string     `json:"proof"`
 }
 
-// RPCTransaction represents a transaction that will serialize to the RPC representation of a transaction
-type RPCTransaction struct {
+// EthTxJsonRPC represents a transaction that will serialize to the RPC representation of a transaction
+type EthTxJsonRPC struct {
 	BlockHash        *common.Hash         `json:"blockHash"`
 	BlockNumber      *hexutil.Big         `json:"blockNumber"`
 	From             common.Address       `json:"from"`
