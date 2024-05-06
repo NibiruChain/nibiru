@@ -42,8 +42,12 @@ func TestKVIndexer(t *testing.T) {
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()
 
-	encodingConfig := MakeEncodingConfig()
-	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig).WithCodec(encodingConfig.Codec)
+	encCfg := MakeEncodingConfig()
+	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
+	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
+	clientCtx := client.Context{}.
+		WithTxConfig(encCfg.TxConfig).
+		WithCodec(encCfg.Codec)
 
 	// build cosmos-sdk wrapper tx
 	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), eth.EthBaseDenom)
