@@ -155,29 +155,29 @@ func FormatBlock(
 	return result
 }
 
-// NewRpcTxFromMsg returns a transaction that will serialize to the RPC
+// NewRPCTxFromMsg returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
-func NewRpcTxFromMsg(
+func NewRPCTxFromMsg(
 	msg *evm.MsgEthereumTx,
 	blockHash gethcommon.Hash,
 	blockNumber, index uint64,
 	baseFee *big.Int,
 	chainID *big.Int,
-) (*RPCTransaction, error) {
+) (*EthTxJsonRPC, error) {
 	tx := msg.AsTransaction()
-	return NewRpcTxFromEthTx(tx, blockHash, blockNumber, index, baseFee, chainID)
+	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFee, chainID)
 }
 
 // NewTransactionFromData returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
-func NewRpcTxFromEthTx(
+func NewRPCTxFromEthTx(
 	tx *gethcore.Transaction,
 	blockHash gethcommon.Hash,
 	blockNumber,
 	index uint64,
 	baseFee *big.Int,
 	chainID *big.Int,
-) (*RPCTransaction, error) {
+) (*EthTxJsonRPC, error) {
 	// Determine the signer. For replay-protected transactions, use the most
 	// permissive signer, because we assume that signers are backwards-compatible
 	// with old transactions. For non-protected transactions, the homestead
@@ -191,7 +191,7 @@ func NewRpcTxFromEthTx(
 	}
 	from, _ := gethcore.Sender(signer, tx) // #nosec G703
 	v, r, s := tx.RawSignatureValues()
-	result := &RPCTransaction{
+	result := &EthTxJsonRPC{
 		Type:     hexutil.Uint64(tx.Type()),
 		From:     from,
 		Gas:      hexutil.Uint64(tx.Gas()),
@@ -263,8 +263,8 @@ func TxStateDBCommitError(res *abci.ResponseDeliverTx) bool {
 	return strings.Contains(res.Log, ErrStateDBCommit)
 }
 
-// TxSucessOrExpectedFailure returns true if the transaction was successful
+// TxSuccessOrExpectedFailure returns true if the transaction was successful
 // or if it failed with an ExceedBlockGasLimit error or TxStateDBCommitError error
-func TxSucessOrExpectedFailure(res *abci.ResponseDeliverTx) bool {
+func TxSuccessOrExpectedFailure(res *abci.ResponseDeliverTx) bool {
 	return res.Code == 0 || TxExceedBlockGasLimit(res) || TxStateDBCommitError(res)
 }

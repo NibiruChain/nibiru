@@ -14,6 +14,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -170,7 +171,7 @@ func FundModuleAccount(
 // addresses rather than cosmos ones (for Gaia).
 func EnsureNibiruPrefix() {
 	csdkConfig := sdk.GetConfig()
-	nibiruPrefix := app.AccountAddressPrefix
+	nibiruPrefix := appconst.AccountAddressPrefix
 	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
 		app.SetPrefixes(nibiruPrefix)
 	}

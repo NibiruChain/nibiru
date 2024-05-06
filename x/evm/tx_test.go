@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -45,7 +45,7 @@ func (suite *TxDataTestSuite) SetupTest() {
 	suite.sdkMinusOneInt = sdkmath.NewInt(-1)
 	suite.invalidAddr = "123456"
 
-	suite.addr = testutil.NewEthAddr()
+	suite.addr = evmtest.NewEthAddr()
 
 	suite.hexAddr = suite.addr.Hex()
 	suite.hexDataBytes = hexutil.Bytes([]byte("data"))

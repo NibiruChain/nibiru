@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 func TestIsEmptyHash(t *testing.T) {
@@ -72,7 +72,7 @@ func TestValidateAddress(t *testing.T) {
 			"zero address", common.Address{}.String(), false,
 		},
 		{
-			"valid address", testutil.NewEthAddr().Hex(), false,
+			"valid address", evmtest.NewEthAddr().Hex(), false,
 		},
 	}
 
@@ -103,7 +103,7 @@ func TestValidateNonZeroAddress(t *testing.T) {
 			"zero address", common.Address{}.String(), true,
 		},
 		{
-			"valid address", testutil.NewEthAddr().Hex(), false,
+			"valid address", evmtest.NewEthAddr().Hex(), false,
 		},
 	}
 

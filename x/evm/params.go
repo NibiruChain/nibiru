@@ -20,9 +20,12 @@ import (
 	"github.com/NibiruChain/nibiru/eth"
 )
 
-var (
+const (
 	// DefaultEVMDenom defines the default EVM denomination
 	DefaultEVMDenom = "unibi"
+)
+
+var (
 	// DefaultAllowUnprotectedTxs rejects all unprotected txs (i.e false)
 	DefaultAllowUnprotectedTxs = false
 	// DefaultEnableCreate enables contract creation (i.e true)
