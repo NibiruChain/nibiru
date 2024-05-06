@@ -49,10 +49,8 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "nibi"
-	appName              = "Nibiru"
-	BondDenom            = "unibi"
-	DisplayDenom         = "NIBI"
+	appName      = "Nibiru"
+	DisplayDenom = "NIBI"
 )
 
 var (

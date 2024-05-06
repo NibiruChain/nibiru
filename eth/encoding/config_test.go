@@ -10,13 +10,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth/encoding"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 func TestTxEncoding(t *testing.T) {
-	addr, key := testutil.PrivKeyEth()
-	signer := testutil.NewSigner(key)
+	addr, key := evmtest.PrivKeyEth()
+	signer := evmtest.NewSigner(key)
 
 	ethTxParams := evm.EvmTxArgs{
 		ChainID:   big.NewInt(1),
