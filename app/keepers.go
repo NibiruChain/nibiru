@@ -541,8 +541,7 @@ func (app *NibiruApp) InitKeepers(
 
 	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
-	var icaHostStack porttypes.IBCModule
-	icaHostStack = icahost.NewIBCModule(app.icaHostKeeper)
+	icaHostStack := icahost.NewIBCModule(app.icaHostKeeper)
 
 	// Add transfer stack to IBC Router
 	ibcRouter.
@@ -574,7 +573,6 @@ func (app *NibiruApp) InitKeepers(
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		// AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
