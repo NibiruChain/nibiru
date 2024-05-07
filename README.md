@@ -6,35 +6,17 @@
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/main/LICENSE.md)
 [![Discord Badge](https://dcbadge.vercel.app/api/server/nibirufi?style=flat)](https://discord.gg/nibirufi)
 
-**Nibiru Chain** is a breakthrough smart contract platform providing superior throughput, reduced latency, and improved security, all driven by Web Assembly (Wasm) smart contracts.
-
-- [Nibiru Chain](#nibiru-chain)
-  - [⚙️ — Documentation](#️--documentation)
-  - [💬 — Community](#--community)
-  - [🧱 — Components of Nibiru](#--components-of-nibiru)
-  - [⛓️ — Building: `make` commands](#️--building-make-commands)
-    - [Nibid CLI](#nibid-cli)
-    - [Running a Local Node](#running-a-local-node)
-    - [Generate the protobufs](#generate-the-protobufs)
-    - [Linter](#linter)
-    - [Multiple Nodes](#multiple-nodes)
-  - [License](#license)
+**Nibiru Chain** is a breakthrough Layer 1 blockchain and smart contract ecosystem providing superior throughput, improved security, and a high-performance EVM execution layer. Nibiru aims to be the most developer-friendly and user-friendly smart contract ecosystem, leading the charge toward mainstream Web3 adoption by innovating at each layer of the stack: dApp development, scalable blockchain data indexing, consensus optimizations, a comprehensive developer toolkit, and composability across multiple VMs.
 
 ## ⚙️ — Documentation
 
 - [Docs | Nibiru Chain](https://nibiru.fi/docs/): Conceptual and technical documentation can be found here.
 - [Complete Golang reference docs](https://pkg.go.dev/github.com/NibiruChain/nibiru): (`pkg.go.dev`) For the blockchain implementation .
-- ["X Module"](https://nibiru.fi/docs/dev/x/)-specific documentation
+- [Nibiru Modules](https://nibiru.fi/docs/dev/x/): Module-specific documentation
 
 ## 💬 — Community
 
 If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru Discord][social-discord]. We also have active communities on [Twitter][social-twitter] and [Telegram][social-telegram].
-
-<!-- Markdown versions of the social badges
-[![description][discord-badge]][social-discord]
-[![description][twitter-badge]][social-twitter]
-[![description][telegram-badge]][social-telegram]
--->
 
 <p style="display: flex; gap: 24px; justify-content: center; text-align:center">
 <a href="https://discord.gg/nibiruchain"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
@@ -44,26 +26,23 @@ If you have questions or concerns, feel free to connect with a developer or comm
 
 ## 🧱 — Components of Nibiru
 
-- **CosmWasm Smart Contracts**: Rust-based, Wasm smart contracts built enhanced security, performance, and interoperability. See our [CosmWasm sandbox monorepo (cw-nibiru)](https://github.com/NibiruChain/cw-nibiru/tree/main) for the protocol's core smart contracts.
-- **Nibi-Oracle**: Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) (opens new window)protocol.
-- **Nibi-Swap**: An automated market maker protocol for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
-
 | Module                        | Description                                                                                                                                                                                                                              |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [wasm][code-x-wasm]           | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://nibiru.fi/docs/wasm/).                                                                                                                             |
-| [devgas][code-x-devgas]       | The `devgas` module of Nibiru Chain shares contract execution fees with smart contract developers. This aims to increase the adoption of Nibiru by offering CosmWasm smart contract developers a direct source of income based on usage. |
-| [epochs][code-x-epochs]       | The `epochs` module allows other modules to set hooks to be called to execute code automatically on a period basis. For example, "once a week, starting at UTC-time = x". `epochs` creates a generalized epoch interface.                |
-| [inflation][code-x-inflation] | Implements the [tokenomics](https://nibiru.fi/docs/learn/tokenomics.html) for Nibiru.                                                                                                                                                    |
-| [common][code-x-common]       | Holds helper and utility functions to be utilized by other `x/` modules.                                                                                                                                                                 |
-| [oracle][code-x-oracle]       | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators.                                                                                                                                            |
-| [spot][code-x-spot]           | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM.                                                                        |
+| [Wasm][code-x-wasm]           | Implements the execution environment for WebAssembly (WASM) smart contracts. CosmWasm smart contracts are Rust-based, Wasm smart contracts built for enhanced security, performance, and interoperability. See our [CosmWasm sandbox monorepo (cw-nibiru)](https://github.com/NibiruChain/cw-nibiru/tree/main) for the protocol's core smart contracts. |
+| [EVM][code-x-evm] | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
+| [Devgas][code-x-devgas]       | The `devgas` module of Nibiru Chain shares contract execution fees with smart contract developers. This aims to increase the adoption of Nibiru by offering CosmWasm smart contract developers a direct source of income based on usage. |
+| [Epochs][code-x-epochs]       | The `epochs` module allows other modules to set hooks to be called to execute code automatically on a period basis. For example, "once a week, starting at UTC-time = x". `epochs` creates a generalized epoch interface.                |
+| [Inflation][code-x-inflation] | Implements the [tokenomics](https://nibiru.fi/docs/learn/tokenomics.html) for Nibiru.                                                                                                                                                    |
+| [Oracle][code-x-oracle]       | Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) protocol. Nibi-Oracle handles the voting process for validators that act as oracles by updating data feeds.  |
+| [Common][code-x-common]       | Helper and utility functions to be utilized by other `x/` modules.                                                                                                                                                                 |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/main/x/common
 [code-x-devgas]: https://nibiru.fi/docs/dev/x/nibiru-chain/devgas.html
 [code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/main/x/epochs
 [code-x-inflation]: https://github.com/NibiruChain/nibiru/tree/main/x/inflation
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/main/x/oracle
-[code-x-spot]: https://github.com/NibiruChain/nibiru/tree/main/x/spot
+[code-x-wasm]: https://nibiru.fi/docs/wasm/
+[code-x-evm]: https://github.com/NibiruChain/nibiru/tree/main/x/evm
 
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus and communicates with other blockchain chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.
 
@@ -126,7 +105,7 @@ make localnet-start
 
 ## License
 
-Licensed under the [MIT License](./LICENSE.md).
+Unless a file notes otherwise, it will fall under the [MIT License](./LICENSE.md).  
 
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
