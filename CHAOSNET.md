@@ -5,6 +5,8 @@
   - [How to run "chaosnet"](#how-to-run-chaosnet)
   - [How to force pull images from the registry](#how-to-force-pull-images-from-the-registry)
   - [IBC Commands](#ibc-commands)
+    - [Interchain Transfers](#interchain-transfers)
+    - [Interchain Accounts](#interchain-accounts)
   - [Endpoints](#endpoints)
   - [FAQ](#faq)
     - [`make chaosnet` says that "Additional property name is not allowed"](#make-chaosnet-says-that-additional-property-name-is-not-allowed)
@@ -49,6 +51,8 @@ make chaosnet-build
 ```
 
 ## IBC Commands
+
+### Interchain Transfers
 
 To send an IBC transfer from nibiru-0 to nibiru-1, run:
 
@@ -214,6 +218,131 @@ To send an IBC transfer from nibiru-0 to nibiru-1, run:
       }
     }
     ```
+
+### Interchain Accounts
+
+The following steps assume nibiru-0 is the controller chain and nibiru-1 is the host chain.
+
+The goal is to have an nibiru-0 use an interchain account on nibiru-1 to stake to a validator.
+
+1. SSH into nibiru-0
+
+    ```sh
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml exec -it nibiru-0 /bin/ash
+    ```
+
+2. Register an Interchain Account on nibiru-0
+
+    ```sh
+    # on nibiru-0
+
+    FROM=nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+
+    nibid tx interchain-accounts controller \
+    register \
+    connection-0 \
+    --from $FROM \
+    --gas auto \
+    --gas-adjustment 1.5 \
+    --gas-prices 0.025unibi \
+    --yes
+    ```
+
+3. Query the interchain account address
+
+    ```sh
+    # on nibiru-0
+
+    nibid q interchain-accounts controller \
+    interchain-account \
+    nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl \
+    connection-0 | jq
+
+    # nibi124zc9yjjksxrfrzpfvkysl3r8zrlef2rce5ccqt9mavgy66hhzmqtrvvlr
+    ```
+
+4. In a new terminal, SSH into nibiru-1
+
+    ```sh
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml exec -it nibiru-1 /bin/ash
+    ```
+
+5. Fund the interchain account
+
+    ```sh
+    # on nibiru-1
+
+    nibid tx bank send \
+    nibi18mxturdh0mjw032c3zslgkw63cukkl4q5skk8g \
+    nibi124zc9yjjksxrfrzpfvkysl3r8zrlef2rce5ccqt9mavgy66hhzmqtrvvlr \
+    1000000unibi \
+    --yes | jq
+
+    nibid q bank balances nibi124zc9yjjksxrfrzpfvkysl3r8zrlef2rce5ccqt9mavgy66hhzmqtrvvlr | jq
+    ```
+
+6. Generate packet data from the host chain
+
+    ```sh
+    # on nibiru-1
+
+    cat << EOF | jq | tee msg_delegate.json
+    {
+      "@type":"/cosmos.staking.v1beta1.MsgDelegate",
+      "delegator_address":"nibi124zc9yjjksxrfrzpfvkysl3r8zrlef2rce5ccqt9mavgy66hhzmqtrvvlr",
+      "validator_address":"nibivaloper18mxturdh0mjw032c3zslgkw63cukkl4qatcdn4",
+      "amount": {
+        "denom": "unibi",
+        "amount": "500000"
+      }
+    }
+    EOF
+
+    nibid tx interchain-accounts host \
+    generate-packet-data \
+    "$(cat msg_delegate.json)" \
+    --encoding proto3 | jq
+
+    # copy the output
+    ```
+
+7. Send the packet from the controller chain
+
+    ```sh
+    # on nibiru-0
+
+    cat << EOF | jq | tee packet.json
+    {
+      "type": "TYPE_EXECUTE_TX",
+      "data": "Cq4BCiMvY29zbW9zLnN0YWtpbmcudjFiZXRhMS5Nc2dEZWxlZ2F0ZRKGAQo/bmliaTEyNHpjOXlqamtzeHJmcnpwZnZreXNsM3I4enJsZWYycmNlNWNjcXQ5bWF2Z3k2Nmhoem1xdHJ2dmxyEjJuaWJpdmFsb3BlcjE4bXh0dXJkaDBtancwMzJjM3pzbGdrdzYzY3Vra2w0cWF0Y2RuNBoPCgV1bmliaRIGNTAwMDAw",
+      "memo": ""
+    }
+    EOF
+
+    FROM=nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+
+    nibid tx interchain-accounts controller send-tx \
+    connection-0 \
+    packet.json \
+    --from $FROM \
+    --gas auto \
+    --gas-adjustment 1.5 \
+    --gas-prices 0.025unibi \
+    --yes | jq
+    ```
+
+8. Verify that the delegation worked on the host chain
+
+    ```sh
+    # on nibiru-1
+
+    nibid q staking delegations nibi124zc9yjjksxrfrzpfvkysl3r8zrlef2rce5ccqt9mavgy66hhzmqtrvvlr | jq
+    ```
+
+9. (Optional) Verify the packet data on the host chain
+
+    ```sh
+    nibid q interchain-accounts host packet-events channel-1 1 | jq
 
 ## Endpoints
 
