@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat(ica): add interchain accounts
-- [#1820](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
+- [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
 
 #### Nibiru EVM
 
