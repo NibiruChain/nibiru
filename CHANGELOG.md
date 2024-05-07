@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-01
+## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
 
 Nibiru v1.3.0 adds interchain accounts.
 
@@ -50,6 +50,10 @@ Nibiru v1.3.0 adds interchain accounts.
 ### Features
 
 * [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
+
+### Bug Fixes
+
+* [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
 
 ### Improvements
 
