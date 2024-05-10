@@ -111,6 +111,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
+	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/genmsg"
 	"github.com/NibiruChain/nibiru/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
@@ -182,6 +185,7 @@ type AppKeepers struct {
 	SudoKeeper         keeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
+	EvmKeeper          evmkeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasmkeeper.Keeper
@@ -224,6 +228,8 @@ func initStoreKeys() (
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
+
+		evm.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -382,6 +388,13 @@ func (app *NibiruApp) InitKeepers(
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),
+	)
+
+	app.EvmKeeper = evmkeeper.NewKeeper(
+		appCodec,
+		keys[evm.StoreKey],
+		tkeys[evm.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
 	)
 
 	// ---------------------------------- IBC keepers
@@ -622,6 +635,8 @@ func (app *NibiruApp) initAppModules(
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 
+		evmmodule.NewAppModule(&app.EvmKeeper, app.AccountKeeper),
+
 		// wasm
 		wasm.NewAppModule(
 			appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper,
@@ -692,12 +707,15 @@ func orderedModuleNames() []string {
 		icatypes.ModuleName,
 
 		// --------------------------------------------------------------------
+		evm.ModuleName,
+
+		// --------------------------------------------------------------------
 		// CosmWasm
 		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
 		tokenfactorytypes.ModuleName,
 
-		// Should be before genmsg
+		// Everything else should be before genmsg
 		genmsg.ModuleName,
 	}
 }
@@ -794,6 +812,7 @@ func ModuleBasicManager() module.BasicManager {
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		// native x/
+		evmmodule.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
@@ -819,6 +838,7 @@ func ModuleAccPerms() map[string][]string {
 		ibcfeetypes.ModuleName:         {},
 		icatypes.ModuleName:            {},
 
+		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
 		common.TreasuryPoolModuleAccount: {},

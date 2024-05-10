@@ -33,8 +33,9 @@ func IsValidChainID(chainID string) bool {
 	return nibiruEvmChainId.MatchString(chainID)
 }
 
-// ParseChainID parses a string chain identifier's epoch to an Ethereum-compatible
-// chain-id in *big.Int format. The function returns an error if the chain-id has an invalid format
+// ParseChainID parses a string chain identifier's epoch to an
+// Ethereum-compatible chain-id in *big.Int format. The function returns an error
+// if the chain-id has an invalid format
 func ParseChainID(chainID string) (*big.Int, error) {
 	chainID = strings.TrimSpace(chainID)
 	if len(chainID) > 48 {
