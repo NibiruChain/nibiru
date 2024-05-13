@@ -10,8 +10,8 @@ const (
 	// ModuleName string name of module
 	ModuleName = "evm"
 
-	// StoreKey: Persistent storage key for ethereum storage data, account code (StateDB) or block
-	// related data for the Eth Web3 API.
+	// StoreKey: Persistent storage key for ethereum storage data, account code
+	// (StateDB) or block related data for the Eth Web3 API.
 	StoreKey = ModuleName
 
 	// TransientKey is the key to access the EVM transient store, that is reset
