@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat(ica): add interchain accounts
 - [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
+- [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
 
 #### Nibiru EVM
 
@@ -57,8 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1855](https://github.com/NibiruChain/nibiru/pull/1855) - feat(eth-pubsub): Implement in-memory EventBus for real-time topic management and event distribution
 - [#1856](https://github.com/NibiruChain/nibiru/pull/1856) - feat(eth-rpc): Conversion types and functions between Ethereum txs and blocks and Tendermint ones.
 - [#1861](https://github.com/NibiruChain/nibiru/pull/1861) - feat(eth-rpc): RPC backend, Ethereum tracer, KV indexer, and RPC APIs
+<<<<<<< HEAD
 - [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests 
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper grpc query impls and collection start 
+- [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests
 
 #### Dapp modules: perp, spot, oracle, etc
 

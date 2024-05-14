@@ -1,0 +1,250 @@
+syntax = "proto3";
+
+package nibiru.perp.v2;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
+
+// The direction that the user is trading in
+// LONG means the user is going long the base asset (e.g. buy BTC)
+// SHORT means the user is shorting the base asset (e.g. sell BTC)
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  LONG = 1;
+  SHORT = 2;
+}
+
+// Enumerates different options of calculating twap.
+enum TwapCalcOption {
+  TWAP_CALC_OPTION_UNSPECIFIED = 0;
+
+  // Spot price from quote asset reserve / base asset reserve
+  SPOT = 1;
+
+  // Swapping with quote assets, output denominated in base assets
+  QUOTE_ASSET_SWAP = 2;
+
+  // Swapping with base assets, output denominated in quote assets
+  BASE_ASSET_SWAP = 3;
+}
+
+message Market {
+  // the trading pair represented by this market
+  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // whether or not the market is enabled
+  bool enabled = 2;
+
+  // the version of the Market, only one market can exist per pair, when one is
+  // closed it cannot be reactivated, so a new market must be created, this is
+  // the version of the market
+  uint64 version = 14;
+
+  // the minimum margin ratio which a user must maintain on this market
+  string maintenance_margin_ratio = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the maximum leverage a user is able to be taken on this market
+  string max_leverage = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Latest cumulative premium fraction for a given pair.
+  // Calculated once per funding rate interval.
+  // A premium fraction is the difference between mark and index, divided by the
+  // number of payments per day. (mark - index) / # payments in a day
+  string latest_cumulative_premium_fraction = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of the notional given to the exchange when trading
+  string exchange_fee_ratio = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of the notional transferred to the ecosystem fund when
+  // trading
+  string ecosystem_fund_fee_ratio = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of liquidated position that will be
+  // given to out as a reward. Half of the liquidation fee is given to the
+  // liquidator, and the other half is given to the ecosystem fund.
+  string liquidation_fee_ratio = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the portion of the position size we try to liquidate if the available
+  // margin is higher than liquidation fee
+  string partial_liquidation_ratio = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // specifies the interval on which the funding rate is updated
+  string funding_rate_epoch_id = 10;
+
+  // amount of time to look back for TWAP calculations
+  google.protobuf.Duration twap_lookback_window = 11
+      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
+
+  // the amount of collateral already credited from the ecosystem fund
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 12
+      [ (gogoproto.nullable) = false ];
+
+  // the maximum funding rate payment per epoch, this represents the maximum
+  // amount of funding that can be paid out per epoch as a percentage of the
+  // position size
+  string max_funding_rate = 13 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.stdduration) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // the pair of the oracle that is used to determine the index price
+  // for the market
+  string oracle_pair = 15 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MarketLastVersion is used to store the last version of the market
+message MarketLastVersion {
+  // version of the market
+  uint64 version = 1;
+}
+
+message AMM {
+  // identifies the market this AMM belongs to
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // the version of the AMM, only one AMM can exist per pair, when one is closed
+  // it cannot be reactivated, so a new AMM must be created, this is the version
+  // of the AMM
+  uint64 version = 8;
+
+  // the amount of base reserves this AMM has
+  string base_reserve = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the amount of quote reserves this AMM has
+  string quote_reserve = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // sqrt(k)
+  string sqrt_depth = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the price multiplier of the dynamic AMM
+  string price_multiplier = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total long refers to the sum of long open notional in base.
+  string total_long = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total short refers to the sum of short open notional in base.
+  string total_short = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The settlement price if the AMM is settled.
+  string settlement_price = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.stdduration) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message Position {
+  // address identifies the address owner of this position
+  string trader_address = 1;
+
+  // pair identifies the pair associated with this position
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // the position size
+  string size = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // amount of margin remaining in the position
+  string margin = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // value of position in quote assets when opened
+  string open_notional = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The most recent cumulative premium fraction this position has.
+  // Used to calculate the next funding payment.
+  string latest_cumulative_premium_fraction = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // last block number this position was updated
+  int64 last_updated_block_number = 7;
+}
+
+// a snapshot of the perp.amm's reserves at a given point in time
+message ReserveSnapshot {
+  AMM amm = 1 [ (gogoproto.nullable) = false ];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 2;
+}
+
+// DNRAllocation represents a rebates allocation for a given epoch.
+message DNRAllocation {
+  // epoch defines the reference epoch for the allocation.
+  uint64 epoch = 1;
+  // amount of DNR allocated for the epoch.
+  repeated cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}

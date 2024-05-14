@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,35 +38,35 @@ func TestMintAndAllocateInflation(t *testing.T) {
 	}{
 		{
 			name:                             "pass",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(281_250)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(363_925)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(354_825)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(281_250)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(363_925)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(354_825))),
+			coinsToMint:                      sdk.NewCoin(denoms.NIBI, math.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, math.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, math.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, math.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, math.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, math.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, math.NewInt(354_825))),
 			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
 			name:                             "pass - no coins minted ",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
+			coinsToMint:                      sdk.NewCoin(denoms.NIBI, math.ZeroInt()),
 			expectedStakingAmt:               sdk.Coin{},
 			expectedStrategicAmt:             sdk.Coin{},
 			expectedCommunityAmt:             sdk.Coin{},
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
+			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, math.ZeroInt()),
+			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, math.ZeroInt()),
 			expectedCommunityPoolBalance:     nil,
 			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
 			name:                             "pass - no root account",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(281_250)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(363_925)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(354_825)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(281_250)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(363_925)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(354_825))),
+			coinsToMint:                      sdk.NewCoin(denoms.NIBI, math.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, math.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, math.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, math.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, math.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, math.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, math.NewInt(354_825))),
 			rootAccount:                      "",
 		},
 	}
@@ -144,7 +146,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 					InflationDistribution: types.DefaultInflationDistribution,
 				})
 			},
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 		},
 		{
 			"high supply",
@@ -154,7 +156,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 				params.InflationEnabled = true
 				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
-			sdk.MustNewDecFromStr("26.741197359810099000"),
+			math.LegacyMustNewDecFromStr("26.741197359810099000"),
 		},
 		{
 			"low supply",
@@ -164,7 +166,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 				params.InflationEnabled = true
 				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
-			sdk.MustNewDecFromStr("53.482394719620198000"),
+			math.LegacyMustNewDecFromStr("53.482394719620198000"),
 		},
 	}
 	for _, tc := range testCases {

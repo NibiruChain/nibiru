@@ -2,7 +2,7 @@ package types_test
 
 import (
 	"fmt"
-	"math"
+	basicmath "math"
 	"sort"
 	"strconv"
 	"testing"
@@ -14,6 +14,8 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -29,19 +31,19 @@ func TestExchangeRateVotesToMap(t *testing.T) {
 			{
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				ExchangeRate: sdk.NewDec(1600),
+				ExchangeRate: math.LegacyNewDec(1600),
 				Power:        100,
 			},
 			{
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				ExchangeRate: sdk.ZeroDec(),
+				ExchangeRate: math.LegacyZeroDec(),
 				Power:        100,
 			},
 			{
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				ExchangeRate: sdk.NewDec(1500),
+				ExchangeRate: math.LegacyNewDec(1500),
 				Power:        100,
 			},
 		},
@@ -71,19 +73,19 @@ func TestToCrossRate(t *testing.T) {
 		expected sdk.Dec
 	}{
 		{
-			base:     sdk.NewDec(1600),
-			quote:    sdk.NewDec(100),
-			expected: sdk.NewDec(16),
+			base:     math.LegacyNewDec(1600),
+			quote:    math.LegacyNewDec(100),
+			expected: math.LegacyNewDec(16),
 		},
 		{
-			base:     sdk.ZeroDec(),
-			quote:    sdk.NewDec(100),
-			expected: sdk.NewDec(16),
+			base:     math.LegacyZeroDec(),
+			quote:    math.LegacyNewDec(100),
+			expected: math.LegacyNewDec(16),
 		},
 		{
-			base:     sdk.NewDec(1600),
-			quote:    sdk.ZeroDec(),
-			expected: sdk.NewDec(16),
+			base:     math.LegacyNewDec(1600),
+			quote:    math.LegacyZeroDec(),
+			expected: math.LegacyNewDec(16),
 		},
 	}
 
@@ -101,7 +103,7 @@ func TestToCrossRate(t *testing.T) {
 		if !data.base.IsZero() && !data.quote.IsZero() {
 			cb = append(cb, types.NewExchangeRateVote(data.base.Quo(data.quote), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 		} else {
-			cb = append(cb, types.NewExchangeRateVote(sdk.ZeroDec(), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
+			cb = append(cb, types.NewExchangeRateVote(math.LegacyZeroDec(), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
 		}
 	}
 
@@ -112,15 +114,15 @@ func TestToCrossRate(t *testing.T) {
 }
 
 func TestSqrt(t *testing.T) {
-	num := sdk.NewDecWithPrec(144, 4)
+	num := math.LegacyNewDecWithPrec(144, 4)
 	floatNum, err := strconv.ParseFloat(num.String(), 64)
 	require.NoError(t, err)
 
-	floatNum = math.Sqrt(floatNum)
-	num, err = sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+	floatNum = basicmath.Sqrt(floatNum)
+	num, err = math.LegacyNewDecFromStr(fmt.Sprintf("%f", floatNum))
 	require.NoError(t, err)
 
-	require.Equal(t, sdk.NewDecWithPrec(12, 2), num)
+	require.Equal(t, math.LegacyNewDecWithPrec(12, 2), num)
 }
 
 func TestPBPower(t *testing.T) {
@@ -132,7 +134,7 @@ func TestPBPower(t *testing.T) {
 	for i := 0; i < len(sk.Validators()); i++ {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewExchangeRateVote(
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 			asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			valAccAddrs[i],
 			power,
@@ -151,7 +153,7 @@ func TestPBPower(t *testing.T) {
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
 	fakeVote := types.NewExchangeRateVote(
-		sdk.OneDec(),
+		math.LegacyOneDec(),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		faceValAddr,
 		0,
@@ -173,35 +175,35 @@ func TestPBWeightedMedian(t *testing.T) {
 			[]int64{1, 2, 10, 100000},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.NewDec(10),
+			math.LegacyNewDec(10),
 		},
 		{
 			// Adding fake validator doesn't change outcome
 			[]int64{1, 2, 10, 100000, 10000000000},
 			[]int64{1, 1, 100, 1, 10000},
 			[]bool{true, true, true, true, false},
-			sdk.NewDec(10),
+			math.LegacyNewDec(10),
 		},
 		{
 			// Tie votes
 			[]int64{1, 2, 3, 4},
 			[]int64{1, 100, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.NewDec(2),
+			math.LegacyNewDec(2),
 		},
 		{
 			// No votes
 			[]int64{},
 			[]int64{},
 			[]bool{true, true, true, true},
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 		},
 		{
 			// not sorted
 			[]int64{2, 1, 10, 100000},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.NewDec(10),
+			math.LegacyNewDec(10),
 		},
 	}
 
@@ -216,7 +218,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			}
 
 			vote := types.NewExchangeRateVote(
-				sdk.NewDec(int64(input)),
+				math.LegacyNewDec(int64(input)),
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
 				power,
@@ -242,39 +244,39 @@ func TestPBStandardDeviation(t *testing.T) {
 			[]float64{1.0, 2.0, 10.0, 100000.0},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.MustNewDecFromStr("49995.000362536000000000"),
+			math.LegacyMustNewDecFromStr("49995.000362536000000000"),
 		},
 		{
 			// Adding fake validator doesn't change outcome
 			[]float64{1.0, 2.0, 10.0, 100000.0, 10000000000},
 			[]int64{1, 1, 100, 1, 10000},
 			[]bool{true, true, true, true, false},
-			sdk.MustNewDecFromStr("4472135950.751005519000000000"),
+			math.LegacyMustNewDecFromStr("4472135950.751005519000000000"),
 		},
 		{
 			// Tie votes
 			[]float64{1.0, 2.0, 3.0, 4.0},
 			[]int64{1, 100, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.MustNewDecFromStr("1.224744871000000000"),
+			math.LegacyMustNewDecFromStr("1.224744871000000000"),
 		},
 		{
 			// No votes
 			[]float64{},
 			[]int64{},
 			[]bool{true, true, true, true},
-			sdk.NewDecWithPrec(0, 0),
+			math.LegacyNewDecWithPrec(0, 0),
 		},
 		{
 			// Abstain votes are ignored
 			[]float64{1.0, 2.0, 10.0, 100000.0, -99999999999.0, 0},
 			[]int64{1, 1, 100, 1, 1, 1},
 			[]bool{true, true, true, true, true, true},
-			sdk.MustNewDecFromStr("49995.000362536000000000"),
+			math.LegacyMustNewDecFromStr("49995.000362536000000000"),
 		},
 	}
 
-	base := math.Pow10(types.OracleDecPrecision)
+	base := basicmath.Pow10(types.OracleDecPrecision)
 	for _, tc := range tests {
 		pb := types.ExchangeRateVotes{}
 		for i, input := range tc.inputs {
@@ -286,7 +288,7 @@ func TestPBStandardDeviation(t *testing.T) {
 			}
 
 			vote := types.NewExchangeRateVote(
-				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
+				math.LegacyNewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
 				power,
@@ -301,11 +303,11 @@ func TestPBStandardDeviation(t *testing.T) {
 
 func TestPBStandardDeviationOverflow(t *testing.T) {
 	valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
-	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
+	exchangeRate, err := math.LegacyNewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
 	pb := types.ExchangeRateVotes{types.NewExchangeRateVote(
-		sdk.ZeroDec(),
+		math.LegacyZeroDec(),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,
 		2,
@@ -316,7 +318,7 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 		1,
 	)}
 
-	require.Equal(t, sdk.ZeroDec(), pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
+	require.Equal(t, math.LegacyZeroDec(), pb.StandardDeviation(pb.WeightedMedianWithAssertion()))
 }
 
 func TestNewClaim(t *testing.T) {
