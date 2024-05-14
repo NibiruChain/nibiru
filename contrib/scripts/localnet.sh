@@ -3,7 +3,7 @@ set -e
 
 # Set localnet settings
 BINARY="nibid"
-CHAIN_ID="nibiru-localnet-0"
+CHAIN_ID="nibirulocalnet_9000-1"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
 CHAIN_DIR="$HOME/.nibid"
@@ -131,7 +131,7 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
+if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
