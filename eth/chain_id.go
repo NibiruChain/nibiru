@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
-
-	errorsmod "cosmossdk.io/errors"
 )
 
 var (
@@ -24,7 +22,8 @@ var (
 		regexEpoch))
 )
 
-// IsValidChainID returns false if the given chain identifier is incorrectly formatted.
+// IsValidChainID returns false if the given chain identifier is incorrectly
+// formatted.
 func IsValidChainID(chainID string) bool {
 	if len(chainID) > 48 {
 		return false
@@ -39,18 +38,21 @@ func IsValidChainID(chainID string) bool {
 func ParseChainID(chainID string) (*big.Int, error) {
 	chainID = strings.TrimSpace(chainID)
 	if len(chainID) > 48 {
-		return nil, errorsmod.Wrapf(ErrInvalidChainID, "chain-id '%s' cannot exceed 48 chars", chainID)
+		return nil, ErrInvalidChainID.Wrapf(
+			`chain-id input "%s" cannot exceed 48 chars`, chainID)
 	}
 
 	matches := nibiruEvmChainId.FindStringSubmatch(chainID)
 	if matches == nil || len(matches) != 4 || matches[1] == "" {
-		return nil, errorsmod.Wrapf(ErrInvalidChainID, "%s: %v", chainID, matches)
+		return nil, ErrInvalidChainID.Wrapf(
+			`chain-id input "%s", matches "%v"`, chainID, matches)
 	}
 
 	// verify that the chain-id entered is a base 10 integer
 	chainIDInt, ok := new(big.Int).SetString(matches[2], 10)
 	if !ok {
-		return nil, errorsmod.Wrapf(ErrInvalidChainID, "epoch %s must be base-10 integer format", matches[2])
+		return nil, ErrInvalidChainID.Wrapf(
+			`epoch "%s" must be base-10 integer format`, matches[2])
 	}
 
 	return chainIDInt, nil
