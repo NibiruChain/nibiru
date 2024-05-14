@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -20,17 +21,17 @@ var (
 var (
 	DefaultInflation         = false
 	DefaultPolynomialFactors = []sdk.Dec{
-		sdk.MustNewDecFromStr("-0.000147085524"),
-		sdk.MustNewDecFromStr("0.074291982762"),
-		sdk.MustNewDecFromStr("-18.867415611180"),
-		sdk.MustNewDecFromStr("3128.641926954698"),
-		sdk.MustNewDecFromStr("-334834.740631598223"),
-		sdk.MustNewDecFromStr("17827464.906540066004"),
+		math.LegacyMustNewDecFromStr("-0.000147085524"),
+		math.LegacyMustNewDecFromStr("0.074291982762"),
+		math.LegacyMustNewDecFromStr("-18.867415611180"),
+		math.LegacyMustNewDecFromStr("3128.641926954698"),
+		math.LegacyMustNewDecFromStr("-334834.740631598223"),
+		math.LegacyMustNewDecFromStr("17827464.906540066004"),
 	}
 	DefaultInflationDistribution = InflationDistribution{
-		CommunityPool:     sdk.NewDecWithPrec(35_4825, 6), // 35.4825%
-		StakingRewards:    sdk.NewDecWithPrec(28_1250, 6), // 28.1250%
-		StrategicReserves: sdk.NewDecWithPrec(36_3925, 6), // 36.3925%
+		CommunityPool:     math.LegacyNewDecWithPrec(35_4825, 6), // 35.4825%
+		StakingRewards:    math.LegacyNewDecWithPrec(28_1250, 6), // 28.1250%
+		StrategicReserves: math.LegacyNewDecWithPrec(36_3925, 6), // 36.3925%
 	}
 	DefaultEpochsPerPeriod = uint64(30)
 	DefaultPeriodsPerYear  = uint64(12)
@@ -101,7 +102,7 @@ func validateInflationDistribution(i interface{}) error {
 	}
 
 	totalProportions := v.StakingRewards.Add(v.StrategicReserves).Add(v.CommunityPool)
-	if !totalProportions.Equal(sdk.OneDec()) {
+	if !totalProportions.Equal(math.LegacyOneDec()) {
 		return errors.New("total distributions ratio should be 1")
 	}
 

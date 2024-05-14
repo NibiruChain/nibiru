@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/assert"
@@ -48,17 +49,17 @@ func TestSqrtDec(t *testing.T) {
 	}{
 		// --------------------------------------------------------------------
 		// Cases: 1 or higher
-		{dec: sdk.OneDec(), sqrtDec: sdk.OneDec()},
-		{dec: sdk.NewDec(4), sqrtDec: sdk.NewDec(2)},
-		{dec: sdk.NewDec(250_000), sqrtDec: sdk.NewDec(500)},
-		{dec: sdk.NewDec(4_819_136_400), sqrtDec: sdk.NewDec(69_420)},
+		{dec: math.LegacyOneDec(), sqrtDec: math.LegacyOneDec()},
+		{dec: math.LegacyNewDec(4), sqrtDec: math.LegacyNewDec(2)},
+		{dec: math.LegacyNewDec(250_000), sqrtDec: math.LegacyNewDec(500)},
+		{dec: math.LegacyNewDec(4_819_136_400), sqrtDec: math.LegacyNewDec(69_420)},
 
 		// --------------------------------------------------------------------
 		// Cases: Between 0 and 1
-		{dec: sdk.MustNewDecFromStr("0.81"), sqrtDec: sdk.MustNewDecFromStr("0.9")},
-		{dec: sdk.MustNewDecFromStr("0.25"), sqrtDec: sdk.MustNewDecFromStr("0.5")},
+		{dec: math.LegacyMustNewDecFromStr("0.81"), sqrtDec: math.LegacyMustNewDecFromStr("0.9")},
+		{dec: math.LegacyMustNewDecFromStr("0.25"), sqrtDec: math.LegacyMustNewDecFromStr("0.5")},
 		// ↓ dec 1e-12, sqrtDec: 1e-6
-		{dec: sdk.MustNewDecFromStr("0.000000000001"), sqrtDec: sdk.MustNewDecFromStr("0.000001")},
+		{dec: math.LegacyMustNewDecFromStr("0.000000000001"), sqrtDec: math.LegacyMustNewDecFromStr("0.000001")},
 
 		// --------------------------------------------------------------------
 		// The math/big library panics if you call sqrt() on a negative number.
@@ -66,7 +67,7 @@ func TestSqrtDec(t *testing.T) {
 
 	t.Run("negative sqrt should panic", func(t *testing.T) {
 		panicString := common.TryCatch(func() {
-			common.MustSqrtDec(sdk.NewDec(-9))
+			common.MustSqrtDec(math.LegacyNewDec(-9))
 		})().Error()
 
 		assert.Contains(t, panicString, "square root of negative number")
@@ -138,21 +139,21 @@ func TestClamp(t *testing.T) {
 		description string
 	}{
 		{
-			value:       sdk.NewDec(15),
-			clampValue:  sdk.NewDec(1),
-			expected:    sdk.NewDec(1),
+			value:       math.LegacyNewDec(15),
+			clampValue:  math.LegacyNewDec(1),
+			expected:    math.LegacyNewDec(1),
 			description: "Clamping 15 to 1",
 		},
 		{
-			value:       sdk.NewDec(-15),
-			clampValue:  sdk.NewDec(1),
-			expected:    sdk.NewDec(-1),
+			value:       math.LegacyNewDec(-15),
+			clampValue:  math.LegacyNewDec(1),
+			expected:    math.LegacyNewDec(-1),
 			description: "Clamping -15 to 1",
 		},
 		{
-			value:       sdk.MustNewDecFromStr("0.5"),
-			clampValue:  sdk.NewDec(1),
-			expected:    sdk.MustNewDecFromStr("0.5"),
+			value:       math.LegacyMustNewDecFromStr("0.5"),
+			clampValue:  math.LegacyNewDec(1),
+			expected:    math.LegacyMustNewDecFromStr("0.5"),
 			description: "Clamping 0.5 to 1",
 		},
 	}

@@ -78,7 +78,7 @@ func (sk DummyStakingKeeper) Validator(ctx sdk.Context, address sdk.ValAddress) 
 
 // TotalBondedTokens nolint
 func (DummyStakingKeeper) TotalBondedTokens(_ sdk.Context) sdk.Int {
-	return sdk.ZeroInt()
+	return sdkmath.ZeroInt()
 }
 
 // Slash nolint
@@ -140,15 +140,17 @@ func (v MockValidator) GetBondedTokens() sdk.Int {
 }
 func (v MockValidator) GetConsensusPower(powerReduction sdk.Int) int64 { return v.power }
 func (v *MockValidator) SetConsensusPower(power int64)                 { v.power = power }
-func (v MockValidator) GetCommission() sdk.Dec                         { return sdk.ZeroDec() }
-func (v MockValidator) GetMinSelfDelegation() sdk.Int                  { return sdk.OneInt() }
-func (v MockValidator) GetDelegatorShares() sdk.Dec                    { return sdk.NewDec(v.power) }
-func (v MockValidator) TokensFromShares(sdk.Dec) sdk.Dec               { return sdk.ZeroDec() }
-func (v MockValidator) TokensFromSharesTruncated(sdk.Dec) sdk.Dec      { return sdk.ZeroDec() }
-func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec        { return sdk.ZeroDec() }
-func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, error)  { return sdk.ZeroDec(), nil }
+func (v MockValidator) GetCommission() sdk.Dec                         { return sdkmath.LegacyZeroDec() }
+func (v MockValidator) GetMinSelfDelegation() sdk.Int                  { return sdkmath.OneInt() }
+func (v MockValidator) GetDelegatorShares() sdk.Dec                    { return sdkmath.LegacyNewDec(v.power) }
+func (v MockValidator) TokensFromShares(sdk.Dec) sdk.Dec               { return sdkmath.LegacyZeroDec() }
+func (v MockValidator) TokensFromSharesTruncated(sdk.Dec) sdk.Dec      { return sdkmath.LegacyZeroDec() }
+func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec        { return sdkmath.LegacyZeroDec() }
+func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, error) {
+	return sdkmath.LegacyZeroDec(), nil
+}
 func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, error) {
-	return sdk.ZeroDec(), nil
+	return sdkmath.LegacyZeroDec(), nil
 }
 
 func NewMockValidator(valAddr sdk.ValAddress, power int64) MockValidator {

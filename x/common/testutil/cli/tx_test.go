@@ -5,18 +5,19 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"cosmossdk.io/math"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
-
-	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 func (s *IntegrationTestSuite) TestSendTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
-	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(42))
+	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(42))
 	txResp, err := s.network.BroadcastMsgs(fromAddr, &banktypes.MsgSend{
 		FromAddress: fromAddr.String(),
 		ToAddress:   toAddr.String(),
@@ -30,7 +31,7 @@ func (s *IntegrationTestSuite) TestSendTx() {
 func (s *IntegrationTestSuite) TestExecTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
-	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(69))
+	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
 	txResp, err := s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args)
 	s.NoError(err)

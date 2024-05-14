@@ -3,6 +3,8 @@ package types_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
+
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -62,9 +64,9 @@ func TestParamsValidate(t *testing.T) {
 			inflationtypes.Params{
 				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
-					StakingRewards:    sdk.OneDec().Neg(),
-					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
-					StrategicReserves: sdk.NewDecWithPrec(333333, 6),
+					StakingRewards:    math.LegacyOneDec().Neg(),
+					CommunityPool:     math.LegacyNewDecWithPrec(133333, 6),
+					StrategicReserves: math.LegacyNewDecWithPrec(333333, 6),
 				},
 				InflationEnabled:    true,
 				HasInflationStarted: true,
@@ -78,9 +80,9 @@ func TestParamsValidate(t *testing.T) {
 			inflationtypes.Params{
 				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
-					StakingRewards:    sdk.NewDecWithPrec(533334, 6),
-					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
-					StrategicReserves: sdk.OneDec().Neg(),
+					StakingRewards:    math.LegacyNewDecWithPrec(533334, 6),
+					CommunityPool:     math.LegacyNewDecWithPrec(133333, 6),
+					StrategicReserves: math.LegacyOneDec().Neg(),
 				},
 				InflationEnabled:    true,
 				HasInflationStarted: true,
@@ -94,9 +96,9 @@ func TestParamsValidate(t *testing.T) {
 			inflationtypes.Params{
 				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
-					StakingRewards:    sdk.NewDecWithPrec(533334, 6),
-					CommunityPool:     sdk.OneDec().Neg(),
-					StrategicReserves: sdk.NewDecWithPrec(333333, 6),
+					StakingRewards:    math.LegacyNewDecWithPrec(533334, 6),
+					CommunityPool:     math.LegacyOneDec().Neg(),
+					StrategicReserves: math.LegacyNewDecWithPrec(333333, 6),
 				},
 				InflationEnabled:    true,
 				HasInflationStarted: true,
@@ -110,9 +112,9 @@ func TestParamsValidate(t *testing.T) {
 			inflationtypes.Params{
 				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
-					StakingRewards:    sdk.NewDecWithPrec(533333, 6),
-					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
-					StrategicReserves: sdk.NewDecWithPrec(333333, 6),
+					StakingRewards:    math.LegacyNewDecWithPrec(533333, 6),
+					CommunityPool:     math.LegacyNewDecWithPrec(133333, 6),
+					StrategicReserves: math.LegacyNewDecWithPrec(333333, 6),
 				},
 				InflationEnabled:    true,
 				HasInflationStarted: true,

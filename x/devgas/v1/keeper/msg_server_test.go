@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -69,8 +70,8 @@ func (s *KeeperTestSuite) InstantiateContract(sender string, admin string) strin
 func (s *KeeperTestSuite) TestGetContractAdminOrCreatorAddress() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_, _, admin := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
-	_ = s.FundAccount(s.ctx, admin, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, admin, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	noAdminContractAddress := s.InstantiateContract(sender.String(), "")
 	withAdminContractAddress := s.InstantiateContract(sender.String(), admin.String())
@@ -119,7 +120,7 @@ func (s *KeeperTestSuite) TestGetContractAdminOrCreatorAddress() {
 
 func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	gov := s.app.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	govContract := s.InstantiateContract(sender.String(), gov)
@@ -247,7 +248,7 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 
 func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	fmt.Printf("s.ctx: %v\n", s.ctx)
 	fmt.Printf("s.ctx.BlockTime(): %v\n", s.ctx.BlockTime())
@@ -344,7 +345,7 @@ func (s *KeeperTestSuite) TestUpdateFeeShare() {
 
 func (s *KeeperTestSuite) TestCancelFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
 	_, _, withdrawer := testdata.KeyTestPubAddr()

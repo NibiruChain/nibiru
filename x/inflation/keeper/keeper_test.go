@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -27,15 +28,15 @@ func TestBurn(t *testing.T) {
 		{
 			name:        "pass",
 			sender:      testutil.AccAddress(),
-			mintCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
-			burnCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
+			mintCoin:    sdk.NewCoin("unibi", math.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", math.NewInt(100)),
 			expectedErr: nil,
 		},
 		{
 			name:        "not enough coins",
 			sender:      testutil.AccAddress(),
-			mintCoin:    sdk.NewCoin("unibi", sdk.NewInt(100)),
-			burnCoin:    sdk.NewCoin("unibi", sdk.NewInt(101)),
+			mintCoin:    sdk.NewCoin("unibi", math.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", math.NewInt(101)),
 			expectedErr: fmt.Errorf("spendable balance 100unibi is smaller than 101unibi: insufficient funds"),
 		},
 	}
@@ -64,7 +65,7 @@ func TestBurn(t *testing.T) {
 				require.Equal(t, tc.mintCoin.Amount, supply.Amount)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, sdk.ZeroInt(), supply.Amount)
+				require.Equal(t, math.ZeroInt(), supply.Amount)
 			}
 		})
 	}

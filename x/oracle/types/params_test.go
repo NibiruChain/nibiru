@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -25,25 +25,25 @@ func TestParamsEqual(t *testing.T) {
 
 	// small vote threshold
 	p2 := types.DefaultParams()
-	p2.VoteThreshold = sdk.ZeroDec()
+	p2.VoteThreshold = math.LegacyZeroDec()
 	err = p2.Validate()
 	require.Error(t, err)
 
 	// negative reward band
 	p3 := types.DefaultParams()
-	p3.RewardBand = sdk.NewDecWithPrec(-1, 2)
+	p3.RewardBand = math.LegacyNewDecWithPrec(-1, 2)
 	err = p3.Validate()
 	require.Error(t, err)
 
 	// negative slash fraction
 	p4 := types.DefaultParams()
-	p4.SlashFraction = sdk.NewDec(-1)
+	p4.SlashFraction = math.LegacyNewDec(-1)
 	err = p4.Validate()
 	require.Error(t, err)
 
 	// negative min valid per window
 	p5 := types.DefaultParams()
-	p5.MinValidPerWindow = sdk.NewDec(-1)
+	p5.MinValidPerWindow = math.LegacyNewDec(-1)
 	err = p5.Validate()
 	require.Error(t, err)
 
@@ -61,13 +61,13 @@ func TestParamsEqual(t *testing.T) {
 
 	// oracle fee ratio > 1
 	p12 := types.DefaultParams()
-	p12.ValidatorFeeRatio = sdk.NewDec(2)
+	p12.ValidatorFeeRatio = math.LegacyNewDec(2)
 	err = p12.Validate()
 	require.Error(t, err)
 
 	// oracle fee ratio < 0
 	p13 := types.DefaultParams()
-	p13.ValidatorFeeRatio = sdk.NewDec(-1)
+	p13.ValidatorFeeRatio = math.LegacyNewDec(-1)
 	err = p13.Validate()
 	require.Error(t, err)
 

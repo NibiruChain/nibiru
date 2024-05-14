@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,7 +69,7 @@ var _ module.HasGenesisBasics = (*StakingModule)(nil)
 func (StakingModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := stakingtypes.DefaultGenesisState()
 	genState.Params.BondDenom = appconst.BondDenom
-	genState.Params.MinCommissionRate = sdk.MustNewDecFromStr("0.05")
+	genState.Params.MinCommissionRate = math.LegacyMustNewDecFromStr("0.05")
 	return cdc.MustMarshalJSON(genState)
 }
 

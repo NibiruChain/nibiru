@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -65,7 +66,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(0, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(0, 2),
 					AllowedDenoms:   []string{"unibi"},
 				},
 			},
@@ -76,7 +77,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(100, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(100, 2),
 					AllowedDenoms:   []string{"unibi"},
 				},
 			},
@@ -87,7 +88,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(10, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(10, 2),
 					AllowedDenoms:   []string{},
 				},
 				FeeShare: []devgastypes.FeeShare{

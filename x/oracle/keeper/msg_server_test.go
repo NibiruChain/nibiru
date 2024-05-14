@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -84,47 +86,47 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
 			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
 			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.29"),
 		},
 
 		{
 			Pair:         asset.Registry.Pair(denoms.BTC, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.27"),
 		},
 	}
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
 			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
 			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.29"),
 		},
 
 		{
 			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.27"),
 		},
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
 		{
 			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
 			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
-			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.29"),
 		},
 		{
 			Pair:         "BTC:CNY",
-			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("0.27"),
 		},
 	}
 	exchangeRatesStr, err := exchangeRates.ToString()

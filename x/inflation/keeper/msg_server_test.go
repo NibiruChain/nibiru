@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -48,7 +48,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	params := app.InflationKeeper.GetParams(ctx)
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
-	newEpochPerPeriod := sdk.NewInt(42)
+	newEpochPerPeriod := math.NewInt(42)
 	msg := types.MsgEditInflationParams{
 		Sender:          testutil.AccAddress().String(),
 		EpochsPerPeriod: &newEpochPerPeriod,

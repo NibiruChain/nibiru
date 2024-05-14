@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/NibiruChain/collections"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -47,7 +48,7 @@ func (k Keeper) rewardWinners(
 			continue
 		}
 
-		rewardPortion, _ := totalRewards.MulDec(sdk.NewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
+		rewardPortion, _ := totalRewards.MulDec(math.LegacyNewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
 		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
 		distributedRewards = distributedRewards.Add(rewardPortion...)
 	}

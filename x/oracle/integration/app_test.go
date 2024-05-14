@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -69,20 +71,20 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	// then the number picked is the one in the middle always.
 	prices := []map[asset.Pair]sdk.Dec{
 		{
-			"nibi:usdc": sdk.OneDec(),
-			"btc:usdc":  sdk.MustNewDecFromStr("100203.0"),
+			"nibi:usdc": math.LegacyOneDec(),
+			"btc:usdc":  math.LegacyMustNewDecFromStr("100203.0"),
 		},
 		{
-			"nibi:usdc": sdk.OneDec(),
-			"btc:usdc":  sdk.MustNewDecFromStr("100150.5"),
+			"nibi:usdc": math.LegacyOneDec(),
+			"btc:usdc":  math.LegacyMustNewDecFromStr("100150.5"),
 		},
 		{
-			"nibi:usdc": sdk.OneDec(),
-			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
+			"nibi:usdc": math.LegacyOneDec(),
+			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
 		{
-			"nibi:usdc": sdk.OneDec(),
-			"btc:usdc":  sdk.MustNewDecFromStr("100300.9"),
+			"nibi:usdc": math.LegacyOneDec(),
+			"btc:usdc":  math.LegacyMustNewDecFromStr("100300.9"),
 		},
 	}
 	votes := s.sendPrevotes(prices)
@@ -96,8 +98,8 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
 		map[asset.Pair]sdk.Dec{
-			"nibi:usdc": sdk.OneDec(),
-			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
+			"nibi:usdc": math.LegacyOneDec(),
+			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
 		gotPrices,
 	)
