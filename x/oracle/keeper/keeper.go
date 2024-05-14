@@ -7,6 +7,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -129,7 +130,7 @@ func (k Keeper) ValidateFeeder(
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return sdk.OneDec().Neg(), err
+		return math.LegacyOneDec().Neg(), err
 	}
 
 	snapshots := k.PriceSnapshots.Iterate(
@@ -144,7 +145,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
+		return math.LegacyOneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
 	}
 
 	if len(snapshots) == 1 {
@@ -154,7 +155,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	firstTimestampMs := snapshots[0].TimestampMs
 	if firstTimestampMs > ctx.BlockTime().UnixMilli() {
 		// should never happen, or else we have corrupted state
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
+		return math.LegacyOneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
 			"Possible corrupted state. First timestamp %d is after current blocktime %d", firstTimestampMs, ctx.BlockTime().UnixMilli())
 	}
 
@@ -163,7 +164,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 		return snapshots[0].Price, nil
 	}
 
-	cumulativePrice := sdk.ZeroDec()
+	cumulativePrice := math.LegacyZeroDec()
 	for i, s := range snapshots {
 		var nextTimestampMs int64
 		if i == len(snapshots)-1 {
