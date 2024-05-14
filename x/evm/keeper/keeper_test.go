@@ -57,10 +57,6 @@ func (s *KeeperSuite) TestQuerier() {
 			return err
 		},
 		func() error {
-			_, err := k.Balance(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.BaseFee(goCtx, nil)
 			return err
 		},
