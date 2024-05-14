@@ -157,10 +157,12 @@ func (k Keeper) Code(goCtx context.Context, req *evm.QueryCodeRequest) (*evm.Que
 //   - A pointer to the QueryParamsResponse object containing the EVM module parameters.
 //   - An error if the parameter retrieval process encounters any issues.
 func (k Keeper) Params(goCtx context.Context, _ *evm.QueryParamsRequest) (*evm.QueryParamsResponse, error) {
-	// TODO: feat(evm): impl query Params
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+
 	return &evm.QueryParamsResponse{
-		Params: evm.Params{},
-	}, common.ErrNotImplementedGprc()
+		Params: params,
+	}, nil
 }
 
 // EthCall: Implements the gRPC query for "/eth.evm.v1.Query/EthCall".
