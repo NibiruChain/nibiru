@@ -3,7 +3,7 @@ set -e
 
 # Set localnet settings
 BINARY="nibid"
-CHAIN_ID="nibirulocalnet_9000-1"
+CHAIN_ID="nibiru-localnet-0"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
 CHAIN_DIR="$HOME/.nibid"
