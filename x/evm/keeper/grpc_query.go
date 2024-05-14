@@ -8,6 +8,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // Compile-time interface assertion
@@ -88,10 +90,14 @@ func (k Keeper) ValidatorAccount(
 //   - A pointer to the QueryBalanceResponse object containing the balance.
 //   - An error if the balance retrieval process encounters any issues.
 func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
-	// TODO: feat(evm): impl query Balance
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
-		Balance: "",
-	}, common.ErrNotImplementedGprc()
+		Balance: balanceInt.String(),
+	}, nil
 }
 
 // BaseFee implements the Query/BaseFee gRPC method
