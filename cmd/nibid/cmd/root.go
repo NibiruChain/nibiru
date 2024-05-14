@@ -118,7 +118,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		pruning.PruningCmd(a.newApp),
 	)
 
-	//sdkserver.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 	server.AddCommands(
 		rootCmd,
 		server.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
