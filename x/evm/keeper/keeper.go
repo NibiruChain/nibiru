@@ -35,5 +35,6 @@ func NewKeeper(
 		storeKey:     storeKey,
 		transientKey: transientKey,
 		authority:    authority,
+		EvmState:     NewEvmState(cdc, storeKey, transientKey),
 	}
 }
