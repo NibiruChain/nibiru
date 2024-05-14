@@ -238,8 +238,8 @@ github.com/MakeNowJust/heredoc/v2 v2.0.1 h1:rlCHh70XXXv7toz95ajQWOWQnN4WNLt0TdpZ
 github.com/MakeNowJust/heredoc/v2 v2.0.1/go.mod h1:6/2Abh5s+hc3g9nbWLe9ObDIOhaRrqsyY9MWy+4JdRM=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
-github.com/NibiruChain/collections v0.4.0 h1:KNJj+CJyqOT/Q33kcVzT2uLYIiwhiFAeZMhGLPge5Og=
-github.com/NibiruChain/collections v0.4.0/go.mod h1:tKTlBL+Cs1oJnS4tT9MIaFWr7BWsUXrc7KPzP1LxRBo=
+github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL9G/z3X7k=
+github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
