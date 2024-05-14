@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/set"
 
@@ -101,7 +103,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
 
-	dec, err := sdk.NewDecFromStr(split[1])
+	dec, err := math.LegacyNewDecFromStr(split[1])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid decimal %s: %w", split[1], err)
 	}

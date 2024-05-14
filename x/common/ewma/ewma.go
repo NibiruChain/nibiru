@@ -1,6 +1,9 @@
 package ewma
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 type MovingAverage interface {
 	Add(sdk.Dec)
@@ -10,8 +13,8 @@ type MovingAverage interface {
 
 func NewMovingAverage(span sdk.Dec) MovingAverage {
 	return &variableEWMA{
-		value: sdk.ZeroDec(),
-		decay: sdk.MustNewDecFromStr("2").Quo(span.Add(sdk.OneDec())),
+		value: math.LegacyZeroDec(),
+		decay: math.LegacyMustNewDecFromStr("2").Quo(span.Add(math.LegacyOneDec())),
 	}
 }
 
@@ -28,7 +31,7 @@ func (v *variableEWMA) Add(dec sdk.Dec) {
 	}
 
 	// val = val * (1 - decay) + dec * decay
-	v.value = v.value.Mul(sdk.OneDec().Sub(v.decay)).Add(dec.Mul(v.decay))
+	v.value = v.value.Mul(math.LegacyOneDec().Sub(v.decay)).Add(dec.Mul(v.decay))
 }
 
 func (v *variableEWMA) Value() sdk.Dec {

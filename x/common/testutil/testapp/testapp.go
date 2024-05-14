@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -52,8 +53,8 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
-	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
-	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", math.LegacyNewDec(20000))
 	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx

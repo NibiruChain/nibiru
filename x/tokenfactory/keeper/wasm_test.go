@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -66,7 +67,7 @@ func SetupContracts(
 ) map[string]LiveContract {
 	wasmName := fixture.WASM_NIBI_STARGATE
 	codeId := StoreContract(t, wasmName, ctx, nibiru, sender)
-	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.OneInt()))
+	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.OneInt()))
 	contract := Instantiate.ContractNibiStargate(t, ctx, nibiru, codeId, sender, deposit)
 	LiveContracts[wasmName] = LiveContract{
 		CodeId:   codeId,
@@ -177,7 +178,7 @@ func (s *TestSuite) TestStargate() {
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
 		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.String())
-		s.Equal(sdk.NewInt(69_420), balance.Amount)
+		s.Equal(math.NewInt(69_420), balance.Amount)
 	})
 
 	s.Run("burn from smart contract", func() {
@@ -193,7 +194,7 @@ func (s *TestSuite) TestStargate() {
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
 		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.String())
-		s.Equal(sdk.NewInt(420), balance.Amount)
+		s.Equal(math.NewInt(420), balance.Amount)
 	})
 
 	s.Run("change admin from smart contract", func() {
