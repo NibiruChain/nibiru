@@ -34,7 +34,7 @@ func (api StoreAPI) InsertDenom(
 		return err
 	}
 	// The x/bank keeper is the source of truth.
-	key := denom.String()
+	key := denom.PrettyString()
 	found := api.HasDenom(ctx, denom)
 	if found {
 		return tftypes.ErrDenomAlreadyRegistered.Wrap(key)
@@ -55,7 +55,7 @@ func (api StoreAPI) InsertDenom(
 func (api StoreAPI) unsafeInsertDenom(
 	ctx sdk.Context, denom tftypes.TFDenom, admin string,
 ) {
-	denomStr := denom.String()
+	denomStr := denom.PrettyString()
 	api.Denoms.Insert(ctx, denomStr, denom)
 	api.creator.Insert(ctx, denom.Creator)
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
@@ -84,7 +84,7 @@ func (api StoreAPI) unsafeGenesisInsertDenom(
 func (api StoreAPI) HasDenom(
 	ctx sdk.Context, denom tftypes.TFDenom,
 ) bool {
-	_, found := api.bankKeeper.GetDenomMetaData(ctx, denom.String())
+	_, found := api.bankKeeper.GetDenomMetaData(ctx, denom.PrettyString())
 	return found
 }
 

@@ -35,7 +35,7 @@ func TestDenomStr_Validate(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tfDenom.Denom(), tc.denom)
-			assert.Equal(t, tfDenom.String(), string(tc.denom))
+			assert.Equal(t, tfDenom.PrettyString(), string(tc.denom))
 
 			assert.NoError(t, tfDenom.Validate())
 			assert.NotPanics(t, func() {
@@ -68,7 +68,7 @@ func TestGenesisState(t *testing.T) {
 			Denom: types.TFDenom{
 				Creator:  creator.String(),
 				Subdenom: testutil.Latin.Letters[lettersIdx : lettersIdx+4],
-			}.String(),
+			}.PrettyString(),
 			AuthorityMetadata: types.DenomAuthorityMetadata{
 				Admin: creator.String(),
 			},

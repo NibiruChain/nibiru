@@ -13,7 +13,7 @@ func (s *TestSuite) TestGenesis() {
 			Subdenom: testutil.RandLetters(3),
 		}
 		s.Require().NoError(denom.Validate())
-		return denom.String()
+		return denom.PrettyString()
 	}
 
 	testCases := []struct {

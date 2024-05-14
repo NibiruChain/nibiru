@@ -31,7 +31,7 @@ func (s *TestSuite) TestStoreWrite() {
 			s.NoError(tfdenom.Validate(), tfdenom)
 
 			// query by denom should fail for all denoms
-			_, err := api.Denoms.Get(s.ctx, tfdenom.String())
+			_, err := api.Denoms.Get(s.ctx, tfdenom.PrettyString())
 			s.Error(err)
 
 			// query by creator should fail for all addrs

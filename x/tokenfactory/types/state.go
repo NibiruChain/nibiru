@@ -29,11 +29,11 @@ func (params ModuleParams) Validate() error {
 // ----------------------------------------------------
 
 func (tfd TFDenom) Denom() DenomStr {
-	return DenomStr(tfd.String())
+	return DenomStr(tfd.PrettyString())
 }
 
 // String: returns the standard string representation.
-func (tfd TFDenom) String() string {
+func (tfd TFDenom) PrettyString() string {
 	return fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom)
 }
 
@@ -42,7 +42,7 @@ func (tfd TFDenom) Validate() error {
 }
 
 func (tfd TFDenom) DefaultBankMetadata() banktypes.Metadata {
-	denom := tfd.String()
+	denom := tfd.PrettyString()
 	return banktypes.Metadata{
 		DenomUnits: []*banktypes.DenomUnit{{
 			Denom:    denom,

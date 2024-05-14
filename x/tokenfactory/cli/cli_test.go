@@ -81,9 +81,9 @@ func (s *IntegrationTestSuite) CreateDenomTest() {
 	)
 	denoms := denomResp.Denoms
 	wantDenoms := []string{
-		types.TFDenom{Creator: creator.String(), Subdenom: "nusd"}.String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnibi"}.String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.String(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "nusd"}.PrettyString(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "stnibi"}.PrettyString(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.PrettyString(),
 	}
 	s.ElementsMatch(denoms, wantDenoms)
 }

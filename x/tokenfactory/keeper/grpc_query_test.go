@@ -45,11 +45,11 @@ func (s *TestSuite) TestQueryDenoms() {
 	denomsResp, err := queryDenoms(denom.Creator)
 	s.NoError(err)
 	s.ElementsMatch(denomsResp.Denoms, []string{
-		denom.String(),
+		denom.PrettyString(),
 		types.TFDenom{
 			Creator:  denom.Creator,
 			Subdenom: "foobar",
-		}.String(),
+		}.PrettyString(),
 	})
 
 	denomsResp, err = queryDenoms("creator")
@@ -91,7 +91,7 @@ func (s *TestSuite) TestQueryDenomInfo() {
 	s.Run("case: happy", func() {
 		resp, err := s.querier.DenomInfo(s.GoCtx(),
 			&types.QueryDenomInfoRequest{
-				Denom: denom.String(),
+				Denom: denom.PrettyString(),
 			})
 		s.NoError(err)
 		s.Equal(creator.String(), resp.Admin)
