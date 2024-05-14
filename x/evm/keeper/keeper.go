@@ -5,11 +5,12 @@ import (
 	// "github.com/NibiruChain/nibiru/x/evm"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 type Keeper struct {

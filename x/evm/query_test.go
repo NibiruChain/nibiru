@@ -2,8 +2,9 @@
 package evm
 
 import (
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 type TestSuite struct {
@@ -12,7 +13,6 @@ type TestSuite struct {
 
 // TestNilQueries: Checks that all expected sad paths for nil msgs error
 func (s *TestSuite) TestNilQueries() {
-
 	for _, testCase := range []func() error{
 		func() error {
 			var req *QueryAccountRequest = nil
