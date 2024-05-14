@@ -30,25 +30,17 @@ const (
 	KeyPrefixEthAddrIndex
 )
 
-// prefix bytes for the EVM transient store
+// KVStore transient prefix namespaces for the EVM Module. Transient stores only
+// remain for current block, and have more gas efficient read and write access.
 const (
-	prefixTransientBloom collections.Namespace = iota + 1
-	prefixTransientTxIndex
-	prefixTransientLogSize
-	prefixTransientGasUsed
+	NamespaceBlockBloom collections.Namespace = iota + 1
+	NamespaceBlockTxIndex
+	NamespaceBlockLogSize
+	NamespaceBlockGasUsed
 )
 
-// KVStore key prefixes
 var (
 	KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
-)
-
-// Transient Store key prefixes
-var (
-	KeyPrefixTransientBloom   = prefixTransientBloom.Prefix()
-	KeyPrefixTransientTxIndex = prefixTransientTxIndex.Prefix()
-	KeyPrefixTransientLogSize = prefixTransientLogSize.Prefix()
-	KeyPrefixTransientGasUsed = prefixTransientGasUsed.Prefix()
 )
 
 // PrefixAccStateEthAddr returns a prefix to iterate over a given account storage.

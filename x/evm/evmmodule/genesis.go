@@ -16,6 +16,8 @@ func InitGenesis(
 	accountKeeper evm.AccountKeeper,
 	data evm.GenesisState,
 ) []abci.ValidatorUpdate {
+	k.BeginBlock(ctx, abci.RequestBeginBlock{})
+	k.EvmState.ModuleParams.Set(ctx, data.Params)
 	// TODO: impl InitGenesis
 	return []abci.ValidatorUpdate{}
 }

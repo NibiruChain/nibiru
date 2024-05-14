@@ -15,6 +15,9 @@ type Keeper struct {
 	// transientKey: Store key that resets every block during Commit
 	transientKey storetypes.StoreKey
 
+	// EvmState isolates the key-value stores (collections) for the x/evm module.
+	EvmState EvmState
+
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 }
