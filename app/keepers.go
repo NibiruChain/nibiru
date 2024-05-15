@@ -282,7 +282,7 @@ func (app *NibiruApp) InitKeepers(
 	// app.capabilityKeeper.Seal()
 
 	// TODO: chore(upgrade): Potential breaking change on AccountKeeper dur
-	// to ProtoBaseAccount replacement. 
+	// to ProtoBaseAccount replacement.
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
 		keys[authtypes.StoreKey],

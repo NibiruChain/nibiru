@@ -15,8 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
-type AccStatePrimaryKey = collections.Pair[gethcommon.Address, gethcommon.Hash]
-type CodeHash = []byte
+type (
+	AccStatePrimaryKey = collections.Pair[gethcommon.Address, gethcommon.Hash]
+	CodeHash           = []byte
+)
 
 // EvmState isolates the key-value stores (collections) for the x/evm module.
 type EvmState struct {

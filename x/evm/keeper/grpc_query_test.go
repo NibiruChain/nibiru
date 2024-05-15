@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
@@ -9,8 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 type TestDeps struct {
@@ -19,12 +20,12 @@ type TestDeps struct {
 	encCfg   codec.EncodingConfig
 	k        keeper.Keeper
 	genState *evm.GenesisState
-	sender Sender
+	sender   Sender
 }
 
 type Sender struct {
-	EthAddr gethcommon.Address
-	PrivKey *ethsecp256k1.PrivKey
+	EthAddr    gethcommon.Address
+	PrivKey    *ethsecp256k1.PrivKey
 	NibiruAddr sdk.AccAddress
 }
 
@@ -52,20 +53,24 @@ func (s *KeeperSuite) SetupTest() TestDeps {
 
 func InvalidEthAddr() string { return "0x0000" }
 
+type TestCase[In, Out any] struct {
+	name string
+	// setup: Optional setup function to create the scenario
+	setup    func(deps *TestDeps)
+	scenario func(deps *TestDeps) (
+		req In,
+		wantResp Out,
+	)
+	wantErr string
+}
+
 func (s *KeeperSuite) TestQueryNibiruAccount() {
 	type In = *evm.QueryNibiruAccountRequest
 	type Out = *evm.QueryNibiruAccountResponse
-	testCases := []struct {
-		name     string
-		scenario func() (
-			req In,
-			wantResp Out,
-		)
-		wantErr string
-	}{
+	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func() (req In, wantResp Out) {
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryNibiruAccountRequest{
 					Address: InvalidEthAddr(),
 				}
@@ -78,7 +83,7 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 		},
 		{
 			name: "happy",
-			scenario: func() (req In, wantResp Out) {
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
 				ethAddr, _, nibiruAddr := evmtest.NewEthAddrNibiruPair()
 				req = &evm.QueryNibiruAccountRequest{
 					Address: ethAddr.String(),
@@ -96,8 +101,8 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			req, wantResp := tc.scenario()
 			deps := s.SetupTest()
+			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.ctx)
 			gotResp, err := deps.k.NibiruAccount(goCtx, req)
 			if tc.wantErr != "" {
@@ -107,25 +112,13 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 			s.Assert().NoError(err)
 			s.EqualValues(wantResp, gotResp)
 		})
-
 	}
-
 }
 
 func (s *KeeperSuite) TestQueryEthAccount() {
-
 	type In = *evm.QueryEthAccountRequest
 	type Out = *evm.QueryEthAccountResponse
-	testCases := []struct {
-		name     string
-		scenario func(deps *TestDeps) (
-			req In,
-			wantResp Out,
-		)
-		// Optional setup function to create the scenario
-		setup func(deps *TestDeps)
-		wantErr string
-	}{
+	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *TestDeps) (req In, wantResp Out) {
@@ -143,17 +136,6 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 		},
 		{
 			name: "happy: fund account + query",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryEthAccountRequest{
-					Address: deps.sender.EthAddr.Hex(),
-				}
-				wantResp = &evm.QueryEthAccountResponse{
-					Balance:  "420",
-					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
-					Nonce:    0,
-				}
-				return req, wantResp
-			},
 			setup: func(deps *TestDeps) {
 				chain := deps.chain
 				ethAddr := deps.sender.EthAddr
@@ -165,6 +147,17 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
 					deps.ctx, evm.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
+			},
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryEthAccountRequest{
+					Address: deps.sender.EthAddr.Hex(),
+				}
+				wantResp = &evm.QueryEthAccountResponse{
+					Balance:  "420",
+					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					Nonce:    0,
+				}
+				return req, wantResp
 			},
 			wantErr: "",
 		},
@@ -186,7 +179,5 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 			s.Assert().NoError(err)
 			s.EqualValues(wantResp, gotResp)
 		})
-
 	}
-
 }

@@ -39,9 +39,7 @@ const (
 	NamespaceBlockGasUsed
 )
 
-var (
-	KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
-)
+var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
 
 // PrefixAccStateEthAddr returns a prefix to iterate over a given account storage.
 func PrefixAccStateEthAddr(address common.Address) []byte {

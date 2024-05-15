@@ -149,6 +149,7 @@ func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec        { return 
 func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, error) {
 	return sdkmath.LegacyZeroDec(), nil
 }
+
 func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, error) {
 	return sdkmath.LegacyZeroDec(), nil
 }

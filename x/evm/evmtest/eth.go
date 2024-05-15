@@ -8,8 +8,9 @@ import (
 	cmt "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	gethcommon "github.com/ethereum/go-ethereum/common"

@@ -69,6 +69,7 @@ func (req *QueryValidatorAccountRequest) Validate() (
 	}
 	return consAddr, nil
 }
+
 func (req *QueryBalanceRequest) Validate() error {
 	if req == nil {
 		return common.ErrNilGrpcMsg()
@@ -82,6 +83,7 @@ func (req *QueryBalanceRequest) Validate() error {
 	}
 	return nil
 }
+
 func (req *QueryStorageRequest) Validate() error {
 	if req == nil {
 		return common.ErrNilGrpcMsg()
