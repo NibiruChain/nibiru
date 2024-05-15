@@ -86,7 +86,7 @@ func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
 func (s *IntegrationTestSuite) TestLogMnemonic() {
 	kring, algo, nodeDirName := cli.NewKeyring(s.T())
 
-	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
 	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
 	s.NoError(err)
 

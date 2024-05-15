@@ -284,8 +284,8 @@ func RegisterStorageAtError(
 func RegisterAccount(
 	queryClient *mocks.EVMQueryClient, addr common.Address, height int64,
 ) {
-	queryClient.On("Account", rpc.NewContextWithHeight(height), &evm.QueryAccountRequest{Address: addr.String()}).
-		Return(&evm.QueryAccountResponse{
+	queryClient.On("EthAccount", rpc.NewContextWithHeight(height), &evm.QueryEthAccountRequest{Address: addr.String()}).
+		Return(&evm.QueryEthAccountResponse{
 			Balance:  "0",
 			CodeHash: "",
 			Nonce:    0,

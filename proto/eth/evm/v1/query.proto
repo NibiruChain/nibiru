@@ -13,14 +13,14 @@ option go_package = "github.com/NibiruChain/nibiru/x/evm";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Account queries an Ethereum account.
-  rpc Account(QueryAccountRequest) returns (QueryAccountResponse) {
-    option (google.api.http).get = "/nibiru/evm/v1/account/{address}";
+  // EthAccount queries an Ethereum account.
+  rpc EthAccount(QueryEthAccountRequest) returns (QueryEthAccountResponse) {
+    option (google.api.http).get = "/nibiru/evm/v1/eth_account/{address}";
   }
 
-  // CosmosAccount queries an Ethereum account's Cosmos Address.
-  rpc CosmosAccount(QueryCosmosAccountRequest) returns (QueryCosmosAccountResponse) {
-    option (google.api.http).get = "/nibiru/evm/v1/cosmos_account/{address}";
+  // NibiruAccount queries the Bech32 Nibiru address corresponding to Nibiru EVM account.
+  rpc NibiruAccount(QueryNibiruAccountRequest) returns (QueryNibiruAccountResponse) {
+    option (google.api.http).get = "/nibiru/evm/v1/nibiru_account/{address}";
   }
 
   // ValidatorAccount queries an Ethereum account's from a validator consensus
@@ -77,8 +77,8 @@ service Query {
   }
 }
 
-// QueryAccountRequest is the request type for the Query/Account RPC method.
-message QueryAccountRequest {
+// QueryEthAccountRequest is the request type for the Query/Account RPC method.
+message QueryEthAccountRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -86,8 +86,8 @@ message QueryAccountRequest {
   string address = 1;
 }
 
-// QueryAccountResponse is the response type for the Query/Account RPC method.
-message QueryAccountResponse {
+// QueryEthAccountResponse is the response type for the Query/Account RPC method.
+message QueryEthAccountResponse {
   // balance is the balance of the EVM denomination.
   string balance = 1;
   // code_hash is the hex-formatted code bytes from the EOA.
@@ -96,9 +96,9 @@ message QueryAccountResponse {
   uint64 nonce = 3;
 }
 
-// QueryCosmosAccountRequest is the request type for the Query/CosmosAccount RPC
+// QueryNibiruAccountRequest is the request type for the Query/NibiruAccount RPC
 // method.
-message QueryCosmosAccountRequest {
+message QueryNibiruAccountRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -106,11 +106,11 @@ message QueryCosmosAccountRequest {
   string address = 1;
 }
 
-// QueryCosmosAccountResponse is the response type for the Query/CosmosAccount
+// QueryNibiruAccountResponse is the response type for the Query/NibiruAccount
 // RPC method.
-message QueryCosmosAccountResponse {
-  // cosmos_address is the cosmos address of the account.
-  string cosmos_address = 1;
+message QueryNibiruAccountResponse {
+  // Nibiru bech32 account "address"
+  string address = 1;
   // sequence is the account's sequence number.
   uint64 sequence = 2;
   // account_number is the account number
@@ -130,7 +130,7 @@ message QueryValidatorAccountRequest {
 // QueryValidatorAccountResponse is the response type for the
 // Query/ValidatorAccount RPC method.
 message QueryValidatorAccountResponse {
-  // account_address is the cosmos address of the account in bech32 format.
+  // account_address is the Nibiru address of the account in bech32 format.
   string account_address = 1;
   // sequence is the account's sequence number.
   uint64 sequence = 2;
