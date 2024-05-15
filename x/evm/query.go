@@ -29,7 +29,7 @@ func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker
 	return nil
 }
 
-func (req *QueryAccountRequest) Validate() error {
+func (req *QueryEthAccountRequest) Validate() error {
 	if req == nil {
 		return common.ErrNilGrpcMsg()
 	}
@@ -41,7 +41,7 @@ func (req *QueryAccountRequest) Validate() error {
 	return nil
 }
 
-func (req *QueryCosmosAccountRequest) Validate() error {
+func (req *QueryNibiruAccountRequest) Validate() error {
 	if req == nil {
 		return common.ErrNilGrpcMsg()
 	}

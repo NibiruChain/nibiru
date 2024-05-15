@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/eth/encoding"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -23,8 +23,21 @@ import (
 
 // NewEthAddr generates an Ethereum address.
 func NewEthAddr() gethcommon.Address {
-	addr, _ := PrivKeyEth()
-	return addr
+	ethAddr, _ := PrivKeyEth()
+	return ethAddr
+}
+
+func NewEthAddrNibiruPair() (
+	ethAddr gethcommon.Address,
+	privKey *ethsecp256k1.PrivKey,
+	nibiruAddr sdk.AccAddress,
+) {
+	ethAddr, privKey = PrivKeyEth()
+	return ethAddr, privKey, EthPrivKeyToNibiruAddr(ethAddr)
+}
+
+func EthPrivKeyToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
+	return sdk.AccAddress(ethAddr.Bytes())
 }
 
 // PrivKeyEth returns an Ethereum private key and corresponding Eth address.
@@ -66,7 +79,7 @@ func NewEthTxMsgAsCmt(t *testing.T) (
 	clientCtx client.Context,
 ) {
 	// Build a TxBuilder that can understand Ethereum types
-	encCfg := encoding.MakeConfig(app.ModuleBasics)
+	encCfg := app.MakeEncodingConfig()
 	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	txConfig := encCfg.TxConfig

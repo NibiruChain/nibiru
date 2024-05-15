@@ -105,6 +105,7 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
@@ -280,11 +281,12 @@ func (app *NibiruApp) InitKeepers(
 	// seal capability keeper after scoping modules
 	// app.capabilityKeeper.Seal()
 
-	// add keepers
+	// TODO: chore(upgrade): Potential breaking change on AccountKeeper dur
+	// to ProtoBaseAccount replacement. 
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
 		keys[authtypes.StoreKey],
-		authtypes.ProtoBaseAccount,
+		eth.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		govModuleAddr,
@@ -396,6 +398,8 @@ func (app *NibiruApp) InitKeepers(
 		keys[evm.StoreKey],
 		tkeys[evm.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 
 	// ---------------------------------- IBC keepers
