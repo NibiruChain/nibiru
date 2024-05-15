@@ -1,10 +1,13 @@
 package keeper_test
 
 import (
+	"context"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
@@ -23,6 +26,10 @@ type TestDeps struct {
 	k        keeper.Keeper
 	genState *evm.GenesisState
 	sender   Sender
+}
+
+func (deps TestDeps) GoCtx() context.Context {
+	return sdk.WrapSDKContext(deps.ctx)
 }
 
 type Sender struct {
@@ -364,3 +371,90 @@ func (s *KeeperSuite) TestQueryStorage() {
 		})
 	}
 }
+
+func (s *KeeperSuite) TestQueryCode() {
+	type In = *evm.QueryCodeRequest
+	type Out = *evm.QueryCodeResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: msg validation",
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryCodeRequest{
+					Address: InvalidEthAddr(),
+				}
+				return req, wantResp
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy",
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAddr()
+				req = &evm.QueryCodeRequest{
+					Address: addr.Hex(),
+				}
+
+				stateDB := s.StateDB(deps)
+				contractBytecode := []byte("bytecode")
+				stateDB.SetCode(addr, contractBytecode)
+				s.Require().NoError(stateDB.Commit())
+
+				s.NotNil(stateDB.Keeper().GetAccount(deps.ctx, addr))
+				s.NotNil(stateDB.GetCode(addr))
+
+				wantResp = &evm.QueryCodeResponse{
+					Code: contractBytecode,
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := s.SetupTest()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.ctx)
+
+			gotResp, err := deps.k.Code(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp, "want hex (%s), got hex (%s)",
+				collections.HumanizeBytes(wantResp.Code),
+				collections.HumanizeBytes(gotResp.Code),
+			)
+		})
+	}
+}
+
+// func (s *KeeperSuite) TestQueryParams() {
+// 	deps := s.SetupTest()
+// 	wantParams := evm.DefaultParams()
+// 	deps.k.SetParams(deps.ctx, wantParams)
+// 	gotResp, err := deps.k.Params(deps.GoCtx(), nil)
+// 	gotParams := gotResp.Params
+// 	s.Require().NoError(err)
+// 	// gotParams2, err := deps.k.EvmState.ModuleParams.Get(deps.ctx)
+// 	// s.Require().NoError(err)
+
+// 	// testutil.Fill(gotParams)
+// 	// s.Require().EqualValues(gotParams2, gotParams, "aaa")
+// 	// s.Require().EqualValues(gotParams2, testutil.Fill(gotParams), "bbb")
+// 	s.Require().EqualValues(
+// 		wantParams, gotParams, "ddd")
+// 	// s.Require().EqualValues(wantParams, testutil.Fill(gotResp.Params), "ccc")
+
+// 	// Empty params to test the setter
+// 	// wantParams.ActivePrecompiles = []string{"new", "something"}
+// 	// deps.k.SetParams(deps.ctx, wantParams)
+// 	// gotResp, err = deps.k.Params(deps.GoCtx(), nil)
+// 	// s.NoError(err)
+// 	// s.EqualValues(wantParams, gotResp.Params)
+// }
