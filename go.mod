@@ -9,7 +9,7 @@ require (
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/CosmWasm/wasmvm v1.5.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/NibiruChain/collections v0.4.0
+	github.com/NibiruChain/collections v0.5.0
 	github.com/armon/go-metrics v0.4.1
 
 	// EVM-specific deps

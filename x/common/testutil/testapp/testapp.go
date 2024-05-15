@@ -36,18 +36,18 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 
 	// Set up base app
 	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
+	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Codec)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
 
 	// Set happy genesis: epochs
-	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
+	appGenesis[epochstypes.ModuleName] = encoding.Codec.MustMarshalJSON(
 		genModEpochs,
 	)
 
 	// Set happy genesis: sudo
 	sudoGenesis := new(sudotypes.GenesisState)
 	sudoGenesis.Sudoers = DefaultSudoers()
-	appGenesis[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGenesis)
+	appGenesis[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
@@ -86,10 +86,10 @@ func DefaultSudoRoot() sdk.AccAddress {
 func SetDefaultSudoGenesis(gen app.GenesisState) {
 	sudoGen := new(sudotypes.GenesisState)
 	encoding := app.MakeEncodingConfig()
-	encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
 	if err := sudoGen.Validate(); err != nil {
 		sudoGen.Sudoers = DefaultSudoers()
-		gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
+		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGen)
 	}
 }
 
@@ -121,7 +121,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		baseAppOptions...,
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encoding.Marshaler, gen)
+	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
 	if err != nil {
 		panic(err)
 	}

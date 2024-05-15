@@ -95,11 +95,11 @@ func (b *Backend) GetProof(
 	}
 
 	// query EVM account
-	req := &evm.QueryAccountRequest{
+	req := &evm.QueryEthAccountRequest{
 		Address: address.String(),
 	}
 
-	res, err := b.queryClient.Account(ctx, req)
+	res, err := b.queryClient.EthAccount(ctx, req)
 	if err != nil {
 		return nil, err
 	}

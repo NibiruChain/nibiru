@@ -31,6 +31,12 @@ const (
 	ProtocolVersion = 65
 )
 
+// Transaction extension protobuf type URLs
+const (
+	TYPE_URL_WEB3_TX        = "/eth.types.v1.ExtensionOptionsWeb3Tx"
+	TYPE_URL_DYNAMIC_FEE_TX = "/eth.types.v1.ExtensionOptionDynamicFeeTx"
+)
+
 // RegisterInterfaces registers the tendermint concrete client-related
 // implementations and interfaces.
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {

@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -446,3 +447,5 @@ func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 
 	return &res, nil
 }
+
+var EmptyCodeHash = crypto.Keccak256(nil)

@@ -197,7 +197,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 200)),
 				},
 			},
-			expectedGas: 62288,
+			expectedGas: 67193,
 			expectedErr: nil,
 		},
 	}

@@ -19,7 +19,7 @@ func AddSudoGenesis(gen app.GenesisState) (
 	rootAddr sdk.AccAddress,
 ) {
 	sudoGenesis, rootPrivKey, rootAddr := SudoGenesis()
-	gen[sudotypes.ModuleName] = app.MakeEncodingConfig().Marshaler.
+	gen[sudotypes.ModuleName] = app.MakeEncodingConfig().Codec.
 		MustMarshalJSON(sudoGenesis)
 	return gen, rootPrivKey, rootAddr
 }

@@ -13,7 +13,7 @@ import (
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilMsg error = common.ErrNilMsg()
+var errNilMsg error = common.ErrNilGrpcMsg()
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,

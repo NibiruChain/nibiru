@@ -31,7 +31,7 @@ func TestBase64Decode(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := app.MakeEncodingConfig().Marshaler
+			appCodec := app.MakeEncodingConfig().Codec
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)

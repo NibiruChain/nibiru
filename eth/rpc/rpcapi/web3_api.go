@@ -18,7 +18,7 @@ func NewImplWeb3API() *APIWeb3 {
 
 // ClientVersion returns the client version in the Web3 user agent format.
 func (a *APIWeb3) ClientVersion() string {
-	return appconst.Version()
+	return appconst.RuntimeVersion()
 }
 
 // Sha3 returns the keccak-256 hash of the passed-in input.
