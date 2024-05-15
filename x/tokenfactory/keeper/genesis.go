@@ -36,13 +36,13 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		denom := iter.Value()
 
 		authorityMetadata, err := k.Store.GetDenomAuthorityMetadata(
-			ctx, denom.PrettyString())
+			ctx, denom.Denom().String())
 		if err != nil {
 			panic(err)
 		}
 
 		genDenoms = append(genDenoms, types.GenesisDenom{
-			Denom:             denom.PrettyString(),
+			Denom:             denom.Denom().String(),
 			AuthorityMetadata: authorityMetadata,
 		})
 	}

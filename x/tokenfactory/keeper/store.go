@@ -34,17 +34,17 @@ func (api StoreAPI) InsertDenom(
 		return err
 	}
 	// The x/bank keeper is the source of truth.
-	key := denom.PrettyString()
+	key := denom.Denom()
 	found := api.HasDenom(ctx, denom)
 	if found {
-		return tftypes.ErrDenomAlreadyRegistered.Wrap(key)
+		return tftypes.ErrDenomAlreadyRegistered.Wrap(key.String())
 	}
 
 	admin := denom.Creator
 	api.unsafeInsertDenom(ctx, denom, admin)
 
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, key, tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Insert(ctx, key.String(), tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	return nil
@@ -55,15 +55,15 @@ func (api StoreAPI) InsertDenom(
 func (api StoreAPI) unsafeInsertDenom(
 	ctx sdk.Context, denom tftypes.TFDenom, admin string,
 ) {
-	denomStr := denom.PrettyString()
-	api.Denoms.Insert(ctx, denomStr, denom)
+	denomStr := denom.Denom()
+	api.Denoms.Insert(ctx, denomStr.String(), denom)
 	api.creator.Insert(ctx, denom.Creator)
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, denomStr, tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Insert(ctx, denomStr.String(), tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	_ = ctx.EventManager().EmitTypedEvent(&tftypes.EventCreateDenom{
-		Denom:   denomStr,
+		Denom:   denomStr.String(),
 		Creator: denom.Creator,
 	})
 }
@@ -84,7 +84,7 @@ func (api StoreAPI) unsafeGenesisInsertDenom(
 func (api StoreAPI) HasDenom(
 	ctx sdk.Context, denom tftypes.TFDenom,
 ) bool {
-	_, found := api.bankKeeper.GetDenomMetaData(ctx, denom.PrettyString())
+	_, found := api.bankKeeper.GetDenomMetaData(ctx, denom.Denom().String())
 	return found
 }
 

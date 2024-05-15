@@ -161,7 +161,7 @@ func (s *TestSuite) TestStargate() {
 		denoms := s.app.TokenFactoryKeeper.QueryDenoms(s.ctx,
 			contract.Addr.String(),
 		)
-		s.ElementsMatch(denoms, []string{tfdenom.PrettyString()})
+		s.ElementsMatch(denoms, []string{tfdenom.Denom().String()})
 	})
 
 	someoneElse := testutil.AccAddress()
@@ -173,11 +173,11 @@ func (s *TestSuite) TestStargate() {
 				"mint_to": "%s" 
 			} 
 		}
-		`, tfdenom.PrettyString(), someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
-		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.PrettyString())
+		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.Denom().String())
 		s.Equal(math.NewInt(69_420), balance.Amount)
 	})
 
@@ -189,11 +189,11 @@ func (s *TestSuite) TestStargate() {
 				"burn_from": "%s" 
 			} 
 		}
-		`, tfdenom.PrettyString(), someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
-		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.PrettyString())
+		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.Denom().String())
 		s.Equal(math.NewInt(420), balance.Amount)
 	})
 
@@ -205,12 +205,12 @@ func (s *TestSuite) TestStargate() {
 				"new_admin": "%s" 
 			} 
 		}
-		`, tfdenom.PrettyString(), someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
 		denomInfo, err := s.app.TokenFactoryKeeper.QueryDenomInfo(
-			s.ctx, tfdenom.PrettyString(),
+			s.ctx, tfdenom.Denom().String(),
 		)
 		s.NoError(err)
 		s.Equal(someoneElse.String(), denomInfo.Admin)

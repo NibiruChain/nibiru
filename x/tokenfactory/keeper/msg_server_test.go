@@ -99,7 +99,7 @@ func (s *TestSuite) TestCreateDenom() {
 			want := types.TFDenom{
 				Creator:  tc.txMsg.Sender,
 				Subdenom: tc.txMsg.Subdenom,
-			}.PrettyString()
+			}.Denom()
 			s.Equal(want, resp.NewTokenDenom)
 
 			if tc.postHook != nil {
@@ -137,7 +137,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "sad: non-admin tries to change admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   testutil.AccAddress().String(),
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.PrettyString(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: "only the current admin can set a new admin",
@@ -156,7 +156,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "happy: SBF changes FTT admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.PrettyString(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: "",
@@ -175,7 +175,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "sad: change admin for denom that doesn't exist ",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.PrettyString(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: collections.ErrNotFound.Error(),
@@ -330,7 +330,7 @@ func (s *TestSuite) TestMintBurn() {
 		Subdenom: "nusd",
 	}
 	nusd69420 := sdk.Coin{
-		Denom:  tfdenom.PrettyString(),
+		Denom:  tfdenom.Denom().String(),
 		Amount: math.NewInt(69_420),
 	}
 
@@ -349,7 +349,7 @@ func (s *TestSuite) TestMintBurn() {
 						Denom: types.TFDenom{
 							Creator:  addrs[0].String(),
 							Subdenom: "nusd",
-						}.PrettyString(),
+						}.Denom().String(),
 						Amount: math.NewInt(69_420),
 					},
 					MintTo: "",
@@ -363,7 +363,7 @@ func (s *TestSuite) TestMintBurn() {
 							Denom: types.TFDenom{
 								Creator:  addrs[0].String(),
 								Subdenom: "nusd",
-							}.PrettyString(),
+							}.Denom().String(),
 							Amount: math.NewInt(1),
 						},
 						BurnFrom: "",
@@ -383,12 +383,12 @@ func (s *TestSuite) TestMintBurn() {
 				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
-					math.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.PrettyString()).Amount,
+					math.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
 				)
 
 				s.T().Log("Module account should be empty.")
 				coin := s.app.BankKeeper.GetBalance(
-					s.ctx, tfModuleAddr, denom.PrettyString())
+					s.ctx, tfModuleAddr, denom.Denom().String())
 				s.Equal(
 					math.NewInt(0),
 					coin.Amount,
@@ -435,7 +435,7 @@ func (s *TestSuite) TestMintBurn() {
 
 				&types.MsgChangeAdmin{
 					Sender:   addrs[0].String(),
-					Denom:    tfdenom.PrettyString(),
+					Denom:    tfdenom.Denom().String(),
 					NewAdmin: addrs[1].String(),
 				},
 			},
@@ -533,13 +533,13 @@ func (s *TestSuite) TestSetDenomMetadata() {
 							Description: "US Dollar",
 							DenomUnits: []*banktypes.DenomUnit{
 								{
-									Denom:    tfdenom.PrettyString(),
+									Denom:    tfdenom.Denom().String(),
 									Exponent: 0,
 									Aliases:  []string{"unusd"},
 								},
 								{Denom: "USD", Exponent: 6},
 							},
-							Base:    tfdenom.PrettyString(),
+							Base:    tfdenom.Denom().String(),
 							Display: "USD",
 							Name:    "USD",
 							Symbol:  "USD",
