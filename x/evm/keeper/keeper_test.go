@@ -45,10 +45,6 @@ func (s *KeeperSuite) TestQuerier() {
 	k := chain.EvmKeeper
 	for _, testCase := range []func() error{
 		func() error {
-			_, err := k.ValidatorAccount(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.BaseFee(goCtx, nil)
 			return err
 		},

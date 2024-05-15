@@ -387,7 +387,7 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 }
 
 func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
-	return app.stakingKeeper
+	return app.StakingKeeper
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {

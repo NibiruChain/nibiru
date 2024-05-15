@@ -3,6 +3,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -78,25 +79,44 @@ func (k Keeper) NibiruAccount(
 	return resp, nil
 }
 
-// ValidatorAccount: Implements the gRPC query for "/eth.evm.v1.Query/ValidatorAccount".
-// ValidatorAccount retrieves the account details for a given validator consensus address.
+// ValidatorAccount: Implements the gRPC query for
+// "/eth.evm.v1.Query/ValidatorAccount". ValidatorAccount retrieves the account
+// details for a given validator consensus address.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryValidatorAccountRequest object containing the validator consensus address.
+//   - req: Request containing the validator consensus address.
 //
 // Returns:
-//   - A pointer to the QueryValidatorAccountResponse object containing the account details.
+//   - Response containing the account details.
 //   - An error if the account retrieval process encounters any issues.
 func (k Keeper) ValidatorAccount(
 	goCtx context.Context, req *evm.QueryValidatorAccountRequest,
 ) (*evm.QueryValidatorAccountResponse, error) {
-	// TODO: feat(evm): impl query ValidatorAccount
-	return &evm.QueryValidatorAccountResponse{
-		AccountAddress: "",
-		Sequence:       0,
-		AccountNumber:  0,
-	}, common.ErrNotImplementedGprc()
+	consAddr, err := req.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
+	if !found {
+		return nil, fmt.Errorf("validator not found for %s", consAddr.String())
+	}
+
+	nibiruAddr := sdk.AccAddress(validator.GetOperator())
+	res := evm.QueryValidatorAccountResponse{
+		AccountAddress: nibiruAddr.String(),
+	}
+
+	account := k.accountKeeper.GetAccount(ctx, nibiruAddr)
+	if account != nil {
+		res.Sequence = account.GetSequence()
+		res.AccountNumber = account.GetAccountNumber()
+	}
+
+	return &res, nil
 }
 
 // Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
