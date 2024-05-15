@@ -25,8 +25,8 @@ func MakeConfig(mb module.BasicManager) params.EncodingConfig {
 	}
 
 	enccodec.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	mb.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	enccodec.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	mb.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	mb.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
 }

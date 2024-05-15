@@ -2,17 +2,23 @@
 package keeper
 
 import (
+	"fmt"
+	"slices"
+
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkstore "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
-type AccStatePrimaryKey = collections.Pair[gethcommon.Address, gethcommon.Hash]
-type CodeHash = []byte
+type (
+	AccStatePrimaryKey = collections.Pair[gethcommon.Address, gethcommon.Hash]
+	CodeHash           = []byte
+)
 
 // EvmState isolates the key-value stores (collections) for the x/evm module.
 type EvmState struct {
@@ -85,4 +91,57 @@ func NewEvmState(
 			collections.Uint64ValueEncoder,
 		),
 	}
+}
+
+// BytesToHex converts a byte array to a hexadecimal string
+func BytesToHex(bz []byte) string {
+	return fmt.Sprintf("%x", bz)
+}
+
+func (state EvmState) SetAccCode(ctx sdk.Context, codeHash, code []byte) {
+	if len(code) > 0 {
+		state.ContractBytecode.Insert(ctx, codeHash, code)
+	} else {
+		// Ignore collections "key not found" error because erasing an empty
+		// state is perfectly valid here.
+		_ = state.ContractBytecode.Delete(ctx, codeHash)
+	}
+}
+
+func (state EvmState) GetContractBytecode(
+	ctx sdk.Context, codeHash []byte,
+) (code []byte) {
+	return state.ContractBytecode.GetOr(ctx, codeHash, []byte{})
+}
+
+// GetParams returns the total set of evm parameters.
+func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
+	params, _ = k.EvmState.ModuleParams.Get(ctx)
+	return params
+}
+
+// SetParams: Setter for the module parameters.
+func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
+	slices.Sort(params.ActivePrecompiles)
+	k.EvmState.ModuleParams.Set(ctx, params)
+}
+
+// SetState update contract storage, delete if value is empty.
+func (state EvmState) SetAccState(
+	ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHash, stateValue []byte,
+) {
+	if len(stateValue) != 0 {
+		state.AccState.Insert(ctx, collections.Join(addr, stateKey), stateValue)
+	} else {
+		_ = state.AccState.Delete(ctx, collections.Join(addr, stateKey))
+	}
+}
+
+// GetState: Implements `statedb.Keeper` interface: Loads smart contract state.
+func (k *Keeper) GetState(ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHash) eth.EthHash {
+	return gethcommon.BytesToHash(k.EvmState.AccState.GetOr(
+		ctx,
+		collections.Join(addr, stateKey),
+		[]byte{},
+	))
 }

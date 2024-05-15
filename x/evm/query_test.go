@@ -15,11 +15,11 @@ type TestSuite struct {
 func (s *TestSuite) TestNilQueries() {
 	for _, testCase := range []func() error{
 		func() error {
-			var req *QueryAccountRequest = nil
+			var req *QueryEthAccountRequest = nil
 			return req.Validate()
 		},
 		func() error {
-			var req *QueryCosmosAccountRequest = nil
+			var req *QueryNibiruAccountRequest = nil
 			return req.Validate()
 		},
 		func() error {

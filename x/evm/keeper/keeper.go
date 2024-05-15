@@ -26,23 +26,28 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	bankKeeper evm.BankKeeper
+	bankKeeper    evm.BankKeeper
+	accountKeeper evm.AccountKeeper
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey, transientKey storetypes.StoreKey,
 	authority sdk.AccAddress,
+	accKeeper evm.AccountKeeper,
+	bankKeeper evm.BankKeeper,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
 	}
 	return Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		transientKey: transientKey,
-		authority:    authority,
-		EvmState:     NewEvmState(cdc, storeKey, transientKey),
+		cdc:           cdc,
+		storeKey:      storeKey,
+		transientKey:  transientKey,
+		authority:     authority,
+		EvmState:      NewEvmState(cdc, storeKey, transientKey),
+		accountKeeper: accKeeper,
+		bankKeeper:    bankKeeper,
 	}
 }
 
@@ -50,19 +55,13 @@ func NewKeeper(
 // "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
 // tokens for EVM execution
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big.Int {
-	cosmosAddr := sdk.AccAddress(addr.Bytes())
+	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	evmParams := k.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	// if node is pruned, params is empty. Return invalid value
 	if evmDenom == "" {
 		return big.NewInt(-1)
 	}
-	coin := k.bankKeeper.GetBalance(ctx, cosmosAddr, evmDenom)
+	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
 	return coin.Amount.BigInt()
-}
-
-// GetParams returns the total set of evm parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
-	params, _ = k.EvmState.ModuleParams.Get(ctx)
-	return params
 }
