@@ -157,7 +157,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
-		Codec:             encCfg.Marshaler,
+		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,

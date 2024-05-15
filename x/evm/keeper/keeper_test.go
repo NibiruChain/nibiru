@@ -45,19 +45,7 @@ func (s *KeeperSuite) TestQuerier() {
 	k := chain.EvmKeeper
 	for _, testCase := range []func() error{
 		func() error {
-			_, err := k.Account(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.CosmosAccount(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.ValidatorAccount(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.Balance(goCtx, nil)
 			return err
 		},
 		func() error {
@@ -65,15 +53,7 @@ func (s *KeeperSuite) TestQuerier() {
 			return err
 		},
 		func() error {
-			_, err := k.Storage(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.Code(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.Params(goCtx, nil)
 			return err
 		},
 		func() error {

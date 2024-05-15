@@ -32,7 +32,7 @@ func init() {
 	GoArch = runtime.GOARCH
 }
 
-func Version() string {
+func RuntimeVersion() string {
 	return fmt.Sprintf(
 		"Version %s (%s)\nCompiled at %s using Go %s (%s)",
 		AppVersion,

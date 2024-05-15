@@ -30,26 +30,8 @@ type AnteHandlerOptions struct {
 // numbers, checks signatures and account numbers, and deducts fees from the
 // first signer.
 func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
-	if options.AccountKeeper == nil {
-		return nil, AnteHandlerError("account keeper")
-	}
-	if options.BankKeeper == nil {
-		return nil, AnteHandlerError("bank keeper")
-	}
-	if options.SignModeHandler == nil {
-		return nil, AnteHandlerError("sign mode handler")
-	}
-	if options.SigGasConsumer == nil {
-		options.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
-	}
-	if options.WasmConfig == nil {
-		return nil, AnteHandlerError("wasm config")
-	}
-	if options.DevGasKeeper == nil {
-		return nil, AnteHandlerError("devgas keeper")
-	}
-	if options.IBCKeeper == nil {
-		return nil, AnteHandlerError("ibc keeper")
+	if err := options.ValidateAndClean(); err != nil {
+		return nil, err
 	}
 
 	anteDecorators := []sdk.AnteDecorator{
@@ -78,6 +60,31 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
+}
+
+func (opts *AnteHandlerOptions) ValidateAndClean() error {
+	if opts.AccountKeeper == nil {
+		return AnteHandlerError("account keeper")
+	}
+	if opts.BankKeeper == nil {
+		return AnteHandlerError("bank keeper")
+	}
+	if opts.SignModeHandler == nil {
+		return AnteHandlerError("sign mode handler")
+	}
+	if opts.SigGasConsumer == nil {
+		opts.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
+	}
+	if opts.WasmConfig == nil {
+		return AnteHandlerError("wasm config")
+	}
+	if opts.DevGasKeeper == nil {
+		return AnteHandlerError("devgas keeper")
+	}
+	if opts.IBCKeeper == nil {
+		return AnteHandlerError("ibc keeper")
+	}
+	return nil
 }
 
 func AnteHandlerError(shortDesc string) error {
