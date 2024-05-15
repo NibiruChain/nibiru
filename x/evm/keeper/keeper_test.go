@@ -49,10 +49,6 @@ func (s *KeeperSuite) TestQuerier() {
 			return err
 		},
 		func() error {
-			_, err := k.Code(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.EthCall(goCtx, nil)
 			return err
 		},

@@ -186,16 +186,31 @@ func (k Keeper) Storage(
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryCodeRequest object containing the Ethereum address.
+//   - req: Request with the Ethereum address of the smart contract bytecode.
 //
 // Returns:
-//   - A pointer to the QueryCodeResponse object containing the code.
+//   - Response containing the smart contract bytecode.
 //   - An error if the code retrieval process encounters any issues.
-func (k Keeper) Code(goCtx context.Context, req *evm.QueryCodeRequest) (*evm.QueryCodeResponse, error) {
-	// TODO: feat(evm): impl query Code
+func (k Keeper) Code(
+	goCtx context.Context, req *evm.QueryCodeRequest,
+) (*evm.QueryCodeResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	address := gethcommon.HexToAddress(req.Address)
+	acct := k.GetAccountWithoutBalance(ctx, address)
+
+	var code []byte
+	if acct != nil && acct.IsContract() {
+		code = k.GetCode(ctx, gethcommon.BytesToHash(acct.CodeHash))
+	}
+
 	return &evm.QueryCodeResponse{
-		Code: []byte{},
-	}, common.ErrNotImplementedGprc()
+		Code: code,
+	}, nil
 }
 
 // Params: Implements the gRPC query for "/eth.evm.v1.Query/Params".
@@ -208,7 +223,9 @@ func (k Keeper) Code(goCtx context.Context, req *evm.QueryCodeRequest) (*evm.Que
 // Returns:
 //   - A pointer to the QueryParamsResponse object containing the EVM module parameters.
 //   - An error if the parameter retrieval process encounters any issues.
-func (k Keeper) Params(goCtx context.Context, _ *evm.QueryParamsRequest) (*evm.QueryParamsResponse, error) {
+func (k Keeper) Params(
+	goCtx context.Context, _ *evm.QueryParamsRequest,
+) (*evm.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	params := k.GetParams(ctx)
 	return &evm.QueryParamsResponse{
