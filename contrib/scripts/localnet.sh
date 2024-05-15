@@ -131,7 +131,7 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
+if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"

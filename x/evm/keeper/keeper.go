@@ -55,13 +55,13 @@ func NewKeeper(
 // "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
 // tokens for EVM execution
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big.Int {
-	cosmosAddr := sdk.AccAddress(addr.Bytes())
+	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	evmParams := k.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	// if node is pruned, params is empty. Return invalid value
 	if evmDenom == "" {
 		return big.NewInt(-1)
 	}
-	coin := k.bankKeeper.GetBalance(ctx, cosmosAddr, evmDenom)
+	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
 	return coin.Amount.BigInt()
 }
