@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
 type TestDeps struct {
@@ -50,6 +51,14 @@ func (s *KeeperSuite) SetupTest() TestDeps {
 			NibiruAddr: nibiruAddr,
 		},
 	}
+}
+
+func (s *KeeperSuite) StateDB(deps *TestDeps) *statedb.StateDB {
+	return statedb.New(deps.ctx, &deps.chain.EvmKeeper,
+		statedb.NewEmptyTxConfig(
+			gethcommon.BytesToHash(deps.ctx.HeaderHash().Bytes()),
+		),
+	)
 }
 
 func InvalidEthAddr() string { return "0x0000" }
@@ -167,10 +176,10 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := s.SetupTest()
-			req, wantResp := tc.scenario(&deps)
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
+			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.ctx)
 			gotResp, err := deps.k.EthAccount(goCtx, req)
 			if tc.wantErr != "" {
@@ -264,12 +273,88 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := s.SetupTest()
-			req, wantResp := tc.scenario(&deps)
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
+			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.ctx)
 			gotResp, err := deps.k.ValidatorAccount(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestQueryStorage() {
+	type In = *evm.QueryStorageRequest
+	type Out = *evm.QueryStorageResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: msg validation",
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryStorageRequest{
+					Address: InvalidEthAddr(),
+				}
+				return req, wantResp
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy",
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAddr()
+				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
+				req = &evm.QueryStorageRequest{
+					Address: addr.Hex(),
+					Key:     storageKey.String(),
+				}
+
+				stateDB := s.StateDB(deps)
+				storageValue := gethcommon.BytesToHash([]byte("value"))
+
+				stateDB.SetState(addr, storageKey, storageValue)
+				s.NoError(stateDB.Commit())
+
+				wantResp = &evm.QueryStorageResponse{
+					Value: storageValue.String(),
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: no committed state",
+			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAddr()
+				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
+				req = &evm.QueryStorageRequest{
+					Address: addr.Hex(),
+					Key:     storageKey.String(),
+				}
+
+				wantResp = &evm.QueryStorageResponse{
+					Value: gethcommon.BytesToHash([]byte{}).String(),
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := s.SetupTest()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.ctx)
+
+			gotResp, err := deps.k.Storage(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
