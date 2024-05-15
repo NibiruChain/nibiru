@@ -120,7 +120,7 @@ func (s *IntegrationTestSuite) MintBurnTest() {
 		Creator:  creator.String(),
 		Subdenom: "nusd",
 	}
-	coin := sdk.NewInt64Coin(denom.String(), 420)
+	coin := sdk.NewInt64Coin(denom.PrettyString(), 420)
 	wantErr := false
 	mint(coin.String(), creator.String(), wantErr) // happy
 
@@ -135,12 +135,12 @@ func (s *IntegrationTestSuite) MintBurnTest() {
 	burn("notacoin_231,,", creator.String(), wantErr)
 
 	t.Log(`want error: unable to parse "mint-to" or "burn-from"`)
-	coin.Denom = denom.String()
+	coin.Denom = denom.PrettyString()
 	mint(coin.String(), "invalidAddr", wantErr)
 	burn(coin.String(), "invalidAddr", wantErr)
 
 	t.Log("burn successfully")
-	coin.Denom = denom.String()
+	coin.Denom = denom.PrettyString()
 	wantErr = false
 	burn(coin.String(), creator.String(), wantErr) // happy
 }
@@ -158,7 +158,7 @@ func (s *IntegrationTestSuite) ChangeAdminTest() {
 	infoResp := new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.PrettyString()}, infoResp,
 		),
 	)
 	s.Equal(infoResp.Admin, admin.String())
@@ -166,14 +166,14 @@ func (s *IntegrationTestSuite) ChangeAdminTest() {
 	s.T().Log("Change to a new admin")
 	_, err := s.network.ExecTxCmd(
 		cli.NewTxCmd(),
-		admin, []string{"change-admin", denom.String(), newAdmin.String()})
+		admin, []string{"change-admin", denom.PrettyString(), newAdmin.String()})
 	s.Require().NoError(err)
 
 	s.T().Log("Verify new admin is in state")
 	infoResp = new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.PrettyString()}, infoResp,
 		),
 	)
 	s.Equal(infoResp.Admin, newAdmin.String())
