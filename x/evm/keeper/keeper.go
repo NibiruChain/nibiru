@@ -28,6 +28,7 @@ type Keeper struct {
 
 	bankKeeper    evm.BankKeeper
 	accountKeeper evm.AccountKeeper
+	stakingKeeper evm.StakingKeeper
 }
 
 func NewKeeper(
@@ -36,6 +37,7 @@ func NewKeeper(
 	authority sdk.AccAddress,
 	accKeeper evm.AccountKeeper,
 	bankKeeper evm.BankKeeper,
+	stakingKeeper evm.StakingKeeper,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
@@ -48,6 +50,7 @@ func NewKeeper(
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
 		accountKeeper: accKeeper,
 		bankKeeper:    bankKeeper,
+		stakingKeeper: stakingKeeper,
 	}
 }
 
