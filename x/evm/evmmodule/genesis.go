@@ -64,7 +64,6 @@ func InitGenesis(
 		}
 	}
 
-	// TODO: impl InitGenesis
 	return []abci.ValidatorUpdate{}
 }
 
