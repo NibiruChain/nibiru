@@ -25,14 +25,14 @@ func (s *TestSuite) SetupSuite() {
 }
 
 func (s *TestSuite) DefaultGenesisCopy() app.GenesisState {
-	return app.NewDefaultGenesisState(s.encCfg.Marshaler)
+	return app.NewDefaultGenesisState(s.encCfg.Codec)
 }
 
 func (s *TestSuite) TestGenesis() {
 	getDefaultStakingGenesis := func() *stakingtypes.GenesisState {
 		genStaking := new(stakingtypes.GenesisState)
-		s.encCfg.Marshaler.MustUnmarshalJSON(
-			app.StakingModule{}.DefaultGenesis(s.encCfg.Marshaler),
+		s.encCfg.Codec.MustUnmarshalJSON(
+			app.StakingModule{}.DefaultGenesis(s.encCfg.Codec),
 			genStaking,
 		)
 		return genStaking
@@ -61,9 +61,9 @@ func (s *TestSuite) TestGenesis() {
 		},
 	} {
 		s.T().Run(tc.name, func(t *testing.T) {
-			genStakingJson := s.encCfg.Marshaler.MustMarshalJSON(tc.gen)
+			genStakingJson := s.encCfg.Codec.MustMarshalJSON(tc.gen)
 			err := app.StakingModule{}.ValidateGenesis(
-				s.encCfg.Marshaler,
+				s.encCfg.Codec,
 				s.encCfg.TxConfig,
 				genStakingJson,
 			)

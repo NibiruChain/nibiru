@@ -19,7 +19,7 @@ genesis as input. The blockchain genesis state is represented as a map from modu
 identifier strings to raw json messages.
 */
 func NewTestGenesisState(encodingConfig app.EncodingConfig) app.GenesisState {
-	codec := encodingConfig.Marshaler
+	codec := encodingConfig.Codec
 	genState := app.NewDefaultGenesisState(codec)
 
 	// Set short voting period to allow fast gov proposals in tests

@@ -268,7 +268,7 @@ func (s *TestSuite) TestStargateSerde() {
 	for _, tc := range testCases {
 		s.Run(tc.typeUrl, func() {
 			pbMsg, _ := (tc.sdkMsg).(codec.ProtoMarshaler)
-			sgMsgValue := s.encConfig.Marshaler.MustMarshal(pbMsg)
+			sgMsgValue := s.encConfig.Codec.MustMarshal(pbMsg)
 			sgMsg := wasmvmtypes.StargateMsg{
 				TypeURL: tc.typeUrl,
 				Value:   sgMsgValue,
@@ -281,7 +281,7 @@ func (s *TestSuite) TestStargateSerde() {
 			ibcTransferPort := wasmtesting.MockIBCTransferKeeper{
 				GetPortFn: func(ctx sdk.Context) string { return "myTransferPort" },
 			}
-			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Marshaler, ibcTransferPort)
+			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Codec, ibcTransferPort)
 			mockContractAddr := testutil.AccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
 				wasmvmtypes.CosmosMsg{
