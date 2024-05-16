@@ -29,13 +29,13 @@ func (params ModuleParams) Validate() error {
 // ----------------------------------------------------
 
 func (tfd TFDenom) Denom() DenomStr {
-	return DenomStr(tfd.Denom())
+	return DenomStr(fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom))
 }
 
-// String: returns the standard string representation.
-func (tfd TFDenom) DenomStr() string {
-	return fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom)
-}
+// // String: returns the standard string representation.
+// func (tfd TFDenom) DenomStr() string {
+// 	return fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom)
+// }
 
 func (tfd TFDenom) Validate() error {
 	return tfd.Denom().Validate()

@@ -35,7 +35,7 @@ func TestDenomStr_Validate(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tfDenom.Denom(), tc.denom)
-			assert.Equal(t, tfDenom.Denom(), string(tc.denom))
+			assert.Equal(t, tfDenom.Denom().String(), string(tc.denom))
 
 			assert.NoError(t, tfDenom.Validate())
 			assert.NotPanics(t, func() {

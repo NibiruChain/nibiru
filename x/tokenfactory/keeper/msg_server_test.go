@@ -100,7 +100,7 @@ func (s *TestSuite) TestCreateDenom() {
 				Creator:  tc.txMsg.Sender,
 				Subdenom: tc.txMsg.Subdenom,
 			}.Denom()
-			s.Equal(want, resp.NewTokenDenom)
+			s.Equal(want.String(), resp.NewTokenDenom)
 
 			if tc.postHook != nil {
 				tc.postHook(s.ctx, s.app)
