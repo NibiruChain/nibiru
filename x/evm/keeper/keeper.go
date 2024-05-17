@@ -2,14 +2,20 @@
 package keeper
 
 import (
-	// "github.com/NibiruChain/nibiru/x/evm"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/core/vm"
+	gethparams "github.com/ethereum/go-ethereum/params"
+
+	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -29,6 +35,15 @@ type Keeper struct {
 	bankKeeper    evm.BankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
+
+	// Integer for the Ethereum EIP155 Chain ID
+	eip155ChainIDInt *big.Int
+	hooks            evm.EvmHooks                                  //nolint:unused
+	precompiles      map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
+	// include "access_list", "json", "struct", and "markdown". If any other
+	// value is used, a no operation tracer is set.
+	tracer string
 }
 
 func NewKeeper(
@@ -38,6 +53,7 @@ func NewKeeper(
 	accKeeper evm.AccountKeeper,
 	bankKeeper evm.BankKeeper,
 	stakingKeeper evm.StakingKeeper,
+	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
@@ -51,6 +67,7 @@ func NewKeeper(
 		accountKeeper: accKeeper,
 		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
+		tracer:        tracer,
 	}
 }
 
@@ -67,4 +84,55 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 	}
 	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
 	return coin.Amount.BigInt()
+}
+
+// SetEvmChainID sets the chain id to the local variable in the keeper
+func (k *Keeper) SetEvmChainID(ctx sdk.Context) {
+	newEthChainID, err := eth.ParseEthChainID(ctx.ChainID())
+	if err != nil {
+		panic(err)
+	}
+
+	ethChainId := k.eip155ChainIDInt
+	if ethChainId != nil && ethChainId.Cmp(newEthChainID) != 0 {
+		panic("chain id already set")
+	}
+
+	k.eip155ChainIDInt = newEthChainID
+}
+
+func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
+	ethChainID, err := eth.ParseEthChainID(ctx.ChainID())
+	if err != nil {
+		panic(err)
+	}
+	return ethChainID
+}
+
+// AddToBlockGasUsed accumulate gas used by each eth msgs included in current
+// block tx.
+func (k Keeper) AddToBlockGasUsed(
+	ctx sdk.Context, gasUsed uint64,
+) (uint64, error) {
+	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
+	if result < gasUsed {
+		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
+	}
+	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	return result, nil
+}
+
+// GetMinGasMultiplier returns minimum gas multiplier.
+func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
+	return math.LegacyNewDecWithPrec(50, 2) // 50%
+}
+
+func (k Keeper) GetBaseFee(
+	ctx sdk.Context, ethCfg *gethparams.ChainConfig,
+) *big.Int {
+	isLondon := evm.IsLondon(ethCfg, ctx.BlockHeight())
+	if !isLondon {
+		return nil
+	}
+	return big.NewInt(0)
 }
