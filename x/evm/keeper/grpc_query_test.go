@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -435,27 +437,64 @@ func (s *KeeperSuite) TestQueryCode() {
 	}
 }
 
-// func (s *KeeperSuite) TestQueryParams() {
-// 	deps := s.SetupTest()
-// 	wantParams := evm.DefaultParams()
-// 	deps.k.SetParams(deps.ctx, wantParams)
-// 	gotResp, err := deps.k.Params(deps.GoCtx(), nil)
-// 	gotParams := gotResp.Params
-// 	s.Require().NoError(err)
-// 	// gotParams2, err := deps.k.EvmState.ModuleParams.Get(deps.ctx)
-// 	// s.Require().NoError(err)
+// AssertModuleParamsEqual errors if the fields don't match. This function avoids
+// failing the "EqualValues" check due to comparisons between nil and empty
+// slices: `[]string(nil)` and `[]string{}`.
+func AssertModuleParamsEqual(want, got evm.Params) error {
+	errs := []error{}
+	{
+		want, got := want.EvmDenom, got.EvmDenom
+		if want != got {
+			errs = append(errs, ErrModuleParamsEquality(
+				"evm_denom", want, got))
+		}
+	}
+	{
+		want, got := want.EnableCreate, got.EnableCreate
+		if want != got {
+			errs = append(errs, ErrModuleParamsEquality(
+				"enable_create", want, got))
+		}
+	}
+	{
+		want, got := want.EnableCall, got.EnableCall
+		if want != got {
+			errs = append(errs, ErrModuleParamsEquality(
+				"enable_call", want, got))
+		}
+	}
+	{
+		want, got := want.ChainConfig, got.ChainConfig
+		if want != got {
+			errs = append(errs, ErrModuleParamsEquality(
+				"chain_config", want, got))
+		}
+	}
+	return common.CombineErrors(errs...)
+}
 
-// 	// testutil.Fill(gotParams)
-// 	// s.Require().EqualValues(gotParams2, gotParams, "aaa")
-// 	// s.Require().EqualValues(gotParams2, testutil.Fill(gotParams), "bbb")
-// 	s.Require().EqualValues(
-// 		wantParams, gotParams, "ddd")
-// 	// s.Require().EqualValues(wantParams, testutil.Fill(gotResp.Params), "ccc")
+func ErrModuleParamsEquality(field string, want, got any) error {
+	return fmt.Errorf(`failed AssetModuleParamsEqual on field %s: want "%v", got "%v"`, field, want, got)
+}
 
-// 	// Empty params to test the setter
-// 	// wantParams.ActivePrecompiles = []string{"new", "something"}
-// 	// deps.k.SetParams(deps.ctx, wantParams)
-// 	// gotResp, err = deps.k.Params(deps.GoCtx(), nil)
-// 	// s.NoError(err)
-// 	// s.EqualValues(wantParams, gotResp.Params)
-// }
+func (s *KeeperSuite) TestQueryParams() {
+	deps := s.SetupTest()
+	want := evm.DefaultParams()
+	deps.k.SetParams(deps.ctx, want)
+	gotResp, err := deps.k.Params(deps.GoCtx(), nil)
+	got := gotResp.Params
+	s.Require().NoError(err)
+
+	// Note that protobuf equals is more reliable than `s.Equal`
+	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
+
+	// Empty params to test the setter
+	want.ActivePrecompiles = []string{"new", "something"}
+	deps.k.SetParams(deps.ctx, want)
+	gotResp, err = deps.k.Params(deps.GoCtx(), nil)
+	s.Require().NoError(err)
+	got = gotResp.Params
+
+	// Note that protobuf equals is more reliable than `s.Equal`
+	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
+}
