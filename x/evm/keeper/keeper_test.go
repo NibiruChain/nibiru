@@ -20,25 +20,6 @@ func TestKeeperSuite(t *testing.T) {
 	suite.Run(t, s)
 }
 
-func (s *KeeperSuite) TestMsgServer() {
-	chain, ctx := testapp.NewNibiruTestAppAndContext()
-	goCtx := sdk.WrapSDKContext(ctx)
-	k := chain.EvmKeeper
-	for _, testCase := range []func() error{
-		func() error {
-			_, err := k.EthereumTx(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.UpdateParams(goCtx, nil)
-			return err
-		},
-	} {
-		err := testCase()
-		s.Require().ErrorContains(err, common.ErrNotImplemented().Error())
-	}
-}
-
 func (s *KeeperSuite) TestQuerier() {
 	chain, ctx := testapp.NewNibiruTestAppAndContext()
 	goCtx := sdk.WrapSDKContext(ctx)
