@@ -4,11 +4,14 @@ package keeper
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -135,4 +138,27 @@ func (k Keeper) GetBaseFee(
 		return nil
 	}
 	return big.NewInt(0)
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", evm.ModuleName)
+}
+
+// Tracer return a default vm.Tracer based on current keeper state
+func (k Keeper) Tracer(
+	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
+) vm.EVMLogger {
+	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+}
+
+// PostTxProcessing: Called after tx is processed successfully. If it errors,
+// the tx will revert.
+func (k *Keeper) PostTxProcessing(
+	ctx sdk.Context, msg core.Message, receipt *gethcore.Receipt,
+) error {
+	if k.hooks == nil {
+		return nil
+	}
+	return k.hooks.PostTxProcessing(ctx, msg, receipt)
 }
