@@ -8,6 +8,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
