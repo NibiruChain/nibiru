@@ -1,39 +1,54 @@
 package app
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	"fmt"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/eth"
 	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	"github.com/NibiruChain/nibiru/x/evm"
 )
-
-type AnteHandlerOptions struct {
-	sdkante.HandlerOptions
-	IBCKeeper        *ibckeeper.Keeper
-	DevGasKeeper     *devgaskeeper.Keeper
-	DevGasBankKeeper devgasante.BankKeeper
-
-	TxCounterStoreKey types.StoreKey
-	WasmConfig        *wasmtypes.WasmConfig
-}
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
 // numbers, checks signatures and account numbers, and deducts fees from the
 // first signer.
-func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
-	if err := options.ValidateAndClean(); err != nil {
-		return nil, err
-	}
+func NewAnteHandler(
+	keepers AppKeepers,
+	options ante.AnteHandlerOptions,
+) sdk.AnteHandler {
+	return func(
+		ctx sdk.Context, tx sdk.Tx, sim bool,
+	) (newCtx sdk.Context, err error) {
+		if err := options.ValidateAndClean(); err != nil {
+			return ctx, err
+		}
 
+		var anteHandler sdk.AnteHandler
+		hasExt, typeUrl := TxHasExtensions(tx)
+		// TODO: handle ethereum txs
+		if hasExt && typeUrl != "" {
+			anteHandler = AnteHandlerExtendedTx(typeUrl, keepers, options, ctx)
+			return anteHandler(ctx, tx, sim)
+		}
+
+		switch tx.(type) {
+		case sdk.Tx:
+			anteHandler = AnteHandlerStandardTx(options)
+		default:
+			return ctx, fmt.Errorf("invalid tx type (%T) in AnteHandler", tx)
+		}
+		return anteHandler(ctx, tx, sim)
+	}
+}
+
+func AnteHandlerStandardTx(options ante.AnteHandlerOptions) sdk.AnteHandler {
 	anteDecorators := []sdk.AnteDecorator{
 		sdkante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
@@ -59,34 +74,42 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}
 
-	return sdk.ChainAnteDecorators(anteDecorators...), nil
+	return sdk.ChainAnteDecorators(anteDecorators...)
 }
 
-func (opts *AnteHandlerOptions) ValidateAndClean() error {
-	if opts.AccountKeeper == nil {
-		return AnteHandlerError("account keeper")
+func TxHasExtensions(tx sdk.Tx) (hasExt bool, typeUrl string) {
+	extensionTx, ok := tx.(authante.HasExtensionOptionsTx)
+	if !ok {
+		return false, ""
 	}
-	if opts.BankKeeper == nil {
-		return AnteHandlerError("bank keeper")
+
+	extOpts := extensionTx.GetExtensionOptions()
+	if len(extOpts) == 0 {
+		return false, ""
 	}
-	if opts.SignModeHandler == nil {
-		return AnteHandlerError("sign mode handler")
-	}
-	if opts.SigGasConsumer == nil {
-		opts.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
-	}
-	if opts.WasmConfig == nil {
-		return AnteHandlerError("wasm config")
-	}
-	if opts.DevGasKeeper == nil {
-		return AnteHandlerError("devgas keeper")
-	}
-	if opts.IBCKeeper == nil {
-		return AnteHandlerError("ibc keeper")
-	}
-	return nil
+
+	return true, extOpts[0].GetTypeUrl()
 }
 
-func AnteHandlerError(shortDesc string) error {
-	return sdkerrors.Wrapf(errors.ErrLogic, "%s is required for AnteHandler", shortDesc)
+func AnteHandlerExtendedTx(
+	typeUrl string,
+	keepers AppKeepers,
+	opts ante.AnteHandlerOptions,
+	ctx sdk.Context,
+) (anteHandler sdk.AnteHandler) {
+	switch typeUrl {
+	case evm.TYPE_URL_ETHEREUM_TX:
+		anteHandler = NewAnteHandlerEVM(keepers, opts)
+	case eth.TYPE_URL_DYNAMIC_FEE_TX:
+		anteHandler = NewAnteHandlerNonEVM(keepers, opts)
+	default:
+		errUnsupported := fmt.Errorf(
+			`encountered tx with unsupported extension option, "%s"`, typeUrl)
+		return func(
+			ctx sdk.Context, tx sdk.Tx, simulate bool,
+		) (newCtx sdk.Context, err error) {
+			return ctx, errUnsupported
+		}
+	}
+	return anteHandler
 }

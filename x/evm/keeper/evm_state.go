@@ -167,3 +167,9 @@ func (state EvmState) CalcBloomFromLogs(
 	}
 	return bloom
 }
+
+// ResetTransientGasUsed resets gas to prepare for the next block of execution.
+// Called in an ante handler.
+func (k Keeper) ResetTransientGasUsed(ctx sdk.Context) {
+	k.EvmState.BlockGasUsed.Set(ctx, 0)
+}

@@ -11,6 +11,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -120,6 +121,8 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	)...)
 }
 
+const DefaultMaxTxGasWanted uint64 = 0
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
 	logger log.Logger,
@@ -182,7 +185,7 @@ func NewNibiruApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler, err := NewAnteHandler(AnteHandlerOptions{
+	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
@@ -195,16 +198,15 @@ func NewNibiruApp(
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
+		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
+		MaxTxGasWanted: DefaultMaxTxGasWanted,
 	})
-	if err != nil {
-		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
-	}
 
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
-		if err = snapshotManager.RegisterExtensions(
+		if err := snapshotManager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(
 				app.CommitMultiStore(),
 				&app.WasmKeeper,
