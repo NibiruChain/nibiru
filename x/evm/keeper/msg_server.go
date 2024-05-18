@@ -31,6 +31,9 @@ var _ evm.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(
 	goCtx context.Context, msg *evm.MsgEthereumTx,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := msg.From
@@ -99,7 +102,8 @@ func (k *Keeper) EthereumTx(
 func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
 ) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.eip155ChainIDInt)
+	ethChainId := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), ethChainId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
@@ -213,7 +217,7 @@ func (k *Keeper) ApplyEvmTx(
 func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
 ) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.eip155ChainIDInt)
+	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}

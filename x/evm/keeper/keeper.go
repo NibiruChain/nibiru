@@ -40,9 +40,9 @@ type Keeper struct {
 	stakingKeeper evm.StakingKeeper
 
 	// Integer for the Ethereum EIP155 Chain ID
-	eip155ChainIDInt *big.Int
-	hooks            evm.EvmHooks                                  //nolint:unused
-	precompiles      map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// eip155ChainIDInt *big.Int
+	hooks       evm.EvmHooks                                  //nolint:unused
+	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.
@@ -87,21 +87,6 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 	}
 	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
 	return coin.Amount.BigInt()
-}
-
-// SetEvmChainID sets the chain id to the local variable in the keeper
-func (k *Keeper) SetEvmChainID(ctx sdk.Context) {
-	newEthChainID, err := eth.ParseEthChainID(ctx.ChainID())
-	if err != nil {
-		panic(err)
-	}
-
-	ethChainId := k.eip155ChainIDInt
-	if ethChainId != nil && ethChainId.Cmp(newEthChainID) != 0 {
-		panic("chain id already set")
-	}
-
-	k.eip155ChainIDInt = newEthChainID
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
