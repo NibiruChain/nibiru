@@ -233,7 +233,7 @@ func initStoreKeys() (
 
 		evm.StoreKey,
 	)
-	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }

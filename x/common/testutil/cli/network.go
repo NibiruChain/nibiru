@@ -118,7 +118,7 @@ type (
 		// listen for events, test if it also implements events.EventSwitch.
 		//
 		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-		// - rcp.HTTP
+		// - rpc.HTTP
 		// - rpc.Local
 		RPCClient tmclient.Client
 

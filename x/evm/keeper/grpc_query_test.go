@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"context"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -10,74 +9,20 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
-
-type TestDeps struct {
-	chain    *app.NibiruApp
-	ctx      sdk.Context
-	encCfg   codec.EncodingConfig
-	k        keeper.Keeper
-	genState *evm.GenesisState
-	sender   Sender
-}
-
-func (deps TestDeps) GoCtx() context.Context {
-	return sdk.WrapSDKContext(deps.ctx)
-}
-
-type Sender struct {
-	EthAddr    gethcommon.Address
-	PrivKey    *ethsecp256k1.PrivKey
-	NibiruAddr sdk.AccAddress
-}
-
-func (s *KeeperSuite) SetupTest() TestDeps {
-	testapp.EnsureNibiruPrefix()
-	encCfg := app.MakeEncodingConfig()
-	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
-	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
-	chain, ctx := testapp.NewNibiruTestAppAndContext()
-
-	ethAddr, privKey, nibiruAddr := evmtest.NewEthAddrNibiruPair()
-	return TestDeps{
-		chain:    chain,
-		ctx:      ctx,
-		encCfg:   encCfg,
-		k:        chain.EvmKeeper,
-		genState: evm.DefaultGenesisState(),
-		sender: Sender{
-			EthAddr:    ethAddr,
-			PrivKey:    privKey,
-			NibiruAddr: nibiruAddr,
-		},
-	}
-}
-
-func (s *KeeperSuite) StateDB(deps *TestDeps) *statedb.StateDB {
-	return statedb.New(deps.ctx, &deps.chain.EvmKeeper,
-		statedb.NewEmptyTxConfig(
-			gethcommon.BytesToHash(deps.ctx.HeaderHash().Bytes()),
-		),
-	)
-}
 
 func InvalidEthAddr() string { return "0x0000" }
 
 type TestCase[In, Out any] struct {
 	name string
 	// setup: Optional setup function to create the scenario
-	setup    func(deps *TestDeps)
-	scenario func(deps *TestDeps) (
+	setup    func(deps *evmtest.TestDeps)
+	scenario func(deps *evmtest.TestDeps) (
 		req In,
 		wantResp Out,
 	)
@@ -90,7 +35,7 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryNibiruAccountRequest{
 					Address: InvalidEthAddr(),
 				}
@@ -103,13 +48,13 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 		},
 		{
 			name: "happy",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				ethAddr, _, nibiruAddr := evmtest.NewEthAddrNibiruPair()
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				ethAcc := evmtest.NewEthAccInfo()
 				req = &evm.QueryNibiruAccountRequest{
-					Address: ethAddr.String(),
+					Address: ethAcc.EthAddr.String(),
 				}
 				wantResp = &evm.QueryNibiruAccountResponse{
-					Address:       nibiruAddr.String(),
+					Address:       ethAcc.NibiruAddr.String(),
 					Sequence:      0,
 					AccountNumber: 0,
 				}
@@ -121,10 +66,10 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := s.SetupTest()
+			deps := evmtest.NewTestDeps()
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.ctx)
-			gotResp, err := deps.k.NibiruAccount(goCtx, req)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.NibiruAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -141,7 +86,7 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryEthAccountRequest{
 					Address: InvalidEthAddr(),
 				}
@@ -156,21 +101,21 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 		},
 		{
 			name: "happy: fund account + query",
-			setup: func(deps *TestDeps) {
-				chain := deps.chain
-				ethAddr := deps.sender.EthAddr
+			setup: func(deps *evmtest.TestDeps) {
+				chain := deps.Chain
+				ethAddr := deps.Sender.EthAddr
 
 				// fund account with 420 tokens
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
-				err := chain.BankKeeper.MintCoins(deps.ctx, evm.ModuleName, coins)
+				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryEthAccountRequest{
-					Address: deps.sender.EthAddr.Hex(),
+					Address: deps.Sender.EthAddr.Hex(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:  "420",
@@ -185,13 +130,13 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := s.SetupTest()
+			deps := evmtest.NewTestDeps()
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.ctx)
-			gotResp, err := deps.k.EthAccount(goCtx, req)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.EthAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -208,7 +153,7 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryValidatorAccountRequest{
 					ConsAddress: "nibi1invalidaddr",
 				}
@@ -221,9 +166,9 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 		},
 		{
 			name:  "happy: default values",
-			setup: func(deps *TestDeps) {},
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				valopers := deps.chain.StakingKeeper.GetValidators(deps.ctx, 1)
+			setup: func(deps *evmtest.TestDeps) {},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				valopers := deps.Chain.StakingKeeper.GetValidators(deps.Ctx, 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				_, err := sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
@@ -243,9 +188,9 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 		},
 		{
 			name:  "happy: with nonce",
-			setup: func(deps *TestDeps) {},
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				valopers := deps.chain.StakingKeeper.GetValidators(deps.ctx, 1)
+			setup: func(deps *evmtest.TestDeps) {},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				valopers := deps.Chain.StakingKeeper.GetValidators(deps.Ctx, 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				consAddr := sdk.ConsAddress(valAddrBz)
 
@@ -254,8 +199,8 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 				coinsToSend := sdk.NewCoins(sdk.NewCoin(eth.EthBaseDenom, math.NewInt(69420)))
 				valAddr := sdk.AccAddress(valAddrBz)
 				s.NoError(testapp.FundAccount(
-					deps.chain.BankKeeper,
-					deps.ctx, valAddr,
+					deps.Chain.BankKeeper,
+					deps.Ctx, valAddr,
 					coinsToSend,
 				))
 
@@ -263,11 +208,11 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 					ConsAddress: consAddr.String(),
 				}
 
-				ak := deps.chain.AccountKeeper
-				acc := ak.GetAccount(deps.ctx, valAddr)
+				ak := deps.Chain.AccountKeeper
+				acc := ak.GetAccount(deps.Ctx, valAddr)
 				s.NoError(acc.SetAccountNumber(420), "acc: ", acc.String())
 				s.NoError(acc.SetSequence(69), "acc: ", acc.String())
-				ak.SetAccount(deps.ctx, acc)
+				ak.SetAccount(deps.Ctx, acc)
 
 				wantResp = &evm.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(valAddrBz).String(),
@@ -282,13 +227,13 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := s.SetupTest()
+			deps := evmtest.NewTestDeps()
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.ctx)
-			gotResp, err := deps.k.ValidatorAccount(goCtx, req)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.ValidatorAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -305,7 +250,7 @@ func (s *KeeperSuite) TestQueryStorage() {
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryStorageRequest{
 					Address: InvalidEthAddr(),
 				}
@@ -315,15 +260,15 @@ func (s *KeeperSuite) TestQueryStorage() {
 		},
 		{
 			name: "happy",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAddr()
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAccInfo().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
 					Key:     storageKey.String(),
 				}
 
-				stateDB := s.StateDB(deps)
+				stateDB := deps.StateDB()
 				storageValue := gethcommon.BytesToHash([]byte("value"))
 
 				stateDB.SetState(addr, storageKey, storageValue)
@@ -338,8 +283,8 @@ func (s *KeeperSuite) TestQueryStorage() {
 		},
 		{
 			name: "happy: no committed state",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAddr()
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAccInfo().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
@@ -357,14 +302,14 @@ func (s *KeeperSuite) TestQueryStorage() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := s.SetupTest()
+			deps := evmtest.NewTestDeps()
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.k.Storage(goCtx, req)
+			gotResp, err := deps.K.Storage(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -381,7 +326,7 @@ func (s *KeeperSuite) TestQueryCode() {
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryCodeRequest{
 					Address: InvalidEthAddr(),
 				}
@@ -391,18 +336,18 @@ func (s *KeeperSuite) TestQueryCode() {
 		},
 		{
 			name: "happy",
-			scenario: func(deps *TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAddr()
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				addr := evmtest.NewEthAccInfo().EthAddr
 				req = &evm.QueryCodeRequest{
 					Address: addr.Hex(),
 				}
 
-				stateDB := s.StateDB(deps)
+				stateDB := deps.StateDB()
 				contractBytecode := []byte("bytecode")
 				stateDB.SetCode(addr, contractBytecode)
 				s.Require().NoError(stateDB.Commit())
 
-				s.NotNil(stateDB.Keeper().GetAccount(deps.ctx, addr))
+				s.NotNil(stateDB.Keeper().GetAccount(deps.Ctx, addr))
 				s.NotNil(stateDB.GetCode(addr))
 
 				wantResp = &evm.QueryCodeResponse{
@@ -416,14 +361,14 @@ func (s *KeeperSuite) TestQueryCode() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := s.SetupTest()
+			deps := evmtest.NewTestDeps()
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.k.Code(goCtx, req)
+			gotResp, err := deps.K.Code(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -478,10 +423,10 @@ func ErrModuleParamsEquality(field string, want, got any) error {
 }
 
 func (s *KeeperSuite) TestQueryParams() {
-	deps := s.SetupTest()
+	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	deps.k.SetParams(deps.ctx, want)
-	gotResp, err := deps.k.Params(deps.GoCtx(), nil)
+	deps.K.SetParams(deps.Ctx, want)
+	gotResp, err := deps.K.Params(deps.GoCtx(), nil)
 	got := gotResp.Params
 	s.Require().NoError(err)
 
@@ -490,8 +435,8 @@ func (s *KeeperSuite) TestQueryParams() {
 
 	// Empty params to test the setter
 	want.ActivePrecompiles = []string{"new", "something"}
-	deps.k.SetParams(deps.ctx, want)
-	gotResp, err = deps.k.Params(deps.GoCtx(), nil)
+	deps.K.SetParams(deps.Ctx, want)
+	gotResp, err = deps.K.Params(deps.GoCtx(), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
