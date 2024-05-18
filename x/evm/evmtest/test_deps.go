@@ -7,6 +7,8 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
@@ -53,4 +55,9 @@ func (deps *TestDeps) StateDB() *statedb.StateDB {
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),
 		),
 	)
+}
+
+func (deps *TestDeps) GethSigner() gethcore.Signer {
+	ctx := deps.Ctx
+	return deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(ctx))
 }

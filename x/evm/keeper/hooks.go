@@ -11,7 +11,6 @@ import (
 func (k *Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	// TODO: feat(evm): impl BeginBlock
 	// Is it necessary to set a local variable, or can we use ctx everywhere?
-	// k.SetEvmChainID(ctx)
 }
 
 // EndBlock also retrieves the bloom filter value from the transient store and commits it to the

@@ -27,7 +27,10 @@ func (k *Keeper) GetEthIntrinsicGas(ctx sdk.Context, msg core.Message, cfg *para
 	homestead := cfg.IsHomestead(height)
 	istanbul := cfg.IsIstanbul(height)
 
-	return core.IntrinsicGas(msg.Data(), msg.AccessList(), isContractCreation, homestead, istanbul)
+	return core.IntrinsicGas(
+		msg.Data(), msg.AccessList(),
+		isContractCreation, homestead, istanbul,
+	)
 }
 
 // RefundGas transfers the leftover gas to the sender of the message, caped to half of the total gas
