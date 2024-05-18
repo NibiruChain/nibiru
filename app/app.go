@@ -187,11 +187,12 @@ func NewNibiruApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+			AccountKeeper:          app.AccountKeeper,
+			BankKeeper:             app.BankKeeper,
+			FeegrantKeeper:         app.FeeGrantKeeper,
+			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
+			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasmtypes.StoreKey],
