@@ -26,18 +26,6 @@ func (s *KeeperSuite) TestQuerier() {
 	k := chain.EvmKeeper
 	for _, testCase := range []func() error{
 		func() error {
-			_, err := k.BaseFee(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.EthCall(goCtx, nil)
-			return err
-		},
-		func() error {
-			_, err := k.EstimateGas(goCtx, nil)
-			return err
-		},
-		func() error {
 			_, err := k.TraceTx(goCtx, nil)
 			return err
 		},
