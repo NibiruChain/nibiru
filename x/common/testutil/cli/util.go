@@ -3,13 +3,14 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app/server"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/app/server"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"

@@ -6,10 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
-	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +13,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/pruning/types"

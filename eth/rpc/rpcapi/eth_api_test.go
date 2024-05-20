@@ -3,6 +3,9 @@ package rpcapi_test
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"testing"
+
 	nibiCommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -13,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
-	"math/big"
-	"testing"
 
 	"github.com/stretchr/testify/suite"
 
