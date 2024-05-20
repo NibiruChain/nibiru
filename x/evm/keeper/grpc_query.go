@@ -3,7 +3,14 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"math/big"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -145,10 +152,18 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
-	// TODO: feat(evm): impl query BaseFee
-	return &evm.QueryBaseFeeResponse{
-		BaseFee: &sdkmath.Int{},
-	}, common.ErrNotImplementedGprc()
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	params := k.GetParams(ctx)
+	ethCfg := params.ChainConfig.EthereumConfig(k.EthChainID(ctx))
+	baseFee := k.GetBaseFee(ctx, ethCfg)
+
+	res := &evm.QueryBaseFeeResponse{}
+	if baseFee != nil {
+		aux := sdkmath.NewIntFromBigInt(baseFee)
+		res.BaseFee = &aux
+	}
+	return res, nil
 }
 
 // Storage: Implements the gRPC query for "/eth.evm.v1.Query/Storage".
@@ -246,14 +261,43 @@ func (k Keeper) Params(
 func (k Keeper) EthCall(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.MsgEthereumTxResponse, error) {
-	// TODO: feat(evm): impl query EthCall
-	return &evm.MsgEthereumTxResponse{
-		Hash:    "",
-		Logs:    []*evm.Log{},
-		Ret:     []byte{},
-		VmError: "",
-		GasUsed: 0,
-	}, common.ErrNotImplementedGprc()
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	var args evm.JsonTxArgs
+	err := json.Unmarshal(req.Args, &args)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	chainID, err := getChainID(ctx, req.ChainId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	cfg, err := k.EVMConfig(ctx, GetProposerAddress(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// ApplyMessageWithConfig expect correct nonce set in msg
+	nonce := k.GetNonce(ctx, args.GetFrom())
+	args.Nonce = (*hexutil.Uint64)(&nonce)
+
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
+
+	// pass false to not commit StateDB
+	res, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return res, nil
 }
 
 // EstimateGas: Implements the gRPC query for "/eth.evm.v1.Query/EstimateGas".
@@ -284,8 +328,8 @@ func (k Keeper) EstimateGasForEvmCallType(
 ) (*evm.EstimateGasResponse, error) {
 	// TODO: feat(evm): impl query EstimateGasForEvmCallType
 	return &evm.EstimateGasResponse{
-		Gas: 0,
-	}, common.ErrNotImplementedGprc()
+		Gas: 220000, // TODO: replace with real gas calc
+	}, nil
 }
 
 // TraceTx configures a new tracer according to the provided configuration, and
@@ -312,4 +356,20 @@ func (k Keeper) TraceBlock(
 	return &evm.QueryTraceBlockResponse{
 		Data: []byte{},
 	}, common.ErrNotImplementedGprc()
+}
+
+// getChainID parse chainID from current context if not provided
+func getChainID(ctx sdk.Context, chainID int64) (*big.Int, error) {
+	if chainID == 0 {
+		return eth.ParseEthChainID(ctx.ChainID())
+	}
+	return big.NewInt(chainID), nil
+}
+
+// GetProposerAddress returns current block proposer's address when provided proposer address is empty.
+func GetProposerAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) sdk.ConsAddress {
+	if len(proposerAddress) == 0 {
+		proposerAddress = ctx.BlockHeader().ProposerAddress
+	}
+	return proposerAddress
 }

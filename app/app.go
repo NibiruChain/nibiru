@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"io"
 	"net/http"
 	"os"
@@ -137,6 +138,14 @@ func NewNibiruApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
+
+	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
+		mp := mempool.NoOpMempool{}
+		app.SetMempool(mp)
+		handler := baseapp.NewDefaultProposalHandler(mp, app)
+		app.SetPrepareProposal(handler.PrepareProposalHandler())
+		app.SetProcessProposal(handler.ProcessProposalHandler())
+	})
 
 	bApp := baseapp.NewBaseApp(
 		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)

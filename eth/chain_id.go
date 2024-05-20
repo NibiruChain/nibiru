@@ -42,6 +42,13 @@ func IsValidChainID(chainID string) bool {
 // Ethereum-compatible chain-id in *big.Int format. The function returns an error
 // if the chain-id has an invalid format
 func ParseEthChainID(chainID string) (*big.Int, error) {
+
+	// TODO: we are still hacking the EVM chain ID.
+	// Need to introduce ID somewhere.
+	// Maybe map nibiru chain_ids to numbers like:
+	// { "nibiru-localnet-0": 1, "cataclysm-1": 2... }
+	return big.NewInt(9000), nil
+
 	chainID = strings.TrimSpace(chainID)
 	if len(chainID) > 48 {
 		return nil, ErrInvalidChainID.Wrapf(
