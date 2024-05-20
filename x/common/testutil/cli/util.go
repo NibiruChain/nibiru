@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app/server"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/NibiruChain/nibiru/app/server"
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"

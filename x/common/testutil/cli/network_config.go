@@ -5,13 +5,14 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 	tmconfig "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 )
 
 // Config: Defines the parameters needed to start a local test network.
