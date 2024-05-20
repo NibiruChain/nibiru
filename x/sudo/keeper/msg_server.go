@@ -89,7 +89,8 @@ type Sudoers struct {
 }
 
 func (sudo Sudoers) String() string {
-	return sudo.ToPb().String()
+	r := sudo.ToPb()
+	return r.String()
 }
 
 func (sudo Sudoers) ToPb() sudotypes.Sudoers {
