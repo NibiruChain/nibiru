@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 	"math/big"
+
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
