@@ -638,6 +638,9 @@ func (n *Network) Cleanup() {
 				_ = v.grpcWeb.Close()
 			}
 		}
+		if v.jsonrpc != nil {
+			_ = v.jsonrpc.Close()
+		}
 	}
 
 	// Give a brief pause for things to finish closing in other processes.

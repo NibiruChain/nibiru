@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/NibiruChain/nibiru/app/server"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"os"
 	"path/filepath"
@@ -304,6 +305,11 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 		panic(err)
 	}
 	return addr
+}
+
+func NewEthAccount(network *Network, uid string) common.Address {
+	addr := NewAccount(network, uid)
+	return common.BytesToAddress(addr.Bytes())
 }
 
 func NewKeyring(t *testing.T) (
