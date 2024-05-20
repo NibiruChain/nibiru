@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
-	"strings"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 )
 
 var (
@@ -42,31 +43,10 @@ func IsValidChainID(chainID string) bool {
 // Ethereum-compatible chain-id in *big.Int format. The function returns an error
 // if the chain-id has an invalid format
 func ParseEthChainID(chainID string) (*big.Int, error) {
-
-	// TODO: we are still hacking the EVM chain ID.
-	// Need to introduce ID somewhere.
-	// Maybe map nibiru chain_ids to numbers like:
-	// { "nibiru-localnet-0": 1, "cataclysm-1": 2... }
-	return big.NewInt(9000), nil
-
-	chainID = strings.TrimSpace(chainID)
-	if len(chainID) > 48 {
-		return nil, ErrInvalidChainID.Wrapf(
-			`chain-id input "%s" cannot exceed 48 chars`, chainID)
+	evmChainID, exists := appconst.EVMChainIDs[chainID]
+	if exists {
+		return evmChainID, nil
+	} else {
+		return appconst.DefaultEVMChainID, nil
 	}
-
-	matches := nibiruEvmChainId.FindStringSubmatch(chainID)
-	if matches == nil || len(matches) != 4 || matches[1] == "" {
-		return nil, ErrInvalidChainID.Wrapf(
-			`chain-id input "%s", matches "%v"`, chainID, matches)
-	}
-
-	// verify that the chain-id entered is a base 10 integer
-	chainIDInt, ok := new(big.Int).SetString(matches[2], 10)
-	if !ok {
-		return nil, ErrInvalidChainID.Wrapf(
-			`epoch "%s" must be base-10 integer format`, matches[2])
-	}
-
-	return chainIDInt, nil
 }

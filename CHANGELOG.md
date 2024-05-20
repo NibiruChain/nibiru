@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1871](https://github.com/NibiruChain/nibiru/pull/1871) - feat(evm): app config and json-rpc
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper collections and grpc query impls for EthAccount, NibiruAccount
 - [#xxxx](https://github.com/NibiruChain/nibiru/pull/xxxx) - feat(evm): keeper logic for ValidatorAccount, BaseFee, contract bytecode, EthCall, etc.
+- [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 
 #### Dapp modules: perp, spot, oracle, etc
 

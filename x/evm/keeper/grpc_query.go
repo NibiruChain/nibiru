@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 
 	sdkmath "cosmossdk.io/math"
 
