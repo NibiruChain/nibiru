@@ -36,7 +36,7 @@ func (k Keeper) CreateDenom(
 	}
 
 	return &types.MsgCreateDenomResponse{
-		NewTokenDenom: denom.String(),
+		NewTokenDenom: denom.Denom().String(),
 	}, err
 }
 

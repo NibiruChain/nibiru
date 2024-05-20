@@ -81,9 +81,9 @@ func (s *IntegrationTestSuite) CreateDenomTest() {
 	)
 	denoms := denomResp.Denoms
 	wantDenoms := []string{
-		types.TFDenom{Creator: creator.String(), Subdenom: "nusd"}.String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnibi"}.String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.String(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "nusd"}.Denom().String(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "stnibi"}.Denom().String(),
+		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.Denom().String(),
 	}
 	s.ElementsMatch(denoms, wantDenoms)
 }
@@ -120,7 +120,7 @@ func (s *IntegrationTestSuite) MintBurnTest() {
 		Creator:  creator.String(),
 		Subdenom: "nusd",
 	}
-	coin := sdk.NewInt64Coin(denom.String(), 420)
+	coin := sdk.NewInt64Coin(denom.Denom().String(), 420)
 	wantErr := false
 	mint(coin.String(), creator.String(), wantErr) // happy
 
@@ -135,12 +135,12 @@ func (s *IntegrationTestSuite) MintBurnTest() {
 	burn("notacoin_231,,", creator.String(), wantErr)
 
 	t.Log(`want error: unable to parse "mint-to" or "burn-from"`)
-	coin.Denom = denom.String()
+	coin.Denom = denom.Denom().String()
 	mint(coin.String(), "invalidAddr", wantErr)
 	burn(coin.String(), "invalidAddr", wantErr)
 
 	t.Log("burn successfully")
-	coin.Denom = denom.String()
+	coin.Denom = denom.Denom().String()
 	wantErr = false
 	burn(coin.String(), creator.String(), wantErr) // happy
 }
@@ -158,7 +158,7 @@ func (s *IntegrationTestSuite) ChangeAdminTest() {
 	infoResp := new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
 		),
 	)
 	s.Equal(infoResp.Admin, admin.String())
@@ -166,14 +166,14 @@ func (s *IntegrationTestSuite) ChangeAdminTest() {
 	s.T().Log("Change to a new admin")
 	_, err := s.network.ExecTxCmd(
 		cli.NewTxCmd(),
-		admin, []string{"change-admin", denom.String(), newAdmin.String()})
+		admin, []string{"change-admin", denom.Denom().String(), newAdmin.String()})
 	s.Require().NoError(err)
 
 	s.T().Log("Verify new admin is in state")
 	infoResp = new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
 		),
 	)
 	s.Equal(infoResp.Admin, newAdmin.String())
