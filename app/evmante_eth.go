@@ -21,18 +21,18 @@ import (
 )
 
 var (
-	_ sdk.AnteDecorator = (*EthGasConsumeDecorator)(nil)
-	_ sdk.AnteDecorator = (*EthAccountVerificationDecorator)(nil)
+	_ sdk.AnteDecorator = (*AnteDecEthGasConsume)(nil)
+	_ sdk.AnteDecorator = (*AnteDecVerifyEthAcc)(nil)
 )
 
-// EthAccountVerificationDecorator validates an account balance checks
-type EthAccountVerificationDecorator struct {
+// AnteDecVerifyEthAcc validates an account balance checks
+type AnteDecVerifyEthAcc struct {
 	AppKeepers
 }
 
-// NewEthAccountVerificationDecorator creates a new EthAccountVerificationDecorator
-func NewEthAccountVerificationDecorator(k AppKeepers) EthAccountVerificationDecorator {
-	return EthAccountVerificationDecorator{
+// NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
+func NewAnteDecVerifyEthAcc(k AppKeepers) AnteDecVerifyEthAcc {
+	return AnteDecVerifyEthAcc{
 		AppKeepers: k,
 	}
 }
@@ -43,7 +43,7 @@ func NewEthAccountVerificationDecorator(k AppKeepers) EthAccountVerificationDeco
 // - any of the msgs is not a MsgEthereumTx
 // - from address is empty
 // - account balance is lower than the transaction cost
-func (avd EthAccountVerificationDecorator) AnteHandle(
+func (avd AnteDecVerifyEthAcc) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
@@ -90,9 +90,9 @@ func (avd EthAccountVerificationDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// EthGasConsumeDecorator validates enough intrinsic gas for the transaction and
+// AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
-type EthGasConsumeDecorator struct {
+type AnteDecEthGasConsume struct {
 	AppKeepers
 	// bankKeeper         anteutils.BankKeeper
 	// distributionKeeper anteutils.DistributionKeeper
@@ -101,12 +101,12 @@ type EthGasConsumeDecorator struct {
 	maxGasWanted uint64
 }
 
-// NewEthGasConsumeDecorator creates a new EthGasConsumeDecorator
-func NewEthGasConsumeDecorator(
+// NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
+func NewAnteDecEthGasConsume(
 	keepers AppKeepers,
 	maxGasWanted uint64,
-) EthGasConsumeDecorator {
-	return EthGasConsumeDecorator{
+) AnteDecEthGasConsume {
+	return AnteDecEthGasConsume{
 		AppKeepers:   keepers,
 		maxGasWanted: maxGasWanted,
 	}
@@ -129,7 +129,7 @@ func NewEthGasConsumeDecorator(
 //   - transaction or block gas meter runs out of gas
 //   - sets the gas meter limit
 //   - gas limit is greater than the block gas meter limit
-func (egcd EthGasConsumeDecorator) AnteHandle(
+func (egcd AnteDecEthGasConsume) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	gasWanted := uint64(0)
@@ -242,7 +242,7 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 
 // deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
 // If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
-func (egcd EthGasConsumeDecorator) deductFee(ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress) error {
+func (egcd AnteDecEthGasConsume) deductFee(ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress) error {
 	if fees.IsZero() {
 		return nil
 	}
@@ -335,14 +335,14 @@ func (ctd CanTransferDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// EthIncrementSenderSequenceDecorator increments the sequence of the signers.
-type EthIncrementSenderSequenceDecorator struct {
+// AnteDecEthIncrementSenderSequence increments the sequence of the signers.
+type AnteDecEthIncrementSenderSequence struct {
 	AppKeepers
 }
 
-// NewEthIncrementSenderSequenceDecorator creates a new EthIncrementSenderSequenceDecorator.
-func NewEthIncrementSenderSequenceDecorator(k AppKeepers) EthIncrementSenderSequenceDecorator {
-	return EthIncrementSenderSequenceDecorator{
+// NewAnteDecEthIncrementSenderSequence creates a new EthIncrementSenderSequenceDecorator.
+func NewAnteDecEthIncrementSenderSequence(k AppKeepers) AnteDecEthIncrementSenderSequence {
+	return AnteDecEthIncrementSenderSequence{
 		AppKeepers: k,
 	}
 }
@@ -350,7 +350,7 @@ func NewEthIncrementSenderSequenceDecorator(k AppKeepers) EthIncrementSenderSequ
 // AnteHandle handles incrementing the sequence of the signer (i.e. sender). If the transaction is a
 // contract creation, the nonce will be incremented during the transaction execution and not within
 // this AnteHandler decorator.
-func (issd EthIncrementSenderSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (issd AnteDecEthIncrementSenderSequence) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
