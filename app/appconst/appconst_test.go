@@ -4,8 +4,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 )
 
 type TestSuite struct {
@@ -45,5 +46,4 @@ func (s *TestSuite) TestGetEthChainID() {
 			s.EqualValues(want, appconst.GetEthChainID(given))
 		}
 	})
-
 }

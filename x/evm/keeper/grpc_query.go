@@ -18,7 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 
@@ -269,14 +268,41 @@ func (k Keeper) Params(
 func (k Keeper) EthCall(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.MsgEthereumTxResponse, error) {
-	// TODO: feat(evm): impl query EthCall
-	return &evm.MsgEthereumTxResponse{
-		Hash:    "",
-		Logs:    []*evm.Log{},
-		Ret:     []byte{},
-		VmError: "",
-		GasUsed: 0,
-	}, common.ErrNotImplementedGprc()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	var args evm.JsonTxArgs
+	err := json.Unmarshal(req.Args, &args)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
+	}
+	chainID := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	// ApplyMessageWithConfig expect correct nonce set in msg
+	nonce := k.GetAccNonce(ctx, args.GetFrom())
+	args.Nonce = (*hexutil.Uint64)(&nonce)
+
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
+	}
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
+
+	// pass false to not commit StateDB
+	res, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	return res, nil
 }
 
 // EstimateGas: Implements the gRPC query for "/eth.evm.v1.Query/EstimateGas".
@@ -304,7 +330,6 @@ func (k Keeper) EstimateGas(
 func (k Keeper) EstimateGasForEvmCallType(
 	goCtx context.Context, req *evm.EthCallRequest, fromType evm.CallType,
 ) (*evm.EstimateGasResponse, error) {
-
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -539,7 +564,6 @@ func (k Keeper) TraceTx(
 	return &evm.QueryTraceTxResponse{
 		Data: resultData,
 	}, nil
-
 }
 
 // Re-export of the default tracer timeout from go-ethereum.
@@ -554,10 +578,69 @@ const DefaultGethTraceTimeout = 5 * time.Second
 func (k Keeper) TraceBlock(
 	goCtx context.Context, req *evm.QueryTraceBlockRequest,
 ) (*evm.QueryTraceBlockResponse, error) {
-	// TODO: feat(evm): impl query TraceBlock
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// get the context of block beginning
+	contextHeight := req.BlockNumber
+	if contextHeight < 1 {
+		// 0 is a special value in `ContextWithHeight`
+		contextHeight = 1
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithBlockHeight(contextHeight)
+	ctx = ctx.WithBlockTime(req.BlockTime)
+	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
+	chainID := k.EthChainID(ctx)
+
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
+	}
+
+	// compute and use base fee of height that is being traced
+	baseFee := k.GetBaseFeeNoCfg(ctx)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
+	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
+	txsLength := len(req.Txs)
+	results := make([]*evm.TxTraceResult, 0, txsLength)
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	for i, tx := range req.Txs {
+		result := evm.TxTraceResult{}
+		ethTx := tx.AsTransaction()
+		txConfig.TxHash = ethTx.Hash()
+		txConfig.TxIndex = uint(i)
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, ethTx, req.TraceConfig, true, nil)
+		if err != nil {
+			result.Error = err.Error()
+		} else {
+			txConfig.LogIndex = logIndex
+			result.Result = traceResult
+		}
+		results = append(results, &result)
+	}
+
+	resultData, err := json.Marshal(results)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
 	return &evm.QueryTraceBlockResponse{
-		Data: []byte{},
-	}, common.ErrNotImplementedGprc()
+		Data: resultData,
+	}, nil
 }
 
 // TraceEthTxMsg do trace on one transaction, it returns a tuple: (traceResult,
