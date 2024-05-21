@@ -20,10 +20,10 @@ func NewAnteHandlerEVM(
 		NewEthMinGasPriceDecorator(k),
 		NewEthValidateBasicDecorator(k),
 		NewEthSigVerificationDecorator(k),
-		NewEthAccountVerificationDecorator(k),
+		NewAnteDecVerifyEthAcc(k),
 		NewCanTransferDecorator(k),
-		NewEthGasConsumeDecorator(k, options.MaxTxGasWanted),
-		NewEthIncrementSenderSequenceDecorator(k),
+		NewAnteDecEthGasConsume(k, options.MaxTxGasWanted),
+		NewAnteDecEthIncrementSenderSequence(k),
 		NewGasWantedDecorator(k),
 		// emit eth tx hash and index at the very last ante handler.
 		NewEthEmitEventDecorator(k),
