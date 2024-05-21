@@ -121,6 +121,14 @@ func (k Keeper) GetBaseFee(
 	return big.NewInt(0)
 }
 
+func (k Keeper) GetBaseFeeNoCfg(
+	ctx sdk.Context,
+) *big.Int {
+	ethChainId := k.EthChainID(ctx)
+	ethCfg := k.GetParams(ctx).ChainConfig.EthereumConfig(ethChainId)
+	return k.GetBaseFee(ctx, ethCfg)
+}
+
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
