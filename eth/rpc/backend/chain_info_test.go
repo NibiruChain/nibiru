@@ -99,7 +99,8 @@ func (s *BackendSuite) TestBaseFee() {
 }
 
 func (s *BackendSuite) TestChainId() {
-	expChainIDNumber := eth.ParseEIP155ChainIDNumber(eth.EIP155ChainID_Testnet)
+	expChainIDNumber, err := eth.ParseEthChainID(eth.EIP155ChainID_Testnet)
+	s.Require().NoError(err)
 	expChainID := (*hexutil.Big)(expChainIDNumber)
 	testCases := []struct {
 		name         string
