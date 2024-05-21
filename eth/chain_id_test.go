@@ -38,7 +38,7 @@ func TestParseChainID_Happy(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		chainIDEpoch, err := ParseEthChainID(tc.chainID)
+		chainIDEpoch, err := ParseEthChainIDStrict(tc.chainID)
 		require.NoError(t, err, tc.name)
 		var errMsg string = ""
 		if err != nil {
@@ -122,7 +122,7 @@ func TestParseChainID_Sad(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		chainIDEpoch, err := ParseEthChainID(tc.chainID)
+		chainIDEpoch, err := ParseEthChainIDStrict(tc.chainID)
 		require.Error(t, err, tc.name)
 		require.Nil(t, chainIDEpoch)
 		require.False(t, IsValidChainID(tc.chainID), tc.name)

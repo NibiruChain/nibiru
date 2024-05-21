@@ -3,15 +3,35 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"math/big"
+	"time"
+
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	sdkmath "cosmossdk.io/math"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/eth/tracers"
+	"github.com/ethereum/go-ethereum/eth/tracers/logger"
+	gethparams "github.com/ethereum/go-ethereum/params"
+
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 // Compile-time interface assertion
@@ -145,10 +165,13 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
-	// TODO: feat(evm): impl query BaseFee
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	ethCfg := params.ChainConfig.EthereumConfig(k.EthChainID(ctx))
+	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx, ethCfg))
 	return &evm.QueryBaseFeeResponse{
-		BaseFee: &sdkmath.Int{},
-	}, common.ErrNotImplementedGprc()
+		BaseFee: &baseFee,
+	}, nil
 }
 
 // Storage: Implements the gRPC query for "/eth.evm.v1.Query/Storage".
@@ -261,12 +284,11 @@ func (k Keeper) EthCall(
 func (k Keeper) EstimateGas(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.EstimateGasResponse, error) {
-	// TODO: feat(evm): impl query EstimateGas
 	return k.EstimateGasForEvmCallType(goCtx, req, evm.CallTypeRPC)
 }
 
 // EstimateGasForEvmCallType estimates the gas cost of a transaction. This can be
-// called with the "eth_estimateGas" JSON-RPC method or an smart contract query.
+// called with the "eth_estimateGas" JSON-RPC method or smart contract query.
 //
 // When [EstimateGas] is called from the JSON-RPC client, we need to reset the
 // gas meter before simulating the transaction (tx) to have an accurate gas
@@ -282,10 +304,147 @@ func (k Keeper) EstimateGas(
 func (k Keeper) EstimateGasForEvmCallType(
 	goCtx context.Context, req *evm.EthCallRequest, fromType evm.CallType,
 ) (*evm.EstimateGasResponse, error) {
-	// TODO: feat(evm): impl query EstimateGasForEvmCallType
-	return &evm.EstimateGasResponse{
-		Gas: 0,
-	}, common.ErrNotImplementedGprc()
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	chainID := k.EthChainID(ctx)
+
+	if req.GasCap < gethparams.TxGas {
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "gas cap cannot be lower than %d", gethparams.TxGas)
+	}
+
+	var args evm.JsonTxArgs
+	err := json.Unmarshal(req.Args, &args)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
+	}
+
+	// Binary search the gas requirement, as it may be higher than the amount used
+	var (
+		lo     = gethparams.TxGas - 1
+		hi     uint64
+		gasCap uint64
+	)
+
+	// Determine the highest gas limit can be used during the estimation.
+	if args.Gas != nil && uint64(*args.Gas) >= gethparams.TxGas {
+		hi = uint64(*args.Gas)
+	} else {
+		// Query block gas limit
+		params := ctx.ConsensusParams()
+		if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
+			hi = uint64(params.Block.MaxGas)
+		} else {
+			hi = req.GasCap
+		}
+	}
+
+	// TODO: Recap the highest gas limit with account's available balance.
+	// Recap the highest gas allowance with specified gascap.
+	if req.GasCap != 0 && hi > req.GasCap {
+		hi = req.GasCap
+	}
+
+	gasCap = hi
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
+	}
+
+	// ApplyMessageWithConfig expect correct nonce set in msg
+	nonce := k.GetAccNonce(ctx, args.GetFrom())
+	args.Nonce = (*hexutil.Uint64)(&nonce)
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	// convert the tx args to an ethereum message
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	// NOTE: the errors from the executable below should be consistent with
+	// go-ethereum, so we don't wrap them with the gRPC status code Create a
+	// helper to check if a gas allowance results in an executable transaction.
+	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
+		// update the message with the new gas value
+		msg = gethcore.NewMessage(
+			msg.From(),
+			msg.To(),
+			msg.Nonce(),
+			msg.Value(),
+			gas,
+			msg.GasPrice(),
+			msg.GasFeeCap(),
+			msg.GasTipCap(),
+			msg.Data(),
+			msg.AccessList(),
+			msg.IsFake(),
+		)
+
+		tmpCtx := ctx
+		if fromType == evm.CallTypeRPC {
+			tmpCtx, _ = ctx.CacheContext()
+
+			acct := k.GetAccount(tmpCtx, msg.From())
+
+			from := msg.From()
+			if acct == nil {
+				acc := k.accountKeeper.NewAccountWithAddress(tmpCtx, from[:])
+				k.accountKeeper.SetAccount(tmpCtx, acc)
+				acct = statedb.NewEmptyAccount()
+			}
+			// When submitting a transaction, the `EthIncrementSenderSequence` ante handler increases the account nonce
+			acct.Nonce = nonce + 1
+			err = k.SetAccount(tmpCtx, from, *acct)
+			if err != nil {
+				return true, nil, err
+			}
+			// resetting the gasMeter after increasing the sequence to have an accurate gas estimation on EVM extensions transactions
+			gasMeter := eth.NewInfiniteGasMeterWithLimit(msg.Gas())
+			tmpCtx = tmpCtx.WithGasMeter(gasMeter).
+				WithKVGasConfig(storetypes.GasConfig{}).
+				WithTransientKVGasConfig(storetypes.GasConfig{})
+		}
+		// pass false to not commit StateDB
+		rsp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig)
+		if err != nil {
+			if errors.Is(err, core.ErrIntrinsicGas) {
+				return true, nil, nil // Special case, raise gas limit
+			}
+			return true, nil, err // Bail out
+		}
+		return len(rsp.VmError) > 0, rsp, nil
+	}
+
+	// Execute the binary search and hone in on an executable gas limit
+	hi, err = evm.BinSearch(lo, hi, executable)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reject the transaction as invalid if it still fails at the highest allowance
+	if hi == gasCap {
+		failed, result, err := executable(hi)
+		if err != nil {
+			return nil, err
+		}
+
+		if failed {
+			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
+				if result.VmError == vm.ErrExecutionReverted.Error() {
+					return nil, evm.NewExecErrorWithReason(result.Ret)
+				}
+				return nil, errors.New(result.VmError)
+			}
+			// Otherwise, the specified gas cap is too low
+			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+		}
+	}
+	return &evm.EstimateGasResponse{Gas: hi}, nil
 }
 
 // TraceTx configures a new tracer according to the provided configuration, and
@@ -294,11 +453,98 @@ func (k Keeper) EstimateGasForEvmCallType(
 func (k Keeper) TraceTx(
 	goCtx context.Context, req *evm.QueryTraceTxRequest,
 ) (*evm.QueryTraceTxResponse, error) {
-	// TODO: feat(evm): impl query TraceTx
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// get the context of block beginning
+	contextHeight := req.BlockNumber
+	if contextHeight < 1 {
+		// 0 is a special value in `ContextWithHeight`
+		contextHeight = 1
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithBlockHeight(contextHeight)
+	ctx = ctx.WithBlockTime(req.BlockTime)
+	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
+	chainID := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
+	}
+
+	// compute and use base fee of the height that is being traced
+	baseFee := k.GetBaseFee(ctx, cfg.ChainConfig)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
+	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	// gas used at this point corresponds to GetProposerAddress & CalculateBaseFee
+	// need to reset gas meter per transaction to be consistent with tx execution
+	// and avoid stacking the gas used of every predecessor in the same gas meter
+
+	for i, tx := range req.Predecessors {
+		ethTx := tx.AsTransaction()
+		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		if err != nil {
+			continue
+		}
+		txConfig.TxHash = ethTx.Hash()
+		txConfig.TxIndex = uint(i)
+		// reset gas meter for each transaction
+		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
+			WithKVGasConfig(storetypes.GasConfig{}).
+			WithTransientKVGasConfig(storetypes.GasConfig{})
+		rsp, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
+		if err != nil {
+			continue
+		}
+		txConfig.LogIndex += uint(len(rsp.Logs))
+	}
+
+	tx := req.Msg.AsTransaction()
+	txConfig.TxHash = tx.Hash()
+	if len(req.Predecessors) > 0 {
+		txConfig.TxIndex++
+	}
+
+	var tracerConfig json.RawMessage
+	if req.TraceConfig != nil && req.TraceConfig.TracerJsonConfig != "" {
+		// ignore error. default to no traceConfig
+		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
+	}
+
+	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, tx, req.TraceConfig, false, tracerConfig)
+	if err != nil {
+		// error will be returned with detail status from traceTx
+		return nil, err
+	}
+
+	resultData, err := json.Marshal(result)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
 	return &evm.QueryTraceTxResponse{
-		Data: []byte{},
-	}, common.ErrNotImplementedGprc()
+		Data: resultData,
+	}, nil
+
 }
+
+// Re-export of the default tracer timeout from go-ethereum.
+// See "geth/eth/tracers/api.go".
+const DefaultGethTraceTimeout = 5 * time.Second
 
 // TraceBlock: Implements the gRPC query for "/eth.evm.v1.Query/TraceBlock".
 // Configures a Nibiru EVM tracer that is used to "trace" and analyze
@@ -312,4 +558,102 @@ func (k Keeper) TraceBlock(
 	return &evm.QueryTraceBlockResponse{
 		Data: []byte{},
 	}, common.ErrNotImplementedGprc()
+}
+
+// TraceEthTxMsg do trace on one transaction, it returns a tuple: (traceResult,
+// nextLogIndex, error).
+func (k *Keeper) TraceEthTxMsg(
+	ctx sdk.Context,
+	cfg *statedb.EVMConfig,
+	txConfig statedb.TxConfig,
+	signer gethcore.Signer,
+	tx *gethcore.Transaction,
+	traceConfig *evm.TraceConfig,
+	commitMessage bool,
+	tracerJSONConfig json.RawMessage,
+) (*interface{}, uint, error) {
+	// Assemble the structured logger or the JavaScript tracer
+	var (
+		tracer    tracers.Tracer
+		overrides *gethparams.ChainConfig
+		err       error
+		timeout   = DefaultGethTraceTimeout
+	)
+	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	if err != nil {
+		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	if traceConfig == nil {
+		traceConfig = &evm.TraceConfig{}
+	}
+
+	if traceConfig.Overrides != nil {
+		overrides = traceConfig.Overrides.EthereumConfig(cfg.ChainConfig.ChainID)
+	}
+
+	logConfig := logger.Config{
+		EnableMemory:     traceConfig.EnableMemory,
+		DisableStorage:   traceConfig.DisableStorage,
+		DisableStack:     traceConfig.DisableStack,
+		EnableReturnData: traceConfig.EnableReturnData,
+		Debug:            traceConfig.Debug,
+		Limit:            int(traceConfig.Limit),
+		Overrides:        overrides,
+	}
+
+	tracer = logger.NewStructLogger(&logConfig)
+
+	tCtx := &tracers.Context{
+		BlockHash: txConfig.BlockHash,
+		TxIndex:   int(txConfig.TxIndex),
+		TxHash:    txConfig.TxHash,
+	}
+
+	if traceConfig.Tracer != "" {
+		if tracer, err = tracers.New(traceConfig.Tracer, tCtx, tracerJSONConfig); err != nil {
+			return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
+		}
+	}
+
+	// Define a meaningful timeout of a single transaction trace
+	if traceConfig.Timeout != "" {
+		if timeout, err = time.ParseDuration(traceConfig.Timeout); err != nil {
+			return nil, 0, grpcstatus.Errorf(grpccodes.InvalidArgument, "timeout value: %s", err.Error())
+		}
+	}
+
+	// Handle timeouts and RPC cancellations
+	deadlineCtx, cancel := context.WithTimeout(ctx.Context(), timeout)
+	defer cancel()
+
+	go func() {
+		<-deadlineCtx.Done()
+		if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
+			tracer.Stop(errors.New("execution timeout"))
+		}
+	}()
+
+	// In order to be on in sync with the tx execution gas meter,
+	// we need to:
+	// 1. Reset GasMeter with InfiniteGasMeterWithLimit
+	// 2. Setup an empty KV gas config for gas to be calculated by opcodes
+	// and not kvstore actions
+	// 3. Setup an empty transient KV gas config for transient gas to be
+	// calculated by opcodes
+	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
+		WithKVGasConfig(storetypes.GasConfig{}).
+		WithTransientKVGasConfig(storetypes.GasConfig{})
+	res, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig)
+	if err != nil {
+		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	var result interface{}
+	result, err = tracer.GetResult()
+	if err != nil {
+		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
