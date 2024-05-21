@@ -173,3 +173,13 @@ func (state EvmState) CalcBloomFromLogs(
 func (k Keeper) ResetTransientGasUsed(ctx sdk.Context) {
 	k.EvmState.BlockGasUsed.Set(ctx, 0)
 }
+
+// GetAccNonce returns the sequence number of an account, returns 0 if not exists.
+func (k *Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
+	nibiruAddr := sdk.AccAddress(addr.Bytes())
+	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)
+	if acct == nil {
+		return 0
+	}
+	return acct.GetSequence()
+}

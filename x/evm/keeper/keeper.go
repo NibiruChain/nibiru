@@ -18,7 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -90,11 +90,7 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
-	ethChainID, err := eth.ParseEthChainID(ctx.ChainID())
-	if err != nil {
-		panic(err)
-	}
-	return ethChainID
+	return appconst.GetEthChainID(ctx.ChainID())
 }
 
 // AddToBlockGasUsed accumulate gas used by each eth msgs included in current
@@ -123,6 +119,14 @@ func (k Keeper) GetBaseFee(
 		return nil
 	}
 	return big.NewInt(0)
+}
+
+func (k Keeper) GetBaseFeeNoCfg(
+	ctx sdk.Context,
+) *big.Int {
+	ethChainId := k.EthChainID(ctx)
+	ethCfg := k.GetParams(ctx).ChainConfig.EthereumConfig(ethChainId)
+	return k.GetBaseFee(ctx, ethCfg)
 }
 
 // Logger returns a module-specific logger.

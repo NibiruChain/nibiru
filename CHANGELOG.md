@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests 
 - [#1871](https://github.com/NibiruChain/nibiru/pull/1871) - feat(evm): app config and json-rpc
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper collections and grpc query impls for EthAccount, NibiruAccount
-- [#xxxx](https://github.com/NibiruChain/nibiru/pull/xxxx) - feat(evm): keeper logic for ValidatorAccount, BaseFee, contract bytecode, EthCall, etc.
+- [#1883](https://github.com/NibiruChain/nibiru/pull/1883) - feat(evm): keeper logic, Ante handlers, EthCall, and EVM transactions.
 - [#1887](https://github.com/NibiruChain/nibiru/pull/1887) - test(evm): eth api integration test suite
 
 #### Dapp modules: perp, spot, oracle, etc
