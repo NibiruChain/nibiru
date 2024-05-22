@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/cometbft/cometbft/api/cometbft/crypto/v1"
 
 	"github.com/cosmos/cosmos-sdk/client"
 

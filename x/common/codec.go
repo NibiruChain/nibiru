@@ -1,9 +1,11 @@
 package common
 
 import (
-	"cosmossdk.io/collections"
-	collcodec "cosmossdk.io/collections/codec"
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
+
+	collcodec "cosmossdk.io/collections/codec"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
