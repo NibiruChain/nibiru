@@ -743,11 +743,3 @@ func (k *Keeper) TraceEthTxMsg(
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
-
-// GetProposerAddress returns current block proposer's address when provided proposer address is empty.
-func GetProposerAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) sdk.ConsAddress {
-	if len(proposerAddress) == 0 {
-		proposerAddress = ctx.BlockHeader().ProposerAddress
-	}
-	return proposerAddress
-}
