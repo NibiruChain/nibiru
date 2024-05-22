@@ -2,29 +2,9 @@
 package eth
 
 import (
-	"fmt"
 	"math/big"
-	"regexp"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-)
-
-var (
-	// one of any lower case letter from "a"-"z"
-	regexChainID = `[a-z]{1,}`
-	// one of either "_" or "-"
-	regexEIP155Separator = `[_-]{1}`
-	// one of "_"
-	// regexEIP155Separator = `_{1}`
-	regexEIP155         = `[1-9][0-9]*`
-	regexEpochSeparator = `-{1}`
-	regexEpoch          = `[1-9][0-9]*`
-	nibiruEvmChainId    = regexp.MustCompile(fmt.Sprintf(`^(%s)%s(%s)%s(%s)$`,
-		regexChainID,
-		regexEIP155Separator,
-		regexEIP155,
-		regexEpochSeparator,
-		regexEpoch))
 )
 
 // IsValidChainID returns false if the given chain identifier is incorrectly
@@ -34,7 +14,7 @@ func IsValidChainID(chainID string) bool {
 		return false
 	}
 
-	return nibiruEvmChainId.MatchString(chainID)
+	return true
 }
 
 // ParseEthChainID parses a string chain identifier's epoch to an
