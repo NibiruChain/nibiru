@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 
+	"github.com/NibiruChain/nibiru/eth"
 	nibiCommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -64,7 +65,9 @@ func (s *IntegrationSuite) Test_ChainID() {
 	*/
 	ethChainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
-	s.Contains(s.cfg.ChainID, fmt.Sprintf("_%s-", ethChainID))
+	wantEthChainID, err := eth.ParseEthChainID(s.cfg.ChainID)
+	s.NoError(err)
+	s.Require().EqualValues(wantEthChainID, ethChainID)
 }
 
 // Test_BlockNumber EVM method: eth_blockNumber
