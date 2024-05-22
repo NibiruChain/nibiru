@@ -10,11 +10,7 @@ import (
 // IsValidChainID returns false if the given chain identifier is incorrectly
 // formatted.
 func IsValidChainID(chainID string) bool {
-	if len(chainID) > 48 {
-		return false
-	}
-
-	return true
+	return len(chainID) <= 48
 }
 
 // ParseEthChainID parses a string chain identifier's epoch to an
