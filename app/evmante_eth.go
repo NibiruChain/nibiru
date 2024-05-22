@@ -21,18 +21,18 @@ import (
 )
 
 var (
-	_ sdk.AnteDecorator = (*EthGasConsumeDecorator)(nil)
-	_ sdk.AnteDecorator = (*EthAccountVerificationDecorator)(nil)
+	_ sdk.AnteDecorator = (*AnteDecEthGasConsume)(nil)
+	_ sdk.AnteDecorator = (*AnteDecVerifyEthAcc)(nil)
 )
 
-// EthAccountVerificationDecorator validates an account balance checks
-type EthAccountVerificationDecorator struct {
+// AnteDecVerifyEthAcc validates an account balance checks
+type AnteDecVerifyEthAcc struct {
 	AppKeepers
 }
 
-// NewEthAccountVerificationDecorator creates a new EthAccountVerificationDecorator
-func NewEthAccountVerificationDecorator(k AppKeepers) EthAccountVerificationDecorator {
-	return EthAccountVerificationDecorator{
+// NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
+func NewAnteDecVerifyEthAcc(k AppKeepers) AnteDecVerifyEthAcc {
+	return AnteDecVerifyEthAcc{
 		AppKeepers: k,
 	}
 }
@@ -43,7 +43,7 @@ func NewEthAccountVerificationDecorator(k AppKeepers) EthAccountVerificationDeco
 // - any of the msgs is not a MsgEthereumTx
 // - from address is empty
 // - account balance is lower than the transaction cost
-func (avd EthAccountVerificationDecorator) AnteHandle(
+func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
@@ -72,11 +72,11 @@ func (avd EthAccountVerificationDecorator) AnteHandle(
 
 		// check whether the sender address is EOA
 		fromAddr := gethcommon.BytesToAddress(from)
-		acct := avd.EvmKeeper.GetAccount(ctx, fromAddr)
+		acct := anteDec.EvmKeeper.GetAccount(ctx, fromAddr)
 
 		if acct == nil {
-			acc := avd.AccountKeeper.NewAccountWithAddress(ctx, from)
-			avd.AccountKeeper.SetAccount(ctx, acc)
+			acc := anteDec.AccountKeeper.NewAccountWithAddress(ctx, from)
+			anteDec.AccountKeeper.SetAccount(ctx, acc)
 			acct = statedb.NewEmptyAccount()
 		} else if acct.IsContract() {
 			return ctx, errors.Wrapf(errortypes.ErrInvalidType,
@@ -90,9 +90,9 @@ func (avd EthAccountVerificationDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// EthGasConsumeDecorator validates enough intrinsic gas for the transaction and
+// AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
-type EthGasConsumeDecorator struct {
+type AnteDecEthGasConsume struct {
 	AppKeepers
 	// bankKeeper         anteutils.BankKeeper
 	// distributionKeeper anteutils.DistributionKeeper
@@ -101,12 +101,12 @@ type EthGasConsumeDecorator struct {
 	maxGasWanted uint64
 }
 
-// NewEthGasConsumeDecorator creates a new EthGasConsumeDecorator
-func NewEthGasConsumeDecorator(
+// NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
+func NewAnteDecEthGasConsume(
 	keepers AppKeepers,
 	maxGasWanted uint64,
-) EthGasConsumeDecorator {
-	return EthGasConsumeDecorator{
+) AnteDecEthGasConsume {
+	return AnteDecEthGasConsume{
 		AppKeepers:   keepers,
 		maxGasWanted: maxGasWanted,
 	}
@@ -129,13 +129,14 @@ func NewEthGasConsumeDecorator(
 //   - transaction or block gas meter runs out of gas
 //   - sets the gas meter limit
 //   - gas limit is greater than the block gas meter limit
-func (egcd EthGasConsumeDecorator) AnteHandle(
+func (anteDec AnteDecEthGasConsume) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	gasWanted := uint64(0)
-	// gas consumption limit already checked during CheckTx so there's no need to
-	// verify it again during ReCheckTx
 	if ctx.IsReCheckTx() {
+		// Then, the limit for gas consumed was already checked during CheckTx so
+		// there's no need to verify it again during ReCheckTx
+		//
 		// Use new context with gasWanted = 0
 		// Otherwise, there's an error on txmempool.postCheck (tendermint)
 		// that is not bubbled up. Thus, the Tx never runs on DeliverMode
@@ -144,10 +145,10 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 		return next(newCtx, tx, simulate)
 	}
 
-	evmParams := egcd.EvmKeeper.GetParams(ctx)
+	evmParams := anteDec.EvmKeeper.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(egcd.EvmKeeper.EthChainID(ctx))
+	ethCfg := chainCfg.EthereumConfig(anteDec.EvmKeeper.EthChainID(ctx))
 
 	blockHeight := big.NewInt(ctx.BlockHeight())
 	homestead := ethCfg.IsHomestead(blockHeight)
@@ -156,7 +157,7 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
-	baseFee := egcd.EvmKeeper.GetBaseFee(ctx, ethCfg)
+	baseFee := anteDec.EvmKeeper.GetBaseFee(ctx, ethCfg)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -174,10 +175,10 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 			return ctx, errors.Wrap(err, "failed to unpack tx data")
 		}
 
-		if ctx.IsCheckTx() && egcd.maxGasWanted != 0 {
+		if ctx.IsCheckTx() && anteDec.maxGasWanted != 0 {
 			// We can't trust the tx gas limit, because we'll refund the unused gas.
-			if txData.GetGas() > egcd.maxGasWanted {
-				gasWanted += egcd.maxGasWanted
+			if txData.GetGas() > anteDec.maxGasWanted {
+				gasWanted += anteDec.maxGasWanted
 			} else {
 				gasWanted += txData.GetGas()
 			}
@@ -190,7 +191,7 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 			return ctx, errors.Wrapf(err, "failed to verify the fees")
 		}
 
-		if err = egcd.deductFee(ctx, fees, from); err != nil {
+		if err = anteDec.deductFee(ctx, fees, from); err != nil {
 			return ctx, err
 		}
 
@@ -242,14 +243,14 @@ func (egcd EthGasConsumeDecorator) AnteHandle(
 
 // deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
 // If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
-func (egcd EthGasConsumeDecorator) deductFee(ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress) error {
+func (anteDec AnteDecEthGasConsume) deductFee(ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress) error {
 	if fees.IsZero() {
 		return nil
 	}
 
 	// If the account balance is not sufficient, try to withdraw enough staking rewards
 
-	if err := egcd.EvmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
+	if err := anteDec.EvmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
 		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil
@@ -335,14 +336,14 @@ func (ctd CanTransferDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// EthIncrementSenderSequenceDecorator increments the sequence of the signers.
-type EthIncrementSenderSequenceDecorator struct {
+// AnteDecEthIncrementSenderSequence increments the sequence of the signers.
+type AnteDecEthIncrementSenderSequence struct {
 	AppKeepers
 }
 
-// NewEthIncrementSenderSequenceDecorator creates a new EthIncrementSenderSequenceDecorator.
-func NewEthIncrementSenderSequenceDecorator(k AppKeepers) EthIncrementSenderSequenceDecorator {
-	return EthIncrementSenderSequenceDecorator{
+// NewAnteDecEthIncrementSenderSequence creates a new EthIncrementSenderSequenceDecorator.
+func NewAnteDecEthIncrementSenderSequence(k AppKeepers) AnteDecEthIncrementSenderSequence {
+	return AnteDecEthIncrementSenderSequence{
 		AppKeepers: k,
 	}
 }
@@ -350,7 +351,7 @@ func NewEthIncrementSenderSequenceDecorator(k AppKeepers) EthIncrementSenderSequ
 // AnteHandle handles incrementing the sequence of the signer (i.e. sender). If the transaction is a
 // contract creation, the nonce will be incremented during the transaction execution and not within
 // this AnteHandler decorator.
-func (issd EthIncrementSenderSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (issd AnteDecEthIncrementSenderSequence) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {

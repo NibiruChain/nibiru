@@ -13,7 +13,7 @@ import (
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilMsg error = common.ErrNilGrpcMsg()
+var errNilMsg error = common.ErrNilGrpcMsg
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,
@@ -36,7 +36,7 @@ func (k Keeper) CreateDenom(
 	}
 
 	return &types.MsgCreateDenomResponse{
-		NewTokenDenom: denom.String(),
+		NewTokenDenom: denom.Denom().String(),
 	}, err
 }
 

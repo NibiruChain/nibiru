@@ -53,6 +53,6 @@ func (s *TestSuite) TestNilQueries() {
 		},
 	} {
 		err := testCase()
-		s.Require().ErrorContains(err, common.ErrNilGrpcMsg().Error())
+		s.Require().ErrorContains(err, common.ErrNilGrpcMsg.Error())
 	}
 }

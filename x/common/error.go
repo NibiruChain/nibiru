@@ -184,9 +184,7 @@ func CombineErrorsFromStrings(strs ...string) (err error) {
 	return CombineErrors(errs...)
 }
 
-func ErrNilGrpcMsg() error {
-	return grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
-}
+var ErrNilGrpcMsg = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
 
 // ErrNotImplemented: Represents an function error value.
 func ErrNotImplemented() error { return fmt.Errorf("fn not implemented yet") }

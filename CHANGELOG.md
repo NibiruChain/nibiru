@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
 
+- [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
+
 #### Nibiru EVM
 
 - [#1837](https://github.com/NibiruChain/nibiru/pull/1837) - feat(eth): protos, eth types, and evm module types
@@ -61,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests 
 - [#1871](https://github.com/NibiruChain/nibiru/pull/1871) - feat(evm): app config and json-rpc
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper collections and grpc query impls for EthAccount, NibiruAccount
+- [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 - [#1883](https://github.com/NibiruChain/nibiru/pull/1883) - feat(evm): keeper logic, Ante handlers, EthCall, and EVM transactions.
 - [#1887](https://github.com/NibiruChain/nibiru/pull/1887) - test(evm): eth api integration test suite
 
