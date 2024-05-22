@@ -2,7 +2,6 @@ package rpcapi_test
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"testing"
 
