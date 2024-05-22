@@ -48,7 +48,6 @@ import (
 
 const (
 	msgsFieldName    = "msgs"
-	baseDenom        = "anibi"
 	TESTNET_CHAIN_ID = "nibiru_9000"
 )
 
@@ -81,7 +80,7 @@ func TestEIP712TestSuite(t *testing.T) {
 func (suite *EIP712TestSuite) SetupTest() {
 	suite.config = encoding.MakeConfig(app.ModuleBasics)
 	suite.clientCtx = client.Context{}.WithTxConfig(suite.config.TxConfig)
-	suite.denom = baseDenom
+	suite.denom = evm.DefaultEVMDenom
 
 	sdk.GetConfig().SetBech32PrefixForAccount(ethclient.Bech32Prefix, "")
 	eip712.SetEncodingConfig(suite.config)
@@ -272,6 +271,18 @@ func (suite *EIP712TestSuite) TestEIP712() {
 			title:         "Fails - Empty Transaction",
 			msgs:          []sdk.Msg{},
 			expectSuccess: false,
+		},
+		{
+			title:   "Success - Invalid ChainID uses default",
+			chainID: "invalidchainid",
+			msgs: []sdk.Msg{
+				govtypes.NewMsgVote(
+					suite.createTestAddress(),
+					5,
+					govtypes.OptionNo,
+				),
+			},
+			expectSuccess: true,
 		},
 		{
 			title: "Fails - Includes TimeoutHeight",
