@@ -29,30 +29,30 @@ func (params ModuleParams) Validate() error {
 // ----------------------------------------------------
 
 func (tfd TFDenom) Denom() DenomStr {
-	return DenomStr(tfd.String())
+	return DenomStr(fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom))
 }
 
-// String: returns the standard string representation.
-func (tfd TFDenom) String() string {
-	return fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom)
-}
+// // String: returns the standard string representation.
+// func (tfd TFDenom) DenomStr() string {
+// 	return fmt.Sprintf("tf/%s/%s", tfd.Creator, tfd.Subdenom)
+// }
 
 func (tfd TFDenom) Validate() error {
 	return tfd.Denom().Validate()
 }
 
 func (tfd TFDenom) DefaultBankMetadata() banktypes.Metadata {
-	denom := tfd.String()
+	denom := tfd.Denom()
 	return banktypes.Metadata{
 		DenomUnits: []*banktypes.DenomUnit{{
-			Denom:    denom,
+			Denom:    denom.String(),
 			Exponent: 0,
 		}},
-		Base: denom,
+		Base: denom.String(),
 		// The following is necessary for x/bank denom validation
-		Display: denom,
-		Name:    denom,
-		Symbol:  denom,
+		Display: denom.String(),
+		Name:    denom.String(),
+		Symbol:  denom.String(),
 	}
 }
 
