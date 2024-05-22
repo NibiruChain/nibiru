@@ -39,7 +39,7 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 
 	"github.com/cosmos/rosetta"
-	crgserver "ithub.com/cosmos/rosetta/lib/server"
+	crgserver "github.com/cosmos/rosetta/lib/server"
 
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
