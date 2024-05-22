@@ -1,6 +1,7 @@
 package ante_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -41,7 +42,8 @@ func (suite *AnteTestSuite) SetupTest() {
 	encodingConfig := app.MakeEncodingConfig()
 	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
-	ctx := suite.app.NewContext(true, tmproto.Header{
+	ctx := suite.app.NewContext(true)
+	ctx.WithBlockHeader(tmproto.Header{
 		Height:  1,
 		ChainID: chainId,
 		Time:    time.Now().UTC(),
@@ -54,7 +56,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithChainID(chainId).
 		WithLegacyAmino(encodingConfig.Amino)
 
-	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	err := suite.app.AccountKeeper.Params.Set(ctx, authtypes.DefaultParams())
 	suite.Require().NoError(err)
 	params := suite.app.AccountKeeper.GetParams(ctx)
 	suite.Require().NoError(params.Validate())
@@ -84,15 +86,17 @@ func (suite *AnteTestSuite) SetupTest() {
 }
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
-func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []uint64, accSeqs []uint64, chainID string) (xauthsigning.Tx, error) {
+func (suite *AnteTestSuite) CreateTestTx(ctx context.Context, privs []cryptotypes.PrivKey, accNums []uint64, accSeqs []uint64, chainID string) (xauthsigning.Tx, error) {
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
+	signMode := signing.SignMode_SIGN_MODE_DIRECT
+
 	var sigsV2 []signing.SignatureV2
 	for i, priv := range privs {
 		sigV2 := signing.SignatureV2{
 			PubKey: priv.PubKey(),
 			Data: &signing.SingleSignatureData{
-				SignMode:  suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(),
+				SignMode:  signMode,
 				Signature: nil,
 			},
 			Sequence: accSeqs[i],
@@ -117,8 +121,13 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 			Sequence:      accSeqs[i],
 		}
 		sigV2, err := tx.SignWithPrivKey(
-			suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(), signerData,
-			suite.txBuilder, priv, suite.clientCtx.TxConfig, accSeqs[i])
+			ctx,
+			signMode,
+			signerData,
+			suite.txBuilder,
+			priv,
+			suite.clientCtx.TxConfig,
+			accSeqs[i])
 		if err != nil {
 			return nil, err
 		}
