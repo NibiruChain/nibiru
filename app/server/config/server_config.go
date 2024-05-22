@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/cosmos/rosetta"
 	"github.com/spf13/viper"
 
 	"github.com/cometbft/cometbft/libs/strings"
@@ -108,6 +109,7 @@ type Config struct {
 	EVM     EVMConfig     `mapstructure:"evm"`
 	JSONRPC JSONRPCConfig `mapstructure:"json-rpc"`
 	TLS     TLSConfig     `mapstructure:"tls"`
+	Rosetta RosettaConfig `mapstructure:"rosetta"`
 }
 
 // EVMConfig defines the application configuration values for the EVM.
@@ -117,6 +119,14 @@ type EVMConfig struct {
 	Tracer string `mapstructure:"tracer"`
 	// MaxTxGasWanted defines the gas wanted for each eth tx returned in ante handler in check tx mode.
 	MaxTxGasWanted uint64 `mapstructure:"max-tx-gas-wanted"`
+}
+
+// RosettaConfig defines the application configuration values for the Rosetta API.
+type RosettaConfig struct {
+	// Enable defines if the Rosetta API server should be enabled.
+	Enable bool `mapstructure:"enable"`
+	// Config defines the Rosetta configuration.
+	Config rosetta.Config `mapstructure:"config"`
 }
 
 // JSONRPCConfig defines configuration for the EVM RPC server.
@@ -201,7 +211,6 @@ func DefaultConfig() *Config {
 	defaultSDKConfig.API.Enable = DefaultAPIEnable
 	defaultSDKConfig.GRPC.Enable = DefaultGRPCEnable
 	defaultSDKConfig.GRPCWeb.Enable = DefaultGRPCWebEnable
-	defaultSDKConfig.Rosetta.Enable = DefaultRosettaEnable
 	defaultSDKConfig.Telemetry.Enabled = DefaultTelemetryEnable
 
 	return &Config{
@@ -209,6 +218,7 @@ func DefaultConfig() *Config {
 		EVM:     *DefaultEVMConfig(),
 		JSONRPC: *DefaultJSONRPCConfig(),
 		TLS:     *DefaultTLSConfig(),
+		Rosetta: *DefaultRosettaConfig(),
 	}
 }
 
@@ -217,6 +227,14 @@ func DefaultEVMConfig() *EVMConfig {
 	return &EVMConfig{
 		Tracer:         DefaultEVMTracer,
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
+	}
+}
+
+// DefaultRosettaConfig returns the default Rosetta configuration
+func DefaultRosettaConfig() *RosettaConfig {
+	return &RosettaConfig{
+		Enable: false,
+		Config: rosetta.Config{},
 	}
 }
 
