@@ -7,6 +7,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +27,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 	tests := []struct {
 		name        string
 		messages    []sdk.Msg
-		expectedGas sdk.Gas
+		expectedGas storetypes.Gas
 		expectedErr error
 	}{
 		{

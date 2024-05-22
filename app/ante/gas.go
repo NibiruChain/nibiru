@@ -4,30 +4,28 @@ import (
 	"fmt"
 
 	storetypes "cosmossdk.io/store/types"
-
-	"github.com/cosmos/cosmos-sdk/types"
 )
 
 type fixedGasMeter struct {
-	consumed types.Gas
+	consumed storetypes.Gas
 }
 
 // NewFixedGasMeter returns a reference to a new fixedGasMeter.
-func NewFixedGasMeter(fixedGas types.Gas) types.GasMeter {
+func NewFixedGasMeter(fixedGas storetypes.Gas) storetypes.GasMeter {
 	return &fixedGasMeter{
 		consumed: fixedGas,
 	}
 }
 
-func (g *fixedGasMeter) GasConsumed() types.Gas {
+func (g *fixedGasMeter) GasConsumed() storetypes.Gas {
 	return g.consumed
 }
 
-func (g *fixedGasMeter) GasConsumedToLimit() types.Gas {
+func (g *fixedGasMeter) GasConsumedToLimit() storetypes.Gas {
 	return g.consumed
 }
 
-func (g *fixedGasMeter) Limit() types.Gas {
+func (g *fixedGasMeter) Limit() storetypes.Gas {
 	return g.consumed
 }
 
@@ -35,8 +33,8 @@ func (g *fixedGasMeter) GasRemaining() storetypes.Gas {
 	return g.consumed
 }
 
-func (g *fixedGasMeter) ConsumeGas(types.Gas, string) {}
-func (g *fixedGasMeter) RefundGas(types.Gas, string)  {}
+func (g *fixedGasMeter) ConsumeGas(storetypes.Gas, string) {}
+func (g *fixedGasMeter) RefundGas(storetypes.Gas, string)  {}
 
 func (g *fixedGasMeter) IsPastLimit() bool {
 	return false
