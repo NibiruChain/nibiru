@@ -9,8 +9,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/set"
 
-	"gopkg.in/yaml.v2"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -30,12 +28,6 @@ func NewAggregateExchangeRatePrevote(hash AggregateVoteHash, voter sdk.ValAddres
 	}
 }
 
-// String implement stringify
-func (v AggregateExchangeRatePrevote) String() string {
-	out, _ := yaml.Marshal(v)
-	return string(out)
-}
-
 // NewAggregateExchangeRateVote creates a AggregateExchangeRateVote instance
 func NewAggregateExchangeRateVote(exchangeRateTuples ExchangeRateTuples, voter sdk.ValAddress) AggregateExchangeRateVote {
 	return AggregateExchangeRateVote{
@@ -44,24 +36,12 @@ func NewAggregateExchangeRateVote(exchangeRateTuples ExchangeRateTuples, voter s
 	}
 }
 
-// String implement stringify
-func (v AggregateExchangeRateVote) String() string {
-	out, _ := yaml.Marshal(v)
-	return string(out)
-}
-
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
 func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdk.Dec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
 	}
-}
-
-// String implement stringify
-func (m ExchangeRateTuple) String() string {
-	out, _ := yaml.Marshal(m)
-	return string(out)
 }
 
 // ToString converts the ExchangeRateTuple to the vote string.
@@ -123,12 +103,6 @@ func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdk.Dec
 		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
 	}
 	return exchangeRateMap
-}
-
-// String implements fmt.Stringer interface
-func (tuples ExchangeRateTuples) String() string {
-	out, _ := yaml.Marshal(tuples)
-	return string(out)
 }
 
 func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {

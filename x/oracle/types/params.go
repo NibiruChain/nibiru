@@ -5,7 +5,6 @@ import (
 	time "time"
 
 	"cosmossdk.io/math"
-	"gopkg.in/yaml.v2"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -72,12 +71,6 @@ func DefaultParams() Params {
 		TwapLookbackWindow: DefaultTwapLookbackWindow,
 		ValidatorFeeRatio:  DefaultValidatorFeeRatio,
 	}
-}
-
-// String implements fmt.Stringer interface
-func (p Params) String() string {
-	out, _ := yaml.Marshal(p)
-	return string(out)
 }
 
 // Validate performs basic validation on oracle parameters.
