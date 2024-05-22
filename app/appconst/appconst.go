@@ -24,6 +24,18 @@ var (
 	GoArch    = ""
 )
 
+// EVM Chain ID Map
+var EVMChainIDs = map[string]*big.Int{
+	"cataclysm-1":       big.NewInt(100),
+	"nibiru-localnet-0": big.NewInt(1000),
+	"nibiru-devnet-1":   big.NewInt(2000),
+	"nibiru-devnet-2":   big.NewInt(3000),
+	"nibiru-testnet-1":  big.NewInt(3000),
+	"nibiru-testnet-2":  big.NewInt(4000),
+	// other test chains will default to 10000
+}
+var DefaultEVMChainID = big.NewInt(10000)
+
 func init() {
 	if len(AppVersion) == 0 {
 		AppVersion = "dev"

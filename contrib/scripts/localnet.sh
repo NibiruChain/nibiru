@@ -163,6 +163,8 @@ val_key_name="validator"
 
 echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
 $BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
+# EVM encrypted nibi address for the same account
+$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
 echo_success "Successfully added genesis account: $val_key_name"
 
 val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
