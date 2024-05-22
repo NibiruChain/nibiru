@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -69,7 +68,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	// so obviously, in this case, since validators have the same power
 	// once weight (based on power) >= total power (sum of weights)
 	// then the number picked is the one in the middle always.
-	prices := []map[asset.Pair]sdk.Dec{
+	prices := []map[asset.Pair]math.LegacyDec{
 		{
 			"nibi:usdc": math.LegacyOneDec(),
 			"btc:usdc":  math.LegacyMustNewDecFromStr("100203.0"),
@@ -97,7 +96,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
-		map[asset.Pair]sdk.Dec{
+		map[asset.Pair]math.LegacyDec{
 			"nibi:usdc": math.LegacyOneDec(),
 			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
@@ -105,7 +104,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	)
 }
 
-func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []string {
+func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]math.LegacyDec) []string {
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
 		raw := prices[i]
@@ -161,11 +160,11 @@ func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
 	s.waitVoteRevealBlock()
 }
 
-func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]sdk.Dec {
+func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]math.LegacyDec {
 	rawRates, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &types.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
-	prices := make(map[asset.Pair]sdk.Dec)
+	prices := make(map[asset.Pair]math.LegacyDec)
 
 	for _, p := range rawRates.ExchangeRates {
 		prices[p.Pair] = p.ExchangeRate

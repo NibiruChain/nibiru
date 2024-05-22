@@ -153,7 +153,7 @@ func TestFuzzTally(t *testing.T) {
 	validators := map[string]int64{}
 
 	f := fuzz.New().NilChance(0).Funcs(
-		func(e *sdk.Dec, c fuzz.Continue) {
+		func(e *math.LegacyDec, c fuzz.Continue) {
 			*e = math.LegacyNewDec(c.Int63())
 		},
 		func(e *map[string]int64, c fuzz.Continue) {
@@ -175,7 +175,7 @@ func TestFuzzTally(t *testing.T) {
 			for addr, power := range validators {
 				addr, _ := sdk.ValAddressFromBech32(addr)
 
-				var rate sdk.Dec
+				var rate math.LegacyDec
 				c.Fuzz(&rate)
 
 				votes = append(votes, types.NewExchangeRateVote(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
@@ -194,7 +194,7 @@ func TestFuzzTally(t *testing.T) {
 	votes := types.ExchangeRateVotes{}
 	f.Fuzz(&votes)
 
-	var rewardBand sdk.Dec
+	var rewardBand math.LegacyDec
 	f.Fuzz(&rewardBand)
 
 	require.NotPanics(t, func() {
@@ -249,13 +249,13 @@ func TestRemoveInvalidBallots(t *testing.T) {
 			name: "nonempty key, nonempty votes, whitelisted",
 			voteMap: VoteMap{
 				"x": types.ExchangeRateVotes{
-					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: "x", ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
@@ -289,12 +289,12 @@ func TestFuzzPickReferencePair(t *testing.T) {
 				*e = append(*e, asset.NewPair(testutil.RandLetters(5), testutil.RandLetters(5)))
 			}
 		},
-		func(e *sdk.Dec, c fuzz.Continue) {
+		func(e *math.LegacyDec, c fuzz.Continue) {
 			*e = math.LegacyNewDec(c.Int63())
 		},
-		func(e *map[asset.Pair]sdk.Dec, c fuzz.Continue) {
+		func(e *map[asset.Pair]math.LegacyDec, c fuzz.Continue) {
 			for _, pair := range pairs {
-				var rate sdk.Dec
+				var rate math.LegacyDec
 				c.Fuzz(&rate)
 
 				(*e)[pair] = rate
@@ -315,7 +315,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 				for addr, power := range validators {
 					addr, _ := sdk.ValAddressFromBech32(addr)
 
-					var rate sdk.Dec
+					var rate math.LegacyDec
 					c.Fuzz(&rate)
 
 					votes = append(votes, types.NewExchangeRateVote(rate, pair, addr, power))

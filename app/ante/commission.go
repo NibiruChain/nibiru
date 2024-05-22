@@ -6,7 +6,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-func MAX_COMMISSION() sdk.Dec { return math.LegacyMustNewDecFromStr("0.25") }
+func MAX_COMMISSION() math.LegacyDec { return math.LegacyMustNewDecFromStr("0.25") }
 
 var _ sdk.AnteDecorator = (*AnteDecoratorStakingCommission)(nil)
 

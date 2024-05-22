@@ -2,16 +2,15 @@ package ewma
 
 import (
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type MovingAverage interface {
-	Add(sdk.Dec)
-	Value() sdk.Dec
-	Set(sdk.Dec)
+	Add(math.LegacyDec)
+	Value() math.LegacyDec
+	Set(math.LegacyDec)
 }
 
-func NewMovingAverage(span sdk.Dec) MovingAverage {
+func NewMovingAverage(span math.LegacyDec) MovingAverage {
 	return &variableEWMA{
 		value: math.LegacyZeroDec(),
 		decay: math.LegacyMustNewDecFromStr("2").Quo(span.Add(math.LegacyOneDec())),
@@ -19,11 +18,11 @@ func NewMovingAverage(span sdk.Dec) MovingAverage {
 }
 
 type variableEWMA struct {
-	decay sdk.Dec
-	value sdk.Dec
+	decay math.LegacyDec
+	value math.LegacyDec
 }
 
-func (v *variableEWMA) Add(dec sdk.Dec) {
+func (v *variableEWMA) Add(dec math.LegacyDec) {
 	if v.value.IsZero() {
 		v.value = dec
 
@@ -34,10 +33,10 @@ func (v *variableEWMA) Add(dec sdk.Dec) {
 	v.value = v.value.Mul(math.LegacyOneDec().Sub(v.decay)).Add(dec.Mul(v.decay))
 }
 
-func (v *variableEWMA) Value() sdk.Dec {
+func (v *variableEWMA) Value() math.LegacyDec {
 	return v.value
 }
 
-func (v *variableEWMA) Set(dec sdk.Dec) {
+func (v *variableEWMA) Set(dec math.LegacyDec) {
 	v.value = dec
 }

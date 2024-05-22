@@ -225,7 +225,7 @@ func TestManual(t *testing.T) {
 	params.EpochsPerPeriod = 30
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
-	params.PolynomialFactors = []sdk.Dec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
+	params.PolynomialFactors = []math.LegacyDec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
 		CommunityPool:     math.LegacyZeroDec(),
 		StakingRewards:    math.LegacyOneDec(),

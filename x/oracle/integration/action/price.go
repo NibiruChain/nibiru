@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func SetOraclePrice(pair asset.Pair, price sdk.Dec) action.Action {
+func SetOraclePrice(pair asset.Pair, price math.LegacyDec) action.Action {
 	return &setPairPrice{
 		Pair:  pair,
 		Price: price,
@@ -22,7 +22,7 @@ func SetOraclePrice(pair asset.Pair, price sdk.Dec) action.Action {
 
 type setPairPrice struct {
 	Pair  asset.Pair
-	Price sdk.Dec
+	Price math.LegacyDec
 }
 
 func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
@@ -31,7 +31,7 @@ func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	return ctx, nil
 }
 
-func InsertOraclePriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) action.Action {
+func InsertOraclePriceSnapshot(pair asset.Pair, time time.Time, price math.LegacyDec) action.Action {
 	return &insertOraclePriceSnapshot{
 		Pair:  pair,
 		Time:  time,
@@ -42,7 +42,7 @@ func InsertOraclePriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) a
 type insertOraclePriceSnapshot struct {
 	Pair  asset.Pair
 	Time  time.Time
-	Price sdk.Dec
+	Price math.LegacyDec
 }
 
 func (s insertOraclePriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {

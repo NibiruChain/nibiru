@@ -126,8 +126,8 @@ func TestCalcTwap(t *testing.T) {
 		currentBlockTime   time.Time
 		currentBlockHeight int64
 		lookbackInterval   time.Duration
-		assetAmount        sdk.Dec
-		expectedPrice      sdk.Dec
+		assetAmount        math.LegacyDec
+		expectedPrice      math.LegacyDec
 		expectedErr        error
 	}{
 		// expected price: (9.5 * (35 - 30) + 8.5 * (30 - 20) + 9.0 * (20 - 5)) / 30 = 8.916666

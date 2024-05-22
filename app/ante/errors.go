@@ -2,7 +2,7 @@ package ante
 
 import (
 	sdkerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 )
 
 var errorCodeIdx uint32 = 1
@@ -18,7 +18,7 @@ var (
 	ErrMaxValidatorCommission = registerError("validator commission rate is above max")
 )
 
-func NewErrMaxValidatorCommission(gotCommission sdk.Dec) error {
+func NewErrMaxValidatorCommission(gotCommission math.LegacyDec) error {
 	return ErrMaxValidatorCommission.Wrapf(
 		"got (%s), max rate is (%s)", gotCommission, MAX_COMMISSION())
 }

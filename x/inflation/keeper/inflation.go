@@ -128,7 +128,7 @@ func (k Keeper) AllocatePolynomialInflation(
 func (k Keeper) GetProportions(
 	_ sdk.Context,
 	coin sdk.Coin,
-	proportion sdk.Dec,
+	proportion math.LegacyDec,
 ) sdk.Coin {
 	return sdk.Coin{
 		Denom:  coin.Denom,
@@ -143,7 +143,7 @@ func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.
 }
 
 // GetInflationRate returns the inflation rate for the current period.
-func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
+func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) math.LegacyDec {
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	if epochMintProvision.IsZero() {
 		return math.LegacyZeroDec()
@@ -165,7 +165,7 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 
 // GetEpochMintProvision retrieves necessary params KV storage
 // and calculate EpochMintProvision
-func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdk.Dec {
+func (k Keeper) GetEpochMintProvision(ctx sdk.Context) math.LegacyDec {
 	peek := k.CurrentPeriod.Peek(ctx)
 
 	return types.CalculateEpochMintProvision(

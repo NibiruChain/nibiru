@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -50,7 +49,7 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 		EpochsPerPeriod: &newEpochsPerPeriod,
 		PeriodsPerYear:  &newEpochsPerPeriod,
 		MaxPeriod:       &newEpochsPerPeriod,
-		PolynomialFactors: []sdk.Dec{
+		PolynomialFactors: []math.LegacyDec{
 			math.LegacyMustNewDecFromStr("0.1"),
 			math.LegacyMustNewDecFromStr("0.2"),
 		},
@@ -62,7 +61,7 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 	s.Require().EqualValues(4, paramsAfter.EpochsPerPeriod)
 	s.Require().EqualValues(4, paramsAfter.PeriodsPerYear)
 	s.Require().EqualValues(4, paramsAfter.MaxPeriod)
-	s.Require().EqualValues([]sdk.Dec{
+	s.Require().EqualValues([]math.LegacyDec{
 		math.LegacyMustNewDecFromStr("0.1"),
 		math.LegacyMustNewDecFromStr("0.2"),
 	}, paramsAfter.PolynomialFactors)
@@ -76,7 +75,7 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 	epochsPerPeriod := math.NewInt(1_234)
 	periodsPerYear := math.NewInt(1_234)
 	maxPeriod := math.NewInt(1_234)
-	polynomialFactors := []sdk.Dec{
+	polynomialFactors := []math.LegacyDec{
 		math.LegacyMustNewDecFromStr("0.1"),
 		math.LegacyMustNewDecFromStr("0.2"),
 	}

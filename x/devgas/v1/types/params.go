@@ -4,13 +4,12 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewParams creates a new Params object
 func NewParams(
 	enableFeeShare bool,
-	developerShares sdk.Dec,
+	developerShares math.LegacyDec,
 	allowedDenoms []string,
 ) ModuleParams {
 	return ModuleParams{
@@ -38,7 +37,7 @@ func validateBool(i interface{}) error {
 }
 
 func validateShares(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(math.LegacyDec)
 
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

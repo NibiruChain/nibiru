@@ -275,7 +275,7 @@ func (b *Backend) SetGasPrice(gasPrice hexutil.Big) bool {
 
 	c := sdk.NewDecCoin(unit, sdkmath.NewIntFromBigInt(gasPrice.ToInt()))
 
-	appConf.SetMinGasPrices(sdk.DecCoins{c})
+	appConf.SetMinGasPrices(math.LegacyDecCoins{c})
 	sdkconfig.WriteConfigFile(b.clientCtx.Viper.ConfigFileUsed(), appConf)
 	b.logger.Info("Your configuration file was modified. Please RESTART your node.", "gas-price", c.String())
 	return true

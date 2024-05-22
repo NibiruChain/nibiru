@@ -257,7 +257,7 @@ func (s *BackendSuite) TestSetEtherbase() {
 				RegisterValidatorAccount(queryClient, s.acc)
 				RegisterParams(queryClient, &header, 1)
 				c := sdk.NewDecCoin(eth.EthBaseDenom, math.NewIntFromBigInt(big.NewInt(1)))
-				s.backend.cfg.SetMinGasPrices(sdk.DecCoins{c})
+				s.backend.cfg.SetMinGasPrices(math.LegacyDecCoins{c})
 				delAddr, _ := s.backend.GetCoinbase()
 				// account, _ := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, delAddr)
 				delCommonAddr := common.BytesToAddress(delAddr.Bytes())

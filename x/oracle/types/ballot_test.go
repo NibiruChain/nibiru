@@ -68,9 +68,9 @@ func TestExchangeRateVotesToMap(t *testing.T) {
 
 func TestToCrossRate(t *testing.T) {
 	data := []struct {
-		base     sdk.Dec
-		quote    sdk.Dec
-		expected sdk.Dec
+		base     math.LegacyDec
+		quote    math.LegacyDec
+		expected math.LegacyDec
 	}{
 		{
 			base:     math.LegacyNewDec(1600),
@@ -168,7 +168,7 @@ func TestPBWeightedMedian(t *testing.T) {
 		inputs      []int64
 		weights     []int64
 		isValidator []bool
-		median      sdk.Dec
+		median      math.LegacyDec
 	}{
 		{
 			// Supermajority one number
@@ -237,7 +237,7 @@ func TestPBStandardDeviation(t *testing.T) {
 		inputs            []float64
 		weights           []int64
 		isValidator       []bool
-		standardDeviation sdk.Dec
+		standardDeviation math.LegacyDec
 	}{
 		{
 			// Supermajority one number
