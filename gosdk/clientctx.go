@@ -6,8 +6,8 @@ package gosdk
 // 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 // )
 
-// TODO: Make a way to instantiate a NibiruSDK from a
-// (*cli.Network, *cli.Validator)
+// TODO: https://github.com/NibiruChain/nibiru/issues/1894
+// Make a way to instantiate a NibiruSDK from a (*cli.Network, *cli.Validator)
 
 // ClientCtx: Docs for args
 //
