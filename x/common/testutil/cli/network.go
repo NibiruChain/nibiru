@@ -167,7 +167,7 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeEncodingConfig()
 
-	chainID := fmt.Sprintf("chain_%d-1", tmrand.NewRand().Int())
+	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
 		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
