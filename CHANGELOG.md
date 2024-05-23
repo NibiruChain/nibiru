@@ -63,10 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests 
 - [#1871](https://github.com/NibiruChain/nibiru/pull/1871) - feat(evm): app config and json-rpc
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper collections and grpc query impls for EthAccount, NibiruAccount
-- [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 - [#1883](https://github.com/NibiruChain/nibiru/pull/1883) - feat(evm): keeper logic, Ante handlers, EthCall, and EVM transactions.
 - [#1887](https://github.com/NibiruChain/nibiru/pull/1887) - test(evm): eth api integration test suite
-
+- [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
+- [#1895](https://github.com/NibiruChain/nibiru/pull/1895) - refactor(geth): Reference go-ethereum as a submodule for easier change tracking with upstream
 #### Dapp modules: perp, spot, oracle, etc
 
 - [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price

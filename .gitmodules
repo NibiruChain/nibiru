@@ -1,0 +1,3 @@
+[submodule "geth"]
+	path = geth
+	url = git@github.com:NibiruChain/go-ethereum.git
