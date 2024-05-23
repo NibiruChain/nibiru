@@ -50,9 +50,12 @@ require (
 
 require (
 	cosmossdk.io/collections v0.4.0
+	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gorilla/websocket v1.5.0
+	github.com/rs/cors v1.8.3
 	golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+	golang.org/x/net v0.23.0
 	golang.org/x/text v0.14.0
 )
 
@@ -66,7 +69,6 @@ require (
 	cosmossdk.io/core v0.10.0 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.3.1 // indirect
-	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -184,7 +186,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	github.com/rs/cors v1.8.3 // indirect
 	github.com/rs/zerolog v1.32.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
@@ -208,7 +209,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
@@ -230,7 +230,7 @@ replace (
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => ./geth
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.27-nibiru
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.12
