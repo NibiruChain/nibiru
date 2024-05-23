@@ -67,7 +67,7 @@ stop:
 
 # Runs golang formatter (gofumpt)
 fmt:
-  gofumpt -w x app
+  gofumpt -w x app gosdk eth
 
 # Format and lint
 tidy: 
