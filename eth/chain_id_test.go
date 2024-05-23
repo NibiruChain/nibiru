@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,17 +17,17 @@ func TestParseChainID_Happy(t *testing.T) {
 	}{
 		{
 			chainID: "cataclysm-1",
-			expInt:  big.NewInt(100),
+			expInt:  big.NewInt(appconst.ETH_CHAIN_ID_MAINNET),
 		},
 		{
 			chainID: "nibiru-localnet-0",
 			name:    "valid nibiru-localnet-0",
-			expInt:  big.NewInt(1000),
+			expInt:  big.NewInt(appconst.ETH_CHAIN_ID_LOCAL),
 		},
 		{
 			chainID: "otherchain",
 			name:    "other chain, default id",
-			expInt:  big.NewInt(10000),
+			expInt:  big.NewInt(appconst.ETH_CHAIN_ID_DEFAULT),
 		},
 	}
 

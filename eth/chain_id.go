@@ -27,10 +27,5 @@ func ParseEthChainID(chainID string) (*big.Int, error) {
 // Ethereum-compatible chain-id in *big.Int format. The function returns an error
 // if the chain-id has an invalid format
 func ParseEthChainIDStrict(chainID string) (*big.Int, error) {
-	evmChainID, exists := appconst.EVMChainIDs[chainID]
-	if exists {
-		return evmChainID, nil
-	} else {
-		return appconst.DefaultEVMChainID, nil
-	}
+	return appconst.GetEthChainID(chainID), nil
 }
