@@ -4,9 +4,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 )
 
 func TestParseChainID_Happy(t *testing.T) {

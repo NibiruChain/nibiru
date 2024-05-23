@@ -11,11 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	fixture "github.com/NibiruChain/nibiru/eth/rpc/rpcapi/fixture"
-	nibiCommon "github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -25,6 +20,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/status-im/keycard-go/hexutils"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
+	fixture "github.com/NibiruChain/nibiru/eth/rpc/rpcapi/fixture"
+	nibiCommon "github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
 	"github.com/stretchr/testify/suite"
 
@@ -191,7 +192,6 @@ func (s *IntegrationSuite) Test_SuggestGasPrice() {
 	// TODO: the backend method is stubbed to 0
 	_, err := s.ethClient.SuggestGasPrice(context.Background())
 	s.NoError(err)
-
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
@@ -204,7 +204,8 @@ func (s *IntegrationSuite) Test_SimpleTransferTransaction() {
 	senderBalanceBefore, err := s.ethClient.BalanceAt(
 		context.Background(), s.fundedAccEthAddr, nil,
 	)
-	recipientAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "recepient"))
+	s.NoError(err)
+	recipientAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "recipient"))
 	recipientBalanceBefore, err := s.ethClient.BalanceAt(context.Background(), recipientAddr, nil)
 	s.NoError(err)
 	s.Equal(int64(0), recipientBalanceBefore.Int64())
@@ -291,7 +292,7 @@ func (s *IntegrationSuite) Test_SmartContract() {
 			GasPrice: big.NewInt(1),
 			Data:     input,
 		})
-
+	s.NoError(err)
 	err = s.ethClient.SendTransaction(context.Background(), tx)
 	s.NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
