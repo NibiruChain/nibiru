@@ -118,7 +118,7 @@ type (
 		// listen for events, test if it also implements events.EventSwitch.
 		//
 		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-		// - rcp.HTTP
+		// - rpc.HTTP
 		// - rpc.Local
 		RPCClient tmclient.Client
 
@@ -543,17 +543,23 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 
 // WaitForNextBlock waits for the next block to be committed, returning an error
 // upon failure.
-func (n *Network) WaitForNextBlock() error {
+func (n *Network) WaitForNextBlockVerbose() (int64, error) {
 	lastBlock, err := n.LatestHeight()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = n.WaitForHeight(lastBlock + 1)
+	newBlock := lastBlock + 1
+	_, err = n.WaitForHeight(newBlock)
 	if err != nil {
-		return err
+		return lastBlock, err
 	}
 
+	return newBlock, err
+}
+
+func (n *Network) WaitForNextBlock() error {
+	_, err := n.WaitForNextBlockVerbose()
 	return err
 }
 

@@ -87,6 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Non-breaking/Compatible Improvements
 
 - [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
+- [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
+- [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
 
 ### Dependencies
 
