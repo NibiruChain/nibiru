@@ -53,9 +53,11 @@ jobs:
       - name: Setup NodeJS with npm caching
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/hydrogen"
-          cache: "npm"
-          cache-dependency-path: "tests/evm/package-lock.json"
+          node-version: 18
+
+      - name: NPM Install
+        run: npm install
+        working-directory: "tests/evm"
 
       - name: "Launch localnet"
         run: |
