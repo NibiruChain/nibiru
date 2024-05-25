@@ -55,7 +55,7 @@ jobs:
         with:
           node-version: "lts/hydrogen"
           cache: "npm"
-          working-directory: "tests/evm"
+          cache-dependency-path: "tests/evm/package-lock.json"
 
       - name: "Launch localnet"
         run: |
