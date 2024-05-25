@@ -232,7 +232,6 @@ func startStandAlone(ctx *server.Context, opts StartOptions) error {
 
 	traceWriterFile := ctx.Viper.GetString(TraceStore)
 	traceWriter, err := openTraceWriter(traceWriterFile)
-
 	if err != nil {
 		return err
 	}
