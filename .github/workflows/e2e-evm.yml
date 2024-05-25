@@ -50,17 +50,12 @@ jobs:
         run: |
           just install
 
-      - name: Setup NodeJS with yarn caching
+      - name: Setup NodeJS with npm caching
         uses: actions/setup-node@v4
         with:
           node-version: "lts/hydrogen"
           cache: "npm"
-
-      - name: Install node_modules
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install # will run `yarn install` command
-          dir: "tests/evm"
+          working-directory: "tests/evm"
 
       - name: "Launch localnet"
         run: |
@@ -68,10 +63,8 @@ jobs:
           sleep 6
 
       - name: Run tests
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: npm test
-          working-directory: "tests/evm"
+        run: npm test
+        working-directory: "tests/evm"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
           MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
