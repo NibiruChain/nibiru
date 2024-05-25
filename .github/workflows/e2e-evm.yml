@@ -51,10 +51,10 @@ jobs:
           just install
 
       - name: Setup NodeJS with yarn caching
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "lts/hydrogen"
-          cache: "yarn"
+          cache: "npm"
 
       - name: Install node_modules
         uses: borales/actions-yarn@v4
@@ -70,7 +70,7 @@ jobs:
       - name: Run tests
         uses: coactions/setup-xvfb@v1
         with:
-          run: yarn test
+          run: npm test
           working-directory: "tests/evm"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
