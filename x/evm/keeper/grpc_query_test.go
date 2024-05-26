@@ -1,14 +1,17 @@
 package keeper_test
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/NibiruChain/collections"
 
+	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -442,4 +445,40 @@ func (s *KeeperSuite) TestQueryParams() {
 
 	// Note that protobuf equals is more reliable than `s.Equal`
 	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
+}
+
+func (s *KeeperSuite) TestEthCall_ERC20_Happy() {
+	deps := evmtest.NewTestDeps()
+	fungibleTokenContract := evmtest.SmartContract_FunToken.Load(s.T())
+
+	s.T().Log("Populate the supply and acc balance")
+	contractConstructorArgs, err := fungibleTokenContract.ABI.Pack(
+		"",
+	)
+	s.Require().NoError(err)
+
+	bytecode := fungibleTokenContract.Bytecode
+	bytecode = append(bytecode, contractConstructorArgs...)
+
+	jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+		From: &deps.Sender.EthAddr,
+		Data: (*hexutil.Bytes)(&bytecode),
+	})
+	s.Require().NoError(err)
+
+	_, err = deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
+		Args:            jsonTxArgs,
+		GasCap:          srvconfig.DefaultGasCap,
+		ProposerAddress: []byte{},
+		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+	})
+	s.Require().NoError(err)
+
+	_, err = deps.Chain.EvmKeeper.EthCall(deps.GoCtx(), &evm.EthCallRequest{
+		Args:            jsonTxArgs,
+		GasCap:          srvconfig.DefaultGasCap,
+		ProposerAddress: []byte{},
+		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+	})
+	s.Require().NoError(err)
 }
