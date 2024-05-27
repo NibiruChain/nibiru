@@ -9,9 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"regexp"
 	"runtime/pprof"
-	"strings"
 	"syscall"
 	"time"
 
