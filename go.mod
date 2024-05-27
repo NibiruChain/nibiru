@@ -9,7 +9,7 @@ require (
 	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
 	cosmossdk.io/core v0.12.1-0.20231114100755-569e3ff6a0d7 // indirect
 	cosmossdk.io/errors v1.0.1
-	cosmossdk.io/log v1.3.1 // indirect
+	cosmossdk.io/log v1.3.1
 	cosmossdk.io/store v1.1.1-0.20240418092142-896cdf1971bc
 	cosmossdk.io/x/circuit v0.1.0 // indirect
 	cosmossdk.io/x/evidence v0.1.0
@@ -19,7 +19,6 @@ require (
 	github.com/CosmWasm/wasmvm v1.5.2
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/NibiruChain/collections v0.50.0
-	github.com/armon/go-metrics v0.4.1
 
 	// EVM-specific deps
 	github.com/btcsuite/btcd v0.23.3
@@ -41,6 +40,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
+	github.com/hashicorp/go-metrics v0.5.3 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.1
@@ -63,8 +63,9 @@ require (
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20240522060652-a1ae4c3e0337
-	cosmossdk.io/tools/rosetta v0.2.1
+	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft/api v1.0.0-alpha.2.0.20240429102542-490e9bc3de65
+	github.com/cosmos/cosmos-db v1.0.2
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
 	github.com/cosmos/rosetta v0.50.6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -72,6 +73,7 @@ require (
 	github.com/rs/cors v1.11.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/net v0.25.0
+	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.15.0
 )
 
@@ -113,7 +115,6 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-db v1.0.2 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.1.4 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
@@ -164,7 +165,6 @@ require (
 	github.com/hashicorp/go-getter v1.7.4 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-metrics v0.5.3 // indirect
 	github.com/hashicorp/go-plugin v1.6.1 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -240,7 +240,6 @@ require (
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/oauth2 v0.19.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/term v0.20.0 // indirect
 	golang.org/x/time v0.5.0 // indirect

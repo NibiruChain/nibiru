@@ -10,6 +10,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
@@ -266,8 +267,8 @@ func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-func (app *NibiruApp) RegisterNodeService(clientCtx client.Context) {
-	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
+func (app *NibiruApp) RegisterNodeService(clientCtx client.Context, config server.Config) {
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), config)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,9 +12,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/types"
 	ethlog "github.com/ethereum/go-ethereum/log"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
@@ -20,16 +22,17 @@ import (
 )
 
 // StartJSONRPC starts the JSON-RPC server
-func StartJSONRPC(ctx *server.Context,
+func StartJSONRPC(ctx context.Context,
 	clientCtx client.Context,
+	srvCtx *server.Context,
+	logger log.Logger,
 	tmRPCAddr,
 	tmEndpoint string,
 	config *srvconfig.Config,
 	indexer eth.EVMTxIndexer,
 ) (*http.Server, chan struct{}, error) {
-	tmWsClient := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
+	tmWsClient := ConnectTmWS(tmRPCAddr, tmEndpoint, logger)
 
-	logger := ctx.Logger.With("module", "geth")
 	ethlog.Root().SetHandler(ethlog.FuncHandler(func(r *ethlog.Record) error {
 		switch r.Lvl {
 		case ethlog.LvlTrace, ethlog.LvlDebug:
@@ -47,11 +50,11 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	apis := rpcapi.GetRPCAPIs(ctx, clientCtx, tmWsClient, allowUnprotectedTxs, indexer, rpcAPIArr)
+	apis := rpcapi.GetRPCAPIs(srvCtx, clientCtx, tmWsClient, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
-			ctx.Logger.Error(
+			logger.Error(
 				"failed to register service in JSON RPC namespace",
 				"namespace", api.Namespace,
 				"service", api.Service,
@@ -85,30 +88,37 @@ func StartJSONRPC(ctx *server.Context,
 
 	errCh := make(chan error)
 	go func() {
-		ctx.Logger.Info("Starting JSON-RPC server", "address", config.JSONRPC.Address)
+		logger.Info("Starting JSON-RPC server", "address", config.JSONRPC.Address)
 		if err := httpSrv.Serve(ln); err != nil {
 			if err == http.ErrServerClosed {
 				close(httpSrvDone)
 				return
 			}
 
-			ctx.Logger.Error("failed to start JSON-RPC server", "error", err.Error())
+			logger.Error("failed to start JSON-RPC server", "error", err.Error())
 			errCh <- err
 		}
 	}()
 
 	select {
 	case err := <-errCh:
-		ctx.Logger.Error("failed to boot JSON-RPC server", "error", err.Error())
+		logger.Error("failed to boot JSON-RPC server", "error", err.Error())
 		return nil, nil, err
-	case <-time.After(types.ServerStartTime): // assume JSON RPC server started successfully
+
+	case <-ctx.Done():
+		// The calling process canceled or closed the provided context, so we must
+		// gracefully stop the gRPC server.
+		logger.Info("stopping gRPC server...", "address", config.GRPC.Address)
+
+		return nil, nil, fmt.Errorf("gRPC server stopped")
+	case <-time.After(ServerStartTime): // assume JSON RPC server started successfully
 	}
 
-	ctx.Logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
+	logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
 
 	// allocate separate WS connection to Tendermint
-	tmWsClient = ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClient, config)
+	tmWsClient = ConnectTmWS(tmRPCAddr, tmEndpoint, logger)
+	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, logger, tmWsClient, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

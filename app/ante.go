@@ -1,8 +1,8 @@
 package app
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
-	"cosmossdk.io/store/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +22,7 @@ type AnteHandlerOptions struct {
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
 
-	TxCounterStoreKey types.StoreKey
+	TxCounterStoreKey corestoretypes.KVStoreService
 	WasmConfig        *wasmtypes.WasmConfig
 }
 

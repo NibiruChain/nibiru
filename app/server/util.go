@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/version"
 
+	"cosmossdk.io/log"
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	tmlog "github.com/cometbft/cometbft/libs/log"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
 
@@ -40,7 +40,7 @@ func AddCommands(
 		sdkserver.BootstrapStateCmd(opts.AppCreator),
 	)
 
-	startCmd := StartCmd(opts)
+	startCmd := StartCmd(opts.AppCreator, opts.DefaultNodeHome)
 	addStartFlags(startCmd)
 
 	rootCmd.AddCommand(
@@ -55,7 +55,7 @@ func AddCommands(
 	)
 }
 
-func ConnectTmWS(tmRPCAddr, tmEndpoint string, logger tmlog.Logger) *rpcclient.WSClient {
+func ConnectTmWS(tmRPCAddr, tmEndpoint string, logger log.Logger) *rpcclient.WSClient {
 	tmWsClient, err := rpcclient.NewWS(tmRPCAddr, tmEndpoint,
 		rpcclient.MaxReconnectAttempts(256),
 		rpcclient.ReadWait(120*time.Second),

@@ -196,7 +196,7 @@ func initStoreKeys() (
 	tkeys map[string]*types.TransientStoreKey,
 	memKeys map[string]*types.MemoryStoreKey,
 ) {
-	keys = sdk.NewKVStoreKeys(
+	keys = storetypes.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		stakingtypes.StoreKey,
@@ -230,8 +230,8 @@ func initStoreKeys() (
 
 		evm.StoreKey,
 	)
-	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
+	memKeys = storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
 
