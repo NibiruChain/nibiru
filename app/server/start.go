@@ -403,7 +403,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 		clientCtx = clientCtx.
 			WithHomeDir(home).
-			WithChainID(hackChainID(genDoc.ChainID))
+			WithChainID(genDoc.ChainID)
 
 		// Set `GRPCClient` to `clientCtx` to enjoy concurrent grpc query.
 		// only use it if gRPC server is enabled.
@@ -506,7 +506,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 			return err
 		}
 
-		clientCtx := clientCtx.WithChainID(hackChainID(genDoc.ChainID))
+		clientCtx := clientCtx.WithChainID(genDoc.ChainID)
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
@@ -658,18 +658,4 @@ func wrapCPUProfile(ctx *server.Context, callback func() error) error {
 	}
 
 	return WaitForQuitSignals()
-}
-
-// hackChainID replaces nibiru-localnet-0 with nibirulocalnet-9000-1 which matches the standard
-func hackChainID(chainID string) string {
-	re := regexp.MustCompile(`-\d+$`)
-	lastNumber := re.FindString(chainID)
-	trimmedInput := strings.TrimSuffix(chainID, lastNumber)
-	if lastNumber == "-0" {
-		lastNumber = "-1"
-	}
-	trimmedInput = strings.ReplaceAll(trimmedInput, "-", "")
-	result := trimmedInput + "_9000" + lastNumber
-
-	return result
 }
