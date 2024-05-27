@@ -403,7 +403,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 		clientCtx = clientCtx.
 			WithHomeDir(home).
-			WithChainID(hackChainID(genDoc.ChainID))
+			WithChainID(genDoc.ChainID)
 
 		// Set `GRPCClient` to `clientCtx` to enjoy concurrent grpc query.
 		// only use it if gRPC server is enabled.
@@ -506,7 +506,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 			return err
 		}
 
-		clientCtx := clientCtx.WithChainID(hackChainID(genDoc.ChainID))
+		clientCtx := clientCtx.WithChainID(genDoc.ChainID)
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
