@@ -66,6 +66,7 @@ func TxTemplateAccessListTx() *gethcore.AccessListTx {
 		Data:     []byte{},
 	}
 }
+
 func TxTemplateLegacyTx() *gethcore.LegacyTx {
 	return &gethcore.LegacyTx{
 		GasPrice: big.NewInt(1),
@@ -75,6 +76,7 @@ func TxTemplateLegacyTx() *gethcore.LegacyTx {
 		Data:     []byte{},
 	}
 }
+
 func TxTemplateDynamicFeeTx() *gethcore.DynamicFeeTx {
 	return &gethcore.DynamicFeeTx{
 		GasFeeCap: big.NewInt(10),

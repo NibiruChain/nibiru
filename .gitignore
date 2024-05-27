@@ -14,4 +14,8 @@ mockdata/
 docs/static
 dist
 coverage.txt
+coverage.html
 temp
+temp*
+txout.json
+vote.json

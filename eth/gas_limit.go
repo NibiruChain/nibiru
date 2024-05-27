@@ -49,6 +49,12 @@ func NewInfiniteGasMeterWithLimit(limit sdk.Gas) sdk.GasMeter {
 	}
 }
 
+// NewInfiniteGasMeter: Alias for an infinite gas meter
+// ([NewInfiniteGasMeterWithLimitla)] with a tracked but unenforced gas limit.
+func NewInfiniteGasMeter() sdk.GasMeter {
+	return NewInfiniteGasMeterWithLimit(math.MaxUint64)
+}
+
 var _ sdk.GasMeter = &InfiniteGasMeter{}
 
 // InfiniteGasMeter: A special impl of `sdk.GasMeter` that ignores any gas
@@ -103,8 +109,8 @@ func (g *InfiniteGasMeter) ConsumeGas(amount sdk.Gas, descriptor string) {
 	}
 }
 
-// RefundGas will deduct the given amount from the gas consumed. If the amount is greater than the
-// gas consumed, the function will panic.
+// RefundGas will deduct the given amount from the gas consumed. If the amount is
+// greater than the gas consumed, the function will panic.
 //
 // Use case: This functionality enables refunding gas to the trasaction or block gas pools so that
 // EVM-compatible chains can fully support the go-ethereum StateDb interface.
