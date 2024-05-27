@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	tmlog "cosmossdk.io/log"
 	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"

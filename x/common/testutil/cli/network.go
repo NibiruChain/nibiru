@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/store/pruning/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"cosmossdk.io/math"

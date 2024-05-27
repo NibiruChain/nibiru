@@ -23,7 +23,7 @@ type allBalancesEqual struct {
 
 func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	coins := app.BankKeeper.GetAllBalances(ctx, b.Account)
-	if !coins.IsEqual(b.Amount) {
+	if !coins.Equal(b.Amount) {
 		return ctx, fmt.Errorf(
 			"account %s balance not equal, expected %s, got %s",
 			b.Account.String(),

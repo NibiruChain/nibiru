@@ -18,8 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
+	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	"github.com/cometbft/cometbft/api/cometbft/crypto/v1"
