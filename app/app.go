@@ -10,15 +10,14 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
@@ -190,11 +189,11 @@ func NewNibiruApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
 		},
-		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
-		WasmConfig:        &wasmConfig,
-		DevGasKeeper:      &app.DevGasKeeper,
-		DevGasBankKeeper:  app.BankKeeper,
+		IBCKeeper:             app.ibcKeeper,
+		TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		WasmConfig:            &wasmConfig,
+		DevGasKeeper:          &app.DevGasKeeper,
+		DevGasBankKeeper:      app.BankKeeper,
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
@@ -253,7 +252,7 @@ func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci
 }
 
 // InitChainer application update at chain initialization
-func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *NibiruApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
 	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -267,7 +266,7 @@ func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-func (app *NibiruApp) RegisterNodeService(clientCtx client.Context, config server.Config) {
+func (app *NibiruApp) RegisterNodeService(clientCtx client.Context, config config.Config) {
 	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), config)
 }
 

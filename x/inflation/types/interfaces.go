@@ -38,7 +38,7 @@ type DistrKeeper interface {
 // StakingKeeper expected staking keeper
 type StakingKeeper interface {
 	// BondedRatio the fraction of the staking tokens which are currently bonded
-	BondedRatio(ctx sdk.Context) math.LegacyDec
+	BondedRatio(ctx sdk.Context) sdkmath.LegacyDec
 	StakingTokenSupply(ctx sdk.Context) sdkmath.Int
 	TotalBondedTokens(ctx sdk.Context) sdkmath.Int
 }

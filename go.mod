@@ -7,7 +7,7 @@ toolchain go1.22.3
 require (
 	cosmossdk.io/api v0.7.5 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
-	cosmossdk.io/core v0.12.1-0.20231114100755-569e3ff6a0d7 // indirect
+	cosmossdk.io/core v0.12.1-0.20231114100755-569e3ff6a0d7
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/log v1.3.1
 	cosmossdk.io/store v1.1.1-0.20240418092142-896cdf1971bc
@@ -40,7 +40,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
-	github.com/hashicorp/go-metrics v0.5.3 // indirect
+	github.com/hashicorp/go-metrics v0.5.3
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.1

@@ -22,8 +22,8 @@ type AnteHandlerOptions struct {
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
 
-	TxCounterStoreKey corestoretypes.KVStoreService
-	WasmConfig        *wasmtypes.WasmConfig
+	TXCounterStoreService corestoretypes.KVStoreService
+	WasmConfig            *wasmtypes.WasmConfig
 }
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -37,7 +37,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 	anteDecorators := []sdk.AnteDecorator{
 		sdkante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
-		wasmkeeper.NewCountTXDecorator(options.TxCounterStoreKey),
+		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreService),
 		sdkante.NewExtensionOptionsDecorator(nil),
 		sdkante.NewValidateBasicDecorator(),
 		sdkante.NewTxTimeoutHeightDecorator(),
