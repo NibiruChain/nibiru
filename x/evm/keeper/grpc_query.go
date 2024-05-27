@@ -258,9 +258,15 @@ func (k Keeper) Params(
 // EthCall: Implements the gRPC query for "/eth.evm.v1.Query/EthCall".
 // EthCall performs a smart contract call using the eth_call JSON-RPC method.
 //
+// An "eth_call" is a method from the Ethereum JSON-RPC specification that allows
+// one to call a smart contract function without execution a transaction on the
+// blockchain. This is useful for simulating transactions and for reading data
+// from the chain using responses from smart contract calls.
+//
 // Parameters:
-//   - goCtx: The context.Context object representing the request context.
-//   - req: The EthCallRequest object containing the call parameters.
+//   - goCtx: Request context with information about the current block that
+//     serves as the main access point to the blockchain state.
+//   - req: "eth_call" parameters to interact with a smart contract.
 //
 // Returns:
 //   - A pointer to the MsgEthereumTxResponse object containing the result of the eth_call.
