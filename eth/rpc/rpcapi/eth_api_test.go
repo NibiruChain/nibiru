@@ -7,15 +7,16 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum"
-	ethCommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	geth "github.com/ethereum/go-ethereum"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-	nibiCommon "github.com/NibiruChain/nibiru/x/common"
+
+	nibirucommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
@@ -36,7 +37,7 @@ type IntegrationSuite struct {
 	ethClient *ethclient.Client
 
 	fundedAccPrivateKey *ecdsa.PrivateKey
-	fundedAccEthAddr    ethCommon.Address
+	fundedAccEthAddr    gethcommon.Address
 	fundedAccNibiAddr   sdk.AccAddress
 
 	contractData evmtest.CompiledEvmContract
@@ -105,7 +106,7 @@ func (s *IntegrationSuite) Test_BlockByNumber() {
 
 // Test_BalanceAt EVM method: eth_getBalance
 func (s *IntegrationSuite) Test_BalanceAt() {
-	testAccEthAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
+	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
 
 	// New user balance should be 0
 	balance, err := s.ethClient.BalanceAt(context.Background(), testAccEthAddr, nil)
@@ -123,7 +124,7 @@ func (s *IntegrationSuite) Test_BalanceAt() {
 // Test_StorageAt EVM method: eth_getStorageAt
 func (s *IntegrationSuite) Test_StorageAt() {
 	storage, err := s.ethClient.StorageAt(
-		context.Background(), s.fundedAccEthAddr, ethCommon.Hash{}, nil,
+		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{}, nil,
 	)
 	s.NoError(err)
 	// TODO: add more checks
@@ -133,7 +134,7 @@ func (s *IntegrationSuite) Test_StorageAt() {
 // Test_PendingStorageAt EVM method: eth_getStorageAt | pending
 func (s *IntegrationSuite) Test_PendingStorageAt() {
 	storage, err := s.ethClient.PendingStorageAt(
-		context.Background(), s.fundedAccEthAddr, ethCommon.Hash{},
+		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{},
 	)
 	s.NoError(err)
 
@@ -161,9 +162,9 @@ func (s *IntegrationSuite) Test_PendingCodeAt() {
 
 // Test_EstimateGas EVM method: eth_estimateGas
 func (s *IntegrationSuite) Test_EstimateGas() {
-	testAccEthAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
+	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
 	gasLimit := uint64(21000)
-	msg := ethereum.CallMsg{
+	msg := geth.CallMsg{
 		From:  s.fundedAccEthAddr,
 		To:    &testAccEthAddr,
 		Gas:   gasLimit,
@@ -192,18 +193,18 @@ func (s *IntegrationSuite) Test_SimpleTransferTransaction() {
 		context.Background(), s.fundedAccEthAddr, nil,
 	)
 	s.NoError(err)
-	recipientAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "recipient"))
+	recipientAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "recipient"))
 	recipientBalanceBefore, err := s.ethClient.BalanceAt(context.Background(), recipientAddr, nil)
 	s.NoError(err)
 	s.Equal(int64(0), recipientBalanceBefore.Int64())
 
 	amountToSend := big.NewInt(1000)
 
-	signer := types.LatestSignerForChainID(chainID)
-	tx, err := types.SignNewTx(
+	signer := gethcore.LatestSignerForChainID(chainID)
+	tx, err := gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
-		&types.LegacyTx{
+		&gethcore.LegacyTx{
 			Nonce:    nonce,
 			To:       &recipientAddr,
 			Value:    amountToSend,
@@ -236,12 +237,12 @@ func (s *IntegrationSuite) Test_SmartContract() {
 	s.NoError(err)
 
 	// Deploying contract
-	signer := types.LatestSignerForChainID(chainID)
+	signer := gethcore.LatestSignerForChainID(chainID)
 	txData := s.contractData.Bytecode
-	tx, err := types.SignNewTx(
+	tx, err := gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
-		&types.LegacyTx{
+		&gethcore.LegacyTx{
 			Nonce:    nonce,
 			Gas:      1_500_000,
 			GasPrice: big.NewInt(1),
@@ -257,23 +258,23 @@ func (s *IntegrationSuite) Test_SmartContract() {
 	contractAddress := receipt.ContractAddress
 
 	// Querying contract: owner's balance should be 1000_000 tokens
-	ownerInitialBalance := (&big.Int{}).Mul(big.NewInt(1000_000), nibiCommon.TO_ATTO)
+	ownerInitialBalance := (&big.Int{}).Mul(big.NewInt(1000_000), nibirucommon.TO_ATTO)
 	s.assertERC20Balance(contractAddress, s.fundedAccEthAddr, ownerInitialBalance)
 
 	// Querying contract: recipient balance should be 0
-	recipientAddr := ethCommon.BytesToAddress(testutilcli.NewAccount(s.network, "contract_recipient"))
+	recipientAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "contract_recipient"))
 	s.assertERC20Balance(contractAddress, recipientAddr, big.NewInt(0))
 
 	// Execute contract: send 1000 anibi to recipient
-	sendAmount := (&big.Int{}).Mul(big.NewInt(1000), nibiCommon.TO_ATTO)
+	sendAmount := (&big.Int{}).Mul(big.NewInt(1000), nibirucommon.TO_ATTO)
 	input, err := s.contractData.ABI.Pack("transfer", recipientAddr, sendAmount)
 	s.NoError(err)
 	nonce, err = s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
-	tx, err = types.SignNewTx(
+	tx, err = gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
-		&types.LegacyTx{
+		&gethcore.LegacyTx{
 			Nonce:    nonce,
 			To:       &contractAddress,
 			Gas:      1_500_000,
@@ -286,11 +287,11 @@ func (s *IntegrationSuite) Test_SmartContract() {
 	s.NoError(s.network.WaitForNextBlock())
 
 	// Querying contract: owner's balance should be 999_000 tokens
-	ownerBalance := (&big.Int{}).Mul(big.NewInt(999_000), nibiCommon.TO_ATTO)
+	ownerBalance := (&big.Int{}).Mul(big.NewInt(999_000), nibirucommon.TO_ATTO)
 	s.assertERC20Balance(contractAddress, s.fundedAccEthAddr, ownerBalance)
 
 	// Querying contract: recipient balance should be 1000 tokens
-	recipientBalance := (&big.Int{}).Mul(big.NewInt(1000), nibiCommon.TO_ATTO)
+	recipientBalance := (&big.Int{}).Mul(big.NewInt(1000), nibirucommon.TO_ATTO)
 	s.assertERC20Balance(contractAddress, recipientAddr, recipientBalance)
 }
 
@@ -300,13 +301,13 @@ func (s *IntegrationSuite) TearDownSuite() {
 }
 
 func (s *IntegrationSuite) assertERC20Balance(
-	contractAddress ethCommon.Address,
-	userAddress ethCommon.Address,
+	contractAddress gethcommon.Address,
+	userAddress gethcommon.Address,
 	expectedBalance *big.Int,
 ) {
 	input, err := s.contractData.ABI.Pack("balanceOf", userAddress)
 	s.NoError(err)
-	msg := ethereum.CallMsg{
+	msg := geth.CallMsg{
 		From: s.fundedAccEthAddr,
 		To:   &contractAddress,
 		Data: input,
