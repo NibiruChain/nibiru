@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"math/big"
-	// "strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
-	// "github.com/status-im/keycard-go/hexutils"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
 	nibiCommon "github.com/NibiruChain/nibiru/x/common"

@@ -1,16 +1,15 @@
 package evmtest
 
 import (
-	"path"
-
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"testing"
+
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/stretchr/testify/require"
 
