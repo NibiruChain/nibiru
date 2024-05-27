@@ -37,7 +37,11 @@ type HardhatOutput struct {
 // HexString: Hexadecimal-encoded string
 type HexString string
 
-func (h HexString) Bytes() []byte  { return gethcommon.Hex2Bytes(string(h)) }
+func (h HexString) Bytes() []byte {
+	return gethcommon.Hex2Bytes(
+		strings.TrimPrefix(string(h), "0x"),
+	)
+}
 func (h HexString) String() string { return string(h) }
 func (h HexString) FromBytes(bz []byte) HexString {
 	return HexString(gethcommon.Bytes2Hex(bz))
@@ -50,9 +54,13 @@ func NewHardhatOutputFromJson(
 	rawJsonBz := make(map[string]json.RawMessage)
 	err := json.Unmarshal(jsonBz, &rawJsonBz)
 	require.NoError(t, err)
+	var rawBytecodeBz HexString
+	err = json.Unmarshal(rawJsonBz["bytecode"], &rawBytecodeBz)
+	require.NoError(t, err)
+
 	return HardhatOutput{
 		ABI:      rawJsonBz["abi"],
-		Bytecode: HexString(rawJsonBz["bytecode"]),
+		Bytecode: rawBytecodeBz,
 	}
 }
 
@@ -61,10 +69,9 @@ func (jsonObj HardhatOutput) EvmContract(t *testing.T) CompiledEvmContract {
 	err := newAbi.UnmarshalJSON(jsonObj.ABI)
 	require.NoError(t, err)
 
-	contract := new(CompiledEvmContract)
 	return CompiledEvmContract{
 		ABI:      *newAbi,
-		Bytecode: contract.Bytecode,
+		Bytecode: jsonObj.Bytecode.Bytes(),
 	}
 }
 

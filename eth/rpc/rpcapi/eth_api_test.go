@@ -239,9 +239,6 @@ func (s *IntegrationSuite) Test_SmartContract() {
 
 	// Deploying contract
 	signer := types.LatestSignerForChainID(chainID)
-	// FIXME: I think the error is here.
-	// txData := hexutils.HexToBytes(strings.TrimPrefix(
-	// 	string(s.contractData.Bytecode), "0x"))
 	txData := s.contractData.Bytecode
 	tx, err := types.SignNewTx(
 		s.fundedAccPrivateKey,
