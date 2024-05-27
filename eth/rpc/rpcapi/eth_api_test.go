@@ -3,26 +3,20 @@ package rpcapi_test
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
-	"fmt"
 	"math/big"
-	"os"
-	"path"
-	"strings"
+	// "strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/status-im/keycard-go/hexutils"
+	// "github.com/status-im/keycard-go/hexutils"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-	fixture "github.com/NibiruChain/nibiru/eth/rpc/rpcapi/fixture"
 	nibiCommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -36,11 +30,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
-type ContractJson struct {
-	Bytecode string  `json:"bytecode"`
-	Abi      abi.ABI `json:"abi"`
-}
-
 type IntegrationSuite struct {
 	suite.Suite
 	cfg     testutilcli.Config
@@ -52,7 +41,7 @@ type IntegrationSuite struct {
 	fundedAccEthAddr    ethCommon.Address
 	fundedAccNibiAddr   sdk.AccAddress
 
-	contractData *ContractJson
+	contractData evmtest.CompiledEvmContract
 }
 
 func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
@@ -73,7 +62,7 @@ func (s *IntegrationSuite) SetupSuite() {
 	s.network = network
 	s.ethClient = network.Validators[0].JSONRPCClient
 
-	s.contractData = getContractData()
+	s.contractData = evmtest.SmartContract_FunToken.Load(s.T())
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey
@@ -250,6 +239,10 @@ func (s *IntegrationSuite) Test_SmartContract() {
 
 	// Deploying contract
 	signer := types.LatestSignerForChainID(chainID)
+	// FIXME: I think the error is here.
+	// txData := hexutils.HexToBytes(strings.TrimPrefix(
+	// 	string(s.contractData.Bytecode), "0x"))
+	txData := s.contractData.Bytecode
 	tx, err := types.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
@@ -257,7 +250,7 @@ func (s *IntegrationSuite) Test_SmartContract() {
 			Nonce:    nonce,
 			Gas:      1_500_000,
 			GasPrice: big.NewInt(1),
-			Data:     hexutils.HexToBytes(strings.TrimPrefix(s.contractData.Bytecode, "0x")),
+			Data:     txData,
 		})
 	s.NoError(err)
 	err = s.ethClient.SendTransaction(context.Background(), tx)
@@ -278,7 +271,7 @@ func (s *IntegrationSuite) Test_SmartContract() {
 
 	// Execute contract: send 1000 anibi to recipient
 	sendAmount := (&big.Int{}).Mul(big.NewInt(1000), nibiCommon.TO_ATTO)
-	input, err := s.contractData.Abi.Pack("transfer", recipientAddr, sendAmount)
+	input, err := s.contractData.ABI.Pack("transfer", recipientAddr, sendAmount)
 	s.NoError(err)
 	nonce, err = s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
@@ -311,22 +304,12 @@ func (s *IntegrationSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func getContractData() *ContractJson {
-	pkgDir, _ := testutil.GetPackageDir()
-	pathToModulePkg := path.Dir(pkgDir)
-	pathToContractJson := pathToModulePkg + fmt.Sprintf("/rpcapi/fixture/%s", fixture.ERC20_CONTRACT_FILE)
-	file, _ := os.ReadFile(pathToContractJson)
-	var contractData ContractJson
-	_ = json.Unmarshal(file, &contractData)
-	return &contractData
-}
-
 func (s *IntegrationSuite) assertERC20Balance(
 	contractAddress ethCommon.Address,
 	userAddress ethCommon.Address,
 	expectedBalance *big.Int,
 ) {
-	input, err := s.contractData.Abi.Pack("balanceOf", userAddress)
+	input, err := s.contractData.ABI.Pack("balanceOf", userAddress)
 	s.NoError(err)
 	msg := ethereum.CallMsg{
 		From: s.fundedAccEthAddr,
