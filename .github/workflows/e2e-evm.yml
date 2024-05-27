@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
-  ethers:
+  e2e-evm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
