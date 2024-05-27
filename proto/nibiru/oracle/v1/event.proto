@@ -12,7 +12,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 message EventPriceUpdate {
   string pair = 1;
   string price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   int64 timestamp_ms = 3;

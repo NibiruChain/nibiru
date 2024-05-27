@@ -37,7 +37,7 @@ message MsgEditInflationParams {
   string sender = 1;
   bool inflation_enabled = 2;
   repeated string polynomial_factors = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
   InflationDistribution inflation_distribution = 4

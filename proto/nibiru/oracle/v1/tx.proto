@@ -103,13 +103,13 @@ message MsgEditOracleParams {
 
   // vote_threshold: [cosmossdk.io/math.LegacyDec] TODO:
   string vote_threshold = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
   // reward_band: [cosmossdk.io/math.LegacyDec] TODO:
   string reward_band = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
@@ -117,7 +117,7 @@ message MsgEditOracleParams {
 
   // slash_fraction: [cosmossdk.io/math.LegacyDec] TODO:
   string slash_fraction = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
@@ -128,7 +128,7 @@ message MsgEditOracleParams {
 
   // min_valid_per_window: [cosmossdk.io/math.LegacyDec] TODO:
   string min_valid_per_window = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
@@ -144,7 +144,7 @@ message MsgEditOracleParams {
 
   // VoteThreshold: [cosmossdk.io/math.LegacyDec] TODO:
   string validator_fee_ratio = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 }

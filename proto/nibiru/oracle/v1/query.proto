@@ -105,7 +105,7 @@ message QueryExchangeRateRequest {
 message QueryExchangeRateResponse {
   // exchange_rate defines the exchange rate of assets voted by validators
   string exchange_rate = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }

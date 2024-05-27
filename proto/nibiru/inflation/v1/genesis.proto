@@ -26,7 +26,7 @@ message Params {
   // polynomial_factors takes in the variables to calculate polynomial
   // inflation
   repeated string polynomial_factors = 2[
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // inflation_distribution of the minted denom

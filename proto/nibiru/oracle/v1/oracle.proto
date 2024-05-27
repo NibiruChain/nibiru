@@ -18,7 +18,7 @@ message Params {
   // received for a ballot to pass.
   string vote_threshold = 2 [
     (gogoproto.moretags) = "yaml:\"vote_threshold\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // RewardBand defines a maxium divergence that a price vote can have from the
@@ -31,7 +31,7 @@ message Params {
   // deviation, the band is taken to be 1 standard deviation.a price
   string reward_band = 3 [
     (gogoproto.moretags) = "yaml:\"reward_band\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // The set of whitelisted markets, or asset pairs, for the module.
@@ -45,7 +45,7 @@ message Params {
   // penalty for failing a voting period.
   string slash_fraction = 5 [
     (gogoproto.moretags) = "yaml:\"slash_fraction\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // SlashWindow returns the number of voting periods that specify a
@@ -55,7 +55,7 @@ message Params {
   uint64 slash_window = 6 [ (gogoproto.moretags) = "yaml:\"slash_window\"" ];
   string min_valid_per_window = 7 [
     (gogoproto.moretags) = "yaml:\"min_valid_per_window\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -75,7 +75,7 @@ message Params {
   // The validator fee ratio that is given to validators every epoch.
   string validator_fee_ratio = 10 [
     (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
@@ -125,7 +125,7 @@ message ExchangeRateTuple {
 
   string exchange_rate = 2 [
     (gogoproto.moretags) = "yaml:\"exchange_rate\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
@@ -133,7 +133,7 @@ message ExchangeRateTuple {
 message DatedPrice {
   string exchange_rate = 1 [
     (gogoproto.moretags) = "yaml:\"exchange_rate\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
