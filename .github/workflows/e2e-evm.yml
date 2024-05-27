@@ -2,7 +2,18 @@ name: EVM e2e tests
 
 on:
   pull_request:
-    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum", "contrib/docker/*", "**.js", "**.json"]
+    paths:
+      [
+        "**.go",
+        "**.proto",
+        "go.mod",
+        "go.sum",
+        "**go.mod",
+        "**go.sum",
+        "contrib/docker/*",
+        "**.js",
+        "**.json",
+      ]
 
 # Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
@@ -57,7 +68,7 @@ jobs:
 
       - name: NPM Install
         run: npm install
-        working-directory: "tests/evm"
+        working-directory: "e2e/evm"
 
       - name: "Launch localnet"
         run: |
@@ -66,7 +77,7 @@ jobs:
 
       - name: Run tests
         run: npm test
-        working-directory: "tests/evm"
+        working-directory: "e2e/evm"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
           MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
