@@ -32,6 +32,12 @@ func NewAppModule(h MessageRouter) AppModule {
 	return AppModule{h}
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 type AppModule struct {
 	router MessageRouter
 }

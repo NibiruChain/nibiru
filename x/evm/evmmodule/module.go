@@ -69,6 +69,12 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	return genesisState.Validate()
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterRESTRoutes performs a no-op as the EVM module doesn't expose REST
 // endpoints
 func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {
