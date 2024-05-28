@@ -155,7 +155,7 @@ func NewBackend(
 	allowUnprotectedTxs bool,
 	indexer eth.EVMTxIndexer,
 ) *Backend {
-	chainID, err := eth.ParseChainID(clientCtx.ChainID)
+	chainID, err := eth.ParseEthChainID(clientCtx.ChainID)
 	if err != nil {
 		panic(err)
 	}

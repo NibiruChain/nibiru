@@ -42,7 +42,7 @@ func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	}
 
 	val := network.Validators[0]
-	AbsorbServerConfig(cfg, val.AppConfig)
+	AbsorbServerConfig(cfg, &val.AppConfig.Config)
 	AbsorbTmConfig(cfg, val.Ctx.Config)
 
 	grpcConn, err := ConnectGrpcToVal(val)

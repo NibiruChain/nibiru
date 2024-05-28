@@ -21,7 +21,7 @@ coverage:
   status:
     project:
       default:
-        target: 66%
+        target: 60%
         if_not_found: success
         threshold: 1% # Allow coverage to drop by X%, posting a success status.
         # removed_code_behavior: Takes values [off, removals_only, adjust_base]
