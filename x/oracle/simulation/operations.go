@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
@@ -102,7 +103,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		exchangeRatesStr := ""
 		for _, pair := range whitelist {
-			price := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
+			price := math.LegacyNewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
 			exchangeRatesStr += price.String() + pair.String() + ","
 		}
 

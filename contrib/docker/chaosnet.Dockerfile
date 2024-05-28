@@ -2,9 +2,11 @@ FROM golang:1.21 AS builder
 
 WORKDIR /nibiru
 
-COPY go.sum go.mod ./
+# copy go.mod, go.sum to WORKDIR
+COPY go.sum go.mod ./  
 RUN go mod download
-COPY . .
+# copy the rest of the project to WORKDIR
+COPY . .               
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg \

@@ -4,9 +4,11 @@ on:
   workflow_dispatch: # Runs on manual calls
   schedule:
     - cron: "0 0 * * *" # Runs automatically every day
+  push:
+    branches: ["main"]
   pull_request:
     # paths makes the action run only when the given paths are changed
-    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
+    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
 
 # Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
@@ -52,3 +54,5 @@ jobs:
 
       - name: "Upload coverage reports to Codecov"
         uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

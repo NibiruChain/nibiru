@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -13,7 +14,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 
 	// slash_window / vote_period
 	votePeriodsPerWindow := uint64(
-		sdk.NewDec(int64(k.SlashWindow(ctx))).
+		math.LegacyNewDec(int64(k.SlashWindow(ctx))).
 			QuoInt64(int64(k.VotePeriod(ctx))).
 			TruncateInt64(),
 	)
@@ -25,8 +26,8 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 		operator := mc.Key
 		missCounter := mc.Value
 		// Calculate valid vote rate; (SlashWindow - MissCounter)/SlashWindow
-		validVoteRate := sdk.NewDecFromInt(
-			sdk.NewInt(int64(votePeriodsPerWindow - missCounter))).
+		validVoteRate := math.LegacyNewDecFromInt(
+			math.NewInt(int64(votePeriodsPerWindow - missCounter))).
 			QuoInt64(int64(votePeriodsPerWindow))
 
 		// Penalize the validator whose the valid vote rate is smaller than min threshold
@@ -39,12 +40,11 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 					continue
 				}
 
-				k.StakingKeeper.Slash(
-					ctx, consAddr,
-					distributionHeight, validator.GetConsensusPower(powerReduction), slashFraction,
+				k.slashingKeeper.Slash(
+					ctx, consAddr, slashFraction, validator.GetConsensusPower(powerReduction), distributionHeight,
 				)
-				k.Logger(ctx).Info("slash", "validator", consAddr.String(), "fraction", slashFraction.String())
-				k.StakingKeeper.Jail(ctx, consAddr)
+				k.Logger(ctx).Info("oracle slash", "validator", consAddr.String(), "fraction", slashFraction.String())
+				k.slashingKeeper.Jail(ctx, consAddr)
 			}
 		}
 

@@ -14,13 +14,19 @@ import (
 	"sync"
 	"time"
 
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
+	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
@@ -33,7 +39,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverapi "github.com/cosmos/cosmos-sdk/server/api"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -111,6 +116,9 @@ type (
 		// Address - account address
 		Address sdk.AccAddress
 
+		// EthAddress - Ethereum address
+		EthAddress common.Address
+
 		// ValAddress - validator operator (valoper) address
 		ValAddress sdk.ValAddress
 
@@ -118,9 +126,11 @@ type (
 		// listen for events, test if it also implements events.EventSwitch.
 		//
 		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-		// - rcp.HTTP
+		// - rpc.HTTP
 		// - rpc.Local
 		RPCClient tmclient.Client
+
+		JSONRPCClient *ethclient.Client
 
 		tmNode *node.Node
 
@@ -131,6 +141,8 @@ type (
 		grpc           *grpc.Server
 		grpcWeb        *http.Server
 		secretMnemonic string
+		jsonrpc        *http.Server
+		jsonrpcDone    chan struct{}
 	}
 )
 
@@ -157,7 +169,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
-		Codec:             encCfg.Marshaler,
+		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
@@ -276,6 +288,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			}
 			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
+
+			if cfg.JSONRPCAddress != "" {
+				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
+			} else {
+				_, jsonRPCPort, err := server.FreeTCPAddr()
+				if err != nil {
+					return nil, err
+				}
+				appCfg.JSONRPC.Address = fmt.Sprintf("0.0.0.0:%s", jsonRPCPort)
+			}
+			appCfg.JSONRPC.Enable = true
+			appCfg.JSONRPC.API = serverconfig.GetAPINamespaces()
 		}
 
 		loggerNoOp := log.NewNopLogger()
@@ -344,6 +368,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
+		ethAddr := common.BytesToAddress(addr.Bytes())
+
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +397,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		commission, err := sdk.NewDecFromStr("0.05")
+		commission, err := math.LegacyNewDecFromStr("0.05")
 		if err != nil {
 			return nil, err
 		}
@@ -381,8 +407,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			valPubKeys[i],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
-			sdk.OneInt(),
+			stakingtypes.NewCommissionRates(commission, math.LegacyOneDec(), math.LegacyOneDec()),
+			math.OneInt(),
 		)
 		if err != nil {
 			return nil, err
@@ -394,7 +420,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), sdk.ZeroInt()))
+		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), math.ZeroInt()))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {
@@ -425,7 +451,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		serverconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
+		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
 
 		clientCtx := client.Context{}.
 			WithKeyringDir(clientDir).
@@ -450,6 +476,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			P2PAddress:     tmCfg.P2P.ListenAddress,
 			APIAddress:     apiAddr,
 			Address:        addr,
+			EthAddress:     ethAddr,
 			ValAddress:     sdk.ValAddress(addr),
 			secretMnemonic: secret,
 		}
@@ -543,17 +570,23 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 
 // WaitForNextBlock waits for the next block to be committed, returning an error
 // upon failure.
-func (n *Network) WaitForNextBlock() error {
+func (n *Network) WaitForNextBlockVerbose() (int64, error) {
 	lastBlock, err := n.LatestHeight()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = n.WaitForHeight(lastBlock + 1)
+	newBlock := lastBlock + 1
+	_, err = n.WaitForHeight(newBlock)
 	if err != nil {
-		return err
+		return lastBlock, err
 	}
 
+	return newBlock, err
+}
+
+func (n *Network) WaitForNextBlock() error {
+	_, err := n.WaitForNextBlockVerbose()
 	return err
 }
 
@@ -612,6 +645,9 @@ func (n *Network) Cleanup() {
 			if v.grpcWeb != nil {
 				_ = v.grpcWeb.Close()
 			}
+		}
+		if v.jsonrpc != nil {
+			_ = v.jsonrpc.Close()
 		}
 	}
 

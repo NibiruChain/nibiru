@@ -39,7 +39,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,

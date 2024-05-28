@@ -4,10 +4,11 @@ package eth.evm.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm/types";
+option go_package = "github.com/NibiruChain/nibiru/x/evm";
 
 // Params defines the EVM module parameters
 message Params {
+  option (gogoproto.equal) = true;
   // evm_denom represents the token denomination used to run the EVM state
   // transitions.
   string evm_denom = 1 [(gogoproto.moretags) = "yaml:\"evm_denom\""];
@@ -32,6 +33,7 @@ message Params {
 // ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int values
 // instead of *big.Int.
 message ChainConfig {
+  option (gogoproto.equal) = true;
   // homestead_block switch (nil no fork, 0 = already homestead)
   string homestead_block = 1
       [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.moretags) = "yaml:\"homestead_block\""];

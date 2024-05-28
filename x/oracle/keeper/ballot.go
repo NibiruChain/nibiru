@@ -7,6 +7,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/omap"
 	"github.com/NibiruChain/nibiru/x/common/set"
@@ -83,7 +85,7 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 func isPassingVoteThreshold(
 	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
-	totalPower := sdk.NewInt(votes.Power())
+	totalPower := math.NewInt(votes.Power())
 	if totalPower.IsZero() {
 		return false
 	}
