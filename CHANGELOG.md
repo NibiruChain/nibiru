@@ -110,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
-- Bump `golangci/golangci-lint-action` from 4 to 5 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854))
+- Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.4 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
