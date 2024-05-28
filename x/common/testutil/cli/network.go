@@ -14,6 +14,12 @@ import (
 	"sync"
 	"time"
 
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -33,7 +39,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverapi "github.com/cosmos/cosmos-sdk/server/api"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -111,6 +116,9 @@ type (
 		// Address - account address
 		Address sdk.AccAddress
 
+		// EthAddress - Ethereum address
+		EthAddress common.Address
+
 		// ValAddress - validator operator (valoper) address
 		ValAddress sdk.ValAddress
 
@@ -122,6 +130,8 @@ type (
 		// - rpc.Local
 		RPCClient tmclient.Client
 
+		JSONRPCClient *ethclient.Client
+
 		tmNode *node.Node
 
 		// API exposes the app's REST and gRPC interfaces, allowing clients to
@@ -131,6 +141,8 @@ type (
 		grpc           *grpc.Server
 		grpcWeb        *http.Server
 		secretMnemonic string
+		jsonrpc        *http.Server
+		jsonrpcDone    chan struct{}
 	}
 )
 
@@ -276,6 +288,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			}
 			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
+
+			if cfg.JSONRPCAddress != "" {
+				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
+			} else {
+				_, jsonRPCPort, err := server.FreeTCPAddr()
+				if err != nil {
+					return nil, err
+				}
+				appCfg.JSONRPC.Address = fmt.Sprintf("0.0.0.0:%s", jsonRPCPort)
+			}
+			appCfg.JSONRPC.Enable = true
+			appCfg.JSONRPC.API = serverconfig.GetAPINamespaces()
 		}
 
 		loggerNoOp := log.NewNopLogger()
@@ -344,6 +368,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
+		ethAddr := common.BytesToAddress(addr.Bytes())
+
 		if err != nil {
 			return nil, err
 		}
@@ -425,7 +451,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		serverconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
+		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
 
 		clientCtx := client.Context{}.
 			WithKeyringDir(clientDir).
@@ -450,6 +476,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			P2PAddress:     tmCfg.P2P.ListenAddress,
 			APIAddress:     apiAddr,
 			Address:        addr,
+			EthAddress:     ethAddr,
 			ValAddress:     sdk.ValAddress(addr),
 			secretMnemonic: secret,
 		}
@@ -618,6 +645,9 @@ func (n *Network) Cleanup() {
 			if v.grpcWeb != nil {
 				_ = v.grpcWeb.Close()
 			}
+		}
+		if v.jsonrpc != nil {
+			_ = v.jsonrpc.Close()
 		}
 	}
 

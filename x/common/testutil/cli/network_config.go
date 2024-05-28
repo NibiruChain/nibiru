@@ -5,14 +5,14 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
 	tmconfig "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 )
 
 // Config: Defines the parameters needed to start a local test network.
@@ -44,6 +44,7 @@ type Config struct {
 	RPCAddress      string                     // RPC listen address (including port)
 	APIAddress      string                     // REST API listen address (including port)
 	GRPCAddress     string                     // GRPC server listen address (including port)
+	JSONRPCAddress  string                     // JSON-RPC listen address (including port)
 }
 
 func (cfg *Config) AbsorbServerConfig(srvCfg *serverconfig.Config) {

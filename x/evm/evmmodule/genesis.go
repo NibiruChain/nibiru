@@ -23,7 +23,6 @@ func InitGenesis(
 	accountKeeper evm.AccountKeeper,
 	genState evm.GenesisState,
 ) []abci.ValidatorUpdate {
-	k.BeginBlock(ctx, abci.RequestBeginBlock{})
 	k.SetParams(ctx, genState.Params)
 
 	if addr := accountKeeper.GetModuleAddress(evm.ModuleName); addr == nil {
