@@ -42,7 +42,8 @@ func TestKVIndexer(t *testing.T) {
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()
 
-	encCfg := MakeEncodingConfig()
+	// encCfg := MakeEncodingConfig()
+	encCfg := app.MakeEncodingConfig()
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
 	clientCtx := client.Context{}.

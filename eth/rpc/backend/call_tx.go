@@ -38,7 +38,7 @@ func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *h
 
 	// The signer used should always be the 'latest' known one because we expect
 	// signers to be backwards-compatible with old transactions.
-	eip155ChainID, err := eth.ParseChainID(b.clientCtx.ChainID)
+	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
 	if err != nil {
 		return common.Hash{}, err
 	}

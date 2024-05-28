@@ -1,7 +1,7 @@
 package genesis
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -10,7 +10,7 @@ import (
 )
 
 func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
-	gen[oracletypes.ModuleName] = app.MakeEncodingConfig().Marshaler.
+	gen[oracletypes.ModuleName] = app.MakeEncodingConfig().Codec.
 		MustMarshalJSON(OracleGenesis())
 	return gen
 }
@@ -18,8 +18,8 @@ func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
 func OracleGenesis() *oracletypes.GenesisState {
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(1_000)},
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
+		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: math.LegacyNewDec(1_000)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: math.LegacyNewDec(10)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 

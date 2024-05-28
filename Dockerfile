@@ -4,8 +4,6 @@ WORKDIR /nibiru
 
 # copy go.mod, go.sum to WORKDIR
 COPY go.sum go.mod ./  
-# copy geth to WORKDIR/geth
-COPY geth ./geth       
 RUN go mod download
 COPY . .
 

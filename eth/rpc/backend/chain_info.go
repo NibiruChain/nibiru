@@ -22,7 +22,7 @@ import (
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
 func (b *Backend) ChainID() (*hexutil.Big, error) {
-	eip155ChainID, err := eth.ParseChainID(b.clientCtx.ChainID)
+	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
 	if err != nil {
 		panic(err)
 	}
