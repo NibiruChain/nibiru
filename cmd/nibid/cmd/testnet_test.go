@@ -22,7 +22,7 @@ func Test_TestnetCmd(t *testing.T) {
 	home := t.TempDir()
 	encodingConfig := app.MakeEncodingConfig()
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
 	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Codec)

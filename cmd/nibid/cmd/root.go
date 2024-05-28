@@ -8,12 +8,10 @@ import (
 	"github.com/NibiruChain/nibiru/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
-
 	"cosmossdk.io/log"
-	dbm "github.com/cometbft/cometbft-db"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -29,6 +27,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
 
 	"github.com/NibiruChain/nibiru/app"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
@@ -114,8 +115,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
-		config.Cmd(),
-		pruning.PruningCmd(a.newApp),
+		confixcmd.ConfigCommand(),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
 	)
 
 	server.AddCommands(
@@ -127,7 +128,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
-		rpc.StatusCommand(),
+		server.StatusCommand(),
 		genesisCommand(
 			encodingConfig,
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
@@ -135,7 +136,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		keys.Commands(),
 	)
 
 	// TODO add rosettaj
@@ -171,9 +172,7 @@ func queryCommand() *cobra.Command {
 	}
 
 	rootQueryCmd.AddCommand(
-		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
 	)

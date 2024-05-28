@@ -10,10 +10,10 @@ import (
 
 	db "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
+	gentypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -153,20 +153,19 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return errors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &tmtypes.GenesisDoc{}
+			genDoc := &gentypes.AppGenesis{}
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
 				}
 			} else {
-				genDoc, err = tmtypes.GenesisDocFromFile(genFile)
+				genDoc, err = gentypes.AppGenesisFromFile(genFile)
 				if err != nil {
 					return errors.Wrap(err, "Failed to read genesis doc from file")
 				}
 			}
 
 			genDoc.ChainID = chainID
-			genDoc.Validators = nil
 			genDoc.AppState = appState
 			genDoc.InitialHeight = initHeight
 
