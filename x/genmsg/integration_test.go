@@ -20,9 +20,9 @@ func TestIntegration(t *testing.T) {
 	recvAddr := sdk.AccAddress("recv")
 
 	encoding := app.MakeEncodingConfig()
-	appGenesis := app.NewDefaultGenesisState(encoding.Marshaler)
+	appGenesis := app.NewDefaultGenesisState(encoding.Codec)
 
-	appGenesis[banktypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(&banktypes.GenesisState{
+	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(&banktypes.GenesisState{
 		Balances: []banktypes.Balance{
 			{
 				Address: senderAddr.String(),
@@ -40,7 +40,7 @@ func TestIntegration(t *testing.T) {
 	anyMsg, err := codectypes.NewAnyWithValue(testMsg)
 	require.NoError(t, err)
 
-	appGenesis[genmsg.ModuleName] = encoding.Marshaler.MustMarshalJSON(
+	appGenesis[genmsg.ModuleName] = encoding.Codec.MustMarshalJSON(
 		&v1.GenesisState{
 			Messages: []*codectypes.Any{anyMsg},
 		},

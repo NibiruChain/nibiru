@@ -42,7 +42,7 @@ func TestBackendSuite(t *testing.T) {
 	suite.Run(t, new(BackendSuite))
 }
 
-const ChainID = eth.EIP155ChainID_Testnet + "-1"
+const ChainID = eth.EIP155ChainID_Testnet
 
 // SetupTest is executed before every BackendTestSuite test
 func (s *BackendSuite) SetupTest() {
@@ -58,7 +58,7 @@ func (s *BackendSuite) SetupTest() {
 	}
 
 	// Create Account with set sequence
-	s.acc = sdk.AccAddress(evmtest.NewEthAddr().Bytes())
+	s.acc = sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes())
 	accounts := map[string]client.TestAccount{}
 	accounts[s.acc.String()] = client.TestAccount{
 		Address: s.acc,
@@ -66,7 +66,8 @@ func (s *BackendSuite) SetupTest() {
 		Seq:     uint64(1),
 	}
 
-	from, priv := evmtest.PrivKeyEth()
+	ethAcc := evmtest.NewEthAccInfo()
+	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	s.from = from
 	s.signer = evmtest.NewSigner(priv)
 	s.Require().NoError(err)
@@ -179,7 +180,8 @@ func (s *BackendSuite) generateTestKeyring(clientDir string) (keyring.Keyring, e
 }
 
 func (s *BackendSuite) signAndEncodeEthTx(msgEthereumTx *evm.MsgEthereumTx) []byte {
-	from, priv := evmtest.PrivKeyEth()
+	ethAcc := evmtest.NewEthAccInfo()
+	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	signer := evmtest.NewSigner(priv)
 
 	queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)

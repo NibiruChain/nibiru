@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/NibiruChain/nibiru/app/server"
+
 	tmtypes "github.com/cometbft/cometbft/abci/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -96,7 +101,7 @@ func startInProcess(cfg Config, val *Validator) error {
 		errCh := make(chan error)
 
 		go func() {
-			if err := apiSrv.Start(*val.AppConfig); err != nil {
+			if err := apiSrv.Start(val.AppConfig.Config); err != nil {
 				errCh <- err
 			}
 		}()
@@ -119,10 +124,30 @@ func startInProcess(cfg Config, val *Validator) error {
 		val.grpc = grpcSrv
 
 		if val.AppConfig.GRPCWeb.Enable {
-			val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, *val.AppConfig)
+			val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, val.AppConfig.Config)
 			if err != nil {
 				return err
 			}
+		}
+	}
+	if val.AppConfig.JSONRPC.Enable && val.AppConfig.JSONRPC.Address != "" {
+		if val.Ctx == nil || val.Ctx.Viper == nil {
+			return fmt.Errorf("validator %s context is nil", val.Moniker)
+		}
+
+		tmEndpoint := "/websocket"
+		tmRPCAddr := fmt.Sprintf("tcp://%s", val.AppConfig.GRPC.Address)
+
+		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
+		if err != nil {
+			return err
+		}
+
+		address := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)
+
+		val.JSONRPCClient, err = ethclient.Dial(address)
+		if err != nil {
+			return fmt.Errorf("failed to dial JSON-RPC at %s: %w", val.AppConfig.JSONRPC.Address, err)
 		}
 	}
 
@@ -284,12 +309,17 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 	return addr
 }
 
+func NewEthAccount(network *Network, uid string) common.Address {
+	addr := NewAccount(network, uid)
+	return common.BytesToAddress(addr.Bytes())
+}
+
 func NewKeyring(t *testing.T) (
 	kring keyring.Keyring,
 	algo keyring.SignatureAlgo,
 	nodeDirName string,
 ) {
-	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
 	kring = keyring.NewInMemory(cdc)
 	nodeDirName = t.TempDir()
 	algo = hd.Secp256k1

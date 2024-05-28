@@ -48,8 +48,8 @@ func (suite *CodecTestSuite) TestRegisterInterfaces() {
 			ProtoName: "cosmos.tx.v1beta1.TxExtensionOptionI",
 			Interface: new(sdktx.TxExtensionOptionI),
 			WantImpls: []string{
-				"/eth.types.v1.ExtensionOptionsWeb3Tx",
-				"/eth.types.v1.ExtensionOptionDynamicFeeTx",
+				TYPE_URL_WEB3_TX,
+				TYPE_URL_DYNAMIC_FEE_TX,
 			},
 		},
 	}

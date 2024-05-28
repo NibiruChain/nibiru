@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -28,16 +29,16 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Change to all non-defaults to test EditOracleParams as a setter .
-	votePeriod := sdk.NewInt(1_234)
-	voteThreshold := sdk.MustNewDecFromStr("0.4")
-	rewardBand := sdk.MustNewDecFromStr("0.5")
+	votePeriod := math.NewInt(1_234)
+	voteThreshold := math.LegacyMustNewDecFromStr("0.4")
+	rewardBand := math.LegacyMustNewDecFromStr("0.5")
 	whitelist := []string{"aave:usdc", "sol:usdc"}
-	slashFraction := sdk.MustNewDecFromStr("0.5")
-	slashWindow := sdk.NewInt(2_000)
-	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
-	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
-	minVoters := sdk.NewInt(2)
-	validatorFeeRatio := sdk.MustNewDecFromStr("0.7")
+	slashFraction := math.LegacyMustNewDecFromStr("0.5")
+	slashWindow := math.NewInt(2_000)
+	minValidPerWindow := math.LegacyMustNewDecFromStr("0.5")
+	twapLookbackWindow := math.NewInt(int64(time.Second * 30))
+	minVoters := math.NewInt(2)
+	validatorFeeRatio := math.LegacyMustNewDecFromStr("0.7")
 	msgEditParams := oracletypes.MsgEditOracleParams{
 		VotePeriod:         &votePeriod,
 		VoteThreshold:      &voteThreshold,
@@ -81,7 +82,7 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	s.EqualValues(resp.NewParams.String(), fullParams.String())
 
 	s.T().Log("Changing to invalid params MUST fail")
-	slashWindow = sdk.NewInt(1_233) // slashWindow < vote period is not allowed.
+	slashWindow = math.NewInt(1_233) // slashWindow < vote period is not allowed.
 	msgEditParams = oracletypes.MsgEditOracleParams{
 		Sender:      okSender.String(),
 		SlashWindow: &slashWindow,

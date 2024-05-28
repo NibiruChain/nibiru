@@ -17,8 +17,8 @@ type EVMQueryClient struct {
 	mock.Mock
 }
 
-// Account provides a mock function with given fields: ctx, in, opts
-func (_m *EVMQueryClient) Account(ctx context.Context, in *evm.QueryAccountRequest, opts ...grpc.CallOption) (*evm.QueryAccountResponse, error) {
+// EthAccount provides a mock function with given fields: ctx, in, opts
+func (_m *EVMQueryClient) EthAccount(ctx context.Context, in *evm.QueryEthAccountRequest, opts ...grpc.CallOption) (*evm.QueryEthAccountResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -28,17 +28,17 @@ func (_m *EVMQueryClient) Account(ctx context.Context, in *evm.QueryAccountReque
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *evm.QueryAccountResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryAccountRequest, ...grpc.CallOption) *evm.QueryAccountResponse); ok {
+	var r0 *evm.QueryEthAccountResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryEthAccountRequest, ...grpc.CallOption) *evm.QueryEthAccountResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*evm.QueryAccountResponse)
+			r0 = ret.Get(0).(*evm.QueryEthAccountResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryAccountRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryEthAccountRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -137,8 +137,8 @@ func (_m *EVMQueryClient) Code(ctx context.Context, in *evm.QueryCodeRequest, op
 	return r0, r1
 }
 
-// CosmosAccount provides a mock function with given fields: ctx, in, opts
-func (_m *EVMQueryClient) CosmosAccount(ctx context.Context, in *evm.QueryCosmosAccountRequest, opts ...grpc.CallOption) (*evm.QueryCosmosAccountResponse, error) {
+// NibiruAccount provides a mock function with given fields: ctx, in, opts
+func (_m *EVMQueryClient) NibiruAccount(ctx context.Context, in *evm.QueryNibiruAccountRequest, opts ...grpc.CallOption) (*evm.QueryNibiruAccountResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -148,17 +148,17 @@ func (_m *EVMQueryClient) CosmosAccount(ctx context.Context, in *evm.QueryCosmos
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *evm.QueryCosmosAccountResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryCosmosAccountRequest, ...grpc.CallOption) *evm.QueryCosmosAccountResponse); ok {
+	var r0 *evm.QueryNibiruAccountResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryNibiruAccountRequest, ...grpc.CallOption) *evm.QueryNibiruAccountResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*evm.QueryCosmosAccountResponse)
+			r0 = ret.Get(0).(*evm.QueryNibiruAccountResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryCosmosAccountRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryNibiruAccountRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

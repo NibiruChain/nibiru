@@ -55,7 +55,6 @@ message ModuleParams {
 // TFDenom is a token factory (TF) denom. The canonical representation is
 // "tf/{creator}/{subdenom}", its unique denomination in the x/bank module.
 message TFDenom {
-  option (gogoproto.goproto_stringer) = false;
   option (gogoproto.stringer) = false;
 
   // Creator: Bech32 address of the creator of the denom.

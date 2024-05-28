@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -445,4 +446,29 @@ func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 	}
 
 	return &res, nil
+}
+
+var EmptyCodeHash = crypto.Keccak256(nil)
+
+// BinSearch executes the binary search and hone in on an executable gas limit
+func BinSearch(
+	lo, hi uint64, executable func(uint64) (bool, *MsgEthereumTxResponse, error),
+) (uint64, error) {
+	for lo+1 < hi {
+		mid := (hi + lo) / 2
+		failed, _, err := executable(mid)
+		// If this errors, there was a consensus error, and the provided message
+		// call or tx will never be accepted, regardless of how high we set the
+		// gas limit.
+		// Return the error directly, don't struggle any more.
+		if err != nil {
+			return 0, err
+		}
+		if failed {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return hi, nil
 }

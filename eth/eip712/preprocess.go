@@ -46,7 +46,7 @@ func PreprocessLedgerTx(chainID string, keyType cosmoskr.KeyType, txBuilder clie
 	sigBytes := sigData.Signature
 
 	// Parse Chain ID as big.Int
-	chainIDInt, err := eth.ParseChainID(chainID)
+	chainIDInt, err := eth.ParseEthChainID(chainID)
 	if err != nil {
 		return fmt.Errorf("could not parse chain id: %w", err)
 	}

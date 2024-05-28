@@ -3,8 +3,7 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -15,12 +14,12 @@ func TestExchangeRateTuples_ToString(t *testing.T) {
 		tuples := types.ExchangeRateTuples{
 			{
 				Pair:         "BTC:USD",
-				ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+				ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 			},
 
 			{
 				Pair:         "ETH:USD",
-				ExchangeRate: sdk.MustNewDecFromStr("4000.00"),
+				ExchangeRate: math.LegacyMustNewDecFromStr("4000.00"),
 			},
 		}
 
@@ -37,12 +36,12 @@ func TestExchangeRateTuples_ToString(t *testing.T) {
 		tuples := types.ExchangeRateTuples{
 			{
 				Pair:         "BTC:USD",
-				ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+				ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 			},
 
 			{
 				Pair:         "BTC:USD",
-				ExchangeRate: sdk.MustNewDecFromStr("4000.00"),
+				ExchangeRate: math.LegacyMustNewDecFromStr("4000.00"),
 			},
 		}
 
@@ -58,7 +57,7 @@ func TestExchangeRateTuple(t *testing.T) {
 	t.Run("inverse", func(t *testing.T) {
 		exchangeRate := types.ExchangeRateTuple{
 			Pair:         "BTC:USD",
-			ExchangeRate: sdk.MustNewDecFromStr("40000.00"),
+			ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 		}
 		exchangeRateStr, err := exchangeRate.ToString()
 		require.NoError(t, err)

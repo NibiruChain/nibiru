@@ -4,6 +4,7 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -98,8 +99,8 @@ func (s *TestSuite) TestCreateDenom() {
 			want := types.TFDenom{
 				Creator:  tc.txMsg.Sender,
 				Subdenom: tc.txMsg.Subdenom,
-			}.String()
-			s.Equal(want, resp.NewTokenDenom)
+			}.Denom()
+			s.Equal(want.String(), resp.NewTokenDenom)
 
 			if tc.postHook != nil {
 				tc.postHook(s.ctx, s.app)
@@ -136,7 +137,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "sad: non-admin tries to change admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   testutil.AccAddress().String(),
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: "only the current admin can set a new admin",
@@ -155,7 +156,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "happy: SBF changes FTT admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: "",
@@ -174,7 +175,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			Name: "sad: change admin for denom that doesn't exist ",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
-				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
 				NewAdmin: testutil.AccAddress().String(),
 			},
 			wantErr: collections.ErrNotFound.Error(),
@@ -329,8 +330,8 @@ func (s *TestSuite) TestMintBurn() {
 		Subdenom: "nusd",
 	}
 	nusd69420 := sdk.Coin{
-		Denom:  tfdenom.String(),
-		Amount: sdk.NewInt(69_420),
+		Denom:  tfdenom.Denom().String(),
+		Amount: math.NewInt(69_420),
 	}
 
 	testCases := []TestCaseTx{
@@ -348,8 +349,8 @@ func (s *TestSuite) TestMintBurn() {
 						Denom: types.TFDenom{
 							Creator:  addrs[0].String(),
 							Subdenom: "nusd",
-						}.String(),
-						Amount: sdk.NewInt(69_420),
+						}.Denom().String(),
+						Amount: math.NewInt(69_420),
 					},
 					MintTo: "",
 				},
@@ -362,8 +363,8 @@ func (s *TestSuite) TestMintBurn() {
 							Denom: types.TFDenom{
 								Creator:  addrs[0].String(),
 								Subdenom: "nusd",
-							}.String(),
-							Amount: sdk.NewInt(1),
+							}.Denom().String(),
+							Amount: math.NewInt(1),
 						},
 						BurnFrom: "",
 					},
@@ -382,14 +383,14 @@ func (s *TestSuite) TestMintBurn() {
 				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
-					sdk.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.String()).Amount,
+					math.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
 				)
 
 				s.T().Log("Module account should be empty.")
 				coin := s.app.BankKeeper.GetBalance(
-					s.ctx, tfModuleAddr, denom.String())
+					s.ctx, tfModuleAddr, denom.Denom().String())
 				s.Equal(
-					sdk.NewInt(0),
+					math.NewInt(0),
 					coin.Amount,
 				)
 			},
@@ -434,7 +435,7 @@ func (s *TestSuite) TestMintBurn() {
 
 				&types.MsgChangeAdmin{
 					Sender:   addrs[0].String(),
-					Denom:    tfdenom.String(),
+					Denom:    tfdenom.Denom().String(),
 					NewAdmin: addrs[1].String(),
 				},
 			},
@@ -532,13 +533,13 @@ func (s *TestSuite) TestSetDenomMetadata() {
 							Description: "US Dollar",
 							DenomUnits: []*banktypes.DenomUnit{
 								{
-									Denom:    tfdenom.String(),
+									Denom:    tfdenom.Denom().String(),
 									Exponent: 0,
 									Aliases:  []string{"unusd"},
 								},
 								{Denom: "USD", Exponent: 6},
 							},
-							Base:    tfdenom.String(),
+							Base:    tfdenom.Denom().String(),
 							Display: "USD",
 							Name:    "USD",
 							Symbol:  "USD",
@@ -646,7 +647,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "happy: burn",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -654,23 +655,23 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", sdk.NewInt(123)),
+						Coin:   sdk.NewCoin("unibi", math.NewInt(123)),
 					},
 					WantErr: "",
 				},
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					sdk.NewInt(0), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					math.NewInt(0), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(
-					sdk.NewInt(0),
+					math.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, tfModuleAddr, "unibi").Amount,
 				)
 
 				s.Equal(
-					sdk.NewInt(0),
+					math.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},
@@ -680,7 +681,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "sad: not enough funds",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -688,18 +689,18 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", sdk.NewInt(124)),
+						Coin:   sdk.NewCoin("unibi", math.NewInt(124)),
 					},
 					WantErr: "spendable balance 123unibi is smaller than 124unibi: insufficient funds",
 				},
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					sdk.NewInt(123), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					math.NewInt(123), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(
-					sdk.NewInt(123),
+					math.NewInt(123),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},

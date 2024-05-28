@@ -23,8 +23,9 @@ var (
 )
 
 const (
-	// Amino names
-	updateParamsName = "evm/MsgUpdateParams"
+	// Protobuf type URL for a consensus tx holding Ethereum transaction msgs.
+	// Corresponds with [ExtensionOptionsEthereumTx].
+	TYPE_URL_ETHEREUM_TX = "/eth.evm.v1.ExtensionOptionsEthereumTx"
 )
 
 // NOTE: This is required for the GetSignBytes function

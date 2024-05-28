@@ -20,7 +20,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 
 	encCfg := app.MakeEncodingConfig()
 	appGenesis := genesis.NewTestGenesisState(encCfg)
-	appGenesis[types.ModuleName] = encCfg.Marshaler.MustMarshalJSON(moduleGenesisIn)
+	appGenesis[types.ModuleName] = encCfg.Codec.MustMarshalJSON(moduleGenesisIn)
 
 	app := testapp.NewNibiruTestApp(appGenesis)
 	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
