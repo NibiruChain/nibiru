@@ -27,8 +27,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/indexer"
+
+	// "github.com/NibiruChain/nibiru/eth/indexer"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -383,19 +383,19 @@ func setupTraceWriter(svrCtx *server.Context) (traceWriter io.WriteCloser, clean
 
 func startJsonServer(ctx context.Context, clientCtx client.Context, cfg config.Config, svrCtx *server.Context) error {
 	logger := svrCtx.Logger
-	home := svrCtx.Config.RootDir
-	var idxer eth.EVMTxIndexer
+	// var idxer eth.EVMTxIndexer
 
-	if cfg.JSONRPC.EnableIndexer {
-		idxDB, err := OpenIndexerDB(home, server.GetAppDBBackend(svrCtx.Viper))
-		if err != nil {
-			svrCtx.Logger.Error("failed to open evm indexer DB", "error", err.Error())
-			return err
-		}
+	// if cfg.JSONRPC.EnableIndexer {
+	// home := svrCtx.Config.RootDir
+	// 	idxDB, err := OpenIndexerDB(home, server.GetAppDBBackend(svrCtx.Viper))
+	// 	if err != nil {
+	// 		svrCtx.Logger.Error("failed to open evm indexer DB", "error", err.Error())
+	// 		return err
+	// 	}
 
-		idxLogger := logger.With("indexer", "evm")
-		idxer = indexer.NewKVIndexer(idxDB, idxLogger, clientCtx)
-	}
+	// 	idxLogger := logger.With("indexer", "evm")
+	// 	idxer = indexer.NewKVIndexer(idxDB, idxLogger, clientCtx)
+	// }
 
 	if cfg.JSONRPC.Enable {
 		genDocProvider := node.DefaultGenesisDocProviderFunc(svrCtx.Config)
@@ -408,7 +408,7 @@ func startJsonServer(ctx context.Context, clientCtx client.Context, cfg config.C
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := svrCtx.Config.RPC.ListenAddress
-		httpSrv, httpSrvDone, err := StartJSONRPC(ctx, clientCtx, svrCtx, logger, tmRPCAddr, tmEndpoint, &cfg, idxer)
+		httpSrv, httpSrvDone, err := StartJSONRPC(ctx, clientCtx, svrCtx, logger, tmRPCAddr, tmEndpoint, &cfg)
 		if err != nil {
 			return err
 		}
