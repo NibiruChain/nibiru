@@ -242,14 +242,16 @@ func NewNibiruApp(
 // Name returns the name of the App
 func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
 
-// BeginBlocker application updates every begin block
-func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.ModuleManager.BeginBlock(ctx, req)
+// BeginBlocker runs the Tendermint ABCI BeginBlock logic. It executes state changes at the beginning
+// of the new block for every registered module. If there is a registered fork at the current height,
+// BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
+func (app *NibiruApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	return app.ModuleManager.BeginBlock(ctx)
 }
 
-// EndBlocker application updates every end block
-func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.ModuleManager.EndBlock(ctx, req)
+// EndBlocker updates every end block
+func (app *NibiruApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	return app.ModuleManager.EndBlock(ctx)
 }
 
 // InitChainer application update at chain initialization
