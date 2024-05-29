@@ -1,19 +1,16 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
@@ -125,53 +122,53 @@ func (network *Network) ExecTxCmd(
 	return resp, nil
 }
 
-func (chain *Network) BroadcastMsgs(
-	from sdk.AccAddress, msgs ...sdk.Msg,
-) (*sdk.TxResponse, error) {
-	cfg := chain.Config
-	kb, info, err := chain.keyBaseAndInfoForAddr(from)
-	if err != nil {
-		return nil, err
-	}
+// func (chain *Network) BroadcastMsgs(
+// 	from sdk.AccAddress, msgs ...sdk.Msg,
+// ) (*sdk.TxResponse, error) {
+// 	cfg := chain.Config
+// 	kb, info, err := chain.keyBaseAndInfoForAddr(from)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	rpc := chain.Validators[0].RPCClient
-	txBuilder := cfg.TxConfig.NewTxBuilder()
-	err = txBuilder.SetMsgs(msgs...)
-	if err != nil {
-		return nil, err
-	}
+// 	rpc := chain.Validators[0].RPCClient
+// 	txBuilder := cfg.TxConfig.NewTxBuilder()
+// 	err = txBuilder.SetMsgs(msgs...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, math.NewInt(1000))))
-	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
+// 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, math.NewInt(1000))))
+// 	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
 
-	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
-	if err != nil {
-		return nil, err
-	}
+// 	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	txFactory := tx.Factory{}
-	txFactory = txFactory.
-		WithChainID(cfg.ChainID).
-		WithKeybase(kb).
-		WithTxConfig(cfg.TxConfig).
-		WithAccountRetriever(cfg.AccountRetriever).
-		WithAccountNumber(acc.GetAccountNumber()).
-		WithSequence(acc.GetSequence())
+// 	txFactory := tx.Factory{}
+// 	txFactory = txFactory.
+// 		WithChainID(cfg.ChainID).
+// 		WithKeybase(kb).
+// 		WithTxConfig(cfg.TxConfig).
+// 		WithAccountRetriever(cfg.AccountRetriever).
+// 		WithAccountNumber(acc.GetAccountNumber()).
+// 		WithSequence(acc.GetSequence())
 
-	err = tx.Sign(txFactory, info.Name, txBuilder, true)
-	if err != nil {
-		return nil, err
-	}
+// 	err = tx.Sign(ctx, txFactory, info.Name, txBuilder, true)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	txBytes, err := cfg.TxConfig.TxEncoder()(txBuilder.GetTx())
-	if err != nil {
-		return nil, err
-	}
+// 	txBytes, err := cfg.TxConfig.TxEncoder()(txBuilder.GetTx())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	respRaw, err := rpc.BroadcastTxSync(context.Background(), txBytes)
-	if err != nil {
-		return nil, err
-	}
+// 	respRaw, err := rpc.BroadcastTxSync(context.Background(), txBytes)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return sdk.NewResponseFormatBroadcastTx(respRaw), err
-}
+// 	return sdk.NewResponseFormatBroadcastTx(respRaw), err
+// }

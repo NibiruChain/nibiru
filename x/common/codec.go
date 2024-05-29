@@ -2,8 +2,8 @@ package common
 
 import (
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 
+	coll "cosmossdk.io/collections"
 	collcodec "cosmossdk.io/collections/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -118,11 +118,11 @@ func (cdc mathIntKeyCodec) Size(key sdkmath.Int) int {
 }
 
 func (cdc mathIntKeyCodec) EncodeJSON(value sdkmath.Int) ([]byte, error) {
-	return collections.StringKey.EncodeJSON(value.String())
+	return coll.StringKey.EncodeJSON(value.String())
 }
 
 func (cdc mathIntKeyCodec) DecodeJSON(b []byte) (v sdkmath.Int, err error) {
-	s, err := collections.StringKey.DecodeJSON(b)
+	s, err := coll.StringKey.DecodeJSON(b)
 	if err != nil {
 		return
 	}
