@@ -9,7 +9,6 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
-
 	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
@@ -51,7 +50,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
@@ -105,35 +103,31 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	ibcmock "github.com/cosmos/ibc-go/v8/testing/mock"
 	"github.com/spf13/cast"
-
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
-
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/devgas/v1"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	"github.com/NibiruChain/nibiru/x/epochs"
-	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
-	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/x/genmsg"
-	"github.com/NibiruChain/nibiru/x/inflation"
-	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/x/oracle"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-
-	"github.com/NibiruChain/nibiru/x/sudo"
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
-	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
-	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	// "github.com/NibiruChain/nibiru/x/common"
+	// "github.com/NibiruChain/nibiru/x/devgas/v1"
+	// devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	// devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	// "github.com/NibiruChain/nibiru/x/epochs"
+	// epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
+	// epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	// "github.com/NibiruChain/nibiru/x/evm"
+	// "github.com/NibiruChain/nibiru/x/evm/evmmodule"
+	// evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
+	// "github.com/NibiruChain/nibiru/x/genmsg"
+	// "github.com/NibiruChain/nibiru/x/inflation"
+	// inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	// inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	// oracle "github.com/NibiruChain/nibiru/x/oracle"
+	// oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	// oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	// "github.com/NibiruChain/nibiru/x/sudo"
+	// "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	// sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	// tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
+	// tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
+	// tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type AppKeepers struct {
@@ -184,13 +178,13 @@ type AppKeepers struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	EpochsKeeper       epochskeeper.Keeper
-	OracleKeeper       oraclekeeper.Keeper
-	InflationKeeper    inflationkeeper.Keeper
-	SudoKeeper         keeper.Keeper
-	DevGasKeeper       devgaskeeper.Keeper
-	TokenFactoryKeeper tokenfactorykeeper.Keeper
-	EvmKeeper          evmkeeper.Keeper
+	// EpochsKeeper       epochskeeper.Keeper
+	// OracleKeeper       oraclekeeper.Keeper
+	// InflationKeeper    inflationkeeper.Keeper
+	// SudoKeeper         keeper.Keeper
+	// DevGasKeeper       devgaskeeper.Keeper
+	// TokenFactoryKeeper tokenfactorykeeper.Keeper
+	// EvmKeeper          evmkeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasmkeeper.Keeper
@@ -226,15 +220,15 @@ func initStoreKeys() (
 		icacontrollertypes.StoreKey,
 
 		// nibiru x/ keys
-		oracletypes.StoreKey,
-		epochstypes.StoreKey,
-		inflationtypes.StoreKey,
-		sudotypes.StoreKey,
+		// oracletypes.StoreKey,
+		// epochstypes.StoreKey,
+		// inflationtypes.StoreKey,
+		// sudotypes.StoreKey,
 		wasmtypes.StoreKey,
-		devgastypes.StoreKey,
-		tokenfactorytypes.StoreKey,
+		// devgastypes.StoreKey,
+		// tokenfactorytypes.StoreKey,
 
-		evm.StoreKey,
+		// evm.StoreKey,
 	)
 	tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys = storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -402,40 +396,40 @@ func (app *NibiruApp) InitKeepers(
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 
-	app.SudoKeeper = keeper.NewKeeper(
-		appCodec, keys[sudotypes.StoreKey],
-	)
+	// app.SudoKeeper = keeper.NewKeeper(
+	// 	appCodec, keys[sudotypes.StoreKey],
+	// )
 
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.slashingKeeper,
-		app.SudoKeeper,
-		distrtypes.ModuleName,
-	)
+	// app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
+	// 	app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.slashingKeeper,
+	// 	app.SudoKeeper,
+	// 	distrtypes.ModuleName,
+	// )
 
-	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstypes.StoreKey],
-	)
+	// app.EpochsKeeper = epochskeeper.NewKeeper(
+	// 	appCodec, keys[epochstypes.StoreKey],
+	// )
 
-	app.InflationKeeper = inflationkeeper.NewKeeper(
-		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
-	)
+	// app.InflationKeeper = inflationkeeper.NewKeeper(
+	// 	appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+	// 	app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
+	// )
 
-	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(
-			app.InflationKeeper.Hooks(),
-			app.OracleKeeper.Hooks(),
-		),
-	)
+	// app.EpochsKeeper.SetHooks(
+	// 	epochstypes.NewMultiEpochHooks(
+	// 		app.InflationKeeper.Hooks(),
+	// 		app.OracleKeeper.Hooks(),
+	// 	),
+	// )
 
-	app.EvmKeeper = evmkeeper.NewKeeper(
-		appCodec,
-		keys[evm.StoreKey],
-		tkeys[evm.TransientKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
-	)
+	// app.EvmKeeper = evmkeeper.NewKeeper(
+	// 	appCodec,
+	// 	keys[evm.StoreKey],
+	// 	tkeys[evm.TransientKey],
+	// 	authtypes.NewModuleAddress(govtypes.ModuleName),
+	// 	app.AccountKeeper,
+	// 	app.BankKeeper,
+	// )
 
 	// ---------------------------------- IBC keepers
 
@@ -534,25 +528,25 @@ func (app *NibiruApp) InitKeepers(
 		GetWasmOpts(*app, appOpts)...,
 	)
 
-	// DevGas uses WasmKeeper
-	app.DevGasKeeper = devgaskeeper.NewKeeper(
-		keys[devgastypes.StoreKey],
-		appCodec,
-		app.BankKeeper,
-		app.WasmKeeper,
-		app.AccountKeeper,
-		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
+	// // DevGas uses WasmKeeper
+	// app.DevGasKeeper = devgaskeeper.NewKeeper(
+	// 	keys[devgastypes.StoreKey],
+	// 	appCodec,
+	// 	app.BankKeeper,
+	// 	app.WasmKeeper,
+	// 	app.AccountKeeper,
+	// 	authtypes.FeeCollectorName,
+	// 	govModuleAddr,
+	// )
 
-	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		keys[tokenfactorytypes.StoreKey],
-		appCodec,
-		app.BankKeeper,
-		app.AccountKeeper,
-		app.DistrKeeper,
-		govModuleAddr,
-	)
+	// app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+	// 	keys[tokenfactorytypes.StoreKey],
+	// 	appCodec,
+	// 	app.BankKeeper,
+	// 	app.AccountKeeper,
+	// 	app.DistrKeeper,
+	// 	govModuleAddr,
+	// )
 
 	// register the proposal types
 
@@ -685,11 +679,11 @@ func (app *NibiruApp) initAppModules(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
 		// Nibiru modules
-		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
-		epochs.NewAppModule(appCodec, app.EpochsKeeper),
-		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
-		sudo.NewAppModule(appCodec, app.SudoKeeper),
-		genmsg.NewAppModule(app.MsgServiceRouter()),
+		// oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
+		// epochs.NewAppModule(appCodec, app.EpochsKeeper),
+		// inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
+		// sudo.NewAppModule(appCodec, app.SudoKeeper),
+		// genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -698,21 +692,27 @@ func (app *NibiruApp) initAppModules(
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 
-		evmmodule.NewAppModule(&app.EvmKeeper, app.AccountKeeper),
+		// evmmodule.NewAppModule(&app.EvmKeeper, app.AccountKeeper),
 
 		// wasm
 		wasm.NewAppModule(
-			appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper,
-			app.BankKeeper, app.MsgServiceRouter(),
+			appCodec,
+			&app.WasmKeeper,
+			app.stakingKeeper,
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.MsgServiceRouter(),
 			app.GetSubspace(wasmtypes.ModuleName)),
-		devgas.NewAppModule(
-			app.DevGasKeeper, app.AccountKeeper,
-			app.GetSubspace(devgastypes.ModuleName)),
-		tokenfactory.NewAppModule(
-			app.TokenFactoryKeeper, app.AccountKeeper,
-		),
-
-		crisis.NewAppModule(app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+		// devgas.NewAppModule(
+		// 	app.DevGasKeeper,app.AccountKeeper,app.GetSubspace(devgastypes.ModuleName)),
+		// 	tokenfactory.NewAppModule(
+		// 		app.TokenFactoryKeeper,
+		// 		app.AccountKeeper,
+		// 	),
+		// crisis.NewAppModule(
+		// 	app.crisisKeeper,
+		// 	skipGenesisInvariants,
+		// 	app.GetSubspace(crisistypes.ModuleName)),
 	}
 }
 
@@ -757,10 +757,10 @@ func orderedModuleNames() []string {
 
 		// --------------------------------------------------------------------
 		// Native x/ Modules
-		epochstypes.ModuleName,
-		oracletypes.ModuleName,
-		inflationtypes.ModuleName,
-		sudotypes.ModuleName,
+		// epochstypes.ModuleName,
+		// oracletypes.ModuleName,
+		// inflationtypes.ModuleName,
+		// sudotypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -770,16 +770,16 @@ func orderedModuleNames() []string {
 		icatypes.ModuleName,
 
 		// --------------------------------------------------------------------
-		evm.ModuleName,
+		// evm.ModuleName,
 
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasmtypes.ModuleName,
-		devgastypes.ModuleName,
-		tokenfactorytypes.ModuleName,
+		// devgastypes.ModuleName,
+		// tokenfactorytypes.ModuleName,
 
 		// Everything else should be before genmsg
-		genmsg.ModuleName,
+		// genmsg.ModuleName,
 	}
 }
 
@@ -876,38 +876,38 @@ func ModuleBasicManager() module.BasicManager {
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		// native x/
-		evmmodule.AppModuleBasic{},
-		oracle.AppModuleBasic{},
-		epochs.AppModuleBasic{},
-		inflation.AppModuleBasic{},
-		sudo.AppModuleBasic{},
+		// evmmodule.AppModuleBasic{},
+		// oracle.AppModuleBasic{},
+		// epochs.AppModuleBasic{},
+		// inflation.AppModuleBasic{},
+		// sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		devgas.AppModuleBasic{},
-		tokenfactory.AppModuleBasic{},
+		// devgas.AppModuleBasic{},
+		// tokenfactory.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
-		genmsg.AppModule{},
+		// genmsg.AppModule{},
 	)
 }
 
 func ModuleAccPerms() map[string][]string {
 	return map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName: nil,
+		distrtypes.ModuleName:      nil,
+		// inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
-		oracletypes.ModuleName:         {},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         {},
-		icatypes.ModuleName:            {},
+		// oracletypes.ModuleName:         {},
+		ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:      {},
+		icatypes.ModuleName:         {},
 
-		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
-		epochstypes.ModuleName:           {},
-		sudotypes.ModuleName:             {},
-		common.TreasuryPoolModuleAccount: {},
-		wasmtypes.ModuleName:             {authtypes.Burner},
-		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+		// evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		// epochstypes.ModuleName:           {},
+		// sudotypes.ModuleName:             {},
+		// common.TreasuryPoolModuleAccount: {},
+		wasmtypes.ModuleName: {authtypes.Burner},
+		// tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 	}
 }
 
@@ -925,8 +925,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Nibiru core params keepers | x/
-	paramsKeeper.Subspace(epochstypes.ModuleName)
-	paramsKeeper.Subspace(inflationtypes.ModuleName)
+	// paramsKeeper.Subspace(epochstypes.ModuleName)
+	// paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
@@ -935,7 +935,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(devgastypes.ModuleName)
+	// paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
 }

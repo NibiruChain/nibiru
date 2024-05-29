@@ -12,13 +12,12 @@ import (
 	wasmbinding "github.com/NibiruChain/nibiru/app/wasmext"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
-
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	// devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	// epochs "github.com/NibiruChain/nibiru/x/epochs/types"
+	// inflation "github.com/NibiruChain/nibiru/x/inflation/types"
+	// oracle "github.com/NibiruChain/nibiru/x/oracle/types"
+	// sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	// tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 /*
@@ -39,12 +38,12 @@ deterministically.
 func TestWasmAcceptedStargateQueries(t *testing.T) {
 	t.Log("stargateQueryPaths: Add nibiru query paths from GRPC service descriptions")
 	queryServiceDescriptions := []grpc.ServiceDesc{
-		epochs.GrpcQueryServiceDesc(),
-		devgas.GrpcQueryServiceDesc(),
-		inflation.GrpcQueryServiceDesc(),
-		oracle.GrpcQueryServiceDesc(),
-		sudotypes.GrpcQueryServiceDesc(),
-		tokenfactory.GrpcQueryServiceDesc(),
+		// epochs.GrpcQueryServiceDesc(),
+		// devgas.GrpcQueryServiceDesc(),
+		// inflation.GrpcQueryServiceDesc(),
+		// oracle.GrpcQueryServiceDesc(),
+		// sudotypes.GrpcQueryServiceDesc(),
+		// tokenfactory.GrpcQueryServiceDesc(),
 	}
 	stargateQueryPaths := set.New[string]()
 	for _, serviceDesc := range queryServiceDescriptions {

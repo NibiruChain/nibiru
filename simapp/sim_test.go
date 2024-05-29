@@ -34,12 +34,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	// devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	// epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	// inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	// oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	// sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	// tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // SimAppChainID hardcoded chainID for simulation
@@ -274,12 +274,12 @@ func TestAppImportExport(t *testing.T) {
 		{oldApp.GetKey(evidencetypes.StoreKey), newApp.GetKey(evidencetypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(capabilitytypes.StoreKey), newApp.GetKey(capabilitytypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
-		{oldApp.GetKey(devgastypes.StoreKey), newApp.GetKey(devgastypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(epochstypes.StoreKey), newApp.GetKey(epochstypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(inflationtypes.StoreKey), newApp.GetKey(inflationtypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(oracletypes.StoreKey), newApp.GetKey(oracletypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(sudotypes.StoreKey), newApp.GetKey(sudotypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(tokenfactorytypes.StoreKey), newApp.GetKey(tokenfactorytypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(devgastypes.StoreKey), newApp.GetKey(devgastypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(epochstypes.StoreKey), newApp.GetKey(epochstypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(inflationtypes.StoreKey), newApp.GetKey(inflationtypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(oracletypes.StoreKey), newApp.GetKey(oracletypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(sudotypes.StoreKey), newApp.GetKey(sudotypes.StoreKey), [][]byte{}},
+		// {oldApp.GetKey(tokenfactorytypes.StoreKey), newApp.GetKey(tokenfactorytypes.StoreKey), [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {

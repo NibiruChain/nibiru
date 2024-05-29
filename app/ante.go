@@ -12,15 +12,15 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	"github.com/NibiruChain/nibiru/app/ante"
-	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	// devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
+	// devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 )
 
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
-	IBCKeeper        *ibckeeper.Keeper
-	DevGasKeeper     *devgaskeeper.Keeper
-	DevGasBankKeeper devgasante.BankKeeper
+	IBCKeeper *ibckeeper.Keeper
+	// DevGasKeeper     *devgaskeeper.Keeper
+	// DevGasBankKeeper devgasante.BankKeeper
 
 	TXCounterStoreService corestoretypes.KVStoreService
 	WasmConfig            *wasmtypes.WasmConfig
@@ -42,14 +42,14 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		sdkante.NewValidateBasicDecorator(),
 		sdkante.NewTxTimeoutHeightDecorator(),
 		sdkante.NewValidateMemoDecorator(options.AccountKeeper),
-		ante.NewPostPriceFixedPriceDecorator(),
+		// ante.NewPostPriceFixedPriceDecorator(),
 		ante.AnteDecoratorStakingCommission{},
 		sdkante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		// Replace fee ante from cosmos auth with a custom one.
 		sdkante.NewDeductFeeDecorator(
 			options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		devgasante.NewDevGasPayoutDecorator(
-			options.DevGasBankKeeper, options.DevGasKeeper),
+		// devgasante.NewDevGasPayoutDecorator(
+		// 	options.DevGasBankKeeper, options.DevGasKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		sdkante.NewSetPubKeyDecorator(options.AccountKeeper),
 		sdkante.NewValidateSigCountDecorator(options.AccountKeeper),
@@ -78,9 +78,9 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 	if opts.WasmConfig == nil {
 		return AnteHandlerError("wasm config")
 	}
-	if opts.DevGasKeeper == nil {
-		return AnteHandlerError("devgas keeper")
-	}
+	// if opts.DevGasKeeper == nil {
+	// 	return AnteHandlerError("devgas keeper")
+	// }
 	if opts.IBCKeeper == nil {
 		return AnteHandlerError("ibc keeper")
 	}

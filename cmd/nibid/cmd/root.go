@@ -29,10 +29,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	// "github.com/NibiruChain/nibiru/x/sudo/cli"
 
 	"github.com/NibiruChain/nibiru/app"
-	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
+	// oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -131,8 +131,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		server.StatusCommand(),
 		genesisCommand(
 			encodingConfig,
-			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
-			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
+			// oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
+			// cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
 		),
 		queryCommand(),
 		txCommand(),

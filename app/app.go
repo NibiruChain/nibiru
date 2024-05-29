@@ -193,8 +193,8 @@ func NewNibiruApp(
 		IBCKeeper:             app.ibcKeeper,
 		TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		WasmConfig:            &wasmConfig,
-		DevGasKeeper:          &app.DevGasKeeper,
-		DevGasBankKeeper:      app.BankKeeper,
+		// DevGasKeeper:          &app.DevGasKeeper,
+		// DevGasBankKeeper:      app.BankKeeper,
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
