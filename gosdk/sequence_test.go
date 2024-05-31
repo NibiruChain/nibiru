@@ -9,11 +9,11 @@ import (
 	"github.com/NibiruChain/nibiru/gosdk"
 )
 
-// TestSequenceExpectations validates the behavior of account sequence numbers
+// DoTestSequenceExpectations validates the behavior of account sequence numbers
 // and transaction finalization in a blockchain network. It ensures that sequence
 // numbers increment correctly with each transaction and that transactions can be
 // queried successfully after the blocks are completed.
-func (s *TestSuite) TestSequenceExpectations() {
+func (s *TestSuite) DoTestSequenceExpectations() {
 	t := s.T()
 	t.Log("Get sequence and block")
 	// Go to next block
@@ -73,6 +73,6 @@ func (s *TestSuite) TestSequenceExpectations() {
 	s.T().Log("Query each tx by hash (successfully)")
 	for txHashHex := range txResults {
 		_, err := s.nibiruSdk.TxByHash(txHashHex)
-		s.NoError(err)
+		s.Require().NoError(err)
 	}
 }
