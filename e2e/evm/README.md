@@ -41,14 +41,28 @@ npm test
 > nibiru-evm-test@0.0.1 test
 > jest
 
- PASS  test/evm.test.js (13.163 s)
-  Ethereum JSON-RPC Interface Tests
-    ✓ Simple Transfer, balance check (4258 ms)
-    ✓ Smart Contract (8656 ms)
+ PASS  test/contract_infinite_loop_gas.test.js (8.617 s)
+  Infinite loop gas contract
+    ✓ should fail due to out of gas error (4152 ms)
 
-Test Suites: 1 passed, 1 total
-Tests:       2 passed, 2 total
+ PASS  test/contract_send_nibi.test.js (16.977 s)
+  Send NIBI from smart contract
+    ✓ send nibi via "sendViaTransfer" method (4244 ms)
+    ✓ send nibi via "sendViaSend" method (4239 ms)
+    ✓ send nibi via "sendViaCall" method (4259 ms)
+
+ PASS  test/erc20.test.js (8.845 s)
+  ERC-20 contract tests
+    ✓ send, balanceOf (8765 ms)
+
+ PASS  test/basic_queries.test.js
+  Basic Queries
+    ✓ Simple transfer, balance check (4224 ms)
+
+Test Suites: 4 passed, 4 total
+Tests:       6 passed, 6 total
 Snapshots:   0 total
-Time:        13.187 s, estimated 14 s
+Time:        38.783 s, estimated 50 s
 Ran all test suites.
+
 ```

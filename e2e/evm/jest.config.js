@@ -1,5 +1,6 @@
 module.exports = {
     testEnvironment: 'node',
-    testMatch: ['**/test/**/*.js'],
+    testMatch: ['**/test/**/*.test.js'],
     verbose: true,
+    "maxWorkers": 1
 };
