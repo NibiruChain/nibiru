@@ -44,7 +44,7 @@ func (s *TestSuite) RPCEndpoint() string {
 // SetupSuite implements the suite.SetupAllSuite interface. This function runs
 // prior to all of the other tests in the suite.
 func (s *TestSuite) SetupSuite() {
-	// testutil.BeforeIntegrationSuite(s.T())
+	testutil.BeforeIntegrationSuite(s.T())
 
 	nibiru, err := gosdk.CreateBlockchain(s.T())
 	s.NoError(err)
@@ -68,7 +68,7 @@ func (s *TestSuite) ConnectGrpc() {
 	s.grpcConn = grpcConn
 }
 
-func (s *TestSuite) TestNewQueryClient() {
+func (s *TestSuite) DoTestNewQueryClient() {
 	_, err := gosdk.NewQuerier(s.grpcConn)
 	s.NoError(err)
 }
@@ -80,13 +80,14 @@ func (s *TestSuite) TestNewNibiruSdk() {
 	s.nibiruSdk = &nibiruSdk
 
 	s.nibiruSdk.Keyring = s.val.ClientCtx.Keyring
-	s.T().Run("DoTestBroadcastMsgs", func(t *testing.T) {
-		s.DoTestBroadcastMsgs()
-	})
-	s.T().Run("DoTestBroadcastMsgsGrpc", func(t *testing.T) {
+
+	s.Run("DoTestBroadcastMsgs", func() { s.DoTestBroadcastMsgs() })
+	s.Run("DoTestBroadcastMsgsGrpc", func() {
 		s.NoError(s.network.WaitForNextBlock())
 		s.DoTestBroadcastMsgsGrpc()
 	})
+	s.Run("DoTestNewQueryClient", s.DoTestNewQueryClient)
+	s.Run("DoTestSequenceExpectations", s.DoTestSequenceExpectations)
 }
 
 // FIXME: Q: What is the node home for a local validator?
