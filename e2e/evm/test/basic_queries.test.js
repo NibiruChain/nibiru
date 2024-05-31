@@ -27,7 +27,8 @@ describe('Basic Queries', () => {
         const senderBalanceAfter = await provider.getBalance(account.address)
         const recipientBalanceAfter = await provider.getBalance(randomAddress)
 
-        // TODO: gas is not deducted regardless the gas limit, check this
+        // TODO: https://github.com/NibiruChain/nibiru/issues/1902
+        // gas is not deducted regardless the gas limit, check this
         const expectedSenderBalance = senderBalanceBefore - amountToSend
         expect(senderBalanceAfter).toBeLessThanOrEqual(expectedSenderBalance)
         expect(recipientBalanceAfter).toEqual(amountToSend)
