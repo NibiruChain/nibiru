@@ -11,7 +11,7 @@ const doContractSend = async (sendMethod) => {
     const recipientBalanceBefore = await provider.getBalance(recipientAddress) // NIBI
     expect(recipientBalanceBefore).toEqual(0n)
 
-    let tx = await contract[sendMethod](recipientAddress, {value: transferValue})
+    const tx = await contract[sendMethod](recipientAddress, {value: transferValue})
     await tx.wait()
 
     const ownerBalanceAfter = await provider.getBalance(account.address) // NIBI
