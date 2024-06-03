@@ -17,6 +17,8 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
+
 	"cosmossdk.io/store/types"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
@@ -290,8 +292,8 @@ func (app *NibiruApp) InitKeepers(
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
-		authcodec.NewBech32Codec(sdk.Bech32MainPrefix),
-		sdk.Bech32MainPrefix,
+		authcodec.NewBech32Codec(appconst.AccountAddressPrefix),
+		appconst.AccountAddressPrefix,
 		govModuleAddr,
 	)
 
