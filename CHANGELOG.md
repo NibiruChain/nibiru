@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 - [#1895](https://github.com/NibiruChain/nibiru/pull/1895) - refactor(geth): Reference go-ethereum as a submodule for easier change tracking with upstream
 - [#1901](https://github.com/NibiruChain/nibiru/pull/1901) - test(evm): more e2e test contracts for edge cases
+- [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
 
 #### Dapp modules: perp, spot, oracle, etc
 
