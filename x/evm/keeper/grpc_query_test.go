@@ -1,25 +1,52 @@
 package keeper_test
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
-	"fmt"
+	"math/big"
+	"regexp"
 
 	"cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	"github.com/NibiruChain/collections"
+	"github.com/ethereum/go-ethereum/crypto"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 func InvalidEthAddr() string { return "0x0000" }
+
+func TraceNibiTransfer() string {
+	return `{
+	  "gas": 21000,
+	  "failed": false,
+	  "returnValue": "",
+	  "structLogs": []
+	}`
+}
+
+func TraceERC20Transfer() string {
+	return `{
+	   "gas": 35062,
+	   "failed": false,
+	   "returnValue": "0000000000000000000000000000000000000000000000000000000000000001",
+	   "structLogs": [
+		  {
+			 "pc": 0,
+			 "op": "PUSH1",
+			 "gas": 30578,
+			 "gasCost": 3,
+			 "depth": 1,
+			 "stack": []
+		  }`
+}
 
 type TestCase[In, Out any] struct {
 	name string
@@ -50,7 +77,7 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 			wantErr: "not a valid ethereum hex addr",
 		},
 		{
-			name: "happy",
+			name: "happy: not existing account",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				ethAcc := evmtest.NewEthAccInfo()
 				req = &evm.QueryNibiruAccountRequest{
@@ -60,6 +87,26 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 					Address:       ethAcc.NibiruAddr.String(),
 					Sequence:      0,
 					AccountNumber: 0,
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: existing account",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				ethAcc := evmtest.NewEthAccInfo()
+				accountKeeper := deps.Chain.AccountKeeper
+				account := accountKeeper.NewAccountWithAddress(deps.Ctx, ethAcc.NibiruAddr)
+				accountKeeper.SetAccount(deps.Ctx, account)
+
+				req = &evm.QueryNibiruAccountRequest{
+					Address: ethAcc.EthAddr.String(),
+				}
+				wantResp = &evm.QueryNibiruAccountResponse{
+					Address:       ethAcc.NibiruAddr.String(),
+					Sequence:      account.GetSequence(),
+					AccountNumber: account.GetAccountNumber(),
 				}
 				return req, wantResp
 			},
@@ -166,6 +213,19 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 				return req, wantResp
 			},
 			wantErr: "decoding bech32 failed",
+		},
+		{
+			name: "sad: validator account not found",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryValidatorAccountRequest{
+					ConsAddress: "nibivalcons1ea4ef7wsatlnaj9ry3zylymxv53f9ntrjecc40",
+				}
+				wantResp = &evm.QueryValidatorAccountResponse{
+					AccountAddress: sdk.AccAddress(gethcommon.Address{}.Bytes()).String(),
+				}
+				return req, wantResp
+			},
+			wantErr: "validator not found",
 		},
 		{
 			name:  "happy: default values",
@@ -385,46 +445,6 @@ func (s *KeeperSuite) TestQueryCode() {
 	}
 }
 
-// AssertModuleParamsEqual errors if the fields don't match. This function avoids
-// failing the "EqualValues" check due to comparisons between nil and empty
-// slices: `[]string(nil)` and `[]string{}`.
-func AssertModuleParamsEqual(want, got evm.Params) error {
-	errs := []error{}
-	{
-		want, got := want.EvmDenom, got.EvmDenom
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"evm_denom", want, got))
-		}
-	}
-	{
-		want, got := want.EnableCreate, got.EnableCreate
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"enable_create", want, got))
-		}
-	}
-	{
-		want, got := want.EnableCall, got.EnableCall
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"enable_call", want, got))
-		}
-	}
-	{
-		want, got := want.ChainConfig, got.ChainConfig
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"chain_config", want, got))
-		}
-	}
-	return common.CombineErrors(errs...)
-}
-
-func ErrModuleParamsEquality(field string, want, got any) error {
-	return fmt.Errorf(`failed AssetModuleParamsEqual on field %s: want "%v", got "%v"`, field, want, got)
-}
-
 func (s *KeeperSuite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
@@ -447,38 +467,518 @@ func (s *KeeperSuite) TestQueryParams() {
 	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
 }
 
-func (s *KeeperSuite) TestEthCall_ERC20_Happy() {
-	deps := evmtest.NewTestDeps()
-	fungibleTokenContract := evmtest.SmartContract_FunToken.Load(s.T())
+func (s *KeeperSuite) TestQueryEthCall() {
+	type In = *evm.EthCallRequest
+	type Out = *evm.MsgEthereumTxResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: msg invalid msg",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				return nil, nil
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "sad: invalid args",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				return &evm.EthCallRequest{Args: []byte("invalid")}, nil
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy: eth call for erc20 token transfer",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				fungibleTokenContract := evmtest.SmartContract_FunToken.Load(s.T())
 
-	s.T().Log("Populate the supply and acc balance")
-	contractConstructorArgs, err := fungibleTokenContract.ABI.Pack(
-		"",
+				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+					From: &deps.Sender.EthAddr,
+					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
+				})
+				s.Require().NoError(err)
+				return &evm.EthCallRequest{Args: jsonTxArgs}, &evm.MsgEthereumTxResponse{
+					Hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+				}
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			gotResp, err := deps.Chain.EvmKeeper.EthCall(deps.GoCtx(), req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.Assert().Empty(wantResp.VmError)
+			s.Assert().Equal(wantResp.Hash, gotResp.Hash)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestQueryBalance() {
+	type In = *evm.QueryBalanceRequest
+	type Out = *evm.QueryBalanceResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: msg validation",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: InvalidEthAddr(),
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					Balance: "0",
+				}
+				return req, wantResp
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy: zero balance",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: evmtest.NewEthAccInfo().EthAddr.String(),
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					Balance: "0",
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: non zero balance",
+			setup: func(deps *evmtest.TestDeps) {
+				chain := deps.Chain
+				ethAddr := deps.Sender.EthAddr
+
+				// fund account with 420 tokens
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
+				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				s.NoError(err)
+				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
+					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+				s.Require().NoError(err)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					Balance: "420",
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.Balance(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestQueryBaseFee() {
+	type In = *evm.QueryBaseFeeRequest
+	type Out = *evm.QueryBaseFeeResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "happy: base fee value",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBaseFeeRequest{}
+				zeroFee := math.NewInt(0)
+				wantResp = &evm.QueryBaseFeeResponse{
+					BaseFee: &zeroFee,
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.BaseFee(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
+	type In = *evm.EthCallRequest
+	type Out = *evm.EstimateGasResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: nil query",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = nil
+				wantResp = nil
+				return req, wantResp
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "sad: insufficient gas cap",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.EthCallRequest{
+					GasCap: gethparams.TxGas - 1,
+				}
+				return req, nil
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "sad: invalid args",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.EthCallRequest{
+					Args:   []byte{0, 0, 0},
+					GasCap: gethparams.TxGas,
+				}
+				return req, nil
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy: estimate gas for transfer",
+			setup: func(deps *evmtest.TestDeps) {
+				chain := deps.Chain
+				ethAddr := deps.Sender.EthAddr
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 1000)}
+				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				s.NoError(err)
+				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
+					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+				s.Require().NoError(err)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				recipient := evmtest.NewEthAccInfo().EthAddr
+				amountToSend := hexutil.Big(*big.NewInt(10))
+				gasLimitArg := hexutil.Uint64(100000)
+
+				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+					From:  &deps.Sender.EthAddr,
+					To:    &recipient,
+					Value: &amountToSend,
+					Gas:   &gasLimitArg,
+				})
+				s.Require().NoError(err)
+				req = &evm.EthCallRequest{
+					Args:   jsonTxArgs,
+					GasCap: gethparams.TxGas,
+				}
+				wantResp = &evm.EstimateGasResponse{
+					Gas: gethparams.TxGas,
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "sad: insufficient balance for transfer",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				recipient := evmtest.NewEthAccInfo().EthAddr
+				amountToSend := hexutil.Big(*big.NewInt(10))
+
+				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+					From:  &deps.Sender.EthAddr,
+					To:    &recipient,
+					Value: &amountToSend,
+				})
+				s.Require().NoError(err)
+				req = &evm.EthCallRequest{
+					Args:   jsonTxArgs,
+					GasCap: gethparams.TxGas,
+				}
+				wantResp = nil
+				return req, wantResp
+			},
+			wantErr: "insufficient balance for transfer",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.EstimateGas(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestTestTraceTx() {
+	type In = *evm.QueryTraceTxRequest
+	type Out = string
+
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: nil query",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				return nil, ""
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy: simple nibi transfer tx",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txMsg := s.ExecuteNibiTransfer(deps)
+				req = &evm.QueryTraceTxRequest{
+					Msg: txMsg,
+				}
+				wantResp = TraceNibiTransfer()
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			"happy: trace erc-20 transfer tx",
+			nil,
+			func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txMsg, predecessors := s.ExecuteERC20Transfer(deps)
+
+				req = &evm.QueryTraceTxRequest{
+					Msg:          txMsg,
+					Predecessors: predecessors,
+				}
+				wantResp = TraceERC20Transfer()
+				return req, wantResp
+			},
+			"",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.TraceTx(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.Assert().NotNil(gotResp)
+			s.Assert().NotNil(gotResp.Data)
+
+			// Replace spaces in want resp
+			re := regexp.MustCompile(`[\s\n\r]+`)
+			wantResp = re.ReplaceAllString(wantResp, "")
+			actualResp := string(gotResp.Data)
+			if len(actualResp) > 1000 {
+				actualResp = actualResp[:len(wantResp)]
+			}
+			s.Assert().Equal(wantResp, actualResp)
+		})
+	}
+}
+
+func (s *KeeperSuite) TestTestTraceBlock() {
+	type In = *evm.QueryTraceBlockRequest
+	type Out = string
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: nil query",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				return nil, ""
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name:  "happy: simple nibi transfer tx",
+			setup: nil,
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txMsg := s.ExecuteNibiTransfer(deps)
+				req = &evm.QueryTraceBlockRequest{
+					Txs: []*evm.MsgEthereumTx{
+						txMsg,
+					},
+				}
+				wantResp = "[{\"result\":" + TraceNibiTransfer() + "}]"
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name:  "happy: trace erc-20 transfer tx",
+			setup: nil,
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txMsg, _ := s.ExecuteERC20Transfer(deps)
+				req = &evm.QueryTraceBlockRequest{
+					Txs: []*evm.MsgEthereumTx{
+						txMsg,
+					},
+				}
+				wantResp = "[{\"result\":" + TraceERC20Transfer() // no end as it's trimmed
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.TraceBlock(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.Assert().NotNil(gotResp)
+			s.Assert().NotNil(gotResp.Data)
+
+			// Replace spaces in want resp
+			re := regexp.MustCompile(`[\s\n\r]+`)
+			wantResp = re.ReplaceAllString(wantResp, "")
+			actualResp := string(gotResp.Data)
+			if len(actualResp) > 1000 {
+				actualResp = actualResp[:len(wantResp)]
+			}
+			s.Assert().Equal(wantResp, actualResp)
+		})
+	}
+}
+
+// ExecuteNibiTransfer executes nibi transfer
+func (s *KeeperSuite) ExecuteNibiTransfer(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
+	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	recipient := GenerateEthAddress()
+
+	txArgs := evm.JsonTxArgs{
+		From:  &deps.Sender.EthAddr,
+		To:    &recipient,
+		Nonce: (*hexutil.Uint64)(&nonce),
+	}
+	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
+	s.NoError(err)
+
+	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	return ethTxMsg
+}
+
+// ExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
+func (s *KeeperSuite) ExecuteERC20Transfer(deps *evmtest.TestDeps) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
+	// TX 1: Deploy ERC-20 contract
+	contractData := evmtest.SmartContract_FunToken.Load(s.T())
+	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	txArgs := evm.JsonTxArgs{
+		From:  &deps.Sender.EthAddr,
+		Nonce: (*hexutil.Uint64)(&nonce),
+		Data:  (*hexutil.Bytes)(&contractData.Bytecode),
+	}
+	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
+	s.NoError(err)
+
+	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	// Contract address is deterministic
+	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
+	deps.Chain.Commit()
+	predecessors := []*evm.MsgEthereumTx{
+		ethTxMsg,
+	}
+
+	// TX 2: execute ERC-20 contract transfer
+	input, err := contractData.ABI.Pack(
+		"transfer", GenerateEthAddress(), new(big.Int).SetUint64(1000),
 	)
+	s.NoError(err)
+	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	txArgs = evm.JsonTxArgs{
+		From:  &deps.Sender.EthAddr,
+		To:    &contractAddress,
+		Nonce: (*hexutil.Uint64)(&nonce),
+		Data:  (*hexutil.Bytes)(&input),
+	}
+	ethTxMsg, err = GenerateAndSignEthTxMsg(txArgs, deps)
+	s.NoError(err)
+
+	resp, err = deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
 
-	bytecode := fungibleTokenContract.Bytecode
-	bytecode = append(bytecode, contractConstructorArgs...)
+	return ethTxMsg, predecessors
+}
 
-	jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
-		From: &deps.Sender.EthAddr,
-		Data: (*hexutil.Bytes)(&bytecode),
-	})
-	s.Require().NoError(err)
-
-	_, err = deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
-		Args:            jsonTxArgs,
+// GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx
+func GenerateAndSignEthTxMsg(txArgs evm.JsonTxArgs, deps *evmtest.TestDeps) (*evm.MsgEthereumTx, error) {
+	estimateArgs, err := json.Marshal(&txArgs)
+	if err != nil {
+		return nil, err
+	}
+	res, err := deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
+		Args:            estimateArgs,
 		GasCap:          srvconfig.DefaultGasCap,
 		ProposerAddress: []byte{},
 		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
 	})
-	s.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
+	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
-	_, err = deps.Chain.EvmKeeper.EthCall(deps.GoCtx(), &evm.EthCallRequest{
-		Args:            jsonTxArgs,
-		GasCap:          srvconfig.DefaultGasCap,
-		ProposerAddress: []byte{},
-		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
-	})
-	s.Require().NoError(err)
+	txMsg := txArgs.ToTransaction()
+	gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+	keyringSigner := deps.Sender.KeyringSigner
+	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
+}
+
+func GenerateEthAddress() gethcommon.Address {
+	privateKey, _ := crypto.GenerateKey()
+	publicKey := privateKey.Public()
+	publicKeyECDSA, _ := publicKey.(*ecdsa.PublicKey)
+	return crypto.PubkeyToAddress(*publicKeyECDSA)
 }

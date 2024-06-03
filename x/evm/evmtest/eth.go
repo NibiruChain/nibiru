@@ -40,7 +40,7 @@ func NewEthAccInfo() EthPrivKeyAcc {
 }
 
 func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
-	return sdk.AccAddress(ethAddr.Bytes())
+	return ethAddr.Bytes()
 }
 
 type EthPrivKeyAcc struct {
