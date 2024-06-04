@@ -23,7 +23,6 @@ import (
 // a) feeCap = tx.fees / tx.gas
 // b) tipFeeCap = tx.MaxPriorityPrice (default) or MaxInt64
 // - when `ExtensionOptionDynamicFeeTx` is omitted, `tipFeeCap` defaults to `MaxInt64`.
-// - when london hardfork is not enabled, it falls back to SDK default behavior (validator min-gas-prices).
 // - Tx priority is set to `effectiveGasPrice / DefaultPriorityReduction`.
 func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 	return func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error) {
@@ -34,13 +33,8 @@ func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 		}
 		params := k.GetParams(ctx)
 		denom := params.EvmDenom
-		ethCfg := params.ChainConfig.EthereumConfig(k.EthChainID(ctx))
 
-		baseFee := k.GetBaseFee(ctx, ethCfg)
-		if baseFee == nil {
-			// london hardfork is not enabled: fallback to min-gas-prices logic
-			return checkTxFeeWithValidatorMinGasPrices(ctx, feeTx)
-		}
+		baseFee := k.GetBaseFee(ctx)
 
 		// default to `MaxInt64` when there's no extension option.
 		maxPriorityPrice := sdkmath.NewInt(math.MaxInt64)

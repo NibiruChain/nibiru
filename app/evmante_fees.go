@@ -15,26 +15,14 @@ import (
 
 var (
 	_ sdk.AnteDecorator = EthMinGasPriceDecorator{}
-	_ sdk.AnteDecorator = EthMempoolFeeDecorator{}
 )
 
 // EthMinGasPriceDecorator will check if the transaction's fee is at least as large
 // as the MinGasPrices param. If fee is too low, decorator returns error and tx
 // is rejected. This applies to both CheckTx and DeliverTx and regardless
-// if London hard fork or fee market params (EIP-1559) are enabled.
+// fee market params (EIP-1559) are enabled.
 // If fee is high enough, then call next AnteHandler
 type EthMinGasPriceDecorator struct {
-	AppKeepers
-}
-
-// EthMempoolFeeDecorator will check if the transaction's effective fee is at
-// least as large as the local validator's minimum gasFee (defined in validator
-// config).
-// If fee is too low, decorator returns error and tx is rejected from mempool.
-// Note this only applies when ctx.CheckTx = true
-// If fee is high enough or not CheckTx, then call next AnteHandler
-// CONTRACT: Tx must implement FeeTx to use MempoolFeeDecorator
-type EthMempoolFeeDecorator struct {
 	AppKeepers
 }
 
@@ -42,14 +30,6 @@ type EthMempoolFeeDecorator struct {
 // Ethereum transactions.
 func NewEthMinGasPriceDecorator(k AppKeepers) EthMinGasPriceDecorator {
 	return EthMinGasPriceDecorator{AppKeepers: k}
-}
-
-// NewEthMempoolFeeDecorator creates a new NewEthMempoolFeeDecorator instance used only for
-// Ethereum transactions.
-func NewEthMempoolFeeDecorator(k AppKeepers) EthMempoolFeeDecorator {
-	return EthMempoolFeeDecorator{
-		AppKeepers: k,
-	}
 }
 
 // AnteHandle ensures that the effective fee from the transaction is greater than the
@@ -67,9 +47,7 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 		return next(ctx, tx, simulate)
 	}
 
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(empd.EvmKeeper.EthChainID(ctx))
-	baseFee := empd.EvmKeeper.GetBaseFee(ctx, ethCfg)
+	baseFee := empd.EvmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		ethMsg, ok := msg.(*evm.MsgEthereumTx)
@@ -111,50 +89,6 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 				errortypes.ErrInsufficientFee,
 				"provided fee < minimum global fee (%s < %s). Please increase the priority tip (for EIP-1559 txs) or the gas prices (for access list or legacy txs)", //nolint:lll
 				fee.TruncateInt().String(), requiredFee.TruncateInt().String(),
-			)
-		}
-	}
-
-	return next(ctx, tx, simulate)
-}
-
-// AnteHandle ensures that the provided fees meet a minimum threshold for the validator.
-// This check only for local mempool purposes, and thus it is only run on (Re)CheckTx.
-// The logic is also skipped if the London hard fork and EIP-1559 are enabled.
-func (mfd EthMempoolFeeDecorator) AnteHandle(
-	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
-) (newCtx sdk.Context, err error) {
-	if !ctx.IsCheckTx() || simulate {
-		return next(ctx, tx, simulate)
-	}
-	evmParams := mfd.EvmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(mfd.EvmKeeper.EthChainID(ctx))
-
-	baseFee := mfd.EvmKeeper.GetBaseFee(ctx, ethCfg)
-	// skip check as the London hard fork and EIP-1559 are enabled
-	if baseFee != nil {
-		return next(ctx, tx, simulate)
-	}
-
-	evmDenom := evmParams.GetEvmDenom()
-	minGasPrice := ctx.MinGasPrices().AmountOf(evmDenom)
-
-	for _, msg := range tx.GetMsgs() {
-		ethMsg, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
-		}
-
-		fee := sdk.NewDecFromBigInt(ethMsg.GetFee())
-		gasLimit := sdk.NewDecFromBigInt(new(big.Int).SetUint64(ethMsg.GetGas()))
-		requiredFee := minGasPrice.Mul(gasLimit)
-
-		if fee.LT(requiredFee) {
-			return ctx, errors.Wrapf(
-				errortypes.ErrInsufficientFee,
-				"insufficient fee; got: %s required: %s",
-				fee, requiredFee,
 			)
 		}
 	}

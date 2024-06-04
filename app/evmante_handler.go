@@ -14,8 +14,6 @@ func NewAnteHandlerEVM(
 	return sdk.ChainAnteDecorators(
 		// outermost AnteDecorator. SetUpContext must be called first
 		NewEthSetUpContextDecorator(k),
-		// Check eth effective gas price against the node's minimal-gas-prices config
-		NewEthMempoolFeeDecorator(k),
 		// Check eth effective gas price against the global MinGasPrice
 		NewEthMinGasPriceDecorator(k),
 		NewEthValidateBasicDecorator(k),

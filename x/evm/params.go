@@ -3,7 +3,6 @@ package evm
 
 import (
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/exp/slices"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -245,9 +243,4 @@ func ValidatePrecompiles(i interface{}) error {
 	}
 
 	return nil
-}
-
-// IsLondon returns if london hardfork is enabled.
-func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
-	return ethConfig.IsLondon(big.NewInt(height))
 }

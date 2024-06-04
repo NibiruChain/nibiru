@@ -2,8 +2,6 @@
 package app
 
 import (
-	"math/big"
-
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -30,15 +28,8 @@ func NewGasWantedDecorator(
 func (gwd GasWantedDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	evmParams := gwd.EvmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(gwd.EvmKeeper.EthChainID(ctx))
-
-	blockHeight := big.NewInt(ctx.BlockHeight())
-	isLondon := ethCfg.IsLondon(blockHeight)
-
 	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok || !isLondon {
+	if !ok {
 		return next(ctx, tx, simulate)
 	}
 
