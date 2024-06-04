@@ -175,7 +175,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	}
 
 	// If user specifies both maxPriorityfee and maxFee, then we do not
-	// need to consult the chain for defaults. It's definitely a London tx.
+	// need to consult the chain for defaults.
 	if args.MaxPriorityFeePerGas == nil || args.MaxFeePerGas == nil {
 		// In this clause, user left some fields unspecified.
 		if head.BaseFee != nil && args.GasPrice == nil {
