@@ -1611,7 +1611,7 @@ type QueryServer interface {
 	// TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
 	TraceBlock(context.Context, *QueryTraceBlockRequest) (*QueryTraceBlockResponse, error)
 	// BaseFee queries the base fee of the parent block of the current block,
-	// it's similar to feemarket module's method, but also checks london hardfork status.
+	// Similar to feemarket module's method
 	BaseFee(context.Context, *QueryBaseFeeRequest) (*QueryBaseFeeResponse, error)
 }
 

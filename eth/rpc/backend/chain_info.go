@@ -52,12 +52,10 @@ func (b *Backend) ChainConfig() *params.ChainConfig {
 
 // BaseFee returns the base fee tracked by the Fee Market module.
 // If the base fee is not enabled globally, the query returns nil.
-// If the London hard fork is not activated at the current height, the query will
-// return nil.
 func (b *Backend) BaseFee(
 	blockRes *tmrpctypes.ResultBlockResults,
 ) (baseFee *big.Int, err error) {
-	// return BaseFee if London hard fork is activated and feemarket is enabled
+	// return BaseFee if feemarket is enabled
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
 		baseFee = nil

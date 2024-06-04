@@ -120,15 +120,12 @@ func (b *Backend) processBlock(
 	// set basefee
 	targetOneFeeHistory.BaseFee = blockBaseFee
 	cfg := b.ChainConfig()
-	if cfg.IsLondon(big.NewInt(blockHeight + 1)) {
-		header, err := b.CurrentHeader()
-		if err != nil {
-			return err
-		}
-		targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
-	} else {
-		targetOneFeeHistory.NextBaseFee = new(big.Int)
+	header, err := b.CurrentHeader()
+	if err != nil {
+		return err
 	}
+	targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
+
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
 	if !ok {
