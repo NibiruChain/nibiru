@@ -47,8 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
-
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
+- [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
 
 #### Nibiru EVM
 
