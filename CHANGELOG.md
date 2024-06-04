@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0) - 2024-06-04
+
+Nibiru v1.4.0 adds PebbleDB support and increases the wasm contract size limit to 3MB.
+
+* [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0)]
+* [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.4.0)]
+
+### State Machine Breaking
+
+* [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
+
+### Features
+
+* [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
+* [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
+
 ## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
 
 Nibiru v1.3.0 adds interchain accounts.
