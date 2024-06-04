@@ -125,6 +125,14 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	return wasmOpts
 }
 
+// overrideWasmVariables overrides the wasm variables to:
+//   - allow for larger wasm files
+func overrideWasmVariables() {
+	// Override Wasm size limitation from WASMD.
+	wasmtypes.MaxWasmSize = 3 * 1024 * 1024 // 3MB
+	wasmtypes.MaxProposalWasmSize = wasmtypes.MaxWasmSize
+}
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
 	logger log.Logger,
@@ -135,6 +143,7 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
+	overrideWasmVariables()
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
