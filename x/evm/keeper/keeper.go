@@ -111,22 +111,15 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-func (k Keeper) GetBaseFee(
-	ctx sdk.Context, ethCfg *gethparams.ChainConfig,
-) *big.Int {
-	isLondon := evm.IsLondon(ethCfg, ctx.BlockHeight())
-	if !isLondon {
-		return nil
-	}
+func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
+	// TODO: plug in fee market keeper
 	return big.NewInt(0)
 }
 
 func (k Keeper) GetBaseFeeNoCfg(
 	ctx sdk.Context,
 ) *big.Int {
-	ethChainId := k.EthChainID(ctx)
-	ethCfg := k.GetParams(ctx).ChainConfig.EthereumConfig(ethChainId)
-	return k.GetBaseFee(ctx, ethCfg)
+	return k.GetBaseFee(ctx)
 }
 
 // Logger returns a module-specific logger.
