@@ -28,7 +28,12 @@ func NewEthSetUpContextDecorator(k AppKeepers) EthSetupContextDecorator {
 	}
 }
 
-func (esc EthSetupContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+func (esc EthSetupContextDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
 	// all transactions must implement GasTx
 	_, ok := tx.(authante.GasTx)
 	if !ok {
@@ -145,10 +150,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	txGasLimit := uint64(0)
 
 	evmParams := vbd.EvmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	chainID := vbd.EvmKeeper.EthChainID(ctx)
-	ethCfg := chainCfg.EthereumConfig(chainID)
-	baseFee := vbd.EvmKeeper.GetBaseFee(ctx, ethCfg)
+	baseFee := vbd.EvmKeeper.GetBaseFee(ctx)
 	enableCreate := evmParams.GetEnableCreate()
 	enableCall := evmParams.GetEnableCall()
 	evmDenom := evmParams.GetEvmDenom()

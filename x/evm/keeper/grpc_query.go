@@ -165,9 +165,7 @@ func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	params := k.GetParams(ctx)
-	ethCfg := params.ChainConfig.EthereumConfig(k.EthChainID(ctx))
-	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx, ethCfg))
+	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx))
 	return &evm.QueryBaseFeeResponse{
 		BaseFee: &baseFee,
 	}, nil
@@ -512,7 +510,7 @@ func (k Keeper) TraceTx(
 	}
 
 	// compute and use base fee of the height that is being traced
-	baseFee := k.GetBaseFee(ctx, cfg.ChainConfig)
+	baseFee := k.GetBaseFee(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}
@@ -613,7 +611,7 @@ func (k Keeper) TraceBlock(
 	}
 
 	// compute and use base fee of height that is being traced
-	baseFee := k.GetBaseFeeNoCfg(ctx)
+	baseFee := k.GetBaseFee(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}
