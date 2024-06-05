@@ -147,12 +147,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 	evmParams := anteDec.EvmKeeper.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(anteDec.EvmKeeper.EthChainID(ctx))
 
-	blockHeight := big.NewInt(ctx.BlockHeight())
-	homestead := ethCfg.IsHomestead(blockHeight)
-	istanbul := ethCfg.IsIstanbul(blockHeight)
 	var events sdk.Events
 
 	// Use the lowest priority of all the messages as the final one.
@@ -186,7 +181,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			gasWanted += txData.GetGas()
 		}
 
-		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, homestead, istanbul, ctx.IsCheckTx())
+		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, ctx.IsCheckTx())
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to verify the fees")
 		}
