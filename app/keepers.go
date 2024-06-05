@@ -36,7 +36,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -321,14 +320,16 @@ func (app *NibiruApp) InitKeepers(
 	}
 	app.txConfig = txConfig
 
+	validatorAddressPrefix := appconst.AccountAddressPrefix + "valoper"
+	consNodeAddressPrefix := appconst.AccountAddressPrefix + "valcons"
 	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		govModuleAddr,
-		authcodec.NewBech32Codec(sdk.Bech32PrefixValAddr),
-		authcodec.NewBech32Codec(sdk.Bech32PrefixConsAddr),
+		authcodec.NewBech32Codec(validatorAddressPrefix),
+		authcodec.NewBech32Codec(consNodeAddressPrefix),
 	)
 
 	app.DistrKeeper = distrkeeper.NewKeeper(
