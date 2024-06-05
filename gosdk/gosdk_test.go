@@ -33,7 +33,7 @@ type TestSuite struct {
 	val       *cli.Validator
 }
 
-func TestNibiruClientTestSuite_RunAll(t *testing.T) {
+func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
@@ -45,6 +45,8 @@ func (s *TestSuite) RPCEndpoint() string {
 // prior to all of the other tests in the suite.
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
+
+	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
 	nibiru, err := gosdk.CreateBlockchain(s.T())
 	s.NoError(err)
@@ -141,21 +143,9 @@ func (s *TestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-// --------------------------------------------------
-// NibiruClientSuite_NoNetwork
-// --------------------------------------------------
-
-type NibiruClientSuite_NoNetwork struct {
-	suite.Suite
-}
-
-func TestNibiruClientSuite_NoNetwork_RunAll(t *testing.T) {
-	suite.Run(t, new(NibiruClientSuite_NoNetwork))
-}
-
-func (s *NibiruClientSuite_NoNetwork) TestGetGrpcConnection_NoNetwork() {
+func (s *TestSuite) DoTestGetGrpcConnection_NoNetwork() {
 	grpcConn, err := gosdk.GetGRPCConnection(
-		gosdk.DefaultNetworkInfo.GrpcEndpoint, true, 2,
+		gosdk.DefaultNetworkInfo.GrpcEndpoint+"notendpoint", true, 2,
 	)
 	s.Error(err)
 	s.Nil(grpcConn)
