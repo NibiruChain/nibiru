@@ -42,7 +42,10 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errors.Wrapf(
+				errortypes.ErrUnknownRequest,
+				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+			)
 		}
 
 		allowUnprotectedTxs := evmParams.GetAllowUnprotectedTxs()
@@ -50,7 +53,9 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		if !allowUnprotectedTxs && !ethTx.Protected() {
 			return ctx, errors.Wrapf(
 				errortypes.ErrNotSupported,
-				"rejected unprotected Ethereum transaction. Please EIP155 sign your transaction to protect it against replay-attacks")
+				"rejected unprotected Ethereum transaction. "+
+					"Please EIP155 sign your transaction to protect it against replay-attacks",
+			)
 		}
 
 		sender, err := signer.Sender(ethTx)
