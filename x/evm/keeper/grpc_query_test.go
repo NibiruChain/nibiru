@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"math/big"
 	"regexp"
@@ -11,10 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -761,7 +758,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 		{
 			name: "happy: simple nibi transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := s.ExecuteNibiTransfer(deps)
+				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceTxRequest{
 					Msg: txMsg,
 				}
@@ -774,7 +771,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 			"happy: trace erc-20 transfer tx",
 			nil,
 			func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors := s.ExecuteERC20Transfer(deps)
+				txMsg, predecessors := evmtest.ExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
@@ -831,7 +828,7 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			name:  "happy: simple nibi transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := s.ExecuteNibiTransfer(deps)
+				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
@@ -846,7 +843,7 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _ := s.ExecuteERC20Transfer(deps)
+				txMsg, _ := evmtest.ExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
@@ -886,99 +883,4 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			s.Assert().Equal(wantResp, actualResp)
 		})
 	}
-}
-
-// ExecuteNibiTransfer executes nibi transfer
-func (s *KeeperSuite) ExecuteNibiTransfer(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
-	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	recipient := GenerateEthAddress()
-
-	txArgs := evm.JsonTxArgs{
-		From:  &deps.Sender.EthAddr,
-		To:    &recipient,
-		Nonce: (*hexutil.Uint64)(&nonce),
-	}
-	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
-	s.NoError(err)
-
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
-	s.Require().NoError(err)
-	s.Require().Empty(resp.VmError)
-	return ethTxMsg
-}
-
-// ExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
-func (s *KeeperSuite) ExecuteERC20Transfer(deps *evmtest.TestDeps) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
-	// TX 1: Deploy ERC-20 contract
-	contractData := evmtest.SmartContract_FunToken.Load(s.T())
-	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	txArgs := evm.JsonTxArgs{
-		From:  &deps.Sender.EthAddr,
-		Nonce: (*hexutil.Uint64)(&nonce),
-		Data:  (*hexutil.Bytes)(&contractData.Bytecode),
-	}
-	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
-	s.NoError(err)
-
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
-	s.Require().NoError(err)
-	s.Require().Empty(resp.VmError)
-
-	// Contract address is deterministic
-	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	deps.Chain.Commit()
-	predecessors := []*evm.MsgEthereumTx{
-		ethTxMsg,
-	}
-
-	// TX 2: execute ERC-20 contract transfer
-	input, err := contractData.ABI.Pack(
-		"transfer", GenerateEthAddress(), new(big.Int).SetUint64(1000),
-	)
-	s.NoError(err)
-	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	txArgs = evm.JsonTxArgs{
-		From:  &deps.Sender.EthAddr,
-		To:    &contractAddress,
-		Nonce: (*hexutil.Uint64)(&nonce),
-		Data:  (*hexutil.Bytes)(&input),
-	}
-	ethTxMsg, err = GenerateAndSignEthTxMsg(txArgs, deps)
-	s.NoError(err)
-
-	resp, err = deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
-	s.Require().NoError(err)
-	s.Require().Empty(resp.VmError)
-
-	return ethTxMsg, predecessors
-}
-
-// GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx
-func GenerateAndSignEthTxMsg(txArgs evm.JsonTxArgs, deps *evmtest.TestDeps) (*evm.MsgEthereumTx, error) {
-	estimateArgs, err := json.Marshal(&txArgs)
-	if err != nil {
-		return nil, err
-	}
-	res, err := deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
-		Args:            estimateArgs,
-		GasCap:          srvconfig.DefaultGasCap,
-		ProposerAddress: []byte{},
-		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
-
-	txMsg := txArgs.ToTransaction()
-	gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
-	keyringSigner := deps.Sender.KeyringSigner
-	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
-}
-
-func GenerateEthAddress() gethcommon.Address {
-	privateKey, _ := crypto.GenerateKey()
-	publicKey := privateKey.Public()
-	publicKeyECDSA, _ := publicKey.(*ecdsa.PublicKey)
-	return crypto.PubkeyToAddress(*publicKeyECDSA)
 }
