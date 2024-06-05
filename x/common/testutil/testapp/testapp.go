@@ -104,7 +104,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 	encoding := app.MakeEncodingConfig()
 	SetDefaultSudoGenesis(gen)
 
-	app := app.NewNibiruApp(
+	application := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -124,12 +124,12 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		panic(err)
 	}
 
-	app.InitChain(&abci.RequestInitChain{
+	application.InitChain(&abci.RequestInitChain{
 		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
-	return app
+	return application
 }
 
 // FundAccount is a utility function that funds an account by minting and
