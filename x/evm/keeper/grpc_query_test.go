@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"regexp"
 
@@ -21,12 +22,12 @@ import (
 func InvalidEthAddr() string { return "0x0000" }
 
 func TraceNibiTransfer() string {
-	return `{
-	  "gas": 21000,
+	return fmt.Sprintf(`{
+	  "gas": %d,
 	  "failed": false,
 	  "returnValue": "",
 	  "structLogs": []
-	}`
+	}`, gethparams.TxGas)
 }
 
 func TraceERC20Transfer() string {
@@ -447,6 +448,7 @@ func (s *KeeperSuite) TestQueryParams() {
 	want := evm.DefaultParams()
 	deps.K.SetParams(deps.Ctx, want)
 	gotResp, err := deps.K.Params(deps.GoCtx(), nil)
+	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
 
