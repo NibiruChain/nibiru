@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/appconst"
@@ -139,12 +140,11 @@ func FundAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress,
 	amounts sdk.Coins,
 ) error {
-	// if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
-	// 	return err
-	// }
+	if err := bankKeeper.MintCoins(ctx, banktypes.ModuleName, amounts); err != nil {
+		return err
+	}
 
-	// return bankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, addr, amounts)
-	return nil
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, banktypes.ModuleName, addr, amounts)
 }
 
 // FundModuleAccount is a utility function that funds a module account by

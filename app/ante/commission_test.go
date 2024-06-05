@@ -120,6 +120,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 				WithFees(txGasCoins.String()).
 				WithChainID(s.ctx.ChainID()).
 				WithTxConfig(encCfg.TxConfig).
+				WithChainID("nibi-test-chain").
 				BuildUnsignedTx(tc.txMsgs...)
 			s.NoError(err)
 

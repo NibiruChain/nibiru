@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 
 	wasmvm "github.com/CosmWasm/wasmvm/types"
 )
@@ -119,7 +119,7 @@ func DecodeBase64StargateMsgs(
 			}
 
 			decodedBz, _ := base64.StdEncoding.Strict().DecodeString(string(sgMsg.Value))
-			concrete := protoMsg.(sdkcodec.ProtoMarshaler)
+			concrete := protoMsg.(proto.Message)
 
 			err = codec.Unmarshal(decodedBz, concrete)
 			if err != nil {

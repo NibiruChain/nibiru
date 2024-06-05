@@ -24,7 +24,6 @@ import (
 	net "github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/cosmos/gogoproto/proto"
 	"golang.org/x/sync/errgroup"
 
 	"cosmossdk.io/math"
@@ -164,14 +163,7 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	types.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
-		ProtoFiles:     proto.HybridResolver,
-		SigningOptions: signingOptions,
-	})
-
-	encCfg := app.EncodingConfig{
-		InterfaceRegistry: app.interfaceRegistry(),
-	}
+	encCfg := app.MakeEncodingConfig()
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
