@@ -177,3 +177,8 @@ func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]sdk.Dec {
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
+
+func (s *IntegrationTestSuite) TearDownSuite() {
+	s.T().Log("tearing down integration test suite")
+	s.network.Cleanup()
+}

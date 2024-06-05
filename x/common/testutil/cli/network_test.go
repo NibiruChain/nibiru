@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 )
@@ -32,15 +33,7 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	/* 	Make test skip if -short is not used:
-	All tests: `go test ./...`
-	Unit tests only: `go test ./... -short`
-	Integration tests only: `go test ./... -run Integration`
-	https://stackoverflow.com/a/41407042/13305627 */
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
-	s.T().Log("setting up integration test suite")
+	testutil.BeforeIntegrationSuite(s.T())
 
 	encConfig := app.MakeEncodingConfig()
 	cfg := new(cli.Config)
