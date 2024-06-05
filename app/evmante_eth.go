@@ -270,7 +270,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	params := ctd.EvmKeeper.GetParams(ctx)
-	ethCfg := params.ChainConfig.EthereumConfig(ctd.EvmKeeper.EthChainID(ctx))
+	ethCfg := evm.EthereumConfig(ctd.EvmKeeper.EthChainID(ctx))
 	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()))
 
 	for _, msg := range tx.GetMsgs() {

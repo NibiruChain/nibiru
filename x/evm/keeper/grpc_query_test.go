@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +12,6 @@ import (
 
 	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -383,46 +381,6 @@ func (s *KeeperSuite) TestQueryCode() {
 			)
 		})
 	}
-}
-
-// AssertModuleParamsEqual errors if the fields don't match. This function avoids
-// failing the "EqualValues" check due to comparisons between nil and empty
-// slices: `[]string(nil)` and `[]string{}`.
-func AssertModuleParamsEqual(want, got evm.Params) error {
-	errs := []error{}
-	{
-		want, got := want.EvmDenom, got.EvmDenom
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"evm_denom", want, got))
-		}
-	}
-	{
-		want, got := want.EnableCreate, got.EnableCreate
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"enable_create", want, got))
-		}
-	}
-	{
-		want, got := want.EnableCall, got.EnableCall
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"enable_call", want, got))
-		}
-	}
-	{
-		want, got := want.ChainConfig, got.ChainConfig
-		if want != got {
-			errs = append(errs, ErrModuleParamsEquality(
-				"chain_config", want, got))
-		}
-	}
-	return common.CombineErrors(errs...)
-}
-
-func ErrModuleParamsEquality(field string, want, got any) error {
-	return fmt.Errorf(`failed AssetModuleParamsEqual on field %s: want "%v", got "%v"`, field, want, got)
 }
 
 func (s *KeeperSuite) TestQueryParams() {

@@ -11,8 +11,7 @@ import (
 )
 
 // EthereumConfig returns an Ethereum ChainConfig for EVM state transitions.
-// All the negative or nil values are converted to nil
-func (cc ChainConfig) EthereumConfig(chainID *big.Int) *params.ChainConfig {
+func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 	return &params.ChainConfig{
 		ChainID:                 chainID,
 		HomesteadBlock:          big.NewInt(0),
@@ -40,16 +39,11 @@ func (cc ChainConfig) EthereumConfig(chainID *big.Int) *params.ChainConfig {
 	}
 }
 
-// DefaultChainConfig returns default evm parameters.
-func DefaultChainConfig() ChainConfig {
-	return ChainConfig{}
-}
-
 // Validate performs a basic validation of the ChainConfig params. The function will return an error
 // if any of the block values is uninitialized (i.e nil) or if the EIP150Hash is an invalid hash.
-func (cc ChainConfig) Validate() error {
+func Validate() error {
 	// NOTE: chain ID is not needed to check config order
-	if err := cc.EthereumConfig(nil).CheckConfigForkOrder(); err != nil {
+	if err := EthereumConfig(nil).CheckConfigForkOrder(); err != nil {
 		return errorsmod.Wrap(err, "invalid config fork order")
 	}
 	return nil

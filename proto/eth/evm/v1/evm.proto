@@ -18,8 +18,8 @@ message Params {
   bool enable_call = 3 [(gogoproto.moretags) = "yaml:\"enable_call\""];
   // extra_eips defines the additional EIPs for the vm.Config
   repeated int64 extra_eips = 4 [(gogoproto.customname) = "ExtraEIPs", (gogoproto.moretags) = "yaml:\"extra_eips\""];
-  // chain_config defines the EVM chain configuration parameters
-  ChainConfig chain_config = 5 [(gogoproto.moretags) = "yaml:\"chain_config\"", (gogoproto.nullable) = false];
+  // DEPRECATED: chain_config
+  reserved 5;
   // allow_unprotected_txs defines if replay-protected (i.e non EIP155
   // signed) transactions can be executed on the state machine.
   bool allow_unprotected_txs = 6;
@@ -28,21 +28,6 @@ message Params {
   repeated string active_precompiles = 7;
   // evm_channels is the list of channel identifiers from EVM compatible chains
   repeated string evm_channels = 8 [(gogoproto.customname) = "EVMChannels"];
-}
-
-// ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int values
-// instead of *big.Int.
-message ChainConfig {
-  option (gogoproto.equal) = true;
-  // With future go-ethereum upgrades this structure will contain blocks of go-ethereum forks.
-  // Example format is defined below:
-
-  // shanghai_block switch block (nil = no fork, 0 = already on shanghai)
-  //  string shanghai_block = 1
-  //      [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.moretags) = "yaml:\"shanghai_block\""];
-  //  // cancun_block switch block (nil = no fork, 0 = already on cancun)
-  //  string cancun_block = 2
-  //      [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.moretags) = "yaml:\"cancun_block\""];
 }
 
 // State represents a single Storage key value pair item.
@@ -147,8 +132,8 @@ message TraceConfig {
   bool debug = 8;
   // limit defines the maximum length of output, but zero means unlimited
   int32 limit = 9;
-  // overrides can be used to execute a trace using future fork rules
-  ChainConfig overrides = 10;
+  // DEPRECATED: chain_config
+  reserved 10;
   // enable_memory switches memory capture
   bool enable_memory = 11 [(gogoproto.jsontag) = "enableMemory"];
   // enable_return_data switches the capture of return data
