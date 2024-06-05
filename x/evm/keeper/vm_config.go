@@ -27,7 +27,7 @@ func (k *Keeper) GetEVMConfig(
 		return nil, errors.Wrap(err, "failed to obtain coinbase address")
 	}
 
-	baseFee := k.GetBaseFee(ctx, ethCfg)
+	baseFee := k.GetBaseFee(ctx)
 	return &statedb.EVMConfig{
 		Params:      params,
 		ChainConfig: ethCfg,
@@ -48,17 +48,12 @@ func (k *Keeper) TxConfig(
 	)
 }
 
-// DEFAULT_NO_BASE_FEE: Toggles whether or not a base fee will be used. It should
-// always be on, since Nibiru EVM starts from a post-London upgrade state.
-const DEFAULT_NO_BASE_FEE = false
-
 // VMConfig creates an EVM configuration from the debug setting and the extra
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
 func (k Keeper) VMConfig(
 	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
-	noBaseFee := DEFAULT_NO_BASE_FEE
 	var debug bool
 	if _, ok := tracer.(evm.NoOpTracer); !ok {
 		debug = true
@@ -67,7 +62,7 @@ func (k Keeper) VMConfig(
 	return vm.Config{
 		Debug:     debug,
 		Tracer:    tracer,
-		NoBaseFee: noBaseFee,
+		NoBaseFee: false,
 		ExtraEips: cfg.Params.EIPs(),
 	}
 }
