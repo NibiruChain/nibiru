@@ -13,9 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
-var (
-	_ sdk.AnteDecorator = EthMinGasPriceDecorator{}
-)
+var _ sdk.AnteDecorator = EthMinGasPriceDecorator{}
 
 // EthMinGasPriceDecorator will check if the transaction's fee is at least as large
 // as the MinGasPrices param. If fee is too low, decorator returns error and tx

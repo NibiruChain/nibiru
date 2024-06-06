@@ -10,7 +10,7 @@ type KeeperSuite struct {
 	suite.Suite
 }
 
-// TestKeeperSuite: Runs all of the tests in the suite.
+// TestKeeperSuite: Runs all the tests in the suite.
 func TestKeeperSuite(t *testing.T) {
 	s := new(KeeperSuite)
 	suite.Run(t, s)
