@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
 - [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
+- [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
 
 #### Nibiru EVM
 
@@ -66,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 - [#1895](https://github.com/NibiruChain/nibiru/pull/1895) - refactor(geth): Reference go-ethereum as a submodule for easier change tracking with upstream
 - [#1901](https://github.com/NibiruChain/nibiru/pull/1901) - test(evm): more e2e test contracts for edge cases
+- [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
 - [#1909](https://github.com/NibiruChain/nibiru/pull/1909) - chore(evm): set is_london true by default and removed from config
 - [#1912](https://github.com/NibiruChain/nibiru/pull/1912) - test(evm): unit tests for evm_ante_sigverify
 
@@ -96,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 - [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
 - [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
+- [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
 
 ### Dependencies
 

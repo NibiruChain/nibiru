@@ -80,7 +80,9 @@ func (MsgEditSudoersPlus) Exec(
 	return network.ExecTxCmd(cli.CmdEditSudoers(), from, args)
 }
 
-type IntegrationSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 	cfg     testutilcli.Config
 	network *testutilcli.Network
@@ -94,14 +96,14 @@ type Account struct {
 }
 
 func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(IntegrationSuite))
+	suite.Run(t, new(TestSuite))
 }
 
 // ———————————————————————————————————————————————————————————————————
 // IntegrationSuite - Setup
 // ———————————————————————————————————————————————————————————————————
 
-func (s *IntegrationSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -122,7 +124,7 @@ func (s *IntegrationSuite) SetupSuite() {
 	s.AddRootToKeyring(s.root)
 }
 
-func (s *IntegrationSuite) FundRoot(root Account) {
+func (s *TestSuite) FundRoot(root Account) {
 	val := s.network.Validators[0]
 	funds := sdk.NewCoins(
 		sdk.NewInt64Coin(denoms.NIBI, 420*common.TO_MICRO),
@@ -133,7 +135,7 @@ func (s *IntegrationSuite) FundRoot(root Account) {
 	))
 }
 
-func (s *IntegrationSuite) AddRootToKeyring(root Account) {
+func (s *TestSuite) AddRootToKeyring(root Account) {
 	s.T().Log("add the x/sudo root account to the clientCtx.Keyring")
 	// Encrypt the x/sudo root account's private key to get its "armor"
 	passphrase := root.passphrase
@@ -150,7 +152,7 @@ func (s *IntegrationSuite) AddRootToKeyring(root Account) {
 // IntegrationSuite - Tests
 // ———————————————————————————————————————————————————————————————————
 
-func (s *IntegrationSuite) TestCmdEditSudoers() {
+func (s *TestSuite) TestCmdEditSudoers() {
 	val := s.network.Validators[0]
 
 	_, contractAddrs := testutil.PrivKeyAddressPairs(3)
@@ -221,7 +223,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	}
 }
 
-func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
+func (s *TestSuite) Test_ZCmdChangeRoot() {
 	val := s.network.Validators[0]
 
 	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
@@ -242,7 +244,7 @@ func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
 // the EditSudoders fn marshals and unmarshals properly from JSON.
 // This unmarshaling is used in the main body of the CmdEditSudoers command.
-func (s *IntegrationSuite) TestMarshal_EditSudoers() {
+func (s *TestSuite) TestMarshal_EditSudoers() {
 	t := s.T()
 
 	t.Log("create valid example json for the message")
@@ -270,7 +272,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	require.NoError(t, newMsg.ValidateBasic(), newMsg.String())
 }
 
-func (s *IntegrationSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
