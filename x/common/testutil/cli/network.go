@@ -224,7 +224,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	buf := bufio.NewReader(os.Stdin)
 
 	// generate private keys, node IDs, and initial transactions
-	for i := 0; i < cfg.NumValidators; i++ {
+	for valIdx := 0; valIdx < cfg.NumValidators; valIdx++ {
 		appCfg := serverconfig.DefaultConfig()
 		appCfg.Pruning = cfg.PruningStrategy
 		appCfg.MinGasPrices = cfg.MinGasPrices
@@ -243,7 +243,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		appCfg.GRPC.Enable = false
 		appCfg.GRPCWeb.Enable = false
 		apiListenAddr := ""
-		if i == 0 {
+		if valIdx == 0 {
 			if cfg.APIAddress != "" {
 				apiListenAddr = cfg.APIAddress
 			} else {
@@ -309,7 +309,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		ctx.Logger = loggerNoOp
 
-		nodeDirName := fmt.Sprintf("node%d", i)
+		nodeDirName := fmt.Sprintf("node%d", valIdx)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "simd")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "simcli")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
@@ -326,7 +326,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		tmCfg.SetRoot(nodeDir)
 		tmCfg.Moniker = nodeDirName
-		monikers[i] = nodeDirName
+		monikers[valIdx] = nodeDirName
 
 		proxyAddr, _, err := server.FreeTCPAddr()
 		if err != nil {
@@ -348,8 +348,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		nodeIDs[i] = nodeID
-		valPubKeys[i] = pubKey
+		nodeIDs[valIdx] = nodeID
+		valPubKeys[valIdx] = pubKey
 
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
 		if err != nil {
@@ -363,8 +363,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		var mnemonic string
-		if i < len(cfg.Mnemonics) {
-			mnemonic = cfg.Mnemonics[i]
+		if valIdx < len(cfg.Mnemonics) {
+			mnemonic = cfg.Mnemonics[valIdx]
 		}
 
 		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
@@ -404,7 +404,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
-			valPubKeys[i],
+			valPubKeys[valIdx],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(commission, math.LegacyOneDec(), math.LegacyOneDec()),
@@ -419,7 +419,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
+		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[valIdx], p2pURL.Hostname(), p2pURL.Port())
 		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), math.ZeroInt()))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
@@ -464,7 +464,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			WithTxConfig(cfg.TxConfig).
 			WithAccountRetriever(cfg.AccountRetriever)
 
-		network.Validators[i] = &Validator{
+		network.Validators[valIdx] = &Validator{
 			AppConfig:      appCfg,
 			ClientCtx:      clientCtx,
 			Ctx:            ctx,
