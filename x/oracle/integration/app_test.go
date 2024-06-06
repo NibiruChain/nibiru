@@ -20,18 +20,20 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-type IntegrationTestSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 }
 
-func (s *IntegrationTestSuite) SetupTest() {
+func (s *TestSuite) SetupTest() {
 	testapp.EnsureNibiruPrefix()
 	homeDir := s.T().TempDir()
 
@@ -60,7 +62,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	require.NoError(s.T(), err)
 }
 
-func (s *IntegrationTestSuite) TestSuccessfulVoting() {
+func (s *TestSuite) TestSuccessfulVoting() {
 	// assuming validators have equal power
 	// we use the weighted median.
 	// what happens is that prices are ordered
@@ -105,7 +107,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	)
 }
 
-func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []string {
+func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []string {
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
 		raw := prices[i]
@@ -129,7 +131,7 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 	return strVotes
 }
 
-func (s *IntegrationTestSuite) sendVotes(rates []string) {
+func (s *TestSuite) sendVotes(rates []string) {
 	for i, val := range s.network.Validators {
 		_, err := s.network.BroadcastMsgs(val.Address, &types.MsgAggregateExchangeRateVote{
 			Salt:          "1",
@@ -141,7 +143,7 @@ func (s *IntegrationTestSuite) sendVotes(rates []string) {
 	}
 }
 
-func (s *IntegrationTestSuite) waitVoteRevealBlock() {
+func (s *TestSuite) waitVoteRevealBlock() {
 	params, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &types.QueryParamsRequest{})
 	require.NoError(s.T(), err)
 
@@ -157,11 +159,11 @@ func (s *IntegrationTestSuite) waitVoteRevealBlock() {
 }
 
 // it's an alias, but it exists to give better understanding of what we're doing in test cases scenarios
-func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
+func (s *TestSuite) waitPriceUpdateBlock() {
 	s.waitVoteRevealBlock()
 }
 
-func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]sdk.Dec {
+func (s *TestSuite) currentPrices() map[asset.Pair]sdk.Dec {
 	rawRates, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &types.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
@@ -175,5 +177,10 @@ func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]sdk.Dec {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TestSuite))
+}
+
+func (s *TestSuite) TearDownSuite() {
+	s.T().Log("tearing down integration test suite")
+	s.network.Cleanup()
 }

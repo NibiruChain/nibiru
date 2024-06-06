@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 - [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
 - [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
+- [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
 
 ### Dependencies
 
