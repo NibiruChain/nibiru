@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 )
 
-func (s *IntegrationTestSuite) TestSendTx() {
+func (s *TestSuite) TestSendTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(42))
@@ -28,7 +28,7 @@ func (s *IntegrationTestSuite) TestSendTx() {
 	s.EqualValues(0, txResp.Code)
 }
 
-func (s *IntegrationTestSuite) TestExecTx() {
+func (s *TestSuite) TestExecTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(69))
@@ -62,7 +62,7 @@ func (s *IntegrationTestSuite) TestExecTx() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestFillWalletFromValidator() {
+func (s *TestSuite) TestFillWalletFromValidator() {
 	toAddr := testutil.AccAddress()
 	val := s.network.Validators[0]
 	funds := sdk.NewCoins(
