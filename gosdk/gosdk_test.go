@@ -22,6 +22,7 @@ import (
 // --------------------------------------------------
 
 var _ suite.SetupAllSuite = (*TestSuite)(nil)
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
