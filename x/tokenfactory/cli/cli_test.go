@@ -17,8 +17,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ suite.SetupAllSuite = (*TestSuite)(nil)
-var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+var (
+	_ suite.SetupAllSuite    = (*TestSuite)(nil)
+	_ suite.TearDownAllSuite = (*TestSuite)(nil)
+)
 
 type TestSuite struct {
 	suite.Suite
