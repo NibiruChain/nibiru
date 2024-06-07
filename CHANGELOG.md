@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1901](https://github.com/NibiruChain/nibiru/pull/1901) - test(evm): more e2e test contracts for edge cases
 - [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
 - [#1909](https://github.com/NibiruChain/nibiru/pull/1909) - chore(evm): set is_london true by default and removed from config
+- [#1911](https://github.com/NibiruChain/nibiru/pull/1911) - chore(evm): simplified config by removing old eth forks
 
 #### Dapp modules: perp, spot, oracle, etc
 
