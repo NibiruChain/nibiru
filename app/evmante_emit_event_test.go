@@ -1,9 +1,10 @@
 package app_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/evm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+
+	"github.com/NibiruChain/nibiru/x/evm"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"

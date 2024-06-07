@@ -3,10 +3,11 @@ package app_test
 import (
 	"math"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestEthSetupContextDecorator() {
