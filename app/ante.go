@@ -78,8 +78,9 @@ func NewAnteHandlerNonEVM(
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
-		// TODO: UD bug(security): Authz is unsafe. Let's include a guard to make
+		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
 		// things safer.
+		// ticket: https://github.com/NibiruChain/nibiru/issues/1915
 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
@@ -88,7 +89,8 @@ func NewAnteHandlerNonEVM(
 		ante.AnteDecoratorStakingCommission{},
 		// ----------- Ante Handlers: Gas
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
-		// TODO: UD spike(security) Does minimum gas price of 0 pose a risk?
+		// TODO: spike(security): Does minimum gas price of 0 pose a risk?
+		// ticket: https://github.com/NibiruChain/nibiru/issues/1916
 		authante.NewDeductFeeDecorator(
 			opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
 		// ----------- Ante Handlers:  devgas
