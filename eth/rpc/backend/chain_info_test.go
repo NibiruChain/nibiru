@@ -61,7 +61,7 @@ func (s *BackendSuite) TestBaseFee() {
 			expPass:    true,
 		},
 		{
-			name:     "pass - base fee or london fork not enabled",
+			name:     "pass - base fee not enabled",
 			blockRes: &tmrpctypes.ResultBlockResults{Height: 1},
 			registerMock: func() {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
@@ -202,7 +202,7 @@ func (s *BackendSuite) TestSuggestGasTipCap() {
 		expPass      bool
 	}{
 		{
-			"pass - London hardfork not enabled or feemarket not enabled ",
+			"pass - Feemarket not enabled ",
 			func() {},
 			nil,
 			big.NewInt(0),

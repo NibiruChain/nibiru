@@ -42,7 +42,6 @@ func NewParams(
 	allowUnprotectedTxs,
 	enableCreate,
 	enableCall bool,
-	config ChainConfig,
 	extraEIPs []int64,
 	activePrecompiles,
 	evmChannels []string,
@@ -53,7 +52,6 @@ func NewParams(
 		EnableCreate:        enableCreate,
 		EnableCall:          enableCall,
 		ExtraEIPs:           extraEIPs,
-		ChainConfig:         config,
 		ActivePrecompiles:   activePrecompiles,
 		EVMChannels:         evmChannels,
 	}
@@ -68,7 +66,6 @@ func DefaultParams() Params {
 		EvmDenom:            DefaultEVMDenom,
 		EnableCreate:        DefaultEnableCreate,
 		EnableCall:          DefaultEnableCall,
-		ChainConfig:         DefaultChainConfig(),
 		ExtraEIPs:           DefaultExtraEIPs,
 		AllowUnprotectedTxs: DefaultAllowUnprotectedTxs,
 		ActivePrecompiles:   AvailableEVMExtensions,
@@ -113,10 +110,6 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateBool(p.AllowUnprotectedTxs); err != nil {
-		return err
-	}
-
-	if err := validateChainConfig(p.ChainConfig); err != nil {
 		return err
 	}
 
@@ -204,15 +197,6 @@ func validateEIPs(i interface{}) error {
 	}
 
 	return nil
-}
-
-func validateChainConfig(i interface{}) error {
-	cfg, ok := i.(ChainConfig)
-	if !ok {
-		return fmt.Errorf("invalid chain config type: %T", i)
-	}
-
-	return cfg.Validate()
 }
 
 // ValidatePrecompiles checks if the precompile addresses are valid and unique.
