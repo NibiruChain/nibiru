@@ -2,9 +2,10 @@ package testapp
 
 import (
 	"encoding/json"
+
 	"time"
 
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -141,11 +142,11 @@ func FundAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress,
 	amounts sdk.Coins,
 ) error {
-	if err := bankKeeper.MintCoins(ctx, distrtypes.ModuleName, amounts); err != nil {
+	if err := bankKeeper.MintCoins(ctx, ibctransfertypes.ModuleName, amounts); err != nil {
 		return err
 	}
 
-	return bankKeeper.SendCoinsFromModuleToAccount(ctx, distrtypes.ModuleName, addr, amounts)
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, addr, amounts)
 }
 
 // FundModuleAccount is a utility function that funds a module account by
