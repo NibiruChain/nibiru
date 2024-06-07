@@ -32,17 +32,26 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errorsmod.Wrapf(
+				errortypes.ErrUnknownRequest,
+				"invalid message type %T, expected %T",
+				msg, (*evm.MsgEthereumTx)(nil),
+			)
 		}
 
 		// emit ethereum tx hash as an event so that it can be indexed by
 		// Tendermint for query purposes it's emitted in ante handler, so we can
 		// query failed transaction (out of block gas limit).
-		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			evm.EventTypeEthereumTx,
-			sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, msgEthTx.Hash),
-			sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i), 10)), // #nosec G701
-		))
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				evm.EventTypeEthereumTx,
+				sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, msgEthTx.Hash),
+				sdk.NewAttribute(
+					evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i),
+						10,
+					),
+				), // #nosec G701
+			))
 	}
 
 	return next(ctx, tx, simulate)
