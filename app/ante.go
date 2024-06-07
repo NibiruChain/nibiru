@@ -31,7 +31,6 @@ func NewAnteHandler(
 
 		var anteHandler sdk.AnteHandler
 		hasExt, typeUrl := TxHasExtensions(tx)
-		// TODO: handle ethereum txs
 		if hasExt && typeUrl != "" {
 			anteHandler = AnteHandlerExtendedTx(typeUrl, keepers, opts, ctx)
 			return anteHandler(ctx, tx, sim)
@@ -45,52 +44,6 @@ func NewAnteHandler(
 		}
 		return anteHandler(ctx, tx, sim)
 	}
-}
-
-// TODO: UD: REMOVE ME
-// func AnteHandlerStandardTx(opts ante.AnteHandlerOptions) sdk.AnteHandler {
-// 	anteDecorators := []sdk.AnteDecorator{
-// 		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
-// 		authante.NewSetUpContextDecorator(),
-// 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
-// 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
-// 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
-// 		authante.NewValidateBasicDecorator(),
-// 		authante.NewTxTimeoutHeightDecorator(),
-// 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-// 		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
-// 		ante.AnteDecoratorStakingCommission{},
-// 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
-// 		// Replace fee ante from cosmos auth with a custom one.
-// 		authante.NewDeductFeeDecorator(
-// 			opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
-// 		// devgas
-// 		devgasante.NewDevGasPayoutDecorator(
-// 			opts.DevGasBankKeeper, opts.DevGasKeeper),
-// 		// NOTE: SetPubKeyDecorator must be called before all signature verification decorators
-// 		authante.NewSetPubKeyDecorator(opts.AccountKeeper),
-// 		authante.NewValidateSigCountDecorator(opts.AccountKeeper),
-// 		authante.NewSigGasConsumeDecorator(opts.AccountKeeper, opts.SigGasConsumer),
-// 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
-// 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
-// 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-// 	}
-
-// 	return sdk.ChainAnteDecorators(anteDecorators...)
-// }
-
-func TxHasExtensions(tx sdk.Tx) (hasExt bool, typeUrl string) {
-	extensionTx, ok := tx.(authante.HasExtensionOptionsTx)
-	if !ok {
-		return false, ""
-	}
-
-	extOpts := extensionTx.GetExtensionOptions()
-	if len(extOpts) == 0 {
-		return false, ""
-	}
-
-	return true, extOpts[0].GetTypeUrl()
 }
 
 func AnteHandlerExtendedTx(
@@ -151,4 +104,18 @@ func NewAnteHandlerNonEVM(
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
 		AnteDecoratorGasWanted{},
 	)
+}
+
+func TxHasExtensions(tx sdk.Tx) (hasExt bool, typeUrl string) {
+	extensionTx, ok := tx.(authante.HasExtensionOptionsTx)
+	if !ok {
+		return false, ""
+	}
+
+	extOpts := extensionTx.GetExtensionOptions()
+	if len(extOpts) == 0 {
+		return false, ""
+	}
+
+	return true, extOpts[0].GetTypeUrl()
 }
