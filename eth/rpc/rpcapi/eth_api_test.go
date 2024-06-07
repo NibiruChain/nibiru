@@ -29,7 +29,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
-type IntegrationSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 	cfg     testutilcli.Config
 	network *testutilcli.Network
@@ -43,12 +45,12 @@ type IntegrationSuite struct {
 	contractData evmtest.CompiledEvmContract
 }
 
-func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(IntegrationSuite))
+func TestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(TestSuite))
 }
 
 // SetupSuite initialize network
-func (s *IntegrationSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -76,14 +78,14 @@ func (s *IntegrationSuite) SetupSuite() {
 }
 
 // Test_ChainID EVM method: eth_chainId
-func (s *IntegrationSuite) Test_ChainID() {
+func (s *TestSuite) Test_ChainID() {
 	ethChainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	s.Equal(appconst.ETH_CHAIN_ID_DEFAULT, ethChainID.Int64())
 }
 
 // Test_BlockNumber EVM method: eth_blockNumber
-func (s *IntegrationSuite) Test_BlockNumber() {
+func (s *TestSuite) Test_BlockNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -93,7 +95,7 @@ func (s *IntegrationSuite) Test_BlockNumber() {
 }
 
 // Test_BlockByNumber EVM method: eth_getBlockByNumber
-func (s *IntegrationSuite) Test_BlockByNumber() {
+func (s *TestSuite) Test_BlockByNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -105,7 +107,7 @@ func (s *IntegrationSuite) Test_BlockByNumber() {
 }
 
 // Test_BalanceAt EVM method: eth_getBalance
-func (s *IntegrationSuite) Test_BalanceAt() {
+func (s *TestSuite) Test_BalanceAt() {
 	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
 
 	// New user balance should be 0
@@ -122,7 +124,7 @@ func (s *IntegrationSuite) Test_BalanceAt() {
 }
 
 // Test_StorageAt EVM method: eth_getStorageAt
-func (s *IntegrationSuite) Test_StorageAt() {
+func (s *TestSuite) Test_StorageAt() {
 	storage, err := s.ethClient.StorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{}, nil,
 	)
@@ -132,7 +134,7 @@ func (s *IntegrationSuite) Test_StorageAt() {
 }
 
 // Test_PendingStorageAt EVM method: eth_getStorageAt | pending
-func (s *IntegrationSuite) Test_PendingStorageAt() {
+func (s *TestSuite) Test_PendingStorageAt() {
 	storage, err := s.ethClient.PendingStorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{},
 	)
@@ -143,7 +145,7 @@ func (s *IntegrationSuite) Test_PendingStorageAt() {
 }
 
 // Test_CodeAt EVM method: eth_getCode
-func (s *IntegrationSuite) Test_CodeAt() {
+func (s *TestSuite) Test_CodeAt() {
 	code, err := s.ethClient.CodeAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
@@ -152,7 +154,7 @@ func (s *IntegrationSuite) Test_CodeAt() {
 }
 
 // Test_PendingCodeAt EVM method: eth_getCode
-func (s *IntegrationSuite) Test_PendingCodeAt() {
+func (s *TestSuite) Test_PendingCodeAt() {
 	code, err := s.ethClient.PendingCodeAt(context.Background(), s.fundedAccEthAddr)
 	s.NoError(err)
 
@@ -161,7 +163,7 @@ func (s *IntegrationSuite) Test_PendingCodeAt() {
 }
 
 // Test_EstimateGas EVM method: eth_estimateGas
-func (s *IntegrationSuite) Test_EstimateGas() {
+func (s *TestSuite) Test_EstimateGas() {
 	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
 	gasLimit := uint64(21000)
 	msg := geth.CallMsg{
@@ -176,14 +178,14 @@ func (s *IntegrationSuite) Test_EstimateGas() {
 }
 
 // Test_SuggestGasPrice EVM method: eth_gasPrice
-func (s *IntegrationSuite) Test_SuggestGasPrice() {
+func (s *TestSuite) Test_SuggestGasPrice() {
 	// TODO: the backend method is stubbed to 0
 	_, err := s.ethClient.SuggestGasPrice(context.Background())
 	s.NoError(err)
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
-func (s *IntegrationSuite) Test_SimpleTransferTransaction() {
+func (s *TestSuite) Test_SimpleTransferTransaction() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.PendingNonceAt(context.Background(), s.fundedAccEthAddr)
@@ -230,7 +232,7 @@ func (s *IntegrationSuite) Test_SimpleTransferTransaction() {
 }
 
 // Test_SmartContract includes contract deployment, query, execution
-func (s *IntegrationSuite) Test_SmartContract() {
+func (s *TestSuite) Test_SmartContract() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
@@ -295,12 +297,12 @@ func (s *IntegrationSuite) Test_SmartContract() {
 	s.assertERC20Balance(contractAddress, recipientAddr, recipientBalance)
 }
 
-func (s *IntegrationSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *IntegrationSuite) assertERC20Balance(
+func (s *TestSuite) assertERC20Balance(
 	contractAddress gethcommon.Address,
 	userAddress gethcommon.Address,
 	expectedBalance *big.Int,
