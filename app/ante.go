@@ -39,7 +39,7 @@ func NewAnteHandler(
 
 		switch tx.(type) {
 		case sdk.Tx:
-			anteHandler = AnteHandlerStandardTx(opts)
+			anteHandler = NewAnteHandlerNonEVM(keepers, opts)
 		default:
 			return ctx, fmt.Errorf("invalid tx type (%T) in AnteHandler", tx)
 		}
@@ -47,35 +47,37 @@ func NewAnteHandler(
 	}
 }
 
-func AnteHandlerStandardTx(opts ante.AnteHandlerOptions) sdk.AnteHandler {
-	anteDecorators := []sdk.AnteDecorator{
-		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
-		authante.NewSetUpContextDecorator(),
-		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
-		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
-		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
-		authante.NewValidateBasicDecorator(),
-		authante.NewTxTimeoutHeightDecorator(),
-		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-		ante.NewPostPriceFixedPriceDecorator(),
-		ante.AnteDecoratorStakingCommission{},
-		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
-		// Replace fee ante from cosmos auth with a custom one.
-		authante.NewDeductFeeDecorator(
-			opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
-		devgasante.NewDevGasPayoutDecorator(
-			opts.DevGasBankKeeper, opts.DevGasKeeper),
-		// NOTE: SetPubKeyDecorator must be called before all signature verification decorators
-		authante.NewSetPubKeyDecorator(opts.AccountKeeper),
-		authante.NewValidateSigCountDecorator(opts.AccountKeeper),
-		authante.NewSigGasConsumeDecorator(opts.AccountKeeper, opts.SigGasConsumer),
-		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
-		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
-		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-	}
+// TODO: UD: REMOVE ME
+// func AnteHandlerStandardTx(opts ante.AnteHandlerOptions) sdk.AnteHandler {
+// 	anteDecorators := []sdk.AnteDecorator{
+// 		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
+// 		authante.NewSetUpContextDecorator(),
+// 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
+// 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
+// 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
+// 		authante.NewValidateBasicDecorator(),
+// 		authante.NewTxTimeoutHeightDecorator(),
+// 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
+// 		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
+// 		ante.AnteDecoratorStakingCommission{},
+// 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
+// 		// Replace fee ante from cosmos auth with a custom one.
+// 		authante.NewDeductFeeDecorator(
+// 			opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
+// 		// devgas
+// 		devgasante.NewDevGasPayoutDecorator(
+// 			opts.DevGasBankKeeper, opts.DevGasKeeper),
+// 		// NOTE: SetPubKeyDecorator must be called before all signature verification decorators
+// 		authante.NewSetPubKeyDecorator(opts.AccountKeeper),
+// 		authante.NewValidateSigCountDecorator(opts.AccountKeeper),
+// 		authante.NewSigGasConsumeDecorator(opts.AccountKeeper, opts.SigGasConsumer),
+// 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
+// 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
+// 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
+// 	}
 
-	return sdk.ChainAnteDecorators(anteDecorators...)
-}
+// 	return sdk.ChainAnteDecorators(anteDecorators...)
+// }
 
 func TxHasExtensions(tx sdk.Tx) (hasExt bool, typeUrl string) {
 	extensionTx, ok := tx.(authante.HasExtensionOptionsTx)
@@ -123,24 +125,23 @@ func NewAnteHandlerNonEVM(
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
-		// TODO: UD
-		// cosmosante.NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
-		// 	sdk.MsgTypeURL(&evm.MsgEthereumTx{}),
-		// 	sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
-		// ),
+		// TODO: UD bug(security): Authz is unsafe. Let's include a guard to make
+		// things safer.
 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-		// TODO: UD
-		// cosmosante.NewMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
-		ante.NewPostPriceFixedPriceDecorator(),
+		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
 		ante.AnteDecoratorStakingCommission{},
+		// ----------- Ante Handlers: Gas
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
+		// TODO: UD spike(security) Does minimum gas price of 0 pose a risk?
 		authante.NewDeductFeeDecorator(
 			opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
+		// ----------- Ante Handlers:  devgas
 		devgasante.NewDevGasPayoutDecorator(
 			opts.DevGasBankKeeper, opts.DevGasKeeper),
+		// ----------- Ante Handlers:  Keys and signatures
 		// NOTE: SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewSetPubKeyDecorator(opts.AccountKeeper),
 		authante.NewValidateSigCountDecorator(opts.AccountKeeper),
@@ -148,6 +149,6 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		NewGasWantedDecorator(k),
+		AnteDecoratorGasWanted{},
 	)
 }

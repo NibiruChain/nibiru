@@ -19,8 +19,24 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
+type TestCase[In, Out any] struct {
+	name string
+	// setup: Optional setup function to create the scenario
+	setup    func(deps *evmtest.TestDeps)
+	scenario func(deps *evmtest.TestDeps) (
+		req In,
+		wantResp Out,
+	)
+	wantErr string
+}
+
 func InvalidEthAddr() string { return "0x0000" }
 
+// TraceNibiTransfer returns a hardcoded JSON string representing the expected
+// trace output of a successful "ether" (unibi) token transfer.
+// Used to test the correctness of "TraceTx" and "TraceBlock".
+//   - Note that the struct logs are empty. That is because a simple token
+//     transfer does not involve contract operations.
 func TraceNibiTransfer() string {
 	return fmt.Sprintf(`{
 	  "gas": %d,
@@ -30,6 +46,9 @@ func TraceNibiTransfer() string {
 	}`, gethparams.TxGas)
 }
 
+// TraceERC20Transfer returns a hardcoded JSON string representing the expected
+// trace output of a successful ERC-20 token transfer (an EVM tx).
+// Used to test the correctness of "TraceTx" and "TraceBlock".
 func TraceERC20Transfer() string {
 	return `{
 	   "gas": 35062,
@@ -44,17 +63,6 @@ func TraceERC20Transfer() string {
 			 "depth": 1,
 			 "stack": []
 		  }`
-}
-
-type TestCase[In, Out any] struct {
-	name string
-	// setup: Optional setup function to create the scenario
-	setup    func(deps *evmtest.TestDeps)
-	scenario func(deps *evmtest.TestDeps) (
-		req In,
-		wantResp Out,
-	)
-	wantErr string
 }
 
 func (s *KeeperSuite) TestQueryNibiruAccount() {
