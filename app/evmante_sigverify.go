@@ -34,8 +34,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 ) (newCtx sdk.Context, err error) {
 	chainID := esvd.EvmKeeper.EthChainID(ctx)
 	evmParams := esvd.EvmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(chainID)
+	ethCfg := evm.EthereumConfig(chainID)
 	blockNum := big.NewInt(ctx.BlockHeight())
 	signer := gethcore.MakeSigner(ethCfg, blockNum)
 

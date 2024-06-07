@@ -352,7 +352,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 //
 // The preprocessing steps performed by the AnteHandler are:
 //
-// 1. set up the initial access list (iff fork > Berlin)
+// 1. set up the initial access list
 //
 // # Tracer parameter
 //
@@ -439,9 +439,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// access list preparation is moved from ante handler to here, because it's needed when `ApplyMessage` is called
 	// under contexts where ante handlers are not run, for example `eth_call` and `eth_estimateGas`.
-	if rules := cfg.ChainConfig.Rules(big.NewInt(ctx.BlockHeight()), cfg.ChainConfig.MergeNetsplitBlock != nil); rules.IsBerlin {
-		stateDB.PrepareAccessList(msg.From(), msg.To(), evmObj.ActivePrecompiles(rules), msg.AccessList())
-	}
+	stateDB.PrepareAccessList(msg.From(), msg.To(), evmObj.ActivePrecompiles(params.Rules{}), msg.AccessList())
 
 	if contractCreation {
 		// take over the nonce management from evm:

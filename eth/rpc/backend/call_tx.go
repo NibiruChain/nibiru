@@ -45,7 +45,7 @@ func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *h
 
 	cfg := b.ChainConfig()
 	if cfg == nil {
-		cfg = evm.DefaultChainConfig().EthereumConfig(eip155ChainID)
+		cfg = evm.EthereumConfig(eip155ChainID)
 	}
 
 	signer := gethcore.LatestSigner(cfg)

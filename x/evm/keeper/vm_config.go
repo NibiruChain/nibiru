@@ -19,7 +19,7 @@ func (k *Keeper) GetEVMConfig(
 	ctx sdk.Context, proposerAddress sdk.ConsAddress, chainID *big.Int,
 ) (*statedb.EVMConfig, error) {
 	params := k.GetParams(ctx)
-	ethCfg := params.ChainConfig.EthereumConfig(chainID)
+	ethCfg := evm.EthereumConfig(chainID)
 
 	// get the coinbase address from the block proposer
 	coinbase, err := k.GetCoinbaseAddress(ctx, proposerAddress)

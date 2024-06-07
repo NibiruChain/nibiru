@@ -23,13 +23,9 @@ import (
 
 // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
 func (k *Keeper) GetEthIntrinsicGas(ctx sdk.Context, msg core.Message, cfg *params.ChainConfig, isContractCreation bool) (uint64, error) {
-	height := big.NewInt(ctx.BlockHeight())
-	homestead := cfg.IsHomestead(height)
-	istanbul := cfg.IsIstanbul(height)
-
 	return core.IntrinsicGas(
 		msg.Data(), msg.AccessList(),
-		isContractCreation, homestead, istanbul,
+		isContractCreation, true, true,
 	)
 }
 
@@ -136,7 +132,7 @@ func VerifyFee(
 	txData evm.TxData,
 	denom string,
 	baseFee *big.Int,
-	homestead, istanbul, isCheckTx bool,
+	isCheckTx bool,
 ) (sdk.Coins, error) {
 	isContractCreation := txData.GetTo() == nil
 
@@ -147,12 +143,12 @@ func VerifyFee(
 		accessList = txData.GetAccessList()
 	}
 
-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, homestead, istanbul)
+	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, true, true)
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
-			"failed to retrieve intrinsic gas, contract creation = %t; homestead = %t, istanbul = %t",
-			isContractCreation, homestead, istanbul,
+			"failed to retrieve intrinsic gas, contract creation = %t",
+			isContractCreation,
 		)
 	}
 

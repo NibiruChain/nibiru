@@ -675,10 +675,6 @@ func (k *Keeper) TraceEthTxMsg(
 		traceConfig = &evm.TraceConfig{}
 	}
 
-	if traceConfig.Overrides != nil {
-		overrides = traceConfig.Overrides.EthereumConfig(cfg.ChainConfig.ChainID)
-	}
-
 	logConfig := logger.Config{
 		EnableMemory:     traceConfig.EnableMemory,
 		DisableStorage:   traceConfig.DisableStorage,
