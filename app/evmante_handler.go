@@ -22,7 +22,7 @@ func NewAnteHandlerEVM(
 		NewCanTransferDecorator(k),
 		NewAnteDecEthGasConsume(k, options.MaxTxGasWanted),
 		NewAnteDecEthIncrementSenderSequence(k),
-		NewGasWantedDecorator(k),
+		AnteDecoratorGasWanted{},
 		// emit eth tx hash and index at the very last ante handler.
 		NewEthEmitEventDecorator(k),
 	)

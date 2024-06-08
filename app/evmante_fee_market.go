@@ -9,23 +9,11 @@ import (
 	"github.com/NibiruChain/nibiru/eth"
 )
 
-// GasWantedDecorator keeps track of the gasWanted amount on the current block in transient store
-// for BaseFee calculation.
-// NOTE: This decorator does not perform any validation
-type GasWantedDecorator struct {
-	AppKeepers
-}
+// AnteDecoratorGasWanted keeps track of the gasWanted amount on the current block in
+// transient store for BaseFee calculation.
+type AnteDecoratorGasWanted struct{}
 
-// NewGasWantedDecorator creates a new NewGasWantedDecorator
-func NewGasWantedDecorator(
-	k AppKeepers,
-) GasWantedDecorator {
-	return GasWantedDecorator{
-		AppKeepers: k,
-	}
-}
-
-func (gwd GasWantedDecorator) AnteHandle(
+func (gwd AnteDecoratorGasWanted) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)

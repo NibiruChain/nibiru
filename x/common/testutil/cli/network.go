@@ -59,92 +59,90 @@ var lock = new(sync.Mutex)
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
 
-type (
-	// Network defines a in-process testing network. It is primarily intended
-	// for client and integration testing. The Network struct can spawn any
-	// number of validators, each with its own RPC and API clients.
+// Network defines a in-process testing network. It is primarily intended
+// for client and integration testing. The Network struct can spawn any
+// number of validators, each with its own RPC and API clients.
+//
+// ### Constraints
+//
+//  1. Only the first validator will have a functional RPC and API
+//     server/client.
+//  2. Due to constraints in Tendermint's JSON-RPC implementation, only one
+//     test network can run at a time. For this reason, it's essential to
+//     invoke `Network.Cleanup` after testing to allow other tests to create
+//     networks.
+type Network struct {
+	BaseDir    string
+	Config     Config
+	Validators []*Validator
+	Logger     Logger
+}
+
+// Validator defines an in-process Tendermint validator node. Through this
+// object, a client can make RPC and API calls and interact with any client
+// command or handler.
+type Validator struct {
+	AppConfig *serverconfig.Config
+	ClientCtx client.Context
+	Ctx       *server.Context
+	// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
+	Dir string
+
+	// NodeID is a unique ID for the validator generated when the
+	// 'cli.Network' is started.
+	NodeID string
+	PubKey cryptotypes.PubKey
+
+	// Moniker is a human-readable name that identifies a validator. A
+	// moniker is optional and may be empty.
+	Moniker string
+
+	// APIAddress is the endpoint that the validator API server binds to.
+	// Only the first validator of a 'cli.Network' exposes the full API.
+	APIAddress string
+
+	// RPCAddress is the endpoint that the RPC server binds to. Only the
+	// first validator of a 'cli.Network' exposes the full API.
+	RPCAddress string
+
+	// P2PAddress is the endpoint that the RPC server binds to. The P2P
+	// server handles Tendermint peer-to-peer (P2P) networking and is
+	// critical for blockchain replication and consensus. It allows nodes
+	// to gossip blocks, transactions, and consensus messages. Only the
+	// first validator of a 'cli.Network' exposes the full API.
+	P2PAddress string
+
+	// Address - account address
+	Address sdk.AccAddress
+
+	// EthAddress - Ethereum address
+	EthAddress common.Address
+
+	// ValAddress - validator operator (valoper) address
+	ValAddress sdk.ValAddress
+
+	// RPCClient wraps most important rpc calls a client would make to
+	// listen for events, test if it also implements events.EventSwitch.
 	//
-	// ### Constraints
-	//
-	// 1. Only the first validator will have a functional RPC and API
-	//    server/client.
-	// 2. Due to constraints in Tendermint's JSON-RPC implementation, only one
-	//    test network can run at a time. For this reason, it's essential to
-	//    invoke `Network.Cleanup` after testing to allow other tests to create
-	//    networks.
-	Network struct {
-		BaseDir    string
-		Config     Config
-		Validators []*Validator
-		Logger     Logger
-	}
+	// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
+	// - rpc.HTTP
+	// - rpc.Local
+	RPCClient tmclient.Client
 
-	// Validator defines an in-process Tendermint validator node. Through this
-	// object, a client can make RPC and API calls and interact with any client
-	// command or handler.
-	Validator struct {
-		AppConfig *serverconfig.Config
-		ClientCtx client.Context
-		Ctx       *server.Context
-		// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
-		Dir string
+	JSONRPCClient *ethclient.Client
 
-		// NodeID is a unique ID for the validator generated when the
-		// 'cli.Network' is started.
-		NodeID string
-		PubKey cryptotypes.PubKey
+	tmNode *node.Node
 
-		// Moniker is a human-readable name that identifies a validator. A
-		// moniker is optional and may be empty.
-		Moniker string
-
-		// APIAddress is the endpoint that the validator API server binds to.
-		// Only the first validator of a 'cli.Network' exposes the full API.
-		APIAddress string
-
-		// RPCAddress is the endpoint that the RPC server binds to. Only the
-		// first validator of a 'cli.Network' exposes the full API.
-		RPCAddress string
-
-		// P2PAddress is the endpoint that the RPC server binds to. The P2P
-		// server handles Tendermint peer-to-peer (P2P) networking and is
-		// critical for blockchain replication and consensus. It allows nodes
-		// to gossip blocks, transactions, and consensus messages. Only the
-		// first validator of a 'cli.Network' exposes the full API.
-		P2PAddress string
-
-		// Address - account address
-		Address sdk.AccAddress
-
-		// EthAddress - Ethereum address
-		EthAddress common.Address
-
-		// ValAddress - validator operator (valoper) address
-		ValAddress sdk.ValAddress
-
-		// RPCClient wraps most important rpc calls a client would make to
-		// listen for events, test if it also implements events.EventSwitch.
-		//
-		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-		// - rpc.HTTP
-		// - rpc.Local
-		RPCClient tmclient.Client
-
-		JSONRPCClient *ethclient.Client
-
-		tmNode *node.Node
-
-		// API exposes the app's REST and gRPC interfaces, allowing clients to
-		// read from state and broadcast txs. The API server connects to the
-		// underlying ABCI application.
-		api            *serverapi.Server
-		grpc           *grpc.Server
-		grpcWeb        *http.Server
-		secretMnemonic string
-		jsonrpc        *http.Server
-		jsonrpcDone    chan struct{}
-	}
-)
+	// API exposes the app's REST and gRPC interfaces, allowing clients to
+	// read from state and broadcast txs. The API server connects to the
+	// underlying ABCI application.
+	api            *serverapi.Server
+	grpc           *grpc.Server
+	grpcWeb        *http.Server
+	secretMnemonic string
+	jsonrpc        *http.Server
+	jsonrpcDone    chan struct{}
+}
 
 // NewAppConstructor returns a new simapp AppConstructor
 func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
