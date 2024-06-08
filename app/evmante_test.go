@@ -189,3 +189,6 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		})
 	}
 }
+
+// func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
+// }

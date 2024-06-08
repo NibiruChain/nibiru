@@ -66,7 +66,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
-		nibiruante.NewPostPriceFixedPriceDecorator(),
+		nibiruante.AnteDecoratorEnsureSinglePostPriceMessage{},
 		nibiruante.AnteDecoratorStakingCommission{},
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
 		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
