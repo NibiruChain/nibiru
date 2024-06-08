@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll } from "bun:test" // eslint-disable-line import/no-unresolved
-import { ethers } from "ethers"
+import { AddressLike, ethers } from "ethers"
 import { account, provider, deployContract } from "./setup"
 import { SendNibiCompiled } from "../types/ethers-contracts"
+import { TypedContractMethod } from "../types/ethers-contracts/common"
 
-const doContractSend = async (
-  sendMethod: string,
-  contract: SendNibiCompiled,
-) => {
+type SendMethod = TypedContractMethod<[_to: AddressLike], [void], "payable">
+
+const doContractSend = async (sendMethod: SendMethod) => {
   const recipientAddress = ethers.Wallet.createRandom().address
   const transferValue = 100n * 10n ** 6n // NIBI
 
@@ -14,10 +14,11 @@ const doContractSend = async (
   const recipientBalanceBefore = await provider.getBalance(recipientAddress) // NIBI
   expect(recipientBalanceBefore).toEqual(BigInt(0))
 
-  const tx = await contract[sendMethod](recipientAddress, {
+  const tx = await sendMethod(recipientAddress, {
     value: transferValue,
   })
-  await tx.wait()
+  const [blockConfirmations, timeout] = [1, 5_000]
+  await tx.wait(blockConfirmations, timeout)
 
   const ownerBalanceAfter = await provider.getBalance(account.address) // NIBI
   const recipientBalanceAfter = await provider.getBalance(recipientAddress) // NIBI
@@ -28,19 +29,26 @@ const doContractSend = async (
   expect(recipientBalanceAfter).toEqual(transferValue)
 }
 
-describe("Send NIBI from smart contract", () => {
+describe("Send NIBI from smart contract", async () => {
   let contract: SendNibiCompiled
-  beforeAll(async () => {
-    contract = (await deployContract(
-      "SendNibiCompiled.json",
-    )) as SendNibiCompiled
-  })
+  contract = (await deployContract("SendNibiCompiled.json")) as SendNibiCompiled
 
-  it.each([["sendViaTransfer"], ["sendViaSend"], ["sendViaCall"]])(
-    "send nibi via %p method",
-    async (sendMethod) => {
-      await doContractSend(sendMethod, contract)
-    },
-    20000,
-  )
+  expect(contract).toBeDefined()
+  const sendMethods: SendMethod[] = [
+    contract.sendViaTransfer,
+    contract.sendViaSend,
+    contract.sendViaCall,
+  ]
+  sendMethods.forEach((m) => expect(m).toBeFunction())
+  // Contract initialized properly.
+
+  const testCases = sendMethods.map((sendMethod) => ({
+    testName: sendMethod.name,
+    sendMethod,
+  }))
+  testCases.forEach(({ testName, sendMethod }) => {
+    it(`send nibi via ${testName} method`, async () => {
+      await doContractSend(sendMethod)
+    }, 20000)
+  })
 })
