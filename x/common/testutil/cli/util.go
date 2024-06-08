@@ -2,6 +2,10 @@ package cli
 
 import (
 	"context"
+
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+
 	"encoding/json"
 	"fmt"
 	"os"
@@ -155,9 +159,19 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 		}
 
 		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, cfg.ChainID, nil, appState, genTime); err != nil {
+		appGenesis = gentypes.NewAppGenesisWithVersion(cfg.ChainID, appState)
+		appGenesis.GenesisTime = genTime
+		appGenesis.Consensus.Validators = nil
+
+		if err := appGenesis.ValidateAndComplete(); err != nil {
 			return err
 		}
+
+		genDocBytes, err := cmtjson.MarshalIndent(appGenesis, "", "  ")
+		if err != nil {
+			return err
+		}
+		return cmtos.WriteFile(genFile, genDocBytes, 0644)
 	}
 
 	return nil
