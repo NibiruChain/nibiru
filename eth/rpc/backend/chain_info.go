@@ -42,12 +42,12 @@ func (b *Backend) ChainID() (*hexutil.Big, error) {
 
 // ChainConfig returns the latest ethereum chain configuration
 func (b *Backend) ChainConfig() *params.ChainConfig {
-	params, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
+	_, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {
 		return nil
 	}
 
-	return params.Params.ChainConfig.EthereumConfig(b.chainID)
+	return evm.EthereumConfig(b.chainID)
 }
 
 // BaseFee returns the base fee tracked by the Fee Market module.
