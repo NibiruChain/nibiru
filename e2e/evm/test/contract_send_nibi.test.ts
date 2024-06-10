@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeAll } from "bun:test" // eslint-disable-line import/no-unresolved
-import { AddressLike, ethers } from "ethers"
+import { describe, it, expect } from "bun:test" // eslint-disable-line import/no-unresolved
+import { ethers } from "ethers"
 import { account, provider, deployContract } from "./setup"
 import { SendNibiCompiled } from "../types/ethers-contracts"
-import { TypedContractMethod } from "../types/ethers-contracts/common"
 
-type SendMethod = TypedContractMethod<[_to: AddressLike], [void], "payable">
+type SendMethod = SendNibiCompiled["sendViaCall"]
 
 const doContractSend = async (sendMethod: SendMethod) => {
   const recipientAddress = ethers.Wallet.createRandom().address
