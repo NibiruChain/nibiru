@@ -3,17 +3,18 @@ package app_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestEthValidateBasicDecorator() {
@@ -115,6 +116,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err = txMsg.Sign(gethSigner, keyringSigner)
+				s.Require().NoError(err)
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
@@ -273,7 +275,10 @@ func buildTx(
 		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})
 		txBuilder.SetExtensionOptions(option)
 	}
-	txBuilder.SetMsgs(msg)
+	err := txBuilder.SetMsgs(msg)
+	if err != nil {
+		panic(err)
+	}
 	txBuilder.SetGasLimit(gasLimit)
 	txBuilder.SetFeeAmount(fees)
 
