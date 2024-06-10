@@ -31,7 +31,6 @@ ui-debug.log
 /public/
 .env
 firebase-debug.log
-**/bun.lockb
 out-*
 exit-status-*
 .DS_Store
