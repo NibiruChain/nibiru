@@ -11,11 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
-var (
-	_ sdk.AnteDecorator = (*AnteDecEthGasConsume)(nil)
-	_ sdk.AnteDecorator = (*AnteDecVerifyEthAcc)(nil)
-)
-
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.
 type AnteDecEthIncrementSenderSequence struct {
 	AppKeepers
@@ -31,11 +26,19 @@ func NewAnteDecEthIncrementSenderSequence(k AppKeepers) AnteDecEthIncrementSende
 // AnteHandle handles incrementing the sequence of the signer (i.e. sender). If the transaction is a
 // contract creation, the nonce will be incremented during the transaction execution and not within
 // this AnteHandler decorator.
-func (issd AnteDecEthIncrementSenderSequence) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errors.Wrapf(
+				errortypes.ErrUnknownRequest,
+				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+			)
 		}
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)

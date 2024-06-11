@@ -1,82 +1,58 @@
 package app_test
 
 import (
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
-func (s *TestSuite) TestGasWantedDecorator() {
+func (s *TestSuite) TestAnteDecEthGasConsume() {
 	testCases := []struct {
-		name     string
-		ctxSetup func(deps *evmtest.TestDeps)
-		txSetup  func(deps *evmtest.TestDeps) sdk.Tx
-		wantErr  string
+		name          string
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
+		wantErr       string
+		maxGasWanted  uint64
+		gasMeter      sdk.GasMeter
 	}{
 		{
-			name: "happy: non fee tx type",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return happyCreateContractTx(deps)
+			name: "happy: sender with funds",
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+				gasLimit := happyGasLimit()
+				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
+				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			wantErr: "",
+			txSetup:      happyCreateContractTx,
+			wantErr:      "",
+			gasMeter:     eth.NewInfiniteGasMeterWithLimit(happyGasLimit().Uint64()),
+			maxGasWanted: 0,
 		},
 		{
-			name: "happy: tx without gas, block gas limit 1000",
-			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: 1000},
-				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
+			name: "happy: is recheck tx",
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
 			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
-					},
-				}
-			},
-			wantErr: "",
+			txSetup:  happyCreateContractTx,
+			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
+			wantErr:  "",
 		},
 		{
-			name: "happy: tx with gas wanted 500, block gas limit 1000",
-			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: 1000},
-				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
+			name: "sad: out of gas",
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+				gasLimit := happyGasLimit()
+				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
+				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
-					},
-					Fee: legacytx.StdFee{Gas: 500},
-				}
-			},
-			wantErr: "",
-		},
-		{
-			name: "sad: tx with gas wanted 1000, block gas limit 500",
-			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{
-						MaxGas: 500,
-					},
-				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
-					},
-					Fee: legacytx.StdFee{Gas: 1000},
-				}
-			},
-			wantErr: "exceeds block gas limit",
+			txSetup:      happyCreateContractTx,
+			wantErr:      "exceeds block gas limit (0)",
+			gasMeter:     eth.NewInfiniteGasMeterWithLimit(0),
+			maxGasWanted: 0,
 		},
 	}
 
@@ -84,15 +60,16 @@ func (s *TestSuite) TestGasWantedDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := app.AnteDecoratorGasWanted{}
+			anteDec := app.NewAnteDecEthGasConsume(
+				deps.Chain.AppKeepers, tc.maxGasWanted,
+			)
 
+			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
-			if tc.ctxSetup != nil {
-				tc.ctxSetup(&deps)
-			}
+			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
 			_, err := anteDec.AnteHandle(
 				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)

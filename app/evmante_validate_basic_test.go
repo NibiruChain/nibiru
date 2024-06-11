@@ -269,7 +269,7 @@ func buildTx(
 	msg sdk.Msg,
 	gasLimit uint64,
 	fees sdk.Coins,
-) sdk.Tx {
+) sdk.FeeTx {
 	txBuilder, _ := deps.EncCfg.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 	if ethExtentions {
 		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})

@@ -40,9 +40,11 @@ func (ctd CanTransferDecorator) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errors.Wrapf(
+				errortypes.ErrUnknownRequest,
+				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+			)
 		}
-
 		baseFee := ctd.EvmKeeper.GetBaseFee(ctx)
 
 		coreMsg, err := msgEthTx.AsMessage(signer, baseFee)
@@ -75,12 +77,17 @@ func (ctd CanTransferDecorator) AnteHandle(
 			BaseFee:     baseFee,
 		}
 
-		stateDB := statedb.New(ctx, &ctd.EvmKeeper, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())))
-		evm := ctd.EvmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
+		stateDB := statedb.New(
+			ctx,
+			&ctd.EvmKeeper,
+			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
+		)
+		evmInstance := ctd.EvmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
-		if coreMsg.Value().Sign() > 0 && !evm.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
+		if coreMsg.Value().Sign() > 0 &&
+			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFunds,
 				"failed to transfer %s from address %s using the EVM block context transfer function",

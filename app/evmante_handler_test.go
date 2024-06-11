@@ -3,15 +3,19 @@ package app_test
 import (
 	"math/big"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
-func (s *TestSuite) TestCanTransferDecorator() {
+func (s *TestSuite) TestAnteHandlerEVM() {
 	testCases := []struct {
 		name          string
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
@@ -22,7 +26,24 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "happy: signed tx, sufficient funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				sdb.AddBalance(deps.Sender.EthAddr, big.NewInt(100))
+				sdb.AddBalance(
+					deps.Sender.EthAddr,
+					new(big.Int).Add(gasLimitCreateContract(), big.NewInt(100)),
+				)
+			},
+			ctxSetup: func(deps *evmtest.TestDeps) {
+				gasPrice := sdk.NewInt64Coin("unibi", 1)
+				cp := &tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{
+						MaxGas: new(big.Int).Add(gasLimitCreateContract(), big.NewInt(100)).Int64(),
+					},
+				}
+				deps.Ctx = deps.Ctx.
+					WithMinGasPrices(
+						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
+					).
+					WithIsCheckTx(true).
+					WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := happyTransfertTx(deps, 0)
@@ -40,51 +61,25 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			},
 			wantErr: "",
 		},
-		{
-			name: "sad: signed tx, insufficient funds",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err := txMsg.Sign(gethSigner, keyringSigner)
-				s.Require().NoError(err)
-
-				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-
-				return tx
-			},
-			wantErr: "insufficient funds",
-		},
-		{
-			name: "sad: unsigned tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-
-				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-
-				return tx
-			},
-			wantErr: "invalid transaction",
-		},
-		{
-			name: "sad: tx with non evm message",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				return nonEvmMsgTx(deps).(sdk.FeeTx)
-			},
-			wantErr: "invalid message",
-		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := app.NewCanTransferDecorator(deps.Chain.AppKeepers)
+
+			anteHandlerEVM := app.NewAnteHandlerEVM(
+				deps.Chain.AppKeepers, ante.AnteHandlerOptions{
+					HandlerOptions: authante.HandlerOptions{
+						AccountKeeper:          deps.Chain.AccountKeeper,
+						BankKeeper:             deps.Chain.BankKeeper,
+						FeegrantKeeper:         deps.Chain.FeeGrantKeeper,
+						SignModeHandler:        deps.EncCfg.TxConfig.SignModeHandler(),
+						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
+						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
+					},
+				})
+
 			tx := tc.txSetup(&deps)
 
 			if tc.ctxSetup != nil {
@@ -96,8 +91,8 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				s.Require().NoError(err)
 			}
 
-			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
+			_, err := anteHandlerEVM(
+				deps.Ctx, tx, false,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestNewDynamicFeeChecker() {
+func (s *TestSuite) TestDynamicFeeChecker() {
 	testCases := []struct {
 		name         string
 		txSetup      func(deps *evmtest.TestDeps) sdk.FeeTx

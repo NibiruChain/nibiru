@@ -4,11 +4,11 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
@@ -120,72 +120,28 @@ func happyCreateContractTx(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
 	return tx
 }
 
-func (s *TestSuite) TestAnteDecEthGasConsume() {
-	testCases := []struct {
-		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
-		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
-		wantErr       string
-		maxGasWanted  uint64
-		gasMeter      sdk.GasMeter
-	}{
-		{
-			name: "happy: sender with funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				gasLimit := happyGasLimit()
-				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
-			},
-			txSetup:      happyCreateContractTx,
-			wantErr:      "",
-			gasMeter:     eth.NewInfiniteGasMeterWithLimit(happyGasLimit().Uint64()),
-			maxGasWanted: 0,
-		},
-		{
-			name: "happy: is recheck tx",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
-			},
-			txSetup:  happyCreateContractTx,
-			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
-			wantErr:  "",
-		},
-		{
-			name: "sad: out of gas",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				gasLimit := happyGasLimit()
-				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
-			},
-			txSetup:      happyCreateContractTx,
-			wantErr:      "exceeds block gas limit (0)",
-			gasMeter:     eth.NewInfiniteGasMeterWithLimit(0),
-			maxGasWanted: 0,
-		},
+func happyTransfertTx(deps *evmtest.TestDeps, nonce uint64) *evm.MsgEthereumTx {
+	to := evmtest.NewEthAccInfo().EthAddr
+	ethContractCreationTxParams := &evm.EvmTxArgs{
+		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
+		Nonce:    nonce,
+		Amount:   big.NewInt(10),
+		GasLimit: gasLimitCreateContract().Uint64(),
+		GasPrice: big.NewInt(1),
+		To:       &to,
 	}
+	tx := evm.NewTx(ethContractCreationTxParams)
+	tx.From = deps.Sender.EthAddr.Hex()
+	return tx
+}
 
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
-			stateDB := deps.StateDB()
-			anteDec := app.NewAnteDecEthGasConsume(
-				deps.Chain.AppKeepers, tc.maxGasWanted,
-			)
-
-			tc.beforeTxSetup(&deps, stateDB)
-			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
-
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
-			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
-			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
-			)
-			if tc.wantErr != "" {
-				s.Require().ErrorContains(err, tc.wantErr)
-				return
-			}
-			s.Require().NoError(err)
-		})
+func nonEvmMsgTx(deps *evmtest.TestDeps) sdk.Tx {
+	gasLimit := uint64(10)
+	fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
+	msg := &banktypes.MsgSend{
+		FromAddress: deps.Sender.NibiruAddr.String(),
+		ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 	}
+	return buildTx(deps, true, msg, gasLimit, fees)
 }

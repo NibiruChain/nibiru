@@ -15,11 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
 )
 
-var (
-	_ sdk.AnteDecorator = (*AnteDecEthGasConsume)(nil)
-	_ sdk.AnteDecorator = (*AnteDecVerifyEthAcc)(nil)
-)
-
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
