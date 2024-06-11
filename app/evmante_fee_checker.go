@@ -26,7 +26,9 @@ import (
 // - Tx priority is set to `effectiveGasPrice / DefaultPriorityReduction`.
 func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 	return func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error) {
-		// TODO: in the e2e test, if the fee in the genesis transaction meet the baseFee and minGasPrice in the feemarket, we can remove this code
+		// TODO: in the e2e test,
+		// if the fee in the genesis transaction meet the baseFee and minGasPrice in the feemarket,
+		// we can remove this code
 		if ctx.BlockHeight() == 0 {
 			// genesis transactions: fallback to min-gas-price logic
 			return checkTxFeeWithValidatorMinGasPrices(ctx, feeTx)
@@ -51,7 +53,10 @@ func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 
 		// priority fee cannot be negative
 		if maxPriorityPrice.IsNegative() {
-			return nil, 0, errors.Wrapf(errortypes.ErrInsufficientFee, "max priority price cannot be negative")
+			return nil, 0, errors.Wrapf(
+				errortypes.ErrInsufficientFee,
+				"max priority price cannot be negative",
+			)
 		}
 
 		gas := feeTx.GetGas()
@@ -62,11 +67,21 @@ func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 		baseFeeInt := sdkmath.NewIntFromBigInt(baseFee)
 
 		if feeCap.LT(baseFeeInt) {
-			return nil, 0, errors.Wrapf(errortypes.ErrInsufficientFee, "gas prices too low, got: %s%s required: %s%s. Please retry using a higher gas price or a higher fee", feeCap, denom, baseFeeInt, denom)
+			return nil, 0, errors.Wrapf(
+				errortypes.ErrInsufficientFee,
+				"gas prices too low, got: %s%s required: %s%s. "+
+					"Please retry using a higher gas price or a higher fee",
+				feeCap,
+				denom,
+				baseFeeInt,
+				denom,
+			)
 		}
 
 		// calculate the effective gas price using the EIP-1559 logic.
-		effectivePrice := sdkmath.NewIntFromBigInt(evm.EffectiveGasPrice(baseFeeInt.BigInt(), feeCap.BigInt(), maxPriorityPrice.BigInt()))
+		effectivePrice := sdkmath.NewIntFromBigInt(
+			evm.EffectiveGasPrice(baseFeeInt.BigInt(), feeCap.BigInt(), maxPriorityPrice.BigInt()),
+		)
 
 		// NOTE: create a new coins slice without having to validate the denom
 		effectiveFee := sdk.Coins{
@@ -109,7 +124,10 @@ func checkTxFeeWithValidatorMinGasPrices(ctx sdk.Context, tx sdk.FeeTx) (sdk.Coi
 		}
 
 		if !feeCoins.IsAnyGTE(requiredFees) {
-			return nil, 0, errors.Wrapf(errortypes.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeCoins, requiredFees)
+			return nil, 0, errors.Wrapf(
+				errortypes.ErrInsufficientFee,
+				"insufficient fees; got: %s required: %s", feeCoins, requiredFees,
+			)
 		}
 	}
 

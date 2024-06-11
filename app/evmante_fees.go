@@ -85,7 +85,9 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 		if fee.LT(requiredFee) {
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFee,
-				"provided fee < minimum global fee (%s < %s). Please increase the priority tip (for EIP-1559 txs) or the gas prices (for access list or legacy txs)", //nolint:lll
+				"provided fee < minimum global fee (%s < %s). "+
+					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
+					"(for access list or legacy txs)",
 				fee.TruncateInt().String(), requiredFee.TruncateInt().String(),
 			)
 		}
