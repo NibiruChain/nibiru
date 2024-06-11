@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1912](https://github.com/NibiruChain/nibiru/pull/1912) - test(evm): unit tests for evm_ante
 - [#1914](https://github.com/NibiruChain/nibiru/pull/1914) - refactor(evm): Remove dead code and document non-EVM ante handler- [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
 - [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
+- [#1922](https://github.com/NibiruChain/nibiru/pull/1922) - feat(evm): tracer option is read from the config.
 
 #### Dapp modules: perp, spot, oracle, etc
 

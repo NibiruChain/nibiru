@@ -393,7 +393,6 @@ func (app *NibiruApp) InitKeepers(
 		),
 	)
 
-	evmTracer := "json"
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec,
 		keys[evm.StoreKey],
@@ -402,7 +401,7 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-		evmTracer,
+		cast.ToString(appOpts.Get("evm.tracer")),
 	)
 
 	// ---------------------------------- IBC keepers
