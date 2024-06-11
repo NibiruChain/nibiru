@@ -3,7 +3,7 @@ name: Linter
 # Run on every main merge and on PRs.
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "v0.50.6b"]
     paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
   pull_request:
     paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]

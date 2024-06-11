@@ -5,6 +5,7 @@ on:
     branches:
       # every push to default branch
       - main
+      - v0.50.6b
   schedule:
     # once per day
     - cron: "0 0 * * *"
