@@ -20,7 +20,8 @@ test-coverage-integration:
 	go test ./... \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
-		-race
+		-race \
+		-v
 
 # Require Python3
 .PHONY: test-create-test-cases
