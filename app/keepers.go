@@ -12,6 +12,8 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
+	appserver "github.com/NibiruChain/nibiru/app/server"
+
 	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -393,7 +395,6 @@ func (app *NibiruApp) InitKeepers(
 		),
 	)
 
-	evmTracer := "json"
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec,
 		keys[evm.StoreKey],
@@ -402,7 +403,7 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-		evmTracer,
+		cast.ToString(appOpts.Get(appserver.EVMTracer)),
 	)
 
 	// ---------------------------------- IBC keepers
