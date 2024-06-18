@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/eth"
 	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -53,7 +53,7 @@ func AnteHandlerExtendedTx(
 	ctx sdk.Context,
 ) (anteHandler sdk.AnteHandler) {
 	switch typeUrl {
-	case evm.TYPE_URL_ETHEREUM_TX:
+	case evmtypes.TYPE_URL_ETHEREUM_TX:
 		anteHandler = NewAnteHandlerEVM(keepers, opts)
 	case eth.TYPE_URL_DYNAMIC_FEE_TX:
 		anteHandler = NewAnteHandlerNonEVM(keepers, opts)

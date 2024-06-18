@@ -4,8 +4,8 @@ package evmtest_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (s *SuiteEVMTest) TestCreateContractTxMsg() {
@@ -36,7 +36,7 @@ func (s *SuiteEVMTest) TestCreateContractGethCoreMsg() {
 	}
 
 	// chain config
-	cfg := evm.EthereumConfig(args.EthChainIDInt)
+	cfg := types.EthereumConfig(args.EthChainIDInt)
 
 	// block height
 	blockHeight := big.NewInt(deps.Ctx.BlockHeight())

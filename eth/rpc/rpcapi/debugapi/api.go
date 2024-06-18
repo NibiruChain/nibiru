@@ -15,7 +15,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 
 	stderrors "github.com/pkg/errors"
 

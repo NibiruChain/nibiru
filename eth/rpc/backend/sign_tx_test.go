@@ -16,8 +16,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
 	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (s *BackendSuite) TestSendTransaction() {

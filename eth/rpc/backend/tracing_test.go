@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/eth/indexer"
 	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (s *BackendSuite) TestTraceTransaction() {

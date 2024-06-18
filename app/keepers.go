@@ -113,9 +113,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
 	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
+	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 	"github.com/NibiruChain/nibiru/x/genmsg"
 	"github.com/NibiruChain/nibiru/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
@@ -230,10 +230,9 @@ func initStoreKeys() (
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
-
-		evm.StoreKey,
+		evmtypes.StoreKey,
 	)
-	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
+	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
@@ -395,13 +394,13 @@ func (app *NibiruApp) InitKeepers(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec,
-		keys[evm.StoreKey],
-		tkeys[evm.TransientKey],
+		keys[evmtypes.StoreKey],
+		tkeys[evmtypes.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-		cast.ToString(appOpts.Get("evm.tracer")),
+		cast.ToString(appOpts.Get("types.tracer")),
 	)
 
 	// ---------------------------------- IBC keepers
@@ -726,7 +725,7 @@ func orderedModuleNames() []string {
 		icatypes.ModuleName,
 
 		// --------------------------------------------------------------------
-		evm.ModuleName,
+		evmtypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// CosmWasm
@@ -857,7 +856,7 @@ func ModuleAccPerms() map[string][]string {
 		ibcfeetypes.ModuleName:         {},
 		icatypes.ModuleName:            {},
 
-		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		evmtypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
 		common.TreasuryPoolModuleAccount: {},

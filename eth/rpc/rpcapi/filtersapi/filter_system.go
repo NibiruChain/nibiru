@@ -24,7 +24,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/eth/rpc/pubsub"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 var (

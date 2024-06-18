@@ -18,7 +18,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // Ethereum API: Allows connection to a full node of the Nibiru blockchain

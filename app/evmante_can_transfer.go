@@ -5,12 +5,10 @@ import (
 	"math/big"
 
 	"cosmossdk.io/errors"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
@@ -34,15 +32,15 @@ func (ctd CanTransferDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	params := ctd.EvmKeeper.GetParams(ctx)
-	ethCfg := evm.EthereumConfig(ctd.EvmKeeper.EthChainID(ctx))
+	ethCfg := types.EthereumConfig(ctd.EvmKeeper.EthChainID(ctx))
 	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()))
 
 	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownRequest,
-				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+				"invalid message type %T, expected %T", msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 		baseFee := ctd.EvmKeeper.GetBaseFee(ctx)
@@ -57,7 +55,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 
 		if baseFee == nil {
 			return ctx, errors.Wrap(
-				evm.ErrInvalidBaseFee,
+				types.ErrInvalidBaseFee,
 				"base fee is supported but evm block context value is nil",
 			)
 		}
@@ -82,7 +80,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			&ctd.EvmKeeper,
 			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
 		)
-		evmInstance := ctd.EvmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
+		evmInstance := ctd.EvmKeeper.NewEVM(ctx, coreMsg, cfg, types.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter

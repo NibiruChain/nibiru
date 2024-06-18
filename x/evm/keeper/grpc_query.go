@@ -9,18 +9,10 @@ import (
 	"math/big"
 	"time"
 
-	grpccodes "google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
-
 	sdkmath "cosmossdk.io/math"
-
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
@@ -29,14 +21,18 @@ import (
 	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 	gethparams "github.com/ethereum/go-ethereum/params"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // Compile-time interface assertion
-var _ evm.QueryServer = Keeper{}
+var _ types.QueryServer = Keeper{}
 
-// EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
+// EthAccount: Implements the gRPC query for "/eth.types.v1.Query/EthAccount".
 // EthAccount retrieves the account details for a given Ethereum hex address.
 //
 // Parameters:
@@ -47,8 +43,8 @@ var _ evm.QueryServer = Keeper{}
 //   - A pointer to the QueryEthAccountResponse object containing the account details.
 //   - An error if the account retrieval process encounters any issues.
 func (k Keeper) EthAccount(
-	goCtx context.Context, req *evm.QueryEthAccountRequest,
-) (*evm.QueryEthAccountResponse, error) {
+	goCtx context.Context, req *types.QueryEthAccountRequest,
+) (*types.QueryEthAccountResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -57,14 +53,14 @@ func (k Keeper) EthAccount(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	acct := k.GetAccountOrEmpty(ctx, addr)
 
-	return &evm.QueryEthAccountResponse{
+	return &types.QueryEthAccountResponse{
 		Balance:  acct.Balance.String(),
 		CodeHash: gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:    acct.Nonce,
 	}, nil
 }
 
-// NibiruAccount: Implements the gRPC query for "/eth.evm.v1.Query/NibiruAccount".
+// NibiruAccount: Implements the gRPC query for "/eth.types.v1.Query/NibiruAccount".
 // NibiruAccount retrieves the Cosmos account details for a given Ethereum address.
 //
 // Parameters:
@@ -75,8 +71,8 @@ func (k Keeper) EthAccount(
 //   - A pointer to the QueryNibiruAccountResponse object containing the Cosmos account details.
 //   - An error if the account retrieval process encounters any issues.
 func (k Keeper) NibiruAccount(
-	goCtx context.Context, req *evm.QueryNibiruAccountRequest,
-) (resp *evm.QueryNibiruAccountResponse, err error) {
+	goCtx context.Context, req *types.QueryNibiruAccountRequest,
+) (resp *types.QueryNibiruAccountResponse, err error) {
 	if err := req.Validate(); err != nil {
 		return resp, err
 	}
@@ -86,7 +82,7 @@ func (k Keeper) NibiruAccount(
 	nibiruAddr := sdk.AccAddress(ethAddr.Bytes())
 
 	accountOrNil := k.accountKeeper.GetAccount(ctx, nibiruAddr)
-	resp = &evm.QueryNibiruAccountResponse{
+	resp = &types.QueryNibiruAccountResponse{
 		Address: nibiruAddr.String(),
 	}
 
@@ -99,7 +95,7 @@ func (k Keeper) NibiruAccount(
 }
 
 // ValidatorAccount: Implements the gRPC query for
-// "/eth.evm.v1.Query/ValidatorAccount". ValidatorAccount retrieves the account
+// "/eth.types.v1.Query/ValidatorAccount". ValidatorAccount retrieves the account
 // details for a given validator consensus address.
 //
 // Parameters:
@@ -110,8 +106,8 @@ func (k Keeper) NibiruAccount(
 //   - Response containing the account details.
 //   - An error if the account retrieval process encounters any issues.
 func (k Keeper) ValidatorAccount(
-	goCtx context.Context, req *evm.QueryValidatorAccountRequest,
-) (*evm.QueryValidatorAccountResponse, error) {
+	goCtx context.Context, req *types.QueryValidatorAccountRequest,
+) (*types.QueryValidatorAccountResponse, error) {
 	consAddr, err := req.Validate()
 	if err != nil {
 		return nil, err
@@ -125,7 +121,7 @@ func (k Keeper) ValidatorAccount(
 	}
 
 	nibiruAddr := sdk.AccAddress(validator.GetOperator())
-	res := evm.QueryValidatorAccountResponse{
+	res := types.QueryValidatorAccountResponse{
 		AccountAddress: nibiruAddr.String(),
 	}
 
@@ -138,7 +134,7 @@ func (k Keeper) ValidatorAccount(
 	return &res, nil
 }
 
-// Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
+// Balance: Implements the gRPC query for "/eth.types.v1.Query/Balance".
 // Balance retrieves the balance of an Ethereum address in "Ether", which
 // actually refers to NIBI tokens on Nibiru EVM.
 //
@@ -149,29 +145,29 @@ func (k Keeper) ValidatorAccount(
 // Returns:
 //   - A pointer to the QueryBalanceResponse object containing the balance.
 //   - An error if the balance retrieval process encounters any issues.
-func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
+func (k Keeper) Balance(goCtx context.Context, req *types.QueryBalanceRequest) (*types.QueryBalanceResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
-	return &evm.QueryBalanceResponse{
+	return &types.QueryBalanceResponse{
 		Balance: balanceInt.String(),
 	}, nil
 }
 
 // BaseFee implements the Query/BaseFee gRPC method
 func (k Keeper) BaseFee(
-	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
-) (*evm.QueryBaseFeeResponse, error) {
+	goCtx context.Context, _ *types.QueryBaseFeeRequest,
+) (*types.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx))
-	return &evm.QueryBaseFeeResponse{
+	return &types.QueryBaseFeeResponse{
 		BaseFee: &baseFee,
 	}, nil
 }
 
-// Storage: Implements the gRPC query for "/eth.evm.v1.Query/Storage".
+// Storage: Implements the gRPC query for "/eth.types.v1.Query/Storage".
 // Storage retrieves the storage value for a given Ethereum address and key.
 //
 // Parameters:
@@ -182,8 +178,8 @@ func (k Keeper) BaseFee(
 //   - A pointer to the QueryStorageResponse object containing the storage value.
 //   - An error if the storage retrieval process encounters any issues.
 func (k Keeper) Storage(
-	goCtx context.Context, req *evm.QueryStorageRequest,
-) (*evm.QueryStorageResponse, error) {
+	goCtx context.Context, req *types.QueryStorageRequest,
+) (*types.QueryStorageResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -195,12 +191,12 @@ func (k Keeper) Storage(
 	state := k.GetState(ctx, address, key)
 	stateHex := state.Hex()
 
-	return &evm.QueryStorageResponse{
+	return &types.QueryStorageResponse{
 		Value: stateHex,
 	}, nil
 }
 
-// Code: Implements the gRPC query for "/eth.evm.v1.Query/Code".
+// Code: Implements the gRPC query for "/eth.types.v1.Query/Code".
 // Code retrieves the smart contract bytecode associated with a given Ethereum
 // address.
 //
@@ -212,8 +208,8 @@ func (k Keeper) Storage(
 //   - Response containing the smart contract bytecode.
 //   - An error if the code retrieval process encounters any issues.
 func (k Keeper) Code(
-	goCtx context.Context, req *evm.QueryCodeRequest,
-) (*evm.QueryCodeResponse, error) {
+	goCtx context.Context, req *types.QueryCodeRequest,
+) (*types.QueryCodeResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -228,12 +224,12 @@ func (k Keeper) Code(
 		code = k.GetCode(ctx, gethcommon.BytesToHash(acct.CodeHash))
 	}
 
-	return &evm.QueryCodeResponse{
+	return &types.QueryCodeResponse{
 		Code: code,
 	}, nil
 }
 
-// Params: Implements the gRPC query for "/eth.evm.v1.Query/Params".
+// Params: Implements the gRPC query for "/eth.types.v1.Query/Params".
 // Params retrieves the EVM module parameters.
 //
 // Parameters:
@@ -244,16 +240,16 @@ func (k Keeper) Code(
 //   - A pointer to the QueryParamsResponse object containing the EVM module parameters.
 //   - An error if the parameter retrieval process encounters any issues.
 func (k Keeper) Params(
-	goCtx context.Context, _ *evm.QueryParamsRequest,
-) (*evm.QueryParamsResponse, error) {
+	goCtx context.Context, _ *types.QueryParamsRequest,
+) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	params := k.GetParams(ctx)
-	return &evm.QueryParamsResponse{
+	return &types.QueryParamsResponse{
 		Params: params,
 	}, nil
 }
 
-// EthCall: Implements the gRPC query for "/eth.evm.v1.Query/EthCall".
+// EthCall: Implements the gRPC query for "/eth.types.v1.Query/EthCall".
 // EthCall performs a smart contract call using the eth_call JSON-RPC method.
 //
 // An "eth_call" is a method from the Ethereum JSON-RPC specification that allows
@@ -270,15 +266,15 @@ func (k Keeper) Params(
 //   - A pointer to the MsgEthereumTxResponse object containing the result of the eth_call.
 //   - An error if the eth_call process encounters any issues.
 func (k Keeper) EthCall(
-	goCtx context.Context, req *evm.EthCallRequest,
-) (*evm.MsgEthereumTxResponse, error) {
+	goCtx context.Context, req *types.EthCallRequest,
+) (*types.MsgEthereumTxResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var args evm.JsonTxArgs
+	var args types.JsonTxArgs
 	err := json.Unmarshal(req.Args, &args)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
@@ -309,12 +305,12 @@ func (k Keeper) EthCall(
 	return res, nil
 }
 
-// EstimateGas: Implements the gRPC query for "/eth.evm.v1.Query/EstimateGas".
+// EstimateGas: Implements the gRPC query for "/eth.types.v1.Query/EstimateGas".
 // EstimateGas implements eth_estimateGas rpc api.
 func (k Keeper) EstimateGas(
-	goCtx context.Context, req *evm.EthCallRequest,
-) (*evm.EstimateGasResponse, error) {
-	return k.EstimateGasForEvmCallType(goCtx, req, evm.CallTypeRPC)
+	goCtx context.Context, req *types.EthCallRequest,
+) (*types.EstimateGasResponse, error) {
+	return k.EstimateGasForEvmCallType(goCtx, req, types.CallTypeRPC)
 }
 
 // EstimateGasForEvmCallType estimates the gas cost of a transaction. This can be
@@ -332,8 +328,8 @@ func (k Keeper) EstimateGas(
 //   - A response containing the estimated gas cost.
 //   - An error if the gas estimation process encounters any issues.
 func (k Keeper) EstimateGasForEvmCallType(
-	goCtx context.Context, req *evm.EthCallRequest, fromType evm.CallType,
-) (*evm.EstimateGasResponse, error) {
+	goCtx context.Context, req *types.EthCallRequest, fromType types.CallType,
+) (*types.EstimateGasResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -345,7 +341,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "gas cap cannot be lower than %d", gethparams.TxGas)
 	}
 
-	var args evm.JsonTxArgs
+	var args types.JsonTxArgs
 	err := json.Unmarshal(req.Args, &args)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
@@ -398,7 +394,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	// NOTE: the errors from the executable below should be consistent with
 	// go-ethereum, so we don't wrap them with the gRPC status code Create a
 	// helper to check if a gas allowance results in an executable transaction.
-	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
+	executable := func(gas uint64) (vmError bool, rsp *types.MsgEthereumTxResponse, err error) {
 		// update the message with the new gas value
 		msg = gethcore.NewMessage(
 			msg.From(),
@@ -415,7 +411,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		)
 
 		tmpCtx := ctx
-		if fromType == evm.CallTypeRPC {
+		if fromType == types.CallTypeRPC {
 			tmpCtx, _ = ctx.CacheContext()
 
 			acct := k.GetAccount(tmpCtx, msg.From())
@@ -450,7 +446,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	}
 
 	// Execute the binary search and hone in on an executable gas limit
-	hi, err = evm.BinSearch(lo, hi, executable)
+	hi, err = types.BinSearch(lo, hi, executable)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +461,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		if failed {
 			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
 				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, evm.NewExecErrorWithReason(result.Ret)
+					return nil, types.NewExecErrorWithReason(result.Ret)
 				}
 				return nil, errors.New(result.VmError)
 			}
@@ -473,15 +469,15 @@ func (k Keeper) EstimateGasForEvmCallType(
 			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
 		}
 	}
-	return &evm.EstimateGasResponse{Gas: hi}, nil
+	return &types.EstimateGasResponse{Gas: hi}, nil
 }
 
 // TraceTx configures a new tracer according to the provided configuration, and
 // executes the given message in the provided environment. The return value will
 // be tracer dependent.
 func (k Keeper) TraceTx(
-	goCtx context.Context, req *evm.QueryTraceTxRequest,
-) (*evm.QueryTraceTxResponse, error) {
+	goCtx context.Context, req *types.QueryTraceTxRequest,
+) (*types.QueryTraceTxResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -535,7 +531,7 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		rsp, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
+		rsp, err := k.ApplyEvmMsg(ctx, msg, types.NewNoOpTracer(), true, cfg, txConfig)
 		if err != nil {
 			continue
 		}
@@ -565,7 +561,7 @@ func (k Keeper) TraceTx(
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	return &evm.QueryTraceTxResponse{
+	return &types.QueryTraceTxResponse{
 		Data: resultData,
 	}, nil
 }
@@ -574,14 +570,14 @@ func (k Keeper) TraceTx(
 // See "geth/eth/tracers/api.go".
 const DefaultGethTraceTimeout = 5 * time.Second
 
-// TraceBlock: Implements the gRPC query for "/eth.evm.v1.Query/TraceBlock".
+// TraceBlock: Implements the gRPC query for "/eth.types.v1.Query/TraceBlock".
 // Configures a Nibiru EVM tracer that is used to "trace" and analyze
 // the execution of transactions within a given block. Block information is read
 // from the context (goCtx). [TraceBlock] is responsible iterates over each Eth
 // transacion message and calls [TraceEthTxMsg] on it.
 func (k Keeper) TraceBlock(
-	goCtx context.Context, req *evm.QueryTraceBlockRequest,
-) (*evm.QueryTraceBlockResponse, error) {
+	goCtx context.Context, req *types.QueryTraceBlockRequest,
+) (*types.QueryTraceBlockResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -618,12 +614,12 @@ func (k Keeper) TraceBlock(
 
 	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 	txsLength := len(req.Txs)
-	results := make([]*evm.TxTraceResult, 0, txsLength)
+	results := make([]*types.TxTraceResult, 0, txsLength)
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
 	for i, tx := range req.Txs {
-		result := evm.TxTraceResult{}
+		result := types.TxTraceResult{}
 		ethTx := tx.AsTransaction()
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
@@ -642,7 +638,7 @@ func (k Keeper) TraceBlock(
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	return &evm.QueryTraceBlockResponse{
+	return &types.QueryTraceBlockResponse{
 		Data: resultData,
 	}, nil
 }
@@ -655,7 +651,7 @@ func (k *Keeper) TraceEthTxMsg(
 	txConfig statedb.TxConfig,
 	signer gethcore.Signer,
 	tx *gethcore.Transaction,
-	traceConfig *evm.TraceConfig,
+	traceConfig *types.TraceConfig,
 	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
 ) (*interface{}, uint, error) {
@@ -672,7 +668,7 @@ func (k *Keeper) TraceEthTxMsg(
 	}
 
 	if traceConfig == nil {
-		traceConfig = &evm.TraceConfig{}
+		traceConfig = &types.TraceConfig{}
 	}
 
 	logConfig := logger.Config{

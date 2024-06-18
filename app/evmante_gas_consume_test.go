@@ -7,16 +7,16 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (s *TestSuite) TestAnteDecEthGasConsume() {
 	testCases := []struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
-		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
+		txSetup       func(deps *evmtest.TestDeps) *types.MsgEthereumTx
 		wantErr       string
 		maxGasWanted  uint64
 		gasMeter      sdk.GasMeter

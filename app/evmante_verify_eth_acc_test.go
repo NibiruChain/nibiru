@@ -3,16 +3,13 @@ package app_test
 import (
 	"math/big"
 
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	gethparams "github.com/ethereum/go-ethereum/params"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
 var NextNoOpAnteHandler sdk.AnteHandler = func(
@@ -25,7 +22,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 	testCases := []struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
-		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
+		txSetup       func(deps *evmtest.TestDeps) *types.MsgEthereumTx
 		wantErr       string
 	}{
 		{
@@ -54,15 +51,15 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		{
 			name:          "sad: invalid tx",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
-			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
-				return new(evm.MsgEthereumTx)
+			txSetup: func(deps *evmtest.TestDeps) *types.MsgEthereumTx {
+				return new(types.MsgEthereumTx)
 			},
 			wantErr: "failed to unpack tx data",
 		},
 		{
 			name:          "sad: empty from addr",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
-			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
+			txSetup: func(deps *evmtest.TestDeps) *types.MsgEthereumTx {
 				tx := happyCreateContractTx(deps)
 				tx.From = ""
 				return tx
@@ -107,22 +104,22 @@ func gasLimitCreateContract() *big.Int {
 	)
 }
 
-func happyCreateContractTx(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
-	ethContractCreationTxParams := &evm.EvmTxArgs{
+func happyCreateContractTx(deps *evmtest.TestDeps) *types.MsgEthereumTx {
+	ethContractCreationTxParams := &types.EvmTxArgs{
 		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    1,
 		Amount:   big.NewInt(10),
 		GasLimit: gasLimitCreateContract().Uint64(),
 		GasPrice: big.NewInt(1),
 	}
-	tx := evm.NewTx(ethContractCreationTxParams)
+	tx := types.NewTx(ethContractCreationTxParams)
 	tx.From = deps.Sender.EthAddr.Hex()
 	return tx
 }
 
-func happyTransfertTx(deps *evmtest.TestDeps, nonce uint64) *evm.MsgEthereumTx {
+func happyTransfertTx(deps *evmtest.TestDeps, nonce uint64) *types.MsgEthereumTx {
 	to := evmtest.NewEthAccInfo().EthAddr
-	ethContractCreationTxParams := &evm.EvmTxArgs{
+	ethContractCreationTxParams := &types.EvmTxArgs{
 		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    nonce,
 		Amount:   big.NewInt(10),
@@ -130,7 +127,7 @@ func happyTransfertTx(deps *evmtest.TestDeps, nonce uint64) *evm.MsgEthereumTx {
 		GasPrice: big.NewInt(1),
 		To:       &to,
 	}
-	tx := evm.NewTx(ethContractCreationTxParams)
+	tx := types.NewTx(ethContractCreationTxParams)
 	tx.From = deps.Sender.EthAddr.Hex()
 	return tx
 }

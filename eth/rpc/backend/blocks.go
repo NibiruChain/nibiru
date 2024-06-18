@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // BlockNumber returns the current block number in abci app state. Because abci

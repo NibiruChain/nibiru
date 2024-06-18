@@ -5,7 +5,7 @@ package eth.evm.v1;
 import "eth/evm/v1/evm.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/x/evm/types";
 
 // GenesisState defines the evm module's genesis state.
 message GenesisState {

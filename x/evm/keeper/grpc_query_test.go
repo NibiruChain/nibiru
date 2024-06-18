@@ -15,8 +15,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 type TestCase[In, Out any] struct {
@@ -66,16 +66,16 @@ func TraceERC20Transfer() string {
 }
 
 func (s *KeeperSuite) TestQueryNibiruAccount() {
-	type In = *evm.QueryNibiruAccountRequest
-	type Out = *evm.QueryNibiruAccountResponse
+	type In = *types.QueryNibiruAccountRequest
+	type Out = *types.QueryNibiruAccountResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryNibiruAccountRequest{
+				req = &types.QueryNibiruAccountRequest{
 					Address: InvalidEthAddr(),
 				}
-				wantResp = &evm.QueryNibiruAccountResponse{
+				wantResp = &types.QueryNibiruAccountResponse{
 					Address: sdk.AccAddress(gethcommon.Address{}.Bytes()).String(),
 				}
 				return req, wantResp
@@ -86,10 +86,10 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 			name: "happy: not existing account",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				ethAcc := evmtest.NewEthAccInfo()
-				req = &evm.QueryNibiruAccountRequest{
+				req = &types.QueryNibiruAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
-				wantResp = &evm.QueryNibiruAccountResponse{
+				wantResp = &types.QueryNibiruAccountResponse{
 					Address:       ethAcc.NibiruAddr.String(),
 					Sequence:      0,
 					AccountNumber: 0,
@@ -106,10 +106,10 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 				account := accountKeeper.NewAccountWithAddress(deps.Ctx, ethAcc.NibiruAddr)
 				accountKeeper.SetAccount(deps.Ctx, account)
 
-				req = &evm.QueryNibiruAccountRequest{
+				req = &types.QueryNibiruAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
-				wantResp = &evm.QueryNibiruAccountResponse{
+				wantResp = &types.QueryNibiruAccountResponse{
 					Address:       ethAcc.NibiruAddr.String(),
 					Sequence:      account.GetSequence(),
 					AccountNumber: account.GetAccountNumber(),
@@ -137,18 +137,18 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 }
 
 func (s *KeeperSuite) TestQueryEthAccount() {
-	type In = *evm.QueryEthAccountRequest
-	type Out = *evm.QueryEthAccountResponse
+	type In = *types.QueryEthAccountRequest
+	type Out = *types.QueryEthAccountResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryEthAccountRequest{
+				req = &types.QueryEthAccountRequest{
 					Address: InvalidEthAddr(),
 				}
-				wantResp = &evm.QueryEthAccountResponse{
+				wantResp = &types.QueryEthAccountResponse{
 					Balance:  "0",
-					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					CodeHash: gethcommon.BytesToHash(types.EmptyCodeHash).Hex(),
 					Nonce:    0,
 				}
 				return req, wantResp
@@ -162,20 +162,20 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 				ethAddr := deps.Sender.EthAddr
 
 				// fund account with 420 tokens
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
-				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				coins := sdk.Coins{sdk.NewInt64Coin(types.DefaultEVMDenom, 420)}
+				err := chain.BankKeeper.MintCoins(deps.Ctx, types.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx, types.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryEthAccountRequest{
+				req = &types.QueryEthAccountRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				}
-				wantResp = &evm.QueryEthAccountResponse{
+				wantResp = &types.QueryEthAccountResponse{
 					Balance:  "420",
-					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					CodeHash: gethcommon.BytesToHash(types.EmptyCodeHash).Hex(),
 					Nonce:    0,
 				}
 				return req, wantResp
@@ -204,16 +204,16 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 }
 
 func (s *KeeperSuite) TestQueryValidatorAccount() {
-	type In = *evm.QueryValidatorAccountRequest
-	type Out = *evm.QueryValidatorAccountResponse
+	type In = *types.QueryValidatorAccountRequest
+	type Out = *types.QueryValidatorAccountResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryValidatorAccountRequest{
+				req = &types.QueryValidatorAccountRequest{
 					ConsAddress: "nibi1invalidaddr",
 				}
-				wantResp = &evm.QueryValidatorAccountResponse{
+				wantResp = &types.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(gethcommon.Address{}.Bytes()).String(),
 				}
 				return req, wantResp
@@ -223,10 +223,10 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 		{
 			name: "sad: validator account not found",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryValidatorAccountRequest{
+				req = &types.QueryValidatorAccountRequest{
 					ConsAddress: "nibivalcons1ea4ef7wsatlnaj9ry3zylymxv53f9ntrjecc40",
 				}
-				wantResp = &evm.QueryValidatorAccountResponse{
+				wantResp = &types.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(gethcommon.Address{}.Bytes()).String(),
 				}
 				return req, wantResp
@@ -243,10 +243,10 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
 				consAddr := sdk.ConsAddress(valAddrBz)
 
-				req = &evm.QueryValidatorAccountRequest{
+				req = &types.QueryValidatorAccountRequest{
 					ConsAddress: consAddr.String(),
 				}
-				wantResp = &evm.QueryValidatorAccountResponse{
+				wantResp = &types.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(valAddrBz).String(),
 					Sequence:       0,
 					AccountNumber:  0,
@@ -273,7 +273,7 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 					coinsToSend,
 				))
 
-				req = &evm.QueryValidatorAccountRequest{
+				req = &types.QueryValidatorAccountRequest{
 					ConsAddress: consAddr.String(),
 				}
 
@@ -283,7 +283,7 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 				s.NoError(acc.SetSequence(69), "acc: ", acc.String())
 				ak.SetAccount(deps.Ctx, acc)
 
-				wantResp = &evm.QueryValidatorAccountResponse{
+				wantResp = &types.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(valAddrBz).String(),
 					Sequence:       69,
 					AccountNumber:  420,
@@ -314,13 +314,13 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 }
 
 func (s *KeeperSuite) TestQueryStorage() {
-	type In = *evm.QueryStorageRequest
-	type Out = *evm.QueryStorageResponse
+	type In = *types.QueryStorageRequest
+	type Out = *types.QueryStorageResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryStorageRequest{
+				req = &types.QueryStorageRequest{
 					Address: InvalidEthAddr(),
 				}
 				return req, wantResp
@@ -332,7 +332,7 @@ func (s *KeeperSuite) TestQueryStorage() {
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				addr := evmtest.NewEthAccInfo().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
-				req = &evm.QueryStorageRequest{
+				req = &types.QueryStorageRequest{
 					Address: addr.Hex(),
 					Key:     storageKey.String(),
 				}
@@ -343,7 +343,7 @@ func (s *KeeperSuite) TestQueryStorage() {
 				stateDB.SetState(addr, storageKey, storageValue)
 				s.NoError(stateDB.Commit())
 
-				wantResp = &evm.QueryStorageResponse{
+				wantResp = &types.QueryStorageResponse{
 					Value: storageValue.String(),
 				}
 				return req, wantResp
@@ -355,12 +355,12 @@ func (s *KeeperSuite) TestQueryStorage() {
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				addr := evmtest.NewEthAccInfo().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
-				req = &evm.QueryStorageRequest{
+				req = &types.QueryStorageRequest{
 					Address: addr.Hex(),
 					Key:     storageKey.String(),
 				}
 
-				wantResp = &evm.QueryStorageResponse{
+				wantResp = &types.QueryStorageResponse{
 					Value: gethcommon.BytesToHash([]byte{}).String(),
 				}
 				return req, wantResp
@@ -390,13 +390,13 @@ func (s *KeeperSuite) TestQueryStorage() {
 }
 
 func (s *KeeperSuite) TestQueryCode() {
-	type In = *evm.QueryCodeRequest
-	type Out = *evm.QueryCodeResponse
+	type In = *types.QueryCodeRequest
+	type Out = *types.QueryCodeResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryCodeRequest{
+				req = &types.QueryCodeRequest{
 					Address: InvalidEthAddr(),
 				}
 				return req, wantResp
@@ -407,7 +407,7 @@ func (s *KeeperSuite) TestQueryCode() {
 			name: "happy",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				addr := evmtest.NewEthAccInfo().EthAddr
-				req = &evm.QueryCodeRequest{
+				req = &types.QueryCodeRequest{
 					Address: addr.Hex(),
 				}
 
@@ -419,7 +419,7 @@ func (s *KeeperSuite) TestQueryCode() {
 				s.NotNil(stateDB.Keeper().GetAccount(deps.Ctx, addr))
 				s.NotNil(stateDB.GetCode(addr))
 
-				wantResp = &evm.QueryCodeResponse{
+				wantResp = &types.QueryCodeResponse{
 					Code: contractBytecode,
 				}
 				return req, wantResp
@@ -453,7 +453,7 @@ func (s *KeeperSuite) TestQueryCode() {
 
 func (s *KeeperSuite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
-	want := evm.DefaultParams()
+	want := types.DefaultParams()
 	deps.K.SetParams(deps.Ctx, want)
 	gotResp, err := deps.K.Params(deps.GoCtx(), nil)
 	s.NoError(err)
@@ -475,8 +475,8 @@ func (s *KeeperSuite) TestQueryParams() {
 }
 
 func (s *KeeperSuite) TestQueryEthCall() {
-	type In = *evm.EthCallRequest
-	type Out = *evm.MsgEthereumTxResponse
+	type In = *types.EthCallRequest
+	type Out = *types.MsgEthereumTxResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg invalid msg",
@@ -488,7 +488,7 @@ func (s *KeeperSuite) TestQueryEthCall() {
 		{
 			name: "sad: invalid args",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				return &evm.EthCallRequest{Args: []byte("invalid")}, nil
+				return &types.EthCallRequest{Args: []byte("invalid")}, nil
 			},
 			wantErr: "InvalidArgument",
 		},
@@ -497,12 +497,12 @@ func (s *KeeperSuite) TestQueryEthCall() {
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				fungibleTokenContract := evmtest.SmartContract_FunToken.Load(s.T())
 
-				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+				jsonTxArgs, err := json.Marshal(&types.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
 				})
 				s.Require().NoError(err)
-				return &evm.EthCallRequest{Args: jsonTxArgs}, &evm.MsgEthereumTxResponse{
+				return &types.EthCallRequest{Args: jsonTxArgs}, &types.MsgEthereumTxResponse{
 					Hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
 				}
 			},
@@ -530,16 +530,16 @@ func (s *KeeperSuite) TestQueryEthCall() {
 }
 
 func (s *KeeperSuite) TestQueryBalance() {
-	type In = *evm.QueryBalanceRequest
-	type Out = *evm.QueryBalanceResponse
+	type In = *types.QueryBalanceRequest
+	type Out = *types.QueryBalanceResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryBalanceRequest{
+				req = &types.QueryBalanceRequest{
 					Address: InvalidEthAddr(),
 				}
-				wantResp = &evm.QueryBalanceResponse{
+				wantResp = &types.QueryBalanceResponse{
 					Balance: "0",
 				}
 				return req, wantResp
@@ -549,10 +549,10 @@ func (s *KeeperSuite) TestQueryBalance() {
 		{
 			name: "happy: zero balance",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryBalanceRequest{
+				req = &types.QueryBalanceRequest{
 					Address: evmtest.NewEthAccInfo().EthAddr.String(),
 				}
-				wantResp = &evm.QueryBalanceResponse{
+				wantResp = &types.QueryBalanceResponse{
 					Balance: "0",
 				}
 				return req, wantResp
@@ -566,18 +566,18 @@ func (s *KeeperSuite) TestQueryBalance() {
 				ethAddr := deps.Sender.EthAddr
 
 				// fund account with 420 tokens
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
-				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				coins := sdk.Coins{sdk.NewInt64Coin(types.DefaultEVMDenom, 420)}
+				err := chain.BankKeeper.MintCoins(deps.Ctx, types.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx, types.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryBalanceRequest{
+				req = &types.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				}
-				wantResp = &evm.QueryBalanceResponse{
+				wantResp = &types.QueryBalanceResponse{
 					Balance: "420",
 				}
 				return req, wantResp
@@ -606,15 +606,15 @@ func (s *KeeperSuite) TestQueryBalance() {
 }
 
 func (s *KeeperSuite) TestQueryBaseFee() {
-	type In = *evm.QueryBaseFeeRequest
-	type Out = *evm.QueryBaseFeeResponse
+	type In = *types.QueryBaseFeeRequest
+	type Out = *types.QueryBaseFeeResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "happy: base fee value",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryBaseFeeRequest{}
+				req = &types.QueryBaseFeeRequest{}
 				zeroFee := math.NewInt(0)
-				wantResp = &evm.QueryBaseFeeResponse{
+				wantResp = &types.QueryBaseFeeResponse{
 					BaseFee: &zeroFee,
 				}
 				return req, wantResp
@@ -643,8 +643,8 @@ func (s *KeeperSuite) TestQueryBaseFee() {
 }
 
 func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
-	type In = *evm.EthCallRequest
-	type Out = *evm.EstimateGasResponse
+	type In = *types.EthCallRequest
+	type Out = *types.EstimateGasResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: nil query",
@@ -658,7 +658,7 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 		{
 			name: "sad: insufficient gas cap",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.EthCallRequest{
+				req = &types.EthCallRequest{
 					GasCap: gethparams.TxGas - 1,
 				}
 				return req, nil
@@ -668,7 +668,7 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 		{
 			name: "sad: invalid args",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.EthCallRequest{
+				req = &types.EthCallRequest{
 					Args:   []byte{0, 0, 0},
 					GasCap: gethparams.TxGas,
 				}
@@ -681,11 +681,11 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 			setup: func(deps *evmtest.TestDeps) {
 				chain := deps.Chain
 				ethAddr := deps.Sender.EthAddr
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 1000)}
-				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				coins := sdk.Coins{sdk.NewInt64Coin(types.DefaultEVMDenom, 1000)}
+				err := chain.BankKeeper.MintCoins(deps.Ctx, types.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx, types.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
@@ -693,18 +693,18 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 				amountToSend := hexutil.Big(*big.NewInt(10))
 				gasLimitArg := hexutil.Uint64(100000)
 
-				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+				jsonTxArgs, err := json.Marshal(&types.JsonTxArgs{
 					From:  &deps.Sender.EthAddr,
 					To:    &recipient,
 					Value: &amountToSend,
 					Gas:   &gasLimitArg,
 				})
 				s.Require().NoError(err)
-				req = &evm.EthCallRequest{
+				req = &types.EthCallRequest{
 					Args:   jsonTxArgs,
 					GasCap: gethparams.TxGas,
 				}
-				wantResp = &evm.EstimateGasResponse{
+				wantResp = &types.EstimateGasResponse{
 					Gas: gethparams.TxGas,
 				}
 				return req, wantResp
@@ -717,13 +717,13 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 				recipient := evmtest.NewEthAccInfo().EthAddr
 				amountToSend := hexutil.Big(*big.NewInt(10))
 
-				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+				jsonTxArgs, err := json.Marshal(&types.JsonTxArgs{
 					From:  &deps.Sender.EthAddr,
 					To:    &recipient,
 					Value: &amountToSend,
 				})
 				s.Require().NoError(err)
-				req = &evm.EthCallRequest{
+				req = &types.EthCallRequest{
 					Args:   jsonTxArgs,
 					GasCap: gethparams.TxGas,
 				}
@@ -754,7 +754,7 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 }
 
 func (s *KeeperSuite) TestTestTraceTx() {
-	type In = *evm.QueryTraceTxRequest
+	type In = *types.QueryTraceTxRequest
 	type Out = string
 
 	testCases := []TestCase[In, Out]{
@@ -769,7 +769,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 			name: "happy: simple nibi transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
-				req = &evm.QueryTraceTxRequest{
+				req = &types.QueryTraceTxRequest{
 					Msg: txMsg,
 				}
 				wantResp = TraceNibiTransfer()
@@ -783,7 +783,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 			func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				txMsg, predecessors := evmtest.ExecuteERC20Transfer(deps, s.T())
 
-				req = &evm.QueryTraceTxRequest{
+				req = &types.QueryTraceTxRequest{
 					Msg:          txMsg,
 					Predecessors: predecessors,
 				}
@@ -824,7 +824,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 }
 
 func (s *KeeperSuite) TestTestTraceBlock() {
-	type In = *evm.QueryTraceBlockRequest
+	type In = *types.QueryTraceBlockRequest
 	type Out = string
 	testCases := []TestCase[In, Out]{
 		{
@@ -839,8 +839,8 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
-				req = &evm.QueryTraceBlockRequest{
-					Txs: []*evm.MsgEthereumTx{
+				req = &types.QueryTraceBlockRequest{
+					Txs: []*types.MsgEthereumTx{
 						txMsg,
 					},
 				}
@@ -854,8 +854,8 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				txMsg, _ := evmtest.ExecuteERC20Transfer(deps, s.T())
-				req = &evm.QueryTraceBlockRequest{
-					Txs: []*evm.MsgEthereumTx{
+				req = &types.QueryTraceBlockRequest{
+					Txs: []*types.MsgEthereumTx{
 						txMsg,
 					},
 				}

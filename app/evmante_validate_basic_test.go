@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (s *TestSuite) TestEthValidateBasicDecorator() {
@@ -22,7 +22,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		name        string
 		ctxSetup    func(deps *evmtest.TestDeps)
 		txSetup     func(deps *evmtest.TestDeps) sdk.Tx
-		paramsSetup func(deps *evmtest.TestDeps) evm.Params
+		paramsSetup func(deps *evmtest.TestDeps) types.Params
 		wantErr     string
 	}{
 		{
@@ -126,8 +126,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		},
 		{
 			name: "sad: tx for contract creation with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
+			paramsSetup: func(deps *evmtest.TestDeps) types.Params {
+				params := types.DefaultParams()
 				params.EnableCreate = false
 				return params
 			},
@@ -141,8 +141,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		},
 		{
 			name: "sad: tx for contract call with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
+			paramsSetup: func(deps *evmtest.TestDeps) types.Params {
+				params := types.DefaultParams()
 				params.EnableCall = false
 				return params
 			},
@@ -248,9 +248,8 @@ func buildEthMsg(
 	gasLimit uint64,
 	from string,
 	to *common.Address,
-
-) *evm.MsgEthereumTx {
-	ethContractCreationTxParams := &evm.EvmTxArgs{
+) *types.MsgEthereumTx {
+	ethContractCreationTxParams := &types.EvmTxArgs{
 		ChainID:  chainID,
 		Nonce:    1,
 		Amount:   big.NewInt(10),
@@ -258,7 +257,7 @@ func buildEthMsg(
 		GasPrice: big.NewInt(1),
 		To:       to,
 	}
-	tx := evm.NewTx(ethContractCreationTxParams)
+	tx := types.NewTx(ethContractCreationTxParams)
 	tx.From = from
 	return tx
 }
@@ -272,7 +271,7 @@ func buildTx(
 ) sdk.FeeTx {
 	txBuilder, _ := deps.EncCfg.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 	if ethExtentions {
-		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})
+		option, _ := codectypes.NewAnyWithValue(&types.ExtensionOptionsEthereumTx{})
 		txBuilder.SetExtensionOptions(option)
 	}
 	err := txBuilder.SetMsgs(msg)

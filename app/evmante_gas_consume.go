@@ -5,14 +5,12 @@ import (
 	"math"
 
 	"cosmossdk.io/errors"
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -80,17 +78,17 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	baseFee := anteDec.EvmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
+				msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 		from := msgEthTx.GetFrom()
 
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
+		txData, err := types.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, errors.Wrap(err, "failed to unpack tx data")
 		}
@@ -122,7 +120,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			),
 		)
 
-		priority := evm.GetTxPriority(txData, baseFee)
+		priority := types.GetTxPriority(txData, baseFee)
 
 		if priority < minPriority {
 			minPriority = priority
@@ -149,7 +147,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 	// Set tx GasMeter with a limit of GasWanted (i.e. gas limit from the Ethereum tx).
 	// The gas consumed will be then reset to the gas used by the state transition
-	// in the EVM.
+	// in the types.
 
 	// FIXME: use a custom gas configuration that doesn't add any additional gas and only
 	// takes into account the gas consumed at the end of the EVM transaction.

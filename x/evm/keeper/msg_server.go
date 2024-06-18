@@ -22,15 +22,15 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
-var _ evm.MsgServer = &Keeper{}
+var _ types.MsgServer = &Keeper{}
 
 func (k *Keeper) EthereumTx(
-	goCtx context.Context, msg *evm.MsgEthereumTx,
-) (resp *evm.MsgEthereumTxResponse, err error) {
+	goCtx context.Context, msg *types.MsgEthereumTx,
+) (resp *types.MsgEthereumTxResponse, err error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
@@ -48,25 +48,25 @@ func (k *Keeper) EthereumTx(
 	attrs := []sdk.Attribute{
 		sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Value().String()),
 		// add event for ethereum transaction hash format
-		sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, resp.Hash),
+		sdk.NewAttribute(types.AttributeKeyEthereumTxHash, resp.Hash),
 		// add event for index of valid ethereum tx
-		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex, 10)),
+		sdk.NewAttribute(types.AttributeKeyTxIndex, strconv.FormatUint(txIndex, 10)),
 		// add event for eth tx gas used, we can't get it from cosmos tx result when it contains multiple eth tx msgs.
-		sdk.NewAttribute(evm.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
+		sdk.NewAttribute(types.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
 	}
 
 	if len(ctx.TxBytes()) > 0 {
 		// add event for tendermint transaction hash format
 		hash := tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash())
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyTxHash, hash.String()))
+		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyTxHash, hash.String()))
 	}
 
 	if to := tx.To(); to != nil {
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyRecipient, to.Hex()))
+		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyRecipient, to.Hex()))
 	}
 
 	if resp.Failed() {
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyEthereumTxFailed, resp.VmError))
+		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyEthereumTxFailed, resp.VmError))
 	}
 
 	txLogAttrs := make([]sdk.Attribute, len(resp.Logs))
@@ -75,24 +75,24 @@ func (k *Keeper) EthereumTx(
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to encode log")
 		}
-		txLogAttrs[i] = sdk.NewAttribute(evm.AttributeKeyTxLog, string(value))
+		txLogAttrs[i] = sdk.NewAttribute(types.AttributeKeyTxLog, string(value))
 	}
 
 	// emit events
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			evm.EventTypeEthereumTx,
+			types.EventTypeEthereumTx,
 			attrs...,
 		),
 		sdk.NewEvent(
-			evm.EventTypeTxLog,
+			types.EventTypeTxLog,
 			txLogAttrs...,
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, sender),
-			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
+			sdk.NewAttribute(types.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
 		),
 	})
 
@@ -101,7 +101,7 @@ func (k *Keeper) EthereumTx(
 
 func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
-) (*evm.MsgEthereumTxResponse, error) {
+) (*types.MsgEthereumTxResponse, error) {
 	ethChainId := k.EthChainID(ctx)
 	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), ethChainId)
 	if err != nil {
@@ -136,7 +136,7 @@ func (k *Keeper) ApplyEvmTx(
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 
-	logs := evm.LogsToEthereum(res.Logs)
+	logs := types.LogsToEthereum(res.Logs)
 
 	cumulativeGasUsed := res.GasUsed
 	if ctx.BlockGasMeter() != nil {
@@ -171,7 +171,7 @@ func (k *Keeper) ApplyEvmTx(
 		// Only call hooks if tx executed successfully.
 		if err = k.PostTxProcessing(tmpCtx, msg, receipt); err != nil {
 			// If hooks return error, revert the whole tx.
-			res.VmError = evm.ErrPostTxProcessing.Error()
+			res.VmError = types.ErrPostTxProcessing.Error()
 			k.Logger(ctx).Error("tx post processing failed", "error", err)
 
 			// If the tx failed in post processing hooks, we should clear the logs
@@ -180,7 +180,7 @@ func (k *Keeper) ApplyEvmTx(
 			// PostTxProcessing is successful, commit the tmpCtx
 			commit()
 			// Since the post-processing can alter the log, we need to update the result
-			res.Logs = evm.NewLogsFromEth(receipt.Logs)
+			res.Logs = types.NewLogsFromEth(receipt.Logs)
 			ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
 		}
 	}
@@ -216,7 +216,7 @@ func (k *Keeper) ApplyEvmTx(
 // See [Keeper.ApplyEvmMsg].
 func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
-) (*evm.MsgEthereumTxResponse, error) {
+) (*types.MsgEthereumTxResponse, error) {
 	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
@@ -367,7 +367,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	commit bool,
 	cfg *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
-) (*evm.MsgEthereumTxResponse, error) {
+) (*types.MsgEthereumTxResponse, error) {
 	var (
 		ret   []byte // return bytes from evm execution
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
@@ -375,9 +375,9 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// return error if contract creation or call are disabled through governance
 	if !cfg.Params.EnableCreate && msg.To() == nil {
-		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
+		return nil, errors.Wrap(types.ErrCreateDisabled, "failed to create new contract")
 	} else if !cfg.Params.EnableCall && msg.To() != nil {
-		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
+		return nil, errors.Wrap(types.ErrCallDisabled, "failed to call contract")
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
@@ -393,18 +393,18 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 		// Check if the transaction is sent to an inactive precompile
 		//
-		// NOTE: This has to be checked here instead of in the actual evm.Call method
-		// because evm.WithPrecompiles only populates the EVM with the active precompiles,
+		// NOTE: This has to be checked here instead of in the actual types.Call method
+		// because types.WithPrecompiles only populates the EVM with the active precompiles,
 		// so there's no telling if the To address is an inactive precompile further down the call stack.
 		toAddr := msg.To()
 		if toAddr != nil &&
-			slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
+			slices.Contains(types.AvailableEVMExtensions, toAddr.String()) &&
 			!slices.Contains(activePrecompiles, *toAddr) {
-			return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
+			return nil, errors.Wrap(types.ErrInactivePrecompile, "failed to call precompile")
 		}
 
 		// NOTE: this only adds active precompiles to the EVM.
-		// This means that evm.Precompile(addr) will return false for inactive precompiles
+		// This means that types.Precompile(addr) will return false for inactive precompiles
 		// even though this is actually a reserved address.
 		precompileMap := k.Precompiles(activePrecompiles...)
 		evmObj.WithPrecompiles(precompileMap, activePrecompiles)
@@ -443,7 +443,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	if contractCreation {
 		// take over the nonce management from evm:
-		// - reset sender's nonce to msg.Nonce() before calling evm.
+		// - reset sender's nonce to msg.Nonce() before calling types.
 		// - increase sender's nonce by one no matter the result.
 		stateDB.SetNonce(sender.Address(), msg.Nonce())
 		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msg.Value())
@@ -457,7 +457,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// calculate gas refund
 	if msg.Gas() < leftoverGas {
-		return nil, errors.Wrap(evm.ErrGasOverflow, "apply message")
+		return nil, errors.Wrap(types.ErrGasOverflow, "apply message")
 	}
 	// refund gas
 	temporaryGasUsed := msg.Gas() - leftoverGas
@@ -485,22 +485,22 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	minimumGasUsed := gasLimit.Mul(minGasMultiplier)
 
 	if !minimumGasUsed.TruncateInt().IsUint64() {
-		return nil, errors.Wrapf(evm.ErrGasOverflow, "minimumGasUsed(%s) is not a uint64", minimumGasUsed.TruncateInt().String())
+		return nil, errors.Wrapf(types.ErrGasOverflow, "minimumGasUsed(%s) is not a uint64", minimumGasUsed.TruncateInt().String())
 	}
 
 	if msg.Gas() < leftoverGas {
-		return nil, errors.Wrapf(evm.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
+		return nil, errors.Wrapf(types.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
 	}
 
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
 	// reset leftoverGas, to be used by the tracer
 	leftoverGas = msg.Gas() - gasUsed
 
-	return &evm.MsgEthereumTxResponse{
+	return &types.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
 		VmError: vmError,
 		Ret:     ret,
-		Logs:    evm.NewLogsFromEth(stateDB.Logs()),
+		Logs:    types.NewLogsFromEth(stateDB.Logs()),
 		Hash:    txConfig.TxHash.Hex(),
 	}, nil
 }

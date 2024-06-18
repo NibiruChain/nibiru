@@ -25,7 +25,7 @@ import (
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // Accounts returns the list of accounts available to this node.

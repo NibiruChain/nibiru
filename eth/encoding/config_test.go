@@ -10,8 +10,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth/encoding"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func TestTxEncoding(t *testing.T) {

@@ -6,11 +6,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-
-	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 // EthValidateBasicDecorator is adapted from ValidateBasicDecorator from cosmos-sdk, it ignores ErrNoSignatures
@@ -96,11 +95,11 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	evmDenom := evmParams.GetEvmDenom()
 
 	for _, msg := range protoTx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrUnknownRequest,
-				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+				"invalid message type %T, expected %T", msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 
@@ -114,7 +113,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 		txGasLimit += msgEthTx.GetGas()
 
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
+		txData, err := types.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, errorsmod.Wrap(err, "failed to unpack MsgEthereumTx Data")
 		}
@@ -122,12 +121,12 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		// return error if contract creation or call are disabled through governance
 		if !enableCreate && txData.GetTo() == nil {
 			return ctx, errorsmod.Wrap(
-				evm.ErrCreateDisabled,
+				types.ErrCreateDisabled,
 				"failed to create new contract",
 			)
 		} else if !enableCall && txData.GetTo() != nil {
 			return ctx, errorsmod.Wrap(
-				evm.ErrCallDisabled,
+				types.ErrCallDisabled,
 				"failed to call contract",
 			)
 		}

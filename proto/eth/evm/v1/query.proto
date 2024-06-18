@@ -9,7 +9,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/x/evm/types";
 
 // Query defines the gRPC querier service.
 service Query {

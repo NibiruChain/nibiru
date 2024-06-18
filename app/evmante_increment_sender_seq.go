@@ -3,12 +3,10 @@ package app
 
 import (
 	"cosmossdk.io/errors"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.
@@ -33,15 +31,15 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 	next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownRequest,
-				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+				"invalid message type %T, expected %T", msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
+		txData, err := types.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, errors.Wrap(err, "failed to unpack tx data")
 		}

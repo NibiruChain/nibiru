@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 // EVMKeeper defines the expected keeper interface used on the AnteHandler
@@ -23,7 +23,7 @@ type EVMKeeper interface {
 	DeductTxCostsFromUserBalance(ctx sdk.Context, fees sdk.Coins, from common.Address) error
 	GetEvmGasBalance(ctx sdk.Context, addr common.Address) *big.Int
 	ResetTransientGasUsed(ctx sdk.Context)
-	GetParams(ctx sdk.Context) evm.Params
+	GetParams(ctx sdk.Context) types.Params
 
 	EVMState() evmkeeper.EvmState
 }

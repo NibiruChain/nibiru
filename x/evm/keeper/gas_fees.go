@@ -4,21 +4,18 @@ package keeper
 import (
 	"math/big"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
@@ -40,7 +37,7 @@ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64
 	switch remaining.Sign() {
 	case -1:
 		// negative refund errors
-		return errors.Wrapf(evm.ErrInvalidRefund, "refunded amount value cannot be negative %d", remaining.Int64())
+		return errors.Wrapf(types.ErrInvalidRefund, "refunded amount value cannot be negative %d", remaining.Int64())
 	case 1:
 		// positive amount refund
 		refundedCoins := sdk.Coins{sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(remaining))}
@@ -83,7 +80,7 @@ func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
 // sender has enough funds to pay for the fees and value of the transaction.
 func CheckSenderBalance(
 	balance sdkmath.Int,
-	txData evm.TxData,
+	txData types.TxData,
 ) error {
 	cost := txData.Cost()
 
@@ -129,7 +126,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 // gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
 // base fee is higher than the gas fee cap.
 func VerifyFee(
-	txData evm.TxData,
+	txData types.TxData,
 	denom string,
 	baseFee *big.Int,
 	isCheckTx bool,

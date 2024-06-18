@@ -20,9 +20,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/cli"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // consensusVersion: EVM module consensus version for upgrades.
@@ -40,12 +40,12 @@ type AppModuleBasic struct{}
 
 // Name returns the evm module's name.
 func (AppModuleBasic) Name() string {
-	return evm.ModuleName
+	return types.ModuleName
 }
 
 // RegisterLegacyAminoCodec registers the module's types with the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	evm.RegisterLegacyAminoCodec(cdc)
+	types.RegisterLegacyAminoCodec(cdc)
 }
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
@@ -56,14 +56,14 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 // DefaultGenesis returns default genesis state as raw bytes for the evm
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(evm.DefaultGenesisState())
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis is the validation check of the Genesis
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-	var genesisState evm.GenesisState
+	var genesisState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", evm.ModuleName, err)
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 
 	return genesisState.Validate()
@@ -75,7 +75,7 @@ func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {
 }
 
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *runtime.ServeMux) {
-	if err := evm.RegisterQueryHandlerClient(context.Background(), serveMux, evm.NewQueryClient(c)); err != nil {
+	if err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(c)); err != nil {
 		panic(err)
 	}
 }
@@ -92,7 +92,7 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 
 // RegisterInterfaces registers interfaces and implementations of the evm module.
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	evm.RegisterInterfaces(registry)
+	types.RegisterInterfaces(registry)
 	eth.RegisterInterfaces(registry)
 }
 
@@ -102,11 +102,11 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 type AppModule struct {
 	AppModuleBasic
 	keeper *keeper.Keeper
-	ak     evm.AccountKeeper
+	ak     types.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(k *keeper.Keeper, ak evm.AccountKeeper) AppModule {
+func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
@@ -116,7 +116,7 @@ func NewAppModule(k *keeper.Keeper, ak evm.AccountKeeper) AppModule {
 
 // Name returns the evm module's name.
 func (AppModule) Name() string {
-	return evm.ModuleName
+	return types.ModuleName
 }
 
 // RegisterInvariants interface for registering invariants. Performs a no-op
@@ -127,8 +127,8 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	evm.RegisterMsgServer(cfg.MsgServer(), am.keeper)
-	evm.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
 // BeginBlock returns the begin block for the evm module.
@@ -145,7 +145,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.V
 // InitGenesis performs genesis initialization for the evm module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState evm.GenesisState
+	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.keeper, am.ak, genesisState)
 	return []abci.ValidatorUpdate{}

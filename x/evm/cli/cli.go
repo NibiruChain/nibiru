@@ -3,19 +3,17 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
-
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // GetTxCmd returns a cli command for this module's transactions
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        evm.ModuleName,
-		Short:                      fmt.Sprintf("x/%s transaction subcommands", evm.ModuleName),
+		Use:                        types.ModuleName,
+		Short:                      fmt.Sprintf("x/%s transaction subcommands", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -32,7 +30,7 @@ func GetTxCmd() *cobra.Command {
 // GetQueryCmd returns a cli command for this module's queries
 func GetQueryCmd() *cobra.Command {
 	moduleQueryCmd := &cobra.Command{
-		Use: evm.ModuleName,
+		Use: types.ModuleName,
 		Short: fmt.Sprintf(
 			"Query commands for the x/%s module", types.ModuleName),
 		DisableFlagParsing:         true,

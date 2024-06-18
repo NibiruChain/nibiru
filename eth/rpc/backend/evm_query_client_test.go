@@ -23,8 +23,8 @@ import (
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/eth/rpc"
 	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
 	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // QueryClient defines a mocked object that implements the ethermint GRPC

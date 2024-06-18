@@ -4,10 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
@@ -59,19 +58,19 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 
 			s.Require().Greater(len(events), 0)
 			event := events[len(events)-1]
-			s.Require().Equal(evm.EventTypeEthereumTx, event.Type)
+			s.Require().Equal(types.EventTypeEthereumTx, event.Type)
 
 			// Convert tx to msg to get hash
-			txMsg, ok := tx.GetMsgs()[0].(*evm.MsgEthereumTx)
+			txMsg, ok := tx.GetMsgs()[0].(*types.MsgEthereumTx)
 			s.Require().True(ok)
 
 			// TX hash attr must present
-			attr, ok := event.GetAttribute(evm.AttributeKeyEthereumTxHash)
+			attr, ok := event.GetAttribute(types.AttributeKeyEthereumTxHash)
 			s.Require().True(ok, "tx hash attribute not found")
 			s.Require().Equal(txMsg.Hash, attr.Value)
 
 			// TX index attr must present
-			attr, ok = event.GetAttribute(evm.AttributeKeyTxIndex)
+			attr, ok = event.GetAttribute(types.AttributeKeyTxIndex)
 			s.Require().True(ok, "tx index attribute not found")
 			s.Require().Equal("0", attr.Value)
 		})

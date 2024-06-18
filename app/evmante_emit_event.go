@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).
@@ -31,12 +31,12 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 	txIndex := eeed.EvmKeeper.EVMState().BlockTxIndex.GetOr(ctx, 0)
 
 	for i, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
+				msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 
@@ -45,10 +45,10 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 		// query failed transaction (out of block gas limit).
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				evm.EventTypeEthereumTx,
-				sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, msgEthTx.Hash),
+				types.EventTypeEthereumTx,
+				sdk.NewAttribute(types.AttributeKeyEthereumTxHash, msgEthTx.Hash),
 				sdk.NewAttribute(
-					evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i),
+					types.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i),
 						10,
 					),
 				), // #nosec G701

@@ -12,20 +12,20 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // InitGenesis initializes genesis state based on exported genesis
 func InitGenesis(
 	ctx sdk.Context,
 	k *keeper.Keeper,
-	accountKeeper evm.AccountKeeper,
-	genState evm.GenesisState,
+	accountKeeper types.AccountKeeper,
+	genState types.GenesisState,
 ) []abci.ValidatorUpdate {
 	k.SetParams(ctx, genState.Params)
 
-	if addr := accountKeeper.GetModuleAddress(evm.ModuleName); addr == nil {
+	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic("the EVM module account has not been set")
 	}
 
@@ -67,10 +67,10 @@ func InitGenesis(
 }
 
 // ExportGenesis exports genesis state of the EVM module
-func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak evm.AccountKeeper) *evm.GenesisState {
+func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak types.AccountKeeper) *types.GenesisState {
 	// TODO: impl ExportGenesis
-	return &evm.GenesisState{
-		Accounts: []evm.GenesisAccount{},
-		Params:   evm.Params{},
+	return &types.GenesisState{
+		Accounts: []types.GenesisAccount{},
+		Params:   types.Params{},
 	}
 }

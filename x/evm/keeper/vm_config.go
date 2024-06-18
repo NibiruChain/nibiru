@@ -11,15 +11,15 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func (k *Keeper) GetEVMConfig(
 	ctx sdk.Context, proposerAddress sdk.ConsAddress, chainID *big.Int,
 ) (*statedb.EVMConfig, error) {
 	params := k.GetParams(ctx)
-	ethCfg := evm.EthereumConfig(chainID)
+	ethCfg := types.EthereumConfig(chainID)
 
 	// get the coinbase address from the block proposer
 	coinbase, err := k.GetCoinbaseAddress(ctx, proposerAddress)
@@ -55,7 +55,7 @@ func (k Keeper) VMConfig(
 	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
 	var debug bool
-	if _, ok := tracer.(evm.NoOpTracer); !ok {
+	if _, ok := tracer.(types.NoOpTracer); !ok {
 		debug = true
 	}
 

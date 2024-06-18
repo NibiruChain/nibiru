@@ -15,8 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
-
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 type GethTxType = uint8
@@ -95,7 +94,7 @@ func NewEthTxMsgFromTxData(
 	innerTxData []byte,
 	nonce uint64,
 	accessList gethcore.AccessList,
-) (*evm.MsgEthereumTx, error) {
+) (*types.MsgEthereumTx, error) {
 	if innerTxData == nil {
 		innerTxData = []byte{}
 	}
@@ -124,7 +123,7 @@ func NewEthTxMsgFromTxData(
 			"received unknown tx type (%v) in NewEthTxMsgFromTxData", txType)
 	}
 
-	ethTxMsg := new(evm.MsgEthereumTx)
+	ethTxMsg := new(types.MsgEthereumTx)
 	if err := ethTxMsg.FromEthereumTx(ethCoreTx); err != nil {
 		return ethTxMsg, err
 	}
@@ -134,11 +133,11 @@ func NewEthTxMsgFromTxData(
 }
 
 // ExecuteNibiTransfer executes nibi transfer
-func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
+func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *types.MsgEthereumTx {
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	recipient := NewEthAccInfo().EthAddr
 
-	txArgs := evm.JsonTxArgs{
+	txArgs := types.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
 		To:    &recipient,
 		Nonce: (*hexutil.Uint64)(&nonce),
@@ -153,11 +152,11 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 }
 
 // ExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
-func ExecuteERC20Transfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
+func ExecuteERC20Transfer(deps *TestDeps, t *testing.T) (*types.MsgEthereumTx, []*types.MsgEthereumTx) {
 	// TX 1: Deploy ERC-20 contract
 	contractData := SmartContract_FunToken.Load(t)
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	txArgs := evm.JsonTxArgs{
+	txArgs := types.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
 		Nonce: (*hexutil.Uint64)(&nonce),
 		Data:  (*hexutil.Bytes)(&contractData.Bytecode),
@@ -172,7 +171,7 @@ func ExecuteERC20Transfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, []*
 	// Contract address is deterministic
 	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
 	deps.Chain.Commit()
-	predecessors := []*evm.MsgEthereumTx{
+	predecessors := []*types.MsgEthereumTx{
 		ethTxMsg,
 	}
 
@@ -182,7 +181,7 @@ func ExecuteERC20Transfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, []*
 	)
 	require.NoError(t, err)
 	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	txArgs = evm.JsonTxArgs{
+	txArgs = types.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
 		To:    &contractAddress,
 		Nonce: (*hexutil.Uint64)(&nonce),
@@ -199,12 +198,12 @@ func ExecuteERC20Transfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, []*
 }
 
 // GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx
-func GenerateAndSignEthTxMsg(txArgs evm.JsonTxArgs, deps *TestDeps) (*evm.MsgEthereumTx, error) {
+func GenerateAndSignEthTxMsg(txArgs types.JsonTxArgs, deps *TestDeps) (*types.MsgEthereumTx, error) {
 	estimateArgs, err := json.Marshal(&txArgs)
 	if err != nil {
 		return nil, err
 	}
-	res, err := deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
+	res, err := deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &types.EthCallRequest{
 		Args:            estimateArgs,
 		GasCap:          srvconfig.DefaultGasCap,
 		ProposerAddress: []byte{},

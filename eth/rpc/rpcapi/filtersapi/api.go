@@ -23,7 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/filters"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // IFilterAPI

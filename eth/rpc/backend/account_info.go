@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // GetCode returns the contract code at the given address and block number.

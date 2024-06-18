@@ -19,8 +19,8 @@ import (
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	evmenc "github.com/NibiruChain/nibiru/eth/encoding"
 	"github.com/NibiruChain/nibiru/eth/indexer"
-	"github.com/NibiruChain/nibiru/x/evm"
 	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	evm "github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 func TestKVIndexer(t *testing.T) {

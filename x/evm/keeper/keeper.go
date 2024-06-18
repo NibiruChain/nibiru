@@ -19,7 +19,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 type Keeper struct {
@@ -35,13 +35,13 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	bankKeeper    evm.BankKeeper
-	accountKeeper evm.AccountKeeper
-	stakingKeeper evm.StakingKeeper
+	bankKeeper    types.BankKeeper
+	accountKeeper types.AccountKeeper
+	stakingKeeper types.StakingKeeper
 
 	// Integer for the Ethereum EIP155 Chain ID
 	// eip155ChainIDInt *big.Int
-	hooks       evm.EvmHooks                                  //nolint:unused
+	hooks       types.EvmHooks                                //nolint:unused
 	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
@@ -53,9 +53,9 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey, transientKey storetypes.StoreKey,
 	authority sdk.AccAddress,
-	accKeeper evm.AccountKeeper,
-	bankKeeper evm.BankKeeper,
-	stakingKeeper evm.StakingKeeper,
+	accKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
 	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
@@ -74,7 +74,7 @@ func NewKeeper(
 	}
 }
 
-// GetEvmGasBalance: Implements `evm.EVMKeeper` from
+// GetEvmGasBalance: Implements `types.EVMKeeper` from
 // "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
 // tokens for EVM execution
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big.Int {
@@ -100,7 +100,7 @@ func (k Keeper) AddToBlockGasUsed(
 ) (uint64, error) {
 	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
 	if result < gasUsed {
-		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
+		return 0, sdkerrors.Wrap(types.ErrGasOverflow, "transient gas used")
 	}
 	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
 	return result, nil
@@ -124,14 +124,14 @@ func (k Keeper) GetBaseFeeNoCfg(
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", evm.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // Tracer return a default vm.Tracer based on current keeper state
 func (k Keeper) Tracer(
 	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
-	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
 }
 
 // PostTxProcessing: Called after tx is processed successfully. If it errors,

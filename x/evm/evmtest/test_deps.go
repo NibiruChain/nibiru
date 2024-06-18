@@ -13,9 +13,9 @@ import (
 	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 type TestDeps struct {
@@ -23,7 +23,7 @@ type TestDeps struct {
 	Ctx      sdk.Context
 	EncCfg   codec.EncodingConfig
 	K        keeper.Keeper
-	GenState *evm.GenesisState
+	GenState *types.GenesisState
 	Sender   EthPrivKeyAcc
 }
 
@@ -34,7 +34,7 @@ func (deps TestDeps) GoCtx() context.Context {
 func NewTestDeps() TestDeps {
 	testapp.EnsureNibiruPrefix()
 	encCfg := app.MakeEncodingConfig()
-	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
+	types.RegisterInterfaces(encCfg.InterfaceRegistry)
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	chain, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
@@ -44,7 +44,7 @@ func NewTestDeps() TestDeps {
 		Ctx:      ctx,
 		EncCfg:   encCfg,
 		K:        chain.EvmKeeper,
-		GenState: evm.DefaultGenesisState(),
+		GenState: types.DefaultGenesisState(),
 		Sender:   ethAcc,
 	}
 }

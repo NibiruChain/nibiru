@@ -6,22 +6,18 @@ import (
 	"math/big"
 	"testing"
 
-	cmt "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/stretchr/testify/assert"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-
+	"github.com/NibiruChain/nibiru/x/evm/types"
+	cmt "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/stretchr/testify/assert"
 )
 
 // NewEthAccInfo returns an Ethereum private key, its corresponding Eth address,
@@ -55,16 +51,16 @@ func (acc EthPrivKeyAcc) GethSigner(ethChainID *big.Int) gethcore.Signer {
 	return gethcore.LatestSignerForChainID(ethChainID)
 }
 
-// NewEthTxMsg: Helper that returns a valid instance of [*evm.MsgEthereumTx].
-func NewEthTxMsg() *evm.MsgEthereumTx {
+// NewEthTxMsg: Helper that returns a valid instance of [*types.MsgEthereumTx].
+func NewEthTxMsg() *types.MsgEthereumTx {
 	return NewEthTxMsgs(1)[0]
 }
 
-func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
+func NewEthTxMsgs(count uint64) (ethTxMsgs []*types.MsgEthereumTx) {
 	ethAddr := NewEthAccInfo().EthAddr
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
-		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{
+		ethTxMsgs = append(ethTxMsgs, types.NewTx(&types.EvmTxArgs{
 			ChainID:  big.NewInt(1),
 			Nonce:    nonce,
 			To:       &ethAddr,
@@ -82,12 +78,12 @@ func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
 // tx bytes used in the Consensus Engine.
 func NewEthTxMsgAsCmt(t *testing.T) (
 	txBz cmt.Tx,
-	ethTxMsgs []*evm.MsgEthereumTx,
+	ethTxMsgs []*types.MsgEthereumTx,
 	clientCtx client.Context,
 ) {
 	// Build a TxBuilder that can understand Ethereum types
 	encCfg := app.MakeEncodingConfig()
-	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
+	types.RegisterInterfaces(encCfg.InterfaceRegistry)
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	txConfig := encCfg.TxConfig
 	clientCtx = client.Context{

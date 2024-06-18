@@ -8,7 +8,7 @@ import (
 
 	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/evm"
+	evmtypes "github.com/NibiruChain/nibiru/x/evm/types"
 	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
 	xoracle "github.com/NibiruChain/nibiru/x/oracle/types"
 	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -18,7 +18,7 @@ type Querier struct {
 	ClientConn *grpc.ClientConn
 
 	// Smart Contracts
-	EVM  evm.QueryClient
+	EVM  evmtypes.QueryClient
 	Wasm wasm.QueryClient
 
 	// Other Modules
@@ -40,7 +40,7 @@ func NewQuerier(
 	return Querier{
 		ClientConn: grpcConn,
 
-		EVM:  evm.NewQueryClient(grpcConn),
+		EVM:  evmtypes.NewQueryClient(grpcConn),
 		Wasm: wasm.NewQueryClient(grpcConn),
 
 		Devgas:       devgas.NewQueryClient(grpcConn),

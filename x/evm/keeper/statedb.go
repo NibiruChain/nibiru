@@ -5,13 +5,12 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 var _ statedb.Keeper = &Keeper{}
@@ -51,7 +50,7 @@ func (k *Keeper) ForEachStorage(
 	stopIter func(key, value gethcommon.Hash) bool,
 ) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := evm.PrefixAccStateEthAddr(addr)
+	prefix := types.PrefixAccStateEthAddr(addr)
 
 	iterator := sdk.KVStorePrefixIterator(store, prefix)
 	defer iterator.Close()
@@ -80,19 +79,19 @@ func (k *Keeper) SetAccBalance(
 	case 1:
 		// mint
 		coins := sdk.NewCoins(sdk.NewCoin(params.EvmDenom, sdkmath.NewIntFromBigInt(delta)))
-		if err := k.bankKeeper.MintCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, nativeAddr, coins); err != nil {
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, nativeAddr, coins); err != nil {
 			return err
 		}
 	case -1:
 		// burn
 		coins := sdk.NewCoins(sdk.NewCoin(params.EvmDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, nativeAddr, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, nativeAddr, types.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins); err != nil {
 			return err
 		}
 	default:
@@ -164,7 +163,7 @@ func (k *Keeper) DeleteAccount(ctx sdk.Context, addr gethcommon.Address) error {
 
 	_, ok := acct.(eth.EthAccountI)
 	if !ok {
-		return evm.ErrInvalidAccount.Wrapf("type %T, address %s", acct, addr)
+		return types.ErrInvalidAccount.Wrapf("type %T, address %s", acct, addr)
 	}
 
 	// clear balance
@@ -192,7 +191,7 @@ func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Addre
 		return nil
 	}
 
-	codeHash := evm.EmptyCodeHash
+	codeHash := types.EmptyCodeHash
 	ethAcct, ok := acct.(eth.EthAccountI)
 	if ok {
 		codeHash = ethAcct.GetCodeHash().Bytes()
@@ -216,6 +215,6 @@ func (k *Keeper) GetAccountOrEmpty(
 	// empty account
 	return statedb.Account{
 		Balance:  new(big.Int),
-		CodeHash: evm.EmptyCodeHash,
+		CodeHash: types.EmptyCodeHash,
 	}
 }

@@ -14,7 +14,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 type (
@@ -24,7 +24,7 @@ type (
 
 // EvmState isolates the key-value stores (collections) for the x/evm module.
 type EvmState struct {
-	ModuleParams collections.Item[evm.Params]
+	ModuleParams collections.Item[types.Params]
 
 	// ContractBytecode: Map from (byte)code hash -> contract bytecode
 	ContractBytecode collections.Map[CodeHash, []byte]
@@ -59,37 +59,37 @@ func NewEvmState(
 ) EvmState {
 	return EvmState{
 		ModuleParams: collections.NewItem(
-			storeKey, evm.KeyPrefixParams,
-			collections.ProtoValueEncoder[evm.Params](cdc),
+			storeKey, types.KeyPrefixParams,
+			collections.ProtoValueEncoder[types.Params](cdc),
 		),
 		ContractBytecode: collections.NewMap(
-			storeKey, evm.KeyPrefixAccCodes,
+			storeKey, types.KeyPrefixAccCodes,
 			eth.KeyEncoderBytes,
 			eth.ValueEncoderBytes,
 		),
 		AccState: collections.NewMap(
-			storeKey, evm.KeyPrefixAccState,
+			storeKey, types.KeyPrefixAccState,
 			collections.PairKeyEncoder(eth.KeyEncoderEthAddr, eth.KeyEncoderEthHash),
 			eth.ValueEncoderBytes,
 		),
 		BlockGasUsed: collections.NewItemTransient(
 			storeKeyTransient,
-			evm.NamespaceBlockGasUsed,
+			types.NamespaceBlockGasUsed,
 			collections.Uint64ValueEncoder,
 		),
 		BlockLogSize: collections.NewItemTransient(
 			storeKeyTransient,
-			evm.NamespaceBlockLogSize,
+			types.NamespaceBlockLogSize,
 			collections.Uint64ValueEncoder,
 		),
 		BlockBloom: collections.NewItemTransient(
 			storeKeyTransient,
-			evm.NamespaceBlockBloom,
+			types.NamespaceBlockBloom,
 			eth.ValueEncoderBytes,
 		),
 		BlockTxIndex: collections.NewItemTransient(
 			storeKeyTransient,
-			evm.NamespaceBlockTxIndex,
+			types.NamespaceBlockTxIndex,
 			collections.Uint64ValueEncoder,
 		),
 	}
@@ -117,13 +117,13 @@ func (state EvmState) GetContractBytecode(
 }
 
 // GetParams returns the total set of evm parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	params, _ = k.EvmState.ModuleParams.Get(ctx)
 	return params
 }
 
 // SetParams: Setter for the module parameters.
-func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	slices.Sort(params.ActivePrecompiles)
 	k.EvmState.ModuleParams.Set(ctx, params)
 }

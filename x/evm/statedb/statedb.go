@@ -76,7 +76,7 @@ func (s *StateDB) GetContext() sdk.Context {
 	return s.ctx
 }
 
-// AddLog adds a log, called by evm.
+// AddLog adds a log, called by types.
 func (s *StateDB) AddLog(log *gethcore.Log) {
 	s.journal.append(addLogChange{})
 
@@ -372,7 +372,7 @@ func (s *StateDB) PrepareAccessList(
 	s.AddAddressToAccessList(sender)
 	if dst != nil {
 		s.AddAddressToAccessList(*dst)
-		// If it's a create-tx, the destination will be added inside evm.create
+		// If it's a create-tx, the destination will be added inside types.create
 	}
 	for _, addr := range precompiles {
 		s.AddAddressToAccessList(addr)

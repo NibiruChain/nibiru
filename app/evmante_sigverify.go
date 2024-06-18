@@ -5,11 +5,10 @@ import (
 	"math/big"
 
 	"cosmossdk.io/errors"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-
-	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 // EthSigVerificationDecorator validates an ethereum signatures
@@ -34,16 +33,16 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 ) (newCtx sdk.Context, err error) {
 	chainID := esvd.EvmKeeper.EthChainID(ctx)
 	evmParams := esvd.EvmKeeper.GetParams(ctx)
-	ethCfg := evm.EthereumConfig(chainID)
+	ethCfg := types.EthereumConfig(chainID)
 	blockNum := big.NewInt(ctx.BlockHeight())
 	signer := gethcore.MakeSigner(ethCfg, blockNum)
 
 	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownRequest,
-				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
+				"invalid message type %T, expected %T", msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 

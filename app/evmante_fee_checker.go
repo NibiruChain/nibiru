@@ -13,8 +13,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
 	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // NewDynamicFeeChecker returns a `TxFeeChecker` that applies a dynamic fee to
@@ -80,7 +80,7 @@ func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 
 		// calculate the effective gas price using the EIP-1559 logic.
 		effectivePrice := sdkmath.NewIntFromBigInt(
-			evm.EffectiveGasPrice(baseFeeInt.BigInt(), feeCap.BigInt(), maxPriorityPrice.BigInt()),
+			types.EffectiveGasPrice(baseFeeInt.BigInt(), feeCap.BigInt(), maxPriorityPrice.BigInt()),
 		)
 
 		// NOTE: create a new coins slice without having to validate the denom
@@ -91,7 +91,7 @@ func NewDynamicFeeChecker(k evmkeeper.Keeper) ante.TxFeeChecker {
 			},
 		}
 
-		bigPriority := effectivePrice.Sub(baseFeeInt).Quo(evm.DefaultPriorityReduction)
+		bigPriority := effectivePrice.Sub(baseFeeInt).Quo(types.DefaultPriorityReduction)
 		priority := int64(math.MaxInt64)
 
 		if bigPriority.IsInt64() {
@@ -142,7 +142,7 @@ func getTxPriority(fees sdk.Coins, gas int64) int64 {
 
 	for _, fee := range fees {
 		gasPrice := fee.Amount.QuoRaw(gas)
-		amt := gasPrice.Quo(evm.DefaultPriorityReduction)
+		amt := gasPrice.Quo(types.DefaultPriorityReduction)
 		p := int64(math.MaxInt64)
 
 		if amt.IsInt64() {

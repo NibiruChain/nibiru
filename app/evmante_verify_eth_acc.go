@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
@@ -49,12 +49,12 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	}
 
 	for i, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
+		msgEthTx, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*types.MsgEthereumTx)(nil))
 		}
 
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
+		txData, err := types.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to unpack tx data any for tx %d", i)
 		}

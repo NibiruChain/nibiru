@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // TxConfig encapulates the readonly information of current tx for `StateDB`.
@@ -42,7 +42,7 @@ func NewEmptyTxConfig(bhash common.Hash) TxConfig {
 // EVMConfig encapsulates common parameters needed to create an EVM to execute a message
 // It's mainly to reduce the number of method parameters
 type EVMConfig struct {
-	Params      evm.Params
+	Params      types.Params
 	ChainConfig *params.ChainConfig
 	CoinBase    common.Address
 	BaseFee     *big.Int

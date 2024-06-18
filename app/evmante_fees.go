@@ -5,12 +5,10 @@ import (
 	"math/big"
 
 	"cosmossdk.io/errors"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-
-	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 var _ sdk.AnteDecorator = EthMinGasPriceDecorator{}
@@ -48,12 +46,12 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 	baseFee := empd.EvmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
-		ethMsg, ok := msg.(*evm.MsgEthereumTx)
+		ethMsg, ok := msg.(*types.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
+				msg, (*types.MsgEthereumTx)(nil),
 			)
 		}
 
@@ -68,7 +66,7 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 		// Transactions with MinGasPrices * gasUsed < tx fees < EffectiveFee are rejected
 		// by the feemarket AnteHandle
 
-		txData, err := evm.UnpackTxData(ethMsg.Data)
+		txData, err := types.UnpackTxData(ethMsg.Data)
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to unpack tx data %s", ethMsg.Hash)
 		}
