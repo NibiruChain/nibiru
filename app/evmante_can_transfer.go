@@ -5,12 +5,13 @@ import (
 	"math/big"
 
 	"cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
-	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // CanTransferDecorator checks if the sender is allowed to transfer funds according to the EVM block

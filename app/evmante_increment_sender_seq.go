@@ -3,10 +3,11 @@ package app
 
 import (
 	"cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/x/evm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/x/evm/types"
 )
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.

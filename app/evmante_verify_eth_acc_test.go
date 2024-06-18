@@ -3,13 +3,14 @@ package app_test
 import (
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethparams "github.com/ethereum/go-ethereum/params"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 	"github.com/NibiruChain/nibiru/x/evm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	gethparams "github.com/ethereum/go-ethereum/params"
 )
 
 var NextNoOpAnteHandler sdk.AnteHandler = func(
