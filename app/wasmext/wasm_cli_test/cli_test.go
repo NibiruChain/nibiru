@@ -31,14 +31,16 @@ var commonArgs = []string{
 		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.NewInt(10_000_000))).String()),
 }
 
-type IntegrationTestSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -52,12 +54,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(s.network.WaitForNextBlock())
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestWasmHappyPath() {
+func (s *TestSuite) TestWasmHappyPath() {
 	s.requiredDeployedContractsLen(0)
 
 	_, err := s.deployWasmContract("testdata/cw_nameservice.wasm")
@@ -70,7 +72,7 @@ func (s *IntegrationTestSuite) TestWasmHappyPath() {
 }
 
 // deployWasmContract deploys a wasm contract located in path.
-func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
+func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 	val := s.network.Validators[0]
 	codec := val.ClientCtx.Codec
 
@@ -124,7 +126,7 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 }
 
 // requiredDeployedContractsLen checks the number of deployed contracts.
-func (s *IntegrationTestSuite) requiredDeployedContractsLen(total int) {
+func (s *TestSuite) requiredDeployedContractsLen(total int) {
 	val := s.network.Validators[0]
 	var queryCodeResponse types.QueryCodesResponse
 	err := testutilcli.ExecQuery(
@@ -138,5 +140,5 @@ func (s *IntegrationTestSuite) requiredDeployedContractsLen(total int) {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TestSuite))
 }

@@ -2,14 +2,23 @@
 package keeper
 
 import (
-	// "github.com/NibiruChain/nibiru/x/evm"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	gethparams "github.com/ethereum/go-ethereum/params"
+
+	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -28,6 +37,16 @@ type Keeper struct {
 
 	bankKeeper    evm.BankKeeper
 	accountKeeper evm.AccountKeeper
+	stakingKeeper evm.StakingKeeper
+
+	// Integer for the Ethereum EIP155 Chain ID
+	// eip155ChainIDInt *big.Int
+	hooks       evm.EvmHooks                                  //nolint:unused
+	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
+	// include "access_list", "json", "struct", and "markdown". If any other
+	// value is used, a no operation tracer is set.
+	tracer string
 }
 
 func NewKeeper(
@@ -36,6 +55,8 @@ func NewKeeper(
 	authority sdk.AccAddress,
 	accKeeper evm.AccountKeeper,
 	bankKeeper evm.BankKeeper,
+	stakingKeeper evm.StakingKeeper,
+	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
@@ -48,6 +69,8 @@ func NewKeeper(
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
 		accountKeeper: accKeeper,
 		bankKeeper:    bankKeeper,
+		stakingKeeper: stakingKeeper,
+		tracer:        tracer,
 	}
 }
 
@@ -64,4 +87,60 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 	}
 	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
 	return coin.Amount.BigInt()
+}
+
+func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
+	return appconst.GetEthChainID(ctx.ChainID())
+}
+
+// AddToBlockGasUsed accumulate gas used by each eth msgs included in current
+// block tx.
+func (k Keeper) AddToBlockGasUsed(
+	ctx sdk.Context, gasUsed uint64,
+) (uint64, error) {
+	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
+	if result < gasUsed {
+		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
+	}
+	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	return result, nil
+}
+
+// GetMinGasMultiplier returns minimum gas multiplier.
+func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
+	return math.LegacyNewDecWithPrec(50, 2) // 50%
+}
+
+func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
+	// TODO: plug in fee market keeper
+	return big.NewInt(0)
+}
+
+func (k Keeper) GetBaseFeeNoCfg(
+	ctx sdk.Context,
+) *big.Int {
+	return k.GetBaseFee(ctx)
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", evm.ModuleName)
+}
+
+// Tracer return a default vm.Tracer based on current keeper state
+func (k Keeper) Tracer(
+	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
+) vm.EVMLogger {
+	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+}
+
+// PostTxProcessing: Called after tx is processed successfully. If it errors,
+// the tx will revert.
+func (k *Keeper) PostTxProcessing(
+	ctx sdk.Context, msg core.Message, receipt *gethcore.Receipt,
+) error {
+	if k.hooks == nil {
+		return nil
+	}
+	return k.hooks.PostTxProcessing(ctx, msg, receipt)
 }

@@ -38,14 +38,14 @@ func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *h
 
 	// The signer used should always be the 'latest' known one because we expect
 	// signers to be backwards-compatible with old transactions.
-	eip155ChainID, err := eth.ParseChainID(b.clientCtx.ChainID)
+	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
 	cfg := b.ChainConfig()
 	if cfg == nil {
-		cfg = evm.DefaultChainConfig().EthereumConfig(eip155ChainID)
+		cfg = evm.EthereumConfig(eip155ChainID)
 	}
 
 	signer := gethcore.LatestSigner(cfg)
@@ -175,7 +175,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	}
 
 	// If user specifies both maxPriorityfee and maxFee, then we do not
-	// need to consult the chain for defaults. It's definitely a London tx.
+	// need to consult the chain for defaults.
 	if args.MaxPriorityFeePerGas == nil || args.MaxFeePerGas == nil {
 		// In this clause, user left some fields unspecified.
 		if head.BaseFee != nil && args.GasPrice == nil {

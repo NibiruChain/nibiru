@@ -363,7 +363,12 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 // - Add the contents of the optional tx access list (2930)
 //
 // This method should only be called if Yolov3/Berlin/2929+2930 is applicable at the current number.
-func (s *StateDB) PrepareAccessList(sender common.Address, dst *common.Address, precompiles []common.Address, list gethcore.AccessList) {
+func (s *StateDB) PrepareAccessList(
+	sender common.Address,
+	dst *common.Address,
+	precompiles []common.Address,
+	list gethcore.AccessList,
+) {
 	s.AddAddressToAccessList(sender)
 	if dst != nil {
 		s.AddAddressToAccessList(*dst)
@@ -466,4 +471,13 @@ func (s *StateDB) Commit() error {
 		}
 	}
 	return nil
+}
+
+// StateObjects: Returns a copy of the [StateDB.stateObjects] map.
+func (s *StateDB) StateObjects() map[common.Address]*stateObject {
+	copyOfMap := make(map[common.Address]*stateObject)
+	for key, val := range s.stateObjects {
+		copyOfMap[key] = val
+	}
+	return copyOfMap
 }

@@ -3,6 +3,7 @@ package keeper
 
 import (
 	"fmt"
+	"math/big"
 	"slices"
 
 	"github.com/NibiruChain/collections"
@@ -10,6 +11,7 @@ import (
 	sdkstore "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -144,4 +146,40 @@ func (k *Keeper) GetState(ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHas
 		collections.Join(addr, stateKey),
 		[]byte{},
 	))
+}
+
+// GetBlockBloomTransient returns bloom bytes for the current block height
+func (state EvmState) GetBlockBloomTransient(ctx sdk.Context) *big.Int {
+	bloomBz, err := state.BlockBloom.Get(ctx)
+	if err != nil {
+		return big.NewInt(0)
+	}
+	return new(big.Int).SetBytes(bloomBz)
+}
+
+func (state EvmState) CalcBloomFromLogs(
+	ctx sdk.Context, newLogs []*gethcore.Log,
+) (bloom gethcore.Bloom) {
+	if len(newLogs) > 0 {
+		bloomInt := state.GetBlockBloomTransient(ctx)
+		bloomInt.Or(bloomInt, big.NewInt(0).SetBytes(gethcore.LogsBloom(newLogs)))
+		bloom = gethcore.BytesToBloom(bloomInt.Bytes())
+	}
+	return bloom
+}
+
+// ResetTransientGasUsed resets gas to prepare for the next block of execution.
+// Called in an ante handler.
+func (k Keeper) ResetTransientGasUsed(ctx sdk.Context) {
+	k.EvmState.BlockGasUsed.Set(ctx, 0)
+}
+
+// GetAccNonce returns the sequence number of an account, returns 0 if not exists.
+func (k *Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
+	nibiruAddr := sdk.AccAddress(addr.Bytes())
+	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)
+	if acct == nil {
+		return 0
+	}
+	return acct.GetSequence()
 }

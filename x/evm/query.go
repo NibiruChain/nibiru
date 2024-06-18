@@ -31,7 +31,7 @@ func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker
 
 func (req *QueryEthAccountRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 	if err := eth.ValidateAddress(req.Address); err != nil {
 		return status.Error(
@@ -43,7 +43,7 @@ func (req *QueryEthAccountRequest) Validate() error {
 
 func (req *QueryNibiruAccountRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -72,7 +72,7 @@ func (req *QueryValidatorAccountRequest) Validate() (
 
 func (req *QueryBalanceRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -86,7 +86,7 @@ func (req *QueryBalanceRequest) Validate() error {
 
 func (req *QueryStorageRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 	if err := eth.ValidateAddress(req.Address); err != nil {
 		return status.Error(
@@ -99,7 +99,7 @@ func (req *QueryStorageRequest) Validate() error {
 
 func (req *QueryCodeRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -113,14 +113,14 @@ func (req *QueryCodeRequest) Validate() error {
 
 func (req *EthCallRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 	return nil
 }
 
 func (req *QueryTraceTxRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {
@@ -131,7 +131,7 @@ func (req *QueryTraceTxRequest) Validate() error {
 
 func (req *QueryTraceBlockRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg()
+		return common.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {

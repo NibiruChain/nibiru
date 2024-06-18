@@ -34,7 +34,10 @@ import (
 // To use a mock method it has to be registered in a given test.
 var _ evm.QueryClient = &mocks.EVMQueryClient{}
 
-var TEST_CHAIN_ID_NUMBER = eth.ParseEIP155ChainIDNumber(eth.EIP155ChainID_Testnet).Int64()
+func TEST_CHAIN_ID_NUMBER() int64 {
+	n, _ := eth.ParseEthChainID(eth.EIP155ChainID_Testnet)
+	return n.Int64()
+}
 
 // TraceTransaction
 func RegisterTraceTransactionWithPredecessors(
@@ -42,7 +45,7 @@ func RegisterTraceTransactionWithPredecessors(
 ) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
 	queryClient.On("TraceTx", rpc.NewContextWithHeight(1),
-		&evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, Predecessors: predecessors, ChainId: TEST_CHAIN_ID_NUMBER, BlockMaxGas: -1}).
+		&evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, Predecessors: predecessors, ChainId: TEST_CHAIN_ID_NUMBER(), BlockMaxGas: -1}).
 		Return(&evm.QueryTraceTxResponse{Data: data}, nil)
 }
 
@@ -50,14 +53,14 @@ func RegisterTraceTransaction(
 	queryClient *mocks.EVMQueryClient, msgEthTx *evm.MsgEthereumTx,
 ) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
-	queryClient.On("TraceTx", rpc.NewContextWithHeight(1), &evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: TEST_CHAIN_ID_NUMBER, BlockMaxGas: -1}).
+	queryClient.On("TraceTx", rpc.NewContextWithHeight(1), &evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: TEST_CHAIN_ID_NUMBER(), BlockMaxGas: -1}).
 		Return(&evm.QueryTraceTxResponse{Data: data}, nil)
 }
 
 func RegisterTraceTransactionError(
 	queryClient *mocks.EVMQueryClient, msgEthTx *evm.MsgEthereumTx,
 ) {
-	queryClient.On("TraceTx", rpc.NewContextWithHeight(1), &evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: TEST_CHAIN_ID_NUMBER}).
+	queryClient.On("TraceTx", rpc.NewContextWithHeight(1), &evm.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: TEST_CHAIN_ID_NUMBER()}).
 		Return(nil, errortypes.ErrInvalidRequest)
 }
 
@@ -67,7 +70,7 @@ func RegisterTraceBlock(
 ) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
 	queryClient.On("TraceBlock", rpc.NewContextWithHeight(1),
-		&evm.QueryTraceBlockRequest{Txs: txs, BlockNumber: 1, TraceConfig: &evm.TraceConfig{}, ChainId: TEST_CHAIN_ID_NUMBER, BlockMaxGas: -1}).
+		&evm.QueryTraceBlockRequest{Txs: txs, BlockNumber: 1, TraceConfig: &evm.TraceConfig{}, ChainId: TEST_CHAIN_ID_NUMBER(), BlockMaxGas: -1}).
 		Return(&evm.QueryTraceBlockResponse{Data: data}, nil)
 }
 
@@ -245,7 +248,7 @@ func RegisterValidatorAccountError(queryClient *mocks.EVMQueryClient) {
 func TestRegisterValidatorAccount(t *testing.T) {
 	queryClient := mocks.NewEVMQueryClient(t)
 
-	validator := sdk.AccAddress(evmtest.NewEthAddr().Bytes())
+	validator := sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes())
 	RegisterValidatorAccount(queryClient, validator)
 	res, err := queryClient.ValidatorAccount(rpc.NewContextWithHeight(1), &evm.QueryValidatorAccountRequest{})
 	require.Equal(t, &evm.QueryValidatorAccountResponse{AccountAddress: validator.String()}, res)

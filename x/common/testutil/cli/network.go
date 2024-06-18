@@ -14,6 +14,12 @@ import (
 	"sync"
 	"time"
 
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -33,7 +39,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverapi "github.com/cosmos/cosmos-sdk/server/api"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -54,85 +59,90 @@ var lock = new(sync.Mutex)
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
 
-type (
-	// Network defines a in-process testing network. It is primarily intended
-	// for client and integration testing. The Network struct can spawn any
-	// number of validators, each with its own RPC and API clients.
+// Network defines a in-process testing network. It is primarily intended
+// for client and integration testing. The Network struct can spawn any
+// number of validators, each with its own RPC and API clients.
+//
+// ### Constraints
+//
+//  1. Only the first validator will have a functional RPC and API
+//     server/client.
+//  2. Due to constraints in Tendermint's JSON-RPC implementation, only one
+//     test network can run at a time. For this reason, it's essential to
+//     invoke `Network.Cleanup` after testing to allow other tests to create
+//     networks.
+type Network struct {
+	BaseDir    string
+	Config     Config
+	Validators []*Validator
+	Logger     Logger
+}
+
+// Validator defines an in-process Tendermint validator node. Through this
+// object, a client can make RPC and API calls and interact with any client
+// command or handler.
+type Validator struct {
+	AppConfig *serverconfig.Config
+	ClientCtx client.Context
+	Ctx       *server.Context
+	// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
+	Dir string
+
+	// NodeID is a unique ID for the validator generated when the
+	// 'cli.Network' is started.
+	NodeID string
+	PubKey cryptotypes.PubKey
+
+	// Moniker is a human-readable name that identifies a validator. A
+	// moniker is optional and may be empty.
+	Moniker string
+
+	// APIAddress is the endpoint that the validator API server binds to.
+	// Only the first validator of a 'cli.Network' exposes the full API.
+	APIAddress string
+
+	// RPCAddress is the endpoint that the RPC server binds to. Only the
+	// first validator of a 'cli.Network' exposes the full API.
+	RPCAddress string
+
+	// P2PAddress is the endpoint that the RPC server binds to. The P2P
+	// server handles Tendermint peer-to-peer (P2P) networking and is
+	// critical for blockchain replication and consensus. It allows nodes
+	// to gossip blocks, transactions, and consensus messages. Only the
+	// first validator of a 'cli.Network' exposes the full API.
+	P2PAddress string
+
+	// Address - account address
+	Address sdk.AccAddress
+
+	// EthAddress - Ethereum address
+	EthAddress common.Address
+
+	// ValAddress - validator operator (valoper) address
+	ValAddress sdk.ValAddress
+
+	// RPCClient wraps most important rpc calls a client would make to
+	// listen for events, test if it also implements events.EventSwitch.
 	//
-	// ### Constraints
-	//
-	// 1. Only the first validator will have a functional RPC and API
-	//    server/client.
-	// 2. Due to constraints in Tendermint's JSON-RPC implementation, only one
-	//    test network can run at a time. For this reason, it's essential to
-	//    invoke `Network.Cleanup` after testing to allow other tests to create
-	//    networks.
-	Network struct {
-		BaseDir    string
-		Config     Config
-		Validators []*Validator
-		Logger     Logger
-	}
+	// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
+	// - rpc.HTTP
+	// - rpc.Local
+	RPCClient tmclient.Client
 
-	// Validator defines an in-process Tendermint validator node. Through this
-	// object, a client can make RPC and API calls and interact with any client
-	// command or handler.
-	Validator struct {
-		AppConfig *serverconfig.Config
-		ClientCtx client.Context
-		Ctx       *server.Context
-		// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
-		Dir string
+	JSONRPCClient *ethclient.Client
 
-		// NodeID is a unique ID for the validator generated when the
-		// 'cli.Network' is started.
-		NodeID string
-		PubKey cryptotypes.PubKey
+	tmNode *node.Node
 
-		// Moniker is a human-readable name that identifies a validator. A
-		// moniker is optional and may be empty.
-		Moniker string
-
-		// APIAddress is the endpoint that the validator API server binds to.
-		// Only the first validator of a 'cli.Network' exposes the full API.
-		APIAddress string
-
-		// RPCAddress is the endpoint that the RPC server binds to. Only the
-		// first validator of a 'cli.Network' exposes the full API.
-		RPCAddress string
-
-		// P2PAddress is the endpoint that the RPC server binds to. The P2P
-		// server handles Tendermint peer-to-peer (P2P) networking and is
-		// critical for blockchain replication and consensus. It allows nodes
-		// to gossip blocks, transactions, and consensus messages. Only the
-		// first validator of a 'cli.Network' exposes the full API.
-		P2PAddress string
-
-		// Address - account address
-		Address sdk.AccAddress
-
-		// ValAddress - validator operator (valoper) address
-		ValAddress sdk.ValAddress
-
-		// RPCClient wraps most important rpc calls a client would make to
-		// listen for events, test if it also implements events.EventSwitch.
-		//
-		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-		// - rcp.HTTP
-		// - rpc.Local
-		RPCClient tmclient.Client
-
-		tmNode *node.Node
-
-		// API exposes the app's REST and gRPC interfaces, allowing clients to
-		// read from state and broadcast txs. The API server connects to the
-		// underlying ABCI application.
-		api            *serverapi.Server
-		grpc           *grpc.Server
-		grpcWeb        *http.Server
-		secretMnemonic string
-	}
-)
+	// API exposes the app's REST and gRPC interfaces, allowing clients to
+	// read from state and broadcast txs. The API server connects to the
+	// underlying ABCI application.
+	api            *serverapi.Server
+	grpc           *grpc.Server
+	grpcWeb        *http.Server
+	secretMnemonic string
+	jsonrpc        *http.Server
+	jsonrpcDone    chan struct{}
+}
 
 // NewAppConstructor returns a new simapp AppConstructor
 func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
@@ -212,7 +222,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	buf := bufio.NewReader(os.Stdin)
 
 	// generate private keys, node IDs, and initial transactions
-	for i := 0; i < cfg.NumValidators; i++ {
+	for valIdx := 0; valIdx < cfg.NumValidators; valIdx++ {
 		appCfg := serverconfig.DefaultConfig()
 		appCfg.Pruning = cfg.PruningStrategy
 		appCfg.MinGasPrices = cfg.MinGasPrices
@@ -231,7 +241,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		appCfg.GRPC.Enable = false
 		appCfg.GRPCWeb.Enable = false
 		apiListenAddr := ""
-		if i == 0 {
+		if valIdx == 0 {
 			if cfg.APIAddress != "" {
 				apiListenAddr = cfg.APIAddress
 			} else {
@@ -276,6 +286,18 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			}
 			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
+
+			if cfg.JSONRPCAddress != "" {
+				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
+			} else {
+				_, jsonRPCPort, err := server.FreeTCPAddr()
+				if err != nil {
+					return nil, err
+				}
+				appCfg.JSONRPC.Address = fmt.Sprintf("0.0.0.0:%s", jsonRPCPort)
+			}
+			appCfg.JSONRPC.Enable = true
+			appCfg.JSONRPC.API = serverconfig.GetAPINamespaces()
 		}
 
 		loggerNoOp := log.NewNopLogger()
@@ -285,7 +307,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		ctx.Logger = loggerNoOp
 
-		nodeDirName := fmt.Sprintf("node%d", i)
+		nodeDirName := fmt.Sprintf("node%d", valIdx)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "simd")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "simcli")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
@@ -302,7 +324,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		tmCfg.SetRoot(nodeDir)
 		tmCfg.Moniker = nodeDirName
-		monikers[i] = nodeDirName
+		monikers[valIdx] = nodeDirName
 
 		proxyAddr, _, err := server.FreeTCPAddr()
 		if err != nil {
@@ -324,8 +346,8 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		nodeIDs[i] = nodeID
-		valPubKeys[i] = pubKey
+		nodeIDs[valIdx] = nodeID
+		valPubKeys[valIdx] = pubKey
 
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
 		if err != nil {
@@ -339,11 +361,13 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		var mnemonic string
-		if i < len(cfg.Mnemonics) {
-			mnemonic = cfg.Mnemonics[i]
+		if valIdx < len(cfg.Mnemonics) {
+			mnemonic = cfg.Mnemonics[valIdx]
 		}
 
 		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
+		ethAddr := common.BytesToAddress(addr.Bytes())
+
 		if err != nil {
 			return nil, err
 		}
@@ -378,7 +402,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
-			valPubKeys[i],
+			valPubKeys[valIdx],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(commission, math.LegacyOneDec(), math.LegacyOneDec()),
@@ -393,7 +417,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
+		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[valIdx], p2pURL.Hostname(), p2pURL.Port())
 		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), math.ZeroInt()))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
@@ -425,7 +449,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		serverconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
+		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
 
 		clientCtx := client.Context{}.
 			WithKeyringDir(clientDir).
@@ -438,7 +462,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			WithTxConfig(cfg.TxConfig).
 			WithAccountRetriever(cfg.AccountRetriever)
 
-		network.Validators[i] = &Validator{
+		network.Validators[valIdx] = &Validator{
 			AppConfig:      appCfg,
 			ClientCtx:      clientCtx,
 			Ctx:            ctx,
@@ -450,6 +474,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			P2PAddress:     tmCfg.P2P.ListenAddress,
 			APIAddress:     apiAddr,
 			Address:        addr,
+			EthAddress:     ethAddr,
 			ValAddress:     sdk.ValAddress(addr),
 			secretMnemonic: secret,
 		}
@@ -543,17 +568,23 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 
 // WaitForNextBlock waits for the next block to be committed, returning an error
 // upon failure.
-func (n *Network) WaitForNextBlock() error {
+func (n *Network) WaitForNextBlockVerbose() (int64, error) {
 	lastBlock, err := n.LatestHeight()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = n.WaitForHeight(lastBlock + 1)
+	newBlock := lastBlock + 1
+	_, err = n.WaitForHeight(newBlock)
 	if err != nil {
-		return err
+		return lastBlock, err
 	}
 
+	return newBlock, err
+}
+
+func (n *Network) WaitForNextBlock() error {
+	_, err := n.WaitForNextBlockVerbose()
 	return err
 }
 
@@ -612,6 +643,9 @@ func (n *Network) Cleanup() {
 			if v.grpcWeb != nil {
 				_ = v.grpcWeb.Close()
 			}
+		}
+		if v.jsonrpc != nil {
+			_ = v.jsonrpc.Close()
 		}
 	}
 

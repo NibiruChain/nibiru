@@ -12,7 +12,7 @@ import (
 )
 
 func TestTransactionLogsValidate(t *testing.T) {
-	addr := evmtest.NewEthAddr().String()
+	addr := evmtest.NewEthAccInfo().EthAddr.String()
 
 	testCases := []struct {
 		name    string
@@ -96,7 +96,7 @@ func TestTransactionLogsValidate(t *testing.T) {
 }
 
 func TestValidateLog(t *testing.T) {
-	addr := evmtest.NewEthAddr().String()
+	addr := evmtest.NewEthAccInfo().EthAddr.String()
 
 	testCases := []struct {
 		name    string
@@ -169,7 +169,7 @@ func TestValidateLog(t *testing.T) {
 }
 
 func TestConversionFunctions(t *testing.T) {
-	addr := evmtest.NewEthAddr().String()
+	addr := evmtest.NewEthAccInfo().EthAddr.String()
 
 	txLogs := evm.TransactionLogs{
 		Hash: common.BytesToHash([]byte("tx_hash")).String(),

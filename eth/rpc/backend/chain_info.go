@@ -22,7 +22,7 @@ import (
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
 func (b *Backend) ChainID() (*hexutil.Big, error) {
-	eip155ChainID, err := eth.ParseChainID(b.clientCtx.ChainID)
+	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
 	if err != nil {
 		panic(err)
 	}
@@ -42,22 +42,20 @@ func (b *Backend) ChainID() (*hexutil.Big, error) {
 
 // ChainConfig returns the latest ethereum chain configuration
 func (b *Backend) ChainConfig() *params.ChainConfig {
-	params, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
+	_, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {
 		return nil
 	}
 
-	return params.Params.ChainConfig.EthereumConfig(b.chainID)
+	return evm.EthereumConfig(b.chainID)
 }
 
 // BaseFee returns the base fee tracked by the Fee Market module.
 // If the base fee is not enabled globally, the query returns nil.
-// If the London hard fork is not activated at the current height, the query will
-// return nil.
 func (b *Backend) BaseFee(
 	blockRes *tmrpctypes.ResultBlockResults,
 ) (baseFee *big.Int, err error) {
-	// return BaseFee if London hard fork is activated and feemarket is enabled
+	// return BaseFee if feemarket is enabled
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
 		baseFee = nil

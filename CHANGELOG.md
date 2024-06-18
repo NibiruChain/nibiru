@@ -46,9 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
-- [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat(ica): add interchain accounts
-- [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
+- [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
+- [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
+- [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
 
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
 
@@ -60,9 +61,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1855](https://github.com/NibiruChain/nibiru/pull/1855) - feat(eth-pubsub): Implement in-memory EventBus for real-time topic management and event distribution
 - [#1856](https://github.com/NibiruChain/nibiru/pull/1856) - feat(eth-rpc): Conversion types and functions between Ethereum txs and blocks and Tendermint ones.
 - [#1861](https://github.com/NibiruChain/nibiru/pull/1861) - feat(eth-rpc): RPC backend, Ethereum tracer, KV indexer, and RPC APIs
-- [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests 
+- [#1869](https://github.com/NibiruChain/nibiru/pull/1869) - feat(eth): Module and start of keeper tests
 - [#1871](https://github.com/NibiruChain/nibiru/pull/1871) - feat(evm): app config and json-rpc
 - [#1873](https://github.com/NibiruChain/nibiru/pull/1873) - feat(evm): keeper collections and grpc query impls for EthAccount, NibiruAccount
+- [#1883](https://github.com/NibiruChain/nibiru/pull/1883) - feat(evm): keeper logic, Ante handlers, EthCall, and EVM transactions.
+- [#1887](https://github.com/NibiruChain/nibiru/pull/1887) - test(evm): eth api integration test suite
+- [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
+- [#1895](https://github.com/NibiruChain/nibiru/pull/1895) - refactor(geth): Reference go-ethereum as a submodule for easier change tracking with upstream
+- [#1901](https://github.com/NibiruChain/nibiru/pull/1901) - test(evm): more e2e test contracts for edge cases
+- [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
+- [#1909](https://github.com/NibiruChain/nibiru/pull/1909) - chore(evm): set is_london true by default and removed from config
+- [#1911](https://github.com/NibiruChain/nibiru/pull/1911) - chore(evm): simplified config by removing old eth forks
+- [#1914](https://github.com/NibiruChain/nibiru/pull/1914) - refactor(evm): Remove dead code and document non-EVM ante handler 
+- [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
 
 #### Dapp modules: perp, spot, oracle, etc
 
@@ -89,6 +100,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
 - [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
+- [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
+- [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
+- [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
 
 ### Dependencies
 
@@ -107,8 +121,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
-- Bump `golangci/golangci-lint-action` from 4 to 5 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854))
+- Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.4 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858))
+- Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
+- Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.32.2 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900))
+
+## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
+
+Nibiru v1.3.0 adds interchain accounts.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.3.0)]
+
+### Features
+
+- [#1820](https://github.com/NibiruChain/nibiru/pull/1820) - feat: add interchain accounts
+
+### Bug Fixes
+
+- [#1864](https://github.com/NibiruChain/nibiru/pull/1864) - fix(ica): add ICA controller stack
+
+### Improvements
+
+- [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 
 ## [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0) - 2024-03-28
 

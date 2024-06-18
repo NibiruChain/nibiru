@@ -3,7 +3,6 @@ package evm
 
 import (
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/exp/slices"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -44,7 +42,6 @@ func NewParams(
 	allowUnprotectedTxs,
 	enableCreate,
 	enableCall bool,
-	config ChainConfig,
 	extraEIPs []int64,
 	activePrecompiles,
 	evmChannels []string,
@@ -55,7 +52,6 @@ func NewParams(
 		EnableCreate:        enableCreate,
 		EnableCall:          enableCall,
 		ExtraEIPs:           extraEIPs,
-		ChainConfig:         config,
 		ActivePrecompiles:   activePrecompiles,
 		EVMChannels:         evmChannels,
 	}
@@ -70,7 +66,6 @@ func DefaultParams() Params {
 		EvmDenom:            DefaultEVMDenom,
 		EnableCreate:        DefaultEnableCreate,
 		EnableCall:          DefaultEnableCall,
-		ChainConfig:         DefaultChainConfig(),
 		ExtraEIPs:           DefaultExtraEIPs,
 		AllowUnprotectedTxs: DefaultAllowUnprotectedTxs,
 		ActivePrecompiles:   AvailableEVMExtensions,
@@ -115,10 +110,6 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateBool(p.AllowUnprotectedTxs); err != nil {
-		return err
-	}
-
-	if err := validateChainConfig(p.ChainConfig); err != nil {
 		return err
 	}
 
@@ -208,15 +199,6 @@ func validateEIPs(i interface{}) error {
 	return nil
 }
 
-func validateChainConfig(i interface{}) error {
-	cfg, ok := i.(ChainConfig)
-	if !ok {
-		return fmt.Errorf("invalid chain config type: %T", i)
-	}
-
-	return cfg.Validate()
-}
-
 // ValidatePrecompiles checks if the precompile addresses are valid and unique.
 func ValidatePrecompiles(i interface{}) error {
 	precompiles, ok := i.([]string)
@@ -245,9 +227,4 @@ func ValidatePrecompiles(i interface{}) error {
 	}
 
 	return nil
-}
-
-// IsLondon returns if london hardfork is enabled.
-func IsLondon(ethConfig *params.ChainConfig, height int64) bool {
-	return ethConfig.IsLondon(big.NewInt(height))
 }

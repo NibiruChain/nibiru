@@ -71,7 +71,7 @@ service Query {
   }
 
   // BaseFee queries the base fee of the parent block of the current block,
-  // it's similar to feemarket module's method, but also checks london hardfork status.
+  // Similar to feemarket module's method
   rpc BaseFee(QueryBaseFeeRequest) returns (QueryBaseFeeResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/base_fee";
   }
