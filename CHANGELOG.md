@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
 - [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
 - [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
+- [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
+- [#1932](https://github.com/NibiruChain/nibiru/pull/1932) - fix(gosdk): fix keyring import functions
 
 #### Nibiru EVM
 
@@ -70,8 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
 - [#1909](https://github.com/NibiruChain/nibiru/pull/1909) - chore(evm): set is_london true by default and removed from config
 - [#1911](https://github.com/NibiruChain/nibiru/pull/1911) - chore(evm): simplified config by removing old eth forks
-- [#1914](https://github.com/NibiruChain/nibiru/pull/1914) - refactor(evm): Remove dead code and document non-EVM ante handler 
+- [#1912](https://github.com/NibiruChain/nibiru/pull/1912) - test(evm): unit tests for evm_ante
+- [#1914](https://github.com/NibiruChain/nibiru/pull/1914) - refactor(evm): Remove dead code and document non-EVM ante handler- [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
 - [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
+- [#1922](https://github.com/NibiruChain/nibiru/pull/1922) - feat(evm): tracer option is read from the config.
 
 #### Dapp modules: perp, spot, oracle, etc
 
@@ -123,7 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.4 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
-- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.32.2 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.33.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923))
 
 ## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
 
