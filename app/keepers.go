@@ -562,11 +562,16 @@ func (app *NibiruApp) InitKeepers(
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
 	icaHostStack := icahost.NewIBCModule(app.icaHostKeeper)
 
+	var wasmStack porttypes.IBCModule
+	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.ibcKeeper.ChannelKeeper, app.ibcFeeKeeper)
+	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.ibcFeeKeeper)
+
 	// Add transfer stack to IBC Router
 	ibcRouter.
 		AddRoute(icahosttypes.SubModuleName, icaHostStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
-		AddRoute(ibctransfertypes.ModuleName, transferStack)
+		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Create Mock IBC Fee module stack for testing
 	// SendPacket, since it is originating from the application to core IBC:
