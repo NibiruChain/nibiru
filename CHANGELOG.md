@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Features
+
+* [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
+
 ## [v1.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0) - 2024-06-04
 
 Nibiru v1.4.0 adds PebbleDB support and increases the wasm contract size limit to 3MB.
