@@ -1,7 +1,8 @@
 package gosdk
 
 import (
-	"github.com/cosmos/cosmos-sdk/crypto"
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -74,10 +75,17 @@ func CreateSignerFromPrivKey(
 	return keyring.NewLocalRecord(keyName, privKey, privKey.PubKey())
 }
 
-func AddSignerToKeyring(
-	kring keyring.Keyring, privKey cryptotypes.PrivKey, keyName string,
-) error {
-	passphrase := "password"
-	armor := crypto.EncryptArmorPrivKey(privKey, passphrase, privKey.Type())
-	return kring.ImportPrivKey(keyName, armor, passphrase)
+func AddSignerToKeyringSecp256k1(
+	kring keyring.Keyring, mnemonic string, keyName string,
+) (sdk.AccAddress, error) {
+	algo := hd.Secp256k1
+	overwrite := true
+	addr, secretMnem, err := sdktestutil.GenerateSaveCoinKey(
+		kring, keyName, mnemonic, overwrite, algo,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w : Failed Key Generation with mnemonic %s", err, secretMnem)
+	}
+
+	return addr, err
 }
