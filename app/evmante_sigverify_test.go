@@ -11,8 +11,10 @@ import (
 	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
-var InvalidChainID = big.NewInt(987654321)
-var RandomAddress = evmtest.NewEthAccInfo().EthAddr.Hex()
+var (
+	InvalidChainID = big.NewInt(987654321)
+	RandomAddress  = evmtest.NewEthAccInfo().EthAddr.Hex()
+)
 
 func (s *TestSuite) TestEthSigVerificationDecorator() {
 	testCases := []struct {

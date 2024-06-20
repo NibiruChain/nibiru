@@ -248,7 +248,6 @@ func buildEthMsg(
 	gasLimit uint64,
 	from string,
 	to *common.Address,
-
 ) *evm.MsgEthereumTx {
 	ethContractCreationTxParams := &evm.EvmTxArgs{
 		ChainID:  chainID,
