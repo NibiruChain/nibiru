@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_2_0"
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_3_0"
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_4_0"
+	"github.com/NibiruChain/nibiru/app/upgrades/v1_5_0"
 )
 
 var Upgrades = []upgrades.Upgrade{
@@ -24,6 +25,7 @@ var Upgrades = []upgrades.Upgrade{
 	v1_2_0.Upgrade,
 	v1_3_0.Upgrade,
 	v1_4_0.Upgrade,
+	v1_5_0.Upgrade,
 }
 
 func (app *NibiruApp) setupUpgrades() {
