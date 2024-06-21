@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
+
+Nibiru v1.5.0 enables IBC CosmWasm smart contracts.
+
+* [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0)]
+* [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.5.0)]
+
 ### Features
 
 * [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
