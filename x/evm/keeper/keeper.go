@@ -32,6 +32,10 @@ type Keeper struct {
 	// EvmState isolates the key-value stores (collections) for the x/evm module.
 	EvmState EvmState
 
+	// FunTokens isolates the key-value stores (collections) for fungible token
+	// mappings.
+	FunTokens FunTokenState
+
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 
@@ -49,6 +53,8 @@ type Keeper struct {
 	tracer string
 }
 
+// NewKeeper is a constructor for an x/evm [Keeper]. This function is necessary
+// because the [Keeper] struct has private fields.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey, transientKey storetypes.StoreKey,
@@ -67,6 +73,7 @@ func NewKeeper(
 		transientKey:  transientKey,
 		authority:     authority,
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
+		FunTokens:     NewFunTokenState(cdc, storeKey),
 		accountKeeper: accKeeper,
 		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
