@@ -3,8 +3,9 @@ package eth_test
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/eth"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 var threeValidAddrs []eth.HexAddr = []eth.HexAddr{
@@ -23,7 +24,6 @@ var threeValidAddrs []eth.HexAddr = []eth.HexAddr{
 // upper case will all produce the same `HexAddr` when passed to
 // `eth.NewHexAddrFromStr`.
 func (s *Suite) TestHexAddr_NewHexAddr() {
-
 	// InputAddrVariation: An instance of a "hexAddr" that derives to the
 	// expected Ethereum address and results in the same string representation.
 	type InputAddrVariation struct {
@@ -90,7 +90,6 @@ func (s *Suite) TestHexAddr_NewHexAddr() {
 			},
 		},
 	} {
-
 		want := tcGroup.want
 		for _, tc := range tcGroup.hexAddrs {
 			tcName := fmt.Sprintf("want %s, %s", want, tc.testCaseName)
