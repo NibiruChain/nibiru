@@ -36,9 +36,11 @@ func NewFunTokenState(
 		IndexesFunToken{
 			ERC20Addr: collections.NewMultiIndex(
 				storeKey, evm.KeyPrefixFunTokenIdxErc20,
-				collections.StringKeyEncoder, //  indexing key (IK): ERC-20 addr
+				eth.KeyEncoderEthAddr, //  indexing key (IK): ERC-20 addr
 				primaryKeyEncoder,
-				func(v evm.FunToken) string { return v.Erc20Addr },
+				func(v evm.FunToken) gethcommon.Address {
+					return v.Erc20Addr.ToAddr()
+				},
 			),
 			BankDenom: collections.NewMultiIndex(
 				storeKey, evm.KeyPrefixFunTokenIdxBankDenom,
@@ -64,7 +66,7 @@ type IndexesFunToken struct {
 	//  - indexing key (IK): ERC-20 addr
 	//  - primary key (PK): FunToken ID
 	//  - value (V): FunToken value
-	ERC20Addr collections.MultiIndex[string, funtokenPrimaryKeyType, funtokenValueType]
+	ERC20Addr collections.MultiIndex[gethcommon.Address, funtokenPrimaryKeyType, funtokenValueType]
 
 	// BankDenom (MultiIndex): Index FunToken by coin denomination
 	//  - indexing key (IK): Coin denom

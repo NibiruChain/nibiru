@@ -12,7 +12,10 @@ option go_package = "github.com/NibiruChain/nibiru/x/evm";
 // "Coin" type in Golang.
 message FunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
-  string erc20_addr = 1;
+  string erc20_addr = 1 [
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.nullable)   = false
+  ];
 
   // bank_denom: Coin denomination in the Bank Module.
   string bank_denom = 2;

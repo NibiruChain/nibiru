@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -23,32 +22,43 @@ func TestSuite_RunAll(t *testing.T) {
 func (s *TestSuite) TestFunToken() {
 	for testIdx, tc := range []struct {
 		bankDenom string
-		erc20Addr string
+		erc20Addr eth.HexAddr
 		wantErr   string
 	}{
 		{
+			// sad: Invalid bank denom
 			bankDenom: "",
-			erc20Addr: "",
+			erc20Addr: eth.HexAddr(""),
 			wantErr:   "FunTokenError",
 		},
 		{
 			bankDenom: "unibi",
-			erc20Addr: "5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
-			wantErr:   "not encoded as expected",
-		},
-		{
-			bankDenom: "unibi",
-			erc20Addr: eth.NewHexAddr(gethcommon.HexToAddress("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")).String(),
+			erc20Addr: eth.MustNewHexAddrFromStr("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"),
 			wantErr:   "",
 		},
 		{
+			bankDenom: "unibi",
+			erc20Addr: eth.MustNewHexAddrFromStr("5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED"),
+			wantErr:   "",
+		},
+		{
+			// NOTE: notice how this one errors using the same happy path
+			// input as above because an unsafe constructor was used.
+			// Naked type overrides should not be used with eth.HexAddr.
+			// Always use NewHexAddr, NewHexAddrFromStr, or MustNewHexAddr...
+			bankDenom: "unibi",
+			erc20Addr: eth.HexAddr("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"),
+			wantErr:   "not encoded as expected",
+		},
+
+		{
 			bankDenom: "ibc/AAA/BBB",
-			erc20Addr: "0xE1aA1500b962528cBB42F05bD6d8A6032a85602f",
+			erc20Addr: eth.MustNewHexAddrFromStr("0xE1aA1500b962528cBB42F05bD6d8A6032a85602f"),
 			wantErr:   "",
 		},
 		{
 			bankDenom: "tf/contract-addr/subdenom",
-			erc20Addr: "0x6B2e60f1030aFa69F584829f1d700b47eE5Fc74a",
+			erc20Addr: eth.MustNewHexAddrFromStr("0x6B2e60f1030aFa69F584829f1d700b47eE5Fc74a"),
 			wantErr:   "",
 		},
 	} {
@@ -59,7 +69,7 @@ func (s *TestSuite) TestFunToken() {
 			}
 			err := funtoken.Validate()
 			if tc.wantErr != "" {
-				s.Require().Error(err)
+				s.Require().Error(err, "funtoken %s", funtoken)
 				return
 			}
 			s.Require().NoError(err)
@@ -93,10 +103,10 @@ func (s *TestSuite) TestFunToken() {
 		},
 	} {
 		s.Run(tc.name, func() {
-			funA := evm.FunToken{Erc20Addr: tc.A}
-			funB := evm.FunToken{Erc20Addr: tc.B}
+			funA := evm.FunToken{Erc20Addr: eth.HexAddr(tc.A)}
+			funB := evm.FunToken{Erc20Addr: eth.HexAddr(tc.B)}
 
-			s.EqualValues(funA.ERC20Addr(), funB.ERC20Addr())
+			s.EqualValues(funA.Erc20Addr.ToAddr(), funB.Erc20Addr.ToAddr())
 		})
 	}
 }

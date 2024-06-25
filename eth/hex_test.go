@@ -3,6 +3,7 @@ package eth_test
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
@@ -11,9 +12,9 @@ import (
 )
 
 var threeValidAddrs []eth.HexAddr = []eth.HexAddr{
-	eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
-	eth.HexAddr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
-	eth.HexAddr("0x1111111111111111111112222222222223333323"),
+	eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
+	eth.MustNewHexAddrFromStr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
+	eth.MustNewHexAddrFromStr("0x1111111111111111111112222222222223333323"),
 }
 
 func (s *Suite) TestHexAddr_UniqueMapping() {
@@ -213,6 +214,59 @@ func (s *Suite) TestHexAddr_Valid() {
 				return
 			}
 			s.Require().NoError(err)
+		})
+	}
+}
+
+func withQuotes(s string) string { return fmt.Sprintf("\"%s\"", s) }
+
+func withoutQuotes(s string) string {
+	return strings.TrimPrefix(strings.TrimSuffix(s, "\""), "\"")
+}
+
+func (s *Suite) TestProtobufEncoding() {
+	for tcIdx, tc := range []struct {
+		given   eth.HexAddr
+		json    string
+		wantErr string
+	}{
+		{
+			given: threeValidAddrs[0],
+			json:  withQuotes(threeValidAddrs[0].String()),
+		},
+		{
+			given: threeValidAddrs[1],
+			json:  withQuotes(threeValidAddrs[1].String()),
+		},
+		{
+			given: threeValidAddrs[2],
+			json:  withQuotes(threeValidAddrs[2].String()),
+		},
+	} {
+		s.Run(strconv.Itoa(tcIdx), func() {
+			givenMut := tc.given
+			jsonBz, err := givenMut.MarshalJSON()
+			s.NoError(err)
+			s.Equal(tc.json, string(jsonBz))
+
+			err = (&givenMut).UnmarshalJSON(jsonBz)
+			s.NoError(err)
+			s.Equal(givenMut, tc.given,
+				"Given -> MarshalJSON -> UnmarshalJSON returns a different value than the given when it should be an identity operation (no-op). test case #%d", tcIdx)
+
+			bz, err := tc.given.Marshal()
+			s.NoError(err)
+			jsonBzWithoutQuotes := withoutQuotes(tc.json)
+			s.Equal(jsonBzWithoutQuotes, string(bz),
+				"Marshaling to bytes gives different value than the test case specifies. test case #%d", tcIdx)
+
+			err = (&givenMut).Unmarshal(bz)
+			s.NoError(err)
+			s.Equal(tc.given, givenMut,
+				"Given -> Marshal -> Unmarshal returns a different value than the given when it should be an identity operation (no-op). test case #%d", tcIdx)
+
+			s.Equal(len(tc.given), tc.given.Size())
+			s.Equal(len(tc.json), tc.given.Size()+2)
 		})
 	}
 }

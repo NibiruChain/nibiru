@@ -7,13 +7,15 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 // FIXME: Explore problems arrising from ERC1155 creating multiple fungible
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
 func (fun FunToken) ID() []byte {
-	return newFunTokenIDFromStr(fun.Erc20Addr, fun.BankDenom)
+	return newFunTokenIDFromStr(fun.Erc20Addr.String(), fun.BankDenom)
 }
 
 func NewFunTokenID(erc20 gethcommon.Address, bankDenom string) []byte {
@@ -34,21 +36,10 @@ func (fun FunToken) Validate() error {
 		return errValidateFunToken(err.Error())
 	}
 
-	if !gethcommon.IsHexAddress(fun.Erc20Addr) {
-		return errValidateFunToken(
-			fmt.Sprintf("ERC20 addr is not a valid, hex-encoded Ethereum address (%s)", fun.Erc20Addr),
-		)
+	if err := fun.Erc20Addr.Valid(); err != nil {
+		return errValidateFunToken(err.Error())
 	}
 
-	// Check address encoding bijectivity
-	wantAddr := fun.ERC20Addr().Hex()
-	haveAddr := fun.Erc20Addr
-	if haveAddr != wantAddr {
-		return errValidateFunToken(fmt.Sprintf(
-			"Etherem address is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
-			haveAddr, wantAddr,
-		))
-	}
 	return nil
 }
 
@@ -59,12 +50,8 @@ func NewFunToken(
 	erc20 gethcommon.Address, bankDenom string, isMadeFromCoin bool,
 ) FunToken {
 	return FunToken{
-		Erc20Addr:      erc20.Hex(),
+		Erc20Addr:      eth.NewHexAddr(erc20),
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: isMadeFromCoin,
 	}
-}
-
-func (fun FunToken) ERC20Addr() gethcommon.Address {
-	return gethcommon.HexToAddress(fun.Erc20Addr)
 }
