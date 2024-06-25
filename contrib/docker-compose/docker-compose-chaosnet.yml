@@ -209,6 +209,7 @@ services:
 
   heartmonitor:
     image: ghcr.io/nibiruchain/go-heartmonitor:latest
+    platform: linux/amd64
     profiles: [heartmonitor]
     restart: always
     command: --clean
@@ -227,6 +228,7 @@ services:
 
   graphql:
     image: ghcr.io/nibiruchain/go-heartmonitor:latest
+    platform: linux/amd64
     profiles: [heartmonitor]
     restart: always
     command: --graphql
