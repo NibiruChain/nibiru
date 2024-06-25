@@ -48,6 +48,7 @@ services:
         RPC_PORT: 36657
         GRPC_PORT: 19090
         LCD_PORT: 11317
+    profiles: [ibc]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:36657"]
       interval: 60s
@@ -63,6 +64,7 @@ services:
 
   pricefeeder-1:
     image: ghcr.io/nibiruchain/pricefeeder:latest
+    profiles: [ibc]
     restart: always
     environment:
       CHAIN_ID: nibiru-localnet-1
@@ -77,6 +79,7 @@ services:
 
   hermes-keys-task-0:
     image: informalsystems/hermes:1.6.0
+    profiles: [ibc]
     user: root
     command:
       [
@@ -107,6 +110,7 @@ services:
 
   hermes-keys-task-1:
     image: informalsystems/hermes:1.6.0
+    profiles: [ibc]
     user: root
     command:
       [
@@ -139,6 +143,7 @@ services:
 
   hermes-client-connection-channel-task:
     image: informalsystems/hermes:1.6.0
+    profiles: [ibc]
     user: root
     command:
       [
@@ -172,6 +177,7 @@ services:
 
   hermes:
     image: informalsystems/hermes:1.6.0
+    profiles: [ibc]
     restart: always
     user: root
     command: ["start"]
@@ -191,22 +197,9 @@ services:
       hermes-client-connection-channel-task:
         condition: service_completed_successfully
 
-  faucet:
-    restart: always
-    image: ghcr.io/nibiruchain/go-faucet:latest
-    environment:
-      NODE: nibiru-0:9090
-      MNEMONIC: undo donkey arena rule old portion long forget rescue post stuff normal reduce raw unable warrior method stairs valley enhance glory lens sign zero
-      SEND_COINS: 11000000unibi
-      MAX_SEND_COINS: 110000000unibi
-    depends_on:
-      nibiru-0:
-        condition: service_healthy
-    ports:
-      - 8000:8000
-
   heartmonitor-db:
     image: postgres:14
+    profiles: [heartmonitor]
     restart: always
     environment:
       POSTGRES_PASSWORD: postgres
@@ -216,6 +209,7 @@ services:
 
   heartmonitor:
     image: ghcr.io/nibiruchain/go-heartmonitor:latest
+    profiles: [heartmonitor]
     restart: always
     command: --clean
     volumes:
@@ -231,26 +225,9 @@ services:
       heartmonitor-db:
         condition: service_started
 
-  liquidator:
-    image: ghcr.io/nibiruchain/go-heartmonitor:latest
-    restart: always
-    command: --liquidator
-    environment:
-      - DATABASE_URI=postgresql://postgres:postgres@heartmonitor-db:5432/heart-monitor?sslmode=disable
-      - TENDERMINT_RPC_ENDPOINT=http://nibiru-0:26657
-      - GRPC_ENDPOINT=tcp://nibiru-0:9090
-      - GRPC_INSECURE=true
-      - NO_PARTITIONS=true
-      - LIQUIDATOR_MNEMONIC=record damage person caution truly riot resource luxury rude guide mushroom athlete fantasy dentist friend mule depth salmon photo unfold exclude coyote idea evoke
-      - LIQUIDATOR_GAS_LIMIT_INITIAL=500000
-      - LIQUIDATOR_GAS_MULTIPLIER=5
-      - LIQUIDATOR_GAS_MAX_ATTEMPTS=10
-    depends_on:
-      heartmonitor:
-        condition: service_started
-
   graphql:
     image: ghcr.io/nibiruchain/go-heartmonitor:latest
+    profiles: [heartmonitor]
     restart: always
     command: --graphql
     environment:
