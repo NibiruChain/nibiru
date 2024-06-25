@@ -45,7 +45,7 @@ func (fun FunToken) Validate() error {
 	haveAddr := fun.Erc20Addr
 	if haveAddr != wantAddr {
 		return errValidateFunToken(fmt.Sprintf(
-			"ERC20 addr is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
+			"Etherem address is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
 			haveAddr, wantAddr,
 		))
 	}

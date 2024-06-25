@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -37,7 +38,7 @@ func (s *TestSuite) TestFunToken() {
 		},
 		{
 			bankDenom: "unibi",
-			erc20Addr: eth.NewHexAddrFromStr("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed").String(),
+			erc20Addr: eth.NewHexAddr(gethcommon.HexToAddress("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")).String(),
 			wantErr:   "",
 		},
 		{

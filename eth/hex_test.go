@@ -2,16 +2,60 @@ package eth_test
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
 var threeValidAddrs []eth.HexAddr = []eth.HexAddr{
 	eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
 	eth.HexAddr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
 	eth.HexAddr("0x1111111111111111111112222222222223333323"),
+}
+
+func (s *Suite) TestHexAddr_UniqueMapping() {
+	type CorrectAnswer struct {
+		gethAddrOut gethcommon.Address
+		hexAddrOut  eth.HexAddr
+	}
+
+	for tcIdx, tc := range []struct {
+		equivSet set.Set[string]
+	}{
+		{
+			equivSet: set.New(
+				"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+				"0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
+				"0x5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED",
+				"5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
+				"0X5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED",
+			),
+		},
+	} {
+		s.Run(strconv.Itoa(tcIdx), func() {
+			s.T().Log("Show that each member of the set is equivalent")
+			var answer CorrectAnswer
+			for idx, equivHexAddrString := range tc.equivSet.ToSlice() {
+				gethAddrOut := gethcommon.HexToAddress(equivHexAddrString)
+				hexAddrOut, err := eth.NewHexAddrFromStr(equivHexAddrString)
+				s.NoError(err)
+				if idx == 0 {
+					answer = CorrectAnswer{
+						gethAddrOut: gethAddrOut,
+						hexAddrOut:  hexAddrOut,
+					}
+					continue
+				}
+
+				s.Equal(answer.gethAddrOut, gethAddrOut)
+				s.Equal(answer.gethAddrOut, hexAddrOut.ToAddr())
+				s.Equal(answer.hexAddrOut, hexAddrOut)
+			}
+		})
+	}
 }
 
 // TestHexAddr_NewHexAddr: Test to showcase the flexibility of inputs that can be
@@ -94,23 +138,24 @@ func (s *Suite) TestHexAddr_NewHexAddr() {
 		for _, tc := range tcGroup.hexAddrs {
 			tcName := fmt.Sprintf("want %s, %s", want, tc.testCaseName)
 			s.Run(tcName, func() {
-				got := eth.NewHexAddrFromStr(tc.hexAddr)
-				err := got.Valid()
+				got, err := eth.NewHexAddrFromStr(tc.hexAddr)
 
 				// gethcommon.Address input should give the same thing
-				got2 := eth.NewHexAddr(common.HexToAddress(tc.hexAddr))
+				got2 := eth.NewHexAddr(gethcommon.HexToAddress(tc.hexAddr))
 				if tc.wantNotEqual {
 					s.NotEqual(want, got)
 					s.NotEqual(want.ToAddr(), got.ToAddr())
 					s.NotEqual(want, got2)
 					s.NotEqual(want.ToAddr(), got2.ToAddr())
+					s.Require().Error(err)
+					return
 				} else {
 					// string input should give the canonical HexAddr
 					s.Equal(want, got)
 					s.Equal(want.ToAddr(), got.ToAddr())
 
 					// gethcommon.Address input should give the same thing
-					got2 := eth.NewHexAddr(common.HexToAddress(tc.hexAddr))
+					got2 := eth.NewHexAddr(gethcommon.HexToAddress(tc.hexAddr))
 					s.Equal(want, got2)
 					s.Equal(want.ToAddr(), got2.ToAddr())
 				}

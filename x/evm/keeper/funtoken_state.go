@@ -13,8 +13,10 @@ import (
 	funtoken "github.com/NibiruChain/nibiru/x/evm"
 )
 
-type funtokenPrimaryKeyType = []byte
-type funtokenValueType = funtoken.FunToken
+type (
+	funtokenPrimaryKeyType = []byte
+	funtokenValueType      = funtoken.FunToken
+)
 
 // FunTokenState isolates the key-value stores (collections) for fungible token
 // mappings. This struct is written as an extension of the default indexed map to

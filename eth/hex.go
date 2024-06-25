@@ -8,18 +8,23 @@ import (
 
 /////////// HexAddr
 
-// TODO: UD-DEBUG: The eth.Addr should map to only one HexString
-// TODO: UD-DEBUG: The eth.Addr should be derivable from HexString
-// TODO: Constructor should be safe (errorable)
-// TODO: UD-DEBUG: HexString -> bytes -> eth.Addr == HexString -> eth.Addr
-// TODO: UD-DEBUG: validate: HexString === HexString -> HexString(eth.Addr.Hex())
-
 // HexAddr: An ERC55-comlpiant hexadecimal-encoded string representing the 20
 // byte address of an Ethereum account.
 type HexAddr string
 
 func NewHexAddr(addr EthAddr) HexAddr {
 	return HexAddr(addr.Hex())
+}
+
+func NewHexAddrFromStr(addr string) (HexAddr, error) {
+	hexAddr := HexAddr(gethcommon.HexToAddress(addr).Hex())
+	if !gethcommon.IsHexAddress(addr) {
+		return hexAddr, fmt.Errorf(
+			"%s: input \"%s\" is not an ERC55-compliant, 20 byte hex address",
+			HexAddrError, addr,
+		)
+	}
+	return hexAddr, hexAddr.Valid()
 }
 
 const HexAddrError = "HexAddrError"
@@ -31,7 +36,7 @@ func (h HexAddr) Valid() error {
 
 	if !gethcommon.IsHexAddress(haveAddr) || haveAddr != wantAddr {
 		return fmt.Errorf(
-			"%s: Etherem address is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
+			"%s: Ethereum address is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
 			HexAddrError, haveAddr, wantAddr,
 		)
 	}
@@ -39,22 +44,13 @@ func (h HexAddr) Valid() error {
 	return nil
 }
 
-func NewHexAddrFromStr(addr string) HexAddr {
-	return HexAddr(gethcommon.HexToAddress(addr).Hex())
-}
-
 func (h HexAddr) ToAddr() EthAddr {
 	return gethcommon.HexToAddress(string(h))
 }
 
-// func (h HexAddr) Bytes() []byte {
-// 	return gethcommon.Hex2Bytes(
-// 		strings.TrimPrefix(string(h), "0x"),
-// 	)
-// }
+// ToBytes gets the string representation of the underlying address.
+func (h HexAddr) ToBytes() []byte {
+	return h.ToAddr().Bytes()
+}
 
 func (h HexAddr) String() string { return h.ToAddr().Hex() }
-
-func (h HexAddr) FromBytes(bz []byte) HexAddr {
-	return HexAddr(gethcommon.BytesToAddress(bz).Hex())
-}
