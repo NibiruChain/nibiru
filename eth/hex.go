@@ -10,7 +10,7 @@ import (
 
 /////////// HexAddr
 
-// HexAddr: An ERC55-comlpiant hexadecimal-encoded string representing the 20
+// HexAddr: An ERC55-compliant hexadecimal-encoded string representing the 20
 // byte address of an Ethereum account.
 type HexAddr string
 
