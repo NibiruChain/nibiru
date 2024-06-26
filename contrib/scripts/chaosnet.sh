@@ -25,6 +25,7 @@ sed -i 's/log_format = .*/log_format = "json"/' $HOME/.nibid/config/config.toml
 sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
 sed -i "s/localhost:1317/0.0.0.0:$LCD_PORT/" $HOME/.nibid/config/app.toml
+sed -i '/\[grpc\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
 sed -i "s/localhost:9090/0.0.0.0:$GRPC_PORT/" $HOME/.nibid/config/app.toml
 
 # ------------------------------------------------------------------------
