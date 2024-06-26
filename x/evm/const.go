@@ -28,6 +28,13 @@ const (
 	KeyPrefixAccState
 	KeyPrefixParams
 	KeyPrefixEthAddrIndex
+
+	// KV store prefix for `FunToken` mappings
+	KeyPrefixFunTokens
+	// KV store prefix for indexing `FunToken` by ERC-20 address
+	KeyPrefixFunTokenIdxErc20
+	// KV store prefix for indexing `FunToken` by bank coin denomination
+	KeyPrefixFunTokenIdxBankDenom
 )
 
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only

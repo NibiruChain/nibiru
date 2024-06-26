@@ -128,7 +128,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
 	k.EvmState.ModuleParams.Set(ctx, params)
 }
 
-// SetState update contract storage, delete if value is empty.
+// SetState updates contract storage and deletes if the value is empty.
 func (state EvmState) SetAccState(
 	ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHash, stateValue []byte,
 ) {

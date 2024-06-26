@@ -4,7 +4,7 @@ import (
 	fmt "fmt"
 
 	"github.com/NibiruChain/collections"
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // BytesToHex converts a byte array to a hexadecimal string
@@ -13,10 +13,10 @@ func BytesToHex(bz []byte) string {
 }
 
 // EthAddr: (alias) 20 byte address of an Ethereum account.
-type EthAddr = ethcommon.Address
+type EthAddr = gethcommon.Address
 
 // EthHash: (alias) 32 byte Keccak256 hash of arbitrary data.
-type EthHash = ethcommon.Hash //revive:disable-line:exported
+type EthHash = gethcommon.Hash //revive:disable-line:exported
 
 var (
 	// Implements a `collections.ValueEncoder` for the `[]byte` type
@@ -44,7 +44,7 @@ func (_ veBytes) Name() string                  { return "[]byte" }
 type veEthAddr struct{}
 
 func (_ veEthAddr) Encode(value EthAddr) []byte    { return value.Bytes() }
-func (_ veEthAddr) Decode(bz []byte) EthAddr       { return ethcommon.BytesToAddress(bz) }
+func (_ veEthAddr) Decode(bz []byte) EthAddr       { return gethcommon.BytesToAddress(bz) }
 func (_ veEthAddr) Stringify(value EthAddr) string { return value.Hex() }
 func (_ veEthAddr) Name() string                   { return "EthAddr" }
 
@@ -65,7 +65,7 @@ type keEthAddr struct{}
 
 func (_ keEthAddr) Encode(value EthAddr) []byte { return value.Bytes() }
 func (_ keEthAddr) Decode(bz []byte) (int, EthAddr) {
-	return ethcommon.AddressLength, ethcommon.BytesToAddress(bz)
+	return gethcommon.AddressLength, gethcommon.BytesToAddress(bz)
 }
 func (_ keEthAddr) Stringify(value EthAddr) string { return value.Hex() }
 
@@ -74,6 +74,6 @@ type keEthHash struct{}
 
 func (_ keEthHash) Encode(value EthHash) []byte { return value.Bytes() }
 func (_ keEthHash) Decode(bz []byte) (int, EthHash) {
-	return ethcommon.HashLength, ethcommon.BytesToHash(bz)
+	return gethcommon.HashLength, gethcommon.BytesToHash(bz)
 }
 func (_ keEthHash) Stringify(value EthHash) string { return value.Hex() }
