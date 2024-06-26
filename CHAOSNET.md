@@ -17,20 +17,18 @@
 
 Chaosnet is an expanded version of localnet that runs:
 
-- two validators (nibiru-0 and nibiru-1)
+- up to two validators (nibiru-0 and nibiru-1)
 - pricefeeders for each validator
-- a hermes relayer between the two validators
-- a faucet
-- a postgres:14 database
-- a heartmonitor instance
-- a liquidator instance
-- a graphql server
+- a hermes relayer between the two validators (if the `ibc` profile is used)
+- a postgres:14 database (if the `heartmonitor` profile is used)
+- a heartmonitor instance (if the `heartmonitor` profile is used)
+- a graphql server (if the `heartmonitor` profile is used)
 
 ## How to run "chaosnet"
 
 1. Make sure you have [Docker](https://docs.docker.com/engine/install/) installed and running
 2. Make sure you have `make` installed
-3. Docker login to ghcr.io
+3. (Optional) Docker login to ghcr.io (only if you want to use the `heartmonitor` profile)
 
 ```bash
 docker login ghcr.io
@@ -42,9 +40,14 @@ Enter your GitHub username for the `username` field, and your personal access to
 
 Note that this will take a while the first time you run it, as it will need to pull all the images from the registry, build the chaonset image locally, and set up the IBC channel (which has a lot of round trip packet commits).
 
+Other profiles include
+
+- `make chaosnet-ibc`: creates two validator instances and a hermes relayer
+- `make chaosnet-heartmonitor`: single validator with heartmonitor+graphql instance
+
 ## How to force pull images from the registry
 
-By default, most images (heart-monitor, liquidator, etc.) are cached locally and won't re-fetch from upstream registries. To force a pull, you can run
+By default, most images (heartmonitor, etc.) are cached locally and won't re-fetch from upstream registries. To force a pull, you can run
 
 ```sh
 make chaosnet-build
