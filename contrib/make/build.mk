@@ -17,33 +17,41 @@ ifeq (,$(VERSION))
 	endif
 endif
 
-OS_NAME := $(shell uname -s | tr A-Z a-z)
-ifeq ($(shell uname -m),x86_64)
-	ARCH_NAME := amd64
-else
-	ARCH_NAME := arm64
-endif
-SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
-
 # SDK_PACK: Cosmos-SDK version
-SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
+SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  "s/ /\@/g")
 # TM_VERSION: Tendermint Core version (CometBFT)
 # grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
-TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::') 
+TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed "s:.* ::")
 ROCKSDB_VERSION := 8.9.1
-WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
-DOCKER := $(shell which docker)
+WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | sed "s:.* ::")
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
 
 export GO111MODULE = on
 
-# process build tags
-build_tags = netgo osusergo ledger static rocksdb pebbledb
-ifeq ($(OS_NAME),darwin)
-	build_tags += static_wasm grocksdb_no_link
+ifeq ($(OS),Windows_NT)
+	OS_NAME := windows
+	ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+		ARCH_NAME := amd64
+	else
+		ARCH_NAME := arm64
+	endif
 else
-	build_tags += muslc
+	OS_NAME := $(shell uname -s | tr A-Z a-z)
+	ifeq ($(shell uname -m),x86_64)
+		ARCH_NAME := amd64
+	else
+		ARCH_NAME := arm64
+	endif
+	SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
+endif
+
+# process build tags
+build_tags = netgo osusergo ledger static pebbledb
+ifeq ($(OS_NAME),darwin)
+	build_tags += rocksdb static_wasm grocksdb_no_link
+else ifeq ($(OS_NAME),linux)
+	build_tags += rocksdb muslc
 endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
@@ -58,21 +66,21 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=nibid \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
+		  -X 'github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)' \
 		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
+		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb \
 		  -linkmode=external \
 		  -w -s
 
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags "$(ldflags)"
 CGO_CFLAGS  := -I$(TEMPDIR)/include
 CGO_LDFLAGS := -L$(TEMPDIR)/lib
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lrocksdb -lstdc++ -lz -lbz2
-else
+else ifeq ($(OS_NAME),linux)
 	CGO_LDFLAGS += -static -lm -lbz2
 endif
 
@@ -80,11 +88,16 @@ endif
 ###                                  Build                                  ###
 ###############################################################################
 
-$(TEMPDIR)/:
-	mkdir -p $(TEMPDIR)/
+$(TEMPDIR):
+ifeq ($(OS_NAME),windows)
+	@if not exist "$(TEMPDIR)" mkdir "$(TEMPDIR)"
+else
+	@mkdir -p $(TEMPDIR)
+endif
 
 # download required libs
-rocksdblib: $(TEMPDIR)/
+rocksdblib: $(TEMPDIR)
+ifneq ($(OS_NAME),windows)
 	@mkdir -p $(TEMPDIR)/include
 	@mkdir -p $(TEMPDIR)/lib
 	@if [ ! -d $(TEMPDIR)/include/rocksdb ] ; \
@@ -95,48 +108,61 @@ rocksdblib: $(TEMPDIR)/
 	then \
 	  wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/; \
 	fi
+endif
 
-wasmvmlib: $(TEMPDIR)/
+wasmvmlib: $(TEMPDIR)
+ifeq ($(OS_NAME),windows)
+	@if not exist "$(TEMPDIR)/lib" mkdir "$(TEMPDIR)/lib"
+	@if not exist "$(TEMPDIR)/lib/wasmvm.dll" curl -o "$(TEMPDIR)/lib/wasmvm.dll" https://storage.googleapis.com/nibiru-static-files/wasmvm_$(WASMVM_VERSION)_$(ARCH_NAME).dll
+else
 	@mkdir -p $(TEMPDIR)/lib
 	@if [ ! -f $(TEMPDIR)/lib/libwasmvm*.a ] ; \
 	then \
 	  if [ "$(OS_NAME)" = "darwin" ] ; \
 	  then \
-	    wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/libwasmvmstatic_darwin.a; \
+	    wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/libwasmvmstatic_darwin.a; \
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a; \
 		else \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a; \
 		fi; \
 	  fi; \
 	fi
+endif
 
 packages:
-	@if [ "$(OS_NAME)" = "linux" ] ; \
+ifeq ($(OS_NAME),linux)
+	if [ -f /etc/debian_version ] ; \
 	then \
-	  if [ -f /etc/debian_version ] ; \
-      then \
-        $(SUDO) apt-get update; \
-        dpkg -s liblz4-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y liblz4-dev; \
-        dpkg -s libsnappy-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libsnappy-dev; \
-        dpkg -s zlib1g-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y zlib1g-dev; \
-        dpkg -s libbz2-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libbz2-dev; \
-        dpkg -s libzstd-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libzstd-dev; \
-      else \
-	    echo "Please make sure you have installed the following libraries: lz4, snappy, z, bz2, zstd"; \
-      fi; \
-    fi
+	  $(SUDO) apt-get update; \
+	  dpkg -s liblz4-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y liblz4-dev; \
+	  dpkg -s libsnappy-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libsnappy-dev; \
+	  dpkg -s zlib1g-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y zlib1g-dev; \
+	  dpkg -s libbz2-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libbz2-dev; \
+	  dpkg -s libzstd-dev > /dev/null 2>&1 || $(SUDO) apt-get install --no-install-recommends -y libzstd-dev; \
+	else \
+	  echo "Please make sure you have installed the following libraries: lz4, snappy, z, bz2, zstd"; \
+	fi
+endif
 
 # command for make build and make install
-build: BUILDARGS=-o $(BUILDDIR)/
-build install: go.sum $(BUILDDIR)/ rocksdblib wasmvmlib packages
+build: BUILDARGS=-o $(BUILDDIR)
+build install: go.sum $(BUILDDIR) packages wasmvmlib rocksdblib
+ifeq ($(OS_NAME),windows)
+	set CGO_ENABLED=1 && set CGO_CFLAGS="$(CGO_CFLAGS)" && set CGO_LDFLAGS="$(CGO_LDFLAGS)" && go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
+else
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
+endif
 
 # ensure build directory exists
-$(BUILDDIR)/:
-	mkdir -p $(BUILDDIR)/
+$(BUILDDIR):
+ifeq ($(OS_NAME),windows)
+	@if not exist "$(BUILDDIR)" mkdir "$(BUILDDIR)"
+else
+	@mkdir -p $(BUILDDIR)
+endif
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
