@@ -16,7 +16,7 @@ type HexAddr string
 
 var _ sdk.CustomProtobufType = (*HexAddr)(nil)
 
-func NewHexAddr(addr EthAddr) HexAddr {
+func NewHexAddr(addr gethcommon.Address) HexAddr {
 	return HexAddr(addr.Hex())
 }
 
@@ -58,7 +58,7 @@ func (h HexAddr) Valid() error {
 	return nil
 }
 
-func (h HexAddr) ToAddr() EthAddr {
+func (h HexAddr) ToAddr() gethcommon.Address {
 	return gethcommon.HexToAddress(string(h))
 }
 
@@ -88,7 +88,7 @@ func (h HexAddr) MarshalJSON() ([]byte, error) {
 // Implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *HexAddr) MarshalTo(data []byte) (n int, err error) {
-	bz := []byte{}
+	bz := []byte(*h)
 	copy(data, bz)
 	hexAddr, err := NewHexAddrFromStr(string(bz))
 	*h = hexAddr

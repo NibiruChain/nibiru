@@ -270,3 +270,12 @@ func (s *Suite) TestProtobufEncoding() {
 		})
 	}
 }
+
+func (s *Suite) TestHexAddrToString() {
+	hexAddr := eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
+	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", hexAddr.String())
+	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", string(hexAddr))
+
+	ethAddr := gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
+	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", ethAddr.String())
+}

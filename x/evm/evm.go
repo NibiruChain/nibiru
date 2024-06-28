@@ -15,29 +15,24 @@ import (
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
 func (fun FunToken) ID() []byte {
-	return newFunTokenIDFromStr(fun.Erc20Addr.String(), fun.BankDenom)
+	return NewFunTokenID(fun.Erc20Addr, fun.BankDenom)
 }
 
-func NewFunTokenID(erc20 gethcommon.Address, bankDenom string) []byte {
-	erc20Addr := erc20.Hex()
-	return newFunTokenIDFromStr(erc20Addr, bankDenom)
+func NewFunTokenID(erc20 eth.HexAddr, bankDenom string) []byte {
+	return tmhash.Sum([]byte(erc20.String() + "|" + bankDenom))
 }
 
-func newFunTokenIDFromStr(erc20AddrHex string, bankDenom string) []byte {
-	return tmhash.Sum([]byte(erc20AddrHex + "|" + bankDenom))
-}
-
-func errValidateFunToken(errMsg string) error {
-	return fmt.Errorf("FunTokenError: %s", errMsg)
+func funTokenValidationError(err error) error {
+	return fmt.Errorf("FunTokenError: %s", err.Error())
 }
 
 func (fun FunToken) Validate() error {
 	if err := sdk.ValidateDenom(fun.BankDenom); err != nil {
-		return errValidateFunToken(err.Error())
+		return funTokenValidationError(err)
 	}
 
 	if err := fun.Erc20Addr.Valid(); err != nil {
-		return errValidateFunToken(err.Error())
+		return funTokenValidationError(err)
 	}
 
 	return nil
