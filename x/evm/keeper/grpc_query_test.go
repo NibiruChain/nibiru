@@ -903,27 +903,31 @@ func (s *KeeperSuite) TestQueryTokenMapping() {
 			name: "sad: no token mapping",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryTokenMappingRequest{
-					Token: "unibi",
+					TokenId: string(evm.NewFunTokenID(eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"), "unibi")),
 				}
 				wantResp = &evm.QueryTokenMappingResponse{
 					FunToken: nil,
 				}
 				return req, wantResp
 			},
-			wantErr: "token not found for unibi",
+			wantErr: "token mapping not found for",
 		},
 		{
 			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
 			setup: func(deps *evmtest.TestDeps) {
-				deps.K.FunTokens.Insert(deps.Ctx, []byte("unibi"), evm.FunToken{
-					Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
-					BankDenom:      "unibi",
-					IsMadeFromCoin: true,
-				})
+				erc20Addr := eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
+				deps.K.FunTokens.Insert(deps.Ctx,
+					evm.NewFunTokenID(erc20Addr, "unibi"),
+					evm.FunToken{
+						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						BankDenom:      "unibi",
+						IsMadeFromCoin: true,
+					},
+				)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryTokenMappingRequest{
-					Token: "unibi",
+					TokenId: string(evm.NewFunTokenID(eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"), "unibi")),
 				}
 				wantResp = &evm.QueryTokenMappingResponse{
 					FunToken: &evm.FunToken{

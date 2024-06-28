@@ -746,9 +746,9 @@ func (k Keeper) TokenMapping(
 ) (*evm.QueryTokenMappingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	funToken, err := k.FunTokens.Get(ctx, []byte(req.Token))
+	funToken, err := k.FunTokens.Get(ctx, []byte(req.TokenId))
 	if err != nil {
-		return nil, grpcstatus.Errorf(grpccodes.NotFound, "token not found for %s", req.Token)
+		return nil, grpcstatus.Errorf(grpccodes.NotFound, "token mapping not found for %s", req.TokenId)
 	}
 
 	return &evm.QueryTokenMappingResponse{

@@ -77,7 +77,7 @@ service Query {
   }
 
   rpc TokenMapping(QueryTokenMappingRequest) returns (QueryTokenMappingResponse) {
-    option (google.api.http).get = "/nibiru/evm/v1/token_mapping/{token}";
+    option (google.api.http).get = "/nibiru/evm/v1/token_mapping/{token_id}";
   }
 }
 
@@ -310,9 +310,9 @@ message QueryTokenMappingRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // token identifier can be either the hex contract address of the ERC20 or the
-	// Cosmos base denomination
-  string token = 1;
+  // token identifier which is a sha256 sum of the erc20 address concatenated with the cosmos denom
+  // see `NewFunTokenID()` for more details
+  string token_id = 1;
 }
 
 message QueryTokenMappingResponse {
