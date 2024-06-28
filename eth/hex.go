@@ -16,7 +16,7 @@ type HexAddr string
 
 var _ sdk.CustomProtobufType = (*HexAddr)(nil)
 
-func NewHexAddr(addr EthAddr) HexAddr {
+func NewHexAddr(addr gethcommon.Address) HexAddr {
 	return HexAddr(addr.Hex())
 }
 
@@ -58,7 +58,7 @@ func (h HexAddr) Valid() error {
 	return nil
 }
 
-func (h HexAddr) ToAddr() EthAddr {
+func (h HexAddr) ToAddr() gethcommon.Address {
 	return gethcommon.HexToAddress(string(h))
 }
 
