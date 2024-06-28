@@ -903,31 +903,53 @@ func (s *KeeperSuite) TestQueryTokenMapping() {
 			name: "sad: no token mapping",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryTokenMappingRequest{
-					TokenId: string(evm.NewFunTokenID(eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"), "unibi")),
+					Token: "unibi",
 				}
 				wantResp = &evm.QueryTokenMappingResponse{
 					FunToken: nil,
 				}
 				return req, wantResp
 			},
-			wantErr: "token mapping not found for",
+			wantErr: "token mapping not found for unibi",
 		},
 		{
 			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
 			setup: func(deps *evmtest.TestDeps) {
-				erc20Addr := eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
-				deps.K.FunTokens.Insert(deps.Ctx,
-					evm.NewFunTokenID(erc20Addr, "unibi"),
-					evm.FunToken{
-						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
-						BankDenom:      "unibi",
-						IsMadeFromCoin: true,
-					},
+				deps.K.FunTokens.SafeInsert(
+					deps.Ctx,
+					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+					"unibi",
+					true,
 				)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryTokenMappingRequest{
-					TokenId: string(evm.NewFunTokenID(eth.MustNewHexAddrFromStr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"), "unibi")),
+					Token: "unibi",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: &evm.FunToken{
+						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						BankDenom:      "unibi",
+						IsMadeFromCoin: true,
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: token mapping exists from ERC20 token -> cosmos coin",
+			setup: func(deps *evmtest.TestDeps) {
+				deps.K.FunTokens.SafeInsert(
+					deps.Ctx,
+					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+					"unibi",
+					true,
+				)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
 				}
 				wantResp = &evm.QueryTokenMappingResponse{
 					FunToken: &evm.FunToken{
