@@ -915,7 +915,7 @@ func (s *KeeperSuite) TestQueryTokenMapping() {
 		{
 			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
 			setup: func(deps *evmtest.TestDeps) {
-				deps.K.FunTokens.SafeInsert(
+				_ = deps.K.FunTokens.SafeInsert(
 					deps.Ctx,
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
@@ -940,7 +940,7 @@ func (s *KeeperSuite) TestQueryTokenMapping() {
 		{
 			name: "happy: token mapping exists from ERC20 token -> cosmos coin",
 			setup: func(deps *evmtest.TestDeps) {
-				deps.K.FunTokens.SafeInsert(
+				_ = deps.K.FunTokens.SafeInsert(
 					deps.Ctx,
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
