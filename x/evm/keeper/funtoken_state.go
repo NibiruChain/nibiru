@@ -12,16 +12,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
-type (
-	funtokenPrimaryKeyType = []byte
-	funtokenValueType      = evm.FunToken
-)
-
 // FunTokenState isolates the key-value stores (collections) for fungible token
 // mappings. This struct is written as an extension of the default indexed map to
 // add utility functions.
 type FunTokenState struct {
-	collections.IndexedMap[funtokenPrimaryKeyType, funtokenValueType, IndexesFunToken]
+	collections.IndexedMap[[]byte, evm.FunToken, IndexesFunToken]
 }
 
 func NewFunTokenState(
@@ -29,7 +24,7 @@ func NewFunTokenState(
 	storeKey storetypes.StoreKey,
 ) FunTokenState {
 	primaryKeyEncoder := eth.KeyEncoderBytes
-	valueEncoder := collections.ProtoValueEncoder[funtokenValueType](cdc)
+	valueEncoder := collections.ProtoValueEncoder[evm.FunToken](cdc)
 	idxMap := collections.NewIndexedMap(
 		storeKey, evm.KeyPrefixFunTokens, primaryKeyEncoder, valueEncoder,
 		IndexesFunToken{
@@ -52,8 +47,8 @@ func NewFunTokenState(
 	return FunTokenState{IndexedMap: idxMap}
 }
 
-func (idxs IndexesFunToken) IndexerList() []collections.Indexer[funtokenPrimaryKeyType, funtokenValueType] {
-	return []collections.Indexer[funtokenPrimaryKeyType, funtokenValueType]{
+func (idxs IndexesFunToken) IndexerList() []collections.Indexer[[]byte, evm.FunToken] {
+	return []collections.Indexer[[]byte, evm.FunToken]{
 		idxs.ERC20Addr,
 		idxs.BankDenom,
 	}
@@ -65,13 +60,13 @@ type IndexesFunToken struct {
 	//  - indexing key (IK): ERC-20 addr
 	//  - primary key (PK): FunToken ID
 	//  - value (V): FunToken value
-	ERC20Addr collections.MultiIndex[gethcommon.Address, funtokenPrimaryKeyType, funtokenValueType]
+	ERC20Addr collections.MultiIndex[gethcommon.Address, []byte, evm.FunToken]
 
 	// BankDenom (MultiIndex): Index FunToken by coin denomination
 	//  - indexing key (IK): Coin denom
 	//  - primary key (PK): FunToken ID
 	//  - value (V): FunToken value
-	BankDenom collections.MultiIndex[string, funtokenPrimaryKeyType, funtokenValueType]
+	BankDenom collections.MultiIndex[string, []byte, evm.FunToken]
 }
 
 // Insert adds an [evm.FunToken] to state with defensive validation. Errors if
