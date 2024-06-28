@@ -10,12 +10,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
-	funtoken "github.com/NibiruChain/nibiru/x/evm"
 )
 
 type (
 	funtokenPrimaryKeyType = []byte
-	funtokenValueType      = funtoken.FunToken
+	funtokenValueType      = evm.FunToken
 )
 
 // FunTokenState isolates the key-value stores (collections) for fungible token
