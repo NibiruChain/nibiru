@@ -80,10 +80,10 @@ type IndexesFunToken struct {
 func (fun FunTokenState) SafeInsert(
 	ctx sdk.Context, erc20 gethcommon.Address, bankDenom string, isMadeFromCoin bool,
 ) error {
-	funtoken := evm.NewFunToken(erc20, bankDenom, isMadeFromCoin)
-	if err := funtoken.Validate(); err != nil {
+	funToken := evm.NewFunToken(erc20, bankDenom, isMadeFromCoin)
+	if err := funToken.Validate(); err != nil {
 		return err
 	}
-	fun.Insert(ctx, funtoken.ID(), funtoken)
+	fun.Insert(ctx, funToken.ID(), funToken)
 	return nil
 }

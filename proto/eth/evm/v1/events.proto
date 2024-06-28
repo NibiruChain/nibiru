@@ -43,3 +43,8 @@ message EventBlockBloom {
   // bloom is the bloom filter of the block
   string bloom = 1;
 }
+
+message EventCreateFunTokenFromCoin {
+  string denom = 1;
+  string contract_address = 2;
+}

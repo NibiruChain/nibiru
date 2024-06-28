@@ -20,6 +20,9 @@ service Msg {
   // UpdateParams defined a governance operation for updating the x/evm module parameters.
   // The authority is hard-coded to the Cosmos SDK x/gov module account
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // CreateFunTokenFromCoin registers existing cosmos coin as an evm erc-20 fungible token contract.
+  rpc CreateFunTokenFromCoin(MsgCreateFunTokenFromCoin) returns (MsgCreateFunTokenFromCoinResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -176,3 +179,23 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
+
+
+// MsgCreateFunTokenFromCoin: sdk.Msg that registers cosmos denom as an evm erc-20 contract.
+// A denom has the form "tf/[creatorAddr]/[subdenom]".
+//  - Denoms become unique x/bank tokens, so the creator-subdenom pair that
+//    defines a denom cannot be reused.
+//  - The resulting denom's admin is originally set to be the creator, but the
+//    admin can be changed later.
+message MsgCreateFunTokenFromCoin {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // cosmos denom. Ex: ibc/abc123def
+  string denom = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+}
+
+// MsgCreateFunTokenFromCoinResponse is the return value of MsgCreateFunTokenFromCoin
+message MsgCreateFunTokenFromCoinResponse {
+  // NewContractAddress: erc-20 contract address. Ex: 0x123abc456
+  string new_contract_address = 1
+  [ (gogoproto.moretags) = "yaml:\"new_contract_address\"" ];
+}
