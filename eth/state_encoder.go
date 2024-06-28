@@ -12,9 +12,6 @@ func BytesToHex(bz []byte) string {
 	return fmt.Sprintf("%x", bz)
 }
 
-// EthHash: (alias) 32 byte Keccak256 hash of arbitrary data.
-type EthHash = gethcommon.Hash //revive:disable-line:exported
-
 var (
 	// Implements a `collections.ValueEncoder` for the `[]byte` type
 	ValueEncoderBytes collections.ValueEncoder[[]byte] = veBytes{}
@@ -26,7 +23,7 @@ var (
 	KeyEncoderEthAddr collections.KeyEncoder[gethcommon.Address] = keEthAddr{}
 
 	// keEthHash: Implements a `collections.KeyEncoder` for an Ethereum hash.
-	KeyEncoderEthHash collections.KeyEncoder[EthHash] = keEthHash{}
+	KeyEncoderEthHash collections.KeyEncoder[gethcommon.Hash] = keEthHash{}
 )
 
 // collections ValueEncoder[[]byte]
@@ -69,8 +66,8 @@ func (_ keEthAddr) Stringify(value gethcommon.Address) string { return value.Hex
 // keEthHash: Implements a `collections.KeyEncoder` for an Ethereum hash.
 type keEthHash struct{}
 
-func (_ keEthHash) Encode(value EthHash) []byte { return value.Bytes() }
-func (_ keEthHash) Decode(bz []byte) (int, EthHash) {
+func (_ keEthHash) Encode(value gethcommon.Hash) []byte { return value.Bytes() }
+func (_ keEthHash) Decode(bz []byte) (int, gethcommon.Hash) {
 	return gethcommon.HashLength, gethcommon.BytesToHash(bz)
 }
-func (_ keEthHash) Stringify(value EthHash) string { return value.Hex() }
+func (_ keEthHash) Stringify(value gethcommon.Hash) string { return value.Hex() }

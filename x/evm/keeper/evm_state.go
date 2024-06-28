@@ -130,7 +130,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
 
 // SetState updates contract storage and deletes if the value is empty.
 func (state EvmState) SetAccState(
-	ctx sdk.Context, addr gethcommon.Address, stateKey eth.EthHash, stateValue []byte,
+	ctx sdk.Context, addr gethcommon.Address, stateKey gethcommon.Hash, stateValue []byte,
 ) {
 	if len(stateValue) != 0 {
 		state.AccState.Insert(ctx, collections.Join(addr, stateKey), stateValue)
@@ -140,7 +140,7 @@ func (state EvmState) SetAccState(
 }
 
 // GetState: Implements `statedb.Keeper` interface: Loads smart contract state.
-func (k *Keeper) GetState(ctx sdk.Context, addr gethcommon.Address, stateKey eth.EthHash) eth.EthHash {
+func (k *Keeper) GetState(ctx sdk.Context, addr gethcommon.Address, stateKey gethcommon.Hash) gethcommon.Hash {
 	return gethcommon.BytesToHash(k.EvmState.AccState.GetOr(
 		ctx,
 		collections.Join(addr, stateKey),
