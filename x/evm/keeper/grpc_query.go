@@ -740,3 +740,18 @@ func (k *Keeper) TraceEthTxMsg(
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
+
+func (k Keeper) TokenMapping(
+	goCtx context.Context, req *evm.QueryTokenMappingRequest,
+) (*evm.QueryTokenMappingResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	funToken, err := k.FunTokens.Get(ctx, []byte(req.Token))
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.NotFound, "token not found for %s", req.Token)
+	}
+
+	return &evm.QueryTokenMappingResponse{
+		FunToken: &funToken,
+	}, nil
+}
