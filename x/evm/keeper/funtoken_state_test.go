@@ -21,7 +21,7 @@ func (s *KeeperSuite) TestInsertAndGet() {
 	s.Require().NoError(err)
 
 	// test Get
-	funToken, err := deps.K.FunTokens.Get(deps.Ctx, evm.NewFunTokenID(erc20Addr, "unibi"))
+	funToken, err := deps.K.FunTokens.Get(deps.Ctx, evm.NewFunTokenID(eth.NewHexAddr(erc20Addr), "unibi"))
 	s.Require().NoError(err)
 	s.Require().Equal(eth.HexAddr("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"), funToken.Erc20Addr)
 	s.Require().Equal("unibi", funToken.BankDenom)
@@ -73,10 +73,10 @@ func (s *KeeperSuite) TestDelete() {
 	s.Require().NoError(err)
 
 	// test Delete
-	err = deps.K.FunTokens.Delete(deps.Ctx, evm.NewFunTokenID(erc20Addr, "unibi"))
+	err = deps.K.FunTokens.Delete(deps.Ctx, evm.NewFunTokenID(eth.NewHexAddr(erc20Addr), "unibi"))
 	s.Require().NoError(err)
 
 	// test Get
-	_, err = deps.K.FunTokens.Get(deps.Ctx, evm.NewFunTokenID(erc20Addr, "unibi"))
+	_, err = deps.K.FunTokens.Get(deps.Ctx, evm.NewFunTokenID(eth.NewHexAddr(erc20Addr), "unibi"))
 	s.Require().Error(err)
 }
