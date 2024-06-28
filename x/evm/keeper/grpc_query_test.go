@@ -894,3 +894,65 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 		})
 	}
 }
+
+func (s *KeeperSuite) TestQueryTokenMapping() {
+	type In = *evm.QueryTokenMappingRequest
+	type Out = *evm.QueryTokenMappingResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: no token mapping",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "unibi",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: nil,
+				}
+				return req, wantResp
+			},
+			wantErr: "token not found for unibi",
+		},
+		{
+			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
+			setup: func(deps *evmtest.TestDeps) {
+				deps.K.FunTokens.Insert(deps.Ctx, []byte("unibi"), evm.FunToken{
+					Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+					BankDenom:      "unibi",
+					IsMadeFromCoin: true,
+				})
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "unibi",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: &evm.FunToken{
+						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						BankDenom:      "unibi",
+						IsMadeFromCoin: true,
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.TokenMapping(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}
