@@ -181,12 +181,7 @@ message MsgUpdateParams {
 message MsgUpdateParamsResponse {}
 
 
-// MsgCreateFunTokenFromCoin: sdk.Msg that registers cosmos denom as an evm erc-20 contract.
-// A denom has the form "tf/[creatorAddr]/[subdenom]".
-//  - Denoms become unique x/bank tokens, so the creator-subdenom pair that
-//    defines a denom cannot be reused.
-//  - The resulting denom's admin is originally set to be the creator, but the
-//    admin can be changed later.
+// MsgCreateFunTokenFromCoin: sdk.Msg that registers cosmos denom as an evm erc-20 contract
 message MsgCreateFunTokenFromCoin {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   // cosmos denom. Ex: ibc/abc123def

@@ -47,4 +47,5 @@ message EventBlockBloom {
 message EventCreateFunTokenFromCoin {
   string denom = 1;
   string contract_address = 2;
+  string creator = 3;
 }

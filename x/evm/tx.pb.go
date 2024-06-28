@@ -440,12 +440,7 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
-// MsgCreateFunTokenFromCoin: sdk.Msg that registers cosmos denom as an evm erc-20 contract.
-// A denom has the form "tf/[creatorAddr]/[subdenom]".
-//   - Denoms become unique x/bank tokens, so the creator-subdenom pair that
-//     defines a denom cannot be reused.
-//   - The resulting denom's admin is originally set to be the creator, but the
-//     admin can be changed later.
+// MsgCreateFunTokenFromCoin: sdk.Msg that registers cosmos denom as an evm erc-20 contract
 type MsgCreateFunTokenFromCoin struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty" yaml:"sender"`
 	// cosmos denom. Ex: ibc/abc123def

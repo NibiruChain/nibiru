@@ -475,6 +475,10 @@ func BinSearch(
 }
 
 func (msg *MsgCreateFunTokenFromCoin) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return fmt.Errorf("invalid sender: %s", msg.Sender)
+	}
 	if err := sdk.ValidateDenom(msg.Denom); err != nil {
 		return errValidateFunToken(err.Error())
 	}

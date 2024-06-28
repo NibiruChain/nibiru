@@ -29,6 +29,7 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventCreateFunTokenFromCoin{
+		Creator:         msg.Sender,
 		Denom:           msg.Denom,
 		ContractAddress: newContractAddress.String(),
 	})
