@@ -480,7 +480,7 @@ func (msg *MsgCreateFunTokenFromCoin) ValidateBasic() error {
 		return fmt.Errorf("invalid sender: %s", msg.Sender)
 	}
 	if err := sdk.ValidateDenom(msg.Denom); err != nil {
-		return errValidateFunToken(err.Error())
+		return fmt.Errorf("invalid denom: %s", msg.Denom)
 	}
 	return nil
 }
