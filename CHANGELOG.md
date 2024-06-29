@@ -48,9 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
-- [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
-- [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
-- [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
 - [#1932](https://github.com/NibiruChain/nibiru/pull/1932) - fix(gosdk): fix keyring import functions
 
 #### Nibiru EVM
@@ -103,8 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Non-breaking/Compatible Improvements
 
-- [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
-- [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 - [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
 - [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
 - [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
@@ -131,6 +126,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
 - Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.33.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923))
+
+## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
+
+Nibiru v1.5.0 enables IBC CosmWasm smart contracts.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.5.0)]
+
+### Features
+
+- [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
+
+## [v1.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0) - 2024-06-04
+
+Nibiru v1.4.0 adds PebbleDB support and increases the wasm contract size limit to 3MB.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.4.0)]
+
+### State Machine Breaking
+
+- [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
+
+### Features
+
+- [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
+- [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
+-
 
 ## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
 
