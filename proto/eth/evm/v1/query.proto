@@ -75,6 +75,10 @@ service Query {
   rpc BaseFee(QueryBaseFeeRequest) returns (QueryBaseFeeResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/base_fee";
   }
+
+  rpc TokenMapping(QueryTokenMappingRequest) returns (QueryTokenMappingResponse) {
+    option (google.api.http).get = "/nibiru/evm/v1/token_mapping/{token}";
+  }
 }
 
 // QueryEthAccountRequest is the request type for the Query/Account RPC method.
@@ -300,4 +304,20 @@ message QueryBaseFeeRequest {}
 message QueryBaseFeeResponse {
   // base_fee is the EIP1559 base fee
   string base_fee = 1 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+}
+
+message QueryTokenMappingRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // either the 0x contract address of the ERC-20 token or the cosmos denom
+  string token = 1;
+}
+
+message QueryTokenMappingResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;  
+
+  // fun_token is a mapping between the Cosmos native coin and the ERC20 contract address
+  FunToken fun_token = 1;
 }
