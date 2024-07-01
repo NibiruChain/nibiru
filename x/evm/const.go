@@ -3,7 +3,8 @@ package evm
 
 import (
 	"github.com/NibiruChain/collections"
-	"github.com/ethereum/go-ethereum/common"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -49,12 +50,12 @@ const (
 var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
 
 // PrefixAccStateEthAddr returns a prefix to iterate over a given account storage.
-func PrefixAccStateEthAddr(address common.Address) []byte {
+func PrefixAccStateEthAddr(address gethcommon.Address) []byte {
 	return append(KeyPrefixBzAccState, address.Bytes()...)
 }
 
 // StateKey defines the full key under which an account state is stored.
-func StateKey(address common.Address, key []byte) []byte {
+func StateKey(address gethcommon.Address, key []byte) []byte {
 	return append(PrefixAccStateEthAddr(address), key...)
 }
 
@@ -71,3 +72,15 @@ const (
 	// CallTypeSmart call type is used in case of smart contract methods calls
 	CallTypeSmart
 )
+
+// ModuleAddressEVM: Module account address as a `gethcommon.Address`.
+func ModuleAddressEVM() gethcommon.Address {
+	if len(evmModuleAddr) == 0 {
+		evmModuleAddr = gethcommon.BytesToAddress(
+			authtypes.NewModuleAddress(ModuleName).Bytes(),
+		)
+	}
+	return evmModuleAddr
+}
+
+var evmModuleAddr gethcommon.Address

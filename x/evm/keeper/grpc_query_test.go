@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
@@ -65,7 +66,7 @@ func TraceERC20Transfer() string {
 		  }`
 }
 
-func (s *KeeperSuite) TestQueryNibiruAccount() {
+func (s *Suite) TestQueryNibiruAccount() {
 	type In = *evm.QueryNibiruAccountRequest
 	type Out = *evm.QueryNibiruAccountResponse
 	testCases := []TestCase[In, Out]{
@@ -136,7 +137,7 @@ func (s *KeeperSuite) TestQueryNibiruAccount() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryEthAccount() {
+func (s *Suite) TestQueryEthAccount() {
 	type In = *evm.QueryEthAccountRequest
 	type Out = *evm.QueryEthAccountResponse
 	testCases := []TestCase[In, Out]{
@@ -203,7 +204,7 @@ func (s *KeeperSuite) TestQueryEthAccount() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryValidatorAccount() {
+func (s *Suite) TestQueryValidatorAccount() {
 	type In = *evm.QueryValidatorAccountRequest
 	type Out = *evm.QueryValidatorAccountResponse
 	testCases := []TestCase[In, Out]{
@@ -313,7 +314,7 @@ func (s *KeeperSuite) TestQueryValidatorAccount() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryStorage() {
+func (s *Suite) TestQueryStorage() {
 	type In = *evm.QueryStorageRequest
 	type Out = *evm.QueryStorageResponse
 	testCases := []TestCase[In, Out]{
@@ -389,7 +390,7 @@ func (s *KeeperSuite) TestQueryStorage() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryCode() {
+func (s *Suite) TestQueryCode() {
 	type In = *evm.QueryCodeRequest
 	type Out = *evm.QueryCodeResponse
 	testCases := []TestCase[In, Out]{
@@ -451,7 +452,7 @@ func (s *KeeperSuite) TestQueryCode() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryParams() {
+func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
 	deps.K.SetParams(deps.Ctx, want)
@@ -474,7 +475,7 @@ func (s *KeeperSuite) TestQueryParams() {
 	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
 }
 
-func (s *KeeperSuite) TestQueryEthCall() {
+func (s *Suite) TestQueryEthCall() {
 	type In = *evm.EthCallRequest
 	type Out = *evm.MsgEthereumTxResponse
 	testCases := []TestCase[In, Out]{
@@ -495,7 +496,8 @@ func (s *KeeperSuite) TestQueryEthCall() {
 		{
 			name: "happy: eth call for erc20 token transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract := evmtest.SmartContract_FunToken.Load(s.T())
+				fungibleTokenContract, err := embeds.SmartContract_FunToken.Load()
+				s.Require().NoError(err)
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
@@ -529,7 +531,7 @@ func (s *KeeperSuite) TestQueryEthCall() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryBalance() {
+func (s *Suite) TestQueryBalance() {
 	type In = *evm.QueryBalanceRequest
 	type Out = *evm.QueryBalanceResponse
 	testCases := []TestCase[In, Out]{
@@ -605,7 +607,7 @@ func (s *KeeperSuite) TestQueryBalance() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryBaseFee() {
+func (s *Suite) TestQueryBaseFee() {
 	type In = *evm.QueryBaseFeeRequest
 	type Out = *evm.QueryBaseFeeResponse
 	testCases := []TestCase[In, Out]{
@@ -642,7 +644,7 @@ func (s *KeeperSuite) TestQueryBaseFee() {
 	}
 }
 
-func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
+func (s *Suite) TestEstimateGasForEvmCallType() {
 	type In = *evm.EthCallRequest
 	type Out = *evm.EstimateGasResponse
 	testCases := []TestCase[In, Out]{
@@ -753,7 +755,7 @@ func (s *KeeperSuite) TestEstimateGasForEvmCallType() {
 	}
 }
 
-func (s *KeeperSuite) TestTestTraceTx() {
+func (s *Suite) TestTestTraceTx() {
 	type In = *evm.QueryTraceTxRequest
 	type Out = string
 
@@ -781,7 +783,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 			"happy: trace erc-20 transfer tx",
 			nil,
 			func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors := evmtest.ExecuteERC20Transfer(deps, s.T())
+				txMsg, predecessors := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
@@ -823,7 +825,7 @@ func (s *KeeperSuite) TestTestTraceTx() {
 	}
 }
 
-func (s *KeeperSuite) TestTestTraceBlock() {
+func (s *Suite) TestTestTraceBlock() {
 	type In = *evm.QueryTraceBlockRequest
 	type Out = string
 	testCases := []TestCase[In, Out]{
@@ -853,7 +855,7 @@ func (s *KeeperSuite) TestTestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _ := evmtest.ExecuteERC20Transfer(deps, s.T())
+				txMsg, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
