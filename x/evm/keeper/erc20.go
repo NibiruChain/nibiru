@@ -3,17 +3,20 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
@@ -60,6 +63,96 @@ type (
 	ERC20Bool   struct{ Value bool }
 )
 
+// CreateFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
+//
+// This function performs the following steps:
+//  1. Checks if the ERC20 token is already registered as a FunToken.
+//  2. Retrieves the metadata of the existing ERC20 token.
+//  3. Verifies that the corresponding bank coin denom is not already registered.
+//  4. Sets the bank coin denom metadata in the state.
+//  5. Creates and inserts the new FunToken mapping.
+//
+// Parameters:
+//   - ctx: The SDK context for the transaction.
+//   - erc20: The Ethereum address of the ERC20 token in HexAddr format.
+//
+// Returns:
+//   - funtoken: The created FunToken mapping.
+//   - err: An error if any step fails, nil otherwise.
+//
+// Possible errors:
+//   - If the ERC20 token is already registered as a FunToken.
+//   - If the ERC20 metadata cannot be retrieved.
+//   - If the bank coin denom is already registered.
+//   - If the bank metadata validation fails.
+//   - If the FunToken insertion fails.
+func (k *Keeper) CreateFunTokenFromERC20(
+	ctx sdk.Context, erc20 eth.HexAddr,
+) (funtoken evm.FunToken, err error) {
+	erc20Addr := erc20.ToAddr()
+
+	// 1 | ERC20 already registered?
+	if funtokens := k.FunTokens.Collect(
+		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
+	); len(funtokens) > 0 {
+		return funtoken, fmt.Errorf("Funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
+	}
+
+	// 2 | Get existing ERC20 metadata
+	info, err := k.FindERC20Metadata(ctx, erc20Addr)
+	if err != nil {
+		return
+	}
+	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
+
+	// 3 | Coin already registered?
+	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
+	if isAlreadyCoin {
+		return funtoken, fmt.Errorf("Bank coin denom already registered with denom \"%s\"", bankDenom)
+	}
+	if funtokens := k.FunTokens.Collect(
+		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
+	); len(funtokens) > 0 {
+		return funtoken, fmt.Errorf("Funtoken mapping already created for bank denom \"%s\"", bankDenom)
+	}
+
+	// 4 | Set bank coin denom metadata in state
+	bankMetadata := bank.Metadata{
+		Description: fmt.Sprintf("Bank coin representation of ERC20 token \"%s\"", erc20.String()),
+		DenomUnits: []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+		},
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    bankDenom,
+		Symbol:  info.Symbol,
+	}
+
+	err = bankMetadata.Validate()
+	if err != nil {
+		return
+	}
+	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
+
+	// 5 | Officially create the funtoken mapping
+	funtoken = evm.FunToken{
+		Erc20Addr:      erc20,
+		BankDenom:      bankDenom,
+		IsMadeFromCoin: false,
+	}
+
+	return funtoken, k.FunTokens.SafeInsert(
+		ctx, funtoken.Erc20Addr.ToAddr(),
+		funtoken.BankDenom,
+		funtoken.IsMadeFromCoin,
+	)
+}
+
+func callContractError(errMsg error) error { return fmt.Errorf("CallContractError: %s", errMsg) }
+
 // CallContract invokes a smart contract on the method specified by [methodName]
 // using the given [args].
 //
@@ -100,7 +193,7 @@ func (k Keeper) CallContract(
 			Data: (*hexutil.Bytes)(&contractData),
 		})
 		if err != nil {
-			return evmResp, err // TODO: UD-DEBUG: ...
+			return evmResp, callContractError(err)
 		}
 
 		gasRes, err := k.EstimateGasForEvmCallType(
@@ -112,7 +205,7 @@ func (k Keeper) CallContract(
 			evm.CallTypeSmart,
 		)
 		if err != nil {
-			return evmResp, err
+			return evmResp, callContractError(err)
 		}
 
 		gasLimit = gasRes.Gas
@@ -140,18 +233,19 @@ func (k Keeper) CallContract(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return evmResp, errors.Wrap(err, "failed to load evm config")
+		return evmResp, callContractError(
+			fmt.Errorf("failed to load evm config: %s", err))
 	}
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, cfg, txConfig,
 	)
 	if err != nil {
-		return evmResp, err
+		return evmResp, callContractError(err)
 	}
 
 	if evmResp.Failed() {
-		return evmResp, errors.Wrap(err, evmResp.VmError)
+		return evmResp, callContractError(fmt.Errorf("%s: %s", err, evmResp.VmError))
 	}
 
 	return evmResp, err

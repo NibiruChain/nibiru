@@ -23,40 +23,42 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	s.Error(err)
 
 	s.T().Log("Case 1: Deploy and invoke ERC20 for info")
+	{
+		metadata := keeper.ERC20Metadata{
+			Name:     "erc20name",
+			Symbol:   "TOKEN",
+			Decimals: 18,
+		}
+		deployResp, err := evmtest.DeployContract(
+			&deps, embeds.SmartContract_ERC20Minter, s.T(),
+			metadata.Name, metadata.Symbol, metadata.Decimals,
+		)
+		s.NoError(err)
+		s.Equal(contractAddress, deployResp.ContractAddr)
 
-	metadata := keeper.ERC20Metadata{
-		Name:     "erc20name",
-		Symbol:   "TOKEN",
-		Decimals: 18,
+		info, err := deps.K.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
+		s.NoError(err, info)
+		s.Equal(metadata, info)
 	}
-	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_ERC20Minter, s.T(),
-		metadata.Name, metadata.Symbol, metadata.Decimals,
-	)
-	s.NoError(err)
-	s.Equal(contractAddress, deployResp.ContractAddr)
-
-	info, err := deps.K.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
-	s.NoError(err, info)
-	s.Equal(metadata, info)
 
 	s.T().Log("Case 2: Deploy and invoke ERC20 for info")
+	{
+		metadata := keeper.ERC20Metadata{
+			Name:     "gwei",
+			Symbol:   "GWEI",
+			Decimals: 9,
+		}
+		deployResp, err := evmtest.DeployContract(
+			&deps, embeds.SmartContract_ERC20Minter, s.T(),
+			metadata.Name, metadata.Symbol, metadata.Decimals,
+		)
+		s.NoError(err)
+		s.NotEqual(contractAddress, deployResp.ContractAddr)
 
-	metadata = keeper.ERC20Metadata{
-		Name:     "gwei",
-		Symbol:   "GWEI",
-		Decimals: 9,
+		info, err := deps.K.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
+		s.NoError(err, info)
+		s.Equal(metadata, info)
 	}
-	deployResp, err = evmtest.DeployContract(
-		&deps, embeds.SmartContract_ERC20Minter, s.T(),
-		metadata.Name, metadata.Symbol, metadata.Decimals,
-	)
-	s.NoError(err)
-	s.NotEqual(contractAddress, deployResp.ContractAddr)
-
-	info, err = deps.K.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
-	s.NoError(err, info)
-	s.Equal(metadata, info)
 
 	s.T().Log("happy: CreateFunToken for the ERC20")
 
@@ -83,12 +85,12 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 			IsMadeFromCoin: false,
 		})
 
-	// s.T().Log("sad: CreateFunToken for the ERC20: already registered")
-	// _, err = deps.K.CreateFunToken(
-	// 	deps.GoCtx(),
-	// 	&evm.MsgCreateFunToken{
-	// 		FromErc20: erc20Addr,
-	// 	},
-	// )
-	// s.Error(err)
+	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
+	_, err = deps.K.CreateFunToken(
+		deps.GoCtx(),
+		&evm.MsgCreateFunToken{
+			FromErc20: erc20Addr,
+		},
+	)
+	s.Error(err)
 }

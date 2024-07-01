@@ -14,7 +14,6 @@ import (
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -524,7 +523,9 @@ func (k *Keeper) CreateFunToken(
 	case msg.FromErc20 == "" && msg.FromBankDenom != "":
 		panic("TODO: UD-DEBUG: not yet implemented")
 	default:
-		panic("TODO: UD-DEBUG:  cannot set both") // impossible because of ValidateBasic
+		// Impossible to reach this case due to ValidateBasic
+		err = fmt.Errorf(
+			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both).")
 	}
 	if err != nil {
 		return
@@ -533,69 +534,4 @@ func (k *Keeper) CreateFunToken(
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
 	}, err
-}
-
-func (k *Keeper) CreateFunTokenFromERC20(
-	ctx sdk.Context, erc20 eth.HexAddr,
-) (funtoken evm.FunToken, err error) {
-	erc20Addr := erc20.ToAddr()
-
-	// ERC20 already registered?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
-	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
-	}
-
-	// Find the existing ERC20
-	info, err := k.FindERC20Metadata(ctx, erc20Addr)
-	if err != nil {
-		return
-	}
-	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
-
-	// Coin already registered?
-	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
-	if isAlreadyCoin {
-		return funtoken, fmt.Errorf("Bank coin denom already registered with denom \"%s\"", bankDenom)
-	}
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
-	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for bank denom \"%s\"", bankDenom)
-	}
-
-	// Set bank coin denom metadata in state
-	bankMetadata := bank.Metadata{
-		Description: fmt.Sprintf("Bank coin representation of ERC20 token \"%s\"", erc20.String()),
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  info.Symbol,
-	}
-
-	err = bankMetadata.Validate()
-	if err != nil {
-		return
-	}
-	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
-
-	// Officially create the funtoken mapping
-	funtoken = evm.FunToken{
-		Erc20Addr:      erc20,
-		BankDenom:      bankDenom,
-		IsMadeFromCoin: false,
-	}
-
-	return funtoken, k.FunTokens.SafeInsert(
-		ctx, funtoken.Erc20Addr.ToAddr(),
-		funtoken.BankDenom,
-		funtoken.IsMadeFromCoin,
-	)
 }
