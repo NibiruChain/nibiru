@@ -896,3 +896,91 @@ func (s *Suite) TestTestTraceBlock() {
 		})
 	}
 }
+
+func (s *KeeperSuite) TestQueryTokenMapping() {
+	type In = *evm.QueryTokenMappingRequest
+	type Out = *evm.QueryTokenMappingResponse
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: no token mapping",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "unibi",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: nil,
+				}
+				return req, wantResp
+			},
+			wantErr: "token mapping not found for unibi",
+		},
+		{
+			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
+			setup: func(deps *evmtest.TestDeps) {
+				_ = deps.K.FunTokens.SafeInsert(
+					deps.Ctx,
+					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+					"unibi",
+					true,
+				)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "unibi",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: &evm.FunToken{
+						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						BankDenom:      "unibi",
+						IsMadeFromCoin: true,
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: token mapping exists from ERC20 token -> cosmos coin",
+			setup: func(deps *evmtest.TestDeps) {
+				_ = deps.K.FunTokens.SafeInsert(
+					deps.Ctx,
+					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+					"unibi",
+					true,
+				)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryTokenMappingRequest{
+					Token: "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+				}
+				wantResp = &evm.QueryTokenMappingResponse{
+					FunToken: &evm.FunToken{
+						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						BankDenom:      "unibi",
+						IsMadeFromCoin: true,
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, wantResp := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.K.TokenMapping(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.EqualValues(wantResp, gotResp)
+		})
+	}
+}

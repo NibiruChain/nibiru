@@ -740,3 +740,30 @@ func (k *Keeper) TraceEthTxMsg(
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
+
+func (k Keeper) TokenMapping(
+	goCtx context.Context, req *evm.QueryTokenMappingRequest,
+) (*evm.QueryTokenMappingResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// first try lookup by cosmos denom
+	bankDenomIter := k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, req.Token)
+	funTokenMappings := k.FunTokens.Collect(ctx, bankDenomIter)
+	if len(funTokenMappings) > 0 {
+		// assumes that there is only one mapping for a given denom
+		return &evm.QueryTokenMappingResponse{
+			FunToken: &funTokenMappings[0],
+		}, nil
+	}
+
+	erc20AddrIter := k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, gethcommon.HexToAddress(req.Token))
+	funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
+	if len(funTokenMappings) > 0 {
+		// assumes that there is only one mapping for a given erc20 address
+		return &evm.QueryTokenMappingResponse{
+			FunToken: &funTokenMappings[0],
+		}, nil
+	}
+
+	return nil, grpcstatus.Errorf(grpccodes.NotFound, "token mapping not found for %s", req.Token)
+}
