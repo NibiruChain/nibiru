@@ -4,6 +4,9 @@ package keeper
 import (
 	"math/big"
 
+	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/precompiles/erc20"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -78,6 +81,25 @@ func NewKeeper(
 		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
 		tracer:        tracer,
+	}
+}
+
+func (k *Keeper) InitPrecompiles(ctx sdk.Context) {
+	// Create precompile objects for fungible tokens
+	iter := k.FunTokens.Iterate(ctx, collections.Range[[]byte]{})
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		erc20Precompile, err := erc20.NewPrecompile(iter.Value(), k.bankKeeper.(bankkeeper.Keeper))
+		if err != nil {
+			panic(err)
+		}
+		err = k.AddEVMExtensions(
+			ctx,
+			erc20Precompile,
+		)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

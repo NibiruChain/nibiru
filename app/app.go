@@ -10,6 +10,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/wasmext"
@@ -258,6 +259,9 @@ func NewNibiruApp(
 		*/
 		app.capabilityKeeper.Seal()
 	}
+
+	ctx := sdk.NewContext(app.CommitMultiStore(), tmproto.Header{}, false, nil)
+	app.EvmKeeper.InitPrecompiles(ctx)
 
 	return app
 }
