@@ -33,6 +33,7 @@ var (
 	_ sdk.Tx     = &MsgEthereumTx{}
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
+	_ sdk.Msg    = &MsgCreateFunTokenFromCoin{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -471,4 +472,20 @@ func BinSearch(
 		}
 	}
 	return hi, nil
+}
+
+func (msg *MsgCreateFunTokenFromCoin) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return fmt.Errorf("invalid sender: %s", msg.Sender)
+	}
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return fmt.Errorf("invalid denom: %s", msg.Denom)
+	}
+	return nil
+}
+
+func (msg *MsgCreateFunTokenFromCoin) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	return []sdk.AccAddress{sender}
 }
