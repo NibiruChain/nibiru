@@ -897,7 +897,7 @@ func (s *Suite) TestTestTraceBlock() {
 	}
 }
 
-func (s *KeeperSuite) TestQueryTokenMapping() {
+func (s *Suite) TestQueryTokenMapping() {
 	type In = *evm.QueryTokenMappingRequest
 	type Out = *evm.QueryTokenMappingResponse
 	testCases := []TestCase[In, Out]{
