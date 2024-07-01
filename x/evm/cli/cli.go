@@ -5,6 +5,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 
 	"github.com/cosmos/cosmos-sdk/client"
 
@@ -21,7 +23,9 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmds := []*cobra.Command{}
+	cmds := []*cobra.Command{
+		CmdCreateFunTokenFromCoin(),
+	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
 	}
@@ -47,4 +51,36 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	return moduleQueryCmd
+}
+
+// CmdCreateFunTokenFromCoin broadcast MsgCreateFunTokenFromCoin
+func CmdCreateFunTokenFromCoin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-fun-token-from-coin [denom] [flags]",
+		Short: `Create an evm fungible token from coin [denom]"`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txFactory, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			txFactory = txFactory.WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(
+				clientCtx.AccountRetriever)
+
+			msg := &evm.MsgCreateFunTokenFromCoin{
+				Sender: clientCtx.GetFromAddress().String(),
+				Denom:  args[0],
+			}
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
