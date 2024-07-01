@@ -8,11 +8,16 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
-func AvailablePrecompiles() map[common.Address]vm.PrecompiledContract {
+func AvailablePrecompiles(
+	bankKeeper bankkeeper.Keeper,
+	authzKeeper authzkeeper.Keeper,
+) map[common.Address]vm.PrecompiledContract {
 	contractMap := make(map[common.Address]vm.PrecompiledContract)
 	// The following TODOs can go in an epic together.
 	// TODO: feat(evm): implement precompiled contracts for fungible tokens
@@ -60,7 +65,12 @@ func (k *Keeper) AddEVMExtensions(
 	params := k.GetParams(ctx)
 
 	addresses := make([]string, len(precompiles))
-	precompilesMap := maps.Clone(k.precompiles)
+	var precompilesMap map[common.Address]vm.PrecompiledContract
+	if k.precompiles != nil {
+		precompilesMap = maps.Clone(k.precompiles)
+	} else {
+		precompilesMap = make(map[common.Address]vm.PrecompiledContract)
+	}
 
 	for i, precompile := range precompiles {
 		// add to active precompiles

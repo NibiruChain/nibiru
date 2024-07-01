@@ -387,9 +387,11 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	if cfg.Params.HasCustomPrecompiles() {
 		customPrecompiles := cfg.Params.GetActivePrecompilesAddrs()
 
-		activePrecompiles := make([]common.Address, len(vm.PrecompiledAddressesBerlin)+len(customPrecompiles))
-		copy(activePrecompiles[:len(vm.PrecompiledAddressesBerlin)], vm.PrecompiledAddressesBerlin)
-		copy(activePrecompiles[len(vm.PrecompiledAddressesBerlin):], customPrecompiles)
+		//activePrecompiles := make([]common.Address, len(vm.PrecompiledAddressesBerlin)+len(customPrecompiles))
+		activePrecompiles := make([]common.Address, len(customPrecompiles))
+		//copy(activePrecompiles[:len(vm.PrecompiledAddressesBerlin)], vm.PrecompiledAddressesBerlin)
+		//copy(activePrecompiles[len(vm.PrecompiledAddressesBerlin):], customPrecompiles)
+		copy(activePrecompiles[:len(customPrecompiles)], customPrecompiles)
 
 		// Check if the transaction is sent to an inactive precompile
 		//
