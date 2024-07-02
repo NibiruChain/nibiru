@@ -189,7 +189,7 @@ message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable)   = true
   ];
 
   // Coin denomination in the Bank Module.
