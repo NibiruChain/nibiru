@@ -75,7 +75,7 @@ const (
 
 // ModuleAddressEVM: Module account address as a `gethcommon.Address`.
 func ModuleAddressEVM() gethcommon.Address {
-	if len(evmModuleAddr) == 0 {
+	if evmModuleAddr == zeroAddr {
 		evmModuleAddr = gethcommon.BytesToAddress(
 			authtypes.NewModuleAddress(ModuleName).Bytes(),
 		)
@@ -83,4 +83,5 @@ func ModuleAddressEVM() gethcommon.Address {
 	return evmModuleAddr
 }
 
+var zeroAddr gethcommon.Address
 var evmModuleAddr gethcommon.Address
