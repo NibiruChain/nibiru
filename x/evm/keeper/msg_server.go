@@ -531,6 +531,12 @@ func (k *Keeper) CreateFunToken(
 		return
 	}
 
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
+		Creator:              msg.Sender,
+		BankDenom:            funtoken.BankDenom,
+		Erc20ContractAddress: funtoken.Erc20Addr.String(),
+	})
+
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
 	}, err
