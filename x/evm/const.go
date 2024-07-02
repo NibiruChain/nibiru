@@ -83,5 +83,7 @@ func ModuleAddressEVM() gethcommon.Address {
 	return evmModuleAddr
 }
 
-var zeroAddr gethcommon.Address
-var evmModuleAddr gethcommon.Address
+var (
+	zeroAddr      gethcommon.Address
+	evmModuleAddr gethcommon.Address
+)

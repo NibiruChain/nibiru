@@ -91,7 +91,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 ) (funtoken evm.FunToken, err error) {
 	erc20Addr := erc20.ToAddr()
 
-	// 1 | ERC20 already registered?
+	// 1 | ERC20 already registered with FunToken?
 	if funtokens := k.FunTokens.Collect(
 		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
 	); len(funtokens) > 0 {
@@ -105,7 +105,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	}
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
-	// 3 | Coin already registered?
+	// 3 | Coin already registered with FunToken?
 	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 	if isAlreadyCoin {
 		return funtoken, fmt.Errorf("Bank coin denom already registered with denom \"%s\"", bankDenom)
@@ -177,20 +177,43 @@ func (k Keeper) CallContract(
 	methodName string,
 	args ...any,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	contractData, err := abi.Pack(methodName, args...)
+	contractInput, err := abi.Pack(methodName, args...)
 	if err != nil {
-		return evmResp, err
+		err = errors.Wrap(err, "failed to pack ABI args")
+		return
 	}
+	return k.CallContractWithInput(ctx, abi, fromAcc, contract, commit, contractInput)
+}
 
+// CallContractWithInput invokes a smart contract with the given [contractInput].
+//
+// Parameters:
+//   - ctx: The SDK context for the transaction.
+//   - abi: The ABI (Application Binary Interface) of the smart contract.
+//   - fromAcc: The Ethereum address of the account initiating the contract call.
+//   - contract: Pointer to the Ethereum address of the contract to be called.
+//   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
+//   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
+//
+// Note: This function handles both contract method calls and simulations,
+// depending on the 'commit' parameter. It uses a default gas limit for
+// simulations and estimates gas for actual transactions.
+func (k Keeper) CallContractWithInput(
+	ctx sdk.Context,
+	abi gethabi.ABI,
+	fromAcc gethcommon.Address,
+	contract *gethcommon.Address,
+	commit bool,
+	contractInput []byte,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
-	// FIXME: Is this gas limit convention useful?
 	gasLimit := serverconfig.DefaultEthCallGasLimit
 	if commit {
 		jsonArgs, err := json.Marshal(evm.JsonTxArgs{
 			From: &fromAcc,
 			To:   contract,
-			Data: (*hexutil.Bytes)(&contractData),
+			Data: (*hexutil.Bytes)(&contractInput),
 		})
 		if err != nil {
 			return evmResp, callContractError(err)
@@ -221,7 +244,7 @@ func (k Keeper) CallContract(
 		unusedBitInt, // gasFeeCap
 		unusedBitInt, // gasTipCap
 		unusedBitInt, // gasPrice
-		contractData,
+		contractInput,
 		gethcore.AccessList{},
 		!commit, // isFake
 	)

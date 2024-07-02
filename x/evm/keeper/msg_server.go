@@ -521,7 +521,7 @@ func (k *Keeper) CreateFunToken(
 	case msg.FromErc20 != "" && msg.FromBankDenom == "":
 		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20)
 	case msg.FromErc20 == "" && msg.FromBankDenom != "":
-		panic("TODO: UD-DEBUG: not yet implemented")
+		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
