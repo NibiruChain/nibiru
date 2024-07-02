@@ -56,8 +56,8 @@ const (
 	// DefaultMaxTxGasWanted is the default gas wanted for each eth tx returned in ante handler in check tx mode
 	DefaultMaxTxGasWanted = 0
 
-	// DefaultGasCap is the default cap on gas that can be used in eth_call/estimateGas
-	DefaultGasCap uint64 = 25000000
+	// DefaultEthCallGasLimit is the default cap on gas that can be used in eth_call/estimateGas
+	DefaultEthCallGasLimit uint64 = 25_000_000
 
 	// DefaultFilterCap is the default cap for total number of filters that can be created
 	DefaultFilterCap int32 = 200
@@ -246,7 +246,7 @@ func DefaultJSONRPCConfig() *JSONRPCConfig {
 		API:                      GetDefaultAPINamespaces(),
 		Address:                  DefaultJSONRPCAddress,
 		WsAddress:                DefaultJSONRPCWsAddress,
-		GasCap:                   DefaultGasCap,
+		GasCap:                   DefaultEthCallGasLimit,
 		EVMTimeout:               DefaultEVMTimeout,
 		TxFeeCap:                 DefaultTxFeeCap,
 		FilterCap:                DefaultFilterCap,

@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *KeeperSuite) TestInsertAndGet() {
+func (s *Suite) TestInsertAndGet() {
 	deps := evmtest.NewTestDeps()
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
@@ -31,7 +31,7 @@ func (s *KeeperSuite) TestInsertAndGet() {
 	// deps.K.FunTokens.Collect(ctx)
 }
 
-func (s *KeeperSuite) TestCollect() {
+func (s *Suite) TestCollect() {
 	deps := evmtest.NewTestDeps()
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
@@ -60,7 +60,7 @@ func (s *KeeperSuite) TestCollect() {
 	s.Require().True(funTokens[0].IsMadeFromCoin)
 }
 
-func (s *KeeperSuite) TestDelete() {
+func (s *Suite) TestDelete() {
 	deps := evmtest.NewTestDeps()
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")

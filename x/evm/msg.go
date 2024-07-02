@@ -33,6 +33,7 @@ var (
 	_ sdk.Tx     = &MsgEthereumTx{}
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
+	_ sdk.Msg    = &MsgCreateFunToken{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -181,7 +182,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	}
 
 	if err := txData.Validate(); err != nil {
-		return err
+		return errorsmod.Wrap(err, "failed \"TxData.Validate\"")
 	}
 
 	// Validate Hash field after validated txData to avoid panic
@@ -471,4 +472,37 @@ func BinSearch(
 		}
 	}
 	return hi, nil
+}
+
+// GetSigners returns the expected signers for a MsgCreateFunToken message.
+func (m MsgCreateFunToken) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+func errMsgCreateFunTokenValidate(errMsg string) error {
+	return fmt.Errorf("MsgCreateFunToken ValidateBasic error: %s", errMsg)
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgCreateFunToken) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return errMsgCreateFunTokenValidate("invalid sender addr")
+	}
+
+	erc20 := m.FromErc20
+	bankDenom := m.FromBankDenom
+	if (erc20 == "" && bankDenom == "") || (erc20 != "" && bankDenom != "") {
+		return errMsgCreateFunTokenValidate(fmt.Sprintf(
+			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)."+
+				"got values (from_erc20=\"%s\", from_bank_denom=\"%s\")", erc20, bankDenom,
+		))
+	}
+
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgCreateFunToken) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
