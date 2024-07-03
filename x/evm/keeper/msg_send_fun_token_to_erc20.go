@@ -20,7 +20,7 @@ func (k *Keeper) SendFunTokenToErc20(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	recipient := msg.ToEthAddr.ToAddr()
+	toEthAddr := msg.ToEthAddr.ToAddr()
 	bankDenom := msg.BankCoin.Denom
 	amount := msg.BankCoin.Amount
 
@@ -36,7 +36,7 @@ func (k *Keeper) SendFunTokenToErc20(
 		return nil, errorsmod.Wrap(err, "failed to send coins to module account")
 	}
 
-	// Step 2: evm call to erc20 minter: mint tokens for a recipient
+	// Step 2: evm call to erc20 minter: mint tokens for a toEthAddr
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.EmbeddedContractERC20Minter.ABI,
@@ -44,8 +44,8 @@ func (k *Keeper) SendFunTokenToErc20(
 		&erc20ContractAddr,
 		true,
 		"mint",
-		recipient,
-		amount,
+		toEthAddr,
+		amount.BigInt(),
 	)
 	if err != nil {
 		return nil, err
@@ -54,5 +54,12 @@ func (k *Keeper) SendFunTokenToErc20(
 		return nil,
 			fmt.Errorf("failed to mint ERC-20 tokens of contract %s", erc20ContractAddr.String())
 	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToErc20{
+		Sender:               msg.Sender,
+		Erc20ContractAddress: erc20ContractAddr.String(),
+		ToEthAddr:            toEthAddr.String(),
+		BankCoin:             msg.BankCoin,
+	})
+
 	return &evm.MsgSendFunTokenToErc20Response{}, nil
 }

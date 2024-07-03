@@ -518,10 +518,17 @@ func (k *Keeper) CreateFunToken(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	switch {
-	case msg.FromErc20 != "" && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20)
-	case msg.FromErc20 == "" && msg.FromBankDenom != "":
+	case msg.FromErc20 != nil && msg.FromBankDenom == "":
+		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
+	case msg.FromErc20 == nil && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
+		if err == nil {
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
+				Creator:              msg.Sender,
+				BankDenom:            funtoken.BankDenom,
+				Erc20ContractAddress: funtoken.Erc20Addr.String(),
+			})
+		}
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(

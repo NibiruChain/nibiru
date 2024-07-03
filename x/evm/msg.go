@@ -492,7 +492,7 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 
 	erc20 := m.FromErc20
 	bankDenom := m.FromBankDenom
-	if (erc20 == "" && bankDenom == "") || (erc20 != "" && bankDenom != "") {
+	if (erc20 == nil && bankDenom == "") || (erc20 != nil && bankDenom != "") {
 		return errMsgCreateFunTokenValidate(fmt.Sprintf(
 			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)."+
 				"got values (from_erc20=\"%s\", from_bank_denom=\"%s\")", erc20, bankDenom,

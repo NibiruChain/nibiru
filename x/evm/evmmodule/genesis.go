@@ -7,7 +7,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -24,6 +23,7 @@ func InitGenesis(
 	genState evm.GenesisState,
 ) []abci.ValidatorUpdate {
 	k.SetParams(ctx, genState.Params)
+	k.CreateModuleAccount(ctx)
 
 	if addr := accountKeeper.GetModuleAddress(evm.ModuleName); addr == nil {
 		panic("the EVM module account has not been set")

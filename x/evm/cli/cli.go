@@ -104,14 +104,14 @@ func SendFunTokenToErc20() *cobra.Command {
 				WithTxConfig(clientCtx.TxConfig).
 				WithAccountRetriever(clientCtx.AccountRetriever)
 
-			coin, err := sdk.ParseCoinNormalized(args[0])
+			coin, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
 			}
 			msg := &evm.MsgSendFunTokenToErc20{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
-				ToEthAddr: eth.MustNewHexAddrFromStr(args[1]),
+				ToEthAddr: eth.MustNewHexAddrFromStr(args[0]),
 			}
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
 		},

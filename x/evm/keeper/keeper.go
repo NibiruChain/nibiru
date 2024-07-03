@@ -4,6 +4,7 @@ package keeper
 import (
 	"math/big"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -150,4 +151,11 @@ func (k *Keeper) PostTxProcessing(
 		return nil
 	}
 	return k.hooks.PostTxProcessing(ctx, msg, receipt)
+}
+
+// CreateModuleAccount creates a module account.
+// This account is intended to store escrowed coins which are minted in EVM ERC-20 contracts.
+func (k *Keeper) CreateModuleAccount(ctx sdk.Context) {
+	moduleAcc := authtypes.NewEmptyModuleAccount(evm.ModuleName)
+	k.accountKeeper.SetModuleAccount(ctx, moduleAcc)
 }
