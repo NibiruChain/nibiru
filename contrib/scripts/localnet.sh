@@ -54,9 +54,9 @@ echo_success() {
 
 echo_info "Parsing flags for the script..."
 
-# $FLAG_NO_BUILD: toggles whether to build from source. The default
-#   behavior of the script is to run make install if the flag --no-build is not present.
-FLAG_NO_BUILD=false
+# $FLAG_SKIP_BUILD: toggles whether to build from source. The default
+#   behavior of the script is to run make install if the flag --no-build is omitted.
+FLAG_SKIP_BUILD=false
 
 
 build_from_source() {
@@ -81,7 +81,7 @@ enable_feature_flag() {
 while [[ $# -gt 0 ]]; do
   case $1 in
   --no-build)
-    FLAG_NO_BUILD=true
+    FLAG_SKIP_BUILD=true
     shift
     ;;
   --features)
@@ -96,13 +96,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-# Check if FLAG_NO_BUILD was set to true
-if ! $FLAG_NO_BUILD; then
+# Check if FLAG_SKIP_BUILD was set to true
+if ! $FLAG_SKIP_BUILD; then
   build_from_source
 fi
 
 echo_info "Features flags:"
-echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
+echo "FLAG_SKIP_BUILD: $FLAG_SKIP_BUILD"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
