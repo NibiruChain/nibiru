@@ -3,13 +3,14 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/spf13/cobra"
 )

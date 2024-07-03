@@ -73,7 +73,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	createFuntokenResp, err := deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
-			FromErc20: erc20Addr,
+			FromErc20: &erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -90,7 +90,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
-			FromErc20: erc20Addr,
+			FromErc20: &erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -100,7 +100,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
-			FromErc20: erc20Addr,
+			FromErc20: &erc20Addr,
 		},
 	)
 	s.ErrorContains(err, "invalid sender")

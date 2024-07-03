@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SendFunTokenToErc20 Sends a coin with a valid "FunToken" mapping to the
