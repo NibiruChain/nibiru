@@ -146,6 +146,7 @@ $BINARY config keyring-backend test
 $BINARY config chain-id $CHAIN_ID
 $BINARY config broadcast-mode sync
 $BINARY config output json
+$BINARY config node "http://localhost:26657"
 $BINARY config # Prints config.
 
 # Enable API Server
