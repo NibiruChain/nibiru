@@ -119,9 +119,11 @@ if pgrep -x "$BINARY" >/dev/null; then
   killall nibid
 fi
 
-# Remove previous data
+# Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
-rm -rf "$CHAIN_DIR"
+$BINARY tendermint unsafe-reset-all
+rm "$CHAIN_DIR/config/genesis.json"
+rm -rf "$CHAIN_DIR/config/gentx/"
 
 # Add directory for chain, exit if error
 if ! mkdir -p "$CHAIN_DIR" 2>/dev/null; then
@@ -135,6 +137,7 @@ if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
+  exit 1
 fi
 
 # nibid config
@@ -165,14 +168,18 @@ echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
-echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
-$BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
-# EVM encrypted nibi address for the same account
+if ! $BINARY keys show $val_key_name; then 
+  echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
+  echo_success "Successfully added key: $val_key_name"
+fi
+
+val_address=$($BINARY keys show $val_key_name -a)
+val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
+
+$BINARY add-genesis-account $val_address $GENESIS_COINS
+# EVM encoded nibi address for the same account
 $BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
 echo_success "Successfully added genesis account: $val_key_name"
-
-val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
-val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
 # ------------------------------------------------------------------------
 # Configure genesis params
