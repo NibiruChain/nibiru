@@ -122,7 +122,7 @@ fi
 # Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
 $BINARY tendermint unsafe-reset-all
-rm "$CHAIN_DIR/config/genesis.json"
+rm -f "$CHAIN_DIR/config/genesis.json"
 rm -rf "$CHAIN_DIR/config/gentx/"
 
 # Add directory for chain, exit if error
