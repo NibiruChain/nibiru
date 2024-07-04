@@ -4,6 +4,9 @@ package keeper_test
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -158,19 +161,8 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 
 	s.T().Log("Setup: Create a coin in the bank state")
 	bankDenom := "sometoken"
-	bankMetadata := bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "TOKEN",
-	}
-	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+
+	setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	createFuntokenResp, err := deps.K.CreateFunToken(
@@ -217,4 +209,137 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 		},
 	)
 	s.ErrorContains(err, "Funtoken mapping already created")
+}
+
+// TestSendFunTokenToErc20 executes sending fun tokens from bank coin to erc20 and checks the results:
+// - sender balance should be reduced by sendAmount
+// - erc-20 balance should be increased by sendAmount
+// - evm module account should hold sender's coins
+func (s *Suite) TestSendFunTokenToErc20() {
+	for _, tc := range []struct {
+		name                string
+		bankDenom           string
+		senderBalanceBefore math.Int
+		amountToSend        math.Int
+		wantErr             string
+	}{
+		{
+			name:                "happy: proper sending",
+			bankDenom:           "unibi",
+			senderBalanceBefore: math.NewInt(100),
+			amountToSend:        math.NewInt(10),
+			wantErr:             "",
+		},
+		{
+			name:                "sad: not registered bank denom",
+			bankDenom:           "not-registered-denom",
+			senderBalanceBefore: math.NewInt(100),
+			amountToSend:        math.NewInt(10),
+			wantErr:             "does not exist",
+		},
+		{
+			name:                "sad: insufficient balance",
+			bankDenom:           "unibi",
+			senderBalanceBefore: math.NewInt(10),
+			amountToSend:        math.NewInt(100),
+			wantErr:             "insufficient funds",
+		},
+	} {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			bankDenom := "unibi"
+			recipientEVMAddr := eth.MustNewHexAddrFromStr("0x1234500000000000000000000000000000000000")
+			evmModuleAddr := deps.Chain.AccountKeeper.GetModuleAddress(evm.ModuleName)
+			spendableAmount := tc.senderBalanceBefore.Int64()
+			spendableCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, spendableAmount))
+
+			ctx := deps.GoCtx()
+			setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
+
+			// Fund sender's wallet
+			err := deps.Chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
+			s.Require().NoError(err)
+			err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
+				deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
+			)
+			s.Require().NoError(err)
+
+			// Create fun token from coin
+			createFunTokenResp, err := deps.K.CreateFunToken(
+				ctx,
+				&evm.MsgCreateFunToken{
+					FromBankDenom: bankDenom,
+					Sender:        deps.Sender.NibiruAddr.String(),
+				},
+			)
+			s.Require().NoError(err)
+			funTokenErc20Addr := createFunTokenResp.FuntokenMapping.Erc20Addr.ToAddr()
+
+			// Send fun token to ERC-20 contract
+			_, err = deps.K.SendFunTokenToErc20(
+				ctx,
+				&evm.MsgSendFunTokenToErc20{
+					Sender:    deps.Sender.NibiruAddr.String(),
+					BankCoin:  sdk.Coin{Denom: tc.bankDenom, Amount: tc.amountToSend},
+					ToEthAddr: recipientEVMAddr,
+				},
+			)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Require().NoError(err)
+
+			// Check 1: coins are stored on a module balance
+			moduleBalance, err := deps.Chain.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
+				Address: evmModuleAddr.String(),
+				Denom:   bankDenom,
+			})
+			s.Require().NoError(err)
+			s.Equal(tc.amountToSend, moduleBalance.Balance.Amount)
+
+			// Check 2: Sender balance reduced by send amount
+			senderBalance, err := deps.Chain.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
+				Address: deps.Sender.NibiruAddr.String(),
+				Denom:   bankDenom,
+			})
+			s.Require().NoError(err)
+			s.Equal(tc.senderBalanceBefore.Sub(tc.amountToSend), senderBalance.Balance.Amount)
+
+			// Check 3: erc-20 balance equals to send amount
+			recipientERC20Balance, err := deps.K.CallContract(
+				deps.Ctx,
+				embeds.EmbeddedContractERC20Minter.ABI,
+				evm.ModuleAddressEVM(),
+				&funTokenErc20Addr,
+				false,
+				"balanceOf",
+				recipientEVMAddr.ToAddr(),
+			)
+			s.Require().NoError(err)
+			res, err := embeds.EmbeddedContractERC20Minter.ABI.Unpack(
+				"balanceOf", recipientERC20Balance.Ret,
+			)
+			s.Require().NoError(err)
+			s.Equal(1, len(res))
+			s.Equal(tc.amountToSend.BigInt(), res[0])
+		})
+	}
+}
+
+// setBankDenomMetadata utility method to set bank denom metadata required for working with coin
+func setBankDenomMetadata(ctx sdk.Context, bankKeeper bankkeeper.Keeper, bankDenom string) {
+	bankMetadata := bank.Metadata{
+		DenomUnits: []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+		},
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    bankDenom,
+		Symbol:  "TOKEN",
+	}
+	bankKeeper.SetDenomMetaData(ctx, bankMetadata)
 }
