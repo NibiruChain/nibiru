@@ -507,7 +507,7 @@ func (m MsgCreateFunToken) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
 
-// GetSigners returns the expected signers for a MsgCreateFunToken message.
+// GetSigners returns the expected signers for a MsgSendFunTokenToErc20 message.
 func (m MsgSendFunTokenToErc20) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{addr}
