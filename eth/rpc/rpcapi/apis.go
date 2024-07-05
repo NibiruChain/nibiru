@@ -29,22 +29,9 @@ const (
 	NamespaceNet      = "net"
 	NamespaceTxPool   = "txpool"
 	NamespaceDebug    = "debug"
-	NamespaceMiner    = "miner"
 
 	apiVersion = "1.0"
 )
-
-func EthereumNamespaces() []string {
-	return []string{
-		NamespaceWeb3,
-		NamespaceEth,
-		NamespacePersonal,
-		NamespaceNet,
-		NamespaceTxPool,
-		NamespaceDebug,
-		NamespaceMiner,
-	}
-}
 
 // APICreator creates the JSON-RPC API implementations.
 type APICreator = func(
@@ -141,22 +128,6 @@ func init() {
 					Version:   apiVersion,
 					Service:   debugapi.NewImplDebugAPI(ctx, evmBackend),
 					Public:    true,
-				},
-			}
-		},
-		NamespaceMiner: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespaceMiner,
-					Version:   apiVersion,
-					Service:   NewImplMinerAPI(ctx, evmBackend),
-					Public:    false,
 				},
 			}
 		},

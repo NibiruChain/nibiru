@@ -236,7 +236,7 @@ func GetDefaultAPINamespaces() []string {
 
 // GetAPINamespaces returns the all the available JSON-RPC API namespaces.
 func GetAPINamespaces() []string {
-	return []string{"web3", "eth", "personal", "net", "txpool", "debug", "miner"}
+	return []string{"web3", "eth", "personal", "net", "txpool", "debug"}
 }
 
 // DefaultJSONRPCConfig returns an EVM config with the JSON-RPC API enabled by default
