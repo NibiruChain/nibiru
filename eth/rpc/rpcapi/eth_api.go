@@ -109,14 +109,8 @@ type IEthAPI interface {
 	GetUncleCountByBlockHash(hash common.Hash) hexutil.Uint
 	GetUncleCountByBlockNumber(blockNum rpc.BlockNumber) hexutil.Uint
 
-	// Proof of Work
-	Hashrate() hexutil.Uint64
-	Mining() bool
-
 	// Other
 	Syncing() (interface{}, error)
-	Coinbase() (string, error)
-	Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error)
 	GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 	SignTypedData(
 		address common.Address, typedData apitypes.TypedData,
@@ -129,14 +123,6 @@ type IEthAPI interface {
 		gasPrice *hexutil.Big, gasLimit *hexutil.Uint64,
 	) (common.Hash, error)
 	GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error)
-	// eth_signTransaction (on Ethereum.org)
-	// eth_getCompilers (on Ethereum.org)
-	// eth_compileSolidity (on Ethereum.org)
-	// eth_compileLLL (on Ethereum.org)
-	// eth_compileSerpent (on Ethereum.org)
-	// eth_getWork (on Ethereum.org)
-	// eth_submitWork (on Ethereum.org)
-	// eth_submitHashrate (on Ethereum.org)
 }
 
 var _ IEthAPI = (*EthAPI)(nil)
@@ -418,22 +404,6 @@ func (e *EthAPI) GetUncleCountByBlockNumber(_ rpc.BlockNumber) hexutil.Uint {
 }
 
 // --------------------------------------------------------------------------
-//                           Proof of Work
-// --------------------------------------------------------------------------
-
-// Hashrate returns the current node's hashrate. Always 0.
-func (e *EthAPI) Hashrate() hexutil.Uint64 {
-	e.logger.Debug("eth_hashrate")
-	return 0
-}
-
-// Mining returns whether or not this node is currently mining. Always false.
-func (e *EthAPI) Mining() bool {
-	e.logger.Debug("eth_mining")
-	return false
-}
-
-// --------------------------------------------------------------------------
 //                           Other
 // --------------------------------------------------------------------------
 
@@ -449,26 +419,6 @@ func (e *EthAPI) Mining() bool {
 func (e *EthAPI) Syncing() (interface{}, error) {
 	e.logger.Debug("eth_syncing")
 	return e.backend.Syncing()
-}
-
-// Coinbase is the address that staking rewards will be send to (alias for Etherbase).
-func (e *EthAPI) Coinbase() (string, error) {
-	e.logger.Debug("eth_coinbase")
-
-	coinbase, err := e.backend.GetCoinbase()
-	if err != nil {
-		return "", err
-	}
-	ethAddr := common.BytesToAddress(coinbase.Bytes())
-	return ethAddr.Hex(), nil
-}
-
-// Sign signs the provided data using the private key of address via Geth's signature standard.
-func (e *EthAPI) Sign(
-	address common.Address, data hexutil.Bytes,
-) (hexutil.Bytes, error) {
-	e.logger.Debug("eth_sign", "address", address.Hex(), "data", common.Bytes2Hex(data))
-	return e.backend.Sign(address, data)
 }
 
 // GetTransactionLogs returns the logs given a transaction hash.

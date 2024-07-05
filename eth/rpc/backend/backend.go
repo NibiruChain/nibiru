@@ -87,11 +87,9 @@ type EVMBackend interface {
 	ChainID() (*hexutil.Big, error)
 	ChainConfig() *params.ChainConfig
 	// TODO: feat: Dynamic fees
-	// GlobalMinGasPrice() (math.LegacyDec, error)
 	BaseFee(blockRes *tmrpctypes.ResultBlockResults) (*big.Int, error)
 	CurrentHeader() (*gethcore.Header, error)
 	PendingTransactions() ([]*sdk.Tx, error)
-	GetCoinbase() (sdk.AccAddress, error)
 	FeeHistory(blockCount gethrpc.DecimalOrHex, lastBlock gethrpc.BlockNumber, rewardPercentiles []float64) (*rpc.FeeHistoryResult, error)
 	SuggestGasTipCap(baseFee *big.Int) (*big.Int, error)
 
