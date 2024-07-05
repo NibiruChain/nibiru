@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
 )
 
@@ -48,39 +47,6 @@ func (s *BackendSuite) TestRPCMinGasPrice() {
 				s.Require().Equal(tc.expMinGasPrice, minPrice)
 			} else {
 				s.Require().NotEqual(tc.expMinGasPrice, minPrice)
-			}
-		})
-	}
-}
-
-// TODO: Combine these 2 into one test since the code is identical
-func (s *BackendSuite) TestListAccounts() {
-	testCases := []struct {
-		name         string
-		registerMock func()
-		expAddr      []common.Address
-		expPass      bool
-	}{
-		{
-			"pass - returns empty address",
-			func() {},
-			[]common.Address{},
-			true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			output, err := s.backend.ListAccounts()
-
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expAddr, output)
-			} else {
-				s.Require().Error(err)
 			}
 		})
 	}
@@ -169,53 +135,6 @@ func (s *BackendSuite) TestSyncing() {
 			if tc.expPass {
 				s.Require().NoError(err)
 				s.Require().Equal(tc.expResponse, output)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
-}
-
-func (s *BackendSuite) TestImportRawKey() {
-	priv, _ := ethsecp256k1.GenerateKey()
-	privHex := common.Bytes2Hex(priv.Bytes())
-	pubAddr := common.BytesToAddress(priv.PubKey().Address().Bytes())
-
-	testCases := []struct {
-		name         string
-		registerMock func()
-		privKey      string
-		password     string
-		expAddr      common.Address
-		expPass      bool
-	}{
-		{
-			"fail - not a valid private key",
-			func() {},
-			"",
-			"",
-			common.Address{},
-			false,
-		},
-		{
-			"pass - returning correct address",
-			func() {},
-			privHex,
-			"",
-			pubAddr,
-			true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			output, err := s.backend.ImportRawKey(tc.privKey, tc.password)
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expAddr, output)
 			} else {
 				s.Require().Error(err)
 			}

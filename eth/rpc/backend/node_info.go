@@ -2,18 +2,12 @@
 package backend
 
 import (
-	"fmt"
 	"time"
 
-	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -62,76 +56,6 @@ func (b *Backend) Syncing() (interface{}, error) {
 		// "pulledStates":  nil, // NA
 		// "knownStates":   nil, // NA
 	}, nil
-}
-
-// ImportRawKey armors and encrypts a given raw hex encoded ECDSA key and stores it into the key directory.
-// The name of the key will have the format "personal_<length-keys>", where <length-keys> is the total number of
-// keys stored on the keyring.
-//
-// NOTE: The key will be both armored and encrypted using the same passphrase.
-func (b *Backend) ImportRawKey(privkey, password string) (common.Address, error) {
-	priv, err := crypto.HexToECDSA(privkey)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	privKey := &ethsecp256k1.PrivKey{Key: crypto.FromECDSA(priv)}
-
-	addr := sdk.AccAddress(privKey.PubKey().Address().Bytes())
-	ethereumAddr := common.BytesToAddress(addr)
-
-	// return if the key has already been imported
-	if _, err := b.clientCtx.Keyring.KeyByAddress(addr); err == nil {
-		return ethereumAddr, nil
-	}
-
-	// ignore error as we only care about the length of the list
-	list, _ := b.clientCtx.Keyring.List() // #nosec G703
-	privKeyName := fmt.Sprintf("personal_%d", len(list))
-
-	armor := sdkcrypto.EncryptArmorPrivKey(privKey, password, ethsecp256k1.KeyType)
-
-	if err := b.clientCtx.Keyring.ImportPrivKey(privKeyName, armor, password); err != nil {
-		return common.Address{}, err
-	}
-
-	b.logger.Info("key successfully imported", "name", privKeyName, "address", ethereumAddr.String())
-
-	return ethereumAddr, nil
-}
-
-// ListAccounts will return a list of addresses for accounts this node manages.
-func (b *Backend) ListAccounts() ([]common.Address, error) {
-	addrs := []common.Address{}
-
-	list, err := b.clientCtx.Keyring.List()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, info := range list {
-		pubKey, err := info.GetPubKey()
-		if err != nil {
-			return nil, err
-		}
-		addrs = append(addrs, common.BytesToAddress(pubKey.Address()))
-	}
-
-	return addrs, nil
-}
-
-// NewAccount will create a new account and returns the address for the new account.
-func (b *Backend) NewMnemonic(uid string,
-	_ keyring.Language,
-	hdPath,
-	bip39Passphrase string,
-	algo keyring.SignatureAlgo,
-) (*keyring.Record, error) {
-	info, _, err := b.clientCtx.Keyring.NewMnemonic(uid, keyring.English, hdPath, bip39Passphrase, algo)
-	if err != nil {
-		return nil, err
-	}
-	return info, err
 }
 
 // UnprotectedAllowed returns the node configuration value for allowing

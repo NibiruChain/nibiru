@@ -23,12 +23,11 @@ const (
 	NamespaceCosmos = "cosmos"
 
 	// Ethereum namespaces
-	NamespaceWeb3     = "web3"
-	NamespaceEth      = "eth"
-	NamespacePersonal = "personal"
-	NamespaceNet      = "net"
-	NamespaceTxPool   = "txpool"
-	NamespaceDebug    = "debug"
+	NamespaceWeb3   = "web3"
+	NamespaceEth    = "eth"
+	NamespaceNet    = "net"
+	NamespaceTxPool = "txpool"
+	NamespaceDebug  = "debug"
 
 	apiVersion = "1.0"
 )
@@ -86,22 +85,6 @@ func init() {
 					Version:   apiVersion,
 					Service:   NewImplNetAPI(clientCtx),
 					Public:    true,
-				},
-			}
-		},
-		NamespacePersonal: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespacePersonal,
-					Version:   apiVersion,
-					Service:   NewImplPersonalAPI(ctx.Logger, evmBackend),
-					Public:    false,
 				},
 			}
 		},
