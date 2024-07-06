@@ -13,6 +13,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/wasmext"
+	"github.com/NibiruChain/nibiru/x/evm/precompile"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -184,6 +185,8 @@ func NewNibiruApp(
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
+
+	precompile.InitPrecompiles(app.AppKeepers.PublicKeepers)
 
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 

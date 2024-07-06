@@ -12,6 +12,7 @@ func TestLoadContracts(t *testing.T) {
 	for _, tc := range []embeds.SmartContractFixture{
 		embeds.SmartContract_FunToken,
 		embeds.SmartContract_ERC20Minter,
+		embeds.SmartContract_FunTokenGateway,
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			_, err := tc.Load()

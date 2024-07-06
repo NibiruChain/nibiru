@@ -5,6 +5,8 @@
 package embeds
 
 import (
+	// The `_ "embed"` import adds access to files embedded in the running Go
+	// program (smart contracts).
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -14,25 +16,29 @@ import (
 	"runtime"
 	"strings"
 
-	// Adds access to files (smart contracts, in this case) embedded in the Go
-
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 var (
+	// Contract_ERC20Minter: The default ERC20 contract deployed during the
+	// creation of a `FunToken` mapping from a bank coin.
+	Contract_ERC20Minter CompiledEvmContract
+
 	//go:embed ERC20MinterCompiled.json
 	erc20MinterContractJSON []byte
 
-	EmbeddedContractERC20Minter CompiledEvmContract
+	// Contract_FuntokenGateway: Precompile contract interface for
+	// "IFunTokenGateway.sol". This precompile enables transfers of ERC20 tokens
+	// to non-EVM accounts. Only the ABI is used.
+	Contract_FuntokenGateway CompiledEvmContract
+	//go:embed IFunTokenGatewayCompiled.json
+	funtokenGatewayJSON []byte
 )
 
 func init() {
-	out, err := SmartContract_ERC20Minter.Load()
-	if err != nil {
-		panic(err)
-	}
-	EmbeddedContractERC20Minter = out
+	Contract_ERC20Minter = SmartContract_ERC20Minter.MustLoad()
+	Contract_FuntokenGateway = SmartContract_FunTokenGateway.MustLoad()
 }
 
 var (
@@ -43,8 +49,13 @@ var (
 
 	SmartContract_ERC20Minter = SmartContractFixture{
 		Name:        "ERC20Minter.sol",
-		FixtureType: FixtueType_Embed,
+		FixtureType: FixtueType_Prod,
 		EmbedJSON:   &erc20MinterContractJSON,
+	}
+	SmartContract_FunTokenGateway = SmartContractFixture{
+		Name:        "FunTokenGateway.sol",
+		FixtureType: FixtueType_Prod,
+		EmbedJSON:   &funtokenGatewayJSON,
 	}
 )
 
@@ -61,11 +72,13 @@ type SmartContractFixture struct {
 	EmbedJSON   *[]byte
 }
 
+// ContractFixtureType: Enum type for embedded smart contracts. This type
+// expresses whether a contract is used in production or only for testing.
 type ContractFixtureType string
 
 const (
-	FixtueType_Embed = "embed"
-	FixtueType_Test  = "test"
+	FixtueType_Prod = "prod"
+	FixtueType_Test = "test"
 )
 
 // HardhatOutput: Expected format for smart contract test fixtures.
@@ -120,12 +133,20 @@ func (jsonObj HardhatOutput) EvmContract() (out CompiledEvmContract, err error) 
 	}, err
 }
 
+func (sc SmartContractFixture) MustLoad() (out CompiledEvmContract) {
+	out, err := sc.Load()
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
 func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
 	var jsonBz []byte
 
 	// Locate the contracts directory.
 	switch sc.FixtureType {
-	case FixtueType_Embed:
+	case FixtueType_Prod:
 		if sc.EmbedJSON == nil {
 			return out, fmt.Errorf("missing compiled contract embed")
 		}
