@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
-	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
@@ -497,7 +496,7 @@ func (s *Suite) TestQueryEthCall() {
 		{
 			name: "happy: eth call for erc20 token transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract, err := embeds.SmartContract_FunToken.Load()
+				fungibleTokenContract, err := embeds.SmartContract_TestERC20.Load()
 				s.Require().NoError(err)
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
@@ -821,14 +820,8 @@ func (s *Suite) TestTraceTx() {
 			if len(actualResp) > 1000 {
 				actualResp = actualResp[:len(wantResp)]
 			}
-
-			// FIXME: Why is this sometimes 35050 and sometimes 35062?
-			replaceTimes := 1
-			hackedWantResp := strings.Replace(wantResp, "35062", "35050", replaceTimes)
-			s.True(
-				wantResp == actualResp || hackedWantResp == actualResp,
-				"got \"%s\", want \"%s\"", actualResp, wantResp,
-			)
+			// FIXME: Why does this trace sometimes have gas 35050 and sometimes 35062?
+			s.Equal(wantResp, actualResp)
 		})
 	}
 }
@@ -900,7 +893,8 @@ func (s *Suite) TestTraceBlock() {
 			if len(actualResp) > 1000 {
 				actualResp = actualResp[:len(wantResp)]
 			}
-			s.Assert().Equal(wantResp, actualResp)
+			// FIXME: Why does this trace sometimes have gas 35050 and sometimes 35062?
+			s.Equal(wantResp, actualResp)
 		})
 	}
 }

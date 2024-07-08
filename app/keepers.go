@@ -105,6 +105,7 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
+	"github.com/NibiruChain/nibiru/app/keepers"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/devgas/v1"
@@ -134,22 +135,17 @@ import (
 )
 
 type AppKeepers struct {
-	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
-	AccountKeeper authkeeper.AccountKeeper
-	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
-	BankKeeper       bankkeeper.Keeper
+	keepers.PublicKeepers
+	privateKeepers
+}
+
+type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
-	StakingKeeper    *stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
-	/* DistrKeeper is the keeper of the distribution store */
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
-	crisisKeeper          crisiskeeper.Keeper
-	upgradeKeeper         upgradekeeper.Keeper
-	paramsKeeper          paramskeeper.Keeper
-	authzKeeper           authzkeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
+	crisisKeeper     crisiskeeper.Keeper
+	upgradeKeeper    upgradekeeper.Keeper
+	paramsKeeper     paramskeeper.Keeper
+	authzKeeper      authzkeeper.Keeper
 
 	// --------------------------------------------------------------------
 	// IBC keepers
@@ -167,31 +163,6 @@ type AppKeepers struct {
 	ibcTransferKeeper   ibctransferkeeper.Keeper
 	icaControllerKeeper icacontrollerkeeper.Keeper
 	icaHostKeeper       icahostkeeper.Keeper
-
-	// make scoped keepers public for test purposes
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-
-	// make IBC modules public for test purposes
-	// these modules are never directly routed to by the IBC Router
-	FeeMockModule ibcmock.IBCModule
-
-	// ---------------
-	// Nibiru keepers
-	// ---------------
-	EpochsKeeper       epochskeeper.Keeper
-	OracleKeeper       oraclekeeper.Keeper
-	InflationKeeper    inflationkeeper.Keeper
-	SudoKeeper         keeper.Keeper
-	DevGasKeeper       devgaskeeper.Keeper
-	TokenFactoryKeeper tokenfactorykeeper.Keeper
-	EvmKeeper          evmkeeper.Keeper
-
-	// WASM keepers
-	WasmKeeper       wasmkeeper.Keeper
-	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 }
 
 func initStoreKeys() (

@@ -25,7 +25,7 @@ func InitGenesis(
 ) []abci.ValidatorUpdate {
 	k.SetParams(ctx, genState.Params)
 
-	if addr := accountKeeper.GetModuleAddress(evm.ModuleName); addr == nil {
+	if evmModule := accountKeeper.GetModuleAccount(ctx, evm.ModuleName); evmModule == nil {
 		panic("the EVM module account has not been set")
 	}
 

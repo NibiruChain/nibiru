@@ -23,11 +23,20 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
+// FindERC20Metadata retrieves the metadata of an ERC20 token.
+//
+// Parameters:
+//   - ctx: The SDK context for the transaction.
+//   - contract: The Ethereum address of the ERC20 contract.
+//
+// Returns:
+//   - info: ERC20Metadata containing name, symbol, and decimals.
+//   - err: An error if metadata retrieval fails.
 func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	contract gethcommon.Address,
 ) (info ERC20Metadata, err error) {
-	var abi gethabi.ABI = embeds.EmbeddedContractERC20Minter.ABI
+	var abi gethabi.ABI = embeds.Contract_ERC20Minter.ABI
 
 	errs := []error{}
 
@@ -59,8 +68,11 @@ type ERC20Metadata struct {
 
 type (
 	ERC20String struct{ Value string }
+	// ERC20Uint8: Unpacking type for "uint8" from Solidity. This is only used in
+	// the "ERC20.decimals" function.
 	ERC20Uint8  struct{ Value uint8 }
 	ERC20Bool   struct{ Value bool }
+	ERC20BigInt struct{ Value *big.Int }
 )
 
 // CreateFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
@@ -151,8 +163,6 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	)
 }
 
-func callContractError(errMsg error) error { return fmt.Errorf("CallContractError: %s", errMsg) }
-
 // CallContract invokes a smart contract on the method specified by [methodName]
 // using the given [args].
 //
@@ -182,14 +192,13 @@ func (k Keeper) CallContract(
 		err = errors.Wrap(err, "failed to pack ABI args")
 		return
 	}
-	return k.CallContractWithInput(ctx, abi, fromAcc, contract, commit, contractInput)
+	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
 }
 
 // CallContractWithInput invokes a smart contract with the given [contractInput].
 //
 // Parameters:
 //   - ctx: The SDK context for the transaction.
-//   - abi: The ABI (Application Binary Interface) of the smart contract.
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
 //   - contract: Pointer to the Ethereum address of the contract to be called.
 //   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
@@ -200,50 +209,38 @@ func (k Keeper) CallContract(
 // simulations and estimates gas for actual transactions.
 func (k Keeper) CallContractWithInput(
 	ctx sdk.Context,
-	abi gethabi.ABI,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
 	commit bool,
 	contractInput []byte,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	// This is a `defer` pattern to add behavior that runs in the case that the error is
+	// non-nil, creating a concise way to add extra information.
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("CallContractError: %w", err)
+		}
+	}()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	gasLimit := serverconfig.DefaultEthCallGasLimit
-	if commit {
-		jsonArgs, err := json.Marshal(evm.JsonTxArgs{
-			From: &fromAcc,
-			To:   contract,
-			Data: (*hexutil.Bytes)(&contractInput),
-		})
-		if err != nil {
-			return evmResp, callContractError(err)
-		}
-
-		gasRes, err := k.EstimateGasForEvmCallType(
-			sdk.WrapSDKContext(ctx),
-			&evm.EthCallRequest{
-				Args:   jsonArgs,
-				GasCap: gasLimit,
-			},
-			evm.CallTypeSmart,
-		)
-		if err != nil {
-			return evmResp, callContractError(err)
-		}
-
-		gasLimit = gasRes.Gas
+	gasLimit, err = computeCommitGasLimit(
+		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
+	)
+	if err != nil {
+		return
 	}
 
-	unusedBitInt := big.NewInt(0)
+	unusedBigInt := big.NewInt(0)
 	evmMsg := gethcore.NewMessage(
 		fromAcc,
 		contract,
 		nonce,
-		unusedBitInt, // amount
+		unusedBigInt, // amount
 		gasLimit,
-		unusedBitInt, // gasFeeCap
-		unusedBitInt, // gasTipCap
-		unusedBitInt, // gasPrice
+		unusedBigInt, // gasFeeCap
+		unusedBigInt, // gasTipCap
+		unusedBigInt, // gasPrice
 		contractInput,
 		gethcore.AccessList{},
 		!commit, // isFake
@@ -256,34 +253,77 @@ func (k Keeper) CallContractWithInput(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return evmResp, callContractError(
-			fmt.Errorf("failed to load evm config: %s", err))
+		err = fmt.Errorf("failed to load evm config: %s", err)
+		return
 	}
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, cfg, txConfig,
 	)
 	if err != nil {
-		return evmResp, callContractError(err)
+		return
 	}
 
 	if evmResp.Failed() {
-		return evmResp, callContractError(fmt.Errorf("%s: %s", err, evmResp.VmError))
+		err = fmt.Errorf("%w: EVM error: %s", err, evmResp.VmError)
+		return
 	}
 
 	return evmResp, err
 }
 
+func computeCommitGasLimit(
+	commit bool,
+	gasLimit uint64,
+	fromAcc, contract *gethcommon.Address,
+	contractInput []byte,
+	k Keeper,
+	ctx sdk.Context,
+) (newGasLimit uint64, err error) {
+	if !commit {
+		return gasLimit, nil
+	}
+
+	// Create a cached context for gas estimation
+	cachedCtx, _ := ctx.CacheContext()
+
+	jsonArgs, err := json.Marshal(evm.JsonTxArgs{
+		From: fromAcc,
+		To:   contract,
+		Data: (*hexutil.Bytes)(&contractInput),
+	})
+	if err != nil {
+		err = fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
+		return
+	}
+
+	gasRes, err := k.EstimateGasForEvmCallType(
+		sdk.WrapSDKContext(cachedCtx),
+		&evm.EthCallRequest{
+			Args:   jsonArgs,
+			GasCap: gasLimit,
+		},
+		evm.CallTypeSmart,
+	)
+	if err != nil {
+		err = fmt.Errorf("failed to compute gas limit: %w", err)
+		return
+	}
+
+	newGasLimit = gasRes.Gas
+	return newGasLimit, nil
+}
+
 func (k Keeper) LoadERC20Name(
 	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
-	return k.loadERC20String(ctx, abi, erc20, "name")
+	return k.LoadERC20String(ctx, abi, erc20, "name")
 }
 
 func (k Keeper) LoadERC20Symbol(
 	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
-	return k.loadERC20String(ctx, abi, erc20, "symbol")
+	return k.LoadERC20String(ctx, abi, erc20, "symbol")
 }
 
 func (k Keeper) LoadERC20Decimals(
@@ -292,7 +332,7 @@ func (k Keeper) LoadERC20Decimals(
 	return k.loadERC20Uint8(ctx, abi, erc20, "decimals")
 }
 
-func (k Keeper) loadERC20String(
+func (k Keeper) LoadERC20String(
 	ctx sdk.Context,
 	erc20Abi gethabi.ABI,
 	erc20Contract gethcommon.Address,
@@ -308,14 +348,14 @@ func (k Keeper) loadERC20String(
 		return out, err
 	}
 
-	erc20string := new(ERC20String)
+	erc20Val := new(ERC20String)
 	err = erc20Abi.UnpackIntoInterface(
-		erc20string, methodName, res.Ret,
+		erc20Val, methodName, res.Ret,
 	)
 	if err != nil {
 		return out, err
 	}
-	return erc20string.Value, err
+	return erc20Val.Value, err
 }
 
 func (k Keeper) loadERC20Uint8(
@@ -334,12 +374,115 @@ func (k Keeper) loadERC20Uint8(
 		return out, err
 	}
 
-	erc20uint8 := new(ERC20Uint8)
+	erc20Val := new(ERC20Uint8)
 	err = erc20Abi.UnpackIntoInterface(
-		erc20uint8, methodName, res.Ret,
+		erc20Val, methodName, res.Ret,
 	)
 	if err != nil {
 		return out, err
 	}
-	return erc20uint8.Value, err
+	return erc20Val.Value, err
+}
+
+func (k Keeper) LoadERC20BigInt(
+	ctx sdk.Context,
+	erc20Abi gethabi.ABI,
+	erc20Contract gethcommon.Address,
+	methodName string,
+	args ...any,
+) (out *big.Int, err error) {
+	res, err := k.CallContract(
+		ctx, erc20Abi,
+		evm.ModuleAddressEVM(),
+		&erc20Contract,
+		false, methodName,
+		args...,
+	)
+	if err != nil {
+		return out, err
+	}
+
+	erc20Val := new(ERC20BigInt)
+	err = erc20Abi.UnpackIntoInterface(
+		erc20Val, methodName, res.Ret,
+	)
+	if err != nil {
+		return out, err
+	}
+	return erc20Val.Value, err
+}
+
+func (k Keeper) ERC20() erc20Calls {
+	return erc20Calls{
+		Keeper: &k,
+		ABI:    embeds.Contract_ERC20Minter.ABI,
+	}
+}
+
+type erc20Calls struct {
+	*Keeper
+	ABI gethabi.ABI
+}
+
+func (e erc20Calls) Mint(
+	contract, from, to gethcommon.Address, amount *big.Int,
+	ctx sdk.Context,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("mint", to, amount)
+	if err != nil {
+		return
+	}
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+}
+
+/*
+Transfer implements "ERC20.transfer"
+
+```solidity
+/// @dev Moves `amount` tokens from the caller's account to `to`.
+/// Returns a boolean value indicating whether the operation succeeded.
+/// Emits a {Transfer} event.
+function transfer(address to, uint256 amount) external returns (bool);
+```
+*/
+func (e erc20Calls) Transfer(
+	contract, from, to gethcommon.Address, amount *big.Int,
+	ctx sdk.Context,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("transfer", to, amount)
+	if err != nil {
+		return
+	}
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+}
+
+// BalanceOf retrieves the balance of an ERC20 token for a specific account.
+// Implements "ERC20.balanceOf".
+func (e erc20Calls) BalanceOf(
+	contract, account gethcommon.Address,
+	ctx sdk.Context,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, e.ABI, contract, "balanceOf", account)
+}
+
+/*
+Burn implements "ERC20Burnable.burn"
+
+```solidity
+/// @dev Destroys `amount` tokens from the caller.
+function burn(uint256 amount) public virtual {
+```
+*/
+func (e erc20Calls) Burn(
+	contract, from gethcommon.Address, amount *big.Int,
+	ctx sdk.Context,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("burn", amount)
+	if err != nil {
+		return
+	}
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
 }

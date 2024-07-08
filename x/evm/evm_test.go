@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 type TestSuite struct {
@@ -118,7 +119,24 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	s.Equal(addr.Hex(), "0x603871c2ddd41c26Ee77495E2E31e6De7f9957e0")
 
 	// Sanity check
-	moduleAddr := authtypes.NewModuleAddress(evm.ModuleName)
-	evmModuleAddr := gethcommon.BytesToAddress(moduleAddr)
+	nibiAddr := authtypes.NewModuleAddress(evm.ModuleName)
+	evmModuleAddr := gethcommon.BytesToAddress(nibiAddr)
 	s.Equal(addr.Hex(), evmModuleAddr.Hex())
+
+	// EVM addr module acc and EVM address should be connected
+	// EVM module should have mint perms
+	deps := evmtest.NewTestDeps()
+	{
+		_, err := deps.K.EthAccount(deps.GoCtx(), &evm.QueryEthAccountRequest{
+			Address: evmModuleAddr.Hex(),
+		})
+		s.NoError(err)
+	}
+	{
+		resp, err := deps.K.NibiruAccount(deps.GoCtx(), &evm.QueryNibiruAccountRequest{
+			Address: evmModuleAddr.Hex(),
+		})
+		s.NoError(err)
+		s.Equal(nibiAddr.String(), resp.Address)
+	}
 }

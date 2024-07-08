@@ -6,7 +6,7 @@ import { FunTokenCompiled } from "../types/ethers-contracts"
 describe("ERC-20 contract tests", () => {
   it("send, balanceOf", async () => {
     const contract = (await deployContract(
-      "FunTokenCompiled.json",
+      "TestERC20Compiled.json",
     )) as FunTokenCompiled
     const contractAddress = await contract.getAddress()
     expect(contractAddress).toBeDefined()

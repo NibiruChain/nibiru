@@ -36,7 +36,8 @@ type Keeper struct {
 	// mappings.
 	FunTokens FunTokenState
 
-	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
+	// the address capable of executing a MsgUpdateParams message. Typically,
+	// this should be the x/gov module account.
 	authority sdk.AccAddress
 
 	bankKeeper    evm.BankKeeper

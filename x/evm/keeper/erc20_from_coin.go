@@ -66,7 +66,7 @@ func (k *Keeper) DeployERC20ForBankCoin(
 		decimals = uint8(bankCoin.DenomUnits[decimalsIdx].Exponent)
 	}
 
-	erc20Embed := embeds.EmbeddedContractERC20Minter
+	erc20Embed := embeds.Contract_ERC20Minter
 	callArgs := []any{bankCoin.Name, bankCoin.Symbol, decimals}
 	methodName := "" // pass empty method name to deploy the contract
 	packedArgs, err := erc20Embed.ABI.Pack(methodName, callArgs...)
@@ -83,8 +83,7 @@ func (k *Keeper) DeployERC20ForBankCoin(
 	commit := true
 
 	_, err = k.CallContractWithInput(
-		ctx, erc20Embed.ABI, fromEvmAddr, erc20Contract, commit,
-		bytecodeForCall,
+		ctx, fromEvmAddr, erc20Contract, commit, bytecodeForCall,
 	)
 	if err != nil {
 		err = errors.Wrap(err, "deploy ERC20 failed")
