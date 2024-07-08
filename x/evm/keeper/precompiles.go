@@ -8,13 +8,29 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
-func AvailablePrecompiles() map[common.Address]vm.PrecompiledContract {
-	contractMap := make(map[common.Address]vm.PrecompiledContract)
+// PrecompileSet is the set of all known precompile addresses. It includes defaults
+// from go-ethereum and the custom ones specific to the Nibiru EVM.
+func (k Keeper) PrecompileSet() set.Set[gethcommon.Address] {
+	precompiles := set.New[gethcommon.Address]()
+	for addr := range k.precompiles {
+		precompiles.Add(addr)
+	}
+	return precompiles
+}
 
+func (k *Keeper) AddPrecompiles(precompileMap map[gethcommon.Address]vm.PrecompiledContract) {
+	if len(k.precompiles) == 0 {
+		k.precompiles = make(map[gethcommon.Address]vm.PrecompiledContract)
+	}
+	for addr, precompile := range precompileMap {
+		k.precompiles[addr] = precompile
+	}
 	// The following TODOs can go in an epic together.
 
 	// TODO: feat(evm): implement precompiled contracts for fungible tokens
@@ -30,36 +46,6 @@ func AvailablePrecompiles() map[common.Address]vm.PrecompiledContract {
 
 	// TODO: feat(evm): implement precompiled contracts for wasm calls
 	// Check if there is sufficient demand for this.
-	return contractMap
-}
-
-// WithPrecompiles sets the available precompiled contracts.
-func (k *Keeper) WithPrecompiles(precompiles map[common.Address]vm.PrecompiledContract) *Keeper {
-	if k.precompiles != nil {
-		panic("available precompiles map already set")
-	}
-
-	k.precompiles = precompiles
-	return k
-}
-
-// Precompiles returns the subset of the available precompiled contracts that
-// are active given the current parameters.
-func (k Keeper) Precompiles(
-	activePrecompiles ...common.Address,
-) map[common.Address]vm.PrecompiledContract {
-	activePrecompileMap := make(map[common.Address]vm.PrecompiledContract)
-
-	for _, address := range activePrecompiles {
-		precompile, ok := k.precompiles[address]
-		if !ok {
-			panic(fmt.Sprintf("precompiled contract not initialized: %s", address))
-		}
-
-		activePrecompileMap[address] = precompile
-	}
-
-	return activePrecompileMap
 }
 
 // AddEVMExtensions adds the given precompiles to the list of active precompiles in the EVM parameters
@@ -70,13 +56,14 @@ func (k *Keeper) AddEVMExtensions(
 ) error {
 	params := k.GetParams(ctx)
 
-	addresses := make([]string, len(precompiles))
+	// precompileAddrs := make([]string, len(precompiles))
+	precompileAddrs := set.New[string]()
 	precompilesMap := maps.Clone(k.precompiles)
 
-	for i, precompile := range precompiles {
+	for _, precompile := range precompiles {
 		// add to active precompiles
 		address := precompile.Address()
-		addresses[i] = address.String()
+		precompileAddrs.Add(address.String())
 
 		// add to available precompiles, but check for duplicates
 		if _, ok := precompilesMap[address]; ok {
@@ -85,7 +72,7 @@ func (k *Keeper) AddEVMExtensions(
 		precompilesMap[address] = precompile
 	}
 
-	params.ActivePrecompiles = append(params.ActivePrecompiles, addresses...)
+	params.ActivePrecompiles = append(params.ActivePrecompiles, precompileAddrs.ToSlice()...)
 
 	// NOTE: the active precompiles are sorted and validated before setting them
 	// in the params
@@ -97,17 +84,17 @@ func (k *Keeper) AddEVMExtensions(
 
 // IsAvailablePrecompile returns true if the given precompile address is contained in the
 // EVM keeper's available precompiles map.
-func (k Keeper) IsAvailablePrecompile(address common.Address) bool {
+func (k Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
 	_, ok := k.precompiles[address]
 	return ok
 }
 
-// GetAvailablePrecompileAddrs returns the list of available precompile addresses.
+// PrecompileAddrsSorted returns the list of available precompile addresses.
 //
 // NOTE: uses index based approach instead of append because it's supposed to be faster.
 // Check https://stackoverflow.com/questions/21362950/getting-a-slice-of-keys-from-a-map.
-func (k Keeper) GetAvailablePrecompileAddrs() []common.Address {
-	addresses := make([]common.Address, len(k.precompiles))
+func (k Keeper) PrecompileAddrsSorted() []gethcommon.Address {
+	addresses := make([]gethcommon.Address, len(k.precompiles))
 	i := 0
 
 	//#nosec G705 -- two operations in for loop here are fine

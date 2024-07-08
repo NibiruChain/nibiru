@@ -1,4 +1,4 @@
-package integration_test
+package keeper_test
 
 import (
 	"context"
@@ -58,8 +58,7 @@ func (s *TestSuite) SetupTest() {
 	s.Require().NoError(err)
 	s.network = network
 
-	_, err = s.network.WaitForHeight(2)
-	require.NoError(s.T(), err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 }
 
 func (s *TestSuite) TestSuccessfulVoting() {

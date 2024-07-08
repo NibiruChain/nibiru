@@ -13,6 +13,16 @@ import (
 // AccountKeeper defines the expected account keeper interface
 type AccountKeeper interface {
 	NewAccountWithAddress(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+
+	// GetModuleAccount gets the module account from the auth account store, if the
+	// account does not exist in the AccountKeeper, then it is created. This
+	// differs from the "GetModuleAddress" function, which performs a pure
+	// computation.
+	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
+
+	// GetModuleAddress returns an address based on the module name, however it
+	// does not modify state at all. To create initialize the module account,
+	// instead use "GetModuleAccount".
 	GetModuleAddress(moduleName string) sdk.AccAddress
 	GetAllAccounts(ctx sdk.Context) (accounts []authtypes.AccountI)
 	IterateAccounts(ctx sdk.Context, cb func(account authtypes.AccountI) bool)
