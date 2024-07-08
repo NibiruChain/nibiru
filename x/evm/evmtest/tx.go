@@ -215,7 +215,7 @@ func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
 ) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
 	// TX 1: Deploy ERC-20 contract
-	deployResp, err := DeployContract(deps, embeds.SmartContract_FunToken, t)
+	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20, t)
 	require.NoError(t, err)
 	contractData := deployResp.ContractData
 	nonce := deployResp.Nonce

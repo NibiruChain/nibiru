@@ -24,8 +24,10 @@ func InitGenesis(
 ) []abci.ValidatorUpdate {
 	k.SetParams(ctx, genState.Params)
 
-	// GetModuleAccount actually creates a new module account with permissions under the hood
-	if addr := accountKeeper.GetModuleAccount(ctx, evm.ModuleName); addr == nil {
+	// Note that "GetModuleAccount" initializes the module account with permissions
+	// under the hood if it did not already exist. This is important because the
+	// EVM module needs to be able to send and receive funds during MsgEthereumTx
+	if evmModule := accountKeeper.GetModuleAccount(ctx, evm.ModuleName); evmModule == nil {
 		panic("the EVM module account has not been set")
 	}
 

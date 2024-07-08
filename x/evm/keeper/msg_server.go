@@ -261,7 +261,9 @@ func (k *Keeper) NewEVM(
 		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
 	}
 	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
-	return vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
+	return theEvm
 }
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
@@ -380,31 +382,19 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
 
-	// set the custom precompiles to the EVM (if any)
-	if cfg.Params.HasCustomPrecompiles() {
-		customPrecompiles := cfg.Params.GetActivePrecompilesAddrs()
+	numPrecompiles := len(k.precompiles)
+	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
 
-		activePrecompiles := make([]gethcommon.Address, len(vm.PrecompiledAddressesBerlin)+len(customPrecompiles))
-		copy(activePrecompiles[:len(vm.PrecompiledAddressesBerlin)], vm.PrecompiledAddressesBerlin)
-		copy(activePrecompiles[len(vm.PrecompiledAddressesBerlin):], customPrecompiles)
-
-		// Check if the transaction is sent to an inactive precompile
-		//
-		// NOTE: This has to be checked here instead of in the actual evm.Call method
-		// because evm.WithPrecompiles only populates the EVM with the active precompiles,
-		// so there's no telling if the To address is an inactive precompile further down the call stack.
-		toAddr := msg.To()
-		if toAddr != nil &&
-			slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
-			!slices.Contains(activePrecompiles, *toAddr) {
-			return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
-		}
-
-		// NOTE: this only adds active precompiles to the EVM.
-		// This means that evm.Precompile(addr) will return false for inactive precompiles
-		// even though this is actually a reserved address.
-		precompileMap := k.Precompiles(activePrecompiles...)
-		evmObj.WithPrecompiles(precompileMap, activePrecompiles)
+	// Check if the transaction is sent to an inactive precompile
+	//
+	// NOTE: This has to be checked here instead of in the actual evm.Call method
+	// because evm.WithPrecompiles only populates the EVM with the active precompiles,
+	// so there's no telling if the To address is an inactive precompile further down the call stack.
+	toAddr := msg.To()
+	if toAddr != nil &&
+		slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
+		!slices.Contains(precompileAddrs, *toAddr) {
+		return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
 	}
 
 	leftoverGas := msg.Gas()
