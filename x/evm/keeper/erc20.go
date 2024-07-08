@@ -399,7 +399,7 @@ func (k Keeper) LoadERC20BigInt(
 		&erc20Contract,
 		commit,
 		methodName,
-		args,
+		args...,
 	)
 	if err != nil {
 		return out, err
