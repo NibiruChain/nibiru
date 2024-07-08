@@ -23,28 +23,14 @@ const (
 	NamespaceCosmos = "cosmos"
 
 	// Ethereum namespaces
-	NamespaceWeb3     = "web3"
-	NamespaceEth      = "eth"
-	NamespacePersonal = "personal"
-	NamespaceNet      = "net"
-	NamespaceTxPool   = "txpool"
-	NamespaceDebug    = "debug"
-	NamespaceMiner    = "miner"
+	NamespaceWeb3   = "web3"
+	NamespaceEth    = "eth"
+	NamespaceNet    = "net"
+	NamespaceTxPool = "txpool"
+	NamespaceDebug  = "debug"
 
 	apiVersion = "1.0"
 )
-
-func EthereumNamespaces() []string {
-	return []string{
-		NamespaceWeb3,
-		NamespaceEth,
-		NamespacePersonal,
-		NamespaceNet,
-		NamespaceTxPool,
-		NamespaceDebug,
-		NamespaceMiner,
-	}
-}
 
 // APICreator creates the JSON-RPC API implementations.
 type APICreator = func(
@@ -102,22 +88,6 @@ func init() {
 				},
 			}
 		},
-		NamespacePersonal: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespacePersonal,
-					Version:   apiVersion,
-					Service:   NewImplPersonalAPI(ctx.Logger, evmBackend),
-					Public:    false,
-				},
-			}
-		},
 		NamespaceTxPool: func(ctx *server.Context, _ client.Context, _ *rpcclient.WSClient, _ bool, _ eth.EVMTxIndexer) []rpc.API {
 			return []rpc.API{
 				{
@@ -141,22 +111,6 @@ func init() {
 					Version:   apiVersion,
 					Service:   debugapi.NewImplDebugAPI(ctx, evmBackend),
 					Public:    true,
-				},
-			}
-		},
-		NamespaceMiner: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespaceMiner,
-					Version:   apiVersion,
-					Service:   NewImplMinerAPI(ctx, evmBackend),
-					Public:    false,
 				},
 			}
 		},

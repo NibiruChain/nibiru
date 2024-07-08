@@ -234,11 +234,6 @@ func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 //   - cfg: Encapsulates params required to construct an EVM.
 //   - tracer: Collects execution traces for EVM transaction logging.
 //   - stateDB: Holds the EVM state.
-//
-// [NewEVM] sets the validator operator address as the coinbase address to make
-// it available for the COINBASE opcode. This is done for backwards
-// compatibility. There is no benficiary of the COINBASE tx opcode because we use
-// post-merge Ethereum (Proof of Stake rather than Proof of Work).
 func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,

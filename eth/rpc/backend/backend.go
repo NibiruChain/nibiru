@@ -9,7 +9,6 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -48,12 +47,6 @@ type EVMBackend interface {
 	// Node specific queries
 	Accounts() ([]common.Address, error)
 	Syncing() (interface{}, error)
-	SetEtherbase(etherbase common.Address) bool
-	SetGasPrice(gasPrice hexutil.Big) bool
-	ImportRawKey(privkey, password string) (common.Address, error)
-	ListAccounts() ([]common.Address, error)
-	NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (*keyring.Record, error)
-	UnprotectedAllowed() bool
 	RPCGasCap() uint64            // global gas cap for eth_call over rpc: DoS protection
 	RPCEVMTimeout() time.Duration // global timeout for eth_call over rpc: DoS protection
 	RPCTxFeeCap() float64         // RPCTxFeeCap is the global transaction fee(price * gaslimit) cap for send-transaction variants. The unit is ether.
@@ -94,11 +87,9 @@ type EVMBackend interface {
 	ChainID() (*hexutil.Big, error)
 	ChainConfig() *params.ChainConfig
 	// TODO: feat: Dynamic fees
-	// GlobalMinGasPrice() (math.LegacyDec, error)
 	BaseFee(blockRes *tmrpctypes.ResultBlockResults) (*big.Int, error)
 	CurrentHeader() (*gethcore.Header, error)
 	PendingTransactions() ([]*sdk.Tx, error)
-	GetCoinbase() (sdk.AccAddress, error)
 	FeeHistory(blockCount gethrpc.DecimalOrHex, lastBlock gethrpc.BlockNumber, rewardPercentiles []float64) (*rpc.FeeHistoryResult, error)
 	SuggestGasTipCap(baseFee *big.Int) (*big.Int, error)
 
