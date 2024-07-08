@@ -649,10 +649,18 @@ func (n *Network) Cleanup() {
 		}
 	}
 
+	for _, v := range n.Validators {
+		_ = v.tmNode.Stop()
+	}
+
+	// TODO: Is there a cleaner way to do this with a synchronous check?
+	// https://github.com/NibiruChain/nibiru/issues/1955
+
 	// Give a brief pause for things to finish closing in other processes.
-	// Hopefully this helps with the address-in-use errors. 100ms chosen
-	// randomly.
-	time.Sleep(100 * time.Millisecond)
+	// Hopefully this helps with the address-in-use errors.
+	// Timeout of 100ms chosen randomly.
+	// Timeout of 500ms chosen because 100ms was not enough. | 2024-07-02
+	time.Sleep(500 * time.Millisecond)
 
 	if n.Config.CleanupDir {
 		_ = os.RemoveAll(n.BaseDir)

@@ -14,7 +14,7 @@ import (
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -147,7 +147,7 @@ func (k *Keeper) ApplyEvmTx(
 		}
 	}
 
-	var contractAddr common.Address
+	var contractAddr gethcommon.Address
 	if msg.To() == nil {
 		contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
 	}
@@ -222,7 +222,7 @@ func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
 
-	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash()))
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 	return k.ApplyEvmMsg(ctx, msg, tracer, commit, cfg, txConfig)
 }
 
@@ -267,11 +267,11 @@ func (k *Keeper) NewEVM(
 //  2. The requested height is from an previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
-	return func(height uint64) common.Hash {
+	return func(height uint64) gethcommon.Hash {
 		h, err := eth.SafeInt64(height)
 		if err != nil {
 			k.Logger(ctx).Error("failed to cast height to int64", "error", err)
-			return common.Hash{}
+			return gethcommon.Hash{}
 		}
 
 		switch {
@@ -281,7 +281,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			// Note: The headerHash is only set at begin block, it will be nil in case of a query context
 			headerHash := ctx.HeaderHash()
 			if len(headerHash) != 0 {
-				return common.BytesToHash(headerHash)
+				return gethcommon.BytesToHash(headerHash)
 			}
 
 			// only recompute the hash if not set (eg: checkTxState)
@@ -289,11 +289,11 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			header, err := tmtypes.HeaderFromProto(&contextBlockHeader)
 			if err != nil {
 				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
-				return common.Hash{}
+				return gethcommon.Hash{}
 			}
 
 			headerHash = header.Hash()
-			return common.BytesToHash(headerHash)
+			return gethcommon.BytesToHash(headerHash)
 
 		case ctx.BlockHeight() > h:
 			// Case 2: if the chain is not the current height we need to retrieve the hash from the store for the
@@ -301,19 +301,19 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
 			if !found {
 				k.Logger(ctx).Debug("historical info not found", "height", h)
-				return common.Hash{}
+				return gethcommon.Hash{}
 			}
 
 			header, err := tmtypes.HeaderFromProto(&histInfo.Header)
 			if err != nil {
 				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
-				return common.Hash{}
+				return gethcommon.Hash{}
 			}
 
-			return common.BytesToHash(header.Hash())
+			return gethcommon.BytesToHash(header.Hash())
 		default:
 			// Case 3: heights greater than the current one returns an empty hash.
-			return common.Hash{}
+			return gethcommon.Hash{}
 		}
 	}
 }
@@ -382,7 +382,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	if cfg.Params.HasCustomPrecompiles() {
 		customPrecompiles := cfg.Params.GetActivePrecompilesAddrs()
 
-		activePrecompiles := make([]common.Address, len(vm.PrecompiledAddressesBerlin)+len(customPrecompiles))
+		activePrecompiles := make([]gethcommon.Address, len(vm.PrecompiledAddressesBerlin)+len(customPrecompiles))
 		copy(activePrecompiles[:len(vm.PrecompiledAddressesBerlin)], vm.PrecompiledAddressesBerlin)
 		copy(activePrecompiles[len(vm.PrecompiledAddressesBerlin):], customPrecompiles)
 
@@ -498,4 +498,35 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		Logs:    evm.NewLogsFromEth(stateDB.Logs()),
 		Hash:    txConfig.TxHash.Hex(),
 	}, nil
+}
+
+func (k *Keeper) CreateFunToken(
+	goCtx context.Context, msg *evm.MsgCreateFunToken,
+) (resp *evm.MsgCreateFunTokenResponse, err error) {
+	var funtoken evm.FunToken
+	err = msg.ValidateBasic()
+	if err != nil {
+		return
+	}
+
+	// TODO: UD-DEBUG: feat: Add fee upon registration.
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	switch {
+	case msg.FromErc20 != "" && msg.FromBankDenom == "":
+		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20)
+	case msg.FromErc20 == "" && msg.FromBankDenom != "":
+		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
+	default:
+		// Impossible to reach this case due to ValidateBasic
+		err = fmt.Errorf(
+			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both).")
+	}
+	if err != nil {
+		return
+	}
+
+	return &evm.MsgCreateFunTokenResponse{
+		FuntokenMapping: funtoken,
+	}, err
 }

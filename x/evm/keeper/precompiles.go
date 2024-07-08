@@ -14,11 +14,22 @@ import (
 
 func AvailablePrecompiles() map[common.Address]vm.PrecompiledContract {
 	contractMap := make(map[common.Address]vm.PrecompiledContract)
+
 	// The following TODOs can go in an epic together.
+
 	// TODO: feat(evm): implement precompiled contracts for fungible tokens
+	// https://github.com/NibiruChain/nibiru/issues/1898
+
 	// TODO: feat(evm): implement precompiled contracts for ibc transfer
+	// Check if there is sufficient demand for this.
+
 	// TODO: feat(evm): implement precompiled contracts for staking
+	// Note that liquid staked assets can be a useful alternative to adding a
+	// staking precompile.
+	// Check if there is sufficient demand for this.
+
 	// TODO: feat(evm): implement precompiled contracts for wasm calls
+	// Check if there is sufficient demand for this.
 	return contractMap
 }
 

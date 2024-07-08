@@ -20,6 +20,11 @@ service Msg {
   // UpdateParams defined a governance operation for updating the x/evm module parameters.
   // The authority is hard-coded to the Cosmos SDK x/gov module account
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
+  // address can be given to create the mapping to a bank coin, or the
+  // denomination for a bank coin can be given to create the mapping to an ERC20.
+  rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -176,3 +181,25 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
+
+// MsgCreateFunToken: Arguments to create a "FunToken" mapping. Either the ERC20
+// contract address can be given to create the mapping to a bank coin, or the
+// denomination for a bank coin can be given to create the mapping to an ERC20.
+message MsgCreateFunToken {
+  // Hexadecimal address of the ERC20 token to which the `FunToken` maps
+  string from_erc20 = 1 [
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.nullable)   = false
+  ];
+
+  // Coin denomination in the Bank Module.
+  string from_bank_denom = 2;
+
+  // Sender: Address for the signer of the transaction.
+  string sender = 3;
+}
+
+message MsgCreateFunTokenResponse {
+  // Fungible token mapping corresponding to ERC20 tokens.
+  eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
+}

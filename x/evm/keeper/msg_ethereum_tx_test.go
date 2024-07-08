@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *KeeperSuite) TestMsgEthereumTx_CreateContract() {
+func (s *Suite) TestMsgEthereumTx_CreateContract() {
 	testCases := []struct {
 		name     string
 		scenario func()
@@ -72,7 +72,7 @@ func (s *KeeperSuite) TestMsgEthereumTx_CreateContract() {
 	}
 }
 
-func (s *KeeperSuite) TestMsgEthereumTx_SimpleTransfer() {
+func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 	testCases := []struct {
 		name     string
 		scenario func()
