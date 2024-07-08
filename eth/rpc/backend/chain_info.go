@@ -97,31 +97,6 @@ func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
 	return result, nil
 }
 
-// GetCoinbase is the address that staking rewards will be send to (alias for Etherbase).
-func (b *Backend) GetCoinbase() (sdk.AccAddress, error) {
-	node, err := b.clientCtx.GetNode()
-	if err != nil {
-		return nil, err
-	}
-
-	status, err := node.Status(b.ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &evm.QueryValidatorAccountRequest{
-		ConsAddress: sdk.ConsAddress(status.ValidatorInfo.Address).String(),
-	}
-
-	res, err := b.queryClient.ValidatorAccount(b.ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	address, _ := sdk.AccAddressFromBech32(res.AccountAddress) // #nosec G703
-	return address, nil
-}
-
 // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
 func (b *Backend) FeeHistory(
 	userBlockCount gethrpc.DecimalOrHex, // number blocks to fetch, maximum is 100
