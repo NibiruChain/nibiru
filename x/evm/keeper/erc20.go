@@ -391,12 +391,15 @@ func (k Keeper) LoadERC20BigInt(
 	methodName string,
 	args ...any,
 ) (out *big.Int, err error) {
+	commit := false
 	res, err := k.CallContract(
-		ctx, erc20Abi,
+		ctx,
+		erc20Abi,
 		evm.ModuleAddressEVM(),
 		&erc20Contract,
-		false, methodName,
-		args...,
+		commit,
+		methodName,
+		args,
 	)
 	if err != nil {
 		return out, err

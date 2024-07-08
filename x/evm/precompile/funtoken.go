@@ -198,6 +198,8 @@ func (p precompileFunToken) bankSend(
 	return method.Outputs.Pack() // TODO: change interface
 }
 
+// ArgsFunTokenBankSend: Constructor for an "args" array of arguments for the
+// "IFunToken.bankSend" function.
 func ArgsFunTokenBankSend(
 	erc20 gethcommon.Address,
 	amount *big.Int,
