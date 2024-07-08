@@ -18,34 +18,34 @@ import (
 )
 
 var (
-	_ vm.PrecompiledContract = (*precompileFunTokenGateway)(nil)
-	_ NibiruPrecompile       = (*precompileFunTokenGateway)(nil)
+	_ vm.PrecompiledContract = (*precompileFunToken)(nil)
+	_ NibiruPrecompile       = (*precompileFunToken)(nil)
 )
 
-// Precompile address for "FunTokenGateway.sol", the contract that
+// Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
 var PrecompileAddr_FuntokenGateway eth.HexAddr = eth.MustNewHexAddrFromStr(
 	"0x0000000000000000000000000000000000000800",
 )
 
-func (p precompileFunTokenGateway) Address() gethcommon.Address {
+func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FuntokenGateway.ToAddr()
 }
 
-func (p precompileFunTokenGateway) RequiredGas(input []byte) (gasPrice uint64) {
+func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
 	// TODO: UD-DEBUG: not implemented yet. Currently set to 0 gasPrice
 	return 22
 }
 
 const (
-	FunTokenGatewayMethod_BankSend FunTokenGatewayMethod = "bankSend"
+	FunTokenMethod_BankSend FunTokenMethod = "bankSend"
 )
 
-type FunTokenGatewayMethod string
+type FunTokenMethod string
 
 // Run runs the precompiled contract
-func (p precompileFunTokenGateway) Run(
+func (p precompileFunToken) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the error is
@@ -64,8 +64,8 @@ func (p precompileFunTokenGateway) Run(
 	}
 
 	caller := contract.CallerAddress
-	switch FunTokenGatewayMethod(method.Name) {
-	case FunTokenGatewayMethod_BankSend:
+	switch FunTokenMethod(method.Name) {
+	case FunTokenMethod_BankSend:
 		// TODO: UD-DEBUG: Test that calling non-method on the right address does
 		// nothing.
 		bz, err = p.bankSend(ctx, caller, method, args, readonly)
@@ -77,23 +77,23 @@ func (p precompileFunTokenGateway) Run(
 	return
 }
 
-func PrecompileFunTokenGateway(keepers keepers.PublicKeepers) vm.PrecompiledContract {
-	return precompileFunTokenGateway{
+func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+	return precompileFunToken{
 		PublicKeepers: keepers,
 	}
 }
 
-func (p precompileFunTokenGateway) ABI() gethabi.ABI {
+func (p precompileFunToken) ABI() gethabi.ABI {
 	return embeds.Contract_FuntokenGateway.ABI
 }
 
-type precompileFunTokenGateway struct {
+type precompileFunToken struct {
 	keepers.PublicKeepers
 	NibiruPrecompile
 }
 
 /*
-bankSend: Implements "IFunTokenGateway.bankSend"
+bankSend: Implements "IFunToken.bankSend"
 
 The "args" populate the following function signature in Solidity:
 ```solidity
@@ -104,7 +104,7 @@ The "args" populate the following function signature in Solidity:
 function bankSend(address erc20, uint256 amount, string memory to) external;
 ```
 */
-func (p precompileFunTokenGateway) bankSend(
+func (p precompileFunToken) bankSend(
 	ctx sdk.Context,
 	caller gethcommon.Address,
 	method *gethabi.Method,
@@ -190,7 +190,7 @@ func (p precompileFunTokenGateway) bankSend(
 	return // TODO: UD-DEBUG:
 }
 
-func ArgsFunTokenGatewayBankSend(
+func ArgsFunTokenBankSend(
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to sdk.AccAddress,
@@ -198,7 +198,7 @@ func ArgsFunTokenGatewayBankSend(
 	return []any{erc20, amount, to.String()}
 }
 
-func (p precompileFunTokenGateway) AssertArgTypesBankSend(args []any) (
+func (p precompileFunToken) AssertArgTypesBankSend(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,

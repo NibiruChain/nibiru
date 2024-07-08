@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "FunToken",
-  "sourceName": "contracts/FunToken.sol",
+  "contractName": "TestERC20",
+  "sourceName": "contracts/TestERC20.sol",
   "abi": [
     {
       "inputs": [],

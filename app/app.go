@@ -186,7 +186,8 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	precompile.InitPrecompiles(app.AppKeepers.PublicKeepers)
+	precompilesToAdd := precompile.InitPrecompiles(app.AppKeepers.PublicKeepers)
+	app.EvmKeeper.AddPrecompiles(precompilesToAdd)
 
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 

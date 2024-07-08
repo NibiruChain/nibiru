@@ -17,71 +17,66 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
-type Info struct {
-	ABI  gethabi.ABI
-	Addr gethcommon.Address
-}
-
+// InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
+// It combines default Ethereum precompiles with custom Nibiru precompiles.
+//
+// Parameters:
+//   - k: A keepers.PublicKeepers instance providing access to various blockchain state.
+//
+// Returns:
+//   - A map of Ethereum addresses to PrecompiledContract implementations.
 func InitPrecompiles(
 	k keepers.PublicKeepers,
-) {
+) (precompiles map[gethcommon.Address]vm.PrecompiledContract) {
 	initMutex.Lock()
 	defer initMutex.Unlock()
 
+	precompiles = make(map[gethcommon.Address]vm.PrecompiledContract)
+
+	// Default precompiles
+	for addr, pc := range vm.PrecompiledContractsBerlin {
+		precompiles[addr] = pc
+	}
+
+	// Custom precompiles
 	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
-		PrecompileFunTokenGateway,
+		PrecompileFunToken,
 	} {
 		pc := precompileSetupFn(k)
 		addPrecompileToVM(pc)
+		precompiles[pc.Address()] = pc
 	}
+	return precompiles
 }
 
 // initMutex: Mutual exclusion lock (mutex) to prevent race conditions with
 // consecutive calls of InitPrecompiles.
 var initMutex = &sync.Mutex{}
 
-// addPrecompileToVM
+// addPrecompileToVM adds a precompiled contract to the EVM's set of recognized
+// precompiles. It updates both the contract map and the list of precompile
+// addresses for the latest major upgrade or hard fork of Ethereum (Berlin).
 func addPrecompileToVM(p vm.PrecompiledContract) {
 	addr := p.Address()
-	for _, precompileMap := range []map[gethcommon.Address]vm.PrecompiledContract{
-		vm.PrecompiledContractsHomestead,
-		vm.PrecompiledContractsByzantium,
-		vm.PrecompiledContractsIstanbul,
-		vm.PrecompiledContractsBerlin,
-		vm.PrecompiledContractsBLS,
-		// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
-		// https://github.com/NibiruChain/nibiru/issues/1921
-		// vm.PrecompiledContractsCancun,
-	} {
-		precompileMap[addr] = p
-	}
+
+	vm.PrecompiledContractsBerlin[addr] = p
+	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
+	// https://github.com/NibiruChain/nibiru/issues/1921
+	// vm.PrecompiledContractsCancun,
 
 	// Done if the precompiled contracts are already added
 	// This check is only relevant during tests to prevent races. The iteration
 	// doesn't get repeated in production.
-	vmSet := set.New(vm.PrecompiledAddressesHomestead...)
-	vmSet.AddMulti(vm.PrecompiledAddressesByzantium...)
-	vmSet.AddMulti(vm.PrecompiledAddressesBerlin...)
-	vmSet.AddMulti(vm.PrecompiledAddressesIstanbul...)
+	vmSet := set.New(vm.PrecompiledAddressesBerlin...)
 	if vmSet.Has(addr) {
 		return
 	}
 
-	vm.PrecompiledAddressesHomestead = append(vm.PrecompiledAddressesHomestead, addr)
-	vm.PrecompiledAddressesByzantium = append(vm.PrecompiledAddressesByzantium, addr)
-	vm.PrecompiledAddressesIstanbul = append(vm.PrecompiledAddressesIstanbul, addr)
 	vm.PrecompiledAddressesBerlin = append(vm.PrecompiledAddressesBerlin, addr)
 	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
 	// https://github.com/NibiruChain/nibiru/issues/1921
 	// vm.PrecompiledAddressesCancun,
-
-	vmSet.Add(addr)
-	Addresses = vmSet
 }
-
-// Addresses is the set of all known precompile addresses. It includes defaults
-// from go-ethereum and the custom ones specific to the Nibiru EVM.
-var Addresses set.Set[gethcommon.Address]
 
 type NibiruPrecompile interface {
 	ABI() gethabi.ABI

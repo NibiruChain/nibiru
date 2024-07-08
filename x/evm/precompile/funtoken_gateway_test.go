@@ -26,12 +26,12 @@ func TestPrecompileSuite(t *testing.T) {
 	suite.Run(t, s)
 }
 
-func (s *Suite) TestPrecompile_FunTokenGateway() {
+func (s *Suite) TestPrecompile_FunToken() {
 	// precompileAddr := precompile.PrecompileAddr_FuntokenGateway
 	// abi := embeds.Contract_FuntokenGateway.ABI
 
-	s.Run("PrecompileExists", s.FunTokenGateway_PrecompileExists)
-	s.Run("HappyPath", s.FunTokenGateway_HappyPath)
+	s.Run("PrecompileExists", s.FunToken_PrecompileExists)
+	s.Run("HappyPath", s.FunToken_HappyPath)
 }
 
 func CreateFunTokenForBankCoin(
@@ -81,8 +81,8 @@ func CreateFunTokenForBankCoin(
 }
 
 // PrecompileExists: An integration test showing that a "PrecompileError" occurs
-// when calling the FunTokenGateway
-func (s *Suite) FunTokenGateway_PrecompileExists() {
+// when calling the FunToken
+func (s *Suite) FunToken_PrecompileExists() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
 	abi := embeds.Contract_FuntokenGateway.ABI
 	deps := evmtest.NewTestDeps()
@@ -96,11 +96,11 @@ func (s *Suite) FunTokenGateway_PrecompileExists() {
 	s.NoError(err)
 	s.Equal(string(codeResp.Code), "")
 
-	s.True(precompile.Addresses.Has(precompileAddr.ToAddr()),
+	s.True(deps.K.PrecompileSet().Has(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	callArgs := []any{"nonsense", "args here", "to see if", "precompile is", "called"}
-	methodName := string(precompile.FunTokenGatewayMethod_BankSend)
+	methodName := string(precompile.FunTokenMethod_BankSend)
 	packedArgs, err := abi.Pack(methodName, callArgs...)
 	if err != nil {
 		err = fmt.Errorf("failed to pack ABI args: %w", err) // easier to read
@@ -120,7 +120,7 @@ func (s *Suite) FunTokenGateway_PrecompileExists() {
 	s.ErrorContains(err, "Precompile error")
 }
 
-func (s *Suite) FunTokenGateway_HappyPath() {
+func (s *Suite) FunToken_HappyPath() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
 	abi := embeds.Contract_FuntokenGateway.ABI
 	deps := evmtest.NewTestDeps()
@@ -128,7 +128,7 @@ func (s *Suite) FunTokenGateway_HappyPath() {
 	theUser := deps.Sender.EthAddr
 	theEvm := evm.ModuleAddressEVM()
 
-	s.True(precompile.Addresses.Has(precompileAddr.ToAddr()),
+	s.True(deps.K.PrecompileSet().Has(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	s.T().Log("Create FunToken mapping and ERC20")
@@ -175,8 +175,8 @@ func (s *Suite) FunTokenGateway_HappyPath() {
 
 	s.T().Log("Send using precompile")
 	randomAcc := testutil.AccAddress()
-	callArgs := precompile.ArgsFunTokenGatewayBankSend(contract, big.NewInt(420), randomAcc)
-	methodName := string(precompile.FunTokenGatewayMethod_BankSend)
+	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(420), randomAcc)
+	methodName := string(precompile.FunTokenMethod_BankSend)
 	input, err := abi.Pack(methodName, callArgs...)
 	s.NoError(err)
 
