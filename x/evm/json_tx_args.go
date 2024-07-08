@@ -31,7 +31,10 @@ type JsonTxArgs struct {
 	// We accept "data" and "input" for backwards-compatibility reasons.
 	// "input" is the newer name and should be preferred by clients.
 	// Issue detail: https://github.com/ethereum/go-ethereum/issues/15628
-	Data  *hexutil.Bytes `json:"data"`
+	Data *hexutil.Bytes `json:"data"`
+	// Both "data" and "input" are accepted for backwards-compatibility reasons.
+	// "input" is the newer name and should be preferred by clients.
+	// Issue detail: https://github.com/ethereum/go-ethereum/issues/15628
 	Input *hexutil.Bytes `json:"input"`
 
 	// Introduced by AccessListTxType transaction.

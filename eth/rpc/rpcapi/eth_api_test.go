@@ -18,6 +18,7 @@ import (
 
 	nibirucommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
 	"github.com/stretchr/testify/suite"
@@ -42,7 +43,7 @@ type TestSuite struct {
 	fundedAccEthAddr    gethcommon.Address
 	fundedAccNibiAddr   sdk.AccAddress
 
-	contractData evmtest.CompiledEvmContract
+	contractData embeds.CompiledEvmContract
 }
 
 func TestSuite_RunAll(t *testing.T) {
@@ -63,7 +64,8 @@ func (s *TestSuite) SetupSuite() {
 	s.network = network
 	s.ethClient = network.Validators[0].JSONRPCClient
 
-	s.contractData = evmtest.SmartContract_FunToken.Load(s.T())
+	s.contractData, err = embeds.SmartContract_FunToken.Load()
+	s.Require().NoError(err)
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey

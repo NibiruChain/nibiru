@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -109,4 +111,14 @@ func (s *TestSuite) TestFunToken() {
 			s.EqualValues(funA.Erc20Addr.ToAddr(), funB.Erc20Addr.ToAddr())
 		})
 	}
+}
+
+func (s *TestSuite) TestModuleAddressEVM() {
+	addr := evm.ModuleAddressEVM()
+	s.Equal(addr.Hex(), "0x603871c2ddd41c26Ee77495E2E31e6De7f9957e0")
+
+	// Sanity check
+	moduleAddr := authtypes.NewModuleAddress(evm.ModuleName)
+	evmModuleAddr := gethcommon.BytesToAddress(moduleAddr)
+	s.Equal(addr.Hex(), evmModuleAddr.Hex())
 }

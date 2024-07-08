@@ -117,13 +117,14 @@ func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []string {
 		}
 
 		pricesStr, err := votes.ToString()
-		require.NoError(s.T(), err)
+		s.Require().NoError(err)
 		_, err = s.network.BroadcastMsgs(val.Address, &types.MsgAggregateExchangeRatePrevote{
 			Hash:      types.GetAggregateVoteHash("1", pricesStr, val.ValAddress).String(),
 			Feeder:    val.Address.String(),
 			Validator: val.ValAddress.String(),
 		})
-		require.NoError(s.T(), err)
+		s.Require().NoError(err)
+		s.NoError(s.network.WaitForNextBlock())
 
 		strVotes[i] = pricesStr
 	}
@@ -139,7 +140,7 @@ func (s *TestSuite) sendVotes(rates []string) {
 			Feeder:        val.Address.String(),
 			Validator:     val.ValAddress.String(),
 		})
-		require.NoError(s.T(), err)
+		s.Require().NoError(err)
 	}
 }
 

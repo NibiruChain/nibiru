@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1936](https://github.com/NibiruChain/nibiru/pull/1936) - feat(evm): EVM fungible token protobufs and encoding tests
 - [#1947](https://github.com/NibiruChain/nibiru/pull/1947) - fix(evm): fix FunToken state marshalling
 - [#1949](https://github.com/NibiruChain/nibiru/pull/1949) - feat(evm): add fungible token mapping queries
+- [#1950](https://github.com/NibiruChain/nibiru/pull/1950) - feat(evm): Tx to create FunToken mapping from ERC20, contract embeds, and ERC20 queries.
 - [#1958](https://github.com/NibiruChain/nibiru/pull/1958) - chore(evm): wiped deprecated evm apis: miner, personal
 
 #### Dapp modules: perp, spot, oracle, etc
