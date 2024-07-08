@@ -236,7 +236,7 @@ func GetDefaultAPINamespaces() []string {
 
 // GetAPINamespaces returns the all the available JSON-RPC API namespaces.
 func GetAPINamespaces() []string {
-	return []string{"web3", "eth", "personal", "net", "txpool", "debug", "miner"}
+	return []string{"web3", "eth", "net", "txpool", "debug"}
 }
 
 // DefaultJSONRPCConfig returns an EVM config with the JSON-RPC API enabled by default
@@ -397,7 +397,7 @@ address = "{{ .JSONRPC.Address }}"
 ws-address = "{{ .JSONRPC.WsAddress }}"
 
 # API defines a list of JSON-RPC namespaces that should be enabled
-# Example: "eth,txpool,personal,net,debug,web3"
+# Example: "eth,txpool,net,debug,web3"
 api = "{{range $index, $elmt := .JSONRPC.API}}{{if $index}},{{$elmt}}{{else}}{{$elmt}}{{end}}{{end}}"
 
 # GasCap sets a cap on gas that can be used in eth_call/estimateGas (0=infinite). Default: 25,000,000.
