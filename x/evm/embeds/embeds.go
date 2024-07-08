@@ -28,17 +28,17 @@ var (
 	//go:embed ERC20MinterCompiled.json
 	erc20MinterContractJSON []byte
 
-	// Contract_FuntokenGateway: Precompile contract interface for
+	// Contract_Funtoken: Precompile contract interface for
 	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
 	// to non-EVM accounts. Only the ABI is used.
-	Contract_FuntokenGateway CompiledEvmContract
+	Contract_Funtoken CompiledEvmContract
 	//go:embed IFunTokenCompiled.json
-	funtokenGatewayJSON []byte
+	funtokenContractJSON []byte
 )
 
 func init() {
 	Contract_ERC20Minter = SmartContract_ERC20Minter.MustLoad()
-	Contract_FuntokenGateway = SmartContract_FunToken.MustLoad()
+	Contract_Funtoken = SmartContract_FunToken.MustLoad()
 }
 
 var (
@@ -55,7 +55,7 @@ var (
 	SmartContract_FunToken = SmartContractFixture{
 		Name:        "FunToken.sol",
 		FixtureType: FixtueType_Prod,
-		EmbedJSON:   &funtokenGatewayJSON,
+		EmbedJSON:   &funtokenContractJSON,
 	}
 )
 

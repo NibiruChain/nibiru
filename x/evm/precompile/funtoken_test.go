@@ -27,9 +27,6 @@ func TestPrecompileSuite(t *testing.T) {
 }
 
 func (s *Suite) TestPrecompile_FunToken() {
-	// precompileAddr := precompile.PrecompileAddr_FuntokenGateway
-	// abi := embeds.Contract_FuntokenGateway.ABI
-
 	s.Run("PrecompileExists", s.FunToken_PrecompileExists)
 	s.Run("HappyPath", s.FunToken_HappyPath)
 }
@@ -84,7 +81,7 @@ func CreateFunTokenForBankCoin(
 // when calling the FunToken
 func (s *Suite) FunToken_PrecompileExists() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
-	abi := embeds.Contract_FuntokenGateway.ABI
+	abi := embeds.Contract_Funtoken.ABI
 	deps := evmtest.NewTestDeps()
 
 	codeResp, err := deps.K.Code(
@@ -122,7 +119,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 
 func (s *Suite) FunToken_HappyPath() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
-	abi := embeds.Contract_FuntokenGateway.ABI
+	abi := embeds.Contract_Funtoken.ABI
 	deps := evmtest.NewTestDeps()
 
 	theUser := deps.Sender.EthAddr
@@ -164,6 +161,7 @@ func (s *Suite) FunToken_HappyPath() {
 	}
 
 	s.T().Log("Transfer - Success (sanity check)")
+	randomAcc := testutil.AccAddress()
 	{
 		from := theUser
 		to := theEvm
@@ -171,11 +169,14 @@ func (s *Suite) FunToken_HappyPath() {
 		s.NoError(err)
 		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_419))
 		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+		s.Equal("0",
+			deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
+		)
 	}
 
 	s.T().Log("Send using precompile")
-	randomAcc := testutil.AccAddress()
-	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(420), randomAcc)
+	amtToSend := int64(419)
+	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(amtToSend), randomAcc)
 	methodName := string(precompile.FunTokenMethod_BankSend)
 	input, err := abi.Pack(methodName, callArgs...)
 	s.NoError(err)
@@ -184,10 +185,15 @@ func (s *Suite) FunToken_HappyPath() {
 	_, err = evmtest.DoEthTx(&deps, precompileAddr.ToAddr(), from, input)
 	s.Require().NoError(err)
 
-	// TODO: UD-DEBUG: WIP
-	// evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_000))
-	// evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
-	// s.Equal("420",
-	// 	deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
-	// )
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_419-amtToSend))
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+	s.Equal(fmt.Sprintf("%d", amtToSend),
+		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
+	)
+
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_000))
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+	s.Equal("419",
+		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
+	)
 }

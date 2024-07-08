@@ -23,6 +23,15 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
+// FindERC20Metadata retrieves the metadata of an ERC20 token.
+//
+// Parameters:
+//   - ctx: The SDK context for the transaction.
+//   - contract: The Ethereum address of the ERC20 contract.
+//
+// Returns:
+//   - info: ERC20Metadata containing name, symbol, and decimals.
+//   - err: An error if metadata retrieval fails.
 func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	contract gethcommon.Address,
@@ -275,18 +284,21 @@ func computeCommitGasLimit(
 		return gasLimit, nil
 	}
 
+	// Create a cached context for gas estimation
+	cachedCtx, _ := ctx.CacheContext()
+
 	jsonArgs, err := json.Marshal(evm.JsonTxArgs{
 		From: fromAcc,
 		To:   contract,
 		Data: (*hexutil.Bytes)(&contractInput),
 	})
 	if err != nil {
-		err = fmt.Errorf("failed to compute gas limit: %w", err)
+		err = fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
 		return
 	}
 
 	gasRes, err := k.EstimateGasForEvmCallType(
-		sdk.WrapSDKContext(ctx),
+		sdk.WrapSDKContext(cachedCtx),
 		&evm.EthCallRequest{
 			Args:   jsonArgs,
 			GasCap: gasLimit,
@@ -446,6 +458,8 @@ func (e erc20Calls) Transfer(
 	return e.CallContractWithInput(ctx, from, &contract, commit, input)
 }
 
+// BalanceOf retrieves the balance of an ERC20 token for a specific account.
+// Implements "ERC20.balanceOf".
 func (e erc20Calls) BalanceOf(
 	contract, account gethcommon.Address,
 	ctx sdk.Context,

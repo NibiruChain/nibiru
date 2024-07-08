@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"sync"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -84,13 +85,15 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 }
 
 func (p precompileFunToken) ABI() gethabi.ABI {
-	return embeds.Contract_FuntokenGateway.ABI
+	return embeds.Contract_Funtoken.ABI
 }
 
 type precompileFunToken struct {
 	keepers.PublicKeepers
 	NibiruPrecompile
 }
+
+var executionGuard sync.Mutex
 
 /*
 bankSend: Implements "IFunToken.bankSend"
@@ -116,6 +119,10 @@ func (p precompileFunToken) bankSend(
 		err = fmt.Errorf("cannot write state from staticcall (a read-only call)")
 		return
 	}
+	if !executionGuard.TryLock() {
+		return nil, fmt.Errorf("bankSend is already in progress")
+	}
+	defer executionGuard.Unlock()
 
 	erc20, amount, to, err := p.AssertArgTypesBankSend(args)
 	if err != nil {
@@ -153,9 +160,9 @@ func (p precompileFunToken) bankSend(
 		return
 	}
 
-	// EVM account mints FunToken.BC to module account
-	coinAmount := math.NewIntFromBigInt(amount)
-	coins := sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, coinAmount))
+	// EVM account mints FunToken.BankDenom to module account
+	amt := math.NewIntFromBigInt(amount)
+	coins := sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, amt))
 	err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
 	if err != nil {
 		err = fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
@@ -163,6 +170,7 @@ func (p precompileFunToken) bankSend(
 		)
 		return
 	}
+
 	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
 	if err != nil {
 		err = fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
@@ -187,7 +195,7 @@ func (p precompileFunToken) bankSend(
 	// TODO: UD-DEBUG: feat: Emit EVM events
 	// TODO: UD-DEBUG: feat: Emit ABCI events
 
-	return // TODO: UD-DEBUG:
+	return method.Outputs.Pack() // TODO: change interface
 }
 
 func ArgsFunTokenBankSend(
