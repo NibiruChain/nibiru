@@ -492,7 +492,7 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 
 	erc20 := m.FromErc20
 	bankDenom := m.FromBankDenom
-	if (erc20 == "" && bankDenom == "") || (erc20 != "" && bankDenom != "") {
+	if (erc20 == nil && bankDenom == "") || (erc20 != nil && bankDenom != "") {
 		return errMsgCreateFunTokenValidate(fmt.Sprintf(
 			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)."+
 				"got values (from_erc20=\"%s\", from_bank_denom=\"%s\")", erc20, bankDenom,
@@ -504,5 +504,31 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m MsgCreateFunToken) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
+
+// GetSigners returns the expected signers for a MsgSendFunTokenToErc20 message.
+func (m MsgSendFunTokenToErc20) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+func errMsgSendFunTokenToErc20Validate(errMsg string) error {
+	return fmt.Errorf("MsgSendFunTokenToErc20 ValidateBasic error: %s", errMsg)
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgSendFunTokenToErc20) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return errMsgCreateFunTokenValidate("invalid sender addr")
+	}
+	if m.ToEthAddr == "" {
+		return errMsgSendFunTokenToErc20Validate("\"to_eth_addr\" must be set")
+	}
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgSendFunTokenToErc20) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }

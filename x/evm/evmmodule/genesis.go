@@ -7,7 +7,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -25,6 +24,9 @@ func InitGenesis(
 ) []abci.ValidatorUpdate {
 	k.SetParams(ctx, genState.Params)
 
+	// Note that "GetModuleAccount" initializes the module account with permissions
+	// under the hood if it did not already exist. This is important because the
+	// EVM module needs to be able to send and receive funds during MsgEthereumTx
 	if evmModule := accountKeeper.GetModuleAccount(ctx, evm.ModuleName); evmModule == nil {
 		panic("the EVM module account has not been set")
 	}
