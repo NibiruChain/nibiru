@@ -581,7 +581,7 @@ func (k *Keeper) SendFunTokenToEvm(
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
 	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToErc20{
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
 		Sender:               msg.Sender,
 		Erc20ContractAddress: erc20ContractAddr.String(),
 		ToEthAddr:            toEthAddr.String(),

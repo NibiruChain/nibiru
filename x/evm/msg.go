@@ -515,8 +515,8 @@ func (m MsgSendFunTokenToEvm) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-func errMsgSendFunTokenToErc20Validate(errMsg string) error {
-	return fmt.Errorf("MsgSendFunTokenToErc20 ValidateBasic error: %s", errMsg)
+func errMsgSendFunTokenToEvmValidate(errMsg string) error {
+	return fmt.Errorf("MsgSendFunTokenToEvm ValidateBasic error: %s", errMsg)
 }
 
 // ValidateBasic does a sanity check of the provided data
@@ -525,7 +525,7 @@ func (m *MsgSendFunTokenToEvm) ValidateBasic() error {
 		return errMsgCreateFunTokenValidate("invalid sender addr")
 	}
 	if m.ToEthAddr == "" {
-		return errMsgSendFunTokenToErc20Validate("\"to_eth_addr\" must be set")
+		return errMsgSendFunTokenToEvmValidate("\"to_eth_addr\" must be set")
 	}
 	return nil
 }

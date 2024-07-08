@@ -212,11 +212,11 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.ErrorContains(err, "Funtoken mapping already created")
 }
 
-// TestSendFunTokenToErc20 executes sending fun tokens from bank coin to erc20 and checks the results:
+// TestSendFunTokenToEvm executes sending fun tokens from bank coin to erc20 and checks the results:
 // - sender balance should be reduced by sendAmount
 // - erc-20 balance should be increased by sendAmount
 // - evm module account should hold sender's coins
-func (s *Suite) TestSendFunTokenToErc20() {
+func (s *Suite) TestSendFunTokenToEvm() {
 	for _, tc := range []struct {
 		name                string
 		bankDenom           string

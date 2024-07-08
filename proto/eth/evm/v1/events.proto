@@ -54,8 +54,8 @@ message EventFunTokenFromBankCoin {
   string creator = 3;
 }
 
-// SendFunTokenToErc20 defines sending fun token to erc20 event.
-message EventSendFunTokenToErc20 {
+// SendFunTokenToEvm defines sending fun token to erc20 event.
+message EventSendFunTokenToEvm {
   string sender = 1;
   string erc20_contract_address = 2;
   string to_eth_addr = 3;
