@@ -262,7 +262,6 @@ func (k *Keeper) NewEVM(
 	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
 	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
 	return theEvm
-
 }
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:

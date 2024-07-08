@@ -7,10 +7,11 @@ import (
 	"maps"
 	"sort"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
 // PrecompileSet is the set of all known precompile addresses. It includes defaults
