@@ -136,63 +136,6 @@ func (s *BackendSuite) TestChainId() {
 	}
 }
 
-func (s *BackendSuite) TestGetCoinbase() {
-	validatorAcc := sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes())
-	testCases := []struct {
-		name         string
-		registerMock func()
-		accAddr      sdk.AccAddress
-		expPass      bool
-	}{
-		{
-			"fail - Can't retrieve status from node",
-			func() {
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				RegisterStatusError(client)
-			},
-			validatorAcc,
-			false,
-		},
-		{
-			"fail - Can't query validator account",
-			func() {
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterStatus(client)
-				RegisterValidatorAccountError(queryClient)
-			},
-			validatorAcc,
-			false,
-		},
-		{
-			"pass - Gets coinbase account",
-			func() {
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterStatus(client)
-				RegisterValidatorAccount(queryClient, validatorAcc)
-			},
-			validatorAcc,
-			true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			accAddr, err := s.backend.GetCoinbase()
-
-			if tc.expPass {
-				s.Require().Equal(tc.accAddr, accAddr)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
-}
-
 func (s *BackendSuite) TestSuggestGasTipCap() {
 	testCases := []struct {
 		name         string
