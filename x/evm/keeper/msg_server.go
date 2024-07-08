@@ -510,10 +510,12 @@ func (k *Keeper) CreateFunToken(
 	// TODO: UD-DEBUG: feat: Add fee upon registration.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
-	case msg.FromErc20 != nil && msg.FromBankDenom == "":
+	case !emptyErc20 && msg.FromBankDenom == "":
 		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
-	case msg.FromErc20 == nil && msg.FromBankDenom != "":
+	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
 		if err == nil {
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
@@ -536,12 +538,12 @@ func (k *Keeper) CreateFunToken(
 	}, err
 }
 
-// SendFunTokenToErc20 Sends a coin with a valid "FunToken" mapping to the
+// SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
-func (k *Keeper) SendFunTokenToErc20(
-	goCtx context.Context, msg *evm.MsgSendFunTokenToErc20,
-) (resp *evm.MsgSendFunTokenToErc20Response, err error) {
+func (k *Keeper) SendFunTokenToEvm(
+	goCtx context.Context, msg *evm.MsgSendFunTokenToEvm,
+) (resp *evm.MsgSendFunTokenToEvmResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
@@ -586,5 +588,5 @@ func (k *Keeper) SendFunTokenToErc20(
 		BankCoin:             msg.BankCoin,
 	})
 
-	return &evm.MsgSendFunTokenToErc20Response{}, nil
+	return &evm.MsgSendFunTokenToEvmResponse{}, nil
 }

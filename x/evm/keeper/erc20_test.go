@@ -277,9 +277,9 @@ func (s *Suite) TestSendFunTokenToErc20() {
 			funTokenErc20Addr := createFunTokenResp.FuntokenMapping.Erc20Addr.ToAddr()
 
 			// Send fun token to ERC-20 contract
-			_, err = deps.K.SendFunTokenToErc20(
+			_, err = deps.K.SendFunTokenToEvm(
 				ctx,
-				&evm.MsgSendFunTokenToErc20{
+				&evm.MsgSendFunTokenToEvm{
 					Sender:    deps.Sender.NibiruAddr.String(),
 					BankCoin:  sdk.Coin{Denom: tc.bankDenom, Amount: tc.amountToSend},
 					ToEthAddr: recipientEVMAddr,

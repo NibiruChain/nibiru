@@ -109,7 +109,7 @@ func SendFunTokenToErc20() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := &evm.MsgSendFunTokenToErc20{
+			msg := &evm.MsgSendFunTokenToEvm{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
 				ToEthAddr: eth.MustNewHexAddrFromStr(args[0]),

@@ -27,10 +27,10 @@ service Msg {
   // denomination for a bank coin can be given to create the mapping to an ERC20.
   rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 
-  // SendFunTokenToErc20: Sends a coin with a valid "FunToken" mapping to the
+  // SendFunTokenToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc SendFunTokenToErc20(MsgSendFunTokenToErc20) returns (MsgSendFunTokenToErc20Response);
+  rpc SendFunTokenToEvm(MsgSendFunTokenToEvm) returns (MsgSendFunTokenToEvmResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -210,8 +210,8 @@ message MsgCreateFunTokenResponse {
   eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
 }
 
-// MsgSendFunTokenToErc20: Arguments to send a bank coin to ERC-20 representation
-message MsgSendFunTokenToErc20 {
+// MsgSendFunTokenToEvm: Arguments to send a bank coin to ERC-20 representation
+message MsgSendFunTokenToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
@@ -221,10 +221,10 @@ message MsgSendFunTokenToErc20 {
   // Sender: Address for the signer of the transaction.
   string sender = 2;
 
-  // Coin to get converted to ERC20
+  // Bank coin to get converted to ERC20
   cosmos.base.v1beta1.Coin bank_coin = 3 [
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
 }
-message MsgSendFunTokenToErc20Response {}
+message MsgSendFunTokenToEvmResponse {}
