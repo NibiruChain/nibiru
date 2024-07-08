@@ -4,11 +4,12 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/evm"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/x/evm"
 )
 
 func DoEthTx(

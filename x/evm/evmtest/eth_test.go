@@ -45,5 +45,4 @@ func (s *Suite) TestERC20Helpers() {
 		deps.Sender.EthAddr,
 		big.NewInt(0),
 	)
-
 }

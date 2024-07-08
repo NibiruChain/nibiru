@@ -93,10 +93,7 @@ func (s *Suite) FunToken_HappyPath() {
 	{
 		from := theUser
 		to := theUser
-		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
-		s.NoError(err)
-		_, err = evmtest.DoEthTx(&deps, contract, from, input)
-		// _, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
+		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
@@ -104,13 +101,10 @@ func (s *Suite) FunToken_HappyPath() {
 	{
 		from := theEvm
 		to := theUser
-		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
+
+		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
 		s.NoError(err)
 
-		_, err = evmtest.DoEthTx(&deps, contract, from, input)
-		s.NoError(err)
-		// _, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
-		// s.NoError(err)
 		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_420))
 		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
 	}
