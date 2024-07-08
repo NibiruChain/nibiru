@@ -4,6 +4,7 @@ node_modules
 contracts
 ignition
 bun.lockb
+package-lock.json
 
 # Hardhat files
 /cache
