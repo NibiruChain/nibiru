@@ -343,3 +343,10 @@ func setBankDenomMetadata(ctx sdk.Context, bankKeeper bankkeeper.Keeper, bankDen
 	}
 	bankKeeper.SetDenomMetaData(ctx, bankMetadata)
 }
+
+func (s *Suite) TestERC20Calls() {
+	deps := evmtest.NewTestDeps()
+	bankDenom := "ibc/btc"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	contract := funtoken.Erc20Addr.ToAddr()
+}

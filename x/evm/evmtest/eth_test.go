@@ -2,6 +2,7 @@
 package evmtest_test
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -9,15 +10,15 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-type SuiteEVMTest struct {
+type Suite struct {
 	suite.Suite
 }
 
-func TestSuiteEVMTest(t *testing.T) {
-	suite.Run(t, new(SuiteEVMTest))
+func TestSuiteEVM(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *SuiteEVMTest) TestSampleFns() {
+func (s *Suite) TestSampleFns() {
 	s.T().Log("Test NewEthTxMsg")
 	ethTxMsg := evmtest.NewEthTxMsg()
 	err := ethTxMsg.ValidateBasic()
@@ -30,4 +31,19 @@ func (s *SuiteEVMTest) TestSampleFns() {
 
 	s.T().Log("Test NewEthTxMsgs")
 	_, _, _ = evmtest.NewEthTxMsgAsCmt(s.T())
+}
+
+func (s *Suite) TestERC20Helpers() {
+	deps := evmtest.NewTestDeps()
+	bankDenom := "token"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	erc20Contract := funtoken.Erc20Addr.ToAddr()
+
+	evmtest.AssertERC20BalanceEqual(
+		s.T(), &deps,
+		erc20Contract,
+		deps.Sender.EthAddr,
+		big.NewInt(0),
+	)
+
 }

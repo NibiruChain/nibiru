@@ -492,6 +492,12 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}, nil
 }
 
+// CreateFunToken is a gRPC transaction message for creating fungible token
+// ("FunToken") a mapping between a bank coin and ERC20 token.
+//
+// If the mapping is generated from an ERC20, this tx creates a bank coin to go
+// with it, and if the mapping's generated from a coin, the EVM module
+// deploys an ERC20 contract that for which it will be the owner.
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
