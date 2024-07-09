@@ -658,7 +658,7 @@ func (n *Network) Cleanup() {
 			stopped = true
 			break
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(400 * time.Millisecond)
 	}
 	if !stopped {
 		panic("cleanup did not succeed within the max retry count")
@@ -710,7 +710,18 @@ func stopValidatorNode(v *Validator) {
 	}
 
 	if v.jsonrpc != nil {
-		_ = v.jsonrpc.Close()
+		// Note that this is a graceful shutdown replacement for:
+		// _ = v.jsonrpc.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := v.jsonrpc.Shutdown(ctx); err != nil {
+			// Log the error or handle it as appropriate for your application
+			v.Ctx.Logger.Error("❌ Error shutting down JSON-RPC server", "error", err)
+		} else {
+			v.Ctx.Logger.Error("✅ Successfully shut down JSON-RPC server", "error", err)
+			v.jsonrpc = nil
+		}
+
 	}
 
 	if v.tmNode != nil {
