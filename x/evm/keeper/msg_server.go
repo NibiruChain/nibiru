@@ -21,6 +21,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 
+	"github.com/NibiruChain/nibiru/x/evm/embeds"
+
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
@@ -490,6 +492,12 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}, nil
 }
 
+// CreateFunToken is a gRPC transaction message for creating fungible token
+// ("FunToken") a mapping between a bank coin and ERC20 token.
+//
+// If the mapping is generated from an ERC20, this tx creates a bank coin to go
+// with it, and if the mapping's generated from a coin, the EVM module
+// deploys an ERC20 contract that for which it will be the owner.
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
@@ -502,11 +510,20 @@ func (k *Keeper) CreateFunToken(
 	// TODO: UD-DEBUG: feat: Add fee upon registration.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
-	case msg.FromErc20 != "" && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20)
-	case msg.FromErc20 == "" && msg.FromBankDenom != "":
+	case !emptyErc20 && msg.FromBankDenom == "":
+		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
+	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
+		if err == nil {
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
+				Creator:              msg.Sender,
+				BankDenom:            funtoken.BankDenom,
+				Erc20ContractAddress: funtoken.Erc20Addr.String(),
+			})
+		}
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -519,4 +536,57 @@ func (k *Keeper) CreateFunToken(
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
 	}, err
+}
+
+// SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the
+// given recipient address ("to_eth_addr") in the corresponding ERC20
+// representation.
+func (k *Keeper) SendFunTokenToEvm(
+	goCtx context.Context, msg *evm.MsgSendFunTokenToEvm,
+) (resp *evm.MsgSendFunTokenToEvmResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender := sdk.MustAccAddressFromBech32(msg.Sender)
+	toEthAddr := msg.ToEthAddr.ToAddr()
+	bankDenom := msg.BankCoin.Denom
+	amount := msg.BankCoin.Amount
+
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom))
+	if len(funTokens) == 0 {
+		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", bankDenom)
+	}
+	erc20ContractAddr := funTokens[0].Erc20Addr.ToAddr()
+
+	// Step 1: Send coins to the evm module account
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.Coins{msg.BankCoin})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to send coins to module account")
+	}
+
+	// Step 2: evm call to erc20 minter: mint tokens for a toEthAddr
+	evmResp, err := k.CallContract(
+		ctx,
+		embeds.Contract_ERC20Minter.ABI,
+		evm.ModuleAddressEVM(),
+		&erc20ContractAddr,
+		true,
+		"mint",
+		toEthAddr,
+		amount.BigInt(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if evmResp.Failed() {
+		return nil,
+			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
+	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
+		Sender:               msg.Sender,
+		Erc20ContractAddress: erc20ContractAddr.String(),
+		ToEthAddr:            toEthAddr.String(),
+		BankCoin:             msg.BankCoin,
+	})
+
+	return &evm.MsgSendFunTokenToEvmResponse{}, nil
 }
