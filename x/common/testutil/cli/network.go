@@ -689,7 +689,11 @@ func (n *Network) Cleanup() {
 // debugging in production environments.
 func stopValidatorNode(v *Validator) {
 	if v.tmNode != nil && v.tmNode.IsRunning() {
-		_ = v.tmNode.Stop()
+		if err := v.tmNode.Stop(); err != nil {
+			v.Ctx.Logger.Error(
+				fmt.Errorf("Error stopping Validator.tmNode: %w", err).Error(),
+			)
+		}
 		v.tmNode.Wait() // Wait for the service to fully stop
 	}
 
