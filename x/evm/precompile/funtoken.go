@@ -26,7 +26,7 @@ var (
 // Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
-var PrecompileAddr_FuntokenGateway eth.HexAddr = eth.MustNewHexAddrFromStr(
+var PrecompileAddr_FuntokenGateway = eth.MustNewHexAddrFromStr(
 	"0x0000000000000000000000000000000000000800",
 )
 
