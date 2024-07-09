@@ -658,7 +658,7 @@ func (n *Network) Cleanup() {
 			stopped = true
 			break
 		}
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 	if !stopped {
 		panic("cleanup did not succeed within the max retry count")
@@ -721,7 +721,6 @@ func stopValidatorNode(v *Validator) {
 			v.Ctx.Logger.Error("✅ Successfully shut down JSON-RPC server", "error", err)
 			v.jsonrpc = nil
 		}
-
 	}
 
 	if v.tmNode != nil {
@@ -748,7 +747,7 @@ func (v *Validator) IsStopped() bool {
 	case v.tmNode.IsRunning():
 		return false
 	}
-	return false
+	return true
 }
 
 func (val Validator) SecretMnemonic() string {
