@@ -716,7 +716,6 @@ func stopValidatorNode(v *Validator) {
 	if v.tmNode != nil {
 		v.tmNode.Wait()
 	}
-
 }
 
 func ValidatorsStopped(vals []*Validator) (stopped bool) {
