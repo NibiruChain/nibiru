@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *SuiteEVMTest) TestCreateContractTxMsg() {
+func (s *Suite) TestCreateContractTxMsg() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := evmtest.NewEthAccInfo()
 
@@ -24,7 +24,7 @@ func (s *SuiteEVMTest) TestCreateContractTxMsg() {
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 }
 
-func (s *SuiteEVMTest) TestCreateContractGethCoreMsg() {
+func (s *Suite) TestCreateContractGethCoreMsg() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := evmtest.NewEthAccInfo()
 
