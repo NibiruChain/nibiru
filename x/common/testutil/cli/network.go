@@ -629,29 +629,20 @@ func (n *Network) Cleanup() {
 
 	n.Logger.Log("cleaning up test network...")
 
-	for _, v := range n.Validators {
-		if v.tmNode != nil && v.tmNode.IsRunning() {
-			_ = v.tmNode.Stop()
-		}
-
-		if v.api != nil {
-			_ = v.api.Close()
-		}
-
-		if v.grpc != nil {
-			v.grpc.Stop()
-			if v.grpcWeb != nil {
-				_ = v.grpcWeb.Close()
-			}
-		}
-		if v.jsonrpc != nil {
-			_ = v.jsonrpc.Close()
-		}
-	}
+	// We use a wait group here to ensure that all services are stopped before
+	// cleaning up.
+	var waitGroup sync.WaitGroup
 
 	for _, v := range n.Validators {
-		_ = v.tmNode.Stop()
+		waitGroup.Add(1)
+
+		go func(v *Validator) {
+			defer waitGroup.Done()
+			stopValidatorNode(v)
+		}(v)
 	}
+
+	waitGroup.Wait()
 
 	// TODO: Is there a cleaner way to do this with a synchronous check?
 	// https://github.com/NibiruChain/nibiru/issues/1955
@@ -659,14 +650,91 @@ func (n *Network) Cleanup() {
 	// Give a brief pause for things to finish closing in other processes.
 	// Hopefully this helps with the address-in-use errors.
 	// Timeout of 100ms chosen randomly.
-	// Timeout of 500ms chosen because 100ms was not enough. | 2024-07-02
-	time.Sleep(500 * time.Millisecond)
+	// Timeout of 250ms chosen because 100ms was not enough. | 2024-07-02
+	maxRetries := 5
+	stopped := false
+	for i := 0; i < maxRetries; i++ {
+		if ValidatorsStopped(n.Validators) {
+			stopped = true
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if !stopped {
+		panic("cleanup did not succeed within the max retry count")
+	}
 
 	if n.Config.CleanupDir {
 		_ = os.RemoveAll(n.BaseDir)
 	}
 
 	n.Logger.Log("finished cleaning up test network")
+}
+
+// stopValidatorNode shuts down all services associated with a validator node.
+//
+// It gracefully stops the Tendermint node, API, gRPC, gRPC-Web, and JSON-RPC
+// services. This function is designed to be run concurrently for multiple
+// validators during network cleanup.
+//
+// The function uses graceful shutdown methods where available to allow ongoing
+// operations to complete before terminating. This approach helps prevent
+// resource leaks and ensures a clean shutdown of all components.
+//
+// Parameters:
+//   - v: Pointer to the Validator struct containing service references.
+//
+// Note: Errors during shutdown are currently ignored to ensure all services
+// attempt to stop, even if one fails. Consider adding error logging for
+// debugging in production environments.
+func stopValidatorNode(v *Validator) {
+	if v.tmNode != nil && v.tmNode.IsRunning() {
+		_ = v.tmNode.Stop()
+		v.tmNode.Wait() // Wait for the service to fully stop
+	}
+
+	if v.api != nil {
+		// Close the API server.
+		// Any blocked "Accept" operations will be unblocked and return errors.
+		_ = v.api.Close()
+	}
+
+	if v.grpc != nil {
+		// GracefulStop stops the gRPC server gracefully. It stops the server from
+		// accepting new connections and RPCs and blocks until all the pending RPCs are
+		// finished.
+		v.grpc.GracefulStop()
+		if v.grpcWeb != nil {
+			_ = v.grpcWeb.Close()
+		}
+	}
+
+	if v.jsonrpc != nil {
+		_ = v.jsonrpc.Close()
+	}
+
+}
+
+func ValidatorsStopped(vals []*Validator) (stopped bool) {
+	for _, v := range vals {
+		if !v.IsStopped() {
+			return false
+		}
+	}
+	return true
+}
+
+// IsStopped returns true if the validator node is stopped
+func (v *Validator) IsStopped() bool {
+	switch {
+	case v == nil:
+		return true
+	case v.tmNode == nil:
+		return true
+	case v.tmNode.IsRunning():
+		return false
+	}
+	return false
 }
 
 func (val Validator) SecretMnemonic() string {
