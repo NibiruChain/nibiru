@@ -658,7 +658,7 @@ func (n *Network) Cleanup() {
 			stopped = true
 			break
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 	if !stopped {
 		panic("cleanup did not succeed within the max retry count")
@@ -711,6 +711,10 @@ func stopValidatorNode(v *Validator) {
 
 	if v.jsonrpc != nil {
 		_ = v.jsonrpc.Close()
+	}
+
+	if v.tmNode != nil {
+		v.tmNode.Wait()
 	}
 
 }
