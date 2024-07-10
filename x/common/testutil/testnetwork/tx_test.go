@@ -1,4 +1,4 @@
-package cli_test
+package testnetwork_test
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
 )
 
 func (s *TestSuite) TestSendTx() {
@@ -38,8 +38,8 @@ func (s *TestSuite) TestExecTx() {
 	s.EqualValues(0, txResp.Code)
 
 	s.T().Run("test tx option changes", func(t *testing.T) {
-		defaultOpts := cli.DEFAULT_TX_OPTIONS
-		opts := cli.WithTxOptions(cli.TxOptionChanges{
+		defaultOpts := testnetwork.DEFAULT_TX_OPTIONS
+		opts := testnetwork.WithTxOptions(testnetwork.TxOptionChanges{
 			BroadcastMode:    &defaultOpts.BroadcastMode,
 			CanFail:          &defaultOpts.CanFail,
 			Fees:             &defaultOpts.Fees,
@@ -53,9 +53,9 @@ func (s *TestSuite) TestExecTx() {
 	})
 
 	s.T().Run("fail when validators are missing", func(t *testing.T) {
-		networkNoVals := new(cli.Network)
+		networkNoVals := new(testnetwork.Network)
 		*networkNoVals = *s.network
-		networkNoVals.Validators = []*cli.Validator{}
+		networkNoVals.Validators = []*testnetwork.Validator{}
 		_, err := networkNoVals.ExecTxCmd(bankcli.NewTxCmd(), fromAddr, args)
 		s.Error(err)
 		s.Contains(err.Error(), "")
@@ -69,7 +69,7 @@ func (s *TestSuite) TestFillWalletFromValidator() {
 		sdk.NewInt64Coin(denoms.NIBI, 420),
 	)
 	feeDenom := denoms.NIBI
-	s.NoError(cli.FillWalletFromValidator(
+	s.NoError(testnetwork.FillWalletFromValidator(
 		toAddr, funds, val, feeDenom,
 	))
 }
