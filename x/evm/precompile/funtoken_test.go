@@ -5,10 +5,8 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
@@ -31,6 +29,52 @@ func TestPrecompileSuite(t *testing.T) {
 func (s *Suite) TestPrecompile_FunToken() {
 	s.Run("PrecompileExists", s.FunToken_PrecompileExists)
 	s.Run("HappyPath", s.FunToken_HappyPath)
+}
+
+func CreateFunTokenForBankCoin(
+	deps *evmtest.TestDeps, bankDenom string, s *Suite,
+) (funtoken evm.FunToken) {
+	s.T().Log("Setup: Create a coin in the bank state")
+	bankMetadata := bank.Metadata{
+		DenomUnits: []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+		},
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    bankDenom,
+		Symbol:  "TOKEN",
+	}
+	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+
+	s.T().Log("happy: CreateFunToken for the bank coin")
+	createFuntokenResp, err := deps.K.CreateFunToken(
+		deps.GoCtx(),
+		&evm.MsgCreateFunToken{
+			FromBankDenom: bankDenom,
+			Sender:        deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.NoError(err, "bankDenom %s", bankDenom)
+	erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
+	funtoken = evm.FunToken{
+		Erc20Addr:      erc20,
+		BankDenom:      bankDenom,
+		IsMadeFromCoin: true,
+	}
+	s.Equal(createFuntokenResp.FuntokenMapping, funtoken)
+
+	s.T().Log("Expect ERC20 to be deployed")
+	erc20Addr := erc20.ToAddr()
+	queryCodeReq := &evm.QueryCodeRequest{
+		Address: erc20Addr.String(),
+	}
+	_, err = deps.K.Code(deps.Ctx, queryCodeReq)
+	s.NoError(err)
+
+	return funtoken
 }
 
 // PrecompileExists: An integration test showing that a "PrecompileError" occurs
@@ -73,22 +117,10 @@ func (s *Suite) FunToken_PrecompileExists() {
 	s.ErrorContains(err, "Precompile error")
 }
 
-// FunToken_HappyPath: runs a whole process of sending fun token from bank to evm and back
-// Steps:
-// 1. Mint a new bank coin: ibc/usdc
-// 2. Create fungible token from the bank coin
-// 3. Send coins from bank to evm account
-// 4. Send some coins between evm accounts
-// 5. Send part of the tokens from evm to a bank account
 func (s *Suite) FunToken_HappyPath() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
 	abi := embeds.Contract_Funtoken.ABI
 	deps := evmtest.NewTestDeps()
-
-	bankDenom := "ibc/usdc"
-	amountToSendToEvm := int64(69_420)
-	amountToSendWithinEvm := int64(1)
-	amountToSendFromEvm := int64(419)
 
 	theUser := deps.Sender.EthAddr
 	theEvm := evm.ModuleAddressEVM()
@@ -96,59 +128,55 @@ func (s *Suite) FunToken_HappyPath() {
 	s.True(deps.K.PrecompileSet().Has(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")
 
-	// Create new fungible token
 	s.T().Log("Create FunToken mapping and ERC20")
-	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	bankDenom := "ibc/usdc"
+	funtoken := CreateFunTokenForBankCoin(&deps, bankDenom, s)
 	contract := funtoken.Erc20Addr.ToAddr()
-
-	// Mint coins for the sender
-	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, amountToSendToEvm))
-	err := deps.Chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
-	s.Require().NoError(err)
-	err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
-		deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
-	)
-	s.Require().NoError(err)
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
 	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
 
-	// Send fungible tokens from bank to EVM
-	_, err = deps.K.SendFunTokenToEvm(
-		deps.Ctx,
-		&evm.MsgSendFunTokenToEvm{
-			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.Coin{Denom: bankDenom, Amount: math.NewInt(amountToSendToEvm)},
-			ToEthAddr: eth.MustNewHexAddrFromStr(theUser.String()),
-		},
-	)
-	s.Require().NoError(err, "failed to send FunToken to EVM")
+	s.T().Log("Mint tokens - Fail from non-owner")
+	{
+		from := theUser
+		to := theUser
+		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
+		s.NoError(err)
+		_, err = evmtest.DoEthTx(&deps, contract, from, input)
+		s.ErrorContains(err, "Ownable: caller is not the owner")
+	}
 
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountToSendToEvm))
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
+	s.T().Log("Mint tokens - Success")
+	{
+		from := theEvm
+		to := theUser
+		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
+		s.NoError(err)
 
-	// Transfer tokens to another account within EVM
+		_, err = evmtest.DoEthTx(&deps, contract, from, input)
+		s.NoError(err)
+		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
+	}
+
 	s.T().Log("Transfer - Success (sanity check)")
 	randomAcc := testutil.AccAddress()
-	amountRemaining := amountToSendToEvm - amountToSendWithinEvm
 	{
 		from := theUser
 		to := theEvm
-		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(amountToSendWithinEvm), deps.Ctx)
+		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(1), deps.Ctx)
 		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountRemaining))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
-		s.Equal(
-			int64(0),
-			deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.Int64(),
+		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_419))
+		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+		s.Equal("0",
+			deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 		)
 	}
 
-	// Send fungible token from EVM to bank
 	s.T().Log("Send using precompile")
-
-	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(amountToSendFromEvm), randomAcc)
+	amtToSend := int64(419)
+	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(amtToSend), randomAcc)
 	methodName := string(precompile.FunTokenMethod_BankSend)
 	input, err := abi.Pack(methodName, callArgs...)
 	s.NoError(err)
@@ -157,21 +185,15 @@ func (s *Suite) FunToken_HappyPath() {
 	_, err = evmtest.DoEthTx(&deps, precompileAddr.ToAddr(), from, input)
 	s.Require().NoError(err)
 
-	evmtest.AssertERC20BalanceEqual(
-		s.T(),
-		&deps,
-		contract,
-		theUser,
-		big.NewInt(amountRemaining-amountToSendFromEvm),
-	)
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
-	s.Equal(fmt.Sprintf("%d", amountToSendFromEvm),
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_419-amtToSend))
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+	s.Equal(fmt.Sprintf("%d", amtToSend),
 		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountRemaining-amountToSendFromEvm))
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
-	s.Equal(
-		amountToSendFromEvm,
-		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.Int64(),
+
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(69_000))
+	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(1))
+	s.Equal("419",
+		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
 }
