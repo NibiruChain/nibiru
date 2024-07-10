@@ -54,12 +54,12 @@ func (p precompileFunToken) Run(
 	defer func() {
 		if err != nil {
 			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("Precompile error: failed to run %s: %w", precompileType, err)
+			err = fmt.Errorf("Precompile error: %s: %w", precompileType, err)
 		}
 	}()
 
 	contractInput := contract.Input
-	ctx, method, args, err := OnStart(p, evm, contractInput)
+	ctx, method, args, err := OnRunStart(p, evm, contractInput)
 	if err != nil {
 		return nil, err
 	}

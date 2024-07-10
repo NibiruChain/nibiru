@@ -23,7 +23,7 @@ func DoEthTx(
 
 func AssertERC20BalanceEqual(
 	t *testing.T,
-	deps *TestDeps,
+	deps TestDeps,
 	contract, account gethcommon.Address,
 	balance *big.Int,
 ) {

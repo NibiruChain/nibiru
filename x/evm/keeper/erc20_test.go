@@ -359,7 +359,7 @@ func (s *Suite) TestERC20Calls() {
 		from := theUser
 		to := theUser
 		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
-		s.ErrorContains(err, "Ownable: caller is not the owner")
+		s.ErrorContains(err, evm.ErrOwnable)
 	}
 
 	s.T().Log("Mint tokens - Success")
@@ -370,8 +370,8 @@ func (s *Suite) TestERC20Calls() {
 		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
 		s.NoError(err)
 
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(69_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(0))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(69_420))
 	}
 
 	s.T().Log("Transfer - Not enough funds")
@@ -381,8 +381,8 @@ func (s *Suite) TestERC20Calls() {
 		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(9_420), deps.Ctx)
 		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
 		// balances unchanged
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(69_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(0))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(69_420))
 	}
 
 	s.T().Log("Transfer - Success (sanity check)")
@@ -391,8 +391,8 @@ func (s *Suite) TestERC20Calls() {
 		to := theUser
 		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(9_420), deps.Ctx)
 		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(9_420))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(60_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(9_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(60_000))
 	}
 
 	s.T().Log("Burn tokens - Allowed as non-owner")
@@ -405,7 +405,7 @@ func (s *Suite) TestERC20Calls() {
 		_, err = deps.K.ERC20().Burn(contract, from, big.NewInt(6_000), deps.Ctx)
 		s.NoError(err)
 
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(9_000))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(54_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(9_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(54_000))
 	}
 }
