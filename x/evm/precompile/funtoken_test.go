@@ -5,8 +5,6 @@ import (
 	"math/big"
 	"testing"
 
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
@@ -29,52 +27,6 @@ func TestPrecompileSuite(t *testing.T) {
 func (s *Suite) TestPrecompile_FunToken() {
 	s.Run("PrecompileExists", s.FunToken_PrecompileExists)
 	s.Run("HappyPath", s.FunToken_HappyPath)
-}
-
-func CreateFunTokenForBankCoin(
-	deps *evmtest.TestDeps, bankDenom string, s *Suite,
-) (funtoken evm.FunToken) {
-	s.T().Log("Setup: Create a coin in the bank state")
-	bankMetadata := bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "TOKEN",
-	}
-	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
-
-	s.T().Log("happy: CreateFunToken for the bank coin")
-	createFuntokenResp, err := deps.K.CreateFunToken(
-		deps.GoCtx(),
-		&evm.MsgCreateFunToken{
-			FromBankDenom: bankDenom,
-			Sender:        deps.Sender.NibiruAddr.String(),
-		},
-	)
-	s.NoError(err, "bankDenom %s", bankDenom)
-	erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
-	funtoken = evm.FunToken{
-		Erc20Addr:      erc20,
-		BankDenom:      bankDenom,
-		IsMadeFromCoin: true,
-	}
-	s.Equal(createFuntokenResp.FuntokenMapping, funtoken)
-
-	s.T().Log("Expect ERC20 to be deployed")
-	erc20Addr := erc20.ToAddr()
-	queryCodeReq := &evm.QueryCodeRequest{
-		Address: erc20Addr.String(),
-	}
-	_, err = deps.K.Code(deps.Ctx, queryCodeReq)
-	s.NoError(err)
-
-	return funtoken
 }
 
 // PrecompileExists: An integration test showing that a "PrecompileError" occurs
@@ -130,7 +82,7 @@ func (s *Suite) FunToken_HappyPath() {
 
 	s.T().Log("Create FunToken mapping and ERC20")
 	bankDenom := "ibc/usdc"
-	funtoken := CreateFunTokenForBankCoin(&deps, bankDenom, s)
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
 	contract := funtoken.Erc20Addr.ToAddr()
 
 	s.T().Log("Balances of the ERC20 should start empty")

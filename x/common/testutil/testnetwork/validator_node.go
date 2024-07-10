@@ -118,7 +118,9 @@ func stopValidatorNode(v *Validator) {
 		// Close the API server.
 		// Any blocked "Accept" operations will be unblocked and return errors.
 		err := v.api.Close()
-		v.Logger.Logf("❌ Error closing the API server: %w", err)
+		if err != nil {
+			v.Logger.Logf("❌ Error closing the API server: %w", err)
+		}
 	}
 
 	if v.grpc != nil {
