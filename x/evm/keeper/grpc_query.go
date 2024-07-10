@@ -34,7 +34,7 @@ import (
 )
 
 // Compile-time interface assertion
-var _ evm.QueryServer = Keeper{}
+var _ evm.QueryServer = &Keeper{}
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
 // EthAccount retrieves the account details for a given Ethereum hex address.
@@ -46,7 +46,7 @@ var _ evm.QueryServer = Keeper{}
 // Returns:
 //   - A pointer to the QueryEthAccountResponse object containing the account details.
 //   - An error if the account retrieval process encounters any issues.
-func (k Keeper) EthAccount(
+func (k *Keeper) EthAccount(
 	goCtx context.Context, req *evm.QueryEthAccountRequest,
 ) (*evm.QueryEthAccountResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -74,7 +74,7 @@ func (k Keeper) EthAccount(
 // Returns:
 //   - A pointer to the QueryNibiruAccountResponse object containing the Cosmos account details.
 //   - An error if the account retrieval process encounters any issues.
-func (k Keeper) NibiruAccount(
+func (k *Keeper) NibiruAccount(
 	goCtx context.Context, req *evm.QueryNibiruAccountRequest,
 ) (resp *evm.QueryNibiruAccountResponse, err error) {
 	if err := req.Validate(); err != nil {
@@ -109,7 +109,7 @@ func (k Keeper) NibiruAccount(
 // Returns:
 //   - Response containing the account details.
 //   - An error if the account retrieval process encounters any issues.
-func (k Keeper) ValidatorAccount(
+func (k *Keeper) ValidatorAccount(
 	goCtx context.Context, req *evm.QueryValidatorAccountRequest,
 ) (*evm.QueryValidatorAccountResponse, error) {
 	consAddr, err := req.Validate()
@@ -149,7 +149,7 @@ func (k Keeper) ValidatorAccount(
 // Returns:
 //   - A pointer to the QueryBalanceResponse object containing the balance.
 //   - An error if the balance retrieval process encounters any issues.
-func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
+func (k *Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 }
 
 // BaseFee implements the Query/BaseFee gRPC method
-func (k Keeper) BaseFee(
+func (k *Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -181,7 +181,7 @@ func (k Keeper) BaseFee(
 // Returns:
 //   - A pointer to the QueryStorageResponse object containing the storage value.
 //   - An error if the storage retrieval process encounters any issues.
-func (k Keeper) Storage(
+func (k *Keeper) Storage(
 	goCtx context.Context, req *evm.QueryStorageRequest,
 ) (*evm.QueryStorageResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -211,7 +211,7 @@ func (k Keeper) Storage(
 // Returns:
 //   - Response containing the smart contract bytecode.
 //   - An error if the code retrieval process encounters any issues.
-func (k Keeper) Code(
+func (k *Keeper) Code(
 	goCtx context.Context, req *evm.QueryCodeRequest,
 ) (*evm.QueryCodeResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -243,7 +243,7 @@ func (k Keeper) Code(
 // Returns:
 //   - A pointer to the QueryParamsResponse object containing the EVM module parameters.
 //   - An error if the parameter retrieval process encounters any issues.
-func (k Keeper) Params(
+func (k *Keeper) Params(
 	goCtx context.Context, _ *evm.QueryParamsRequest,
 ) (*evm.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -269,7 +269,7 @@ func (k Keeper) Params(
 // Returns:
 //   - A pointer to the MsgEthereumTxResponse object containing the result of the eth_call.
 //   - An error if the eth_call process encounters any issues.
-func (k Keeper) EthCall(
+func (k *Keeper) EthCall(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.MsgEthereumTxResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -311,7 +311,7 @@ func (k Keeper) EthCall(
 
 // EstimateGas: Implements the gRPC query for "/eth.evm.v1.Query/EstimateGas".
 // EstimateGas implements eth_estimateGas rpc api.
-func (k Keeper) EstimateGas(
+func (k *Keeper) EstimateGas(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.EstimateGasResponse, error) {
 	return k.EstimateGasForEvmCallType(goCtx, req, evm.CallTypeRPC)
@@ -331,7 +331,7 @@ func (k Keeper) EstimateGas(
 // Returns:
 //   - A response containing the estimated gas cost.
 //   - An error if the gas estimation process encounters any issues.
-func (k Keeper) EstimateGasForEvmCallType(
+func (k *Keeper) EstimateGasForEvmCallType(
 	goCtx context.Context, req *evm.EthCallRequest, fromType evm.CallType,
 ) (*evm.EstimateGasResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -479,7 +479,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 // TraceTx configures a new tracer according to the provided configuration, and
 // executes the given message in the provided environment. The return value will
 // be tracer dependent.
-func (k Keeper) TraceTx(
+func (k *Keeper) TraceTx(
 	goCtx context.Context, req *evm.QueryTraceTxRequest,
 ) (*evm.QueryTraceTxResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -579,7 +579,7 @@ const DefaultGethTraceTimeout = 5 * time.Second
 // the execution of transactions within a given block. Block information is read
 // from the context (goCtx). [TraceBlock] is responsible iterates over each Eth
 // transacion message and calls [TraceEthTxMsg] on it.
-func (k Keeper) TraceBlock(
+func (k *Keeper) TraceBlock(
 	goCtx context.Context, req *evm.QueryTraceBlockRequest,
 ) (*evm.QueryTraceBlockResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -741,7 +741,7 @@ func (k *Keeper) TraceEthTxMsg(
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
 
-func (k Keeper) TokenMapping(
+func (k *Keeper) TokenMapping(
 	goCtx context.Context, req *evm.QueryTokenMappingRequest,
 ) (*evm.QueryTokenMappingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

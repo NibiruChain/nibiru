@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -13,7 +11,6 @@ import (
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,11 +37,6 @@ func RegisterTxSearch(client *mocks.Client, query string, txBz []byte) {
 func RegisterTxSearchEmpty(client *mocks.Client, query string) {
 	client.On("TxSearch", rpc.NewContextWithHeight(1), query, false, (*int)(nil), (*int)(nil), "").
 		Return(&tmrpctypes.ResultTxSearch{}, nil)
-}
-
-func RegisterTxSearchError(client *mocks.Client, query string) {
-	client.On("TxSearch", rpc.NewContextWithHeight(1), query, false, (*int)(nil), (*int)(nil), "").
-		Return(nil, errortypes.ErrInvalidRequest)
 }
 
 // Broadcast Tx
@@ -262,25 +254,6 @@ func RegisterABCIQueryWithOptions(client *mocks.Client, height int64, path strin
 			Response: abci.ResponseQuery{
 				Value:  []byte{2}, // TODO replace with data.Bytes(),
 				Height: height,
-			},
-		}, nil)
-}
-
-func RegisterABCIQueryWithOptionsError(clients *mocks.Client, path string, data bytes.HexBytes, opts tmrpcclient.ABCIQueryOptions) {
-	clients.On("ABCIQueryWithOptions", context.Background(), path, data, opts).
-		Return(nil, errortypes.ErrInvalidRequest)
-}
-
-func RegisterABCIQueryAccount(clients *mocks.Client, data bytes.HexBytes, opts tmrpcclient.ABCIQueryOptions, acc client.Account) {
-	baseAccount := authtypes.NewBaseAccount(acc.GetAddress(), acc.GetPubKey(), acc.GetAccountNumber(), acc.GetSequence())
-	accAny, _ := codectypes.NewAnyWithValue(baseAccount)
-	accResponse := authtypes.QueryAccountResponse{Account: accAny}
-	respBz, _ := accResponse.Marshal()
-	clients.On("ABCIQueryWithOptions", context.Background(), "/cosmos.auth.v1beta1.Query/Account", data, opts).
-		Return(&tmrpctypes.ResultABCIQuery{
-			Response: abci.ResponseQuery{
-				Value:  respBz,
-				Height: 1,
 			},
 		}, nil)
 }

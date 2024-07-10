@@ -2,7 +2,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 	"slices"
 
@@ -95,11 +94,6 @@ func NewEvmState(
 	}
 }
 
-// BytesToHex converts a byte array to a hexadecimal string
-func BytesToHex(bz []byte) string {
-	return fmt.Sprintf("%x", bz)
-}
-
 func (state EvmState) SetAccCode(ctx sdk.Context, codeHash, code []byte) {
 	if len(code) > 0 {
 		state.ContractBytecode.Insert(ctx, codeHash, code)
@@ -117,13 +111,13 @@ func (state EvmState) GetContractBytecode(
 }
 
 // GetParams returns the total set of evm parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
+func (k *Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 	params, _ = k.EvmState.ModuleParams.Get(ctx)
 	return params
 }
 
 // SetParams: Setter for the module parameters.
-func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
+func (k *Keeper) SetParams(ctx sdk.Context, params evm.Params) {
 	slices.Sort(params.ActivePrecompiles)
 	k.EvmState.ModuleParams.Set(ctx, params)
 }
@@ -170,7 +164,7 @@ func (state EvmState) CalcBloomFromLogs(
 
 // ResetTransientGasUsed resets gas to prepare for the next block of execution.
 // Called in an ante handler.
-func (k Keeper) ResetTransientGasUsed(ctx sdk.Context) {
+func (k *Keeper) ResetTransientGasUsed(ctx sdk.Context) {
 	k.EvmState.BlockGasUsed.Set(ctx, 0)
 }
 

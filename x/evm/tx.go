@@ -39,7 +39,7 @@ type EvmTxArgs struct { //revive:disable-line:exported
 // The default value is the same as the `sdk.DefaultPowerReduction`.
 var DefaultPriorityReduction = sdk.DefaultPowerReduction
 
-// GetTxPriority returns the priority of a given Ethereum tx. It relies of the
+// GetTxPriority returns the priority of a given Ethereum tx. It relies on the
 // priority reduction global variable to calculate the tx priority given the tx
 // tip price:
 //
@@ -167,7 +167,7 @@ func (tx *DynamicFeeTx) GetAccessList() gethcore.AccessList {
 	return *tx.Accesses.ToEthAccessList()
 }
 
-// GetData returns the a copy of the input data bytes.
+// GetData returns a copy of the input data bytes.
 func (tx *DynamicFeeTx) GetData() []byte {
 	return common.CopyBytes(tx.Data)
 }
@@ -263,7 +263,7 @@ func (tx *DynamicFeeTx) SetSignatureValues(chainID, v, r, s *big.Int) {
 }
 
 // Validate performs a stateless validation of the tx fields.
-func (tx DynamicFeeTx) Validate() error {
+func (tx *DynamicFeeTx) Validate() error {
 	if tx.GasTipCap == nil {
 		return errorsmod.Wrap(ErrInvalidGasCap, "gas tip cap cannot nil")
 	}
@@ -327,12 +327,12 @@ func (tx DynamicFeeTx) Validate() error {
 }
 
 // Fee returns gasprice * gaslimit.
-func (tx DynamicFeeTx) Fee() *big.Int {
+func (tx *DynamicFeeTx) Fee() *big.Int {
 	return fee(tx.GetGasFeeCap(), tx.GasLimit)
 }
 
 // Cost returns amount + gasprice * gaslimit.
-func (tx DynamicFeeTx) Cost() *big.Int {
+func (tx *DynamicFeeTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValue())
 }
 
@@ -348,11 +348,11 @@ func (tx *DynamicFeeTx) EffectiveGasPrice(baseFee *big.Int) *big.Int {
 }
 
 // EffectiveFee returns effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveFee(baseFee *big.Int) *big.Int {
+func (tx *DynamicFeeTx) EffectiveFee(baseFee *big.Int) *big.Int {
 	return fee(tx.EffectiveGasPrice(baseFee), tx.GasLimit)
 }
 
 // EffectiveCost returns amount + effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveCost(baseFee *big.Int) *big.Int {
+func (tx *DynamicFeeTx) EffectiveCost(baseFee *big.Int) *big.Int {
 	return cost(tx.EffectiveFee(baseFee), tx.GetValue())
 }

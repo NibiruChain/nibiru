@@ -28,7 +28,7 @@ func NewTransactionLogsFromEth(hash gethcommon.Hash, ethlogs []*gethcore.Log) Tr
 }
 
 // Validate performs a basic validation of a GenesisAccount fields.
-func (tx TransactionLogs) Validate() error {
+func (tx *TransactionLogs) Validate() error {
 	if eth.IsEmptyHash(tx.Hash) {
 		return fmt.Errorf("hash cannot be the empty %s", tx.Hash)
 	}
@@ -48,7 +48,7 @@ func (tx TransactionLogs) Validate() error {
 }
 
 // EthLogs returns the Ethereum type Logs from the Transaction Logs.
-func (tx TransactionLogs) EthLogs() []*gethcore.Log {
+func (tx *TransactionLogs) EthLogs() []*gethcore.Log {
 	return LogsToEthereum(tx.Logs)
 }
 
@@ -98,7 +98,7 @@ func NewLogsFromEth(ethlogs []*gethcore.Log) []*Log {
 	return logs
 }
 
-// LogsToEthereum casts the Ethermint Logs to a slice of Ethereum Logs.
+// LogsToEthereum casts the Proto Logs to a slice of Ethereum Logs.
 func LogsToEthereum(logs []*Log) []*gethcore.Log {
 	var ethLogs []*gethcore.Log //nolint: prealloc
 	for i := range logs {
@@ -107,7 +107,7 @@ func LogsToEthereum(logs []*Log) []*gethcore.Log {
 	return ethLogs
 }
 
-// NewLogFromEth creates a new Log instance from a Ethereum type Log.
+// NewLogFromEth creates a new Log instance from an Ethereum type Log.
 func NewLogFromEth(log *gethcore.Log) *Log {
 	topics := make([]string, len(log.Topics))
 	for i, topic := range log.Topics {

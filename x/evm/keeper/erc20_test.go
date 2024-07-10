@@ -98,7 +98,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.ErrorContains(err, "Funtoken mapping already created")
+	s.ErrorContains(err, "funtoken mapping already created")
 
 	s.T().Log("sad: CreateFunToken for the ERC20: invalid sender")
 	_, err = deps.K.CreateFunToken(
@@ -209,7 +209,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.ErrorContains(err, "Funtoken mapping already created")
+	s.ErrorContains(err, "funtoken mapping already created")
 }
 
 // TestSendFunTokenToEvm executes sending fun tokens from bank coin to erc20 and checks the results:

@@ -11,17 +11,17 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
-func (m QueryTraceTxRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	for _, msg := range m.Predecessors {
+func (req *QueryTraceTxRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	for _, msg := range req.Predecessors {
 		if err := msg.UnpackInterfaces(unpacker); err != nil {
 			return err
 		}
 	}
-	return m.Msg.UnpackInterfaces(unpacker)
+	return req.Msg.UnpackInterfaces(unpacker)
 }
 
-func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	for _, msg := range m.Txs {
+func (req *QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	for _, msg := range req.Txs {
 		if err := msg.UnpackInterfaces(unpacker); err != nil {
 			return err
 		}

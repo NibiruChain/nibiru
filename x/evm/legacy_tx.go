@@ -76,7 +76,7 @@ func (tx *LegacyTx) GetAccessList() gethcore.AccessList {
 	return nil
 }
 
-// GetData returns the a copy of the input data bytes.
+// GetData returns a copy of the input data bytes.
 func (tx *LegacyTx) GetData() []byte {
 	return common.CopyBytes(tx.Data)
 }
@@ -161,7 +161,7 @@ func (tx *LegacyTx) SetSignatureValues(_, v, r, s *big.Int) {
 }
 
 // Validate performs a stateless validation of the tx fields.
-func (tx LegacyTx) Validate() error {
+func (tx *LegacyTx) Validate() error {
 	gasPrice := tx.GetGasPrice()
 	if gasPrice == nil {
 		return errorsmod.Wrap(ErrInvalidGasPrice, "gas price cannot be nil")
@@ -205,26 +205,26 @@ func (tx LegacyTx) Validate() error {
 }
 
 // Fee returns gasprice * gaslimit.
-func (tx LegacyTx) Fee() *big.Int {
+func (tx *LegacyTx) Fee() *big.Int {
 	return fee(tx.GetGasPrice(), tx.GetGas())
 }
 
 // Cost returns amount + gasprice * gaslimit.
-func (tx LegacyTx) Cost() *big.Int {
+func (tx *LegacyTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValue())
 }
 
 // EffectiveGasPrice is the same as GasPrice for LegacyTx
-func (tx LegacyTx) EffectiveGasPrice(_ *big.Int) *big.Int {
+func (tx *LegacyTx) EffectiveGasPrice(_ *big.Int) *big.Int {
 	return tx.GetGasPrice()
 }
 
 // EffectiveFee is the same as Fee for LegacyTx
-func (tx LegacyTx) EffectiveFee(_ *big.Int) *big.Int {
+func (tx *LegacyTx) EffectiveFee(_ *big.Int) *big.Int {
 	return tx.Fee()
 }
 
 // EffectiveCost is the same as Cost for LegacyTx
-func (tx LegacyTx) EffectiveCost(_ *big.Int) *big.Int {
+func (tx *LegacyTx) EffectiveCost(_ *big.Int) *big.Int {
 	return tx.Cost()
 }

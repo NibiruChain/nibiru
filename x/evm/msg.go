@@ -35,7 +35,7 @@ var (
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
 
-	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
+	_ codectypes.UnpackInterfacesMessage = &MsgEthereumTx{}
 )
 
 // message type and route constants
@@ -145,14 +145,14 @@ func (msg *MsgEthereumTx) FromEthereumTx(tx *gethcore.Transaction) error {
 }
 
 // Route returns the route value of an MsgEthereumTx.
-func (msg MsgEthereumTx) Route() string { return RouterKey }
+func (msg *MsgEthereumTx) Route() string { return RouterKey }
 
 // Type returns the type value of an MsgEthereumTx.
-func (msg MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
+func (msg *MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
 
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation
 // checks of a Transaction. If returns an error if validation fails.
-func (msg MsgEthereumTx) ValidateBasic() error {
+func (msg *MsgEthereumTx) ValidateBasic() error {
 	if msg.From != "" {
 		if err := eth.ValidateAddress(msg.From); err != nil {
 			return errorsmod.Wrap(err, "invalid from address")
@@ -194,7 +194,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	return nil
 }
 
-// GetMsgs returns a single MsgEthereumTx as an sdk.Msg.
+// GetMsgs returns a single MsgEthereumTx as sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
@@ -223,7 +223,7 @@ func (msg *MsgEthereumTx) GetSigners() []sdk.AccAddress {
 //
 // NOTE: This method cannot be used as a chain ID is needed to create valid bytes
 // to sign over. Use 'RLPSignBytes' instead.
-func (msg MsgEthereumTx) GetSignBytes() []byte {
+func (msg *MsgEthereumTx) GetSignBytes() []byte {
 	panic("must use 'RLPSignBytes' with a chain ID to get the valid bytes to sign")
 }
 
@@ -257,7 +257,7 @@ func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.
 }
 
 // GetGas implements the GasTx interface. It returns the GasLimit of the transaction.
-func (msg MsgEthereumTx) GetGas() uint64 {
+func (msg *MsgEthereumTx) GetGas() uint64 {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return 0
@@ -265,8 +265,8 @@ func (msg MsgEthereumTx) GetGas() uint64 {
 	return txData.GetGas()
 }
 
-// GetFee returns the fee for non dynamic fee tx
-func (msg MsgEthereumTx) GetFee() *big.Int {
+// GetFee returns the fee for non-dynamic fee tx
+func (msg *MsgEthereumTx) GetFee() *big.Int {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
@@ -275,7 +275,7 @@ func (msg MsgEthereumTx) GetFee() *big.Int {
 }
 
 // GetEffectiveFee returns the fee for dynamic fee tx
-func (msg MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
+func (msg *MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
@@ -294,7 +294,7 @@ func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
-func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
+func (msg *MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
@@ -304,7 +304,7 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 }
 
 // AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFee *big.Int) (core.Message, error) {
+func (msg *MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFee *big.Int) (core.Message, error) {
 	return msg.AsTransaction().AsMessage(signer, baseFee)
 }
 
@@ -321,7 +321,7 @@ func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (common.Address, error) {
 }
 
 // UnpackInterfaces implements UnpackInterfacesMesssage.UnpackInterfaces
-func (msg MsgEthereumTx) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (msg *MsgEthereumTx) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	return unpacker.UnpackAny(msg.Data, new(TxData))
 }
 
@@ -372,7 +372,7 @@ func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
+func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
 	addr, _ := sdk.AccAddressFromBech32(m.Authority)
 	return []sdk.AccAddress{addr}
@@ -388,8 +388,8 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 }
 
 // GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+func (m *MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(m))
 }
 
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
@@ -419,7 +419,7 @@ func EncodeTransactionLogs(res *TransactionLogs) ([]byte, error) {
 	return proto.Marshal(res)
 }
 
-// DecodeTransactionLogs decodes an protobuf-encoded byte slice into
+// DecodeTransactionLogs decodes a protobuf-encoded byte slice into
 // TransactionLogs
 func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
 	var logs TransactionLogs
@@ -461,7 +461,7 @@ func BinSearch(
 		// If this errors, there was a consensus error, and the provided message
 		// call or tx will never be accepted, regardless of how high we set the
 		// gas limit.
-		// Return the error directly, don't struggle any more.
+		// Return the error directly, don't struggle anymore.
 		if err != nil {
 			return 0, err
 		}
@@ -475,7 +475,7 @@ func BinSearch(
 }
 
 // GetSigners returns the expected signers for a MsgCreateFunToken message.
-func (m MsgCreateFunToken) GetSigners() []sdk.AccAddress {
+func (m *MsgCreateFunToken) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{addr}
 }
@@ -505,12 +505,12 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 }
 
 // GetSignBytes implements the LegacyMsg interface.
-func (m MsgCreateFunToken) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+func (m *MsgCreateFunToken) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgSendFunTokenToEvm message.
-func (m MsgSendFunTokenToEvm) GetSigners() []sdk.AccAddress {
+func (m *MsgSendFunTokenToEvm) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{addr}
 }
@@ -531,6 +531,6 @@ func (m *MsgSendFunTokenToEvm) ValidateBasic() error {
 }
 
 // GetSignBytes implements the LegacyMsg interface.
-func (m MsgSendFunTokenToEvm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+func (m *MsgSendFunTokenToEvm) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(m))
 }

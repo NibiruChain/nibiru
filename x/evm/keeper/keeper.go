@@ -97,13 +97,13 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 	return coin.Amount.BigInt()
 }
 
-func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
+func (k *Keeper) EthChainID(ctx sdk.Context) *big.Int {
 	return appconst.GetEthChainID(ctx.ChainID())
 }
 
 // AddToBlockGasUsed accumulate gas used by each eth msgs included in current
 // block tx.
-func (k Keeper) AddToBlockGasUsed(
+func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
 ) (uint64, error) {
 	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
@@ -115,28 +115,28 @@ func (k Keeper) AddToBlockGasUsed(
 }
 
 // GetMinGasMultiplier returns minimum gas multiplier.
-func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
+func (k *Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
+func (k *Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 	// TODO: plug in fee market keeper
 	return big.NewInt(0)
 }
 
-func (k Keeper) GetBaseFeeNoCfg(
+func (k *Keeper) GetBaseFeeNoCfg(
 	ctx sdk.Context,
 ) *big.Int {
 	return k.GetBaseFee(ctx)
 }
 
 // Logger returns a module-specific logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
 }
 
 // Tracer return a default vm.Tracer based on current keeper state
-func (k Keeper) Tracer(
+func (k *Keeper) Tracer(
 	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
 	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())

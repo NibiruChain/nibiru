@@ -70,7 +70,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 		deps.Ctx, fromEvmAddr, &contractAddr, commit,
 		bytecodeForCall,
 	)
-	s.ErrorContains(err, "Precompile error")
+	s.ErrorContains(err, "precompile error")
 }
 
 // FunToken_HappyPath: runs a whole process of sending fun token from bank to evm and back

@@ -16,7 +16,7 @@ import (
 
 // PrecompileSet is the set of all known precompile addresses. It includes defaults
 // from go-ethereum and the custom ones specific to the Nibiru EVM.
-func (k Keeper) PrecompileSet() set.Set[gethcommon.Address] {
+func (k *Keeper) PrecompileSet() set.Set[gethcommon.Address] {
 	precompiles := set.New[gethcommon.Address]()
 	for addr := range k.precompiles {
 		precompiles.Add(addr)
@@ -84,7 +84,7 @@ func (k *Keeper) AddEVMExtensions(
 
 // IsAvailablePrecompile returns true if the given precompile address is contained in the
 // EVM keeper's available precompiles map.
-func (k Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
+func (k *Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
 	_, ok := k.precompiles[address]
 	return ok
 }
@@ -93,7 +93,7 @@ func (k Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
 //
 // NOTE: uses index based approach instead of append because it's supposed to be faster.
 // Check https://stackoverflow.com/questions/21362950/getting-a-slice-of-keys-from-a-map.
-func (k Keeper) PrecompileAddrsSorted() []gethcommon.Address {
+func (k *Keeper) PrecompileAddrsSorted() []gethcommon.Address {
 	addresses := make([]gethcommon.Address, len(k.precompiles))
 	i := 0
 

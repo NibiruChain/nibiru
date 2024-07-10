@@ -40,7 +40,7 @@ func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 }
 
 // Validate performs a basic validation of the ChainConfig params. The function will return an error
-// if any of the block values is uninitialized (i.e nil) or if the EIP150Hash is an invalid hash.
+// if any of the block values is uninitialized (i.e. nil) or if the EIP150Hash is an invalid hash.
 func Validate() error {
 	// NOTE: chain ID is not needed to check config order
 	if err := EthereumConfig(nil).CheckConfigForkOrder(); err != nil {
