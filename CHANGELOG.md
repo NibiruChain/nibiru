@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1958](https://github.com/NibiruChain/nibiru/pull/1958) - chore(evm): wiped deprecated evm apis: miner, personal
 - [#1959](https://github.com/NibiruChain/nibiru/pull/1959) - feat(evm): Add precompile to the EVM that enables trasnfers of ERC20 tokens to "nibi" accounts as regular Ethereum transactions 
 - [#1960](https://github.com/NibiruChain/nibiru/pull/1960) - test(network): graceful cleanup for more consistent CI runs
+- [#1961](https://github.com/NibiruChain/nibiru/pull/1961) - chore(test): reverted funtoken precompile test back to the isolated state
 
 #### Dapp modules: perp, spot, oracle, etc
 
