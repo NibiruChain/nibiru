@@ -1,4 +1,4 @@
-package cli
+package testnetwork
 
 import (
 	"bufio"
@@ -6,17 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 
@@ -30,22 +27,18 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
-	"github.com/cometbft/cometbft/node"
-	tmclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
-	serverapi "github.com/cosmos/cosmos-sdk/server/api"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
@@ -71,77 +64,14 @@ type AppConstructor = func(val Validator) servertypes.Application
 //     test network can run at a time. For this reason, it's essential to
 //     invoke `Network.Cleanup` after testing to allow other tests to create
 //     networks.
+//
+// Each of the "Validators" has a "Logger", each being a shared reference to the
+// `Network.Logger`. This helps simplify debugging.
 type Network struct {
 	BaseDir    string
 	Config     Config
 	Validators []*Validator
 	Logger     Logger
-}
-
-// Validator defines an in-process Tendermint validator node. Through this
-// object, a client can make RPC and API calls and interact with any client
-// command or handler.
-type Validator struct {
-	AppConfig *serverconfig.Config
-	ClientCtx client.Context
-	Ctx       *server.Context
-	// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
-	Dir string
-
-	// NodeID is a unique ID for the validator generated when the
-	// 'cli.Network' is started.
-	NodeID string
-	PubKey cryptotypes.PubKey
-
-	// Moniker is a human-readable name that identifies a validator. A
-	// moniker is optional and may be empty.
-	Moniker string
-
-	// APIAddress is the endpoint that the validator API server binds to.
-	// Only the first validator of a 'cli.Network' exposes the full API.
-	APIAddress string
-
-	// RPCAddress is the endpoint that the RPC server binds to. Only the
-	// first validator of a 'cli.Network' exposes the full API.
-	RPCAddress string
-
-	// P2PAddress is the endpoint that the RPC server binds to. The P2P
-	// server handles Tendermint peer-to-peer (P2P) networking and is
-	// critical for blockchain replication and consensus. It allows nodes
-	// to gossip blocks, transactions, and consensus messages. Only the
-	// first validator of a 'cli.Network' exposes the full API.
-	P2PAddress string
-
-	// Address - account address
-	Address sdk.AccAddress
-
-	// EthAddress - Ethereum address
-	EthAddress common.Address
-
-	// ValAddress - validator operator (valoper) address
-	ValAddress sdk.ValAddress
-
-	// RPCClient wraps most important rpc calls a client would make to
-	// listen for events, test if it also implements events.EventSwitch.
-	//
-	// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
-	// - rpc.HTTP
-	// - rpc.Local
-	RPCClient tmclient.Client
-
-	JSONRPCClient *ethclient.Client
-
-	tmNode *node.Node
-
-	// API exposes the app's REST and gRPC interfaces, allowing clients to
-	// read from state and broadcast txs. The API server connects to the
-	// underlying ABCI application.
-	api            *serverapi.Server
-	grpc           *grpc.Server
-	grpcWeb        *http.Server
-	secretMnemonic string
-	jsonrpc        *http.Server
-	jsonrpcDone    chan struct{}
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
@@ -194,7 +124,25 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	}
 }
 
-// New creates a new Network for integration tests.
+/*
+New creates a new Network for integration tests.
+
+Example:
+
+	import (
+		"suite"
+		"github.com/NibiruChain/nibiru/app"
+		"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+		"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
+	)
+
+	var s *suite.Suite // For some test suite...
+	encodingConfig := app.MakeEncodingConfig()
+	genesisState := genesis.NewTestGenesisState(encodingConfig)
+	cfg = testnetwork.BuildNetworkConfig(genesisState)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
+	s.Require().NoError(err)
+*/
 func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
 	logger.Log("acquiring test network lock")
@@ -467,6 +415,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			ClientCtx:      clientCtx,
 			Ctx:            ctx,
 			Dir:            filepath.Join(network.BaseDir, nodeDirName),
+			Logger:         logger,
 			NodeID:         nodeID,
 			PubKey:         pubKey,
 			Moniker:        nodeDirName,
@@ -629,29 +578,20 @@ func (n *Network) Cleanup() {
 
 	n.Logger.Log("cleaning up test network...")
 
-	for _, v := range n.Validators {
-		if v.tmNode != nil && v.tmNode.IsRunning() {
-			_ = v.tmNode.Stop()
-		}
-
-		if v.api != nil {
-			_ = v.api.Close()
-		}
-
-		if v.grpc != nil {
-			v.grpc.Stop()
-			if v.grpcWeb != nil {
-				_ = v.grpcWeb.Close()
-			}
-		}
-		if v.jsonrpc != nil {
-			_ = v.jsonrpc.Close()
-		}
-	}
+	// We use a wait group here to ensure that all services are stopped before
+	// cleaning up.
+	var waitGroup sync.WaitGroup
 
 	for _, v := range n.Validators {
-		_ = v.tmNode.Stop()
+		waitGroup.Add(1)
+
+		go func(v *Validator) {
+			defer waitGroup.Done()
+			stopValidatorNode(v)
+		}(v)
 	}
+
+	waitGroup.Wait()
 
 	// TODO: Is there a cleaner way to do this with a synchronous check?
 	// https://github.com/NibiruChain/nibiru/issues/1955
@@ -659,65 +599,25 @@ func (n *Network) Cleanup() {
 	// Give a brief pause for things to finish closing in other processes.
 	// Hopefully this helps with the address-in-use errors.
 	// Timeout of 100ms chosen randomly.
-	// Timeout of 500ms chosen because 100ms was not enough. | 2024-07-02
-	time.Sleep(500 * time.Millisecond)
+	// Timeout of 250ms chosen because 100ms was not enough. | 2024-07-02
+	maxRetries := 5
+	stopped := false
+	for i := 0; i < maxRetries; i++ {
+		if ValidatorsStopped(n.Validators) {
+			stopped = true
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if !stopped {
+		panic("cleanup did not succeed within the max retry count")
+	}
 
 	if n.Config.CleanupDir {
 		_ = os.RemoveAll(n.BaseDir)
 	}
 
 	n.Logger.Log("finished cleaning up test network")
-}
-
-func (val Validator) SecretMnemonic() string {
-	return val.secretMnemonic
-}
-
-func (val Validator) SecretMnemonicSlice() []string {
-	return strings.Fields(val.secretMnemonic)
-}
-
-// LogMnemonic logs a secret to the network's logger for debugging and manual
-// testing
-func LogMnemonic(l Logger, secret string) {
-	lines := []string{
-		"THIS MNEMONIC IS FOR TESTING PURPOSES ONLY",
-		"DO NOT USE IN PRODUCTION",
-		"",
-		strings.Join(strings.Fields(secret)[0:8], " "),
-		strings.Join(strings.Fields(secret)[8:16], " "),
-		strings.Join(strings.Fields(secret)[16:24], " "),
-	}
-
-	lineLengths := make([]int, len(lines))
-	for i, line := range lines {
-		lineLengths[i] = len(line)
-	}
-
-	maxLineLength := 0
-	for _, lineLen := range lineLengths {
-		if lineLen > maxLineLength {
-			maxLineLength = lineLen
-		}
-	}
-
-	l.Log("\n")
-	l.Log(strings.Repeat("+", maxLineLength+8))
-	for _, line := range lines {
-		l.Logf("++  %s  ++\n", centerText(line, maxLineLength))
-	}
-	l.Log(strings.Repeat("+", maxLineLength+8))
-	l.Log("\n")
-}
-
-// centerText: Centers text across a fixed width, filling either side with
-// whitespace buffers
-func centerText(text string, width int) string {
-	textLen := len(text)
-	leftBuffer := strings.Repeat(" ", (width-textLen)/2)
-	rightBuffer := strings.Repeat(" ", (width-textLen)/2+(width-textLen)%2)
-
-	return fmt.Sprintf("%s%s%s", leftBuffer, text, rightBuffer)
 }
 
 func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, *keyring.Record, error) {

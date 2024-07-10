@@ -1,5 +1,5 @@
 /*
-Package network implements and exposes a fully operational in-process Tendermint
+Package "testnetwork" implements and exposes a fully operational in-process Tendermint
 test network that consists of at least one or potentially many validators. This
 test network can be used primarily for integration tests or unit test suites.
 
@@ -62,4 +62,4 @@ A typical testing flow might look like the following:
 		suite.Run(t, new(IntegrationTestSuite))
 	}
 */
-package cli
+package testnetwork
