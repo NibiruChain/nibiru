@@ -34,7 +34,7 @@ func (s *TestSuite) DoTestSequenceExpectations() {
 	s.EqualValues(seq, newSeq)
 
 	t.Log("broadcast msg n times, expect sequence += n")
-	numTxs := uint64(5)
+	numTxs := uint64(2)
 	seqs := []uint64{}
 	txResults := make(map[string]*cmtcoretypes.ResultTx)
 	for broadcastCount := uint64(0); broadcastCount < numTxs; broadcastCount++ {

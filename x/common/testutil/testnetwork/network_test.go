@@ -1,5 +1,5 @@
 // Alteration of [network/network_test.go](https://github.com/cosmos/cosmos-sdk/blob/v0.45.15/testutil/network/network_test.go)
-package cli_test
+package testnetwork_test
 
 import (
 	"fmt"
@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
 )
 
 func TestIntegrationTestSuite_RunAll(t *testing.T) {
@@ -31,17 +31,17 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	network *cli.Network
-	cfg     *cli.Config
+	network *testnetwork.Network
+	cfg     *testnetwork.Config
 }
 
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	encConfig := app.MakeEncodingConfig()
-	cfg := new(cli.Config)
-	*cfg = cli.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
-	network, err := cli.New(
+	cfg := new(testnetwork.Config)
+	*cfg = testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
+	network, err := testnetwork.New(
 		s.T(),
 		s.T().TempDir(),
 		*cfg,
@@ -74,13 +74,13 @@ func (s *TestSuite) TestNetwork_LatestHeight() {
 	s.NoError(err)
 	s.Positive(height)
 
-	sadNetwork := new(cli.Network)
+	sadNetwork := new(testnetwork.Network)
 	_, err = sadNetwork.LatestHeight()
 	s.Error(err)
 }
 
 func (s *TestSuite) TestLogMnemonic() {
-	kring, algo, nodeDirName := cli.NewKeyring(s.T())
+	kring, algo, nodeDirName := testnetwork.NewKeyring(s.T())
 
 	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
 	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
@@ -92,7 +92,7 @@ func (s *TestSuite) TestLogMnemonic() {
 	)
 	s.NoError(err)
 
-	cli.LogMnemonic(&mockLogger{
+	testnetwork.LogMnemonic(&mockLogger{
 		Logs: []string{},
 	}, secret)
 }
@@ -103,7 +103,7 @@ func (s *TestSuite) TestValidatorGetSecret() {
 	secretSlice := val.SecretMnemonicSlice()
 	s.Equal(secret, strings.Join(secretSlice, " "))
 
-	kring, algo, nodeDirName := cli.NewKeyring(s.T())
+	kring, algo, nodeDirName := testnetwork.NewKeyring(s.T())
 	mnemonic := secret
 	overwrite := true
 	addrGenerated, secretGenerated, err := sdktestutil.GenerateSaveCoinKey(
@@ -114,7 +114,7 @@ func (s *TestSuite) TestValidatorGetSecret() {
 	s.Equal(val.Address, addrGenerated)
 }
 
-var _ cli.Logger = (*mockLogger)(nil)
+var _ testnetwork.Logger = (*mockLogger)(nil)
 
 type mockLogger struct {
 	Logs []string
@@ -130,7 +130,7 @@ func (ml *mockLogger) Logf(format string, args ...interface{}) {
 
 func (s *TestSuite) TestNewAccount() {
 	s.NotPanics(func() {
-		addr := cli.NewAccount(s.network, "newacc")
+		addr := testnetwork.NewAccount(s.network, "newacc")
 		s.NoError(sdk.VerifyAddressFormat(addr))
 	})
 }

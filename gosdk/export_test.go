@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
 
 	tmconfig "github.com/cometbft/cometbft/config"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -15,20 +15,20 @@ import (
 
 type Blockchain struct {
 	GrpcConn *grpc.ClientConn
-	Cfg      *cli.Config
-	Network  *cli.Network
-	Val      *cli.Validator
+	Cfg      *testnetwork.Config
+	Network  *testnetwork.Network
+	Val      *testnetwork.Validator
 }
 
 func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	EnsureNibiruPrefix()
 	encConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encConfig)
-	cliCfg := cli.BuildNetworkConfig(genState)
+	cliCfg := testnetwork.BuildNetworkConfig(genState)
 	cfg := &cliCfg
 	cfg.NumValidators = 1
 
-	network, err := cli.New(
+	network, err := testnetwork.New(
 		t,
 		t.TempDir(),
 		*cfg,
@@ -57,7 +57,7 @@ func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	}, err
 }
 
-func ConnectGrpcToVal(val *cli.Validator) (*grpc.ClientConn, error) {
+func ConnectGrpcToVal(val *testnetwork.Validator) (*grpc.ClientConn, error) {
 	grpcUrl := val.AppConfig.GRPC.Address
 	return GetGRPCConnection(
 		grpcUrl, true, 5,
@@ -65,16 +65,16 @@ func ConnectGrpcToVal(val *cli.Validator) (*grpc.ClientConn, error) {
 }
 
 func AbsorbServerConfig(
-	cfg *cli.Config, srvCfg *serverconfig.Config,
-) *cli.Config {
+	cfg *testnetwork.Config, srvCfg *serverconfig.Config,
+) *testnetwork.Config {
 	cfg.GRPCAddress = srvCfg.GRPC.Address
 	cfg.APIAddress = srvCfg.API.Address
 	return cfg
 }
 
 func AbsorbTmConfig(
-	cfg *cli.Config, tmCfg *tmconfig.Config,
-) *cli.Config {
+	cfg *testnetwork.Config, tmCfg *tmconfig.Config,
+) *testnetwork.Config {
 	cfg.RPCAddress = tmCfg.RPC.ListenAddress
 	return cfg
 }

@@ -25,17 +25,17 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
 )
 
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg     testnetwork.Config
+	network *testnetwork.Network
 
 	ethClient *ethclient.Client
 
@@ -57,8 +57,8 @@ func (s *TestSuite) SetupSuite() {
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genState)
-	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
+	s.cfg = testnetwork.BuildNetworkConfig(genState)
+	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 
 	s.network = network
@@ -75,7 +75,7 @@ func (s *TestSuite) SetupSuite() {
 	val := s.network.Validators[0]
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 100_000_000)) // 10 NIBI
-	s.NoError(testutilcli.FillWalletFromValidator(s.fundedAccNibiAddr, funds, val, denoms.NIBI))
+	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, val, denoms.NIBI))
 	s.NoError(s.network.WaitForNextBlock())
 }
 
@@ -110,7 +110,7 @@ func (s *TestSuite) Test_BlockByNumber() {
 
 // Test_BalanceAt EVM method: eth_getBalance
 func (s *TestSuite) Test_BalanceAt() {
-	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
+	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 
 	// New user balance should be 0
 	balance, err := s.ethClient.BalanceAt(context.Background(), testAccEthAddr, nil)
@@ -166,7 +166,7 @@ func (s *TestSuite) Test_PendingCodeAt() {
 
 // Test_EstimateGas EVM method: eth_estimateGas
 func (s *TestSuite) Test_EstimateGas() {
-	testAccEthAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "new-user"))
+	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 	gasLimit := uint64(21000)
 	msg := geth.CallMsg{
 		From:  s.fundedAccEthAddr,
@@ -197,7 +197,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 		context.Background(), s.fundedAccEthAddr, nil,
 	)
 	s.NoError(err)
-	recipientAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "recipient"))
+	recipientAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "recipient"))
 	recipientBalanceBefore, err := s.ethClient.BalanceAt(context.Background(), recipientAddr, nil)
 	s.NoError(err)
 	s.Equal(int64(0), recipientBalanceBefore.Int64())
@@ -266,7 +266,7 @@ func (s *TestSuite) Test_SmartContract() {
 	s.assertERC20Balance(contractAddress, s.fundedAccEthAddr, ownerInitialBalance)
 
 	// Querying contract: recipient balance should be 0
-	recipientAddr := gethcommon.BytesToAddress(testutilcli.NewAccount(s.network, "contract_recipient"))
+	recipientAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "contract_recipient"))
 	s.assertERC20Balance(contractAddress, recipientAddr, big.NewInt(0))
 
 	// Execute contract: send 1000 anibi to recipient

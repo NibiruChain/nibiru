@@ -14,9 +14,9 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -25,8 +25,8 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg     testnetwork.Config
+	network *testnetwork.Network
 }
 
 func (s *TestSuite) SetupSuite() {
@@ -38,7 +38,7 @@ func (s *TestSuite) SetupTest() {
 	homeDir := s.T().TempDir()
 
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
-	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()
@@ -50,7 +50,7 @@ func (s *TestSuite) SetupTest() {
 		return gs
 	}())
 
-	network, err := testutilcli.New(
+	network, err := testnetwork.New(
 		s.T(),
 		homeDir,
 		s.cfg,
