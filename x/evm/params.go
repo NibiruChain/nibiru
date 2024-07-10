@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
@@ -15,25 +16,18 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/exp/slices"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/eth"
 )
 
 const (
 	// DefaultEVMDenom defines the default EVM denomination
-	DefaultEVMDenom = "unibi"
+	DefaultEVMDenom = appconst.BondDenom
 )
 
 var (
-	// DefaultAllowUnprotectedTxs rejects all unprotected txs (i.e false)
-	DefaultAllowUnprotectedTxs = false
-	// DefaultEnableCreate enables contract creation (i.e true)
-	DefaultEnableCreate = true
-	// DefaultEnableCall enables contract calls (i.e true)
-	DefaultEnableCall = true
 	// AvailableEVMExtensions defines the default active precompiles
 	AvailableEVMExtensions = []string{}
-	DefaultExtraEIPs       = []int64{}
-	DefaultEVMChannels     = []string{}
 )
 
 // NewParams creates a new Params instance
@@ -64,12 +58,13 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		EvmDenom:            DefaultEVMDenom,
-		EnableCreate:        DefaultEnableCreate,
-		EnableCall:          DefaultEnableCall,
-		ExtraEIPs:           DefaultExtraEIPs,
-		AllowUnprotectedTxs: DefaultAllowUnprotectedTxs,
+		EnableCreate:        true,
+		EnableCall:          true,
+		ExtraEIPs:           []int64{},
+		AllowUnprotectedTxs: false,
 		ActivePrecompiles:   AvailableEVMExtensions,
-		EVMChannels:         DefaultEVMChannels,
+		EVMChannels:         []string{},
+		CreateFuntokenFee:   math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
 	}
 }
 

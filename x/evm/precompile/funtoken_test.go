@@ -111,8 +111,8 @@ func (s *Suite) FunToken_HappyPath() {
 	s.Require().NoError(err)
 
 	s.T().Log("Balances of the ERC20 should start empty")
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(0))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(0))
 
 	// Send fungible tokens from bank to EVM
 	_, err = deps.K.SendFunTokenToEvm(
@@ -125,8 +125,8 @@ func (s *Suite) FunToken_HappyPath() {
 	)
 	s.Require().NoError(err, "failed to send FunToken to EVM")
 
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountToSendToEvm))
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(0))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(amountToSendToEvm))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(0))
 
 	// Transfer tokens to another account within EVM
 	s.T().Log("Transfer - Success (sanity check)")
@@ -137,8 +137,8 @@ func (s *Suite) FunToken_HappyPath() {
 		to := theEvm
 		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(amountToSendWithinEvm), deps.Ctx)
 		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountRemaining))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(amountRemaining))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
 		s.Equal(
 			int64(0),
 			deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.Int64(),
@@ -159,17 +159,17 @@ func (s *Suite) FunToken_HappyPath() {
 
 	evmtest.AssertERC20BalanceEqual(
 		s.T(),
-		&deps,
+		deps,
 		contract,
 		theUser,
 		big.NewInt(amountRemaining-amountToSendFromEvm),
 	)
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
 	s.Equal(fmt.Sprintf("%d", amountToSendFromEvm),
 		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(amountRemaining-amountToSendFromEvm))
-	evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(amountRemaining-amountToSendFromEvm))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(amountToSendWithinEvm))
 	s.Equal(
 		amountToSendFromEvm,
 		deps.Chain.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.Int64(),
