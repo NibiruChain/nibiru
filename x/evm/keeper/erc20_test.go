@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -74,6 +75,15 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.K.Code(deps.Ctx, queryCodeReq)
 	s.NoError(err)
 
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	createFuntokenResp, err := deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -91,6 +101,15 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 		})
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -166,6 +185,15 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	createFuntokenResp, err := deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -173,7 +201,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.NoError(err, "bankDenom %s", bankDenom)
+	s.Require().NoError(err, "bankDenom %s", bankDenom)
 	erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
 	erc20Addr := erc20.ToAddr()
 	s.Equal(
@@ -202,6 +230,14 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.Equal(metadata, info)
 
 	s.T().Log("sad: CreateFunToken for the bank coin: already registered")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -209,7 +245,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.ErrorContains(err, "Funtoken mapping already created")
+	s.Require().ErrorContains(err, "Funtoken mapping already created")
 }
 
 // TestSendFunTokenToEvm executes sending fun tokens from bank coin to erc20 and checks the results:
@@ -262,6 +298,15 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			s.Require().NoError(err)
 			err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
 				deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
+			)
+			s.Require().NoError(err)
+
+			// Give the sender funds for the fee
+			err = testapp.FundAccount(
+				deps.Chain.BankKeeper,
+				deps.Ctx,
+				deps.Sender.NibiruAddr,
+				deps.K.FeeForCreateFunToken(deps.Ctx),
 			)
 			s.Require().NoError(err)
 

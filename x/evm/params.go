@@ -25,10 +25,8 @@ const (
 	DefaultEVMDenom = appconst.BondDenom
 )
 
-var (
-	// AvailableEVMExtensions defines the default active precompiles
-	AvailableEVMExtensions = []string{}
-)
+// AvailableEVMExtensions defines the default active precompiles
+var AvailableEVMExtensions = []string{}
 
 // NewParams creates a new Params instance
 func NewParams(
