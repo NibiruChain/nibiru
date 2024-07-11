@@ -51,7 +51,7 @@ func (k *Keeper) TxConfig(
 // VMConfig creates an EVM configuration from the debug setting and the extra
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
-func (k *Keeper) VMConfig(
+func (k Keeper) VMConfig(
 	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
 	var debug bool
@@ -68,7 +68,7 @@ func (k *Keeper) VMConfig(
 }
 
 // GetCoinbaseAddress returns the block proposer's validator operator address.
-func (k *Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) (common.Address, error) {
+func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) (common.Address, error) {
 	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, ParseProposerAddr(ctx, proposerAddress))
 	if !found {
 		return common.Address{}, errors.Wrapf(

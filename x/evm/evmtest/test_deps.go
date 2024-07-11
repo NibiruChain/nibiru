@@ -27,7 +27,7 @@ type TestDeps struct {
 	Sender   EthPrivKeyAcc
 }
 
-func (deps *TestDeps) GoCtx() context.Context {
+func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
 }
 

@@ -32,11 +32,11 @@ import (
 // Returns:
 //   - info: ERC20Metadata containing name, symbol, and decimals.
 //   - err: An error if metadata retrieval fails.
-func (k *Keeper) FindERC20Metadata(
+func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	contract gethcommon.Address,
 ) (info ERC20Metadata, err error) {
-	var abi = embeds.Contract_ERC20Minter.ABI
+	var abi gethabi.ABI = embeds.Contract_ERC20Minter.ABI
 
 	errs := []error{}
 
@@ -178,7 +178,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 // Note: This function handles both contract method calls and simulations,
 // depending on the 'commit' parameter. It uses a default gas limit for
 // simulations and estimates gas for actual transactions.
-func (k *Keeper) CallContract(
+func (k Keeper) CallContract(
 	ctx sdk.Context,
 	abi gethabi.ABI,
 	fromAcc gethcommon.Address,
@@ -207,7 +207,7 @@ func (k *Keeper) CallContract(
 // Note: This function handles both contract method calls and simulations,
 // depending on the 'commit' parameter. It uses a default gas limit for
 // simulations and estimates gas for actual transactions.
-func (k *Keeper) CallContractWithInput(
+func (k Keeper) CallContractWithInput(
 	ctx sdk.Context,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
@@ -277,7 +277,7 @@ func computeCommitGasLimit(
 	gasLimit uint64,
 	fromAcc, contract *gethcommon.Address,
 	contractInput []byte,
-	k *Keeper,
+	k Keeper,
 	ctx sdk.Context,
 ) (newGasLimit uint64, err error) {
 	if !commit {
@@ -314,25 +314,25 @@ func computeCommitGasLimit(
 	return newGasLimit, nil
 }
 
-func (k *Keeper) LoadERC20Name(
+func (k Keeper) LoadERC20Name(
 	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
 	return k.LoadERC20String(ctx, abi, erc20, "name")
 }
 
-func (k *Keeper) LoadERC20Symbol(
+func (k Keeper) LoadERC20Symbol(
 	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
 	return k.LoadERC20String(ctx, abi, erc20, "symbol")
 }
 
-func (k *Keeper) LoadERC20Decimals(
+func (k Keeper) LoadERC20Decimals(
 	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
 ) (out uint8, err error) {
 	return k.loadERC20Uint8(ctx, abi, erc20, "decimals")
 }
 
-func (k *Keeper) LoadERC20String(
+func (k Keeper) LoadERC20String(
 	ctx sdk.Context,
 	erc20Abi gethabi.ABI,
 	erc20Contract gethcommon.Address,
@@ -358,7 +358,7 @@ func (k *Keeper) LoadERC20String(
 	return erc20Val.Value, err
 }
 
-func (k *Keeper) loadERC20Uint8(
+func (k Keeper) loadERC20Uint8(
 	ctx sdk.Context,
 	erc20Abi gethabi.ABI,
 	erc20Contract gethcommon.Address,
@@ -384,7 +384,7 @@ func (k *Keeper) loadERC20Uint8(
 	return erc20Val.Value, err
 }
 
-func (k *Keeper) LoadERC20BigInt(
+func (k Keeper) LoadERC20BigInt(
 	ctx sdk.Context,
 	erc20Abi gethabi.ABI,
 	erc20Contract gethcommon.Address,
@@ -415,9 +415,9 @@ func (k *Keeper) LoadERC20BigInt(
 	return erc20Val.Value, err
 }
 
-func (k *Keeper) ERC20() Erc20Calls {
+func (k Keeper) ERC20() Erc20Calls {
 	return Erc20Calls{
-		Keeper: k,
+		Keeper: &k,
 		ABI:    embeds.Contract_ERC20Minter.ABI,
 	}
 }

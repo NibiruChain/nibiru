@@ -48,8 +48,8 @@ func (suite *TxDataTestSuite) SetupTest() {
 	suite.addr = evmtest.NewEthAccInfo().EthAddr
 
 	suite.hexAddr = suite.addr.Hex()
-	suite.hexDataBytes = []byte("data")
-	suite.hexInputBytes = []byte("input")
+	suite.hexDataBytes = hexutil.Bytes([]byte("data"))
+	suite.hexInputBytes = hexutil.Bytes([]byte("input"))
 }
 
 func TestTxDataTestSuite(t *testing.T) {

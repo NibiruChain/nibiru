@@ -232,7 +232,7 @@ func (tx *AccessListTx) SetSignatureValues(chainID, v, r, s *big.Int) {
 }
 
 // Validate performs a stateless validation of the tx fields.
-func (tx *AccessListTx) Validate() error {
+func (tx AccessListTx) Validate() error {
 	gasPrice := tx.GetGasPrice()
 	if gasPrice == nil {
 		return errorsmod.Wrap(ErrInvalidGasPrice, "cannot be nil")
@@ -277,26 +277,26 @@ func (tx *AccessListTx) Validate() error {
 }
 
 // Fee returns gasprice * gaslimit.
-func (tx *AccessListTx) Fee() *big.Int {
+func (tx AccessListTx) Fee() *big.Int {
 	return fee(tx.GetGasPrice(), tx.GetGas())
 }
 
 // Cost returns amount + gasprice * gaslimit.
-func (tx *AccessListTx) Cost() *big.Int {
+func (tx AccessListTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValue())
 }
 
 // EffectiveGasPrice is the same as GasPrice for AccessListTx
-func (tx *AccessListTx) EffectiveGasPrice(_ *big.Int) *big.Int {
+func (tx AccessListTx) EffectiveGasPrice(_ *big.Int) *big.Int {
 	return tx.GetGasPrice()
 }
 
 // EffectiveFee is the same as Fee for AccessListTx
-func (tx *AccessListTx) EffectiveFee(_ *big.Int) *big.Int {
+func (tx AccessListTx) EffectiveFee(_ *big.Int) *big.Int {
 	return tx.Fee()
 }
 
 // EffectiveCost is the same as Cost for AccessListTx
-func (tx *AccessListTx) EffectiveCost(_ *big.Int) *big.Int {
+func (tx AccessListTx) EffectiveCost(_ *big.Int) *big.Int {
 	return tx.Cost()
 }

@@ -28,7 +28,7 @@ func NewTransactionLogsFromEth(hash gethcommon.Hash, ethlogs []*gethcore.Log) Tr
 }
 
 // Validate performs a basic validation of a GenesisAccount fields.
-func (tx *TransactionLogs) Validate() error {
+func (tx TransactionLogs) Validate() error {
 	if eth.IsEmptyHash(tx.Hash) {
 		return fmt.Errorf("hash cannot be the empty %s", tx.Hash)
 	}
@@ -48,7 +48,7 @@ func (tx *TransactionLogs) Validate() error {
 }
 
 // EthLogs returns the Ethereum type Logs from the Transaction Logs.
-func (tx *TransactionLogs) EthLogs() []*gethcore.Log {
+func (tx TransactionLogs) EthLogs() []*gethcore.Log {
 	return LogsToEthereum(tx.Logs)
 }
 

@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	address       = common.BigToAddress(big.NewInt(101))
-	address2      = common.BigToAddress(big.NewInt(102))
-	address3      = common.BigToAddress(big.NewInt(103))
-	blockHash     = common.BigToHash(big.NewInt(9999))
-	emptyTxConfig = statedb.NewEmptyTxConfig(blockHash)
+	address       common.Address   = common.BigToAddress(big.NewInt(101))
+	address2      common.Address   = common.BigToAddress(big.NewInt(102))
+	address3      common.Address   = common.BigToAddress(big.NewInt(103))
+	blockHash     common.Hash      = common.BigToHash(big.NewInt(9999))
+	emptyTxConfig statedb.TxConfig = statedb.NewEmptyTxConfig(blockHash)
 )
 
 type StateDBTestSuite struct {

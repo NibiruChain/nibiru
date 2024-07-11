@@ -50,7 +50,7 @@ func (s Storage) Copy() Storage {
 
 // Validate performs a basic validation of the State fields. Note that [State]
 // can be empty.
-func (s *State) Validate() error {
+func (s State) Validate() error {
 	if strings.TrimSpace(s.Key) == "" {
 		return errorsmod.Wrap(ErrInvalidState, "state key hash cannot be blank")
 	}

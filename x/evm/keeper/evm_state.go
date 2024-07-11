@@ -111,13 +111,13 @@ func (state EvmState) GetContractBytecode(
 }
 
 // GetParams returns the total set of evm parameters.
-func (k *Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
+func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 	params, _ = k.EvmState.ModuleParams.Get(ctx)
 	return params
 }
 
 // SetParams: Setter for the module parameters.
-func (k *Keeper) SetParams(ctx sdk.Context, params evm.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
 	slices.Sort(params.ActivePrecompiles)
 	k.EvmState.ModuleParams.Set(ctx, params)
 }
@@ -169,7 +169,7 @@ func (k *Keeper) ResetTransientGasUsed(ctx sdk.Context) {
 }
 
 // GetAccNonce returns the sequence number of an account, returns 0 if not exists.
-func (k *Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
+func (k Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)
 	if acct == nil {

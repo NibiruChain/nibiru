@@ -14,7 +14,7 @@ import (
 
 var (
 	_             statedb.Keeper = &MockKeeper{}
-	errAddress                   = common.BigToAddress(big.NewInt(100))
+	errAddress    common.Address = common.BigToAddress(big.NewInt(100))
 	emptyCodeHash                = crypto.Keccak256(nil)
 )
 

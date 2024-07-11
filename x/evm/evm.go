@@ -14,7 +14,7 @@ import (
 // FIXME: Explore problems arrising from ERC1155 creating multiple fungible
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
-func (fun *FunToken) ID() []byte {
+func (fun FunToken) ID() []byte {
 	return NewFunTokenID(fun.Erc20Addr, fun.BankDenom)
 }
 
@@ -26,7 +26,7 @@ func funTokenValidationError(err error) error {
 	return fmt.Errorf("FunTokenError: %s", err.Error())
 }
 
-func (fun *FunToken) Validate() error {
+func (fun FunToken) Validate() error {
 	if err := sdk.ValidateDenom(fun.BankDenom); err != nil {
 		return funTokenValidationError(err)
 	}

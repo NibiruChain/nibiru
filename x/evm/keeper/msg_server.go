@@ -270,7 +270,7 @@ func (k *Keeper) NewEVM(
 //  1. The requested height matches the current height from context (and thus same epoch number)
 //  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
-func (k *Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
+func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
 		h, err := eth.SafeInt64(height)
 		if err != nil {

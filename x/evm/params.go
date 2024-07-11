@@ -71,7 +71,7 @@ func validateChannels(i interface{}) error {
 }
 
 // Validate performs basic validation on evm parameters.
-func (p *Params) Validate() error {
+func (p Params) Validate() error {
 	if err := validateEVMDenom(p.EvmDenom); err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (p *Params) Validate() error {
 }
 
 // EIPs returns the ExtraEIPS as a int slice
-func (p *Params) EIPs() []int {
+func (p Params) EIPs() []int {
 	eips := make([]int, len(p.ExtraEIPs))
 	for i, eip := range p.ExtraEIPs {
 		eips[i] = int(eip)
@@ -110,7 +110,7 @@ func (p *Params) EIPs() []int {
 
 // GetActivePrecompilesAddrs is a util function that the Active Precompiles
 // as a slice of addresses.
-func (p *Params) GetActivePrecompilesAddrs() []common.Address {
+func (p Params) GetActivePrecompilesAddrs() []common.Address {
 	precompiles := make([]common.Address, len(p.ActivePrecompiles))
 	for i, precompile := range p.ActivePrecompiles {
 		precompiles[i] = common.HexToAddress(precompile)
@@ -120,13 +120,13 @@ func (p *Params) GetActivePrecompilesAddrs() []common.Address {
 
 // IsEVMChannel returns true if the channel provided is in the list of
 // EVM channels
-func (p *Params) IsEVMChannel(channel string) bool {
+func (p Params) IsEVMChannel(channel string) bool {
 	return slices.Contains(p.EVMChannels, channel)
 }
 
 // IsActivePrecompile returns true if the given precompile address is
 // registered as an active precompile.
-func (p *Params) IsActivePrecompile(address string) bool {
+func (p Params) IsActivePrecompile(address string) bool {
 	_, found := sort.Find(len(p.ActivePrecompiles), func(i int) int {
 		return strings.Compare(address, p.ActivePrecompiles[i])
 	})

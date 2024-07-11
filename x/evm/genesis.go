@@ -8,7 +8,7 @@ import (
 )
 
 // Validate performs a basic validation of a GenesisAccount fields.
-func (ga *GenesisAccount) Validate() error {
+func (ga GenesisAccount) Validate() error {
 	if err := eth.ValidateAddress(ga.Address); err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func DefaultGenesisState() *GenesisState {
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
-func (gs *GenesisState) Validate() error {
+func (gs GenesisState) Validate() error {
 	seenAccounts := make(map[string]bool)
 	for _, acc := range gs.Accounts {
 		if seenAccounts[acc.Address] {
