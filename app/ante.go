@@ -32,13 +32,13 @@ func NewAnteHandler(
 		var anteHandler sdk.AnteHandler
 		hasExt, typeUrl := TxHasExtensions(tx)
 		if hasExt && typeUrl != "" {
-			anteHandler = AnteHandlerExtendedTx(typeUrl, keepers, opts, ctx)
+			anteHandler = AnteHandlerExtendedTx(typeUrl, keepers, opts)
 			return anteHandler(ctx, tx, sim)
 		}
 
 		switch tx.(type) {
 		case sdk.Tx:
-			anteHandler = NewAnteHandlerNonEVM(keepers, opts)
+			anteHandler = NewAnteHandlerNonEVM(opts)
 		default:
 			return ctx, fmt.Errorf("invalid tx type (%T) in AnteHandler", tx)
 		}
@@ -50,13 +50,12 @@ func AnteHandlerExtendedTx(
 	typeUrl string,
 	keepers AppKeepers,
 	opts ante.AnteHandlerOptions,
-	ctx sdk.Context,
 ) (anteHandler sdk.AnteHandler) {
 	switch typeUrl {
 	case evm.TYPE_URL_ETHEREUM_TX:
 		anteHandler = NewAnteHandlerEVM(keepers, opts)
 	case eth.TYPE_URL_DYNAMIC_FEE_TX:
-		anteHandler = NewAnteHandlerNonEVM(keepers, opts)
+		anteHandler = NewAnteHandlerNonEVM(opts)
 	default:
 		errUnsupported := fmt.Errorf(
 			`encountered tx with unsupported extension option, "%s"`, typeUrl)
@@ -71,7 +70,7 @@ func AnteHandlerExtendedTx(
 
 // NewAnteHandlerNonEVM: Default ante handler for non-EVM transactions.
 func NewAnteHandlerNonEVM(
-	k AppKeepers, opts ante.AnteHandlerOptions,
+	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs

@@ -103,7 +103,7 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 
 // AddToBlockGasUsed accumulate gas used by each eth msgs included in current
 // block tx.
-func (k Keeper) AddToBlockGasUsed(
+func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
 ) (uint64, error) {
 	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed

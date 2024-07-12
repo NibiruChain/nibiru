@@ -34,7 +34,7 @@ import (
 )
 
 // Compile-time interface assertion
-var _ evm.QueryServer = Keeper{}
+var _ evm.QueryServer = &Keeper{}
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
 // EthAccount retrieves the account details for a given Ethereum hex address.
@@ -269,7 +269,7 @@ func (k Keeper) Params(
 // Returns:
 //   - A pointer to the MsgEthereumTxResponse object containing the result of the eth_call.
 //   - An error if the eth_call process encounters any issues.
-func (k Keeper) EthCall(
+func (k *Keeper) EthCall(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.MsgEthereumTxResponse, error) {
 	if err := req.Validate(); err != nil {

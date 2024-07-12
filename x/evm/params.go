@@ -28,27 +28,6 @@ const (
 // AvailableEVMExtensions defines the default active precompiles
 var AvailableEVMExtensions = []string{}
 
-// NewParams creates a new Params instance
-func NewParams(
-	evmDenom string,
-	allowUnprotectedTxs,
-	enableCreate,
-	enableCall bool,
-	extraEIPs []int64,
-	activePrecompiles,
-	evmChannels []string,
-) Params {
-	return Params{
-		EvmDenom:            evmDenom,
-		AllowUnprotectedTxs: allowUnprotectedTxs,
-		EnableCreate:        enableCreate,
-		EnableCall:          enableCall,
-		ExtraEIPs:           extraEIPs,
-		ActivePrecompiles:   activePrecompiles,
-		EVMChannels:         evmChannels,
-	}
-}
-
 // DefaultParams returns default evm parameters
 // ExtraEIPs is empty to prevent overriding the latest hard fork instruction set
 // ActivePrecompiles is empty to prevent overriding the default precompiles

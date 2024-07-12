@@ -23,43 +23,6 @@ import (
 
 type GethTxType = uint8
 
-func NewEthTx(
-	deps *TestDeps, txData gethcore.TxData, nonce uint64,
-) (ethCoreTx *gethcore.Transaction, err error) {
-	ethCoreTx, err = NewEthTxUnsigned(deps, txData, nonce)
-	if err != nil {
-		return ethCoreTx, err
-	}
-
-	sig, _, err := deps.Sender.KeyringSigner.SignByAddress(
-		deps.Sender.NibiruAddr, ethCoreTx.Hash().Bytes(),
-	)
-	if err != nil {
-		return ethCoreTx, err
-	}
-
-	return ethCoreTx.WithSignature(deps.GethSigner(), sig)
-}
-
-func NewEthTxUnsigned(
-	deps *TestDeps, txData gethcore.TxData, nonce uint64,
-) (ethCoreTx *gethcore.Transaction, err error) {
-	switch typedTxData := txData.(type) {
-	case *gethcore.LegacyTx:
-		typedTxData.Nonce = nonce
-		ethCoreTx = gethcore.NewTx(typedTxData)
-	case *gethcore.AccessListTx:
-		typedTxData.Nonce = nonce
-		ethCoreTx = gethcore.NewTx(typedTxData)
-	case *gethcore.DynamicFeeTx:
-		typedTxData.Nonce = nonce
-		ethCoreTx = gethcore.NewTx(typedTxData)
-	default:
-		return ethCoreTx, fmt.Errorf("received unknown tx type in NewEthTxUnsigned")
-	}
-	return ethCoreTx, err
-}
-
 func TxTemplateAccessListTx() *gethcore.AccessListTx {
 	return &gethcore.AccessListTx{
 		GasPrice: big.NewInt(1),
@@ -152,12 +115,6 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg
-}
-
-func GasLimitCreateContract() *big.Int {
-	return new(big.Int).SetUint64(
-		gethparams.TxGasContractCreation + 700,
-	)
 }
 
 type DeployContractResult struct {

@@ -54,7 +54,7 @@ func (p precompileFunToken) Run(
 	defer func() {
 		if err != nil {
 			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("Precompile error: %s: %w", precompileType, err)
+			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
 		}
 	}()
 

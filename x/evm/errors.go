@@ -19,14 +19,12 @@ const (
 
 const (
 	codeErrInvalidState = uint32(iota) + 2 // NOTE: code 1 is reserved for internal errors
-	codeErrInvalidChainConfig
 	codeErrZeroAddress
 	codeErrCreateDisabled
 	codeErrCallDisabled
 	codeErrInvalidAmount
 	codeErrInvalidGasPrice
 	codeErrInvalidGasFee
-	codeErrVMExecution
 	codeErrInvalidRefund
 	codeErrInvalidGasCap
 	codeErrInvalidBaseFee
@@ -41,9 +39,6 @@ var ErrPostTxProcessing = errors.New("failed to execute post processing")
 var (
 	// ErrInvalidState returns an error resulting from an invalid Storage State.
 	ErrInvalidState = errorsmod.Register(ModuleName, codeErrInvalidState, "invalid storage state")
-
-	// ErrInvalidChainConfig returns an error resulting from an invalid ChainConfig.
-	ErrInvalidChainConfig = errorsmod.Register(ModuleName, codeErrInvalidChainConfig, "invalid chain configuration")
 
 	// ErrZeroAddress returns an error resulting from an zero (empty) ethereum Address.
 	ErrZeroAddress = errorsmod.Register(ModuleName, codeErrZeroAddress, "invalid zero address")
@@ -63,16 +58,13 @@ var (
 	// ErrInvalidGasFee returns an error if the tx gas fee is out of bound.
 	ErrInvalidGasFee = errorsmod.Register(ModuleName, codeErrInvalidGasFee, "invalid gas fee")
 
-	// ErrVMExecution returns an error resulting from an error in EVM execution.
-	ErrVMExecution = errorsmod.Register(ModuleName, codeErrVMExecution, "evm transaction execution failed")
-
-	// ErrInvalidRefund returns an error if a the gas refund value is invalid.
+	// ErrInvalidRefund returns an error if the gas refund value is invalid.
 	ErrInvalidRefund = errorsmod.Register(ModuleName, codeErrInvalidRefund, "invalid gas refund amount")
 
-	// ErrInvalidGasCap returns an error if a the gas cap value is negative or invalid
+	// ErrInvalidGasCap returns an error if the gas cap value is negative or invalid
 	ErrInvalidGasCap = errorsmod.Register(ModuleName, codeErrInvalidGasCap, "invalid gas cap")
 
-	// ErrInvalidBaseFee returns an error if a the base fee cap value is invalid
+	// ErrInvalidBaseFee returns an error if the base fee cap value is invalid
 	ErrInvalidBaseFee = errorsmod.Register(ModuleName, codeErrInvalidBaseFee, "invalid base fee")
 
 	// ErrGasOverflow returns an error if gas computation overlow/underflow

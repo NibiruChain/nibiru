@@ -82,7 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1959](https://github.com/NibiruChain/nibiru/pull/1959) - feat(evm): Add precompile to the EVM that enables trasnfers of ERC20 tokens to "nibi" accounts as regular Ethereum transactions 
 - [#1960](https://github.com/NibiruChain/nibiru/pull/1960) - test(network): graceful cleanup for more consistent CI runs
 - [#1961](https://github.com/NibiruChain/nibiru/pull/1961) - chore(test): reverted funtoken precompile test back to the isolated state
+<<<<<<< HEAD
 - [#1963](https://github.com/NibiruChain/nibiru/pull/1963) - feat(evm): Deduct a fee during the creation of a FunToken mapping. Implemented by `deductCreateFunTokenFee` inside of the `eth.evm.v1.MsgCreateFunToken` transaction.
+- [#1962](https://github.com/NibiruChain/nibiru/pull/1962) - chore(evm): code cleanup, unused code, typos, styles, warnings
 
 #### Dapp modules: perp, spot, oracle, etc
 
