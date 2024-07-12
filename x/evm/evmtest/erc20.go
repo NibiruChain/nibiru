@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -23,7 +24,7 @@ func DoEthTx(
 
 func AssertERC20BalanceEqual(
 	t *testing.T,
-	deps *TestDeps,
+	deps TestDeps,
 	contract, account gethcommon.Address,
 	balance *big.Int,
 ) {
@@ -54,6 +55,15 @@ func CreateFunTokenForBankCoin(
 		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 	}
 	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+
+	// Give the sender funds for the fee
+	err := testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	createFuntokenResp, err := deps.K.CreateFunToken(

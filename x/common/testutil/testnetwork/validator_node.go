@@ -128,8 +128,12 @@ func stopValidatorNode(v *Validator) {
 		// accepting new connections and RPCs and blocks until all the pending RPCs are
 		// finished.
 		v.grpc.GracefulStop()
-		if v.grpcWeb != nil {
-			_ = v.grpcWeb.Close()
+	}
+
+	if v.grpcWeb != nil {
+		err := v.grpcWeb.Close()
+		if err != nil {
+			v.Logger.Logf("❌ Error closing the gRPC web server: %w", err)
 		}
 	}
 

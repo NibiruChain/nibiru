@@ -60,6 +60,10 @@ func (k *Keeper) CreateFunTokenFromCoin(
 func (k *Keeper) DeployERC20ForBankCoin(
 	ctx sdk.Context, bankCoin bank.Metadata,
 ) (erc20Addr gethcommon.Address, err error) {
+	// bank.Metadata validation guarantees that both "Base" and "Display" denoms
+	// pass "sdk.ValidateDenom" and that the "DenomUnits" slice has exponents in
+	// ascending order with at least one element, which must be the base
+	// denomination and have exponent 0.
 	decimals := uint8(0)
 	if len(bankCoin.DenomUnits) > 0 {
 		decimalsIdx := len(bankCoin.DenomUnits) - 1

@@ -32,9 +32,11 @@ message Params {
   // evm_denom represents the token denomination used to run the EVM state
   // transitions.
   string evm_denom = 1 [(gogoproto.moretags) = "yaml:\"evm_denom\""];
-  // enable_create toggles state transitions that use the vm.Create function
+  // enable_create: Enables contract creation by allowing for state transitions
+  // that use the "vm.Create" function
   bool enable_create = 2 [(gogoproto.moretags) = "yaml:\"enable_create\""];
-  // enable_call toggles state transitions that use the vm.Call function
+  // enable_call: Enables contract calls by allowing for state transitions that
+  // use the "vm.Call" function
   bool enable_call = 3 [(gogoproto.moretags) = "yaml:\"enable_call\""];
   // extra_eips defines the additional EIPs for the vm.Config
   repeated int64 extra_eips = 4 [(gogoproto.customname) = "ExtraEIPs", (gogoproto.moretags) = "yaml:\"extra_eips\""];
@@ -48,6 +50,14 @@ message Params {
   repeated string active_precompiles = 7;
   // evm_channels is the list of channel identifiers from EVM compatible chains
   repeated string evm_channels = 8 [(gogoproto.customname) = "EVMChannels"];
+
+  // Fee deducted and burned when calling "CreateFunToken" in units of
+  // "evm_denom".
+  string create_funtoken_fee = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
 }
 
 // State represents a single Storage key value pair item.

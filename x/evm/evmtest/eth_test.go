@@ -40,7 +40,7 @@ func (s *Suite) TestERC20Helpers() {
 	erc20Contract := funtoken.Erc20Addr.ToAddr()
 
 	evmtest.AssertERC20BalanceEqual(
-		s.T(), &deps,
+		s.T(), deps,
 		erc20Contract,
 		deps.Sender.EthAddr,
 		big.NewInt(0),

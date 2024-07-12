@@ -9,22 +9,20 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @dev {ERC20} token, including:
  *
+ *  - an "owner" that can mint tokens
  *  - ability for holders to burn (destroy) their tokens
- *  - a minter role that allows for token minting (creation)
  *
  * The contract owner is set automatically in the constructor as the
  * deployer due to "Ownable".
  * 
  * The Context contract is inherited indirectly through "ERC20" and "Ownable".
- *
- * The account that deploys the contract will be able to mint and burn tokens.
  */
 contract ERC20Minter is ERC20, ERC20Burnable, Ownable {
   uint8 private _decimals;
 
   /**
-    * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` to the
-    * account that deploys the contract and customizes tokens decimals
+    * @dev Grants "owner" status to the account that deploys the contract and
+    * customizes tokens decimals.
     *
     * See {ERC20-constructor}.
     */
@@ -52,24 +50,21 @@ contract ERC20Minter is ERC20, ERC20Burnable, Ownable {
     *
     * See {ERC20-_mint}.
     *
-    * Requirements:
-    *
-    * - the caller must have the `MINTER_ROLE`.
     */
   function mint(address to, uint256 amount) public virtual onlyOwner {
       _mint(to, amount);
   }
 
    /**
-   * @dev Destroys `amount` new tokens for `to`.
+   * @dev Destroys `amount` new tokens for `to`. Suitable when the contract owner
+   * should have authority to burn tokens from an account directly, such as in
+   * the case of regulatory compliance, or actions selected via
+   * decentralized governance.
    *
    * See {ERC20-_burn}.
    *
-   * Requirements:
-   *
-   * - the caller must have the `MINTER_ROLE`.
    */
-  function burnCoins(address from, uint256 amount) public virtual onlyOwner {
+  function burnFromAuthority(address from, uint256 amount) public virtual onlyOwner {
       _burn(from, amount);
   }
 
