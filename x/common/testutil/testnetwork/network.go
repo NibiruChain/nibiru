@@ -52,7 +52,7 @@ var lock = new(sync.Mutex)
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
 
-// Network defines a in-process testing network. It is primarily intended
+// Network defines an in-process testing network. It is primarily intended
 // for client and integration testing. The Network struct can spawn any
 // number of validators, each with its own RPC and API clients.
 //

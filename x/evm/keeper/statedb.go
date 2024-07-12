@@ -22,7 +22,7 @@ var _ statedb.Keeper = &Keeper{}
 
 // GetAccount: Ethereum account getter for a [statedb.Account].
 // Implements the `statedb.Keeper` interface.
-// Returns nil if the account does not not exist or has the wrong type.
+// Returns nil if the account does not exist or has the wrong type.
 func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {
 	acct := k.GetAccountWithoutBalance(ctx, addr)
 	if acct == nil {

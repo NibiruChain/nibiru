@@ -13,7 +13,7 @@ import (
 
 // Keeper of the inflation module. Keepers are module-specific "gate keepers"
 // responsible for encapsulating access to the key-value stores (state) of the
-// network. The functions on the Keeper contain all of the business logic for
+// network. The functions on the Keeper contain all the business logic for
 // reading and modifying state.
 type Keeper struct {
 	cdc      codec.BinaryCodec
@@ -27,7 +27,7 @@ type Keeper struct {
 	distrKeeper   types.DistrKeeper
 	stakingKeeper types.StakingKeeper
 	sudoKeeper    types.SudoKeeper
-	// feeCollectorName is the name of of x/auth module's fee collector module
+	// feeCollectorName is the name of x/auth module's fee collector module
 	// account, "fee_collector", which collects transaction fees for distribution
 	// to all stakers.
 	// By sending staking inflation to the fee collector, the tokens are properly

@@ -11,8 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 	"github.com/ethereum/go-ethereum/params"
-
-	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
 const (
@@ -21,10 +19,6 @@ const (
 	TracerStruct     = "struct"
 	TracerMarkdown   = "markdown"
 )
-
-func TracerTypes() set.Set[string] {
-	return set.New(TracerAccessList, TracerJSON, TracerStruct, TracerMarkdown)
-}
 
 // NewTracer creates a new Logger tracer to collect execution traces from an
 // EVM transaction.
