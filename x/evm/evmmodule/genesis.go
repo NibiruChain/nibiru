@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/NibiruChain/collections"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -70,9 +71,43 @@ func InitGenesis(
 
 // ExportGenesis exports genesis state of the EVM module
 func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak evm.AccountKeeper) *evm.GenesisState {
-	// TODO: impl ExportGenesis
+	var genesisAccounts []evm.GenesisAccount
+
+	iter := k.EvmState.AccState.Iterate(ctx, collections.PairRange[gethcommon.Address, gethcommon.Hash]{})
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		address := key.K1()
+		hash := key.K1()
+		val := iter.Value()
+
+		fmt.Println("---")
+		fmt.Println("Address: ", address.String())
+		fmt.Println("Hash: ", hash.String())
+		fmt.Println("Value: ", eth.BytesToHex(val))
+
+		//var storage evm.Storage
+		//k.ForEachStorage(ctx, address, func(key, value gethcommon.Hash) bool {
+		//	storage = append(storage, evm.NewStateFromEthHashes(key, value))
+		//	return false
+		//})
+
+		//account := k.GetAccountWithoutBalance(ctx, address)
+		//code := eth.BytesToHex(k.GetCode(ctx, gethcommon.BytesToHash(account.CodeHash)))
+		//
+		//genesisAccount := evm.GenesisAccount{
+		//	Address: address.String(),
+		//	Code:    code,
+		//	Storage: storage,
+		//}
+		//
+		//genesisAccounts = append(genesisAccounts, genesisAccount)
+	}
+
 	return &evm.GenesisState{
-		Accounts: []evm.GenesisAccount{},
-		Params:   evm.Params{},
+		Params:           k.GetParams(ctx),
+		Accounts:         genesisAccounts,
+		FuntokenMappings: make([]evm.FunToken, 0),
 	}
 }
