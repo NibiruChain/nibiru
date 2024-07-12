@@ -66,7 +66,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 		deps.Ctx, fromEvmAddr, &contractAddr, commit,
 		bytecodeForCall,
 	)
-	s.ErrorContains(err, "Precompile error")
+	s.ErrorContains(err, "precompile error")
 }
 
 func (s *Suite) FunToken_HappyPath() {

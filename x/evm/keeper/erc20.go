@@ -107,7 +107,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	if funtokens := k.FunTokens.Collect(
 		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
 	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
+		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
 	}
 
 	// 2 | Get existing ERC20 metadata
@@ -120,12 +120,12 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	// 3 | Coin already registered with FunToken?
 	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 	if isAlreadyCoin {
-		return funtoken, fmt.Errorf("Bank coin denom already registered with denom \"%s\"", bankDenom)
+		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
 	if funtokens := k.FunTokens.Collect(
 		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
 	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for bank denom \"%s\"", bankDenom)
+		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
 	// 4 | Set bank coin denom metadata in state
@@ -249,7 +249,7 @@ func (k Keeper) CallContractWithInput(
 	// Apply EVM message
 	cfg, err := k.GetEVMConfig(
 		ctx,
-		sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
+		ctx.BlockHeader().ProposerAddress,
 		k.EthChainID(ctx),
 	)
 	if err != nil {
@@ -415,19 +415,19 @@ func (k Keeper) LoadERC20BigInt(
 	return erc20Val.Value, err
 }
 
-func (k Keeper) ERC20() erc20Calls {
-	return erc20Calls{
+func (k Keeper) ERC20() Erc20Calls {
+	return Erc20Calls{
 		Keeper: &k,
 		ABI:    embeds.Contract_ERC20Minter.ABI,
 	}
 }
 
-type erc20Calls struct {
+type Erc20Calls struct {
 	*Keeper
 	ABI gethabi.ABI
 }
 
-func (e erc20Calls) Mint(
+func (e Erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
@@ -449,7 +449,7 @@ Transfer implements "ERC20.transfer"
 function transfer(address to, uint256 amount) external returns (bool);
 ```
 */
-func (e erc20Calls) Transfer(
+func (e Erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
@@ -463,7 +463,7 @@ func (e erc20Calls) Transfer(
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
 // Implements "ERC20.balanceOf".
-func (e erc20Calls) BalanceOf(
+func (e Erc20Calls) BalanceOf(
 	contract, account gethcommon.Address,
 	ctx sdk.Context,
 ) (out *big.Int, err error) {
@@ -478,7 +478,7 @@ Burn implements "ERC20Burnable.burn"
 function burn(uint256 amount) public virtual {
 ```
 */
-func (e erc20Calls) Burn(
+func (e Erc20Calls) Burn(
 	contract, from gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {

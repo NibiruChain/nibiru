@@ -55,7 +55,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 }
 
 // AllocatePolynomialInflation allocates coins from the inflation to external
-// modules according to proportions proportions:
+// modules according to proportions:
 //
 // Returns:
 //   - staking: Tokens minted for staking inflation that go to the decentralized

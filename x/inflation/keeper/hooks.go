@@ -13,8 +13,8 @@ import (
 )
 
 // Hooks implements module-specific calls ([epochstypes.EpochHooks]) that will
-// occur at the end of every epoch. Hooks is meant for use with with
-// `EpochsKeeper.SetHooks`. These functions run outside of the normal body of
+// occur at the end of every epoch. Hooks is meant for use with
+// `EpochsKeeper.SetHooks`. These functions run outside the normal body of
 // transactions.
 type Hooks struct {
 	K Keeper

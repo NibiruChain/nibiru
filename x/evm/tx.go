@@ -39,7 +39,7 @@ type EvmTxArgs struct { //revive:disable-line:exported
 // The default value is the same as the `sdk.DefaultPowerReduction`.
 var DefaultPriorityReduction = sdk.DefaultPowerReduction
 
-// GetTxPriority returns the priority of a given Ethereum tx. It relies of the
+// GetTxPriority returns the priority of a given Ethereum tx. It relies on the
 // priority reduction global variable to calculate the tx priority given the tx
 // tip price:
 //
@@ -167,7 +167,7 @@ func (tx *DynamicFeeTx) GetAccessList() gethcore.AccessList {
 	return *tx.Accesses.ToEthAccessList()
 }
 
-// GetData returns the a copy of the input data bytes.
+// GetData returns a copy of the input data bytes.
 func (tx *DynamicFeeTx) GetData() []byte {
 	return common.CopyBytes(tx.Data)
 }

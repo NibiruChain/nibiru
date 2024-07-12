@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
 	"github.com/ethereum/go-ethereum/common"
 )

@@ -105,7 +105,7 @@ func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
 ) (*evm.MsgEthereumTxResponse, error) {
 	ethChainId := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), ethChainId)
+	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, ethChainId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
@@ -118,7 +118,7 @@ func (k *Keeper) ApplyEvmTx(
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	// snapshot to contain the tx processing and post processing in same scope
+	// snapshot to contain the tx processing and post-processing in same scope
 	var commit func()
 	tmpCtx := ctx
 	if k.hooks != nil {
@@ -176,7 +176,7 @@ func (k *Keeper) ApplyEvmTx(
 			res.VmError = evm.ErrPostTxProcessing.Error()
 			k.Logger(ctx).Error("tx post processing failed", "error", err)
 
-			// If the tx failed in post processing hooks, we should clear the logs
+			// If the tx failed in post-processing hooks, we should clear the logs
 			res.Logs = nil
 		} else if commit != nil {
 			// PostTxProcessing is successful, commit the tmpCtx
@@ -219,7 +219,7 @@ func (k *Keeper) ApplyEvmTx(
 func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
 ) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.EthChainID(ctx))
+	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
@@ -268,7 +268,7 @@ func (k *Keeper) NewEVM(
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
 //  1. The requested height matches the current height from context (and thus same epoch number)
-//  2. The requested height is from an previous height from the same chain epoch
+//  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
@@ -280,7 +280,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 		switch {
 		case ctx.BlockHeight() == h:
-			// Case 1: The requested height matches the one from the context so we can retrieve the header
+			// Case 1: The requested height matches the one from the context, so we can retrieve the header
 			// hash directly from the context.
 			// Note: The headerHash is only set at begin block, it will be nil in case of a query context
 			headerHash := ctx.HeaderHash()
@@ -527,7 +527,7 @@ func (k *Keeper) CreateFunToken(
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
-			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both).")
+			"either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
 	}
 	if err != nil {
 		return

@@ -41,7 +41,7 @@ func NewAccessList(ethAccessList *gethcore.AccessList) AccessList {
 	return al
 }
 
-// ToEthAccessList is an utility function to convert the protobuf compatible
+// ToEthAccessList is a utility function to convert the protobuf compatible
 // AccessList to eth core AccessList from go-ethereum
 func (al AccessList) ToEthAccessList() *gethcore.AccessList {
 	var ethAccessList gethcore.AccessList
@@ -140,7 +140,7 @@ func (tx *AccessListTx) GetAccessList() gethcore.AccessList {
 	return *tx.Accesses.ToEthAccessList()
 }
 
-// GetData returns the a copy of the input data bytes.
+// GetData returns a copy of the input data bytes.
 func (tx *AccessListTx) GetData() []byte {
 	return common.CopyBytes(tx.Data)
 }
