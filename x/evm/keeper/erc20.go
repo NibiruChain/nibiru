@@ -6,161 +6,109 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
-// FindERC20Metadata retrieves the metadata of an ERC20 token.
-//
-// Parameters:
-//   - ctx: The SDK context for the transaction.
-//   - contract: The Ethereum address of the ERC20 contract.
-//
-// Returns:
-//   - info: ERC20Metadata containing name, symbol, and decimals.
-//   - err: An error if metadata retrieval fails.
-func (k Keeper) FindERC20Metadata(
+// ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
+// Go functions corresponding to contract calls in the ERC20 standard like "mint"
+// and "transfer" in the ERC20 standard.
+func (k Keeper) ERC20() erc20Calls {
+	return erc20Calls{
+		Keeper: &k,
+		ABI:    embeds.Contract_ERC20Minter.ABI,
+	}
+}
+
+type erc20Calls struct {
+	*Keeper
+	ABI gethabi.ABI
+}
+
+/*
+Mint implements "ERC20Minter.mint" from ERC20Minter.sol.
+See [nibiru/x/evm/embeds].
+
+	```solidity
+	/// @dev Moves `amount` tokens from the caller's account to `to`.
+	/// Returns a boolean value indicating whether the operation succeeded.
+	/// Emits a {Transfer} event.
+	function mint(address to, uint256 amount) public virtual onlyOwner {
+	  _mint(to, amount);
+	}
+	```
+
+[nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/tree/main/x/evm/embeds
+*/
+func (e erc20Calls) Mint(
+	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-	contract gethcommon.Address,
-) (info ERC20Metadata, err error) {
-	var abi gethabi.ABI = embeds.Contract_ERC20Minter.ABI
-
-	errs := []error{}
-
-	// Load name, symbol, decimals
-	name, err := k.LoadERC20Name(ctx, abi, contract)
-	errs = append(errs, err)
-	symbol, err := k.LoadERC20Symbol(ctx, abi, contract)
-	errs = append(errs, err)
-	decimals, err := k.LoadERC20Decimals(ctx, abi, contract)
-	errs = append(errs, err)
-
-	err = common.CombineErrors(errs...)
-	if err != nil {
-		return info, errors.Wrap(err, "failed to \"FindERC20Metadata\"")
-	}
-
-	return ERC20Metadata{
-		Name:     name,
-		Symbol:   symbol,
-		Decimals: decimals,
-	}, nil
-}
-
-type ERC20Metadata struct {
-	Name     string
-	Symbol   string
-	Decimals uint8
-}
-
-type (
-	ERC20String struct{ Value string }
-	// ERC20Uint8: Unpacking type for "uint8" from Solidity. This is only used in
-	// the "ERC20.decimals" function.
-	ERC20Uint8  struct{ Value uint8 }
-	ERC20Bool   struct{ Value bool }
-	ERC20BigInt struct{ Value *big.Int }
-)
-
-// CreateFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
-//
-// This function performs the following steps:
-//  1. Checks if the ERC20 token is already registered as a FunToken.
-//  2. Retrieves the metadata of the existing ERC20 token.
-//  3. Verifies that the corresponding bank coin denom is not already registered.
-//  4. Sets the bank coin denom metadata in the state.
-//  5. Creates and inserts the new FunToken mapping.
-//
-// Parameters:
-//   - ctx: The SDK context for the transaction.
-//   - erc20: The Ethereum address of the ERC20 token in HexAddr format.
-//
-// Returns:
-//   - funtoken: The created FunToken mapping.
-//   - err: An error if any step fails, nil otherwise.
-//
-// Possible errors:
-//   - If the ERC20 token is already registered as a FunToken.
-//   - If the ERC20 metadata cannot be retrieved.
-//   - If the bank coin denom is already registered.
-//   - If the bank metadata validation fails.
-//   - If the FunToken insertion fails.
-func (k *Keeper) CreateFunTokenFromERC20(
-	ctx sdk.Context, erc20 eth.HexAddr,
-) (funtoken evm.FunToken, err error) {
-	erc20Addr := erc20.ToAddr()
-
-	// 1 | ERC20 already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
-	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
-	}
-
-	// 2 | Get existing ERC20 metadata
-	info, err := k.FindERC20Metadata(ctx, erc20Addr)
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("mint", to, amount)
 	if err != nil {
 		return
 	}
-	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+}
 
-	// 3 | Coin already registered with FunToken?
-	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
-	if isAlreadyCoin {
-		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
-	}
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
-	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
-	}
+/*
+Transfer implements "ERC20.transfer"
 
-	// 4 | Set bank coin denom metadata in state
-	bankMetadata := bank.Metadata{
-		Description: fmt.Sprintf("Bank coin representation of ERC20 token \"%s\"", erc20.String()),
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  info.Symbol,
-	}
-
-	err = bankMetadata.Validate()
+	```solidity
+	/// @dev Moves `amount` tokens from the caller's account to `to`.
+	/// Returns a boolean value indicating whether the operation succeeded.
+	/// Emits a {Transfer} event.
+	function transfer(address to, uint256 amount) external returns (bool);
+	```
+*/
+func (e erc20Calls) Transfer(
+	contract, from, to gethcommon.Address, amount *big.Int,
+	ctx sdk.Context,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
 		return
 	}
-	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+}
 
-	// 5 | Officially create the funtoken mapping
-	funtoken = evm.FunToken{
-		Erc20Addr:      erc20,
-		BankDenom:      bankDenom,
-		IsMadeFromCoin: false,
+// BalanceOf retrieves the balance of an ERC20 token for a specific account.
+// Implements "ERC20.balanceOf".
+func (e erc20Calls) BalanceOf(
+	contract, account gethcommon.Address,
+	ctx sdk.Context,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, e.ABI, contract, "balanceOf", account)
+}
+
+/*
+Burn implements "ERC20Burnable.burn"
+
+	```solidity
+	/// @dev Destroys `amount` tokens from the caller.
+	function burn(uint256 amount) public virtual {
+	```
+*/
+func (e erc20Calls) Burn(
+	contract, from gethcommon.Address, amount *big.Int,
+	ctx sdk.Context,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	input, err := e.ABI.Pack("burn", amount)
+	if err != nil {
+		return
 	}
-
-	return funtoken, k.FunTokens.SafeInsert(
-		ctx, funtoken.Erc20Addr.ToAddr(),
-		funtoken.BankDenom,
-		funtoken.IsMadeFromCoin,
-	)
+	commit := true
+	return e.CallContractWithInput(ctx, from, &contract, commit, input)
 }
 
 // CallContract invokes a smart contract on the method specified by [methodName]
@@ -189,7 +137,7 @@ func (k Keeper) CallContract(
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	contractInput, err := abi.Pack(methodName, args...)
 	if err != nil {
-		err = errors.Wrap(err, "failed to pack ABI args")
+		err = fmt.Errorf("failed to pack ABI args: %w", err)
 		return
 	}
 	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
@@ -249,7 +197,7 @@ func (k Keeper) CallContractWithInput(
 	// Apply EVM message
 	cfg, err := k.GetEVMConfig(
 		ctx,
-		ctx.BlockHeader().ProposerAddress,
+		sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
 		k.EthChainID(ctx),
 	)
 	if err != nil {
@@ -272,6 +220,16 @@ func (k Keeper) CallContractWithInput(
 	return evmResp, err
 }
 
+// computeCommitGasLimit: If the transition is meant to mutate state, this
+// function computes an appopriates gas limit for the call with "contractInput"
+// bytes against the given contract address.
+//
+// ℹ️ This creates a cached context for gas estimation, which is essential
+// because state transitions can occur outside of the EVM that are triggered
+// by Ethereum transactions, like in the case of precompiled contract or
+// custom EVM hook that runs after tx execution. Gas estimation in that case
+// could mutate the "ctx" object and result in falty resulting state, so we
+// must cache here to avoid this issue.
 func computeCommitGasLimit(
 	commit bool,
 	gasLimit uint64,
@@ -284,8 +242,7 @@ func computeCommitGasLimit(
 		return gasLimit, nil
 	}
 
-	// Create a cached context for gas estimation
-	cachedCtx, _ := ctx.CacheContext()
+	cachedCtx, _ := ctx.CacheContext() // IMPORTANT!
 
 	jsonArgs, err := json.Marshal(evm.JsonTxArgs{
 		From: fromAcc,
@@ -413,79 +370,4 @@ func (k Keeper) LoadERC20BigInt(
 		return out, err
 	}
 	return erc20Val.Value, err
-}
-
-func (k Keeper) ERC20() Erc20Calls {
-	return Erc20Calls{
-		Keeper: &k,
-		ABI:    embeds.Contract_ERC20Minter.ABI,
-	}
-}
-
-type Erc20Calls struct {
-	*Keeper
-	ABI gethabi.ABI
-}
-
-func (e Erc20Calls) Mint(
-	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	input, err := e.ABI.Pack("mint", to, amount)
-	if err != nil {
-		return
-	}
-	commit := true
-	return e.CallContractWithInput(ctx, from, &contract, commit, input)
-}
-
-/*
-Transfer implements "ERC20.transfer"
-
-```solidity
-/// @dev Moves `amount` tokens from the caller's account to `to`.
-/// Returns a boolean value indicating whether the operation succeeded.
-/// Emits a {Transfer} event.
-function transfer(address to, uint256 amount) external returns (bool);
-```
-*/
-func (e Erc20Calls) Transfer(
-	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	input, err := e.ABI.Pack("transfer", to, amount)
-	if err != nil {
-		return
-	}
-	commit := true
-	return e.CallContractWithInput(ctx, from, &contract, commit, input)
-}
-
-// BalanceOf retrieves the balance of an ERC20 token for a specific account.
-// Implements "ERC20.balanceOf".
-func (e Erc20Calls) BalanceOf(
-	contract, account gethcommon.Address,
-	ctx sdk.Context,
-) (out *big.Int, err error) {
-	return e.LoadERC20BigInt(ctx, e.ABI, contract, "balanceOf", account)
-}
-
-/*
-Burn implements "ERC20Burnable.burn"
-
-```solidity
-/// @dev Destroys `amount` tokens from the caller.
-function burn(uint256 amount) public virtual {
-```
-*/
-func (e Erc20Calls) Burn(
-	contract, from gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	input, err := e.ABI.Pack("burn", amount)
-	if err != nil {
-		return
-	}
-	commit := true
-	return e.CallContractWithInput(ctx, from, &contract, commit, input)
 }

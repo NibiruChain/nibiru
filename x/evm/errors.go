@@ -12,6 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
+// Errors related to ERC20 calls and FunToken mappings.
+const (
+	ErrOwnable = "Ownable: caller is not the owner"
+)
+
 const (
 	codeErrInvalidState = uint32(iota) + 2 // NOTE: code 1 is reserved for internal errors
 	codeErrZeroAddress

@@ -485,9 +485,12 @@ func (k *Keeper) CreateFunToken(
 		return
 	}
 
-	// TODO: UD-DEBUG: feat: Add fee upon registration.
-
+	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = k.deductCreateFunTokenFee(ctx, msg)
+	if err != nil {
+		return
+	}
 
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
@@ -514,6 +517,25 @@ func (k *Keeper) CreateFunToken(
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
 	}, err
+}
+
+func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunToken) error {
+	fee := k.FeeForCreateFunToken(ctx)
+	from := sdk.MustAccAddressFromBech32(msg.Sender) // validation in msg.ValidateBasic
+
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, from, evm.ModuleName, fee); err != nil {
+		return fmt.Errorf("unable to pay the \"create_fun_token_fee\": %w", err)
+	}
+	if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
+		return fmt.Errorf("failed to burn the \"create_fun_token_fee\" after payment: %w", err)
+	}
+	return nil
+}
+
+func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
+	evmParams := k.GetParams(ctx)
+	return sdk.NewCoins(sdk.NewCoin(evmParams.EvmDenom, evmParams.CreateFuntokenFee))
 }
 
 // SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the

@@ -186,7 +186,7 @@
           "type": "uint256"
         }
       ],
-      "name": "burnCoins",
+      "name": "burnFromAuthority",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
