@@ -59,7 +59,7 @@ func (p precompileFunToken) Run(
 	}()
 
 	contractInput := contract.Input
-	ctx, method, args, err := OnStart(p, evm, contractInput)
+	ctx, method, args, err := OnRunStart(p, evm, contractInput)
 	if err != nil {
 		return nil, err
 	}

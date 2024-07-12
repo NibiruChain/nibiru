@@ -3,11 +3,8 @@ package keeper
 
 import (
 	"bytes"
-	"fmt"
-	"maps"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -48,40 +45,6 @@ func (k *Keeper) AddPrecompiles(precompileMap map[gethcommon.Address]vm.Precompi
 	// Check if there is sufficient demand for this.
 }
 
-// AddEVMExtensions adds the given precompiles to the list of active precompiles in the EVM parameters
-// and to the available precompiles map in the Keeper. This function returns an error if
-// the precompiles are invalid or duplicated.
-func (k *Keeper) AddEVMExtensions(
-	ctx sdk.Context, precompiles ...vm.PrecompiledContract,
-) error {
-	params := k.GetParams(ctx)
-
-	// precompileAddrs := make([]string, len(precompiles))
-	precompileAddrs := set.New[string]()
-	precompilesMap := maps.Clone(k.precompiles)
-
-	for _, precompile := range precompiles {
-		// add to active precompiles
-		address := precompile.Address()
-		precompileAddrs.Add(address.String())
-
-		// add to available precompiles, but check for duplicates
-		if _, ok := precompilesMap[address]; ok {
-			return fmt.Errorf("precompile already registered: %s", address)
-		}
-		precompilesMap[address] = precompile
-	}
-
-	params.ActivePrecompiles = append(params.ActivePrecompiles, precompileAddrs.ToSlice()...)
-
-	// NOTE: the active precompiles are sorted and validated before setting them
-	// in the params
-	k.SetParams(ctx, params)
-	// update the pointer to the map with the newly added EVM Extensions
-	k.precompiles = precompilesMap
-	return nil
-}
-
 // IsAvailablePrecompile returns true if the given precompile address is contained in the
 // EVM keeper's available precompiles map.
 func (k Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
@@ -93,6 +56,10 @@ func (k Keeper) IsAvailablePrecompile(address gethcommon.Address) bool {
 //
 // NOTE: uses index based approach instead of append because it's supposed to be faster.
 // Check https://stackoverflow.com/questions/21362950/getting-a-slice-of-keys-from-a-map.
+//
+// TODO: refactor(evm/keeper/precompiles): Use ordered map as the underlying
+// struct to remove the need for iterating over k.precompiles in so many
+// different ways. The set could also be tracked as well to make it ea
 func (k Keeper) PrecompileAddrsSorted() []gethcommon.Address {
 	addresses := make([]gethcommon.Address, len(k.precompiles))
 	i := 0
