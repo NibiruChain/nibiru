@@ -102,7 +102,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	if funtokens := k.FunTokens.Collect(
 		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
 	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
+		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
 	}
 
 	// 2 | Get existing ERC20 metadata
@@ -115,12 +115,12 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	// 3 | Coin already registered with FunToken?
 	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 	if isAlreadyCoin {
-		return funtoken, fmt.Errorf("Bank coin denom already registered with denom \"%s\"", bankDenom)
+		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
 	if funtokens := k.FunTokens.Collect(
 		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
 	); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("Funtoken mapping already created for bank denom \"%s\"", bankDenom)
+		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
 	// 4 | Set bank coin denom metadata in state
