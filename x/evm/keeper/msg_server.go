@@ -105,7 +105,7 @@ func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
 ) (*evm.MsgEthereumTxResponse, error) {
 	ethChainId := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), ethChainId)
+	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, ethChainId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
@@ -118,16 +118,7 @@ func (k *Keeper) ApplyEvmTx(
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	// snapshot to contain the tx processing and post processing in same scope
-	var commit func()
-	tmpCtx := ctx
-	if k.hooks != nil {
-		// Create a cache context to revert state when tx hooks fails,
-		// the cache context is only committed when both tx and hooks executed successfully.
-		// Didn't use `Snapshot` because the context stack has exponential complexity on certain operations,
-		// thus restricted to be used only inside `ApplyMessage`.
-		tmpCtx, commit = ctx.CacheContext()
-	}
+	tmpCtx, commit := ctx.CacheContext()
 
 	// pass true to commit the StateDB
 	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, cfg, txConfig)
@@ -170,21 +161,8 @@ func (k *Keeper) ApplyEvmTx(
 
 	if !res.Failed() {
 		receipt.Status = gethcore.ReceiptStatusSuccessful
-		// Only call hooks if tx executed successfully.
-		if err = k.PostTxProcessing(tmpCtx, msg, receipt); err != nil {
-			// If hooks return error, revert the whole tx.
-			res.VmError = evm.ErrPostTxProcessing.Error()
-			k.Logger(ctx).Error("tx post processing failed", "error", err)
-
-			// If the tx failed in post processing hooks, we should clear the logs
-			res.Logs = nil
-		} else if commit != nil {
-			// PostTxProcessing is successful, commit the tmpCtx
-			commit()
-			// Since the post-processing can alter the log, we need to update the result
-			res.Logs = evm.NewLogsFromEth(receipt.Logs)
-			ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
-		}
+		commit()
+		ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
@@ -219,7 +197,7 @@ func (k *Keeper) ApplyEvmTx(
 func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
 ) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, sdk.ConsAddress(ctx.BlockHeader().ProposerAddress), k.EthChainID(ctx))
+	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
@@ -268,7 +246,7 @@ func (k *Keeper) NewEVM(
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
 //  1. The requested height matches the current height from context (and thus same epoch number)
-//  2. The requested height is from an previous height from the same chain epoch
+//  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
@@ -280,7 +258,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 		switch {
 		case ctx.BlockHeight() == h:
-			// Case 1: The requested height matches the one from the context so we can retrieve the header
+			// Case 1: The requested height matches the one from the context, so we can retrieve the header
 			// hash directly from the context.
 			// Note: The headerHash is only set at begin block, it will be nil in case of a query context
 			headerHash := ctx.HeaderHash()
@@ -507,9 +485,12 @@ func (k *Keeper) CreateFunToken(
 		return
 	}
 
-	// TODO: UD-DEBUG: feat: Add fee upon registration.
-
+	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = k.deductCreateFunTokenFee(ctx, msg)
+	if err != nil {
+		return
+	}
 
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
@@ -527,7 +508,7 @@ func (k *Keeper) CreateFunToken(
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
-			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both).")
+			"either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
 	}
 	if err != nil {
 		return
@@ -536,6 +517,25 @@ func (k *Keeper) CreateFunToken(
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
 	}, err
+}
+
+func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunToken) error {
+	fee := k.FeeForCreateFunToken(ctx)
+	from := sdk.MustAccAddressFromBech32(msg.Sender) // validation in msg.ValidateBasic
+
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx, from, evm.ModuleName, fee); err != nil {
+		return fmt.Errorf("unable to pay the \"create_fun_token_fee\": %w", err)
+	}
+	if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
+		return fmt.Errorf("failed to burn the \"create_fun_token_fee\" after payment: %w", err)
+	}
+	return nil
+}
+
+func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
+	evmParams := k.GetParams(ctx)
+	return sdk.NewCoins(sdk.NewCoin(evmParams.EvmDenom, evmParams.CreateFuntokenFee))
 }
 
 // SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the

@@ -96,7 +96,7 @@ func ABIMethodByID(abi gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
 }
 
-func OnStart(
+func OnRunStart(
 	p NibiruPrecompile, evm *vm.EVM, input []byte,
 ) (ctx sdk.Context, method *gethabi.Method, args []interface{}, err error) {
 	// 1 | Get context from StateDB

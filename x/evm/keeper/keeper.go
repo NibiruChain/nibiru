@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
@@ -46,7 +45,6 @@ type Keeper struct {
 
 	// Integer for the Ethereum EIP155 Chain ID
 	// eip155ChainIDInt *big.Int
-	hooks       evm.EvmHooks                                  //nolint:unused
 	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
@@ -103,7 +101,7 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 
 // AddToBlockGasUsed accumulate gas used by each eth msgs included in current
 // block tx.
-func (k Keeper) AddToBlockGasUsed(
+func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
 ) (uint64, error) {
 	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
@@ -140,15 +138,4 @@ func (k Keeper) Tracer(
 	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
 	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
-}
-
-// PostTxProcessing: Called after tx is processed successfully. If it errors,
-// the tx will revert.
-func (k *Keeper) PostTxProcessing(
-	ctx sdk.Context, msg core.Message, receipt *gethcore.Receipt,
-) error {
-	if k.hooks == nil {
-		return nil
-	}
-	return k.hooks.PostTxProcessing(ctx, msg, receipt)
 }

@@ -39,7 +39,7 @@ func NewMsgRegisterFeeShare(
 // Route returns the name of the module
 func (msg MsgRegisterFeeShare) Route() string { return RouterKey }
 
-// Type returns the the action
+// Type returns the action
 func (msg MsgRegisterFeeShare) Type() string { return TypeMsgRegisterFeeShare }
 
 // ValidateBasic runs stateless checks on the message
@@ -129,7 +129,7 @@ func NewMsgUpdateFeeShare(
 // Route returns the name of the module
 func (msg MsgUpdateFeeShare) Route() string { return RouterKey }
 
-// Type returns the the action
+// Type returns the action
 func (msg MsgUpdateFeeShare) Type() string { return TypeMsgUpdateFeeShare }
 
 // ValidateBasic runs stateless checks on the message

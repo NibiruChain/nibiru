@@ -52,7 +52,7 @@ var lock = new(sync.Mutex)
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
 
-// Network defines a in-process testing network. It is primarily intended
+// Network defines an in-process testing network. It is primarily intended
 // for client and integration testing. The Network struct can spawn any
 // number of validators, each with its own RPC and API clients.
 //
@@ -593,14 +593,15 @@ func (n *Network) Cleanup() {
 
 	waitGroup.Wait()
 
-	// TODO: Is there a cleaner way to do this with a synchronous check?
+	// TODO: Is there a cleaner way to do this with a guarnteed synchronous on
+	// each "Validator.tmNode"?
 	// https://github.com/NibiruChain/nibiru/issues/1955
 
 	// Give a brief pause for things to finish closing in other processes.
 	// Hopefully this helps with the address-in-use errors.
 	// Timeout of 100ms chosen randomly.
 	// Timeout of 250ms chosen because 100ms was not enough. | 2024-07-02
-	maxRetries := 5
+	maxRetries := 20
 	stopped := false
 	for i := 0; i < maxRetries; i++ {
 		if ValidatorsStopped(n.Validators) {

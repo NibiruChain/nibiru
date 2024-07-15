@@ -76,7 +76,7 @@ func (tx *LegacyTx) GetAccessList() gethcore.AccessList {
 	return nil
 }
 
-// GetData returns the a copy of the input data bytes.
+// GetData returns a copy of the input data bytes.
 func (tx *LegacyTx) GetData() []byte {
 	return common.CopyBytes(tx.Data)
 }

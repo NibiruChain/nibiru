@@ -194,7 +194,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	return nil
 }
 
-// GetMsgs returns a single MsgEthereumTx as an sdk.Msg.
+// GetMsgs returns a single MsgEthereumTx as sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
@@ -419,7 +419,7 @@ func EncodeTransactionLogs(res *TransactionLogs) ([]byte, error) {
 	return proto.Marshal(res)
 }
 
-// DecodeTransactionLogs decodes an protobuf-encoded byte slice into
+// DecodeTransactionLogs decodes a protobuf-encoded byte slice into
 // TransactionLogs
 func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
 	var logs TransactionLogs
@@ -461,7 +461,7 @@ func BinSearch(
 		// If this errors, there was a consensus error, and the provided message
 		// call or tx will never be accepted, regardless of how high we set the
 		// gas limit.
-		// Return the error directly, don't struggle any more.
+		// Return the error directly, don't struggle anymore.
 		if err != nil {
 			return 0, err
 		}

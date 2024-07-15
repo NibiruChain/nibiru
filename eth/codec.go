@@ -2,8 +2,6 @@
 package eth
 
 import (
-	"math/big"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -63,12 +61,4 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&ExtensionOptionsWeb3Tx{},
 		&ExtensionOptionDynamicFeeTx{},
 	)
-}
-
-func ParseEIP155ChainIDNumber(chainId string) *big.Int {
-	idNum, err := ParseEthChainID(chainId)
-	if err != nil {
-		panic(err)
-	}
-	return idNum
 }

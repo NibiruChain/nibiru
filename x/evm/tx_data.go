@@ -48,7 +48,7 @@ type TxData interface {
 	EffectiveCost(baseFee *big.Int) *big.Int
 }
 
-// NOTE: All non-protected transactions (i.e non EIP155 signed) will fail if the
+// NOTE: All non-protected transactions (i.e. non EIP155 signed) will fail if the
 // AllowUnprotectedTxs parameter is disabled.
 func NewTxDataFromTx(tx *gethcore.Transaction) (TxData, error) {
 	var txData TxData

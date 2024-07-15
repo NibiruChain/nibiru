@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -74,6 +75,15 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.K.Code(deps.Ctx, queryCodeReq)
 	s.NoError(err)
 
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	createFuntokenResp, err := deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -91,6 +101,15 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 		})
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -98,7 +117,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.ErrorContains(err, "Funtoken mapping already created")
+	s.ErrorContains(err, "funtoken mapping already created")
 
 	s.T().Log("sad: CreateFunToken for the ERC20: invalid sender")
 	_, err = deps.K.CreateFunToken(
@@ -166,6 +185,15 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
+
 	createFuntokenResp, err := deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -173,7 +201,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.NoError(err, "bankDenom %s", bankDenom)
+	s.Require().NoError(err, "bankDenom %s", bankDenom)
 	erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
 	erc20Addr := erc20.ToAddr()
 	s.Equal(
@@ -202,6 +230,14 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.Equal(metadata, info)
 
 	s.T().Log("sad: CreateFunToken for the bank coin: already registered")
+	// Give the sender funds for the fee
+	err = testapp.FundAccount(
+		deps.Chain.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.K.FeeForCreateFunToken(deps.Ctx),
+	)
+	s.Require().NoError(err)
 	_, err = deps.K.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
@@ -209,7 +245,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.ErrorContains(err, "Funtoken mapping already created")
+	s.Require().ErrorContains(err, "funtoken mapping already created")
 }
 
 // TestSendFunTokenToEvm executes sending fun tokens from bank coin to erc20 and checks the results:
@@ -262,6 +298,15 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			s.Require().NoError(err)
 			err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
 				deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
+			)
+			s.Require().NoError(err)
+
+			// Give the sender funds for the fee
+			err = testapp.FundAccount(
+				deps.Chain.BankKeeper,
+				deps.Ctx,
+				deps.Sender.NibiruAddr,
+				deps.K.FeeForCreateFunToken(deps.Ctx),
 			)
 			s.Require().NoError(err)
 
@@ -359,7 +404,7 @@ func (s *Suite) TestERC20Calls() {
 		from := theUser
 		to := theUser
 		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
-		s.ErrorContains(err, "Ownable: caller is not the owner")
+		s.ErrorContains(err, evm.ErrOwnable)
 	}
 
 	s.T().Log("Mint tokens - Success")
@@ -370,8 +415,8 @@ func (s *Suite) TestERC20Calls() {
 		_, err := deps.K.ERC20().Mint(contract, from, to, big.NewInt(69_420), deps.Ctx)
 		s.NoError(err)
 
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(69_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(0))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(69_420))
 	}
 
 	s.T().Log("Transfer - Not enough funds")
@@ -381,8 +426,8 @@ func (s *Suite) TestERC20Calls() {
 		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(9_420), deps.Ctx)
 		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
 		// balances unchanged
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(69_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(0))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(69_420))
 	}
 
 	s.T().Log("Transfer - Success (sanity check)")
@@ -391,8 +436,8 @@ func (s *Suite) TestERC20Calls() {
 		to := theUser
 		_, err := deps.K.ERC20().Transfer(contract, from, to, big.NewInt(9_420), deps.Ctx)
 		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(9_420))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(60_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(9_420))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(60_000))
 	}
 
 	s.T().Log("Burn tokens - Allowed as non-owner")
@@ -405,7 +450,7 @@ func (s *Suite) TestERC20Calls() {
 		_, err = deps.K.ERC20().Burn(contract, from, big.NewInt(6_000), deps.Ctx)
 		s.NoError(err)
 
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theUser, big.NewInt(9_000))
-		evmtest.AssertERC20BalanceEqual(s.T(), &deps, contract, theEvm, big.NewInt(54_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(9_000))
+		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(54_000))
 	}
 }
