@@ -912,17 +912,17 @@ func (s *Suite) TestTraceBlock() {
 	}
 }
 
-func (s *Suite) TestQueryTokenMapping() {
-	type In = *evm.QueryTokenMappingRequest
-	type Out = *evm.QueryTokenMappingResponse
+func (s *Suite) TestQueryFunToken() {
+	type In = *evm.QueryFunTokenRequest
+	type Out = *evm.QueryFunTokenResponse
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: no token mapping",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryTokenMappingRequest{
+				req = &evm.QueryFunTokenRequest{
 					Token: "unibi",
 				}
-				wantResp = &evm.QueryTokenMappingResponse{
+				wantResp = &evm.QueryFunTokenResponse{
 					FunToken: nil,
 				}
 				return req, wantResp
@@ -940,10 +940,10 @@ func (s *Suite) TestQueryTokenMapping() {
 				)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryTokenMappingRequest{
+				req = &evm.QueryFunTokenRequest{
 					Token: "unibi",
 				}
-				wantResp = &evm.QueryTokenMappingResponse{
+				wantResp = &evm.QueryFunTokenResponse{
 					FunToken: &evm.FunToken{
 						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
 						BankDenom:      "unibi",
@@ -965,10 +965,10 @@ func (s *Suite) TestQueryTokenMapping() {
 				)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				req = &evm.QueryTokenMappingRequest{
+				req = &evm.QueryFunTokenRequest{
 					Token: "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
 				}
-				wantResp = &evm.QueryTokenMappingResponse{
+				wantResp = &evm.QueryFunTokenResponse{
 					FunToken: &evm.FunToken{
 						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
 						BankDenom:      "unibi",
@@ -989,7 +989,7 @@ func (s *Suite) TestQueryTokenMapping() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.TokenMapping(goCtx, req)
+			gotResp, err := deps.K.FunToken(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
