@@ -2,25 +2,21 @@
 package evmtest
 
 import (
-	"crypto/ecdsa"
 	"math/big"
 	"testing"
 
 	cmt "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/stretchr/testify/assert"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -28,13 +24,11 @@ import (
 // public key, and Nibiru address.
 func NewEthAccInfo() EthPrivKeyAcc {
 	privkey, _ := ethsecp256k1.GenerateKey()
-	privKeyE, _ := privkey.ToECDSA()
-	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
+	ethAddr := privkey.PubKey().Address()
 	return EthPrivKeyAcc{
-		EthAddr:       ethAddr,
-		NibiruAddr:    EthAddrToNibiruAddr(ethAddr),
+		EthAddr:       common.BytesToAddress(ethAddr.Bytes()),
+		NibiruAddr:    sdk.AccAddress(ethAddr.Bytes()),
 		PrivKey:       privkey,
-		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),
 	}
 }
@@ -44,10 +38,9 @@ func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
 }
 
 type EthPrivKeyAcc struct {
-	EthAddr       gethcommon.Address
+	EthAddr       common.Address
 	NibiruAddr    sdk.AccAddress
 	PrivKey       *ethsecp256k1.PrivKey
-	PrivKeyE      *ecdsa.PrivateKey
 	KeyringSigner keyring.Signer
 }
 
@@ -61,13 +54,13 @@ func NewEthTxMsg() *evm.MsgEthereumTx {
 }
 
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
-	ethAddr := NewEthAccInfo().EthAddr
+	commonAddr := common.Address(NewEthAccInfo().EthAddr.Bytes())
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
 		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{
 			ChainID:  big.NewInt(1),
 			Nonce:    nonce,
-			To:       &ethAddr,
+			To:       &commonAddr,
 			GasLimit: 100000,
 			GasPrice: big.NewInt(1),
 			Input:    []byte("testinput"),
