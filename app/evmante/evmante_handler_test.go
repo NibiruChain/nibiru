@@ -79,7 +79,8 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 					},
-					EvmKeeper: deps.Chain.EvmKeeper,
+					EvmKeeper:     deps.Chain.EvmKeeper,
+					AccountKeeper: deps.Chain.AccountKeeper,
 				})
 
 			tx := tc.txSetup(&deps)
