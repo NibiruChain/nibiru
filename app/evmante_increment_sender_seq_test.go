@@ -1,12 +1,11 @@
-package evmante_test
+package app_test
 
 import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -26,7 +25,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyTransferTx(deps, 0)
+				return happyTransfertTx(deps, 0)
 			},
 			wantErr: "",
 			wantSeq: 1,
@@ -38,8 +37,8 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txMsgOne := evmtestutil.HappyTransferTx(deps, 0)
-				txMsgTwo := evmtestutil.HappyTransferTx(deps, 1)
+				txMsgOne := happyTransfertTx(deps, 0)
+				txMsgTwo := happyTransfertTx(deps, 1)
 
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 				s.Require().NoError(txBuilder.SetMsgs(txMsgOne, txMsgTwo))
@@ -53,13 +52,13 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		{
 			name: "sad: account does not exists",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyTransferTx(deps, 0)
+				return happyTransfertTx(deps, 0)
 			},
 			wantErr: "unknown address",
 		},
 		{
 			name:    "sad: tx with non evm message",
-			txSetup: evmtestutil.NonEvmMsgTx,
+			txSetup: nonEvmMsgTx,
 			wantErr: "invalid message",
 		},
 	}
@@ -68,7 +67,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewAnteDecEthIncrementSenderSequence(&deps.Chain.EvmKeeper, deps.Chain.AccountKeeper)
+			anteDec := app.NewAnteDecEthIncrementSenderSequence(deps.Chain.AppKeepers)
 
 			if tc.beforeTxSetup != nil {
 				tc.beforeTxSetup(&deps, stateDB)
@@ -77,7 +76,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

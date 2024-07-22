@@ -1,11 +1,11 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmante
+package app
 
 import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -13,15 +13,13 @@ import (
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.
 type AnteDecEthIncrementSenderSequence struct {
-	evmKeeper     EVMKeeper
-	accountKeeper ante.AccountKeeper
+	AppKeepers
 }
 
 // NewAnteDecEthIncrementSenderSequence creates a new EthIncrementSenderSequenceDecorator.
-func NewAnteDecEthIncrementSenderSequence(k EVMKeeper, ak ante.AccountKeeper) AnteDecEthIncrementSenderSequence {
+func NewAnteDecEthIncrementSenderSequence(k AppKeepers) AnteDecEthIncrementSenderSequence {
 	return AnteDecEthIncrementSenderSequence{
-		evmKeeper:     k,
-		accountKeeper: ak,
+		AppKeepers: k,
 	}
 }
 
@@ -49,7 +47,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 		}
 
 		// increase sequence of sender
-		acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
+		acc := issd.AccountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
 		if acc == nil {
 			return ctx, errors.Wrapf(
 				errortypes.ErrUnknownAddress,
@@ -71,7 +69,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 			return ctx, errors.Wrapf(err, "failed to set sequence to %d", acc.GetSequence()+1)
 		}
 
-		issd.accountKeeper.SetAccount(ctx, acc)
+		issd.AccountKeeper.SetAccount(ctx, acc)
 	}
 
 	return next(ctx, tx, simulate)

@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmante
+package app
 
 import (
 	"math/big"
@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -20,15 +21,13 @@ var _ sdk.AnteDecorator = EthMinGasPriceDecorator{}
 // fee market params (EIP-1559) are enabled.
 // If fee is high enough, then call next AnteHandler
 type EthMinGasPriceDecorator struct {
-	evmKeeper EVMKeeper
+	AppKeepers
 }
 
 // NewEthMinGasPriceDecorator creates a new MinGasPriceDecorator instance used only for
 // Ethereum transactions.
-func NewEthMinGasPriceDecorator(k EVMKeeper) EthMinGasPriceDecorator {
-	return EthMinGasPriceDecorator{
-		evmKeeper: k,
-	}
+func NewEthMinGasPriceDecorator(k AppKeepers) EthMinGasPriceDecorator {
+	return EthMinGasPriceDecorator{AppKeepers: k}
 }
 
 // AnteHandle ensures that the effective fee from the transaction is greater than the
@@ -37,7 +36,7 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	minGasPrices := ctx.MinGasPrices()
-	evmParams := empd.evmKeeper.GetParams(ctx)
+	evmParams := empd.EvmKeeper.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	minGasPrice := minGasPrices.AmountOf(evmDenom)
 
@@ -46,7 +45,7 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 		return next(ctx, tx, simulate)
 	}
 
-	baseFee := empd.evmKeeper.GetBaseFee(ctx)
+	baseFee := empd.EvmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		ethMsg, ok := msg.(*evm.MsgEthereumTx)

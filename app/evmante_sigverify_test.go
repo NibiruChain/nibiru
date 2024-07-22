@@ -1,4 +1,4 @@
-package evmante_test
+package app_test
 
 import (
 	"math/big"
@@ -6,13 +6,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
-var InvalidChainID = big.NewInt(987654321)
+var (
+	InvalidChainID = big.NewInt(987654321)
+)
 
 func (s *TestSuite) TestEthSigVerificationDecorator() {
 	testCases := []struct {
@@ -23,7 +24,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "sad: unsigned tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "rejected unprotected Ethereum transaction",
@@ -42,7 +43,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "sad: ethereum tx invalid chain id",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				gethSigner := deps.Sender.GethSigner(InvalidChainID)
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
@@ -54,7 +55,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "happy: signed ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
@@ -69,14 +70,14 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthSigVerificationDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := app.NewEthSigVerificationDecorator(deps.Chain.AppKeepers)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

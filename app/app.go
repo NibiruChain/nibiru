@@ -225,7 +225,6 @@ func NewNibiruApp(
 		DevGasBankKeeper:  app.BankKeeper,
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
-		EvmKeeper:      app.EvmKeeper,
 	})
 
 	app.SetAnteHandler(anteHandler)

@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmante
+package app
 
 import (
 	errorsmod "cosmossdk.io/errors"
@@ -12,12 +12,12 @@ import (
 // EthSetupContextDecorator is adapted from SetUpContextDecorator from cosmos-sdk, it ignores gas consumption
 // by setting the gas meter to infinite
 type EthSetupContextDecorator struct {
-	evmKeeper EVMKeeper
+	AppKeepers
 }
 
-func NewEthSetUpContextDecorator(k EVMKeeper) EthSetupContextDecorator {
+func NewEthSetUpContextDecorator(k AppKeepers) EthSetupContextDecorator {
 	return EthSetupContextDecorator{
-		evmKeeper: k,
+		AppKeepers: k,
 	}
 }
 
@@ -43,6 +43,6 @@ func (esc EthSetupContextDecorator) AnteHandle(
 
 	// Reset transient gas used to prepare the execution of current cosmos tx.
 	// Transient gas-used is necessary to sum the gas-used of cosmos tx, when it contains multiple eth msgs.
-	esc.evmKeeper.ResetTransientGasUsed(ctx)
+	esc.EvmKeeper.ResetTransientGasUsed(ctx)
 	return next(newCtx, tx, simulate)
 }
