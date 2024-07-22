@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package app
+package evmante
 
 import (
 	"math"
@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth"
@@ -18,21 +17,17 @@ import (
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	AppKeepers
-	// bankKeeper         anteutils.BankKeeper
-	// distributionKeeper anteutils.DistributionKeeper
-	// evmKeeper          EVMKeeper
-	// stakingKeeper      anteutils.StakingKeeper
+	evmKeeper    EVMKeeper
 	maxGasWanted uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
-	keepers AppKeepers,
+	k EVMKeeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		AppKeepers:   keepers,
+		evmKeeper:    k,
 		maxGasWanted: maxGasWanted,
 	}
 }
@@ -70,14 +65,14 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 		return next(newCtx, tx, simulate)
 	}
 
-	evmParams := anteDec.EvmKeeper.GetParams(ctx)
+	evmParams := anteDec.evmKeeper.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 
 	var events sdk.Events
 
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
-	baseFee := anteDec.EvmKeeper.GetBaseFee(ctx)
+	baseFee := anteDec.evmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -170,7 +165,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(ctx sdk.Context, fees sdk.Coins, f
 
 	// If the account balance is not sufficient, try to withdraw enough staking rewards
 
-	if err := anteDec.EvmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
+	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
 		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil

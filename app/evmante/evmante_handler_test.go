@@ -1,4 +1,4 @@
-package app_test
+package evmante_test
 
 import (
 	"math/big"
@@ -8,9 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
+	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -28,14 +29,14 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				sdb.AddBalance(
 					deps.Sender.EthAddr,
-					new(big.Int).Add(gasLimitCreateContract(), big.NewInt(100)),
+					new(big.Int).Add(evmtestutil.GasLimitCreateContract(), big.NewInt(100)),
 				)
 			},
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
 				cp := &tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
-						MaxGas: new(big.Int).Add(gasLimitCreateContract(), big.NewInt(100)).Int64(),
+						MaxGas: new(big.Int).Add(evmtestutil.GasLimitCreateContract(), big.NewInt(100)).Int64(),
 					},
 				}
 				deps.Ctx = deps.Ctx.
@@ -46,7 +47,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 					WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
+				txMsg := evmtestutil.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
@@ -68,8 +69,8 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
 
-			anteHandlerEVM := app.NewAnteHandlerEVM(
-				deps.Chain.AppKeepers, ante.AnteHandlerOptions{
+			anteHandlerEVM := evmante.NewAnteHandlerEVM(
+				ante.AnteHandlerOptions{
 					HandlerOptions: authante.HandlerOptions{
 						AccountKeeper:          deps.Chain.AccountKeeper,
 						BankKeeper:             deps.Chain.BankKeeper,
@@ -78,6 +79,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 					},
+					EvmKeeper: deps.Chain.EvmKeeper,
 				})
 
 			tx := tc.txSetup(&deps)
