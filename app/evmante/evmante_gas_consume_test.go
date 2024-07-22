@@ -1,12 +1,13 @@
-package app_test
+package evmante_test
 
 import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
+	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
@@ -28,7 +29,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			txSetup:      happyCreateContractTx,
+			txSetup:      evmtestutil.HappyCreateContractTx,
 			wantErr:      "",
 			gasMeter:     eth.NewInfiniteGasMeterWithLimit(happyGasLimit().Uint64()),
 			maxGasWanted: 0,
@@ -38,7 +39,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
 			},
-			txSetup:  happyCreateContractTx,
+			txSetup:  evmtestutil.HappyCreateContractTx,
 			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
 			wantErr:  "",
 		},
@@ -49,7 +50,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			txSetup:      happyCreateContractTx,
+			txSetup:      evmtestutil.HappyCreateContractTx,
 			wantErr:      "exceeds block gas limit (0)",
 			gasMeter:     eth.NewInfiniteGasMeterWithLimit(0),
 			maxGasWanted: 0,
@@ -60,8 +61,8 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := app.NewAnteDecEthGasConsume(
-				deps.Chain.AppKeepers, tc.maxGasWanted,
+			anteDec := evmante.NewAnteDecEthGasConsume(
+				&deps.Chain.AppKeepers.EvmKeeper, tc.maxGasWanted,
 			)
 
 			tc.beforeTxSetup(&deps, stateDB)
@@ -71,7 +72,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
