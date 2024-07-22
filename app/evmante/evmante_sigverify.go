@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package app
+package evmante
 
 import (
 	"math/big"
@@ -14,13 +14,13 @@ import (
 
 // EthSigVerificationDecorator validates an ethereum signatures
 type EthSigVerificationDecorator struct {
-	AppKeepers
+	evmKeeper EVMKeeper
 }
 
 // NewEthSigVerificationDecorator creates a new EthSigVerificationDecorator
-func NewEthSigVerificationDecorator(k AppKeepers) EthSigVerificationDecorator {
+func NewEthSigVerificationDecorator(k EVMKeeper) EthSigVerificationDecorator {
 	return EthSigVerificationDecorator{
-		AppKeepers: k,
+		evmKeeper: k,
 	}
 }
 
@@ -32,8 +32,8 @@ func NewEthSigVerificationDecorator(k AppKeepers) EthSigVerificationDecorator {
 func (esvd EthSigVerificationDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	chainID := esvd.EvmKeeper.EthChainID(ctx)
-	evmParams := esvd.EvmKeeper.GetParams(ctx)
+	chainID := esvd.evmKeeper.EthChainID(ctx)
+	evmParams := esvd.evmKeeper.GetParams(ctx)
 	ethCfg := evm.EthereumConfig(chainID)
 	blockNum := big.NewInt(ctx.BlockHeight())
 	signer := gethcore.MakeSigner(ethCfg, blockNum)
