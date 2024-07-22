@@ -1,4 +1,4 @@
-package evmante_test
+package app_test
 
 import (
 	"math/big"
@@ -10,10 +10,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
@@ -30,7 +29,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			name: "happy: properly built eth tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-				tx, err := evmtestutil.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
+				tx, err := happyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -42,21 +41,21 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyCreateContractTx(deps)
+				return happyCreateContractTx(deps)
 			},
 			wantErr: "",
 		},
 		{
 			name: "sad: fail chain id basic validation",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyCreateContractTx(deps)
+				return happyCreateContractTx(deps)
 			},
 			wantErr: "invalid chain-id",
 		},
 		{
 			name: "sad: tx not implementing protoTxProvider",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				gethSigner := deps.Sender.GethSigner(InvalidChainID)
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
@@ -70,7 +69,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 				txBuilder.SetMemo("memo")
-				tx, err := evmtestutil.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
+				tx, err := happyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -81,7 +80,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 				txBuilder.SetFeePayer(testutil.AccAddress())
-				tx, err := evmtestutil.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
+				tx, err := happyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -92,7 +91,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 				txBuilder.SetFeeGranter(testutil.AccAddress())
-				tx, err := evmtestutil.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
+				tx, err := happyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -112,7 +111,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				}
 				err := txBuilder.SetSignatures(sigV2)
 				s.Require().NoError(err)
-				txMsg := evmtestutil.HappyCreateContractTx(deps)
+				txMsg := happyCreateContractTx(deps)
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
@@ -134,7 +133,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-				tx, err := evmtestutil.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
+				tx, err := happyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -221,7 +220,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthValidateBasicDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := app.NewEthValidateBasicDecorator(deps.Chain.AppKeepers)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
@@ -233,7 +232,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				deps.K.SetParams(deps.Ctx, tc.paramsSetup(&deps))
 			}
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

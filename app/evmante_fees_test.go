@@ -1,11 +1,10 @@
-package evmante_test
+package app_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
@@ -19,7 +18,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 		{
 			name: "happy: min gas price is 0",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "",
@@ -35,7 +34,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 					WithIsCheckTx(true)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "",
@@ -51,7 +50,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 					WithIsCheckTx(true)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "insufficient fee",
@@ -83,7 +82,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := evmante.NewEthMinGasPriceDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := app.NewEthMinGasPriceDecorator(deps.Chain.AppKeepers)
 
 			tx := tc.txSetup(&deps)
 
@@ -92,7 +91,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

@@ -1,13 +1,12 @@
-package evmante_test
+package app_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -32,7 +31,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		{
 			name: "happy: eth tx emitted event",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := happyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "",
@@ -43,13 +42,13 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthEmitEventDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := app.NewEthEmitEventDecorator(deps.Chain.AppKeepers)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

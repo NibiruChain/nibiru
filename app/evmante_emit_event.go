@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmante
+package app
 
 import (
 	"strconv"
@@ -13,14 +13,12 @@ import (
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).
 type EthEmitEventDecorator struct {
-	evmKeeper EVMKeeper
+	AppKeepers
 }
 
 // NewEthEmitEventDecorator creates a new EthEmitEventDecorator
-func NewEthEmitEventDecorator(k EVMKeeper) EthEmitEventDecorator {
-	return EthEmitEventDecorator{
-		evmKeeper: k,
-	}
+func NewEthEmitEventDecorator(k AppKeepers) EthEmitEventDecorator {
+	return EthEmitEventDecorator{AppKeepers: k}
 }
 
 // AnteHandle emits some basic events for the eth messages
@@ -30,7 +28,7 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 	// After eth tx passed ante handler, the fee is deducted and nonce increased,
 	// it shouldn't be ignored by json-rpc. We need to emit some events at the
 	// very end of ante handler to be indexed by the consensus engine.
-	txIndex := eeed.evmKeeper.EVMState().BlockTxIndex.GetOr(ctx, 0)
+	txIndex := eeed.EvmKeeper.EVMState().BlockTxIndex.GetOr(ctx, 0)
 
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)

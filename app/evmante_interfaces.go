@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmante
+package app
 
 import (
 	"math/big"
@@ -26,8 +26,6 @@ type EVMKeeper interface {
 	GetParams(ctx sdk.Context) evm.Params
 
 	EVMState() evmkeeper.EvmState
-	EthChainID(ctx sdk.Context) *big.Int
-	GetBaseFee(ctx sdk.Context) *big.Int
 }
 
 type protoTxProvider interface {
