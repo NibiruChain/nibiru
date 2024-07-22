@@ -5,6 +5,7 @@ package ethsecp256k1
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"crypto/subtle"
 	"fmt"
 
@@ -14,6 +15,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/crypto/ripemd160"
 
 	"github.com/NibiruChain/nibiru/eth/eip712"
 )
@@ -147,12 +149,14 @@ var (
 // Address returns the address of the ECDSA public key.
 // The function will return an empty address if the public key is invalid.
 func (pubKey PubKey) Address() tmcrypto.Address {
-	pubk, err := crypto.DecompressPubkey(pubKey.Key)
-	if err != nil {
-		return nil
+	if len(pubKey.Key) != PubKeySize {
+		panic("length of pubkey is incorrect")
 	}
 
-	return tmcrypto.Address(crypto.PubkeyToAddress(*pubk).Bytes())
+	sha := sha256.Sum256(pubKey.Key)
+	hasherRIPEMD160 := ripemd160.New()
+	hasherRIPEMD160.Write(sha[:]) // does not error
+	return tmcrypto.Address(hasherRIPEMD160.Sum(nil))
 }
 
 // Bytes returns the raw bytes of the ECDSA public key.
