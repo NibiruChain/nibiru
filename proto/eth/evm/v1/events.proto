@@ -47,11 +47,12 @@ message EventBlockBloom {
   string bloom = 1;
 }
 
-// EventFunTokenFromBankCoin defines a fun token creation from the bank coin event.
-message EventFunTokenFromBankCoin {
+// EventFunTokenCreated defines a fun token creation event.
+message EventFunTokenCreated {
   string bank_denom = 1;
   string erc20_contract_address = 2;
   string creator = 3;
+  bool is_made_from_coin = 4;
 }
 
 // SendFunTokenToEvm defines sending fun token to erc20 event.

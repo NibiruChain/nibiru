@@ -498,13 +498,6 @@ func (k *Keeper) CreateFunToken(
 		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
-		if err == nil {
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
-				Creator:              msg.Sender,
-				BankDenom:            funtoken.BankDenom,
-				Erc20ContractAddress: funtoken.Erc20Addr.String(),
-			})
-		}
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -513,6 +506,13 @@ func (k *Keeper) CreateFunToken(
 	if err != nil {
 		return
 	}
+
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenCreated{
+		Creator:              msg.Sender,
+		BankDenom:            funtoken.BankDenom,
+		Erc20ContractAddress: funtoken.Erc20Addr.String(),
+		IsMadeFromCoin:       emptyErc20,
+	})
 
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
