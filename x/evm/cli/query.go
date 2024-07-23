@@ -57,7 +57,7 @@ $ %s query %s get-fun-token 0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6
 			}
 			queryClient := evm.NewQueryClient(clientCtx)
 
-			res, err := queryClient.FunToken(cmd.Context(), &evm.QueryFunTokenRequest{
+			res, err := queryClient.FunTokenMapping(cmd.Context(), &evm.QueryFunTokenMappingRequest{
 				Token: args[0],
 			})
 			if err != nil {

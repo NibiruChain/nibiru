@@ -377,8 +377,8 @@ func (_m *EVMQueryClient) ValidatorAccount(ctx context.Context, in *evm.QueryVal
 	return r0, r1
 }
 
-// FunToken provides a mock function with given fields: ctx, in, opts
-func (_m *EVMQueryClient) FunToken(ctx context.Context, in *evm.QueryFunTokenRequest, opts ...grpc.CallOption) (*evm.QueryFunTokenResponse, error) {
+// FunTokenMapping provides a mock function with given fields: ctx, in, opts
+func (_m *EVMQueryClient) FunTokenMapping(ctx context.Context, in *evm.QueryFunTokenMappingRequest, opts ...grpc.CallOption) (*evm.QueryFunTokenMappingResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -388,17 +388,17 @@ func (_m *EVMQueryClient) FunToken(ctx context.Context, in *evm.QueryFunTokenReq
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *evm.QueryFunTokenResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryFunTokenRequest, ...grpc.CallOption) *evm.QueryFunTokenResponse); ok {
+	var r0 *evm.QueryFunTokenMappingResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *evm.QueryFunTokenMappingRequest, ...grpc.CallOption) *evm.QueryFunTokenMappingResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*evm.QueryFunTokenResponse)
+			r0 = ret.Get(0).(*evm.QueryFunTokenMappingResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryFunTokenRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *evm.QueryFunTokenMappingRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

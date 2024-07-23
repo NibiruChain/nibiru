@@ -741,9 +741,9 @@ func (k *Keeper) TraceEthTxMsg(
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
 
-func (k Keeper) FunToken(
-	goCtx context.Context, req *evm.QueryFunTokenRequest,
-) (*evm.QueryFunTokenResponse, error) {
+func (k Keeper) FunTokenMapping(
+	goCtx context.Context, req *evm.QueryFunTokenMappingRequest,
+) (*evm.QueryFunTokenMappingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// first try lookup by cosmos denom
@@ -751,7 +751,7 @@ func (k Keeper) FunToken(
 	funTokenMappings := k.FunTokens.Collect(ctx, bankDenomIter)
 	if len(funTokenMappings) > 0 {
 		// assumes that there is only one mapping for a given denom
-		return &evm.QueryFunTokenResponse{
+		return &evm.QueryFunTokenMappingResponse{
 			FunToken: &funTokenMappings[0],
 		}, nil
 	}
@@ -760,7 +760,7 @@ func (k Keeper) FunToken(
 	funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
 	if len(funTokenMappings) > 0 {
 		// assumes that there is only one mapping for a given erc20 address
-		return &evm.QueryFunTokenResponse{
+		return &evm.QueryFunTokenMappingResponse{
 			FunToken: &funTokenMappings[0],
 		}, nil
 	}
