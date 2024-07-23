@@ -76,7 +76,7 @@ service Query {
     option (google.api.http).get = "/nibiru/evm/v1/base_fee";
   }
 
-  rpc FunToken(QueryFunTokenRequest) returns (QueryFunTokenResponse) {
+  rpc FunTokenMapping(QueryFunTokenMappingRequest) returns (QueryFunTokenMappingResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/funtoken/{token}";
   }
 }
@@ -306,7 +306,7 @@ message QueryBaseFeeResponse {
   string base_fee = 1 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
 }
 
-message QueryFunTokenRequest {
+message QueryFunTokenMappingRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -314,7 +314,7 @@ message QueryFunTokenRequest {
   string token = 1;
 }
 
-message QueryFunTokenResponse {
+message QueryFunTokenMappingResponse {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;  
 
