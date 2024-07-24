@@ -912,7 +912,7 @@ func (s *Suite) TestTraceBlock() {
 	}
 }
 
-func (s *Suite) TestQueryFunToken() {
+func (s *Suite) TestQueryFunTokenMapping() {
 	type In = *evm.QueryFunTokenMappingRequest
 	type Out = *evm.QueryFunTokenMappingResponse
 	testCases := []TestCase[In, Out]{
