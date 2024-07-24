@@ -12,6 +12,8 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
+	"github.com/NibiruChain/nibiru/x/evm"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
@@ -63,23 +65,14 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().Empty(resp.VmError)
 
 				// Event "EventContractDeployed" must present
-				var sdkEvents = deps.Ctx.EventManager().Events()
-				contractDeployedEventType := "eth.evm.v1.EventContractDeployed"
-				err = testutil.AssertEventPresent(sdkEvents, contractDeployedEventType)
-				s.Require().NoError(err)
-
-				var contractDeployedEvent sdk.Event
-				for _, abciEvent := range sdkEvents {
-					if abciEvent.Type == contractDeployedEventType {
-						contractDeployedEvent = abciEvent
-					}
-				}
-				for _, err = range []error{
-					testutil.EventHasAttributeValue(contractDeployedEvent, "sender", ethAcc.EthAddr.String()),
-					testutil.EventHasAttributeValue(contractDeployedEvent, "contract_addr", resp.Logs[0].Address),
-				} {
-					s.Require().NoError(err)
-				}
+				testutil.RequireContainsTypedEvent(
+					s.T(),
+					deps.Ctx,
+					&evm.EventContractDeployed{
+						Sender:       ethAcc.EthAddr.String(),
+						ContractAddr: resp.Logs[0].Address,
+					},
+				)
 			},
 		},
 		{
@@ -166,23 +159,14 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.Require().Empty(resp.VmError)
 
 	// Event "EventContractExecuted" must present
-	var sdkEvents = deps.Ctx.EventManager().Events()
-	contractExecutedEventType := "eth.evm.v1.EventContractDeployed"
-	err = testutil.AssertEventPresent(sdkEvents, contractExecutedEventType)
-	s.Require().NoError(err)
-
-	var contractExecutedEvent sdk.Event
-	for _, abciEvent := range sdkEvents {
-		if abciEvent.Type == contractExecutedEventType {
-			contractExecutedEvent = abciEvent
-		}
-	}
-	for _, err = range []error{
-		testutil.EventHasAttributeValue(contractExecutedEvent, "sender", ethAcc.EthAddr.String()),
-		testutil.EventHasAttributeValue(contractExecutedEvent, "contract_addr", resp.Logs[0].Address),
-	} {
-		s.Require().NoError(err)
-	}
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventContractExecuted{
+			Sender:       ethAcc.EthAddr.String(),
+			ContractAddr: resp.Logs[0].Address,
+		},
+	)
 }
 
 func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
@@ -238,24 +222,15 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		wantGasUsed := strconv.FormatUint(gethparams.TxGas, 10)
 		s.Equal(gasUsed, wantGasUsed)
 
-		// Event "EventContractDeployed" must present
-		var sdkEvents = deps.Ctx.EventManager().Events()
-		evmTransferEventType := "eth.evm.v1.EventTransfer"
-		err = testutil.AssertEventPresent(sdkEvents, evmTransferEventType)
-		s.Require().NoError(err)
-
-		var evmTransferEvent sdk.Event
-		for _, abciEvent := range sdkEvents {
-			if abciEvent.Type == evmTransferEventType {
-				evmTransferEvent = abciEvent
-			}
-		}
-		for _, err = range []error{
-			testutil.EventHasAttributeValue(evmTransferEvent, "sender", ethAcc.EthAddr.String()),
-			testutil.EventHasAttributeValue(evmTransferEvent, "recipient", to.String()),
-			testutil.EventHasAttributeValue(evmTransferEvent, "amount", strconv.FormatInt(amount, 10)),
-		} {
-			s.Require().NoError(err)
-		}
+		// Event "EventTransfer" must present
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventTransfer{
+				Sender:    ethAcc.EthAddr.String(),
+				Recipient: to.String(),
+				Amount:    strconv.FormatInt(amount, 10),
+			},
+		)
 	}
 }
