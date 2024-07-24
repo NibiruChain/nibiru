@@ -163,6 +163,25 @@ func (k *Keeper) ApplyEvmTx(
 		receipt.Status = gethcore.ReceiptStatusSuccessful
 		commit()
 		ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
+
+		// Emit typed events
+		if msg.To() == nil { // contract creation
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
+				Sender:       msg.From().String(),
+				ContractAddr: contractAddr.String(),
+			})
+		} else if len(msg.Data()) > 0 { // contract executed
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
+				Sender:       msg.From().String(),
+				ContractAddr: msg.To().String(),
+			})
+		} else if msg.Value().Cmp(big.NewInt(0)) > 0 { // evm transfer
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
+				Sender:    msg.From().String(),
+				Recipient: msg.To().String(),
+				Amount:    msg.Value().String(),
+			})
+		}
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
@@ -498,13 +517,6 @@ func (k *Keeper) CreateFunToken(
 		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
-		if err == nil {
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenFromBankCoin{
-				Creator:              msg.Sender,
-				BankDenom:            funtoken.BankDenom,
-				Erc20ContractAddress: funtoken.Erc20Addr.String(),
-			})
-		}
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -513,6 +525,13 @@ func (k *Keeper) CreateFunToken(
 	if err != nil {
 		return
 	}
+
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenCreated{
+		Creator:              msg.Sender,
+		BankDenom:            funtoken.BankDenom,
+		Erc20ContractAddress: funtoken.Erc20Addr.String(),
+		IsMadeFromCoin:       emptyErc20,
+	})
 
 	return &evm.MsgCreateFunTokenResponse{
 		FuntokenMapping: funtoken,
