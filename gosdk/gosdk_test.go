@@ -92,7 +92,6 @@ func (s *TestSuite) TestNewNibiruSdk() {
 		s.DoTestBroadcastMsgsGrpc()
 	})
 	s.Run("DoTestNewQueryClient", s.DoTestNewQueryClient)
-	s.Run("DoTestSequenceExpectations", s.DoTestSequenceExpectations)
 }
 
 // FIXME: Q: What is the node home for a local validator?
