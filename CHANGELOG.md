@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1965](https://github.com/NibiruChain/nibiru/pull/1965) - refactor(evm): remove evm post-processing hooks
 - [#1968](https://github.com/NibiruChain/nibiru/pull/1968) - refactor(evm): funtoken events, cli commands and queries
 - [#1971](https://github.com/NibiruChain/nibiru/pull/1971) - feat(evm): typed events for contract creation, contract execution and transfer
-- [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
+- [#1973](https://github.com/NibiruChain/nibiru/pull/1973) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
 
 #### Dapp modules: perp, spot, oracle, etc
 
