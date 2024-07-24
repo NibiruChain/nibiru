@@ -3,9 +3,12 @@ package evmtest
 import (
 	"math/big"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/params"
 	gethparams "github.com/ethereum/go-ethereum/params"
+
+	"github.com/NibiruChain/nibiru/x/evm/embeds"
 
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -26,6 +29,18 @@ type ArgsCreateContract struct {
 	GasLimit      *big.Int
 }
 
+// ArgsExecuteContract: Arguments to call with `ExecuteContractTxMsg`
+// to make Ethereum transactions that execute contracts.
+type ArgsExecuteContract struct {
+	EthAcc          EthPrivKeyAcc
+	EthChainIDInt   *big.Int
+	ContractAddress *gethcommon.Address
+	Data            []byte
+	GasPrice        *big.Int
+	Nonce           uint64
+	GasLimit        *big.Int
+}
+
 func CreateContractTxMsg(
 	args ArgsCreateContract,
 ) (ethTxMsg *evm.MsgEthereumTx, err error) {
@@ -33,11 +48,15 @@ func CreateContractTxMsg(
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGasContractCreation)
 	}
+	testContract, err := embeds.SmartContract_TestERC20.Load()
+	if err != nil {
+		return nil, err
+	}
 	gethTxCreateCntract := &gethcore.AccessListTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
 		To:       nil,
-		Data:     []byte("contract_data"),
+		Data:     testContract.Bytecode,
 		Nonce:    args.Nonce,
 	}
 	ethTx := gethcore.NewTx(gethTxCreateCntract)
@@ -66,4 +85,30 @@ func CreateContractGethCoreMsg(
 
 	signer := gethcore.MakeSigner(cfg, blockHeight)
 	return ethTxMsg.AsMessage(signer, nil)
+}
+
+func ExecuteContractTxMsg(args ArgsExecuteContract) (ethTxMsg *evm.MsgEthereumTx, err error) {
+	gasLimit := args.GasLimit
+	if gasLimit == nil {
+		gasLimit = new(big.Int).SetUint64(gethparams.TxGas)
+	}
+	gethTxExecuteContract := &gethcore.AccessListTx{
+		GasPrice: args.GasPrice,
+		Gas:      gasLimit.Uint64(),
+		To:       args.ContractAddress,
+		Data:     args.Data,
+		Nonce:    args.Nonce,
+	}
+	ethTx := gethcore.NewTx(gethTxExecuteContract)
+	ethTxMsg = new(evm.MsgEthereumTx)
+	err = ethTxMsg.FromEthereumTx(ethTx)
+	if err != nil {
+		return ethTxMsg, err
+	}
+	fromAcc := args.EthAcc
+	ethTxMsg.From = fromAcc.EthAddr.Hex()
+
+	gethSigner := fromAcc.GethSigner(args.EthChainIDInt)
+	keyringSigner := fromAcc.KeyringSigner
+	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
 }

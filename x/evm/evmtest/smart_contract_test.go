@@ -4,6 +4,8 @@ package evmtest_test
 import (
 	"math/big"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
@@ -45,4 +47,22 @@ func (s *Suite) TestCreateContractGethCoreMsg() {
 		args, cfg, blockHeight,
 	)
 	s.NoError(err)
+}
+
+func (s *Suite) TestExecuteContractTxMsg() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := evmtest.NewEthAccInfo()
+	contractAddress := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	args := evmtest.ArgsExecuteContract{
+		EthAcc:          ethAcc,
+		EthChainIDInt:   deps.K.EthChainID(deps.Ctx),
+		GasPrice:        big.NewInt(1),
+		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
+		ContractAddress: &contractAddress,
+		Data:            nil,
+	}
+
+	ethTxMsg, err := evmtest.ExecuteContractTxMsg(args)
+	s.NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
 }
