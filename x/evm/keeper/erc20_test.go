@@ -104,25 +104,16 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 		})
 
 	// Event "EventFunTokenCreated" must present
-	var sdkEvents = deps.Ctx.EventManager().Events()
-	funTokenCreatedEventType := "eth.evm.v1.EventFunTokenCreated"
-	err = testutil.AssertEventPresent(sdkEvents, funTokenCreatedEventType)
-	s.Require().NoError(err)
-
-	var funTokenCreatedEvent sdk.Event
-	for _, abciEvent := range sdkEvents {
-		if abciEvent.Type == funTokenCreatedEventType {
-			funTokenCreatedEvent = abciEvent
-		}
-	}
-	for _, err = range []error{
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "bank_denom", expectedBankDenom),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "erc20_contract_address", erc20Addr.String()),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "creator", deps.Sender.NibiruAddr.String()),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "is_made_from_coin", "false"),
-	} {
-		s.Require().NoError(err)
-	}
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventFunTokenCreated{
+			BankDenom:            expectedBankDenom,
+			Erc20ContractAddress: erc20Addr.String(),
+			Creator:              deps.Sender.NibiruAddr.String(),
+			IsMadeFromCoin:       false,
+		},
+	)
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
 	// Give the sender funds for the fee
@@ -254,25 +245,17 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.Equal(metadata, info)
 
 	// Event "EventFunTokenCreated" must present
-	var sdkEvents = deps.Ctx.EventManager().Events()
-	funTokenCreatedEventType := "eth.evm.v1.EventFunTokenCreated"
-	err = testutil.AssertEventPresent(sdkEvents, funTokenCreatedEventType)
-	s.Require().NoError(err)
-
-	var funTokenCreatedEvent sdk.Event
-	for _, abciEvent := range sdkEvents {
-		if abciEvent.Type == funTokenCreatedEventType {
-			funTokenCreatedEvent = abciEvent
-		}
-	}
-	for _, err = range []error{
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "bank_denom", bankDenom),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "erc20_contract_address", erc20Addr.String()),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "creator", deps.Sender.NibiruAddr.String()),
-		testutil.EventHasAttributeValue(funTokenCreatedEvent, "is_made_from_coin", "true"),
-	} {
-		s.Require().NoError(err)
-	}
+	// Event "EventFunTokenCreated" must present
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventFunTokenCreated{
+			BankDenom:            bankDenom,
+			Erc20ContractAddress: erc20Addr.String(),
+			Creator:              deps.Sender.NibiruAddr.String(),
+			IsMadeFromCoin:       true,
+		},
+	)
 
 	s.T().Log("sad: CreateFunToken for the bank coin: already registered")
 	// Give the sender funds for the fee
@@ -367,11 +350,12 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			funTokenErc20Addr := createFunTokenResp.FuntokenMapping.Erc20Addr.ToAddr()
 
 			// Send fun token to ERC-20 contract
+			bankCoin := sdk.Coin{Denom: tc.bankDenom, Amount: tc.amountToSend}
 			_, err = deps.K.SendFunTokenToEvm(
 				ctx,
 				&evm.MsgSendFunTokenToEvm{
 					Sender:    deps.Sender.NibiruAddr.String(),
-					BankCoin:  sdk.Coin{Denom: tc.bankDenom, Amount: tc.amountToSend},
+					BankCoin:  bankCoin,
 					ToEthAddr: recipientEVMAddr,
 				},
 			)
@@ -380,6 +364,18 @@ func (s *Suite) TestSendFunTokenToEvm() {
 				return
 			}
 			s.Require().NoError(err)
+
+			// Event "EventSendFunTokenToEvm" must present
+			testutil.RequireContainsTypedEvent(
+				s.T(),
+				deps.Ctx,
+				&evm.EventSendFunTokenToEvm{
+					Sender:               deps.Sender.NibiruAddr.String(),
+					Erc20ContractAddress: funTokenErc20Addr.String(),
+					ToEthAddr:            recipientEVMAddr.String(),
+					BankCoin:             bankCoin,
+				},
+			)
 
 			// Check 1: coins are stored on a module balance
 			moduleBalance, err := deps.Chain.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
