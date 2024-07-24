@@ -1,13 +1,13 @@
-package app_test
+package ante_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
+func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps) sdk.Tx
@@ -16,13 +16,13 @@ func (s *TestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 		{
 			name: "sad: evm message",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return happyTransfertTx(deps, 0)
+				return evmtest.HappyTransferTx(deps, 0)
 			},
 			wantErr: "invalid type",
 		},
 		{
 			name:    "happy: non evm message",
-			txSetup: nonEvmMsgTx,
+			txSetup: evmtest.NonEvmMsgTx,
 			wantErr: "",
 		},
 	}
@@ -30,11 +30,11 @@ func (s *TestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := app.AnteDecoratorPreventEtheruemTxMsgs{}
+			anteDec := ante.AnteDecoratorPreventEtheruemTxMsgs{}
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
