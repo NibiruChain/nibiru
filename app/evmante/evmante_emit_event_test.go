@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -32,7 +31,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		{
 			name: "happy: eth tx emitted event",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := evmtest.HappyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "",
@@ -49,7 +48,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 			s.Require().NoError(stateDB.Commit())
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

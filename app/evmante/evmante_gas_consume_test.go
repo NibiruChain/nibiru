@@ -7,7 +7,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
@@ -29,7 +28,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			txSetup:      evmtestutil.HappyCreateContractTx,
+			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "",
 			gasMeter:     eth.NewInfiniteGasMeterWithLimit(happyGasLimit().Uint64()),
 			maxGasWanted: 0,
@@ -39,7 +38,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
 			},
-			txSetup:  evmtestutil.HappyCreateContractTx,
+			txSetup:  evmtest.HappyCreateContractTx,
 			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
 			wantErr:  "",
 		},
@@ -50,7 +49,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
-			txSetup:      evmtestutil.HappyCreateContractTx,
+			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "exceeds block gas limit (0)",
 			gasMeter:     eth.NewInfiniteGasMeterWithLimit(0),
 			maxGasWanted: 0,
@@ -72,7 +71,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

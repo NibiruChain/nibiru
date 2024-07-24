@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app/ante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
@@ -17,13 +16,13 @@ func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 		{
 			name: "sad: evm message",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyTransferTx(deps, 0)
+				return evmtest.HappyTransferTx(deps, 0)
 			},
 			wantErr: "invalid type",
 		},
 		{
 			name:    "happy: non evm message",
-			txSetup: evmtestutil.NonEvmMsgTx,
+			txSetup: evmtest.NonEvmMsgTx,
 			wantErr: "",
 		},
 	}
@@ -35,7 +34,7 @@ func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

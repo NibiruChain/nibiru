@@ -7,7 +7,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -26,7 +25,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				sdb.AddBalance(deps.Sender.EthAddr, big.NewInt(100))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := evmtestutil.HappyTransferTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
@@ -44,7 +43,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: signed tx, insufficient funds",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := evmtestutil.HappyTransferTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
@@ -62,7 +61,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: unsigned tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := evmtestutil.HappyTransferTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
@@ -75,7 +74,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: tx with non evm message",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				return evmtestutil.NonEvmMsgTx(deps).(sdk.FeeTx)
+				return evmtest.NonEvmMsgTx(deps).(sdk.FeeTx)
 			},
 			wantErr: "invalid message",
 		},
@@ -98,7 +97,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

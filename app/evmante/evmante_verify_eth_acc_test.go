@@ -6,7 +6,6 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
@@ -24,13 +23,13 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				sdb.AddBalance(deps.Sender.EthAddr, happyGasLimit())
 			},
-			txSetup: evmtestutil.HappyCreateContractTx,
+			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "",
 		},
 		{
 			name:          "sad: sender has insufficient gas balance",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
-			txSetup:       evmtestutil.HappyCreateContractTx,
+			txSetup:       evmtest.HappyCreateContractTx,
 			wantErr:       "sender balance < tx cost",
 		},
 		{
@@ -39,7 +38,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 				// Force account to be a smart contract
 				sdb.SetCode(deps.Sender.EthAddr, []byte("evm bytecode stuff"))
 			},
-			txSetup: evmtestutil.HappyCreateContractTx,
+			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "sender is not EOA",
 		},
 		{
@@ -54,7 +53,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			name:          "sad: empty from addr",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
 			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := evmtest.HappyCreateContractTx(deps)
 				tx.From = ""
 				return tx
 			},
@@ -74,7 +73,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

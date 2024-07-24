@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -23,7 +22,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "sad: unsigned tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := evmtest.HappyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "rejected unprotected Ethereum transaction",
@@ -42,7 +41,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "sad: ethereum tx invalid chain id",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := deps.Sender.GethSigner(InvalidChainID)
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
@@ -54,7 +53,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "happy: signed ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				tx := evmtestutil.HappyCreateContractTx(deps)
+				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
@@ -76,7 +75,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

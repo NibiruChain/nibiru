@@ -11,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -29,14 +28,14 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				sdb.AddBalance(
 					deps.Sender.EthAddr,
-					new(big.Int).Add(evmtestutil.GasLimitCreateContract(), big.NewInt(100)),
+					new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100)),
 				)
 			},
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
 				cp := &tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
-						MaxGas: new(big.Int).Add(evmtestutil.GasLimitCreateContract(), big.NewInt(100)).Int64(),
+						MaxGas: new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100)).Int64(),
 					},
 				}
 				deps.Ctx = deps.Ctx.
@@ -47,7 +46,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 					WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := evmtestutil.HappyTransferTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))

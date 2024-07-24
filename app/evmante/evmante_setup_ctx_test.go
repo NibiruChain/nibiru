@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app/evmante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
@@ -17,14 +16,14 @@ func (s *TestSuite) TestEthSetupContextDecorator() {
 	anteDec := evmante.NewEthSetUpContextDecorator(&deps.Chain.EvmKeeper)
 
 	s.Require().NoError(stateDB.Commit())
-	tx := evmtestutil.HappyCreateContractTx(&deps)
+	tx := evmtest.HappyCreateContractTx(&deps)
 
 	// Set block gas used to non 0 to check that handler resets it
 	deps.Chain.EvmKeeper.EvmState.BlockGasUsed.Set(deps.Ctx, 1000)
 
 	// Ante handler returns new context
 	newCtx, err := anteDec.AnteHandle(
-		deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+		deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 	)
 	s.Require().NoError(err)
 

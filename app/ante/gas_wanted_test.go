@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/app/ante"
-	evmtestutil "github.com/NibiruChain/nibiru/x/common/testutil/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
@@ -20,7 +19,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		{
 			name: "happy: non fee tx type",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtestutil.HappyCreateContractTx(deps)
+				return evmtest.HappyCreateContractTx(deps)
 			},
 			wantErr: "",
 		},
@@ -35,7 +34,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						evmtestutil.HappyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 				}
 			},
@@ -52,7 +51,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						evmtestutil.HappyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 					Fee: legacytx.StdFee{Gas: 500},
 				}
@@ -72,7 +71,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						evmtestutil.HappyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 					Fee: legacytx.StdFee{Gas: 1000},
 				}
@@ -95,7 +94,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 				tc.ctxSetup(&deps)
 			}
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtestutil.NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

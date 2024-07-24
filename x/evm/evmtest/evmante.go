@@ -1,4 +1,4 @@
-package evmtestutil
+package evmtest
 
 import (
 	"math/big"
@@ -10,7 +10,6 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
 var NextNoOpAnteHandler sdk.AnteHandler = func(
@@ -19,8 +18,8 @@ var NextNoOpAnteHandler sdk.AnteHandler = func(
 	return ctx, nil
 }
 
-func HappyTransferTx(deps *evmtest.TestDeps, nonce uint64) *evm.MsgEthereumTx {
-	to := evmtest.NewEthAccInfo().EthAddr
+func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
+	to := NewEthAccInfo().EthAddr
 	ethContractCreationTxParams := &evm.EvmTxArgs{
 		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    nonce,
@@ -34,19 +33,19 @@ func HappyTransferTx(deps *evmtest.TestDeps, nonce uint64) *evm.MsgEthereumTx {
 	return tx
 }
 
-func NonEvmMsgTx(deps *evmtest.TestDeps) sdk.Tx {
+func NonEvmMsgTx(deps *TestDeps) sdk.Tx {
 	gasLimit := uint64(10)
 	fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 	msg := &banktypes.MsgSend{
 		FromAddress: deps.Sender.NibiruAddr.String(),
-		ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+		ToAddress:   NewEthAccInfo().NibiruAddr.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 	}
 	return buildTx(deps, true, msg, gasLimit, fees)
 }
 
 func buildTx(
-	deps *evmtest.TestDeps,
+	deps *TestDeps,
 	ethExtentions bool,
 	msg sdk.Msg,
 	gasLimit uint64,
@@ -67,7 +66,7 @@ func buildTx(
 	return txBuilder.GetTx()
 }
 
-func HappyCreateContractTx(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
+func HappyCreateContractTx(deps *TestDeps) *evm.MsgEthereumTx {
 	ethContractCreationTxParams := &evm.EvmTxArgs{
 		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    1,
