@@ -119,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
-- Bump `robinraju/release-downloader` from 1.8 to 1.10 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839))
+- Bump `robinraju/release-downloader` from 1.8 to 1.11 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839), [#1948](https://github.com/NibiruChain/nibiru/pull/1948))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724), [#1843](https://github.com/NibiruChain/nibiru/pull/1843))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
