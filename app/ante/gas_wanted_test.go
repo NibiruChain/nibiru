@@ -1,15 +1,15 @@
-package app_test
+package ante_test
 
 import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestGasWantedDecorator() {
+func (s *AnteTestSuite) TestGasWantedDecorator() {
 	testCases := []struct {
 		name     string
 		ctxSetup func(deps *evmtest.TestDeps)
@@ -19,7 +19,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 		{
 			name: "happy: non fee tx type",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return happyCreateContractTx(deps)
+				return evmtest.HappyCreateContractTx(deps)
 			},
 			wantErr: "",
 		},
@@ -34,7 +34,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 				}
 			},
@@ -51,7 +51,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 					Fee: legacytx.StdFee{Gas: 500},
 				}
@@ -71,7 +71,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
 					Msgs: []sdk.Msg{
-						happyCreateContractTx(deps),
+						evmtest.HappyCreateContractTx(deps),
 					},
 					Fee: legacytx.StdFee{Gas: 1000},
 				}
@@ -84,7 +84,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := app.AnteDecoratorGasWanted{}
+			anteDec := ante.AnteDecoratorGasWanted{}
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
@@ -94,7 +94,7 @@ func (s *TestSuite) TestGasWantedDecorator() {
 				tc.ctxSetup(&deps)
 			}
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
