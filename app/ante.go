@@ -10,6 +10,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
 	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -53,7 +54,7 @@ func AnteHandlerExtendedTx(
 ) (anteHandler sdk.AnteHandler) {
 	switch typeUrl {
 	case evm.TYPE_URL_ETHEREUM_TX:
-		anteHandler = NewAnteHandlerEVM(keepers, opts)
+		anteHandler = evmante.NewAnteHandlerEVM(opts)
 	case eth.TYPE_URL_DYNAMIC_FEE_TX:
 		anteHandler = NewAnteHandlerNonEVM(opts)
 	default:
@@ -73,7 +74,7 @@ func NewAnteHandlerNonEVM(
 	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
@@ -103,7 +104,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		AnteDecoratorGasWanted{},
+		ante.AnteDecoratorGasWanted{},
 	)
 }
 

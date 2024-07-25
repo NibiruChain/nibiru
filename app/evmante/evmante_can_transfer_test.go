@@ -1,11 +1,11 @@
-package app_test
+package evmante_test
 
 import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
@@ -25,7 +25,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				sdb.AddBalance(deps.Sender.EthAddr, big.NewInt(100))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
@@ -43,7 +43,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: signed tx, insufficient funds",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
@@ -61,7 +61,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: unsigned tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				txMsg := happyTransfertTx(deps, 0)
+				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
@@ -74,7 +74,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "sad: tx with non evm message",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				return nonEvmMsgTx(deps).(sdk.FeeTx)
+				return evmtest.NonEvmMsgTx(deps).(sdk.FeeTx)
 			},
 			wantErr: "invalid message",
 		},
@@ -84,7 +84,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := app.NewCanTransferDecorator(deps.Chain.AppKeepers)
+			anteDec := evmante.NewCanTransferDecorator(&deps.Chain.AppKeepers.EvmKeeper)
 			tx := tc.txSetup(&deps)
 
 			if tc.ctxSetup != nil {
@@ -97,7 +97,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, NextNoOpAnteHandler,
+				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

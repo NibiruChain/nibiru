@@ -1,34 +1,29 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package app
+package evmante
 
 import (
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
-
-	gethcommon "github.com/ethereum/go-ethereum/common"
-)
-
-var (
-	_ sdk.AnteDecorator = (*AnteDecEthGasConsume)(nil)
-	_ sdk.AnteDecorator = (*AnteDecVerifyEthAcc)(nil)
 )
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
-	AppKeepers
+	evmKeeper     EVMKeeper
+	accountKeeper evm.AccountKeeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k AppKeepers) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
-		AppKeepers: k,
+		evmKeeper:     k,
+		accountKeeper: ak,
 	}
 }
 
@@ -67,11 +62,11 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 
 		// check whether the sender address is EOA
 		fromAddr := gethcommon.BytesToAddress(from)
-		acct := anteDec.EvmKeeper.GetAccount(ctx, fromAddr)
+		acct := anteDec.evmKeeper.GetAccount(ctx, fromAddr)
 
 		if acct == nil {
-			acc := anteDec.AccountKeeper.NewAccountWithAddress(ctx, from)
-			anteDec.AccountKeeper.SetAccount(ctx, acc)
+			acc := anteDec.accountKeeper.NewAccountWithAddress(ctx, from)
+			anteDec.accountKeeper.SetAccount(ctx, acc)
 			acct = statedb.NewEmptyAccount()
 		} else if acct.IsContract() {
 			return ctx, errors.Wrapf(errortypes.ErrInvalidType,
