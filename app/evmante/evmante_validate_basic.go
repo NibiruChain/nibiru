@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package app
+package evmante
 
 import (
 	"errors"
@@ -15,13 +15,13 @@ import (
 
 // EthValidateBasicDecorator is adapted from ValidateBasicDecorator from cosmos-sdk, it ignores ErrNoSignatures
 type EthValidateBasicDecorator struct {
-	AppKeepers
+	evmKeeper EVMKeeper
 }
 
 // NewEthValidateBasicDecorator creates a new EthValidateBasicDecorator
-func NewEthValidateBasicDecorator(k AppKeepers) EthValidateBasicDecorator {
+func NewEthValidateBasicDecorator(k EVMKeeper) EthValidateBasicDecorator {
 	return EthValidateBasicDecorator{
-		AppKeepers: k,
+		evmKeeper: k,
 	}
 }
 
@@ -89,8 +89,8 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	txFee := sdk.Coins{}
 	txGasLimit := uint64(0)
 
-	evmParams := vbd.EvmKeeper.GetParams(ctx)
-	baseFee := vbd.EvmKeeper.GetBaseFee(ctx)
+	evmParams := vbd.evmKeeper.GetParams(ctx)
+	baseFee := vbd.evmKeeper.GetBaseFee(ctx)
 	enableCreate := evmParams.GetEnableCreate()
 	enableCall := evmParams.GetEnableCall()
 	evmDenom := evmParams.GetEvmDenom()

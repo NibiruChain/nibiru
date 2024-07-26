@@ -10,6 +10,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/app/evmante"
 	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
 )
 
@@ -35,7 +36,7 @@ func NewAnteHandler(
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
 				case "/eth.evm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = NewAnteHandlerEVM(keepers, options)
+					anteHandler = evmante.NewAnteHandlerEVM(options)
 				default:
 					return ctx, fmt.Errorf(
 						"rejecting tx with unsupported extension option: %s", typeURL)
@@ -60,7 +61,7 @@ func NewAnteHandlerNonEVM(
 	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
@@ -88,6 +89,6 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		AnteDecoratorGasWanted{},
+		ante.AnteDecoratorGasWanted{},
 	)
 }

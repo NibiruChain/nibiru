@@ -87,7 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1965](https://github.com/NibiruChain/nibiru/pull/1965) - refactor(evm): remove evm post-processing hooks
 - [#1966](https://github.com/NibiruChain/nibiru/pull/1966) - refactor(evm): clean up AnteHandler setup
 - [#1968](https://github.com/NibiruChain/nibiru/pull/1968) - refactor(evm): funtoken events, cli commands and queries
+- [#1970](https://github.com/NibiruChain/nibiru/pull/1970) - refactor(evm): move evm antehandlers to separate package. Remove "gosdk/sequence_test.go", which causes a race condition in CI.
 - [#1971](https://github.com/NibiruChain/nibiru/pull/1971) - feat(evm): typed events for contract creation, contract execution and transfer
+- [#1973](https://github.com/NibiruChain/nibiru/pull/1973) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
 
 #### Dapp modules: perp, spot, oracle, etc
 
@@ -119,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
-- Bump `robinraju/release-downloader` from 1.8 to 1.10 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839))
+- Bump `robinraju/release-downloader` from 1.8 to 1.11 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839), [#1948](https://github.com/NibiruChain/nibiru/pull/1948))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724), [#1843](https://github.com/NibiruChain/nibiru/pull/1843))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
@@ -137,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.5 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858), [#1938](https://github.com/NibiruChain/nibiru/pull/1938))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
-- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.33.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.35.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 

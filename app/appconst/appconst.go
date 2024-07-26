@@ -53,16 +53,22 @@ const (
 )
 
 var knownEthChainIDMap = map[string]int64{
-	"cataclysm-1":       ETH_CHAIN_ID_MAINNET,
+	"cataclysm-1": ETH_CHAIN_ID_MAINNET,
+
 	"nibiru-localnet-0": ETH_CHAIN_ID_LOCAL,
 	"nibiru-localnet-1": ETH_CHAIN_ID_LOCAL,
 	"nibiru-localnet-2": ETH_CHAIN_ID_LOCAL,
-	"nibiru-testnet-0":  ETH_CHAIN_ID_DEVNET,
-	"nibiru-testnet-1":  ETH_CHAIN_ID_DEVNET,
-	"nibiru-testnet-2":  ETH_CHAIN_ID_DEVNET,
-	"nibiru-devnet-0":   ETH_CHAIN_ID_DEVNET,
-	"nibiru-devnet-1":   ETH_CHAIN_ID_DEVNET,
-	"nibiru-devnet-2":   ETH_CHAIN_ID_DEVNET,
+	"nibiru-localnet-3": ETH_CHAIN_ID_LOCAL,
+
+	"nibiru-testnet-0": ETH_CHAIN_ID_DEVNET,
+	"nibiru-testnet-1": ETH_CHAIN_ID_DEVNET,
+	"nibiru-testnet-2": ETH_CHAIN_ID_DEVNET,
+	"nibiru-testnet-3": ETH_CHAIN_ID_DEVNET,
+
+	"nibiru-devnet-0": ETH_CHAIN_ID_DEVNET,
+	"nibiru-devnet-1": ETH_CHAIN_ID_DEVNET,
+	"nibiru-devnet-2": ETH_CHAIN_ID_DEVNET,
+	"nibiru-devnet-3": ETH_CHAIN_ID_DEVNET,
 }
 
 // GetEthChainID: Maps the given chain ID from the block's `sdk.Context` to an
