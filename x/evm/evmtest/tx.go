@@ -59,6 +59,9 @@ func NewEthTxMsgFromTxData(
 	txType GethTxType,
 	innerTxData []byte,
 	nonce uint64,
+	to *gethcommon.Address,
+	value *big.Int,
+	gas uint64,
 	accessList gethcore.AccessList,
 ) (*evm.MsgEthereumTx, error) {
 	if innerTxData == nil {
@@ -71,17 +74,26 @@ func NewEthTxMsgFromTxData(
 		innerTx := TxTemplateLegacyTx()
 		innerTx.Nonce = nonce
 		innerTx.Data = innerTxData
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
 		ethCoreTx = gethcore.NewTx(innerTx)
 	case gethcore.AccessListTxType:
 		innerTx := TxTemplateAccessListTx()
 		innerTx.Nonce = nonce
 		innerTx.Data = innerTxData
 		innerTx.AccessList = accessList
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
 		ethCoreTx = gethcore.NewTx(innerTx)
 	case gethcore.DynamicFeeTxType:
 		innerTx := TxTemplateDynamicFeeTx()
 		innerTx.Nonce = nonce
 		innerTx.Data = innerTxData
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
 		innerTx.AccessList = accessList
 		ethCoreTx = gethcore.NewTx(innerTx)
 	default:

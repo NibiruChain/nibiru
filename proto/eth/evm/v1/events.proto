@@ -65,3 +65,22 @@ message EventSendFunTokenToEvm {
     (gogoproto.nullable) = false
   ];
 }
+
+// EventTransfer defines event for EVM transfer
+message EventTransfer {
+  string sender = 1;
+  string recipient = 2;
+  string amount = 3;
+}
+
+// EventContractDeployed defines event for EVM contract deployment
+message EventContractDeployed {
+  string sender = 1;
+  string contract_addr = 2;
+}
+
+// EventContractExecuted defines event for EVM contract execution
+message EventContractExecuted {
+  string sender = 1;
+  string contract_addr = 2;
+}
