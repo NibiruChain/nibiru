@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -50,18 +51,15 @@ func (k *Keeper) ForEachStorage(
 	addr gethcommon.Address,
 	stopIter func(key, value gethcommon.Hash) bool,
 ) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := evm.PrefixAccStateEthAddr(addr)
-
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		key := gethcommon.BytesToHash(iterator.Key())
-		value := gethcommon.BytesToHash(iterator.Value())
-
-		// check if iteration stops
-		if !stopIter(key, value) {
+	iter := k.EvmState.AccState.Iterate(
+		ctx,
+		collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.Prefix(addr),
+	)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		hash := iter.Key().K2()
+		val := iter.Value()
+		if !stopIter(hash, gethcommon.BytesToHash(val)) {
 			return
 		}
 	}
