@@ -159,7 +159,6 @@ func DeployContract(
 		Nonce: (*hexutil.Uint64)(&nonce),
 		Input: (*hexutil.Bytes)(&bytecodeForCall),
 		From:  &deps.Sender.EthAddr,
-		// ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
 	}
 	ethTxMsg, err := GenerateAndSignEthTxMsg(jsonTxArgs, deps)
 	require.NoError(t, err)
