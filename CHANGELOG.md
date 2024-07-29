@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1962](https://github.com/NibiruChain/nibiru/pull/1962) - chore(evm): code cleanup, unused code, typos, styles, warnings
 - [#1963](https://github.com/NibiruChain/nibiru/pull/1963) - feat(evm): Deduct a fee during the creation of a FunToken mapping. Implemented by `deductCreateFunTokenFee` inside of the `eth.evm.v1.MsgCreateFunToken` transaction.
 - [#1965](https://github.com/NibiruChain/nibiru/pull/1965) - refactor(evm): remove evm post-processing hooks
+- [#1967](https://github.com/NibiruChain/nibiru/pull/1967) - feat(evm): export genesis
 - [#1968](https://github.com/NibiruChain/nibiru/pull/1968) - refactor(evm): funtoken events, cli commands and queries
 - [#1970](https://github.com/NibiruChain/nibiru/pull/1970) - refactor(evm): move evm antehandlers to separate package. Remove "gosdk/sequence_test.go", which causes a race condition in CI.
 - [#1971](https://github.com/NibiruChain/nibiru/pull/1971) - feat(evm): typed events for contract creation, contract execution and transfer
