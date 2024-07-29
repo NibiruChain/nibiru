@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/NibiruChain/collections"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -31,6 +32,7 @@ func InitGenesis(
 		panic("the EVM module account has not been set")
 	}
 
+	// Create evm contracts from genstate.Accounts
 	for _, account := range genState.Accounts {
 		address := gethcommon.HexToAddress(account.Address)
 		accAddress := sdk.AccAddress(address.Bytes())
@@ -57,11 +59,20 @@ func InitGenesis(
 			panic(fmt.Sprintf("%s account: %s , evm state codehash: %v, ethAccount codehash: %v, evm state code: %s\n",
 				s, account.Address, codeHash, ethAcct.GetCodeHash(), account.Code))
 		}
-
 		k.SetCode(ctx, codeHash.Bytes(), code)
 
 		for _, storage := range account.Storage {
 			k.SetState(ctx, address, gethcommon.HexToHash(storage.Key), gethcommon.HexToHash(storage.Value).Bytes())
+		}
+	}
+
+	// Create fungible token mappings
+	for _, funToken := range genState.FuntokenMappings {
+		err := k.FunTokens.SafeInsert(
+			ctx, gethcommon.HexToAddress(funToken.Erc20Addr.String()), funToken.BankDenom, funToken.IsMadeFromCoin,
+		)
+		if err != nil {
+			panic(fmt.Errorf("failed creating funtoken: %w", err))
 		}
 	}
 
@@ -70,9 +81,46 @@ func InitGenesis(
 
 // ExportGenesis exports genesis state of the EVM module
 func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak evm.AccountKeeper) *evm.GenesisState {
-	// TODO: impl ExportGenesis
+	var genesisAccounts []evm.GenesisAccount
+
+	// 1. Export EVM contacts
+	// TODO: find the way to get eth contract addresses from the evm keeper
+	allAccounts := ak.GetAllAccounts(ctx)
+	for _, acc := range allAccounts {
+		ethAcct, ok := acc.(eth.EthAccountI)
+		if ok {
+			address := ethAcct.EthAddress()
+			codeHash := ethAcct.GetCodeHash()
+			code, err := k.EvmState.ContractBytecode.Get(ctx, codeHash.Bytes())
+			if err != nil {
+				// Not a contract
+				continue
+			}
+			var storage evm.Storage
+
+			k.ForEachStorage(ctx, address, func(key, value gethcommon.Hash) bool {
+				storage = append(storage, evm.NewStateFromEthHashes(key, value))
+				return true
+			})
+			genesisAccounts = append(genesisAccounts, evm.GenesisAccount{
+				Address: address.String(),
+				Code:    eth.BytesToHex(code),
+				Storage: storage,
+			})
+		}
+	}
+
+	// 2. Export Fungible tokens
+	var funTokens []evm.FunToken
+	iter := k.FunTokens.Iterate(ctx, collections.Range[[]byte]{})
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		funTokens = append(funTokens, iter.Value())
+	}
+
 	return &evm.GenesisState{
-		Accounts: []evm.GenesisAccount{},
-		Params:   evm.Params{},
+		Params:           k.GetParams(ctx),
+		Accounts:         genesisAccounts,
+		FuntokenMappings: funTokens,
 	}
 }
