@@ -49,7 +49,6 @@ func (suite *CodecTestSuite) TestRegisterInterfaces() {
 			Interface: new(sdktx.TxExtensionOptionI),
 			WantImpls: []string{
 				TYPE_URL_WEB3_TX,
-				TYPE_URL_DYNAMIC_FEE_TX,
 			},
 		},
 	}
