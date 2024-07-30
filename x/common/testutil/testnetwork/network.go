@@ -15,6 +15,7 @@ import (
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/app/appconst"
 	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -143,12 +144,20 @@ Example:
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
 	s.Require().NoError(err)
 */
-func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
+func New(logger Logger, baseDir string, cfg Config) (network *Network, err error) {
 	// only one caller/test can create and use a network at a time
 	logger.Log("acquiring test network lock")
 	lock.Lock()
 
-	network := &Network{
+	// This is a `defer` pattern to add behavior that runs in the case that the error is
+	// non-nil, creating a concise way to add extra information.
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("error starting test network: %w", err)
+		}
+	}()
+
+	network = &Network{
 		Logger:     logger,
 		BaseDir:    baseDir,
 		Validators: make([]*Validator, cfg.NumValidators),
@@ -180,7 +189,10 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		ctx := server.NewDefaultContext()
 		tmCfg := ctx.Config
+
 		tmCfg.Consensus.TimeoutCommit = cfg.TimeoutCommit
+		defaultTmCfg := appconst.NewDefaultTendermintConfig()
+		tmCfg.DBBackend = defaultTmCfg.DBBackend
 
 		// Only allow the first validator to expose an RPC, API and gRPC
 		// server/client due to Tendermint in-process constraints.
@@ -196,14 +208,14 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 				var err error
 				apiListenAddr, _, err = server.FreeTCPAddr()
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to get free TCP address for API: %w", err)
 				}
 			}
 
 			appCfg.API.Address = apiListenAddr
 			apiURL, err := url.Parse(apiListenAddr)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse API listen address: %w", err)
 			}
 			apiAddr = fmt.Sprintf("http://%s:%s", apiURL.Hostname(), apiURL.Port())
 
@@ -262,12 +274,12 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o755)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create node configuration directory: %w", err)
 		}
 
 		err = os.MkdirAll(clientDir, 0o755)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create node client directory: %w", err)
 		}
 
 		tmCfg.SetRoot(nodeDir)
@@ -291,7 +303,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to initialize node validator files: %w", err)
 		}
 
 		nodeIDs[valIdx] = nodeID
@@ -299,13 +311,13 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create new keyring: %w", err)
 		}
 
 		keyringAlgos, _ := kb.SupportedAlgorithms()
 		algo, err := keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse signing algorithm: %w", err)
 		}
 
 		var mnemonic string
@@ -429,7 +441,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 	}
 
-	err := initGenFiles(cfg, genAccounts, genBalances, genFiles)
+	err = initGenFiles(cfg, genAccounts, genBalances, genFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +454,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	for idx, v := range network.Validators {
 		err := startInProcess(cfg, v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to start node: %w", err)
 		}
 		logger.Log("started validator", idx)
 	}
