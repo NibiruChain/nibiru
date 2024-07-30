@@ -69,11 +69,11 @@ func startInProcess(cfg Config, val *Validator) error {
 		logger.With("module", val.Moniker),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to construct Node: %w", err)
 	}
 
 	if err := tmNode.Start(); err != nil {
-		return err
+		return fmt.Errorf("failed Node.Start(): %w", err)
 	}
 
 	val.tmNode = tmNode

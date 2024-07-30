@@ -93,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1973](https://github.com/NibiruChain/nibiru/pull/1973) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
 - [#1976](https://github.com/NibiruChain/nibiru/pull/1976) - refactor(evm): unique chain ids for all networks
 - [#1977](https://github.com/NibiruChain/nibiru/pull/1977) - fix(localnet): rolled back change of evm validator address with cosmos derivation path
+- [#1979](https://github.com/NibiruChain/nibiru/pull/1979) -refactor(db): use pebbledb as the default db in integration tests
 
 #### Dapp modules: perp, spot, oracle, etc
 

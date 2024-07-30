@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
+
+	db "github.com/cometbft/cometbft-db"
 )
 
 const (
@@ -12,6 +14,11 @@ const (
 	BondDenom  = "unibi"
 	// AccountAddressPrefix: Bech32 prefix for Nibiru accounts.
 	AccountAddressPrefix = "nibi"
+)
+
+var (
+	DefaultDBBackend     db.BackendType = db.PebbleDBBackend
+	HavePebbleDBBuildTag bool
 )
 
 // Runtime version vars
