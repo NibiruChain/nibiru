@@ -17,7 +17,8 @@ const (
 )
 
 var (
-	DefaultDBBackend db.BackendType = db.PebbleDBBackend
+	DefaultDBBackend     db.BackendType = db.PebbleDBBackend
+	HavePebbleDBBuildTag bool
 )
 
 // Runtime version vars

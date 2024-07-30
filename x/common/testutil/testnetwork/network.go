@@ -191,8 +191,10 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		tmCfg := ctx.Config
 
 		tmCfg.Consensus.TimeoutCommit = cfg.TimeoutCommit
-		defaultTmCfg := appconst.NewDefaultTendermintConfig()
-		tmCfg.DBBackend = defaultTmCfg.DBBackend
+		if appconst.HavePebbleDBBuildTag {
+			defaultTmCfg := appconst.NewDefaultTendermintConfig()
+			tmCfg.DBBackend = defaultTmCfg.DBBackend
+		}
 
 		// Only allow the first validator to expose an RPC, API and gRPC
 		// server/client due to Tendermint in-process constraints.

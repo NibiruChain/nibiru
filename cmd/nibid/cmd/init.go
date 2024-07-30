@@ -7,8 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
 	tmcfg "github.com/cometbft/cometbft/config"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"

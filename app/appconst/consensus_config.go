@@ -1,8 +1,9 @@
 package appconst
 
 import (
-	tmcfg "github.com/cometbft/cometbft/config"
 	"time"
+
+	tmcfg "github.com/cometbft/cometbft/config"
 )
 
 // NewDefaultTendermintConfig returns a consensus "Config" (CometBFT) with new
