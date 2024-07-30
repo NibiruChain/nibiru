@@ -76,7 +76,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 			}
 
 			customAppTemplate, customAppConfig := srvconfig.AppConfig("unibi")
-			tmCfg := customTendermintConfig()
+			tmCfg := appconst.NewDefaultTendermintConfig()
 
 			return sdkserver.InterceptConfigsPreRunHandler(
 				cmd,
