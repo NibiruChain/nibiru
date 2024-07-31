@@ -37,10 +37,7 @@ func (k *Keeper) EthereumTx(
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	sender := msg.From
 	tx := msg.AsTransaction()
-	txIndex := k.EvmState.BlockTxIndex.GetOr(ctx, 0)
 
 	resp, err = k.ApplyEvmTx(ctx, tx)
 	if err != nil {
@@ -52,7 +49,7 @@ func (k *Keeper) EthereumTx(
 		// add event for ethereum transaction hash format
 		sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, resp.Hash),
 		// add event for index of valid ethereum tx
-		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex, 10)),
+		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(k.EvmState.BlockTxIndex.GetOr(ctx, 0), 10)),
 		// add event for eth tx gas used, we can't get it from cosmos tx result when it contains multiple eth tx msgs.
 		sdk.NewAttribute(evm.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
 	}
@@ -93,7 +90,7 @@ func (k *Keeper) EthereumTx(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, sender),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
 			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
 		),
 	})
@@ -104,16 +101,15 @@ func (k *Keeper) EthereumTx(
 func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
 ) (*evm.MsgEthereumTxResponse, error) {
-	ethChainId := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, ethChainId)
+	evmConfig, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
 	txConfig := k.TxConfig(ctx, tx.Hash())
 
 	// get the signer according to the chain rules from the config and block height
-	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
+	msg, err := tx.AsMessage(signer, evmConfig.BaseFee)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
@@ -121,7 +117,7 @@ func (k *Keeper) ApplyEvmTx(
 	tmpCtx, commit := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, cfg, txConfig)
+	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -185,7 +181,7 @@ func (k *Keeper) ApplyEvmTx(
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
-	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, cfg.Params.EvmDenom); err != nil {
+	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, evmConfig.Params.EvmDenom); err != nil {
 		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
 	}
 
@@ -236,7 +232,7 @@ func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
-	cfg *statedb.EVMConfig,
+	evmConfig *statedb.EVMConfig,
 	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
 ) *vm.EVM {
@@ -244,21 +240,21 @@ func (k *Keeper) NewEVM(
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
 		GetHash:     k.GetHashFn(ctx),
-		Coinbase:    cfg.CoinBase,
+		Coinbase:    evmConfig.CoinBase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
 		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
-		BaseFee:     cfg.BaseFee,
+		BaseFee:     evmConfig.BaseFee,
 		Random:      nil, // not supported
 	}
 
 	txCtx := core.NewEVMTxContext(msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+		tracer = k.Tracer(ctx, msg, evmConfig.ChainConfig)
 	}
-	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
-	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
+	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
 	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
 	return theEvm
 }
@@ -361,7 +357,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msg core.Message,
 	tracer vm.EVMLogger,
 	commit bool,
-	cfg *statedb.EVMConfig,
+	evmConfig *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
 ) (*evm.MsgEthereumTxResponse, error) {
 	var (
@@ -370,14 +366,14 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 
 	// return error if contract creation or call are disabled through governance
-	if !cfg.Params.EnableCreate && msg.To() == nil {
+	if !evmConfig.Params.EnableCreate && msg.To() == nil {
 		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
-	} else if !cfg.Params.EnableCall && msg.To() != nil {
+	} else if !evmConfig.Params.EnableCall && msg.To() != nil {
 		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
-	evmObj := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
+	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	numPrecompiles := len(k.precompiles)
 	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
@@ -408,7 +404,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
 
-	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, cfg.ChainConfig, contractCreation)
+	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
 	if err != nil {
 		// should have already been checked on Ante Handler
 		return nil, errors.Wrap(err, "intrinsic gas failed")
