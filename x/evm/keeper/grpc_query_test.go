@@ -127,7 +127,7 @@ func (s *Suite) TestQueryNibiruAccount() {
 			deps := evmtest.NewTestDeps()
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.NibiruAccount(goCtx, req)
+			gotResp, err := deps.EvmKeeper.NibiruAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -194,7 +194,7 @@ func (s *Suite) TestQueryEthAccount() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.EthAccount(goCtx, req)
+			gotResp, err := deps.EvmKeeper.EthAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -304,7 +304,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.ValidatorAccount(goCtx, req)
+			gotResp, err := deps.EvmKeeper.ValidatorAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -380,7 +380,7 @@ func (s *Suite) TestQueryStorage() {
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.K.Storage(goCtx, req)
+			gotResp, err := deps.EvmKeeper.Storage(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -439,7 +439,7 @@ func (s *Suite) TestQueryCode() {
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.K.Code(goCtx, req)
+			gotResp, err := deps.EvmKeeper.Code(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -456,8 +456,8 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	deps.K.SetParams(deps.Ctx, want)
-	gotResp, err := deps.K.Params(deps.GoCtx(), nil)
+	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	gotResp, err := deps.EvmKeeper.Params(deps.GoCtx(), nil)
 	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
@@ -467,8 +467,8 @@ func (s *Suite) TestQueryParams() {
 
 	// Empty params to test the setter
 	want.ActivePrecompiles = []string{"new", "something"}
-	deps.K.SetParams(deps.Ctx, want)
-	gotResp, err = deps.K.Params(deps.GoCtx(), nil)
+	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	gotResp, err = deps.EvmKeeper.Params(deps.GoCtx(), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
@@ -597,7 +597,7 @@ func (s *Suite) TestQueryBalance() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.Balance(goCtx, req)
+			gotResp, err := deps.EvmKeeper.Balance(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -634,7 +634,7 @@ func (s *Suite) TestQueryBaseFee() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.BaseFee(goCtx, req)
+			gotResp, err := deps.EvmKeeper.BaseFee(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -745,7 +745,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.EstimateGas(goCtx, req)
+			gotResp, err := deps.EvmKeeper.EstimateGas(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -805,7 +805,7 @@ func (s *Suite) TestTraceTx() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.TraceTx(goCtx, req)
+			gotResp, err := deps.EvmKeeper.TraceTx(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -884,7 +884,7 @@ func (s *Suite) TestTraceBlock() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.TraceBlock(goCtx, req)
+			gotResp, err := deps.EvmKeeper.TraceBlock(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -932,7 +932,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 		{
 			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
 			setup: func(deps *evmtest.TestDeps) {
-				_ = deps.K.FunTokens.SafeInsert(
+				_ = deps.EvmKeeper.FunTokens.SafeInsert(
 					deps.Ctx,
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
@@ -957,7 +957,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 		{
 			name: "happy: token mapping exists from ERC20 token -> cosmos coin",
 			setup: func(deps *evmtest.TestDeps) {
-				_ = deps.K.FunTokens.SafeInsert(
+				_ = deps.EvmKeeper.FunTokens.SafeInsert(
 					deps.Ctx,
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
@@ -989,7 +989,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 			}
 			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.K.FunTokenMapping(goCtx, req)
+			gotResp, err := deps.EvmKeeper.FunTokenMapping(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
