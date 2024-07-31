@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthMinGasPriceDecorator() {
+func (s *TestSuite) TestMempoolGasFeeDecorator() {
 	testCases := []struct {
 		name     string
 		txSetup  func(deps *evmtest.TestDeps) sdk.Tx

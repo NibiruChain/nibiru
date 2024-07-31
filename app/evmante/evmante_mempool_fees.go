@@ -13,7 +13,7 @@ var _ sdk.AnteDecorator = MempoolGasPriceDecorator{}
 
 // MempoolGasPriceDecorator will check if the transaction's fee is at least as large
 // as the mempool MinGasPrices param. If fee is too low, decorator returns error and tx
-// is rejected. This applies to both CheckTx only.
+// is rejected. This applies to CheckTx only.
 // If fee is high enough, then call next AnteHandler
 type MempoolGasPriceDecorator struct {
 	evmKeeper EVMKeeper
