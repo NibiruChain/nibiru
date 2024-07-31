@@ -23,7 +23,7 @@ import type {
   TypedContractMethod,
 } from "./common";
 
-export interface FunTokenCompiledInterface extends Interface {
+export interface TestERC20CompiledInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "allowance"
@@ -120,11 +120,11 @@ export namespace TransferEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface FunTokenCompiled extends BaseContract {
-  connect(runner?: ContractRunner | null): FunTokenCompiled;
+export interface TestERC20Compiled extends BaseContract {
+  connect(runner?: ContractRunner | null): TestERC20Compiled;
   waitForDeployment(): Promise<this>;
 
-  interface: FunTokenCompiledInterface;
+  interface: TestERC20CompiledInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,

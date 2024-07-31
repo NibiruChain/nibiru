@@ -1,35 +1,27 @@
-import { describe, it, expect } from "bun:test" // eslint-disable-line import/no-unresolved
-import { ethers } from "ethers"
-import { account, deployContract } from "./setup"
-import { FunTokenCompiled } from "../types/ethers-contracts"
+import { describe, expect, it } from "bun:test"; // eslint-disable-line import/no-unresolved
+import { parseUnits, toBigInt, Wallet } from "ethers";
+import { TestERC20Compiled__factory } from "../types/ethers-contracts";
+import { account } from "./setup";
 
 describe("ERC-20 contract tests", () => {
-  it("send, balanceOf", async () => {
-    const contract = (await deployContract(
-      "TestERC20Compiled.json",
-    )) as FunTokenCompiled
-    const contractAddress = await contract.getAddress()
-    expect(contractAddress).toBeDefined()
+  it("should send properly", async () => {
+    const factory = new TestERC20Compiled__factory(account);
+    const contract = await factory.deploy();
+    await contract.waitForDeployment()
+    expect(contract.getAddress()).resolves.toBeDefined()
 
-    // Execute contract: ERC20 transfer
-    const shrimpAddress = ethers.Wallet.createRandom().address
-    let ownerInitialBalance = ethers.parseUnits("1000000", 18)
+    const ownerInitialBalance = parseUnits("1000000", 18)
+    const alice = Wallet.createRandom()
 
-    const amountToSend = ethers.parseUnits("1000", 18) // contract tokens
-
-    let ownerBalance = await contract.balanceOf(account.address)
-    let shrimpBalance = await contract.balanceOf(shrimpAddress)
-
-    expect(ownerBalance).toEqual(ownerInitialBalance)
-    expect(shrimpBalance).toEqual(ethers.toBigInt(0))
-
-    let tx = await contract.transfer(shrimpAddress, amountToSend)
+    expect(contract.balanceOf(account)).resolves.toEqual(ownerInitialBalance)
+    expect(contract.balanceOf(alice)).resolves.toEqual(toBigInt(0))
+    
+    // send to alice
+    const amountToSend = parseUnits("1000", 18) // contract tokens
+    let tx = await contract.transfer(alice, amountToSend)
     await tx.wait()
 
-    ownerBalance = await contract.balanceOf(account.address)
-    shrimpBalance = await contract.balanceOf(shrimpAddress)
-
-    expect(ownerBalance).toEqual(ownerInitialBalance - amountToSend)
-    expect(shrimpBalance).toEqual(amountToSend)
-  }, 20000)
+    expect(contract.balanceOf(account)).resolves.toEqual(ownerInitialBalance - amountToSend)
+    expect(contract.balanceOf(alice)).resolves.toEqual(amountToSend)
+  }, 20e3)
 })

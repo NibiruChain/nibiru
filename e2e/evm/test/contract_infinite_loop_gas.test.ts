@@ -1,28 +1,24 @@
-import { describe, it, expect, beforeAll } from "bun:test" // eslint-disable-line import/no-unresolved
-import { deployContract } from "./setup"
-import { InfiniteLoopGasCompiled } from "../types/ethers-contracts"
+import { describe, expect, it } from "bun:test"; // eslint-disable-line import/no-unresolved
+import { toBigInt } from "ethers";
+import { InfiniteLoopGasCompiled__factory } from "../types/ethers-contracts";
+import { account } from "./setup";
 
 describe("Infinite loop gas contract", () => {
-  let contract: InfiniteLoopGasCompiled
-
-  beforeAll(async () => {
-    contract = (await deployContract(
-      "InfiniteLoopGasCompiled.json",
-    )) as InfiniteLoopGasCompiled
-  })
-
   it("should fail due to out of gas error", async () => {
-    const initialCounter = await contract.counter()
-    expect(initialCounter).toBe(BigInt(0))
+    const factory = new InfiniteLoopGasCompiled__factory(account);
+    const contract = await factory.deploy();
+    await contract.waitForDeployment()
+    
+    expect(contract.counter()).resolves.toBe(toBigInt(0))
 
     try {
-      const tx = await contract.forever({ gasLimit: 1000000 })
+      const tx = await contract.forever({ gasLimit: 1e6 })
       await tx.wait()
-      throw "The transaction should have failed but did not."
+      throw new Error("The transaction should have failed but did not.")
     } catch (error) {
       expect(error.message).toContain("transaction execution reverted")
     }
-    const finalCounter = await contract.counter()
-    expect(finalCounter).toEqual(initialCounter)
-  }, 20000)
+    
+    expect(contract.counter()).resolves.toBe(toBigInt(0))
+  }, 20e3)
 })
