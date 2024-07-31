@@ -108,7 +108,7 @@ func (k *Keeper) AddToBlockGasUsed(
 	if result < gasUsed {
 		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
 	}
-	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	k.EvmState.BlockGasUsed.Set(ctx, result)
 	return result, nil
 }
 
