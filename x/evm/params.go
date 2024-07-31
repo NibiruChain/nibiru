@@ -42,6 +42,7 @@ func DefaultParams() Params {
 		ActivePrecompiles:   AvailableEVMExtensions,
 		EVMChannels:         []string{},
 		CreateFuntokenFee:   math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
+		GlobalMinGasPrice:   sdk.NewDec(1),                     // 1unibi
 	}
 }
 
