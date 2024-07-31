@@ -119,7 +119,7 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 
 func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 	// TODO: plug in fee market keeper
-	return big.NewInt(0)
+	return big.NewInt(1)
 }
 
 // Logger returns a module-specific logger.
