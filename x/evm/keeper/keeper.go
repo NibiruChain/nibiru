@@ -122,12 +122,6 @@ func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 	return big.NewInt(0)
 }
 
-func (k Keeper) GetBaseFeeNoCfg(
-	ctx sdk.Context,
-) *big.Int {
-	return k.GetBaseFee(ctx)
-}
-
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
