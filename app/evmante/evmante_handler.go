@@ -16,6 +16,7 @@ func NewAnteHandlerEVM(
 		NewEthSetUpContextDecorator(&options.EvmKeeper),
 		// Check eth effective gas price against the global MinGasPrice
 		NewMempoolGasPriceDecorator(&options.EvmKeeper),
+		NewGlobalGasPriceDecorator(&options.EvmKeeper),
 		NewEthValidateBasicDecorator(&options.EvmKeeper),
 		NewEthSigVerificationDecorator(&options.EvmKeeper),
 		NewAnteDecVerifyEthAcc(&options.EvmKeeper, options.AccountKeeper),
