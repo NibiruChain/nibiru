@@ -39,10 +39,6 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	if !ctx.IsCheckTx() {
-		return next(ctx, tx, simulate)
-	}
-
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
