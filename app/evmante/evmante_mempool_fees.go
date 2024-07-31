@@ -57,7 +57,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 
 		effectiveGasPrice := ethTx.GetEffectiveGasPrice(baseFee)
 
-		if effectiveGasPrice.Cmp(minGasPrice.BigInt()) < 0 {
+		if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFee,
 				"provided gas price < minimum local gas price (%s < %s). "+
