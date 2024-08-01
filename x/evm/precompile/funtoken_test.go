@@ -33,7 +33,7 @@ func (s *Suite) TestPrecompile_FunToken() {
 // when calling the FunToken
 func (s *Suite) FunToken_PrecompileExists() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
-	abi := embeds.Contract_Funtoken.ABI
+	abi := embeds.SmartContract_FunToken.ABI
 	deps := evmtest.NewTestDeps()
 
 	codeResp, err := deps.K.Code(
@@ -71,7 +71,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 
 func (s *Suite) FunToken_HappyPath() {
 	precompileAddr := precompile.PrecompileAddr_FuntokenGateway
-	abi := embeds.Contract_Funtoken.ABI
+	abi := embeds.SmartContract_FunToken.ABI
 	deps := evmtest.NewTestDeps()
 
 	theUser := deps.Sender.EthAddr
@@ -93,7 +93,7 @@ func (s *Suite) FunToken_HappyPath() {
 	{
 		from := theUser
 		to := theUser
-		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
+		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
 		s.NoError(err)
 		_, err = evmtest.DoEthTx(&deps, contract, from, input)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
@@ -103,7 +103,7 @@ func (s *Suite) FunToken_HappyPath() {
 	{
 		from := theEvm
 		to := theUser
-		input, err := embeds.Contract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
+		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
 		s.NoError(err)
 
 		_, err = evmtest.DoEthTx(&deps, contract, from, input)

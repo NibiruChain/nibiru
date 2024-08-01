@@ -9,14 +9,13 @@ import (
 )
 
 func TestLoadContracts(t *testing.T) {
-	for _, tc := range []embeds.SmartContractFixture{
+	for _, tc := range []embeds.CompiledEvmContract{
 		embeds.SmartContract_TestERC20,
 		embeds.SmartContract_ERC20Minter,
 		embeds.SmartContract_FunToken,
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			_, err := tc.Load()
-			assert.NoError(t, err)
+			assert.NoError(t, tc.Load())
 		})
 	}
 }

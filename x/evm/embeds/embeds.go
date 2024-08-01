@@ -21,55 +21,49 @@ import (
 )
 
 var (
-	// Contract_ERC20Minter: The default ERC20 contract deployed during the
-	// creation of a `FunToken` mapping from a bank coin.
-	Contract_ERC20Minter CompiledEvmContract
-
 	//go:embed ERC20MinterCompiled.json
 	erc20MinterContractJSON []byte
-
-	// Contract_Funtoken: Precompile contract interface for
-	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
-	// to non-EVM accounts. Only the ABI is used.
-	Contract_Funtoken CompiledEvmContract
 	//go:embed IFunTokenCompiled.json
 	funtokenContractJSON []byte
 )
 
-func init() {
-	Contract_ERC20Minter = SmartContract_ERC20Minter.MustLoad()
-	Contract_Funtoken = SmartContract_FunToken.MustLoad()
-}
-
 var (
-	SmartContract_TestERC20 = SmartContractFixture{
+	SmartContract_TestERC20 = CompiledEvmContract{
 		Name:        "TestERC20.sol",
 		FixtureType: FixtueType_Test,
 	}
 
-	SmartContract_ERC20Minter = SmartContractFixture{
+	// Contract_ERC20Minter: The default ERC20 contract deployed during the
+	// creation of a `FunToken` mapping from a bank coin.
+	SmartContract_ERC20Minter = CompiledEvmContract{
 		Name:        "ERC20Minter.sol",
 		FixtureType: FixtueType_Prod,
 		EmbedJSON:   erc20MinterContractJSON,
 	}
-	SmartContract_FunToken = SmartContractFixture{
+
+	// SmartContract_Funtoken: Precompile contract interface for
+	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
+	// to non-EVM accounts. Only the ABI is used.
+	SmartContract_FunToken = CompiledEvmContract{
 		Name:        "FunToken.sol",
 		FixtureType: FixtueType_Prod,
 		EmbedJSON:   funtokenContractJSON,
 	}
 )
 
-// CompiledEvmContract: EVM contract that can be deployed into the EVM state and
-// used as a valid precompile.
-type CompiledEvmContract struct {
-	ABI      gethabi.ABI `json:"abi"`
-	Bytecode []byte      `json:"bytecode"`
+func init() {
+	SmartContract_ERC20Minter.MustLoad()
+	SmartContract_FunToken.MustLoad()
 }
 
-type SmartContractFixture struct {
+type CompiledEvmContract struct {
 	Name        string
 	FixtureType ContractFixtureType
 	EmbedJSON   []byte
+
+	// filled in post-load
+	ABI      *gethabi.ABI `json:"abi"`
+	Bytecode []byte       `json:"bytecode"`
 }
 
 // ContractFixtureType: Enum type for embedded smart contracts. This type
@@ -114,35 +108,34 @@ func ParseCompiledJson(
 	return newAbi, rawBytecodeBz.Bytes(), err
 }
 
-func (sc SmartContractFixture) MustLoad() (out CompiledEvmContract) {
-	out, err := sc.Load()
+func (sc *CompiledEvmContract) MustLoad() {
+	err := sc.Load()
 	if err != nil {
 		panic(err)
 	}
-	return out
 }
 
-func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
+func (sc CompiledEvmContract) Load() error {
 	var jsonBz []byte
 
 	// Locate the contracts directory.
 	switch sc.FixtureType {
 	case FixtueType_Prod:
 		if sc.EmbedJSON == nil {
-			return out, fmt.Errorf("missing compiled contract embed")
+			return fmt.Errorf("missing compiled contract embed")
 		}
 		jsonBz = sc.EmbedJSON
 	case FixtueType_Test:
 		contractsDirPath, err := pathToE2EContracts()
 		if err != nil {
-			return out, err
+			return err
 		}
 		baseName := strings.TrimSuffix(sc.Name, ".sol")
 		compiledPath := fmt.Sprintf("%s/%sCompiled.json", contractsDirPath, baseName)
 
 		jsonBz, err = os.ReadFile(compiledPath)
 		if err != nil {
-			return out, err
+			return err
 		}
 	default:
 		panic(fmt.Errorf("unexpected case type \"%s\"", sc.FixtureType))
@@ -150,13 +143,13 @@ func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
 
 	abi, bytecode, err := ParseCompiledJson(jsonBz)
 	if err != nil {
-		return
+		return err
 	}
 
-	return CompiledEvmContract{
-		ABI:      *abi,
-		Bytecode: bytecode,
-	}, err
+	sc.ABI = abi
+	sc.Bytecode = bytecode
+
+	return nil
 }
 
 // pathToE2EContracts: Returns the absolute path to the E2E test contract

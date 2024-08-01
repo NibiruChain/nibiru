@@ -35,7 +35,7 @@ func TestKeeperSuite(t *testing.T) {
 // - verifies that fungible token is in place and the balance is correct
 func (s *Suite) TestExportInitGenesis() {
 	deps := evmtest.NewTestDeps()
-	erc20Contract := embeds.SmartContract_TestERC20.MustLoad()
+	erc20Contract := embeds.SmartContract_TestERC20
 	fromUser := deps.Sender.EthAddr
 	toUserA := gethcommon.HexToAddress("0xAE8A5F44A9b55Ae6D2c9C228253E8fAfb837d2F2")
 	toUserB := gethcommon.HexToAddress("0xf893292542F2578F1004e62fd723901ddE5EC5Cf")

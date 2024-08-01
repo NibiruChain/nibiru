@@ -497,8 +497,7 @@ func (s *Suite) TestQueryEthCall() {
 		{
 			name: "happy: eth call for erc20 token transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract, err := embeds.SmartContract_TestERC20.Load()
-				s.Require().NoError(err)
+				fungibleTokenContract := embeds.SmartContract_TestERC20
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,

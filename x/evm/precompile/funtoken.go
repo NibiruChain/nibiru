@@ -84,8 +84,8 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	}
 }
 
-func (p precompileFunToken) ABI() gethabi.ABI {
-	return embeds.Contract_Funtoken.ABI
+func (p precompileFunToken) ABI() *gethabi.ABI {
+	return embeds.SmartContract_FunToken.ABI
 }
 
 type precompileFunToken struct {

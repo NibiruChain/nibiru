@@ -79,12 +79,12 @@ func addPrecompileToVM(p vm.PrecompiledContract) {
 }
 
 type NibiruPrecompile interface {
-	ABI() gethabi.ABI
+	ABI() *gethabi.ABI
 }
 
 // ABIMethodByID: Looks up an ABI method by the 4-byte id.
 // Copy of "ABI.MethodById" from go-ethereum version > 1.10
-func ABIMethodByID(abi gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
+func ABIMethodByID(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	if len(sigdata) < 4 {
 		return nil, fmt.Errorf("data too short (%d bytes) for abi method lookup", len(sigdata))
 	}
