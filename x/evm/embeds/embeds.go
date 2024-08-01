@@ -81,12 +81,6 @@ const (
 	FixtueType_Test = "test"
 )
 
-// HardhatOutput: Expected format for smart contract test fixtures.
-type HardhatOutput struct {
-	ABI      json.RawMessage `json:"abi"`
-	Bytecode HexString       `json:"bytecode"`
-}
-
 // HexString: Hexadecimal-encoded string
 type HexString string
 
@@ -100,33 +94,24 @@ func (h HexString) FromBytes(bz []byte) HexString {
 	return HexString(gethcommon.Bytes2Hex(bz))
 }
 
-func NewHardhatOutputFromJson(
+func ParseCompiledJson(
 	jsonBz []byte,
-) (out HardhatOutput, err error) {
+) (abi *gethabi.ABI, bytecode []byte, err error) {
 	rawJsonBz := make(map[string]json.RawMessage)
 	err = json.Unmarshal(jsonBz, &rawJsonBz)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
-	var rawBytecodeBz HexString = HexString(rawJsonBz["bytecode"])
 
-	return HardhatOutput{
-		ABI:      rawJsonBz["abi"],
-		Bytecode: rawBytecodeBz,
-	}, err
-}
-
-func (jsonObj HardhatOutput) EvmContract() (out CompiledEvmContract, err error) {
 	newAbi := new(gethabi.ABI)
-	err = newAbi.UnmarshalJSON(jsonObj.ABI)
+	err = newAbi.UnmarshalJSON(rawJsonBz["abi"])
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
-	return CompiledEvmContract{
-		ABI:      *newAbi,
-		Bytecode: jsonObj.Bytecode.Bytes(),
-	}, err
+	rawBytecodeBz := HexString(rawJsonBz["bytecode"])
+
+	return newAbi, rawBytecodeBz.Bytes(), err
 }
 
 func (sc SmartContractFixture) MustLoad() (out CompiledEvmContract) {
@@ -163,12 +148,15 @@ func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
 		panic(fmt.Errorf("unexpected case type \"%s\"", sc.FixtureType))
 	}
 
-	compiledJson, err := NewHardhatOutputFromJson(jsonBz)
+	abi, bytecode, err := ParseCompiledJson(jsonBz)
 	if err != nil {
 		return
 	}
 
-	return compiledJson.EvmContract()
+	return CompiledEvmContract{
+		ABI:      *abi,
+		Bytecode: bytecode,
+	}, err
 }
 
 // pathToE2EContracts: Returns the absolute path to the E2E test contract
