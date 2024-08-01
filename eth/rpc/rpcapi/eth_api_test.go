@@ -63,7 +63,7 @@ func (s *TestSuite) SetupSuite() {
 
 	s.network = network
 	s.ethClient = network.Validators[0].JSONRPCClient
-	s.contractData = embeds.SmartContract_TestERC20
+	s.contractData = embeds.SmartContract_ERC20Minter
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey

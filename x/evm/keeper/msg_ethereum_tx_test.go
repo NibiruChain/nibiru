@@ -125,11 +125,11 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	)
 	s.Require().NoError(err)
 	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_TestERC20, s.T(),
+		&deps, embeds.SmartContract_ERC20Minter, s.T(),
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-	testContract := embeds.SmartContract_TestERC20
+	testContract := embeds.SmartContract_ERC20Minter
 	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	input, err := testContract.ABI.Pack("transfer", to, big.NewInt(123))
 	s.NoError(err)

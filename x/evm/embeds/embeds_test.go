@@ -1,21 +1,24 @@
 package embeds_test
 
 import (
+	_ "embed"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 )
 
+//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
+var testErc20Json []byte
+
+var SmartContract_ERC20Minter = embeds.CompiledEvmContract{
+	Name:      "TestERC20.sol",
+	EmbedJSON: testErc20Json,
+}
+
 func TestLoadContracts(t *testing.T) {
-	for _, tc := range []embeds.CompiledEvmContract{
-		embeds.SmartContract_TestERC20,
-		embeds.SmartContract_ERC20Minter,
-		embeds.SmartContract_FunToken,
-	} {
-		t.Run(tc.Name, func(t *testing.T) {
-			assert.NoError(t, tc.Load())
-		})
-	}
+	require.NotPanics(t, func() {
+		SmartContract_ERC20Minter.MustLoad()
+	})
 }

@@ -28,11 +28,6 @@ var (
 )
 
 var (
-	SmartContract_TestERC20 = CompiledEvmContract{
-		Name:        "TestERC20.sol",
-		FixtureType: FixtueType_Test,
-	}
-
 	// Contract_ERC20Minter: The default ERC20 contract deployed during the
 	// creation of a `FunToken` mapping from a bank coin.
 	SmartContract_ERC20Minter = CompiledEvmContract{

@@ -48,7 +48,7 @@ func CreateContractTxMsg(
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGasContractCreation)
 	}
-	testContract := embeds.SmartContract_TestERC20
+	testContract := embeds.SmartContract_ERC20Minter
 	gethTxCreateCntract := &gethcore.AccessListTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
