@@ -19,6 +19,8 @@ var (
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenContractJSON []byte
+	//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
+	testErc20Json []byte
 )
 
 var (
@@ -36,11 +38,17 @@ var (
 		Name:      "FunToken.sol",
 		EmbedJSON: funtokenContractJSON,
 	}
+
+	SmartContract_TestERC20 = CompiledEvmContract{
+		Name:      "TestERC20.sol",
+		EmbedJSON: testErc20Json,
+	}
 )
 
 func init() {
 	SmartContract_ERC20Minter.MustLoad()
 	SmartContract_FunToken.MustLoad()
+	SmartContract_TestERC20.MustLoad()
 }
 
 type CompiledEvmContract struct {
@@ -69,6 +77,11 @@ func (sc *CompiledEvmContract) MustLoad() {
 		panic(err)
 	}
 
+	var bytecodeStr string
+	err = json.Unmarshal(rawJsonBz["bytecode"], &bytecodeStr)
+	if err != nil {
+		panic(err)
+	}
+	sc.Bytecode = gethcommon.FromHex(bytecodeStr)
 	sc.ABI = abi
-	sc.Bytecode = gethcommon.FromHex(string(rawJsonBz["bytecode"]))
 }
