@@ -9,7 +9,6 @@ import (
 	// program (smart contracts).
 	_ "embed"
 	"encoding/json"
-	"strings"
 
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -53,19 +52,6 @@ type CompiledEvmContract struct {
 	Bytecode []byte       `json:"bytecode"`
 }
 
-// HexString: Hexadecimal-encoded string
-type HexString string
-
-func (h HexString) Bytes() []byte {
-	return gethcommon.Hex2Bytes(
-		strings.TrimPrefix(string(h), "0x"),
-	)
-}
-func (h HexString) String() string { return string(h) }
-func (h HexString) FromBytes(bz []byte) HexString {
-	return HexString(gethcommon.Bytes2Hex(bz))
-}
-
 func parseCompiledJson(
 	jsonBz []byte,
 ) (abi *gethabi.ABI, bytecode []byte, err error) {
@@ -81,9 +67,7 @@ func parseCompiledJson(
 		return nil, nil, err
 	}
 
-	rawBytecodeBz := HexString(rawJsonBz["bytecode"])
-
-	return newAbi, rawBytecodeBz.Bytes(), err
+	return newAbi, gethcommon.FromHex(string(rawJsonBz["bytecode"])), err
 }
 
 func (sc *CompiledEvmContract) MustLoad() {
