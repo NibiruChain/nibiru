@@ -50,12 +50,12 @@ var (
 	SmartContract_ERC20Minter = SmartContractFixture{
 		Name:        "ERC20Minter.sol",
 		FixtureType: FixtueType_Prod,
-		EmbedJSON:   &erc20MinterContractJSON,
+		EmbedJSON:   erc20MinterContractJSON,
 	}
 	SmartContract_FunToken = SmartContractFixture{
 		Name:        "FunToken.sol",
 		FixtureType: FixtueType_Prod,
-		EmbedJSON:   &funtokenContractJSON,
+		EmbedJSON:   funtokenContractJSON,
 	}
 )
 
@@ -69,7 +69,7 @@ type CompiledEvmContract struct {
 type SmartContractFixture struct {
 	Name        string
 	FixtureType ContractFixtureType
-	EmbedJSON   *[]byte
+	EmbedJSON   []byte
 }
 
 // ContractFixtureType: Enum type for embedded smart contracts. This type
@@ -131,7 +131,7 @@ func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
 		if sc.EmbedJSON == nil {
 			return out, fmt.Errorf("missing compiled contract embed")
 		}
-		jsonBz = *sc.EmbedJSON
+		jsonBz = sc.EmbedJSON
 	case FixtueType_Test:
 		contractsDirPath, err := pathToE2EContracts()
 		if err != nil {
