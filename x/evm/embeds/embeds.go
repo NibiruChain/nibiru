@@ -108,11 +108,7 @@ func NewHardhatOutputFromJson(
 	if err != nil {
 		return
 	}
-	var rawBytecodeBz HexString
-	err = json.Unmarshal(rawJsonBz["bytecode"], &rawBytecodeBz)
-	if err != nil {
-		return
-	}
+	var rawBytecodeBz HexString = HexString(rawJsonBz["bytecode"])
 
 	return HardhatOutput{
 		ABI:      rawJsonBz["abi"],
