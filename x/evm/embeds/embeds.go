@@ -9,7 +9,6 @@ import (
 	// program (smart contracts).
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
@@ -88,24 +87,15 @@ func parseCompiledJson(
 }
 
 func (sc *CompiledEvmContract) MustLoad() {
-	err := sc.Load()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (sc CompiledEvmContract) Load() error {
 	if sc.EmbedJSON == nil {
-		return fmt.Errorf("missing compiled contract embed")
+		panic("missing compiled contract embed")
 	}
 
 	abi, bytecode, err := parseCompiledJson(sc.EmbedJSON)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	sc.ABI = abi
 	sc.Bytecode = bytecode
-
-	return nil
 }
