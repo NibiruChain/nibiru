@@ -88,7 +88,7 @@ func (h HexString) FromBytes(bz []byte) HexString {
 	return HexString(gethcommon.Bytes2Hex(bz))
 }
 
-func ParseCompiledJson(
+func parseCompiledJson(
 	jsonBz []byte,
 ) (abi *gethabi.ABI, bytecode []byte, err error) {
 	rawJsonBz := make(map[string]json.RawMessage)
@@ -141,7 +141,7 @@ func (sc CompiledEvmContract) Load() error {
 		panic(fmt.Errorf("unexpected case type \"%s\"", sc.FixtureType))
 	}
 
-	abi, bytecode, err := ParseCompiledJson(jsonBz)
+	abi, bytecode, err := parseCompiledJson(jsonBz)
 	if err != nil {
 		return err
 	}
