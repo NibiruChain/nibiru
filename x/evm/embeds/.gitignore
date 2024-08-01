@@ -1,14 +1,13 @@
 node_modules
 .env
 
-contracts
 ignition
 bun.lockb
-package-lock.json
 
 # Hardhat files
 /cache
-/artifacts
+artifacts/@openzeppelin
+artifacts/build-info
 
 # TypeChain files
 /typechain

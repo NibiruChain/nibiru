@@ -21,9 +21,9 @@ import (
 )
 
 var (
-	//go:embed ERC20MinterCompiled.json
+	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
 	erc20MinterContractJSON []byte
-	//go:embed IFunTokenCompiled.json
+	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenContractJSON []byte
 )
 
