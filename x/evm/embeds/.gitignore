@@ -8,6 +8,7 @@ bun.lockb
 /cache
 artifacts/@openzeppelin
 artifacts/build-info
+*.dbg.json
 
 # TypeChain files
 /typechain
