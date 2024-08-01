@@ -52,34 +52,23 @@ type CompiledEvmContract struct {
 	Bytecode []byte       `json:"bytecode"`
 }
 
-func parseCompiledJson(
-	jsonBz []byte,
-) (abi *gethabi.ABI, bytecode []byte, err error) {
-	rawJsonBz := make(map[string]json.RawMessage)
-	err = json.Unmarshal(jsonBz, &rawJsonBz)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	newAbi := new(gethabi.ABI)
-	err = newAbi.UnmarshalJSON(rawJsonBz["abi"])
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return newAbi, gethcommon.FromHex(string(rawJsonBz["bytecode"])), err
-}
-
 func (sc *CompiledEvmContract) MustLoad() {
 	if sc.EmbedJSON == nil {
 		panic("missing compiled contract embed")
 	}
 
-	abi, bytecode, err := parseCompiledJson(sc.EmbedJSON)
+	rawJsonBz := make(map[string]json.RawMessage)
+	err := json.Unmarshal(sc.EmbedJSON, &rawJsonBz)
+	if err != nil {
+		panic(err)
+	}
+
+	abi := new(gethabi.ABI)
+	err = abi.UnmarshalJSON(rawJsonBz["abi"])
 	if err != nil {
 		panic(err)
 	}
 
 	sc.ABI = abi
-	sc.Bytecode = bytecode
+	sc.Bytecode = gethcommon.FromHex(string(rawJsonBz["bytecode"]))
 }
