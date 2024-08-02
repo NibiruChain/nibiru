@@ -83,7 +83,7 @@ func CreateContractGethCoreMsg(
 		return gethCoreMsg, err
 	}
 
-	signer := gethcore.MakeSigner(cfg, blockHeight)
+	signer := gethcore.MakeSigner(cfg, blockHeight, 0)
 	return ethTxMsg.AsMessage(signer, nil)
 }
 

@@ -3,7 +3,6 @@ package statedb
 
 import (
 	"fmt"
-	"math/big"
 	"sort"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,6 +11,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/holiman/uint256"
 )
 
 // revision is the identifier of a version of state.
@@ -122,12 +122,12 @@ func (s *StateDB) Empty(addr common.Address) bool {
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
-func (s *StateDB) GetBalance(addr common.Address) *big.Int {
+func (s *StateDB) GetBalance(addr common.Address) *uint256.Int {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.Balance()
 	}
-	return common.Big0
+	return common.U2560
 }
 
 // GetNonce returns the nonce of account, 0 if not exists.
@@ -294,18 +294,25 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) AddBalance(addr common.Address, amount *uint256.Int, reason tracing.BalanceChangeReason) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.AddBalance(amount)
+		stateObject.AddBalance(amount, reason)
 	}
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) SubBalance(addr common.Address, amount *uint256.Int, reason tracing.BalanceChangeReason) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SubBalance(amount)
+		stateObject.SubBalance(amount, reason)
+	}
+}
+
+func (s *StateDB) SetBalance(addr common.Address, amount *uint256.Int, reason tracing.BalanceChangeReason) {
+	stateObject := s.getOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SetBalance(amount, reason)
 	}
 }
 
@@ -346,10 +353,10 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	s.journal.append(suicideChange{
 		account:     &addr,
 		prev:        stateObject.suicided,
-		prevbalance: new(big.Int).Set(stateObject.Balance()),
+		prevbalance: new(uint256.Int).Set(stateObject.Balance()),
 	})
 	stateObject.markSuicided()
-	stateObject.account.Balance = new(big.Int)
+	stateObject.account.Balance = new(uint256.Int)
 
 	return true
 }

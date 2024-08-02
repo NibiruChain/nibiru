@@ -8,8 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -34,7 +37,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 ) (sdk.Context, error) {
 	params := ctd.evmKeeper.GetParams(ctx)
 	ethCfg := evm.EthereumConfig(ctd.evmKeeper.EthChainID(ctx))
-	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()))
+	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()), uint64(ctx.BlockTime().Unix()))
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -60,11 +63,11 @@ func (ctd CanTransferDecorator) AnteHandle(
 				"base fee is supported but evm block context value is nil",
 			)
 		}
-		if coreMsg.GasFeeCap().Cmp(baseFee) < 0 {
+		if coreMsg.GasFeeCap.Cmp(baseFee) < 0 {
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFee,
 				"max fee per gas less than block base fee (%s < %s)",
-				coreMsg.GasFeeCap(), baseFee,
+				coreMsg.GasFeeCap, baseFee,
 			)
 		}
 
@@ -81,17 +84,36 @@ func (ctd CanTransferDecorator) AnteHandle(
 			ctd.evmKeeper,
 			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
 		)
-		evmInstance := ctd.evmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
+		blockCtx := vm.BlockContext{
+			CanTransfer: core.CanTransfer,
+			Transfer:    core.Transfer,
+			GetHash:     ctd.evmKeeper.GetHashFn(ctx),
+			Coinbase:    cfg.CoinBase,
+			GasLimit:    eth.BlockGasLimit(ctx),
+			BlockNumber: big.NewInt(ctx.BlockHeight()),
+			Time:        uint64(ctx.BlockHeader().Time.Unix()),
+			Difficulty:  big.NewInt(0), // unused. Only required in PoW context
+			BaseFee:     cfg.BaseFee,
+			Random:      nil, // not supported
+		}
+		txCtx := core.NewEVMTxContext(&coreMsg)
+		vmConfig := vm.Config{
+			Tracer:    nil,
+			NoBaseFee: false,
+			ExtraEips: cfg.Params.EIPs(),
+		}
+		evmInstance := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+		// evmInstance := ctd.evmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
-		if coreMsg.Value().Sign() > 0 &&
-			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
+		if coreMsg.Value.Sign() > 0 &&
+			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From, coreMsg.Value) {
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFunds,
 				"failed to transfer %s from address %s using the EVM block context transfer function",
-				coreMsg.Value(),
-				coreMsg.From(),
+				coreMsg.Value,
+				coreMsg.From,
 			)
 		}
 	}

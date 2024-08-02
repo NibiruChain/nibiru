@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/x/evm"
@@ -19,7 +18,7 @@ import (
 type EVMKeeper interface {
 	statedb.Keeper
 
-	NewEVM(ctx sdk.Context, msg core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger, stateDB vm.StateDB) *vm.EVM
+	// NewEVM(ctx sdk.Context, msg core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger, stateDB vm.StateDB) *vm.EVM
 	DeductTxCostsFromUserBalance(ctx sdk.Context, fees sdk.Coins, from common.Address) error
 	GetEvmGasBalance(ctx sdk.Context, addr common.Address) *big.Int
 	ResetTransientGasUsed(ctx sdk.Context)
@@ -28,6 +27,7 @@ type EVMKeeper interface {
 	EVMState() evmkeeper.EvmState
 	EthChainID(ctx sdk.Context) *big.Int
 	GetBaseFee(ctx sdk.Context) *big.Int
+	GetHashFn(ctx sdk.Context) vm.GetHashFunc
 }
 
 type protoTxProvider interface {

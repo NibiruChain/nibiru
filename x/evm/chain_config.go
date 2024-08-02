@@ -6,7 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -18,7 +17,6 @@ func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 		DAOForkBlock:            big.NewInt(0),
 		DAOForkSupport:          true,
 		EIP150Block:             big.NewInt(0),
-		EIP150Hash:              common.Hash{},
 		EIP155Block:             big.NewInt(0),
 		EIP158Block:             big.NewInt(0),
 		ByzantiumBlock:          big.NewInt(0),
@@ -31,8 +29,10 @@ func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 		ArrowGlacierBlock:       big.NewInt(0),
 		GrayGlacierBlock:        big.NewInt(0),
 		MergeNetsplitBlock:      big.NewInt(0),
-		ShanghaiBlock:           nil, // TODO: change this if we upgrade go-ethereum dependency
-		CancunBlock:             nil, // TODO: change this if we upgrade go-ethereum dependency
+		ShanghaiTime:            nil,
+		CancunTime:              nil,
+		PragueTime:              nil,
+		VerkleTime:              nil,
 		TerminalTotalDifficulty: nil,
 		Ethash:                  nil,
 		Clique:                  nil,

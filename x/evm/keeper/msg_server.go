@@ -16,15 +16,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
-
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
@@ -237,7 +238,7 @@ func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
 	cfg *statedb.EVMConfig,
-	tracer vm.EVMLogger,
+	tracer *tracing.Hooks,
 	stateDB vm.StateDB,
 ) *vm.EVM {
 	blockCtx := vm.BlockContext{
@@ -247,15 +248,15 @@ func (k *Keeper) NewEVM(
 		Coinbase:    cfg.CoinBase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
-		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
+		Time:        uint64(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
 		BaseFee:     cfg.BaseFee,
 		Random:      nil, // not supported
 	}
 
-	txCtx := core.NewEVMTxContext(msg)
+	txCtx := core.NewEVMTxContext(&msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+		tracer = evm.NewTracer(k.tracer, msg, cfg.ChainConfig, ctx.BlockHeight())
 	}
 	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
 	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
@@ -359,7 +360,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 // If commit is true, the `StateDB` will be committed, otherwise discarded.
 func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msg core.Message,
-	tracer vm.EVMLogger,
+	tracer *tracing.Hooks,
 	commit bool,
 	cfg *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
@@ -370,14 +371,39 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 
 	// return error if contract creation or call are disabled through governance
-	if !cfg.Params.EnableCreate && msg.To() == nil {
+	if !cfg.Params.EnableCreate && msg.To == nil {
 		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
-	} else if !cfg.Params.EnableCall && msg.To() != nil {
+	} else if !cfg.Params.EnableCall && msg.To != nil {
 		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
-	evmObj := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
+
+	blockCtx := vm.BlockContext{
+		CanTransfer: core.CanTransfer,
+		Transfer:    core.Transfer,
+		GetHash:     k.GetHashFn(ctx),
+		Coinbase:    cfg.CoinBase,
+		BlockNumber: big.NewInt(ctx.BlockHeight()),
+		Time:        uint64(ctx.BlockHeader().Time.Unix()),
+		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
+		BaseFee:     cfg.BaseFee,
+		Random:      nil, // not supported
+	}
+	txCtx := core.NewEVMTxContext(&msg)
+	if tracer == nil {
+		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+	}
+	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
+	evmObj := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+	// evmObj := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
+	value, overflow := uint256.FromBig(msg.Value)
+	if overflow {
+		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex())
+	}
+	if !value.IsZero() && !evmObj.Context.CanTransfer(stateDB, msg.From, value) {
+		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex())
+	}
 
 	numPrecompiles := len(k.precompiles)
 	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
@@ -387,26 +413,26 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// NOTE: This has to be checked here instead of in the actual evm.Call method
 	// because evm.WithPrecompiles only populates the EVM with the active precompiles,
 	// so there's no telling if the To address is an inactive precompile further down the call stack.
-	toAddr := msg.To()
+	toAddr := msg.To
 	if toAddr != nil &&
 		slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
 		!slices.Contains(precompileAddrs, *toAddr) {
 		return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
 	}
 
-	leftoverGas := msg.Gas()
+	leftoverGas := msg.GasLimit
 
 	// Allow the tracer captures the tx level events, mainly the gas consumption.
 	vmCfg := evmObj.Config
-	if vmCfg.Debug {
-		vmCfg.Tracer.CaptureTxStart(leftoverGas)
+	if vmCfg.Tracer != nil {
+		vmCfg.Tracer.OnTxStart(leftoverGas)
 		defer func() {
-			vmCfg.Tracer.CaptureTxEnd(leftoverGas)
+			vmCfg.Tracer.OnTxEnd(leftoverGas)
 		}()
 	}
 
-	sender := vm.AccountRef(msg.From())
-	contractCreation := msg.To() == nil
+	sender := vm.AccountRef(msg.From)
+	contractCreation := msg.To == nil
 
 	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, cfg.ChainConfig, contractCreation)
 	if err != nil {
@@ -423,17 +449,17 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// access list preparation is moved from ante handler to here, because it's needed when `ApplyMessage` is called
 	// under contexts where ante handlers are not run, for example `eth_call` and `eth_estimateGas`.
-	stateDB.PrepareAccessList(msg.From(), msg.To(), evmObj.ActivePrecompiles(params.Rules{}), msg.AccessList())
+	stateDB.PrepareAccessList(msg.From, msg.To, vm.ActivePrecompiles(params.Rules{}), msg.AccessList)
 
 	if contractCreation {
 		// take over the nonce management from evm:
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.
-		stateDB.SetNonce(sender.Address(), msg.Nonce())
-		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msg.Value())
-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
+		stateDB.SetNonce(sender.Address(), msg.Nonce)
+		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data, leftoverGas, value)
+		stateDB.SetNonce(sender.Address(), msg.Nonce+1)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msg.Value())
+		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To, msg.Data, leftoverGas, value)
 	}
 
 	// After EIP-3529: refunds are capped to gasUsed / 5
@@ -464,7 +490,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		}
 	}
 
-	gasLimit := math.LegacyNewDec(int64(msg.Gas()))
+	gasLimit := math.LegacyNewDec(int64(msg.GasLimit))
 	minGasMultiplier := k.GetMinGasMultiplier(ctx)
 	minimumGasUsed := gasLimit.Mul(minGasMultiplier)
 
@@ -472,13 +498,13 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, errors.Wrapf(evm.ErrGasOverflow, "minimumGasUsed(%s) is not a uint64", minimumGasUsed.TruncateInt().String())
 	}
 
-	if msg.Gas() < leftoverGas {
+	if msg.GasLimit < leftoverGas {
 		return nil, errors.Wrapf(evm.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
 	}
 
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
 	// reset leftoverGas, to be used by the tracer
-	leftoverGas = msg.Gas() - gasUsed
+	leftoverGas = msg.GasLimit - gasUsed
 
 	return &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,

@@ -3,11 +3,11 @@ package statedb
 
 import (
 	"bytes"
-	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/holiman/uint256"
 )
 
 var emptyCodeHash = crypto.Keccak256(nil)
@@ -16,14 +16,14 @@ var emptyCodeHash = crypto.Keccak256(nil)
 // These objects are stored in the storage of auth module.
 type Account struct {
 	Nonce    uint64
-	Balance  *big.Int
+	Balance  *uint256.Int
 	CodeHash []byte
 }
 
 // NewEmptyAccount returns an empty account.
 func NewEmptyAccount() *Account {
 	return &Account{
-		Balance:  new(big.Int),
+		Balance:  new(uint256.Int),
 		CodeHash: emptyCodeHash,
 	}
 }
@@ -69,7 +69,7 @@ type stateObject struct {
 // newObject creates a state object.
 func newObject(db *StateDB, address common.Address, account Account) *stateObject {
 	if account.Balance == nil {
-		account.Balance = new(big.Int)
+		account.Balance = new(uint256.Int)
 	}
 	if account.CodeHash == nil {
 		account.CodeHash = emptyCodeHash
@@ -92,34 +92,50 @@ func (s *stateObject) markSuicided() {
 	s.suicided = true
 }
 
+func (s *stateObject) touch() {
+	s.db.journal.append(touchChange{
+		account: &s.address,
+	})
+	if s.address == ripemd {
+		// Explicitly put it in the dirty-cache, which is otherwise generated from
+		// flattened journals.
+		s.db.journal.dirty(s.address)
+	}
+}
+
 // AddBalance adds amount to s's balance.
 // It is used to add funds to the destination account of a transfer.
-func (s *stateObject) AddBalance(amount *big.Int) {
-	if amount.Sign() == 0 {
+func (s *stateObject) AddBalance(amount *uint256.Int, reason tracing.BalanceChangeReason) {
+	// EIP161: We must check emptiness for the objects such that the account
+	// clearing (0,0,0 objects) can take effect.
+	if amount.IsZero() {
+		if s.empty() {
+			s.touch()
+		}
 		return
 	}
-	s.SetBalance(new(big.Int).Add(s.Balance(), amount))
+	s.SetBalance(new(uint256.Int).Add(s.Balance(), amount), reason)
 }
 
 // SubBalance removes amount from s's balance.
 // It is used to remove funds from the origin account of a transfer.
-func (s *stateObject) SubBalance(amount *big.Int) {
+func (s *stateObject) SubBalance(amount *uint256.Int) {
 	if amount.Sign() == 0 {
 		return
 	}
-	s.SetBalance(new(big.Int).Sub(s.Balance(), amount))
+	s.SetBalance(new(uint256.Int).Sub(s.Balance(), amount))
 }
 
 // SetBalance update account balance.
-func (s *stateObject) SetBalance(amount *big.Int) {
+func (s *stateObject) SetBalance(amount *uint256.Int) {
 	s.db.journal.append(balanceChange{
 		account: &s.address,
-		prev:    new(big.Int).Set(s.account.Balance),
+		prev:    new(uint256.Int).Set(s.account.Balance),
 	})
 	s.setBalance(amount)
 }
 
-func (s *stateObject) setBalance(amount *big.Int) {
+func (s *stateObject) setBalance(amount *uint256.Int) {
 	s.account.Balance = amount
 }
 
@@ -187,7 +203,7 @@ func (s *stateObject) CodeHash() []byte {
 }
 
 // Balance returns the balance of account
-func (s *stateObject) Balance() *big.Int {
+func (s *stateObject) Balance() *uint256.Int {
 	return s.account.Balance
 }
 
