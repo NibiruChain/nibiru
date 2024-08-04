@@ -217,6 +217,10 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	if account == nil {
 		return nil
 	}
+
+	// Reflect the micronibi (unibi) balance in wei
+	// weiBalance := account.BalanceWei()
+
 	// Insert into the live set
 	obj := newObject(s, addr, *account)
 	s.setStateObject(obj)
@@ -263,7 +267,7 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 func (s *StateDB) CreateAccount(addr common.Address) {
 	newObj, prev := s.createObject(addr)
 	if prev != nil {
-		newObj.setBalance(prev.account.Balance)
+		newObj.setBalance(prev.account.BalanceWei)
 	}
 }
 
@@ -349,7 +353,7 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
 	stateObject.markSuicided()
-	stateObject.account.Balance = new(big.Int)
+	stateObject.account.BalanceWei = new(big.Int)
 
 	return true
 }
@@ -457,7 +461,7 @@ func (s *StateDB) Commit() error {
 			if obj.code != nil && obj.dirtyCode {
 				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
+			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account.ToNative()); err != nil {
 				return errorsmod.Wrap(err, "failed to set account")
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {

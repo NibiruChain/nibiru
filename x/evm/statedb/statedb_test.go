@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
@@ -173,15 +174,16 @@ func (suite *StateDBTestSuite) TestBalance() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			keeper := NewMockKeeper()
-			db := statedb.New(sdk.Context{}, keeper, emptyTxConfig)
+			deps := evmtest.NewTestDeps()
+			db := deps.StateDB()
 			tc.malleate(db)
 
 			// check dirty state
 			suite.Require().Equal(tc.expBalance, db.GetBalance(address))
 			suite.Require().NoError(db.Commit())
+
 			// check committed balance too
-			suite.Require().Equal(tc.expBalance, keeper.accounts[address].account.Balance)
+			suite.Require().Equal(tc.expBalance, db.GetBalance(address))
 		})
 	}
 }
@@ -225,16 +227,18 @@ func (suite *StateDBTestSuite) TestState() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			keeper := NewMockKeeper()
-			db := statedb.New(sdk.Context{}, keeper, emptyTxConfig)
+			deps := evmtest.NewTestDeps()
+			db := deps.StateDB()
 			tc.malleate(db)
 			suite.Require().NoError(db.Commit())
 
 			// check committed states in keeper
-			suite.Require().Equal(tc.expStates, keeper.accounts[address].states)
+			for k, v := range tc.expStates {
+				suite.Equal(v, db.GetState(address, k))
+			}
 
 			// check ForEachStorage
-			db = statedb.New(sdk.Context{}, keeper, emptyTxConfig)
+			db = deps.StateDB()
 			collected := CollectContractStorage(db)
 			if len(tc.expStates) > 0 {
 				suite.Require().Equal(tc.expStates, collected)
