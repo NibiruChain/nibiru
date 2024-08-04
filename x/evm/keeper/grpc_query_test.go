@@ -29,7 +29,8 @@ type TestCase[In, Out any] struct {
 		req In,
 		wantResp Out,
 	)
-	wantErr string
+	onTestEnd func(deps *evmtest.TestDeps)
+	wantErr   string
 }
 
 func InvalidEthAddr() string { return "0x0000" }
@@ -149,9 +150,9 @@ func (s *Suite) TestQueryEthAccount() {
 					Address: InvalidEthAddr(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
-					Balance:  "0",
-					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
-					Nonce:    0,
+					BalanceWei: "0",
+					CodeHash:   gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					Nonce:      0,
 				}
 				return req, wantResp
 			},
@@ -176,9 +177,9 @@ func (s *Suite) TestQueryEthAccount() {
 					Address: deps.Sender.EthAddr.Hex(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
-					Balance:  "420",
-					CodeHash: gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
-					Nonce:    0,
+					BalanceWei: "420" + strings.Repeat("0", 12),
+					CodeHash:   gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					Nonce:      0,
 				}
 				return req, wantResp
 			},
@@ -543,7 +544,7 @@ func (s *Suite) TestQueryBalance() {
 					Address: InvalidEthAddr(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
-					Balance: "0",
+					BalanceWei: "0",
 				}
 				return req, wantResp
 			},
@@ -556,7 +557,8 @@ func (s *Suite) TestQueryBalance() {
 					Address: evmtest.NewEthAccInfo().EthAddr.String(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
-					Balance: "0",
+					Balance:    "0",
+					BalanceWei: "0",
 				}
 				return req, wantResp
 			},
@@ -581,7 +583,8 @@ func (s *Suite) TestQueryBalance() {
 					Address: deps.Sender.EthAddr.Hex(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
-					Balance: "420",
+					Balance:    "420",
+					BalanceWei: "420" + strings.Repeat("0", 12),
 				}
 				return req, wantResp
 			},
@@ -681,7 +684,8 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 		},
 		{
 			name: "happy: estimate gas for transfer",
-			setup: func(deps *evmtest.TestDeps) {
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				// fund the account
 				chain := deps.Chain
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 1000)}
@@ -690,10 +694,17 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
 					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
-			},
-			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+
+				// assert balance of 1000 * 10^12 wei
+				resp, _ := deps.Chain.EvmKeeper.Balance(deps.GoCtx(), &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+				})
+				s.Equal("1000", resp.Balance)
+				s.Require().Equal("1000"+strings.Repeat("0", 12), resp.BalanceWei)
+
+				// Send Eth call to transfer from the account - 5 * 10^12 wei
 				recipient := evmtest.NewEthAccInfo().EthAddr
-				amountToSend := hexutil.Big(*big.NewInt(10))
+				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(5)))
 				gasLimitArg := hexutil.Uint64(100000)
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
@@ -713,12 +724,15 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				return req, wantResp
 			},
 			wantErr: "",
+			onTestEnd: func(deps *evmtest.TestDeps) {
+
+			},
 		},
 		{
 			name: "sad: insufficient balance for transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				recipient := evmtest.NewEthAccInfo().EthAddr
-				amountToSend := hexutil.Big(*big.NewInt(10))
+				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(10)))
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From:  &deps.Sender.EthAddr,
@@ -752,6 +766,10 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 			}
 			s.Assert().NoError(err)
 			s.EqualValues(wantResp, gotResp)
+
+			if tc.onTestEnd != nil {
+				tc.onTestEnd(&deps)
+			}
 		})
 	}
 }
@@ -781,9 +799,8 @@ func (s *Suite) TestTraceTx() {
 			wantErr: "",
 		},
 		{
-			"happy: trace erc-20 transfer tx",
-			nil,
-			func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+			name: "happy: trace erc-20 transfer tx",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				txMsg, predecessors := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
@@ -793,7 +810,7 @@ func (s *Suite) TestTraceTx() {
 				wantResp = TraceERC20Transfer()
 				return req, wantResp
 			},
-			"",
+			wantErr: "",
 		},
 	}
 

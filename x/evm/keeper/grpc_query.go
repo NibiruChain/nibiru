@@ -58,9 +58,9 @@ func (k Keeper) EthAccount(
 	acct := k.GetAccountOrEmpty(ctx, addr)
 
 	return &evm.QueryEthAccountResponse{
-		Balance:  acct.Balance.String(),
-		CodeHash: gethcommon.BytesToHash(acct.CodeHash).Hex(),
-		Nonce:    acct.Nonce,
+		BalanceWei: evm.NativeToWei(acct.BalanceEvmDenom).String(),
+		CodeHash:   gethcommon.BytesToHash(acct.CodeHash).Hex(),
+		Nonce:      acct.Nonce,
 	}, nil
 }
 
@@ -139,8 +139,8 @@ func (k Keeper) ValidatorAccount(
 }
 
 // Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
-// Balance retrieves the balance of an Ethereum address in "Ether", which
-// actually refers to NIBI tokens on Nibiru EVM.
+// Balance retrieves the balance of an Ethereum address in "wei", the smallest
+// unit of "Ether". Ether refers to NIBI tokens on Nibiru EVM.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
@@ -156,7 +156,8 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
-		Balance: balanceInt.String(),
+		Balance:    balanceInt.String(),
+		BalanceWei: evm.NativeToWei(balanceInt).String(),
 	}, nil
 }
 
@@ -444,7 +445,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
 			}
-			return true, nil, err // Bail out
+			return true, nil, fmt.Errorf("error applying EVM message to StateDB: %w", err) // Bail out
 		}
 		return len(rsp.VmError) > 0, rsp, nil
 	}
@@ -459,15 +460,15 @@ func (k Keeper) EstimateGasForEvmCallType(
 	if hi == gasCap {
 		failed, result, err := executable(hi)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth call exec error: %w", err)
 		}
 
 		if failed {
 			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
 				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, evm.NewExecErrorWithReason(result.Ret)
+					return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(result.Ret))
 				}
-				return nil, errors.New(result.VmError)
+				return nil, fmt.Errorf("VMError: %s", result.VmError)
 			}
 			// Otherwise, the specified gas cap is too low
 			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
