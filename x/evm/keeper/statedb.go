@@ -71,8 +71,7 @@ func (k *Keeper) SetAccBalance(
 ) error {
 	nativeAddr := sdk.AccAddress(addr.Bytes())
 	params := k.GetParams(ctx)
-	balance :=
-		k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom).Amount.BigInt()
+	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom).Amount.BigInt()
 	delta := new(big.Int).Sub(amountEvmDenom, balance)
 
 	switch delta.Sign() {

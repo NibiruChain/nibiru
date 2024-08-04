@@ -725,7 +725,6 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 			},
 			wantErr: "",
 			onTestEnd: func(deps *evmtest.TestDeps) {
-
 			},
 		},
 		{

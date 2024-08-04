@@ -218,9 +218,6 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 		return nil
 	}
 
-	// Reflect the micronibi (unibi) balance in wei
-	// weiBalance := account.BalanceWei()
-
 	// Insert into the live set
 	obj := newObject(s, addr, *account)
 	s.setStateObject(obj)

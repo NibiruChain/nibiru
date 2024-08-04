@@ -69,8 +69,8 @@ func NewEmptyAccount() *Account {
 }
 
 // IsContract returns if the account contains contract code.
-func (acct Account) IsContract() bool {
-	return !bytes.Equal(acct.CodeHash, emptyCodeHash)
+func (acct *Account) IsContract() bool {
+	return (acct != nil) && !bytes.Equal(acct.CodeHash, emptyCodeHash)
 }
 
 // Storage represents in-memory cache/buffer of contract storage.
@@ -88,7 +88,22 @@ func (s Storage) SortedKeys() []common.Hash {
 	return keys
 }
 
-// stateObject is the state of an acount
+// stateObject represents the state of a Nibiru EVM account.
+// It encapsulates both the account data (balance, nonce, code) and the contract
+// storage state. stateObject serves as an in-memory cache and staging area for
+// changes before they are committed to the underlying storage.
+//
+// Key features:
+// 1. It uses AccountWei, which represents balances in wei for EVM compatibility.
+// 2. It maintains both the original (committed) storage and dirty (uncommitted) storage.
+// 3. It tracks whether the account has been marked for deletion (suicided).
+// 4. It caches the contract code for efficient access.
+//
+// stateObjects are used to:
+// - Efficiently manage and track changes to account state during EVM execution.
+// - Provide a layer of abstraction between the EVM and the underlying storage.
+// - Enable features like state reverting and snapshotting.
+// - Optimize performance by minimizing direct access to the underlying storage.
 type stateObject struct {
 	db *StateDB
 
@@ -115,8 +130,9 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 		account.CodeHash = emptyCodeHash
 	}
 	return &stateObject{
-		db:            db,
-		address:       address,
+		db:      db,
+		address: address,
+		// Reflect the micronibi (unibi) balance in wei
 		account:       account.ToWei(),
 		originStorage: make(Storage),
 		dirtyStorage:  make(Storage),
