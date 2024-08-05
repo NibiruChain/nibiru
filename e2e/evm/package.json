@@ -13,7 +13,7 @@
     "bun": "^1.0.3",
     "bun-types": "^1.0.3",
     "dotenv": "^16.4.5",
-    "eslint": "^9.4.0",
+    "eslint": "^8.0.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
