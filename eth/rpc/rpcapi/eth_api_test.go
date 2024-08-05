@@ -15,11 +15,11 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/eth"
 
 	nibirucommon "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 
 	"github.com/stretchr/testify/suite"
 
@@ -70,7 +70,7 @@ func (s *TestSuite) SetupSuite() {
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
-	s.fundedAccNibiAddr = evmtest.EthAddrToNibiruAddr(s.fundedAccEthAddr)
+	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	val := s.network.Validators[0]
 

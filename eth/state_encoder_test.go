@@ -4,11 +4,9 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/eth"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {
@@ -32,14 +30,6 @@ func assertBijectiveValue[T any](t *testing.T, encoder collections.ValueEncoder[
 	require.Equal(t, wantStr, gotStr,
 		"encoding and decoding produce different string representations")
 	require.NotEmpty(t, encoder.Name())
-}
-
-type Suite struct {
-	suite.Suite
-}
-
-func TestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(Suite))
 }
 
 func (s *Suite) TestEncoderBytes() {
