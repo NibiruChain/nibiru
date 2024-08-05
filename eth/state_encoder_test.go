@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/eth"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {

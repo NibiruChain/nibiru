@@ -6,7 +6,6 @@ import (
 )
 
 func (s *Suite) TestEthAddrToNibiruAddr() {
-
 	accInfo := evmtest.NewEthAccInfo()
 	s.Equal(
 		accInfo.EthAddr,
@@ -19,7 +18,6 @@ func (s *Suite) TestEthAddrToNibiruAddr() {
 
 	s.T().Log("unit operation - hex -> nibi -> hex")
 	{
-
 		addr := evmtest.NewEthAccInfo().NibiruAddr
 		s.Equal(
 			addr,
