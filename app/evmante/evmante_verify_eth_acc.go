@@ -3,7 +3,6 @@ package evmante
 
 import (
 	"cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -70,7 +69,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 
 		if err := keeper.CheckSenderBalance(
-			sdkmath.NewIntFromBigInt(acct.BalanceEvmDenom), txData,
+			evm.NativeToWei(acct.BalanceEvmDenom), txData,
 		); err != nil {
 			return ctx, errors.Wrap(err, "failed to check sender balance")
 		}

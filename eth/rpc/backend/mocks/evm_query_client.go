@@ -137,7 +137,6 @@ func (_m *EVMQueryClient) Code(ctx context.Context, in *evm.QueryCodeRequest, op
 	return r0, r1
 }
 
-
 // EstimateGas provides a mock function with given fields: ctx, in, opts
 func (_m *EVMQueryClient) EstimateGas(ctx context.Context, in *evm.EthCallRequest, opts ...grpc.CallOption) (*evm.EstimateGasResponse, error) {
 	_va := make([]interface{}, len(opts))
