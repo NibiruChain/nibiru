@@ -87,10 +87,12 @@ func (ctd CanTransferDecorator) AnteHandle(
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
 		if coreMsg.Value().Sign() > 0 &&
 			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
+			balanceWei := stateDB.GetBalance(coreMsg.From())
 			return ctx, errors.Wrapf(
 				errortypes.ErrInsufficientFunds,
-				"failed to transfer %s from address %s using the EVM block context transfer function",
+				"failed to transfer %s wei (balance=%s) from address %s using the EVM block context transfer function",
 				coreMsg.Value(),
+				balanceWei,
 				coreMsg.From(),
 			)
 		}

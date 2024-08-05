@@ -49,7 +49,7 @@ func NewTestDeps() TestDeps {
 	}
 }
 
-func (deps *TestDeps) StateDB() *statedb.StateDB {
+func (deps TestDeps) StateDB() *statedb.StateDB {
 	return statedb.New(deps.Ctx, &deps.Chain.EvmKeeper,
 		statedb.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),

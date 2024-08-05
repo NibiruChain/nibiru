@@ -30,7 +30,7 @@ func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.A
 		return nil
 	}
 
-	acct.Balance = k.GetEvmGasBalance(ctx, addr)
+	acct.BalanceEvmDenom = k.GetEvmGasBalance(ctx, addr)
 	return acct
 }
 
@@ -67,13 +67,13 @@ func (k *Keeper) ForEachStorage(
 
 // SetAccBalance update account's balance, compare with current balance first, then decide to mint or burn.
 func (k *Keeper) SetAccBalance(
-	ctx sdk.Context, addr gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {
 	nativeAddr := sdk.AccAddress(addr.Bytes())
 	params := k.GetParams(ctx)
-	coin := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom)
-	balance := coin.Amount.BigInt()
-	delta := new(big.Int).Sub(amount, balance)
+	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom).Amount.BigInt()
+	delta := new(big.Int).Sub(amountEvmDenom, balance)
+
 	switch delta.Sign() {
 	case 1:
 		// mint
@@ -126,7 +126,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.Balance); err != nil {
+	if err := k.SetAccBalance(ctx, addr, account.BalanceEvmDenom); err != nil {
 		return err
 	}
 
@@ -213,7 +213,7 @@ func (k *Keeper) GetAccountOrEmpty(
 
 	// empty account
 	return statedb.Account{
-		Balance:  new(big.Int),
-		CodeHash: evm.EmptyCodeHash,
+		BalanceEvmDenom: new(big.Int),
+		CodeHash:        evm.EmptyCodeHash,
 	}
 }

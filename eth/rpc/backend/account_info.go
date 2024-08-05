@@ -111,7 +111,7 @@ func (b *Backend) GetProof(
 		return nil, err
 	}
 
-	balance, ok := sdkmath.NewIntFromString(res.Balance)
+	balance, ok := sdkmath.NewIntFromString(res.BalanceWei)
 	if !ok {
 		return nil, errors.New("invalid balance")
 	}
@@ -152,7 +152,10 @@ func (b *Backend) GetStorageAt(address common.Address, key string, blockNrOrHash
 }
 
 // GetBalance returns the provided account's balance up to the provided block number.
-func (b *Backend) GetBalance(address common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*hexutil.Big, error) {
+func (b *Backend) GetBalance(
+	address common.Address,
+	blockNrOrHash rpc.BlockNumberOrHash,
+) (*hexutil.Big, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
 	if err != nil {
 		return nil, err
@@ -172,9 +175,9 @@ func (b *Backend) GetBalance(address common.Address, blockNrOrHash rpc.BlockNumb
 		return nil, err
 	}
 
-	val, ok := sdkmath.NewIntFromString(res.Balance)
+	val, ok := sdkmath.NewIntFromString(res.BalanceWei)
 	if !ok {
-		return nil, errors.New("invalid balance")
+		return nil, fmt.Errorf("invalid balance: %s", res.BalanceWei)
 	}
 
 	// balance can only be negative in case of pruned node

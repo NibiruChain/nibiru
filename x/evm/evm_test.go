@@ -2,7 +2,9 @@
 package evm_test
 
 import (
+	"math/big"
 	"strconv"
+	"strings"
 	"testing"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -138,5 +140,68 @@ func (s *TestSuite) TestModuleAddressEVM() {
 		})
 		s.NoError(err)
 		s.Equal(nibiAddr.String(), resp.Address)
+	}
+}
+
+func (s *TestSuite) TestWeiConversion() {
+	{
+		unibiAmt := big.NewInt(420)
+		s.Equal(
+			unibiAmt,
+			evm.WeiToNative(evm.NativeToWei(unibiAmt)),
+			"native -> wei -> native should be an identity operation",
+		)
+
+		weiAmt := evm.NativeToWei(unibiAmt)
+		want := "420" + strings.Repeat("0", 12)
+		s.Equal(weiAmt.String(), want)
+	}
+
+	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
+	for _, tc := range []struct {
+		weiAmtIn  string
+		want      *big.Int
+		wantError string
+	}{
+		{
+			//	Input  number:  123456789012345678901234567890
+			//	Parsed number:  123456789012345678 * 10^12
+			weiAmtIn:  "123456789012345678901234567890",
+			want:      evm.NativeToWei(big.NewInt(123456789012345678)),
+			wantError: "",
+		},
+		{
+			weiAmtIn:  "123456789012345678901234567890",
+			want:      evm.NativeToWei(big.NewInt(123456789012345678)),
+			wantError: "",
+		},
+		{
+			weiAmtIn:  "0",
+			want:      big.NewInt(0),
+			wantError: "",
+		},
+		{
+			weiAmtIn:  "1",
+			wantError: "cannot transfer less than 1 micronibi.",
+		},
+		{
+			weiAmtIn: new(big.Int).Sub(
+				tenPow12, big.NewInt(1),
+			).String(),
+			wantError: "cannot transfer less than 1 micronibi.",
+		},
+		{
+			weiAmtIn:  "500",
+			wantError: "cannot transfer less than 1 micronibi.",
+		},
+	} {
+		weiAmtIn, _ := new(big.Int).SetString(tc.weiAmtIn, 10)
+		got, err := evm.ParseWeiAsMultipleOfMicronibi(weiAmtIn)
+		if tc.wantError != "" {
+			s.Require().ErrorContains(err, tc.wantError)
+			return
+		}
+		s.NoError(err)
+		s.Require().Equal(tc.want.String(), got.String())
 	}
 }
