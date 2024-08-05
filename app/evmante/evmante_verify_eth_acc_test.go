@@ -21,7 +21,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		{
 			name: "happy: sender with funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				sdb.AddBalance(deps.Sender.EthAddr, happyGasLimit())
+				sdb.AddBalance(deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()))
 			},
 			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "",
