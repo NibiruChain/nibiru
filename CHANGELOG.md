@@ -94,7 +94,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1976](https://github.com/NibiruChain/nibiru/pull/1976) - refactor(evm): unique chain ids for all networks
 - [#1977](https://github.com/NibiruChain/nibiru/pull/1977) - fix(localnet): rolled back change of evm validator address with cosmos derivation path
 - [#1981](https://github.com/NibiruChain/nibiru/pull/1981) - fix(evm): remove isCheckTx() short circuit on `AnteDecVerifyEthAcc`
-- [#1979](https://github.com/NibiruChain/nibiru/pull/1979) -refactor(db): use pebbledb as the default db in integration tests
+- [#1979](https://github.com/NibiruChain/nibiru/pull/1979) - refactor(db): use pebbledb as the default db in integration tests
+- [#1982](https://github.com/NibiruChain/nibiru/pull/1982) - feat(evm): add GlobalMinGasPrices
 
 #### Dapp modules: perp, spot, oracle, etc
 
