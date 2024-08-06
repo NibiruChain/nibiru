@@ -1,11 +1,11 @@
-import { describe, expect, it } from "bun:test"; // eslint-disable-line import/no-unresolved
-import { toBigInt, Wallet } from "ethers";
-import { account, provider } from "./setup";
+import { describe, expect, it } from "bun:test" // eslint-disable-line import/no-unresolved
+import { toBigInt, Wallet } from "ethers"
+import { account, provider } from "./setup"
 
 describe("Basic Queries", () => {
   it("Simple transfer, balance check", async () => {
     const alice = Wallet.createRandom()
-    const amountToSend = toBigInt(1e3) // unibi
+    const amountToSend = toBigInt(5e12) * toBigInt(1e6) // unibi
 
     const senderBalanceBefore = await provider.getBalance(account)
     const recipientBalanceBefore = await provider.getBalance(alice)
@@ -19,7 +19,7 @@ describe("Basic Queries", () => {
       value: amountToSend,
     }
     const txResponse = await account.sendTransaction(transaction)
-    await txResponse.wait()
+    await txResponse.wait(1, 10e3)
     expect(txResponse).toHaveProperty("blockHash")
 
     const senderBalanceAfter = await provider.getBalance(account)

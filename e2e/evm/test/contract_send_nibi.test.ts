@@ -1,17 +1,17 @@
-import { describe, expect, it } from "bun:test"; // eslint-disable-line import/no-unresolved
-import { ethers, toBigInt } from "ethers";
-import { SendNibiCompiled__factory } from "../types/ethers-contracts";
-import { account, provider } from "./setup";
+import { describe, expect, it } from "bun:test" // eslint-disable-line import/no-unresolved
+import { ethers, toBigInt } from "ethers"
+import { SendNibiCompiled__factory } from "../types/ethers-contracts"
+import { account, provider } from "./setup"
 
 describe("Send NIBI via smart contract", async () => {
-  const factory = new SendNibiCompiled__factory(account);
-  const contract = await factory.deploy();
+  const factory = new SendNibiCompiled__factory(account)
+  const contract = await factory.deploy()
   await contract.waitForDeployment()
   expect(contract.getAddress()).resolves.toBeDefined()
 
   it("should send via transfer method", async () => {
     const recipient = ethers.Wallet.createRandom()
-    const transferValue = toBigInt(100e6) // NIBI
+    const transferValue = toBigInt(5e12) * toBigInt(6) // 5 micro NIBI
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
     const recipientBalanceBefore = await provider.getBalance(recipient) // NIBI
@@ -30,7 +30,7 @@ describe("Send NIBI via smart contract", async () => {
 
   it("should send via send method", async () => {
     const recipient = ethers.Wallet.createRandom()
-    const transferValue = toBigInt(100e6) // NIBI
+    const transferValue = toBigInt(100e12) * toBigInt(6) // 100 NIBi
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
     const recipientBalanceBefore = await provider.getBalance(recipient) // NIBI
@@ -49,7 +49,7 @@ describe("Send NIBI via smart contract", async () => {
 
   it("should send via transfer method", async () => {
     const recipient = ethers.Wallet.createRandom()
-    const transferValue = toBigInt(100e6) // NIBI
+    const transferValue = toBigInt(100e12) * toBigInt(6) // 100 NIBI
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
     const recipientBalanceBefore = await provider.getBalance(recipient) // NIBI
@@ -65,5 +65,4 @@ describe("Send NIBI via smart contract", async () => {
     )
     expect(provider.getBalance(recipient)).resolves.toBe(transferValue)
   }, 20e3)
-
 })
