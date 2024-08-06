@@ -18,7 +18,9 @@ var emptyCodeHash = crypto.Keccak256(nil)
 // balance is stored in the smallest native unit (e.g., micronibi or unibi).
 // These objects are stored in the storage of auth module.
 type Account struct {
-	BalanceEvmDenom *big.Int
+	// BalanceNative is the micronibi (unibi) balance of the account, which is
+	// the official balance in the x/bank module state
+	BalanceNative *big.Int
 	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
 	Nonce uint64
 	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
@@ -32,8 +34,10 @@ type Account struct {
 // definition of NIBI as "ether".
 type AccountWei struct {
 	BalanceWei *big.Int
-	Nonce      uint64
-	CodeHash   []byte
+	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
+	Nonce uint64
+	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
+	CodeHash []byte
 }
 
 // ToWei converts an Account (native representation) to AccountWei (EVM
@@ -42,7 +46,7 @@ type AccountWei struct {
 // unibi to wei.
 func (acc Account) ToWei() AccountWei {
 	return AccountWei{
-		BalanceWei: evm.NativeToWei(acc.BalanceEvmDenom),
+		BalanceWei: evm.NativeToWei(acc.BalanceNative),
 		Nonce:      acc.Nonce,
 		CodeHash:   acc.CodeHash,
 	}
@@ -54,17 +58,17 @@ func (acc Account) ToWei() AccountWei {
 // convert from wei to unibi.
 func (acc AccountWei) ToNative() Account {
 	return Account{
-		BalanceEvmDenom: evm.WeiToNative(acc.BalanceWei),
-		Nonce:           acc.Nonce,
-		CodeHash:        acc.CodeHash,
+		BalanceNative: evm.WeiToNative(acc.BalanceWei),
+		Nonce:         acc.Nonce,
+		CodeHash:      acc.CodeHash,
 	}
 }
 
 // NewEmptyAccount returns an empty account.
 func NewEmptyAccount() *Account {
 	return &Account{
-		BalanceEvmDenom: new(big.Int),
-		CodeHash:        emptyCodeHash,
+		BalanceNative: new(big.Int),
+		CodeHash:      emptyCodeHash,
 	}
 }
 
@@ -123,8 +127,8 @@ type stateObject struct {
 
 // newObject creates a state object.
 func newObject(db *StateDB, address common.Address, account Account) *stateObject {
-	if account.BalanceEvmDenom == nil {
-		account.BalanceEvmDenom = new(big.Int)
+	if account.BalanceNative == nil {
+		account.BalanceNative = new(big.Int)
 	}
 	if account.CodeHash == nil {
 		account.CodeHash = emptyCodeHash
@@ -139,13 +143,11 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 	}
 }
 
-// empty returns whether the account is considered empty.
-func (s *stateObject) empty() bool {
-	return s.account.Nonce == 0 && s.account.BalanceWei.Sign() == 0 && bytes.Equal(s.account.CodeHash, emptyCodeHash)
-}
-
-func (s *stateObject) markSuicided() {
-	s.suicided = true
+// isEmpty returns whether the account is considered isEmpty.
+func (s *stateObject) isEmpty() bool {
+	return s.account.Nonce == 0 &&
+		s.account.BalanceWei.Sign() == 0 &&
+		bytes.Equal(s.account.CodeHash, emptyCodeHash)
 }
 
 // AddBalance adds amount to s's balance.

@@ -25,10 +25,19 @@ describe("Basic Queries", () => {
     const senderBalanceAfter = await provider.getBalance(account)
     const recipientBalanceAfter = await provider.getBalance(alice)
 
-    // TODO: https://github.com/NibiruChain/nibiru/issues/1902
-    // gas is not deducted regardless the gas limit, check this
-    const expectedSenderBalance = senderBalanceBefore - amountToSend
-    expect(senderBalanceAfter).toEqual(expectedSenderBalance)
+    // Assert balances with logging
+    const tenPow12 = toBigInt(1e12)
+    const gasUsed = 50000n // 50k gas for the transaction
+    const txCostMicronibi = amountToSend / tenPow12 + gasUsed
+    const txCostWei = txCostMicronibi * tenPow12
+    const expectedSenderWei = senderBalanceBefore - txCostWei
+    console.debug("DEBUG should send via transfer method %o:", {
+      senderBalanceBefore,
+      amountToSend,
+      expectedSenderWei,
+      senderBalanceAfter,
+    })
+    expect(senderBalanceAfter).toEqual(expectedSenderWei)
     expect(recipientBalanceAfter).toEqual(amountToSend)
   }, 20e3)
 })

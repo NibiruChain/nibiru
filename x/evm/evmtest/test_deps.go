@@ -19,12 +19,12 @@ import (
 )
 
 type TestDeps struct {
-	Chain    *app.NibiruApp
-	Ctx      sdk.Context
-	EncCfg   codec.EncodingConfig
-	K        keeper.Keeper
-	GenState *evm.GenesisState
-	Sender   EthPrivKeyAcc
+	Chain     *app.NibiruApp
+	Ctx       sdk.Context
+	EncCfg    codec.EncodingConfig
+	EvmKeeper keeper.Keeper
+	GenState  *evm.GenesisState
+	Sender    EthPrivKeyAcc
 }
 
 func (deps TestDeps) GoCtx() context.Context {
@@ -40,12 +40,12 @@ func NewTestDeps() TestDeps {
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
 	ethAcc := NewEthAccInfo()
 	return TestDeps{
-		Chain:    chain,
-		Ctx:      ctx,
-		EncCfg:   encCfg,
-		K:        chain.EvmKeeper,
-		GenState: evm.DefaultGenesisState(),
-		Sender:   ethAcc,
+		Chain:     chain,
+		Ctx:       ctx,
+		EncCfg:    encCfg,
+		EvmKeeper: chain.EvmKeeper,
+		GenState:  evm.DefaultGenesisState(),
+		Sender:    ethAcc,
 	}
 }
 

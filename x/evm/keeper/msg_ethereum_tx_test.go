@@ -45,7 +45,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				gasLimit := big.NewInt(1000_000)
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 					GasLimit:      gasLimit,
@@ -85,7 +85,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				gasLimit := gethparams.TxGasContractCreation
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 				}
@@ -138,7 +138,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	gasLimit := big.NewInt(1000_000)
 	args := evmtest.ArgsExecuteContract{
 		EthAcc:          ethAcc,
-		EthChainIDInt:   deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:        big.NewInt(1),
 		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
 		GasLimit:        gasLimit,
