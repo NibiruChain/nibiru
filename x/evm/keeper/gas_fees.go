@@ -97,7 +97,7 @@ func CheckSenderBalance(
 	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
 		return errors.Wrapf(
 			errortypes.ErrInsufficientFunds,
-			"sender balance < tx cost (%s < %s)", balanceWei, txData.Cost(),
+			"sender balance < tx cost (%s < %s)", balanceWei, cost,
 		)
 	}
 	return nil

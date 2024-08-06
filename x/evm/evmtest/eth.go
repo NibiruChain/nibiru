@@ -39,10 +39,6 @@ func NewEthAccInfo() EthPrivKeyAcc {
 	}
 }
 
-func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
-	return ethAddr.Bytes()
-}
-
 type EthPrivKeyAcc struct {
 	EthAddr       gethcommon.Address
 	NibiruAddr    sdk.AccAddress
