@@ -96,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1981](https://github.com/NibiruChain/nibiru/pull/1981) - fix(evm): remove isCheckTx() short circuit on `AnteDecVerifyEthAcc`
 - [#1979](https://github.com/NibiruChain/nibiru/pull/1979) - refactor(db): use pebbledb as the default db in integration tests
 - [#1982](https://github.com/NibiruChain/nibiru/pull/1982) - feat(evm): add GlobalMinGasPrices
+- [#1983](https://github.com/NibiruChain/nibiru/pull/1983) - chore(evm): remove ExtensionOptionsWeb3Tx and ExtensionOptionDynamicFeeTx
 
 #### Dapp modules: perp, spot, oracle, etc
 
