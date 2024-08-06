@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
