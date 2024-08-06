@@ -107,7 +107,7 @@ func (k *Keeper) AddToBlockGasUsed(
 	if result < gasUsed {
 		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
 	}
-	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	k.EvmState.BlockGasUsed.Set(ctx, result)
 	return result, nil
 }
 
@@ -118,13 +118,7 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 
 func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 	// TODO: plug in fee market keeper
-	return big.NewInt(0)
-}
-
-func (k Keeper) GetBaseFeeNoCfg(
-	ctx sdk.Context,
-) *big.Int {
-	return k.GetBaseFee(ctx)
+	return big.NewInt(1)
 }
 
 // Logger returns a module-specific logger.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test" // eslint-disable-line import/no-unresolved
-import { ethers, toBigInt } from "ethers"
+import { toBigInt, Wallet } from "ethers"
 import { SendNibiCompiled__factory } from "../types/ethers-contracts"
 import { account, provider } from "./setup"
 
@@ -10,7 +10,7 @@ describe("Send NIBI via smart contract", async () => {
   expect(contract.getAddress()).resolves.toBeDefined()
 
   it("should send via transfer method", async () => {
-    const recipient = ethers.Wallet.createRandom()
+    const recipient = Wallet.createRandom()
     const transferValue = toBigInt(5e12) * toBigInt(6) // 5 micro NIBI
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
@@ -20,16 +20,16 @@ describe("Send NIBI via smart contract", async () => {
     const tx = await contract.sendViaTransfer(recipient, {
       value: transferValue,
     })
-    await tx.wait(1, 5e3)
+    const receipt = await tx.wait(1, 5e3)
 
     expect(provider.getBalance(account)).resolves.toBe(
-      ownerBalanceBefore - transferValue,
+      ownerBalanceBefore - transferValue - receipt.gasUsed,
     )
     expect(provider.getBalance(recipient)).resolves.toBe(transferValue)
   }, 20e3)
 
   it("should send via send method", async () => {
-    const recipient = ethers.Wallet.createRandom()
+    const recipient = Wallet.createRandom()
     const transferValue = toBigInt(100e12) * toBigInt(6) // 100 NIBi
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
@@ -39,16 +39,16 @@ describe("Send NIBI via smart contract", async () => {
     const tx = await contract.sendViaSend(recipient, {
       value: transferValue,
     })
-    await tx.wait(1, 5e3)
+    const receipt = await tx.wait(1, 5e3)
 
     expect(provider.getBalance(account)).resolves.toBe(
-      ownerBalanceBefore - transferValue,
+      ownerBalanceBefore - transferValue - receipt.gasUsed,
     )
     expect(provider.getBalance(recipient)).resolves.toBe(transferValue)
   }, 20e3)
 
   it("should send via transfer method", async () => {
-    const recipient = ethers.Wallet.createRandom()
+    const recipient = Wallet.createRandom()
     const transferValue = toBigInt(100e12) * toBigInt(6) // 100 NIBI
 
     const ownerBalanceBefore = await provider.getBalance(account) // NIBI
@@ -58,10 +58,10 @@ describe("Send NIBI via smart contract", async () => {
     const tx = await contract.sendViaCall(recipient, {
       value: transferValue,
     })
-    await tx.wait(1, 5e3)
+    const receipt = await tx.wait(1, 5e3)
 
     expect(provider.getBalance(account)).resolves.toBe(
-      ownerBalanceBefore - transferValue,
+      ownerBalanceBefore - transferValue - receipt.gasUsed,
     )
     expect(provider.getBalance(recipient)).resolves.toBe(transferValue)
   }, 20e3)

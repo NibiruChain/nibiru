@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1977](https://github.com/NibiruChain/nibiru/pull/1977) - fix(localnet): rolled back change of evm validator address with cosmos derivation path
 - [#1979](https://github.com/NibiruChain/nibiru/pull/1979) -refactor(db): use pebbledb as the default db in integration tests
 - [#1981](https://github.com/NibiruChain/nibiru/pull/1981) - fix(evm): remove isCheckTx() short circuit on `AnteDecVerifyEthAcc`
+- [#1982](https://github.com/NibiruChain/nibiru/pull/1982) - feat(evm): add GlobalMinGasPrices
 - [#1985](https://github.com/NibiruChain/nibiru/pull/1985) - feat(evm)!: Use atto denomination for the wei units in the EVM so that NIBI is "ether" to clients. Only micronibi (unibi) amounts can be transferred. All clients follow the constraint equation, 1 ether == 1 NIBI == 10^6 unibi == 10^18 wei. 
 
 #### Dapp modules: perp, spot, oracle, etc
