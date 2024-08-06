@@ -1,12 +1,11 @@
 package evmante_test
 
 import (
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -22,7 +21,14 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		{
 			name: "happy: signed tx, sufficient funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				sdb.AddBalance(deps.Sender.EthAddr, big.NewInt(100))
+				s.NoError(
+					testapp.FundAccount(
+						deps.Chain.BankKeeper,
+						deps.Ctx,
+						deps.Sender.NibiruAddr,
+						sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100)),
+					),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)

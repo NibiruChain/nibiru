@@ -40,6 +40,7 @@ type TxData interface {
 
 	// static fee
 	Fee() *big.Int
+	// Cost is the gas cost of the transaction in wei
 	Cost() *big.Int
 
 	// effective gasPrice/fee/cost according to current base fee

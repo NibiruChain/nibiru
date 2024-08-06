@@ -289,9 +289,9 @@ func RegisterAccount(
 ) {
 	queryClient.On("EthAccount", rpc.NewContextWithHeight(height), &evm.QueryEthAccountRequest{Address: addr.String()}).
 		Return(&evm.QueryEthAccountResponse{
-			Balance:  "0",
-			CodeHash: "",
-			Nonce:    0,
+			BalanceWei: "0",
+			CodeHash:   "",
+			Nonce:      0,
 		},
 			nil,
 		)
@@ -302,21 +302,21 @@ func RegisterBalance(
 	queryClient *mocks.EVMQueryClient, addr common.Address, height int64,
 ) {
 	queryClient.On("Balance", rpc.NewContextWithHeight(height), &evm.QueryBalanceRequest{Address: addr.String()}).
-		Return(&evm.QueryBalanceResponse{Balance: "1"}, nil)
+		Return(&evm.QueryBalanceResponse{BalanceWei: "1"}, nil)
 }
 
 func RegisterBalanceInvalid(
 	queryClient *mocks.EVMQueryClient, addr common.Address, height int64,
 ) {
 	queryClient.On("Balance", rpc.NewContextWithHeight(height), &evm.QueryBalanceRequest{Address: addr.String()}).
-		Return(&evm.QueryBalanceResponse{Balance: "invalid"}, nil)
+		Return(&evm.QueryBalanceResponse{BalanceWei: "invalid"}, nil)
 }
 
 func RegisterBalanceNegative(
 	queryClient *mocks.EVMQueryClient, addr common.Address, height int64,
 ) {
 	queryClient.On("Balance", rpc.NewContextWithHeight(height), &evm.QueryBalanceRequest{Address: addr.String()}).
-		Return(&evm.QueryBalanceResponse{Balance: "-1"}, nil)
+		Return(&evm.QueryBalanceResponse{BalanceWei: "-1"}, nil)
 }
 
 func RegisterBalanceError(

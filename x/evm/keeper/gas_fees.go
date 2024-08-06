@@ -82,7 +82,7 @@ func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
 // CheckSenderBalance validates that the tx cost value is positive and that the
 // sender has enough funds to pay for the fees and value of the transaction.
 func CheckSenderBalance(
-	balance sdkmath.Int,
+	balanceWei *big.Int,
 	txData evm.TxData,
 ) error {
 	cost := txData.Cost()
@@ -94,10 +94,10 @@ func CheckSenderBalance(
 		)
 	}
 
-	if balance.IsNegative() || balance.BigInt().Cmp(cost) < 0 {
+	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
 		return errors.Wrapf(
 			errortypes.ErrInsufficientFunds,
-			"sender balance < tx cost (%s < %s)", balance, txData.Cost(),
+			"sender balance < tx cost (%s < %s)", balanceWei, txData.Cost(),
 		)
 	}
 	return nil

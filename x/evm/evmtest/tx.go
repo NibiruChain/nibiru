@@ -241,3 +241,32 @@ func GenerateAndSignEthTxMsg(
 	keyringSigner := deps.Sender.KeyringSigner
 	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
 }
+
+func TransferWei(
+	deps *TestDeps,
+	to gethcommon.Address,
+	amountWei *big.Int,
+) error {
+	ethAcc := deps.Sender
+	var innerTxData []byte = nil
+	var accessList gethcore.AccessList = nil
+	ethTxMsg, err := NewEthTxMsgFromTxData(
+		deps,
+		gethcore.LegacyTxType,
+		innerTxData,
+		deps.StateDB().GetNonce(ethAcc.EthAddr),
+		&to,
+		amountWei,
+		gethparams.TxGas,
+		accessList,
+	)
+	if err != nil {
+		return fmt.Errorf("error while transferring wei: %w", err)
+	}
+
+	_, err = deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	if err != nil {
+		return fmt.Errorf("error while transferring wei: %w", err)
+	}
+	return err
+}

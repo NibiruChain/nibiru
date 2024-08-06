@@ -32,7 +32,7 @@ func NewEthAccInfo() EthPrivKeyAcc {
 	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
 	return EthPrivKeyAcc{
 		EthAddr:       ethAddr,
-		NibiruAddr:    EthAddrToNibiruAddr(ethAddr),
+		NibiruAddr:    eth.EthAddrToNibiruAddr(ethAddr),
 		PrivKey:       privkey,
 		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),

@@ -188,12 +188,12 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		deps := evmtest.NewTestDeps()
 		ethAcc := deps.Sender
 
-		amount := int64(123)
+		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
 		err := testapp.FundAccount(
 			deps.Chain.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewInt64Coin("unibi", amount)),
+			sdk.NewCoins(sdk.NewInt64Coin("unibi", fundedAmount)),
 		)
 		s.Require().NoError(err)
 
@@ -208,7 +208,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			innerTxData,
 			deps.StateDB().GetNonce(ethAcc.EthAddr),
 			&to,
-			big.NewInt(amount),
+			big.NewInt(fundedAmount),
 			gethparams.TxGas,
 			accessList,
 		)
@@ -229,7 +229,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			&evm.EventTransfer{
 				Sender:    ethAcc.EthAddr.String(),
 				Recipient: to.String(),
-				Amount:    strconv.FormatInt(amount, 10),
+				Amount:    strconv.FormatInt(fundedAmount, 10),
 			},
 		)
 	}
