@@ -609,7 +609,7 @@ func (s *Suite) TestIterateStorage() {
 	keySet := set.New[common.Hash](key1, key2)
 	valSet := set.New[common.Hash](value1, value2)
 	for _, stateKey := range storage.SortedKeys() {
-		stateValue := deps.K.GetState(deps.Ctx, address, stateKey)
+		stateValue := deps.EvmKeeper.GetState(deps.Ctx, address, stateKey)
 		s.True(keySet.Has(stateKey))
 		s.True(valSet.Has(stateValue))
 	}

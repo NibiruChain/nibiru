@@ -49,7 +49,7 @@ func (_m *EVMQueryClient) EthAccount(ctx context.Context, in *evm.QueryEthAccoun
 
 // NibiruAccount provides a mock function with given fields: ctx, in, opts
 func (_m *EVMQueryClient) NibiruAccount(
-	ctx context.Context, in *evm.QueryNibiruAccountRequest, opts ...grpc.CallOption, 
+	ctx context.Context, in *evm.QueryNibiruAccountRequest, opts ...grpc.CallOption,
 ) (*evm.QueryNibiruAccountResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
@@ -78,7 +78,6 @@ func (_m *EVMQueryClient) NibiruAccount(
 
 	return r0, r1
 }
-
 
 // Balance provides a mock function with given fields: ctx, in, opts
 func (_m *EVMQueryClient) Balance(ctx context.Context, in *evm.QueryBalanceRequest, opts ...grpc.CallOption) (*evm.QueryBalanceResponse, error) {
