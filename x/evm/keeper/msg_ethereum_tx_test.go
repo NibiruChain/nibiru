@@ -45,7 +45,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				gasLimit := big.NewInt(1_500_000)
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 					GasLimit:      gasLimit,
@@ -85,7 +85,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				gasLimit := gethparams.TxGasContractCreation
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 				}
@@ -137,7 +137,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	gasLimit := big.NewInt(1000_000)
 	args := evmtest.ArgsExecuteContract{
 		EthAcc:          ethAcc,
-		EthChainIDInt:   deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:        big.NewInt(1),
 		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
 		GasLimit:        gasLimit,
@@ -187,12 +187,12 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		deps := evmtest.NewTestDeps()
 		ethAcc := deps.Sender
 
-		amount := int64(123)
+		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
 		err := testapp.FundAccount(
 			deps.Chain.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewInt64Coin("unibi", amount)),
+			sdk.NewCoins(sdk.NewInt64Coin("unibi", fundedAmount)),
 		)
 		s.Require().NoError(err)
 
@@ -207,7 +207,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			innerTxData,
 			deps.StateDB().GetNonce(ethAcc.EthAddr),
 			&to,
-			big.NewInt(amount),
+			big.NewInt(fundedAmount),
 			gethparams.TxGas,
 			accessList,
 		)
@@ -228,7 +228,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			&evm.EventTransfer{
 				Sender:    ethAcc.EthAddr.String(),
 				Recipient: to.String(),
-				Amount:    strconv.FormatInt(amount, 10),
+				Amount:    strconv.FormatInt(fundedAmount, 10),
 			},
 		)
 	}

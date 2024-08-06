@@ -7,9 +7,18 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/ethereum/go-ethereum/common"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
+	return ethAddr.Bytes()
+}
+
+func NibiruAddrToEthAddr(nibiruAddr sdk.AccAddress) gethcommon.Address {
+	return gethcommon.BytesToAddress(nibiruAddr.Bytes())
+}
 
 var (
 	_ authtypes.AccountI                 = (*EthAccount)(nil)
@@ -32,11 +41,11 @@ const (
 type EthAccountI interface { //revive:disable-line:exported
 	authtypes.AccountI
 	// EthAddress returns the ethereum Address representation of the AccAddress
-	EthAddress() common.Address
+	EthAddress() gethcommon.Address
 	// CodeHash is the keccak256 hash of the contract code (if any)
-	GetCodeHash() common.Hash
+	GetCodeHash() gethcommon.Hash
 	// SetCodeHash sets the code hash to the account fields
-	SetCodeHash(code common.Hash) error
+	SetCodeHash(code gethcommon.Hash) error
 	// Type returns the type of Ethereum Account (EOA or Contract)
 	Type() EthAccType
 }
@@ -46,15 +55,15 @@ func (acc EthAccount) GetBaseAccount() *authtypes.BaseAccount {
 }
 
 // EthAddress returns the account address ethereum format.
-func (acc EthAccount) EthAddress() common.Address {
-	return common.BytesToAddress(acc.GetAddress().Bytes())
+func (acc EthAccount) EthAddress() gethcommon.Address {
+	return gethcommon.BytesToAddress(acc.GetAddress().Bytes())
 }
 
-func (acc EthAccount) GetCodeHash() common.Hash {
-	return common.HexToHash(acc.CodeHash)
+func (acc EthAccount) GetCodeHash() gethcommon.Hash {
+	return gethcommon.HexToHash(acc.CodeHash)
 }
 
-func (acc *EthAccount) SetCodeHash(codeHash common.Hash) error {
+func (acc *EthAccount) SetCodeHash(codeHash gethcommon.Hash) error {
 	acc.CodeHash = codeHash.Hex()
 	return nil
 }
@@ -62,7 +71,7 @@ func (acc *EthAccount) SetCodeHash(codeHash common.Hash) error {
 // Type returns the type of Ethereum Account (EOA or Contract)
 func (acc EthAccount) Type() EthAccType {
 	if bytes.Equal(
-		emptyCodeHash, common.HexToHash(acc.CodeHash).Bytes(),
+		emptyCodeHash, gethcommon.HexToHash(acc.CodeHash).Bytes(),
 	) {
 		return EthAccType_EOA
 	}
@@ -79,6 +88,6 @@ var emptyCodeHash = crypto.Keccak256(nil)
 func ProtoBaseAccount() authtypes.AccountI {
 	return &EthAccount{
 		BaseAccount: &authtypes.BaseAccount{},
-		CodeHash:    common.BytesToHash(emptyCodeHash).String(),
+		CodeHash:    gethcommon.BytesToHash(emptyCodeHash).String(),
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"sort"
 
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -118,7 +117,7 @@ func (s *StateDB) Exist(addr common.Address) bool {
 // or empty according to the EIP161 specification (balance = nonce = code = 0)
 func (s *StateDB) Empty(addr common.Address) bool {
 	so := s.getStateObject(addr)
-	return so == nil || so.empty()
+	return so == nil || so.isEmpty()
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
@@ -217,6 +216,7 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	if account == nil {
 		return nil
 	}
+
 	// Insert into the live set
 	obj := newObject(s, addr, *account)
 	s.setStateObject(obj)
@@ -263,7 +263,7 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 func (s *StateDB) CreateAccount(addr common.Address) {
 	newObj, prev := s.createObject(addr)
 	if prev != nil {
-		newObj.setBalance(prev.account.Balance)
+		newObj.setBalance(prev.account.BalanceWei)
 	}
 }
 
@@ -348,8 +348,8 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 		prev:        stateObject.suicided,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
-	stateObject.markSuicided()
-	stateObject.account.Balance = new(big.Int)
+	stateObject.suicided = true
+	stateObject.account.BalanceWei = new(big.Int)
 
 	return true
 }
@@ -444,6 +444,11 @@ func (s *StateDB) RevertToSnapshot(revid int) {
 	s.validRevisions = s.validRevisions[:idx]
 }
 
+// errorf: wrapper of "fmt.Errorf" specific to the current Go package.
+func errorf(format string, args ...any) error {
+	return fmt.Errorf("StateDB error: "+format, args...)
+}
+
 // Commit writes the dirty states to keeper
 // the StateDB object should be discarded after committed.
 func (s *StateDB) Commit() error {
@@ -451,14 +456,14 @@ func (s *StateDB) Commit() error {
 		obj := s.stateObjects[addr]
 		if obj.suicided {
 			if err := s.keeper.DeleteAccount(s.ctx, obj.Address()); err != nil {
-				return errorsmod.Wrap(err, "failed to delete account")
+				return errorf("failed to delete account: %w")
 			}
 		} else {
 			if obj.code != nil && obj.dirtyCode {
 				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
-				return errorsmod.Wrap(err, "failed to set account")
+			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account.ToNative()); err != nil {
+				return errorf("failed to set account: %w")
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {
 				value := obj.dirtyStorage[key]

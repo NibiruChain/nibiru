@@ -37,10 +37,7 @@ func (k *Keeper) EthereumTx(
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	sender := msg.From
 	tx := msg.AsTransaction()
-	txIndex := k.EvmState.BlockTxIndex.GetOr(ctx, 0)
 
 	resp, err = k.ApplyEvmTx(ctx, tx)
 	if err != nil {
@@ -52,7 +49,7 @@ func (k *Keeper) EthereumTx(
 		// add event for ethereum transaction hash format
 		sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, resp.Hash),
 		// add event for index of valid ethereum tx
-		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex, 10)),
+		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(k.EvmState.BlockTxIndex.GetOr(ctx, 0), 10)),
 		// add event for eth tx gas used, we can't get it from cosmos tx result when it contains multiple eth tx msgs.
 		sdk.NewAttribute(evm.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
 	}
@@ -93,7 +90,7 @@ func (k *Keeper) EthereumTx(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, sender),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
 			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
 		),
 	})
@@ -104,16 +101,15 @@ func (k *Keeper) EthereumTx(
 func (k *Keeper) ApplyEvmTx(
 	ctx sdk.Context, tx *gethcore.Transaction,
 ) (*evm.MsgEthereumTxResponse, error) {
-	ethChainId := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, ethChainId)
+	evmConfig, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
 	}
 	txConfig := k.TxConfig(ctx, tx.Hash())
 
 	// get the signer according to the chain rules from the config and block height
-	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
+	msg, err := tx.AsMessage(signer, evmConfig.BaseFee)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
@@ -121,7 +117,7 @@ func (k *Keeper) ApplyEvmTx(
 	tmpCtx, commit := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, cfg, txConfig)
+	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -185,7 +181,7 @@ func (k *Keeper) ApplyEvmTx(
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
-	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, cfg.Params.EvmDenom); err != nil {
+	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, evmConfig.Params.EvmDenom); err != nil {
 		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
 	}
 
@@ -236,7 +232,7 @@ func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
 func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
-	cfg *statedb.EVMConfig,
+	evmConfig *statedb.EVMConfig,
 	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
 ) *vm.EVM {
@@ -244,21 +240,21 @@ func (k *Keeper) NewEVM(
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
 		GetHash:     k.GetHashFn(ctx),
-		Coinbase:    cfg.CoinBase,
+		Coinbase:    evmConfig.CoinBase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
 		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
-		BaseFee:     cfg.BaseFee,
+		BaseFee:     evmConfig.BaseFee,
 		Random:      nil, // not supported
 	}
 
 	txCtx := core.NewEVMTxContext(msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+		tracer = k.Tracer(ctx, msg, evmConfig.ChainConfig)
 	}
-	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
-	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, cfg.ChainConfig, vmConfig)
+	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
+	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
 	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
 	return theEvm
 }
@@ -361,7 +357,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msg core.Message,
 	tracer vm.EVMLogger,
 	commit bool,
-	cfg *statedb.EVMConfig,
+	evmConfig *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
 ) (*evm.MsgEthereumTxResponse, error) {
 	var (
@@ -370,14 +366,14 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 
 	// return error if contract creation or call are disabled through governance
-	if !cfg.Params.EnableCreate && msg.To() == nil {
+	if !evmConfig.Params.EnableCreate && msg.To() == nil {
 		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
-	} else if !cfg.Params.EnableCall && msg.To() != nil {
+	} else if !evmConfig.Params.EnableCall && msg.To() != nil {
 		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
-	evmObj := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
+	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	numPrecompiles := len(k.precompiles)
 	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
@@ -408,7 +404,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
 
-	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, cfg.ChainConfig, contractCreation)
+	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
 	if err != nil {
 		// should have already been checked on Ante Handler
 		return nil, errors.Wrap(err, "intrinsic gas failed")
@@ -421,19 +417,31 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}
 	leftoverGas -= intrinsicGas
 
-	// access list preparation is moved from ante handler to here, because it's needed when `ApplyMessage` is called
-	// under contexts where ante handlers are not run, for example `eth_call` and `eth_estimateGas`.
-	stateDB.PrepareAccessList(msg.From(), msg.To(), evmObj.ActivePrecompiles(params.Rules{}), msg.AccessList())
+	// access list preparation is moved from ante handler to here, because it's
+	// needed when `ApplyMessage` is called under contexts where ante handlers
+	// are not run, for example `eth_call` and `eth_estimateGas`.
+	stateDB.PrepareAccessList(
+		msg.From(),
+		msg.To(),
+		evmObj.ActivePrecompiles(params.Rules{}),
+		msg.AccessList(),
+	)
+
+	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
+	if err != nil {
+		return nil, err
+		// return nil, fmt.Errorf("cannot use \"value\" in wei that can't be converted to unibi. %s is not divisible by 10^12", msg.Value())
+	}
 
 	if contractCreation {
 		// take over the nonce management from evm:
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.
 		stateDB.SetNonce(sender.Address(), msg.Nonce())
-		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msg.Value())
+		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msgWei)
 		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msg.Value())
+		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msgWei)
 	}
 
 	// After EIP-3529: refunds are capped to gasUsed / 5
@@ -460,7 +468,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := stateDB.Commit(); err != nil {
-			return nil, errors.Wrap(err, "failed to commit stateDB")
+			return nil, fmt.Errorf("failed to commit stateDB: %w", err)
 		}
 	}
 
@@ -487,6 +495,24 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		Logs:    evm.NewLogsFromEth(stateDB.Logs()),
 		Hash:    txConfig.TxHash.Hex(),
 	}, nil
+}
+
+func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
+	// if "weiValue" is nil, 0, or negative, early return
+	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
+		return weiInt, nil
+	}
+
+	// err if weiInt is too small
+	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
+	if weiInt.Cmp(tenPow12) < 0 {
+		return weiInt, fmt.Errorf(
+			"wei amount is too small (%s), cannot transfer less than 1 micronibi. 10^18 wei == 1 NIBI == 10^6 micronibi", weiInt)
+	}
+
+	// truncate to highest micronibi amount
+	newWeiInt = evm.NativeToWei(evm.WeiToNative(weiInt))
+	return newWeiInt, nil
 }
 
 // CreateFunToken is a gRPC transaction message for creating fungible token

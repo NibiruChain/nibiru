@@ -92,8 +92,8 @@ message QueryEthAccountRequest {
 
 // QueryEthAccountResponse is the response type for the Query/Account RPC method.
 message QueryEthAccountResponse {
-  // balance is the balance of the EVM denomination.
-  string balance = 1;
+  // balance_wei is the balance of wei (attoether, where NIBI is ether).
+  string balance_wei = 1;
   // code_hash is the hex-formatted code bytes from the EOA.
   string code_hash = 2;
   // nonce is the account's sequence number.
@@ -153,8 +153,10 @@ message QueryBalanceRequest {
 
 // QueryBalanceResponse is the response type for the Query/Balance RPC method.
 message QueryBalanceResponse {
-  // balance is the balance of the EVM denomination.
+  // balance is the balance of the EVM denomination
   string balance = 1;
+  // balance is the balance of the EVM denomination in units of wei.
+  string balance_wei = 2;
 }
 
 // QueryStorageRequest is the request type for the Query/Storage RPC method.
