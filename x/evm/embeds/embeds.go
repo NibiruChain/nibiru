@@ -9,192 +9,79 @@ import (
 	// program (smart contracts).
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"os"
-	"path"
-	"path/filepath"
-	"runtime"
-	"strings"
 
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 var (
+	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
+	erc20MinterContractJSON []byte
+	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
+	funtokenContractJSON []byte
+	//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
+	testErc20Json []byte
+)
+
+var (
 	// Contract_ERC20Minter: The default ERC20 contract deployed during the
 	// creation of a `FunToken` mapping from a bank coin.
-	Contract_ERC20Minter CompiledEvmContract
+	SmartContract_ERC20Minter = CompiledEvmContract{
+		Name:      "ERC20Minter.sol",
+		EmbedJSON: erc20MinterContractJSON,
+	}
 
-	//go:embed ERC20MinterCompiled.json
-	erc20MinterContractJSON []byte
-
-	// Contract_Funtoken: Precompile contract interface for
+	// SmartContract_Funtoken: Precompile contract interface for
 	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
 	// to non-EVM accounts. Only the ABI is used.
-	Contract_Funtoken CompiledEvmContract
-	//go:embed IFunTokenCompiled.json
-	funtokenContractJSON []byte
+	SmartContract_FunToken = CompiledEvmContract{
+		Name:      "FunToken.sol",
+		EmbedJSON: funtokenContractJSON,
+	}
+
+	SmartContract_TestERC20 = CompiledEvmContract{
+		Name:      "TestERC20.sol",
+		EmbedJSON: testErc20Json,
+	}
 )
 
 func init() {
-	Contract_ERC20Minter = SmartContract_ERC20Minter.MustLoad()
-	Contract_Funtoken = SmartContract_FunToken.MustLoad()
+	SmartContract_ERC20Minter.MustLoad()
+	SmartContract_FunToken.MustLoad()
+	SmartContract_TestERC20.MustLoad()
 }
 
-var (
-	SmartContract_TestERC20 = SmartContractFixture{
-		Name:        "TestERC20.sol",
-		FixtureType: FixtueType_Test,
-	}
-
-	SmartContract_ERC20Minter = SmartContractFixture{
-		Name:        "ERC20Minter.sol",
-		FixtureType: FixtueType_Prod,
-		EmbedJSON:   &erc20MinterContractJSON,
-	}
-	SmartContract_FunToken = SmartContractFixture{
-		Name:        "FunToken.sol",
-		FixtureType: FixtueType_Prod,
-		EmbedJSON:   &funtokenContractJSON,
-	}
-)
-
-// CompiledEvmContract: EVM contract that can be deployed into the EVM state and
-// used as a valid precompile.
 type CompiledEvmContract struct {
-	ABI      gethabi.ABI `json:"abi"`
-	Bytecode []byte      `json:"bytecode"`
+	Name      string
+	EmbedJSON []byte
+
+	// filled in post-load
+	ABI      *gethabi.ABI `json:"abi"`
+	Bytecode []byte       `json:"bytecode"`
 }
 
-type SmartContractFixture struct {
-	Name        string
-	FixtureType ContractFixtureType
-	EmbedJSON   *[]byte
-}
+func (sc *CompiledEvmContract) MustLoad() {
+	if sc.EmbedJSON == nil {
+		panic("missing compiled contract embed")
+	}
 
-// ContractFixtureType: Enum type for embedded smart contracts. This type
-// expresses whether a contract is used in production or only for testing.
-type ContractFixtureType string
-
-const (
-	FixtueType_Prod = "prod"
-	FixtueType_Test = "test"
-)
-
-// HardhatOutput: Expected format for smart contract test fixtures.
-type HardhatOutput struct {
-	ABI      json.RawMessage `json:"abi"`
-	Bytecode HexString       `json:"bytecode"`
-}
-
-// HexString: Hexadecimal-encoded string
-type HexString string
-
-func (h HexString) Bytes() []byte {
-	return gethcommon.Hex2Bytes(
-		strings.TrimPrefix(string(h), "0x"),
-	)
-}
-func (h HexString) String() string { return string(h) }
-func (h HexString) FromBytes(bz []byte) HexString {
-	return HexString(gethcommon.Bytes2Hex(bz))
-}
-
-func NewHardhatOutputFromJson(
-	jsonBz []byte,
-) (out HardhatOutput, err error) {
 	rawJsonBz := make(map[string]json.RawMessage)
-	err = json.Unmarshal(jsonBz, &rawJsonBz)
-	if err != nil {
-		return
-	}
-	var rawBytecodeBz HexString
-	err = json.Unmarshal(rawJsonBz["bytecode"], &rawBytecodeBz)
-	if err != nil {
-		return
-	}
-
-	return HardhatOutput{
-		ABI:      rawJsonBz["abi"],
-		Bytecode: rawBytecodeBz,
-	}, err
-}
-
-func (jsonObj HardhatOutput) EvmContract() (out CompiledEvmContract, err error) {
-	newAbi := new(gethabi.ABI)
-	err = newAbi.UnmarshalJSON(jsonObj.ABI)
-	if err != nil {
-		return
-	}
-
-	return CompiledEvmContract{
-		ABI:      *newAbi,
-		Bytecode: jsonObj.Bytecode.Bytes(),
-	}, err
-}
-
-func (sc SmartContractFixture) MustLoad() (out CompiledEvmContract) {
-	out, err := sc.Load()
+	err := json.Unmarshal(sc.EmbedJSON, &rawJsonBz)
 	if err != nil {
 		panic(err)
 	}
-	return out
-}
 
-func (sc SmartContractFixture) Load() (out CompiledEvmContract, err error) {
-	var jsonBz []byte
-
-	// Locate the contracts directory.
-	switch sc.FixtureType {
-	case FixtueType_Prod:
-		if sc.EmbedJSON == nil {
-			return out, fmt.Errorf("missing compiled contract embed")
-		}
-		jsonBz = *sc.EmbedJSON
-	case FixtueType_Test:
-		contractsDirPath, err := pathToE2EContracts()
-		if err != nil {
-			return out, err
-		}
-		baseName := strings.TrimSuffix(sc.Name, ".sol")
-		compiledPath := fmt.Sprintf("%s/%sCompiled.json", contractsDirPath, baseName)
-
-		jsonBz, err = os.ReadFile(compiledPath)
-		if err != nil {
-			return out, err
-		}
-	default:
-		panic(fmt.Errorf("unexpected case type \"%s\"", sc.FixtureType))
-	}
-
-	compiledJson, err := NewHardhatOutputFromJson(jsonBz)
+	abi := new(gethabi.ABI)
+	err = abi.UnmarshalJSON(rawJsonBz["abi"])
 	if err != nil {
-		return
+		panic(err)
 	}
 
-	return compiledJson.EvmContract()
-}
-
-// pathToE2EContracts: Returns the absolute path to the E2E test contract
-// directory located at path, "NibiruChain/nibiru/e2e/evm/contracts".
-func pathToE2EContracts() (thePath string, err error) {
-	dirEvmTest, _ := GetPackageDir()
-	dirOfRepo := path.Dir(path.Dir(path.Dir(dirEvmTest)))
-	dirEvmE2e := path.Join(dirOfRepo, "e2e/evm")
-	if path.Base(dirEvmE2e) != "evm" {
-		return thePath, fmt.Errorf("failed to locate the e2e/evm directory")
+	var bytecodeStr string
+	err = json.Unmarshal(rawJsonBz["bytecode"], &bytecodeStr)
+	if err != nil {
+		panic(err)
 	}
-	return dirEvmE2e + "/contracts", nil
-}
-
-// GetPackageDir: Returns the absolute path of the Golang package that
-// calls this function.
-func GetPackageDir() (string, error) {
-	// Get the import path of the current package
-	_, filename, _, _ := runtime.Caller(0)
-	pkgDir := path.Dir(filename)
-	pkgPath := path.Join(path.Base(pkgDir), "..")
-
-	// Get the directory path of the package
-	return filepath.Abs(pkgPath)
+	sc.Bytecode = gethcommon.FromHex(bytecodeStr)
+	sc.ABI = abi
 }

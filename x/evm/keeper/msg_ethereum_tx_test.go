@@ -42,7 +42,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				)
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
-				gasLimit := big.NewInt(1000_000)
+				gasLimit := big.NewInt(1_500_000)
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
 					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
@@ -129,8 +129,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-	testContract, err := embeds.SmartContract_TestERC20.Load()
-	s.Require().NoError(err)
+	testContract := embeds.SmartContract_TestERC20
 	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	input, err := testContract.ABI.Pack("transfer", to, big.NewInt(123))
 	s.NoError(err)
