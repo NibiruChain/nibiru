@@ -37,65 +37,43 @@ import (
 var _ evm.QueryServer = &Keeper{}
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
-// EthAccount retrieves the account details for a given Ethereum hex address.
+// EthAccount retrieves the account  and balance details for an account with the
+// given address.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: Request containing the Ethereum hexadecimal address.
-//
-// Returns:
-//   - A pointer to the QueryEthAccountResponse object containing the account details.
-//   - An error if the account retrieval process encounters any issues.
+//   - req: Request containing the address in either Ethereum hexadecimal or
+//     Bech32 format.
 func (k Keeper) EthAccount(
 	goCtx context.Context, req *evm.QueryEthAccountRequest,
 ) (*evm.QueryEthAccountResponse, error) {
-	if err := req.Validate(); err != nil {
+	isBech32, err := req.Validate()
+	if err != nil {
 		return nil, err
 	}
 
-	addr := gethcommon.HexToAddress(req.Address)
+	var addrEth gethcommon.Address
+	var addrBech32 sdk.AccAddress
+
+	if isBech32 {
+		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+	} else {
+		addrEth = gethcommon.HexToAddress(req.Address)
+		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	acct := k.GetAccountOrEmpty(ctx, addr)
+	acct := k.GetAccountOrEmpty(ctx, addrEth)
 
 	return &evm.QueryEthAccountResponse{
-		BalanceWei: evm.NativeToWei(acct.BalanceNative).String(),
-		CodeHash:   gethcommon.BytesToHash(acct.CodeHash).Hex(),
-		Nonce:      acct.Nonce,
+		Balance:       acct.BalanceNative.String(),
+		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
+		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
+		Nonce:         acct.Nonce,
+		EthAddress:    addrEth.Hex(),
+		Bech32Address: addrBech32.String(),
 	}, nil
-}
-
-// NibiruAccount: Implements the gRPC query for "/eth.evm.v1.Query/NibiruAccount".
-// NibiruAccount retrieves the Cosmos account details for a given Ethereum address.
-//
-// Parameters:
-//   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryNibiruAccountRequest object containing the Ethereum address.
-//
-// Returns:
-//   - A pointer to the QueryNibiruAccountResponse object containing the Cosmos account details.
-//   - An error if the account retrieval process encounters any issues.
-func (k Keeper) NibiruAccount(
-	goCtx context.Context, req *evm.QueryNibiruAccountRequest,
-) (resp *evm.QueryNibiruAccountResponse, err error) {
-	if err := req.Validate(); err != nil {
-		return resp, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ethAddr := gethcommon.HexToAddress(req.Address)
-	nibiruAddr := sdk.AccAddress(ethAddr.Bytes())
-
-	accountOrNil := k.accountKeeper.GetAccount(ctx, nibiruAddr)
-	resp = &evm.QueryNibiruAccountResponse{
-		Address: nibiruAddr.String(),
-	}
-
-	if accountOrNil != nil {
-		resp.Sequence = accountOrNil.GetSequence()
-		resp.AccountNumber = accountOrNil.GetAccountNumber()
-	}
-
-	return resp, nil
 }
 
 // ValidatorAccount: Implements the gRPC query for

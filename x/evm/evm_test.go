@@ -129,17 +129,12 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	// EVM module should have mint perms
 	deps := evmtest.NewTestDeps()
 	{
-		_, err := deps.EvmKeeper.EthAccount(deps.GoCtx(), &evm.QueryEthAccountRequest{
+		resp, err := deps.EvmKeeper.EthAccount(deps.GoCtx(), &evm.QueryEthAccountRequest{
 			Address: evmModuleAddr.Hex(),
 		})
 		s.NoError(err)
-	}
-	{
-		resp, err := deps.EvmKeeper.NibiruAccount(deps.GoCtx(), &evm.QueryNibiruAccountRequest{
-			Address: evmModuleAddr.Hex(),
-		})
-		s.NoError(err)
-		s.Equal(nibiAddr.String(), resp.Address)
+		s.Equal(nibiAddr.String(), resp.Bech32Address)
+		s.Equal(evmModuleAddr.String(), resp.EthAddress)
 	}
 }
 
