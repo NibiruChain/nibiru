@@ -30,7 +30,7 @@ func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.A
 		return nil
 	}
 
-	acct.BalanceEvmDenom = k.GetEvmGasBalance(ctx, addr)
+	acct.BalanceNative = k.GetEvmGasBalance(ctx, addr)
 	return acct
 }
 
@@ -126,7 +126,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.BalanceEvmDenom); err != nil {
+	if err := k.SetAccBalance(ctx, addr, account.BalanceNative); err != nil {
 		return err
 	}
 
@@ -213,7 +213,7 @@ func (k *Keeper) GetAccountOrEmpty(
 
 	// empty account
 	return statedb.Account{
-		BalanceEvmDenom: new(big.Int),
-		CodeHash:        evm.EmptyCodeHash,
+		BalanceNative: new(big.Int),
+		CodeHash:      evm.EmptyCodeHash,
 	}
 }
