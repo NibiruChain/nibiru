@@ -145,7 +145,9 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 
 // isEmpty returns whether the account is considered isEmpty.
 func (s *stateObject) isEmpty() bool {
-	return s.account.Nonce == 0 && s.account.BalanceWei.Sign() == 0 && bytes.Equal(s.account.CodeHash, emptyCodeHash)
+	return s.account.Nonce == 0 &&
+		s.account.BalanceWei.Sign() == 0 &&
+		bytes.Equal(s.account.CodeHash, emptyCodeHash)
 }
 
 // AddBalance adds amount to s's balance.
