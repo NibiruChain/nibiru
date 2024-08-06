@@ -139,20 +139,17 @@ type DeployContractResult struct {
 
 func DeployContract(
 	deps *TestDeps,
-	contract embeds.SmartContractFixture,
+	contract embeds.CompiledEvmContract,
 	t *testing.T,
 	args ...any,
 ) (result DeployContractResult, err error) {
-	contractData, err := contract.Load()
-	require.NoError(t, err)
-
 	// Use contract args
-	packedArgs, err := contractData.ABI.Pack("", args...)
+	packedArgs, err := contract.ABI.Pack("", args...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to pack ABI args")
 		return
 	}
-	bytecodeForCall := append(contractData.Bytecode, packedArgs...)
+	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	jsonTxArgs := evm.JsonTxArgs{
@@ -172,7 +169,7 @@ func DeployContract(
 	return DeployContractResult{
 		TxResp:       resp,
 		EthTxMsg:     ethTxMsg,
-		ContractData: contractData,
+		ContractData: contract,
 		Nonce:        nonce,
 		ContractAddr: contractAddress,
 	}, nil

@@ -396,7 +396,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			// Check 3: erc-20 balance equals to send amount
 			recipientERC20Balance, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
-				embeds.Contract_ERC20Minter.ABI,
+				embeds.SmartContract_ERC20Minter.ABI,
 				evm.ModuleAddressEVM(),
 				&funTokenErc20Addr,
 				false,
@@ -404,7 +404,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 				recipientEVMAddr.ToAddr(),
 			)
 			s.Require().NoError(err)
-			res, err := embeds.Contract_ERC20Minter.ABI.Unpack(
+			res, err := embeds.SmartContract_ERC20Minter.ABI.Unpack(
 				"balanceOf", recipientERC20Balance.Ret,
 			)
 			s.Require().NoError(err)

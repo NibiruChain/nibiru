@@ -29,7 +29,7 @@ func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	contract gethcommon.Address,
 ) (info ERC20Metadata, err error) {
-	var abi gethabi.ABI = embeds.Contract_ERC20Minter.ABI
+	var abi *gethabi.ABI = embeds.SmartContract_ERC20Minter.ABI
 
 	errs := []error{}
 
