@@ -229,7 +229,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				tc.ctxSetup(&deps)
 			}
 			if tc.paramsSetup != nil {
-				deps.K.SetParams(deps.Ctx, tc.paramsSetup(&deps))
+				deps.EvmKeeper.SetParams(deps.Ctx, tc.paramsSetup(&deps))
 			}
 			_, err := anteDec.AnteHandle(
 				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,

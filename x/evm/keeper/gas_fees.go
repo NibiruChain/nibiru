@@ -127,7 +127,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 
 // VerifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
 // gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
-// base fee is higher than the gas fee cap.
+// base fee is lower than the gas fee cap.
 func VerifyFee(
 	txData evm.TxData,
 	denom string,
