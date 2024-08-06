@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
@@ -64,7 +65,7 @@ func (s *Suite) TestStateDBBalance() {
 	s.T().Log("Send via bank transfer from account to account. See expected wei amounts.")
 	{
 		deps := evmtest.NewTestDeps()
-		toNibiAddr := evmtest.EthAddrToNibiruAddr(to)
+		toNibiAddr := eth.EthAddrToNibiruAddr(to)
 		err := testapp.FundAccount(
 			deps.Chain.BankKeeper,
 			deps.Ctx,
