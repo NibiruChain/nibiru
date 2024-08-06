@@ -58,7 +58,7 @@ func (k Keeper) EthAccount(
 	acct := k.GetAccountOrEmpty(ctx, addr)
 
 	return &evm.QueryEthAccountResponse{
-		BalanceWei: evm.NativeToWei(acct.BalanceEvmDenom).String(),
+		BalanceWei: evm.NativeToWei(acct.BalanceNative).String(),
 		CodeHash:   gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:      acct.Nonce,
 	}, nil
