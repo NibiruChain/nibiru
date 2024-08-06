@@ -25,9 +25,7 @@ describe("Basic Queries", () => {
     const senderBalanceAfter = await provider.getBalance(account)
     const recipientBalanceAfter = await provider.getBalance(alice)
 
-    // TODO: https://github.com/NibiruChain/nibiru/issues/1902
-    // gas is not deducted regardless the gas limit, check this
-    const expectedSenderBalance = senderBalanceBefore - amountToSend
+    const expectedSenderBalance = senderBalanceBefore - amountToSend - 50000n // 50k gas for the transaction
     expect(senderBalanceAfter).toEqual(expectedSenderBalance)
     expect(recipientBalanceAfter).toEqual(amountToSend)
   }, 20e3)
