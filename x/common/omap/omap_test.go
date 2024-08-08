@@ -2,18 +2,32 @@ package omap_test
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/omap"
+	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/x/evm/precompile"
 )
+
+type Suite struct {
+	suite.Suite
+}
+
+func TestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(Suite))
+}
 
 // TestLenHasKeys checks the length of the ordered map and verifies if the map
 // contains certain keys.
-func TestLenHasKeys(t *testing.T) {
+func (s *Suite) TestLenHasKeys() {
 	type HasCheck struct {
 		key string
 		has bool
@@ -45,21 +59,21 @@ func TestLenHasKeys(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		t.Run(fmt.Sprintf("case-%d", idx), func(t *testing.T) {
+		s.Run(fmt.Sprintf("case-%d", idx), func() {
 			om := omap.OrderedMap_String[int](tc.dataMap)
 
-			require.Equal(t, tc.len, om.Len())
+			s.Require().Equal(tc.len, om.Len())
 
 			orderedKeys := om.Keys()
 			definitelyOrderedKeys := []string{}
 			definitelyOrderedKeys = append(definitelyOrderedKeys, orderedKeys...)
 			sort.Strings(definitelyOrderedKeys)
 
-			require.Equal(t, definitelyOrderedKeys, orderedKeys)
+			s.Equal(definitelyOrderedKeys, orderedKeys)
 
 			idx := 0
 			for key := range om.Range() {
-				require.Equal(t, orderedKeys[idx], key)
+				s.Equal(orderedKeys[idx], key)
 				idx++
 			}
 		})
@@ -67,23 +81,27 @@ func TestLenHasKeys(t *testing.T) {
 }
 
 // TestGetSetDelete checks the Get, Set, and Delete operations on the OrderedMap.
-func TestGetSetDelete(t *testing.T) {
+func (s *Suite) TestGetSetDelete() {
 	om := omap.OrderedMap_String[string](make(map[string]string))
-	require.Equal(t, 0, om.Len())
+	s.Require().Equal(0, om.Len())
 
 	om.Set("foo", "fooval")
-	require.True(t, om.Has("foo"))
-	require.Equal(t, 1, om.Len())
+	s.Require().True(om.Has("foo"))
+	s.Require().Equal(1, om.Len())
 
 	om.Delete("bar") // shouldn't cause any problems
 	om.Delete("foo")
-	require.False(t, om.Has("foo"))
-	require.Equal(t, 0, om.Len())
+	s.Require().False(om.Has("foo"))
+	s.Require().Equal(0, om.Len())
 }
 
-// TestOrderedMap_Pair tests an OrderedMap where the key is an asset.Pair, a
+// DummyValue is a blank struct to use as a placeholder in the maps for the
+// generic value argument.
+type DummyValue struct{}
+
+// TestPair tests an OrderedMap where the key is an asset.Pair, a
 // type that isn't built-in.
-func TestOrderedMap_Pair(t *testing.T) {
+func (s *Suite) TestPair() {
 	pairStrs := []string{
 		"abc:xyz", "abc:abc", "aaa:bbb", "xyz:xyz", "bbb:ccc", "xyz:abc",
 	}
@@ -94,21 +112,93 @@ func TestOrderedMap_Pair(t *testing.T) {
 	orderedKeys := asset.MustNewPairs(orderedKeyStrs...)
 	pairs := asset.MustNewPairs(pairStrs...)
 
-	type ValueType struct{}
-	unorderedMap := make(map[asset.Pair]ValueType)
+	unorderedMap := make(map[asset.Pair]DummyValue)
 	for _, pair := range pairs {
-		unorderedMap[pair] = ValueType{}
+		unorderedMap[pair] = DummyValue{}
 	}
 
-	om := omap.OrderedMap_Pair[ValueType](unorderedMap)
-	require.Equal(t, 6, om.Len())
-	require.EqualValues(t, orderedKeys, om.Keys())
-	require.NotEqualValues(t, asset.PairsToStrings(orderedKeys), pairStrs)
+	om := omap.OrderedMap_Pair[DummyValue](unorderedMap)
+	s.Require().Equal(6, om.Len())
+	s.Require().EqualValues(orderedKeys, om.Keys())
+	s.Require().NotEqualValues(asset.PairsToStrings(orderedKeys), pairStrs)
 
 	var pairsFromLoop []asset.Pair
 	for pair := range om.Range() {
 		pairsFromLoop = append(pairsFromLoop, pair)
 	}
-	require.EqualValues(t, orderedKeys, pairsFromLoop)
-	require.NotEqualValues(t, pairsFromLoop, pairs)
+	s.Require().EqualValues(orderedKeys, pairsFromLoop)
+	s.Require().NotEqualValues(pairsFromLoop, pairs)
+}
+
+func (s *Suite) TestEthAddress() {
+	s.Run("basic sorting", func() {
+		var orderedKeys []gethcommon.Address
+		unorderedMap := make(map[gethcommon.Address]DummyValue)
+
+		// Prepare unsorted test inputs
+		omapKeyInt64s := []int64{1, 0, 4, 6, 3, 2, 5}
+		var unorderedKeys []gethcommon.Address
+		for _, i := range omapKeyInt64s {
+			bigInt := big.NewInt(i)
+			key := gethcommon.BigToAddress(bigInt)
+			unorderedKeys = append(unorderedKeys, key)
+			unorderedMap[key] = DummyValue{}
+		}
+
+		{
+			for _, i := range []int64{0, 1, 2, 3, 4, 5, 6} {
+				orderedKeys = append(orderedKeys, gethcommon.BigToAddress(big.NewInt(i)))
+			}
+		}
+
+		// Use sorter Sort
+		om := omap.OrderedMap_EthAddress[DummyValue](unorderedMap)
+		s.Require().EqualValues(orderedKeys, om.Keys())
+		s.NotEqualValues(unorderedKeys, orderedKeys)
+	})
+
+	// This test proves that:
+	// 1. The VM precompiles are ordered
+	// 2. The output map from InitPrecompiles has the same addresses as the slice
+	// of VM precompile addresses
+	// 3. The ordered map produces the same ordered address slice.
+	//
+	// The VM precompiles are expected to be sorted. You'll notice from reading
+	// the constants for precompile addresses imported from
+	// "github.com/ethereum/go-ethereum/core/vm" that the order goes 1, 2, 3, ...
+	s.Run("precompile address sorting", func() {
+		// Check that the ordered map of precompiles is ordered
+		deps := evmtest.NewTestDeps()
+		// Types are written out to make the test easier to read.
+		// Note that orderedKeys must be set after InitPrecompiles to mirror the
+		// behavior of the Nibiru BaseApp.
+		var unorderedMap map[gethcommon.Address]vm.PrecompiledContract
+		unorderedMap = precompile.InitPrecompiles(deps.Chain.PublicKeepers)
+		var orderedKeys []gethcommon.Address = vm.PrecompiledAddressesBerlin
+
+		s.T().Log("1 | Prepare unsorted test inputs from output of \"precompile.InitPrecompiles\"")
+		var unorderedKeys []gethcommon.Address
+		for addr, _ := range unorderedMap {
+			unorderedKeys = append(unorderedKeys, addr)
+		}
+
+		s.T().Log("2 | Compute ordered keys from VM")
+		var vmAddrInts []*big.Int
+		var vmAddrIntsBefore []*big.Int // unchanged copy of vmAddrInts
+		for _, addr := range vm.PrecompiledAddressesBerlin {
+			vmAddrInt := new(big.Int).SetBytes(addr.Bytes())
+			vmAddrInts = append(vmAddrInts, vmAddrInt)
+			vmAddrIntsBefore = append(vmAddrIntsBefore, vmAddrInt)
+		}
+		lessFunc := func(i, j int) bool {
+			return vmAddrInts[i].Cmp(vmAddrInts[j]) < 0
+		}
+		sort.Slice(vmAddrInts, lessFunc)
+		s.Require().EqualValues(vmAddrInts, vmAddrIntsBefore, "vm precompiles not ordered in InitPrecompiles")
+
+		s.T().Log("3 | The ordered map produces the same ordered address slice")
+		om := omap.OrderedMap_EthAddress[vm.PrecompiledContract](unorderedMap)
+		s.Require().EqualValues(orderedKeys, om.Keys())
+	})
+
 }
