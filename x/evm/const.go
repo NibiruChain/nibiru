@@ -76,20 +76,11 @@ const (
 	CallTypeSmart
 )
 
-// ModuleAddressEVM: Module account address as a `gethcommon.Address`.
-func ModuleAddressEVM() gethcommon.Address {
-	if evmModuleAddr == zeroAddr {
-		evmModuleAddr = gethcommon.BytesToAddress(
-			authtypes.NewModuleAddress(ModuleName).Bytes(),
-		)
-	}
-	return evmModuleAddr
-}
+var EVM_MODULE_ADDRESS gethcommon.Address
 
-var (
-	zeroAddr      gethcommon.Address
-	evmModuleAddr gethcommon.Address
-)
+func init() {
+	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(authtypes.NewModuleAddress(ModuleName))
+}
 
 // NativeToWei converts a "unibi" amount to "wei" units for the EVM.
 //

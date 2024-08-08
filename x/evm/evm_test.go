@@ -117,7 +117,7 @@ func (s *TestSuite) TestFunToken() {
 }
 
 func (s *TestSuite) TestModuleAddressEVM() {
-	addr := evm.ModuleAddressEVM()
+	addr := evm.EVM_MODULE_ADDRESS
 	s.Equal(addr.Hex(), "0x603871c2ddd41c26Ee77495E2E31e6De7f9957e0")
 
 	// Sanity check

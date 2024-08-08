@@ -397,7 +397,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			recipientERC20Balance, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
 				embeds.SmartContract_ERC20Minter.ABI,
-				evm.ModuleAddressEVM(),
+				evm.EVM_MODULE_ADDRESS,
 				&funTokenErc20Addr,
 				false,
 				"balanceOf",
@@ -438,7 +438,7 @@ func (s *Suite) TestERC20Calls() {
 	contract := funtoken.Erc20Addr.ToAddr()
 
 	theUser := deps.Sender.EthAddr
-	theEvm := evm.ModuleAddressEVM()
+	theEvm := evm.EVM_MODULE_ADDRESS
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
