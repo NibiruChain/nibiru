@@ -297,7 +297,7 @@ func (k Keeper) LoadERC20String(
 ) (out string, err error) {
 	res, err := k.CallContract(
 		ctx, erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false, methodName,
 	)
@@ -323,7 +323,7 @@ func (k Keeper) loadERC20Uint8(
 ) (out uint8, err error) {
 	res, err := k.CallContract(
 		ctx, erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false, methodName,
 	)
@@ -352,7 +352,7 @@ func (k Keeper) LoadERC20BigInt(
 	res, err := k.CallContract(
 		ctx,
 		erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		commit,
 		methodName,

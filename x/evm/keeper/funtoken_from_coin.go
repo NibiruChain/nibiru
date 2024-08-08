@@ -80,7 +80,7 @@ func (k *Keeper) DeployERC20ForBankCoin(
 	}
 	bytecodeForCall := append(erc20Embed.Bytecode, packedArgs...)
 
-	fromEvmAddr := evm.ModuleAddressEVM()
+	fromEvmAddr := evm.EVM_MODULE_ADDRESS
 	nonce := k.GetAccNonce(ctx, fromEvmAddr)
 	erc20Addr = crypto.CreateAddress(fromEvmAddr, nonce)
 	erc20Contract := (*gethcommon.Address)(nil) // nil >> doesn't exist yet
