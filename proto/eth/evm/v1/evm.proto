@@ -49,7 +49,7 @@ message Params {
   // signed) transactions can be executed on the state machine.
   bool allow_unprotected_txs = 6;
   // DEPRECATED: active_precompiles
-  // This is replaced by the "Params.ActivePrecompiles()" function.
+  // All precompiles present according to the VM are active.
   reserved 7;
   // evm_channels is the list of channel identifiers from EVM compatible chains
   repeated string evm_channels = 8 [ (gogoproto.customname) = "EVMChannels" ];
