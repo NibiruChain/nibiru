@@ -153,6 +153,11 @@ $BINARY config # Prints config.
 echo_info "config/app.toml: Enabling API server"
 sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
 
+# Enable GRPC Server
+echo_info "config/app.toml: Enabling GRPC server"
+sed -i $SEDOPTION '/\[grpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+
+
 # Enable JSON RPC Server
 echo_info "config/app.toml: Enabling JSON API server"
 sed -i $SEDOPTION '/\[json\-rpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
