@@ -18,6 +18,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/x/common/omap"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -43,9 +44,12 @@ type Keeper struct {
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
-	// Integer for the Ethereum EIP155 Chain ID
-	// eip155ChainIDInt *big.Int
-	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// precompiles is the set of active precompiled contracts used in the EVM.
+	// Precompiles are special, built-in contract interfaces that exist at
+	// predefined address and run custom logic outside of what is possible only
+	// in Solidity.
+	precompiles omap.SortedMap[gethcommon.Address, vm.PrecompiledContract]
+
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.

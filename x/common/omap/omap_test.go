@@ -2,18 +2,29 @@ package omap_test
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/omap"
 )
 
-// TestLenHasKeys checks the length of the ordered map and verifies if the map
+type Suite struct {
+	suite.Suite
+}
+
+func TestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(Suite))
+}
+
+// TestLenHasKeys checks the length of the sorted map and verifies if the map
 // contains certain keys.
-func TestLenHasKeys(t *testing.T) {
+func (s *Suite) TestLenHasKeys() {
 	type HasCheck struct {
 		key string
 		has bool
@@ -45,70 +56,129 @@ func TestLenHasKeys(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		t.Run(fmt.Sprintf("case-%d", idx), func(t *testing.T) {
-			om := omap.OrderedMap_String[int](tc.dataMap)
+		s.Run(fmt.Sprintf("case-%d", idx), func() {
+			om := omap.SortedMap_String(tc.dataMap)
 
-			require.Equal(t, tc.len, om.Len())
+			s.Require().Equal(tc.len, om.Len())
 
-			orderedKeys := om.Keys()
-			definitelyOrderedKeys := []string{}
-			definitelyOrderedKeys = append(definitelyOrderedKeys, orderedKeys...)
-			sort.Strings(definitelyOrderedKeys)
+			sortedKeys := om.Keys()
+			definitelySortedKeys := []string{}
+			definitelySortedKeys = append(definitelySortedKeys, sortedKeys...)
+			sort.Strings(definitelySortedKeys)
 
-			require.Equal(t, definitelyOrderedKeys, orderedKeys)
+			s.Equal(definitelySortedKeys, sortedKeys)
 
 			idx := 0
 			for key := range om.Range() {
-				require.Equal(t, orderedKeys[idx], key)
+				s.Equal(sortedKeys[idx], key)
 				idx++
 			}
 		})
 	}
 }
 
-// TestGetSetDelete checks the Get, Set, and Delete operations on the OrderedMap.
-func TestGetSetDelete(t *testing.T) {
-	om := omap.OrderedMap_String[string](make(map[string]string))
-	require.Equal(t, 0, om.Len())
+// TestGetSetDelete checks the Get, Set, and Delete operations on the SortedMap.
+func (s *Suite) TestGetSetDelete() {
+	s.Run("single element", func() {
+		om := omap.SortedMap_String(make(map[string]string))
+		s.Require().Equal(0, om.Len())
+		om.Set("foo", "fooval")
+		s.Require().True(om.Has("foo"))
+		s.Require().Equal(1, om.Len())
 
-	om.Set("foo", "fooval")
-	require.True(t, om.Has("foo"))
-	require.Equal(t, 1, om.Len())
+		om.Delete("bar") // shouldn't cause any problems
+		om.Delete("foo")
+		s.Require().False(om.Has("foo"))
+		s.Require().Equal(0, om.Len())
+	})
 
-	om.Delete("bar") // shouldn't cause any problems
-	om.Delete("foo")
-	require.False(t, om.Has("foo"))
-	require.Equal(t, 0, om.Len())
+	s.Run("multiple elements", func() {
+		om := omap.SortedMap_String(map[string]string{
+			"0": "w",
+			"1": "x",
+			"2": "y",
+			"3": "z",
+		})
+		s.Require().Equal(4, om.Len())
+
+		om.Set("11", "xx")
+		om.Set("22", "yy")
+		s.Require().Equal([]string{"0", "1", "11", "2", "22", "3"}, om.Keys())
+
+		om.Delete("2") // shouldn't cause any problems
+		s.Require().False(om.Has("2"))
+		s.Require().Equal(5, om.Len())
+
+		s.Require().Equal([]string{"0", "1", "11", "22", "3"}, om.Keys())
+		om.Union(map[string]string{"222": "", "111": ""})
+		s.Require().Equal([]string{"0", "1", "11", "111", "22", "222", "3"}, om.Keys())
+
+		for k, v := range om.Data() {
+			gotVal, exists := om.Get(k)
+			s.True(exists)
+			s.Require().Equal(v, gotVal)
+		}
+	})
 }
 
-// TestOrderedMap_Pair tests an OrderedMap where the key is an asset.Pair, a
-// type that isn't built-in.
-func TestOrderedMap_Pair(t *testing.T) {
+// DummyValue is a blank struct to use as a placeholder in the maps for the
+// generic value argument.
+type DummyValue struct{}
+
+// TestPair tests an SortedMap where the key is an asset.Pair.
+func (s *Suite) TestPair() {
 	pairStrs := []string{
 		"abc:xyz", "abc:abc", "aaa:bbb", "xyz:xyz", "bbb:ccc", "xyz:abc",
 	}
-	orderedKeyStrs := []string{}
-	orderedKeyStrs = append(orderedKeyStrs, pairStrs...)
-	sort.Strings(orderedKeyStrs)
+	sortedKeyStrs := []string{}
+	sortedKeyStrs = append(sortedKeyStrs, pairStrs...)
+	sort.Strings(sortedKeyStrs)
 
-	orderedKeys := asset.MustNewPairs(orderedKeyStrs...)
+	sortedKeys := asset.MustNewPairs(sortedKeyStrs...)
 	pairs := asset.MustNewPairs(pairStrs...)
 
-	type ValueType struct{}
-	unorderedMap := make(map[asset.Pair]ValueType)
+	unsortedMap := make(map[asset.Pair]DummyValue)
 	for _, pair := range pairs {
-		unorderedMap[pair] = ValueType{}
+		unsortedMap[pair] = DummyValue{}
 	}
 
-	om := omap.OrderedMap_Pair[ValueType](unorderedMap)
-	require.Equal(t, 6, om.Len())
-	require.EqualValues(t, orderedKeys, om.Keys())
-	require.NotEqualValues(t, asset.PairsToStrings(orderedKeys), pairStrs)
+	om := omap.SortedMap_Pair(unsortedMap)
+	s.Require().Equal(6, om.Len())
+	s.Require().EqualValues(sortedKeys, om.Keys())
+	s.Require().NotEqualValues(asset.PairsToStrings(sortedKeys), pairStrs)
 
 	var pairsFromLoop []asset.Pair
 	for pair := range om.Range() {
 		pairsFromLoop = append(pairsFromLoop, pair)
 	}
-	require.EqualValues(t, orderedKeys, pairsFromLoop)
-	require.NotEqualValues(t, pairsFromLoop, pairs)
+	s.Require().EqualValues(sortedKeys, pairsFromLoop)
+	s.Require().NotEqualValues(pairsFromLoop, pairs)
+}
+
+func (s *Suite) TestEthAddress() {
+	s.Run("basic sorting", func() {
+		var sortedKeys []gethcommon.Address
+		unsortedMap := make(map[gethcommon.Address]DummyValue)
+
+		// Prepare unsorted test inputs
+		omapKeyInt64s := []int64{1, 0, 4, 6, 3, 2, 5}
+		var unsortedKeys []gethcommon.Address
+		for _, i := range omapKeyInt64s {
+			bigInt := big.NewInt(i)
+			key := gethcommon.BigToAddress(bigInt)
+			unsortedKeys = append(unsortedKeys, key)
+			unsortedMap[key] = DummyValue{}
+		}
+
+		{
+			for _, i := range []int64{0, 1, 2, 3, 4, 5, 6} {
+				sortedKeys = append(sortedKeys, gethcommon.BigToAddress(big.NewInt(i)))
+			}
+		}
+
+		// Use sorter Sort
+		om := omap.SortedMap_EthAddress(unsortedMap)
+		s.Require().EqualValues(sortedKeys, om.Keys())
+		s.NotEqualValues(unsortedKeys, sortedKeys)
+	})
 }

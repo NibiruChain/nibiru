@@ -19,7 +19,7 @@ type Suite struct {
 }
 
 // TestPrecompileSuite: Runs all the tests in the suite.
-func TestPrecompileSuite(t *testing.T) {
+func TestSuite(t *testing.T) {
 	s := new(Suite)
 	suite.Run(t, s)
 }
@@ -45,7 +45,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 	s.NoError(err)
 	s.Equal(string(codeResp.Code), "")
 
-	s.True(deps.EvmKeeper.PrecompileSet().Has(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	callArgs := []any{"nonsense", "args here", "to see if", "precompile is", "called"}
@@ -77,7 +77,7 @@ func (s *Suite) FunToken_HappyPath() {
 	theUser := deps.Sender.EthAddr
 	theEvm := evm.EVM_MODULE_ADDRESS
 
-	s.True(deps.EvmKeeper.PrecompileSet().Has(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	s.T().Log("Create FunToken mapping and ERC20")
