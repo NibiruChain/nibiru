@@ -35,8 +35,6 @@ var AvailableEVMExtensions = []string{}
 func DefaultParams() Params {
 	return Params{
 		EvmDenom:            DefaultEVMDenom,
-		EnableCreate:        true,
-		EnableCall:          true,
 		ExtraEIPs:           []int64{},
 		AllowUnprotectedTxs: false,
 		ActivePrecompiles:   AvailableEVMExtensions,
@@ -70,14 +68,6 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateEIPs(p.ExtraEIPs); err != nil {
-		return err
-	}
-
-	if err := validateBool(p.EnableCall); err != nil {
-		return err
-	}
-
-	if err := validateBool(p.EnableCreate); err != nil {
 		return err
 	}
 
