@@ -20,8 +20,6 @@ const (
 const (
 	codeErrInvalidState = uint32(iota) + 2 // NOTE: code 1 is reserved for internal errors
 	codeErrZeroAddress
-	codeErrCreateDisabled
-	codeErrCallDisabled
 	codeErrInvalidAmount
 	codeErrInvalidGasPrice
 	codeErrInvalidGasFee
@@ -42,12 +40,6 @@ var (
 
 	// ErrZeroAddress returns an error resulting from an zero (empty) ethereum Address.
 	ErrZeroAddress = errorsmod.Register(ModuleName, codeErrZeroAddress, "invalid zero address")
-
-	// ErrCreateDisabled returns an error if the EnableCreate parameter is false.
-	ErrCreateDisabled = errorsmod.Register(ModuleName, codeErrCreateDisabled, "EVM Create operation is disabled")
-
-	// ErrCallDisabled returns an error if the EnableCall parameter is false.
-	ErrCallDisabled = errorsmod.Register(ModuleName, codeErrCallDisabled, "EVM Call operation is disabled")
 
 	// ErrInvalidAmount returns an error if a tx contains an invalid amount.
 	ErrInvalidAmount = errorsmod.Register(ModuleName, codeErrInvalidAmount, "invalid transaction amount")

@@ -365,13 +365,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
-	// return error if contract creation or call are disabled through governance
-	if !evmConfig.Params.EnableCreate && msg.To() == nil {
-		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
-	} else if !evmConfig.Params.EnableCall && msg.To() != nil {
-		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
-	}
-
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 

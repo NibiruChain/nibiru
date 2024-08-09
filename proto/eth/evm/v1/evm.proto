@@ -32,12 +32,11 @@ message Params {
   // evm_denom represents the token denomination used to run the EVM state
   // transitions.
   string evm_denom = 1 [ (gogoproto.moretags) = "yaml:\"evm_denom\"" ];
-  // enable_create: Enables contract creation by allowing for state transitions
-  // that use the "vm.Create" function
-  bool enable_create = 2 [ (gogoproto.moretags) = "yaml:\"enable_create\"" ];
-  // enable_call: Enables contract calls by allowing for state transitions that
-  // use the "vm.Call" function
-  bool enable_call = 3 [ (gogoproto.moretags) = "yaml:\"enable_call\"" ];
+  // DEPRECATED: enable_create
+  reserved 2;
+  // DEPRECATED: enable_call
+  reserved 3;
+
   // extra_eips defines the additional EIPs for the vm.Config
   repeated int64 extra_eips = 4 [
     (gogoproto.customname) = "ExtraEIPs",
