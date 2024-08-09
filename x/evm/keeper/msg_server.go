@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"slices"
 	"strconv"
 
 	"cosmossdk.io/errors"
@@ -374,21 +373,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
-
-	numPrecompiles := k.precompiles.Len()
-	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
-
-	// Check if the transaction is sent to an inactive precompile
-	//
-	// NOTE: This has to be checked here instead of in the actual evm.Call method
-	// because evm.WithPrecompiles only populates the EVM with the active precompiles,
-	// so there's no telling if the To address is an inactive precompile further down the call stack.
-	toAddr := msg.To()
-	if toAddr != nil &&
-		slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
-		!slices.Contains(precompileAddrs, *toAddr) {
-		return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
-	}
 
 	leftoverGas := msg.Gas()
 

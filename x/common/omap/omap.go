@@ -15,7 +15,6 @@
 package omap
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -150,9 +149,6 @@ func (om *SortedMap[K, V]) Set(key K, val V) {
 		idx := sort.Search(lenBefore, func(i int) bool {
 			return om.sorter.Less(key, om.orderedKeys[i])
 		})
-
-		fmt.Printf("idx: %d\n", idx)
-		fmt.Printf("lenBefore: %d\n", lenBefore)
 
 		// Update om.orderedKeys
 		newSortedKeys := make([]K, lenBefore+1)
