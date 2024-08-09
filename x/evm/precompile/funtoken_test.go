@@ -58,7 +58,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 		err, fmt.Sprintf("argument count mismatch: got %d for 3", len(callArgs)),
 		"callArgs: ", callArgs)
 
-	fromEvmAddr := evm.ModuleAddressEVM()
+	fromEvmAddr := evm.EVM_MODULE_ADDRESS
 	contractAddr := precompileAddr.ToAddr()
 	commit := true
 	bytecodeForCall := packedArgs
@@ -75,7 +75,7 @@ func (s *Suite) FunToken_HappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	theUser := deps.Sender.EthAddr
-	theEvm := evm.ModuleAddressEVM()
+	theEvm := evm.EVM_MODULE_ADDRESS
 
 	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
 		"did not see precompile address during \"InitPrecompiles\"")

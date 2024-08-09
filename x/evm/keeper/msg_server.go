@@ -596,7 +596,7 @@ func (k *Keeper) SendFunTokenToEvm(
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20ContractAddr,
 		true,
 		"mint",

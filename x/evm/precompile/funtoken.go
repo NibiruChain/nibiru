@@ -157,7 +157,7 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// Caller transfers ERC20 to the EVM account
-	transferTo := evm.ModuleAddressEVM()
+	transferTo := evm.EVM_MODULE_ADDRESS
 	_, err = p.EvmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
 		err = fmt.Errorf("failed to send from caller to the EVM account: %w", err)
@@ -170,7 +170,7 @@ func (p precompileFunToken) bankSend(
 	err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
 	if err != nil {
 		err = fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
-			evm.ModuleName, evm.ModuleAddressEVM().Hex(), caller.Hex(), err,
+			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
 		return
 	}
@@ -178,7 +178,7 @@ func (p precompileFunToken) bankSend(
 	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
 	if err != nil {
 		err = fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
-			evm.ModuleName, evm.ModuleAddressEVM().Hex(), caller.Hex(), err,
+			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
 		return
 	}
@@ -188,7 +188,7 @@ func (p precompileFunToken) bankSend(
 	// Since we're sending them away and want accurate total supply tracking, the
 	// tokens need to be burned.
 	if funtoken.IsMadeFromCoin {
-		caller := evm.ModuleAddressEVM()
+		caller := evm.EVM_MODULE_ADDRESS
 		_, err = p.EvmKeeper.ERC20().Burn(erc20, caller, amount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
