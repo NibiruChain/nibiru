@@ -255,7 +255,7 @@ func (k *Keeper) NewEVM(
 	}
 	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
 	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
-	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
+	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
 }
 
@@ -375,7 +375,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
-	numPrecompiles := len(k.precompiles)
+	numPrecompiles := k.precompiles.Len()
 	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
 
 	// Check if the transaction is sent to an inactive precompile

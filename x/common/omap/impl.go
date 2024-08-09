@@ -3,8 +3,9 @@ package omap
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func stringIsLess(a, b string) bool {
@@ -12,12 +13,12 @@ func stringIsLess(a, b string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// OrderedMap[string, V]: OrderedMap_String
+// SortedMap[string, V]
 // ---------------------------------------------------------------------------
 
-func OrderedMap_String[V any](data map[string]V) OrderedMap[string, V] {
-	omap := OrderedMap[string, V]{}
-	return omap.BuildFrom(data, stringSorter{})
+func SortedMap_String[V any](data map[string]V) SortedMap[string, V] {
+	omap := SortedMap[string, V]{}
+	return *omap.BuildFrom(data, stringSorter{})
 }
 
 // stringSorter is a Sorter implementation for keys of type string . It uses
@@ -31,14 +32,14 @@ func (sorter stringSorter) Less(a, b string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// OrderedMap[asset.Pair, V]: OrderedMap_Pair
+// SortedMap[asset.Pair, V]
 // ---------------------------------------------------------------------------
 
-func OrderedMap_Pair[V any](
+func SortedMap_Pair[V any](
 	data map[asset.Pair]V,
-) OrderedMap[asset.Pair, V] {
-	omap := OrderedMap[asset.Pair, V]{}
-	return omap.BuildFrom(data, pairSorter{})
+) SortedMap[asset.Pair, V] {
+	omap := SortedMap[asset.Pair, V]{}
+	return *omap.BuildFrom(data, pairSorter{})
 }
 
 // pairSorter is a Sorter implementation for keys of type asset.Pair. It uses
@@ -51,10 +52,14 @@ func (sorter pairSorter) Less(a, b asset.Pair) bool {
 	return stringIsLess(a.String(), b.String())
 }
 
-func OrderedMap_EthAddress[V any](
+// ---------------------------------------------------------------------------
+// SortedMap[gethcommon.Address, V]
+// ---------------------------------------------------------------------------
+
+func SortedMap_EthAddress[V any](
 	data map[gethcommon.Address]V,
-) OrderedMap[gethcommon.Address, V] {
-	return OrderedMap[gethcommon.Address, V]{}.BuildFrom(
+) SortedMap[gethcommon.Address, V] {
+	return *new(SortedMap[gethcommon.Address, V]).BuildFrom(
 		data, addrSorter{},
 	)
 }

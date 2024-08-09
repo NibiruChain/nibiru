@@ -86,7 +86,7 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 ) {
 	rewardBand := k.RewardBand(ctx)
 	// Iterate through sorted keys for deterministic ordering.
-	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	orderedPairVotes := omap.SortedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
 		exchangeRate := Tally(pairVotes[pair], rewardBand, validatorPerformances)
 		k.SetPrice(ctx, pair, exchangeRate)

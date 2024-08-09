@@ -118,7 +118,7 @@ func (k Keeper) removeInvalidVotes(
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	orderedPairVotes := omap.SortedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
 		// If pair is not whitelisted, or the votes for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
