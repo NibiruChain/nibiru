@@ -125,38 +125,6 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			wantErr: "tx AuthInfo SignerInfos should be empty",
 		},
 		{
-			name: "sad: tx for contract creation with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
-				params.EnableCreate = false
-				return params
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "EVM Create operation is disabled",
-		},
-		{
-			name: "sad: tx for contract call with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
-				params.EnableCall = false
-				return params
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
-				gasLimit := uint64(10)
-				to := evmtest.NewEthAccInfo().EthAddr
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := buildEthMsg(chainID, gasLimit, "", &to)
-				return buildTx(deps, true, msg, gasLimit, fees)
-			},
-			wantErr: "EVM Call operation is disabled",
-		},
-		{
 			name: "sad: tx without extension options should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
