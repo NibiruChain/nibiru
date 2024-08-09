@@ -438,7 +438,7 @@ func (s *Suite) TestQueryParams() {
 	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
 
 	// Empty params to test the setter
-	want.ActivePrecompiles = []string{"new", "something"}
+	want.EvmDenom = "wei"
 	deps.EvmKeeper.SetParams(deps.Ctx, want)
 	gotResp, err = deps.EvmKeeper.Params(deps.GoCtx(), nil)
 	s.Require().NoError(err)

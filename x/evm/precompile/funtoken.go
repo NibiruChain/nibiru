@@ -35,7 +35,11 @@ func (p precompileFunToken) Address() gethcommon.Address {
 }
 
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
-	// TODO: UD-DEBUG: not implemented yet. Currently set to 0 gasPrice
+	// TODO: https://github.com/NibiruChain/nibiru/issues/1990
+	// We need to determine an appropriate gas value for the transaction to
+	// configure this function and add a assertions around the gas usage to
+	// the precompile's test suite. UD-DEBUG: not implemented yet. Currently
+	// set to 0 gasPrice
 	return 22
 }
 
