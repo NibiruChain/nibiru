@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"slices"
 	"strconv"
 
 	"cosmossdk.io/errors"
@@ -255,7 +254,7 @@ func (k *Keeper) NewEVM(
 	}
 	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
 	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
-	theEvm.WithPrecompiles(k.precompiles, k.PrecompileAddrsSorted())
+	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
 }
 
@@ -365,30 +364,8 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
-	// return error if contract creation or call are disabled through governance
-	if !evmConfig.Params.EnableCreate && msg.To() == nil {
-		return nil, errors.Wrap(evm.ErrCreateDisabled, "failed to create new contract")
-	} else if !evmConfig.Params.EnableCall && msg.To() != nil {
-		return nil, errors.Wrap(evm.ErrCallDisabled, "failed to call contract")
-	}
-
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
-
-	numPrecompiles := len(k.precompiles)
-	precompileAddrs := make([]gethcommon.Address, numPrecompiles)
-
-	// Check if the transaction is sent to an inactive precompile
-	//
-	// NOTE: This has to be checked here instead of in the actual evm.Call method
-	// because evm.WithPrecompiles only populates the EVM with the active precompiles,
-	// so there's no telling if the To address is an inactive precompile further down the call stack.
-	toAddr := msg.To()
-	if toAddr != nil &&
-		slices.Contains(evm.AvailableEVMExtensions, toAddr.String()) &&
-		!slices.Contains(precompileAddrs, *toAddr) {
-		return nil, errors.Wrap(evm.ErrInactivePrecompile, "failed to call precompile")
-	}
 
 	leftoverGas := msg.Gas()
 
@@ -612,7 +589,7 @@ func (k *Keeper) SendFunTokenToEvm(
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20ContractAddr,
 		true,
 		"mint",

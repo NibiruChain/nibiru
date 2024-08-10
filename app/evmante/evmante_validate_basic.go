@@ -91,8 +91,6 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	evmParams := vbd.evmKeeper.GetParams(ctx)
 	baseFee := vbd.evmKeeper.GetBaseFee(ctx)
-	enableCreate := evmParams.GetEnableCreate()
-	enableCall := evmParams.GetEnableCall()
 	evmDenom := evmParams.GetEvmDenom()
 
 	for _, msg := range protoTx.GetMsgs() {
@@ -117,19 +115,6 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, errorsmod.Wrap(err, "failed to unpack MsgEthereumTx Data")
-		}
-
-		// return error if contract creation or call are disabled through governance
-		if !enableCreate && txData.GetTo() == nil {
-			return ctx, errorsmod.Wrap(
-				evm.ErrCreateDisabled,
-				"failed to create new contract",
-			)
-		} else if !enableCall && txData.GetTo() != nil {
-			return ctx, errorsmod.Wrap(
-				evm.ErrCallDisabled,
-				"failed to call contract",
-			)
 		}
 
 		if baseFee == nil && txData.TxType() == gethcore.DynamicFeeTxType {
