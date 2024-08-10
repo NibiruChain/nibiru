@@ -19,7 +19,7 @@ import (
 )
 
 type TestDeps struct {
-	Chain     *app.NibiruApp
+	App       *app.NibiruApp
 	Ctx       sdk.Context
 	EncCfg    codec.EncodingConfig
 	EvmKeeper keeper.Keeper
@@ -36,21 +36,21 @@ func NewTestDeps() TestDeps {
 	encCfg := app.MakeEncodingConfig()
 	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
-	chain, ctx := testapp.NewNibiruTestAppAndContext()
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
 	ethAcc := NewEthAccInfo()
 	return TestDeps{
-		Chain:     chain,
+		App:       app,
 		Ctx:       ctx,
 		EncCfg:    encCfg,
-		EvmKeeper: chain.EvmKeeper,
+		EvmKeeper: app.EvmKeeper,
 		GenState:  evm.DefaultGenesisState(),
 		Sender:    ethAcc,
 	}
 }
 
 func (deps TestDeps) StateDB() *statedb.StateDB {
-	return statedb.New(deps.Ctx, &deps.Chain.EvmKeeper,
+	return statedb.New(deps.Ctx, &deps.App.EvmKeeper,
 		statedb.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),
 		),
@@ -59,5 +59,5 @@ func (deps TestDeps) StateDB() *statedb.StateDB {
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
 	ctx := deps.Ctx
-	return deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(ctx))
+	return deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(ctx))
 }

@@ -123,7 +123,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg
@@ -160,7 +160,7 @@ func DeployContract(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(jsonTxArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -187,7 +187,7 @@ func DeployAndExecuteERC20Transfer(
 
 	// Contract address is deterministic
 	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	deps.Chain.Commit()
+	deps.App.Commit()
 	predecessors := []*evm.MsgEthereumTx{
 		deployResp.EthTxMsg,
 	}
@@ -207,7 +207,7 @@ func DeployAndExecuteERC20Transfer(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -222,11 +222,11 @@ func GenerateAndSignEthTxMsg(
 	if err != nil {
 		return nil, err
 	}
-	res, err := deps.Chain.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
+	res, err := deps.App.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
 		Args:            estimateArgs,
 		GasCap:          srvconfig.DefaultEthCallGasLimit,
 		ProposerAddress: []byte{},
-		ChainId:         deps.Chain.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+		ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
 	})
 	if err != nil {
 		return nil, err
@@ -234,7 +234,7 @@ func GenerateAndSignEthTxMsg(
 	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
 	txMsg := txArgs.ToTransaction()
-	gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+	gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 	keyringSigner := deps.Sender.KeyringSigner
 	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
 }
@@ -261,7 +261,7 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 
-	_, err = deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	_, err = deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	if err != nil {
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}

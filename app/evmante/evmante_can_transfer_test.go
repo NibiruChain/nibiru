@@ -23,7 +23,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				s.NoError(
 					testapp.FundAccount(
-						deps.Chain.BankKeeper,
+						deps.App.BankKeeper,
 						deps.Ctx,
 						deps.Sender.NibiruAddr,
 						sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100)),
@@ -34,7 +34,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -52,7 +52,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -90,7 +90,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewCanTransferDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewCanTransferDecorator(&deps.App.AppKeepers.EvmKeeper)
 			tx := tc.txSetup(&deps)
 
 			if tc.ctxSetup != nil {

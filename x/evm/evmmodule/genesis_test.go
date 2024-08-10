@@ -68,9 +68,9 @@ func (s *Suite) TestExportInitGenesis() {
 
 	// Fund sender's wallet
 	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin("unibi", totalSupply.Int64()))
-	err = deps.Chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
+	err = deps.App.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
 	s.Require().NoError(err)
-	err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
+	err = deps.App.BankKeeper.SendCoinsFromModuleToAccount(
 		deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
 	)
 	s.Require().NoError(err)
@@ -87,13 +87,13 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Export genesis
-	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, &deps.EvmKeeper, deps.Chain.AccountKeeper)
-	authGenesisState := deps.Chain.AccountKeeper.ExportGenesis(deps.Ctx)
+	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper)
+	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 
 	// Init genesis from the exported state
 	deps = evmtest.NewTestDeps()
-	deps.Chain.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-	evmmodule.InitGenesis(deps.Ctx, &deps.EvmKeeper, deps.Chain.AccountKeeper, *evmGenesisState)
+	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
+	evmmodule.InitGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	// Verify erc20 balances for users A, B and sender
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx)
