@@ -11,7 +11,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 )
@@ -31,19 +30,19 @@ func (k Keeper) FindERC20Metadata(
 ) (info ERC20Metadata, err error) {
 	var abi *gethabi.ABI = embeds.SmartContract_ERC20Minter.ABI
 
-	errs := []error{}
-
 	// Load name, symbol, decimals
 	name, err := k.LoadERC20Name(ctx, abi, contract)
-	errs = append(errs, err)
-	symbol, err := k.LoadERC20Symbol(ctx, abi, contract)
-	errs = append(errs, err)
-	decimals, err := k.LoadERC20Decimals(ctx, abi, contract)
-	errs = append(errs, err)
-
-	err = common.CombineErrors(errs...)
 	if err != nil {
-		err = fmt.Errorf("failed to \"FindERC20Metadata\": %w", err)
+		return info, err
+	}
+
+	symbol, err := k.LoadERC20Symbol(ctx, abi, contract)
+	if err != nil {
+		return info, err
+	}
+
+	decimals, err := k.LoadERC20Decimals(ctx, abi, contract)
+	if err != nil {
 		return info, err
 	}
 
