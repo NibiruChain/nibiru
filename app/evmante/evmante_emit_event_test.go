@@ -42,7 +42,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthEmitEventDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthEmitEventDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

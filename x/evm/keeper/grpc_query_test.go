@@ -77,7 +77,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
-				err := testapp.FundAccount(deps.Chain.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
+				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
@@ -102,7 +102,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
-				err := testapp.FundAccount(deps.Chain.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
+				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
@@ -211,7 +211,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: default values",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.Chain.StakingKeeper.GetValidators(deps.Ctx, 1)
+				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				_, err := sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
@@ -233,7 +233,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: with nonce",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.Chain.StakingKeeper.GetValidators(deps.Ctx, 1)
+				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				consAddr := sdk.ConsAddress(valAddrBz)
 
@@ -242,7 +242,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 				coinsToSend := sdk.NewCoins(sdk.NewCoin(eth.EthBaseDenom, math.NewInt(69420)))
 				valAddr := sdk.AccAddress(valAddrBz)
 				s.NoError(testapp.FundAccount(
-					deps.Chain.BankKeeper,
+					deps.App.BankKeeper,
 					deps.Ctx, valAddr,
 					coinsToSend,
 				))
@@ -251,7 +251,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 					ConsAddress: consAddr.String(),
 				}
 
-				ak := deps.Chain.AccountKeeper
+				ak := deps.App.AccountKeeper
 				acc := ak.GetAccount(deps.Ctx, valAddr)
 				s.NoError(acc.SetAccountNumber(420), "acc: ", acc.String())
 				s.NoError(acc.SetSequence(69), "acc: ", acc.String())
@@ -491,7 +491,7 @@ func (s *Suite) TestQueryEthCall() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			gotResp, err := deps.Chain.EvmKeeper.EthCall(deps.GoCtx(), req)
+			gotResp, err := deps.App.EvmKeeper.EthCall(deps.GoCtx(), req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -537,7 +537,7 @@ func (s *Suite) TestQueryBalance() {
 		{
 			name: "happy: non zero balance",
 			setup: func(deps *evmtest.TestDeps) {
-				chain := deps.Chain
+				chain := deps.App
 				ethAddr := deps.Sender.EthAddr
 
 				// fund account with 420 tokens
@@ -656,7 +656,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 			name: "happy: estimate gas for transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				// fund the account
-				chain := deps.Chain
+				chain := deps.App
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 1000)}
 				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
@@ -666,7 +666,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				s.Require().NoError(err)
 
 				// assert balance of 1000 * 10^12 wei
-				resp, _ := deps.Chain.EvmKeeper.Balance(deps.GoCtx(), &evm.QueryBalanceRequest{
+				resp, _ := deps.App.EvmKeeper.Balance(deps.GoCtx(), &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				s.Equal("1000", resp.Balance)

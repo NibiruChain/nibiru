@@ -520,7 +520,7 @@ func (s *Suite) TestLog() {
 	)
 
 	deps := evmtest.NewTestDeps()
-	db := statedb.New(deps.Ctx, &deps.Chain.EvmKeeper, txConfig)
+	db := statedb.New(deps.Ctx, &deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
 	log := &gethcore.Log{
