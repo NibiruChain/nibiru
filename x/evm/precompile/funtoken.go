@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/app/keepers"
-	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/embeds"
 )
@@ -26,12 +25,10 @@ var (
 // Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
-var PrecompileAddr_FuntokenGateway = eth.MustNewHexAddrFromStr(
-	"0x0000000000000000000000000000000000000800",
-)
+var PrecompileAddr_FuntokenGateway = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
 
 func (p precompileFunToken) Address() gethcommon.Address {
-	return PrecompileAddr_FuntokenGateway.ToAddr()
+	return PrecompileAddr_FuntokenGateway
 }
 
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {

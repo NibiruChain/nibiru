@@ -45,7 +45,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 	s.NoError(err)
 	s.Equal(string(codeResp.Code), "")
 
-	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	callArgs := []any{"nonsense", "args here", "to see if", "precompile is", "called"}
@@ -59,11 +59,10 @@ func (s *Suite) FunToken_PrecompileExists() {
 		"callArgs: ", callArgs)
 
 	fromEvmAddr := evm.EVM_MODULE_ADDRESS
-	contractAddr := precompileAddr.ToAddr()
 	commit := true
 	bytecodeForCall := packedArgs
 	_, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, fromEvmAddr, &contractAddr, commit,
+		deps.Ctx, fromEvmAddr, &precompileAddr, commit,
 		bytecodeForCall,
 	)
 	s.ErrorContains(err, "precompile error")
@@ -77,7 +76,7 @@ func (s *Suite) FunToken_HappyPath() {
 	theUser := deps.Sender.EthAddr
 	theEvm := evm.EVM_MODULE_ADDRESS
 
-	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	s.T().Log("Create FunToken mapping and ERC20")
@@ -134,7 +133,7 @@ func (s *Suite) FunToken_HappyPath() {
 	s.NoError(err)
 
 	from := theUser
-	_, err = evmtest.DoEthTx(&deps, precompileAddr.ToAddr(), from, input)
+	_, err = evmtest.DoEthTx(&deps, precompileAddr, from, input)
 	s.Require().NoError(err)
 
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(69_419-amtToSend))
