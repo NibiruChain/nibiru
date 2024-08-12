@@ -51,14 +51,14 @@ func CreateFunTokenForBankCoin(
 		Name:    bankDenom,
 		Symbol:  bankDenom,
 	}
-	if deps.Chain.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
 		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 	}
-	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 
 	// Give the sender funds for the fee
 	err := testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),

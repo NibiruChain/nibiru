@@ -35,7 +35,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
 				// so, the module must have some coins
 				err := testapp.FundModuleAccount(
-					deps.Chain.BankKeeper,
+					deps.App.BankKeeper,
 					deps.Ctx,
 					authtypes.FeeCollectorName,
 					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
@@ -55,7 +55,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
 
-				resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 				s.Require().NoError(
 					err,
 					"resp: %s\nblock header: %s",
@@ -94,7 +94,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
-				resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 				s.Require().ErrorContains(
 					err,
 					core.ErrIntrinsicGas.Error(),
@@ -118,7 +118,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
 	// so, the module must have some coins
 	err := testapp.FundModuleAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		authtypes.FeeCollectorName,
 		sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
@@ -148,7 +148,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	s.Require().NoError(
 		err,
 		"resp: %s\nblock header: %s",
@@ -189,7 +189,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 
 		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
 		err := testapp.FundAccount(
-			deps.Chain.BankKeeper,
+			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin("unibi", fundedAmount)),
@@ -213,7 +213,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		)
 		s.NoError(err)
 
-		resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+		resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
 

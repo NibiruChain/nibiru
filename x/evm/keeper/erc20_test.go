@@ -79,7 +79,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 
 	// Give the sender funds for the fee
 	err = testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
@@ -118,7 +118,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
 	// Give the sender funds for the fee
 	err = testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
@@ -197,12 +197,12 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.T().Log("Setup: Create a coin in the bank state")
 	bankDenom := "sometoken"
 
-	setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
+	setBankDenomMetadata(deps.Ctx, deps.App.BankKeeper, bankDenom)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	// Give the sender funds for the fee
 	err = testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
@@ -260,7 +260,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	s.T().Log("sad: CreateFunToken for the bank coin: already registered")
 	// Give the sender funds for the fee
 	err = testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
@@ -314,24 +314,24 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			deps := evmtest.NewTestDeps()
 			bankDenom := "unibi"
 			recipientEVMAddr := eth.MustNewHexAddrFromStr("0x1234500000000000000000000000000000000000")
-			evmModuleAddr := deps.Chain.AccountKeeper.GetModuleAddress(evm.ModuleName)
+			evmModuleAddr := deps.App.AccountKeeper.GetModuleAddress(evm.ModuleName)
 			spendableAmount := tc.senderBalanceBefore.Int64()
 			spendableCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, spendableAmount))
 
 			ctx := deps.GoCtx()
-			setBankDenomMetadata(deps.Ctx, deps.Chain.BankKeeper, bankDenom)
+			setBankDenomMetadata(deps.Ctx, deps.App.BankKeeper, bankDenom)
 
 			// Fund sender's wallet
-			err := deps.Chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
+			err := deps.App.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
 			s.Require().NoError(err)
-			err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
+			err = deps.App.BankKeeper.SendCoinsFromModuleToAccount(
 				deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
 			)
 			s.Require().NoError(err)
 
 			// Give the sender funds for the fee
 			err = testapp.FundAccount(
-				deps.Chain.BankKeeper,
+				deps.App.BankKeeper,
 				deps.Ctx,
 				deps.Sender.NibiruAddr,
 				deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
@@ -378,7 +378,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			)
 
 			// Check 1: coins are stored on a module balance
-			moduleBalance, err := deps.Chain.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
+			moduleBalance, err := deps.App.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
 				Address: evmModuleAddr.String(),
 				Denom:   bankDenom,
 			})
@@ -386,7 +386,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			s.Equal(tc.amountToSend, moduleBalance.Balance.Amount)
 
 			// Check 2: Sender balance reduced by send amount
-			senderBalance, err := deps.Chain.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
+			senderBalance, err := deps.App.BankKeeper.Balance(ctx, &bank.QueryBalanceRequest{
 				Address: deps.Sender.NibiruAddr.String(),
 				Denom:   bankDenom,
 			})

@@ -27,7 +27,7 @@ func (s *Suite) TestOrderedPrecompileAddresses() {
 	// Note that orderedKeys must be set after InitPrecompiles to mirror the
 	// behavior of the Nibiru BaseApp.
 	deps := evmtest.NewTestDeps()
-	var unorderedMap map[gethcommon.Address]vm.PrecompiledContract = precompile.InitPrecompiles(deps.Chain.PublicKeepers)
+	var unorderedMap map[gethcommon.Address]vm.PrecompiledContract = precompile.InitPrecompiles(deps.App.PublicKeepers)
 	var orderedKeys []gethcommon.Address = vm.PrecompiledAddressesBerlin
 
 	s.T().Log("2 | Compute ordered keys from VM")

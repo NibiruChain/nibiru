@@ -52,7 +52,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -74,15 +74,15 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			anteHandlerEVM := evmante.NewAnteHandlerEVM(
 				ante.AnteHandlerOptions{
 					HandlerOptions: authante.HandlerOptions{
-						AccountKeeper:          deps.Chain.AccountKeeper,
-						BankKeeper:             deps.Chain.BankKeeper,
-						FeegrantKeeper:         deps.Chain.FeeGrantKeeper,
+						AccountKeeper:          deps.App.AccountKeeper,
+						BankKeeper:             deps.App.BankKeeper,
+						FeegrantKeeper:         deps.App.FeeGrantKeeper,
 						SignModeHandler:        deps.EncCfg.TxConfig.SignModeHandler(),
 						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 					},
-					EvmKeeper:     deps.Chain.EvmKeeper,
-					AccountKeeper: deps.Chain.AccountKeeper,
+					EvmKeeper:     deps.App.EvmKeeper,
+					AccountKeeper: deps.App.AccountKeeper,
 				})
 
 			tx := tc.txSetup(&deps)
