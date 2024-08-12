@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -23,7 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/filters"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // IFilterAPI

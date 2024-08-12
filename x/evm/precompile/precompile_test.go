@@ -7,9 +7,9 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
 // This test proves that:

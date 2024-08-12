@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmkeeper "github.com/NibiruChain/nibiru/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // EVMKeeper defines the expected keeper interface used on the AnteHandler

@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts

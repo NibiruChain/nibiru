@@ -12,7 +12,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {

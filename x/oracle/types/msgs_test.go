@@ -5,8 +5,8 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	"github.com/stretchr/testify/require"
 

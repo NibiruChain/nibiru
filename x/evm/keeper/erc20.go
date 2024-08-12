@@ -12,10 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
@@ -46,7 +46,7 @@ See [nibiru/x/evm/embeds].
 	}
 	```
 
-[nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/tree/main/x/evm/embeds
+[nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/v2/tree/main/x/evm/embeds
 */
 func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,

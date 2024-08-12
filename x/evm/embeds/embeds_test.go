@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
 func TestLoadContracts(t *testing.T) {

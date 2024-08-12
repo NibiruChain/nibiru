@@ -5,8 +5,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // InitGenesis import module genesis

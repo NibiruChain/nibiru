@@ -30,11 +30,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/pubsub"
-	rpcfilters "github.com/NibiruChain/nibiru/eth/rpc/rpcapi/filtersapi"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
+	rpcfilters "github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/filtersapi"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type WebsocketsServer interface {

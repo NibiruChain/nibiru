@@ -25,10 +25,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/cli"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/simulation"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // type check to ensure the interface is properly implemented

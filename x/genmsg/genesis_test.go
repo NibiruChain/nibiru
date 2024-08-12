@@ -11,7 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
+	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
 type mockRouter struct {

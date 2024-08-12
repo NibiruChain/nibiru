@@ -8,10 +8,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestCreateDenom() {

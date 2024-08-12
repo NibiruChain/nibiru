@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type Keeper struct {
@@ -85,7 +85,7 @@ func NewKeeper(
 }
 
 // GetEvmGasBalance: Implements `evm.EVMKeeper` from
-// "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
+// "github.com/NibiruChain/nibiru/v2/app/ante/evm": Load account's balance of gas
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
