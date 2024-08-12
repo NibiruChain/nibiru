@@ -11,6 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/evmante"
 	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/x/evm"
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
@@ -26,16 +27,18 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 		{
 			name: "happy: signed tx, sufficient funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+				balanceMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
 				sdb.AddBalance(
 					deps.Sender.EthAddr,
-					new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100)),
+					evm.NativeToWei(balanceMicronibi),
 				)
 			},
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
+				maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
 				cp := &tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
-						MaxGas: new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100)).Int64(),
+						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
 					},
 				}
 				deps.Ctx = deps.Ctx.
@@ -49,7 +52,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -71,15 +74,15 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			anteHandlerEVM := evmante.NewAnteHandlerEVM(
 				ante.AnteHandlerOptions{
 					HandlerOptions: authante.HandlerOptions{
-						AccountKeeper:          deps.Chain.AccountKeeper,
-						BankKeeper:             deps.Chain.BankKeeper,
-						FeegrantKeeper:         deps.Chain.FeeGrantKeeper,
+						AccountKeeper:          deps.App.AccountKeeper,
+						BankKeeper:             deps.App.BankKeeper,
+						FeegrantKeeper:         deps.App.FeeGrantKeeper,
 						SignModeHandler:        deps.EncCfg.TxConfig.SignModeHandler(),
 						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 					},
-					EvmKeeper:     deps.Chain.EvmKeeper,
-					AccountKeeper: deps.Chain.AccountKeeper,
+					EvmKeeper:     deps.App.EvmKeeper,
+					AccountKeeper: deps.App.AccountKeeper,
 				})
 
 			tx := tc.txSetup(&deps)

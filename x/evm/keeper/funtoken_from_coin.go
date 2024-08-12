@@ -70,7 +70,7 @@ func (k *Keeper) DeployERC20ForBankCoin(
 		decimals = uint8(bankCoin.DenomUnits[decimalsIdx].Exponent)
 	}
 
-	erc20Embed := embeds.Contract_ERC20Minter
+	erc20Embed := embeds.SmartContract_ERC20Minter
 	callArgs := []any{bankCoin.Name, bankCoin.Symbol, decimals}
 	methodName := "" // pass empty method name to deploy the contract
 	packedArgs, err := erc20Embed.ABI.Pack(methodName, callArgs...)
@@ -80,7 +80,7 @@ func (k *Keeper) DeployERC20ForBankCoin(
 	}
 	bytecodeForCall := append(erc20Embed.Bytecode, packedArgs...)
 
-	fromEvmAddr := evm.ModuleAddressEVM()
+	fromEvmAddr := evm.EVM_MODULE_ADDRESS
 	nonce := k.GetAccNonce(ctx, fromEvmAddr)
 	erc20Addr = crypto.CreateAddress(fromEvmAddr, nonce)
 	erc20Contract := (*gethcommon.Address)(nil) // nil >> doesn't exist yet

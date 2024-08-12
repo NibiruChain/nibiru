@@ -1,3 +1,17 @@
+// Package precompile implements custom precompiles for the Nibiru EVM.
+//
+// Precompiles are special, built-in contract interfaces that exist at
+// predefined addresses and run custom logic outside of what is possible
+// in standard Solidity contracts. This package extends the default Ethereum
+// precompiles with Nibiru-specific functionality.
+//
+// Key components:
+//   - InitPrecompiles: Initializes and returns a map of precompiled contracts.
+//   - NibiruPrecompile: Interface for Nibiru-specific precompiles.
+//   - PrecompileFunToken: Implements the FunToken precompile for ERC20-to-bank transfers.
+//
+// The package also provides utility functions for working with precompiles, such
+// as "ABIMethodByID" and "OnRunStart" for common precompile execution setup.
 package precompile
 
 import (
@@ -78,13 +92,16 @@ func addPrecompileToVM(p vm.PrecompiledContract) {
 	// vm.PrecompiledAddressesCancun,
 }
 
+// NibiruPrecompile is the interface that all Nibiru-specific precompiles
+// must implement.
 type NibiruPrecompile interface {
-	ABI() gethabi.ABI
+	vm.PrecompiledContract
+	ABI() *gethabi.ABI
 }
 
 // ABIMethodByID: Looks up an ABI method by the 4-byte id.
 // Copy of "ABI.MethodById" from go-ethereum version > 1.10
-func ABIMethodByID(abi gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
+func ABIMethodByID(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	if len(sigdata) < 4 {
 		return nil, fmt.Errorf("data too short (%d bytes) for abi method lookup", len(sigdata))
 	}

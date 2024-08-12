@@ -37,65 +37,43 @@ import (
 var _ evm.QueryServer = &Keeper{}
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
-// EthAccount retrieves the account details for a given Ethereum hex address.
+// EthAccount retrieves the account  and balance details for an account with the
+// given address.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: Request containing the Ethereum hexadecimal address.
-//
-// Returns:
-//   - A pointer to the QueryEthAccountResponse object containing the account details.
-//   - An error if the account retrieval process encounters any issues.
+//   - req: Request containing the address in either Ethereum hexadecimal or
+//     Bech32 format.
 func (k Keeper) EthAccount(
 	goCtx context.Context, req *evm.QueryEthAccountRequest,
 ) (*evm.QueryEthAccountResponse, error) {
-	if err := req.Validate(); err != nil {
+	isBech32, err := req.Validate()
+	if err != nil {
 		return nil, err
 	}
 
-	addr := gethcommon.HexToAddress(req.Address)
+	var addrEth gethcommon.Address
+	var addrBech32 sdk.AccAddress
+
+	if isBech32 {
+		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+	} else {
+		addrEth = gethcommon.HexToAddress(req.Address)
+		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	acct := k.GetAccountOrEmpty(ctx, addr)
+	acct := k.GetAccountOrEmpty(ctx, addrEth)
 
 	return &evm.QueryEthAccountResponse{
-		Balance:  acct.Balance.String(),
-		CodeHash: gethcommon.BytesToHash(acct.CodeHash).Hex(),
-		Nonce:    acct.Nonce,
+		Balance:       acct.BalanceNative.String(),
+		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
+		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
+		Nonce:         acct.Nonce,
+		EthAddress:    addrEth.Hex(),
+		Bech32Address: addrBech32.String(),
 	}, nil
-}
-
-// NibiruAccount: Implements the gRPC query for "/eth.evm.v1.Query/NibiruAccount".
-// NibiruAccount retrieves the Cosmos account details for a given Ethereum address.
-//
-// Parameters:
-//   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryNibiruAccountRequest object containing the Ethereum address.
-//
-// Returns:
-//   - A pointer to the QueryNibiruAccountResponse object containing the Cosmos account details.
-//   - An error if the account retrieval process encounters any issues.
-func (k Keeper) NibiruAccount(
-	goCtx context.Context, req *evm.QueryNibiruAccountRequest,
-) (resp *evm.QueryNibiruAccountResponse, err error) {
-	if err := req.Validate(); err != nil {
-		return resp, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ethAddr := gethcommon.HexToAddress(req.Address)
-	nibiruAddr := sdk.AccAddress(ethAddr.Bytes())
-
-	accountOrNil := k.accountKeeper.GetAccount(ctx, nibiruAddr)
-	resp = &evm.QueryNibiruAccountResponse{
-		Address: nibiruAddr.String(),
-	}
-
-	if accountOrNil != nil {
-		resp.Sequence = accountOrNil.GetSequence()
-		resp.AccountNumber = accountOrNil.GetAccountNumber()
-	}
-
-	return resp, nil
 }
 
 // ValidatorAccount: Implements the gRPC query for
@@ -139,8 +117,8 @@ func (k Keeper) ValidatorAccount(
 }
 
 // Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
-// Balance retrieves the balance of an Ethereum address in "Ether", which
-// actually refers to NIBI tokens on Nibiru EVM.
+// Balance retrieves the balance of an Ethereum address in "wei", the smallest
+// unit of "Ether". Ether refers to NIBI tokens on Nibiru EVM.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
@@ -156,7 +134,8 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
-		Balance: balanceInt.String(),
+		Balance:    balanceInt.String(),
+		BalanceWei: evm.NativeToWei(balanceInt).String(),
 	}, nil
 }
 
@@ -444,7 +423,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
 			}
-			return true, nil, err // Bail out
+			return true, nil, fmt.Errorf("error applying EVM message to StateDB: %w", err) // Bail out
 		}
 		return len(rsp.VmError) > 0, rsp, nil
 	}
@@ -459,15 +438,15 @@ func (k Keeper) EstimateGasForEvmCallType(
 	if hi == gasCap {
 		failed, result, err := executable(hi)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth call exec error: %w", err)
 		}
 
 		if failed {
 			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
 				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, evm.NewExecErrorWithReason(result.Ret)
+					return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(result.Ret))
 				}
-				return nil, errors.New(result.VmError)
+				return nil, fmt.Errorf("VMError: %s", result.VmError)
 			}
 			// Otherwise, the specified gas cap is too low
 			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)

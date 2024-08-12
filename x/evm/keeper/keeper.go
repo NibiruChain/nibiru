@@ -18,6 +18,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/x/common/omap"
 	"github.com/NibiruChain/nibiru/x/evm"
 )
 
@@ -43,9 +44,12 @@ type Keeper struct {
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
-	// Integer for the Ethereum EIP155 Chain ID
-	// eip155ChainIDInt *big.Int
-	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// precompiles is the set of active precompiled contracts used in the EVM.
+	// Precompiles are special, built-in contract interfaces that exist at
+	// predefined address and run custom logic outside of what is possible only
+	// in Solidity.
+	precompiles omap.SortedMap[gethcommon.Address, vm.PrecompiledContract]
+
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.
@@ -82,8 +86,8 @@ func NewKeeper(
 
 // GetEvmGasBalance: Implements `evm.EVMKeeper` from
 // "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
-// tokens for EVM execution
-func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big.Int {
+// tokens for EVM execution in EVM denom units.
+func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	evmParams := k.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
@@ -91,8 +95,7 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big
 	if evmDenom == "" {
 		return big.NewInt(-1)
 	}
-	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
-	return coin.Amount.BigInt()
+	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
@@ -108,7 +111,7 @@ func (k *Keeper) AddToBlockGasUsed(
 	if result < gasUsed {
 		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
 	}
-	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	k.EvmState.BlockGasUsed.Set(ctx, result)
 	return result, nil
 }
 
@@ -119,13 +122,7 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 
 func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 	// TODO: plug in fee market keeper
-	return big.NewInt(0)
-}
-
-func (k Keeper) GetBaseFeeNoCfg(
-	ctx sdk.Context,
-) *big.Int {
-	return k.GetBaseFee(ctx)
+	return big.NewInt(1)
 }
 
 // Logger returns a module-specific logger.

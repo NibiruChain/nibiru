@@ -24,13 +24,13 @@ import (
 func (k Keeper) ERC20() erc20Calls {
 	return erc20Calls{
 		Keeper: &k,
-		ABI:    embeds.Contract_ERC20Minter.ABI,
+		ABI:    embeds.SmartContract_ERC20Minter.ABI,
 	}
 }
 
 type erc20Calls struct {
 	*Keeper
-	ABI gethabi.ABI
+	ABI *gethabi.ABI
 }
 
 /*
@@ -128,7 +128,7 @@ func (e erc20Calls) Burn(
 // simulations and estimates gas for actual transactions.
 func (k Keeper) CallContract(
 	ctx sdk.Context,
-	abi gethabi.ABI,
+	abi *gethabi.ABI,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
 	commit bool,
@@ -272,32 +272,32 @@ func computeCommitGasLimit(
 }
 
 func (k Keeper) LoadERC20Name(
-	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
+	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
 	return k.LoadERC20String(ctx, abi, erc20, "name")
 }
 
 func (k Keeper) LoadERC20Symbol(
-	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
+	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
 	return k.LoadERC20String(ctx, abi, erc20, "symbol")
 }
 
 func (k Keeper) LoadERC20Decimals(
-	ctx sdk.Context, abi gethabi.ABI, erc20 gethcommon.Address,
+	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out uint8, err error) {
 	return k.loadERC20Uint8(ctx, abi, erc20, "decimals")
 }
 
 func (k Keeper) LoadERC20String(
 	ctx sdk.Context,
-	erc20Abi gethabi.ABI,
+	erc20Abi *gethabi.ABI,
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out string, err error) {
 	res, err := k.CallContract(
 		ctx, erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false, methodName,
 	)
@@ -317,13 +317,13 @@ func (k Keeper) LoadERC20String(
 
 func (k Keeper) loadERC20Uint8(
 	ctx sdk.Context,
-	erc20Abi gethabi.ABI,
+	erc20Abi *gethabi.ABI,
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out uint8, err error) {
 	res, err := k.CallContract(
 		ctx, erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false, methodName,
 	)
@@ -343,7 +343,7 @@ func (k Keeper) loadERC20Uint8(
 
 func (k Keeper) LoadERC20BigInt(
 	ctx sdk.Context,
-	erc20Abi gethabi.ABI,
+	erc20Abi *gethabi.ABI,
 	erc20Contract gethcommon.Address,
 	methodName string,
 	args ...any,
@@ -352,7 +352,7 @@ func (k Keeper) LoadERC20BigInt(
 	res, err := k.CallContract(
 		ctx,
 		erc20Abi,
-		evm.ModuleAddressEVM(),
+		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		commit,
 		methodName,

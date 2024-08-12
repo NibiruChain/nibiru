@@ -35,17 +35,17 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
 				// so, the module must have some coins
 				err := testapp.FundModuleAccount(
-					deps.Chain.BankKeeper,
+					deps.App.BankKeeper,
 					deps.Ctx,
 					authtypes.FeeCollectorName,
 					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
 				)
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
-				gasLimit := big.NewInt(1000_000)
+				gasLimit := big.NewInt(1_500_000)
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 					GasLimit:      gasLimit,
@@ -55,7 +55,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
 
-				resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 				s.Require().NoError(
 					err,
 					"resp: %s\nblock header: %s",
@@ -85,7 +85,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				gasLimit := gethparams.TxGasContractCreation
 				args := evmtest.ArgsCreateContract{
 					EthAcc:        ethAcc,
-					EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 				}
@@ -94,7 +94,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
-				resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 				s.Require().ErrorContains(
 					err,
 					core.ErrIntrinsicGas.Error(),
@@ -118,7 +118,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
 	// so, the module must have some coins
 	err := testapp.FundModuleAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		authtypes.FeeCollectorName,
 		sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
@@ -129,8 +129,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-	testContract, err := embeds.SmartContract_TestERC20.Load()
-	s.Require().NoError(err)
+	testContract := embeds.SmartContract_TestERC20
 	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	input, err := testContract.ABI.Pack("transfer", to, big.NewInt(123))
 	s.NoError(err)
@@ -138,7 +137,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	gasLimit := big.NewInt(1000_000)
 	args := evmtest.ArgsExecuteContract{
 		EthAcc:          ethAcc,
-		EthChainIDInt:   deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:        big.NewInt(1),
 		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
 		GasLimit:        gasLimit,
@@ -149,7 +148,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
-	resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	s.Require().NoError(
 		err,
 		"resp: %s\nblock header: %s",
@@ -188,12 +187,12 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		deps := evmtest.NewTestDeps()
 		ethAcc := deps.Sender
 
-		amount := int64(123)
+		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
 		err := testapp.FundAccount(
-			deps.Chain.BankKeeper,
+			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewInt64Coin("unibi", amount)),
+			sdk.NewCoins(sdk.NewInt64Coin("unibi", fundedAmount)),
 		)
 		s.Require().NoError(err)
 
@@ -208,13 +207,13 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			innerTxData,
 			deps.StateDB().GetNonce(ethAcc.EthAddr),
 			&to,
-			big.NewInt(amount),
+			big.NewInt(fundedAmount),
 			gethparams.TxGas,
 			accessList,
 		)
 		s.NoError(err)
 
-		resp, err := deps.Chain.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+		resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
 
@@ -229,7 +228,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			&evm.EventTransfer{
 				Sender:    ethAcc.EthAddr.String(),
 				Recipient: to.String(),
-				Amount:    strconv.FormatInt(amount, 10),
+				Amount:    strconv.FormatInt(fundedAmount, 10),
 			},
 		)
 	}

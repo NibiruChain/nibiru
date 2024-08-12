@@ -85,11 +85,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1962](https://github.com/NibiruChain/nibiru/pull/1962) - chore(evm): code cleanup, unused code, typos, styles, warnings
 - [#1963](https://github.com/NibiruChain/nibiru/pull/1963) - feat(evm): Deduct a fee during the creation of a FunToken mapping. Implemented by `deductCreateFunTokenFee` inside of the `eth.evm.v1.MsgCreateFunToken` transaction.
 - [#1965](https://github.com/NibiruChain/nibiru/pull/1965) - refactor(evm): remove evm post-processing hooks
+- [#1966](https://github.com/NibiruChain/nibiru/pull/1966) - refactor(evm): clean up AnteHandler setup
+- [#1967](https://github.com/NibiruChain/nibiru/pull/1967) - feat(evm): export genesis
 - [#1968](https://github.com/NibiruChain/nibiru/pull/1968) - refactor(evm): funtoken events, cli commands and queries
 - [#1970](https://github.com/NibiruChain/nibiru/pull/1970) - refactor(evm): move evm antehandlers to separate package. Remove "gosdk/sequence_test.go", which causes a race condition in CI.
 - [#1971](https://github.com/NibiruChain/nibiru/pull/1971) - feat(evm): typed events for contract creation, contract execution and transfer
 - [#1973](https://github.com/NibiruChain/nibiru/pull/1973) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
+- [#1976](https://github.com/NibiruChain/nibiru/pull/1976) - refactor(evm): unique chain ids for all networks
 - [#1977](https://github.com/NibiruChain/nibiru/pull/1977) - fix(localnet): rolled back change of evm validator address with cosmos derivation path
+- [#1979](https://github.com/NibiruChain/nibiru/pull/1979) - refactor(db): use pebbledb as the default db in integration tests
+- [#1981](https://github.com/NibiruChain/nibiru/pull/1981) - fix(evm): remove isCheckTx() short circuit on `AnteDecVerifyEthAcc`
+- [#1982](https://github.com/NibiruChain/nibiru/pull/1982) - feat(evm): add GlobalMinGasPrices
+- [#1983](https://github.com/NibiruChain/nibiru/pull/1983) - chore(evm): remove ExtensionOptionsWeb3Tx and ExtensionOptionDynamicFeeTx
+- [#1984](https://github.com/NibiruChain/nibiru/pull/1984) - refactor(evm): embeds
+- [#1985](https://github.com/NibiruChain/nibiru/pull/1985) - feat(evm)!: Use atto denomination for the wei units in the EVM so that NIBI is "ether" to clients. Only micronibi (unibi) amounts can be transferred. All clients follow the constraint equation, 1 ether == 1 NIBI == 10^6 unibi == 10^18 wei.
+- [#1986](https://github.com/NibiruChain/nibiru/pull/1986) - feat(evm): Combine both account queries into "/eth.evm.v1.Query/EthAccount", accepting both nibi-prefixed Bech32 addresses and Ethereum-type hexadecimal addresses as input.
+- [#1989](https://github.com/NibiruChain/nibiru/pull/1989) - refactor(evm): simplify evm module address
+- [#1996](https://github.com/NibiruChain/nibiru/pull/1996) - perf(evm-keeper-precompile): implement sorted map for `k.precompiles` to remove dead code
+- [#1997](https://github.com/NibiruChain/nibiru/pull/1997) - refactor(evm): Remove unnecessary params: "enable_call", "enable_create".
 
 #### Dapp modules: perp, spot, oracle, etc
 
@@ -117,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
 - [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
 - [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
+- [#1992](https://github.com/NibiruChain/nibiru/pull/1992) - chore: enabled grpc for localnet
 
 ### Dependencies
 
@@ -139,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.5 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858), [#1938](https://github.com/NibiruChain/nibiru/pull/1938))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
-- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.35.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.36.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972), [#1974](https://github.com/NibiruChain/nibiru/pull/1974), [#1988](https://github.com/NibiruChain/nibiru/pull/1988))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 

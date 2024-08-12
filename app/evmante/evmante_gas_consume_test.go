@@ -25,7 +25,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			name: "happy: sender with funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
-				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
+				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
@@ -46,7 +46,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			name: "sad: out of gas",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
-				balance := new(big.Int).Add(gasLimit, big.NewInt(100))
+				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
 				sdb.AddBalance(deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
@@ -61,7 +61,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
 			anteDec := evmante.NewAnteDecEthGasConsume(
-				&deps.Chain.AppKeepers.EvmKeeper, tc.maxGasWanted,
+				&deps.App.AppKeepers.EvmKeeper, tc.maxGasWanted,
 			)
 
 			tc.beforeTxSetup(&deps, stateDB)

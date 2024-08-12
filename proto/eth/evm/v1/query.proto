@@ -13,14 +13,10 @@ option go_package = "github.com/NibiruChain/nibiru/x/evm";
 
 // Query defines the gRPC querier service.
 service Query {
-  // EthAccount queries an Ethereum account.
+  // EthAccount queries a Nibiru account using its EVM address or Bech32 Nibiru
+  // address.
   rpc EthAccount(QueryEthAccountRequest) returns (QueryEthAccountResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/eth_account/{address}";
-  }
-
-  // NibiruAccount queries the Bech32 Nibiru address corresponding to Nibiru EVM account.
-  rpc NibiruAccount(QueryNibiruAccountRequest) returns (QueryNibiruAccountResponse) {
-    option (google.api.http).get = "/nibiru/evm/v1/nibiru_account/{address}";
   }
 
   // ValidatorAccount queries an Ethereum account's from a validator consensus
@@ -86,39 +82,28 @@ message QueryEthAccountRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // address is the ethereum hex address to query the account for.
+  // address is the Ethereum hex address or nibi Bech32 address to query the account for.
   string address = 1;
 }
 
-// QueryEthAccountResponse is the response type for the Query/Account RPC method.
+// QueryEthAccountResponse is the response type for the Query/EthAccount RPC method.
 message QueryEthAccountResponse {
-  // balance is the balance of the EVM denomination.
+  // balance is the balance of unibi (micronibi).
   string balance = 1;
+  // balance_wei is the balance of wei (attoether, where NIBI is ether).
+  string balance_wei = 2;
   // code_hash is the hex-formatted code bytes from the EOA.
-  string code_hash = 2;
+  string code_hash = 3;
   // nonce is the account's sequence number.
-  uint64 nonce = 3;
-}
+  uint64 nonce = 4;
 
-// QueryNibiruAccountRequest is the request type for the Query/NibiruAccount RPC
-// method.
-message QueryNibiruAccountRequest {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
+  // eth_address: The hexadecimal-encoded string representing the 20 byte address
+  // of a Nibiru EVM account.
+  string eth_address = 5;
 
-  // address is the ethereum hex address to query the account for.
-  string address = 1;
-}
-
-// QueryNibiruAccountResponse is the response type for the Query/NibiruAccount
-// RPC method.
-message QueryNibiruAccountResponse {
-  // Nibiru bech32 account "address"
-  string address = 1;
-  // sequence is the account's sequence number.
-  uint64 sequence = 2;
-  // account_number is the account number
-  uint64 account_number = 3;
+  // bech32_address is the nibi-prefixed address of the account that can receive
+  // bank transfers ("cosmos.bank.v1beta1.MsgSend").
+  string bech32_address = 6;
 }
 
 // QueryValidatorAccountRequest is the request type for the
@@ -153,8 +138,10 @@ message QueryBalanceRequest {
 
 // QueryBalanceResponse is the response type for the Query/Balance RPC method.
 message QueryBalanceResponse {
-  // balance is the balance of the EVM denomination.
+  // balance is the balance of the EVM denomination
   string balance = 1;
+  // balance is the balance of the EVM denomination in units of wei.
+  string balance_wei = 2;
 }
 
 // QueryStorageRequest is the request type for the Query/Storage RPC method.
@@ -246,10 +233,10 @@ message QueryTraceTxRequest {
   reserved 2;
   reserved "tx_index";
   // trace_config holds extra parameters to trace functions.
-  TraceConfig trace_config = 3;
+  eth.evm.v1.TraceConfig trace_config = 3;
   // predecessors is an array of transactions included in the same block
   // need to be replayed first to get correct context for tracing.
-  repeated MsgEthereumTx predecessors = 4;
+  repeated eth.evm.v1.MsgEthereumTx predecessors = 4;
   // block_number of requested transaction
   int64 block_number = 5;
   // block_hash of requested transaction

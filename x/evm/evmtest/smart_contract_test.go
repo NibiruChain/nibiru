@@ -16,7 +16,7 @@ func (s *Suite) TestCreateContractTxMsg() {
 
 	args := evmtest.ArgsCreateContract{
 		EthAcc:        ethAcc,
-		EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:      big.NewInt(1),
 		Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 	}
@@ -32,7 +32,7 @@ func (s *Suite) TestCreateContractGethCoreMsg() {
 
 	args := evmtest.ArgsCreateContract{
 		EthAcc:        ethAcc,
-		EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:      big.NewInt(1),
 		Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 	}
@@ -55,7 +55,7 @@ func (s *Suite) TestExecuteContractTxMsg() {
 	contractAddress := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	args := evmtest.ArgsExecuteContract{
 		EthAcc:          ethAcc,
-		EthChainIDInt:   deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:        big.NewInt(1),
 		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
 		ContractAddress: &contractAddress,

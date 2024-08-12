@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthMinGasPriceDecorator() {
+func (s *TestSuite) TestMempoolGasFeeDecorator() {
 	testCases := []struct {
 		name     string
 		txSetup  func(deps *evmtest.TestDeps) sdk.Tx
@@ -82,7 +82,7 @@ func (s *TestSuite) TestEthMinGasPriceDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := evmante.NewEthMinGasPriceDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewMempoolGasPriceDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 

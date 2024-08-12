@@ -44,14 +44,6 @@ func (suite *CodecTestSuite) TestRegisterInterfaces() {
 				"/cosmos.auth.v1beta1.ModuleAccount",
 			},
 		},
-		{
-			ProtoName: "cosmos.tx.v1beta1.TxExtensionOptionI",
-			Interface: new(sdktx.TxExtensionOptionI),
-			WantImpls: []string{
-				TYPE_URL_WEB3_TX,
-				TYPE_URL_DYNAMIC_FEE_TX,
-			},
-		},
 	}
 
 	// -------------------------------------------

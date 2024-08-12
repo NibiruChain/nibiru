@@ -32,15 +32,11 @@ func NewEthAccInfo() EthPrivKeyAcc {
 	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
 	return EthPrivKeyAcc{
 		EthAddr:       ethAddr,
-		NibiruAddr:    EthAddrToNibiruAddr(ethAddr),
+		NibiruAddr:    eth.EthAddrToNibiruAddr(ethAddr),
 		PrivKey:       privkey,
 		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),
 	}
-}
-
-func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
-	return ethAddr.Bytes()
 }
 
 type EthPrivKeyAcc struct {

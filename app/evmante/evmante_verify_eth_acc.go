@@ -3,7 +3,6 @@ package evmante
 
 import (
 	"cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -39,10 +38,6 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	if !ctx.IsCheckTx() {
-		return next(ctx, tx, simulate)
-	}
-
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
@@ -73,7 +68,9 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		if err := keeper.CheckSenderBalance(sdkmath.NewIntFromBigInt(acct.Balance), txData); err != nil {
+		if err := keeper.CheckSenderBalance(
+			evm.NativeToWei(acct.BalanceNative), txData,
+		); err != nil {
 			return ctx, errors.Wrap(err, "failed to check sender balance")
 		}
 	}

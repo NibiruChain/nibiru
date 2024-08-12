@@ -113,7 +113,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err = txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -125,41 +125,9 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			wantErr: "tx AuthInfo SignerInfos should be empty",
 		},
 		{
-			name: "sad: tx for contract creation with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
-				params.EnableCreate = false
-				return params
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "EVM Create operation is disabled",
-		},
-		{
-			name: "sad: tx for contract call with param disabled",
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				params := evm.DefaultParams()
-				params.EnableCall = false
-				return params
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
-				gasLimit := uint64(10)
-				to := evmtest.NewEthAccInfo().EthAddr
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := buildEthMsg(chainID, gasLimit, "", &to)
-				return buildTx(deps, true, msg, gasLimit, fees)
-			},
-			wantErr: "EVM Call operation is disabled",
-		},
-		{
 			name: "sad: tx without extension options should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -184,7 +152,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with from value set should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -195,7 +163,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with fee <> msg fee",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", 5))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -206,7 +174,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with gas limit <> msg gas limit",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -220,7 +188,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthValidateBasicDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthValidateBasicDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
@@ -229,7 +197,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				tc.ctxSetup(&deps)
 			}
 			if tc.paramsSetup != nil {
-				deps.K.SetParams(deps.Ctx, tc.paramsSetup(&deps))
+				deps.EvmKeeper.SetParams(deps.Ctx, tc.paramsSetup(&deps))
 			}
 			_, err := anteDec.AnteHandle(
 				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,

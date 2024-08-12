@@ -54,7 +54,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			name: "happy: signed ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -68,7 +68,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthSigVerificationDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthSigVerificationDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

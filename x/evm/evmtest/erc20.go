@@ -17,7 +17,7 @@ func DoEthTx(
 	deps *TestDeps, contract, from gethcommon.Address, input []byte,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	commit := true
-	return deps.K.CallContractWithInput(
+	return deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx, from, &contract, commit, input,
 	)
 }
@@ -28,7 +28,7 @@ func AssertERC20BalanceEqual(
 	contract, account gethcommon.Address,
 	balance *big.Int,
 ) {
-	gotBalance, err := deps.K.ERC20().BalanceOf(contract, account, deps.Ctx)
+	gotBalance, err := deps.EvmKeeper.ERC20().BalanceOf(contract, account, deps.Ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, balance.String(), gotBalance.String())
 }
@@ -51,22 +51,22 @@ func CreateFunTokenForBankCoin(
 		Name:    bankDenom,
 		Symbol:  bankDenom,
 	}
-	if deps.Chain.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
 		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 	}
-	deps.Chain.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 
 	// Give the sender funds for the fee
 	err := testapp.FundAccount(
-		deps.Chain.BankKeeper,
+		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		deps.K.FeeForCreateFunToken(deps.Ctx),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	)
 	s.Require().NoError(err)
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
-	createFuntokenResp, err := deps.K.CreateFunToken(
+	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
 		deps.GoCtx(),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
@@ -87,7 +87,7 @@ func CreateFunTokenForBankCoin(
 	queryCodeReq := &evm.QueryCodeRequest{
 		Address: erc20Addr.String(),
 	}
-	_, err = deps.K.Code(deps.Ctx, queryCodeReq)
+	_, err = deps.EvmKeeper.Code(deps.Ctx, queryCodeReq)
 	s.NoError(err)
 
 	return funtoken

@@ -3,7 +3,6 @@ package keeper
 
 import (
 	"math/big"
-	"slices"
 
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -118,7 +117,6 @@ func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 
 // SetParams: Setter for the module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
-	slices.Sort(params.ActivePrecompiles)
 	k.EvmState.ModuleParams.Set(ctx, params)
 }
 

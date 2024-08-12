@@ -3,8 +3,6 @@ package evm
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -12,12 +10,10 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/exp/slices"
 
 	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/eth"
 )
 
 const (
@@ -25,21 +21,13 @@ const (
 	DefaultEVMDenom = appconst.BondDenom
 )
 
-// AvailableEVMExtensions defines the default active precompiles
-var AvailableEVMExtensions = []string{}
-
 // DefaultParams returns default evm parameters
 // ExtraEIPs is empty to prevent overriding the latest hard fork instruction set
-// ActivePrecompiles is empty to prevent overriding the default precompiles
-// from the EVM configuration.
 func DefaultParams() Params {
 	return Params{
 		EvmDenom:            DefaultEVMDenom,
-		EnableCreate:        true,
-		EnableCall:          true,
 		ExtraEIPs:           []int64{},
 		AllowUnprotectedTxs: false,
-		ActivePrecompiles:   AvailableEVMExtensions,
 		EVMChannels:         []string{},
 		CreateFuntokenFee:   math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
 	}
@@ -73,19 +61,7 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	if err := validateBool(p.EnableCall); err != nil {
-		return err
-	}
-
-	if err := validateBool(p.EnableCreate); err != nil {
-		return err
-	}
-
 	if err := validateBool(p.AllowUnprotectedTxs); err != nil {
-		return err
-	}
-
-	if err := ValidatePrecompiles(p.ActivePrecompiles); err != nil {
 		return err
 	}
 
@@ -101,30 +77,10 @@ func (p Params) EIPs() []int {
 	return eips
 }
 
-// GetActivePrecompilesAddrs is a util function that the Active Precompiles
-// as a slice of addresses.
-func (p Params) GetActivePrecompilesAddrs() []common.Address {
-	precompiles := make([]common.Address, len(p.ActivePrecompiles))
-	for i, precompile := range p.ActivePrecompiles {
-		precompiles[i] = common.HexToAddress(precompile)
-	}
-	return precompiles
-}
-
 // IsEVMChannel returns true if the channel provided is in the list of
 // EVM channels
 func (p Params) IsEVMChannel(channel string) bool {
 	return slices.Contains(p.EVMChannels, channel)
-}
-
-// IsActivePrecompile returns true if the given precompile address is
-// registered as an active precompile.
-func (p Params) IsActivePrecompile(address string) bool {
-	_, found := sort.Find(len(p.ActivePrecompiles), func(i int) int {
-		return strings.Compare(address, p.ActivePrecompiles[i])
-	})
-
-	return found
 }
 
 func validateEVMDenom(i interface{}) error {
@@ -161,36 +117,6 @@ func validateEIPs(i interface{}) error {
 			return fmt.Errorf("found duplicate EIP: %d", eip)
 		}
 		uniqueEIPs[eip] = struct{}{}
-	}
-
-	return nil
-}
-
-// ValidatePrecompiles checks if the precompile addresses are valid and unique.
-func ValidatePrecompiles(i interface{}) error {
-	precompiles, ok := i.([]string)
-	if !ok {
-		return fmt.Errorf("invalid precompile slice type: %T", i)
-	}
-
-	seenPrecompiles := make(map[string]struct{})
-	for _, precompile := range precompiles {
-		if _, ok := seenPrecompiles[precompile]; ok {
-			return fmt.Errorf("duplicate precompile %s", precompile)
-		}
-
-		if err := eth.ValidateAddress(precompile); err != nil {
-			return fmt.Errorf("invalid precompile %s", precompile)
-		}
-
-		seenPrecompiles[precompile] = struct{}{}
-	}
-
-	// NOTE: Check that the precompiles are sorted. This is required for the
-	// precompiles to be found correctly when using the IsActivePrecompile method,
-	// because of the use of sort.Find.
-	if !slices.IsSorted(precompiles) {
-		return fmt.Errorf("precompiles need to be sorted: %s", precompiles)
 	}
 
 	return nil
