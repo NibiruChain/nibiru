@@ -102,19 +102,21 @@ type NibiruPrecompile interface {
 // ABIMethodByID: Looks up an ABI method by the 4-byte id.
 // Copy of "ABI.MethodById" from go-ethereum version > 1.10
 func ABIMethodByID(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
-	if len(sigdata) < 4 {
-		return nil, fmt.Errorf("data too short (%d bytes) for abi method lookup", len(sigdata))
+	if len(sigdata) != 4 {
+		return nil, fmt.Errorf("data (%d bytes) insufficient for abi method lookup", len(sigdata))
 	}
+
 	for _, method := range abi.Methods {
 		if bytes.Equal(method.ID, sigdata[:4]) {
 			return &method, nil
 		}
 	}
+
 	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
 }
 
 func OnRunStart(
-	p NibiruPrecompile, evm *vm.EVM, input []byte,
+	precompile NibiruPrecompile, evm *vm.EVM, input []byte,
 ) (ctx sdk.Context, method *gethabi.Method, args []interface{}, err error) {
 	// 1 | Get context from StateDB
 	stateDB, ok := evm.StateDB.(*statedb.StateDB)
@@ -125,23 +127,19 @@ func OnRunStart(
 	ctx = stateDB.GetContext()
 
 	// 2 | Parse the ABI method
-	// ABI method IDs are at least 4 bytes according to "gethabi.ABI.MethodByID".
-	methodIdBytes := 4
-	if len(input) < methodIdBytes {
+	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
+	if len(input) != 4 {
 		readableBz := collections.HumanizeBytes(input)
 		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", readableBz)
 		return
 	}
-	methodID := input[:methodIdBytes]
-	abi := p.ABI()
-	method, err = ABIMethodByID(abi, methodID)
+	method, err = ABIMethodByID(precompile.ABI(), input[:4])
 	if err != nil {
 		err = fmt.Errorf("unable to parse ABI method by its 4-byte ID: %w", err)
 		return
 	}
 
-	argsBz := input[methodIdBytes:]
-	args, err = method.Inputs.Unpack(argsBz)
+	args, err = method.Inputs.Unpack(input[4:])
 	if err != nil {
 		err = fmt.Errorf("unable to unpack input args: %w", err)
 		return

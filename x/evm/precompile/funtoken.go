@@ -59,18 +59,16 @@ func (p precompileFunToken) Run(
 		}
 	}()
 
-	contractInput := contract.Input
-	ctx, method, args, err := OnRunStart(p, evm, contractInput)
+	ctx, method, args, err := OnRunStart(p, evm, contract.Input)
 	if err != nil {
 		return nil, err
 	}
 
-	caller := contract.CallerAddress
 	switch FunTokenMethod(method.Name) {
 	case FunTokenMethod_BankSend:
 		// TODO: UD-DEBUG: Test that calling non-method on the right address does
 		// nothing.
-		bz, err = p.bankSend(ctx, caller, method, args, readonly)
+		bz, err = p.bankSend(ctx, contract.CallerAddress, method, args, readonly)
 	default:
 		// TODO: UD-DEBUG: test invalid method called
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
@@ -184,8 +182,7 @@ func (p precompileFunToken) bankSend(
 	// Since we're sending them away and want accurate total supply tracking, the
 	// tokens need to be burned.
 	if funtoken.IsMadeFromCoin {
-		caller := evm.EVM_MODULE_ADDRESS
-		_, err = p.EvmKeeper.ERC20().Burn(erc20, caller, amount, ctx)
+		_, err = p.EvmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
 			return
