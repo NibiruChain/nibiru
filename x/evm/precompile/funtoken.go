@@ -120,8 +120,7 @@ func (p precompileFunToken) bankSend(
 ) (bz []byte, err error) {
 	if readOnly {
 		// Check required for transactions but not needed for queries
-		err = fmt.Errorf("cannot write state from staticcall (a read-only call)")
-		return
+		return nil, fmt.Errorf("cannot write state from staticcall (a read-only call)")
 	}
 	if !executionGuard.TryLock() {
 		return nil, fmt.Errorf("bankSend is already in progress")
@@ -202,40 +201,34 @@ func (p precompileFunToken) bankSend(
 	return method.Outputs.Pack() // TODO: change interface
 }
 
-// ArgsFunTokenBankSend: Constructor for an "args" array of arguments for the
-// "IFunToken.bankSend" function.
-func ArgsFunTokenBankSend(
-	erc20 gethcommon.Address,
-	amount *big.Int,
-	to sdk.AccAddress,
-) []any {
-	return []any{erc20, amount, to.String()}
-}
-
 func (p precompileFunToken) AssertArgTypesBankSend(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,
 	err error,
 ) {
-	err = AssertArgCount(args, 3)
-	if err != nil {
+	if len(args) != 3 {
+		err = fmt.Errorf("expected 3 arguments but got %d", len(args))
 		return
 	}
 
-	erc20, ok1 := args[0].(gethcommon.Address)
-	amount, ok2 := args[1].(*big.Int)
-	to, ok3 := args[2].(string)
-	if !(ok1 && ok2 && ok3) {
-		err = fmt.Errorf("type validation for failed for \"%s\"",
-			"function bankSend(address erc20, uint256 amount, string memory to) external")
+	erc20, ok := args[0].(gethcommon.Address)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (address erc20) argument")
+		return
 	}
-	return
-}
 
-func AssertArgCount(args []interface{}, wantNumArgs int) error {
-	if len(args) != wantNumArgs {
-		return fmt.Errorf("expected %d arguments but got %d", wantNumArgs, len(args))
+	amount, ok = args[1].(*big.Int)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (uint256 amount) argument")
+		return
 	}
-	return nil
+
+	to, ok = args[2].(string)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (string to) argument")
+		return
+	}
+
+	return
 }
