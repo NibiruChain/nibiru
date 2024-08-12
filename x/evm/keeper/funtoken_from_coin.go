@@ -71,28 +71,22 @@ func (k *Keeper) DeployERC20ForBankCoin(
 	}
 
 	erc20Embed := embeds.SmartContract_ERC20Minter
-	callArgs := []any{bankCoin.Name, bankCoin.Symbol, decimals}
-	methodName := "" // pass empty method name to deploy the contract
-	packedArgs, err := erc20Embed.ABI.Pack(methodName, callArgs...)
+
+	// pass empty method name to deploy the contract
+	packedArgs, err := erc20Embed.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
 	if err != nil {
 		err = errors.Wrap(err, "failed to pack ABI args")
-		return
+		return gethcommon.Address{}, err
 	}
+
 	bytecodeForCall := append(erc20Embed.Bytecode, packedArgs...)
-
-	fromEvmAddr := evm.EVM_MODULE_ADDRESS
-	nonce := k.GetAccNonce(ctx, fromEvmAddr)
-	erc20Addr = crypto.CreateAddress(fromEvmAddr, nonce)
-	erc20Contract := (*gethcommon.Address)(nil) // nil >> doesn't exist yet
-	commit := true
-
 	_, err = k.CallContractWithInput(
-		ctx, fromEvmAddr, erc20Contract, commit, bytecodeForCall,
+		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall,
 	)
 	if err != nil {
 		err = errors.Wrap(err, "deploy ERC20 failed")
 		return
 	}
 
-	return erc20Addr, nil
+	return crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS)), nil
 }
