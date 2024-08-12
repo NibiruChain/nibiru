@@ -18,9 +18,7 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	ctx sdk.Context, bankDenom string,
 ) (funtoken evm.FunToken, err error) {
 	// 1 | Coin already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
-	); len(funtokens) > 0 {
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
@@ -33,13 +31,11 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	// 3 | deploy ERC20 for metadata
 	erc20Addr, err := k.DeployERC20ForBankCoin(ctx, bankCoin)
 	if err != nil {
-		return
+		return funtoken, errors.Wrap(err, "failed to deploy ERC20 for bank coin")
 	}
 
 	// 4 | ERC20 already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
-	); len(funtokens) > 0 {
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
 	}
 

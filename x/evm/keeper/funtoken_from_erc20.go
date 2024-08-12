@@ -99,27 +99,24 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	erc20Addr := erc20.ToAddr()
 
 	// 1 | ERC20 already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
-	); len(funtokens) > 0 {
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
 	}
 
 	// 2 | Get existing ERC20 metadata
 	info, err := k.FindERC20Metadata(ctx, erc20Addr)
 	if err != nil {
-		return
+		return funtoken, err
 	}
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
 	// 3 | Coin already registered with FunToken?
-	_, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
-	if isAlreadyCoin {
+	_, isFound := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
+	if isFound {
 		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
-	); len(funtokens) > 0 {
+
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
@@ -142,7 +139,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 
 	err = bankMetadata.Validate()
 	if err != nil {
-		return
+		return funtoken, fmt.Errorf("failed to validate bank metadata: %w", err)
 	}
 	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
 
