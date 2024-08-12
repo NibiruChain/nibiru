@@ -12,7 +12,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/x/evm"
 )
@@ -55,40 +54,16 @@ func (k *Keeper) ResetGasMeterAndConsumeGas(ctx sdk.Context, gasUsed uint64) {
 	ctx.GasMeter().ConsumeGas(gasUsed, "apply evm transaction")
 }
 
-// GasToRefund calculates the amount of gas the state machine should refund to the sender. It is
+// gasToRefund calculates the amount of gas the state machine should refund to the sender. It is
 // capped by the refund quotient value.
 // Note: do not pass 0 to refundQuotient
-func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
+func gasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
 	// Apply refund counter
 	refund := gasConsumed / refundQuotient
 	if refund > availableRefund {
 		return availableRefund
 	}
 	return refund
-}
-
-// CheckSenderBalance validates that the tx cost value is positive and that the
-// sender has enough funds to pay for the fees and value of the transaction.
-func CheckSenderBalance(
-	balanceWei *big.Int,
-	txData evm.TxData,
-) error {
-	cost := txData.Cost()
-
-	if cost.Sign() < 0 {
-		return errors.Wrapf(
-			errortypes.ErrInvalidCoins,
-			"tx cost (%s) is negative and invalid", cost,
-		)
-	}
-
-	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
-		return errors.Wrapf(
-			errortypes.ErrInsufficientFunds,
-			"sender balance < tx cost (%s < %s)", balanceWei, cost,
-		)
-	}
-	return nil
 }
 
 // DeductTxCostsFromUserBalance deducts the fees from the user balance. Returns
@@ -111,55 +86,4 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	}
 
 	return nil
-}
-
-// VerifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
-// gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
-// base fee is lower than the gas fee cap.
-func VerifyFee(
-	txData evm.TxData,
-	denom string,
-	baseFee *big.Int,
-	isCheckTx bool,
-) (sdk.Coins, error) {
-	isContractCreation := txData.GetTo() == nil
-
-	gasLimit := txData.GetGas()
-
-	var accessList gethcore.AccessList
-	if txData.GetAccessList() != nil {
-		accessList = txData.GetAccessList()
-	}
-
-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, true, true)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err,
-			"failed to retrieve intrinsic gas, contract creation = %t",
-			isContractCreation,
-		)
-	}
-
-	// intrinsic gas verification during CheckTx
-	if isCheckTx && gasLimit < intrinsicGas {
-		return nil, errors.Wrapf(
-			errortypes.ErrOutOfGas,
-			"gas limit too low: %d (gas limit) < %d (intrinsic gas)", gasLimit, intrinsicGas,
-		)
-	}
-
-	if baseFee != nil && txData.GetGasFeeCap().Cmp(baseFee) < 0 {
-		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
-			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
-			txData.GetGasFeeCap(),
-			baseFee)
-	}
-
-	feeAmt := txData.EffectiveFee(baseFee)
-	if feeAmt.Sign() == 0 {
-		// zero fee, no need to deduct
-		return sdk.Coins{}, nil
-	}
-
-	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmt)}}, nil
 }

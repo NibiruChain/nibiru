@@ -2,13 +2,14 @@
 package evmante
 
 import (
+	"math/big"
+
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/x/evm/statedb"
 )
 
@@ -68,11 +69,35 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		if err := keeper.CheckSenderBalance(
+		if err := checkSenderBalance(
 			evm.NativeToWei(acct.BalanceNative), txData,
 		); err != nil {
 			return ctx, errors.Wrap(err, "failed to check sender balance")
 		}
 	}
 	return next(ctx, tx, simulate)
+}
+
+// checkSenderBalance validates that the tx cost value is positive and that the
+// sender has enough funds to pay for the fees and value of the transaction.
+func checkSenderBalance(
+	balanceWei *big.Int,
+	txData evm.TxData,
+) error {
+	cost := txData.Cost()
+
+	if cost.Sign() < 0 {
+		return errors.Wrapf(
+			errortypes.ErrInvalidCoins,
+			"tx cost (%s) is negative and invalid", cost,
+		)
+	}
+
+	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
+		return errors.Wrapf(
+			errortypes.ErrInsufficientFunds,
+			"sender balance < tx cost (%s < %s)", balanceWei, cost,
+		)
+	}
+	return nil
 }

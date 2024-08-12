@@ -3,15 +3,18 @@ package evmante
 
 import (
 	"math"
+	"math/big"
 
 	"cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -101,7 +104,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			gasWanted += txData.GetGas()
 		}
 
-		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, ctx.IsCheckTx())
+		fees, err := verifyFee(txData, evmDenom, baseFee, ctx.IsCheckTx())
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to verify the fees")
 		}
@@ -169,4 +172,55 @@ func (anteDec AnteDecEthGasConsume) deductFee(ctx sdk.Context, fees sdk.Coins, f
 		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil
+}
+
+// verifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
+// gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
+// base fee is lower than the gas fee cap.
+func verifyFee(
+	txData evm.TxData,
+	denom string,
+	baseFee *big.Int,
+	isCheckTx bool,
+) (sdk.Coins, error) {
+	isContractCreation := txData.GetTo() == nil
+
+	gasLimit := txData.GetGas()
+
+	var accessList gethcore.AccessList
+	if txData.GetAccessList() != nil {
+		accessList = txData.GetAccessList()
+	}
+
+	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, true, true)
+	if err != nil {
+		return nil, errors.Wrapf(
+			err,
+			"failed to retrieve intrinsic gas, contract creation = %t",
+			isContractCreation,
+		)
+	}
+
+	// intrinsic gas verification during CheckTx
+	if isCheckTx && gasLimit < intrinsicGas {
+		return nil, errors.Wrapf(
+			errortypes.ErrOutOfGas,
+			"gas limit too low: %d (gas limit) < %d (intrinsic gas)", gasLimit, intrinsicGas,
+		)
+	}
+
+	if baseFee != nil && txData.GetGasFeeCap().Cmp(baseFee) < 0 {
+		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
+			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
+			txData.GetGasFeeCap(),
+			baseFee)
+	}
+
+	feeAmt := txData.EffectiveFee(baseFee)
+	if feeAmt.Sign() == 0 {
+		// zero fee, no need to deduct
+		return sdk.Coins{}, nil
+	}
+
+	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmt)}}, nil
 }
