@@ -176,7 +176,7 @@ func (k Keeper) CallContractWithInput(
 		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
 	)
 	if err != nil {
-		return
+		return evmResp, err
 	}
 
 	unusedBigInt := big.NewInt(0)
@@ -195,26 +195,25 @@ func (k Keeper) CallContractWithInput(
 	)
 
 	// Apply EVM message
-	cfg, err := k.GetEVMConfig(
+	evmCfg, err := k.GetEVMConfig(
 		ctx,
 		sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		err = fmt.Errorf("failed to load evm config: %s", err)
-		return
+		return evmResp, fmt.Errorf("failed to load evm config: %s", err)
 	}
+
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evm.NewNoOpTracer(), commit, cfg, txConfig,
+		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
-		return
+		return evmResp, err
 	}
 
 	if evmResp.Failed() {
-		err = fmt.Errorf("%w: EVM error: %s", err, evmResp.VmError)
-		return
+		return evmResp, fmt.Errorf("%w: EVM error: %s", err, evmResp.VmError)
 	}
 
 	return evmResp, err
