@@ -4,30 +4,18 @@ package keeper
 import (
 	"math/big"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
-	"github.com/ethereum/go-ethereum/params"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/x/evm"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
-
-// GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
-func (k *Keeper) GetEthIntrinsicGas(ctx sdk.Context, msg core.Message, cfg *params.ChainConfig, isContractCreation bool) (uint64, error) {
-	return core.IntrinsicGas(
-		msg.Data(), msg.AccessList(),
-		isContractCreation, true, true,
-	)
-}
 
 // RefundGas transfers the leftover gas to the sender of the message, caped to half of the total gas
 // consumed in the transaction. Additionally, the function sets the total gas consumed to the value

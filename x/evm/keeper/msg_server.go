@@ -381,7 +381,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
 
-	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
+	intrinsicGas, err := core.IntrinsicGas(msg.Data(), msg.AccessList(), contractCreation, true, true)
 	if err != nil {
 		// should have already been checked on Ante Handler
 		return nil, errors.Wrap(err, "intrinsic gas failed")
