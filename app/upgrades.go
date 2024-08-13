@@ -5,11 +5,11 @@ import (
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/NibiruChain/nibiru/app/upgrades"
-	"github.com/NibiruChain/nibiru/app/upgrades/v1_1_0"
-	"github.com/NibiruChain/nibiru/app/upgrades/v1_2_0"
-	"github.com/NibiruChain/nibiru/app/upgrades/v1_3_0"
-	"github.com/NibiruChain/nibiru/app/upgrades/v1_4_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_1_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_2_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_3_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_4_0"
 )
 
 var Upgrades = []upgrades.Upgrade{

@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Params defines the module parameters for the x/oracle module.
 message Params {
@@ -38,7 +38,7 @@ message Params {
   // Ex. '["unibi:uusd","ubtc:uusd"]'
   repeated string whitelist = 4 [
     (gogoproto.moretags) = "yaml:\"whitelist\"",
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair"
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair"
   ];
   // SlashFraction returns the proportion of an oracle's stake that gets
   // slashed in the event of slashing. `SlashFraction` specifies the exact
@@ -119,7 +119,7 @@ message ExchangeRateTuple {
   string pair = 1 [
     (gogoproto.moretags) = "yaml:\"pair\"",
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

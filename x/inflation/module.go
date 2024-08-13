@@ -17,10 +17,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/inflation/client/cli"
-	"github.com/NibiruChain/nibiru/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/x/inflation/simulation"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // type check to ensure the interface is properly implemented

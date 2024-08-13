@@ -4,7 +4,7 @@ package evmante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
 )
 
 // NewAnteHandlerEVM creates the default ante handler for Ethereum transactions

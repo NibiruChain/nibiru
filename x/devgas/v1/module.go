@@ -16,11 +16,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/client/cli"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/exported"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/simulation"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/exported"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // type check to ensure the interface is properly implemented

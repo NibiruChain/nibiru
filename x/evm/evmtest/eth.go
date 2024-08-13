@@ -12,16 +12,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // NewEthAccInfo returns an Ethereum private key, its corresponding Eth address,

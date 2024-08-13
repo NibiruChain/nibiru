@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.

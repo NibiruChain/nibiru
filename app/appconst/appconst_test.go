@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 type TestSuite struct {

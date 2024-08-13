@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {

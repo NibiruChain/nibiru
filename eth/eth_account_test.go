@@ -1,8 +1,8 @@
 package eth_test
 
 import (
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *Suite) TestEthAddrToNibiruAddr() {

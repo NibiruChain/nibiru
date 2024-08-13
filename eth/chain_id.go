@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 var (

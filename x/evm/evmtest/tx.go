@@ -15,10 +15,10 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/require"
 
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
 type GethTxType = uint8

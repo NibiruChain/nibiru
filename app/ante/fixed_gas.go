@@ -4,7 +4,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 const OracleMessageGas = 500

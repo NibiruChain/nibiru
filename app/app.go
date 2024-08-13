@@ -11,9 +11,9 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	"github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/app/wasmext"
-	"github.com/NibiruChain/nibiru/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"

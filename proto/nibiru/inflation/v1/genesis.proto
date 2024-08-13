@@ -5,7 +5,7 @@ package nibiru.inflation.v1;
 import "gogoproto/gogo.proto";
 import "nibiru/inflation/v1/inflation.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
 
 // GenesisState defines the inflation module's genesis state.
 message GenesisState {

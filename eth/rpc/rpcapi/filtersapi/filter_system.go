@@ -23,8 +23,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth/rpc/pubsub"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 var (

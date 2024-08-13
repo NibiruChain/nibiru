@@ -13,7 +13,7 @@ import (
 
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )

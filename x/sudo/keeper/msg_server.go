@@ -9,8 +9,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type MsgServer struct {
