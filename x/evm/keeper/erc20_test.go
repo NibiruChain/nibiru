@@ -148,9 +148,9 @@ func (s *Suite) TestDeployERC20ForBankCoin() {
 	deps := evmtest.NewTestDeps()
 
 	// Compute contract address. FindERC20 should fail
-	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	_, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, contractAddress)
+	nonce := deps.StateDB().GetNonce(evm.EVM_MODULE_ADDRESS)
+	expectedERC20Addr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, nonce)
+	_, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, expectedERC20Addr)
 	s.Error(err)
 
 	s.T().Log("Case 1: Deploy and invoke ERC20 for info")
@@ -171,18 +171,16 @@ func (s *Suite) TestDeployERC20ForBankCoin() {
 		deps.Ctx, bankMetadata,
 	)
 	s.Require().NoError(err)
-	s.NotEqual(contractAddress, erc20Addr,
-		"address derived from before call should differ since the contract deployment succeeds")
+	s.Equal(expectedERC20Addr, erc20Addr)
 
 	s.T().Log("Expect ERC20 metadata on contract")
-	metadata := keeper.ERC20Metadata{
+	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, erc20Addr)
+	s.NoError(err)
+	s.Equal(keeper.ERC20Metadata{
 		Name:     bankDenom,
 		Symbol:   "TOKEN",
 		Decimals: 0,
-	}
-	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, erc20Addr)
-	s.NoError(err, info)
-	s.Equal(metadata, info)
+	}, info)
 }
 
 func (s *Suite) TestCreateFunTokenFromCoin() {
