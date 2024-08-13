@@ -13,15 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-func DoEthTx(
-	deps *TestDeps, contract, from gethcommon.Address, input []byte,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	commit := true
-	return deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, from, &contract, commit, input,
-	)
-}
-
 func AssertERC20BalanceEqual(
 	t *testing.T,
 	deps TestDeps,
