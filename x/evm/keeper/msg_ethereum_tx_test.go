@@ -50,7 +50,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 					GasLimit:      gasLimit,
 				}
-				ethTxMsg, err := evmtest.CreateContractTxMsg(args)
+				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
 				s.Require().NoError(err)
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
@@ -89,7 +89,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					GasPrice:      big.NewInt(1),
 					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 				}
-				ethTxMsg, err := evmtest.CreateContractTxMsg(args)
+				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
 				s.NoError(err)
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)

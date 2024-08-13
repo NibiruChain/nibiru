@@ -223,20 +223,23 @@ func GenerateAndSignEthTxMsg(
 	if err != nil {
 		return nil, err
 	}
-	res, err := deps.App.EvmKeeper.EstimateGas(sdk.WrapSDKContext(deps.Ctx), &evm.EthCallRequest{
-		Args:            estimateArgs,
-		GasCap:          srvconfig.DefaultEthCallGasLimit,
-		ProposerAddress: []byte{},
-		ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
-	})
+	res, err := deps.App.EvmKeeper.EstimateGas(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.EthCallRequest{
+			Args:            estimateArgs,
+			GasCap:          srvconfig.DefaultEthCallGasLimit,
+			ProposerAddress: []byte{},
+			ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
-	txMsg := txArgs.ToTransaction()
+	msgEthereumTx := txArgs.ToTransaction()
 	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-	return txMsg, txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
+	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, deps.Sender.KeyringSigner)
 }
 
 func TransferWei(
