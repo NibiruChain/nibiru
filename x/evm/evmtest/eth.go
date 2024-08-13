@@ -48,11 +48,6 @@ func (acc EthPrivKeyAcc) GethSigner(ethChainID *big.Int) gethcore.Signer {
 	return gethcore.LatestSignerForChainID(ethChainID)
 }
 
-// NewEthTxMsg: Helper that returns a valid instance of [*evm.MsgEthereumTx].
-func NewEthTxMsg() *evm.MsgEthereumTx {
-	return NewEthTxMsgs(1)[0]
-}
-
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
 	ethAddr := NewEthAccInfo().EthAddr
 	startIdx := uint64(1)
