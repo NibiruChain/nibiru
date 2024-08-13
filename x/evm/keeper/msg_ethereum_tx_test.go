@@ -55,7 +55,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 				s.Require().NoError(
 					err,
 					"resp: %s\nblock header: %s",
@@ -94,7 +94,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 				s.Require().ErrorContains(
 					err,
 					core.ErrIntrinsicGas.Error(),
@@ -148,7 +148,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	s.Require().NoError(
 		err,
 		"resp: %s\nblock header: %s",
@@ -213,7 +213,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		)
 		s.NoError(err)
 
-		resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+		resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
 

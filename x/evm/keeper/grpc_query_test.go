@@ -429,7 +429,7 @@ func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
 	deps.EvmKeeper.SetParams(deps.Ctx, want)
-	gotResp, err := deps.EvmKeeper.Params(deps.GoCtx(), nil)
+	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
@@ -440,7 +440,7 @@ func (s *Suite) TestQueryParams() {
 	// Empty params to test the setter
 	want.EvmDenom = "wei"
 	deps.EvmKeeper.SetParams(deps.Ctx, want)
-	gotResp, err = deps.EvmKeeper.Params(deps.GoCtx(), nil)
+	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
@@ -491,7 +491,7 @@ func (s *Suite) TestQueryEthCall() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			gotResp, err := deps.App.EvmKeeper.EthCall(deps.GoCtx(), req)
+			gotResp, err := deps.App.EvmKeeper.EthCall(sdk.WrapSDKContext(deps.Ctx), req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -666,7 +666,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				s.Require().NoError(err)
 
 				// assert balance of 1000 * 10^12 wei
-				resp, _ := deps.App.EvmKeeper.Balance(deps.GoCtx(), &evm.QueryBalanceRequest{
+				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx), &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				s.Equal("1000", resp.Balance)

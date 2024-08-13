@@ -86,7 +86,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 		))
 
 		resp, err := deps.EvmKeeper.CreateFunToken(
-			deps.GoCtx(),
+			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -127,7 +127,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 		))
 
 		_, err = deps.EvmKeeper.CreateFunToken(
-			deps.GoCtx(),
+			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -139,7 +139,7 @@ func (s *Suite) TestCreateFunTokenFromERC20() {
 	s.T().Log("sad: CreateFunToken for the ERC20: invalid sender")
 	{
 		_, err = deps.EvmKeeper.CreateFunToken(
-			deps.GoCtx(),
+			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 			},
@@ -211,7 +211,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	))
 
 	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
-		deps.GoCtx(),
+		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -268,7 +268,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 	)
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CreateFunToken(
-		deps.GoCtx(),
+		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -319,7 +319,7 @@ func (s *Suite) TestSendFunTokenToEvm() {
 			spendableAmount := tc.senderBalanceBefore.Int64()
 			spendableCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, spendableAmount))
 
-			ctx := deps.GoCtx()
+			ctx := sdk.WrapSDKContext(deps.Ctx)
 			setBankDenomMetadata(deps.Ctx, deps.App.BankKeeper, bankDenom)
 
 			// Fund sender's wallet

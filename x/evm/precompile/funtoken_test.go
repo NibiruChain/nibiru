@@ -5,13 +5,14 @@ import (
 	"math/big"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-
-	"github.com/stretchr/testify/suite"
 )
 
 type Suite struct {
@@ -37,7 +38,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 	deps := evmtest.NewTestDeps()
 
 	codeResp, err := deps.EvmKeeper.Code(
-		deps.GoCtx(),
+		sdk.WrapSDKContext(deps.Ctx),
 		&evm.QueryCodeRequest{
 			Address: precompileAddr.String(),
 		},

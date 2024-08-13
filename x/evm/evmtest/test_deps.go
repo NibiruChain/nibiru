@@ -1,8 +1,6 @@
 package evmtest
 
 import (
-	"context"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -25,10 +23,6 @@ type TestDeps struct {
 	EvmKeeper keeper.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc
-}
-
-func (deps TestDeps) GoCtx() context.Context {
-	return sdk.WrapSDKContext(deps.Ctx)
 }
 
 func NewTestDeps() TestDeps {

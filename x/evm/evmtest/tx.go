@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -123,7 +124,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg
@@ -160,7 +161,7 @@ func DeployContract(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(jsonTxArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -207,7 +208,7 @@ func DeployAndExecuteERC20Transfer(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -222,7 +223,7 @@ func GenerateAndSignEthTxMsg(
 	if err != nil {
 		return nil, err
 	}
-	res, err := deps.App.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
+	res, err := deps.App.EvmKeeper.EstimateGas(sdk.WrapSDKContext(deps.Ctx), &evm.EthCallRequest{
 		Args:            estimateArgs,
 		GasCap:          srvconfig.DefaultEthCallGasLimit,
 		ProposerAddress: []byte{},
@@ -261,7 +262,7 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 
-	_, err = deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	_, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}

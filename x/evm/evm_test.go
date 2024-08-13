@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -129,7 +130,7 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	// EVM module should have mint perms
 	deps := evmtest.NewTestDeps()
 	{
-		resp, err := deps.EvmKeeper.EthAccount(deps.GoCtx(), &evm.QueryEthAccountRequest{
+		resp, err := deps.EvmKeeper.EthAccount(sdk.WrapSDKContext(deps.Ctx), &evm.QueryEthAccountRequest{
 			Address: evmModuleAddr.Hex(),
 		})
 		s.NoError(err)
