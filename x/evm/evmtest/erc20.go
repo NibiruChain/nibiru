@@ -16,12 +16,12 @@ import (
 func AssertERC20BalanceEqual(
 	t *testing.T,
 	deps TestDeps,
-	contract, account gethcommon.Address,
-	balance *big.Int,
+	erc20, account gethcommon.Address,
+	expectedBalance *big.Int,
 ) {
-	gotBalance, err := deps.EvmKeeper.ERC20().BalanceOf(contract, account, deps.Ctx)
+	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, balance.String(), gotBalance.String())
+	assert.Zero(t, expectedBalance.Cmp(actualBalance))
 }
 
 // CreateFunTokenForBankCoin: Uses the "TestDeps.Sender" account to create a
