@@ -2,7 +2,6 @@
 package evmtest
 
 import (
-	"crypto/ecdsa"
 	"math/big"
 	"testing"
 
@@ -34,7 +33,6 @@ func NewEthAccInfo() EthPrivKeyAcc {
 		EthAddr:       ethAddr,
 		NibiruAddr:    eth.EthAddrToNibiruAddr(ethAddr),
 		PrivKey:       privkey,
-		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),
 	}
 }
@@ -43,7 +41,6 @@ type EthPrivKeyAcc struct {
 	EthAddr       gethcommon.Address
 	NibiruAddr    sdk.AccAddress
 	PrivKey       *ethsecp256k1.PrivKey
-	PrivKeyE      *ecdsa.PrivateKey
 	KeyringSigner keyring.Signer
 }
 
