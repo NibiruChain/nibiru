@@ -52,6 +52,5 @@ func (deps TestDeps) StateDB() *statedb.StateDB {
 }
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
-	ctx := deps.Ctx
-	return deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(ctx))
+	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 }

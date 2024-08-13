@@ -5,12 +5,11 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -65,7 +64,7 @@ func CreateContractTxMsg(
 	fromAcc := args.EthAcc
 	ethTxMsg.From = fromAcc.EthAddr.Hex()
 
-	gethSigner := fromAcc.GethSigner(args.EthChainIDInt)
+	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
 	keyringSigner := fromAcc.KeyringSigner
 	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
 }
@@ -105,7 +104,7 @@ func ExecuteContractTxMsg(args ArgsExecuteContract) (ethTxMsg *evm.MsgEthereumTx
 	fromAcc := args.EthAcc
 	ethTxMsg.From = fromAcc.EthAddr.Hex()
 
-	gethSigner := fromAcc.GethSigner(args.EthChainIDInt)
+	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
 	keyringSigner := fromAcc.KeyringSigner
 	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
 }

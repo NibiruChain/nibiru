@@ -235,7 +235,7 @@ func GenerateAndSignEthTxMsg(
 	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
 	txMsg := txArgs.ToTransaction()
-	gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 	keyringSigner := deps.Sender.KeyringSigner
 	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
 }

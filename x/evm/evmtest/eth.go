@@ -44,10 +44,6 @@ type EthPrivKeyAcc struct {
 	KeyringSigner keyring.Signer
 }
 
-func (acc EthPrivKeyAcc) GethSigner(ethChainID *big.Int) gethcore.Signer {
-	return gethcore.LatestSignerForChainID(ethChainID)
-}
-
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
 	ethAddr := NewEthAccInfo().EthAddr
 	startIdx := uint64(1)

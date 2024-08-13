@@ -1,13 +1,13 @@
 package evmante_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 func (s *TestSuite) TestCanTransferDecorator() {
@@ -34,7 +34,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -52,7 +52,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
-				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err := txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)

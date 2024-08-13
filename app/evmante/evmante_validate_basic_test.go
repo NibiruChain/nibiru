@@ -3,18 +3,18 @@ package evmante_test
 import (
 	"math/big"
 
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 func (s *TestSuite) TestEthValidateBasicDecorator() {
@@ -56,7 +56,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			name: "sad: tx not implementing protoTxProvider",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(InvalidChainID)
+				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
 				keyringSigner := deps.Sender.KeyringSigner
 				err := tx.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
@@ -113,7 +113,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
-				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				keyringSigner := deps.Sender.KeyringSigner
 				err = txMsg.Sign(gethSigner, keyringSigner)
 				s.Require().NoError(err)
