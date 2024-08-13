@@ -203,13 +203,12 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	// Give the sender funds for the fee
-	err = testapp.FundAccount(
+	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-	)
-	s.Require().NoError(err)
+	))
 
 	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
 		deps.GoCtx(),
@@ -231,7 +230,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 
 	s.T().Log("Expect ERC20 to be deployed")
 	queryCodeReq := &evm.QueryCodeRequest{
-		Address: erc20Addr.String(),
+		Address: erc20.String(),
 	}
 	_, err = deps.EvmKeeper.Code(deps.Ctx, queryCodeReq)
 	s.Require().NoError(err)
@@ -253,7 +252,7 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 		deps.Ctx,
 		&evm.EventFunTokenCreated{
 			BankDenom:            bankDenom,
-			Erc20ContractAddress: erc20Addr.String(),
+			Erc20ContractAddress: erc20.String(),
 			Creator:              deps.Sender.NibiruAddr.String(),
 			IsMadeFromCoin:       true,
 		},
