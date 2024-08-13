@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
 	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"

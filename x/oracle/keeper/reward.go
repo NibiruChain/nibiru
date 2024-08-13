@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins sdk.Coins, votePeriods uint64) error {

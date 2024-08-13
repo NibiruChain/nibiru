@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // Keeper of the inflation module. Keepers are module-specific "gate keepers"

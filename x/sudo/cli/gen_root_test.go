@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 func TestAddSudoRootAccountCmd(t *testing.T) {

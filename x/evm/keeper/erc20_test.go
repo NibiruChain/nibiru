@@ -11,14 +11,14 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 func (s *Suite) TestCreateFunTokenFromERC20() {

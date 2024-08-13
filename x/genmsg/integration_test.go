@@ -9,10 +9,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/genmsg"
-	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/genmsg"
+	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
 func TestIntegration(t *testing.T) {

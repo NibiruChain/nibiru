@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/NibiruChain/nibiru/eth/rpc/pubsub"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
 )
 
 func makeSubscription(id, event string) *Subscription {

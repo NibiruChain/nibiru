@@ -10,11 +10,11 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 type Suite struct {

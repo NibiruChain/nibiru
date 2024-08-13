@@ -6,8 +6,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type GenesisSuite struct {

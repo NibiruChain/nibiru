@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -14,10 +14,10 @@ import (
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestSendTransaction() {

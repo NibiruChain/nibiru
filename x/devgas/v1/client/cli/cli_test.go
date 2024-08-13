@@ -20,9 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"
 )
 
 // CLITestSuite: Tests all tx commands for the module.

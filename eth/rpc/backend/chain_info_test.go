@@ -15,11 +15,11 @@ import (
 	"github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestBaseFee() {

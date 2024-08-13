@@ -20,7 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"

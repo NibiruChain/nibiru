@@ -7,7 +7,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 )
 
 type increaseBlockNumberBy struct {

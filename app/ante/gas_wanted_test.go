@@ -5,8 +5,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *AnteTestSuite) TestGasWantedDecorator() {

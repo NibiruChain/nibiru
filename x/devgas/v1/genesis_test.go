@@ -9,11 +9,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type GenesisTestSuite struct {

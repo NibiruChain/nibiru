@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	"github.com/NibiruChain/nibiru/eth"
-	cryptocodec "github.com/NibiruChain/nibiru/eth/crypto/codec"
-	enccodec "github.com/NibiruChain/nibiru/eth/encoding/codec"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
+	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding/codec"
 )
 
 var TestCodec amino.Codec

@@ -5,7 +5,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 )
 
 func stringIsLess(a, b string) bool {

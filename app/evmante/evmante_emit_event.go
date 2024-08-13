@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).

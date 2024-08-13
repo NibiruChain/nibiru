@@ -15,10 +15,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	simulation "github.com/NibiruChain/nibiru/x/sudo/simulation"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	simulation "github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 // Ensure the interface is properly implemented at compile time

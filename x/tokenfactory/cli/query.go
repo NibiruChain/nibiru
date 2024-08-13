@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

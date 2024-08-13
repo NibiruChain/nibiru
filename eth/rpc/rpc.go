@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

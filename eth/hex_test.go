@@ -7,8 +7,8 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
 
 var threeValidAddrs []eth.HexAddr = []eth.HexAddr{

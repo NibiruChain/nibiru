@@ -9,9 +9,9 @@ import (
 
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	"github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/app/evmante"
-	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence

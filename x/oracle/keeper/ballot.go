@@ -9,10 +9,10 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // groupVotesByPair takes a collection of votes and groups them by their

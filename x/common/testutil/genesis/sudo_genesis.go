@@ -3,14 +3,14 @@ package genesis
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 
-	"github.com/NibiruChain/nibiru/x/sudo"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 )
 
 func AddSudoGenesis(gen app.GenesisState) (

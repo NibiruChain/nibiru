@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"

@@ -7,7 +7,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {

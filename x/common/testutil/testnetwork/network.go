@@ -15,8 +15,8 @@ import (
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/pruning/types"
@@ -41,9 +41,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -132,9 +132,9 @@ Example:
 
 	import (
 		"suite"
-		"github.com/NibiruChain/nibiru/app"
-		"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-		"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
+		"github.com/NibiruChain/nibiru/v2/app"
+		"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+		"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 	)
 
 	var s *suite.Suite // For some test suite...

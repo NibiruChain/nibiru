@@ -5,8 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 var _ types.EpochHooks = Hooks{}

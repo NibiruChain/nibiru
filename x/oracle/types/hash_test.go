@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

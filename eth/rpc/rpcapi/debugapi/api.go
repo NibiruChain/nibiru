@@ -15,7 +15,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	stderrors "github.com/pkg/errors"
 
@@ -27,8 +27,8 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/rlp"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 )
 
 // HandlerT keeps track of the cpu profiler and trace execution

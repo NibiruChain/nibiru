@@ -18,7 +18,7 @@ import (
 
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // BlockNumber represents a decoded hex string for a block number.

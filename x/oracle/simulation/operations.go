@@ -10,8 +10,8 @@ import (
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 
@@ -21,8 +21,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // Simulation operation weights constants

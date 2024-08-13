@@ -5,7 +5,7 @@ package ante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type BankKeeper interface {

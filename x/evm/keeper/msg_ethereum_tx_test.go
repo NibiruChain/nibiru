@@ -12,13 +12,13 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *Suite) TestMsgEthereumTx_CreateContract() {

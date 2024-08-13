@@ -11,11 +11,11 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	sim "github.com/NibiruChain/nibiru/x/oracle/simulation"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	sim "github.com/NibiruChain/nibiru/v2/x/oracle/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 var (

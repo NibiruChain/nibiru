@@ -7,10 +7,10 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func SetOraclePrice(pair asset.Pair, price sdk.Dec) action.Action {

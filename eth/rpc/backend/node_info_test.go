@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
 )
 
 func (s *BackendSuite) TestRPCMinGasPrice() {

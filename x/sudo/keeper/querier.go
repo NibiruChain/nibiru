@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"

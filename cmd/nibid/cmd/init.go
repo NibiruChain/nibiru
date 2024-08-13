@@ -9,7 +9,7 @@ import (
 
 	tmcfg "github.com/cometbft/cometbft/config"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"

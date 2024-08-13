@@ -15,7 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 //go:embed testdata/reflect.wasm

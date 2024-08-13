@@ -2,7 +2,7 @@
 package rpcapi
 
 import (
-	appconst "github.com/NibiruChain/nibiru/app/appconst"
+	appconst "github.com/NibiruChain/nibiru/v2/app/appconst"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"

@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 
 	// "github.com/cosmos/cosmos-sdk/client/flags".
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 // GetTxCmd returns the transaction commands for this module.

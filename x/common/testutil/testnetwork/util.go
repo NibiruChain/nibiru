@@ -11,14 +11,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/NibiruChain/nibiru/app/server"
+	"github.com/NibiruChain/nibiru/v2/app/server"
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	"github.com/NibiruChain/nibiru/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app/codec"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"

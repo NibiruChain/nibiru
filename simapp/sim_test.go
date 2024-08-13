@@ -35,13 +35,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // SimAppChainID hardcoded chainID for simulation

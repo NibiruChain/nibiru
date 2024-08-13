@@ -7,10 +7,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi/debugapi"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi/filtersapi"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/debugapi"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/filtersapi"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )

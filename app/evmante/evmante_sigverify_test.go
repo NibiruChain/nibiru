@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var InvalidChainID = big.NewInt(987654321)

@@ -7,8 +7,8 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 )
 
 // NOTE: we don't need to implement proto interface on this file

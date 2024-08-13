@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

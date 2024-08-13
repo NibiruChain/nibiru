@@ -9,9 +9,9 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and

@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // ArgsCreateContract: Arguments to call with `CreateContractTxMsg` and

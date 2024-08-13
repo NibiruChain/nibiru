@@ -5,11 +5,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	"github.com/stretchr/testify/suite"
 )

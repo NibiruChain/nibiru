@@ -14,14 +14,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 func init() {

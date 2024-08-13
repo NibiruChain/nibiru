@@ -13,11 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {

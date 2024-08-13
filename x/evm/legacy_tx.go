@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 func NewLegacyTx(tx *gethcore.Transaction) (*LegacyTx, error) {

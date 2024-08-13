@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/exp/slices"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 const (

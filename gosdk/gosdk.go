@@ -8,8 +8,8 @@ import (
 	cmtcoretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	csdk "github.com/cosmos/cosmos-sdk/types"

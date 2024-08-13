@@ -5,7 +5,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (

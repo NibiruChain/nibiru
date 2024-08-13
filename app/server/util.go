@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/netutil"
 
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"

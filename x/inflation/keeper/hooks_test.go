@@ -11,11 +11,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // TestEpochIdentifierAfterEpochEnd: Ensures that the amount in the community

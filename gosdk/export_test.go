@@ -5,9 +5,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 
 	tmconfig "github.com/cometbft/cometbft/config"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"

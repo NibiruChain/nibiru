@@ -8,13 +8,13 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // NetAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.
 type NetAPI struct {
 	networkVersion uint64
-	// TODO: epic: test(eth-rpc): "github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	// TODO: epic: test(eth-rpc): "github.com/NibiruChain/nibiru/v2/x/common/testutil/cli"
 	// Validator.RPCClient should be used to test APIs that depend on the CometBFT
 	// RPC client.
 	tmClient rpcclient.Client

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
@@ -18,15 +18,15 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 // ———————————————————————————————————————————————————————————————————

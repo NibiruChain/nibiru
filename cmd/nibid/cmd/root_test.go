@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	// Nibiru
-	"github.com/NibiruChain/nibiru/app"
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	"github.com/NibiruChain/nibiru/v2/app"
+	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid/cmd"
 
 	// Cosmos-SDK
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"

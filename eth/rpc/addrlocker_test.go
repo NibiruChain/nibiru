@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	rpc "github.com/NibiruChain/nibiru/eth/rpc"
+	rpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
 type SuiteAddrLocker struct {

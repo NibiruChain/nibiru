@@ -15,7 +15,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	nibiruapp "github.com/NibiruChain/nibiru/app"
+	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
 )
 
 // GenesisStateWithSingleValidator initializes GenesisState with a single validator and genesis accounts

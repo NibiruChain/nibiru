@@ -17,9 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash

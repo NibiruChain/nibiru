@@ -7,7 +7,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 )
 
 // RegisterCrypto registers all crypto dependency types with the provided Amino

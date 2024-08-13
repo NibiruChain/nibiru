@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // TestSuiteOracleSudo tests sudo-only functions in the oracle module.

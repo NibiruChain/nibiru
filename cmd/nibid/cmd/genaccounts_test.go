@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid/cmd"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})

@@ -10,7 +10,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // Msg defines the evm Msg service.
 service Msg {
@@ -194,7 +194,7 @@ message MsgUpdateParamsResponse {}
 message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.HexAddr",
     (gogoproto.nullable)   = true
   ];
 
@@ -214,7 +214,7 @@ message MsgCreateFunTokenResponse {
 message MsgSendFunTokenToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.HexAddr",
     (gogoproto.nullable)   = false
   ];
 

@@ -14,11 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // Ethereum API: Allows connection to a full node of the Nibiru blockchain

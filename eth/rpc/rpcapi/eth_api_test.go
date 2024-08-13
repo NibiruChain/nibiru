@@ -17,21 +17,21 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/gosdk"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
 
-	nibirucommon "github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
+	nibirucommon "github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
 var (

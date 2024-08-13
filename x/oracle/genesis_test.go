@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/oracle"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestExportInitGenesis(t *testing.T) {
