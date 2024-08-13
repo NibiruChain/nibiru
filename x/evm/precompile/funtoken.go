@@ -17,10 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
-var (
-	_ vm.PrecompiledContract = (*precompileFunToken)(nil)
-	_ NibiruPrecompile       = (*precompileFunToken)(nil)
-)
+var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 
 // Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
@@ -59,7 +56,7 @@ func (p precompileFunToken) Run(
 		}
 	}()
 
-	ctx, method, args, err := OnRunStart(p, evm, contract.Input)
+	ctx, method, args, err := OnRunStart(embeds.SmartContract_FunToken.ABI, evm, contract.Input)
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +80,8 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	}
 }
 
-func (p precompileFunToken) ABI() *gethabi.ABI {
-	return embeds.SmartContract_FunToken.ABI
-}
-
 type precompileFunToken struct {
 	keepers.PublicKeepers
-	NibiruPrecompile
 }
 
 var executionGuard sync.Mutex

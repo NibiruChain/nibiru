@@ -7,7 +7,6 @@
 //
 // Key components:
 //   - InitPrecompiles: Initializes and returns a map of precompiled contracts.
-//   - NibiruPrecompile: Interface for Nibiru-specific precompiles.
 //   - PrecompileFunToken: Implements the FunToken precompile for ERC20-to-bank transfers.
 //
 // The package also provides utility functions for working with precompiles, such
@@ -92,16 +91,9 @@ func addPrecompileToVM(p vm.PrecompiledContract) {
 	// vm.PrecompiledAddressesCancun,
 }
 
-// NibiruPrecompile is the interface that all Nibiru-specific precompiles
-// must implement.
-type NibiruPrecompile interface {
-	vm.PrecompiledContract
-	ABI() *gethabi.ABI
-}
-
-// ABIMethodByID: Looks up an ABI method by the 4-byte id.
+// methodById: Looks up an ABI method by the 4-byte id.
 // Copy of "ABI.MethodById" from go-ethereum version > 1.10
-func ABIMethodByID(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
+func methodById(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	if len(sigdata) != 4 {
 		return nil, fmt.Errorf("data (%d bytes) insufficient for abi method lookup", len(sigdata))
 	}
@@ -116,7 +108,7 @@ func ABIMethodByID(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 }
 
 func OnRunStart(
-	precompile NibiruPrecompile, evm *vm.EVM, input []byte,
+	abi *gethabi.ABI, evm *vm.EVM, input []byte,
 ) (ctx sdk.Context, method *gethabi.Method, args []interface{}, err error) {
 	// 1 | Get context from StateDB
 	stateDB, ok := evm.StateDB.(*statedb.StateDB)
@@ -133,7 +125,7 @@ func OnRunStart(
 		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", readableBz)
 		return
 	}
-	method, err = ABIMethodByID(precompile.ABI(), input[:4])
+	method, err = methodById(abi, input[:4])
 	if err != nil {
 		err = fmt.Errorf("unable to parse ABI method by its 4-byte ID: %w", err)
 		return
