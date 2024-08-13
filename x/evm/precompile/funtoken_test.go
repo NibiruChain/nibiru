@@ -127,7 +127,7 @@ func (s *Suite) FunToken_HappyPath() {
 
 	s.T().Log("Send using precompile")
 	amtToSend := int64(419)
-	callArgs := []any{contract.String(), big.NewInt(amtToSend), randomAcc.String()}
+	callArgs := []any{contract, big.NewInt(amtToSend), randomAcc.String()}
 	methodName := string(precompile.FunTokenMethod_BankSend)
 	input, err := abi.Pack(methodName, callArgs...)
 	s.NoError(err)

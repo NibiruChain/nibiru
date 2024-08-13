@@ -120,7 +120,7 @@ func OnRunStart(
 
 	// 2 | Parse the ABI method
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
-	if len(input) != 4 {
+	if len(input) < 4 {
 		readableBz := collections.HumanizeBytes(input)
 		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", readableBz)
 		return
