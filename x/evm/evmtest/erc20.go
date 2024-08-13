@@ -29,6 +29,10 @@ func AssertERC20BalanceEqual(
 func CreateFunTokenForBankCoin(
 	deps *TestDeps, bankDenom string, s *suite.Suite,
 ) (funtoken evm.FunToken) {
+	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
+	}
+
 	s.T().Log("Setup: Create a coin in the bank state")
 	bankMetadata := bank.Metadata{
 		DenomUnits: []*bank.DenomUnit{
@@ -42,19 +46,16 @@ func CreateFunTokenForBankCoin(
 		Name:    bankDenom,
 		Symbol:  bankDenom,
 	}
-	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
-		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
-	}
+
 	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 
 	// Give the sender funds for the fee
-	err := testapp.FundAccount(
+	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-	)
-	s.Require().NoError(err)
+	))
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
@@ -65,20 +66,21 @@ func CreateFunTokenForBankCoin(
 		},
 	)
 	s.NoError(err, "bankDenom %s", bankDenom)
+
 	erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
 	funtoken = evm.FunToken{
 		Erc20Addr:      erc20,
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: true,
 	}
-	s.Equal(createFuntokenResp.FuntokenMapping, funtoken)
+	s.Equal(funtoken, createFuntokenResp.FuntokenMapping)
 
 	s.T().Log("Expect ERC20 to be deployed")
-	erc20Addr := erc20.ToAddr()
-	queryCodeReq := &evm.QueryCodeRequest{
-		Address: erc20Addr.String(),
-	}
-	_, err = deps.EvmKeeper.Code(deps.Ctx, queryCodeReq)
+	_, err = deps.EvmKeeper.Code(deps.Ctx,
+		&evm.QueryCodeRequest{
+			Address: erc20.String(),
+		},
+	)
 	s.NoError(err)
 
 	return funtoken
