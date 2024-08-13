@@ -3,11 +3,6 @@ package evmante_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -15,6 +10,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestEthValidateBasicDecorator() {
@@ -57,8 +58,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -114,8 +114,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err = txMsg.Sign(gethSigner, keyringSigner)
+				err = txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
@@ -142,7 +141,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := &banktypes.MsgSend{
 					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 				}
 				return buildTx(deps, true, msg, gasLimit, fees)

@@ -23,9 +23,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// NewEthAccInfo returns an Ethereum private key, its corresponding Eth address,
-// public key, and Nibiru address.
-func NewEthAccInfo() EthPrivKeyAcc {
+// NewEthPrivAcc returns an Ethereum private key, its corresponding Eth address, Nibiru address, and keyring signer.
+func NewEthPrivAcc() EthPrivKeyAcc {
 	privkey, _ := ethsecp256k1.GenerateKey()
 	privKeyE, _ := privkey.ToECDSA()
 	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
@@ -45,7 +44,7 @@ type EthPrivKeyAcc struct {
 }
 
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
-	ethAddr := NewEthAccInfo().EthAddr
+	ethAddr := NewEthPrivAcc().EthAddr
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
 		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{

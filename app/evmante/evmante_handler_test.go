@@ -3,17 +3,18 @@ package evmante_test
 import (
 	"math/big"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 func (s *TestSuite) TestAnteHandlerEVM() {
@@ -53,8 +54,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
 
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err := txMsg.Sign(gethSigner, keyringSigner)
+				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)

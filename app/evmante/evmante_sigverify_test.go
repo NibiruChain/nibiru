@@ -3,12 +3,13 @@ package evmante_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var InvalidChainID = big.NewInt(987654321)
@@ -43,8 +44,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -55,8 +55,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},

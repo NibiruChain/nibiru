@@ -140,7 +140,7 @@ func (s *Suite) TestQueryEvmAccount() {
 		{
 			name: "happy: not existing account",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				ethAcc := evmtest.NewEthAccInfo()
+				ethAcc := evmtest.NewEthPrivAcc()
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
@@ -304,7 +304,7 @@ func (s *Suite) TestQueryStorage() {
 		{
 			name: "happy",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
@@ -327,7 +327,7 @@ func (s *Suite) TestQueryStorage() {
 		{
 			name: "happy: no committed state",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
@@ -380,7 +380,7 @@ func (s *Suite) TestQueryCode() {
 		{
 			name: "happy",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				req = &evm.QueryCodeRequest{
 					Address: addr.Hex(),
 				}
@@ -524,7 +524,7 @@ func (s *Suite) TestQueryBalance() {
 			name: "happy: zero balance",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBalanceRequest{
-					Address: evmtest.NewEthAccInfo().EthAddr.String(),
+					Address: evmtest.NewEthPrivAcc().EthAddr.String(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
 					Balance:    "0",
@@ -673,7 +673,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				s.Require().Equal("1000"+strings.Repeat("0", 12), resp.BalanceWei)
 
 				// Send Eth call to transfer from the account - 5 * 10^12 wei
-				recipient := evmtest.NewEthAccInfo().EthAddr
+				recipient := evmtest.NewEthPrivAcc().EthAddr
 				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(5)))
 				gasLimitArg := hexutil.Uint64(100000)
 
@@ -700,7 +700,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 		{
 			name: "sad: insufficient balance for transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				recipient := evmtest.NewEthAccInfo().EthAddr
+				recipient := evmtest.NewEthPrivAcc().EthAddr
 				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(10)))
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{

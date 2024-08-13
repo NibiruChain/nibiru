@@ -114,7 +114,7 @@ func NewEthTxMsgFromTxData(
 // ExecuteNibiTransfer executes nibi transfer
 func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	recipient := NewEthAccInfo().EthAddr
+	recipient := NewEthPrivAcc().EthAddr
 
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
@@ -195,7 +195,7 @@ func DeployAndExecuteERC20Transfer(
 
 	// TX 2: execute ERC-20 contract transfer
 	input, err := contractData.ABI.Pack(
-		"transfer", NewEthAccInfo().EthAddr, new(big.Int).SetUint64(1000),
+		"transfer", NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
 	)
 	require.NoError(t, err)
 	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
@@ -236,8 +236,7 @@ func GenerateAndSignEthTxMsg(
 
 	txMsg := txArgs.ToTransaction()
 	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-	keyringSigner := deps.Sender.KeyringSigner
-	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
+	return txMsg, txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 }
 
 func TransferWei(

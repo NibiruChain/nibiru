@@ -12,7 +12,7 @@ import (
 
 func (s *Suite) TestCreateContractTxMsg() {
 	deps := evmtest.NewTestDeps()
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 
 	args := evmtest.ArgsCreateContract{
 		EthAcc:        ethAcc,
@@ -28,7 +28,7 @@ func (s *Suite) TestCreateContractTxMsg() {
 
 func (s *Suite) TestCreateContractGethCoreMsg() {
 	deps := evmtest.NewTestDeps()
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 
 	args := evmtest.ArgsCreateContract{
 		EthAcc:        ethAcc,
@@ -51,7 +51,7 @@ func (s *Suite) TestCreateContractGethCoreMsg() {
 
 func (s *Suite) TestExecuteContractTxMsg() {
 	deps := evmtest.NewTestDeps()
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	contractAddress := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	args := evmtest.ArgsExecuteContract{
 		EthAcc:          ethAcc,

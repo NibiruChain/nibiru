@@ -32,7 +32,7 @@ func NewTestDeps() TestDeps {
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
-	ethAcc := NewEthAccInfo()
+	ethAcc := NewEthPrivAcc()
 	return TestDeps{
 		App:       app,
 		Ctx:       ctx,

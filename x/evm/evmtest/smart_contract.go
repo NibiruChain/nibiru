@@ -65,8 +65,7 @@ func CreateContractTxMsg(
 	ethTxMsg.From = fromAcc.EthAddr.Hex()
 
 	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
-	keyringSigner := fromAcc.KeyringSigner
-	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
+	return ethTxMsg, ethTxMsg.Sign(gethSigner, fromAcc.KeyringSigner)
 }
 
 func CreateContractGethCoreMsg(
@@ -105,6 +104,5 @@ func ExecuteContractTxMsg(args ArgsExecuteContract) (ethTxMsg *evm.MsgEthereumTx
 	ethTxMsg.From = fromAcc.EthAddr.Hex()
 
 	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
-	keyringSigner := fromAcc.KeyringSigner
-	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
+	return ethTxMsg, ethTxMsg.Sign(gethSigner, fromAcc.KeyringSigner)
 }
