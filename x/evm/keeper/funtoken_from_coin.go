@@ -75,6 +75,8 @@ func (k *Keeper) DeployERC20ForBankCoin(
 		return gethcommon.Address{}, err
 	}
 
+	erc20Addr = crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS))
+
 	bytecodeForCall := append(erc20Embed.Bytecode, packedArgs...)
 	_, err = k.CallContractWithInput(
 		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall,
@@ -84,5 +86,5 @@ func (k *Keeper) DeployERC20ForBankCoin(
 		return
 	}
 
-	return crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS)), nil
+	return erc20Addr, nil
 }
