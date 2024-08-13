@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 var _ sdk.AnteDecorator = (*DevGasPayoutDecorator)(nil)

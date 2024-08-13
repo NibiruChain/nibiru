@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	enccodec "github.com/NibiruChain/nibiru/eth/encoding/codec"
+	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding/codec"
 )
 
 // MakeConfig creates an EncodingConfig for testing

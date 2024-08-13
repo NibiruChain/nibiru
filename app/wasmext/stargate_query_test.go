@@ -9,16 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
-	wasmbinding "github.com/NibiruChain/nibiru/app/wasmext"
+	wasmbinding "github.com/NibiruChain/nibiru/v2/app/wasmext"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 /*

@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

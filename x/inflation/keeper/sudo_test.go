@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	inflationKeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	inflationKeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 func TestSuiteInflationSudo(t *testing.T) {

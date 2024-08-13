@@ -16,7 +16,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )

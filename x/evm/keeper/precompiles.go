@@ -5,7 +5,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/NibiruChain/nibiru/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
 )
 
 func (k *Keeper) AddPrecompiles(

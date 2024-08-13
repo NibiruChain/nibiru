@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
 // Config: Defines the parameters needed to start a local test [Network].

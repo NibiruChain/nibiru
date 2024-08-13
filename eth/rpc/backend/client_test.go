@@ -15,9 +15,9 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // Client defines a mocked object that implements the Tendermint JSON-RPC Client

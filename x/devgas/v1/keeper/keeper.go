@@ -13,7 +13,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts
