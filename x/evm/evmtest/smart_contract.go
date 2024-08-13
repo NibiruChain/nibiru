@@ -44,12 +44,11 @@ func CreateContractMsgEthereumTx(
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGasContractCreation)
 	}
-	testContract := embeds.SmartContract_TestERC20
 	ethTx := gethcore.NewTx(&gethcore.AccessListTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
 		To:       nil,
-		Data:     testContract.Bytecode,
+		Data:     embeds.SmartContract_TestERC20.Bytecode,
 		Nonce:    args.Nonce,
 	})
 
@@ -64,7 +63,7 @@ func CreateContractMsgEthereumTx(
 	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, args.EthAcc.KeyringSigner)
 }
 
-func ExecuteContractTxMsg(args ArgsExecuteContract) (msgEthereumTx *evm.MsgEthereumTx, err error) {
+func ExecuteContractMsgEthereumTx(args ArgsExecuteContract) (msgEthereumTx *evm.MsgEthereumTx, err error) {
 	gasLimit := args.GasLimit
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGas)

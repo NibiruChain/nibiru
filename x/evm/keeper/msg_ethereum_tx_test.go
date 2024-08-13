@@ -144,7 +144,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 		ContractAddress: &contractAddr,
 		Data:            input,
 	}
-	ethTxMsg, err := evmtest.ExecuteContractTxMsg(args)
+	ethTxMsg, err := evmtest.ExecuteContractMsgEthereumTx(args)
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())

@@ -38,7 +38,7 @@ func (s *Suite) TestExecuteContractTxMsg() {
 		Data:            nil,
 	}
 
-	ethTxMsg, err := evmtest.ExecuteContractTxMsg(args)
+	ethTxMsg, err := evmtest.ExecuteContractMsgEthereumTx(args)
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 }
