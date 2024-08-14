@@ -29,115 +29,116 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	s.Error(err)
 
 	s.T().Log("Deploy ERC20")
-	{
-		metadata := keeper.ERC20Metadata{
-			Name:     "erc20name",
-			Symbol:   "TOKEN",
-			Decimals: 18,
-		}
-		deployResp, err := evmtest.DeployContract(
-			&deps, embeds.SmartContract_ERC20Minter,
-			metadata.Name, metadata.Symbol, metadata.Decimals,
-		)
-		s.Require().NoError(err)
-		s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
-
-		info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
-		s.Require().NoError(err, info)
-		s.Require().Equal(metadata, info)
-
-		queryCodeReq := &evm.QueryCodeRequest{
-			Address: expectedERC20Addr.String(),
-		}
-		_, err = deps.EvmKeeper.Code(deps.Ctx, queryCodeReq)
-		s.Require().NoError(err)
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
 	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_ERC20Minter,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
 
-	erc20Addr := eth.NewHexAddr(expectedERC20Addr)
+	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(metadata, *info)
+
+	_, err = deps.EvmKeeper.Code(deps.Ctx, &evm.QueryCodeRequest{
+		Address: expectedERC20Addr.String(),
+	})
+	s.Require().NoError(err)
+
+	erc20Addr := eth.NewHexAddr(deployResp.ContractAddr)
+
+	s.T().Log("sad: insufficient funds to create FunToken mapping")
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().ErrorContains(err, "insufficient funds")
 
 	s.T().Log("happy: CreateFunToken for the ERC20")
-	{
-		s.Require().NoError(testapp.FundAccount(
-			deps.App.BankKeeper,
-			deps.Ctx,
-			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-		))
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
 
-		resp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-				Sender:    deps.Sender.NibiruAddr.String(),
-			},
-		)
-		s.Require().NoError(err, "erc20 %s", erc20Addr)
+	resp, err := deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err, "erc20 %s", erc20Addr)
 
-		expectedBankDenom := fmt.Sprintf("erc20/%s", expectedERC20Addr.String())
-		s.Equal(
-			resp.FuntokenMapping,
-			evm.FunToken{
-				Erc20Addr:      erc20Addr,
-				BankDenom:      expectedBankDenom,
-				IsMadeFromCoin: false,
-			})
+	expectedBankDenom := fmt.Sprintf("erc20/%s", expectedERC20Addr.String())
+	s.Equal(
+		resp.FuntokenMapping,
+		evm.FunToken{
+			Erc20Addr:      erc20Addr,
+			BankDenom:      expectedBankDenom,
+			IsMadeFromCoin: false,
+		})
 
-		// Event "EventFunTokenCreated" must present
-		testutil.RequireContainsTypedEvent(
-			s.T(),
-			deps.Ctx,
-			&evm.EventFunTokenCreated{
-				BankDenom:            expectedBankDenom,
-				Erc20ContractAddress: erc20Addr.String(),
-				Creator:              deps.Sender.NibiruAddr.String(),
-				IsMadeFromCoin:       false,
-			},
-		)
-	}
+	// Event "EventFunTokenCreated" must present
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventFunTokenCreated{
+			BankDenom:            expectedBankDenom,
+			Erc20ContractAddress: erc20Addr.String(),
+			Creator:              deps.Sender.NibiruAddr.String(),
+			IsMadeFromCoin:       false,
+		},
+	)
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
-	{
-		// Give the sender funds for the fee
-		s.Require().NoError(testapp.FundAccount(
-			deps.App.BankKeeper,
-			deps.Ctx,
-			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-		))
+	// Give the sender funds for the fee
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
 
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-				Sender:    deps.Sender.NibiruAddr.String(),
-			},
-		)
-		s.ErrorContains(err, "funtoken mapping already created")
-	}
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.ErrorContains(err, "funtoken mapping already created")
 
 	s.T().Log("sad: CreateFunToken for the ERC20: invalid sender")
-	{
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-			},
-		)
-		s.ErrorContains(err, "invalid sender")
-	}
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+		},
+	)
+	s.ErrorContains(err, "invalid sender")
 
 	s.T().Log("sad: CreateFunToken for the ERC20: missing erc20 address")
-	{
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20:     nil,
-				FromBankDenom: "",
-				Sender:        deps.Sender.NibiruAddr.String(),
-			},
-		)
-		s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
-	}
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20:     nil,
+			FromBankDenom: "",
+			Sender:        deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
 }
 
 func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
@@ -159,7 +160,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	erc20Addr = eth.NewHexAddr(deployResp.ContractAddr)
 
 	s.T().Log("happy: CreateFunToken for the ERC20")
-
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
