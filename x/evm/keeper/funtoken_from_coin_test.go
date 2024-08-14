@@ -153,6 +153,8 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 // - sender balance should be reduced by sendAmount
 // - erc-20 balance should be increased by sendAmount
 // - evm module account should hold sender's coins
+//
+// Builds on TestCreateFunTokenFromCoin
 func (s *FunTokenFromCoinSuite) TestConvertCoinToEvm() {
 	for _, tc := range []struct {
 		name           string
@@ -271,6 +273,8 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvm() {
 // - sender balance
 // - erc-20 balance
 // - evm module account balance
+//
+// Builds on TestConvertCoinToEvm
 func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	for _, tc := range []struct {
 		name                string
