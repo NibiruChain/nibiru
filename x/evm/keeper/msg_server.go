@@ -484,32 +484,32 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err err
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
-	var funtoken evm.FunToken
+	var funtoken *evm.FunToken
 	err = msg.ValidateBasic()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err = k.deductCreateFunTokenFee(ctx, msg)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
+		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
+		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
 			"either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenCreated{
@@ -520,7 +520,7 @@ func (k *Keeper) CreateFunToken(
 	})
 
 	return &evm.MsgCreateFunTokenResponse{
-		FuntokenMapping: funtoken,
+		FuntokenMapping: *funtoken,
 	}, err
 }
 
