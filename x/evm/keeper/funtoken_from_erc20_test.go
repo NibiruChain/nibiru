@@ -124,7 +124,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 		s.ErrorContains(err, "invalid sender")
 	}
 
-	s.T().Log("sad: CreateFunToken for the ERC20: invalid erc20 address")
+	s.T().Log("sad: CreateFunToken for the ERC20: missing erc20 address")
 	{
 		_, err = deps.EvmKeeper.CreateFunToken(
 			sdk.WrapSDKContext(deps.Ctx),
@@ -134,7 +134,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 				Sender:        deps.Sender.NibiruAddr.String(),
 			},
 		)
-		s.ErrorContains(err, "invalid sender")
+		s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
 	}
 }
 
