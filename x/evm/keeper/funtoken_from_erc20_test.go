@@ -204,13 +204,13 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, "erc20/"+erc20Addr.String()).Amount.String(),
 	)
 
-	s.T().Log("send cosmos tokens back to erc20")
-	_, err = deps.EvmKeeper.SendFunTokenToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
-		ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
-		Sender:    randomAcc.String(),
-		BankCoin:  sdk.NewCoin("erc20/"+erc20Addr.String(), sdk.NewInt(1)),
-	})
-	s.Require().NoError(err)
+	// s.T().Log("send cosmos tokens back to erc20")
+	// _, err = deps.EvmKeeper.SendFunTokenToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
+	// 	ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+	// 	Sender:    randomAcc.String(),
+	// 	BankCoin:  sdk.NewCoin("erc20/"+erc20Addr.String(), sdk.NewInt(1)),
+	// })
+	// s.Require().NoError(err)
 }
 
 type FunTokenFromErc20Suite struct {

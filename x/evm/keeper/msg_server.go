@@ -203,22 +203,6 @@ func (k *Keeper) ApplyEvmTx(
 	return res, nil
 }
 
-// ApplyEvmMsgWithEmptyTxConfig; Computes new state by applyig the EVM
-// message to the given state. This function calls [Keeper.ApplyEvmMsg] with
-// and empty`statedb.TxConfig`.
-// See [Keeper.ApplyEvmMsg].
-func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
-	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
-) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load evm config")
-	}
-
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-	return k.ApplyEvmMsg(ctx, msg, tracer, commit, cfg, txConfig)
-}
-
 // NewEVM generates a go-ethereum VM.
 //
 // Args:
