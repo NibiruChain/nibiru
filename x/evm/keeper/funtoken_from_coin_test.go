@@ -57,7 +57,6 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	)
 	s.Require().ErrorContains(err, "insufficient funds")
 
-	s.T().Log("happy: CreateFunToken for the bank coin")
 	// Give the sender funds for the fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -66,6 +65,23 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
 
+	s.T().Log("sad: invalid bank denom")
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromBankDenom: "doesn't exist",
+			Sender:        deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().Error(err)
+
+	s.T().Log("happy: CreateFunToken for the bank coin")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
 	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
@@ -73,7 +89,8 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.Require().NoError(err, "bankDenom %s", bankDenom)
+	s.Require().NoError(err)
+
 	erc20Addr := createFuntokenResp.FuntokenMapping.Erc20Addr
 
 	s.Equal(
@@ -169,13 +186,6 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvm() {
 			initialBalance: math.NewInt(100),
 			amountToSend:   math.NewInt(10),
 			wantErr:        "",
-		},
-		{
-			name:           "sad: not registered bank denom",
-			bankDenom:      "not-registered-denom",
-			initialBalance: math.NewInt(100),
-			amountToSend:   math.NewInt(10),
-			wantErr:        "does not exist",
 		},
 		{
 			name:           "sad: insufficient balance",
