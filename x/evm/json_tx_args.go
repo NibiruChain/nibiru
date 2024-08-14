@@ -56,9 +56,9 @@ func (args *JsonTxArgs) String() string {
 		args.AccessList)
 }
 
-// ToTransaction converts the arguments to an ethereum transaction.
+// ToMsgEthTx converts the arguments to an ethereum transaction.
 // This assumes that setTxDefaults has been called.
-func (args *JsonTxArgs) ToTransaction() *MsgEthereumTx {
+func (args *JsonTxArgs) ToMsgEthTx() *MsgEthereumTx {
 	var (
 		chainID, value, gasPrice, maxFeePerGas, maxPriorityFeePerGas sdkmath.Int
 		gas, nonce                                                   uint64

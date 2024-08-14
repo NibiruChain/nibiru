@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -137,8 +138,7 @@ func (k Keeper) CallContract(
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	contractInput, err := abi.Pack(methodName, args...)
 	if err != nil {
-		err = fmt.Errorf("failed to pack ABI args: %w", err)
-		return
+		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
 	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
 }
@@ -176,7 +176,7 @@ func (k Keeper) CallContractWithInput(
 		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
 	)
 	if err != nil {
-		return evmResp, err
+		return nil, err
 	}
 
 	unusedBigInt := big.NewInt(0)
@@ -201,7 +201,7 @@ func (k Keeper) CallContractWithInput(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return evmResp, fmt.Errorf("failed to load evm config: %s", err)
+		return nil, errors.Wrapf(err, "failed to load evm config")
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
@@ -209,11 +209,11 @@ func (k Keeper) CallContractWithInput(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
-		return evmResp, err
+		return nil, errors.Wrapf(err, "failed to apply EVM message")
 	}
 
 	if evmResp.Failed() {
-		return evmResp, fmt.Errorf("%w: EVM error: %s", err, evmResp.VmError)
+		return nil, errors.Wrapf(err, "EVM execution failed: %s", evmResp.VmError)
 	}
 
 	return evmResp, err
@@ -249,8 +249,7 @@ func computeCommitGasLimit(
 		Data: (*hexutil.Bytes)(&contractInput),
 	})
 	if err != nil {
-		err = fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
-		return
+		return gasLimit, fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
 	}
 
 	gasRes, err := k.EstimateGasForEvmCallType(
@@ -262,12 +261,10 @@ func computeCommitGasLimit(
 		evm.CallTypeSmart,
 	)
 	if err != nil {
-		err = fmt.Errorf("failed to compute gas limit: %w", err)
-		return
+		return gasLimit, fmt.Errorf("failed to compute gas limit: %w", err)
 	}
 
-	newGasLimit = gasRes.Gas
-	return newGasLimit, nil
+	return gasRes.Gas, nil
 }
 
 func (k Keeper) LoadERC20Name(

@@ -45,7 +45,7 @@ func (s *Suite) TestExportInitGenesis() {
 	amountToSendC := big.NewInt(228)
 
 	// Create ERC-20 contract
-	deployResp, err := evmtest.DeployContract(&deps, erc20Contract, s.T())
+	deployResp, err := evmtest.DeployContract(&deps, erc20Contract)
 	s.Require().NoError(err)
 	erc20Addr := deployResp.ContractAddr
 	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(

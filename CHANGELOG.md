@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1996](https://github.com/NibiruChain/nibiru/pull/1996) - perf(evm-keeper-precompile): implement sorted map for `k.precompiles` to remove dead code
 - [#1997](https://github.com/NibiruChain/nibiru/pull/1997) - refactor(evm): Remove unnecessary params: "enable_call", "enable_create".
 - [#2000](https://github.com/NibiruChain/nibiru/pull/2000) - refactor(evm): simplify ERC-20 keeper methods
+- [#2001](https://github.com/NibiruChain/nibiru/pull/2001) - refactor(evm): simplify FunToken methods and tests
 
 #### Dapp modules: perp, spot, oracle, etc
 
