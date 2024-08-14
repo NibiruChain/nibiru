@@ -3,6 +3,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
 func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
@@ -136,6 +138,79 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 		)
 		s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
 	}
+}
+
+func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
+	deps := evmtest.NewTestDeps()
+
+	var erc20Addr eth.HexAddr
+	s.T().Log("Deploy ERC20")
+
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_ERC20Minter,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+	erc20Addr = eth.NewHexAddr(deployResp.ContractAddr)
+
+	s.T().Log("happy: CreateFunToken for the ERC20")
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err, "erc20 %s", erc20Addr)
+	// bankDemon := resp.FuntokenMapping.BankDenom
+
+	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
+	input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+	s.Require().NoError(err)
+	erc20 := erc20Addr.ToAddr()
+	_, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, deps.Sender.EthAddr, &erc20, true, input,
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("send erc20 tokens to cosmos")
+	randomAcc := testutil.AccAddress()
+	callArgs := []any{erc20Addr.ToAddr(), big.NewInt(1), randomAcc.String()}
+	input, err = embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
+	s.Require().NoError(err)
+
+	_, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_FunToken, true, input,
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("check balances")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_419))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
+	s.Equal("1",
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, "erc20/"+erc20Addr.String()).Amount.String(),
+	)
+
+	s.T().Log("send cosmos tokens back to erc20")
+	_, err = deps.EvmKeeper.SendFunTokenToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
+		ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+		Sender:    randomAcc.String(),
+		BankCoin:  sdk.NewCoin("erc20/"+erc20Addr.String(), sdk.NewInt(1)),
+	})
+	s.Require().NoError(err)
 }
 
 type FunTokenFromErc20Suite struct {
