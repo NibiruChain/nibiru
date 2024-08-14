@@ -140,7 +140,7 @@ func (s *Suite) TestQueryEvmAccount() {
 		{
 			name: "happy: not existing account",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				ethAcc := evmtest.NewEthAccInfo()
+				ethAcc := evmtest.NewEthPrivAcc()
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
@@ -304,7 +304,7 @@ func (s *Suite) TestQueryStorage() {
 		{
 			name: "happy",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
@@ -327,7 +327,7 @@ func (s *Suite) TestQueryStorage() {
 		{
 			name: "happy: no committed state",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				storageKey := gethcommon.BytesToHash([]byte("storagekey"))
 				req = &evm.QueryStorageRequest{
 					Address: addr.Hex(),
@@ -380,7 +380,7 @@ func (s *Suite) TestQueryCode() {
 		{
 			name: "happy",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				addr := evmtest.NewEthAccInfo().EthAddr
+				addr := evmtest.NewEthPrivAcc().EthAddr
 				req = &evm.QueryCodeRequest{
 					Address: addr.Hex(),
 				}
@@ -429,7 +429,7 @@ func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
 	deps.EvmKeeper.SetParams(deps.Ctx, want)
-	gotResp, err := deps.EvmKeeper.Params(deps.GoCtx(), nil)
+	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
@@ -440,7 +440,7 @@ func (s *Suite) TestQueryParams() {
 	// Empty params to test the setter
 	want.EvmDenom = "wei"
 	deps.EvmKeeper.SetParams(deps.Ctx, want)
-	gotResp, err = deps.EvmKeeper.Params(deps.GoCtx(), nil)
+	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
@@ -491,7 +491,7 @@ func (s *Suite) TestQueryEthCall() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			gotResp, err := deps.App.EvmKeeper.EthCall(deps.GoCtx(), req)
+			gotResp, err := deps.App.EvmKeeper.EthCall(sdk.WrapSDKContext(deps.Ctx), req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -524,7 +524,7 @@ func (s *Suite) TestQueryBalance() {
 			name: "happy: zero balance",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBalanceRequest{
-					Address: evmtest.NewEthAccInfo().EthAddr.String(),
+					Address: evmtest.NewEthPrivAcc().EthAddr.String(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
 					Balance:    "0",
@@ -666,14 +666,14 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				s.Require().NoError(err)
 
 				// assert balance of 1000 * 10^12 wei
-				resp, _ := deps.App.EvmKeeper.Balance(deps.GoCtx(), &evm.QueryBalanceRequest{
+				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx), &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				s.Equal("1000", resp.Balance)
 				s.Require().Equal("1000"+strings.Repeat("0", 12), resp.BalanceWei)
 
 				// Send Eth call to transfer from the account - 5 * 10^12 wei
-				recipient := evmtest.NewEthAccInfo().EthAddr
+				recipient := evmtest.NewEthPrivAcc().EthAddr
 				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(5)))
 				gasLimitArg := hexutil.Uint64(100000)
 
@@ -700,7 +700,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 		{
 			name: "sad: insufficient balance for transfer",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				recipient := evmtest.NewEthAccInfo().EthAddr
+				recipient := evmtest.NewEthPrivAcc().EthAddr
 				amountToSend := hexutil.Big(*evm.NativeToWei(big.NewInt(10)))
 
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{

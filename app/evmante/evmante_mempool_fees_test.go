@@ -70,7 +70,7 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := &banktypes.MsgSend{
 					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 				}
 				return buildTx(deps, true, msg, gasLimit, fees)

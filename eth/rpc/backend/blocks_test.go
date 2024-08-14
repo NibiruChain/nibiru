@@ -104,7 +104,7 @@ func (s *BackendSuite) TestGetBlockByNumber() {
 			blockNumber: rpc.BlockNumber(1),
 			fullTx:      true,
 			baseFee:     math.NewInt(1).BigInt(),
-			validator:   sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator:   sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			ethTx:       nil,
 			ethTxBz:     nil,
 			registerMock: func(blockNum rpc.BlockNumber, _ math.Int, _ sdk.AccAddress, _ []byte) {
@@ -120,7 +120,7 @@ func (s *BackendSuite) TestGetBlockByNumber() {
 			blockNumber: rpc.BlockNumber(1),
 			fullTx:      true,
 			baseFee:     math.NewInt(1).BigInt(),
-			validator:   sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator:   sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			ethTx:       nil,
 			ethTxBz:     nil,
 			registerMock: func(blockNum rpc.BlockNumber, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -136,7 +136,7 @@ func (s *BackendSuite) TestGetBlockByNumber() {
 			blockNumber: rpc.BlockNumber(1),
 			fullTx:      true,
 			baseFee:     math.NewInt(1).BigInt(),
-			validator:   sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator:   sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			ethTx:       nil,
 			ethTxBz:     nil,
 			registerMock: func(blockNum rpc.BlockNumber, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -153,7 +153,7 @@ func (s *BackendSuite) TestGetBlockByNumber() {
 			blockNumber: rpc.BlockNumber(1),
 			fullTx:      true,
 			baseFee:     math.NewInt(1).BigInt(),
-			validator:   sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator:   sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			ethTx:       nil,
 			ethTxBz:     nil,
 			registerMock: func(blockNum rpc.BlockNumber, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -175,7 +175,7 @@ func (s *BackendSuite) TestGetBlockByNumber() {
 			blockNumber: rpc.BlockNumber(1),
 			fullTx:      true,
 			baseFee:     math.NewInt(1).BigInt(),
-			validator:   sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator:   sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			ethTx:       msgEthereumTx,
 			ethTxBz:     bz,
 			registerMock: func(blockNum rpc.BlockNumber, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -249,7 +249,7 @@ func (s *BackendSuite) TestGetBlockByHash() {
 			hash:      common.BytesToHash(block.Hash()),
 			fullTx:    true,
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			tx:        nil,
 			txBz:      nil,
 			registerMock: func(hash common.Hash, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -264,7 +264,7 @@ func (s *BackendSuite) TestGetBlockByHash() {
 			hash:      common.BytesToHash(block.Hash()),
 			fullTx:    true,
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			tx:        nil,
 			txBz:      nil,
 			registerMock: func(hash common.Hash, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -279,7 +279,7 @@ func (s *BackendSuite) TestGetBlockByHash() {
 			hash:      common.BytesToHash(block.Hash()),
 			fullTx:    true,
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			tx:        nil,
 			txBz:      nil,
 			registerMock: func(hash common.Hash, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -297,7 +297,7 @@ func (s *BackendSuite) TestGetBlockByHash() {
 			hash:      common.BytesToHash(block.Hash()),
 			fullTx:    true,
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			tx:        nil,
 			txBz:      nil,
 			registerMock: func(hash common.Hash, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -320,7 +320,7 @@ func (s *BackendSuite) TestGetBlockByHash() {
 			hash:      common.BytesToHash(block.Hash()),
 			fullTx:    true,
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			tx:        msgEthereumTx,
 			txBz:      bz,
 			registerMock: func(hash common.Hash, baseFee math.Int, validator sdk.AccAddress, txBz []byte) {
@@ -926,7 +926,7 @@ func (s *BackendSuite) TestGetEthBlockFromTendermint() {
 		{
 			name:      "pass - block with tx - with BaseFee error",
 			baseFee:   nil,
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			height:    int64(1),
 			resBlock: &cmtrpc.ResultBlock{
 				Block: cmt.MakeBlock(1, []cmt.Tx{bz}, nil, nil),
@@ -974,7 +974,7 @@ func (s *BackendSuite) TestGetEthBlockFromTendermint() {
 		{
 			name:      "pass - block with tx - with ConsensusParams error - BlockMaxGas defaults to max uint32",
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			height:    int64(1),
 			resBlock: &cmtrpc.ResultBlock{
 				Block: cmt.MakeBlock(1, []cmt.Tx{bz}, nil, nil),
@@ -998,7 +998,7 @@ func (s *BackendSuite) TestGetEthBlockFromTendermint() {
 		{
 			name:      "pass - block with tx - with ShouldIgnoreGasUsed - empty txs",
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			height:    int64(1),
 			resBlock: &cmtrpc.ResultBlock{
 				Block: cmt.MakeBlock(1, []cmt.Tx{bz}, nil, nil),
@@ -1028,7 +1028,7 @@ func (s *BackendSuite) TestGetEthBlockFromTendermint() {
 		{
 			name:      "pass - block with tx - non fullTx",
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			height:    int64(1),
 			resBlock: &cmtrpc.ResultBlock{
 				Block: cmt.MakeBlock(1, []cmt.Tx{bz}, nil, nil),
@@ -1052,7 +1052,7 @@ func (s *BackendSuite) TestGetEthBlockFromTendermint() {
 		{
 			name:      "pass - block with tx",
 			baseFee:   math.NewInt(1).BigInt(),
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			height:    int64(1),
 			resBlock: &cmtrpc.ResultBlock{
 				Block: cmt.MakeBlock(1, []cmt.Tx{bz}, nil, nil),

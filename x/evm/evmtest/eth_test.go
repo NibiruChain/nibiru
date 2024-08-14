@@ -20,7 +20,7 @@ func TestSuiteEVM(t *testing.T) {
 
 func (s *Suite) TestSampleFns() {
 	s.T().Log("Test NewEthTxMsg")
-	ethTxMsg := evmtest.NewEthTxMsg()
+	ethTxMsg := evmtest.NewEthTxMsgs(1)[0]
 	err := ethTxMsg.ValidateBasic()
 	s.NoError(err)
 

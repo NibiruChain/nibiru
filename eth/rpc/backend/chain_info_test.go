@@ -272,7 +272,7 @@ func (s *BackendSuite) TestFeeHistory() {
 				GasUsedRatio: []float64{0},
 				Reward:       [][]*hexutil.Big{{(*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0))}},
 			},
-			validator: sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes()),
+			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
 			expPass:   true,
 		},
 	}

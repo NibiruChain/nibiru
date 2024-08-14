@@ -2,7 +2,6 @@
 package evmtest
 
 import (
-	"crypto/ecdsa"
 	"math/big"
 	"testing"
 
@@ -24,9 +23,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// NewEthAccInfo returns an Ethereum private key, its corresponding Eth address,
-// public key, and Nibiru address.
-func NewEthAccInfo() EthPrivKeyAcc {
+// NewEthPrivAcc returns an Ethereum private key, its corresponding Eth address, Nibiru address, and keyring signer.
+func NewEthPrivAcc() EthPrivKeyAcc {
 	privkey, _ := ethsecp256k1.GenerateKey()
 	privKeyE, _ := privkey.ToECDSA()
 	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
@@ -34,7 +32,6 @@ func NewEthAccInfo() EthPrivKeyAcc {
 		EthAddr:       ethAddr,
 		NibiruAddr:    eth.EthAddrToNibiruAddr(ethAddr),
 		PrivKey:       privkey,
-		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),
 	}
 }
@@ -43,21 +40,11 @@ type EthPrivKeyAcc struct {
 	EthAddr       gethcommon.Address
 	NibiruAddr    sdk.AccAddress
 	PrivKey       *ethsecp256k1.PrivKey
-	PrivKeyE      *ecdsa.PrivateKey
 	KeyringSigner keyring.Signer
 }
 
-func (acc EthPrivKeyAcc) GethSigner(ethChainID *big.Int) gethcore.Signer {
-	return gethcore.LatestSignerForChainID(ethChainID)
-}
-
-// NewEthTxMsg: Helper that returns a valid instance of [*evm.MsgEthereumTx].
-func NewEthTxMsg() *evm.MsgEthereumTx {
-	return NewEthTxMsgs(1)[0]
-}
-
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
-	ethAddr := NewEthAccInfo().EthAddr
+	ethAddr := NewEthPrivAcc().EthAddr
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
 		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{

@@ -45,12 +45,12 @@ func TestMsgsSuite(t *testing.T) {
 }
 
 func (s *MsgsSuite) SetupTest() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, privFrom := ethAcc.EthAddr, ethAcc.PrivKey
 
 	s.signer = evmtest.NewSigner(privFrom)
 	s.from = from
-	s.to = evmtest.NewEthAccInfo().EthAddr
+	s.to = evmtest.NewEthPrivAcc().EthAddr
 	s.chainID = big.NewInt(1)
 	s.hundredBigInt = big.NewInt(100)
 
@@ -958,7 +958,7 @@ func (s *MsgsSuite) TestUnwrapEthererumMsg() {
 }
 
 func (s *MsgsSuite) TestTransactionLogsEncodeDecode() {
-	addr := evmtest.NewEthAccInfo().EthAddr.String()
+	addr := evmtest.NewEthPrivAcc().EthAddr.String()
 
 	txLogs := evm.TransactionLogs{
 		Hash: common.BytesToHash([]byte("tx_hash")).String(),

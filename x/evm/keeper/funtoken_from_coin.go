@@ -18,9 +18,7 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	ctx sdk.Context, bankDenom string,
 ) (funtoken evm.FunToken, err error) {
 	// 1 | Coin already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
-	); len(funtokens) > 0 {
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
@@ -33,13 +31,11 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	// 3 | deploy ERC20 for metadata
 	erc20Addr, err := k.DeployERC20ForBankCoin(ctx, bankCoin)
 	if err != nil {
-		return
+		return funtoken, errors.Wrap(err, "failed to deploy ERC20 for bank coin")
 	}
 
 	// 4 | ERC20 already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(
-		ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr),
-	); len(funtokens) > 0 {
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
 	}
 
@@ -71,23 +67,19 @@ func (k *Keeper) DeployERC20ForBankCoin(
 	}
 
 	erc20Embed := embeds.SmartContract_ERC20Minter
-	callArgs := []any{bankCoin.Name, bankCoin.Symbol, decimals}
-	methodName := "" // pass empty method name to deploy the contract
-	packedArgs, err := erc20Embed.ABI.Pack(methodName, callArgs...)
+
+	// pass empty method name to deploy the contract
+	packedArgs, err := erc20Embed.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
 	if err != nil {
 		err = errors.Wrap(err, "failed to pack ABI args")
-		return
+		return gethcommon.Address{}, err
 	}
+
+	erc20Addr = crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS))
+
 	bytecodeForCall := append(erc20Embed.Bytecode, packedArgs...)
-
-	fromEvmAddr := evm.EVM_MODULE_ADDRESS
-	nonce := k.GetAccNonce(ctx, fromEvmAddr)
-	erc20Addr = crypto.CreateAddress(fromEvmAddr, nonce)
-	erc20Contract := (*gethcommon.Address)(nil) // nil >> doesn't exist yet
-	commit := true
-
 	_, err = k.CallContractWithInput(
-		ctx, fromEvmAddr, erc20Contract, commit, bytecodeForCall,
+		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall,
 	)
 	if err != nil {
 		err = errors.Wrap(err, "deploy ERC20 failed")

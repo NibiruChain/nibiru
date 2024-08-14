@@ -4,19 +4,15 @@ import (
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/params"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// ArgsCreateContract: Arguments to call with `CreateContractTxMsg` and
-// `CreateContractGethCoreMsg` to make Ethereum transactions that create
+// ArgsCreateContract: Arguments to call with `CreateContractTxMsg` to make Ethereum transactions that create
 // contracts.
 //
 // It is recommended to use a gas price of `big.NewInt(1)` for simpler op code
@@ -41,71 +37,52 @@ type ArgsExecuteContract struct {
 	GasLimit        *big.Int
 }
 
-func CreateContractTxMsg(
+func CreateContractMsgEthereumTx(
 	args ArgsCreateContract,
-) (ethTxMsg *evm.MsgEthereumTx, err error) {
+) (msgEthereumTx *evm.MsgEthereumTx, err error) {
 	gasLimit := args.GasLimit
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGasContractCreation)
 	}
-	testContract := embeds.SmartContract_TestERC20
-	gethTxCreateCntract := &gethcore.AccessListTx{
+	ethTx := gethcore.NewTx(&gethcore.AccessListTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
 		To:       nil,
-		Data:     testContract.Bytecode,
+		Data:     embeds.SmartContract_TestERC20.Bytecode,
 		Nonce:    args.Nonce,
-	}
-	ethTx := gethcore.NewTx(gethTxCreateCntract)
-	ethTxMsg = new(evm.MsgEthereumTx)
-	err = ethTxMsg.FromEthereumTx(ethTx)
-	if err != nil {
-		return ethTxMsg, err
-	}
-	fromAcc := args.EthAcc
-	ethTxMsg.From = fromAcc.EthAddr.Hex()
+	})
 
-	gethSigner := fromAcc.GethSigner(args.EthChainIDInt)
-	keyringSigner := fromAcc.KeyringSigner
-	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
+	msgEthereumTx = new(evm.MsgEthereumTx)
+	err = msgEthereumTx.FromEthereumTx(ethTx)
+	if err != nil {
+		return msgEthereumTx, err
+	}
+	msgEthereumTx.From = args.EthAcc.EthAddr.Hex()
+
+	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
+	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, args.EthAcc.KeyringSigner)
 }
 
-func CreateContractGethCoreMsg(
-	args ArgsCreateContract,
-	cfg *params.ChainConfig,
-	blockHeight *big.Int,
-) (gethCoreMsg core.Message, err error) {
-	ethTxMsg, err := CreateContractTxMsg(args)
-	if err != nil {
-		return gethCoreMsg, err
-	}
-
-	signer := gethcore.MakeSigner(cfg, blockHeight)
-	return ethTxMsg.AsMessage(signer, nil)
-}
-
-func ExecuteContractTxMsg(args ArgsExecuteContract) (ethTxMsg *evm.MsgEthereumTx, err error) {
+func ExecuteContractMsgEthereumTx(args ArgsExecuteContract) (msgEthereumTx *evm.MsgEthereumTx, err error) {
 	gasLimit := args.GasLimit
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGas)
 	}
-	gethTxExecuteContract := &gethcore.AccessListTx{
+
+	coreTx := gethcore.NewTx(&gethcore.AccessListTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
 		To:       args.ContractAddress,
 		Data:     args.Data,
 		Nonce:    args.Nonce,
-	}
-	ethTx := gethcore.NewTx(gethTxExecuteContract)
-	ethTxMsg = new(evm.MsgEthereumTx)
-	err = ethTxMsg.FromEthereumTx(ethTx)
+	})
+	msgEthereumTx = new(evm.MsgEthereumTx)
+	err = msgEthereumTx.FromEthereumTx(coreTx)
 	if err != nil {
-		return ethTxMsg, err
+		return msgEthereumTx, err
 	}
-	fromAcc := args.EthAcc
-	ethTxMsg.From = fromAcc.EthAddr.Hex()
+	msgEthereumTx.From = args.EthAcc.EthAddr.Hex()
 
-	gethSigner := fromAcc.GethSigner(args.EthChainIDInt)
-	keyringSigner := fromAcc.KeyringSigner
-	return ethTxMsg, ethTxMsg.Sign(gethSigner, keyringSigner)
+	gethSigner := gethcore.LatestSignerForChainID(args.EthChainIDInt)
+	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, args.EthAcc.KeyringSigner)
 }

@@ -19,7 +19,7 @@ var NextNoOpAnteHandler sdk.AnteHandler = func(
 }
 
 func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
-	to := NewEthAccInfo().EthAddr
+	to := NewEthPrivAcc().EthAddr
 	ethContractCreationTxParams := &evm.EvmTxArgs{
 		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    nonce,
@@ -38,7 +38,7 @@ func NonEvmMsgTx(deps *TestDeps) sdk.Tx {
 	fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 	msg := &banktypes.MsgSend{
 		FromAddress: deps.Sender.NibiruAddr.String(),
-		ToAddress:   NewEthAccInfo().NibiruAddr.String(),
+		ToAddress:   NewEthPrivAcc().NibiruAddr.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 	}
 	return buildTx(deps, true, msg, gasLimit, fees)

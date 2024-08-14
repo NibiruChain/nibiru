@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -113,7 +114,7 @@ func NewEthTxMsgFromTxData(
 // ExecuteNibiTransfer executes nibi transfer
 func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	recipient := NewEthAccInfo().EthAddr
+	recipient := NewEthPrivAcc().EthAddr
 
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
@@ -123,7 +124,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg
@@ -160,7 +161,7 @@ func DeployContract(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(jsonTxArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -194,7 +195,7 @@ func DeployAndExecuteERC20Transfer(
 
 	// TX 2: execute ERC-20 contract transfer
 	input, err := contractData.ABI.Pack(
-		"transfer", NewEthAccInfo().EthAddr, new(big.Int).SetUint64(1000),
+		"transfer", NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
 	)
 	require.NoError(t, err)
 	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
@@ -207,7 +208,7 @@ func DeployAndExecuteERC20Transfer(
 	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -222,21 +223,23 @@ func GenerateAndSignEthTxMsg(
 	if err != nil {
 		return nil, err
 	}
-	res, err := deps.App.EvmKeeper.EstimateGas(deps.GoCtx(), &evm.EthCallRequest{
-		Args:            estimateArgs,
-		GasCap:          srvconfig.DefaultEthCallGasLimit,
-		ProposerAddress: []byte{},
-		ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
-	})
+	res, err := deps.App.EvmKeeper.EstimateGas(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.EthCallRequest{
+			Args:            estimateArgs,
+			GasCap:          srvconfig.DefaultEthCallGasLimit,
+			ProposerAddress: []byte{},
+			ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
-	txMsg := txArgs.ToTransaction()
-	gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-	keyringSigner := deps.Sender.KeyringSigner
-	return txMsg, txMsg.Sign(gethSigner, keyringSigner)
+	msgEthereumTx := txArgs.ToTransaction()
+	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, deps.Sender.KeyringSigner)
 }
 
 func TransferWei(
@@ -261,7 +264,7 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 
-	_, err = deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	_, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}

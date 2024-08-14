@@ -24,7 +24,7 @@ func (s *BackendSuite) TestSendTransaction() {
 	gasPrice := new(hexutil.Big)
 	gas := hexutil.Uint64(1)
 	zeroGas := hexutil.Uint64(0)
-	toAddr := evmtest.NewEthAccInfo().EthAddr
+	toAddr := evmtest.NewEthPrivAcc().EthAddr
 	priv, _ := ethsecp256k1.GenerateKey()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 	nonce := hexutil.Uint64(1)
@@ -145,7 +145,7 @@ func (s *BackendSuite) TestSendTransaction() {
 }
 
 func (s *BackendSuite) TestSign() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 
 	testCases := []struct {
@@ -194,7 +194,7 @@ func (s *BackendSuite) TestSign() {
 }
 
 func (s *BackendSuite) TestSignTypedData() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	testCases := []struct {
 		name           string

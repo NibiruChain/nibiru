@@ -58,7 +58,7 @@ func (s *BackendSuite) SetupTest() {
 	}
 
 	// Create Account with set sequence
-	s.acc = sdk.AccAddress(evmtest.NewEthAccInfo().EthAddr.Bytes())
+	s.acc = sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes())
 	accounts := map[string]client.TestAccount{}
 	accounts[s.acc.String()] = client.TestAccount{
 		Address: s.acc,
@@ -66,7 +66,7 @@ func (s *BackendSuite) SetupTest() {
 		Seq:     uint64(1),
 	}
 
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	s.from = from
 	s.signer = evmtest.NewSigner(priv)
@@ -180,7 +180,7 @@ func (s *BackendSuite) generateTestKeyring(clientDir string) (keyring.Keyring, e
 }
 
 func (s *BackendSuite) signAndEncodeEthTx(msgEthereumTx *evm.MsgEthereumTx) []byte {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	signer := evmtest.NewSigner(priv)
 
