@@ -73,12 +73,23 @@ Transfer implements "ERC20.transfer"
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
+) (out bool, err error) {
 	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
+		return false, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return e.CallContractWithInput(ctx, from, &contract, true, input)
+	resp, err := e.CallContractWithInput(ctx, from, &contract, true, input)
+	if err != nil {
+		return false, err
+	}
+
+	var erc20Bool ERC20Bool
+	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
+	if err != nil {
+		return false, err
+	}
+
+	return erc20Bool.Value, nil
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
