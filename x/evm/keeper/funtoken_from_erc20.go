@@ -93,20 +93,19 @@ type (
 //   - If the bank metadata validation fails.
 //   - If the FunToken insertion fails.
 func (k *Keeper) CreateFunTokenFromERC20(
-	ctx sdk.Context, erc20 eth.HexAddr,
+	ctx sdk.Context, erc20 gethcommon.Address,
 ) (funtoken evm.FunToken, err error) {
-	erc20Addr := erc20.ToAddr()
-
 	// 1 | ERC20 already registered with FunToken?
-	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr)); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20Addr.Hex())
+	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20)); len(funtokens) > 0 {
+		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20)
 	}
 
 	// 2 | Get existing ERC20 metadata
-	info, err := k.FindERC20Metadata(ctx, erc20Addr)
+	info, err := k.FindERC20Metadata(ctx, erc20)
 	if err != nil {
 		return funtoken, err
 	}
+
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
 	// 3 | Coin already registered with FunToken?
@@ -114,7 +113,6 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	if isFound {
 		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
-
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
@@ -122,12 +120,12 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	// 4 | Set bank coin denom metadata in state
 	bankMetadata := bank.Metadata{
 		Description: fmt.Sprintf(
-			"ERC20 token \"%s\" represented as a bank coin with corresponding FunToken mapping", erc20.String(),
+			"ERC20 token \"%s\" represented as a bank coin with a corresponding FunToken mapping", erc20.String(),
 		),
 		DenomUnits: []*bank.DenomUnit{
 			{
 				Denom:    bankDenom,
-				Exponent: 0,
+				Exponent: 0, // TODO(k-yang): determine which exponent to use
 			},
 		},
 		Base:    bankDenom,
@@ -144,7 +142,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 
 	// 5 | Officially create the funtoken mapping
 	funtoken = evm.FunToken{
-		Erc20Addr:      erc20,
+		Erc20Addr:      eth.NewHexAddr(erc20),
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: false,
 	}

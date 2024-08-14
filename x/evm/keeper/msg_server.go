@@ -516,7 +516,7 @@ func (k *Keeper) CreateFunToken(
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
+		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
