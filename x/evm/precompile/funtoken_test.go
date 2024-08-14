@@ -5,13 +5,14 @@ import (
 	"math/big"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-
-	"github.com/stretchr/testify/suite"
 )
 
 type Suite struct {
@@ -37,7 +38,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 	deps := evmtest.NewTestDeps()
 
 	codeResp, err := deps.EvmKeeper.Code(
-		deps.GoCtx(),
+		sdk.WrapSDKContext(deps.Ctx),
 		&evm.QueryCodeRequest{
 			Address: precompileAddr.String(),
 		},
@@ -45,7 +46,7 @@ func (s *Suite) FunToken_PrecompileExists() {
 	s.NoError(err)
 	s.Equal(string(codeResp.Code), "")
 
-	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	callArgs := []any{"nonsense", "args here", "to see if", "precompile is", "called"}
@@ -59,11 +60,10 @@ func (s *Suite) FunToken_PrecompileExists() {
 		"callArgs: ", callArgs)
 
 	fromEvmAddr := evm.EVM_MODULE_ADDRESS
-	contractAddr := precompileAddr.ToAddr()
 	commit := true
 	bytecodeForCall := packedArgs
 	_, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, fromEvmAddr, &contractAddr, commit,
+		deps.Ctx, fromEvmAddr, &precompileAddr, commit,
 		bytecodeForCall,
 	)
 	s.ErrorContains(err, "precompile error")
@@ -77,7 +77,7 @@ func (s *Suite) FunToken_HappyPath() {
 	theUser := deps.Sender.EthAddr
 	theEvm := evm.EVM_MODULE_ADDRESS
 
-	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr.ToAddr()),
+	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompileAddr),
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	s.T().Log("Create FunToken mapping and ERC20")
@@ -95,7 +95,9 @@ func (s *Suite) FunToken_HappyPath() {
 		to := theUser
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
 		s.NoError(err)
-		_, err = evmtest.DoEthTx(&deps, contract, from, input)
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx, from, &contract, true, input,
+		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
@@ -106,7 +108,9 @@ func (s *Suite) FunToken_HappyPath() {
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", to, big.NewInt(69_420))
 		s.NoError(err)
 
-		_, err = evmtest.DoEthTx(&deps, contract, from, input)
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx, from, &contract, true, input,
+		)
 		s.NoError(err)
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(69_420))
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theEvm, big.NewInt(0))
@@ -128,13 +132,15 @@ func (s *Suite) FunToken_HappyPath() {
 
 	s.T().Log("Send using precompile")
 	amtToSend := int64(419)
-	callArgs := precompile.ArgsFunTokenBankSend(contract, big.NewInt(amtToSend), randomAcc)
+	callArgs := []any{contract, big.NewInt(amtToSend), randomAcc.String()}
 	methodName := string(precompile.FunTokenMethod_BankSend)
 	input, err := abi.Pack(methodName, callArgs...)
 	s.NoError(err)
 
 	from := theUser
-	_, err = evmtest.DoEthTx(&deps, precompileAddr.ToAddr(), from, input)
+	_, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, from, &precompileAddr, true, input,
+	)
 	s.Require().NoError(err)
 
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, theUser, big.NewInt(69_419-amtToSend))

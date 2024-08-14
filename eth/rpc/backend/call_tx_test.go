@@ -22,7 +22,7 @@ func (s *BackendSuite) TestResend() {
 	txNonce := (hexutil.Uint64)(1)
 	baseFee := math.NewInt(1)
 	gasPrice := new(hexutil.Big)
-	toAddr := evmtest.NewEthAccInfo().EthAddr
+	toAddr := evmtest.NewEthPrivAcc().EthAddr
 	chainID := (*hexutil.Big)(s.backend.chainID)
 	callArgs := evm.JsonTxArgs{
 		From:                 nil,
@@ -387,7 +387,7 @@ func (s *BackendSuite) TestSendRawTransaction() {
 func (s *BackendSuite) TestDoCall() {
 	_, bz := s.buildEthereumTx()
 	gasPrice := (*hexutil.Big)(big.NewInt(1))
-	toAddr := evmtest.NewEthAccInfo().EthAddr
+	toAddr := evmtest.NewEthPrivAcc().EthAddr
 	chainID := (*hexutil.Big)(s.backend.chainID)
 	callArgs := evm.JsonTxArgs{
 		From:                 nil,

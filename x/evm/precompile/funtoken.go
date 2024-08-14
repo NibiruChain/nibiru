@@ -13,25 +13,19 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
-var (
-	_ vm.PrecompiledContract = (*precompileFunToken)(nil)
-	_ NibiruPrecompile       = (*precompileFunToken)(nil)
-)
+var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 
 // Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
-var PrecompileAddr_FuntokenGateway = eth.MustNewHexAddrFromStr(
-	"0x0000000000000000000000000000000000000800",
-)
+var PrecompileAddr_FuntokenGateway = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
 
 func (p precompileFunToken) Address() gethcommon.Address {
-	return PrecompileAddr_FuntokenGateway.ToAddr()
+	return PrecompileAddr_FuntokenGateway
 }
 
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
@@ -62,18 +56,16 @@ func (p precompileFunToken) Run(
 		}
 	}()
 
-	contractInput := contract.Input
-	ctx, method, args, err := OnRunStart(p, evm, contractInput)
+	ctx, method, args, err := OnRunStart(embeds.SmartContract_FunToken.ABI, evm, contract.Input)
 	if err != nil {
 		return nil, err
 	}
 
-	caller := contract.CallerAddress
 	switch FunTokenMethod(method.Name) {
 	case FunTokenMethod_BankSend:
 		// TODO: UD-DEBUG: Test that calling non-method on the right address does
 		// nothing.
-		bz, err = p.bankSend(ctx, caller, method, args, readonly)
+		bz, err = p.bankSend(ctx, contract.CallerAddress, method, args, readonly)
 	default:
 		// TODO: UD-DEBUG: test invalid method called
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
@@ -88,13 +80,8 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	}
 }
 
-func (p precompileFunToken) ABI() *gethabi.ABI {
-	return embeds.SmartContract_FunToken.ABI
-}
-
 type precompileFunToken struct {
 	keepers.PublicKeepers
-	NibiruPrecompile
 }
 
 var executionGuard sync.Mutex
@@ -120,8 +107,7 @@ func (p precompileFunToken) bankSend(
 ) (bz []byte, err error) {
 	if readOnly {
 		// Check required for transactions but not needed for queries
-		err = fmt.Errorf("cannot write state from staticcall (a read-only call)")
-		return
+		return nil, fmt.Errorf("cannot write state from staticcall (a read-only call)")
 	}
 	if !executionGuard.TryLock() {
 		return nil, fmt.Errorf("bankSend is already in progress")
@@ -188,8 +174,7 @@ func (p precompileFunToken) bankSend(
 	// Since we're sending them away and want accurate total supply tracking, the
 	// tokens need to be burned.
 	if funtoken.IsMadeFromCoin {
-		caller := evm.EVM_MODULE_ADDRESS
-		_, err = p.EvmKeeper.ERC20().Burn(erc20, caller, amount, ctx)
+		_, err = p.EvmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
 			return
@@ -202,40 +187,34 @@ func (p precompileFunToken) bankSend(
 	return method.Outputs.Pack() // TODO: change interface
 }
 
-// ArgsFunTokenBankSend: Constructor for an "args" array of arguments for the
-// "IFunToken.bankSend" function.
-func ArgsFunTokenBankSend(
-	erc20 gethcommon.Address,
-	amount *big.Int,
-	to sdk.AccAddress,
-) []any {
-	return []any{erc20, amount, to.String()}
-}
-
 func (p precompileFunToken) AssertArgTypesBankSend(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,
 	err error,
 ) {
-	err = AssertArgCount(args, 3)
-	if err != nil {
+	if len(args) != 3 {
+		err = fmt.Errorf("expected 3 arguments but got %d", len(args))
 		return
 	}
 
-	erc20, ok1 := args[0].(gethcommon.Address)
-	amount, ok2 := args[1].(*big.Int)
-	to, ok3 := args[2].(string)
-	if !(ok1 && ok2 && ok3) {
-		err = fmt.Errorf("type validation for failed for \"%s\"",
-			"function bankSend(address erc20, uint256 amount, string memory to) external")
+	erc20, ok := args[0].(gethcommon.Address)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (address erc20) argument")
+		return
 	}
-	return
-}
 
-func AssertArgCount(args []interface{}, wantNumArgs int) error {
-	if len(args) != wantNumArgs {
-		return fmt.Errorf("expected %d arguments but got %d", wantNumArgs, len(args))
+	amount, ok = args[1].(*big.Int)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (uint256 amount) argument")
+		return
 	}
-	return nil
+
+	to, ok = args[2].(string)
+	if !ok {
+		err = fmt.Errorf("type validation for failed for (string to) argument")
+		return
+	}
+
+	return
 }

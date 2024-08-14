@@ -72,7 +72,7 @@ func TestValidateAddress(t *testing.T) {
 			"zero address", common.Address{}.String(), false,
 		},
 		{
-			"valid address", evmtest.NewEthAccInfo().EthAddr.Hex(), false,
+			"valid address", evmtest.NewEthPrivAcc().EthAddr.Hex(), false,
 		},
 	}
 
@@ -103,7 +103,7 @@ func TestValidateNonZeroAddress(t *testing.T) {
 			"zero address", common.Address{}.String(), true,
 		},
 		{
-			"valid address", evmtest.NewEthAccInfo().EthAddr.Hex(), false,
+			"valid address", evmtest.NewEthPrivAcc().EthAddr.Hex(), false,
 		},
 	}
 

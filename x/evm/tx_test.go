@@ -45,7 +45,7 @@ func (suite *TxDataTestSuite) SetupTest() {
 	suite.sdkMinusOneInt = sdkmath.NewInt(-1)
 	suite.invalidAddr = "123456"
 
-	suite.addr = evmtest.NewEthAccInfo().EthAddr
+	suite.addr = evmtest.NewEthPrivAcc().EthAddr
 
 	suite.hexAddr = suite.addr.Hex()
 	suite.hexDataBytes = hexutil.Bytes([]byte("data"))

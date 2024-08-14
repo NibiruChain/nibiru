@@ -9,6 +9,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -56,9 +57,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			name: "sad: tx not implementing protoTxProvider",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(InvalidChainID)
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -113,9 +113,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
-				gethSigner := deps.Sender.GethSigner(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err = txMsg.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				err = txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
@@ -142,7 +141,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := &banktypes.MsgSend{
 					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 				}
 				return buildTx(deps, true, msg, gasLimit, fees)
