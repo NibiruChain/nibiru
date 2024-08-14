@@ -552,53 +552,23 @@ func (k *Keeper) ConvertCoinToEvm(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	toEthAddr := msg.ToEthAddr.ToAddr()
-	bankDenom := msg.BankCoin.Denom
-	amount := msg.BankCoin.Amount
+	ethRecipient := msg.ToEthAddr.ToAddr()
 
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom))
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
-		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", bankDenom)
+		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", msg.BankCoin.Denom)
 	}
 	if len(funTokens) > 1 {
-		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", bankDenom)
+		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", msg.BankCoin.Denom)
 	}
 
 	fungibleTokenMapping := funTokens[0]
-	erc20ContractAddr := fungibleTokenMapping.Erc20Addr.ToAddr()
 
-	// Step 1: Send coins to the evm module account
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.Coins{msg.BankCoin})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to send coins to module account")
+	if fungibleTokenMapping.IsMadeFromCoin {
+		return k.convertCoinNativeCoin(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
+	} else {
+		return k.convertCoinNativeERC20(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
 	}
-
-	// Step 2: evm call to erc20 minter: mint tokens for a toEthAddr
-	evmResp, err := k.CallContract(
-		ctx,
-		embeds.SmartContract_ERC20Minter.ABI,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20ContractAddr,
-		true,
-		"mint",
-		toEthAddr,
-		amount.BigInt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if evmResp.Failed() {
-		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
-	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               msg.Sender,
-		Erc20ContractAddress: erc20ContractAddr.String(),
-		ToEthAddr:            toEthAddr.String(),
-		BankCoin:             msg.BankCoin,
-	})
-
-	return &evm.MsgSendFunTokenToEvmResponse{}, nil
 }
 
 // Converts a native coin to an ERC20 token.
