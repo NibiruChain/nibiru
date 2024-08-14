@@ -76,7 +76,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Send fungible token coins from bank to evm
-	_, err = deps.EvmKeeper.SendFunTokenToEvm(
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		deps.Ctx,
 		&evm.MsgSendFunTokenToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),

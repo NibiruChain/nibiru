@@ -349,7 +349,7 @@ func (m *EventFunTokenCreated) GetIsMadeFromCoin() bool {
 	return false
 }
 
-// SendFunTokenToEvm defines sending fun token to erc20 event.
+// ConvertCoinToEvm defines sending fun token to erc20 event.
 type EventSendFunTokenToEvm struct {
 	Sender               string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Erc20ContractAddress string     `protobuf:"bytes,2,opt,name=erc20_contract_address,json=erc20ContractAddress,proto3" json:"erc20_contract_address,omitempty"`

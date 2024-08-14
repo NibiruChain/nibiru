@@ -27,10 +27,10 @@ service Msg {
   // denomination for a bank coin can be given to create the mapping to an ERC20.
   rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 
-  // SendFunTokenToEvm: Sends a coin with a valid "FunToken" mapping to the
+  // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc SendFunTokenToEvm(MsgSendFunTokenToEvm) returns (MsgSendFunTokenToEvmResponse);
+  rpc ConvertCoinToEvm(MsgSendFunTokenToEvm) returns (MsgSendFunTokenToEvmResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.

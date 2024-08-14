@@ -204,13 +204,20 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, "erc20/"+erc20Addr.String()).Amount.String(),
 	)
 
-	// s.T().Log("send cosmos tokens back to erc20")
-	// _, err = deps.EvmKeeper.SendFunTokenToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
-	// 	ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
-	// 	Sender:    randomAcc.String(),
-	// 	BankCoin:  sdk.NewCoin("erc20/"+erc20Addr.String(), sdk.NewInt(1)),
-	// })
-	// s.Require().NoError(err)
+	s.T().Log("send cosmos tokens back to erc20")
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
+		ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+		Sender:    randomAcc.String(),
+		BankCoin:  sdk.NewCoin("erc20/"+erc20Addr.String(), sdk.NewInt(1)),
+	})
+	s.Require().NoError(err)
+
+	s.T().Log("check balances")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_420))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
+	s.Require().Equal("0",
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, "erc20/"+erc20Addr.String()).Amount.String(),
+	)
 }
 
 type FunTokenFromErc20Suite struct {

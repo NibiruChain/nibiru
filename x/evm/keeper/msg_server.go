@@ -543,10 +543,10 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 	return sdk.NewCoins(sdk.NewCoin(evmParams.EvmDenom, evmParams.CreateFuntokenFee))
 }
 
-// SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the
+// ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
-func (k *Keeper) SendFunTokenToEvm(
+func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgSendFunTokenToEvm,
 ) (resp *evm.MsgSendFunTokenToEvmResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

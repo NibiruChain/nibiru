@@ -211,7 +211,7 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 
 			// Send fun token to ERC-20 contract
 			bankCoin := sdk.NewCoin(tc.bankDenom, tc.amountToSend)
-			_, err = deps.EvmKeeper.SendFunTokenToEvm(
+			_, err = deps.EvmKeeper.ConvertCoinToEvm(
 				ctx,
 				&evm.MsgSendFunTokenToEvm{
 					Sender:    deps.Sender.NibiruAddr.String(),

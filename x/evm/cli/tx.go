@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		CmdCreateFunTokenFromBankCoin(),
 		CmdCreateFunTokenFromERC20(),
-		SendFunTokenToEvm(),
+		ConvertCoinToEvm(),
 	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
@@ -99,8 +99,8 @@ func CmdCreateFunTokenFromERC20() *cobra.Command {
 	return cmd
 }
 
-// SendFunTokenToEvm broadcast MsgSendFunTokenToEvm
-func SendFunTokenToEvm() *cobra.Command {
+// ConvertCoinToEvm broadcast MsgSendFunTokenToEvm
+func ConvertCoinToEvm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-funtoken-to-erc20 [to_eth_addr] [coin] [flags]",
 		Short: `Send bank [coin] to its erc20 representation for the user [to_eth_addr]"`,
