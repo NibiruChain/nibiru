@@ -9,18 +9,18 @@ option go_package = "github.com/NibiruChain/nibiru/x/evm";
 
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {
-  // amount
-  string amount = 1;
+  // value is the ether value of the transaction in units of wei.
+  string value = 1;
   // eth_hash is the Ethereum hash of the transaction
-  string eth_hash = 2;
+  string eth_tx_hash = 2;
   // index of the transaction in the block
-  string index = 3;
+  string block_tx_index = 3;
   // gas_used is the amount of gas used by the transaction
   string gas_used = 4;
-  // hash is the Tendermint hash of the transaction
-  string hash = 5;
-  // recipient of the transaction
-  string recipient = 6;
+  // tm_tx_hash is the Tendermint hash of the transaction
+  string tm_tx_hash = 5;
+  // to is the EIP55-compliant hex string of the "to" address 
+  string to = 6;
   // eth_tx_failed contains a VM error should it occur
   string eth_tx_failed = 7;
 }

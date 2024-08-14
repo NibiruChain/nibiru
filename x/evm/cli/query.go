@@ -25,7 +25,8 @@ func GetQueryCmd() *cobra.Command {
 
 	// Add subcommands
 	cmds := []*cobra.Command{
-		GetCmdFunToken(),
+		CmdQueryFunToken(),
+		CmdQueryAccount(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -33,8 +34,8 @@ func GetQueryCmd() *cobra.Command {
 	return moduleQueryCmd
 }
 
-// GetCmdFunToken returns fungible token mapping for either bank coin or erc20 addr
-func GetCmdFunToken() *cobra.Command {
+// CmdQueryFunToken returns fungible token mapping for either bank coin or erc20 addr
+func CmdQueryFunToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "funtoken [coin-or-erc20addr]",
 		Short: "Query evm fungible token mapping",
@@ -59,6 +60,32 @@ $ %s query %s get-fun-token 0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6
 
 			res, err := queryClient.FunTokenMapping(cmd.Context(), &evm.QueryFunTokenMappingRequest{
 				Token: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryAccount() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account [address]",
+		Short: "Query account by its hex address or bech32",
+		Long:  strings.TrimSpace(""),
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := evm.NewQueryClient(clientCtx)
+
+			res, err := queryClient.EthAccount(cmd.Context(), &evm.QueryEthAccountRequest{
+				Address: args[0],
 			})
 			if err != nil {
 				return err
