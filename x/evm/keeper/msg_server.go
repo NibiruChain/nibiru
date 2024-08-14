@@ -591,7 +591,7 @@ func (k *Keeper) ConvertCoinToEvm(
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
 	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               msg.Sender,
 		Erc20ContractAddress: erc20ContractAddr.String(),
 		ToEthAddr:            toEthAddr.String(),
@@ -636,7 +636,7 @@ func (k Keeper) convertCoinNativeCoin(
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
 	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
 		Erc20ContractAddress: erc20ContractAddr.String(),
 		ToEthAddr:            recipient.String(),
@@ -728,7 +728,7 @@ func (k Keeper) convertCoinNativeERC20(
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}
 
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
 		Erc20ContractAddress: fungibleTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),

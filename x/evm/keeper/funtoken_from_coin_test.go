@@ -225,11 +225,11 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 			}
 			s.Require().NoError(err)
 
-			// Event "EventSendFunTokenToEvm" must present
+			// Event "EventConvertCoinToEvm" must present
 			testutil.RequireContainsTypedEvent(
 				s.T(),
 				deps.Ctx,
-				&evm.EventSendFunTokenToEvm{
+				&evm.EventConvertCoinToEvm{
 					Sender:               deps.Sender.NibiruAddr.String(),
 					Erc20ContractAddress: funTokenErc20Addr.String(),
 					ToEthAddr:            recipientEVMAddr.String(),
