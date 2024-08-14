@@ -22,10 +22,10 @@ var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 // Precompile address for "FunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
-var PrecompileAddr_FuntokenGateway = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
+var PrecompileAddr_FunToken = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
 
 func (p precompileFunToken) Address() gethcommon.Address {
-	return PrecompileAddr_FuntokenGateway
+	return PrecompileAddr_FunToken
 }
 
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
@@ -131,23 +131,20 @@ func (p precompileFunToken) bankSend(
 
 	// Amount should be positive
 	if amount == nil || amount.Cmp(big.NewInt(0)) != 1 {
-		err = fmt.Errorf("transfer amount must be positive")
-		return
+		return nil, fmt.Errorf("transfer amount must be positive")
 	}
 
 	// The "to" argument must be a valid Nibiru address
 	toAddr, err := sdk.AccAddressFromBech32(to)
 	if err != nil {
-		err = fmt.Errorf("\"to\" is not a valid address (%s): %w", to, err)
-		return
+		return nil, fmt.Errorf("\"to\" is not a valid address (%s): %w", to, err)
 	}
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
 	_, err = p.EvmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
-		err = fmt.Errorf("failed to send from caller to the EVM account: %w", err)
-		return
+		return nil, fmt.Errorf("failed to send from caller to the EVM account: %w", err)
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
@@ -155,18 +152,16 @@ func (p precompileFunToken) bankSend(
 	coins := sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, amt))
 	err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
 	if err != nil {
-		err = fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
+		return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
-		return
 	}
 
 	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
 	if err != nil {
-		err = fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
+		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
-		return
 	}
 
 	// If the FunToken mapping was created from a bank coin, then the EVM account

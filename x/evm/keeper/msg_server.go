@@ -20,10 +20,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -202,22 +201,6 @@ func (k *Keeper) ApplyEvmTx(
 	// reset the gas meter for current cosmos transaction
 	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 	return res, nil
-}
-
-// ApplyEvmMsgWithEmptyTxConfig; Computes new state by applyig the EVM
-// message to the given state. This function calls [Keeper.ApplyEvmMsg] with
-// and empty`statedb.TxConfig`.
-// See [Keeper.ApplyEvmMsg].
-func (k *Keeper) ApplyEvmMsgWithEmptyTxConfig(
-	ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool,
-) (*evm.MsgEthereumTxResponse, error) {
-	cfg, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load evm config")
-	}
-
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-	return k.ApplyEvmMsg(ctx, msg, tracer, commit, cfg, txConfig)
 }
 
 // NewEVM generates a go-ethereum VM.
@@ -517,7 +500,7 @@ func (k *Keeper) CreateFunToken(
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, *msg.FromErc20)
+		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:

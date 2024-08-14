@@ -489,25 +489,21 @@ func (m MsgCreateFunToken) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-func errMsgCreateFunTokenValidate(errMsg string) error {
-	return fmt.Errorf("MsgCreateFunToken ValidateBasic error: %s", errMsg)
-}
-
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgCreateFunToken) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return errMsgCreateFunTokenValidate("invalid sender addr")
+		return fmt.Errorf("invalid sender addr")
 	}
 
-	erc20 := m.FromErc20
-	bankDenom := m.FromBankDenom
-	emptyBankDenom := bankDenom == ""
-	emptyErc20 := !(erc20 != nil && erc20.Size() > 0)
-	if (emptyErc20 && emptyBankDenom) || (!emptyErc20 && !emptyBankDenom) {
-		return errMsgCreateFunTokenValidate(fmt.Sprintf(
-			"Either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)."+
-				"got values (from_erc20=\"%s\", from_bank_denom=\"%s\")", erc20, bankDenom,
-		))
+	emptyBankDenom := m.FromBankDenom == ""
+	emptyErc20 := m.FromErc20 == nil || m.FromErc20.Size() == 0
+
+	if emptyErc20 && emptyBankDenom {
+		return fmt.Errorf("either the \"from_erc20\" or \"from_bank_denom\" must be set")
+	}
+
+	if !emptyErc20 && !emptyBankDenom {
+		return fmt.Errorf("either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
 	}
 
 	return nil
@@ -524,17 +520,13 @@ func (m MsgSendFunTokenToEvm) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-func errMsgSendFunTokenToEvmValidate(errMsg string) error {
-	return fmt.Errorf("MsgSendFunTokenToEvm ValidateBasic error: %s", errMsg)
-}
-
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgSendFunTokenToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return errMsgCreateFunTokenValidate("invalid sender addr")
+		return fmt.Errorf("invalid sender addr")
 	}
 	if m.ToEthAddr == "" {
-		return errMsgSendFunTokenToEvmValidate("\"to_eth_addr\" must be set")
+		return fmt.Errorf("empty to_eth_addr")
 	}
 	return nil
 }

@@ -9,20 +9,17 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
-
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/encoding"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"

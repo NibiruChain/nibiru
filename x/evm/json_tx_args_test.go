@@ -94,7 +94,7 @@ func (suite *TxDataTestSuite) TestConvertTxArgsEthTx() {
 		},
 	}
 	for _, tc := range testCases {
-		res := tc.txArgs.ToTransaction()
+		res := tc.txArgs.ToMsgEthTx()
 		suite.Require().NotNil(res)
 	}
 }
