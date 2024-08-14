@@ -143,36 +143,34 @@ func DeployContract(
 	contract embeds.CompiledEvmContract,
 	t *testing.T,
 	args ...any,
-) (result DeployContractResult, err error) {
+) (result *DeployContractResult, err error) {
 	// Use contract args
 	packedArgs, err := contract.ABI.Pack("", args...)
 	if err != nil {
-		err = errors.Wrap(err, "failed to pack ABI args")
-		return
+		return nil, errors.Wrap(err, "failed to pack contract args")
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	jsonTxArgs := evm.JsonTxArgs{
-		Nonce: (*hexutil.Uint64)(&nonce),
-		Input: (*hexutil.Bytes)(&bytecodeForCall),
-		From:  &deps.Sender.EthAddr,
-	}
-	ethTxMsg, err := GenerateAndSignEthTxMsg(jsonTxArgs, deps)
+	msgEthTx, err := GenerateAndSignEthTxMsg(
+		evm.JsonTxArgs{
+			Nonce: (*hexutil.Uint64)(&nonce),
+			Input: (*hexutil.Bytes)(&bytecodeForCall),
+			From:  &deps.Sender.EthAddr,
+		}, deps,
+	)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), msgEthTx)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
-	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-
-	return DeployContractResult{
+	return &DeployContractResult{
 		TxResp:       resp,
-		EthTxMsg:     ethTxMsg,
+		EthTxMsg:     msgEthTx,
 		ContractData: contract,
 		Nonce:        nonce,
-		ContractAddr: contractAddress,
+		ContractAddr: crypto.CreateAddress(deps.Sender.EthAddr, nonce),
 	}, nil
 }
 
@@ -217,9 +215,9 @@ func DeployAndExecuteERC20Transfer(
 
 // GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx
 func GenerateAndSignEthTxMsg(
-	txArgs evm.JsonTxArgs, deps *TestDeps,
+	jsonTxArgs evm.JsonTxArgs, deps *TestDeps,
 ) (*evm.MsgEthereumTx, error) {
-	estimateArgs, err := json.Marshal(&txArgs)
+	estimateArgs, err := json.Marshal(&jsonTxArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -235,11 +233,11 @@ func GenerateAndSignEthTxMsg(
 	if err != nil {
 		return nil, err
 	}
-	txArgs.Gas = (*hexutil.Uint64)(&res.Gas)
+	jsonTxArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
-	msgEthereumTx := txArgs.ToTransaction()
+	msgEthTx := jsonTxArgs.ToMsgEthTx()
 	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, deps.Sender.KeyringSigner)
+	return msgEthTx, msgEthTx.Sign(gethSigner, deps.Sender.KeyringSigner)
 }
 
 func TransferWei(

@@ -471,7 +471,7 @@ func (e *EthAPI) FillTransaction(
 	}
 
 	// Assemble the transaction and obtain rlp
-	tx := args.ToTransaction().AsTransaction()
+	tx := args.ToMsgEthTx().AsTransaction()
 
 	data, err := tx.MarshalBinary()
 	if err != nil {

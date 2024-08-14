@@ -49,7 +49,7 @@ func (b *Backend) SendTransaction(args evm.JsonTxArgs) (common.Hash, error) {
 	// the corresponding chainID validation, we need to sign the transaction before calling it
 
 	// Sign transaction
-	msg := args.ToTransaction()
+	msg := args.ToMsgEthTx()
 	if err := msg.Sign(signer, b.clientCtx.Keyring); err != nil {
 		b.logger.Debug("failed to sign tx", "error", err.Error())
 		return common.Hash{}, err

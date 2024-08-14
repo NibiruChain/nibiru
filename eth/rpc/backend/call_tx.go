@@ -50,7 +50,7 @@ func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *h
 
 	signer := gethcore.LatestSigner(cfg)
 
-	matchTx := args.ToTransaction().AsTransaction()
+	matchTx := args.ToMsgEthTx().AsTransaction()
 
 	// Before replacing the old transaction, ensure the _new_ transaction fee is reasonable.
 	price := matchTx.GasPrice()
