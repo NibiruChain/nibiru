@@ -150,30 +150,31 @@ func (p precompileFunToken) bankSend(
 	// EVM account mints FunToken.BankDenom to module account
 	amt := math.NewIntFromBigInt(amount)
 	coins := sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, amt))
-	err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
-	if err != nil {
-		return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
-			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
-		)
-	}
-
-	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
-	if err != nil {
-		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
-			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
-		)
-	}
-
-	// If the FunToken mapping was created from a bank coin, then the EVM account
-	// owns the ERC20 contract and was the original minter of the ERC20 tokens.
-	// Since we're sending them away and want accurate total supply tracking, the
-	// tokens need to be burned.
 	if funtoken.IsMadeFromCoin {
+		// If the FunToken mapping was created from a bank coin, then the EVM account
+		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
+		// Since we're sending them away and want accurate total supply tracking, the
+		// tokens need to be burned.
 		_, err = p.EvmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
 			return
 		}
+	} else {
+		err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
+		if err != nil {
+			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
+				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
+			)
+		}
+	}
+
+	// Transfer the bank coin
+	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
+	if err != nil {
+		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
+			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
+		)
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events

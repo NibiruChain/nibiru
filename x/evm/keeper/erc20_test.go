@@ -4,30 +4,9 @@ package keeper_test
 import (
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
-
-// setBankDenomMetadata utility method to set bank denom metadata required for working with coin
-func setBankDenomMetadata(ctx sdk.Context, bankKeeper bankkeeper.Keeper, bankDenom string) {
-	bankMetadata := bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "TOKEN",
-	}
-	bankKeeper.SetDenomMetaData(ctx, bankMetadata)
-}
 
 func (s *Suite) TestERC20Calls() {
 	deps := evmtest.NewTestDeps()

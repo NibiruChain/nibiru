@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
@@ -14,8 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
 func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
@@ -146,11 +149,11 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	s.Require().ErrorContains(err, "bank coin denom should have bank metadata for denom")
 }
 
-// TestSendFunTokenToEvm executes sending fun tokens from bank coin to erc20 and checks the results:
+// TestConvertCoinToEvm executes sending fun tokens from bank coin to erc20 and checks the results:
 // - sender balance should be reduced by sendAmount
 // - erc-20 balance should be increased by sendAmount
 // - evm module account should hold sender's coins
-func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
+func (s *FunTokenFromCoinSuite) TestConvertCoinToEvm() {
 	for _, tc := range []struct {
 		name           string
 		bankDenom      string
@@ -186,8 +189,20 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 			recipientEVMAddr := eth.MustNewHexAddrFromStr("0x1234500000000000000000000000000000000000")
 			evmModuleAddr := deps.App.AccountKeeper.GetModuleAddress(evm.ModuleName)
 
-			ctx := sdk.WrapSDKContext(deps.Ctx)
-			setBankDenomMetadata(deps.Ctx, deps.App.BankKeeper, bankDenom)
+			s.T().Log("Setup: Create a coin in the bank state")
+			deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+				DenomUnits: []*bank.DenomUnit{
+					{
+						Denom:    bankDenom,
+						Exponent: 0,
+						Aliases:  nil,
+					},
+				},
+				Base:    bankDenom,
+				Display: bankDenom,
+				Name:    bankDenom,
+				Symbol:  "TOKEN",
+			})
 
 			// Give the sender funds
 			s.Require().NoError(testapp.FundAccount(
@@ -199,7 +214,7 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 
 			// Create fun token from coin
 			createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-				ctx,
+				sdk.WrapSDKContext(deps.Ctx),
 				&evm.MsgCreateFunToken{
 					FromBankDenom: bankDenom,
 					Sender:        deps.Sender.NibiruAddr.String(),
@@ -211,7 +226,7 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 			// Send fun token to ERC-20 contract
 			bankCoin := sdk.NewCoin(tc.bankDenom, tc.amountToSend)
 			_, err = deps.EvmKeeper.ConvertCoinToEvm(
-				ctx,
+				sdk.WrapSDKContext(deps.Ctx),
 				&evm.MsgSendFunTokenToEvm{
 					Sender:    deps.Sender.NibiruAddr.String(),
 					BankCoin:  bankCoin,
@@ -248,6 +263,140 @@ func (s *FunTokenFromCoinSuite) TestSendFunTokenToEvm() {
 			balance, err := deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr, recipientEVMAddr.ToAddr(), deps.Ctx)
 			s.Require().NoError(err)
 			s.Require().Zero(balance.Cmp(tc.amountToSend.BigInt()))
+		})
+	}
+}
+
+// TestConvertCoinToEvmAndBack executes sending fun tokens from bank coin to erc20 and then back to bank coin and checks the results:
+// - sender balance
+// - erc-20 balance
+// - evm module account balance
+func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
+	for _, tc := range []struct {
+		name                string
+		bankDenom           string
+		initialBalance      math.Int
+		amountToConvert     math.Int
+		amountToConvertBack math.Int
+		wantErr             string
+	}{
+		{
+			name:                "happy: send everything back",
+			bankDenom:           "unibi",
+			initialBalance:      math.NewInt(100),
+			amountToConvert:     math.NewInt(10),
+			amountToConvertBack: math.NewInt(10),
+			wantErr:             "",
+		},
+		{
+			name:                "happy: send some back",
+			bankDenom:           "unibi",
+			initialBalance:      math.NewInt(100),
+			amountToConvert:     math.NewInt(10),
+			amountToConvertBack: math.NewInt(5),
+			wantErr:             "",
+		},
+		{
+			name:                "sad: insufficient funds",
+			bankDenom:           "unibi",
+			initialBalance:      math.NewInt(100),
+			amountToConvert:     math.NewInt(10),
+			amountToConvertBack: math.NewInt(11),
+			wantErr:             "transfer amount exceeds balance",
+		},
+	} {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			alice := evmtest.NewEthPrivAcc()
+			bankDenom := "unibi"
+
+			s.T().Log("Setup: Create a coin in the bank state")
+			deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+				DenomUnits: []*bank.DenomUnit{
+					{
+						Denom:    bankDenom,
+						Exponent: 0,
+						Aliases:  nil,
+					},
+				},
+				Base:    bankDenom,
+				Display: bankDenom,
+				Name:    bankDenom,
+				Symbol:  "TOKEN",
+			})
+
+			// Give the sender funds
+			s.Require().NoError(testapp.FundAccount(
+				deps.App.BankKeeper,
+				deps.Ctx,
+				deps.Sender.NibiruAddr,
+				deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewCoin(bankDenom, tc.initialBalance)),
+			))
+
+			// Create fun token from coin
+			createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
+				sdk.WrapSDKContext(deps.Ctx),
+				&evm.MsgCreateFunToken{
+					FromBankDenom: bankDenom,
+					Sender:        deps.Sender.NibiruAddr.String(),
+				},
+			)
+			s.Require().NoError(err)
+			funTokenErc20Addr := createFunTokenResp.FuntokenMapping.Erc20Addr
+
+			// Send fun token to ERC-20 contract
+			bankCoin := sdk.NewCoin(tc.bankDenom, tc.amountToConvert)
+			_, err = deps.EvmKeeper.ConvertCoinToEvm(
+				sdk.WrapSDKContext(deps.Ctx),
+				&evm.MsgSendFunTokenToEvm{
+					Sender:    deps.Sender.NibiruAddr.String(),
+					BankCoin:  bankCoin,
+					ToEthAddr: eth.NewHexAddr(alice.EthAddr),
+				},
+			)
+			s.Require().NoError(err)
+
+			// Event "EventConvertCoinToEvm" must present
+			testutil.RequireContainsTypedEvent(
+				s.T(),
+				deps.Ctx,
+				&evm.EventConvertCoinToEvm{
+					Sender:               deps.Sender.NibiruAddr.String(),
+					Erc20ContractAddress: funTokenErc20Addr.String(),
+					ToEthAddr:            alice.EthAddr.String(),
+					BankCoin:             bankCoin,
+				},
+			)
+
+			_, err = deps.EvmKeeper.CallContract(
+				deps.Ctx,
+				embeds.SmartContract_FunToken.ABI,
+				alice.EthAddr,
+				&precompile.PrecompileAddr_FunToken,
+				true,
+				"bankSend",
+				funTokenErc20Addr.ToAddr(),
+				tc.amountToConvertBack.BigInt(),
+				deps.Sender.NibiruAddr.String(),
+			)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Require().NoError(err)
+
+			// Check 1: module balance
+			moduleBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), bankDenom)
+			s.Require().True(tc.amountToConvert.Sub(tc.amountToConvertBack).Equal(moduleBalance.Amount))
+
+			// Check 2: Sender balance
+			senderBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, bankDenom)
+			s.Require().Equal(tc.initialBalance.Sub(tc.amountToConvert).Add(tc.amountToConvertBack), senderBalance.Amount)
+
+			// Check 3: erc-20 balance
+			balance, err := deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.ToAddr(), alice.EthAddr, deps.Ctx)
+			s.Require().NoError(err)
+			s.Require().Zero(balance.Cmp(tc.amountToConvert.Sub(tc.amountToConvertBack).BigInt()))
 		})
 	}
 }
