@@ -189,8 +189,9 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	)
 	s.Require().NoError(err)
 
-	s.T().Log("send erc20 tokens to cosmos")
 	randomAcc := testutil.AccAddress()
+
+	s.T().Log("send erc20 tokens to cosmos")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_FunToken.ABI,
@@ -211,12 +212,28 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
 
+	s.T().Log("sad: send too many erc20 tokens to cosmos")
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_FunToken.ABI,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_FunToken,
+		true,
+		"bankSend",
+		erc20Addr.ToAddr(),
+		big.NewInt(70_000),
+		randomAcc.String(),
+	)
+	s.Require().Error(err)
+
 	s.T().Log("send cosmos tokens back to erc20")
-	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx), &evm.MsgSendFunTokenToEvm{
-		ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
-		Sender:    randomAcc.String(),
-		BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
-	})
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgSendFunTokenToEvm{
+			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+			Sender:    randomAcc.String(),
+			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+		},
+	)
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
@@ -225,6 +242,16 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	s.Require().True(
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)),
 	)
+
+	s.T().Log("sad: send too many cosmos tokens back to erc20")
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgSendFunTokenToEvm{
+			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+			Sender:    randomAcc.String(),
+			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+		},
+	)
+	s.Require().Error(err)
 }
 
 type FunTokenFromErc20Suite struct {
