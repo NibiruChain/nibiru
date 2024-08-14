@@ -141,7 +141,6 @@ type DeployContractResult struct {
 func DeployContract(
 	deps *TestDeps,
 	contract embeds.CompiledEvmContract,
-	t *testing.T,
 	args ...any,
 ) (result *DeployContractResult, err error) {
 	// Use contract args
@@ -159,11 +158,17 @@ func DeployContract(
 			From:  &deps.Sender.EthAddr,
 		}, deps,
 	)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+	}
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), msgEthTx)
-	require.NoError(t, err)
-	require.Empty(t, resp.VmError)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute ethereum tx")
+	}
+	if resp.VmError != "" {
+		return nil, fmt.Errorf("vm error: %s", resp.VmError)
+	}
 
 	return &DeployContractResult{
 		TxResp:       resp,
@@ -179,7 +184,7 @@ func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
 ) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
 	// TX 1: Deploy ERC-20 contract
-	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20, t)
+	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20)
 	require.NoError(t, err)
 	contractData := deployResp.ContractData
 	nonce := deployResp.Nonce

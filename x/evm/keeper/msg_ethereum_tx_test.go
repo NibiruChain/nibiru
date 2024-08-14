@@ -125,7 +125,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	)
 	s.Require().NoError(err)
 	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_TestERC20, s.T(),
+		&deps, embeds.SmartContract_TestERC20,
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr

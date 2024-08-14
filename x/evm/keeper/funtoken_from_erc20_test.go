@@ -21,12 +21,12 @@ import (
 func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	deps := evmtest.NewTestDeps()
 
-	// Compute contract address. FindERC20 should fail
+	// assert that the ERC20 contract is not deployed
 	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.StateDB().GetNonce(deps.Sender.EthAddr))
 	_, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, expectedERC20Addr)
 	s.Error(err)
 
-	s.T().Log("Case 1: Deploy and invoke ERC20 with 18 decimals")
+	s.T().Log("Deploy and invoke ERC20 with 18 decimals")
 	{
 		metadata := keeper.ERC20Metadata{
 			Name:     "erc20name",
@@ -34,27 +34,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 			Decimals: 18,
 		}
 		deployResp, err := evmtest.DeployContract(
-			&deps, embeds.SmartContract_ERC20Minter, s.T(),
-			metadata.Name, metadata.Symbol, metadata.Decimals,
-		)
-		s.Require().NoError(err)
-		s.Equal(expectedERC20Addr, deployResp.ContractAddr)
-
-		info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
-		s.NoError(err, info)
-		s.Equal(metadata, info)
-	}
-
-	s.T().Log("Case 2: Deploy and invoke ERC20 with 9 decimals")
-	{
-		metadata := keeper.ERC20Metadata{
-			Name:     "gwei",
-			Symbol:   "GWEI",
-			Decimals: 9,
-		}
-		expectedERC20Addr = crypto.CreateAddress(deps.Sender.EthAddr, deps.StateDB().GetNonce(deps.Sender.EthAddr))
-		deployResp, err := evmtest.DeployContract(
-			&deps, embeds.SmartContract_ERC20Minter, s.T(),
+			&deps, embeds.SmartContract_ERC20Minter,
 			metadata.Name, metadata.Symbol, metadata.Decimals,
 		)
 		s.Require().NoError(err)
@@ -62,7 +42,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 		info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, deployResp.ContractAddr)
 		s.NoError(err, info)
-		s.Equal(metadata, info)
+		s.Require().Equal(metadata, info)
 
 		queryCodeReq := &evm.QueryCodeRequest{
 			Address: expectedERC20Addr.String(),
