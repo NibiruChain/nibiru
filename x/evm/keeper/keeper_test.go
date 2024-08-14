@@ -12,6 +12,5 @@ type Suite struct {
 
 // TestSuite: Runs all the tests in the suite.
 func TestSuite(t *testing.T) {
-	s := new(Suite)
-	suite.Run(t, s)
+	suite.Run(t, new(Suite))
 }

@@ -2,19 +2,21 @@
 package keeper_test
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
-func (s *Suite) TestDeployERC20ForBankCoin() {
+func (s *FunTokenFromCoinSuite) TestDeployERC20ForBankCoin() {
 	deps := evmtest.NewTestDeps()
 
 	// Compute contract address. FindERC20 should fail
@@ -24,7 +26,7 @@ func (s *Suite) TestDeployERC20ForBankCoin() {
 	s.Error(err)
 
 	s.T().Log("Case 1: Deploy and invoke ERC20 for info")
-	bankDenom := "sometoken"
+	const bankDenom = "sometoken"
 	bankMetadata := bank.Metadata{
 		DenomUnits: []*bank.DenomUnit{
 			{
@@ -53,7 +55,7 @@ func (s *Suite) TestDeployERC20ForBankCoin() {
 	}, info)
 }
 
-func (s *Suite) TestCreateFunTokenFromCoin() {
+func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	deps := evmtest.NewTestDeps()
 
 	// Compute contract address. FindERC20 should fail
@@ -141,4 +143,12 @@ func (s *Suite) TestCreateFunTokenFromCoin() {
 		},
 	)
 	s.Require().ErrorContains(err, "funtoken mapping already created")
+}
+
+type FunTokenFromCoinSuite struct {
+	suite.Suite
+}
+
+func TestFunTokenFromCoinSuite(t *testing.T) {
+	suite.Run(t, new(FunTokenFromCoinSuite))
 }

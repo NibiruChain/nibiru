@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -176,7 +177,7 @@ func (k Keeper) CallContractWithInput(
 		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
 	)
 	if err != nil {
-		return evmResp, err
+		return nil, err
 	}
 
 	unusedBigInt := big.NewInt(0)
@@ -201,7 +202,7 @@ func (k Keeper) CallContractWithInput(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return evmResp, fmt.Errorf("failed to load evm config: %s", err)
+		return nil, errors.Wrapf(err, "failed to load evm config")
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
@@ -209,11 +210,11 @@ func (k Keeper) CallContractWithInput(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
-		return evmResp, err
+		return nil, errors.Wrapf(err, "failed to apply EVM message")
 	}
 
 	if evmResp.Failed() {
-		return evmResp, fmt.Errorf("%w: EVM error: %s", err, evmResp.VmError)
+		return nil, errors.Wrapf(err, "EVM execution failed: %s", evmResp.VmError)
 	}
 
 	return evmResp, err
