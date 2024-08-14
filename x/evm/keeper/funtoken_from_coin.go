@@ -23,8 +23,8 @@ func (k *Keeper) CreateFunTokenFromCoin(
 	}
 
 	// 2 | Check for denom metadata in bank state
-	bankCoin, isAlreadyCoin := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
-	if !isAlreadyCoin {
+	bankCoin, isFound := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
+	if !isFound {
 		return funtoken, fmt.Errorf("bank coin denom should have bank metadata for denom \"%s\"", bankDenom)
 	}
 
