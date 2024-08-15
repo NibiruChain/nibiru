@@ -484,32 +484,32 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err err
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
-	var funtoken evm.FunToken
+	var funtoken *evm.FunToken
 	err = msg.ValidateBasic()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err = k.deductCreateFunTokenFee(ctx, msg)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.CreateFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
+		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.CreateFunTokenFromCoin(ctx, msg.FromBankDenom)
+		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
 			"either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenCreated{
@@ -520,7 +520,7 @@ func (k *Keeper) CreateFunToken(
 	})
 
 	return &evm.MsgCreateFunTokenResponse{
-		FuntokenMapping: funtoken,
+		FuntokenMapping: *funtoken,
 	}, err
 }
 
@@ -543,32 +543,52 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 	return sdk.NewCoins(sdk.NewCoin(evmParams.EvmDenom, evmParams.CreateFuntokenFee))
 }
 
-// SendFunTokenToEvm Sends a coin with a valid "FunToken" mapping to the
+// ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
-func (k *Keeper) SendFunTokenToEvm(
-	goCtx context.Context, msg *evm.MsgSendFunTokenToEvm,
-) (resp *evm.MsgSendFunTokenToEvmResponse, err error) {
+func (k *Keeper) ConvertCoinToEvm(
+	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
+) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	toEthAddr := msg.ToEthAddr.ToAddr()
-	bankDenom := msg.BankCoin.Denom
-	amount := msg.BankCoin.Amount
+	ethRecipient := msg.ToEthAddr.ToAddr()
 
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom))
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
-		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", bankDenom)
+		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", msg.BankCoin.Denom)
 	}
-	erc20ContractAddr := funTokens[0].Erc20Addr.ToAddr()
+	if len(funTokens) > 1 {
+		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", msg.BankCoin.Denom)
+	}
 
-	// Step 1: Send coins to the evm module account
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.Coins{msg.BankCoin})
+	fungibleTokenMapping := funTokens[0]
+
+	if fungibleTokenMapping.IsMadeFromCoin {
+		return k.convertCoinNativeCoin(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
+	} else {
+		return k.convertCoinNativeERC20(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
+	}
+}
+
+// Converts a native coin to an ERC20 token.
+// EVM module owns the ERC-20 contract and can mint the ERC-20 tokens.
+func (k Keeper) convertCoinNativeCoin(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	fungibleTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	// Step 1: Escrow bank coins with EVM module account
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
 
-	// Step 2: evm call to erc20 minter: mint tokens for a toEthAddr
+	erc20ContractAddr := fungibleTokenMapping.Erc20Addr.ToAddr()
+
+	// Step 2: mint ERC-20 tokens for recipient
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
@@ -576,8 +596,8 @@ func (k *Keeper) SendFunTokenToEvm(
 		&erc20ContractAddr,
 		true,
 		"mint",
-		toEthAddr,
-		amount.BigInt(),
+		recipient,
+		coin.Amount.BigInt(),
 	)
 	if err != nil {
 		return nil, err
@@ -586,12 +606,104 @@ func (k *Keeper) SendFunTokenToEvm(
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
 	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventSendFunTokenToEvm{
-		Sender:               msg.Sender,
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
 		Erc20ContractAddress: erc20ContractAddr.String(),
-		ToEthAddr:            toEthAddr.String(),
-		BankCoin:             msg.BankCoin,
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
 	})
 
-	return &evm.MsgSendFunTokenToEvmResponse{}, nil
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
+// EVM module does not own the ERC-20 contract and cannot mint the ERC-20 tokens.
+// EVM module has escrowed tokens in the first conversion from ERC-20 to bank coin.
+func (k Keeper) convertCoinNativeERC20(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	fungibleTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	erc20Addr := fungibleTokenMapping.Erc20Addr.ToAddr()
+
+	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if recipientBalanceBefore == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+
+	// Escrow Coins on module account
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		sender,
+		evm.ModuleName,
+		sdk.NewCoins(coin),
+	); err != nil {
+		return nil, errors.Wrap(err, "failed to escrow coins")
+	}
+
+	// verify that the EVM module account has enough escrowed ERC-20 to transfer
+	// should never fail, because the coins were minted from the escrowed tokens, but check just in case
+	evmModuleBalance, err := k.ERC20().BalanceOf(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		ctx,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if evmModuleBalance == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
+		return nil, fmt.Errorf("insufficient balance in EVM module account")
+	}
+
+	// unescrow ERC-20 tokens from EVM module address
+	res, err := k.ERC20().Transfer(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		recipient,
+		coin.Amount.BigInt(),
+		ctx,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
+	}
+	if !res {
+		return nil, fmt.Errorf("failed to transfer ERC20 tokens")
+	}
+
+	// Check expected Receiver balance after transfer execution
+	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if recipientBalanceAfter == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+
+	expectedFinalBalance := big.NewInt(0).Add(recipientBalanceBefore, coin.Amount.BigInt())
+	if r := recipientBalanceAfter.Cmp(expectedFinalBalance); r != 0 {
+		return nil, fmt.Errorf("expected balance after transfer to be %s, got %s", expectedFinalBalance, recipientBalanceAfter)
+	}
+
+	// Burn escrowed Coins
+	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to burn coins")
+	}
+
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
+		Erc20ContractAddress: fungibleTokenMapping.Erc20Addr.String(),
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }

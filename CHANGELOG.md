@@ -105,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1997](https://github.com/NibiruChain/nibiru/pull/1997) - refactor(evm): Remove unnecessary params: "enable_call", "enable_create".
 - [#2000](https://github.com/NibiruChain/nibiru/pull/2000) - refactor(evm): simplify ERC-20 keeper methods
 - [#2001](https://github.com/NibiruChain/nibiru/pull/2001) - refactor(evm): simplify FunToken methods and tests
+- [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
 
 #### Dapp modules: perp, spot, oracle, etc
 
