@@ -500,7 +500,7 @@ func (k *Keeper) CreateFunToken(
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
+		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Addr())
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
@@ -552,7 +552,7 @@ func (k *Keeper) ConvertCoinToEvm(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	ethRecipient := msg.ToEthAddr.ToAddr()
+	ethRecipient := msg.ToEthAddr.Addr()
 
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
@@ -586,7 +586,7 @@ func (k Keeper) convertCoinNativeCoin(
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
 
-	erc20ContractAddr := fungibleTokenMapping.Erc20Addr.ToAddr()
+	erc20ContractAddr := fungibleTokenMapping.Erc20Addr.Addr()
 
 	// Step 2: mint ERC-20 tokens for recipient
 	evmResp, err := k.CallContract(
@@ -626,7 +626,7 @@ func (k Keeper) convertCoinNativeERC20(
 	coin sdk.Coin,
 	fungibleTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	erc20Addr := fungibleTokenMapping.Erc20Addr.ToAddr()
+	erc20Addr := fungibleTokenMapping.Erc20Addr.Addr()
 
 	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
 	if err != nil {

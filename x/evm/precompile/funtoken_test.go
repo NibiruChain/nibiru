@@ -67,7 +67,7 @@ func (s *Suite) TestHappyPath() {
 	s.T().Log("Create FunToken mapping and ERC20")
 	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	contract := funtoken.Erc20Addr.ToAddr()
+	contract := funtoken.Erc20Addr.Addr()
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))

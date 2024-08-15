@@ -176,7 +176,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	bankDemon := resp.FuntokenMapping.BankDenom
 
 	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
-	erc20 := erc20Addr.ToAddr()
+	erc20 := erc20Addr.Addr()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
@@ -199,7 +199,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		erc20Addr.ToAddr(),
+		erc20Addr.Addr(),
 		big.NewInt(1),
 		randomAcc.String(),
 	)
@@ -220,7 +220,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		erc20Addr.ToAddr(),
+		erc20Addr.Addr(),
 		big.NewInt(70_000),
 		randomAcc.String(),
 	)

@@ -64,7 +64,7 @@ func (s *Suite) TestExportInitGenesis() {
 	// Create fungible token from bank coin
 	funToken := evmtest.CreateFunTokenForBankCoin(&deps, "unibi", &s.Suite)
 	s.Require().NoError(err)
-	funTokenAddr := funToken.Erc20Addr.ToAddr()
+	funTokenAddr := funToken.Erc20Addr.Addr()
 
 	// Fund sender's wallet
 	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin("unibi", totalSupply.Int64()))

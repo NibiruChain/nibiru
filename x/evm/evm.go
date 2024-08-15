@@ -15,10 +15,10 @@ import (
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
 func (fun FunToken) ID() []byte {
-	return NewFunTokenID(fun.Erc20Addr, fun.BankDenom)
+	return NewFunTokenID(fun.Erc20Addr.Addr(), fun.BankDenom)
 }
 
-func NewFunTokenID(erc20 eth.HexAddr, bankDenom string) []byte {
+func NewFunTokenID(erc20 gethcommon.Address, bankDenom string) []byte {
 	return tmhash.Sum([]byte(erc20.String() + "|" + bankDenom))
 }
 

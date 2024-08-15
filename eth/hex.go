@@ -22,12 +22,14 @@ func NewHexAddr(addr gethcommon.Address) HexAddr {
 
 func NewHexAddrFromStr(addr string) (HexAddr, error) {
 	hexAddr := HexAddr(gethcommon.HexToAddress(addr).Hex())
+
 	if !gethcommon.IsHexAddress(addr) {
-		return hexAddr, fmt.Errorf(
-			"%s: input \"%s\" is not an ERC55-compliant, 20 byte hex address",
-			HexAddrError, addr,
+		return "", fmt.Errorf(
+			"HexAddrError: input \"%s\" is not an ERC55-compliant, 20 byte hex address",
+			addr,
 		)
 	}
+
 	return hexAddr, hexAddr.Valid()
 }
 
@@ -41,28 +43,26 @@ func MustNewHexAddrFromStr(addr string) HexAddr {
 	return hexAddr
 }
 
-const HexAddrError = "HexAddrError"
-
 func (h HexAddr) Valid() error {
 	// Check address encoding bijectivity
-	wantAddr := h.ToAddr().Hex() // gethcommon.Address.Hex()
-	haveAddr := string(h)        // should be equivalent to ↑
+	wantAddr := h.Addr().Hex() // gethcommon.Address.Hex()
+	haveAddr := string(h)      // should be equivalent to ↑
 
 	if !gethcommon.IsHexAddress(haveAddr) || haveAddr != wantAddr {
 		return fmt.Errorf(
-			"%s: Ethereum address is not represented as expected. We have encoding \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
-			HexAddrError, haveAddr, wantAddr,
+			"HexAddrError: Ethereum address is not represented as expected. We have \"%s\" and instead need \"%s\" (gethcommon.Address.Hex)",
+			haveAddr, wantAddr,
 		)
 	}
 
 	return nil
 }
 
-func (h HexAddr) ToAddr() gethcommon.Address {
+func (h HexAddr) Addr() gethcommon.Address {
 	return gethcommon.HexToAddress(string(h))
 }
 
-func (h HexAddr) String() string { return h.ToAddr().Hex() }
+func (h HexAddr) String() string { return h.Addr().Hex() }
 
 // Marshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md

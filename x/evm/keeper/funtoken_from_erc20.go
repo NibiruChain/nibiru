@@ -145,7 +145,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(
-		ctx, funtoken.Erc20Addr.ToAddr(),
+		ctx, funtoken.Erc20Addr.Addr(),
 		funtoken.BankDenom,
 		funtoken.IsMadeFromCoin,
 	)

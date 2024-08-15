@@ -109,7 +109,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	s.Require().NoError(err)
 
 	s.T().Log("Expect ERC20 metadata on contract")
-	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, erc20Addr.ToAddr())
+	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, erc20Addr.Addr())
 	s.Require().NoError(err, info)
 	s.Equal(
 		keeper.ERC20Metadata{
@@ -238,7 +238,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal(sdk.NewInt(90), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
-	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.ToAddr(), alice.EthAddr, deps.Ctx)
+	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.Addr(), alice.EthAddr, deps.Ctx)
 	s.Require().NoError(err)
 	s.Require().Zero(balance.Cmp(big.NewInt(10)))
 
@@ -261,7 +261,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		funTokenErc20Addr.ToAddr(),
+		funTokenErc20Addr.Addr(),
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
 	)
@@ -276,7 +276,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal(sdk.NewInt(100), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.ToAddr(), alice.EthAddr, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.Addr(), alice.EthAddr, deps.Ctx)
 	s.Require().NoError(err)
 	s.Require().Zero(balance.Cmp(big.NewInt(0)))
 
@@ -288,7 +288,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		funTokenErc20Addr.ToAddr(),
+		funTokenErc20Addr.Addr(),
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
 	)

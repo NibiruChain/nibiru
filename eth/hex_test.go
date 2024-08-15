@@ -54,7 +54,7 @@ func (s *HexAddrSuite) TestHexAddr_UniqueMapping() {
 				}
 
 				s.Equal(answer.gethAddrOut, gethAddrOut)
-				s.Equal(answer.gethAddrOut, hexAddrOut.ToAddr())
+				s.Equal(answer.gethAddrOut, hexAddrOut.Addr())
 				s.Equal(answer.hexAddrOut, hexAddrOut)
 			}
 		})
@@ -147,20 +147,20 @@ func (s *HexAddrSuite) TestHexAddr_NewHexAddr() {
 				got2 := eth.NewHexAddr(gethcommon.HexToAddress(tc.hexAddr))
 				if tc.wantNotEqual {
 					s.NotEqual(want, got)
-					s.NotEqual(want.ToAddr(), got.ToAddr())
+					s.NotEqual(want.Addr(), got.Addr())
 					s.NotEqual(want, got2)
-					s.NotEqual(want.ToAddr(), got2.ToAddr())
+					s.NotEqual(want.Addr(), got2.Addr())
 					s.Require().Error(err)
 					return
 				} else {
 					// string input should give the canonical HexAddr
 					s.Equal(want, got)
-					s.Equal(want.ToAddr(), got.ToAddr())
+					s.Equal(want.Addr(), got.Addr())
 
 					// gethcommon.Address input should give the same thing
 					got2 := eth.NewHexAddr(gethcommon.HexToAddress(tc.hexAddr))
 					s.Equal(want, got2)
-					s.Equal(want.ToAddr(), got2.ToAddr())
+					s.Equal(want.Addr(), got2.Addr())
 				}
 
 				s.Require().NoError(err)
@@ -191,22 +191,22 @@ func (s *HexAddrSuite) TestHexAddr_Valid() {
 		{
 			name:    "0x prefix: missing",
 			hexAddr: "5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
-			wantErr: eth.HexAddrError,
+			wantErr: "HexAddrError",
 		},
 		{
 			name:    "0x prefix: typo",
 			hexAddr: "0XAe967917c465db8578ca9024c205720b1a3651A9",
-			wantErr: eth.HexAddrError,
+			wantErr: "HexAddrError",
 		},
 		{
 			name:    "mixed case checksum not valid according to ERC55",
 			hexAddr: "0xae967917c465db8578ca9024c205720b1a3651A9",
-			wantErr: eth.HexAddrError,
+			wantErr: "HexAddrError",
 		},
 		{
 			name:    "sad 1",
 			hexAddr: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
-			wantErr: eth.HexAddrError,
+			wantErr: "HexAddrError",
 		},
 	} {
 		s.Run(tc.name, func() {
@@ -296,10 +296,15 @@ func (s *HexAddrSuite) TestIsHexAddress() {
 }
 
 func (s *HexAddrSuite) TestHexAddrValid() {
-	s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Valid())
-	s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED").Valid())
-	s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234").Valid())
-	s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B").Valid())
+	// s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Valid())
+	// s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED").Valid())
+	// s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234").Valid())
+	// s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B").Valid())
+
+	s.NoError(eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Valid())
+	s.Error(eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED").Valid())
+	s.Error(eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234").Valid())
+	s.Error(eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B").Valid())
 }
 
 type HexAddrSuite struct {

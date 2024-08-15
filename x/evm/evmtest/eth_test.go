@@ -37,7 +37,7 @@ func (s *Suite) TestERC20Helpers() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "token"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	erc20Contract := funtoken.Erc20Addr.ToAddr()
+	erc20Contract := funtoken.Erc20Addr.Addr()
 
 	evmtest.AssertERC20BalanceEqual(
 		s.T(), deps,

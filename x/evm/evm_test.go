@@ -112,7 +112,7 @@ func (s *TestSuite) TestFunToken() {
 			funA := evm.FunToken{Erc20Addr: eth.HexAddr(tc.A)}
 			funB := evm.FunToken{Erc20Addr: eth.HexAddr(tc.B)}
 
-			s.EqualValues(funA.Erc20Addr.ToAddr(), funB.Erc20Addr.ToAddr())
+			s.EqualValues(funA.Erc20Addr.Addr(), funB.Erc20Addr.Addr())
 		})
 	}
 }
