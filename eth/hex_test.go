@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"testing"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -17,7 +19,7 @@ var threeValidAddrs []eth.HexAddr = []eth.HexAddr{
 	eth.MustNewHexAddrFromStr("0x1111111111111111111112222222222223333323"),
 }
 
-func (s *Suite) TestHexAddr_UniqueMapping() {
+func (s *HexAddrSuite) TestHexAddr_UniqueMapping() {
 	type CorrectAnswer struct {
 		gethAddrOut gethcommon.Address
 		hexAddrOut  eth.HexAddr
@@ -68,7 +70,7 @@ func (s *Suite) TestHexAddr_UniqueMapping() {
 // include or remove the prefix, or change the letters to and from lower and
 // upper case will all produce the same `HexAddr` when passed to
 // `eth.NewHexAddrFromStr`.
-func (s *Suite) TestHexAddr_NewHexAddr() {
+func (s *HexAddrSuite) TestHexAddr_NewHexAddr() {
 	// InputAddrVariation: An instance of a "hexAddr" that derives to the
 	// expected Ethereum address and results in the same string representation.
 	type InputAddrVariation struct {
@@ -168,7 +170,7 @@ func (s *Suite) TestHexAddr_NewHexAddr() {
 }
 
 // TestHexAddr_Valid: Test that demonstrates
-func (s *Suite) TestHexAddr_Valid() {
+func (s *HexAddrSuite) TestHexAddr_Valid() {
 	for _, tc := range []struct {
 		name    string
 		hexAddr string
@@ -224,7 +226,7 @@ func withoutQuotes(s string) string {
 	return strings.TrimPrefix(strings.TrimSuffix(s, "\""), "\"")
 }
 
-func (s *Suite) TestProtobufEncoding() {
+func (s *HexAddrSuite) TestProtobufEncoding() {
 	for tcIdx, tc := range []struct {
 		given   eth.HexAddr
 		json    string
@@ -271,11 +273,39 @@ func (s *Suite) TestProtobufEncoding() {
 	}
 }
 
-func (s *Suite) TestHexAddrToString() {
+func (s *HexAddrSuite) TestHexAddrToString() {
 	hexAddr := eth.HexAddr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
 	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", hexAddr.String())
 	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", string(hexAddr))
 
 	ethAddr := gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
 	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", ethAddr.String())
+}
+
+func (s *HexAddrSuite) TestIsHexAddress() {
+	// showcases how geth checks for valid hex addresses and treats invalid inputs
+	s.True(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"))
+	s.True(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED"))
+	s.False(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234"))
+	s.False(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B"))
+
+	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Hex())
+	s.Equal("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED").Hex())
+	s.Equal("0xb6053f3e94c9B9a09f33669435e7eF1BEAEd1234", gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234").Hex())
+	s.Equal("0x00005AaEb6053f3e94c9b9A09f33669435e7Ef1b", gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B").Hex())
+}
+
+func (s *HexAddrSuite) TestHexAddrValid() {
+	s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Valid())
+	s.NoError(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED").Valid())
+	s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234").Valid())
+	s.Error(eth.MustNewHexAddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1B").Valid())
+}
+
+type HexAddrSuite struct {
+	suite.Suite
+}
+
+func TestHexAddrSuite(t *testing.T) {
+	suite.Run(t, new(HexAddrSuite))
 }
