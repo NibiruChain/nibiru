@@ -10,8 +10,8 @@ require (
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/CosmWasm/wasmvm v1.5.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/NibiruChain/collections v0.3.0
-	github.com/cometbft/cometbft v0.37.2
+	github.com/NibiruChain/collections v0.4.0
+	github.com/cometbft/cometbft v0.37.4
 	github.com/cometbft/cometbft-db v0.11.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
 	github.com/cosmos/cosmos-sdk v0.47.5

@@ -238,8 +238,8 @@ github.com/MakeNowJust/heredoc/v2 v2.0.1 h1:rlCHh70XXXv7toz95ajQWOWQnN4WNLt0TdpZ
 github.com/MakeNowJust/heredoc/v2 v2.0.1/go.mod h1:6/2Abh5s+hc3g9nbWLe9ObDIOhaRrqsyY9MWy+4JdRM=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
-github.com/NibiruChain/collections v0.3.0 h1:DB2RPzzgcHk35lRXuJ1cPOezweAZ6/c/Guq3bAo4W6w=
-github.com/NibiruChain/collections v0.3.0/go.mod h1:tKTlBL+Cs1oJnS4tT9MIaFWr7BWsUXrc7KPzP1LxRBo=
+github.com/NibiruChain/collections v0.4.0 h1:KNJj+CJyqOT/Q33kcVzT2uLYIiwhiFAeZMhGLPge5Og=
+github.com/NibiruChain/collections v0.4.0/go.mod h1:tKTlBL+Cs1oJnS4tT9MIaFWr7BWsUXrc7KPzP1LxRBo=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
@@ -389,8 +389,8 @@ github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE
 github.com/coinbase/kryptology v1.8.0/go.mod h1:RYXOAPdzOGUe3qlSFkMGn58i3xUA8hmxYHksuq+8ciI=
 github.com/coinbase/rosetta-sdk-go v0.7.9 h1:lqllBjMnazTjIqYrOGv8h8jxjg9+hJazIGZr9ZvoCcA=
 github.com/coinbase/rosetta-sdk-go v0.7.9/go.mod h1:0/knutI7XGVqXmmH4OQD8OckFrbQ8yMsUZTG7FXCR2M=
-github.com/cometbft/cometbft v0.37.2 h1:XB0yyHGT0lwmJlFmM4+rsRnczPlHoAKFX6K8Zgc2/Jc=
-github.com/cometbft/cometbft v0.37.2/go.mod h1:Y2MMMN//O5K4YKd8ze4r9jmk4Y7h0ajqILXbH5JQFVs=
+github.com/cometbft/cometbft v0.37.4 h1:xyvvEqlyfK8MgNIIKVJaMsuIp03wxOcFmVkT26+Ikpg=
+github.com/cometbft/cometbft v0.37.4/go.mod h1:Cmg5Hp4sNpapm7j+x0xRyt2g0juQfmB752ous+pA0G8=
 github.com/cometbft/cometbft-db v0.11.0 h1:M3Lscmpogx5NTbb1EGyGDaFRdsoLWrUWimFEyf7jej8=
 github.com/cometbft/cometbft-db v0.11.0/go.mod h1:GDPJAC/iFHNjmZZPN8V8C1yr/eyityhi2W1hz2MGKSc=
 github.com/confio/ics23/go v0.9.0 h1:cWs+wdbS2KRPZezoaaj+qBleXgUk5WOQFMP3CQFGTr4=
