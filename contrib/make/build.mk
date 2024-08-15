@@ -34,7 +34,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb grocksdb_no_link static_wasm muslc ledger
+build_tags = netgo osusergo rocksdb pebbledb grocksdb_no_link static_wasm muslc ledger
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
