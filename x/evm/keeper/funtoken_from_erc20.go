@@ -139,14 +139,14 @@ func (k *Keeper) createFunTokenFromERC20(
 
 	// 5 | Officially create the funtoken mapping
 	funtoken = &evm.FunToken{
-		Erc20Addr:      eth.NewHexAddr(erc20),
+		Erc20Addr: eth.EIP55Addr{
+			Address: erc20,
+		},
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: false,
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(
-		ctx, funtoken.Erc20Addr.Addr(),
-		funtoken.BankDenom,
-		funtoken.IsMadeFromCoin,
+		ctx, erc20, bankDenom, false,
 	)
 }

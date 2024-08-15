@@ -64,7 +64,7 @@ func (s *Suite) TestExportInitGenesis() {
 	// Create fungible token from bank coin
 	funToken := evmtest.CreateFunTokenForBankCoin(&deps, "unibi", &s.Suite)
 	s.Require().NoError(err)
-	funTokenAddr := funToken.Erc20Addr.Addr()
+	funTokenAddr := funToken.Erc20Addr.Address
 
 	// Fund sender's wallet
 	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin("unibi", totalSupply.Int64()))
@@ -75,13 +75,15 @@ func (s *Suite) TestExportInitGenesis() {
 	)
 	s.Require().NoError(err)
 
+	eip55Addr, err := eth.NewEIP55AddrFromStr(toUserC.String())
+	s.Require().NoError(err)
 	// Send fungible token coins from bank to evm
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		deps.Ctx,
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.Coin{Denom: "unibi", Amount: math.NewInt(amountToSendC.Int64())},
-			ToEthAddr: eth.MustNewHexAddrFromStr(toUserC.String()),
+			ToEthAddr: eip55Addr,
 		},
 	)
 	s.Require().NoError(err)

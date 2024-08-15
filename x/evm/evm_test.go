@@ -26,59 +26,53 @@ func TestSuite_RunAll(t *testing.T) {
 }
 
 func (s *TestSuite) TestFunToken() {
-	for testIdx, tc := range []struct {
+	for idx, tc := range []struct {
 		bankDenom string
-		erc20Addr eth.HexAddr
-		wantErr   string
+		input     string
+		wantErr   bool
 	}{
 		{
 			// sad: Invalid bank denom
 			bankDenom: "",
-			erc20Addr: eth.HexAddr(""),
-			wantErr:   "FunTokenError",
+			input:     "5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
+			wantErr:   true,
 		},
 		{
 			bankDenom: "unibi",
-			erc20Addr: eth.MustNewHexAddrFromStr("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"),
-			wantErr:   "",
+			input:     "5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
 		},
 		{
 			bankDenom: "unibi",
-			erc20Addr: eth.MustNewHexAddrFromStr("5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED"),
-			wantErr:   "",
+			input:     "5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED",
 		},
 		{
-			// NOTE: notice how this one errors using the same happy path
-			// input as above because an unsafe constructor was used.
-			// Naked type overrides should not be used with eth.HexAddr.
-			// Always use NewHexAddr, NewHexAddrFromStr, or MustNewHexAddr...
 			bankDenom: "unibi",
-			erc20Addr: eth.HexAddr("5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"),
-			wantErr:   "not encoded as expected",
+			input:     "5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
 		},
 
 		{
 			bankDenom: "ibc/AAA/BBB",
-			erc20Addr: eth.MustNewHexAddrFromStr("0xE1aA1500b962528cBB42F05bD6d8A6032a85602f"),
-			wantErr:   "",
+			input:     "0xE1aA1500b962528cBB42F05bD6d8A6032a85602f",
 		},
 		{
 			bankDenom: "tf/contract-addr/subdenom",
-			erc20Addr: eth.MustNewHexAddrFromStr("0x6B2e60f1030aFa69F584829f1d700b47eE5Fc74a"),
-			wantErr:   "",
+			input:     "0x6B2e60f1030aFa69F584829f1d700b47eE5Fc74a",
 		},
 	} {
-		s.Run(strconv.Itoa(testIdx), func() {
+		s.Run(strconv.Itoa(idx), func() {
+			eip55Addr, err := eth.NewEIP55AddrFromStr(tc.input)
+			s.Require().NoError(err)
+
 			funtoken := evm.FunToken{
-				Erc20Addr: tc.erc20Addr,
+				Erc20Addr: eip55Addr,
 				BankDenom: tc.bankDenom,
 			}
-			err := funtoken.Validate()
-			if tc.wantErr != "" {
-				s.Require().Error(err, "funtoken %s", funtoken)
+			if tc.wantErr {
+				s.Require().Error(funtoken.Validate())
 				return
 			}
-			s.Require().NoError(err)
+
+			s.Require().NoError(funtoken.Validate())
 		})
 	}
 
@@ -109,10 +103,16 @@ func (s *TestSuite) TestFunToken() {
 		},
 	} {
 		s.Run(tc.name, func() {
-			funA := evm.FunToken{Erc20Addr: eth.HexAddr(tc.A)}
-			funB := evm.FunToken{Erc20Addr: eth.HexAddr(tc.B)}
+			addrA, err := eth.NewEIP55AddrFromStr(tc.A)
+			s.Require().NoError(err)
 
-			s.EqualValues(funA.Erc20Addr.Addr(), funB.Erc20Addr.Addr())
+			addrB, err := eth.NewEIP55AddrFromStr(tc.B)
+			s.Require().NoError(err)
+
+			funA := evm.FunToken{Erc20Addr: addrA}
+			funB := evm.FunToken{Erc20Addr: addrB}
+
+			s.EqualValues(funA.Erc20Addr.Address, funB.Erc20Addr.Address)
 		})
 	}
 }

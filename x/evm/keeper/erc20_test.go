@@ -12,7 +12,7 @@ func (s *Suite) TestERC20Calls() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "ibc/btc"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	contract := funtoken.Erc20Addr.Addr()
+	contract := funtoken.Erc20Addr.Address
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{

@@ -41,7 +41,9 @@ func (k *Keeper) createFunTokenFromCoin(
 
 	// 5 | Officially create the funtoken mapping
 	funtoken = &evm.FunToken{
-		Erc20Addr:      eth.NewHexAddr(erc20Addr),
+		Erc20Addr: eth.EIP55Addr{
+			Address: erc20Addr,
+		},
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: true,
 	}

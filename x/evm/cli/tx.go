@@ -84,7 +84,7 @@ func CmdCreateFunTokenFromERC20() *cobra.Command {
 			txFactory = txFactory.
 				WithTxConfig(clientCtx.TxConfig).
 				WithAccountRetriever(clientCtx.AccountRetriever)
-			erc20Addr, err := eth.NewHexAddrFromStr(args[0])
+			erc20Addr, err := eth.NewEIP55AddrFromStr(args[0])
 			if err != nil {
 				return err
 			}
@@ -118,6 +118,11 @@ func ConvertCoinToEvm() *cobra.Command {
 				WithTxConfig(clientCtx.TxConfig).
 				WithAccountRetriever(clientCtx.AccountRetriever)
 
+			eip55Addr, err := eth.NewEIP55AddrFromStr(args[0])
+			if err != nil {
+				return err
+			}
+
 			coin, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
 				return err
@@ -125,7 +130,7 @@ func ConvertCoinToEvm() *cobra.Command {
 			msg := &evm.MsgConvertCoinToEvm{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
-				ToEthAddr: eth.MustNewHexAddrFromStr(args[0]),
+				ToEthAddr: eip55Addr,
 			}
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
 		},

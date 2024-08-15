@@ -67,7 +67,7 @@ func (s *Suite) TestHappyPath() {
 	s.T().Log("Create FunToken mapping and ERC20")
 	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	contract := funtoken.Erc20Addr.Addr()
+	contract := funtoken.Erc20Addr.Address
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
@@ -83,9 +83,11 @@ func (s *Suite) TestHappyPath() {
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
-			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(69_420)),
-			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+			Sender:   deps.Sender.NibiruAddr.String(),
+			BankCoin: sdk.NewCoin(bankDenom, sdk.NewInt(69_420)),
+			ToEthAddr: eth.EIP55Addr{
+				Address: deps.Sender.EthAddr,
+			},
 		},
 	)
 	s.Require().NoError(err)
