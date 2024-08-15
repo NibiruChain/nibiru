@@ -5,9 +5,9 @@
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
 GOLANG_CROSS_VERSION  ?= v1.21.5
 
-# The `make release` command is running a Docker container with the image 
+# The `make release` command is running a Docker container with the image
 # `gorelease/goreleaser-cross:${GOLANG_CROSS_VERSION}`. This command:
-# `-v "$(CURDIR)":/go/src/$(PACKAGE_NAME)`: mounts the current directory 
+# `-v "$(CURDIR)":/go/src/$(PACKAGE_NAME)`: mounts the current directory
 # `release --clean`: executes the release inside the directory
 release:
 	docker run \
