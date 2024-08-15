@@ -82,7 +82,7 @@ func (s *Suite) TestHappyPath() {
 
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(69_420)),
 			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),

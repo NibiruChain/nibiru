@@ -30,7 +30,7 @@ service Msg {
   // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc ConvertCoinToEvm(MsgSendFunTokenToEvm) returns (MsgSendFunTokenToEvmResponse);
+  rpc ConvertCoinToEvm(MsgConvertCoinToEvm) returns (MsgConvertCoinToEvmResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -210,8 +210,8 @@ message MsgCreateFunTokenResponse {
   eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
 }
 
-// MsgSendFunTokenToEvm: Arguments to send a bank coin to ERC-20 representation
-message MsgSendFunTokenToEvm {
+// MsgConvertCoinToEvm: Arguments to send a bank coin to ERC-20 representation
+message MsgConvertCoinToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.HexAddr",
@@ -227,4 +227,4 @@ message MsgSendFunTokenToEvm {
     (gogoproto.nullable) = false
   ];
 }
-message MsgSendFunTokenToEvmResponse {}
+message MsgConvertCoinToEvmResponse {}

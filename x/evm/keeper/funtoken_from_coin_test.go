@@ -209,7 +209,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.T().Log("Convert bank coin to erc-20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(10)),
 			ToEthAddr: eth.NewHexAddr(alice.EthAddr),
@@ -245,7 +245,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.T().Log("sad: Convert more bank coin to erc-20, insufficient funds")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(100)),
 			ToEthAddr: eth.NewHexAddr(alice.EthAddr),

@@ -228,7 +228,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 
 	s.T().Log("send cosmos tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
 			Sender:    randomAcc.String(),
 			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
@@ -245,7 +245,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 
 	s.T().Log("sad: send too many cosmos tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
 			Sender:    randomAcc.String(),
 			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),

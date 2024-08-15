@@ -99,7 +99,7 @@ func CmdCreateFunTokenFromERC20() *cobra.Command {
 	return cmd
 }
 
-// ConvertCoinToEvm broadcast MsgSendFunTokenToEvm
+// ConvertCoinToEvm broadcast MsgConvertCoinToEvm
 func ConvertCoinToEvm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-funtoken-to-erc20 [to_eth_addr] [coin] [flags]",
@@ -122,7 +122,7 @@ func ConvertCoinToEvm() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := &evm.MsgSendFunTokenToEvm{
+			msg := &evm.MsgConvertCoinToEvm{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
 				ToEthAddr: eth.MustNewHexAddrFromStr(args[0]),

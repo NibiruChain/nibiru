@@ -547,8 +547,8 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
 func (k *Keeper) ConvertCoinToEvm(
-	goCtx context.Context, msg *evm.MsgSendFunTokenToEvm,
-) (resp *evm.MsgSendFunTokenToEvmResponse, err error) {
+	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
+) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
@@ -579,7 +579,7 @@ func (k Keeper) convertCoinNativeCoin(
 	recipient gethcommon.Address,
 	coin sdk.Coin,
 	fungibleTokenMapping evm.FunToken,
-) (*evm.MsgSendFunTokenToEvmResponse, error) {
+) (*evm.MsgConvertCoinToEvmResponse, error) {
 	// Step 1: Escrow bank coins with EVM module account
 	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
@@ -613,7 +613,7 @@ func (k Keeper) convertCoinNativeCoin(
 		BankCoin:             coin,
 	})
 
-	return &evm.MsgSendFunTokenToEvmResponse{}, nil
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
 
 // Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
@@ -625,7 +625,7 @@ func (k Keeper) convertCoinNativeERC20(
 	recipient gethcommon.Address,
 	coin sdk.Coin,
 	fungibleTokenMapping evm.FunToken,
-) (*evm.MsgSendFunTokenToEvmResponse, error) {
+) (*evm.MsgConvertCoinToEvmResponse, error) {
 	erc20Addr := fungibleTokenMapping.Erc20Addr.ToAddr()
 
 	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
@@ -705,5 +705,5 @@ func (k Keeper) convertCoinNativeERC20(
 		BankCoin:             coin,
 	})
 
-	return &evm.MsgSendFunTokenToEvmResponse{}, nil
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
