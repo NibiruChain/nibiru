@@ -62,11 +62,6 @@ func (h HexAddr) ToAddr() gethcommon.Address {
 	return gethcommon.HexToAddress(string(h))
 }
 
-// ToBytes gets the string representation of the underlying address.
-func (h HexAddr) ToBytes() []byte {
-	return h.ToAddr().Bytes()
-}
-
 func (h HexAddr) String() string { return h.ToAddr().Hex() }
 
 // Marshal implements the gogo proto custom type interface.
