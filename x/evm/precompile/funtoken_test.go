@@ -8,7 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -63,13 +65,30 @@ func (s *Suite) TestHappyPath() {
 		"did not see precompile address during \"InitPrecompiles\"")
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	bankDenom := "ibc/usdc"
+	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
 	contract := funtoken.Erc20Addr.ToAddr()
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(69_420))),
+	))
+
+	_, err := deps.EvmKeeper.ConvertCoinToEvm(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgConvertCoinToEvm{
+			Sender:    deps.Sender.NibiruAddr.String(),
+			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(69_420)),
+			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
+		},
+	)
+	s.Require().NoError(err)
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
@@ -81,33 +100,10 @@ func (s *Suite) TestHappyPath() {
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
-	s.T().Log("Mint tokens - Success")
-	{
-		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
-		s.NoError(err)
-
-		_, err = deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, evm.EVM_MODULE_ADDRESS, &contract, true, input,
-		)
-		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(69_420))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
-	}
-
-	s.T().Log("Transfer - Success (sanity check)")
 	randomAcc := testutil.AccAddress()
-	{
-		_, err := deps.EvmKeeper.ERC20().Transfer(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(1), deps.Ctx)
-		s.NoError(err)
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(69_419))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
-		s.Equal("0",
-			deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
-		)
-	}
 
 	s.T().Log("Send using precompile")
-	amtToSend := int64(419)
+	amtToSend := int64(420)
 	callArgs := []any{contract, big.NewInt(amtToSend), randomAcc.String()}
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
 	s.NoError(err)
@@ -117,15 +113,9 @@ func (s *Suite) TestHappyPath() {
 	)
 	s.Require().NoError(err)
 
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(69_419-amtToSend))
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
-	s.Equal(fmt.Sprintf("%d", amtToSend),
-		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
-	)
-
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(69_000))
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
-	s.Equal("419",
-		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
+	s.Equal(sdk.NewInt(420),
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount,
 	)
 }

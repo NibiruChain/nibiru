@@ -514,14 +514,14 @@ func (m MsgCreateFunToken) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
 
-// GetSigners returns the expected signers for a MsgSendFunTokenToEvm message.
-func (m MsgSendFunTokenToEvm) GetSigners() []sdk.AccAddress {
+// GetSigners returns the expected signers for a MsgConvertCoinToEvm message.
+func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{addr}
 }
 
 // ValidateBasic does a sanity check of the provided data
-func (m *MsgSendFunTokenToEvm) ValidateBasic() error {
+func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender addr")
 	}
@@ -532,6 +532,6 @@ func (m *MsgSendFunTokenToEvm) ValidateBasic() error {
 }
 
 // GetSignBytes implements the LegacyMsg interface.
-func (m MsgSendFunTokenToEvm) GetSignBytes() []byte {
+func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }

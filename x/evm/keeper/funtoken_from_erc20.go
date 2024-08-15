@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -27,26 +26,24 @@ import (
 func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	contract gethcommon.Address,
-) (info ERC20Metadata, err error) {
-	var abi *gethabi.ABI = embeds.SmartContract_ERC20Minter.ABI
-
+) (info *ERC20Metadata, err error) {
 	// Load name, symbol, decimals
-	name, err := k.LoadERC20Name(ctx, abi, contract)
+	name, err := k.LoadERC20Name(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
-	symbol, err := k.LoadERC20Symbol(ctx, abi, contract)
+	symbol, err := k.LoadERC20Symbol(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
-	decimals, err := k.LoadERC20Decimals(ctx, abi, contract)
+	decimals, err := k.LoadERC20Decimals(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
-		return info, err
+		return nil, err
 	}
 
-	return ERC20Metadata{
+	return &ERC20Metadata{
 		Name:     name,
 		Symbol:   symbol,
 		Decimals: decimals,
@@ -69,7 +66,7 @@ type (
 	ERC20BigInt struct{ Value *big.Int }
 )
 
-// CreateFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
+// createFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
 //
 // This function performs the following steps:
 //  1. Checks if the ERC20 token is already registered as a FunToken.
@@ -92,9 +89,9 @@ type (
 //   - If the bank coin denom is already registered.
 //   - If the bank metadata validation fails.
 //   - If the FunToken insertion fails.
-func (k *Keeper) CreateFunTokenFromERC20(
+func (k *Keeper) createFunTokenFromERC20(
 	ctx sdk.Context, erc20 gethcommon.Address,
-) (funtoken evm.FunToken, err error) {
+) (funtoken *evm.FunToken, err error) {
 	// 1 | ERC20 already registered with FunToken?
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20)); len(funtokens) > 0 {
 		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20)
@@ -141,7 +138,7 @@ func (k *Keeper) CreateFunTokenFromERC20(
 	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
 
 	// 5 | Officially create the funtoken mapping
-	funtoken = evm.FunToken{
+	funtoken = &evm.FunToken{
 		Erc20Addr:      eth.NewHexAddr(erc20),
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: false,
