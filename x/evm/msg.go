@@ -525,7 +525,7 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender addr")
 	}
-	if m.ToEthAddr == "" {
+	if m.ToEthAddr.Address.String() == "" || m.ToEthAddr.Size() == 0 {
 		return fmt.Errorf("empty to_eth_addr")
 	}
 	return nil

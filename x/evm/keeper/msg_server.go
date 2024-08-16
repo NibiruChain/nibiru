@@ -500,7 +500,7 @@ func (k *Keeper) CreateFunToken(
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.ToAddr())
+		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Address)
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
@@ -552,7 +552,6 @@ func (k *Keeper) ConvertCoinToEvm(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	ethRecipient := msg.ToEthAddr.ToAddr()
 
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
@@ -565,9 +564,9 @@ func (k *Keeper) ConvertCoinToEvm(
 	fungibleTokenMapping := funTokens[0]
 
 	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinNativeCoin(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinNativeCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
 	} else {
-		return k.convertCoinNativeERC20(ctx, sender, ethRecipient, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinNativeERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
 	}
 }
 
@@ -578,7 +577,7 @@ func (k Keeper) convertCoinNativeCoin(
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
 	coin sdk.Coin,
-	fungibleTokenMapping evm.FunToken,
+	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	// Step 1: Escrow bank coins with EVM module account
 	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
@@ -586,14 +585,14 @@ func (k Keeper) convertCoinNativeCoin(
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
 
-	erc20ContractAddr := fungibleTokenMapping.Erc20Addr.ToAddr()
+	erc20Addr := funTokenMapping.Erc20Addr.Address
 
 	// Step 2: mint ERC-20 tokens for recipient
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
 		evm.EVM_MODULE_ADDRESS,
-		&erc20ContractAddr,
+		&erc20Addr,
 		true,
 		"mint",
 		recipient,
@@ -604,11 +603,11 @@ func (k Keeper) convertCoinNativeCoin(
 	}
 	if evmResp.Failed() {
 		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20ContractAddr.String())
+			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
 	}
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
-		Erc20ContractAddress: erc20ContractAddr.String(),
+		Erc20ContractAddress: erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
 		BankCoin:             coin,
 	})
@@ -624,9 +623,9 @@ func (k Keeper) convertCoinNativeERC20(
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
 	coin sdk.Coin,
-	fungibleTokenMapping evm.FunToken,
+	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	erc20Addr := fungibleTokenMapping.Erc20Addr.ToAddr()
+	erc20Addr := funTokenMapping.Erc20Addr.Address
 
 	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
 	if err != nil {
@@ -700,7 +699,7 @@ func (k Keeper) convertCoinNativeERC20(
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
-		Erc20ContractAddress: fungibleTokenMapping.Erc20Addr.String(),
+		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
 		BankCoin:             coin,
 	})

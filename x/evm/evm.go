@@ -15,10 +15,10 @@ import (
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
 func (fun FunToken) ID() []byte {
-	return NewFunTokenID(fun.Erc20Addr, fun.BankDenom)
+	return NewFunTokenID(fun.Erc20Addr.Address, fun.BankDenom)
 }
 
-func NewFunTokenID(erc20 eth.HexAddr, bankDenom string) []byte {
+func NewFunTokenID(erc20 gethcommon.Address, bankDenom string) []byte {
 	return tmhash.Sum([]byte(erc20.String() + "|" + bankDenom))
 }
 
@@ -28,10 +28,6 @@ func funTokenValidationError(err error) error {
 
 func (fun FunToken) Validate() error {
 	if err := sdk.ValidateDenom(fun.BankDenom); err != nil {
-		return funTokenValidationError(err)
-	}
-
-	if err := fun.Erc20Addr.Valid(); err != nil {
 		return funTokenValidationError(err)
 	}
 
@@ -45,7 +41,9 @@ func NewFunToken(
 	erc20 gethcommon.Address, bankDenom string, isMadeFromCoin bool,
 ) FunToken {
 	return FunToken{
-		Erc20Addr:      eth.NewHexAddr(erc20),
+		Erc20Addr: eth.EIP55Addr{
+			Address: erc20,
+		},
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: isMadeFromCoin,
 	}

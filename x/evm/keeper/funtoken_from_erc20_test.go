@@ -50,7 +50,9 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	})
 	s.Require().NoError(err)
 
-	erc20Addr := eth.NewHexAddr(deployResp.ContractAddr)
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
 
 	s.T().Log("sad: insufficient funds to create FunToken mapping")
 	_, err = deps.EvmKeeper.CreateFunToken(
@@ -155,7 +157,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
 	s.Require().NoError(err)
-	erc20Addr := eth.NewHexAddr(deployResp.ContractAddr)
 
 	s.T().Log("CreateFunToken for the ERC20")
 	s.Require().NoError(testapp.FundAccount(
@@ -168,20 +169,21 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	resp, err := deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
-			Sender:    deps.Sender.NibiruAddr.String(),
+			FromErc20: &eth.EIP55Addr{
+				Address: deployResp.ContractAddr,
+			},
+			Sender: deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.Require().NoError(err, "erc20 %s", erc20Addr)
+	s.Require().NoError(err, "erc20 %s", deployResp.ContractAddr)
 	bankDemon := resp.FuntokenMapping.BankDenom
 
 	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
-	erc20 := erc20Addr.ToAddr()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
 		deps.Sender.EthAddr,
-		&erc20,
+		&deployResp.ContractAddr,
 		true,
 		"mint",
 		deps.Sender.EthAddr,
@@ -199,15 +201,15 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		erc20Addr.ToAddr(),
+		deployResp.ContractAddr,
 		big.NewInt(1),
 		randomAcc.String(),
 	)
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_419))
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_419))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(1))
 	s.Require().Equal(sdk.NewInt(1),
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
@@ -220,7 +222,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		"bankSend",
-		erc20Addr.ToAddr(),
+		deployResp.ContractAddr,
 		big.NewInt(70_000),
 		randomAcc.String(),
 	)
@@ -229,16 +231,18 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	s.T().Log("send cosmos tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
-			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
-			Sender:    randomAcc.String(),
-			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+			ToEthAddr: eth.EIP55Addr{
+				Address: deps.Sender.EthAddr,
+			},
+			Sender:   randomAcc.String(),
+			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
 		},
 	)
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_420))
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_420))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
 	s.Require().True(
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)),
 	)
@@ -246,9 +250,11 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 	s.T().Log("sad: send too many cosmos tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
-			ToEthAddr: eth.NewHexAddr(deps.Sender.EthAddr),
-			Sender:    randomAcc.String(),
-			BankCoin:  sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+			ToEthAddr: eth.EIP55Addr{
+				Address: deps.Sender.EthAddr,
+			},
+			Sender:   randomAcc.String(),
+			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
 		},
 	)
 	s.Require().Error(err)
