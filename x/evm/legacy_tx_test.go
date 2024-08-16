@@ -133,7 +133,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasPrice() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap
+		actual := tc.tx.GetGasFeeCap()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -177,7 +177,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasFeeCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap
+		actual := tc.tx.GetGasFeeCap()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
