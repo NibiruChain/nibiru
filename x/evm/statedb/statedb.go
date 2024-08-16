@@ -490,10 +490,12 @@ func (s *StateDB) StateObjects() map[common.Address]*stateObject {
 }
 
 func (s *StateDB) GetTransientState(addr common.Address, key common.Hash) common.Hash {
+	// TODO(k-yang): implement
 	return common.Hash{}
 }
 
 func (s *StateDB) SetTransientState(addr common.Address, key, value common.Hash) {
+	// TODO(k-yang): implement
 }
 
 func (s *StateDB) Prepare(rules params.Rules, sender, coinbase common.Address, dst *common.Address, precompiles []common.Address, list types.AccessList) {
