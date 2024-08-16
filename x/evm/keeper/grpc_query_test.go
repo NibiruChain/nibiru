@@ -931,7 +931,9 @@ func (s *Suite) TestQueryFunTokenMapping() {
 				}
 				wantResp = &evm.QueryFunTokenMappingResponse{
 					FunToken: &evm.FunToken{
-						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						Erc20Addr: eth.EIP55Addr{
+							Address: gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+						},
 						BankDenom:      "unibi",
 						IsMadeFromCoin: true,
 					},
@@ -956,7 +958,9 @@ func (s *Suite) TestQueryFunTokenMapping() {
 				}
 				wantResp = &evm.QueryFunTokenMappingResponse{
 					FunToken: &evm.FunToken{
-						Erc20Addr:      "0xAEf9437FF23D48D73271a41a8A094DEc9ac71477",
+						Erc20Addr: eth.EIP55Addr{
+							Address: gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
+						},
 						BankDenom:      "unibi",
 						IsMadeFromCoin: true,
 					},
