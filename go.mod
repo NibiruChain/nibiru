@@ -246,7 +246,7 @@ replace (
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => /Users/kevinyang/code/NibiruChain/go-ethereum
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.11.6-nibiru
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.12
