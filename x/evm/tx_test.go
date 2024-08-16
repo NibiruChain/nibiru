@@ -366,7 +366,7 @@ func (suite *TxDataTestSuite) TestDynamicFeeTxGetGasFeeCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap()
+		actual := tc.tx.GetGasFeeCap
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

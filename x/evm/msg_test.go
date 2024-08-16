@@ -67,7 +67,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_Constructor() {
 	// suite.Require().Equal(msg.Data.To, suite.to.Hex())
 	s.Require().Equal(msg.Route(), evm.RouterKey)
 	s.Require().Equal(msg.Type(), evm.TypeMsgEthereumTx)
-	// suite.Require().NotNil(msg.To())
+	// suite.Require().NotNil(msg.To)
 	s.Require().Equal(msg.GetMsgs(), []sdk.Msg{msg})
 	s.Require().Panics(func() { msg.GetSigners() })
 	s.Require().Panics(func() { msg.GetSignBytes() })

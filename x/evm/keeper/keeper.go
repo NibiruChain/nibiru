@@ -132,7 +132,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // Tracer return a default vm.Tracer based on current keeper state
 func (k Keeper) Tracer(
-	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
+	ctx sdk.Context, msg *core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
-	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight(), uint64(ctx.BlockTime().Unix()))
 }

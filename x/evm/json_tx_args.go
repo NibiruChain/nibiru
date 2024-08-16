@@ -7,11 +7,11 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
-	geth "github.com/ethereum/go-ethereum/core/types"
+	core "github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 // JsonTxArgs represents the arguments to construct a new transaction
@@ -38,8 +38,8 @@ type JsonTxArgs struct {
 	Input *hexutil.Bytes `json:"input"`
 
 	// Introduced by AccessListTxType transaction.
-	AccessList *geth.AccessList `json:"accessList,omitempty"`
-	ChainID    *hexutil.Big     `json:"chainId,omitempty"`
+	AccessList *gethcore.AccessList `json:"accessList,omitempty"`
+	ChainID    *hexutil.Big         `json:"chainId,omitempty"`
 }
 
 // String return the struct in a string format
@@ -158,10 +158,10 @@ func (args *JsonTxArgs) ToMsgEthTx() *MsgEthereumTx {
 
 // ToMessage converts the arguments to the Message type used by the core evm.
 // This assumes that setTxDefaults has been called.
-func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.Message, error) {
+func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (*core.Message, error) {
 	// Reject invalid combinations of pre- and post-1559 fee styles
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
-		return geth.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
+		return nil, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
 	// Set sender address or use zero address if none specified.
@@ -218,7 +218,7 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.M
 		value = args.Value.ToInt()
 	}
 	data := args.GetData()
-	var accessList geth.AccessList
+	var accessList gethcore.AccessList
 	if args.AccessList != nil {
 		accessList = *args.AccessList
 	}
@@ -228,8 +228,16 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.M
 		nonce = uint64(*args.Nonce)
 	}
 
-	msg := geth.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
-	return msg, nil
+	return &core.Message{
+		From:       addr,
+		To:         args.To,
+		Nonce:      nonce,
+		Value:      value,
+		GasLimit:   gas,
+		GasPrice:   gasPrice,
+		Data:       data,
+		AccessList: accessList,
+	}, nil
 }
 
 // GetFrom retrieves the transaction sender address.

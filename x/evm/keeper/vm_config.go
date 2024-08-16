@@ -54,16 +54,11 @@ func (k *Keeper) TxConfig(
 func (k Keeper) VMConfig(
 	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
-	var debug bool
-	if _, ok := tracer.(evm.NoOpTracer); !ok {
-		debug = true
-	}
-
 	return vm.Config{
-		Debug:     debug,
-		Tracer:    tracer,
-		NoBaseFee: false,
-		ExtraEips: cfg.Params.EIPs(),
+		EnablePreimageRecording: true,
+		Tracer:                  tracer,
+		NoBaseFee:               false,
+		ExtraEips:               cfg.Params.EIPs(),
 	}
 }
 

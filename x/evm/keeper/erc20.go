@@ -11,6 +11,7 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
@@ -189,19 +190,18 @@ func (k Keeper) CallContractWithInput(
 	}
 
 	unusedBigInt := big.NewInt(0)
-	evmMsg := gethcore.NewMessage(
-		fromAcc,
-		contract,
-		nonce,
-		unusedBigInt, // amount
-		gasLimit,
-		unusedBigInt, // gasFeeCap
-		unusedBigInt, // gasTipCap
-		unusedBigInt, // gasPrice
-		contractInput,
-		gethcore.AccessList{},
-		!commit, // isFake
-	)
+	evmMsg := &core.Message{
+		To:         contract,
+		From:       fromAcc,
+		Nonce:      nonce,
+		Value:      unusedBigInt,
+		GasLimit:   gasLimit,
+		GasPrice:   unusedBigInt,
+		Data:       contractInput,
+		AccessList: gethcore.AccessList{},
+		GasFeeCap:  unusedBigInt,
+		GasTipCap:  unusedBigInt,
+	}
 
 	// Apply EVM message
 	evmCfg, err := k.GetEVMConfig(

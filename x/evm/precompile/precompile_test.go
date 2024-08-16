@@ -42,9 +42,9 @@ func (s *Suite) TestOrderedPrecompileAddresses() {
 		return vmAddrInts[i].Cmp(vmAddrInts[j]) < 0
 	}
 	sort.Slice(vmAddrInts, lessFunc)
-	s.Require().EqualValues(vmAddrInts, vmAddrIntsBefore, "vm precompiles not ordered in InitPrecompiles")
+	s.EqualValues(vmAddrInts, vmAddrIntsBefore, "vm precompiles not ordered in InitPrecompiles")
 
 	s.T().Log("3 | The ordered map produces the same ordered address slice")
 	om := omap.SortedMap_EthAddress[vm.PrecompiledContract](unorderedMap)
-	s.Require().EqualValues(orderedKeys, om.Keys())
+	s.EqualValues(orderedKeys, om.Keys())
 }
