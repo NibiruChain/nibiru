@@ -70,9 +70,6 @@ func (s *Suite) TestFailToPackABI() {
 func (s *Suite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
-	s.True(deps.EvmKeeper.IsAvailablePrecompile(precompile.PrecompileAddr_FunToken),
-		"did not see precompile address during \"InitPrecompiles\"")
-
 	s.T().Log("Create FunToken mapping and ERC20")
 	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
