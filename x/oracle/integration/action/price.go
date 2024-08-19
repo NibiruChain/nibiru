@@ -7,10 +7,10 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func SetOraclePrice(pair asset.Pair, price sdk.Dec) action.Action {
@@ -25,10 +25,10 @@ type setPairPrice struct {
 	Price sdk.Dec
 }
 
-func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.OracleKeeper.SetPrice(ctx, s.Pair, s.Price)
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func InsertOraclePriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) action.Action {
@@ -45,12 +45,12 @@ type insertOraclePriceSnapshot struct {
 	Price sdk.Dec
 }
 
-func (s insertOraclePriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (s insertOraclePriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.OracleKeeper.PriceSnapshots.Insert(ctx, collections.Join(s.Pair, s.Time), types.PriceSnapshot{
 		Pair:        s.Pair,
 		Price:       s.Price,
 		TimestampMs: s.Time.UnixMilli(),
 	})
 
-	return ctx, nil, true
+	return ctx, nil
 }

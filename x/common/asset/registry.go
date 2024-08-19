@@ -1,8 +1,8 @@
 package asset
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
 
 type registry map[string]set.Set[string]

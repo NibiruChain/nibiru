@@ -7,19 +7,19 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 )
 
 type increaseBlockNumberBy struct {
 	numBlocks int64
 }
 
-func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.EndBlocker(ctx, types.RequestEndBlock{Height: ctx.BlockHeight()})
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + i.numBlocks)
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 // IncreaseBlockNumberBy increases the block number by the given number of blocks
@@ -31,10 +31,10 @@ type increaseBlockTimeBy struct {
 	seconds time.Duration
 }
 
-func (i increaseBlockTimeBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (i increaseBlockTimeBy) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * i.seconds))
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func IncreaseBlockTimeBy(seconds time.Duration) Action {
@@ -45,8 +45,8 @@ type setBlockTime struct {
 	blockTime time.Time
 }
 
-func (s setBlockTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	return ctx.WithBlockTime(s.blockTime), nil, true
+func (s setBlockTime) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	return ctx.WithBlockTime(s.blockTime), nil
 }
 
 // SetBlockTime sets the block time to the given value
@@ -58,8 +58,8 @@ type setBlockNumber struct {
 	blockNumber int64
 }
 
-func (s setBlockNumber) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	return ctx.WithBlockHeight(s.blockNumber), nil, true
+func (s setBlockNumber) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	return ctx.WithBlockHeight(s.blockNumber), nil
 }
 
 // SetBlockNumber sets the block number to the given value
@@ -69,7 +69,7 @@ func SetBlockNumber(blockNumber int64) Action {
 
 type moveToNextBlock struct{}
 
-func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.EndBlock(types.RequestEndBlock{})
 	app.Commit()
 
@@ -85,7 +85,7 @@ func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	return app.NewContext(
 		false,
 		newHeader,
-	).WithBlockTime(newHeader.Time), nil, true
+	).WithBlockTime(newHeader.Time), nil
 }
 
 func MoveToNextBlock() Action {
@@ -96,7 +96,7 @@ type moveToNextBlockWithDuration struct {
 	blockDuration time.Duration
 }
 
-func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
 	app.Commit()
 
@@ -112,7 +112,7 @@ func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sd
 	return app.NewContext(
 		false,
 		newHeader,
-	).WithBlockTime(newHeader.Time), nil, true
+	).WithBlockTime(newHeader.Time), nil
 }
 
 func MoveToNextBlockWithDuration(blockDuration time.Duration) Action {
@@ -125,7 +125,7 @@ type moveToNextBlockWithTime struct {
 	blockTime time.Time
 }
 
-func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
 	app.Commit()
 
@@ -141,7 +141,7 @@ func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 	return app.NewContext(
 		false,
 		newHeader,
-	).WithBlockTime(newHeader.Time), nil, true
+	).WithBlockTime(newHeader.Time), nil
 }
 
 func MoveToNextBlockWithTime(blockTime time.Time) Action {

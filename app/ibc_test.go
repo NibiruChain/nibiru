@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
 	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+	testapp.EnsureNibiruPrefix()
 }
 
 /*
@@ -32,7 +34,7 @@ func SetupNibiruTestingApp() (
 
 	// Create genesis state
 	encCdc := app.MakeEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	genesisState := app.NewDefaultGenesisState(encCdc.Codec)
 	testapp.SetDefaultSudoGenesis(genesisState)
 
 	return nibiruApp, genesisState
@@ -90,7 +92,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	path := NewIBCTestingTransferPath(suite.chainA, suite.chainB)
 	suite.coordinator.Setup(path)
 
-	amount, ok := sdk.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
+	amount, ok := math.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
 	suite.Require().True(ok)
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, amount)
 
@@ -195,7 +197,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	// check that module account escrow address is empty
 	escrowAddress := transfertypes.GetEscrowAddress(packet.GetDestPort(), packet.GetDestChannel())
 	balance = chainBApp.BankKeeper.GetBalance(suite.chainB.GetContext(), escrowAddress, sdk.DefaultBondDenom)
-	suite.Require().Equal(sdk.NewCoin(sdk.DefaultBondDenom, sdk.ZeroInt()), balance)
+	suite.Require().Equal(sdk.NewCoin(sdk.DefaultBondDenom, math.ZeroInt()), balance)
 
 	// check that balance on chain B is empty
 	balance = chainCApp.BankKeeper.GetBalance(suite.chainC.GetContext(), suite.chainC.SenderAccount.GetAddress(), voucherDenomTrace.IBCDenom())

@@ -3,11 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // MintAndAllocateInflation mints and allocates tokens based on the polynomial
@@ -54,7 +55,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 }
 
 // AllocatePolynomialInflation allocates coins from the inflation to external
-// modules according to proportions proportions:
+// modules according to proportions:
 //
 // Returns:
 //   - staking: Tokens minted for staking inflation that go to the decentralized
@@ -131,7 +132,7 @@ func (k Keeper) GetProportions(
 ) sdk.Coin {
 	return sdk.Coin{
 		Denom:  coin.Denom,
-		Amount: sdk.NewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
+		Amount: math.LegacyNewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
 	}
 }
 
@@ -145,21 +146,21 @@ func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.
 func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	if epochMintProvision.IsZero() {
-		return sdk.ZeroDec()
+		return math.LegacyZeroDec()
 	}
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, mintDenom)
 	if circulatingSupply.IsZero() {
-		return sdk.ZeroDec()
+		return math.LegacyZeroDec()
 	}
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
-	circulatingSupplyToDec := sdk.NewDecFromInt(circulatingSupply)
+	circulatingSupplyToDec := math.LegacyNewDecFromInt(circulatingSupply)
 	return epochMintProvision.
 		MulInt64(int64(k.GetEpochsPerPeriod(ctx))).
 		MulInt64(int64(k.GetPeriodsPerYear(ctx))).
 		Quo(circulatingSupplyToDec).
-		Mul(sdk.NewDec(100))
+		Mul(math.LegacyNewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage

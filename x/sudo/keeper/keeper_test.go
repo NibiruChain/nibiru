@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 func TestCheckPermissions(t *testing.T) {

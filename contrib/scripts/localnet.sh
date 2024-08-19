@@ -54,15 +54,10 @@ echo_success() {
 
 echo_info "Parsing flags for the script..."
 
-# $FLAG_NO_BUILD: toggles whether to build from source. The default
-#   behavior of the script is to run make install if the flag --no-build is not present.
-FLAG_NO_BUILD=false
+# $FLAG_SKIP_BUILD: toggles whether to build from source. The default
+#   behavior of the script is to run make install if the flag --no-build is omitted.
+FLAG_SKIP_BUILD=false
 
-# $FLAG_PERP: Feature flag for x/perp. Enabled with `--features perp`.
-FLAG_PERP=false
-
-# $FLAG_SPOT: Feature flag for x/spot. Enabled with `--features spot`.
-FLAG_SPOT=false
 
 build_from_source() {
   echo_info "Building from source..."
@@ -77,39 +72,37 @@ build_from_source() {
 # enable_feature_flag: Enables feature flags variables if present
 enable_feature_flag() {
   case $1 in
-    perp) FLAG_PERP=true ;;
-    spot) FLAG_SPOT=true ;;
-    *) echo_error "Unknown feature: $1" ;;
+  spot) FLAG_SPOT=true ;;
+  *) echo_error "Unknown feature: $1" ;;
   esac
 }
 
 # Iterate over flags, handling the cases: "--no-build" and "--features"
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --no-build)
-      FLAG_NO_BUILD=true
-      shift
-      ;;
-    --features)
-      shift # Remove '--features' from arguments
-      while [[ $# -gt 0 && $1 != --* ]]; do
-        enable_feature_flag "$1"
-        shift # Remove the feature name from arguments
-      done
-      ;;
-    *) shift ;; # Unknown arg
+  --no-build)
+    FLAG_SKIP_BUILD=true
+    shift
+    ;;
+  --features)
+    shift # Remove '--features' from arguments
+    while [[ $# -gt 0 && $1 != --* ]]; do
+      enable_feature_flag "$1"
+      shift # Remove the feature name from arguments
+    done
+    ;;
+  *) shift ;; # Unknown arg
   esac
 done
 
-# Check if FLAG_NO_BUILD was set to true
-if ! $FLAG_NO_BUILD; then
+
+# Check if FLAG_SKIP_BUILD was set to true
+if ! $FLAG_SKIP_BUILD; then
   build_from_source
 fi
 
 echo_info "Features flags:"
-echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
-echo "FLAG_PERP: $FLAG_PERP"
-echo "FLAG_SPOT: $FLAG_SPOT"
+echo "FLAG_SKIP_BUILD: $FLAG_SKIP_BUILD"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -126,9 +119,11 @@ if pgrep -x "$BINARY" >/dev/null; then
   killall nibid
 fi
 
-# Remove previous data
+# Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
-rm -rf "$CHAIN_DIR"
+$BINARY tendermint unsafe-reset-all
+rm -f "$CHAIN_DIR/config/genesis.json"
+rm -rf "$CHAIN_DIR/config/gentx/"
 
 # Add directory for chain, exit if error
 if ! mkdir -p "$CHAIN_DIR" 2>/dev/null; then
@@ -138,95 +133,60 @@ fi
 
 # Initialize nibid with "localnet" chain id
 echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
+if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
+  exit 1
 fi
 
-# Configure keyring-backend to "test"
-echo_info "Configuring keyring-backend..."
-if $BINARY config keyring-backend test; then
-  echo_success "Successfully configured keyring-backend"
-else
-  echo_error "Failed to configure keyring-backend"
-fi
-
-# Configure chain-id
-echo_info "Configuring chain-id..."
-if $BINARY config chain-id $CHAIN_ID; then
-  echo_success "Successfully configured chain-id"
-else
-  echo_error "Failed to configure chain-id"
-fi
-
-# Configure broadcast mode
-echo_info "Configuring broadcast mode..."
-if $BINARY config broadcast-mode sync; then
-  echo_success "Successfully configured broadcast-mode"
-else
-  echo_error "Failed to configure broadcast mode"
-fi
-
-# Configure output mode
-echo_info "Configuring output mode..."
-if $BINARY config output json; then
-  echo_success "Successfully configured output mode"
-else
-  echo_error "Failed to configure output mode"
-fi
+# nibid config
+echo_info "Updating nibid config..."
+$BINARY config keyring-backend test
+$BINARY config chain-id $CHAIN_ID
+$BINARY config broadcast-mode sync
+$BINARY config output json
+$BINARY config node "http://localhost:26657"
+$BINARY config # Prints config.
 
 # Enable API Server
-echo_info "Enabling API server"
-if sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml; then
-  echo_success "Successfully enabled API server"
-else
-  echo_error "Failed to enable API server"
-fi
+echo_info "config/app.toml: Enabling API server"
+sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+
+# Enable GRPC Server
+echo_info "config/app.toml: Enabling GRPC server"
+sed -i $SEDOPTION '/\[grpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+
+
+# Enable JSON RPC Server
+echo_info "config/app.toml: Enabling JSON API server"
+sed -i $SEDOPTION '/\[json\-rpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
 
 # Enable Swagger Docs
-echo_info "Enabling Swagger Docs"
-if sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml; then
-  echo_success "Successfully enabled Swagger Docs"
-else
-  echo_error "Failed to enable Swagger Docs"
-fi
+echo_info "config/app.toml: Enabling Swagger Docs"
+sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml
 
 # Enable CORS for localnet
-echo_info "Enabling CORS"
-if sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml; then
-  echo_success "Successfully enabled CORS"
-else
-  echo_error "Failed to enable CORS"
-fi
+echo_info "config/app.toml: Enabling CORS"
+sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml
 
 echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
-echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
-if $BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS; then
-  echo_success "Successfully added genesis account: $val_key_name"
-else
-  echo_error "Failed to add genesis account: $val_key_name"
+if ! $BINARY keys show $val_key_name; then 
+  echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
+  echo_success "Successfully added key: $val_key_name"
 fi
 
-val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
+val_address=$($BINARY keys show $val_key_name -a)
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
-echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
-  echo_success "Successfully added gentx"
-else
-  echo_error "Failed to add gentx"
-fi
-
-echo_info "Collecting gentx..."
-if $BINARY genesis collect-gentxs; then
-  echo_success "Successfully collected genesis txs into genesis.json"
-else
-  echo_error "Failed to collect genesis txs"
-fi
+$BINARY add-genesis-account $val_address $GENESIS_COINS
+# EVM encoded nibi address for the same account
+$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
+$BINARY add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS
+echo_success "Successfully added genesis account: $val_key_name"
 
 # ------------------------------------------------------------------------
 # Configure genesis params
@@ -246,24 +206,6 @@ add_genesis_param() {
 
 echo_info "Configuring genesis params"
 
-if $FLAG_PERP; then
-  curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-  source "$curr_dir/feat-perp.sh"
-
-  if add_genesis_perp_markets_with_coingecko_prices; then
-    echo_success "set perp markets with coingecko prices"
-  elif add_genesis_perp_markets_offline; then
-    echo_success "set perp markets with offline defaults"
-  else
-    echo_error "failed to set genesis perp markets"
-    exit 1
-  fi
-fi
-
-# if $FLAG_SPOT; then
-#   # Perform any actions specific to the x/spot feature
-# fi
-
 # set validator as sudoer
 add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 
@@ -272,9 +214,30 @@ price_btc="50000"
 price_eth="2000"
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
 
+# ------------------------------------------------------------------------
+# Gentx
+# ------------------------------------------------------------------------
+
+echo_info "Adding gentx validator..."
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
+  echo_success "Successfully added gentx"
+else
+  echo_error "Failed to add gentx"
+fi
+
+echo_info "Collecting gentx..."
+if $BINARY genesis collect-gentxs; then
+  echo_success "Successfully collected genesis txs into genesis.json"
+else
+  echo_error "Failed to collect genesis txs"
+fi
+
+# ------------------------------------------------------------------------
 # Start the network
+# ------------------------------------------------------------------------
+
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 $BINARY start --home "$CHAIN_DIR" --pruning nothing

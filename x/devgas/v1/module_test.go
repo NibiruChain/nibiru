@@ -3,9 +3,9 @@ package devgas_test
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/NibiruChain/nibiru/app/codec"
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/app/codec"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 func (s *GenesisTestSuite) TestAppModule() {

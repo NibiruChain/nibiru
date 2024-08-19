@@ -17,9 +17,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/inflation/client/cli"
-	"github.com/NibiruChain/nibiru/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // type check to ensure the interface is properly implemented
@@ -154,7 +155,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the inflation module.
-func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
+func (am AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.

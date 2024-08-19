@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func TestDenomStr_Validate(t *testing.T) {
@@ -35,7 +35,7 @@ func TestDenomStr_Validate(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tfDenom.Denom(), tc.denom)
-			assert.Equal(t, tfDenom.String(), string(tc.denom))
+			assert.Equal(t, tfDenom.Denom().String(), string(tc.denom))
 
 			assert.NoError(t, tfDenom.Validate())
 			assert.NotPanics(t, func() {
@@ -68,7 +68,7 @@ func TestGenesisState(t *testing.T) {
 			Denom: types.TFDenom{
 				Creator:  creator.String(),
 				Subdenom: testutil.Latin.Letters[lettersIdx : lettersIdx+4],
-			}.String(),
+			}.Denom().String(),
 			AuthorityMetadata: types.DenomAuthorityMetadata{
 				Admin: creator.String(),
 			},

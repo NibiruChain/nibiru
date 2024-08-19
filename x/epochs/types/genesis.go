@@ -36,6 +36,15 @@ func DefaultGenesisFromTime(startTime time.Time) *GenesisState {
 			EpochCountingStarted:    false,
 		},
 		{
+			Identifier:              DayEpochID,
+			StartTime:               startTime,
+			Duration:                24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   startTime,
+			EpochCountingStarted:    false,
+		},
+		{
 			Identifier:              WeekEpochID,
 			StartTime:               startTime,
 			Duration:                7 * 24 * time.Hour,

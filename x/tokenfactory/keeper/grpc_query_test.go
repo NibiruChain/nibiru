@@ -3,8 +3,8 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestQueryModuleParams() {
@@ -45,11 +45,11 @@ func (s *TestSuite) TestQueryDenoms() {
 	denomsResp, err := queryDenoms(denom.Creator)
 	s.NoError(err)
 	s.ElementsMatch(denomsResp.Denoms, []string{
-		denom.String(),
+		denom.Denom().String(),
 		types.TFDenom{
 			Creator:  denom.Creator,
 			Subdenom: "foobar",
-		}.String(),
+		}.Denom().String(),
 	})
 
 	denomsResp, err = queryDenoms("creator")
@@ -91,7 +91,7 @@ func (s *TestSuite) TestQueryDenomInfo() {
 	s.Run("case: happy", func() {
 		resp, err := s.querier.DenomInfo(s.GoCtx(),
 			&types.QueryDenomInfoRequest{
-				Denom: denom.String(),
+				Denom: denom.Denom().String(),
 			})
 		s.NoError(err)
 		s.Equal(creator.String(), resp.Admin)

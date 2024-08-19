@@ -84,7 +84,8 @@ buf_gen() {
   local proto_dir="$1"
 
   if [ ! buf ]; then
-    echo "Please install buf to generate protos."
+    echo "Please install buf to generate protos. Try using:"
+    echo "go install github.com/bufbuild/buf/cmd/buf@latest"
     exit 1
   fi 
 

@@ -1,17 +1,17 @@
 name: Linter
 
-# Run on every master merge and on PRs.
+# Run on every main merge and on PRs.
 on:
   push:
-    branches: ["master"]
-    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
+    branches: ["main"]
+    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
   pull_request:
-    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
+    paths: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum"]
 
-# Allow concurrent runs on main/release branches but isolates other branches 
+# Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
-  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 permissions:
   contents: read
@@ -23,13 +23,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.19
+          go-version: 1.21
           cache: false # the golangci-lint action already caches for us (https://github.com/golangci/golangci-lint-action#performance)
 
+      # Use GitHub actions output paramters to get go paths. For more info, see
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - name: "Set output variables for go cache"
+        id: go-cache-paths
+        run: |
+          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: "Go build cache"
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+          key: go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Go mod cache"
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: v1.54.2

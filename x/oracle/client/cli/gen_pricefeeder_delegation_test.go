@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/oracle/client/cli"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/stretchr/testify/require"
 )
 
-// Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddGenesisPricefeederDelegation(t *testing.T) {
-	app.SetPrefixes(app.AccountAddressPrefix)
+	app.SetPrefixes(appconst.AccountAddressPrefix)
 
 	tests := []struct {
 		name        string

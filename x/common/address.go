@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -20,3 +21,13 @@ func StringsToAddrs(strs ...string) []sdk.AccAddress {
 	}
 	return addrs
 }
+
+// TODO: (realu) Move to collections library
+var StringValueEncoder collections.ValueEncoder[string] = stringValueEncoder{}
+
+type stringValueEncoder struct{}
+
+func (a stringValueEncoder) Encode(value string) []byte    { return []byte(value) }
+func (a stringValueEncoder) Decode(b []byte) string        { return string(b) }
+func (a stringValueEncoder) Stringify(value string) string { return value }
+func (a stringValueEncoder) Name() string                  { return "string" }

@@ -9,8 +9,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type MsgServer struct {
@@ -89,7 +89,8 @@ type Sudoers struct {
 }
 
 func (sudo Sudoers) String() string {
-	return sudo.ToPb().String()
+	r := sudo.ToPb()
+	return r.String()
 }
 
 func (sudo Sudoers) ToPb() sudotypes.Sudoers {

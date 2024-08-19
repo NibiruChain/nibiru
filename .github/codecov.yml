@@ -1,0 +1,38 @@
+ignore:
+  - "**/*.pb.go"
+  - "**/*.pb.gw.go"
+  - "**/mocks/.*"
+  - "**/kubernetes_mock/.*"
+  - "pkg"
+codecov:
+  require_ci_to_pass: true
+parsers:
+  gcov:
+    branch_detection:
+      loop: yes
+      macro: no
+      method: no
+      conditional: yes
+coverage:
+  range: 40..92
+  round: down
+  precision: 2
+  # status: See https://docs.codecov.com/docs/commit-status
+  status:
+    project:
+      default:
+        target: 60%
+        if_not_found: success
+        threshold: 1% # Allow coverage to drop by X%, posting a success status.
+        # removed_code_behavior: Takes values [off, removals_only, adjust_base]
+        removed_code_behavior: adjust_base
+    patch:
+      default:
+        target: 0%
+
+comment: # this is a top-level key
+  layout: " diff, flags, files"
+  behavior: default
+  require_changes: true # if true: only post the comment if coverage changes
+  require_base: false # [true :: must have a base report to post]
+  require_head: true # [true :: must have a head report to post]
