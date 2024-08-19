@@ -107,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2001](https://github.com/NibiruChain/nibiru/pull/2001) - refactor(evm): simplify FunToken methods and tests
 - [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
 - [#2004](https://github.com/NibiruChain/nibiru/pull/2004) - refactor(evm)!: replace `HexAddr` with `EIP55Addr`
+- [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups
 
 #### Dapp modules: perp, spot, oracle, etc
 
