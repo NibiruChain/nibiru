@@ -21,17 +21,6 @@ func (k *Keeper) AddPrecompiles(
 			k.precompiles.Set(addr, precompile)
 		}
 	}
-
-	// TODO: feat(evm): implement precompiled contracts for ibc transfer
-	// Check if there is sufficient demand for this.
-
-	// TODO: feat(evm): implement precompiled contracts for staking
-	// Note that liquid staked assets can be a useful alternative to adding a
-	// staking precompile.
-	// Check if there is sufficient demand for this.
-
-	// TODO: feat(evm): implement precompiled contracts for wasm calls
-	// Check if there is sufficient demand for this.
 }
 
 // IsAvailablePrecompile returns true if the given precompile address is contained in the

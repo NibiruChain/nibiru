@@ -50,6 +50,18 @@ func InitPrecompiles(
 		pc := precompileSetupFn(k)
 		precompiles[pc.Address()] = pc
 	}
+
+	// TODO: feat(evm): implement precompiled contracts for ibc transfer
+	// Check if there is sufficient demand for this.
+
+	// TODO: feat(evm): implement precompiled contracts for staking
+	// Note that liquid staked assets can be a useful alternative to adding a
+	// staking precompile.
+	// Check if there is sufficient demand for this.
+
+	// TODO: feat(evm): implement precompiled contracts for wasm calls
+	// Check if there is sufficient demand for this.
+
 	return precompiles
 }
 
