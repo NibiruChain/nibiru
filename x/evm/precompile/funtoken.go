@@ -8,6 +8,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -15,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -80,17 +82,20 @@ func (p precompileFunToken) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+
 	return
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	return precompileFunToken{
-		PublicKeepers: keepers,
+		bankKeeper: keepers.BankKeeper,
+		evmKeeper:  keepers.EvmKeeper,
 	}
 }
 
 type precompileFunToken struct {
-	keepers.PublicKeepers
+	bankKeeper bankkeeper.Keeper
+	evmKeeper  evmkeeper.Keeper
 }
 
 var executionGuard sync.Mutex
@@ -123,14 +128,14 @@ func (p precompileFunToken) bankSend(
 	}
 	defer executionGuard.Unlock()
 
-	erc20, amount, to, err := p.AssertArgTypesBankSend(args)
+	erc20, amount, to, err := p.decomposeBankSendArgs(args)
 	if err != nil {
 		return
 	}
 
 	// ERC20 must have FunToken mapping
-	funtokens := p.EvmKeeper.FunTokens.Collect(
-		ctx, p.EvmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
+	funtokens := p.evmKeeper.FunTokens.Collect(
+		ctx, p.evmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
 	)
 	if len(funtokens) != 1 {
 		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
@@ -151,7 +156,7 @@ func (p precompileFunToken) bankSend(
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
-	_, err = p.EvmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
+	_, err = p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send from caller to the EVM account: %w", err)
 	}
@@ -164,13 +169,13 @@ func (p precompileFunToken) bankSend(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		_, err = p.EvmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
+		_, err = p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
 			return
 		}
 	} else {
-		err = p.BankKeeper.MintCoins(ctx, evm.ModuleName, coins)
+		err = p.bankKeeper.MintCoins(ctx, evm.ModuleName, coins)
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
 				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -179,7 +184,7 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// Transfer the bank coin
-	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
+	err = p.bankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
 	if err != nil {
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -189,10 +194,10 @@ func (p precompileFunToken) bankSend(
 	// TODO: UD-DEBUG: feat: Emit EVM events
 	// TODO: UD-DEBUG: feat: Emit ABCI events
 
-	return method.Outputs.Pack() // TODO: change interface
+	return method.Outputs.Pack()
 }
 
-func (p precompileFunToken) AssertArgTypesBankSend(args []any) (
+func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,
