@@ -129,7 +129,7 @@ type TestFixture struct {
 	OracleKeeper  Keeper
 	StakingKeeper stakingkeeper.Keeper
 	DistrKeeper   distrkeeper.Keeper
-	SudoKeeper    types.SudoKeeper
+	SudoKeeper    sudokeeper.Keeper
 }
 
 // CreateTestFixture nolint
@@ -326,7 +326,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
 
-	h := NewMsgServerImpl(fixture.OracleKeeper)
+	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
