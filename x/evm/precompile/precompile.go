@@ -16,9 +16,6 @@ package precompile
 import (
 	"bytes"
 	"fmt"
-	"sync"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,8 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
@@ -41,9 +36,6 @@ import (
 func InitPrecompiles(
 	k keepers.PublicKeepers,
 ) (precompiles map[gethcommon.Address]vm.PrecompiledContract) {
-	initMutex.Lock()
-	defer initMutex.Unlock()
-
 	precompiles = make(map[gethcommon.Address]vm.PrecompiledContract)
 
 	// Default precompiles
@@ -56,39 +48,21 @@ func InitPrecompiles(
 		PrecompileFunToken,
 	} {
 		pc := precompileSetupFn(k)
-		addPrecompileToVM(pc)
 		precompiles[pc.Address()] = pc
 	}
+
+	// TODO: feat(evm): implement precompiled contracts for ibc transfer
+	// Check if there is sufficient demand for this.
+
+	// TODO: feat(evm): implement precompiled contracts for staking
+	// Note that liquid staked assets can be a useful alternative to adding a
+	// staking precompile.
+	// Check if there is sufficient demand for this.
+
+	// TODO: feat(evm): implement precompiled contracts for wasm calls
+	// Check if there is sufficient demand for this.
+
 	return precompiles
-}
-
-// initMutex: Mutual exclusion lock (mutex) to prevent race conditions with
-// consecutive calls of InitPrecompiles.
-var initMutex = &sync.Mutex{}
-
-// addPrecompileToVM adds a precompiled contract to the EVM's set of recognized
-// precompiles. It updates both the contract map and the list of precompile
-// addresses for the latest major upgrade or hard fork of Ethereum (Berlin).
-func addPrecompileToVM(p vm.PrecompiledContract) {
-	addr := p.Address()
-
-	vm.PrecompiledContractsBerlin[addr] = p
-	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
-	// https://github.com/NibiruChain/nibiru/issues/1921
-	// vm.PrecompiledContractsCancun,
-
-	// Done if the precompiled contracts are already added
-	// This check is only relevant during tests to prevent races. The iteration
-	// doesn't get repeated in production.
-	vmSet := set.New(vm.PrecompiledAddressesBerlin...)
-	if vmSet.Has(addr) {
-		return
-	}
-
-	vm.PrecompiledAddressesBerlin = append(vm.PrecompiledAddressesBerlin, addr)
-	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
-	// https://github.com/NibiruChain/nibiru/issues/1921
-	// vm.PrecompiledAddressesCancun,
 }
 
 // methodById: Looks up an ABI method by the 4-byte id.
@@ -107,18 +81,9 @@ func methodById(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
 }
 
-func OnRunStart(
-	abi *gethabi.ABI, evm *vm.EVM, input []byte,
-) (ctx sdk.Context, method *gethabi.Method, args []interface{}, err error) {
-	// 1 | Get context from StateDB
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx = stateDB.GetContext()
-
-	// 2 | Parse the ABI method
+func DecomposeInput(
+	abi *gethabi.ABI, input []byte,
+) (method *gethabi.Method, args []interface{}, err error) {
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
 	if len(input) < 4 {
 		readableBz := collections.HumanizeBytes(input)
@@ -137,5 +102,5 @@ func OnRunStart(
 		return
 	}
 
-	return ctx, method, args, nil
+	return method, args, nil
 }
