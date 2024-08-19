@@ -131,14 +131,6 @@ func overrideWasmVariables() {
 	wasmtypes.MaxProposalWasmSize = wasmtypes.MaxWasmSize
 }
 
-// overrideWasmVariables overrides the wasm variables to:
-//   - allow for larger wasm files
-func overrideWasmVariables() {
-	// Override Wasm size limitation from WASMD.
-	wasmtypes.MaxWasmSize = 3 * 1024 * 1024 // 3MB
-	wasmtypes.MaxProposalWasmSize = wasmtypes.MaxWasmSize
-}
-
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
 	logger log.Logger,
