@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestParams(t *testing.T) {
@@ -23,13 +23,13 @@ func TestParams(t *testing.T) {
 
 	// Test custom params setting
 	votePeriod := uint64(10)
-	voteThreshold := sdk.NewDecWithPrec(33, 2)
+	voteThreshold := math.LegacyNewDecWithPrec(33, 2)
 	minVoters := uint64(4)
-	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	slashFraction := sdk.NewDecWithPrec(1, 2)
+	oracleRewardBand := math.LegacyNewDecWithPrec(1, 2)
+	slashFraction := math.LegacyNewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
-	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	minFeeRatio := sdk.NewDecWithPrec(1, 2)
+	minValidPerWindow := math.LegacyNewDecWithPrec(1, 4)
+	minFeeRatio := math.LegacyNewDecWithPrec(1, 2)
 	whitelist := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),

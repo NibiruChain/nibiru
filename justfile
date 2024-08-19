@@ -16,6 +16,10 @@ install-clean:
 build: 
   make build
 
+# Cleans the Go cache, modcache, and testcashe
+clean-cache:
+  go clean -cache -testcache -modcache
+
 alias b := build
 
 # Generate protobuf code (Golang) for Nibiru
@@ -39,7 +43,7 @@ lint:
 
   golangci-lint run --allow-parallel-runners --fix
 
-# Runs a Nibiru local network. Ex: "just localnet --features perp spot" 
+# Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
 
@@ -67,7 +71,7 @@ stop:
 
 # Runs golang formatter (gofumpt)
 fmt:
-  gofumpt -w x app
+  gofumpt -w x app gosdk eth
 
 # Format and lint
 tidy: 
@@ -82,3 +86,15 @@ test-release:
 
 release-publish:
   make release
+
+# Run Go tests (short mode)
+test-unit:
+  go test ./... -short
+
+# Run Go tests (short mode) + coverage
+test-coverage-unit:
+  make test-coverage-unit
+
+# Run Go tests, including live network tests + coverage
+test-coverage-integration:
+  make test-coverage-integration

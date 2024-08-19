@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type GenesisTestSuite struct {
@@ -65,7 +66,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(0, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(0, 2),
 					AllowedDenoms:   []string{"unibi"},
 				},
 			},
@@ -76,7 +77,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(100, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(100, 2),
 					AllowedDenoms:   []string{"unibi"},
 				},
 			},
@@ -87,7 +88,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 			genesis: devgastypes.GenesisState{
 				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
-					DeveloperShares: sdk.NewDecWithPrec(10, 2),
+					DeveloperShares: math.LegacyNewDecWithPrec(10, 2),
 					AllowedDenoms:   []string{},
 				},
 				FeeShare: []devgastypes.FeeShare{

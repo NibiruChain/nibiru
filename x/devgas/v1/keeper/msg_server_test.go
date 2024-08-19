@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -14,13 +15,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 //go:embed testdata/reflect.wasm
 var wasmContract []byte
 
-func (s *IntegrationTestSuite) StoreCode() {
+func (s *KeeperTestSuite) StoreCode() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
@@ -41,7 +42,7 @@ func (s *IntegrationTestSuite) StoreCode() {
 	s.Require().Equal(wasmtypes.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
 
-func (s *IntegrationTestSuite) InstantiateContract(sender string, admin string) string {
+func (s *KeeperTestSuite) InstantiateContract(sender string, admin string) string {
 	msgStoreCode := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender
@@ -66,11 +67,11 @@ func (s *IntegrationTestSuite) InstantiateContract(sender string, admin string) 
 	return result.Address
 }
 
-func (s *IntegrationTestSuite) TestGetContractAdminOrCreatorAddress() {
+func (s *KeeperTestSuite) TestGetContractAdminOrCreatorAddress() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_, _, admin := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
-	_ = s.FundAccount(s.ctx, admin, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, admin, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	noAdminContractAddress := s.InstantiateContract(sender.String(), "")
 	withAdminContractAddress := s.InstantiateContract(sender.String(), admin.String())
@@ -117,9 +118,9 @@ func (s *IntegrationTestSuite) TestGetContractAdminOrCreatorAddress() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestRegisterFeeShare() {
+func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	gov := s.app.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	govContract := s.InstantiateContract(sender.String(), gov)
@@ -245,9 +246,9 @@ func (s *IntegrationTestSuite) TestRegisterFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestUpdateFeeShare() {
+func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	fmt.Printf("s.ctx: %v\n", s.ctx)
 	fmt.Printf("s.ctx.BlockTime(): %v\n", s.ctx.BlockTime())
@@ -342,9 +343,9 @@ func (s *IntegrationTestSuite) TestUpdateFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestCancelFeeShare() {
+func (s *KeeperTestSuite) TestCancelFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
 	_, _, withdrawer := testdata.KeyTestPubAddr()
@@ -409,7 +410,7 @@ func (s *IntegrationTestSuite) TestCancelFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestUpdateParams() {
+func (s *KeeperTestSuite) TestUpdateParams() {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 

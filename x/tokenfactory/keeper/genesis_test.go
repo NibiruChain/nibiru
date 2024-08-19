@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestGenesis() {
@@ -13,7 +13,7 @@ func (s *TestSuite) TestGenesis() {
 			Subdenom: testutil.RandLetters(3),
 		}
 		s.Require().NoError(denom.Validate())
-		return denom.String()
+		return denom.Denom().String()
 	}
 
 	testCases := []struct {

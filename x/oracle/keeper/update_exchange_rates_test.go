@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestOracleThreshold(t *testing.T) {
@@ -134,10 +135,10 @@ func TestOracleTally(t *testing.T) {
 	votes := types.ExchangeRateVotes{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	fixture.OracleKeeper.StakingKeeper = stakingKeeper
-	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
+	h := NewMsgServerImpl(fixture.OracleKeeper)
 
 	for i, rate := range rates {
-		decExchangeRate := sdk.NewDecWithPrec(int64(rate*math.Pow10(OracleDecPrecision)), int64(OracleDecPrecision))
+		decExchangeRate := sdkmath.LegacyNewDecWithPrec(int64(rate*math.Pow10(OracleDecPrecision)), int64(OracleDecPrecision))
 		exchangeRateStr, err := types.ExchangeRateTuples{
 			{ExchangeRate: decExchangeRate, Pair: asset.Registry.Pair(denoms.BTC, denoms.USD)},
 		}.ToString()
@@ -261,7 +262,7 @@ func TestOracleRewardBand(t *testing.T) {
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Sub(rewardSpread.Add(sdk.OneDec()))},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Sub(rewardSpread.Add(sdkmath.LegacyOneDec()))},
 	}, 0)
 
 	// Account 2, atom:usd
@@ -301,7 +302,7 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 	// Account 3, KRW
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pairbtc:usd.String(), ExchangeRate: randomExchangeRate}}, 2)
 
-	rewardAmt := sdk.NewInt(1e6)
+	rewardAmt := math.NewInt(1e6)
 	err := input.BankKeeper.MintCoins(input.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewCoin(denoms.Gov, rewardAmt)))
 	require.NoError(t, err)
 
@@ -309,9 +310,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 
-	expectedRewardAmt := sdk.NewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
-	expectedRewardAmt2 := sdk.ZeroInt() // even vote power is same KRW with SDR, KRW chosen referenceTerra because alphabetical order
-	expectedRewardAmt3 := sdk.NewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt2 := math.ZeroInt() // even vote power is same KRW with SDR, KRW chosen referenceTerra because alphabetical order
+	expectedRewardAmt3 := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
 	assert.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(denoms.Gov).TruncateInt())
@@ -327,9 +328,9 @@ func TestOracleExchangeRate(t *testing.T) {
 	// eth:usd and atom:usd pass, but btc:usd fails due to not enough validators voting.
 	input, h := Setup(t)
 
-	atomUsdExchangeRate := sdk.NewDec(1000000)
-	ethUsdExchangeRate := sdk.NewDec(1000000)
-	btcusdExchangeRate := sdk.NewDec(1e6)
+	atomUsdExchangeRate := sdkmath.LegacyNewDec(1000000)
+	ethUsdExchangeRate := sdkmath.LegacyNewDec(1000000)
+	btcusdExchangeRate := sdkmath.LegacyNewDec(1e6)
 
 	// Account 1, eth:usd, atom:usd, btc:usd
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
@@ -348,14 +349,14 @@ func TestOracleExchangeRate(t *testing.T) {
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
 		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdk.ZeroDec()},
+		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyZeroDec()},
 	}, 2)
 
 	// Account 4, eth:usd, atom:usd, btc:usd
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
 		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdk.ZeroDec()},
+		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyZeroDec()},
 	}, 3)
 
 	ethUsdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.TO_MICRO)
@@ -370,8 +371,8 @@ func TestOracleExchangeRate(t *testing.T) {
 	// val 1,2,3,4 all won on 2 pairs
 	// so total votes are 2 * 2 + 2 + 2 = 8
 	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethUsdRewards, atomUsdRewards).
-		QuoDec(sdk.NewDec(8)). // total votes
-		MulDec(sdk.NewDec(2))  // votes won by val1 and val2
+		QuoDec(sdkmath.LegacyNewDec(8)). // total votes
+		MulDec(sdkmath.LegacyNewDec(2))  // votes won by val1 and val2
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
 	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[1])
@@ -388,8 +389,8 @@ func TestOracleRandomPrices(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		for val := 0; val < 4; val++ {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdk.NewDec(int64(rand.Uint64() % 1e6))},
-				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdk.NewDec(int64(rand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
 			}, val)
 		}
 

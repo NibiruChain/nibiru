@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -18,12 +19,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/fixture"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/fixture"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // Instantiate is a empty struct type with conventience functions for
@@ -66,7 +67,7 @@ func SetupContracts(
 ) map[string]LiveContract {
 	wasmName := fixture.WASM_NIBI_STARGATE
 	codeId := StoreContract(t, wasmName, ctx, nibiru, sender)
-	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.OneInt()))
+	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.OneInt()))
 	contract := Instantiate.ContractNibiStargate(t, ctx, nibiru, codeId, sender, deposit)
 	LiveContracts[wasmName] = LiveContract{
 		CodeId:   codeId,
@@ -160,7 +161,7 @@ func (s *TestSuite) TestStargate() {
 		denoms := s.app.TokenFactoryKeeper.QueryDenoms(s.ctx,
 			contract.Addr.String(),
 		)
-		s.ElementsMatch(denoms, []string{tfdenom.String()})
+		s.ElementsMatch(denoms, []string{tfdenom.Denom().String()})
 	})
 
 	someoneElse := testutil.AccAddress()
@@ -172,12 +173,12 @@ func (s *TestSuite) TestStargate() {
 				"mint_to": "%s" 
 			} 
 		}
-		`, tfdenom, someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
-		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.String())
-		s.Equal(sdk.NewInt(69_420), balance.Amount)
+		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.Denom().String())
+		s.Equal(math.NewInt(69_420), balance.Amount)
 	})
 
 	s.Run("burn from smart contract", func() {
@@ -188,12 +189,12 @@ func (s *TestSuite) TestStargate() {
 				"burn_from": "%s" 
 			} 
 		}
-		`, tfdenom, someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
-		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.String())
-		s.Equal(sdk.NewInt(420), balance.Amount)
+		balance := s.app.BankKeeper.GetBalance(s.ctx, someoneElse, tfdenom.Denom().String())
+		s.Equal(math.NewInt(420), balance.Amount)
 	})
 
 	s.Run("change admin from smart contract", func() {
@@ -204,12 +205,12 @@ func (s *TestSuite) TestStargate() {
 				"new_admin": "%s" 
 			} 
 		}
-		`, tfdenom, someoneElse), " ")
+		`, tfdenom.Denom(), someoneElse), " ")
 		_, err := s.ExecuteAgainstContract(contract, execMsgJson)
 		s.NoError(err, "execMsgJson: %v", execMsgJson)
 
 		denomInfo, err := s.app.TokenFactoryKeeper.QueryDenomInfo(
-			s.ctx, tfdenom.String(),
+			s.ctx, tfdenom.Denom().String(),
 		)
 		s.NoError(err)
 		s.Equal(someoneElse.String(), denomInfo.Admin)
@@ -267,7 +268,7 @@ func (s *TestSuite) TestStargateSerde() {
 	for _, tc := range testCases {
 		s.Run(tc.typeUrl, func() {
 			pbMsg, _ := (tc.sdkMsg).(codec.ProtoMarshaler)
-			sgMsgValue := s.encConfig.Marshaler.MustMarshal(pbMsg)
+			sgMsgValue := s.encConfig.Codec.MustMarshal(pbMsg)
 			sgMsg := wasmvmtypes.StargateMsg{
 				TypeURL: tc.typeUrl,
 				Value:   sgMsgValue,
@@ -280,7 +281,7 @@ func (s *TestSuite) TestStargateSerde() {
 			ibcTransferPort := wasmtesting.MockIBCTransferKeeper{
 				GetPortFn: func(ctx sdk.Context) string { return "myTransferPort" },
 			}
-			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Marshaler, ibcTransferPort)
+			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Codec, ibcTransferPort)
 			mockContractAddr := testutil.AccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
 				wasmvmtypes.CosmosMsg{

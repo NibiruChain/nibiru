@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "nibiru/inflation/v1/inflation.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
 
 service Msg {
   // ToggleInflation defines a method to enable or disable inflation.
@@ -60,3 +60,12 @@ message MsgEditInflationParams {
 message MsgToggleInflationResponse {}
 
 message MsgEditInflationParamsResponse {}
+
+// MsgBurn: allows burning of any token
+message MsgBurn {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+}
+
+message MsgBurnResponse {}

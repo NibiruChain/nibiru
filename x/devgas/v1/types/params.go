@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -51,7 +52,7 @@ func validateShares(i interface{}) error {
 		return fmt.Errorf("value cannot be negative: %T", i)
 	}
 
-	if v.GT(sdk.OneDec()) {
+	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("value cannot be greater than 1: %T", i)
 	}
 

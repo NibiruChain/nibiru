@@ -4,16 +4,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"cosmossdk.io/math"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
-func (s *IntegrationTestSuite) TestQueryFeeShares() {
+func (s *KeeperTestSuite) TestQueryFeeShares() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(
-		s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))),
+		s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))),
 	)
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
@@ -70,10 +72,10 @@ func (s *IntegrationTestSuite) TestQueryFeeShares() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestFeeShare() {
+func (s *KeeperTestSuite) TestFeeShare() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
@@ -102,10 +104,10 @@ func (s *IntegrationTestSuite) TestFeeShare() {
 	s.Require().Equal(resp.Feeshare, feeShare)
 }
 
-func (s *IntegrationTestSuite) TestFeeSharesByWithdrawer() {
+func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
@@ -141,7 +143,7 @@ func (s *IntegrationTestSuite) TestFeeSharesByWithdrawer() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestQueryParams() {
+func (s *KeeperTestSuite) TestQueryParams() {
 	s.SetupTest()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 	resp, err := s.queryClient.Params(goCtx, nil)
@@ -149,7 +151,7 @@ func (s *IntegrationTestSuite) TestQueryParams() {
 	s.NotNil(resp)
 }
 
-func (s *IntegrationTestSuite) TestNilRequests() {
+func (s *KeeperTestSuite) TestNilRequests() {
 	s.SetupTest()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 	querier := devgaskeeper.NewQuerier(s.app.DevGasKeeper)

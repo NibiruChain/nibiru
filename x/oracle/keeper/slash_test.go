@@ -3,6 +3,7 @@ package keeper
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,9 +13,9 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestSlashAndResetMissCounters(t *testing.T) {
@@ -44,7 +45,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	)
 	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr1).GetBondedTokens())
 
-	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
+	votePeriodsPerWindow := math.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).Ceil().TruncateInt64()
 	// Case 1, no slash
@@ -96,11 +97,11 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
 
-	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
+	votePeriodsPerWindow := math.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := uint64(0); i < uint64(sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
+	for i := uint64(0); i < uint64(math.LegacyOneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, govstable
@@ -110,7 +111,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 
 		// Account 2, govstable, miss vote
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
+			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(math.LegacyNewDec(100000000000000))},
 		}, 1)
 
 		// Account 3, govstable
@@ -141,7 +142,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 
 	// Account 2, govstable, miss vote
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(math.LegacyNewDec(100000000000000))},
 	}, 1)
 
 	// Account 3, govstable
@@ -160,7 +161,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	// input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 
 	validator = input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
-	require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(testStakingAmt).TruncateInt(), validator.GetBondedTokens())
+	require.Equal(t, math.LegacyOneDec().Sub(slashFraction).MulInt(testStakingAmt).TruncateInt(), validator.GetBondedTokens())
 }
 
 // TestWhitelistSlashing: Creates a scenario where one valoper (valIdx 0) does
@@ -168,7 +169,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 func TestWhitelistSlashing(t *testing.T) {
 	input, msgServer := Setup(t)
 
-	votePeriodsPerSlashWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
+	votePeriodsPerSlashWindow := math.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidVotePeriodsPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
 	pair := asset.Registry.Pair(denoms.ATOM, denoms.USD)
@@ -181,7 +182,7 @@ func TestWhitelistSlashing(t *testing.T) {
 	perfs := input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 	require.EqualValues(t, 0, perfs.TotalRewardWeight())
 
-	allowedMissPct := sdk.OneDec().Sub(minValidVotePeriodsPerWindow)
+	allowedMissPct := math.LegacyOneDec().Sub(minValidVotePeriodsPerWindow)
 	allowedMissVotePeriods := allowedMissPct.MulInt64(votePeriodsPerSlashWindow).
 		TruncateInt64()
 	t.Logf("For %v blocks, valoper0 does not vote, while 1 and 2 do.", allowedMissVotePeriods)
@@ -242,17 +243,17 @@ func TestAbstainSlashing(t *testing.T) {
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
 
-	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
+	votePeriodsPerWindow := math.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := uint64(0); i <= uint64(sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
+	for i := uint64(0); i <= uint64(math.LegacyOneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, ATOM/USD
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, 0)
 
 		// Account 2, ATOM/USD, abstain vote
-		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdk.OneDec().Neg()}}, 1)
+		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: math.LegacyOneDec().Neg()}}, 1)
 
 		// Account 3, ATOM/USD
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, 2)

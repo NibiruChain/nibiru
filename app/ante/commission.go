@@ -1,11 +1,12 @@
 package ante
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-func MAX_COMMISSION() sdk.Dec { return sdk.MustNewDecFromStr("0.25") }
+func MAX_COMMISSION() sdk.Dec { return math.LegacyMustNewDecFromStr("0.25") }
 
 var _ sdk.AnteDecorator = (*AnteDecoratorStakingCommission)(nil)
 

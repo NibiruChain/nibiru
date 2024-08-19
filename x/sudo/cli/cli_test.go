@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
@@ -18,15 +18,15 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 // ———————————————————————————————————————————————————————————————————
@@ -70,7 +70,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 }
 
 func (MsgEditSudoersPlus) Exec(
-	network *testutilcli.Network,
+	network *testnetwork.Network,
 	fileName string,
 	from sdk.AccAddress,
 ) (*sdk.TxResponse, error) {
@@ -80,10 +80,12 @@ func (MsgEditSudoersPlus) Exec(
 	return network.ExecTxCmd(cli.CmdEditSudoers(), from, args)
 }
 
-type IntegrationSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg     testnetwork.Config
+	network *testnetwork.Network
 	root    Account
 }
 
@@ -94,14 +96,14 @@ type Account struct {
 }
 
 func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(IntegrationSuite))
+	suite.Run(t, new(TestSuite))
 }
 
 // ———————————————————————————————————————————————————————————————————
 // IntegrationSuite - Setup
 // ———————————————————————————————————————————————————————————————————
 
-func (s *IntegrationSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -113,8 +115,8 @@ func (s *IntegrationSuite) SetupSuite() {
 		passphrase: "secure-password",
 	}
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genState)
-	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
+	s.cfg = testnetwork.BuildNetworkConfig(genState)
+	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 
 	s.network = network
@@ -122,18 +124,18 @@ func (s *IntegrationSuite) SetupSuite() {
 	s.AddRootToKeyring(s.root)
 }
 
-func (s *IntegrationSuite) FundRoot(root Account) {
+func (s *TestSuite) FundRoot(root Account) {
 	val := s.network.Validators[0]
 	funds := sdk.NewCoins(
 		sdk.NewInt64Coin(denoms.NIBI, 420*common.TO_MICRO),
 	)
 	feeDenom := denoms.NIBI
-	s.NoError(testutilcli.FillWalletFromValidator(
+	s.NoError(testnetwork.FillWalletFromValidator(
 		root.addr, funds, val, feeDenom,
 	))
 }
 
-func (s *IntegrationSuite) AddRootToKeyring(root Account) {
+func (s *TestSuite) AddRootToKeyring(root Account) {
 	s.T().Log("add the x/sudo root account to the clientCtx.Keyring")
 	// Encrypt the x/sudo root account's private key to get its "armor"
 	passphrase := root.passphrase
@@ -150,7 +152,7 @@ func (s *IntegrationSuite) AddRootToKeyring(root Account) {
 // IntegrationSuite - Tests
 // ———————————————————————————————————————————————————————————————————
 
-func (s *IntegrationSuite) TestCmdEditSudoers() {
+func (s *TestSuite) TestCmdEditSudoers() {
 	val := s.network.Validators[0]
 
 	_, contractAddrs := testutil.PrivKeyAddressPairs(3)
@@ -182,7 +184,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	out, err = msg.Exec(s.network, fileName, sender)
 	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	state, err := testutilcli.QuerySudoers(val.ClientCtx)
+	state, err := testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 
 	gotRoot := state.Sudoers.Root
@@ -207,7 +209,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	out, err = msg.Exec(s.network, fileName, sender)
 	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	state, err = testutilcli.QuerySudoers(val.ClientCtx)
+	state, err = testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 
 	gotRoot = state.Sudoers.Root
@@ -221,10 +223,10 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	}
 }
 
-func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
+func (s *TestSuite) Test_ZCmdChangeRoot() {
 	val := s.network.Validators[0]
 
-	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
+	sudoers, err := testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 	initialRoot := sudoers.Sudoers.Root
 
@@ -233,7 +235,7 @@ func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
 		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
 	require.NoError(s.T(), err)
 
-	sudoers, err = testutilcli.QuerySudoers(val.ClientCtx)
+	sudoers, err = testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 	require.NotEqual(s.T(), sudoers.Sudoers.Root, initialRoot)
 	require.Equal(s.T(), sudoers.Sudoers.Root, newRoot.String())
@@ -242,7 +244,7 @@ func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
 // the EditSudoders fn marshals and unmarshals properly from JSON.
 // This unmarshaling is used in the main body of the CmdEditSudoers command.
-func (s *IntegrationSuite) TestMarshal_EditSudoers() {
+func (s *TestSuite) TestMarshal_EditSudoers() {
 	t := s.T()
 
 	t.Log("create valid example json for the message")
@@ -263,14 +265,14 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	fileJsonBz, _ := msgPlus.ToJson(t)
 
 	t.Log("check unmarshal file → proto")
-	cdc := app.MakeEncodingConfig().Marshaler
+	cdc := app.MakeEncodingConfig().Codec
 	newMsg := new(types.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)
 	require.NoError(t, newMsg.ValidateBasic(), newMsg.String())
 }
 
-func (s *IntegrationSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }

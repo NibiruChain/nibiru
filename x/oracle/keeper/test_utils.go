@@ -5,17 +5,12 @@ import (
 	"testing"
 	"time"
 
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -25,8 +20,12 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -37,6 +36,7 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
@@ -56,6 +56,7 @@ var ModuleBasics = module.NewBasicManager(
 	distr.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	params.AppModuleBasic{},
+	sudo.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint
@@ -128,7 +129,7 @@ type TestFixture struct {
 	OracleKeeper  Keeper
 	StakingKeeper stakingkeeper.Keeper
 	DistrKeeper   distrkeeper.Keeper
-	SudoKeeper    sudokeeper.Keeper
+	SudoKeeper    types.SudoKeeper
 }
 
 // CreateTestFixture nolint
@@ -159,7 +160,6 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	ms.MountStoreWithDB(keyOracle, storetypes.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, storetypes.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, storetypes.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keySudo, storetypes.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -222,9 +222,9 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
-	distrParams.CommunityTax = sdk.NewDecWithPrec(2, 2)
-	distrParams.BaseProposerReward = sdk.NewDecWithPrec(1, 2)
-	distrParams.BonusProposerReward = sdk.NewDecWithPrec(4, 2)
+	distrParams.CommunityTax = math.LegacyNewDecWithPrec(2, 2)
+	distrParams.BaseProposerReward = math.LegacyNewDecWithPrec(1, 2)
+	distrParams.BonusProposerReward = math.LegacyNewDecWithPrec(4, 2)
 	distrKeeper.SetParams(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
 
@@ -236,22 +236,21 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
+	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
+	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
+
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
 	accountKeeper.SetModuleAccount(ctx, notBondedPool)
 	accountKeeper.SetModuleAccount(ctx, distrAcc)
 	accountKeeper.SetModuleAccount(ctx, oracleAcc)
+	accountKeeper.SetModuleAccount(ctx, sudoAcc)
 
 	for _, addr := range Addrs {
 		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
 		err := bankKeeper.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, InitCoins)
 		require.NoError(t, err)
 	}
-
-	sudoKeeper := sudokeeper.NewKeeper(
-		appCodec,
-		keySudo,
-	)
 
 	keeper := NewKeeper(
 		appCodec,
@@ -261,6 +260,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		distrKeeper,
 		stakingKeeper,
 		slashingKeeper,
+		sudoKeeper,
 		distrtypes.ModuleName,
 	)
 
@@ -272,15 +272,23 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	keeper.Params.Set(ctx, defaults)
 
-	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper, sudoKeeper}
+	return TestFixture{
+		ctx, legacyAmino, accountKeeper, bankKeeper,
+		keeper,
+		*stakingKeeper,
+		distrKeeper,
+		sudoKeeper,
+	}
 }
 
 // NewTestMsgCreateValidator test msg creator
-func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
-	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+func NewTestMsgCreateValidator(
+	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int,
+) *stakingtypes.MsgCreateValidator {
+	commission := stakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
-		stakingtypes.Description{}, commission, sdk.OneInt(),
+		stakingtypes.Description{}, commission, math.OneInt(),
 	)
 
 	return msg
@@ -304,7 +312,7 @@ func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePer
 
 var (
 	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	testExchangeRate = sdk.NewDec(1700)
+	testExchangeRate = math.LegacyNewDec(1700)
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
@@ -318,7 +326,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
 
-	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
+	h := NewMsgServerImpl(fixture.OracleKeeper)
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created

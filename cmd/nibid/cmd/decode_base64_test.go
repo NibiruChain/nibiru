@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
+	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid/cmd"
 )
 
 func TestBase64Decode(t *testing.T) {
@@ -31,7 +31,7 @@ func TestBase64Decode(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := app.MakeEncodingConfig().Marshaler
+			appCodec := app.MakeEncodingConfig().Codec
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)

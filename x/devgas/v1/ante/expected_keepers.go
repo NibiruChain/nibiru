@@ -1,11 +1,11 @@
 package ante
 
-// Interfaces needed for the for the Nibiru Chain ante handler
+// Interfaces needed for the Nibiru Chain ante handler
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type BankKeeper interface {

@@ -5,14 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/epochs"
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
@@ -21,46 +20,38 @@ func TestEpochsExportGenesis(t *testing.T) {
 
 	encCfg := app.MakeEncodingConfig()
 	appGenesis := genesis.NewTestGenesisState(encCfg)
-	appGenesis[types.ModuleName] = encCfg.Marshaler.MustMarshalJSON(moduleGenesisIn)
+	appGenesis[types.ModuleName] = encCfg.Codec.MustMarshalJSON(moduleGenesisIn)
 
 	app := testapp.NewNibiruTestApp(appGenesis)
 	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
 
 	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
-	require.Len(t, genesis.Epochs, 4)
+	require.Len(t, genesis.Epochs, 3)
 
 	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
-	assert.EqualValues(t, genesis.Epochs[0].Identifier, "30 min")
-	assert.EqualValues(t, genesis.Epochs[0].StartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[0].Duration, time.Minute*30, errMsg)
-	assert.EqualValues(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
-	assert.EqualValues(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
-	assert.EqualValues(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
-	assert.EqualValues(t, genesis.Epochs[0].EpochCountingStarted, false)
+	require.Equal(t, genesis.Epochs[0].Identifier, "30 min")
+	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*30, errMsg)
+	require.Equal(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
+	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
+	require.Equal(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
+	require.Equal(t, genesis.Epochs[0].EpochCountingStarted, false)
 
-	assert.EqualValues(t, genesis.Epochs[1].Identifier, "day")
-	assert.EqualValues(t, genesis.Epochs[1].StartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[1].Duration, time.Hour*24)
-	assert.EqualValues(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
-	assert.EqualValues(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
-	assert.EqualValues(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[1].EpochCountingStarted, false)
+	require.Equal(t, genesis.Epochs[1].Identifier, "day")
+	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[1].Duration, time.Hour*24)
+	require.Equal(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
+	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
+	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[1].EpochCountingStarted, false)
 
-	assert.EqualValues(t, genesis.Epochs[2].Identifier, "month")
-	assert.EqualValues(t, genesis.Epochs[2].StartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[2].Duration, time.Hour*24*30)
-	assert.EqualValues(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
-	assert.EqualValues(t, genesis.Epochs[2].CurrentEpochStartHeight, int64(0))
-	assert.EqualValues(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[2].EpochCountingStarted, false)
-
-	assert.EqualValues(t, genesis.Epochs[3].Identifier, "week")
-	assert.EqualValues(t, genesis.Epochs[3].StartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[3].Duration, time.Hour*24*7)
-	assert.EqualValues(t, genesis.Epochs[3].CurrentEpoch, uint64(0))
-	assert.EqualValues(t, genesis.Epochs[3].CurrentEpochStartHeight, int64(0))
-	assert.EqualValues(t, genesis.Epochs[3].CurrentEpochStartTime, chainStartTime, errMsg)
-	assert.EqualValues(t, genesis.Epochs[3].EpochCountingStarted, false)
+	require.Equal(t, genesis.Epochs[2].Identifier, "week")
+	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24*7)
+	require.Equal(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
+	require.Equal(t, genesis.Epochs[2].CurrentEpochStartHeight, int64(0))
+	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[2].EpochCountingStarted, false)
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
@@ -103,7 +94,7 @@ func TestEpochsInitGenesis(t *testing.T) {
 	err := epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
 	require.Error(t, err)
 
-	assert.EqualError(t, genesisState.Validate(), "epoch identifier should be unique")
+	require.EqualError(t, genesisState.Validate(), "epoch identifier should be unique")
 
 	genesisState = types.GenesisState{
 		Epochs: []types.EpochInfo{
@@ -123,11 +114,11 @@ func TestEpochsInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	require.NoError(t, err)
-	assert.EqualValues(t, epochInfo.Identifier, "monthly")
-	assert.EqualValues(t, epochInfo.StartTime.UTC().String(), now.UTC().String())
-	assert.EqualValues(t, epochInfo.Duration, time.Hour*24)
-	assert.EqualValues(t, epochInfo.CurrentEpoch, uint64(0))
-	assert.EqualValues(t, epochInfo.CurrentEpochStartHeight, ctx.BlockHeight())
-	assert.EqualValues(t, epochInfo.CurrentEpochStartTime.UTC().String(), time.Time{}.String())
-	assert.EqualValues(t, epochInfo.EpochCountingStarted, true)
+	require.Equal(t, epochInfo.Identifier, "monthly")
+	require.Equal(t, epochInfo.StartTime.UTC().String(), now.UTC().String())
+	require.Equal(t, epochInfo.Duration, time.Hour*24)
+	require.Equal(t, epochInfo.CurrentEpoch, uint64(0))
+	require.Equal(t, epochInfo.CurrentEpochStartHeight, ctx.BlockHeight())
+	require.Equal(t, epochInfo.CurrentEpochStartTime.UTC().String(), time.Time{}.String())
+	require.Equal(t, epochInfo.EpochCountingStarted, true)
 }

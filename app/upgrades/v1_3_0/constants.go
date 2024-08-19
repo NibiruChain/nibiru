@@ -15,7 +15,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/NibiruChain/nibiru/app/upgrades"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
 
 const UpgradeName = "v1.3.0"

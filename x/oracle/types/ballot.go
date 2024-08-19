@@ -2,14 +2,13 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
 	"sort"
-	"strconv"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 )
 
 // NOTE: we don't need to implement proto interface on this file
@@ -57,7 +56,7 @@ func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRa
 			vote.ExchangeRate = exchangeRateRT.Quo(vote.ExchangeRate)
 		} else {
 			// If we can't get reference exchange rate, we just convert the vote as abstain vote
-			vote.ExchangeRate = sdk.ZeroDec()
+			vote.ExchangeRate = math.LegacyZeroDec()
 			vote.Power = 0
 		}
 
@@ -103,7 +102,7 @@ func (votes ExchangeRateVotes) WeightedMedian() sdk.Dec {
 			}
 		}
 	}
-	return sdk.ZeroDec()
+	return math.LegacyZeroDec()
 }
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
@@ -121,22 +120,22 @@ func (pb ExchangeRateVotes) WeightedMedianWithAssertion() sdk.Dec {
 			}
 		}
 	}
-	return sdk.ZeroDec()
+	return math.LegacyZeroDec()
 }
 
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
 func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
-		return sdk.ZeroDec()
+		return math.LegacyZeroDec()
 	}
 
 	defer func() {
 		if e := recover(); e != nil {
-			standardDeviation = sdk.ZeroDec()
+			standardDeviation = math.LegacyZeroDec()
 		}
 	}()
 
-	sum := sdk.ZeroDec()
+	sum := math.LegacyZeroDec()
 	n := 0
 	for _, v := range pb {
 		// ignore abstain votes in std dev calculation
@@ -149,9 +148,10 @@ func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation
 
 	variance := sum.QuoInt64(int64(n))
 
-	floatNum, _ := strconv.ParseFloat(variance.String(), 64)
-	floatNum = math.Sqrt(floatNum)
-	standardDeviation, _ = sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+	standardDeviation, err := common.SqrtDec(variance)
+	if err != nil {
+		return math.LegacyZeroDec()
+	}
 
 	return
 }

@@ -1,0 +1,86 @@
+// Copyright (c) 2023-2024 Nibi, Inc.
+syntax = "proto3";
+package eth.evm.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
+
+// EventEthereumTx defines the event for an Ethereum transaction
+message EventEthereumTx {
+  // amount
+  string amount = 1;
+  // eth_hash is the Ethereum hash of the transaction
+  string eth_hash = 2;
+  // index of the transaction in the block
+  string index = 3;
+  // gas_used is the amount of gas used by the transaction
+  string gas_used = 4;
+  // hash is the Tendermint hash of the transaction
+  string hash = 5;
+  // recipient of the transaction
+  string recipient = 6;
+  // eth_tx_failed contains a VM error should it occur
+  string eth_tx_failed = 7;
+}
+
+// EventTxLog defines the event for an Ethereum transaction log
+message EventTxLog {
+  // tx_logs is an array of transaction logs
+  repeated string tx_logs = 1;
+}
+
+// EventMessage
+message EventMessage {
+  // module which emits the event
+  string module = 1;
+  // sender of the message
+  string sender = 2;
+  // tx_type is the type of the message
+  string tx_type = 3;
+}
+
+// EventBlockBloom defines an Ethereum block bloom filter event
+message EventBlockBloom {
+  // bloom is the bloom filter of the block
+  string bloom = 1;
+}
+
+// EventFunTokenCreated defines a fun token creation event.
+message EventFunTokenCreated {
+  string bank_denom = 1;
+  string erc20_contract_address = 2;
+  string creator = 3;
+  bool is_made_from_coin = 4;
+}
+
+// ConvertCoinToEvm defines sending fun token to erc20 event.
+message EventConvertCoinToEvm {
+  string sender = 1;
+  string erc20_contract_address = 2;
+  string to_eth_addr = 3;
+  cosmos.base.v1beta1.Coin bank_coin = 4 [
+    (gogoproto.moretags) = "yaml:\"bank_coin\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// EventTransfer defines event for EVM transfer
+message EventTransfer {
+  string sender = 1;
+  string recipient = 2;
+  string amount = 3;
+}
+
+// EventContractDeployed defines event for EVM contract deployment
+message EventContractDeployed {
+  string sender = 1;
+  string contract_addr = 2;
+}
+
+// EventContractExecuted defines event for EVM contract execution
+message EventContractExecuted {
+  string sender = 1;
+  string contract_addr = 2;
+}

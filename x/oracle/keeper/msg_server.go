@@ -2,29 +2,24 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
-
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 type msgServer struct {
 	Keeper
-	SudoKeeper sudokeeper.Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the oracle MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper, sudoKeeper sudokeeper.Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper, SudoKeeper: sudoKeeper}
+func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
 }
 
 func (ms msgServer) AggregateExchangeRatePrevote(
@@ -118,7 +113,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
 		return nil, sdkerrors.Wrapf(
-			types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
+			types.ErrHashVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
 		)
 	}
 
@@ -173,27 +168,20 @@ func (ms msgServer) DelegateFeedConsent(
 	return &types.MsgDelegateFeedConsentResponse{}, err
 }
 
-func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
+// EditOracleParams: gRPC tx msg for editing the oracle module params.
+// [SUDO] Only callable by sudoers.
+func (ms msgServer) EditOracleParams(
+	goCtx context.Context, msg *types.MsgEditOracleParams,
+) (resp *types.MsgEditOracleParamsResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, fmt.Errorf("invalid address")
+	// Stateless field validation is already performed in msg.ValidateBasic()
+	// before the current scope is reached.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	newParams, err := ms.Sudo().EditOracleParams(
+		ctx, *msg, sender,
+	)
+	resp = &types.MsgEditOracleParamsResponse{
+		NewParams: &newParams,
 	}
-
-	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
-	if err != nil {
-		return nil, sudotypes.ErrUnauthorized
-	}
-
-	params, err := ms.Keeper.Params.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
-	}
-
-	mergedParams := mergeOracleParams(msg, params)
-
-	ms.Keeper.UpdateParams(ctx, mergedParams)
-
-	return &types.MsgEditOracleParamsResponse{}, nil
+	return resp, err
 }
