@@ -8,6 +8,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
 	s "github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -24,6 +25,7 @@ var (
 	address    common.Address = common.BigToAddress(big.NewInt(101))
 	address2   common.Address = common.BigToAddress(big.NewInt(102))
 	address3   common.Address = common.BigToAddress(big.NewInt(103))
+	coinbase   common.Address = common.BigToAddress(big.NewInt(0))
 	blockHash  common.Hash    = common.BigToHash(big.NewInt(9999))
 	errAddress common.Address = common.BigToAddress(big.NewInt(100))
 )
@@ -40,7 +42,7 @@ type Suite struct {
 // CollectContractStorage is a helper function that collects all storage key-value pairs
 // for a given contract address using the ForEachStorage method of the StateDB.
 // It returns a map of storage slots to their values.
-func CollectContractStorage(db vm.StateDB) statedb.Storage {
+func CollectContractStorage(db *statedb.StateDB) statedb.Storage {
 	storage := make(statedb.Storage)
 	err := db.ForEachStorage(
 		address,
@@ -479,7 +481,7 @@ func (s *Suite) TestAccessList() {
 				StorageKeys: []common.Hash{value1},
 			}}
 
-			db.PrepareAccessList(address, &address2, vm.PrecompiledAddressesBerlin, al)
+			db.Prepare(params.Rules{}, address, coinbase, &address2, vm.PrecompiledAddressesBerlin, al)
 
 			// check sender and dst
 			s.Require().True(db.AddressInAccessList(address))

@@ -15,18 +15,16 @@ package precompile
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
-	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -41,9 +39,6 @@ import (
 func InitPrecompiles(
 	k keepers.PublicKeepers,
 ) (precompiles map[gethcommon.Address]vm.PrecompiledContract) {
-	initMutex.Lock()
-	defer initMutex.Unlock()
-
 	precompiles = make(map[gethcommon.Address]vm.PrecompiledContract)
 
 	// Default precompiles
@@ -52,43 +47,14 @@ func InitPrecompiles(
 	}
 
 	// Custom precompiles
-	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
+	for _, precompileCtor := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
 		PrecompileFunToken,
 	} {
-		pc := precompileSetupFn(k)
-		addPrecompileToVM(pc)
+		pc := precompileCtor(k)
 		precompiles[pc.Address()] = pc
 	}
+
 	return precompiles
-}
-
-// initMutex: Mutual exclusion lock (mutex) to prevent race conditions with
-// consecutive calls of InitPrecompiles.
-var initMutex = &sync.Mutex{}
-
-// addPrecompileToVM adds a precompiled contract to the EVM's set of recognized
-// precompiles. It updates both the contract map and the list of precompile
-// addresses for the latest major upgrade or hard fork of Ethereum (Berlin).
-func addPrecompileToVM(p vm.PrecompiledContract) {
-	addr := p.Address()
-
-	vm.PrecompiledContractsBerlin[addr] = p
-	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
-	// https://github.com/NibiruChain/nibiru/issues/1921
-	// vm.PrecompiledContractsCancun,
-
-	// Done if the precompiled contracts are already added
-	// This check is only relevant during tests to prevent races. The iteration
-	// doesn't get repeated in production.
-	vmSet := set.New(vm.PrecompiledAddressesBerlin...)
-	if vmSet.Has(addr) {
-		return
-	}
-
-	vm.PrecompiledAddressesBerlin = append(vm.PrecompiledAddressesBerlin, addr)
-	// TODO: 2024-07-05 feat: Cancun after go-ethereum upgrade
-	// https://github.com/NibiruChain/nibiru/issues/1921
-	// vm.PrecompiledAddressesCancun,
 }
 
 // methodById: Looks up an ABI method by the 4-byte id.
@@ -121,8 +87,7 @@ func OnRunStart(
 	// 2 | Parse the ABI method
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
 	if len(input) < 4 {
-		readableBz := collections.HumanizeBytes(input)
-		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", readableBz)
+		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", hex.EncodeToString(input))
 		return
 	}
 	method, err = methodById(abi, input[:4])

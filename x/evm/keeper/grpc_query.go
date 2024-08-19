@@ -379,27 +379,15 @@ func (k Keeper) EstimateGasForEvmCallType(
 	// helper to check if a gas allowance results in an executable transaction.
 	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
 		// update the message with the new gas value
-		msg = gethcore.NewMessage(
-			msg.From(),
-			msg.To(),
-			msg.Nonce(),
-			msg.Value(),
-			gas,
-			msg.GasPrice(),
-			msg.GasFeeCap(),
-			msg.GasTipCap(),
-			msg.Data(),
-			msg.AccessList(),
-			msg.IsFake(),
-		)
+		msg.GasLimit = gas
 
 		tmpCtx := ctx
 		if fromType == evm.CallTypeRPC {
 			tmpCtx, _ = ctx.CacheContext()
 
-			acct := k.GetAccount(tmpCtx, msg.From())
+			acct := k.GetAccount(tmpCtx, msg.From)
 
-			from := msg.From()
+			from := msg.From
 			if acct == nil {
 				acc := k.accountKeeper.NewAccountWithAddress(tmpCtx, from[:])
 				k.accountKeeper.SetAccount(tmpCtx, acc)
@@ -412,7 +400,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 				return true, nil, err
 			}
 			// resetting the gasMeter after increasing the sequence to have an accurate gas estimation on EVM extensions transactions
-			gasMeter := eth.NewInfiniteGasMeterWithLimit(msg.Gas())
+			gasMeter := eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)
 			tmpCtx = tmpCtx.WithGasMeter(gasMeter).
 				WithKVGasConfig(storetypes.GasConfig{}).
 				WithTransientKVGasConfig(storetypes.GasConfig{})
@@ -504,14 +492,14 @@ func (k Keeper) TraceTx(
 
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
-		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		msg, err := core.TransactionToMessage(ethTx, signer, cfg.BaseFee)
 		if err != nil {
 			continue
 		}
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
 		// reset gas meter for each transaction
-		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
+		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
 		rsp, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
@@ -645,7 +633,7 @@ func (k *Keeper) TraceEthTxMsg(
 		err       error
 		timeout   = DefaultGethTraceTimeout
 	)
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	msg, err := core.TransactionToMessage(tx, signer, cfg.BaseFee)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -673,7 +661,7 @@ func (k *Keeper) TraceEthTxMsg(
 	}
 
 	if traceConfig.Tracer != "" {
-		if tracer, err = tracers.New(traceConfig.Tracer, tCtx, tracerJSONConfig); err != nil {
+		if tracer, err = tracers.DefaultDirectory.New(traceConfig.Tracer, tCtx, tracerJSONConfig); err != nil {
 			return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 		}
 	}
@@ -703,7 +691,7 @@ func (k *Keeper) TraceEthTxMsg(
 	// and not kvstore actions
 	// 3. Setup an empty transient KV gas config for transient gas to be
 	// calculated by opcodes
-	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
+	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	res, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig)

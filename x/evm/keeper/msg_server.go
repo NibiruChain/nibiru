@@ -29,13 +29,13 @@ import (
 var _ evm.MsgServer = &Keeper{}
 
 func (k *Keeper) EthereumTx(
-	goCtx context.Context, msg *evm.MsgEthereumTx,
+	goCtx context.Context, msgEthTx *evm.MsgEthereumTx,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
-	if err := msg.ValidateBasic(); err != nil {
+	if err := msgEthTx.ValidateBasic(); err != nil {
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	tx := msg.AsTransaction()
+	tx := msgEthTx.AsTransaction()
 
 	resp, err = k.ApplyEvmTx(ctx, tx)
 	if err != nil {
@@ -88,7 +88,7 @@ func (k *Keeper) EthereumTx(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
+			sdk.NewAttribute(sdk.AttributeKeySender, msgEthTx.From),
 			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
 		),
 	})
@@ -107,7 +107,7 @@ func (k *Keeper) ApplyEvmTx(
 
 	// get the signer according to the chain rules from the config and block height
 	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, evmConfig.BaseFee)
+	msg, err := core.TransactionToMessage(tx, signer, evmConfig.BaseFee)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
@@ -118,7 +118,7 @@ func (k *Keeper) ApplyEvmTx(
 	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
-		// all gas will be deducted. so is not msg.Gas()
+		// all gas will be deducted. so is not msg.GasLimit
 		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
@@ -135,8 +135,8 @@ func (k *Keeper) ApplyEvmTx(
 	}
 
 	var contractAddr gethcommon.Address
-	if msg.To() == nil {
-		contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
+	if msg.To == nil {
+		contractAddr = crypto.CreateAddress(msg.From, msg.Nonce)
 	}
 
 	receipt := &gethcore.Receipt{
@@ -159,28 +159,28 @@ func (k *Keeper) ApplyEvmTx(
 		ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
 
 		// Emit typed events
-		if msg.To() == nil { // contract creation
+		if msg.To == nil { // contract creation
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
-				Sender:       msg.From().String(),
+				Sender:       msg.From.String(),
 				ContractAddr: contractAddr.String(),
 			})
-		} else if len(msg.Data()) > 0 { // contract executed
+		} else if len(msg.Data) > 0 { // contract executed
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
-				Sender:       msg.From().String(),
-				ContractAddr: msg.To().String(),
+				Sender:       msg.From.String(),
+				ContractAddr: msg.To.String(),
 			})
-		} else if msg.Value().Cmp(big.NewInt(0)) > 0 { // evm transfer
+		} else if msg.Value.Cmp(big.NewInt(0)) > 0 { // evm transfer
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
-				Sender:    msg.From().String(),
-				Recipient: msg.To().String(),
-				Amount:    msg.Value().String(),
+				Sender:    msg.From.String(),
+				Recipient: msg.To.String(),
+				Amount:    msg.Value.String(),
 			})
 		}
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
-	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, evmConfig.Params.EvmDenom); err != nil {
-		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
+	if err = k.RefundGas(ctx, msg, msg.GasLimit-res.GasUsed, evmConfig.Params.EvmDenom); err != nil {
+		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From)
 	}
 
 	if len(receipt.Logs) > 0 {
@@ -213,7 +213,7 @@ func (k *Keeper) ApplyEvmTx(
 //   - stateDB: Holds the EVM state.
 func (k *Keeper) NewEVM(
 	ctx sdk.Context,
-	msg core.Message,
+	msg *core.Message,
 	evmConfig *statedb.EVMConfig,
 	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
@@ -225,7 +225,7 @@ func (k *Keeper) NewEVM(
 		Coinbase:    evmConfig.CoinBase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
-		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
+		Time:        uint64(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
 		BaseFee:     evmConfig.BaseFee,
 		Random:      nil, // not supported
@@ -235,7 +235,12 @@ func (k *Keeper) NewEVM(
 	if tracer == nil {
 		tracer = k.Tracer(ctx, msg, evmConfig.ChainConfig)
 	}
-	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
+	vmConfig := vm.Config{
+		EnablePreimageRecording: true,
+		Tracer:                  tracer,
+		NoBaseFee:               false,
+		ExtraEips:               evmConfig.Params.EIPs(),
+	}
 	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
 	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
@@ -336,7 +341,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 //
 // If commit is true, the `StateDB` will be committed, otherwise discarded.
 func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
-	msg core.Message,
+	msg *core.Message,
 	tracer vm.EVMLogger,
 	commit bool,
 	evmConfig *statedb.EVMConfig,
@@ -350,21 +355,23 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
-	leftoverGas := msg.Gas()
+	leftoverGas := msg.GasLimit
 
 	// Allow the tracer captures the tx level events, mainly the gas consumption.
-	vmCfg := evmObj.Config
-	if vmCfg.Debug {
-		vmCfg.Tracer.CaptureTxStart(leftoverGas)
+	if evmObj.Config.Tracer != nil {
+		evmObj.Config.Tracer.CaptureTxStart(leftoverGas)
 		defer func() {
-			vmCfg.Tracer.CaptureTxEnd(leftoverGas)
+			evmObj.Config.Tracer.CaptureTxEnd(leftoverGas)
 		}()
 	}
 
-	sender := vm.AccountRef(msg.From())
-	contractCreation := msg.To() == nil
+	sender := vm.AccountRef(msg.From)
+	contractCreation := msg.To == nil
 
-	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
+	intrinsicGas, err := core.IntrinsicGas(
+		msg.Data, msg.AccessList,
+		contractCreation, true, true, true,
+	)
 	if err != nil {
 		// should have already been checked on Ante Handler
 		return nil, errors.Wrap(err, "intrinsic gas failed")
@@ -381,38 +388,38 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
 	stateDB.PrepareAccessList(
-		msg.From(),
-		msg.To(),
+		msg.From,
+		msg.To,
 		evmObj.ActivePrecompiles(params.Rules{}),
-		msg.AccessList(),
+		msg.AccessList,
 	)
 
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
+	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
 	if err != nil {
 		return nil, err
-		// return nil, fmt.Errorf("cannot use \"value\" in wei that can't be converted to unibi. %s is not divisible by 10^12", msg.Value())
+		// return nil, fmt.Errorf("cannot use \"value\" in wei that can't be converted to unibi. %s is not divisible by 10^12", msg.Value)
 	}
 
 	if contractCreation {
 		// take over the nonce management from evm:
-		// - reset sender's nonce to msg.Nonce() before calling evm.
+		// - reset sender's nonce to msg.Nonce before calling evm.
 		// - increase sender's nonce by one no matter the result.
-		stateDB.SetNonce(sender.Address(), msg.Nonce())
-		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msgWei)
-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
+		stateDB.SetNonce(sender.Address(), msg.Nonce)
+		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data, leftoverGas, msgWei)
+		stateDB.SetNonce(sender.Address(), msg.Nonce+1)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msgWei)
+		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To, msg.Data, leftoverGas, msgWei)
 	}
 
 	// After EIP-3529: refunds are capped to gasUsed / 5
 	refundQuotient := params.RefundQuotientEIP3529
 
 	// calculate gas refund
-	if msg.Gas() < leftoverGas {
+	if msg.GasLimit < leftoverGas {
 		return nil, errors.Wrap(evm.ErrGasOverflow, "apply message")
 	}
 	// refund gas
-	temporaryGasUsed := msg.Gas() - leftoverGas
+	temporaryGasUsed := msg.GasLimit - leftoverGas
 	refund := GasToRefund(stateDB.GetRefund(), temporaryGasUsed, refundQuotient)
 
 	// update leftoverGas and temporaryGasUsed with refund amount
@@ -432,7 +439,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		}
 	}
 
-	gasLimit := math.LegacyNewDec(int64(msg.Gas()))
+	gasLimit := math.LegacyNewDec(int64(msg.GasLimit))
 	minGasMultiplier := k.GetMinGasMultiplier(ctx)
 	minimumGasUsed := gasLimit.Mul(minGasMultiplier)
 
@@ -440,13 +447,13 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, errors.Wrapf(evm.ErrGasOverflow, "minimumGasUsed(%s) is not a uint64", minimumGasUsed.TruncateInt().String())
 	}
 
-	if msg.Gas() < leftoverGas {
-		return nil, errors.Wrapf(evm.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
+	if msg.GasLimit < leftoverGas {
+		return nil, errors.Wrapf(evm.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.GasLimit, leftoverGas)
 	}
 
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
 	// reset leftoverGas, to be used by the tracer
-	leftoverGas = msg.Gas() - gasUsed
+	leftoverGas = msg.GasLimit - gasUsed
 
 	return &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
