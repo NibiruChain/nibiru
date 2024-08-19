@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/collections"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -27,7 +25,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
@@ -107,18 +104,9 @@ func methodById(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
 }
 
-func OnRunStart(
-	abi *gethabi.ABI, evm *vm.EVM, input []byte,
-) (ctx sdk.Context, method *gethabi.Method, args []interface{}, err error) {
-	// 1 | Get context from StateDB
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx = stateDB.GetContext()
-
-	// 2 | Parse the ABI method
+func DecomposeInput(
+	abi *gethabi.ABI, input []byte,
+) (method *gethabi.Method, args []interface{}, err error) {
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
 	if len(input) < 4 {
 		readableBz := collections.HumanizeBytes(input)
@@ -137,5 +125,5 @@ func OnRunStart(
 		return
 	}
 
-	return ctx, method, args, nil
+	return method, args, nil
 }

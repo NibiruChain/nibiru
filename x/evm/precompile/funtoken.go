@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -56,7 +57,15 @@ func (p precompileFunToken) Run(
 		}
 	}()
 
-	ctx, method, args, err := OnRunStart(embeds.SmartContract_FunToken.ABI, evm, contract.Input)
+	// 1 | Get context from StateDB
+	stateDB, ok := evm.StateDB.(*statedb.StateDB)
+	if !ok {
+		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
+		return
+	}
+	ctx := stateDB.GetContext()
+
+	method, args, err := DecomposeInput(embeds.SmartContract_FunToken.ABI, contract.Input)
 	if err != nil {
 		return nil, err
 	}
