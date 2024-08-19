@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
