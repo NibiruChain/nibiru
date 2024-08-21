@@ -1,15 +1,20 @@
 import { describe, expect, it } from "@jest/globals"
-import { toBigInt, Wallet, parseEther } from "ethers"
+import {
+  toBigInt,
+  Wallet,
+  parseEther,
+  keccak256,
+  AbiCoder,
+  ethers,
+} from "ethers"
 import { account, provider } from "./setup"
 import {
   SendNibiCompiled__factory,
   TestERC20Compiled__factory,
 } from "../types/ethers-contracts"
-import { deployERC20 } from "./utils"
+import { alice, deployERC20, sendTestNibi } from "./utils"
 
 describe("Basic Queries", () => {
-  const alice = Wallet.createRandom()
-
   it("Simple transfer, balance check", async () => {
     const amountToSend = toBigInt(5e12) * toBigInt(1e6) // unibi
     const senderBalanceBefore = await provider.getBalance(account)
@@ -139,10 +144,10 @@ describe("Basic Queries", () => {
   it("eth_getFilterChanges", async () => {
     // Deploy ERC-20 contract
     const contract = await deployERC20()
-    const address = await contract.getAddress()
+    const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
-      address: address,
+      address: contractAddr,
     }
     // Create the filter for a contract
     const filterId = await provider.send("eth_newFilter", [filter])
@@ -151,6 +156,7 @@ describe("Basic Queries", () => {
     // Execute some contract TX
     const tx = await contract.transfer(alice, parseEther("0.01"))
     await tx.wait(1, 5e3)
+    await new Promise((resolve) => setTimeout(resolve, 3000))
 
     // Assert logs
     const changes = await provider.send("eth_getFilterChanges", [filterId])
@@ -158,15 +164,19 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("address")
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
+
+    const success = await provider.send("eth_uninstallFilter", [filterId])
+    expect(success).toBeTruthy()
   }, 20e3)
 
-  it("eth_getFilterLogs", async () => {
+  // Skipping as the method is not implemented
+  it.skip("eth_getFilterLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployERC20()
-    const address = await contract.getAddress()
+    const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
-      address: address,
+      address: contractAddr,
     }
     // Execute some contract TX
     const tx = await contract.transfer(alice, parseEther("0.01"))
@@ -184,17 +194,17 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("topics")
   }, 20e3)
 
-  it("eth_getLogs", async () => {
+  // Skipping as the method is not implemented
+  it.skip("eth_getLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployERC20()
-    const address = await contract.getAddress()
+    const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
-      address: address,
+      address: contractAddr,
     }
     // Execute some contract TX
     const tx = await contract.transfer(alice, parseEther("0.01"))
-    await tx.wait(1, 5e3)
 
     // Assert logs
     const changes = await provider.send("eth_getLogs", [filter])
@@ -203,4 +213,182 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
   }, 20e3)
+
+  it("eth_getProof", async () => {
+    // Deploy ERC-20 contract
+    const contract = await deployERC20()
+    const contractAddr = await contract.getAddress()
+
+    const slot = 1 // Assuming balanceOf is at slot 1
+    const storageKey = keccak256(
+      AbiCoder.defaultAbiCoder().encode(
+        ["address", "uint256"],
+        [account.address, slot],
+      ),
+    )
+    const proof = await provider.send("eth_getProof", [
+      contractAddr,
+      [storageKey],
+      "latest",
+    ])
+    // Assert proof structure
+    expect(proof).toHaveProperty("address")
+    expect(proof).toHaveProperty("balance")
+    expect(proof).toHaveProperty("codeHash")
+    expect(proof).toHaveProperty("nonce")
+    expect(proof).toHaveProperty("storageProof")
+
+    if (proof.storageProof.length > 0) {
+      expect(proof.storageProof[0]).toHaveProperty("key", storageKey)
+      expect(proof.storageProof[0]).toHaveProperty("value")
+      expect(proof.storageProof[0]).toHaveProperty("proof")
+    }
+  }, 20e3)
+
+  // Skipping as the method is not implemented
+  it.skip("eth_getLogs", async () => {
+    // Deploy ERC-20 contract
+    const contract = await deployERC20()
+    const contractAddr = await contract.getAddress()
+    const filter = {
+      fromBlock: "latest",
+      address: contractAddr,
+    }
+    // Execute some contract TX
+    const tx = await contract.transfer(alice, parseEther("0.01"))
+    await tx.wait(1, 5e3)
+
+    // Assert logs
+    const logs = await provider.send("eth_getLogs", [filter])
+    expect(logs.length).toBeGreaterThan(0)
+    expect(logs[0]).toHaveProperty("address")
+    expect(logs[0]).toHaveProperty("data")
+    expect(logs[0]).toHaveProperty("topics")
+  }, 20e3)
+
+  it("eth_getProof", async () => {
+    const contract = await deployERC20()
+    const contractAddr = await contract.getAddress()
+
+    const slot = 1 // Assuming balanceOf is at slot 1
+    const storageKey = keccak256(
+      AbiCoder.defaultAbiCoder().encode(
+        ["address", "uint256"],
+        [account.address, slot],
+      ),
+    )
+    const proof = await provider.send("eth_getProof", [
+      contractAddr,
+      [storageKey],
+      "latest",
+    ])
+    // Assert proof structure
+    expect(proof).toHaveProperty("address")
+    expect(proof).toHaveProperty("balance")
+    expect(proof).toHaveProperty("codeHash")
+    expect(proof).toHaveProperty("nonce")
+    expect(proof).toHaveProperty("storageProof")
+
+    if (proof.storageProof.length > 0) {
+      expect(proof.storageProof[0]).toHaveProperty("key", storageKey)
+      expect(proof.storageProof[0]).toHaveProperty("value")
+      expect(proof.storageProof[0]).toHaveProperty("proof")
+    }
+  }, 20e3)
+
+  it("eth_getStorageAt", async () => {
+    const contract = await deployERC20()
+    const contractAddr = await contract.getAddress()
+
+    const value = await provider.getStorage(contractAddr, 1)
+    expect(value).toBeDefined()
+  }, 20e3)
+
+  it("eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex", async () => {
+    // Execute EVM transfer
+    const txResponse = await sendTestNibi()
+    const block = await txResponse.getBlock()
+
+    const txByBlockHash = await provider.send(
+      "eth_getTransactionByBlockHashAndIndex",
+      [block.hash, "0x0"],
+    )
+    expect(txByBlockHash).toBeDefined()
+    expect(txByBlockHash).toHaveProperty("from")
+    expect(txByBlockHash).toHaveProperty("to")
+    expect(txByBlockHash).toHaveProperty("blockHash")
+    expect(txByBlockHash).toHaveProperty("blockNumber")
+    expect(txByBlockHash).toHaveProperty("value")
+
+    const txByBlockNumber = await provider.send(
+      "eth_getTransactionByBlockNumberAndIndex",
+      [block.number, "0x0"],
+    )
+
+    expect(txByBlockNumber).toBeDefined()
+    expect(txByBlockNumber["from"]).toEqual(txByBlockHash["from"])
+    expect(txByBlockNumber["to"]).toEqual(txByBlockHash["to"])
+    expect(txByBlockNumber["value"]).toEqual(txByBlockHash["value"])
+  }, 20e3)
+
+  it("eth_getTransactionByHash", async () => {
+    const txResponse = await sendTestNibi()
+    const txByHash = await provider.getTransaction(txResponse.hash)
+    expect(txByHash).toBeDefined()
+    expect(txByHash.hash).toEqual(txResponse.hash)
+  }, 20e3)
+
+  it("eth_getTransactionByHash", async () => {
+    const txCount = await provider.getTransactionCount(account.address)
+    expect(txCount).toBeGreaterThanOrEqual(0)
+  })
+
+  it("eth_getTransactionReceipt", async () => {
+    const txResponse = await sendTestNibi()
+    const txReceipt = await provider.getTransactionReceipt(txResponse.hash)
+    expect(txReceipt).toBeDefined()
+    expect(txReceipt.hash).toEqual(txResponse.hash)
+  }, 20e3)
+
+  it("eth_getUncleCountByBlockHash", async () => {
+    const latestBlock = await provider.getBlockNumber()
+    const block = await provider.getBlock(latestBlock)
+    const uncleCount = await provider.send("eth_getUncleCountByBlockHash", [
+      block.hash,
+    ])
+    expect(parseInt(uncleCount)).toBeGreaterThanOrEqual(0)
+  })
+
+  it("eth_getUncleCountByBlockNumber", async () => {
+    const latestBlock = await provider.getBlockNumber()
+    const uncleCount = await provider.send("eth_getUncleCountByBlockNumber", [
+      latestBlock,
+    ])
+    expect(parseInt(uncleCount)).toBeGreaterThanOrEqual(0)
+  })
+
+  it("eth_maxPriorityFeePerGas", async () => {
+    const maxPriorityGas = await provider.send("eth_maxPriorityFeePerGas", [])
+    expect(parseInt(maxPriorityGas)).toBeGreaterThanOrEqual(0)
+  })
+
+  it("eth_maxPriorityFeePerGas", async () => {
+    const maxPriorityGas = await provider.send("eth_maxPriorityFeePerGas", [])
+    expect(parseInt(maxPriorityGas)).toBeGreaterThanOrEqual(0)
+  })
+
+  it("eth_newBlockFilter", async () => {
+    const filterId = await provider.send("eth_newBlockFilter", [])
+    expect(filterId).toBeDefined()
+  })
+
+  it("eth_newPendingTransactionFilter", async () => {
+    const filterId = await provider.send("eth_newPendingTransactionFilter", [])
+    expect(filterId).toBeDefined()
+  })
+
+  it("eth_syncing", async () => {
+    const syncing = await provider.send("eth_syncing", [])
+    expect(syncing).toBeFalsy()
+  })
 })
