@@ -370,12 +370,21 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, errors.Wrap(err, "intrinsic gas failed")
 	}
 
-	// Should check again even if it is checked on Ante Handler, because eth_call don't go through Ante Handler.
+	// Check if the provided gas in the message is enough to cover the intrinsic
+	// gas, the base gas cost before execution occurs (gethparams.TxGas, contract
+	// creation, and cost per byte of the data payload).
+	//
+	// Should check again even if it is checked on Ante Handler, because eth_call
+	// don't go through Ante Handler.
 	if leftoverGas < intrinsicGas {
 		// eth_estimateGas will check for this exact error
-		return nil, errors.Wrap(core.ErrIntrinsicGas, "apply message")
+		return nil, errors.Wrapf(
+			core.ErrIntrinsicGas,
+			"apply message msg.Gas = %d, intrinsic gas = %d.",
+			leftoverGas, intrinsicGas,
+		)
 	}
-	leftoverGas -= intrinsicGas
+	leftoverGas = leftoverGas - intrinsicGas
 
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
@@ -398,10 +407,21 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.
 		stateDB.SetNonce(sender.Address(), msg.Nonce())
-		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msgWei)
+		ret, _, leftoverGas, vmErr = evmObj.Create(
+			sender,
+			msg.Data(),
+			leftoverGas,
+			msgWei,
+		)
 		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msgWei)
+		ret, leftoverGas, vmErr = evmObj.Call(
+			sender,
+			*msg.To(),
+			msg.Data(),
+			leftoverGas,
+			msgWei,
+		)
 	}
 
 	// After EIP-3529: refunds are capped to gasUsed / 5
@@ -445,7 +465,10 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}
 
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
-	// reset leftoverGas, to be used by the tracer
+
+	// This resulting "leftoverGas" is used by the tracer. This happens as a
+	// result of the defer statement near the beginning of the function with
+	// "vm.Tracer".
 	leftoverGas = msg.Gas() - gasUsed
 
 	return &evm.MsgEthereumTxResponse{

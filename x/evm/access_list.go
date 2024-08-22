@@ -158,18 +158,18 @@ func (tx *AccessListTx) GetGasPrice() *big.Int {
 	return tx.GasPrice.BigInt()
 }
 
-// GetGasTipCap returns the gas price field.
-func (tx *AccessListTx) GetGasTipCap() *big.Int {
+// GetGasTipCapWei returns the gas price field.
+func (tx *AccessListTx) GetGasTipCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetGasFeeCap returns the gas price field.
-func (tx *AccessListTx) GetGasFeeCap() *big.Int {
+// GetGasFeeCapWei returns the gas price field.
+func (tx *AccessListTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetValue returns the tx amount.
-func (tx *AccessListTx) GetValue() *big.Int {
+// GetValueWei returns the tx amount.
+func (tx *AccessListTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {
 		return nil
 	}
@@ -199,7 +199,7 @@ func (tx *AccessListTx) AsEthereumData() gethcore.TxData {
 		GasPrice:   tx.GetGasPrice(),
 		Gas:        tx.GetGas(),
 		To:         tx.GetTo(),
-		Value:      tx.GetValue(),
+		Value:      tx.GetValueWei(),
 		Data:       tx.GetData(),
 		AccessList: tx.GetAccessList(),
 		V:          v,
@@ -245,7 +245,7 @@ func (tx AccessListTx) Validate() error {
 		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
 	}
 
-	amount := tx.GetValue()
+	amount := tx.GetValueWei()
 	// Amount can be 0
 	if amount != nil && amount.Sign() == -1 {
 		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
@@ -283,16 +283,16 @@ func (tx AccessListTx) Fee() *big.Int {
 
 // Cost returns amount + gasprice * gaslimit.
 func (tx AccessListTx) Cost() *big.Int {
-	return cost(tx.Fee(), tx.GetValue())
+	return cost(tx.Fee(), tx.GetValueWei())
 }
 
-// EffectiveGasPrice is the same as GasPrice for AccessListTx
-func (tx AccessListTx) EffectiveGasPrice(_ *big.Int) *big.Int {
+// EffectiveGasPriceWei is the same as GasPrice for AccessListTx
+func (tx AccessListTx) EffectiveGasPriceWei(_ *big.Int) *big.Int {
 	return tx.GetGasPrice()
 }
 
-// EffectiveFee is the same as Fee for AccessListTx
-func (tx AccessListTx) EffectiveFee(_ *big.Int) *big.Int {
+// EffectiveFeeWei is the same as Fee for AccessListTx
+func (tx AccessListTx) EffectiveFeeWei(_ *big.Int) *big.Int {
 	return tx.Fee()
 }
 

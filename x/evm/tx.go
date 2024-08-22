@@ -20,8 +20,7 @@ import (
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.
 // This includes LegacyTx, DynamicFeeTx and AccessListTx
-
-type EvmTxArgs struct { //revive:disable-line:exported
+type EvmTxArgs struct {
 	Nonce     uint64
 	GasLimit  uint64
 	Input     []byte
@@ -46,17 +45,20 @@ var DefaultPriorityReduction = sdk.DefaultPowerReduction
 //	tx_priority = tip_price / priority_reduction
 func GetTxPriority(txData TxData, baseFee *big.Int) (priority int64) {
 	// calculate priority based on effective gas price
-	tipPrice := txData.EffectiveGasPrice(baseFee)
+	tipPrice := txData.EffectiveGasPriceWei(baseFee)
 
+	// Return the min of the max possible priorty and the derived priority
 	priority = math.MaxInt64
-	priorityBig := new(big.Int).Quo(tipPrice, DefaultPriorityReduction.BigInt())
+	derivedPriority := new(big.Int).Quo(tipPrice, DefaultPriorityReduction.BigInt())
 
-	// safety check
-	if priorityBig.IsInt64() {
-		priority = priorityBig.Int64()
+	// Overflow safety check
+	var priorityBigI64 int64
+	if derivedPriority.IsInt64() {
+		priorityBigI64 = derivedPriority.Int64()
+	} else {
+		priorityBigI64 = priority
 	}
-
-	return priority
+	return min(priority, priorityBigI64)
 }
 
 // Failed returns if the contract execution failed in vm errors
@@ -179,27 +181,27 @@ func (tx *DynamicFeeTx) GetGas() uint64 {
 
 // GetGasPrice returns the gas fee cap field.
 func (tx *DynamicFeeTx) GetGasPrice() *big.Int {
-	return tx.GetGasFeeCap()
+	return tx.GetGasFeeCapWei()
 }
 
-// GetGasTipCap returns the gas tip cap field.
-func (tx *DynamicFeeTx) GetGasTipCap() *big.Int {
+// GetGasTipCapWei returns the gas tip cap field.
+func (tx *DynamicFeeTx) GetGasTipCapWei() *big.Int {
 	if tx.GasTipCap == nil {
 		return nil
 	}
 	return tx.GasTipCap.BigInt()
 }
 
-// GetGasFeeCap returns the gas fee cap field.
-func (tx *DynamicFeeTx) GetGasFeeCap() *big.Int {
+// GetGasFeeCapWei returns the gas fee cap field.
+func (tx *DynamicFeeTx) GetGasFeeCapWei() *big.Int {
 	if tx.GasFeeCap == nil {
 		return nil
 	}
 	return tx.GasFeeCap.BigInt()
 }
 
-// GetValue returns the tx amount.
-func (tx *DynamicFeeTx) GetValue() *big.Int {
+// GetValueWei returns the tx amount.
+func (tx *DynamicFeeTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {
 		return nil
 	}
@@ -226,11 +228,11 @@ func (tx *DynamicFeeTx) AsEthereumData() gethcore.TxData {
 	return &gethcore.DynamicFeeTx{
 		ChainID:    tx.GetChainID(),
 		Nonce:      tx.GetNonce(),
-		GasTipCap:  tx.GetGasTipCap(),
-		GasFeeCap:  tx.GetGasFeeCap(),
+		GasTipCap:  tx.GetGasTipCapWei(),
+		GasFeeCap:  tx.GetGasFeeCapWei(),
 		Gas:        tx.GetGas(),
 		To:         tx.GetTo(),
-		Value:      tx.GetValue(),
+		Value:      tx.GetValueWei(),
 		Data:       tx.GetData(),
 		AccessList: tx.GetAccessList(),
 		V:          v,
@@ -280,11 +282,11 @@ func (tx DynamicFeeTx) Validate() error {
 		return errorsmod.Wrapf(ErrInvalidGasCap, "gas fee cap cannot be negative %s", tx.GasFeeCap)
 	}
 
-	if !eth.IsValidInt256(tx.GetGasTipCap()) {
+	if !eth.IsValidInt256(tx.GetGasTipCapWei()) {
 		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
-	if !eth.IsValidInt256(tx.GetGasFeeCap()) {
+	if !eth.IsValidInt256(tx.GetGasFeeCapWei()) {
 		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
@@ -299,7 +301,7 @@ func (tx DynamicFeeTx) Validate() error {
 		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
-	amount := tx.GetValue()
+	amount := tx.GetValueWei()
 	// Amount can be 0
 	if amount != nil && amount.Sign() == -1 {
 		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
@@ -328,31 +330,27 @@ func (tx DynamicFeeTx) Validate() error {
 
 // Fee returns gasprice * gaslimit.
 func (tx DynamicFeeTx) Fee() *big.Int {
-	return fee(tx.GetGasFeeCap(), tx.GasLimit)
+	return fee(tx.GetGasFeeCapWei(), tx.GasLimit)
 }
 
 // Cost returns amount + gasprice * gaslimit.
 func (tx DynamicFeeTx) Cost() *big.Int {
-	return cost(tx.Fee(), tx.GetValue())
+	return cost(tx.Fee(), tx.GetValueWei())
 }
 
-// EffectiveGasPrice computes the effective gas price based on eip-1559 rules
+// EffectiveGasPriceWei returns the effective gas price based on EIP-1559 rules.
 // `effectiveGasPrice = min(baseFee + tipCap, feeCap)`
-func EffectiveGasPrice(baseFee, feeCap, tipCap *big.Int) *big.Int {
-	return gethmath.BigMin(new(big.Int).Add(tipCap, baseFee), feeCap)
+func (tx *DynamicFeeTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+	feeWithSpecifiedTip := new(big.Int).Add(tx.GasTipCap.BigInt(), baseFeeWei)
+	return gethmath.BigMin(feeWithSpecifiedTip, tx.GasFeeCap.BigInt())
 }
 
-// EffectiveGasPrice returns the effective gas price
-func (tx *DynamicFeeTx) EffectiveGasPrice(baseFee *big.Int) *big.Int {
-	return EffectiveGasPrice(baseFee, tx.GasFeeCap.BigInt(), tx.GasTipCap.BigInt())
-}
-
-// EffectiveFee returns effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveFee(baseFee *big.Int) *big.Int {
-	return fee(tx.EffectiveGasPrice(baseFee), tx.GasLimit)
+// EffectiveFeeWei returns effective_gasprice * gaslimit.
+func (tx DynamicFeeTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
+	return fee(tx.EffectiveGasPriceWei(baseFeeWei), tx.GasLimit)
 }
 
 // EffectiveCost returns amount + effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveCost(baseFee *big.Int) *big.Int {
-	return cost(tx.EffectiveFee(baseFee), tx.GetValue())
+func (tx DynamicFeeTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+	return cost(tx.EffectiveFeeWei(baseFeeWei), tx.GetValueWei())
 }

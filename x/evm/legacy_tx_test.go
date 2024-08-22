@@ -133,7 +133,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasPrice() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap()
+		actual := tc.tx.GetGasFeeCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -155,7 +155,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasTipCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasTipCap()
+		actual := tc.tx.GetGasTipCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -177,7 +177,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasFeeCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap()
+		actual := tc.tx.GetGasFeeCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -206,7 +206,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetValue() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetValue()
+		actual := tc.tx.GetValueWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -369,7 +369,7 @@ func (suite *TxDataTestSuite) TestLegacyTxEffectiveGasPrice() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveGasPrice(tc.baseFee)
+		actual := tc.tx.EffectiveGasPriceWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -394,7 +394,7 @@ func (suite *TxDataTestSuite) TestLegacyTxEffectiveFee() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveFee(tc.baseFee)
+		actual := tc.tx.EffectiveFeeWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

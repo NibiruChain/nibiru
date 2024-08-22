@@ -72,7 +72,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
-	baseFee := anteDec.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibiPerGas := anteDec.evmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -101,7 +101,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			gasWanted += txData.GetGas()
 		}
 
-		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, ctx.IsCheckTx())
+		fees, err := keeper.VerifyFee(txData, evmDenom, baseFeeMicronibiPerGas, ctx.IsCheckTx())
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to verify the fees")
 		}
@@ -117,7 +117,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			),
 		)
 
-		priority := evm.GetTxPriority(txData, baseFee)
+		priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
 
 		if priority < minPriority {
 			minPriority = priority

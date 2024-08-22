@@ -131,7 +131,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 func VerifyFee(
 	txData evm.TxData,
 	denom string,
-	baseFee *big.Int,
+	baseFeeMicronibi *big.Int,
 	isCheckTx bool,
 ) (sdk.Coins, error) {
 	isContractCreation := txData.GetTo() == nil
@@ -160,18 +160,20 @@ func VerifyFee(
 		)
 	}
 
-	if baseFee != nil && txData.GetGasFeeCap().Cmp(baseFee) < 0 {
+	gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
+	if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
 		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
 			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
-			txData.GetGasFeeCap(),
-			baseFee)
+			txData.GetGasFeeCapWei(),
+			baseFeeMicronibi)
 	}
 
-	feeAmt := txData.EffectiveFee(baseFee)
-	if feeAmt.Sign() == 0 {
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
+	if feeAmtMicronibi.Sign() == 0 {
 		// zero fee, no need to deduct
 		return sdk.Coins{}, nil
 	}
 
-	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmt)}}, nil
+	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
 }

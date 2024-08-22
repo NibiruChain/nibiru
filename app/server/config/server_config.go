@@ -7,6 +7,8 @@ import (
 	"path"
 	"time"
 
+	tracerslogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
+
 	"github.com/spf13/viper"
 
 	"github.com/cometbft/cometbft/libs/strings"
@@ -114,7 +116,8 @@ type Config struct {
 type EVMConfig struct {
 	// Tracer defines vm.Tracer type that the EVM will use if the node is run in
 	// trace mode. Default: 'json'.
-	Tracer string `mapstructure:"tracer"`
+	Tracer     string               `mapstructure:"tracer"`
+	TracerOpts tracerslogger.Config `mapstucture:"tracer_opts"`
 	// MaxTxGasWanted defines the gas wanted for each eth tx returned in ante handler in check tx mode.
 	MaxTxGasWanted uint64 `mapstructure:"max-tx-gas-wanted"`
 }
@@ -214,8 +217,18 @@ func DefaultConfig() *Config {
 
 // DefaultEVMConfig returns the default EVM configuration
 func DefaultEVMConfig() *EVMConfig {
+
 	return &EVMConfig{
-		Tracer:         DefaultEVMTracer,
+		Tracer: DefaultEVMTracer,
+		TracerOpts: tracerslogger.Config{
+			EnableMemory:     false, // disable
+			DisableStack:     false, // enable stack
+			DisableStorage:   false, // enable storage
+			EnableReturnData: false, // disable
+			Debug:            true,  // enable debug
+			Limit:            0,
+			Overrides:        nil,
+		},
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 	}
 }
@@ -380,6 +393,30 @@ tracer = "{{ .EVM.Tracer }}"
 
 # MaxTxGasWanted defines the gas wanted for each eth tx returned in ante handler in check tx mode.
 max-tx-gas-wanted = {{ .EVM.MaxTxGasWanted }}
+
+[evm.tracer_opts]
+
+# Enable the capture of EVM memory state at each
+# execution step. This can be useful for debugging complex contracts but may
+# significantly increase the volume of logged data.
+memory = false
+
+# Enable the capture of contract storage changes. By default, storage
+# modifications are logged. Disabling storage capture can significantly reduce
+# log size for contracts with many storage operations.
+stack = true
+
+# Enable the capture of contract storage changes.
+storage = true 
+
+# enable return-data capture
+return-data = false
+
+# enable debug capture
+debug = true
+
+# Maximum length of the tracer output. Zero means unlimited.
+limit = 0
 
 ###############################################################################
 ###                           JSON RPC Configuration                        ###
