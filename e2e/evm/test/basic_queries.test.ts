@@ -372,11 +372,6 @@ describe("Basic Queries", () => {
     expect(parseInt(maxPriorityGas)).toBeGreaterThanOrEqual(0)
   })
 
-  it("eth_maxPriorityFeePerGas", async () => {
-    const maxPriorityGas = await provider.send("eth_maxPriorityFeePerGas", [])
-    expect(parseInt(maxPriorityGas)).toBeGreaterThanOrEqual(0)
-  })
-
   it("eth_newBlockFilter", async () => {
     const filterId = await provider.send("eth_newBlockFilter", [])
     expect(filterId).toBeDefined()
