@@ -23,9 +23,9 @@ var (
 func (s *Suite) TestCmdConvertCoinToEvm() {
 	testCases := []TestCase{
 		{
-			name: "happy: convert-coin-to-ev:qm",
+			name: "happy: convert-coin-to-evm",
 			args: []string{
-				"convert-coin-to-ev:qm",
+				"convert-coin-to-evm",
 				dummyEthAddr,
 				fmt.Sprintf("%d%s", 123, dummyFuntoken.BankDenom),
 			},
@@ -35,7 +35,7 @@ func (s *Suite) TestCmdConvertCoinToEvm() {
 		{
 			name: "sad: coin format",
 			args: []string{
-				"convert-coin-to-ev:qm",
+				"convert-coin-to-evm",
 				dummyAccs[1].EthAddr.Hex(),
 				fmt.Sprintf("%s %d", dummyFuntoken.BankDenom, 123),
 			},
