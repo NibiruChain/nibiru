@@ -138,11 +138,30 @@ func (s *Suite) TestQueryEvmAccount() {
 			wantErr: "not a valid ethereum hex addr",
 		},
 		{
-			name: "happy: not existing account",
+			name: "happy: nonexistent account (hex addr input)",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				ethAcc := evmtest.NewEthAccInfo()
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
+				}
+				wantResp = &evm.QueryEthAccountResponse{
+					Balance:       "0",
+					BalanceWei:    "0",
+					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					Nonce:         0,
+					EthAddress:    ethAcc.EthAddr.String(),
+					Bech32Address: ethAcc.NibiruAddr.String(),
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: nonexistent account (bech32 input)",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				ethAcc := evmtest.NewEthAccInfo()
+				req = &evm.QueryEthAccountRequest{
+					Address: ethAcc.NibiruAddr.String(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:       "0",

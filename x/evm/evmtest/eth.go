@@ -39,6 +39,15 @@ func NewEthAccInfo() EthPrivKeyAcc {
 	}
 }
 
+// NewEthAccInfos calls [NewEthAccInfo] n times.
+func NewEthAccInfos(n int) []EthPrivKeyAcc {
+	infos := make([]EthPrivKeyAcc, n)
+	for idx := 0; idx < n; idx++ {
+		infos[idx] = NewEthAccInfo()
+	}
+	return infos
+}
+
 type EthPrivKeyAcc struct {
 	EthAddr       gethcommon.Address
 	NibiruAddr    sdk.AccAddress

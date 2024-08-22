@@ -9,7 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/eth"
 	"github.com/NibiruChain/nibiru/x/evm"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // GetQueryCmd returns a cli command for this module's queries
@@ -84,15 +87,46 @@ func CmdQueryAccount() *cobra.Command {
 			}
 			queryClient := evm.NewQueryClient(clientCtx)
 
-			res, err := queryClient.EthAccount(cmd.Context(), &evm.QueryEthAccountRequest{
+			req := &evm.QueryEthAccountRequest{
 				Address: args[0],
-			})
+			}
+
+			isBech32, err := req.Validate()
+			fmt.Printf("TODO: UD-DEBUG: req.String(): %v\n", req.String())
+			fmt.Printf("TODO: UD-DEBUG: err: %v\n", err)
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintProto(res)
+
+			offline, _ := cmd.Flags().GetBool("offline")
+
+			if offline {
+				var addrEth gethcommon.Address
+				var addrBech32 sdk.AccAddress
+
+				if isBech32 {
+					addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+					addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+				} else {
+					addrEth = gethcommon.HexToAddress(req.Address)
+					addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+				}
+
+				resp := new(evm.QueryEthAccountResponse)
+				resp.EthAddress = addrEth.Hex()
+				resp.Bech32Address = addrBech32.String()
+				return clientCtx.PrintProto(resp)
+			}
+
+			resp, err := queryClient.EthAccount(cmd.Context(), req)
+			if err != nil {
+				return fmt.Errorf("consider using the \"--offline\" flag: %w", err)
+			}
+
+			return clientCtx.PrintProto(resp)
 		},
 	}
+	cmd.Flags().Bool("offline", false, "Skip the query and only return addresses.")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
