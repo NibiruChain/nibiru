@@ -12,6 +12,7 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -32,12 +33,15 @@ func (p precompileFunToken) Address() gethcommon.Address {
 }
 
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
-	// TODO: https://github.com/NibiruChain/nibiru/issues/1990
-	// We need to determine an appropriate gas value for the transaction to
-	// configure this function and add a assertions around the gas usage to
-	// the precompile's test suite. UD-DEBUG: not implemented yet. Currently
-	// set to 0 gasPrice
-	return 22
+	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
+	// a contract, it's value can be used to derive an appropriate value for the
+	// precompile call. The FunToken precompile performs 3 operations, labeld 1-3
+	// below:
+	// 0 | Call the precompile (already counted in gas calculation)
+	// 1 | Send ERC20 to EVM.
+	// 2 | Convert ERC20 to coin
+	// 3 | Send coin to recipient.
+	return gethparams.TxGas * 3
 }
 
 const (
