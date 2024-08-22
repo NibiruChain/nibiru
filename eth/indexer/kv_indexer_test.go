@@ -14,13 +14,13 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	evmenc "github.com/NibiruChain/nibiru/eth/encoding"
-	"github.com/NibiruChain/nibiru/eth/indexer"
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	evmenc "github.com/NibiruChain/nibiru/v2/eth/encoding"
+	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func TestKVIndexer(t *testing.T) {

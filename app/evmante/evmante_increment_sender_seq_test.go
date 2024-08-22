@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
@@ -67,7 +67,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewAnteDecEthIncrementSenderSequence(&deps.Chain.EvmKeeper, deps.Chain.AccountKeeper)
+			anteDec := evmante.NewAnteDecEthIncrementSenderSequence(&deps.App.EvmKeeper, deps.App.AccountKeeper)
 
 			if tc.beforeTxSetup != nil {
 				tc.beforeTxSetup(&deps, stateDB)
@@ -85,7 +85,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			s.Require().NoError(err)
 
 			if tc.wantSeq > 0 {
-				seq := deps.Chain.AccountKeeper.GetAccount(deps.Ctx, deps.Sender.NibiruAddr).GetSequence()
+				seq := deps.App.AccountKeeper.GetAccount(deps.Ctx, deps.Sender.NibiruAddr).GetSequence()
 				s.Require().Equal(tc.wantSeq, seq)
 			}
 		})

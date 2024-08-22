@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // Sudo extends the Keeper with sudo functions. See sudo.go. Sudo is syntactic

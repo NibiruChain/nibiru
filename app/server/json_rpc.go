@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -17,7 +17,7 @@ import (
 	ethlog "github.com/ethereum/go-ethereum/log"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
 // StartJSONRPC starts the JSON-RPC server

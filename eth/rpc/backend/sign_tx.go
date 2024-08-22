@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // SendTransaction sends transaction based on received args using Node's key to sign it
@@ -49,7 +49,7 @@ func (b *Backend) SendTransaction(args evm.JsonTxArgs) (common.Hash, error) {
 	// the corresponding chainID validation, we need to sign the transaction before calling it
 
 	// Sign transaction
-	msg := args.ToTransaction()
+	msg := args.ToMsgEthTx()
 	if err := msg.Sign(signer, b.clientCtx.Keyring); err != nil {
 		b.logger.Debug("failed to sign tx", "error", err.Error())
 		return common.Hash{}, err

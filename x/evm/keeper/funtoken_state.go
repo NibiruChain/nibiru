@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // FunTokenState isolates the key-value stores (collections) for fungible token
@@ -33,7 +33,7 @@ func NewFunTokenState(
 				eth.KeyEncoderEthAddr, //  indexing key (IK): ERC-20 addr
 				primaryKeyEncoder,
 				func(v evm.FunToken) gethcommon.Address {
-					return v.Erc20Addr.ToAddr()
+					return v.Erc20Addr.Address
 				},
 			),
 			BankDenom: collections.NewMultiIndex(

@@ -9,12 +9,13 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestEthValidateBasicDecorator() {
@@ -56,9 +57,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			name: "sad: tx not implementing protoTxProvider",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(InvalidChainID)
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -113,9 +113,8 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err = txMsg.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				err = txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
@@ -127,7 +126,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx without extension options should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -142,7 +141,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := &banktypes.MsgSend{
 					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 				}
 				return buildTx(deps, true, msg, gasLimit, fees)
@@ -152,7 +151,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with from value set should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -163,7 +162,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with fee <> msg fee",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", 5))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -174,7 +173,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with gas limit <> msg gas limit",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.Chain.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -188,7 +187,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthValidateBasicDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthValidateBasicDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

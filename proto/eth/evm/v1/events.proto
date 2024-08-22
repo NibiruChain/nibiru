@@ -5,7 +5,7 @@ package eth.evm.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {
@@ -55,8 +55,8 @@ message EventFunTokenCreated {
   bool is_made_from_coin = 4;
 }
 
-// SendFunTokenToEvm defines sending fun token to erc20 event.
-message EventSendFunTokenToEvm {
+// ConvertCoinToEvm defines sending fun token to erc20 event.
+message EventConvertCoinToEvm {
   string sender = 1;
   string erc20_contract_address = 2;
   string to_eth_addr = 3;

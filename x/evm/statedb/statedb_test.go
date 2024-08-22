@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	s "github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // emptyCodeHash: The hash for empty contract bytecode, or a blank byte
@@ -520,7 +520,7 @@ func (s *Suite) TestLog() {
 	)
 
 	deps := evmtest.NewTestDeps()
-	db := statedb.New(deps.Ctx, &deps.Chain.EvmKeeper, txConfig)
+	db := statedb.New(deps.Ctx, &deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
 	log := &gethcore.Log{

@@ -4,7 +4,7 @@ package eth.evm.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // FunToken is a fungible token mapping between a bank coin and a corresponding
 // ERC-20 smart contract. Bank coins here refer to tokens like NIBI, IBC
@@ -13,7 +13,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/evm";
 message FunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string erc20_addr = 1 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
     (gogoproto.nullable) = false
   ];
 

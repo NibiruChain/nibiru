@@ -15,10 +15,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/epochs/client/cli"
-	"github.com/NibiruChain/nibiru/x/epochs/keeper"
-	"github.com/NibiruChain/nibiru/x/epochs/simulation"
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 var (

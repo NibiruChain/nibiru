@@ -10,7 +10,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // Msg defines the evm Msg service.
 service Msg {
@@ -27,10 +27,10 @@ service Msg {
   // denomination for a bank coin can be given to create the mapping to an ERC20.
   rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 
-  // SendFunTokenToEvm: Sends a coin with a valid "FunToken" mapping to the
+  // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc SendFunTokenToEvm(MsgSendFunTokenToEvm) returns (MsgSendFunTokenToEvmResponse);
+  rpc ConvertCoinToEvm(MsgConvertCoinToEvm) returns (MsgConvertCoinToEvmResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -194,7 +194,7 @@ message MsgUpdateParamsResponse {}
 message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
     (gogoproto.nullable)   = true
   ];
 
@@ -210,11 +210,11 @@ message MsgCreateFunTokenResponse {
   eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
 }
 
-// MsgSendFunTokenToEvm: Arguments to send a bank coin to ERC-20 representation
-message MsgSendFunTokenToEvm {
+// MsgConvertCoinToEvm: Arguments to send a bank coin to ERC-20 representation
+message MsgConvertCoinToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/eth.HexAddr",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
     (gogoproto.nullable)   = false
   ];
 
@@ -227,4 +227,4 @@ message MsgSendFunTokenToEvm {
     (gogoproto.nullable) = false
   ];
 }
-message MsgSendFunTokenToEvmResponse {}
+message MsgConvertCoinToEvmResponse {}

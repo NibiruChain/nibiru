@@ -10,11 +10,11 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 type Suite struct {
@@ -45,7 +45,7 @@ func (s *Suite) TestExportInitGenesis() {
 	amountToSendC := big.NewInt(228)
 
 	// Create ERC-20 contract
-	deployResp, err := evmtest.DeployContract(&deps, erc20Contract, s.T())
+	deployResp, err := evmtest.DeployContract(&deps, erc20Contract)
 	s.Require().NoError(err)
 	erc20Addr := deployResp.ContractAddr
 	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
@@ -64,36 +64,38 @@ func (s *Suite) TestExportInitGenesis() {
 	// Create fungible token from bank coin
 	funToken := evmtest.CreateFunTokenForBankCoin(&deps, "unibi", &s.Suite)
 	s.Require().NoError(err)
-	funTokenAddr := funToken.Erc20Addr.ToAddr()
+	funTokenAddr := funToken.Erc20Addr.Address
 
 	// Fund sender's wallet
 	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin("unibi", totalSupply.Int64()))
-	err = deps.Chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
+	err = deps.App.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, spendableCoins)
 	s.Require().NoError(err)
-	err = deps.Chain.BankKeeper.SendCoinsFromModuleToAccount(
+	err = deps.App.BankKeeper.SendCoinsFromModuleToAccount(
 		deps.Ctx, evm.ModuleName, deps.Sender.NibiruAddr, spendableCoins,
 	)
 	s.Require().NoError(err)
 
+	eip55Addr, err := eth.NewEIP55AddrFromStr(toUserC.String())
+	s.Require().NoError(err)
 	// Send fungible token coins from bank to evm
-	_, err = deps.EvmKeeper.SendFunTokenToEvm(
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		deps.Ctx,
-		&evm.MsgSendFunTokenToEvm{
+		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.Coin{Denom: "unibi", Amount: math.NewInt(amountToSendC.Int64())},
-			ToEthAddr: eth.MustNewHexAddrFromStr(toUserC.String()),
+			ToEthAddr: eip55Addr,
 		},
 	)
 	s.Require().NoError(err)
 
 	// Export genesis
-	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, &deps.EvmKeeper, deps.Chain.AccountKeeper)
-	authGenesisState := deps.Chain.AccountKeeper.ExportGenesis(deps.Ctx)
+	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper)
+	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 
 	// Init genesis from the exported state
 	deps = evmtest.NewTestDeps()
-	deps.Chain.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-	evmmodule.InitGenesis(deps.Ctx, &deps.EvmKeeper, deps.Chain.AccountKeeper, *evmGenesisState)
+	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
+	evmmodule.InitGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	// Verify erc20 balances for users A, B and sender
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx)

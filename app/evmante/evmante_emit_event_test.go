@@ -4,11 +4,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestEthEmitEventDecorator() {
@@ -42,7 +42,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthEmitEventDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthEmitEventDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

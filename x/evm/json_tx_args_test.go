@@ -8,7 +8,7 @@ import (
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethcoretypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func (suite *TxDataTestSuite) TestTxArgsString() {
@@ -94,7 +94,7 @@ func (suite *TxDataTestSuite) TestConvertTxArgsEthTx() {
 		},
 	}
 	for _, tc := range testCases {
-		res := tc.txArgs.ToTransaction()
+		res := tc.txArgs.ToMsgEthTx()
 		suite.Require().NotNil(res)
 	}
 }

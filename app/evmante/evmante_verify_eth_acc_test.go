@@ -5,10 +5,10 @@ import (
 
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
@@ -65,7 +65,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewAnteDecVerifyEthAcc(&deps.Chain.AppKeepers.EvmKeeper, &deps.Chain.AppKeepers.AccountKeeper)
+			anteDec := evmante.NewAnteDecVerifyEthAcc(&deps.App.AppKeepers.EvmKeeper, &deps.App.AppKeepers.AccountKeeper)
 
 			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)

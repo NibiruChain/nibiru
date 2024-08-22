@@ -14,17 +14,17 @@ import (
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestSendTransaction() {
 	gasPrice := new(hexutil.Big)
 	gas := hexutil.Uint64(1)
 	zeroGas := hexutil.Uint64(0)
-	toAddr := evmtest.NewEthAccInfo().EthAddr
+	toAddr := evmtest.NewEthPrivAcc().EthAddr
 	priv, _ := ethsecp256k1.GenerateKey()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 	nonce := hexutil.Uint64(1)
@@ -128,7 +128,7 @@ func (s *BackendSuite) TestSendTransaction() {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterParamsWithoutHeader(queryClient, 1)
 				ethSigner := gethcore.LatestSigner(s.backend.ChainConfig())
-				msg := callArgsDefault.ToTransaction()
+				msg := callArgsDefault.ToMsgEthTx()
 				err := msg.Sign(ethSigner, s.backend.clientCtx.Keyring)
 				s.Require().NoError(err)
 				tc.expHash = msg.AsTransaction().Hash()
@@ -145,7 +145,7 @@ func (s *BackendSuite) TestSendTransaction() {
 }
 
 func (s *BackendSuite) TestSign() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 
 	testCases := []struct {
@@ -194,7 +194,7 @@ func (s *BackendSuite) TestSign() {
 }
 
 func (s *BackendSuite) TestSignTypedData() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
 	testCases := []struct {
 		name           string
@@ -263,7 +263,7 @@ func broadcastTx(
 	RegisterBaseFee(queryClient, baseFee)
 	RegisterParamsWithoutHeader(queryClient, 1)
 	ethSigner := gethcore.LatestSigner(s.backend.ChainConfig())
-	msg := callArgsDefault.ToTransaction()
+	msg := callArgsDefault.ToMsgEthTx()
 	err = msg.Sign(ethSigner, s.backend.clientCtx.Keyring)
 	s.Require().NoError(err)
 	tx, _ := msg.BuildTx(s.backend.clientCtx.TxConfig.NewTxBuilder(), evm.DefaultEVMDenom)

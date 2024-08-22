@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend/mocks"
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestGetCode() {
@@ -33,7 +33,7 @@ func (s *BackendSuite) TestGetCode() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil ",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{},
 			func(addr common.Address) {},
 			false,
@@ -41,7 +41,7 @@ func (s *BackendSuite) TestGetCode() {
 		},
 		{
 			"fail - query client errors on getting Code",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address) {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
@@ -52,7 +52,7 @@ func (s *BackendSuite) TestGetCode() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address) {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
@@ -81,7 +81,7 @@ func (s *BackendSuite) TestGetCode() {
 func (s *BackendSuite) TestGetProof() {
 	blockNrInvalid := rpc.NewBlockNumber(big.NewInt(1))
 	blockNr := rpc.NewBlockNumber(big.NewInt(4))
-	address1 := evmtest.NewEthAccInfo().EthAddr
+	address1 := evmtest.NewEthPrivAcc().EthAddr
 
 	testCases := []struct {
 		name          string
@@ -199,7 +199,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{},
 			func(addr common.Address, key string, storage string) {},
@@ -208,7 +208,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 		},
 		{
 			"fail - query client errors on getting Storage",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address, key string, storage string) {
@@ -220,7 +220,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address, key string, storage string) {
@@ -260,7 +260,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{},
 			func(bn rpc.BlockNumber, addr common.Address) {
 			},
@@ -269,7 +269,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - tendermint client failed to get block",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -280,7 +280,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - query client failed to get balance",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -294,7 +294,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - invalid balance",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -308,7 +308,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - pruned node state",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -322,7 +322,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAccInfo().EthAddr,
+			evmtest.NewEthPrivAcc().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -393,7 +393,7 @@ func (s *BackendSuite) TestGetTransactionCount() {
 		s.Run(fmt.Sprintf("Case %s", tc.name), func() {
 			s.SetupTest()
 
-			addr := evmtest.NewEthAccInfo().EthAddr
+			addr := evmtest.NewEthPrivAcc().EthAddr
 			if tc.accExists {
 				addr = common.BytesToAddress(s.acc.Bytes())
 			}

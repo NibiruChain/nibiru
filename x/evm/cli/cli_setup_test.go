@@ -16,8 +16,8 @@ import (
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/NibiruChain/nibiru/x/evm/cli"
-	"github.com/NibiruChain/nibiru/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 )
 
 type Suite struct {

@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "nibiru/sudo/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/sudo/types";
 
 // EventUpdateSudoers: ABCI event emitted upon execution of "MsgEditSudoers".
 message EventUpdateSudoers {

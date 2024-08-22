@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"math/big"
 
-	// "github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 var (
-	dummyAccs     = evmtest.NewEthAccInfos(3)
+	dummyAccs     = evmtest.NewEthPrivAccs(3)
 	dummyEthAddr  = dummyAccs[1].EthAddr.Hex()
 	dummyFuntoken = evm.NewFunToken(
 		gethcommon.BigToAddress(big.NewInt(123)),
@@ -20,12 +20,12 @@ var (
 	)
 )
 
-func (s *Suite) TestCmdSendFunTokenToEvm() {
+func (s *Suite) TestCmdConvertCoinToEvm() {
 	testCases := []TestCase{
 		{
-			name: "happy: send-funtoken-to-erc20",
+			name: "happy: convert-coin-to-evm",
 			args: []string{
-				"send-funtoken-to-erc20",
+				"convert-coin-to-evm",
 				dummyEthAddr,
 				fmt.Sprintf("%d%s", 123, dummyFuntoken.BankDenom),
 			},
@@ -35,7 +35,7 @@ func (s *Suite) TestCmdSendFunTokenToEvm() {
 		{
 			name: "sad: coin format",
 			args: []string{
-				"send-funtoken-to-erc20",
+				"convert-coin-to-evm",
 				dummyAccs[1].EthAddr.Hex(),
 				fmt.Sprintf("%s %d", dummyFuntoken.BankDenom, 123),
 			},

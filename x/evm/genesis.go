@@ -4,7 +4,7 @@ package evm
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // Validate performs a basic validation of a GenesisAccount fields.

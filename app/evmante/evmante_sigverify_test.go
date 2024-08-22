@@ -5,10 +5,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
-	tf "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var InvalidChainID = big.NewInt(987654321)
@@ -42,9 +43,8 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			name: "sad: ethereum tx invalid chain id",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(InvalidChainID)
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -54,9 +54,8 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			name: "happy: signed ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := deps.Sender.GethSigner(deps.Chain.EvmKeeper.EthChainID(deps.Ctx))
-				keyringSigner := deps.Sender.KeyringSigner
-				err := tx.Sign(gethSigner, keyringSigner)
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -68,7 +67,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewEthSigVerificationDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthSigVerificationDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

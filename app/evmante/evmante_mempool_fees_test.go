@@ -4,8 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/app/evmante"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestMempoolGasFeeDecorator() {
@@ -70,7 +70,7 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := &banktypes.MsgSend{
 					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthAccInfo().NibiruAddr.String(),
+					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 				}
 				return buildTx(deps, true, msg, gasLimit, fees)
@@ -82,7 +82,7 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := evmante.NewMempoolGasPriceDecorator(&deps.Chain.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewMempoolGasPriceDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 

@@ -3,13 +3,13 @@ package assertion
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/action"
 
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 )
 
 func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) action.Action {

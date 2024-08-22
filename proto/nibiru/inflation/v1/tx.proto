@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "nibiru/inflation/v1/inflation.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
 
 service Msg {
   // ToggleInflation defines a method to enable or disable inflation.

@@ -7,10 +7,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
@@ -26,7 +26,7 @@ func (s *Suite) TestStateDBBalance() {
 
 		s.T().Log("fund account in unibi. See expected wei amount.")
 		err := testapp.FundAccount(
-			deps.Chain.BankKeeper,
+			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 42)),
@@ -38,7 +38,7 @@ func (s *Suite) TestStateDBBalance() {
 		)
 		s.Equal(
 			"42",
-			deps.Chain.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.DefaultEVMDenom).Amount.String(),
+			deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.DefaultEVMDenom).Amount.String(),
 		)
 	}
 
@@ -67,13 +67,13 @@ func (s *Suite) TestStateDBBalance() {
 		deps := evmtest.NewTestDeps()
 		toNibiAddr := eth.EthAddrToNibiruAddr(to)
 		err := testapp.FundAccount(
-			deps.Chain.BankKeeper,
+			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 8)),
 		)
 		s.NoError(err)
-		err = deps.Chain.BankKeeper.SendCoins(
+		err = deps.App.BankKeeper.SendCoins(
 			deps.Ctx, deps.Sender.NibiruAddr,
 			toNibiAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 3)),

@@ -1,12 +1,12 @@
 package eth_test
 
 import (
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *Suite) TestEthAddrToNibiruAddr() {
-	accInfo := evmtest.NewEthAccInfo()
+	accInfo := evmtest.NewEthPrivAcc()
 	s.Equal(
 		accInfo.EthAddr,
 		eth.NibiruAddrToEthAddr(accInfo.NibiruAddr),
@@ -18,7 +18,7 @@ func (s *Suite) TestEthAddrToNibiruAddr() {
 
 	s.T().Log("unit operation - hex -> nibi -> hex")
 	{
-		addr := evmtest.NewEthAccInfo().NibiruAddr
+		addr := evmtest.NewEthPrivAcc().NibiruAddr
 		s.Equal(
 			addr,
 			eth.EthAddrToNibiruAddr(
@@ -29,7 +29,7 @@ func (s *Suite) TestEthAddrToNibiruAddr() {
 
 	s.T().Log("unit operation - nibi -> hex -> nibi")
 	{
-		addr := evmtest.NewEthAccInfo().EthAddr
+		addr := evmtest.NewEthPrivAcc().EthAddr
 		s.Equal(
 			addr,
 			eth.NibiruAddrToEthAddr(

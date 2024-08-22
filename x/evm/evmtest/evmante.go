@@ -9,7 +9,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 var NextNoOpAnteHandler sdk.AnteHandler = func(
@@ -19,9 +19,9 @@ var NextNoOpAnteHandler sdk.AnteHandler = func(
 }
 
 func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
-	to := NewEthAccInfo().EthAddr
+	to := NewEthPrivAcc().EthAddr
 	ethContractCreationTxParams := &evm.EvmTxArgs{
-		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    nonce,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),
@@ -38,7 +38,7 @@ func NonEvmMsgTx(deps *TestDeps) sdk.Tx {
 	fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 	msg := &banktypes.MsgSend{
 		FromAddress: deps.Sender.NibiruAddr.String(),
-		ToAddress:   NewEthAccInfo().NibiruAddr.String(),
+		ToAddress:   NewEthPrivAcc().NibiruAddr.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 	}
 	return buildTx(deps, true, msg, gasLimit, fees)
@@ -68,7 +68,7 @@ func buildTx(
 
 func HappyCreateContractTx(deps *TestDeps) *evm.MsgEthereumTx {
 	ethContractCreationTxParams := &evm.EvmTxArgs{
-		ChainID:  deps.Chain.EvmKeeper.EthChainID(deps.Ctx),
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    1,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),

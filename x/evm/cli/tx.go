@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmds := []*cobra.Command{
 		CmdCreateFunToken(),
-		CmdSendFunTokenToEvm(),
+		ConvertCoinToEvm(),
 	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
@@ -74,7 +74,7 @@ func CmdCreateFunToken() *cobra.Command {
 				}
 				msg.FromBankDenom = bankDenom
 			} else {
-				erc20Addr, err := eth.NewHexAddrFromStr(erc20AddrStr)
+				erc20Addr, err := eth.NewEIP55AddrFromStr(erc20AddrStr)
 				if err != nil {
 					return err
 				}
@@ -91,14 +91,19 @@ func CmdCreateFunToken() *cobra.Command {
 	return cmd
 }
 
-// CmdSendFunTokenToEvm broadcast MsgSendFunTokenToEvm
-func CmdSendFunTokenToEvm() *cobra.Command {
+// ConvertCoinToEvm broadcast MsgConvertCoinToEvm
+func ConvertCoinToEvm() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "send-funtoken-to-erc20 [to_eth_addr] [coin] [flags]",
-		Short: `Send bank [coin] to its erc20 representation for the user [to_eth_addr]"`,
+		Use:   "convert-coin-to-evm [to_eth_addr] [coin] [flags]",
+		Short: `Convert bank [coin] to its erc20 representation for the user [to_eth_addr]"`,
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			eip55Addr, err := eth.NewEIP55AddrFromStr(args[0])
 			if err != nil {
 				return err
 			}
@@ -107,10 +112,10 @@ func CmdSendFunTokenToEvm() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := &evm.MsgSendFunTokenToEvm{
+			msg := &evm.MsgConvertCoinToEvm{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
-				ToEthAddr: eth.MustNewHexAddrFromStr(args[0]),
+				ToEthAddr: eip55Addr,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
