@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmds := []*cobra.Command{
 		CmdCreateFunToken(),
-		ConvertCoinToEvm(),
+		CmdConvertCoinToEvm(),
 	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
@@ -40,7 +40,7 @@ func GetTxCmd() *cobra.Command {
 func CmdCreateFunToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-funtoken [flags]",
-		Short: `Create a fungible token from erc20 contract [erc20addr]"`,
+		Short: `Create a fungible token mapping between a bank coin and erc20 contract"`,
 		Long: heredoc.Doc(`
 	Example: Creating a fungible token mapping from bank coin.
 
@@ -91,11 +91,11 @@ func CmdCreateFunToken() *cobra.Command {
 	return cmd
 }
 
-// ConvertCoinToEvm broadcast MsgConvertCoinToEvm
-func ConvertCoinToEvm() *cobra.Command {
+// CmdConvertCoinToEvm broadcast MsgConvertCoinToEvm
+func CmdConvertCoinToEvm() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "convert-coin-to-evm [to_eth_addr] [coin] [flags]",
-		Short: `Convert bank [coin] to its erc20 representation for the user [to_eth_addr]"`,
+		Short: `Convert bank [coin] to its erc20 representation and send to the [to_eth_addr] account"`,
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
