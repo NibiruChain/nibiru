@@ -1,11 +1,15 @@
-import { describe, expect, it } from "@jest/globals"
+import { describe, expect, it } from "bun:test" // eslint-disable-line import/no-unresolved
 import { toBigInt, Wallet } from "ethers"
+import { SendNibiCompiled__factory } from "../types/ethers-contracts"
 import { account, provider } from "./setup"
-import { deploySendReceiveNibi } from "./utils"
 
-describe("Send NIBI via smart contract", () => {
+describe("Send NIBI via smart contract", async () => {
+  const factory = new SendNibiCompiled__factory(account)
+  const contract = await factory.deploy()
+  await contract.waitForDeployment()
+  expect(contract.getAddress()).resolves.toBeDefined()
+
   it("should send via transfer method", async () => {
-    const contract = await deploySendReceiveNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(5e12) * toBigInt(1e6) // 5 micro NIBI
 
@@ -35,7 +39,6 @@ describe("Send NIBI via smart contract", () => {
   }, 20e3)
 
   it("should send via send method", async () => {
-    const contract = await deploySendReceiveNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(100e12) * toBigInt(1e6) // 100 NIBi
 
@@ -65,7 +68,6 @@ describe("Send NIBI via smart contract", () => {
   }, 20e3)
 
   it("should send via transfer method", async () => {
-    const contract = await deploySendReceiveNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(100e12) * toBigInt(1e6) // 100 NIBI
 

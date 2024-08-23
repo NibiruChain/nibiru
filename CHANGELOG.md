@@ -107,7 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2001](https://github.com/NibiruChain/nibiru/pull/2001) - refactor(evm): simplify FunToken methods and tests
 - [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
 - [#2004](https://github.com/NibiruChain/nibiru/pull/2004) - refactor(evm)!: replace `HexAddr` with `EIP55Addr`
-- [#2006](https://github.com/NibiruChain/nibiru/pull/2006) - test(evm): e2e tests for eth_* endpoints
 - [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups
 - [#2013](https://github.com/NibiruChain/nibiru/pull/2013) - chore(evm): Set appropriate gas value for the required gas of the "IFunToken.sol" precompile.
 - [#2014](https://github.com/NibiruChain/nibiru/pull/2014) - feat(evm): Emit block bloom event in EndBlock hook.

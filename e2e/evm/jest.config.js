@@ -1,9 +1,6 @@
 module.exports = {
     testEnvironment: 'node',
-    transform: {
-        '^.+\\.(ts|tsx)?$': 'ts-jest',
-    },
-    testMatch: ['**/test/**/*.test.ts'],
+    testMatch: ['**/test/**/*.test.js'],
     verbose: true,
     "maxWorkers": 1
 };
