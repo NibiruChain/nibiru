@@ -4,8 +4,12 @@ package evm
 import (
 	"math/big"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 var (
@@ -34,19 +38,17 @@ type TxData interface {
 	GetAccessList() gethcore.AccessList
 	GetData() []byte
 
-	// TODO: UD-DEBUG: document
 	GetNonce() uint64
 
-	// TODO: UD-DEBUG: document
-	// Raw gas limit in gas units. Note that this is not a "fee" in wei or
-	// micronibi or a price.
+	// GetGas returns the gas limit in gas units. Note that this is not a "fee"
+	// in wei or micronibi or a price.
 	GetGas() uint64
 
-	// TODO: UD-DEBUG: document
 	// Gas price as wei spent per unit gas.
 	GetGasPrice() *big.Int
 
-	// TODO: UD-DEBUG: document
+	// GetGasTipCapWei returns a cap on the gas tip in units of wei.
+	//
 	// Also called "maxPriorityFeePerGas" in Alchemy and Ethers.
 	// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas].
 	// Base fees are determined by the network, not the end user that broadcasts
@@ -58,8 +60,7 @@ type TxData interface {
 	// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 	GetGasTipCapWei() *big.Int
 
-	// TODO: UD-DEBUG: document
-	// Cap on the fees paid in units of wei, where:
+	// GetGasFeeCapWei returns a cap on the gas fees paid in units of wei, where:
 	// feesWithoutCap := effective gas price (wei per gas) * gas units
 	// fees -> min(feesWithoutCap, gasFeeCap)
 	// Also called "maxFeePerGas" in Alchemy and Ethers.
@@ -76,6 +77,7 @@ type TxData interface {
 	GetValueWei() *big.Int
 
 	GetTo() *common.Address
+	GetToRaw() string
 
 	GetRawSignatureValues() (v, r, s *big.Int)
 	SetSignatureValues(chainID, v, r, s *big.Int)
@@ -167,4 +169,57 @@ func cost(fee, value *big.Int) *big.Int {
 		return new(big.Int).Add(fee, value)
 	}
 	return fee
+}
+
+func (tx *DynamicFeeTx) GetToRaw() string { return tx.To }
+func (tx *LegacyTx) GetToRaw() string     { return tx.To }
+func (tx *AccessListTx) GetToRaw() string { return tx.To }
+
+func ValidateTxDataAmount(txData TxData) error {
+	amount := txData.GetValueWei()
+	// Amount can be 0
+	if amount != nil && amount.Sign() == -1 {
+		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
+	}
+	if !eth.IsValidInt256(amount) {
+		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
+	}
+	return nil
+}
+
+func ValidateTxDataTo(txData TxData) error {
+	to := txData.GetToRaw()
+	if to != "" {
+		if err := eth.ValidateAddress(to); err != nil {
+			return errorsmod.Wrap(err, "invalid to address")
+		}
+	}
+	return nil
+}
+
+func ValidateTxDataGasPrice(txData TxData) error {
+	gasPrice := txData.GetGasPrice()
+	if gasPrice == nil {
+		return errorsmod.Wrap(ErrInvalidGasPrice, "cannot be nil")
+	}
+	if !eth.IsValidInt256(gasPrice) {
+		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
+	}
+
+	if gasPrice.Sign() == -1 {
+		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
+	}
+	return nil
+}
+
+func ValidateTxDataChainID(txData TxData) error {
+	chainID := txData.GetChainID()
+
+	if chainID == nil {
+		return errorsmod.Wrap(
+			sdkerrors.ErrInvalidChainID,
+			"chain ID must be derived from TxData txs",
+		)
+	}
+	return nil
 }

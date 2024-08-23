@@ -4,8 +4,6 @@ package evm
 import (
 	"math/big"
 
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -162,43 +160,19 @@ func (tx *LegacyTx) SetSignatureValues(_, v, r, s *big.Int) {
 
 // Validate performs a stateless validation of the tx fields.
 func (tx LegacyTx) Validate() error {
-	gasPrice := tx.GetGasPrice()
-	if gasPrice == nil {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "gas price cannot be nil")
-	}
-
-	if gasPrice.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
-	}
-	if !eth.IsValidInt256(gasPrice) {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
-	}
-	if !eth.IsValidInt256(tx.Fee()) {
-		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
-	}
-
-	amount := tx.GetValueWei()
-	// Amount can be 0
-	if amount != nil && amount.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
-	}
-	if !eth.IsValidInt256(amount) {
-		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
-	}
-
-	if tx.To != "" {
-		if err := eth.ValidateAddress(tx.To); err != nil {
-			return errorsmod.Wrap(err, "invalid to address")
+	for _, err := range []error{
+		ValidateTxDataAmount(&tx),
+		ValidateTxDataTo(&tx),
+		ValidateTxDataGasPrice(&tx),
+		ValidateTxDataChainID(&tx),
+	} {
+		if err != nil {
+			return err
 		}
 	}
 
-	chainID := tx.GetChainID()
-
-	if chainID == nil {
-		return errorsmod.Wrap(
-			errortypes.ErrInvalidChainID,
-			"chain ID must be derived from LegacyTx txs",
-		)
+	if !eth.IsValidInt256(tx.Fee()) {
+		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	return nil

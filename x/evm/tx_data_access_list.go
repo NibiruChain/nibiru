@@ -233,35 +233,18 @@ func (tx *AccessListTx) SetSignatureValues(chainID, v, r, s *big.Int) {
 
 // Validate performs a stateless validation of the tx fields.
 func (tx AccessListTx) Validate() error {
-	gasPrice := tx.GetGasPrice()
-	if gasPrice == nil {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "cannot be nil")
-	}
-	if !eth.IsValidInt256(gasPrice) {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
-	}
-
-	if gasPrice.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
-	}
-
-	amount := tx.GetValueWei()
-	// Amount can be 0
-	if amount != nil && amount.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
-	}
-	if !eth.IsValidInt256(amount) {
-		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
+	for _, err := range []error{
+		ValidateTxDataAmount(&tx),
+		ValidateTxDataTo(&tx),
+		ValidateTxDataGasPrice(&tx),
+	} {
+		if err != nil {
+			return err
+		}
 	}
 
 	if !eth.IsValidInt256(tx.Fee()) {
 		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
-	}
-
-	if tx.To != "" {
-		if err := eth.ValidateAddress(tx.To); err != nil {
-			return errorsmod.Wrap(err, "invalid to address")
-		}
 	}
 
 	chainID := tx.GetChainID()
