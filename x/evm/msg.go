@@ -284,12 +284,12 @@ func (msg MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
 }
 
 // GetEffectiveFee returns the fee for dynamic fee tx
-func (msg MsgEthereumTx) GetEffectiveGasPrice(baseFee *big.Int) *big.Int {
+func (msg MsgEthereumTx) GetEffectiveGasPrice(baseFeeWei *big.Int) *big.Int {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
 	}
-	return txData.EffectiveGasPriceWei(baseFee)
+	return txData.EffectiveGasPriceWei(baseFeeWei)
 }
 
 // GetFrom loads the ethereum sender address from the sigcache and returns an

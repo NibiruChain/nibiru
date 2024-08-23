@@ -4,7 +4,7 @@ package evmante
 import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -43,23 +43,25 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 		return next(ctx, tx, simulate)
 	}
 
-	baseFee := d.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 
 	for _, msg := range tx.GetMsgs() {
 		ethTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
 
-		effectiveGasPrice := ethTx.GetEffectiveGasPrice(baseFee)
+		effectiveGasPriceWei := ethTx.GetEffectiveGasPrice(baseFeeWei)
+		effectiveGasPrice := evm.WeiToNative(effectiveGasPriceWei)
 
 		if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
 			return ctx, errors.Wrapf(
-				errortypes.ErrInsufficientFee,
+				sdkerrors.ErrInsufficientFee,
 				"provided gas price < minimum local gas price (%s < %s). "+
 					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
 					"(for access list or legacy txs)",

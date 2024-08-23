@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -125,9 +126,10 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	return nil
 }
 
-// VerifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
-// gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
-// base fee is lower than the gas fee cap.
+// VerifyFee is used to return the fee for the given transaction data in
+// sdk.Coins. It checks that the gas limit is not reached, the gas limit is
+// higher than the intrinsic gas and that the base fee is lower than the gas fee
+// cap.
 func VerifyFee(
 	txData evm.TxData,
 	denom string,
@@ -159,16 +161,18 @@ func VerifyFee(
 			"gas limit too low: %d (gas limit) < %d (intrinsic gas)", gasLimit, intrinsicGas,
 		)
 	}
+	fmt.Printf("txData: %v\n", txData)
 
 	gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 	if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
 		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
-			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
+			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) wei per gas",
 			txData.GetGasFeeCapWei(),
-			baseFeeMicronibi)
+			baseFeeWei,
+		)
 	}
 
-	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
 	if feeAmtMicronibi.Sign() == 0 {
 		// zero fee, no need to deduct

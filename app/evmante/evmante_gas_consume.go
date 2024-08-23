@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -34,8 +34,7 @@ func NewAnteDecEthGasConsume(
 
 // AnteHandle validates that the Ethereum tx message has enough to cover
 // intrinsic gas (during CheckTx only) and that the sender has enough balance to
-// pay for the gas cost. If the balance is not sufficient, it will be attempted
-// to withdraw enough staking rewards for the payment.
+// pay for the gas cost.
 //
 // Intrinsic gas for a transaction is the amount of gas that the transaction uses
 // before the transaction is executed. The gas is a constant value plus any cost
@@ -78,7 +77,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
@@ -135,7 +134,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	// EthSetupContextDecorator, so it will never exceed the block gas limit.
 	if gasWanted > blockGasLimit {
 		return ctx, errors.Wrapf(
-			errortypes.ErrOutOfGas,
+			sdkerrors.ErrOutOfGas,
 			"tx gas (%d) exceeds block gas limit (%d)",
 			gasWanted,
 			blockGasLimit,
@@ -158,7 +157,9 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 // deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
 // If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
-func (anteDec AnteDecEthGasConsume) deductFee(ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress) error {
+func (anteDec AnteDecEthGasConsume) deductFee(
+	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
+) error {
 	if fees.IsZero() {
 		return nil
 	}

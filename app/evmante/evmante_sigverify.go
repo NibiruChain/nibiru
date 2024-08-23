@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -42,7 +42,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
@@ -51,7 +51,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		ethTx := msgEthTx.AsTransaction()
 		if !allowUnprotectedTxs && !ethTx.Protected() {
 			return ctx, errors.Wrapf(
-				errortypes.ErrNotSupported,
+				sdkerrors.ErrNotSupported,
 				"rejected unprotected Ethereum transaction. "+
 					"Please EIP155 sign your transaction to protect it against replay-attacks",
 			)
@@ -60,7 +60,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		sender, err := signer.Sender(ethTx)
 		if err != nil {
 			return ctx, errors.Wrapf(
-				errortypes.ErrorInvalidSigner,
+				sdkerrors.ErrorInvalidSigner,
 				"couldn't retrieve sender address from the ethereum transaction: %s",
 				err.Error(),
 			)
