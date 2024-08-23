@@ -148,7 +148,7 @@ type AccessListTx struct {
 	Nonce uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// gas_price defines the value for each gas unit
 	GasPrice *cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=gas_price,json=gasPrice,proto3,customtype=cosmossdk.io/math.Int" json:"gas_price,omitempty"`
-	// gas_limit defines the gas limit defined for the transaction.
+	// gas defines the gas limit defined for the transaction.
 	GasLimit uint64 `protobuf:"varint,4,opt,name=gas,proto3" json:"gas,omitempty"`
 	// to is the recipient address in hex format
 	To string `protobuf:"bytes,5,opt,name=to,proto3" json:"to,omitempty"`

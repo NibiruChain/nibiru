@@ -217,7 +217,6 @@ func DefaultConfig() *Config {
 
 // DefaultEVMConfig returns the default EVM configuration
 func DefaultEVMConfig() *EVMConfig {
-
 	return &EVMConfig{
 		Tracer: DefaultEVMTracer,
 		TracerOpts: tracerslogger.Config{
