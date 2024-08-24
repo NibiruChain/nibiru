@@ -6,9 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (suite *Suite) TestNewLegacyTx() {
@@ -298,21 +297,6 @@ func (suite *Suite) TestLegacyTxSetSignatureValues() {
 }
 
 func (suite *Suite) TestLegacyTxValidate() {
-	// Used as the initial condition
-	validLegacyTx := func() *evm.LegacyTx {
-		return &evm.LegacyTx{
-			Nonce:    24,
-			GasLimit: 500,
-			To:       gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Hex(),
-			GasPrice: &suite.sdkInt,
-			Amount:   &suite.sdkInt,
-			Data:     []byte{},
-			V:        []byte{},
-			R:        []byte{},
-			S:        []byte{},
-		}
-	}
-
 	testCases := []struct {
 		name     string
 		tx       func(tx *evm.LegacyTx) *evm.LegacyTx
@@ -358,7 +342,7 @@ func (suite *Suite) TestLegacyTxValidate() {
 	}
 
 	for _, tc := range testCases {
-		got := tc.tx(validLegacyTx())
+		got := tc.tx(evmtest.ValidLegacyTx())
 		err := got.Validate()
 
 		if tc.expError {

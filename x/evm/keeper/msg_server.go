@@ -255,9 +255,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 		switch {
 		case ctx.BlockHeight() == h:
-			// Case 1: The requested height matches the one from the context, so we can retrieve the header
-			// hash directly from the context.
-			// Note: The headerHash is only set at begin block, it will be nil in case of a query context
+			// Case 1: The requested height matches the one from the context, so
+			// we can retrieve the header hash directly from the context. Note:
+			// The headerHash is only set at begin block, it will be nil in case
+			// of a query context
 			headerHash := ctx.HeaderHash()
 			if len(headerHash) != 0 {
 				return gethcommon.BytesToHash(headerHash)
@@ -275,8 +276,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			return gethcommon.BytesToHash(headerHash)
 
 		case ctx.BlockHeight() > h:
-			// Case 2: if the chain is not the current height we need to retrieve the hash from the store for the
-			// current chain epoch. This only applies if the current height is greater than the requested height.
+			// Case 2: if the chain is not the current height we need to retrieve
+			// the hash from the store for the current chain epoch. This only
+			// applies if the current height is greater than the requested
+			// height.
 			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
 			if !found {
 				k.Logger(ctx).Debug("historical info not found", "height", h)
@@ -399,7 +402,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
 	if err != nil {
 		return nil, err
-		// return nil, fmt.Errorf("cannot use \"value\" in wei that can't be converted to unibi. %s is not divisible by 10^12", msg.Value())
 	}
 
 	if contractCreation {
