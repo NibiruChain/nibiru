@@ -7,6 +7,7 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
