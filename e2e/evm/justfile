@@ -29,7 +29,7 @@ gen-types:
 
 # Runs the E2E tests
 test:
-  bun test
+  npm test
 
 # Format
 fmt: 
