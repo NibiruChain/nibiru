@@ -213,6 +213,8 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		return nil, errors.New("can't find index of ethereum tx")
 	}
 
+	// TODO: refactor(evm-rpc-backend): Replace interface with gethcore.Receipt
+	// in eth_getTransactionReceipt
 	receipt := map[string]interface{}{
 		// Consensus fields: These fields are defined by the Yellow Paper
 		"status":            status,

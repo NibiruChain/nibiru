@@ -3,6 +3,7 @@ package evmante
 
 import (
 	"cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -38,13 +39,14 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	}
 
 	minGasPrice := ctx.MinGasPrices().AmountOf(d.evmKeeper.GetParams(ctx).EvmDenom)
+	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
+	baseFeeDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
 	// if MinGasPrices is not set, skip the check
 	if minGasPrice.IsZero() {
 		return next(ctx, tx, simulate)
+	} else if minGasPrice.LT(baseFeeDec) {
+		minGasPrice = baseFeeDec
 	}
-
-	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
-	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 
 	for _, msg := range tx.GetMsgs() {
 		ethTx, ok := msg.(*evm.MsgEthereumTx)
@@ -56,16 +58,18 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 			)
 		}
 
-		effectiveGasPriceWei := ethTx.GetEffectiveGasPrice(baseFeeWei)
-		effectiveGasPrice := evm.WeiToNative(effectiveGasPriceWei)
-
-		if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
+		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+		effectiveGasPriceDec := math.LegacyNewDecFromBigInt(
+			evm.WeiToNative(ethTx.GetEffectiveGasPrice(baseFeeWei)),
+		)
+		if effectiveGasPriceDec.LT(minGasPrice) {
+			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"provided gas price < minimum local gas price (%s < %s). "+
 					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
 					"(for access list or legacy txs)",
-				effectiveGasPrice.String(), minGasPrice.String(),
+				effectiveGasPriceDec, minGasPrice,
 			)
 		}
 	}

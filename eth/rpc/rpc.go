@@ -168,7 +168,7 @@ func NewRPCTxFromMsg(
 	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFee, chainID)
 }
 
-// NewTransactionFromData returns a transaction that will serialize to the RPC
+// NewRPCTxFromEthTx returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func NewRPCTxFromEthTx(
 	tx *gethcore.Transaction,

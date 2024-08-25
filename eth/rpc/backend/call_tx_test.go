@@ -305,21 +305,21 @@ func (s *BackendSuite) TestSendRawTransaction() {
 		expPass      bool
 	}{
 		{
-			"fail - empty bytes",
+			"sad - empty bytes",
 			func() {},
 			[]byte{},
 			common.Hash{},
 			false,
 		},
 		{
-			"fail - no RLP encoded bytes",
+			"sad - no RLP encoded bytes",
 			func() {},
 			bz,
 			common.Hash{},
 			false,
 		},
 		{
-			"fail - unprotected transactions",
+			"sad - unprotected transactions",
 			func() {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				s.backend.allowUnprotectedTxs = false
@@ -330,7 +330,7 @@ func (s *BackendSuite) TestSendRawTransaction() {
 			false,
 		},
 		{
-			"fail - failed to get evm params",
+			"sad - failed to get evm params",
 			func() {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				s.backend.allowUnprotectedTxs = true
@@ -341,7 +341,7 @@ func (s *BackendSuite) TestSendRawTransaction() {
 			false,
 		},
 		{
-			"fail - failed to broadcast transaction",
+			"sad - failed to broadcast transaction",
 			func() {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)

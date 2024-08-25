@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	geth "github.com/ethereum/go-ethereum"
@@ -19,9 +20,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 
-	nibirucommon "github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
@@ -43,8 +44,10 @@ type TestSuite struct {
 	suite.Suite
 	cfg     testnetwork.Config
 	network *testnetwork.Network
+	val     *testnetwork.Validator
 
 	ethClient *ethclient.Client
+	ethAPI    *rpcapi.EthAPI
 
 	fundedAccPrivateKey *ecdsa.PrivateKey
 	fundedAccEthAddr    gethcommon.Address
@@ -70,7 +73,9 @@ func (s *TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.network = network
-	s.ethClient = network.Validators[0].JSONRPCClient
+	s.val = network.Validators[0]
+	s.ethClient = s.val.JSONRPCClient
+	s.ethAPI = s.val.EthRPC_ETH
 	s.contractData = embeds.SmartContract_TestERC20
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
@@ -78,10 +83,8 @@ func (s *TestSuite) SetupSuite() {
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
-	val := s.network.Validators[0]
-
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
-	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, val, eth.EthBaseDenom))
+	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom))
 	s.NoError(s.network.WaitForNextBlock())
 }
 
@@ -109,9 +112,7 @@ func (s *TestSuite) Test_BlockByNumber() {
 
 	ethBlock, err := s.ethClient.BlockByNumber(context.Background(), big.NewInt(networkBlockNumber))
 	s.NoError(err)
-
-	// TODO: add more checks about the eth block
-	s.NotNil(ethBlock)
+	s.NoError(ethBlock.SanityCheck())
 }
 
 // Test_BalanceAt EVM method: eth_getBalance
@@ -240,7 +241,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 
 	s.T().Logf("Sending %d wei to %s", weiToSend, recipientAddr.Hex())
 	signer := gethcore.LatestSignerForChainID(chainID)
-	gasPrice := big.NewInt(1)
+	gasPrice := evm.NativeToWei(big.NewInt(1))
 	tx, err := gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
@@ -249,7 +250,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 			To:       &recipientAddr,
 			Value:    weiToSend,
 			Gas:      params.TxGas,
-			GasPrice: gasPrice,
+			GasPrice: gasPrice, // 1 micronibi per gas
 		})
 	s.NoError(err)
 	err = s.ethClient.SendTransaction(context.Background(), tx)
@@ -261,7 +262,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 
 	costOfTx := new(big.Int).Add(
 		weiToSend,
-		new(big.Int).Mul(evm.NativeToWei(new(big.Int).SetUint64(params.TxGas)), gasPrice),
+		new(big.Int).Mul((new(big.Int).SetUint64(params.TxGas)), gasPrice),
 	)
 	wantSenderBalWei := new(big.Int).Sub(senderBalanceBeforeWei, costOfTx)
 	s.Equal(wantSenderBalWei.String(), senderAmountAfterWei.String(), "surpising sender balance")
@@ -271,6 +272,8 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 	s.Equal(weiToSend.String(), recipientBalanceAfter.String())
 }
 
+var blankCtx = context.Background()
+
 // Test_SmartContract includes contract deployment, query, execution
 func (s *TestSuite) Test_SmartContract() {
 	chainID, err := s.ethClient.ChainID(context.Background())
@@ -278,84 +281,116 @@ func (s *TestSuite) Test_SmartContract() {
 	nonce, err := s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
-	// Deploying contract
+	s.T().Log("Make sure the account has funds.")
+
+	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 1_000_000_000))
+	s.Require().NoError(testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	)
+	s.NoError(s.network.WaitForNextBlock())
+
+	grpcUrl := s.network.Validators[0].AppConfig.GRPC.Address
+	grpcConn, err := gosdk.GetGRPCConnection(grpcUrl, true, 5)
+	s.NoError(err)
+
+	querier := bank.NewQueryClient(grpcConn)
+	resp, err := querier.Balance(context.Background(), &bank.QueryBalanceRequest{
+		Address: s.fundedAccNibiAddr.String(),
+		Denom:   eth.EthBaseDenom,
+	})
+	s.Require().NoError(err)
+	// Expect 1.005 billion because of the setup function before this test.
+	s.True(resp.Balance.Amount.GT(math.NewInt(1_004_900_000)), "unexpectedly low balance ", resp.Balance.Amount.String())
+
+	s.T().Log("Deploy contract")
 	signer := gethcore.LatestSignerForChainID(chainID)
 	txData := s.contractData.Bytecode
 	tx, err := gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
 		&gethcore.LegacyTx{
-			Nonce:    nonce,
-			Gas:      1_500_000,
-			GasPrice: big.NewInt(1),
-			Data:     txData,
+			Nonce: nonce,
+			Gas:   100_500_000 + params.TxGasContractCreation,
+			GasPrice: evm.NativeToWei(new(big.Int).Add(
+				evm.BASE_FEE_MICRONIBI, big.NewInt(0),
+			)),
+			Data: txData,
 		})
-	s.NoError(err)
-	err = s.ethClient.SendTransaction(context.Background(), tx)
-	s.NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
-	hash := tx.Hash()
-	receipt, err := s.ethClient.TransactionReceipt(context.Background(), hash)
-	s.NoError(err)
-	contractAddress := receipt.ContractAddress
+	s.Require().NoError(err)
 
-	// Querying contract: owner's balance should be 1000_000 tokens
-	ownerInitialBalance := (&big.Int{}).Mul(big.NewInt(1000_000), nibirucommon.TO_ATTO)
-	s.assertERC20Balance(contractAddress, s.fundedAccEthAddr, ownerInitialBalance)
-
-	// Querying contract: recipient balance should be 0
-	recipientAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "contract_recipient"))
-	s.assertERC20Balance(contractAddress, recipientAddr, big.NewInt(0))
-
-	// Execute contract: send 1000 anibi to recipient
-	sendAmount := (&big.Int{}).Mul(big.NewInt(1000), nibirucommon.TO_ATTO)
-	input, err := s.contractData.ABI.Pack("transfer", recipientAddr, sendAmount)
+	txBz, err := tx.MarshalBinary()
 	s.NoError(err)
-	nonce, err = s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
-	s.NoError(err)
-	tx, err = gethcore.SignNewTx(
-		s.fundedAccPrivateKey,
-		signer,
-		&gethcore.LegacyTx{
-			Nonce:    nonce,
-			To:       &contractAddress,
-			Gas:      1_500_000,
-			GasPrice: big.NewInt(1),
-			Data:     input,
-		})
-	s.NoError(err)
-	err = s.ethClient.SendTransaction(context.Background(), tx)
-	s.NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
+	txHash, err := s.ethAPI.SendRawTransaction(txBz)
+	s.Require().NoError(err)
 
-	// Querying contract: owner's balance should be 999_000 tokens
-	ownerBalance := (&big.Int{}).Mul(big.NewInt(999_000), nibirucommon.TO_ATTO)
-	s.assertERC20Balance(contractAddress, s.fundedAccEthAddr, ownerBalance)
+	s.T().Log("Assert: tx IS pending just after execution")
+	pendingTxs, err := s.ethAPI.GetPendingTransactions()
+	s.NoError(err)
+	s.Require().Len(pendingTxs, 1)
+	_ = s.network.WaitForNextBlock()
 
-	// Querying contract: recipient balance should be 1000 tokens
-	recipientBalance := (&big.Int{}).Mul(big.NewInt(1000), nibirucommon.TO_ATTO)
-	s.assertERC20Balance(contractAddress, recipientAddr, recipientBalance)
+	s.T().Log("Assert: tx NOT pending")
+	{
+		wantCount := 0
+		pending, err := s.ethClient.PendingTransactionCount(blankCtx)
+		s.NoError(err)
+		s.Require().EqualValues(uint(wantCount), pending)
+
+		pendingTxs, err := s.ethAPI.GetPendingTransactions()
+		s.NoError(err)
+		s.Require().Len(pendingTxs, wantCount)
+
+		// This query will succeed only if a receipt is found
+		_, err = s.ethClient.TransactionReceipt(blankCtx, txHash)
+		s.Require().Errorf(err, "receipt for txHash: %s", txHash.Hex())
+
+		// This query succeeds if no receipt is found
+		_, err = s.ethAPI.GetTransactionReceipt(txHash)
+		s.Require().NoError(err)
+	}
+
+	{
+		weiToSend := evm.NativeToWei(big.NewInt(1)) // 1 unibi
+		s.T().Logf("Sending %d wei (sanity check)", weiToSend)
+		accResp, err := s.val.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
+			&evm.QueryEthAccountRequest{
+				Address: s.fundedAccEthAddr.Hex(),
+			})
+		s.NoError(err)
+		nonce := accResp.Nonce
+		recipientAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "recipient"))
+
+		signer := gethcore.LatestSignerForChainID(chainID)
+		gasPrice := evm.NativeToWei(big.NewInt(1))
+		tx, err := gethcore.SignNewTx(
+			s.fundedAccPrivateKey,
+			signer,
+			&gethcore.LegacyTx{
+				Nonce:    nonce,
+				To:       &recipientAddr,
+				Value:    weiToSend,
+				Gas:      params.TxGas,
+				GasPrice: gasPrice, // 1 micronibi per gas
+			})
+		s.Require().NoError(err)
+		txBz, err := tx.MarshalBinary()
+		s.NoError(err)
+		txHash, err := s.ethAPI.SendRawTransaction(txBz)
+		// err = s.ethClient.SendTransaction(blankCtx, tx)
+		s.Require().NoError(err)
+		_ = s.network.WaitForNextBlock()
+
+		txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, txHash)
+		s.Require().NoError(err)
+		s.NotNil(txReceipt)
+
+		logs, err := s.ethAPI.GetTransactionLogs(txHash)
+		s.NoError(err)
+		s.NotEmpty(logs)
+	}
 }
 
 func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
-}
-
-func (s *TestSuite) assertERC20Balance(
-	contractAddress gethcommon.Address,
-	userAddress gethcommon.Address,
-	expectedBalance *big.Int,
-) {
-	input, err := s.contractData.ABI.Pack("balanceOf", userAddress)
-	s.NoError(err)
-	msg := geth.CallMsg{
-		From: s.fundedAccEthAddr,
-		To:   &contractAddress,
-		Data: input,
-	}
-	recipientBalanceBeforeBytes, err := s.ethClient.CallContract(context.Background(), msg, nil)
-	s.NoError(err)
-	balance := new(big.Int).SetBytes(recipientBalanceBeforeBytes)
-	s.Equal(expectedBalance.String(), balance.String())
 }

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "@jest/globals"
 import { toBigInt, Wallet } from "ethers"
 import { account, provider } from "./setup"
-import { deploySendReceiveNibi } from "./utils"
+import { COMMON_TX_ARGS, deployContractSendNibi } from "./utils"
 
 describe("Send NIBI via smart contract", () => {
   it("should send via transfer method", async () => {
-    const contract = await deploySendReceiveNibi()
+    const contract = await deployContractSendNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(5e12) * toBigInt(1e6) // 5 micro NIBI
 
@@ -15,6 +15,7 @@ describe("Send NIBI via smart contract", () => {
 
     const tx = await contract.sendViaTransfer(recipient, {
       value: weiToSend,
+      ...COMMON_TX_ARGS,
     })
     const receipt = await tx.wait(1, 5e3)
 
@@ -35,7 +36,7 @@ describe("Send NIBI via smart contract", () => {
   }, 20e3)
 
   it("should send via send method", async () => {
-    const contract = await deploySendReceiveNibi()
+    const contract = await deployContractSendNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(100e12) * toBigInt(1e6) // 100 NIBi
 
@@ -45,6 +46,7 @@ describe("Send NIBI via smart contract", () => {
 
     const tx = await contract.sendViaSend(recipient, {
       value: weiToSend,
+      ...COMMON_TX_ARGS,
     })
     const receipt = await tx.wait(1, 5e3)
 
@@ -65,7 +67,7 @@ describe("Send NIBI via smart contract", () => {
   }, 20e3)
 
   it("should send via transfer method", async () => {
-    const contract = await deploySendReceiveNibi()
+    const contract = await deployContractSendNibi()
     const recipient = Wallet.createRandom()
     const weiToSend = toBigInt(100e12) * toBigInt(1e6) // 100 NIBI
 
@@ -75,6 +77,7 @@ describe("Send NIBI via smart contract", () => {
 
     const tx = await contract.sendViaCall(recipient, {
       value: weiToSend,
+      ...COMMON_TX_ARGS,
     })
     const receipt = await tx.wait(1, 5e3)
 

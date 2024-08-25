@@ -1,20 +1,27 @@
-import { describe, expect, it } from "@jest/globals"
+import { describe, expect, it, jest } from "@jest/globals"
 import {
   toBigInt,
-  Wallet,
   parseEther,
   keccak256,
   AbiCoder,
-  ethers,
+  hexlify,
+  TransactionRequest,
 } from "ethers"
 import { account, provider } from "./setup"
 import {
-  SendNibiCompiled__factory,
-  TestERC20Compiled__factory,
-} from "../types/ethers-contracts"
-import { alice, deployERC20, sendTestNibi } from "./utils"
+  INTRINSIC_TX_GAS,
+  TENPOW12,
+  alice,
+  deployContractTestERC20,
+  deployContractSendNibi,
+  hexify,
+  sendTestNibi,
+  COMMON_TX_ARGS,
+} from "./utils"
 
 describe("Basic Queries", () => {
+  jest.setTimeout(15e3)
+
   it("Simple transfer, balance check", async () => {
     const amountToSend = toBigInt(5e12) * toBigInt(1e6) // unibi
     const senderBalanceBefore = await provider.getBalance(account)
@@ -22,11 +29,14 @@ describe("Basic Queries", () => {
     expect(senderBalanceBefore).toBeGreaterThan(0)
     expect(recipientBalanceBefore).toEqual(BigInt(0))
 
+    const tenPow12 = toBigInt(1e12)
+
     // Execute EVM transfer
-    const transaction = {
+    const transaction: TransactionRequest = {
       gasLimit: toBigInt(100e3),
       to: alice,
       value: amountToSend,
+      maxFeePerGas: tenPow12,
     }
     const txResponse = await account.sendTransaction(transaction)
     await txResponse.wait(1, 10e3)
@@ -36,7 +46,6 @@ describe("Basic Queries", () => {
     const recipientBalanceAfter = await provider.getBalance(alice)
 
     // Assert balances with logging
-    const tenPow12 = toBigInt(1e12)
     const gasUsed = 50000n // 50k gas for the transaction
     const txCostMicronibi = amountToSend / tenPow12 + gasUsed
     const txCostWei = txCostMicronibi * tenPow12
@@ -49,7 +58,7 @@ describe("Basic Queries", () => {
     })
     expect(senderBalanceAfter).toEqual(expectedSenderWei)
     expect(recipientBalanceAfter).toEqual(amountToSend)
-  }, 20e3)
+  })
 
   it("eth_accounts", async () => {
     const accounts = await provider.listAccounts()
@@ -64,6 +73,7 @@ describe("Basic Queries", () => {
     }
     const estimatedGas = await provider.estimateGas(tx)
     expect(estimatedGas).toBeGreaterThan(BigInt(0))
+    expect(estimatedGas).toEqual(INTRINSIC_TX_GAS)
   })
 
   it("eth_feeHistory", async () => {
@@ -86,6 +96,7 @@ describe("Basic Queries", () => {
   it("eth_gasPrice", async () => {
     const gasPrice = await provider.send("eth_gasPrice", [])
     expect(gasPrice).toBeDefined()
+    expect(gasPrice).toEqual(hexify(1))
   })
 
   it("eth_getBalance", async () => {
@@ -133,9 +144,7 @@ describe("Basic Queries", () => {
   })
 
   it("eth_getCode", async () => {
-    const factory = new SendNibiCompiled__factory(account)
-    const contract = await factory.deploy()
-    await contract.waitForDeployment()
+    const contract = await deployContractSendNibi()
     const contractAddr = await contract.getAddress()
     const code = await provider.send("eth_getCode", [contractAddr, "latest"])
     expect(code).toBeDefined()
@@ -143,7 +152,7 @@ describe("Basic Queries", () => {
 
   it("eth_getFilterChanges", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
@@ -154,7 +163,11 @@ describe("Basic Queries", () => {
     expect(filterId).toBeDefined()
 
     // Execute some contract TX
-    const tx = await contract.transfer(alice, parseEther("0.01"))
+    const tx = await contract.transfer(
+      alice,
+      parseEther("0.01"),
+      COMMON_TX_ARGS,
+    )
     await tx.wait(1, 5e3)
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
@@ -167,12 +180,12 @@ describe("Basic Queries", () => {
 
     const success = await provider.send("eth_uninstallFilter", [filterId])
     expect(success).toBeTruthy()
-  }, 20e3)
+  })
 
   // Skipping as the method is not implemented
   it.skip("eth_getFilterLogs", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
@@ -192,12 +205,12 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("address")
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
-  }, 20e3)
+  })
 
   // Skipping as the method is not implemented
   it.skip("eth_getLogs", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
@@ -212,11 +225,11 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("address")
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
-  }, 20e3)
+  })
 
   it("eth_getProof", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
 
     const slot = 1 // Assuming balanceOf is at slot 1
@@ -243,12 +256,12 @@ describe("Basic Queries", () => {
       expect(proof.storageProof[0]).toHaveProperty("value")
       expect(proof.storageProof[0]).toHaveProperty("proof")
     }
-  }, 20e3)
+  })
 
   // Skipping as the method is not implemented
   it.skip("eth_getLogs", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
     const filter = {
       fromBlock: "latest",
@@ -264,10 +277,10 @@ describe("Basic Queries", () => {
     expect(logs[0]).toHaveProperty("address")
     expect(logs[0]).toHaveProperty("data")
     expect(logs[0]).toHaveProperty("topics")
-  }, 20e3)
+  })
 
   it("eth_getProof", async () => {
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
 
     const slot = 1 // Assuming balanceOf is at slot 1
@@ -294,15 +307,15 @@ describe("Basic Queries", () => {
       expect(proof.storageProof[0]).toHaveProperty("value")
       expect(proof.storageProof[0]).toHaveProperty("proof")
     }
-  }, 20e3)
+  })
 
   it("eth_getStorageAt", async () => {
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
 
     const value = await provider.getStorage(contractAddr, 1)
     expect(value).toBeDefined()
-  }, 20e3)
+  })
 
   it("eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex", async () => {
     // Execute EVM transfer
@@ -329,16 +342,16 @@ describe("Basic Queries", () => {
     expect(txByBlockNumber["from"]).toEqual(txByBlockHash["from"])
     expect(txByBlockNumber["to"]).toEqual(txByBlockHash["to"])
     expect(txByBlockNumber["value"]).toEqual(txByBlockHash["value"])
-  }, 20e3)
+  })
 
   it("eth_getTransactionByHash", async () => {
     const txResponse = await sendTestNibi()
     const txByHash = await provider.getTransaction(txResponse.hash)
     expect(txByHash).toBeDefined()
     expect(txByHash.hash).toEqual(txResponse.hash)
-  }, 20e3)
+  })
 
-  it("eth_getTransactionByHash", async () => {
+  it("eth_getTransactionCount", async () => {
     const txCount = await provider.getTransactionCount(account.address)
     expect(txCount).toBeGreaterThanOrEqual(0)
   })
@@ -348,7 +361,7 @@ describe("Basic Queries", () => {
     const txReceipt = await provider.getTransactionReceipt(txResponse.hash)
     expect(txReceipt).toBeDefined()
     expect(txReceipt.hash).toEqual(txResponse.hash)
-  }, 20e3)
+  })
 
   it("eth_getUncleCountByBlockHash", async () => {
     const latestBlock = await provider.getBlockNumber()
