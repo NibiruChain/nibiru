@@ -78,6 +78,8 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		// Add the tendermint queries service in the gRPC router.
 		app.RegisterTendermintService(val.ClientCtx)
+
+		val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
 	}
 
 	if val.APIAddress != "" {
@@ -119,7 +121,8 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 	val.Ctx.Logger = evmServerCtxLogger
 
-	if val.AppConfig.JSONRPC.Enable && val.AppConfig.JSONRPC.Address != "" {
+	useEthJsonRPC := val.AppConfig.JSONRPC.Enable && val.AppConfig.JSONRPC.Address != ""
+	if useEthJsonRPC {
 		if val.Ctx == nil || val.Ctx.Viper == nil {
 			return fmt.Errorf("validator %s context is nil", val.Moniker)
 		}
@@ -128,6 +131,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		tmRPCAddr := fmt.Sprintf("tcp://%s", val.AppConfig.GRPC.Address)
 
 		val.Logger.Log("Set EVM indexer")
+
 		homeDir := val.Ctx.Config.RootDir
 		evmTxIndexer, err := server.OpenEVMIndexer(
 			val.Ctx, evmServerCtxLogger, val.ClientCtx, homeDir,
@@ -148,24 +152,23 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		if err != nil {
 			return fmt.Errorf("failed to dial JSON-RPC at address %s: %w", val.AppConfig.JSONRPC.Address, err)
 		}
+
+		val.Logger.Log("Set up Ethereum JSON-RPC client objects")
+		val.EthRpcQueryClient = ethrpc.NewQueryClient(val.ClientCtx)
+		val.EthRpcBackend = backend.NewBackend(
+			val.Ctx,
+			val.Ctx.Logger,
+			val.ClientCtx,
+			val.AppConfig.JSONRPC.AllowUnprotectedTxs,
+			val.EthTxIndexer,
+		)
+
+		val.Logger.Log("Expose typed methods for each namespace")
+		val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
+		val.EthRpc_WEB3 = rpcapi.NewImplWeb3API()
+
+		val.Ctx.Logger = logger // set back to normal setting
 	}
-
-	val.Logger.Log("Set up Ethereum JSON-RPC client objects")
-	val.EthRpcQueryClient = ethrpc.NewQueryClient(val.ClientCtx)
-	val.EthRpcBackend = backend.NewBackend(
-		val.Ctx,
-		val.Ctx.Logger,
-		val.ClientCtx,
-		val.AppConfig.JSONRPC.AllowUnprotectedTxs,
-		val.EthTxIndexer,
-	)
-
-	val.Logger.Log("Expose typed methods for each namespace")
-	val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
-	val.EthRpc_WEB3 = rpcapi.NewImplWeb3API()
-	val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
-
-	val.Ctx.Logger = logger // set back to normal setting
 
 	return nil
 }

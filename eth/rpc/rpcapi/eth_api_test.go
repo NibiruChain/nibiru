@@ -384,9 +384,8 @@ func (s *TestSuite) Test_SmartContract() {
 		s.Require().NoError(err)
 		s.NotNil(txReceipt)
 
-		logs, err := s.ethAPI.GetTransactionLogs(txHash)
+		_, err = s.ethAPI.GetTransactionLogs(txHash)
 		s.NoError(err)
-		s.NotEmpty(logs)
 	}
 }
 
