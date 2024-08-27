@@ -67,12 +67,12 @@ func (k Keeper) EthAccount(
 	acct := k.GetAccountOrEmpty(ctx, addrEth)
 
 	return &evm.QueryEthAccountResponse{
+		EthAddress:    addrEth.Hex(),
+		Bech32Address: addrBech32.String(),
 		Balance:       acct.BalanceNative.String(),
 		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
 		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:         acct.Nonce,
-		EthAddress:    addrEth.Hex(),
-		Bech32Address: addrBech32.String(),
 	}, nil
 }
 
