@@ -24,11 +24,12 @@ func NewEthSigVerificationDecorator(k EVMKeeper) EthSigVerificationDecorator {
 	}
 }
 
-// AnteHandle validates checks that the registered chain id is the same as the one on the message, and
-// that the signer address matches the one defined on the message.
-// It's not skipped for RecheckTx, because it set `From` address which is critical from other ante handler to work.
-// Failure in RecheckTx will prevent tx to be included into block, especially when CheckTx succeed, in which case user
-// won't see the error message.
+// AnteHandle validates checks that the registered chain id is the same as the
+// one on the message, and that the signer address matches the one defined on the
+// message. It's not skipped for RecheckTx, because it set `From` address which
+// is critical from other ante handler to work. Failure in RecheckTx will prevent
+// tx to be included into block, especially when CheckTx succeed, in which case
+// user won't see the error message.
 func (esvd EthSigVerificationDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
