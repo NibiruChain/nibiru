@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -25,9 +26,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmds := []*cobra.Command{
-		CmdCreateFunTokenFromBankCoin(),
-		CmdCreateFunTokenFromERC20(),
-		ConvertCoinToEvm(),
+		CmdCreateFunToken(),
+		CmdConvertCoinToEvm(),
 	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
@@ -36,87 +36,72 @@ func GetTxCmd() *cobra.Command {
 	return txCmd
 }
 
-// CmdCreateFunTokenFromBankCoin broadcast MsgCreateFunToken
-func CmdCreateFunTokenFromBankCoin() *cobra.Command {
+// CmdCreateFunToken broadcast MsgCreateFunToken
+func CmdCreateFunToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-funtoken-from-bank-coin [denom] [flags]",
-		Short: `Create an erc20 fungible token from bank coin [denom]"`,
-		Args:  cobra.ExactArgs(1),
+		Use:   "create-funtoken [flags]",
+		Short: `Create a fungible token mapping between a bank coin and erc20 contract"`,
+		Long: heredoc.Doc(`
+	Example: Creating a fungible token mapping from bank coin.
+
+	create-funtoken --bank-denom="ibc/..."
+
+	Example: Creating a fungible token mapping from an ERC20.
+
+	create-funtoken --erc20=[erc20-address]
+		`),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			txFactory, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-			if err != nil {
-				return err
+
+			bankDenom, _ := cmd.Flags().GetString("bank-denom")
+			erc20AddrStr, _ := cmd.Flags().GetString("erc20")
+
+			if (bankDenom == "" && erc20AddrStr == "") ||
+				(bankDenom != "" && erc20AddrStr != "") {
+				return fmt.Errorf("exactly one of the flags --bank-denom or --erc20 must be specified")
 			}
-			txFactory = txFactory.
-				WithTxConfig(clientCtx.TxConfig).
-				WithAccountRetriever(clientCtx.AccountRetriever)
 
 			msg := &evm.MsgCreateFunToken{
-				Sender:        clientCtx.GetFromAddress().String(),
-				FromBankDenom: args[0],
+				Sender: clientCtx.GetFromAddress().String(),
 			}
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
+			if bankDenom != "" {
+				if err := sdk.ValidateDenom(bankDenom); err != nil {
+					return err
+				}
+				msg.FromBankDenom = bankDenom
+			} else {
+				erc20Addr, err := eth.NewEIP55AddrFromStr(erc20AddrStr)
+				if err != nil {
+					return err
+				}
+				msg.FromErc20 = &erc20Addr
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String("bank-denom", "", "The bank denom to create a fungible token from")
+	cmd.Flags().String("erc20", "", "The ERC20 address to create a fungible token from")
+
 	return cmd
 }
 
-// CmdCreateFunTokenFromERC20 broadcast MsgCreateFunToken
-func CmdCreateFunTokenFromERC20() *cobra.Command {
+// CmdConvertCoinToEvm broadcast MsgConvertCoinToEvm
+func CmdConvertCoinToEvm() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-funtoken-from-erc20 [erc20addr] [flags]",
-		Short: `Create a fungible token from erc20 contract [erc20addr]"`,
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-			txFactory, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			txFactory = txFactory.
-				WithTxConfig(clientCtx.TxConfig).
-				WithAccountRetriever(clientCtx.AccountRetriever)
-			erc20Addr, err := eth.NewEIP55AddrFromStr(args[0])
-			if err != nil {
-				return err
-			}
-			msg := &evm.MsgCreateFunToken{
-				Sender:    clientCtx.GetFromAddress().String(),
-				FromErc20: &erc20Addr,
-			}
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
-		},
-	}
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-// ConvertCoinToEvm broadcast MsgConvertCoinToEvm
-func ConvertCoinToEvm() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "send-funtoken-to-erc20 [to_eth_addr] [coin] [flags]",
-		Short: `Send bank [coin] to its erc20 representation for the user [to_eth_addr]"`,
+		Use:   "convert-coin-to-evm [to_eth_addr] [coin] [flags]",
+		Short: `Convert bank [coin] to its erc20 representation and send to the [to_eth_addr] account"`,
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			txFactory, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			txFactory = txFactory.
-				WithTxConfig(clientCtx.TxConfig).
-				WithAccountRetriever(clientCtx.AccountRetriever)
 
 			eip55Addr, err := eth.NewEIP55AddrFromStr(args[0])
 			if err != nil {
@@ -132,7 +117,7 @@ func ConvertCoinToEvm() *cobra.Command {
 				BankCoin:  coin,
 				ToEthAddr: eip55Addr,
 			}
-			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txFactory, msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
