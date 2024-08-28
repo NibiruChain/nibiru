@@ -162,6 +162,9 @@ sed -i $SEDOPTION '/\[grpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/con
 echo_info "config/app.toml: Enabling JSON API server"
 sed -i $SEDOPTION '/\[json\-rpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
 
+echo_info "config/app.toml: Enabling debug evm api"
+sed -i $SEDOPTION '/\[json\-rpc\]/,+13 s/api = "eth,net,web3"/api = "eth,net,web3,debug"/' $CHAIN_DIR/config/app.toml
+
 # Enable Swagger Docs
 echo_info "config/app.toml: Enabling Swagger Docs"
 sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml
