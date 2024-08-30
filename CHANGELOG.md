@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2017](https://github.com/NibiruChain/nibiru/pull/2017) - fix(evm): Fix DynamicFeeTx gas cap parameters
 - [#2019](https://github.com/NibiruChain/nibiru/pull/2019) - chore(evm): enabled debug rpc api on localnet.
 - [#2020](https://github.com/NibiruChain/nibiru/pull/2020) - test(evm): e2e tests for debug namespace
+- [#2022](https://github.com/NibiruChain/nibiru/pull/2022) - feat(evm): debug_traceCall method implemented
 
 #### Dapp modules: perp, spot, oracle, etc
 
