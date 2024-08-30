@@ -5,6 +5,8 @@ import {
   keccak256,
   AbiCoder,
   TransactionRequest,
+  Block,
+  TransactionResponse,
 } from "ethers"
 import { account, provider } from "./setup"
 import {
@@ -55,9 +57,7 @@ describe("Basic Queries", () => {
     expect(senderBalanceAfter).toEqual(expectedSenderWei)
     expect(recipientBalanceAfter).toEqual(amountToSend)
   })
-})
 
-describe("eth queries", () => {
   it("eth_accounts", async () => {
     const accounts = await provider.listAccounts()
     expect(accounts).not.toHaveLength(0)
@@ -211,7 +211,7 @@ describe("eth queries", () => {
       address: contractAddr,
     }
     // Execute some contract TX
-    const _tx = await contract.transfer(alice, parseEther("0.01"))
+    const tx = await contract.transfer(alice, parseEther("0.01"))
 
     // Assert logs
     const changes = await provider.send("eth_getLogs", [filter])
@@ -313,8 +313,9 @@ describe("eth queries", () => {
 
   it("eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex", async () => {
     // Execute EVM transfer
-    const txResponse = await sendTestNibi()
-    const block = await txResponse.getBlock()
+    const txResponse: TransactionResponse = await sendTestNibi()
+    const block: Block = (await txResponse.getBlock()) as Block
+    expect(block).toBeTruthy()
 
     const txByBlockHash = await provider.send(
       "eth_getTransactionByBlockHashAndIndex",

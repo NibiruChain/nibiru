@@ -4,8 +4,6 @@ package evm
 import (
 	"math/big"
 
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -86,7 +84,7 @@ func (tx *LegacyTx) GetGas() uint64 {
 	return tx.GasLimit
 }
 
-// GetGasPrice returns the gas price field.
+// GetGasPrice is equivalent to wei per unit gas.
 func (tx *LegacyTx) GetGasPrice() *big.Int {
 	if tx.GasPrice == nil {
 		return nil
@@ -94,18 +92,20 @@ func (tx *LegacyTx) GetGasPrice() *big.Int {
 	return tx.GasPrice.BigInt()
 }
 
-// GetGasTipCap returns the gas price field.
-func (tx *LegacyTx) GetGasTipCap() *big.Int {
+// GetGasTipCapWei returns a cap on the gas tip in units of wei.
+// For a [LegacyTx], this is taken to be the gas price.
+func (tx *LegacyTx) GetGasTipCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetGasFeeCap returns the gas price field.
-func (tx *LegacyTx) GetGasFeeCap() *big.Int {
+// GetGasFeeCapWei returns a cap on the gas fees paid in units of wei.
+// For a [LegacyTx], this is taken to be the gas price.
+func (tx *LegacyTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetValue returns the tx amount.
-func (tx *LegacyTx) GetValue() *big.Int {
+// GetValueWei returns the tx amount.
+func (tx *LegacyTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {
 		return nil
 	}
@@ -133,7 +133,7 @@ func (tx *LegacyTx) AsEthereumData() gethcore.TxData {
 		GasPrice: tx.GetGasPrice(),
 		Gas:      tx.GetGas(),
 		To:       tx.GetTo(),
-		Value:    tx.GetValue(),
+		Value:    tx.GetValueWei(),
 		Data:     tx.GetData(),
 		V:        v,
 		R:        r,
@@ -162,43 +162,19 @@ func (tx *LegacyTx) SetSignatureValues(_, v, r, s *big.Int) {
 
 // Validate performs a stateless validation of the tx fields.
 func (tx LegacyTx) Validate() error {
-	gasPrice := tx.GetGasPrice()
-	if gasPrice == nil {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "gas price cannot be nil")
-	}
-
-	if gasPrice.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
-	}
-	if !eth.IsValidInt256(gasPrice) {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
-	}
-	if !eth.IsValidInt256(tx.Fee()) {
-		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
-	}
-
-	amount := tx.GetValue()
-	// Amount can be 0
-	if amount != nil && amount.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
-	}
-	if !eth.IsValidInt256(amount) {
-		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
-	}
-
-	if tx.To != "" {
-		if err := eth.ValidateAddress(tx.To); err != nil {
-			return errorsmod.Wrap(err, "invalid to address")
+	for _, err := range []error{
+		ValidateTxDataAmount(&tx),
+		ValidateTxDataTo(&tx),
+		ValidateTxDataGasPrice(&tx),
+		ValidateTxDataChainID(&tx),
+	} {
+		if err != nil {
+			return err
 		}
 	}
 
-	chainID := tx.GetChainID()
-
-	if chainID == nil {
-		return errorsmod.Wrap(
-			errortypes.ErrInvalidChainID,
-			"chain ID must be derived from LegacyTx txs",
-		)
+	if !eth.IsValidInt256(tx.Fee()) {
+		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	return nil
@@ -206,25 +182,26 @@ func (tx LegacyTx) Validate() error {
 
 // Fee returns gasprice * gaslimit.
 func (tx LegacyTx) Fee() *big.Int {
-	return fee(tx.GetGasPrice(), tx.GetGas())
+	return priceTimesGas(tx.GetGasPrice(), tx.GetGas())
 }
 
 // Cost returns amount + gasprice * gaslimit.
 func (tx LegacyTx) Cost() *big.Int {
-	return cost(tx.Fee(), tx.GetValue())
+	return cost(tx.Fee(), tx.GetValueWei())
 }
 
-// EffectiveGasPrice is the same as GasPrice for LegacyTx
-func (tx LegacyTx) EffectiveGasPrice(_ *big.Int) *big.Int {
-	return tx.GetGasPrice()
+// EffectiveGasPriceWei is the same as GasPrice for LegacyTx
+func (tx LegacyTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(tx.GetGasPrice(), baseFeeWei)
 }
 
-// EffectiveFee is the same as Fee for LegacyTx
-func (tx LegacyTx) EffectiveFee(_ *big.Int) *big.Int {
-	return tx.Fee()
+// EffectiveFeeWei is the same as Fee for LegacyTx
+func (tx LegacyTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
+	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GetGas())
 }
 
 // EffectiveCost is the same as Cost for LegacyTx
-func (tx LegacyTx) EffectiveCost(_ *big.Int) *big.Int {
-	return tx.Cost()
+func (tx LegacyTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+	txFee := tx.EffectiveFeeWei(baseFeeWei)
+	return cost(txFee, tx.GetValueWei())
 }

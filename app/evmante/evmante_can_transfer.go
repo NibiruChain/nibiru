@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -40,7 +40,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
@@ -62,7 +62,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 		}
 		if coreMsg.GasFeeCap().Cmp(baseFee) < 0 {
 			return ctx, errors.Wrapf(
-				errortypes.ErrInsufficientFee,
+				sdkerrors.ErrInsufficientFee,
 				"max fee per gas less than block base fee (%s < %s)",
 				coreMsg.GasFeeCap(), baseFee,
 			)
@@ -89,7 +89,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
 			balanceWei := stateDB.GetBalance(coreMsg.From())
 			return ctx, errors.Wrapf(
-				errortypes.ErrInsufficientFunds,
+				sdkerrors.ErrInsufficientFunds,
 				"failed to transfer %s wei (balance=%s) from address %s using the EVM block context transfer function",
 				coreMsg.Value(),
 				balanceWei,
