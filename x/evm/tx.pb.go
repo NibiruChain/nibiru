@@ -84,8 +84,12 @@ func (m *MsgEthereumTx) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgEthereumTx proto.InternalMessageInfo
 
 // LegacyTx is the transaction data of regular Ethereum transactions.
-// NOTE: All non-protected transactions (i.e non EIP155 signed) will fail if the
-// AllowUnprotectedTxs parameter is disabled.
+//
+// Note that setting "evm.Params.AllowUnprotectedTxs" to false will cause all
+// non-EIP155 signed transactions to fail, as they'll lack replay protection.
+//
+// LegacyTx is a custom implementation of "LegacyTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type LegacyTx struct {
 	// nonce corresponds to the account nonce (transaction sequence).
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -99,11 +103,19 @@ type LegacyTx struct {
 	Amount *cosmossdk_io_math.Int `protobuf:"bytes,5,opt,name=value,proto3,customtype=cosmossdk.io/math.Int" json:"value,omitempty"`
 	// data is the data payload bytes of the transaction.
 	Data []byte `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
-	// v defines the signature value
+	// v defines the recovery id as the "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,7,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,8,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,9,opt,name=s,proto3" json:"s,omitempty"`
 }
 
@@ -141,6 +153,8 @@ func (m *LegacyTx) XXX_DiscardUnknown() {
 var xxx_messageInfo_LegacyTx proto.InternalMessageInfo
 
 // AccessListTx is the data of EIP-2930 access list transactions.
+// It is a custom implementation of "AccessListTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type AccessListTx struct {
 	// chain_id of the destination EVM chain
 	ChainID *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=cosmossdk.io/math.Int" json:"chainID"`
@@ -158,11 +172,19 @@ type AccessListTx struct {
 	Data []byte `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
 	Accesses AccessList `protobuf:"bytes,8,rep,name=accesses,proto3,castrepeated=AccessList" json:"accessList"`
-	// v defines the signature value
+	// v defines the recovery id and "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,9,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,10,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,11,opt,name=s,proto3" json:"s,omitempty"`
 }
 
@@ -199,7 +221,9 @@ func (m *AccessListTx) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AccessListTx proto.InternalMessageInfo
 
-// DynamicFeeTx is the data of EIP-1559 dinamic fee transactions.
+// DynamicFeeTx is the data of EIP-1559 dynamic fee transactions. It is a custom
+// implementation of "DynamicFeeTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type DynamicFeeTx struct {
 	// chain_id of the destination EVM chain
 	ChainID *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=cosmossdk.io/math.Int" json:"chainID"`
@@ -219,11 +243,19 @@ type DynamicFeeTx struct {
 	Data []byte `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
 	Accesses AccessList `protobuf:"bytes,9,rep,name=accesses,proto3,castrepeated=AccessList" json:"accessList"`
-	// v defines the signature value
+	// v defines the recovery id and "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,10,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,11,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,12,opt,name=s,proto3" json:"s,omitempty"`
 }
 

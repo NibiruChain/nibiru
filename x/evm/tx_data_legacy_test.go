@@ -7,9 +7,10 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (suite *TxDataTestSuite) TestNewLegacyTx() {
+func (suite *Suite) TestNewLegacyTx() {
 	testCases := []struct {
 		name string
 		tx   *gethcore.Transaction
@@ -39,14 +40,14 @@ func (suite *TxDataTestSuite) TestNewLegacyTx() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxTxType() {
+func (suite *Suite) TestLegacyTxTxType() {
 	tx := evm.LegacyTx{}
 	actual := tx.TxType()
 
 	suite.Require().Equal(uint8(0), actual)
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxCopy() {
+func (suite *Suite) TestLegacyTxCopy() {
 	tx := &evm.LegacyTx{}
 	txData := tx.Copy()
 
@@ -54,21 +55,21 @@ func (suite *TxDataTestSuite) TestLegacyTxCopy() {
 	// TODO: Test for different pointers
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetChainID() {
+func (suite *Suite) TestLegacyTxGetChainID() {
 	tx := evm.LegacyTx{}
 	actual := tx.GetChainID()
 
 	suite.Require().Nil(actual)
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetAccessList() {
+func (suite *Suite) TestLegacyTxGetAccessList() {
 	tx := evm.LegacyTx{}
 	actual := tx.GetAccessList()
 
 	suite.Require().Nil(actual)
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetData() {
+func (suite *Suite) TestLegacyTxGetData() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -88,7 +89,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetData() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetGas() {
+func (suite *Suite) TestLegacyTxGetGas() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -110,7 +111,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGas() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetGasPrice() {
+func (suite *Suite) TestLegacyTxGetGasPrice() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -133,13 +134,13 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasPrice() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap()
+		actual := tc.tx.GetGasFeeCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetGasTipCap() {
+func (suite *Suite) TestLegacyTxGetGasTipCap() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -155,13 +156,13 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasTipCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasTipCap()
+		actual := tc.tx.GetGasTipCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetGasFeeCap() {
+func (suite *Suite) TestLegacyTxGetGasFeeCap() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -177,13 +178,13 @@ func (suite *TxDataTestSuite) TestLegacyTxGetGasFeeCap() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetGasFeeCap()
+		actual := tc.tx.GetGasFeeCapWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetValue() {
+func (suite *Suite) TestLegacyTxGetValue() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -206,13 +207,13 @@ func (suite *TxDataTestSuite) TestLegacyTxGetValue() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.GetValue()
+		actual := tc.tx.GetValueWei()
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetNonce() {
+func (suite *Suite) TestLegacyTxGetNonce() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -233,7 +234,7 @@ func (suite *TxDataTestSuite) TestLegacyTxGetNonce() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxGetTo() {
+func (suite *Suite) TestLegacyTxGetTo() {
 	testCases := []struct {
 		name string
 		tx   evm.LegacyTx
@@ -262,14 +263,14 @@ func (suite *TxDataTestSuite) TestLegacyTxGetTo() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxAsEthereumData() {
+func (suite *Suite) TestLegacyTxAsEthereumData() {
 	tx := &evm.LegacyTx{}
 	txData := tx.AsEthereumData()
 
 	suite.Require().Equal(&gethcore.LegacyTx{}, txData)
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxSetSignatureValues() {
+func (suite *Suite) TestLegacyTxSetSignatureValues() {
 	testCases := []struct {
 		name string
 		v    *big.Int
@@ -295,52 +296,54 @@ func (suite *TxDataTestSuite) TestLegacyTxSetSignatureValues() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxValidate() {
+func (suite *Suite) TestLegacyTxValidate() {
 	testCases := []struct {
 		name     string
-		tx       evm.LegacyTx
+		tx       func(tx *evm.LegacyTx) *evm.LegacyTx
 		expError bool
 	}{
 		{
-			"empty",
-			evm.LegacyTx{},
-			true,
+			name:     "empty",
+			tx:       func(_ *evm.LegacyTx) *evm.LegacyTx { return new(evm.LegacyTx) },
+			expError: true,
 		},
 		{
-			"gas price is nil",
-			evm.LegacyTx{
-				GasPrice: nil,
+			name: "gas price is nil",
+			tx: func(tx *evm.LegacyTx) *evm.LegacyTx {
+				tx.GasPrice = nil
+				return tx
 			},
-			true,
+			expError: true,
 		},
 		{
-			"gas price is negative",
-			evm.LegacyTx{
-				GasPrice: &suite.sdkMinusOneInt,
+			name: "gas price is negative",
+			tx: func(tx *evm.LegacyTx) *evm.LegacyTx {
+				tx.GasPrice = &suite.sdkMinusOneInt
+				return tx
 			},
-			true,
+			expError: true,
 		},
 		{
-			"amount is negative",
-			evm.LegacyTx{
-				GasPrice: &suite.sdkInt,
-				Amount:   &suite.sdkMinusOneInt,
+			name: "amount is negative",
+			tx: func(tx *evm.LegacyTx) *evm.LegacyTx {
+				tx.Amount = &suite.sdkMinusOneInt
+				return tx
 			},
-			true,
+			expError: true,
 		},
 		{
-			"to address is invalid",
-			evm.LegacyTx{
-				GasPrice: &suite.sdkInt,
-				Amount:   &suite.sdkInt,
-				To:       suite.invalidAddr,
+			name: "to address is invalid",
+			tx: func(tx *evm.LegacyTx) *evm.LegacyTx {
+				tx.To = suite.invalidAddr
+				return tx
 			},
-			true,
+			expError: true,
 		},
 	}
 
 	for _, tc := range testCases {
-		err := tc.tx.Validate()
+		got := tc.tx(evmtest.ValidLegacyTx())
+		err := got.Validate()
 
 		if tc.expError {
 			suite.Require().Error(err, tc.name)
@@ -351,7 +354,7 @@ func (suite *TxDataTestSuite) TestLegacyTxValidate() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxEffectiveGasPrice() {
+func (suite *Suite) TestLegacyTxEffectiveGasPrice() {
 	testCases := []struct {
 		name    string
 		tx      evm.LegacyTx
@@ -369,13 +372,13 @@ func (suite *TxDataTestSuite) TestLegacyTxEffectiveGasPrice() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveGasPrice(tc.baseFee)
+		actual := tc.tx.EffectiveGasPriceWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxEffectiveFee() {
+func (suite *Suite) TestLegacyTxEffectiveFee() {
 	testCases := []struct {
 		name    string
 		tx      evm.LegacyTx
@@ -394,13 +397,13 @@ func (suite *TxDataTestSuite) TestLegacyTxEffectiveFee() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveFee(tc.baseFee)
+		actual := tc.tx.EffectiveFeeWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxEffectiveCost() {
+func (suite *Suite) TestLegacyTxEffectiveCost() {
 	testCases := []struct {
 		name    string
 		tx      evm.LegacyTx
@@ -426,7 +429,7 @@ func (suite *TxDataTestSuite) TestLegacyTxEffectiveCost() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestLegacyTxFeeCost() {
+func (suite *Suite) TestLegacyTxFeeCost() {
 	tx := &evm.LegacyTx{}
 
 	suite.Require().Panics(func() { tx.Fee() }, "should panic")

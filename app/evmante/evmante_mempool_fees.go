@@ -3,8 +3,9 @@ package evmante
 
 import (
 	"cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -38,32 +39,38 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	}
 
 	minGasPrice := ctx.MinGasPrices().AmountOf(d.evmKeeper.GetParams(ctx).EvmDenom)
+	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
+	baseFeeDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
+
 	// if MinGasPrices is not set, skip the check
 	if minGasPrice.IsZero() {
 		return next(ctx, tx, simulate)
+	} else if minGasPrice.LT(baseFeeDec) {
+		minGasPrice = baseFeeDec
 	}
-
-	baseFee := d.evmKeeper.GetBaseFee(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		ethTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
 
-		effectiveGasPrice := ethTx.GetEffectiveGasPrice(baseFee)
-
-		if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
+		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+		effectiveGasPriceDec := math.LegacyNewDecFromBigInt(
+			evm.WeiToNative(ethTx.GetEffectiveGasPrice(baseFeeWei)),
+		)
+		if effectiveGasPriceDec.LT(minGasPrice) {
+			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
 			return ctx, errors.Wrapf(
-				errortypes.ErrInsufficientFee,
+				sdkerrors.ErrInsufficientFee,
 				"provided gas price < minimum local gas price (%s < %s). "+
 					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
 					"(for access list or legacy txs)",
-				effectiveGasPrice.String(), minGasPrice.String(),
+				effectiveGasPriceDec, minGasPrice,
 			)
 		}
 	}

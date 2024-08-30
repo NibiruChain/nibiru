@@ -1,13 +1,10 @@
 import { describe, expect, it } from "@jest/globals"
 import { toBigInt } from "ethers"
-import { InfiniteLoopGasCompiled__factory } from "../types/ethers-contracts"
-import { account } from "./setup"
+import { deployContractInfiniteLoopGas } from "./utils"
 
 describe("Infinite loop gas contract", () => {
   it("should fail due to out of gas error", async () => {
-    const factory = new InfiniteLoopGasCompiled__factory(account)
-    const contract = await factory.deploy()
-    await contract.waitForDeployment()
+    const contract = await deployContractInfiniteLoopGas()
 
     expect(contract.counter()).resolves.toBe(toBigInt(0))
 

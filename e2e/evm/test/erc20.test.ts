@@ -1,11 +1,11 @@
 import { describe, expect, it } from "@jest/globals"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 import { account } from "./setup"
-import { deployERC20 } from "./utils"
+import { deployContractTestERC20 } from "./utils"
 
 describe("ERC-20 contract tests", () => {
   it("should send properly", async () => {
-    const contract = await deployERC20()
+    const contract = await deployContractTestERC20()
     expect(contract.getAddress()).resolves.toBeDefined()
 
     const ownerInitialBalance = parseUnits("1000000", 18)

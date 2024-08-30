@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-func (suite *TxDataTestSuite) TestTestNewAccessList() {
+func (suite *Suite) TestTestNewAccessList() {
 	testCases := []struct {
 		name          string
 		ethAccessList *gethcore.AccessList
@@ -32,7 +32,7 @@ func (suite *TxDataTestSuite) TestTestNewAccessList() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestAccessListToEthAccessList() {
+func (suite *Suite) TestAccessListToEthAccessList() {
 	ethAccessList := gethcore.AccessList{{Address: suite.addr, StorageKeys: []common.Hash{{0}}}}
 	al := evm.NewAccessList(&ethAccessList)
 	actual := al.ToEthAccessList()

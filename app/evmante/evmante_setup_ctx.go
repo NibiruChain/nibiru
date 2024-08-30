@@ -5,7 +5,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
@@ -31,7 +31,7 @@ func (esc EthSetupContextDecorator) AnteHandle(
 	_, ok := tx.(authante.GasTx)
 	if !ok {
 		return ctx, errorsmod.Wrapf(
-			errortypes.ErrInvalidType,
+			sdkerrors.ErrInvalidType,
 			"invalid transaction type %T, expected GasTx", tx,
 		)
 	}
