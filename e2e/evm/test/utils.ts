@@ -15,8 +15,6 @@ export const hexify = (x: number): string => {
 /** 10 to the power of 12 */
 export const TENPOW12 = toBigInt(1e12)
 
-export const COMMON_TX_ARGS: TransactionRequest = { maxFeePerGas: TENPOW12 }
-
 export const INTRINSIC_TX_GAS: bigint = 21000n
 
 export const deployContractTestERC20 = async () => {

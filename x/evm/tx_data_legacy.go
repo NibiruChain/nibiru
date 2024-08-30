@@ -92,12 +92,14 @@ func (tx *LegacyTx) GetGasPrice() *big.Int {
 	return tx.GasPrice.BigInt()
 }
 
-// GetGasTipCapWei returns the gas price field.
+// GetGasTipCapWei returns a cap on the gas tip in units of wei.
+// For a [LegacyTx], this is taken to be the gas price.
 func (tx *LegacyTx) GetGasTipCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetGasFeeCapWei returns the gas price field.
+// GetGasFeeCapWei returns a cap on the gas fees paid in units of wei.
+// For a [LegacyTx], this is taken to be the gas price.
 func (tx *LegacyTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
@@ -180,7 +182,7 @@ func (tx LegacyTx) Validate() error {
 
 // Fee returns gasprice * gaslimit.
 func (tx LegacyTx) Fee() *big.Int {
-	return fee(tx.GetGasPrice(), tx.GetGas())
+	return priceTimesGas(tx.GetGasPrice(), tx.GetGas())
 }
 
 // Cost returns amount + gasprice * gaslimit.
@@ -189,16 +191,17 @@ func (tx LegacyTx) Cost() *big.Int {
 }
 
 // EffectiveGasPriceWei is the same as GasPrice for LegacyTx
-func (tx LegacyTx) EffectiveGasPriceWei(_ *big.Int) *big.Int {
-	return tx.GetGasPrice()
+func (tx LegacyTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(tx.GetGasPrice(), baseFeeWei)
 }
 
 // EffectiveFeeWei is the same as Fee for LegacyTx
-func (tx LegacyTx) EffectiveFeeWei(_ *big.Int) *big.Int {
-	return tx.Fee()
+func (tx LegacyTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
+	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GetGas())
 }
 
 // EffectiveCost is the same as Cost for LegacyTx
-func (tx LegacyTx) EffectiveCost(_ *big.Int) *big.Int {
-	return tx.Cost()
+func (tx LegacyTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+	txFee := tx.EffectiveFeeWei(baseFeeWei)
+	return cost(txFee, tx.GetValueWei())
 }

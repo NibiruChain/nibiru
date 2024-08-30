@@ -4,19 +4,16 @@ import {
   parseEther,
   keccak256,
   AbiCoder,
-  hexlify,
   TransactionRequest,
 } from "ethers"
 import { account, provider } from "./setup"
 import {
   INTRINSIC_TX_GAS,
-  TENPOW12,
   alice,
   deployContractTestERC20,
   deployContractSendNibi,
   hexify,
   sendTestNibi,
-  COMMON_TX_ARGS,
 } from "./utils"
 
 describe("Basic Queries", () => {
@@ -36,7 +33,6 @@ describe("Basic Queries", () => {
       gasLimit: toBigInt(100e3),
       to: alice,
       value: amountToSend,
-      maxFeePerGas: tenPow12,
     }
     const txResponse = await account.sendTransaction(transaction)
     await txResponse.wait(1, 10e3)
@@ -163,11 +159,7 @@ describe("Basic Queries", () => {
     expect(filterId).toBeDefined()
 
     // Execute some contract TX
-    const tx = await contract.transfer(
-      alice,
-      parseEther("0.01"),
-      COMMON_TX_ARGS,
-    )
+    const tx = await contract.transfer(alice, parseEther("0.01"))
     await tx.wait(1, 5e3)
     await new Promise((resolve) => setTimeout(resolve, 3000))
 

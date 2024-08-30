@@ -171,16 +171,21 @@ func VerifyFee(
 		)
 	}
 
-	gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
-	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
-	if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
-		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
-			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) wei per gas",
-			txData.GetGasFeeCapWei(),
-			baseFeeWei,
-		)
+	if baseFeeMicronibi == nil {
+		baseFeeMicronibi = evm.BASE_FEE_MICRONIBI
 	}
 
+	// gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
+	// if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
+	// 	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+	// 	return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
+	// 		"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) wei per gas",
+	// 		txData.GetGasFeeCapWei(),
+	// 		baseFeeWei,
+	// 	)
+	// }
+
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
 	if feeAmtMicronibi.Sign() == 0 {
 		// zero fee, no need to deduct

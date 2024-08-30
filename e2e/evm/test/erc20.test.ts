@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 import { account } from "./setup"
-import { COMMON_TX_ARGS, deployContractTestERC20 } from "./utils"
+import { deployContractTestERC20 } from "./utils"
 
 describe("ERC-20 contract tests", () => {
   it("should send properly", async () => {
@@ -16,7 +16,7 @@ describe("ERC-20 contract tests", () => {
 
     // send to alice
     const amountToSend = parseUnits("1000", 18) // contract tokens
-    let tx = await contract.transfer(alice, amountToSend, COMMON_TX_ARGS)
+    let tx = await contract.transfer(alice, amountToSend)
     await tx.wait()
 
     expect(contract.balanceOf(account)).resolves.toEqual(

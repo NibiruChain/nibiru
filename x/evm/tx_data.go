@@ -159,9 +159,13 @@ func rawSignatureValues(vBz, rBz, sBz []byte) (v, r, s *big.Int) {
 	return v, r, s
 }
 
-func fee(gasPrice *big.Int, gas uint64) *big.Int {
+// Returns the fee in wei corresponding to the given gas price and gas amount.
+// Args:
+//   - weiPerGas: Wei per unit gas (gas price).
+//   - gas: gas units
+func priceTimesGas(weiPerGas *big.Int, gas uint64) *big.Int {
 	gasLimit := new(big.Int).SetUint64(gas)
-	return new(big.Int).Mul(gasPrice, gasLimit)
+	return new(big.Int).Mul(weiPerGas, gasLimit)
 }
 
 func cost(fee, value *big.Int) *big.Int {

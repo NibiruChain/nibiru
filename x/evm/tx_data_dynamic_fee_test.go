@@ -2,7 +2,9 @@ package evm_test
 
 import (
 	"math/big"
+	"strings"
 
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -549,24 +551,66 @@ func (suite *Suite) TestDynamicFeeTxValidate() {
 
 func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 	testCases := []struct {
-		name    string
-		tx      evm.DynamicFeeTx
-		baseFee *big.Int
-		exp     *big.Int
+		name       string
+		tx         func() evm.DynamicFeeTx
+		baseFeeWei *big.Int
+		exp        *big.Int
 	}{
 		{
-			"non-empty dynamic fee tx",
-			evm.DynamicFeeTx{
-				GasTipCap: &suite.sdkInt,
-				GasFeeCap: &suite.sdkInt,
+			name: "all equal to base fee",
+			tx: func() evm.DynamicFeeTx {
+				return evm.DynamicFeeTx{
+					GasTipCap: &suite.sdkInt,
+					GasFeeCap: &suite.sdkInt,
+				}
 			},
-			(&suite.sdkInt).BigInt(),
-			(&suite.sdkInt).BigInt(),
+			baseFeeWei: (&suite.sdkInt).BigInt(),
+			exp:        (&suite.sdkInt).BigInt(),
+		},
+		{
+			name: "baseFee < tip < feeCap",
+			tx: func() evm.DynamicFeeTx {
+				gasTipCap, _ := math.NewIntFromString("5" + strings.Repeat("0", 12))
+				gasFeeCap, _ := math.NewIntFromString("10" + strings.Repeat("0", 12))
+				return evm.DynamicFeeTx{
+					GasTipCap: &gasTipCap,
+					GasFeeCap: &gasFeeCap,
+				}
+			},
+			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			exp:        evm.NativeToWei(big.NewInt(6)),
+		},
+		{
+			name: "baseFee < feeCap < tip",
+			tx: func() evm.DynamicFeeTx {
+				gasTipCap, _ := math.NewIntFromString("10" + strings.Repeat("0", 12))
+				gasFeeCap, _ := math.NewIntFromString("2" + strings.Repeat("0", 12))
+				return evm.DynamicFeeTx{
+					GasTipCap: &gasTipCap,
+					GasFeeCap: &gasFeeCap,
+				}
+			},
+			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			exp:        evm.NativeToWei(big.NewInt(2)),
+		},
+		{
+			name: "below baseFee",
+			tx: func() evm.DynamicFeeTx {
+				gasTipCap, _ := math.NewIntFromString("0" + strings.Repeat("0", 12))
+				gasFeeCap, _ := math.NewIntFromString("0" + strings.Repeat("0", 12))
+				return evm.DynamicFeeTx{
+					GasTipCap: &gasTipCap,
+					GasFeeCap: &gasFeeCap,
+				}
+			},
+			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			exp:        evm.NativeToWei(big.NewInt(1)),
 		},
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveGasPriceWei(tc.baseFee)
+		txData := tc.tx()
+		actual := txData.EffectiveGasPriceWei(tc.baseFeeWei)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

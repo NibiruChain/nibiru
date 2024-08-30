@@ -61,14 +61,14 @@ func (s *Suite) TestVerifyFee() {
 			)
 			txData.GasPrice = &lowGasPrice
 
-			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(nil))
+			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
 
 			return testCase{
-				name:             "sad: gas fee cap lower than base fee",
+				name:             "happy: gas fee cap lower than base fee",
 				txData:           txData,
 				baseFeeMicronibi: baseFeeMicronibi,
 				wantCoinAmt:      effectiveFeeMicronibi.String(),
-				wantErr:          "gasfeecap is lower than the tx baseFee",
+				wantErr:          "",
 			}
 		},
 		func() testCase {

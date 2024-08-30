@@ -14,6 +14,22 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
+// BigIntMax returns max(x,y).
+func BigIntMax(x, y *big.Int) *big.Int {
+	if x == nil && y != nil {
+		return y
+	} else if x != nil && y == nil {
+		return x
+	} else if x == nil && y == nil {
+		return nil
+	}
+
+	if x.Cmp(y) > 0 {
+		return x
+	}
+	return y
+}
+
 func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	txData := &DynamicFeeTx{
 		Nonce:    tx.Nonce(),
@@ -109,12 +125,22 @@ func (tx *DynamicFeeTx) GetGas() uint64 {
 	return tx.GasLimit
 }
 
-// GetGasPrice returns the gas fee cap field.
+// Gas price as wei spent per unit gas.
 func (tx *DynamicFeeTx) GetGasPrice() *big.Int {
 	return tx.GetGasFeeCapWei()
 }
 
-// GetGasTipCapWei returns the gas tip cap field.
+// GetGasTipCapWei returns a cap on the gas tip in units of wei.
+//
+// Also called "maxPriorityFeePerGas" in Alchemy and Ethers.
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas].
+// Base fees are determined by the network, not the end user that broadcasts
+// the transaction. Adding a tip increases one's "priority" in the block.
+//
+// The terminology "fee per gas" essentially means "wei per unit gas".
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas] for more info.
+//
+// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 func (tx *DynamicFeeTx) GetGasTipCapWei() *big.Int {
 	if tx.GasTipCap == nil {
 		return nil
@@ -122,7 +148,18 @@ func (tx *DynamicFeeTx) GetGasTipCapWei() *big.Int {
 	return tx.GasTipCap.BigInt()
 }
 
-// GetGasFeeCapWei returns the gas fee cap field.
+// GetGasFeeCapWei returns a cap on the gas fees paid in units of wei, where:
+//
+// feesWithoutCap := effective gas price (wei per gas) * gas units
+// gas fee cap -> min(feesWithoutCap, gasFeeCap)
+//
+// Also called "maxFeePerGas" in Alchemy and Ethers.
+// maxFeePerGas := baseFeePerGas + maxPriorityFeePerGas
+//
+// The terminology "fee per gas" essentially means "wei per unit gas".
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas] for more info.
+//
+// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 func (tx *DynamicFeeTx) GetGasFeeCapWei() *big.Int {
 	if tx.GasFeeCap == nil {
 		return nil
@@ -246,7 +283,7 @@ func (tx DynamicFeeTx) Validate() error {
 
 // Fee returns gasprice * gaslimit.
 func (tx DynamicFeeTx) Fee() *big.Int {
-	return fee(tx.GetGasFeeCapWei(), tx.GasLimit)
+	return priceTimesGas(tx.GetGasFeeCapWei(), tx.GasLimit)
 }
 
 // Cost returns amount + gasprice * gaslimit.
@@ -258,12 +295,15 @@ func (tx DynamicFeeTx) Cost() *big.Int {
 // `effectiveGasPrice = min(baseFee + tipCap, feeCap)`
 func (tx *DynamicFeeTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
 	feeWithSpecifiedTip := new(big.Int).Add(tx.GasTipCap.BigInt(), baseFeeWei)
-	return gethmath.BigMin(feeWithSpecifiedTip, tx.GasFeeCap.BigInt())
+
+	// Enforce base fee as the minimum [EffectiveGasPriceWei]:
+	rawEffectiveGasPrice := gethmath.BigMin(feeWithSpecifiedTip, tx.GasFeeCap.BigInt())
+	return BigIntMax(baseFeeWei, rawEffectiveGasPrice)
 }
 
 // EffectiveFeeWei returns effective_gasprice * gaslimit.
 func (tx DynamicFeeTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
-	return fee(tx.EffectiveGasPriceWei(baseFeeWei), tx.GasLimit)
+	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GasLimit)
 }
 
 // EffectiveCost returns amount + effective_gasprice * gaslimit.

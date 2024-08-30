@@ -150,7 +150,7 @@ func (tx *AccessListTx) GetGas() uint64 {
 	return tx.GasLimit
 }
 
-// GetGasPrice returns the gas price field.
+// Gas price as wei spent per unit gas.
 func (tx *AccessListTx) GetGasPrice() *big.Int {
 	if tx.GasPrice == nil {
 		return nil
@@ -158,12 +158,29 @@ func (tx *AccessListTx) GetGasPrice() *big.Int {
 	return tx.GasPrice.BigInt()
 }
 
-// GetGasTipCapWei returns the gas price field.
+// GetGasTipCapWei returns a cap on the gas tip in units of wei.
+// For an [AccessListTx], this is taken to be the gas price.
+//
+// Also called "maxPriorityFeePerGas" in Alchemy and Ethers.
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas].
+// Base fees are determined by the network, not the end user that broadcasts
+// the transaction. Adding a tip increases one's "priority" in the block.
+//
+// The terminology "fee per gas" essentially means "wei per unit gas".
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas] for more info.
+//
+// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 func (tx *AccessListTx) GetGasTipCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
-// GetGasFeeCapWei returns the gas price field.
+// GetGasFeeCapWei returns a cap on the gas fees paid in units of wei:
+// For an [AccessListTx], this is taken to be the gas price.
+//
+// The terminology "fee per gas" essentially means "wei per unit gas".
+// See [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas] for more info.
+//
+// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 func (tx *AccessListTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
@@ -261,7 +278,7 @@ func (tx AccessListTx) Validate() error {
 
 // Fee returns gasprice * gaslimit.
 func (tx AccessListTx) Fee() *big.Int {
-	return fee(tx.GetGasPrice(), tx.GetGas())
+	return priceTimesGas(tx.GetGasPrice(), tx.GetGas())
 }
 
 // Cost returns amount + gasprice * gaslimit.
@@ -270,16 +287,17 @@ func (tx AccessListTx) Cost() *big.Int {
 }
 
 // EffectiveGasPriceWei is the same as GasPrice for AccessListTx
-func (tx AccessListTx) EffectiveGasPriceWei(_ *big.Int) *big.Int {
-	return tx.GetGasPrice()
+func (tx AccessListTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(tx.GetGasPrice(), baseFeeWei)
 }
 
 // EffectiveFeeWei is the same as Fee for AccessListTx
-func (tx AccessListTx) EffectiveFeeWei(_ *big.Int) *big.Int {
-	return tx.Fee()
+func (tx AccessListTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
+	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GetGas())
 }
 
 // EffectiveCost is the same as Cost for AccessListTx
-func (tx AccessListTx) EffectiveCost(_ *big.Int) *big.Int {
-	return tx.Cost()
+func (tx AccessListTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+	txFee := tx.EffectiveFeeWei(baseFeeWei)
+	return cost(txFee, tx.GetValueWei())
 }

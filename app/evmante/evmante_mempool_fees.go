@@ -41,6 +41,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	minGasPrice := ctx.MinGasPrices().AmountOf(d.evmKeeper.GetParams(ctx).EvmDenom)
 	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
 	baseFeeDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
+
 	// if MinGasPrices is not set, skip the check
 	if minGasPrice.IsZero() {
 		return next(ctx, tx, simulate)
