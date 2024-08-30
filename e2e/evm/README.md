@@ -41,7 +41,7 @@ bun test v1.1.12 (43f0913c)
 test/erc20.test.ts:
 ✓ ERC-20 contract tests > should send properly [8410.41ms]
 
-test/basic_queries.test.ts:
+test/native_transfer.test.ts:
 ✓ Basic Queries > Simple transfer, balance check [4251.02ms]
 
 test/contract_infinite_loop_gas.test.ts:
