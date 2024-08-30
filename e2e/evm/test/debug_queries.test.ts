@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeAll } from "@jest/globals"
 import { TransactionReceipt, parseEther } from "ethers"
 import { provider } from "./setup"
-import { alice, deployContractTestERC20 } from "./utils"
+import { alice, deployContractTestERC20, hexify } from "./utils"
+import { TestERC20Compiled__factory } from "../types/ethers-contracts"
 
 describe("debug queries", () => {
   let contractAddress: string
@@ -28,8 +29,7 @@ describe("debug queries", () => {
     blockHash = receipt.blockHash
   }, 20e3)
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_traceBlockByNumber", async () => {
+  it("debug_traceBlockByNumber", async () => {
     const traceResult = await provider.send("debug_traceBlockByNumber", [
       blockNumber,
     ])
@@ -37,7 +37,7 @@ describe("debug queries", () => {
   })
 
   // TODO: impl in EVM: remove skip
-  it.skip("debug_traceBlockByHash", async () => {
+  it("debug_traceBlockByHash", async () => {
     const traceResult = await provider.send("debug_traceBlockByHash", [
       blockHash,
     ])
@@ -47,6 +47,22 @@ describe("debug queries", () => {
   // TODO: impl in EVM: remove skip
   it.skip("debug_traceTransaction", async () => {
     const traceResult = await provider.send("debug_traceTransaction", [txHash])
+    expectTrace([{ result: traceResult }])
+  })
+
+  it("debug_traceCall", async () => {
+    const contractInterface = TestERC20Compiled__factory.createInterface()
+    const callData = contractInterface.encodeFunctionData("totalSupply")
+    const tx = {
+      to: contractAddress,
+      data: callData,
+      gas: hexify(1000_000),
+    }
+    const traceResult = await provider.send("debug_traceCall", [
+      tx,
+      "latest",
+      {},
+    ])
     expectTrace([{ result: traceResult }])
   })
 
