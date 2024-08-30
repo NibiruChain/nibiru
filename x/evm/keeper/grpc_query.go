@@ -736,28 +736,6 @@ func (k *Keeper) TraceEthTxMsg(
 		err       error
 		timeout   = DefaultGethTraceTimeout
 	)
-	//msg, err := tx.AsMessage(signer, cfg.BaseFee)
-
-	//contractAddr := gethcommon.HexToAddress("0xF7E9a7C2dD9D49da974262e3636F0811A92487a9")
-	//msg := gethcore.NewMessage(
-	//	gethcommon.HexToAddress("0xC0f4b45712670cf7865A14816bE9Af9091EDdA1d"),
-	//	&contractAddr,
-	//	//tx.To(),
-	//	tx.Nonce(),
-	//	tx.Value(),
-	//	big.NewInt(1000_000_000).Uint64(),
-	//	tx.GasPrice(),
-	//	tx.GasFeeCap(),
-	//	tx.GasTipCap(),
-	//	tx.Data(),
-	//	tx.AccessList(),
-	//	false,
-	//)
-
-	//if err != nil {
-	//	return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
-	//}
-
 	if traceConfig == nil {
 		traceConfig = &evm.TraceConfig{}
 	}
