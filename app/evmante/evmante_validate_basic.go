@@ -7,7 +7,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -34,7 +34,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	err := tx.ValidateBasic()
 	// ErrNoSignatures is fine with eth tx
-	if err != nil && !errors.Is(err, errortypes.ErrNoSignatures) {
+	if err != nil && !errors.Is(err, sdkerrors.ErrNoSignatures) {
 		return ctx, errorsmod.Wrap(err, "tx basic validation failed")
 	}
 
@@ -43,7 +43,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	wrapperTx, ok := tx.(protoTxProvider)
 	if !ok {
 		return ctx, errorsmod.Wrapf(
-			errortypes.ErrUnknownRequest,
+			sdkerrors.ErrUnknownRequest,
 			"invalid tx type %T, didn't implement interface protoTxProvider",
 			tx,
 		)
@@ -52,13 +52,13 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	protoTx := wrapperTx.GetProtoTx()
 	body := protoTx.Body
 	if body.Memo != "" || body.TimeoutHeight != uint64(0) || len(body.NonCriticalExtensionOptions) > 0 {
-		return ctx, errorsmod.Wrap(errortypes.ErrInvalidRequest,
+		return ctx, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
 			"for eth tx body Memo TimeoutHeight NonCriticalExtensionOptions should be empty")
 	}
 
 	if len(body.ExtensionOptions) != 1 {
 		return ctx, errorsmod.Wrap(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"for eth tx length of ExtensionOptions should be 1",
 		)
 	}
@@ -66,14 +66,14 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	authInfo := protoTx.AuthInfo
 	if len(authInfo.SignerInfos) > 0 {
 		return ctx, errorsmod.Wrap(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"for eth tx AuthInfo SignerInfos should be empty",
 		)
 	}
 
 	if authInfo.Fee.Payer != "" || authInfo.Fee.Granter != "" {
 		return ctx, errorsmod.Wrap(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"for eth tx AuthInfo Fee payer and granter should be empty",
 		)
 	}
@@ -81,7 +81,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	sigs := protoTx.Signatures
 	if len(sigs) > 0 {
 		return ctx, errorsmod.Wrap(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"for eth tx Signatures should be empty",
 		)
 	}
@@ -97,7 +97,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errorsmod.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
@@ -105,7 +105,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		// Validate `From` field
 		if msgEthTx.From != "" {
 			return ctx, errorsmod.Wrapf(
-				errortypes.ErrInvalidRequest,
+				sdkerrors.ErrInvalidRequest,
 				"invalid From %s, expect empty string", msgEthTx.From,
 			)
 		}
@@ -134,7 +134,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	if !authInfo.Fee.Amount.IsEqual(txFee) {
 		return ctx, errorsmod.Wrapf(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"invalid AuthInfo Fee Amount (%s != %s)",
 			authInfo.Fee.Amount,
 			txFee,
@@ -143,7 +143,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	if authInfo.Fee.GasLimit != txGasLimit {
 		return ctx, errorsmod.Wrapf(
-			errortypes.ErrInvalidRequest,
+			sdkerrors.ErrInvalidRequest,
 			"invalid AuthInfo Fee GasLimit (%d != %d)",
 			authInfo.Fee.GasLimit,
 			txGasLimit,

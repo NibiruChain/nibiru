@@ -4,7 +4,7 @@ package evmante
 import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
@@ -38,7 +38,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownRequest,
+				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
@@ -52,7 +52,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 		acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
 		if acc == nil {
 			return ctx, errors.Wrapf(
-				errortypes.ErrUnknownAddress,
+				sdkerrors.ErrUnknownAddress,
 				"account %s is nil", gethcommon.BytesToAddress(msgEthTx.GetFrom().Bytes()),
 			)
 		}
@@ -62,7 +62,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 		// with same sender, they'll be accepted.
 		if txData.GetNonce() != nonce {
 			return ctx, errors.Wrapf(
-				errortypes.ErrInvalidSequence,
+				sdkerrors.ErrInvalidSequence,
 				"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
 			)
 		}

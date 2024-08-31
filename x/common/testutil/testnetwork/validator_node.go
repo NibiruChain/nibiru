@@ -3,14 +3,20 @@ package testnetwork
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stretchr/testify/suite"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"
@@ -20,6 +26,11 @@ import (
 	serverapi "github.com/cosmos/cosmos-sdk/server/api"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc"
+
+	geth "github.com/ethereum/go-ethereum"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
 // Validator defines an in-process Tendermint validator node. Through this
@@ -73,7 +84,14 @@ type Validator struct {
 	// - rpc.Local
 	RPCClient tmclient.Client
 
-	JSONRPCClient *ethclient.Client
+	JSONRPCClient     *ethclient.Client
+	EthRpcQueryClient *ethrpc.QueryClient
+	EthRpcBackend     *backend.Backend
+	EthTxIndexer      eth.EVMTxIndexer
+
+	EthRPC_ETH  *rpcapi.EthAPI
+	EthRpc_WEB3 *rpcapi.APIWeb3
+	EthRpc_NET  *rpcapi.NetAPI
 
 	Logger Logger
 
@@ -227,4 +245,23 @@ func centerText(text string, width int) string {
 	rightBuffer := strings.Repeat(" ", (width-textLen)/2+(width-textLen)%2)
 
 	return fmt.Sprintf("%s%s%s", leftBuffer, text, rightBuffer)
+}
+
+func (val *Validator) AssertERC20Balance(
+	contract gethcommon.Address,
+	accAddr gethcommon.Address,
+	expectedBalance *big.Int,
+	s *suite.Suite,
+) {
+	input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("balanceOf", accAddr)
+	s.NoError(err)
+	msg := geth.CallMsg{
+		From: accAddr,
+		To:   &contract,
+		Data: input,
+	}
+	recipientBalanceBeforeBytes, err := val.JSONRPCClient.CallContract(context.Background(), msg, nil)
+	s.NoError(err)
+	balance := new(big.Int).SetBytes(recipientBalanceBeforeBytes)
+	s.Equal(expectedBalance.String(), balance.String())
 }

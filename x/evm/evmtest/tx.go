@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -272,4 +274,21 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 	return err
+}
+
+// ValidLegacyTx: Useful initial condition for tests
+// Exported only for use in tests.
+func ValidLegacyTx() *evm.LegacyTx {
+	sdkInt := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
+	return &evm.LegacyTx{
+		Nonce:    24,
+		GasLimit: 50_000,
+		To:       gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Hex(),
+		GasPrice: &sdkInt,
+		Amount:   &sdkInt,
+		Data:     []byte{},
+		V:        []byte{},
+		R:        []byte{},
+		S:        []byte{},
+	}
 }

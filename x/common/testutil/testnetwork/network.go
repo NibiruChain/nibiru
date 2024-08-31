@@ -98,30 +98,31 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
-		Codec:             encCfg.Codec,
-		TxConfig:          encCfg.TxConfig,
-		LegacyAmino:       encCfg.Amino,
-		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg, chainID),
-		GenesisState:      appGenesis,
-		TimeoutCommit:     time.Second / 2,
-		ChainID:           chainID,
-		NumValidators:     1,
-		BondDenom:         denoms.NIBI,
-		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		AppConstructor:    NewAppConstructor(encCfg, chainID),
+		BondDenom:         denoms.NIBI,
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		ChainID:           chainID,
+		CleanupDir:        true,
+		Codec:             encCfg.Codec,
+		EnableTMLogging:   false, // super noisy
+		GenesisState:      appGenesis,
+		InterfaceRegistry: encCfg.InterfaceRegistry,
+		KeyringOptions:    []keyring.Option{},
+		LegacyAmino:       encCfg.Amino,
+		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
+		NumValidators:     1,
+		PruningStrategy:   types.PruningOptionNothing,
+		SigningAlgo:       string(hd.Secp256k1Type),
+		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
 			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
-		PruningStrategy: types.PruningOptionNothing,
-		CleanupDir:      true,
-		SigningAlgo:     string(hd.Secp256k1Type),
-		KeyringOptions:  []keyring.Option{},
+		TimeoutCommit: time.Second / 2,
+		TxConfig:      encCfg.TxConfig,
 	}
 }
 
@@ -262,12 +263,11 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			appCfg.JSONRPC.API = serverconfig.GetAPINamespaces()
 		}
 
-		loggerNoOp := log.NewNopLogger()
+		serverCtxLogger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			loggerNoOp = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			serverCtxLogger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		}
-
-		ctx.Logger = loggerNoOp
+		ctx.Logger = serverCtxLogger
 
 		nodeDirName := fmt.Sprintf("node%d", valIdx)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "simd")
@@ -454,7 +454,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 	logger.Log("starting test network...")
 	for idx, v := range network.Validators {
-		err := startInProcess(cfg, v)
+		err := startNodeAndServers(cfg, v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start node: %w", err)
 		}

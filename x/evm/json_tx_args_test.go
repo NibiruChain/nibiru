@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-func (suite *TxDataTestSuite) TestTxArgsString() {
+func (suite *Suite) TestTxArgsString() {
 	testCases := []struct {
 		name           string
 		txArgs         evm.JsonTxArgs
@@ -49,7 +49,7 @@ func (suite *TxDataTestSuite) TestTxArgsString() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestConvertTxArgsEthTx() {
+func (suite *Suite) TestConvertTxArgsEthTx() {
 	testCases := []struct {
 		name   string
 		txArgs evm.JsonTxArgs
@@ -99,7 +99,7 @@ func (suite *TxDataTestSuite) TestConvertTxArgsEthTx() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestToMessageEVM() {
+func (suite *Suite) TestToMessageEVM() {
 	testCases := []struct {
 		name         string
 		txArgs       evm.JsonTxArgs
@@ -227,7 +227,7 @@ func (suite *TxDataTestSuite) TestToMessageEVM() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestGetFrom() {
+func (suite *Suite) TestGetFrom() {
 	testCases := []struct {
 		name       string
 		txArgs     evm.JsonTxArgs
@@ -252,7 +252,7 @@ func (suite *TxDataTestSuite) TestGetFrom() {
 	}
 }
 
-func (suite *TxDataTestSuite) TestGetData() {
+func (suite *Suite) TestGetData() {
 	testCases := []struct {
 		name           string
 		txArgs         evm.JsonTxArgs
