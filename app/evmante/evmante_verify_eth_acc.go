@@ -4,7 +4,7 @@ package evmante
 import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -26,8 +26,10 @@ func NewAnteDecVerifyEthAcc(k EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthA
 	}
 }
 
-// AnteHandle validates checks that the sender balance is greater than the total transaction cost.
-// The account will be set to store if it doesn't exist, i.e. cannot be found on store.
+// AnteHandle validates checks that the sender balance is greater than the total
+// transaction cost. The account will be set to store if it doesn't exist, i.e.
+// cannot be found on store.
+//
 // This AnteHandler decorator will fail if:
 // - any of the msgs is not a MsgEthereumTx
 // - from address is empty
@@ -41,7 +43,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, errors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
 		}
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
@@ -52,7 +54,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		// sender address should be in the tx cache from the previous AnteHandle call
 		from := msgEthTx.GetFrom()
 		if from.Empty() {
-			return ctx, errors.Wrap(errortypes.ErrInvalidAddress, "from address cannot be empty")
+			return ctx, errors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
 		}
 
 		// check whether the sender address is EOA
@@ -64,7 +66,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			anteDec.accountKeeper.SetAccount(ctx, acc)
 			acct = statedb.NewEmptyAccount()
 		} else if acct.IsContract() {
-			return ctx, errors.Wrapf(errortypes.ErrInvalidType,
+			return ctx, errors.Wrapf(sdkerrors.ErrInvalidType,
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 

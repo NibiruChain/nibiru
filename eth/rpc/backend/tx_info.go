@@ -213,6 +213,8 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		return nil, errors.New("can't find index of ethereum tx")
 	}
 
+	// TODO: refactor(evm-rpc-backend): Replace interface with gethcore.Receipt
+	// in eth_getTransactionReceipt
 	receipt := map[string]interface{}{
 		// Consensus fields: These fields are defined by the Yellow Paper
 		"status":            status,
@@ -253,7 +255,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPrice(baseFee))
+			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPriceWei(baseFee))
 		}
 	}
 

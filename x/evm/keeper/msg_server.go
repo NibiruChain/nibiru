@@ -255,9 +255,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 		switch {
 		case ctx.BlockHeight() == h:
-			// Case 1: The requested height matches the one from the context, so we can retrieve the header
-			// hash directly from the context.
-			// Note: The headerHash is only set at begin block, it will be nil in case of a query context
+			// Case 1: The requested height matches the one from the context, so
+			// we can retrieve the header hash directly from the context. Note:
+			// The headerHash is only set at begin block, it will be nil in case
+			// of a query context
 			headerHash := ctx.HeaderHash()
 			if len(headerHash) != 0 {
 				return gethcommon.BytesToHash(headerHash)
@@ -275,8 +276,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			return gethcommon.BytesToHash(headerHash)
 
 		case ctx.BlockHeight() > h:
-			// Case 2: if the chain is not the current height we need to retrieve the hash from the store for the
-			// current chain epoch. This only applies if the current height is greater than the requested height.
+			// Case 2: if the chain is not the current height we need to retrieve
+			// the hash from the store for the current chain epoch. This only
+			// applies if the current height is greater than the requested
+			// height.
 			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
 			if !found {
 				k.Logger(ctx).Debug("historical info not found", "height", h)
@@ -370,12 +373,21 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, errors.Wrap(err, "intrinsic gas failed")
 	}
 
-	// Should check again even if it is checked on Ante Handler, because eth_call don't go through Ante Handler.
+	// Check if the provided gas in the message is enough to cover the intrinsic
+	// gas, the base gas cost before execution occurs (gethparams.TxGas, contract
+	// creation, and cost per byte of the data payload).
+	//
+	// Should check again even if it is checked on Ante Handler, because eth_call
+	// don't go through Ante Handler.
 	if leftoverGas < intrinsicGas {
 		// eth_estimateGas will check for this exact error
-		return nil, errors.Wrap(core.ErrIntrinsicGas, "apply message")
+		return nil, errors.Wrapf(
+			core.ErrIntrinsicGas,
+			"apply message msg.Gas = %d, intrinsic gas = %d.",
+			leftoverGas, intrinsicGas,
+		)
 	}
-	leftoverGas -= intrinsicGas
+	leftoverGas = leftoverGas - intrinsicGas
 
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
@@ -390,7 +402,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
 	if err != nil {
 		return nil, err
-		// return nil, fmt.Errorf("cannot use \"value\" in wei that can't be converted to unibi. %s is not divisible by 10^12", msg.Value())
 	}
 
 	if contractCreation {
@@ -398,10 +409,21 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.
 		stateDB.SetNonce(sender.Address(), msg.Nonce())
-		ret, _, leftoverGas, vmErr = evmObj.Create(sender, msg.Data(), leftoverGas, msgWei)
+		ret, _, leftoverGas, vmErr = evmObj.Create(
+			sender,
+			msg.Data(),
+			leftoverGas,
+			msgWei,
+		)
 		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(sender, *msg.To(), msg.Data(), leftoverGas, msgWei)
+		ret, leftoverGas, vmErr = evmObj.Call(
+			sender,
+			*msg.To(),
+			msg.Data(),
+			leftoverGas,
+			msgWei,
+		)
 	}
 
 	// After EIP-3529: refunds are capped to gasUsed / 5
@@ -445,7 +467,10 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}
 
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
-	// reset leftoverGas, to be used by the tracer
+
+	// This resulting "leftoverGas" is used by the tracer. This happens as a
+	// result of the defer statement near the beginning of the function with
+	// "vm.Tracer".
 	leftoverGas = msg.Gas() - gasUsed
 
 	return &evm.MsgEthereumTxResponse{

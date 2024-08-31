@@ -148,6 +148,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	txHash := ethereumTx.AsTransaction().Hash()
+	b.logger.Debug("eth_sendRawTransaction", "txHash", txHash.Hex())
 
 	syncCtx := b.clientCtx.WithBroadcastMode(flags.BroadcastSync)
 	rsp, err := syncCtx.BroadcastTx(txBytes)
@@ -291,7 +292,9 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 }
 
 // EstimateGas returns an estimate of gas usage for the given smart contract call.
-func (b *Backend) EstimateGas(args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber) (hexutil.Uint64, error) {
+func (b *Backend) EstimateGas(
+	args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber,
+) (hexutil.Uint64, error) {
 	blockNr := rpc.EthPendingBlockNumber
 	if blockNrOptional != nil {
 		blockNr = *blockNrOptional

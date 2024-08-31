@@ -120,9 +120,12 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
-	// TODO: plug in fee market keeper
-	return big.NewInt(1)
+// GetBaseFee returns the gas base fee in units of the EVM denom. Note that this
+// function is currently constant/stateless.
+func (k Keeper) GetBaseFee(_ sdk.Context) *big.Int {
+	// TODO: (someday maybe):  Consider making base fee dynamic based on
+	// congestion in the previous block.
+	return evm.BASE_FEE_MICRONIBI
 }
 
 // Logger returns a module-specific logger.
