@@ -6,16 +6,19 @@ import (
 	"math"
 	"math/big"
 	"strconv"
+	"strings"
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/pkg/errors"
+	"github.com/status-im/keycard-go/hexutils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -352,14 +355,19 @@ func (b *Backend) HeaderByHash(blockHash common.Hash) (*gethcore.Header, error) 
 
 // BlockBloom query block bloom filter from block results
 func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.Bloom, error) {
+	msgType := proto.MessageName((*evm.EventBlockBloom)(nil))
 	for _, event := range blockRes.EndBlockEvents {
-		if event.Type != evm.EventTypeBlockBloom {
+		if event.Type != msgType {
 			continue
 		}
 
 		for _, attr := range event.Attributes {
 			if attr.Key == evm.AttributeKeyEthereumBloom {
-				return gethcore.BytesToBloom([]byte(attr.Value)), nil
+				return gethcore.BytesToBloom(
+					hexutils.HexToBytes( // Bloom stores hex bytes
+						strings.ReplaceAll(attr.Value, `"`, ""), // Unquote typed event
+					),
+				), nil
 			}
 		}
 	}

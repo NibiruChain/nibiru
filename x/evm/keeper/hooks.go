@@ -4,6 +4,8 @@ package keeper
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,7 @@ func (k *Keeper) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Valida
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	bloom := gethcoretypes.BytesToBloom(k.EvmState.GetBlockBloomTransient(ctx).Bytes())
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventBlockBloom{
-		Bloom: string(bloom.Bytes()),
+		Bloom: eth.BytesToHex(bloom.Bytes()),
 	})
 	// The bloom logic doesn't update the validator set.
 	return []abci.ValidatorUpdate{}
