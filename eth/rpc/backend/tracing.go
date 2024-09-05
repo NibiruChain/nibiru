@@ -209,3 +209,54 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 
 	return decodedResults, nil
 }
+
+// TraceCall implements eth debug_traceCall method which lets you run an eth_call
+// within the context of the given block execution using the final state of parent block as the base.
+// Method returns the structured logs created during the execution of EVM.
+// The method returns the same output as debug_traceTransaction.
+// https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-debug#debugtracecall
+func (b *Backend) TraceCall(
+	txArgs evm.JsonTxArgs,
+	contextBlock rpc.BlockNumber,
+	config *evm.TraceConfig,
+) (interface{}, error) {
+	blk, err := b.TendermintBlockByNumber(contextBlock)
+	if err != nil {
+		b.logger.Debug("block not found", "contextBlock", contextBlock)
+		return nil, err
+	}
+	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	if !ok {
+		return nil, errors.New("invalid rpc client")
+	}
+
+	cp, err := nc.ConsensusParams(b.ctx, &blk.Block.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	traceTxRequest := evm.QueryTraceTxRequest{
+		Msg:             txArgs.ToMsgEthTx(),
+		Predecessors:    nil,
+		BlockNumber:     blk.Block.Height,
+		BlockTime:       blk.Block.Time,
+		BlockHash:       common.Bytes2Hex(blk.BlockID.Hash),
+		ProposerAddress: sdk.ConsAddress(blk.Block.ProposerAddress),
+		ChainId:         b.chainID.Int64(),
+		BlockMaxGas:     cp.ConsensusParams.Block.MaxGas,
+	}
+
+	if config != nil {
+		traceTxRequest.TraceConfig = config
+	}
+	traceResult, err := b.queryClient.TraceCall(rpc.NewContextWithHeight(contextBlock.Int64()), &traceTxRequest)
+	if err != nil {
+		return nil, err
+	}
+	var decodedResult interface{}
+	err = json.Unmarshal(traceResult.Data, &decodedResult)
+	if err != nil {
+		return nil, err
+	}
+	return decodedResult, nil
+}

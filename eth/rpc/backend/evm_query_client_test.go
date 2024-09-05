@@ -57,6 +57,24 @@ func RegisterTraceTransaction(
 		Return(&evm.QueryTraceTxResponse{Data: data}, nil)
 }
 
+func RegisterTraceCall(
+	queryClient *mocks.EVMQueryClient, msgEthTx *evm.MsgEthereumTx,
+) {
+	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
+	queryClient.On(
+		"TraceCall",
+		rpc.NewContextWithHeight(1),
+		&evm.QueryTraceTxRequest{
+			Msg:         msgEthTx,
+			BlockNumber: 1,
+			ChainId:     TEST_CHAIN_ID_NUMBER(),
+			BlockMaxGas: -1,
+			TraceConfig: &evm.TraceConfig{},
+		},
+	).
+		Return(&evm.QueryTraceTxResponse{Data: data}, nil)
+}
+
 func RegisterTraceTransactionError(
 	queryClient *mocks.EVMQueryClient, msgEthTx *evm.MsgEthereumTx,
 ) {
