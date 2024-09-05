@@ -122,6 +122,11 @@ type EVMBackend interface {
 		config *evm.TraceConfig,
 		block *tmrpctypes.ResultBlock,
 	) ([]*evm.TxTraceResult, error)
+	TraceCall(
+		txArgs evm.JsonTxArgs,
+		contextHeight rpc.BlockNumber,
+		config *evm.TraceConfig,
+	) (interface{}, error)
 }
 
 var _ BackendI = (*Backend)(nil)

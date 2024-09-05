@@ -106,6 +106,27 @@ func (a *DebugAPI) TraceBlockByHash(hash common.Hash, config *evm.TraceConfig) (
 	return a.backend.TraceBlock(rpc.BlockNumber(resBlock.Block.Height), config, resBlock)
 }
 
+// TraceCall implements eth debug_traceCall method which lets you run an eth_call
+// within the context of the given block execution using the final state of parent block as the base.
+// Method returns the structured logs created during the execution of EVM.
+// The method returns the same output as debug_traceTransaction.
+// https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-debug#debugtracecall
+func (a *DebugAPI) TraceCall(
+	args evm.JsonTxArgs,
+	blockNrOrHash rpc.BlockNumberOrHash,
+	config *evm.TraceConfig,
+) (interface{}, error) {
+	a.logger.Debug("debug_traceCall", args.String(), "block number or hash", blockNrOrHash)
+
+	// Get Tendermint Block
+	resBlock, err := a.backend.BlockNumberFromTendermint(blockNrOrHash)
+	if err != nil {
+		a.logger.Debug("get block failed", "blockNrOrHash", blockNrOrHash, "error", err.Error())
+		return nil, err
+	}
+	return a.backend.TraceCall(args, resBlock, config)
+}
+
 // BlockProfile turns on goroutine profiling for nsec seconds and writes profile data to
 // file. It uses a profile rate of 1 for most accurate information. If a different rate is
 // desired, set the rate and write the profile manually.
