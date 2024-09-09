@@ -118,6 +118,7 @@ describe("eth queries", () => {
     expect(blockByHash).toBeDefined()
     expect(blockByHash.hash).toEqual(blockByNumber.hash)
     expect(blockByHash.number).toEqual(blockByNumber.number)
+    console.debug("DEBUG %o:", { blockByHash })
   })
 
   it("eth_getBlockTransactionCountByHash", async () => {

@@ -10,7 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/debugapi"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/filtersapi"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
@@ -61,7 +60,7 @@ func init() {
 				{
 					Namespace: NamespaceEth,
 					Version:   apiVersion,
-					Service:   filtersapi.NewImplFiltersAPI(ctx.Logger, clientCtx, tmWSClient, evmBackend),
+					Service:   NewImplFiltersAPI(ctx.Logger, clientCtx, tmWSClient, evmBackend),
 					Public:    true,
 				},
 			}

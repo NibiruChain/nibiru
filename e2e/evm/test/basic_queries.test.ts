@@ -176,7 +176,7 @@ describe("Basic Queries", () => {
     expect(success).toBeTruthy()
   })
 
-  // Skipping as the method is not implemented
+  // TODO: impl in EVM: remove skip
   it.skip("eth_getFilterLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()
@@ -201,7 +201,7 @@ describe("Basic Queries", () => {
     expect(changes[0]).toHaveProperty("topics")
   })
 
-  // Skipping as the method is not implemented
+  // TODO: impl in EVM: remove skip
   it.skip("eth_getLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()
@@ -252,7 +252,7 @@ describe("Basic Queries", () => {
     }
   })
 
-  // Skipping as the method is not implemented
+  // TODO: impl in EVM: remove skip
   it.skip("eth_getLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()

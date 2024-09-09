@@ -1,11 +1,17 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package filtersapi
+package rpcapi
 
 import (
+	"cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 )
 
 // FilterLogs creates a slice of logs matching the given criteria.
@@ -104,4 +110,29 @@ func returnLogs(logs []*gethcore.Log) []*gethcore.Log {
 		return []*gethcore.Log{}
 	}
 	return logs
+}
+
+// ParseBloomFromEvents iterates through the slice of events
+func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error) {
+	bloomEvent := new(evm.EventBlockBloom)
+	bloomEventType := gogoproto.MessageName(bloomEvent)
+	for _, event := range events {
+		if event.Type != bloomEventType {
+			continue
+		}
+		typedProtoEvent, err := sdk.ParseTypedEvent(event)
+		if err != nil {
+			return bloom, errors.Wrapf(
+				err, "failed to parse event of type %s", bloomEventType)
+		}
+		bloomEvent, ok := (typedProtoEvent).(*evm.EventBlockBloom)
+		if !ok {
+			return bloom, errors.Wrapf(
+				err, "failed to parse event of type %s", bloomEventType)
+		}
+
+		bloom = gethcore.BytesToBloom([]byte(bloomEvent.Bloom))
+		return bloom, err
+	}
+	return bloom, err
 }
