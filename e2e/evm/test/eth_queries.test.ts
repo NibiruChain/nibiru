@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals"
-import { parseEther, keccak256, AbiCoder, TransactionRequest } from "ethers"
+import { parseEther, keccak256, AbiCoder } from "ethers"
 import { account, provider } from "./setup"
 import {
   INTRINSIC_TX_GAS,
@@ -132,7 +132,6 @@ describe("eth queries", () => {
     expect(success).toBeTruthy()
   })
 
-  // Skipping as the method is not implemented
   it("eth_getFilterLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()
@@ -158,7 +157,6 @@ describe("eth queries", () => {
     expect(changes[0]).toHaveProperty("topics")
   })
 
-  // Skipping as the method is not implemented
   it("eth_getLogs", async () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()
@@ -183,36 +181,6 @@ describe("eth queries", () => {
 
   it("eth_getProof", async () => {
     // Deploy ERC-20 contract
-    const contract = await deployContractTestERC20()
-    const contractAddr = await contract.getAddress()
-
-    const slot = 1 // Assuming balanceOf is at slot 1
-    const storageKey = keccak256(
-      AbiCoder.defaultAbiCoder().encode(
-        ["address", "uint256"],
-        [account.address, slot],
-      ),
-    )
-    const proof = await provider.send("eth_getProof", [
-      contractAddr,
-      [storageKey],
-      "latest",
-    ])
-    // Assert proof structure
-    expect(proof).toHaveProperty("address")
-    expect(proof).toHaveProperty("balance")
-    expect(proof).toHaveProperty("codeHash")
-    expect(proof).toHaveProperty("nonce")
-    expect(proof).toHaveProperty("storageProof")
-
-    if (proof.storageProof.length > 0) {
-      expect(proof.storageProof[0]).toHaveProperty("key", storageKey)
-      expect(proof.storageProof[0]).toHaveProperty("value")
-      expect(proof.storageProof[0]).toHaveProperty("proof")
-    }
-  })
-
-  it("eth_getProof", async () => {
     const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
 
