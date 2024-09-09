@@ -36,7 +36,6 @@ describe("debug queries", () => {
     expectTrace(traceResult)
   })
 
-  // TODO: impl in EVM: remove skip
   it("debug_traceBlockByHash", async () => {
     const traceResult = await provider.send("debug_traceBlockByHash", [
       blockHash,
@@ -44,8 +43,8 @@ describe("debug queries", () => {
     expectTrace(traceResult)
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_traceTransaction", async () => {
+  it("debug_traceTransaction", async () => {
+    // it.skip("debug_traceTransaction", async () => {
     const traceResult = await provider.send("debug_traceTransaction", [txHash])
     expectTrace([{ result: traceResult }])
   })
@@ -66,22 +65,36 @@ describe("debug queries", () => {
     expectTrace([{ result: traceResult }])
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_getBadBlocks", async () => {
-    const traceResult = await provider.send("debug_getBadBlocks", [txHash])
-    expect(traceResult).toBeDefined()
+  // TODO: impl in EVM
+  it("debug_getBadBlocks", async () => {
+    try {
+      const traceResult = await provider.send("debug_getBadBlocks", [txHash])
+      console.debug("DEBUG %o:", { traceResult })
+      expect(traceResult).toBeDefined()
+    } catch (err) {
+      expect(err.message).toContain(
+        "the method debug_getBadBlocks does not exist",
+      )
+    }
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_storageRangeAt", async () => {
-    const traceResult = await provider.send("debug_storageRangeAt", [
-      blockNumber,
-      txIndex,
-      contractAddress,
-      "0x0",
-      100,
-    ])
-    expect(traceResult).toBeDefined()
+  // TODO: impl in EVM
+  it("debug_storageRangeAt", async () => {
+    try {
+      const traceResult = await provider.send("debug_storageRangeAt", [
+        blockNumber,
+        txIndex,
+        contractAddress,
+        "0x0",
+        100,
+      ])
+      console.debug("DEBUG %o:", { traceResult })
+      expect(traceResult).toBeDefined()
+    } catch (err) {
+      expect(err.message).toContain(
+        "the method debug_storageRangeAt does not exist",
+      )
+    }
   })
 })
 

@@ -73,7 +73,6 @@ describe("eth queries", () => {
     expect(blockByHash).toBeDefined()
     expect(blockByHash.hash).toEqual(blockByNumber.hash)
     expect(blockByHash.number).toEqual(blockByNumber.number)
-    console.debug("DEBUG %o:", { blockByHash })
   })
 
   it("eth_getBlockTransactionCountByHash", async () => {
@@ -161,7 +160,6 @@ describe("eth queries", () => {
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20()
     const contractAddr = await contract.getAddress()
-    console.log(contractAddr)
     const filter = {
       fromBlock: "0x1",
       address: contractAddr,
