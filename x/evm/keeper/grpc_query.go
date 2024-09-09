@@ -67,12 +67,12 @@ func (k Keeper) EthAccount(
 	acct := k.GetAccountOrEmpty(ctx, addrEth)
 
 	return &evm.QueryEthAccountResponse{
+		EthAddress:    addrEth.Hex(),
+		Bech32Address: addrBech32.String(),
 		Balance:       acct.BalanceNative.String(),
 		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
 		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:         acct.Nonce,
-		EthAddress:    addrEth.Hex(),
-		Bech32Address: addrBech32.String(),
 	}, nil
 }
 
@@ -533,7 +533,94 @@ func (k Keeper) TraceTx(
 		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
 	}
 
-	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, tx, req.TraceConfig, false, tracerConfig)
+	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	if err != nil {
+		return nil, err
+	}
+
+	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
+	if err != nil {
+		// error will be returned with detail status from traceTx
+		return nil, err
+	}
+
+	resultData, err := json.Marshal(result)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &evm.QueryTraceTxResponse{
+		Data: resultData,
+	}, nil
+}
+
+// TraceCall configures a new tracer according to the provided configuration, and
+// executes the given message in the provided environment. The return value will
+// be tracer dependent.
+func (k Keeper) TraceCall(
+	goCtx context.Context, req *evm.QueryTraceTxRequest,
+) (*evm.QueryTraceTxResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// get the context of block beginning
+	contextHeight := req.BlockNumber
+	if contextHeight < 1 {
+		// 0 is a special value in `ContextWithHeight`
+		contextHeight = 1
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithBlockHeight(contextHeight)
+	ctx = ctx.WithBlockTime(req.BlockTime)
+	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
+	chainID := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
+	}
+
+	// compute and use base fee of the height that is being traced
+	baseFee := k.GetBaseFee(ctx)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	var tracerConfig json.RawMessage
+	if req.TraceConfig != nil && req.TraceConfig.TracerJsonConfig != "" {
+		// ignore error. default to no traceConfig
+		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
+	}
+
+	// req.Msg is not signed, so to gethcore.Message because it's not signed and will fail on getting
+	msgEthTx := req.Msg
+	txData, err := evm.UnpackTxData(req.Msg.Data)
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to unpack tx data: %s", err.Error())
+	}
+	msg := gethcore.NewMessage(
+		gethcommon.HexToAddress(msgEthTx.From),
+		txData.GetTo(),
+		txData.GetNonce(),
+		txData.GetValueWei(),
+		txData.GetGas(),
+		txData.GetGasPrice(),
+		txData.GetGasFeeCapWei(),
+		txData.GetGasTipCapWei(),
+		txData.GetData(),
+		txData.GetAccessList(),
+		false,
+	)
+	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -606,7 +693,12 @@ func (k Keeper) TraceBlock(
 		ethTx := tx.AsTransaction()
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, ethTx, req.TraceConfig, true, nil)
+		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		if err != nil {
+			result.Error = err.Error()
+			continue
+		}
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, true, nil)
 		if err != nil {
 			result.Error = err.Error()
 		} else {
@@ -632,8 +724,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx sdk.Context,
 	cfg *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
-	signer gethcore.Signer,
-	tx *gethcore.Transaction,
+	msg gethcore.Message,
 	traceConfig *evm.TraceConfig,
 	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
@@ -645,11 +736,6 @@ func (k *Keeper) TraceEthTxMsg(
 		err       error
 		timeout   = DefaultGethTraceTimeout
 	)
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
-	if err != nil {
-		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
-	}
-
 	if traceConfig == nil {
 		traceConfig = &evm.TraceConfig{}
 	}

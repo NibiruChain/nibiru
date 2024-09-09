@@ -25,7 +25,7 @@ func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
 		Nonce:    nonce,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),
-		GasPrice: big.NewInt(1),
+		GasPrice: evm.NativeToWei(big.NewInt(1)),
 		To:       &to,
 	}
 	tx := evm.NewTx(ethContractCreationTxParams)
@@ -72,7 +72,7 @@ func HappyCreateContractTx(deps *TestDeps) *evm.MsgEthereumTx {
 		Nonce:    1,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),
-		GasPrice: big.NewInt(1),
+		GasPrice: evm.NativeToWei(big.NewInt(1)),
 	}
 	tx := evm.NewTx(ethContractCreationTxParams)
 	tx.From = deps.Sender.EthAddr.Hex()

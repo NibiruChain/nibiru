@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"math/big"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -10,10 +11,12 @@ import (
 	"github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -257,6 +260,59 @@ func (s *BackendSuite) TestTraceBlock() {
 			if tc.expPass {
 				s.Require().NoError(err)
 				s.Require().Equal(tc.expTraceResults, traceResults)
+			} else {
+				s.Require().Error(err)
+			}
+		})
+	}
+}
+
+func (s *BackendSuite) TestTraceCall() {
+	priv, _ := ethsecp256k1.GenerateKey()
+	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
+
+	txArgs := evm.JsonTxArgs{
+		From:  &from,
+		Value: (*hexutil.Big)(big.NewInt(1e12)),
+	}
+
+	testCases := []struct {
+		name         string
+		registerMock func()
+		expResult    interface{}
+		expPass      bool
+	}{
+		{
+			"pass - valid call",
+			func() {
+				var (
+					queryClient       = s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+					client            = s.backend.clientCtx.Client.(*mocks.Client)
+					height      int64 = 1
+				)
+
+				msgEthereumTx := txArgs.ToMsgEthTx()
+
+				_, err := RegisterBlock(client, height, nil)
+				s.Require().NoError(err)
+				RegisterTraceCall(queryClient, msgEthereumTx)
+				RegisterConsensusParams(client, height)
+			},
+			map[string]interface{}{"test": "hello"},
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(fmt.Sprintf("case %s", tc.name), func() {
+			s.SetupTest() // reset test and queries
+			tc.registerMock()
+
+			txResult, err := s.backend.TraceCall(txArgs, rpc.NewBlockNumber(big.NewInt(1)), &evm.TraceConfig{})
+
+			if tc.expPass {
+				s.Require().NoError(err)
+				s.Require().Equal(tc.expResult, txResult)
 			} else {
 				s.Require().Error(err)
 			}

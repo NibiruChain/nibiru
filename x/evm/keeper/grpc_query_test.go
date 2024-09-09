@@ -138,11 +138,30 @@ func (s *Suite) TestQueryEvmAccount() {
 			wantErr: "not a valid ethereum hex addr",
 		},
 		{
-			name: "happy: not existing account",
+			name: "happy: nonexistent account (hex addr input)",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				ethAcc := evmtest.NewEthPrivAcc()
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
+				}
+				wantResp = &evm.QueryEthAccountResponse{
+					Balance:       "0",
+					BalanceWei:    "0",
+					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					Nonce:         0,
+					EthAddress:    ethAcc.EthAddr.String(),
+					Bech32Address: ethAcc.NibiruAddr.String(),
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: nonexistent account (bech32 input)",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				ethAcc := evmtest.NewEthPrivAcc()
+				req = &evm.QueryEthAccountRequest{
+					Address: ethAcc.NibiruAddr.String(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:       "0",
@@ -894,6 +913,88 @@ func (s *Suite) TestTraceBlock() {
 			// 	wantResp == actualResp || hackedWantResp == actualResp,
 			// 	"got \"%s\", want \"%s\"", actualResp, wantResp,
 			// )
+		})
+	}
+}
+
+func (s *Suite) TestTraceCall() {
+	type In = *evm.QueryTraceTxRequest
+	type Out = string
+
+	testCases := []TestCase[In, Out]{
+		{
+			name: "sad: nil query",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				return nil, ""
+			},
+			wantErr: "InvalidArgument",
+		},
+		{
+			name: "happy: simple nibi transfer tx",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				recipient := evmtest.NewEthPrivAcc().EthAddr
+				gas := uint64(21000)
+				txArgs := evm.JsonTxArgs{
+					From:  &deps.Sender.EthAddr,
+					To:    &recipient,
+					Value: (*hexutil.Big)(big.NewInt(1e12)),
+					Gas:   (*hexutil.Uint64)(&gas),
+				}
+				req = &evm.QueryTraceTxRequest{
+					Msg: txArgs.ToMsgEthTx(),
+				}
+				wantResp = TraceNibiTransfer()
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: trace erc-20 transfer tx",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				s.T().Log("Deploy ERC20")
+
+				deployResp, err := evmtest.DeployContract(
+					deps, embeds.SmartContract_TestERC20,
+				)
+				s.Require().NoError(err)
+				data, err := deployResp.ContractData.ABI.Pack(
+					"transfer", evmtest.NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
+				)
+				s.Require().NoError(err)
+				gas := uint64(1e6)
+
+				txArgs := evm.JsonTxArgs{
+					From: &deps.Sender.EthAddr,
+					To:   &deployResp.ContractAddr,
+					Data: (*hexutil.Bytes)(&data),
+					Gas:  (*hexutil.Uint64)(&gas),
+				}
+				req = &evm.QueryTraceTxRequest{
+					Msg: txArgs.ToMsgEthTx(),
+				}
+				wantResp = TraceERC20Transfer()
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			if tc.setup != nil {
+				tc.setup(&deps)
+			}
+			req, _ := tc.scenario(&deps)
+			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			gotResp, err := deps.EvmKeeper.TraceCall(goCtx, req)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Assert().NoError(err)
+			s.Assert().NotNil(gotResp)
+			s.Assert().NotNil(gotResp.Data)
 		})
 	}
 }

@@ -261,7 +261,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_ValidateBasic() {
 			gasTipCap:  nil,
 			chainID:    validChainID,
 			expectPass: false,
-			errMsg:     "gas price cannot be nil",
+			errMsg:     "cannot be nil: invalid gas price",
 		},
 		{
 			msg:        "negative gas price - Legacy Tx",

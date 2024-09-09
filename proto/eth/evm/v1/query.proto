@@ -66,6 +66,11 @@ service Query {
     option (google.api.http).get = "/nibiru/evm/v1/trace_block";
   }
 
+  // TraceCall implements the `debug_traceCall` rpc api
+  rpc TraceCall(QueryTraceTxRequest) returns (QueryTraceTxResponse) {
+    option (google.api.http).get = "/nibiru/evm/v1/trace_call";
+  }
+
   // BaseFee queries the base fee of the parent block of the current block,
   // Similar to feemarket module's method
   rpc BaseFee(QueryBaseFeeRequest) returns (QueryBaseFeeResponse) {

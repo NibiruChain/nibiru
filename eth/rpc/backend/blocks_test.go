@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cometbft/cometbft/abci/types"
 	cmtrpc "github.com/cometbft/cometbft/rpc/core/types"
@@ -845,7 +846,7 @@ func (s *BackendSuite) TestBlockBloom() {
 			&cmtrpc.ResultBlockResults{
 				EndBlockEvents: []types.Event{
 					{
-						Type: evm.EventTypeBlockBloom,
+						Type: proto.MessageName((*evm.EventBlockBloom)(nil)),
 						Attributes: []types.EventAttribute{
 							{Key: evm.AttributeKeyEthereumTxHash},
 						},
@@ -860,7 +861,7 @@ func (s *BackendSuite) TestBlockBloom() {
 			&cmtrpc.ResultBlockResults{
 				EndBlockEvents: []types.Event{
 					{
-						Type: evm.EventTypeBlockBloom,
+						Type: proto.MessageName((*evm.EventBlockBloom)(nil)),
 						Attributes: []types.EventAttribute{
 							{Key: evm.AttributeKeyEthereumBloom},
 						},
