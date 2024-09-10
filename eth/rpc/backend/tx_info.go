@@ -22,7 +22,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash
+// GetTransactionByHash returns the Ethereum format transaction identified by
+// Ethereum transaction hash. If the transaction is not found or has been
+// discarded from a pruning node, this resolves to nil.
 func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
 	hexTx := txHash.Hex()
@@ -316,7 +318,7 @@ func (b *Backend) GetTxByEthHash(hash common.Hash) (*eth.TxResult, error) {
 		return txs.GetTxByHash(hash)
 	})
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetTxByEthHash %s", hash.Hex())
+		return nil, errorsmod.Wrapf(err, "GetTxByEthHash(%s)", hash.Hex())
 	}
 	return txResult, nil
 }
@@ -352,8 +354,9 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 		return nil, errors.New("ethereum tx not found")
 	}
 	txResult := resTxs.Txs[0]
-	if !rpc.TxSuccessOrExpectedFailure(&txResult.TxResult) {
-		return nil, errors.New("invalid ethereum tx")
+	isValidEnough, reason := rpc.TxIsValidEnough(&txResult.TxResult)
+	if !isValidEnough {
+		return nil, errors.Errorf("invalid ethereum tx: %s", reason)
 	}
 
 	var tx sdk.Tx

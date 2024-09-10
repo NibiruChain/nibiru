@@ -57,7 +57,13 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 	var ethTxIndex int32
 	for txIndex, tx := range block.Txs {
 		result := txResults[txIndex]
-		if !rpc.TxSuccessOrExpectedFailure(result) {
+		isValidEnough, reason := rpc.TxIsValidEnough(result)
+		if !isValidEnough {
+			kv.logger.Debug(
+				"Skipped indexing of tx",
+				"reason", reason,
+				"tm_tx_hash", fmt.Sprintf("%X", tx.Hash()),
+			)
 			continue
 		}
 

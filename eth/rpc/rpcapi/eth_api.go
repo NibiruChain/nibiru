@@ -427,6 +427,7 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 
 	hexTx := txHash.Hex()
 	res, err := e.backend.GetTxByEthHash(txHash)
+
 	if err != nil {
 		e.logger.Debug("tx not found", "hash", hexTx, "error", err.Error())
 		return nil, nil

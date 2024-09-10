@@ -384,9 +384,21 @@ func (s *NetworkSuite) Test_SmartContract() {
 		txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, txHash)
 		s.Require().NoError(err)
 		s.NotNil(txReceipt)
+		fmt.Printf("txReceipt: %v\n", txReceipt)
+		txHashFromReceipt := txReceipt.TxHash
 
-		_, err = s.ethAPI.GetTransactionLogs(txHash)
+		s.Equal(txHash, txHashFromReceipt)
+		// _, err = s.ethAPI.GetTransactionLogs(txHash)
+		// s.NoError(err)
+		tx, isPending, err := s.ethClient.TransactionByHash(blankCtx, txHash)
 		s.NoError(err)
+		s.NotNil(tx)
+
+		txJson, err := s.ethAPI.GetTransactionByHash(txHash)
+		s.NoError(err)
+		s.NotNil(txJson)
+		fmt.Printf("isPending: %v\n", isPending)
+		fmt.Printf("tx: %v\n", tx)
 	}
 }
 

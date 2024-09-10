@@ -267,8 +267,13 @@ func (b *Backend) EthMsgsFromTendermintBlock(
 		//  - Include unsuccessful tx that exceeds block gas limit
 		//  - Include unsuccessful tx that failed when committing changes to stateDB
 		//  - Exclude unsuccessful tx with any other error but ExceedBlockGasLimit
-		if !rpc.TxSuccessOrExpectedFailure(txResults[i]) {
-			b.logger.Debug("invalid tx result code", "cosmos-hash", hexutil.Encode(tx.Hash()))
+		isValidEnough, reason := rpc.TxIsValidEnough(txResults[i])
+		if !isValidEnough {
+			b.logger.Debug(
+				"invalid tx result code",
+				"tm_tx_hash", fmt.Sprintf("%X", tx.Hash()),
+				"reason", reason,
+			)
 			continue
 		}
 
