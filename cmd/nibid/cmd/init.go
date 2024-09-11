@@ -153,7 +153,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return errors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &gentypes.AppGenesis{}
+			genDoc := gentypes.NewAppGenesisWithVersion(chainID, appState)
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
@@ -165,8 +165,6 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				}
 			}
 
-			genDoc.ChainID = chainID
-			genDoc.AppState = appState
 			genDoc.InitialHeight = initHeight
 
 			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
