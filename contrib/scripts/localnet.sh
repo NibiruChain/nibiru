@@ -135,15 +135,8 @@ if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
+  exit 1
 fi
-
-# nibid config
-echo_info "Updating nibid config..."
-$BINARY config keyring-backend test
-$BINARY config chain-id $CHAIN_ID
-$BINARY config broadcast-mode sync
-$BINARY config output json
-$BINARY config # Prints config.
 
 # Enable API Server
 echo_info "config/app.toml: Enabling API server"
@@ -161,11 +154,13 @@ echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
-echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
-$BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
+if ! $BINARY keys show $val_key_name --keyring-backend test > /dev/null; then
+  echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover --keyring-backend test
+fi
+$BINARY add-genesis-account $($BINARY keys show $val_key_name -a --keyring-backend test) $GENESIS_COINS --keyring-backend test
 echo_success "Successfully added genesis account: $val_key_name"
 
-val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
+val_address=$($BINARY keys list --keyring-backend test --output=json | jq -r '.[] | select(.name == "validator") | .address')
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
 # ------------------------------------------------------------------------
@@ -202,7 +197,7 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price
 # ------------------------------------------------------------------------
 
 echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID --keyring-backend test; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
