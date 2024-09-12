@@ -14,10 +14,10 @@ RPC_PORT=${RPC_PORT:-"26657"}
 
 rm -rf "$HOME/.nibid"
 nibid init $CHAIN_ID --chain-id $CHAIN_ID --home $HOME/.nibid --overwrite
-nibid config keyring-backend test
-nibid config chain-id $CHAIN_ID
-nibid config broadcast-mode sync
-nibid config output json
+nibid config set client keyring-backend test
+nibid config set client chain-id $CHAIN_ID
+nibid config set client broadcast-mode sync
+nibid config set client output json
 
 sed -i "s/127.0.0.1:26657/0.0.0.0:$RPC_PORT/" $HOME/.nibid/config/config.toml
 sed -i 's/log_format = .*/log_format = "json"/' $HOME/.nibid/config/config.toml

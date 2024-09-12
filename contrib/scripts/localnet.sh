@@ -138,6 +138,14 @@ else
   exit 1
 fi
 
+# nibid config
+echo_info "Updating nibid config..."
+$BINARY config set client keyring-backend test
+$BINARY config set client chain-id $CHAIN_ID
+$BINARY config set client broadcast-mode sync
+$BINARY config set client output json
+$BINARY config view client # Prints config.
+
 # Enable API Server
 echo_info "config/app.toml: Enabling API server"
 sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
@@ -154,13 +162,11 @@ echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
-if ! $BINARY keys show $val_key_name --keyring-backend test > /dev/null; then
-  echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover --keyring-backend test
-fi
-$BINARY add-genesis-account $($BINARY keys show $val_key_name -a --keyring-backend test) $GENESIS_COINS --keyring-backend test
+echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
+$BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
 echo_success "Successfully added genesis account: $val_key_name"
 
-val_address=$($BINARY keys list --keyring-backend test --output=json | jq -r '.[] | select(.name == "validator") | .address')
+val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
 # ------------------------------------------------------------------------
@@ -197,7 +203,7 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price
 # ------------------------------------------------------------------------
 
 echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID --keyring-backend test; then
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
@@ -215,4 +221,4 @@ fi
 # ------------------------------------------------------------------------
 
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home "$CHAIN_DIR" --pruning nothing
+$BINARY start --home "$CHAIN_DIR" --pruning nothing --log_level=debug
