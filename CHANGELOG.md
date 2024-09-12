@@ -118,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2022](https://github.com/NibiruChain/nibiru/pull/2022) - feat(evm): debug_traceCall method implemented
 - [#2023](https://github.com/NibiruChain/nibiru/pull/2023) - fix(evm)!: adjusted generation and parsing of the block bloom events
 - [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
+- [#2032](https://github.com/NibiruChain/nibiru/pull/2032) - feat(evm): ante handler to prohibit authz grant evm messages 
 
 #### Dapp modules: perp, spot, oracle, etc
 
