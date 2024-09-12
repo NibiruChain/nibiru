@@ -2,16 +2,18 @@
 package rpcapi
 
 import (
+	"math/big"
+
 	"cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	gogoproto "github.com/cosmos/gogoproto/proto"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // FilterLogs creates a slice of logs matching the given criteria.

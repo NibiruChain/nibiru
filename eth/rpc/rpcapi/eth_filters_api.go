@@ -316,7 +316,7 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 	// The routine receives a channel that receives block header events as an
 	// argument.
 	go func(headersCh <-chan coretypes.ResultEvent) {
-		// This defer statement ensures the subscription is cancelled
+		// This defer statement ensures the subscription is canceled
 		// when the goroutine exits.
 		defer cancelSubs()
 
@@ -518,7 +518,6 @@ func (api *FiltersAPI) NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, e
 func (api *FiltersAPI) GetLogs(
 	ctx context.Context, crit filters.FilterCriteria,
 ) ([]*gethcore.Log, error) {
-
 	var filter *Filter
 	if crit.BlockHash != nil {
 		// Block filter requested, construct a single-shot filter

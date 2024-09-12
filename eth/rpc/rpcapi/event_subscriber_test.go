@@ -112,7 +112,6 @@ func (s *Suite) TestParseBloomFromEvents() {
 		},
 	} {
 		s.Run(tc.name, func() {
-
 			wantBloom, events := tc.endBlockEvents()
 			bloom, err := rpcapi.ParseBloomFromEvents(events)
 
