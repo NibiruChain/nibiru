@@ -94,7 +94,7 @@ func (s *Suite) TestParseBloomFromEvents() {
 				err := deps.Ctx.EventManager().EmitTypedEvents(
 					&evm.EventTransfer{},
 					&evm.EventBlockBloom{
-						Bloom: eth.BloomToString(bloom),
+						Bloom: eth.BloomToHex(bloom),
 					},
 				)
 				s.NoError(err, "emitting bloom event failed")

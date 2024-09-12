@@ -148,13 +148,12 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	txHash := ethereumTx.AsTransaction().Hash()
+	b.logger.Debug("eth_sendRawTransaction",
+		"txHash", txHash.Hex(),
+	)
 
 	syncCtx := b.clientCtx.WithBroadcastMode(flags.BroadcastSync)
 	rsp, err := syncCtx.BroadcastTx(txBytes)
-	b.logger.Debug("eth_sendRawTransaction",
-		"txHash", txHash.Hex(),
-		"blockHeight", fmt.Sprintf("%d", rsp.Height),
-	)
 	if rsp != nil && rsp.Code != 0 {
 		err = errorsmod.ABCIError(rsp.Codespace, rsp.Code, rsp.RawLog)
 	}
@@ -162,6 +161,9 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 		b.logger.Error("failed to broadcast tx", "error", err.Error())
 		return txHash, err
 	}
+	b.logger.Debug("eth_sendRawTransaction",
+		"blockHeight", fmt.Sprintf("%d", rsp.Height),
+	)
 
 	return txHash, nil
 }

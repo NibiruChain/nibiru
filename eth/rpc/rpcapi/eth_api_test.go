@@ -267,7 +267,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
 	s.NoError(err)
 
-	s.T().Log("Assert event expectations")
+	s.T().Log("Assert event expectations - successful eth tx")
 	{
 		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
 		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
@@ -282,12 +282,6 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 			}
 		}
 
-		// TODO: UD-DEBUG:  REMOVE
-		for eventIdx, event := range blockOfTx.TxsResults[0].Events {
-			eventJson, _ := json.Marshal(event)
-			fmt.Printf("Events[%d]: %s\n", eventIdx, string(eventJson))
-		}
-
 		eventsJson, _ := json.Marshal(events)
 		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
 		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
@@ -295,66 +289,9 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		s.Require().Equal(hash0, hash1)
 	}
 
+	s.T().Log("Assert balances")
 	senderBalanceAfterWei, err := s.ethClient.BalanceAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
-
-	// TODO: UD-DEBUG:  REMOVE --------------- Fail TX on purpose
-	weiToSend = new(big.Int).Add(senderBalanceAfterWei, evm.NativeToWei(big.NewInt(5)))
-	tx, err = gethcore.SignNewTx(
-		s.fundedAccPrivateKey,
-		signer,
-		&gethcore.LegacyTx{
-			Nonce:    nonce,
-			To:       &recipientAddr,
-			Value:    weiToSend,
-			Gas:      params.TxGas,
-			GasPrice: gasPrice, // 1 micronibi per gas
-		})
-	s.NoError(err)
-	// err = s.ethClient.SendTransaction(context.Background(), tx)
-	txBz, err := tx.MarshalBinary()
-	s.NoError(err)
-	_, err = s.ethAPI.SendRawTransaction(txBz)
-	// txHash, err := s.ethAPI.SendRawTransaction(txBz)
-	s.Require().Error(err) // Expect failure
-
-	s.T().Log("You do not get a receipt for failed transactions")
-	txReceipt, err = s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
-	s.Error(err)
-
-	// go back changing the requested block height until it has the failed tx.
-
-	s.T().Log("Assert event expectations")
-	{
-		latestHeight, _ := s.network.LatestHeight()
-		blockHeightOfTx := int64(latestHeight)
-		// blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
-		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
-		s.NoError(err)
-		ethTxEvents := []sdk.Event{}
-		events := blockOfTx.TxsResults[0].Events
-		for _, event := range events {
-			if event.Type == "ethereum_tx" {
-				ethTxEvents = append(ethTxEvents,
-					sdk.Event{Type: event.Type, Attributes: event.Attributes},
-				)
-			}
-		}
-
-		// TODO: UD-DEBUG:  REMOVE
-		for eventIdx, event := range blockOfTx.TxsResults[0].Events {
-			eventJson, _ := json.Marshal(event)
-			fmt.Printf("Events[%d]: %s\n", eventIdx, string(eventJson))
-		}
-
-		eventsJson, _ := json.Marshal(events)
-		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
-		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
-		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
-		s.Require().Equal(hash0, hash1)
-	}
-
-	s.Require().False(true)
 
 	costOfTx := new(big.Int).Add(
 		weiToSend,

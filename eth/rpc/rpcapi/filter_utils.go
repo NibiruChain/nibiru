@@ -134,7 +134,7 @@ func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error)
 				err, "failed to parse event of type %s", bloomEventType)
 		}
 
-		return eth.BloomFromString(bloomEvent.Bloom)
+		return eth.BloomFromHex(bloomEvent.Bloom)
 	}
 	return bloom, err
 }

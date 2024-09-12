@@ -20,7 +20,7 @@ func (k *Keeper) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Valida
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	bloom := gethcoretypes.BytesToBloom(k.EvmState.GetBlockBloomTransient(ctx).Bytes())
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventBlockBloom{
-		Bloom: eth.BloomToString(bloom),
+		Bloom: eth.BloomToHex(bloom),
 	})
 	// The bloom logic doesn't update the validator set.
 	return []abci.ValidatorUpdate{}

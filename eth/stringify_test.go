@@ -14,7 +14,7 @@ func (s *Suite) TestStringify() {
 		gethcore.BytesToBloom(gethcommon.Big1.Bytes()),
 	}
 	for tcIdx, bloom := range testCases {
-		gotStr := eth.BloomToString(bloom)
+		gotStr := eth.BloomToHex(bloom)
 		gotBloom, err := eth.BloomFromHex(gotStr)
 		s.NoError(err)
 		s.Equalf(bloom, gotBloom, "test case: %d", tcIdx)
