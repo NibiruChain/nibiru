@@ -254,7 +254,7 @@ func TxLogsFromEvents(
 
 // ParseTxLogsFromEvent parse tx logs from one event
 func ParseTxLogsFromEvent(event *evm.EventTxLog) ([]*gethcore.Log, error) {
-	evmTxLogs := make([]*gethcore.Log, len(event.TxLogs))
+	evmTxLogs := []*gethcore.Log{}
 	for _, txLogStr := range event.TxLogs {
 		txLog := new(evm.Log)
 		if err := json.Unmarshal([]byte(txLogStr), txLog); err != nil {
