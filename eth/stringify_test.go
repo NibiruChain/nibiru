@@ -1,9 +1,10 @@
 package eth_test
 
 import (
-	"github.com/NibiruChain/nibiru/v2/eth"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 func (s *Suite) TestStringify() {
