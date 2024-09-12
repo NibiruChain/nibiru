@@ -145,6 +145,11 @@ message AccessTuple {
   repeated string storage_keys = 2 [ (gogoproto.jsontag) = "storageKeys" ];
 }
 
+// TracerConfig stores additional tracer args. For geth it's only one attr: onlyTopCall
+message TracerConfig {
+  bool only_top_call = 1  [ (gogoproto.jsontag) = "onlyTopCall" ];
+}
+
 // TraceConfig holds extra parameters to trace functions.
 message TraceConfig {
   // DEPRECATED: DisableMemory and DisableReturnData have been renamed to
@@ -173,6 +178,6 @@ message TraceConfig {
   bool enable_memory = 11 [ (gogoproto.jsontag) = "enableMemory" ];
   // enable_return_data switches the capture of return data
   bool enable_return_data = 12 [ (gogoproto.jsontag) = "enableReturnData" ];
-  // tracer_json_config configures the tracer using a JSON string
-  string tracer_json_config = 13 [ (gogoproto.jsontag) = "tracerConfig" ];
+  // tracer_config configures the tracer options
+  TracerConfig tracer_config = 13 [ (gogoproto.jsontag) = "tracerConfig" ];
 }

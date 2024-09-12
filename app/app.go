@@ -52,6 +52,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	// force call init() of the geth tracers
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 const (
