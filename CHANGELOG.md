@@ -118,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2022](https://github.com/NibiruChain/nibiru/pull/2022) - feat(evm): debug_traceCall method implemented
 - [#2023](https://github.com/NibiruChain/nibiru/pull/2023) - fix(evm)!: adjusted generation and parsing of the block bloom events
 - [#2030](https://github.com/NibiruChain/nibiru/pull/2030) - fix(eth/rpc): test and fix eth_getTransactionByHash and eth_getLogs. This is meant to address a bug where the EVMIndexer has a discrepenacy during tx search depending on how the "eth_getTransactionByHash" request is sent. Additionally, this change adjusts the `testnetwork` full node setup to mirror production more closely and expose the structs for the Ethereum JSON-RPC API. 
+- [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
 
 #### Dapp modules: perp, spot, oracle, etc
 
