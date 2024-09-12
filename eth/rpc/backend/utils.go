@@ -48,7 +48,7 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // If the pending value is true, it will iterate over the mempool (pending)
 // txs in order to compute and return the pending tx sequence.
 // Todo: include the ability to specify a blockNumber
-func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
+func (b *EVMBackend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
 	adr := sdk.AccAddress(accAddr.Bytes()).String()
 	ctx := rpc.NewContextWithHeight(height)
@@ -104,7 +104,7 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 }
 
 // output: targetOneFeeHistory
-func (b *Backend) processBlock(
+func (b *EVMBackend) processBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
 	ethBlock *map[string]interface{},
 	rewardPercentiles []float64,
@@ -208,14 +208,17 @@ func (b *Backend) processBlock(
 }
 
 // AllTxLogsFromEvents parses all ethereum logs from cosmos events
-func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
-	allLogs := make([][]*gethcore.Log, 0, 4)
+func AllTxLogsFromEvents(events []abci.Event) (allLogs [][]*gethcore.Log, err error) {
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != evm.TypeUrlEventTxLog {
 			continue
 		}
+		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
+		if err != nil {
+			return allLogs, err
+		}
 
-		logs, err := ParseTxLogsFromEvent(event)
+		logs, err := ParseTxLogsFromEvent(typedEvent)
 		if err != nil {
 			return nil, err
 		}
@@ -226,9 +229,11 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 }
 
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
-func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
+func TxLogsFromEvents(
+	events []abci.Event, msgIndex int,
+) (txLogsForMsgIdx []*gethcore.Log, err error) {
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != evm.TypeUrlEventTxLog {
 			continue
 		}
 
@@ -238,27 +243,26 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 			continue
 		}
 
-		return ParseTxLogsFromEvent(event)
+		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
+		if err != nil {
+			return txLogsForMsgIdx, err
+		}
+		return ParseTxLogsFromEvent(typedEvent)
 	}
 	return nil, fmt.Errorf("eth tx logs not found for message index %d", msgIndex)
 }
 
 // ParseTxLogsFromEvent parse tx logs from one event
-func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
-	logs := make([]*evm.Log, 0, len(event.Attributes))
-	for _, attr := range event.Attributes {
-		if attr.Key != evm.AttributeKeyTxLog {
-			continue
-		}
-
-		var log evm.Log
-		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
+func ParseTxLogsFromEvent(event *evm.EventTxLog) ([]*gethcore.Log, error) {
+	evmTxLogs := []*gethcore.Log{}
+	for _, txLogStr := range event.TxLogs {
+		txLog := new(evm.Log)
+		if err := json.Unmarshal([]byte(txLogStr), txLog); err != nil {
 			return nil, err
 		}
-
-		logs = append(logs, &log)
+		evmTxLogs = append(evmTxLogs, txLog.ToEthereum())
 	}
-	return evm.LogsToEthereum(logs), nil
+	return evmTxLogs, nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored

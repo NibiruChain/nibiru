@@ -21,7 +21,7 @@ import (
 )
 
 // GetCode returns the contract code at the given address and block number.
-func (b *Backend) GetCode(
+func (b *EVMBackend) GetCode(
 	address common.Address, blockNrOrHash rpc.BlockNumberOrHash,
 ) (hexutil.Bytes, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
@@ -42,7 +42,7 @@ func (b *Backend) GetCode(
 }
 
 // GetProof returns an account object with proof and any storage proofs
-func (b *Backend) GetProof(
+func (b *EVMBackend) GetProof(
 	address common.Address,
 	storageKeys []string,
 	blockNrOrHash rpc.BlockNumberOrHash,
@@ -131,7 +131,7 @@ func (b *Backend) GetProof(
 }
 
 // GetStorageAt returns the contract storage at the given address, block number, and key.
-func (b *Backend) GetStorageAt(address common.Address, key string, blockNrOrHash rpc.BlockNumberOrHash) (hexutil.Bytes, error) {
+func (b *EVMBackend) GetStorageAt(address common.Address, key string, blockNrOrHash rpc.BlockNumberOrHash) (hexutil.Bytes, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (b *Backend) GetStorageAt(address common.Address, key string, blockNrOrHash
 }
 
 // GetBalance returns the provided account's balance up to the provided block number.
-func (b *Backend) GetBalance(
+func (b *EVMBackend) GetBalance(
 	address common.Address,
 	blockNrOrHash rpc.BlockNumberOrHash,
 ) (*hexutil.Big, error) {
@@ -189,7 +189,7 @@ func (b *Backend) GetBalance(
 }
 
 // GetTransactionCount returns the number of transactions at the given address up to the given block number.
-func (b *Backend) GetTransactionCount(address common.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
+func (b *EVMBackend) GetTransactionCount(address common.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
 	n := hexutil.Uint64(0)
 	bn, err := b.BlockNumber()
 	if err != nil {

@@ -86,7 +86,7 @@ type Validator struct {
 
 	JSONRPCClient     *ethclient.Client
 	EthRpcQueryClient *ethrpc.QueryClient
-	EthRpcBackend     *backend.Backend
+	EthRpcBackend     *backend.EVMBackend
 	EthTxIndexer      eth.EVMTxIndexer
 
 	EthRPC_ETH  *rpcapi.EthAPI

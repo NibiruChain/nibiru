@@ -30,7 +30,7 @@ type BloomIV struct {
 // Filter can be used to retrieve and filter logs.
 type Filter struct {
 	logger   log.Logger
-	backend  rpcbackend.Backend
+	backend  rpcbackend.EVMBackend
 	criteria filters.FilterCriteria
 
 	bloomFilters [][]BloomIV // Filter the system is matching for
@@ -38,14 +38,14 @@ type Filter struct {
 
 // NewBlockFilter creates a new filter which directly inspects the contents of
 // a block to figure out whether it is interesting or not.
-func NewBlockFilter(logger log.Logger, backend rpcbackend.Backend, criteria filters.FilterCriteria) *Filter {
+func NewBlockFilter(logger log.Logger, backend rpcbackend.EVMBackend, criteria filters.FilterCriteria) *Filter {
 	// Create a generic filter and convert it into a block filter
 	return newFilter(logger, backend, criteria, nil)
 }
 
 // NewRangeFilter creates a new filter which uses a bloom filter on blocks to
 // figure out whether a particular block is interesting or not.
-func NewRangeFilter(logger log.Logger, backend rpcbackend.Backend, begin, end int64, addresses []common.Address, topics [][]common.Hash) *Filter {
+func NewRangeFilter(logger log.Logger, backend rpcbackend.EVMBackend, begin, end int64, addresses []common.Address, topics [][]common.Hash) *Filter {
 	// Flatten the address and topic filter clauses into a single bloombits filter
 	// system. Since the bloombits are not positional, nil topics are permitted,
 	// which get flattened into a nil byte slice.
@@ -80,7 +80,7 @@ func NewRangeFilter(logger log.Logger, backend rpcbackend.Backend, begin, end in
 // newFilter returns a new Filter
 func newFilter(
 	logger log.Logger,
-	backend rpcbackend.Backend,
+	backend rpcbackend.EVMBackend,
 	criteria filters.FilterCriteria,
 	bloomFilters [][]BloomIV,
 ) *Filter {

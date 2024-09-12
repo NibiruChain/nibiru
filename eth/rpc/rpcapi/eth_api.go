@@ -131,11 +131,11 @@ var _ IEthAPI = (*EthAPI)(nil)
 type EthAPI struct {
 	ctx     context.Context
 	logger  log.Logger
-	backend backend.EVMBackend
+	backend *backend.EVMBackend
 }
 
 // NewImplEthAPI creates an instance of the public ETH Web3 API.
-func NewImplEthAPI(logger log.Logger, backend backend.EVMBackend) *EthAPI {
+func NewImplEthAPI(logger log.Logger, backend *backend.EVMBackend) *EthAPI {
 	api := &EthAPI{
 		ctx:     context.Background(),
 		logger:  logger.With("client", "json-rpc"),

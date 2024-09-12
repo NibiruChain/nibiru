@@ -33,7 +33,7 @@ import (
 type FiltersAPI struct {
 	logger    log.Logger
 	clientCtx client.Context
-	backend   *rpcbackend.Backend
+	backend   *rpcbackend.EVMBackend
 	events    *EventSubscriber
 	filtersMu sync.Mutex
 	filters   map[gethrpc.ID]*filter
@@ -58,7 +58,7 @@ func NewImplFiltersAPI(
 	logger log.Logger,
 	clientCtx client.Context,
 	tmWSClient *rpcclient.WSClient,
-	backend *rpcbackend.Backend,
+	backend *rpcbackend.EVMBackend,
 ) *FiltersAPI {
 	logger = logger.With("api", "filter")
 	api := &FiltersAPI{

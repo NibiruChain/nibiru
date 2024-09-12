@@ -69,13 +69,13 @@ func (k *Keeper) EthereumTx(
 		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyEthereumTxFailed, resp.VmError))
 	}
 
-	txLogAttrs := make([]sdk.Attribute, len(resp.Logs))
+	txLogs := make([]string, len(resp.Logs))
 	for i, log := range resp.Logs {
 		value, err := json.Marshal(log)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to encode log")
 		}
-		txLogAttrs[i] = sdk.NewAttribute(evm.AttributeKeyTxLog, string(value))
+		txLogs[i] = string(value)
 	}
 
 	// emit events
@@ -84,17 +84,17 @@ func (k *Keeper) EthereumTx(
 			evm.EventTypeEthereumTx,
 			attrs...,
 		),
-		sdk.NewEvent(
-			evm.EventTypeTxLog,
-			txLogAttrs...,
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
-			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
-		),
 	})
+	_ = ctx.EventManager().EmitTypedEvents(
+		&evm.EventTxLog{
+			TxLogs: txLogs,
+		},
+		&evm.EventMessage{
+			Module: evm.ModuleName,
+			Sender: msg.From,
+			TxType: fmt.Sprintf("%d", tx.Type()),
+		},
+	)
 
 	return resp, nil
 }
