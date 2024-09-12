@@ -50,6 +50,9 @@ func (k *Keeper) EthereumTx(
 		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(k.EvmState.BlockTxIndex.GetOr(ctx, 0), 10)),
 		// add event for eth tx gas used, we can't get it from cosmos tx result when it contains multiple eth tx msgs.
 		sdk.NewAttribute(evm.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
+		// TODO: fix: It's odd that each event is emitted twice. Migrate to typed
+		// events and change EVM indexer to align.
+		// sdk.NewAttribute("emitted_from", "EthereumTx"),
 	}
 
 	if len(ctx.TxBytes()) > 0 {

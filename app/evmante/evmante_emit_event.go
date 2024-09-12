@@ -54,6 +54,9 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 						10,
 					),
 				), // #nosec G701
+				// TODO: fix: It's odd that each event is emitted twice. Migrate to typed
+				// events and change EVM indexer to align.
+				// sdk.NewAttribute("emitted_from", "EthEmitEventDecorator"),
 			))
 	}
 
