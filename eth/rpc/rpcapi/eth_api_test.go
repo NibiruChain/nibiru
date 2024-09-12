@@ -85,7 +85,7 @@ func (s *NodeSuite) SetupSuite() {
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
-	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
+	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom))
 	s.NoError(s.network.WaitForNextBlock())
 }

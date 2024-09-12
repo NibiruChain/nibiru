@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc/codes"
@@ -208,14 +209,26 @@ func (b *Backend) processBlock(
 }
 
 // AllTxLogsFromEvents parses all ethereum logs from cosmos events
-func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
-	allLogs := make([][]*gethcore.Log, 0, 4)
+func AllTxLogsFromEvents(events []abci.Event) (allLogs [][]*gethcore.Log, err error) {
+	allLogs = make([][]*gethcore.Log, 0, 4)
+	eventType := evm.TypeUrlEventTxLog
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != eventType {
 			continue
 		}
 
-		logs, err := ParseTxLogsFromEvent(event)
+		typedProtoEvent, err := sdk.ParseTypedEvent(event)
+		if err != nil {
+			return allLogs, errors.Wrapf(
+				err, "failed to parse event of type %s", eventType)
+		}
+		typedEvent, ok := (typedProtoEvent).(*evm.EventTxLog)
+		if !ok {
+			return allLogs, errors.Wrapf(
+				err, "failed to parse event of type %s", eventType)
+		}
+
+		logs, err := ParseTxLogsFromEvent(typedEvent)
 		if err != nil {
 			return nil, err
 		}
@@ -226,39 +239,26 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 }
 
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
-func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
-	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
-			continue
-		}
-
-		if msgIndex > 0 {
-			// not the eth tx we want
-			msgIndex--
-			continue
-		}
-
-		return ParseTxLogsFromEvent(event)
+func TxLogsFromEvents(events []abci.Event, msgIndex int) (txLogsForMsgIdx []*gethcore.Log, err error) {
+	allLogs, err := AllTxLogsFromEvents(events)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("eth tx logs not found for message index %d", msgIndex)
+	return allLogs[msgIndex], nil
 }
 
 // ParseTxLogsFromEvent parse tx logs from one event
-func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
-	logs := make([]*evm.Log, 0, len(event.Attributes))
-	for _, attr := range event.Attributes {
-		if attr.Key != evm.AttributeKeyTxLog {
-			continue
-		}
-
-		var log evm.Log
-		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
+func ParseTxLogsFromEvent(event *evm.EventTxLog) ([]*gethcore.Log, error) {
+	evmTxLogs := []*gethcore.Log{}
+	for _, txLogStr := range event.TxLogs {
+		txLog := new(evm.Log)
+		err := json.Unmarshal([]byte(txLogStr), txLog)
+		if err != nil {
 			return nil, err
 		}
-
-		logs = append(logs, &log)
+		evmTxLogs = append(evmTxLogs, txLog.ToEthereum())
 	}
-	return evm.LogsToEthereum(logs), nil
+	return evmTxLogs, nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
