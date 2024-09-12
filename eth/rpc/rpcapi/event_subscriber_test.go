@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/filters"
 	"github.com/ethereum/go-ethereum/rpc"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -93,7 +94,7 @@ func (s *Suite) TestParseBloomFromEvents() {
 				err := deps.Ctx.EventManager().EmitTypedEvents(
 					&evm.EventTransfer{},
 					&evm.EventBlockBloom{
-						Bloom: string(bloom.Bytes()),
+						Bloom: eth.BloomToString(bloom),
 					},
 				)
 				s.NoError(err, "emitting bloom event failed")

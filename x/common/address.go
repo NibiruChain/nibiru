@@ -19,6 +19,7 @@ func StringsToAddrs(strs ...string) []sdk.AccAddress {
 		addr := sdk.MustAccAddressFromBech32(str)
 		addrs = append(addrs, addr)
 	}
+
 	return addrs
 }
 

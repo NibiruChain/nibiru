@@ -13,6 +13,7 @@ import (
 
 	gogoproto "github.com/cosmos/gogoproto/proto"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -133,8 +134,7 @@ func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error)
 				err, "failed to parse event of type %s", bloomEventType)
 		}
 
-		bloom = gethcore.BytesToBloom([]byte(bloomEvent.Bloom))
-		return bloom, err
+		return eth.BloomFromString(bloomEvent.Bloom)
 	}
 	return bloom, err
 }

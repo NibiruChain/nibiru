@@ -62,7 +62,7 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 			kv.logger.Debug(
 				"Skipped indexing of tx",
 				"reason", reason,
-				"tm_tx_hash", fmt.Sprintf("%X", tx.Hash()),
+				"tm_tx_hash", eth.TmTxHashToString(tx.Hash()),
 			)
 			continue
 		}

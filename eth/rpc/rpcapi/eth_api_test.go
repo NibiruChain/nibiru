@@ -3,6 +3,7 @@ package rpcapi_test
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -36,11 +37,11 @@ import (
 )
 
 var (
-	_ suite.TearDownAllSuite = (*NetworkSuite)(nil)
-	_ suite.SetupAllSuite    = (*NetworkSuite)(nil)
+	_ suite.TearDownAllSuite = (*NodeSuite)(nil)
+	_ suite.SetupAllSuite    = (*NodeSuite)(nil)
 )
 
-type NetworkSuite struct {
+type NodeSuite struct {
 	suite.Suite
 	cfg     testnetwork.Config
 	network *testnetwork.Network
@@ -58,12 +59,12 @@ type NetworkSuite struct {
 
 func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(Suite))
-	suite.Run(t, new(NetworkSuite))
+	suite.Run(t, new(NodeSuite))
 }
 
 // SetupSuite runs before every test in the suite. Implements the
 // "suite.SetupAllSuite" interface.
-func (s *NetworkSuite) SetupSuite() {
+func (s *NodeSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -90,14 +91,14 @@ func (s *NetworkSuite) SetupSuite() {
 }
 
 // Test_ChainID EVM method: eth_chainId
-func (s *NetworkSuite) Test_ChainID() {
+func (s *NodeSuite) Test_ChainID() {
 	ethChainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	s.Equal(appconst.ETH_CHAIN_ID_DEFAULT, ethChainID.Int64())
 }
 
 // Test_BlockNumber EVM method: eth_blockNumber
-func (s *NetworkSuite) Test_BlockNumber() {
+func (s *NodeSuite) Test_BlockNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -107,7 +108,7 @@ func (s *NetworkSuite) Test_BlockNumber() {
 }
 
 // Test_BlockByNumber EVM method: eth_getBlockByNumber
-func (s *NetworkSuite) Test_BlockByNumber() {
+func (s *NodeSuite) Test_BlockByNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -117,7 +118,7 @@ func (s *NetworkSuite) Test_BlockByNumber() {
 }
 
 // Test_BalanceAt EVM method: eth_getBalance
-func (s *NetworkSuite) Test_BalanceAt() {
+func (s *NodeSuite) Test_BalanceAt() {
 	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 
 	// New user balance should be 0
@@ -134,7 +135,7 @@ func (s *NetworkSuite) Test_BalanceAt() {
 }
 
 // Test_StorageAt EVM method: eth_getStorageAt
-func (s *NetworkSuite) Test_StorageAt() {
+func (s *NodeSuite) Test_StorageAt() {
 	storage, err := s.ethClient.StorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{}, nil,
 	)
@@ -144,7 +145,7 @@ func (s *NetworkSuite) Test_StorageAt() {
 }
 
 // Test_PendingStorageAt EVM method: eth_getStorageAt | pending
-func (s *NetworkSuite) Test_PendingStorageAt() {
+func (s *NodeSuite) Test_PendingStorageAt() {
 	storage, err := s.ethClient.PendingStorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{},
 	)
@@ -155,7 +156,7 @@ func (s *NetworkSuite) Test_PendingStorageAt() {
 }
 
 // Test_CodeAt EVM method: eth_getCode
-func (s *NetworkSuite) Test_CodeAt() {
+func (s *NodeSuite) Test_CodeAt() {
 	code, err := s.ethClient.CodeAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
@@ -164,7 +165,7 @@ func (s *NetworkSuite) Test_CodeAt() {
 }
 
 // Test_PendingCodeAt EVM method: eth_getCode
-func (s *NetworkSuite) Test_PendingCodeAt() {
+func (s *NodeSuite) Test_PendingCodeAt() {
 	code, err := s.ethClient.PendingCodeAt(context.Background(), s.fundedAccEthAddr)
 	s.NoError(err)
 
@@ -173,7 +174,7 @@ func (s *NetworkSuite) Test_PendingCodeAt() {
 }
 
 // Test_EstimateGas EVM method: eth_estimateGas
-func (s *NetworkSuite) Test_EstimateGas() {
+func (s *NodeSuite) Test_EstimateGas() {
 	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 	gasLimit := uint64(21000)
 	msg := geth.CallMsg{
@@ -197,14 +198,14 @@ func (s *NetworkSuite) Test_EstimateGas() {
 }
 
 // Test_SuggestGasPrice EVM method: eth_gasPrice
-func (s *NetworkSuite) Test_SuggestGasPrice() {
+func (s *NodeSuite) Test_SuggestGasPrice() {
 	// TODO: the backend method is stubbed to 0
 	_, err := s.ethClient.SuggestGasPrice(context.Background())
 	s.NoError(err)
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
-func (s *NetworkSuite) Test_SimpleTransferTransaction() {
+func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.PendingNonceAt(context.Background(), s.fundedAccEthAddr)
@@ -232,13 +233,15 @@ func (s *NetworkSuite) Test_SimpleTransferTransaction() {
 	grpcConn, err := gosdk.GetGRPCConnection(grpcUrl, true, 5)
 	s.NoError(err)
 
-	querier := bank.NewQueryClient(grpcConn)
-	resp, err := querier.Balance(context.Background(), &bank.QueryBalanceRequest{
-		Address: s.fundedAccNibiAddr.String(),
-		Denom:   eth.EthBaseDenom,
-	})
-	s.Require().NoError(err)
-	s.Equal("105"+strings.Repeat("0", 6), resp.Balance.Amount.String())
+	{
+		querier := bank.NewQueryClient(grpcConn)
+		resp, err := querier.Balance(context.Background(), &bank.QueryBalanceRequest{
+			Address: s.fundedAccNibiAddr.String(),
+			Denom:   eth.EthBaseDenom,
+		})
+		s.Require().NoError(err)
+		s.Equal("105"+strings.Repeat("0", 6), resp.Balance.Amount.String())
+	}
 
 	s.T().Logf("Sending %d wei to %s", weiToSend, recipientAddr.Hex())
 	signer := gethcore.LatestSignerForChainID(chainID)
@@ -258,15 +261,107 @@ func (s *NetworkSuite) Test_SimpleTransferTransaction() {
 	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
-	senderAmountAfterWei, err := s.ethClient.BalanceAt(context.Background(), s.fundedAccEthAddr, nil)
+	s.NoError(s.network.WaitForNextBlock())
+	s.NoError(s.network.WaitForNextBlock())
+
+	txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
 	s.NoError(err)
+
+	s.T().Log("Assert event expectations")
+	{
+		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
+		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+		s.NoError(err)
+		ethTxEvents := []sdk.Event{}
+		events := blockOfTx.TxsResults[0].Events
+		for _, event := range events {
+			if event.Type == "ethereum_tx" {
+				ethTxEvents = append(ethTxEvents,
+					sdk.Event{Type: event.Type, Attributes: event.Attributes},
+				)
+			}
+		}
+
+		// TODO: UD-DEBUG:  REMOVE
+		for eventIdx, event := range blockOfTx.TxsResults[0].Events {
+			eventJson, _ := json.Marshal(event)
+			fmt.Printf("Events[%d]: %s\n", eventIdx, string(eventJson))
+		}
+
+		eventsJson, _ := json.Marshal(events)
+		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
+		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		s.Require().Equal(hash0, hash1)
+	}
+
+	senderBalanceAfterWei, err := s.ethClient.BalanceAt(context.Background(), s.fundedAccEthAddr, nil)
+	s.NoError(err)
+
+	// TODO: UD-DEBUG:  REMOVE --------------- Fail TX on purpose
+	weiToSend = new(big.Int).Add(senderBalanceAfterWei, evm.NativeToWei(big.NewInt(5)))
+	tx, err = gethcore.SignNewTx(
+		s.fundedAccPrivateKey,
+		signer,
+		&gethcore.LegacyTx{
+			Nonce:    nonce,
+			To:       &recipientAddr,
+			Value:    weiToSend,
+			Gas:      params.TxGas,
+			GasPrice: gasPrice, // 1 micronibi per gas
+		})
+	s.NoError(err)
+	// err = s.ethClient.SendTransaction(context.Background(), tx)
+	txBz, err := tx.MarshalBinary()
+	s.NoError(err)
+	_, err = s.ethAPI.SendRawTransaction(txBz)
+	// txHash, err := s.ethAPI.SendRawTransaction(txBz)
+	s.Require().Error(err) // Expect failure
+
+	s.T().Log("You do not get a receipt for failed transactions")
+	txReceipt, err = s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
+	s.Error(err)
+
+	// go back changing the requested block height until it has the failed tx.
+
+	s.T().Log("Assert event expectations")
+	{
+		latestHeight, _ := s.network.LatestHeight()
+		blockHeightOfTx := int64(latestHeight)
+		// blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
+		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+		s.NoError(err)
+		ethTxEvents := []sdk.Event{}
+		events := blockOfTx.TxsResults[0].Events
+		for _, event := range events {
+			if event.Type == "ethereum_tx" {
+				ethTxEvents = append(ethTxEvents,
+					sdk.Event{Type: event.Type, Attributes: event.Attributes},
+				)
+			}
+		}
+
+		// TODO: UD-DEBUG:  REMOVE
+		for eventIdx, event := range blockOfTx.TxsResults[0].Events {
+			eventJson, _ := json.Marshal(event)
+			fmt.Printf("Events[%d]: %s\n", eventIdx, string(eventJson))
+		}
+
+		eventsJson, _ := json.Marshal(events)
+		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
+		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		s.Require().Equal(hash0, hash1)
+	}
+
+	s.Require().False(true)
 
 	costOfTx := new(big.Int).Add(
 		weiToSend,
 		new(big.Int).Mul((new(big.Int).SetUint64(params.TxGas)), gasPrice),
 	)
 	wantSenderBalWei := new(big.Int).Sub(senderBalanceBeforeWei, costOfTx)
-	s.Equal(wantSenderBalWei.String(), senderAmountAfterWei.String(), "surpising sender balance")
+	s.Equal(wantSenderBalWei.String(), senderBalanceAfterWei.String(), "surpising sender balance")
 
 	recipientBalanceAfter, err := s.ethClient.BalanceAt(context.Background(), recipientAddr, nil)
 	s.NoError(err)
@@ -276,7 +371,7 @@ func (s *NetworkSuite) Test_SimpleTransferTransaction() {
 var blankCtx = context.Background()
 
 // Test_SmartContract includes contract deployment, query, execution
-func (s *NetworkSuite) Test_SmartContract() {
+func (s *NodeSuite) Test_SmartContract() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
@@ -377,32 +472,25 @@ func (s *NetworkSuite) Test_SmartContract() {
 		txBz, err := tx.MarshalBinary()
 		s.NoError(err)
 		txHash, err := s.ethAPI.SendRawTransaction(txBz)
-		// err = s.ethClient.SendTransaction(blankCtx, tx)
 		s.Require().NoError(err)
 		_ = s.network.WaitForNextBlock()
 
 		txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, txHash)
 		s.Require().NoError(err)
 		s.NotNil(txReceipt)
-		fmt.Printf("txReceipt: %v\n", txReceipt)
-		txHashFromReceipt := txReceipt.TxHash
 
+		txHashFromReceipt := txReceipt.TxHash
 		s.Equal(txHash, txHashFromReceipt)
-		// _, err = s.ethAPI.GetTransactionLogs(txHash)
-		// s.NoError(err)
-		tx, isPending, err := s.ethClient.TransactionByHash(blankCtx, txHash)
+
+		// TODO: Test eth_getTransactionByHash using a JSON-RPC request at the
+		// endpoint directly.
+		tx, _, err = s.ethClient.TransactionByHash(blankCtx, txHash)
 		s.NoError(err)
 		s.NotNil(tx)
-
-		txJson, err := s.ethAPI.GetTransactionByHash(txHash)
-		s.NoError(err)
-		s.NotNil(txJson)
-		fmt.Printf("isPending: %v\n", isPending)
-		fmt.Printf("tx: %v\n", tx)
 	}
 }
 
-func (s *NetworkSuite) TearDownSuite() {
+func (s *NodeSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }

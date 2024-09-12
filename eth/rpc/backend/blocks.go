@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -271,7 +272,7 @@ func (b *Backend) EthMsgsFromTendermintBlock(
 		if !isValidEnough {
 			b.logger.Debug(
 				"invalid tx result code",
-				"tm_tx_hash", fmt.Sprintf("%X", tx.Hash()),
+				"tm_tx_hash", eth.TmTxHashToString(tx.Hash()),
 				"reason", reason,
 			)
 			continue

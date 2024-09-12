@@ -27,8 +27,6 @@ import (
 // discarded from a pruning node, this resolves to nil.
 func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
-	hexTx := txHash.Hex()
-
 	if err != nil {
 		return b.getTransactionByHashPending(txHash)
 	}
@@ -59,7 +57,7 @@ func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, e
 		// Fallback to find tx index by iterating all valid eth transactions
 		msgs := b.EthMsgsFromTendermintBlock(block, blockRes)
 		for i := range msgs {
-			if msgs[i].Hash == hexTx {
+			if msgs[i].Hash == eth.EthTxHashToString(txHash) {
 				if i > math.MaxInt32 {
 					return nil, errors.New("tx index overflow")
 				}

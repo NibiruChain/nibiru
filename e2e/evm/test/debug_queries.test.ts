@@ -89,7 +89,6 @@ describe("debug queries", () => {
   it("debug_getBadBlocks", async () => {
     try {
       const traceResult = await provider.send("debug_getBadBlocks", [txHash])
-      console.debug("DEBUG %o:", { traceResult })
       expect(traceResult).toBeDefined()
     } catch (err) {
       expect(err.message).toContain(
@@ -108,7 +107,6 @@ describe("debug queries", () => {
         "0x0",
         100,
       ])
-      console.debug("DEBUG %o:", { traceResult })
       expect(traceResult).toBeDefined()
     } catch (err) {
       expect(err.message).toContain(
