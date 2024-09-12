@@ -84,6 +84,10 @@ func StartCmd(appCreator types.AppCreator, defaultNodeHome string) *cobra.Comman
 // StartCmd runs the service passed in, either stand-alone or in-process with
 // Tendermint.
 func StartCmdWithOptions(appCreator types.AppCreator, defaultNodeHome string, opts server.StartCmdOptions) *cobra.Command {
+	if opts.DBOpener == nil {
+		opts.DBOpener = openDB
+	}
+
 	if opts.StartCommandHandler == nil {
 		opts.StartCommandHandler = start
 	}
