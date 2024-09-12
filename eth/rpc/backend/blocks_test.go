@@ -4,8 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
 func (s *BackendSuite) TestBlockNumber() {

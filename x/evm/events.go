@@ -1,6 +1,12 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
 package evm
 
+import (
+	"cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // Evm module events
 const (
 	EventTypeEthereumTx = TypeMsgEthereumTx
@@ -23,3 +29,17 @@ const (
 	// JSON name of EventBlockBloom.Bloom
 	AttributeKeyEthereumBloom = "bloom"
 )
+
+func (e *EventTxLog) FromABCIEvent(event abci.Event) (*EventTxLog, error) {
+	typedProtoEvent, err := sdk.ParseTypedEvent(event)
+	if err != nil {
+		return nil, errors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventTxLog)
+	}
+	typedEvent, ok := (typedProtoEvent).(*EventTxLog)
+	if !ok {
+		return nil, errors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventTxLog)
+	}
+	return typedEvent, nil
+}
