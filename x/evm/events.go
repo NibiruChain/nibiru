@@ -4,8 +4,12 @@ package evm
 // Evm module events
 const (
 	EventTypeEthereumTx = TypeMsgEthereumTx
-	EventTypeBlockBloom = "block_bloom"
-	EventTypeTxLog      = "tx_log"
+
+	// proto.MessageName(new(evm.EventBlockBloom))
+	TypeUrlEventBlockBloom = "eth.evm.v1.EventBlockBloom"
+
+	// proto.MessageName(new(evm.EventTxLog))
+	TypeUrlEventTxLog = "eth.evm.v1.EventTxLog"
 
 	AttributeKeyRecipient      = "recipient"
 	AttributeKeyTxHash         = "txHash"
@@ -16,6 +20,6 @@ const (
 	AttributeKeyTxLog          = "txLog"
 	// tx failed in eth vm execution
 	AttributeKeyEthereumTxFailed = "ethereumTxFailed"
-	AttributeValueCategory       = ModuleName
-	AttributeKeyEthereumBloom    = "bloom"
+	// JSON name of EventBlockBloom.Bloom
+	AttributeKeyEthereumBloom = "bloom"
 )
