@@ -8,7 +8,7 @@ import (
 )
 
 // GetLogs returns all the logs from all the ethereum transactions in a block.
-func (b *Backend) GetLogs(hash common.Hash) ([][]*gethcore.Log, error) {
+func (b *EVMBackend) GetLogs(hash common.Hash) ([][]*gethcore.Log, error) {
 	resBlock, err := b.TendermintBlockByHash(hash)
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func (b *Backend) GetLogs(hash common.Hash) ([][]*gethcore.Log, error) {
 }
 
 // GetLogsByHeight returns all the logs from all the ethereum transactions in a block.
-func (b *Backend) GetLogsByHeight(height *int64) ([][]*gethcore.Log, error) {
+func (b *EVMBackend) GetLogsByHeight(height *int64) ([][]*gethcore.Log, error) {
 	// NOTE: we query the state in case the tx result logs are not persisted after an upgrade.
 	blockRes, err := b.TendermintBlockResultByNumber(height)
 	if err != nil {
@@ -34,7 +34,7 @@ func (b *Backend) GetLogsByHeight(height *int64) ([][]*gethcore.Log, error) {
 //   - bloomBitsBlocks: The number of blocks a single bloom bit section vector
 //     contains on the server side.
 //   - bloomSections: The number of processed sections maintained by the indexer.
-func (b *Backend) BloomStatus() (
+func (b *EVMBackend) BloomStatus() (
 	bloomBitBlocks, bloomSections uint64,
 ) {
 	return 4096, 0

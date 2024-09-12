@@ -69,7 +69,7 @@ type BackendSuite struct {
 	fundedAccPrivateKey *ecdsa.PrivateKey
 	fundedAccEthAddr    gethcommon.Address
 	fundedAccNibiAddr   sdk.AccAddress
-	backend             *backend.Backend
+	backend             *backend.EVMBackend
 	ethChainID          *big.Int
 }
 
