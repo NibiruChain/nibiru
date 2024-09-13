@@ -8,8 +8,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -21,48 +26,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
-// --------------------------------------------------------------------
-// ------------------------------------------------ Imports using mocks
-// --------------------------------------------------------------------
-// import (
-// 	"bufio"
-// 	"math/big"
-// 	"os"
-// 	"testing"
-
-// 	"crypto/ecdsa"
-
-// 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-// 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	"github.com/ethereum/go-ethereum/common"
-// 	gethcommon "github.com/ethereum/go-ethereum/common"
-// 	gethcore "github.com/ethereum/go-ethereum/core/types"
-// 	"github.com/ethereum/go-ethereum/crypto"
-// 	"github.com/stretchr/testify/suite"
-
-// 	"github.com/NibiruChain/nibiru/v2/app"
-// 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-// 	"github.com/NibiruChain/nibiru/v2/eth"
-// 	"github.com/NibiruChain/nibiru/v2/eth/crypto/hd"
-// 	"github.com/NibiruChain/nibiru/v2/eth/encoding"
-// 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-// 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-
-// 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-// 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
-// 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
-// 	"github.com/NibiruChain/nibiru/v2/x/evm"
-// 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-// )
-
 type BackendSuite struct {
 	suite.Suite
-
-	// from   common.Address
-	// acc    sdk.AccAddress
-	// signer keyring.Signer
-
 	cfg                 testnetwork.Config
 	network             *testnetwork.Network
 	node                *testnetwork.Validator
@@ -77,10 +42,7 @@ func TestBackendSuite(t *testing.T) {
 	suite.Run(t, new(BackendSuite))
 }
 
-const ChainID = eth.EIP155ChainID_Testnet
-
 func (s *BackendSuite) SetupSuite() {
-	// testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
@@ -103,106 +65,33 @@ func (s *BackendSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
-// // buildEthereumTx returns an example legacy Ethereum transaction
-// func (s *BackendSuite) buildEthereumTx() (*evm.MsgEthereumTx, []byte) {
-// 	ethTxParams := evm.EvmTxArgs{
-// 		ChainID:  s.ethChainID,
-// 		Nonce:    uint64(0),
-// 		To:       &common.Address{},
-// 		Amount:   big.NewInt(0),
-// 		GasLimit: 100000,
-// 		GasPrice: big.NewInt(1),
-// 	}
-// 	msgEthereumTx := evm.NewTx(&ethTxParams)
+// SendNibiViaEthTransfer sends nibi using the eth rpc backend
+func (s *BackendSuite) SendNibiViaEthTransfer(
+	from gethcommon.Address,
+	to gethcommon.Address,
+	amount *big.Int,
+) (rpc.BlockNumber, gethcommon.Hash) {
+	block, err := s.backend.BlockNumber()
+	s.Require().NoError(err)
+	nonce, err := s.backend.GetTransactionCount(from, rpc.BlockNumber(block))
+	s.NoError(err)
 
-// 	// A valid msg should have empty `From`
-// 	msgEthereumTx.From = s.from.Hex()
-
-// 	txBuilder := s.node.ClientCtx.TxConfig.NewTxBuilder()
-// 	err := txBuilder.SetMsgs(msgEthereumTx)
-// 	s.Require().NoError(err)
-
-// 	bz, err := s.node.ClientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
-// 	s.Require().NoError(err)
-// 	return msgEthereumTx, bz
-// }
-
-// // buildFormattedBlock returns a formatted block for testing
-// func (s *BackendSuite) buildFormattedBlock(
-// 	blockRes *tmrpctypes.ResultBlockResults,
-// 	resBlock *tmrpctypes.ResultBlock,
-// 	fullTx bool,
-// 	tx *evm.MsgEthereumTx,
-// 	validator sdk.AccAddress,
-// 	baseFee *big.Int,
-// ) map[string]interface{} {
-// 	header := resBlock.Block.Header
-// 	gasLimit := int64(^uint32(0)) // for `MaxGas = -1` (DefaultConsensusParams)
-// 	gasUsed := new(big.Int).SetUint64(uint64(blockRes.TxsResults[0].GasUsed))
-
-// 	root := common.Hash{}.Bytes()
-// 	receipt := gethcore.NewReceipt(root, false, gasUsed.Uint64())
-// 	bloom := gethcore.CreateBloom(gethcore.Receipts{receipt})
-
-// 	ethRPCTxs := []interface{}{}
-// 	if tx != nil {
-// 		if fullTx {
-// 			rpcTx, err := rpc.NewRPCTxFromEthTx(
-// 				tx.AsTransaction(),
-// 				common.BytesToHash(header.Hash()),
-// 				uint64(header.Height),
-// 				uint64(0),
-// 				baseFee,
-// 				s.ethChainID,
-// 			)
-// 			s.Require().NoError(err)
-// 			ethRPCTxs = []interface{}{rpcTx}
-// 		} else {
-// 			ethRPCTxs = []interface{}{common.HexToHash(tx.Hash)}
-// 		}
-// 	}
-
-// 	return rpc.FormatBlock(
-// 		header,
-// 		resBlock.Block.Size(),
-// 		gasLimit,
-// 		gasUsed,
-// 		ethRPCTxs,
-// 		bloom,
-// 		common.BytesToAddress(validator.Bytes()),
-// 		baseFee,
-// 	)
-// }
-
-// func (s *BackendSuite) generateTestKeyring(clientDir string) (keyring.Keyring, error) {
-// 	buf := bufio.NewReader(os.Stdin)
-// 	encCfg := encoding.MakeConfig(app.ModuleBasics)
-// 	return keyring.New(
-// 		sdk.KeyringServiceName(), // appName
-// 		keyring.BackendTest,      // backend
-// 		clientDir,                // rootDir
-// 		buf,                      // userInput
-// 		encCfg.Codec,             // codec
-// 		[]keyring.Option{hd.EthSecp256k1Option()}...,
-// 	)
-// }
-
-// func (s *BackendSuite) signAndEncodeEthTx(msgEthereumTx *evm.MsgEthereumTx) []byte {
-// 	ethAcc := evmtest.NewEthPrivAcc()
-// 	from, priv := ethAcc.EthAddr, ethAcc.PrivKey
-// 	signer := evmtest.NewSigner(priv)
-
-// 	ethSigner := gethcore.LatestSigner(s.backend.ChainConfig())
-// 	msgEthereumTx.From = from.String()
-// 	err := msgEthereumTx.Sign(ethSigner, signer)
-// 	s.Require().NoError(err)
-
-// 	tx, err := msgEthereumTx.BuildTx(s.node.ClientCtx.TxConfig.NewTxBuilder(), eth.EthBaseDenom)
-// 	s.Require().NoError(err)
-
-// 	txEncoder := s.node.ClientCtx.TxConfig.TxEncoder()
-// 	txBz, err := txEncoder(tx)
-// 	s.Require().NoError(err)
-
-// 	return txBz
-// }
+	signer := gethcore.LatestSignerForChainID(s.ethChainID)
+	gasPrice := evm.NativeToWei(big.NewInt(1))
+	tx, err := gethcore.SignNewTx(
+		s.fundedAccPrivateKey,
+		signer,
+		&gethcore.LegacyTx{
+			Nonce:    uint64(*nonce),
+			To:       &to,
+			Value:    amount,
+			Gas:      params.TxGas,
+			GasPrice: gasPrice,
+		})
+	s.Require().NoError(err)
+	txBz, err := tx.MarshalBinary()
+	s.Require().NoError(err)
+	txHash, err := s.backend.SendRawTransaction(txBz)
+	s.Require().NoError(err)
+	return rpc.BlockNumber(block), txHash
+}
