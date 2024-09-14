@@ -39,7 +39,7 @@ func (b *EVMBackend) TraceTransaction(hash common.Hash, config *evm.TraceConfig)
 
 	// check tx index is not out of bound
 	if len(blk.Block.Txs) > math.MaxUint32 {
-		return nil, fmt.Errorf("tx count %d is overfloing", len(blk.Block.Txs))
+		return nil, fmt.Errorf("tx count %d is overflowing", len(blk.Block.Txs))
 	}
 	txsLen := uint32(len(blk.Block.Txs)) // #nosec G701 -- checked for int overflow already
 	if txsLen < transaction.TxIndex {

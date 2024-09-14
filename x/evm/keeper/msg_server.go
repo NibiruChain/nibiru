@@ -69,13 +69,13 @@ func (k *Keeper) EthereumTx(
 		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyEthereumTxFailed, resp.VmError))
 	}
 
-	txLogs := make([]string, len(resp.Logs))
+	txLogAttrs := make([]sdk.Attribute, len(resp.Logs))
 	for i, log := range resp.Logs {
 		value, err := json.Marshal(log)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to encode log")
 		}
-		txLogs[i] = string(value)
+		txLogAttrs[i] = sdk.NewAttribute(evm.AttributeKeyTxLog, string(value))
 	}
 
 	// emit events
@@ -84,11 +84,17 @@ func (k *Keeper) EthereumTx(
 			evm.EventTypeEthereumTx,
 			attrs...,
 		),
+		sdk.NewEvent(
+			evm.TypeUrlEventTxLog,
+			txLogAttrs...,
+		),
 	})
 	_ = ctx.EventManager().EmitTypedEvents(
-		&evm.EventTxLog{
-			TxLogs: txLogs,
-		},
+		// TODO: migrate legacy event from above to typed event.
+		// https://github.com/NibiruChain/nibiru/issues/2034
+		// &evm.EventTxLog{
+		// 	TxLogs: txLogs,
+		// },
 		&evm.EventMessage{
 			Module: evm.ModuleName,
 			Sender: msg.From,
