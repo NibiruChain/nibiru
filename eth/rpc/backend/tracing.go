@@ -18,7 +18,7 @@ import (
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (b *EVMBackend) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (interface{}, error) {
+func (b *Backend) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (interface{}, error) {
 	// Get transaction by hash
 	transaction, err := b.GetTxByEthHash(hash)
 	if err != nil {
@@ -39,7 +39,7 @@ func (b *EVMBackend) TraceTransaction(hash common.Hash, config *evm.TraceConfig)
 
 	// check tx index is not out of bound
 	if len(blk.Block.Txs) > math.MaxUint32 {
-		return nil, fmt.Errorf("tx count %d is overfloing", len(blk.Block.Txs))
+		return nil, fmt.Errorf("tx count %d is overflowing", len(blk.Block.Txs))
 	}
 	txsLen := uint32(len(blk.Block.Txs)) // #nosec G701 -- checked for int overflow already
 	if txsLen < transaction.TxIndex {
@@ -136,7 +136,7 @@ func (b *EVMBackend) TraceTransaction(hash common.Hash, config *evm.TraceConfig)
 // TraceBlock configures a new tracer according to the provided configuration, and
 // executes all the transactions contained within. The return value will be one item
 // per transaction, dependent on the requested tracer.
-func (b *EVMBackend) TraceBlock(height rpc.BlockNumber,
+func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	config *evm.TraceConfig,
 	block *tmrpctypes.ResultBlock,
 ) ([]*evm.TxTraceResult, error) {
@@ -215,7 +215,7 @@ func (b *EVMBackend) TraceBlock(height rpc.BlockNumber,
 // Method returns the structured logs created during the execution of EVM.
 // The method returns the same output as debug_traceTransaction.
 // https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-debug#debugtracecall
-func (b *EVMBackend) TraceCall(
+func (b *Backend) TraceCall(
 	txArgs evm.JsonTxArgs,
 	contextBlock rpc.BlockNumber,
 	config *evm.TraceConfig,

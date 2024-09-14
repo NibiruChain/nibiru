@@ -26,7 +26,7 @@ import (
 
 // Resend accepts an existing transaction and a new gas price and limit. It will remove
 // the given transaction from the pool and reinsert it with the new gas price and limit.
-func (b *EVMBackend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *hexutil.Uint64) (common.Hash, error) {
+func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *hexutil.Uint64) (common.Hash, error) {
 	if args.Nonce == nil {
 		return common.Hash{}, fmt.Errorf("missing transaction nonce in transaction spec")
 	}
@@ -102,7 +102,7 @@ func (b *EVMBackend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit
 }
 
 // SendRawTransaction send a raw Ethereum transaction.
-func (b *EVMBackend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
+func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	// RLP decode raw transaction bytes
 	tx := &gethcore.Transaction{}
 	if err := tx.UnmarshalBinary(data); err != nil {
@@ -170,7 +170,7 @@ func (b *EVMBackend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
 
 // SetTxDefaults populates tx message with default values in case they are not
 // provided on the args
-func (b *EVMBackend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
+func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
 		return args, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
@@ -297,7 +297,7 @@ func (b *EVMBackend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) 
 }
 
 // EstimateGas returns an estimate of gas usage for the given smart contract call.
-func (b *EVMBackend) EstimateGas(
+func (b *Backend) EstimateGas(
 	args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber,
 ) (hexutil.Uint64, error) {
 	blockNr := rpc.EthPendingBlockNumber
@@ -335,7 +335,7 @@ func (b *EVMBackend) EstimateGas(
 
 // DoCall performs a simulated call operation through the evmtypes. It returns the
 // estimated gas used on the operation or an error if fails.
-func (b *EVMBackend) DoCall(
+func (b *Backend) DoCall(
 	args evm.JsonTxArgs, blockNr rpc.BlockNumber,
 ) (*evm.MsgEthereumTxResponse, error) {
 	bz, err := json.Marshal(&args)
@@ -390,7 +390,7 @@ func (b *EVMBackend) DoCall(
 }
 
 // GasPrice returns the current gas price based on Ethermint's gas price oracle.
-func (b *EVMBackend) GasPrice() (*hexutil.Big, error) {
+func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	var (
 		result *big.Int
 		err    error

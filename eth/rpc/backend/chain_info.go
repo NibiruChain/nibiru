@@ -21,7 +21,7 @@ import (
 )
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
-func (b *EVMBackend) ChainID() (*hexutil.Big, error) {
+func (b *Backend) ChainID() (*hexutil.Big, error) {
 	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
 	if err != nil {
 		panic(err)
@@ -41,7 +41,7 @@ func (b *EVMBackend) ChainID() (*hexutil.Big, error) {
 }
 
 // ChainConfig returns the latest ethereum chain configuration
-func (b *EVMBackend) ChainConfig() *params.ChainConfig {
+func (b *Backend) ChainConfig() *params.ChainConfig {
 	_, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {
 		return nil
@@ -52,7 +52,7 @@ func (b *EVMBackend) ChainConfig() *params.ChainConfig {
 
 // BaseFee returns the base fee tracked by the Fee Market module.
 // If the base fee is not enabled globally, the query returns nil.
-func (b *EVMBackend) BaseFee(
+func (b *Backend) BaseFee(
 	blockRes *tmrpctypes.ResultBlockResults,
 ) (baseFee *big.Int, err error) {
 	// return BaseFee if feemarket is enabled
@@ -68,13 +68,13 @@ func (b *EVMBackend) BaseFee(
 // CurrentHeader returns the latest block header
 // This will return error as per node configuration
 // if the ABCI responses are discarded ('discard_abci_responses' config param)
-func (b *EVMBackend) CurrentHeader() (*gethcore.Header, error) {
+func (b *Backend) CurrentHeader() (*gethcore.Header, error) {
 	return b.HeaderByNumber(rpc.EthLatestBlockNumber)
 }
 
 // PendingTransactions returns the transactions that are in the transaction pool
 // and have a from address that is one of the accounts this node manages.
-func (b *EVMBackend) PendingTransactions() ([]*sdk.Tx, error) {
+func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
 	mc, ok := b.clientCtx.Client.(tmrpcclient.MempoolClient)
 	if !ok {
 		return nil, errors.New("invalid rpc client")
@@ -98,7 +98,7 @@ func (b *EVMBackend) PendingTransactions() ([]*sdk.Tx, error) {
 }
 
 // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
-func (b *EVMBackend) FeeHistory(
+func (b *Backend) FeeHistory(
 	userBlockCount gethrpc.DecimalOrHex, // number blocks to fetch, maximum is 100
 	lastBlock gethrpc.BlockNumber, // the block to start search , to oldest
 	rewardPercentiles []float64, // percentiles to fetch reward
@@ -196,7 +196,7 @@ func (b *EVMBackend) FeeHistory(
 
 // SuggestGasTipCap: Not yet supported. Returns 0 as the suggested tip cap. After
 // implementing tx prioritization, this function can come to life.
-func (b *EVMBackend) SuggestGasTipCap(baseFee *big.Int) (*big.Int, error) {
+func (b *Backend) SuggestGasTipCap(baseFee *big.Int) (*big.Int, error) {
 	maxDelta := big.NewInt(0)
 	return maxDelta, nil
 }
@@ -205,7 +205,7 @@ func DefaultMinGasPrice() sdkmath.LegacyDec { return sdkmath.LegacyZeroDec() }
 
 // GlobalMinGasPrice returns the minimum gas price for all nodes. This is
 // distinct from the individual configuration set by the validator set.
-func (b *EVMBackend) GlobalMinGasPrice() (sdkmath.LegacyDec, error) {
+func (b *Backend) GlobalMinGasPrice() (sdkmath.LegacyDec, error) {
 	// TODO: feat(eth): dynamic fees
 	return DefaultMinGasPrice(), nil
 }

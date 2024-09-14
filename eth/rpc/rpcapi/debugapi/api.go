@@ -45,7 +45,7 @@ type HandlerT struct {
 type DebugAPI struct {
 	ctx     *server.Context
 	logger  log.Logger
-	backend *backend.EVMBackend
+	backend *backend.Backend
 	handler *HandlerT
 }
 
@@ -53,7 +53,7 @@ type DebugAPI struct {
 // Ethereum service.
 func NewImplDebugAPI(
 	ctx *server.Context,
-	backend *backend.EVMBackend,
+	backend *backend.Backend,
 ) *DebugAPI {
 	return &DebugAPI{
 		ctx:     ctx,

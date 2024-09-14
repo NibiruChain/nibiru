@@ -31,7 +31,7 @@ import (
 // app state could lag behind from tendermint latest block, it's more stable for
 // the client to use the latest block number in abci app state than tendermint
 // rpc.
-func (b *EVMBackend) BlockNumber() (hexutil.Uint64, error) {
+func (b *Backend) BlockNumber() (hexutil.Uint64, error) {
 	// do any grpc query, ignore the response and use the returned block height
 	var header metadata.MD
 	_, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{}, grpc.Header(&header))
@@ -59,7 +59,7 @@ func (b *EVMBackend) BlockNumber() (hexutil.Uint64, error) {
 // GetBlockByNumber returns the JSON-RPC compatible Ethereum block identified by
 // block number. Depending on fullTx it either returns the full transaction
 // objects or if false only the hashes of the transactions.
-func (b *EVMBackend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
+func (b *Backend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, nil
@@ -87,7 +87,7 @@ func (b *EVMBackend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (ma
 
 // GetBlockByHash returns the JSON-RPC compatible Ethereum block identified by
 // hash.
-func (b *EVMBackend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]interface{}, error) {
+func (b *Backend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]interface{}, error) {
 	resBlock, err := b.TendermintBlockByHash(hash)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (b *EVMBackend) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]i
 
 // GetBlockTransactionCountByHash returns the number of Ethereum transactions in
 // the block identified by hash.
-func (b *EVMBackend) GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint {
+func (b *Backend) GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint {
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		b.logger.Error("invalid rpc client")
@@ -137,7 +137,7 @@ func (b *EVMBackend) GetBlockTransactionCountByHash(hash common.Hash) *hexutil.U
 
 // GetBlockTransactionCountByNumber returns the number of Ethereum transactions
 // in the block identified by number.
-func (b *EVMBackend) GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) *hexutil.Uint {
+func (b *Backend) GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) *hexutil.Uint {
 	block, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		b.logger.Debug("block not found", "height", blockNum.Int64(), "error", err.Error())
@@ -154,7 +154,7 @@ func (b *EVMBackend) GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) 
 
 // GetBlockTransactionCount returns the number of Ethereum transactions in a
 // given block.
-func (b *EVMBackend) GetBlockTransactionCount(block *tmrpctypes.ResultBlock) *hexutil.Uint {
+func (b *Backend) GetBlockTransactionCount(block *tmrpctypes.ResultBlock) *hexutil.Uint {
 	blockRes, err := b.TendermintBlockResultByNumber(&block.Block.Height)
 	if err != nil {
 		return nil
@@ -167,7 +167,7 @@ func (b *EVMBackend) GetBlockTransactionCount(block *tmrpctypes.ResultBlock) *he
 
 // TendermintBlockByNumber returns a Tendermint-formatted block for a given
 // block number
-func (b *EVMBackend) TendermintBlockByNumber(blockNum rpc.BlockNumber) (*tmrpctypes.ResultBlock, error) {
+func (b *Backend) TendermintBlockByNumber(blockNum rpc.BlockNumber) (*tmrpctypes.ResultBlock, error) {
 	height := blockNum.Int64()
 	if height <= 0 {
 		// fetch the latest block number from the app state, more accurate than the tendermint block store state.
@@ -193,7 +193,7 @@ func (b *EVMBackend) TendermintBlockByNumber(blockNum rpc.BlockNumber) (*tmrpcty
 
 // TendermintBlockResultByNumber returns a Tendermint-formatted block result
 // by block number
-func (b *EVMBackend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.ResultBlockResults, error) {
+func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.ResultBlockResults, error) {
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		return nil, errors.New("invalid rpc client")
@@ -202,7 +202,7 @@ func (b *EVMBackend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.R
 }
 
 // TendermintBlockByHash returns a Tendermint-formatted block by block number
-func (b *EVMBackend) TendermintBlockByHash(blockHash common.Hash) (*tmrpctypes.ResultBlock, error) {
+func (b *Backend) TendermintBlockByHash(blockHash common.Hash) (*tmrpctypes.ResultBlock, error) {
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
 		return nil, errors.New("invalid rpc client")
@@ -222,7 +222,7 @@ func (b *EVMBackend) TendermintBlockByHash(blockHash common.Hash) (*tmrpctypes.R
 }
 
 // BlockNumberFromTendermint returns the BlockNumber from BlockNumberOrHash
-func (b *EVMBackend) BlockNumberFromTendermint(blockNrOrHash rpc.BlockNumberOrHash) (rpc.BlockNumber, error) {
+func (b *Backend) BlockNumberFromTendermint(blockNrOrHash rpc.BlockNumberOrHash) (rpc.BlockNumber, error) {
 	switch {
 	case blockNrOrHash.BlockHash == nil && blockNrOrHash.BlockNumber == nil:
 		return rpc.EthEarliestBlockNumber, fmt.Errorf("types BlockHash and BlockNumber cannot be both nil")
@@ -240,7 +240,7 @@ func (b *EVMBackend) BlockNumberFromTendermint(blockNrOrHash rpc.BlockNumberOrHa
 }
 
 // BlockNumberFromTendermintByHash returns the block height of given block hash
-func (b *EVMBackend) BlockNumberFromTendermintByHash(blockHash common.Hash) (*big.Int, error) {
+func (b *Backend) BlockNumberFromTendermintByHash(blockHash common.Hash) (*big.Int, error) {
 	resBlock, err := b.TendermintBlockByHash(blockHash)
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (b *EVMBackend) BlockNumberFromTendermintByHash(blockHash common.Hash) (*bi
 // EthMsgsFromTendermintBlock returns all real MsgEthereumTxs from a
 // Tendermint block. It also ensures consistency over the correct txs indexes
 // across RPC endpoints
-func (b *EVMBackend) EthMsgsFromTendermintBlock(
+func (b *Backend) EthMsgsFromTendermintBlock(
 	resBlock *tmrpctypes.ResultBlock,
 	blockRes *tmrpctypes.ResultBlockResults,
 ) []*evm.MsgEthereumTx {
@@ -299,7 +299,7 @@ func (b *EVMBackend) EthMsgsFromTendermintBlock(
 }
 
 // HeaderByNumber returns the block header identified by height.
-func (b *EVMBackend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, error) {
+func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, err
@@ -330,7 +330,7 @@ func (b *EVMBackend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header,
 }
 
 // HeaderByHash returns the block header identified by hash.
-func (b *EVMBackend) HeaderByHash(blockHash common.Hash) (*gethcore.Header, error) {
+func (b *Backend) HeaderByHash(blockHash common.Hash) (*gethcore.Header, error) {
 	resBlock, err := b.TendermintBlockByHash(blockHash)
 	if err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (b *EVMBackend) HeaderByHash(blockHash common.Hash) (*gethcore.Header, erro
 }
 
 // BlockBloom query block bloom filter from block results
-func (b *EVMBackend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.Bloom, error) {
+func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.Bloom, error) {
 	msgType := proto.MessageName((*evm.EventBlockBloom)(nil))
 	for _, event := range blockRes.EndBlockEvents {
 		if event.Type != msgType {
@@ -382,7 +382,7 @@ func (b *EVMBackend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethco
 
 // RPCBlockFromTendermintBlock returns a JSON-RPC compatible Ethereum block from a
 // given Tendermint block and its block result.
-func (b *EVMBackend) RPCBlockFromTendermintBlock(
+func (b *Backend) RPCBlockFromTendermintBlock(
 	resBlock *tmrpctypes.ResultBlock,
 	blockRes *tmrpctypes.ResultBlockResults,
 	fullTx bool,
@@ -478,7 +478,7 @@ func (b *EVMBackend) RPCBlockFromTendermintBlock(
 }
 
 // EthBlockByNumber returns the Ethereum Block identified by number.
-func (b *EVMBackend) EthBlockByNumber(blockNum rpc.BlockNumber) (*gethcore.Block, error) {
+func (b *Backend) EthBlockByNumber(blockNum rpc.BlockNumber) (*gethcore.Block, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, err
@@ -498,7 +498,7 @@ func (b *EVMBackend) EthBlockByNumber(blockNum rpc.BlockNumber) (*gethcore.Block
 
 // EthBlockFromTendermintBlock returns an Ethereum Block type from Tendermint block
 // EthBlockFromTendermintBlock
-func (b *EVMBackend) EthBlockFromTendermintBlock(
+func (b *Backend) EthBlockFromTendermintBlock(
 	resBlock *tmrpctypes.ResultBlock,
 	blockRes *tmrpctypes.ResultBlockResults,
 ) (*gethcore.Block, error) {
