@@ -14,10 +14,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
-// EVMBackend implements the BackendI interface
-// EVMBackend implements the functionality shared within ethereum namespaces
-// as defined by EIP-1474: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1474.md
-// Implemented by EVMBackend.
+// Backend implements implements the functionality shared within ethereum namespaces
+// as defined by [EIP-1474].
+//
+// [EIP-1474]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1474.md
 type EVMBackend struct {
 	ctx                 context.Context
 	clientCtx           client.Context
