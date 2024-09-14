@@ -99,7 +99,11 @@ func (s *BackendSuite) SetupSuite() {
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
-	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom))
+
+	txResp, err := testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
+	)
+	s.Require().NoError(err, txResp.TxHash)
 	s.NoError(s.network.WaitForNextBlock())
 }
 

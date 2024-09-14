@@ -19,6 +19,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 
+	cmtcore "github.com/cometbft/cometbft/rpc/core/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
@@ -55,7 +57,16 @@ type NodeSuite struct {
 	fundedAccNibiAddr   sdk.AccAddress
 
 	contractData embeds.CompiledEvmContract
+	txHistory    []*sdk.TxResponse
+	// txBlockHistory: Block results from successful EVM transactions
+	txBlockHistory []*cmtcore.ResultBlockResults
 }
+
+// TODO: UD-DEBUG: Consider if necessary
+// type SuccessfulTx struct {
+// 	EthTxHash   gethcommon.Hash
+// 	BlockHeight int64
+// }
 
 func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(Suite))
@@ -86,7 +97,12 @@ func (s *NodeSuite) SetupSuite() {
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
-	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom))
+	txResp, err := testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom,
+	)
+	s.Require().NoError(err)
+	s.txHistory = append(s.txHistory, txResp)
+
 	s.NoError(s.network.WaitForNextBlock())
 }
 
@@ -204,6 +220,18 @@ func (s *NodeSuite) Test_SuggestGasPrice() {
 	s.NoError(err)
 }
 
+func BlockWithTxs(
+	ethTxHash gethcommon.Hash,
+	node *testnetwork.Validator,
+	s *suite.Suite,
+) (*cmtcore.ResultBlockResults, error) {
+
+	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
+	s.NoError(err)
+	blockHeightOfTx := txReceipt.BlockNumber.Int64()
+	return node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+}
+
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
 func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	chainID, err := s.ethClient.ChainID(context.Background())
@@ -219,10 +247,12 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	s.T().Log("make sure the sender has enough funds")
 	weiToSend := evm.NativeToWei(big.NewInt(1))                          // 1 unibi
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 5_000_000)) // 5 * 10^6 unibi
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	txResp, err := testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
+	s.txHistory = append(s.txHistory, txResp)
 
 	senderBalanceBeforeWei, err := s.ethClient.BalanceAt(
 		context.Background(), s.fundedAccEthAddr, nil,
@@ -261,16 +291,9 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
-	s.NoError(s.network.WaitForNextBlock())
-	s.NoError(s.network.WaitForNextBlock())
-
-	txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
-	s.NoError(err)
-
 	s.T().Log("Assert event expectations - successful eth tx")
 	{
-		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
-		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+		blockOfTx, err := BlockWithTxs(tx.Hash(), s.val, &s.Suite)
 		s.NoError(err)
 		ethTxEvents := []sdk.Event{}
 		events := blockOfTx.TxsResults[0].Events
@@ -287,6 +310,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
 		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
 		s.Require().Equal(hash0, hash1)
+		_ = s.network.WaitForNextBlock()
 	}
 
 	s.T().Log("Assert balances")
@@ -317,10 +341,12 @@ func (s *NodeSuite) Test_SmartContract() {
 	s.T().Log("Make sure the account has funds.")
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 1_000_000_000))
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	txResp, err := testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
+	s.txHistory = append(s.txHistory, txResp)
 
 	grpcUrl := s.network.Validators[0].AppConfig.GRPC.Address
 	grpcConn, err := gosdk.GetGRPCConnection(grpcUrl, true, 5)

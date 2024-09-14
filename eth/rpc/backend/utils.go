@@ -208,17 +208,14 @@ func (b *EVMBackend) processBlock(
 }
 
 // AllTxLogsFromEvents parses all ethereum logs from cosmos events
-func AllTxLogsFromEvents(events []abci.Event) (allLogs [][]*gethcore.Log, err error) {
+func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
+	allLogs := make([][]*gethcore.Log, 0, 4)
 	for _, event := range events {
 		if event.Type != evm.TypeUrlEventTxLog {
 			continue
 		}
-		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
-		if err != nil {
-			return allLogs, err
-		}
 
-		logs, err := ParseTxLogsFromEvent(typedEvent)
+		logs, err := ParseTxLogsFromEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -229,9 +226,7 @@ func AllTxLogsFromEvents(events []abci.Event) (allLogs [][]*gethcore.Log, err er
 }
 
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
-func TxLogsFromEvents(
-	events []abci.Event, msgIndex int,
-) (txLogsForMsgIdx []*gethcore.Log, err error) {
+func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
 	for _, event := range events {
 		if event.Type != evm.TypeUrlEventTxLog {
 			continue
@@ -243,26 +238,27 @@ func TxLogsFromEvents(
 			continue
 		}
 
-		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
-		if err != nil {
-			return txLogsForMsgIdx, err
-		}
-		return ParseTxLogsFromEvent(typedEvent)
+		return ParseTxLogsFromEvent(event)
 	}
 	return nil, fmt.Errorf("eth tx logs not found for message index %d", msgIndex)
 }
 
 // ParseTxLogsFromEvent parse tx logs from one event
-func ParseTxLogsFromEvent(event *evm.EventTxLog) ([]*gethcore.Log, error) {
-	evmTxLogs := []*gethcore.Log{}
-	for _, txLogStr := range event.TxLogs {
-		txLog := new(evm.Log)
-		if err := json.Unmarshal([]byte(txLogStr), txLog); err != nil {
+func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
+	logs := make([]*evm.Log, 0, len(event.Attributes))
+	for _, attr := range event.Attributes {
+		if attr.Key != evm.AttributeKeyTxLog {
+			continue
+		}
+
+		var log evm.Log
+		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
 			return nil, err
 		}
-		evmTxLogs = append(evmTxLogs, txLog.ToEthereum())
+
+		logs = append(logs, &log)
 	}
-	return evmTxLogs, nil
+	return evm.LogsToEthereum(logs), nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
