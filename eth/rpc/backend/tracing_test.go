@@ -11,11 +11,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-var recipient = evmtest.NewEthPrivAcc().EthAddr
-var amountToSend = evm.NativeToWei(big.NewInt(1))
 var traceConfig = &evm.TraceConfig{
 	Tracer: "callTracer",
 	TracerConfig: &evm.TracerConfig{
@@ -24,9 +21,6 @@ var traceConfig = &evm.TraceConfig{
 }
 
 func (s *BackendSuite) TestTraceTransaction() {
-	_, txHash := s.SendNibiViaEthTransfer(s.fundedAccEthAddr, recipient, amountToSend)
-	s.Require().NoError(s.network.WaitForNextBlock())
-
 	testCases := []struct {
 		name    string
 		txHash  gethcommon.Hash
@@ -39,7 +33,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 		},
 		{
 			name:    "happy: tx found",
-			txHash:  txHash,
+			txHash:  transferTxHash,
 			wantErr: "",
 		},
 	}
@@ -62,11 +56,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 }
 
 func (s *BackendSuite) TestTraceBlock() {
-	blockNumber, _ := s.SendNibiViaEthTransfer(s.fundedAccEthAddr, recipient, amountToSend)
-	s.Require().NoError(s.network.WaitForNextBlock())
-
-	blockNumberWithTx := rpc.NewBlockNumber(big.NewInt(blockNumber.Int64() + 1))
-	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(blockNumberWithTx)
+	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(transferTxBlockNumber)
 	s.Require().NoError(err)
 
 	blockNumberWithoutTx := rpc.NewBlockNumber(big.NewInt(1))
@@ -87,7 +77,7 @@ func (s *BackendSuite) TestTraceBlock() {
 		},
 		{
 			name:        "happy: block with txs",
-			blockNumber: blockNumberWithTx,
+			blockNumber: transferTxBlockNumber,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
 		},

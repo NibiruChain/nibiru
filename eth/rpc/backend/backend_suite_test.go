@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
@@ -25,6 +27,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
+
+var recipient = evmtest.NewEthPrivAcc().EthAddr
+var amountToSend = evm.NativeToWei(big.NewInt(1))
+var transferTxBlockNumber rpc.BlockNumber
+var transferTxHash gethcommon.Hash
 
 type BackendSuite struct {
 	suite.Suite
@@ -63,17 +70,18 @@ func (s *BackendSuite) SetupSuite() {
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom))
 	s.NoError(s.network.WaitForNextBlock())
+
+	// Send 1 Transfer TX and use the results in the tests
+	transferTxBlockNumber, transferTxHash = s.sendNibiViaEthTransfer(recipient, amountToSend)
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
-func (s *BackendSuite) SendNibiViaEthTransfer(
-	from gethcommon.Address,
+func (s *BackendSuite) sendNibiViaEthTransfer(
 	to gethcommon.Address,
 	amount *big.Int,
 ) (rpc.BlockNumber, gethcommon.Hash) {
 	block, err := s.backend.BlockNumber()
 	s.Require().NoError(err)
-	nonce, err := s.backend.GetTransactionCount(from, rpc.BlockNumber(block))
 	s.NoError(err)
 
 	signer := gethcore.LatestSignerForChainID(s.ethChainID)
@@ -82,7 +90,6 @@ func (s *BackendSuite) SendNibiViaEthTransfer(
 		s.fundedAccPrivateKey,
 		signer,
 		&gethcore.LegacyTx{
-			Nonce:    uint64(*nonce),
 			To:       &to,
 			Value:    amount,
 			Gas:      params.TxGas,
@@ -93,5 +100,7 @@ func (s *BackendSuite) SendNibiViaEthTransfer(
 	s.Require().NoError(err)
 	txHash, err := s.backend.SendRawTransaction(txBz)
 	s.Require().NoError(err)
-	return rpc.BlockNumber(block), txHash
+	s.Require().NoError(s.network.WaitForNextBlock())
+
+	return rpc.NewBlockNumber(big.NewInt(int64(block) + 1)), txHash
 }
