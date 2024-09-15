@@ -4,7 +4,6 @@ package backend
 import (
 	"fmt"
 	"math"
-	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -127,15 +126,6 @@ func (b *Backend) getTransactionByHashPending(txHash common.Hash) (*rpc.EthTxJso
 	return nil, nil
 }
 
-// GetGasUsed returns gasUsed from transaction, patching to
-// price * gas in the event the tx is reverted.
-func (b *Backend) GetGasUsed(res *eth.TxResult, price *big.Int, gas uint64) uint64 {
-	if res.Failed && res.Height < b.cfg.JSONRPC.FixRevertGasRefundHeight {
-		return new(big.Int).Mul(price, new(big.Int).SetUint64(gas)).Uint64()
-	}
-	return res.GasUsed
-}
-
 // GetTransactionReceipt returns the transaction receipt identified by hash.
 func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
 	hexTx := hash.Hex()
@@ -215,6 +205,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 
 	// TODO: refactor(evm-rpc-backend): Replace interface with gethcore.Receipt
 	// in eth_getTransactionReceipt
+	// NOTE: gethcore.Receipt doesn't include required fields: from, to and doesn't marshal json
 	receipt := map[string]interface{}{
 		// Consensus fields: These fields are defined by the Yellow Paper
 		"status":            status,
@@ -226,7 +217,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		// They are stored in the chain database.
 		"transactionHash": hash,
 		"contractAddress": nil,
-		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, txData.GetGasPrice(), txData.GetGas())),
+		"gasUsed":         res.GasUsed,
 
 		// Inclusion information: These fields provide information about the inclusion of the
 		// transaction corresponding to this receipt.
@@ -258,7 +249,6 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPriceWei(baseFee))
 		}
 	}
-
 	return receipt, nil
 }
 
@@ -303,9 +293,10 @@ func (b *Backend) GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, 
 }
 
 // GetTxByEthHash uses `/tx_query` to find transaction by ethereum tx hash
-// TODO: Don't need to convert once hashing is fixed on Tendermint
-// https://github.com/cometbft/cometbft/issues/6539
 func (b *Backend) GetTxByEthHash(hash common.Hash) (*eth.TxResult, error) {
+	// NOTE: The Tendermint hash is not the same as the gethcommon.Hash.
+	// https://github.com/cometbft/cometbft/issues/342#issuecomment-1428836340
+	// https://github.com/tendermint/tendermint/issues/6539
 	if b.indexer != nil {
 		return b.indexer.GetByTxHash(hash)
 	}

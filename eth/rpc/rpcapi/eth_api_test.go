@@ -106,6 +106,18 @@ func (s *NodeSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
+func BlockWithEthTxs(
+	ethTxHash gethcommon.Hash,
+	node *testnetwork.Validator,
+) (*cmtcore.ResultBlockResults, error) {
+	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
+	if err != nil {
+		return nil, err
+	}
+	blockHeightOfTx := txReceipt.BlockNumber.Int64()
+	return node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+}
+
 // Test_ChainID EVM method: eth_chainId
 func (s *NodeSuite) Test_ChainID() {
 	ethChainID, err := s.ethClient.ChainID(context.Background())
@@ -156,7 +168,10 @@ func (s *NodeSuite) Test_StorageAt() {
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{}, nil,
 	)
 	s.NoError(err)
-	// TODO: add more checks
+	// TODO: Test more behavior.
+	// Above, there's a check for empty contract code returned at a non-contract
+	// account. We should add a check for the presence of code for an acocunt
+	// that is known to be a deployed contract.
 	s.NotNil(storage)
 }
 
@@ -167,7 +182,7 @@ func (s *NodeSuite) Test_PendingStorageAt() {
 	)
 	s.NoError(err)
 
-	// TODO: add more checks
+	// TODO: Test more behavior - Non-empty case needed
 	s.NotNil(storage)
 }
 
@@ -176,7 +191,7 @@ func (s *NodeSuite) Test_CodeAt() {
 	code, err := s.ethClient.CodeAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
-	// TODO: add more checks
+	// TODO: Test more behavior - Non-empty case needed
 	s.NotNil(code)
 }
 
@@ -218,18 +233,6 @@ func (s *NodeSuite) Test_SuggestGasPrice() {
 	// TODO: the backend method is stubbed to 0
 	_, err := s.ethClient.SuggestGasPrice(context.Background())
 	s.NoError(err)
-}
-
-func BlockWithTxs(
-	ethTxHash gethcommon.Hash,
-	node *testnetwork.Validator,
-	s *suite.Suite,
-) (*cmtcore.ResultBlockResults, error) {
-
-	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
-	s.NoError(err)
-	blockHeightOfTx := txReceipt.BlockNumber.Int64()
-	return node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
@@ -293,8 +296,9 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 
 	s.T().Log("Assert event expectations - successful eth tx")
 	{
-		blockOfTx, err := BlockWithTxs(tx.Hash(), s.val, &s.Suite)
+		blockOfTx, err := BlockWithEthTxs(tx.Hash(), s.val)
 		s.NoError(err)
+		s.txBlockHistory = append(s.txBlockHistory, blockOfTx)
 		ethTxEvents := []sdk.Event{}
 		events := blockOfTx.TxsResults[0].Events
 		for _, event := range events {

@@ -47,7 +47,6 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // getAccountNonce returns the account nonce for the given account address.
 // If the pending value is true, it will iterate over the mempool (pending)
 // txs in order to compute and return the pending tx sequence.
-// Todo: include the ability to specify a blockNumber
 func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
 	adr := sdk.AccAddress(accAddr.Bytes()).String()
@@ -72,8 +71,8 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 		return nonce, nil
 	}
 
-	// the account retriever doesn't include the uncommitted transactions on the nonce so we need to
-	// to manually add them.
+	// the account retriever doesn't include the uncommitted transactions on the nonce,
+	// so we need to manually add them.
 	pendingTxs, err := b.PendingTransactions()
 	if err != nil {
 		logger.Error("failed to fetch pending transactions", "error", err.Error())
