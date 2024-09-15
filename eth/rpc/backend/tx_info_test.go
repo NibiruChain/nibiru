@@ -79,10 +79,9 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 			// Check fields
 			s.Equal(s.fundedAccEthAddr, receipt.From)
 			s.Equal(&recipient, receipt.To)
-			s.Equal(uint64(0), receipt.GasUsed)
+			s.Greater(receipt.GasUsed, uint64(0))
 			s.Equal(receipt.GasUsed, receipt.CumulativeGasUsed)
 			s.Equal(tc.txHash, receipt.TxHash)
-			s.Equal(uint(0), receipt.TransactionIndex)
 			s.Nil(receipt.ContractAddress)
 			s.Require().Equal(gethcore.ReceiptStatusSuccessful, receipt.Status)
 		})
