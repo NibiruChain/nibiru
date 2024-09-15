@@ -106,18 +106,6 @@ func (s *NodeSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
-func BlockWithEthTxs(
-	ethTxHash gethcommon.Hash,
-	node *testnetwork.Validator,
-) (*cmtcore.ResultBlockResults, error) {
-	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
-	if err != nil {
-		return nil, err
-	}
-	blockHeightOfTx := txReceipt.BlockNumber.Int64()
-	return node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
-}
-
 // Test_ChainID EVM method: eth_chainId
 func (s *NodeSuite) Test_ChainID() {
 	ethChainID, err := s.ethClient.ChainID(context.Background())
@@ -200,7 +188,7 @@ func (s *NodeSuite) Test_PendingCodeAt() {
 	code, err := s.ethClient.PendingCodeAt(context.Background(), s.fundedAccEthAddr)
 	s.NoError(err)
 
-	// TODO: add more checks
+	// TODO: Test more behavior - Non-empty case needed
 	s.NotNil(code)
 }
 
@@ -296,7 +284,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 
 	s.T().Log("Assert event expectations - successful eth tx")
 	{
-		blockOfTx, err := BlockWithEthTxs(tx.Hash(), s.val)
+		blockOfTx, err := s.val.BlockByEthTx(tx.Hash())
 		s.NoError(err)
 		s.txBlockHistory = append(s.txBlockHistory, blockOfTx)
 		ethTxEvents := []sdk.Event{}
