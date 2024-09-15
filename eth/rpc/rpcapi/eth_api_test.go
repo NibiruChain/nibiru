@@ -47,7 +47,7 @@ type NodeSuite struct {
 	suite.Suite
 	cfg     testnetwork.Config
 	network *testnetwork.Network
-	val     *testnetwork.Validator
+	node    *testnetwork.Validator
 
 	ethClient *ethclient.Client
 	ethAPI    *rpcapi.EthAPI
@@ -86,9 +86,9 @@ func (s *NodeSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.network = network
-	s.val = network.Validators[0]
-	s.ethClient = s.val.JSONRPCClient
-	s.ethAPI = s.val.EthRPC_ETH
+	s.node = network.Validators[0]
+	s.ethClient = s.node.JSONRPCClient
+	s.ethAPI = s.node.EthRPC_ETH
 	s.contractData = embeds.SmartContract_TestERC20
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
@@ -98,7 +98,7 @@ func (s *NodeSuite) SetupSuite() {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 	txResp, err := testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom,
+		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
 	)
 	s.Require().NoError(err)
 	s.txHistory = append(s.txHistory, txResp)
@@ -284,8 +284,8 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 
 	s.T().Log("Assert event expectations - successful eth tx")
 	{
-		blockOfTx, err := s.val.BlockByEthTx(tx.Hash())
-		s.NoError(err)
+		blockOfTx, err := s.node.BlockByEthTx(tx.Hash())
+		s.Require().NoError(err)
 		s.txBlockHistory = append(s.txBlockHistory, blockOfTx)
 		ethTxEvents := []sdk.Event{}
 		events := blockOfTx.TxsResults[0].Events
@@ -403,7 +403,7 @@ func (s *NodeSuite) Test_SmartContract() {
 	{
 		weiToSend := evm.NativeToWei(big.NewInt(1)) // 1 unibi
 		s.T().Logf("Sending %d wei (sanity check)", weiToSend)
-		accResp, err := s.val.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
+		accResp, err := s.node.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
 			&evm.QueryEthAccountRequest{
 				Address: s.fundedAccEthAddr.Hex(),
 			})

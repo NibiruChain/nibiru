@@ -43,7 +43,7 @@ type IEthAPI interface {
 	// it is a user or a smart contract.
 	GetTransactionByHash(hash common.Hash) (*rpc.EthTxJsonRPC, error)
 	GetTransactionCount(address common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*hexutil.Uint64, error)
-	GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error)
+	GetTransactionReceipt(hash common.Hash) (*backend.TransactionReceipt, error)
 	GetTransactionByBlockHashAndIndex(hash common.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	// eth_getBlockReceipts
@@ -192,7 +192,7 @@ func (e *EthAPI) GetTransactionCount(
 // GetTransactionReceipt returns the transaction receipt identified by hash.
 func (e *EthAPI) GetTransactionReceipt(
 	hash common.Hash,
-) (map[string]interface{}, error) {
+) (*backend.TransactionReceipt, error) {
 	hexTx := hash.Hex()
 	e.logger.Debug("eth_getTransactionReceipt", "hash", hexTx)
 	return e.backend.GetTransactionReceipt(hash)

@@ -1,6 +1,7 @@
 package backend_test
 
 import (
+	"encoding/json"
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -8,6 +9,8 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestGetTransactionByHash() {
@@ -73,14 +76,15 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 			s.Require().NoError(err)
 			s.Require().NotNil(receipt)
 
-			s.Require().Equal(s.fundedAccEthAddr, receipt["from"])
-			s.Require().Equal(&recipient, receipt["to"])
-			s.Require().Greater(receipt["gasUsed"], uint64(0))
-			s.Require().Equal(hexutil.Uint64(receipt["gasUsed"].(uint64)), receipt["cumulativeGasUsed"])
-			s.Require().Equal(tc.txHash, receipt["transactionHash"])
-			s.Require().Greater(receipt["transactionIndex"], hexutil.Uint64(0))
-			s.Require().Nil(receipt["contractAddress"])
-			s.Require().Equal(hexutil.Uint(gethcore.ReceiptStatusSuccessful), receipt["status"])
+			// Check fields
+			s.Equal(s.fundedAccEthAddr, receipt.From)
+			s.Equal(&recipient, receipt.To)
+			s.Equal(uint64(0), receipt.GasUsed)
+			s.Equal(receipt.GasUsed, receipt.CumulativeGasUsed)
+			s.Equal(tc.txHash, receipt.TxHash)
+			s.Equal(uint(0), receipt.TransactionIndex)
+			s.Nil(receipt.ContractAddress)
+			s.Require().Equal(gethcore.ReceiptStatusSuccessful, receipt.Status)
 		})
 	}
 }
@@ -177,4 +181,39 @@ func AssertTxResults(s *BackendSuite, tx *rpc.EthTxJsonRPC, expectedTxHash gethc
 	s.Require().Greater(tx.Gas, uint64(0))
 	s.Require().Equal(expectedTxHash, tx.Hash)
 	s.Require().Equal(uint64(1), uint64(*tx.TransactionIndex))
+}
+
+func (s *BackendSuite) TestReceiptMarshalJson() {
+	toAddr := evmtest.NewEthPrivAcc().EthAddr
+	tr := backend.TransactionReceipt{
+		Receipt: gethcore.Receipt{
+			Type:              0,
+			PostState:         []byte{},
+			Status:            0,
+			CumulativeGasUsed: 0,
+			Bloom:             [256]byte{},
+			Logs:              []*gethcore.Log{},
+			TxHash:            [32]byte{},
+			ContractAddress:   [20]byte{},
+			GasUsed:           0,
+			BlockHash:         [32]byte{},
+			BlockNumber:       &big.Int{},
+			TransactionIndex:  0,
+		},
+		ContractAddress:   nil,
+		From:              evmtest.NewEthPrivAcc().EthAddr,
+		To:                &toAddr,
+		EffectiveGasPrice: big.NewInt(1),
+	}
+
+	jsonBz, err := json.Marshal(tr)
+	s.Require().NoError(err)
+
+	gethReceipt := new(gethcore.Receipt)
+	err = json.Unmarshal(jsonBz, gethReceipt)
+	s.Require().NoError(err)
+
+	receipt := new(backend.TransactionReceipt)
+	err = json.Unmarshal(jsonBz, receipt)
+	s.Require().NoError(err)
 }
