@@ -402,8 +402,7 @@ func startJsonServer(ctx context.Context, clientCtx client.Context, cfg config.C
 	// }
 
 	if cfg.JSONRPC.Enable {
-		genDocProvider := node.DefaultGenesisDocProviderFunc(svrCtx.Config)
-		genDoc, err := genDocProvider()
+		genDoc, err := genutiltypes.AppGenesisFromFile(svrCtx.Config.GenesisFile())
 		if err != nil {
 			return err
 		}
