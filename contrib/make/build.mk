@@ -132,6 +132,7 @@ packages:
 # command for make build and make install
 build: BUILDARGS=-o $(BUILDDIR)/
 build install: go.sum $(BUILDDIR)/ rocksdblib wasmvmlib packages
+	statik -src=client/docs/static -dest=client/docs -f -m
 	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
 
 # ensure build directory exists
