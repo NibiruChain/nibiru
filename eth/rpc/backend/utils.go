@@ -48,7 +48,7 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // If the pending value is true, it will iterate over the mempool (pending)
 // txs in order to compute and return the pending tx sequence.
 // Todo: include the ability to specify a blockNumber
-func (b *EVMBackend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
+func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
 	adr := sdk.AccAddress(accAddr.Bytes()).String()
 	ctx := rpc.NewContextWithHeight(height)
@@ -104,7 +104,7 @@ func (b *EVMBackend) getAccountNonce(accAddr common.Address, pending bool, heigh
 }
 
 // output: targetOneFeeHistory
-func (b *EVMBackend) processBlock(
+func (b *Backend) processBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
 	ethBlock *map[string]interface{},
 	rewardPercentiles []float64,

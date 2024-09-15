@@ -12,7 +12,7 @@ import (
 )
 
 // Accounts returns the list of accounts available to this node.
-func (b *EVMBackend) Accounts() ([]common.Address, error) {
+func (b *Backend) Accounts() ([]common.Address, error) {
 	addresses := make([]common.Address, 0) // return [] instead of nil if empty
 
 	infos, err := b.clientCtx.Keyring.List()
@@ -39,7 +39,7 @@ func (b *EVMBackend) Accounts() ([]common.Address, error) {
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (b *EVMBackend) Syncing() (interface{}, error) {
+func (b *Backend) Syncing() (interface{}, error) {
 	status, err := b.clientCtx.Client.Status(b.ctx)
 	if err != nil {
 		return false, err
@@ -60,49 +60,49 @@ func (b *EVMBackend) Syncing() (interface{}, error) {
 
 // UnprotectedAllowed returns the node configuration value for allowing
 // unprotected transactions (i.e not replay-protected)
-func (b EVMBackend) UnprotectedAllowed() bool {
+func (b Backend) UnprotectedAllowed() bool {
 	return b.allowUnprotectedTxs
 }
 
 // RPCGasCap is the global gas cap for eth-call variants.
-func (b *EVMBackend) RPCGasCap() uint64 {
+func (b *Backend) RPCGasCap() uint64 {
 	return b.cfg.JSONRPC.GasCap
 }
 
 // RPCEVMTimeout is the global evm timeout for eth-call variants.
-func (b *EVMBackend) RPCEVMTimeout() time.Duration {
+func (b *Backend) RPCEVMTimeout() time.Duration {
 	return b.cfg.JSONRPC.EVMTimeout
 }
 
 // RPCGasCap is the global gas cap for eth-call variants.
-func (b *EVMBackend) RPCTxFeeCap() float64 {
+func (b *Backend) RPCTxFeeCap() float64 {
 	return b.cfg.JSONRPC.TxFeeCap
 }
 
 // RPCFilterCap is the limit for total number of filters that can be created
-func (b *EVMBackend) RPCFilterCap() int32 {
+func (b *Backend) RPCFilterCap() int32 {
 	return b.cfg.JSONRPC.FilterCap
 }
 
 // RPCFeeHistoryCap is the limit for total number of blocks that can be fetched
-func (b *EVMBackend) RPCFeeHistoryCap() int32 {
+func (b *Backend) RPCFeeHistoryCap() int32 {
 	return b.cfg.JSONRPC.FeeHistoryCap
 }
 
 // RPCLogsCap defines the max number of results can be returned from single `eth_getLogs` query.
-func (b *EVMBackend) RPCLogsCap() int32 {
+func (b *Backend) RPCLogsCap() int32 {
 	return b.cfg.JSONRPC.LogsCap
 }
 
 // RPCBlockRangeCap defines the max block range allowed for `eth_getLogs` query.
-func (b *EVMBackend) RPCBlockRangeCap() int32 {
+func (b *Backend) RPCBlockRangeCap() int32 {
 	return b.cfg.JSONRPC.BlockRangeCap
 }
 
 // RPCMinGasPrice returns the minimum gas price for a transaction obtained from
 // the node config. If set value is 0, it will default to 20.
 
-func (b *EVMBackend) RPCMinGasPrice() int64 {
+func (b *Backend) RPCMinGasPrice() int64 {
 	evmParams, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {
 		return eth.DefaultGasPrice
