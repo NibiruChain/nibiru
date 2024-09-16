@@ -60,7 +60,7 @@ func NewBackend(
 }
 
 // CosmosBackend: Currently unused. Backend functionality for the shared
-// "cosmos" RPC namespace. Implements [BackendI] in combination with [EVMBackend].
+// "cosmos" RPC namespace. Implements [BackendI] in combination with [Backend].
 // TODO: feat(eth): Implement the cosmos JSON-RPC defined by Wallet Connect V2:
 // https://docs.walletconnect.com/2.0/json-rpc/cosmos.
 type CosmosBackend interface {

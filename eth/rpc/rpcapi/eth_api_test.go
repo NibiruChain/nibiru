@@ -86,7 +86,10 @@ func (s *NodeSuite) SetupSuite() {
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
-	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom))
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom,
+	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 }
 
@@ -219,9 +222,10 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	s.T().Log("make sure the sender has enough funds")
 	weiToSend := evm.NativeToWei(big.NewInt(1))                          // 1 unibi
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 5_000_000)) // 5 * 10^6 unibi
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
 	senderBalanceBeforeWei, err := s.ethClient.BalanceAt(
@@ -317,9 +321,10 @@ func (s *NodeSuite) Test_SmartContract() {
 	s.T().Log("Make sure the account has funds.")
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 1_000_000_000))
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
 	grpcUrl := s.network.Validators[0].AppConfig.GRPC.Address
