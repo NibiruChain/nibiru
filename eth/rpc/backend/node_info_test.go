@@ -1,9 +1,10 @@
 package backend_test
 
 import (
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 func (s *BackendSuite) TestAccounts() {
