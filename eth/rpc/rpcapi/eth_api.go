@@ -4,8 +4,6 @@ package rpcapi
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -53,7 +51,6 @@ type IEthAPI interface {
 	// Allows developers to both send ETH from one address to another, write data
 	// on-chain, and interact with smart contracts.
 	SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
-	SendTransaction(args evm.JsonTxArgs) (common.Hash, error)
 	// eth_sendPrivateTransaction
 	// eth_cancel	PrivateTransaction
 
@@ -112,16 +109,9 @@ type IEthAPI interface {
 	// Other
 	Syncing() (interface{}, error)
 	GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
-	SignTypedData(
-		address common.Address, typedData apitypes.TypedData,
-	) (hexutil.Bytes, error)
 	FillTransaction(
 		args evm.JsonTxArgs,
 	) (*rpc.SignTransactionResult, error)
-	Resend(
-		ctx context.Context, args evm.JsonTxArgs,
-		gasPrice *hexutil.Big, gasLimit *hexutil.Uint64,
-	) (common.Hash, error)
 	GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error)
 }
 
@@ -236,14 +226,6 @@ func (e *EthAPI) GetTransactionByBlockNumberAndIndex(
 func (e *EthAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	e.logger.Debug("eth_sendRawTransaction", "length", len(data))
 	return e.backend.SendRawTransaction(data)
-}
-
-// SendTransaction sends an Ethereum transaction.
-func (e *EthAPI) SendTransaction(
-	txArgs evm.JsonTxArgs,
-) (common.Hash, error) {
-	e.logger.Debug("eth_sendTransaction", "args", txArgs.String())
-	return e.backend.SendTransaction(txArgs)
 }
 
 // --------------------------------------------------------------------------
@@ -448,16 +430,6 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 	return backend.TxLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Events, index)
 }
 
-// SignTypedData signs EIP-712 conformant typed data
-func (e *EthAPI) SignTypedData(
-	address common.Address, typedData apitypes.TypedData,
-) (hexutil.Bytes, error) {
-	e.logger.Debug(
-		"eth_signTypedData", "address", address.Hex(), "data", typedData,
-	)
-	return e.backend.SignTypedData(address, typedData)
-}
-
 // FillTransaction fills the defaults (nonce, gas, gasPrice or 1559 fields)
 // on a given unsigned transaction, and returns it to the caller for further
 // processing (signing + broadcast).
@@ -482,18 +454,6 @@ func (e *EthAPI) FillTransaction(
 		Raw: data,
 		Tx:  tx,
 	}, nil
-}
-
-// Resend accepts an existing transaction and a new gas price and limit. It will
-// remove the given transaction from the pool and reinsert it with the new gas
-// price and limit.
-func (e *EthAPI) Resend(_ context.Context,
-	args evm.JsonTxArgs,
-	gasPrice *hexutil.Big,
-	gasLimit *hexutil.Uint64,
-) (common.Hash, error) {
-	e.logger.Debug("eth_resend", "args", args.String())
-	return e.backend.Resend(args, gasPrice, gasLimit)
 }
 
 // GetPendingTransactions returns the transactions that are in the transaction

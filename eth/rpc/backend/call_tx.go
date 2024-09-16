@@ -19,87 +19,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
-
-// Resend accepts an existing transaction and a new gas price and limit. It will remove
-// the given transaction from the pool and reinsert it with the new gas price and limit.
-func (b *Backend) Resend(args evm.JsonTxArgs, gasPrice *hexutil.Big, gasLimit *hexutil.Uint64) (common.Hash, error) {
-	if args.Nonce == nil {
-		return common.Hash{}, fmt.Errorf("missing transaction nonce in transaction spec")
-	}
-
-	args, err := b.SetTxDefaults(args)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// The signer used should always be the 'latest' known one because we expect
-	// signers to be backwards-compatible with old transactions.
-	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	cfg := b.ChainConfig()
-	if cfg == nil {
-		cfg = evm.EthereumConfig(eip155ChainID)
-	}
-
-	signer := gethcore.LatestSigner(cfg)
-
-	matchTx := args.ToMsgEthTx().AsTransaction()
-
-	// Before replacing the old transaction, ensure the _new_ transaction fee is reasonable.
-	price := matchTx.GasPrice()
-	if gasPrice != nil {
-		price = gasPrice.ToInt()
-	}
-	gas := matchTx.Gas()
-	if gasLimit != nil {
-		gas = uint64(*gasLimit)
-	}
-	if err := rpc.CheckTxFee(price, gas, b.RPCTxFeeCap()); err != nil {
-		return common.Hash{}, err
-	}
-
-	pending, err := b.PendingTransactions()
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	for _, tx := range pending {
-		p, err := evm.UnwrapEthereumMsg(tx, common.Hash{})
-		if err != nil {
-			// not valid ethereum tx
-			continue
-		}
-
-		pTx := p.AsTransaction()
-
-		wantSigHash := signer.Hash(matchTx)
-		pFrom, err := gethcore.Sender(signer, pTx)
-		if err != nil {
-			continue
-		}
-
-		if pFrom == *args.From && signer.Hash(pTx) == wantSigHash {
-			// Match. Re-sign and send the transaction.
-			if gasPrice != nil && (*big.Int)(gasPrice).Sign() != 0 {
-				args.GasPrice = gasPrice
-			}
-			if gasLimit != nil && *gasLimit != 0 {
-				args.Gas = gasLimit
-			}
-
-			return b.SendTransaction(args) // TODO: this calls SetTxDefaults again, refactor to avoid calling it twice
-		}
-	}
-
-	return common.Hash{}, fmt.Errorf("transaction %#x not found", matchTx.Hash())
-}
 
 // SendRawTransaction send a raw Ethereum transaction.
 func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {

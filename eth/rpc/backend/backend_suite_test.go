@@ -72,7 +72,8 @@ func (s *BackendSuite) SetupSuite() {
 	txResp, err := testnetwork.FillWalletFromValidator(
 		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
 	)
-	s.Require().NoError(err, txResp.TxHash)
+	s.Require().NoError(err)
+	s.Require().NotNil(txResp.TxHash)
 	s.NoError(s.network.WaitForNextBlock())
 
 	// Send 1 Transfer TX and use the results in the tests
