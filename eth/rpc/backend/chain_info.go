@@ -162,7 +162,7 @@ func (b *Backend) FeeHistory(
 		}
 
 		oneFeeHistory := rpc.OneFeeHistory{}
-		err = b.processBlock(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
+		err = b.retrieveEVMTxFeesFromBlock(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
 		if err != nil {
 			return nil, err
 		}

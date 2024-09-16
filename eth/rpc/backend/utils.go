@@ -102,8 +102,10 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 	return nonce, nil
 }
 
-// output: targetOneFeeHistory
-func (b *Backend) processBlock(
+// retrieveEVMTxFeesFromBlock goes through evm txs of the block,
+// retrieves the gas fees and puts them into an object `targetOneFeeHistory`
+// See eth_feeHistory method for more details of the return format.
+func (b *Backend) retrieveEVMTxFeesFromBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
 	ethBlock *map[string]interface{},
 	rewardPercentiles []float64,
@@ -285,13 +287,13 @@ func GetLogsFromBlockResults(blockRes *tmrpctypes.ResultBlockResults) ([][]*geth
 }
 
 // GetHexProofs returns list of hex data of proof op
-func GetHexProofs(proof *crypto.ProofOps) []string {
-	if proof == nil {
+func GetHexProofs(proofOps *crypto.ProofOps) []string {
+	if proofOps == nil {
 		return []string{""}
 	}
 	proofs := []string{}
 	// check for proof
-	for _, p := range proof.Ops {
+	for _, p := range proofOps.Ops {
 		proof := ""
 		if len(p.Data) > 0 {
 			proof = hexutil.Encode(p.Data)
