@@ -51,8 +51,6 @@ type IEthAPI interface {
 	// Allows developers to both send ETH from one address to another, write data
 	// on-chain, and interact with smart contracts.
 	SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
-	// eth_sendPrivateTransaction
-	// eth_cancel	PrivateTransaction
 
 	// Account Information
 	//

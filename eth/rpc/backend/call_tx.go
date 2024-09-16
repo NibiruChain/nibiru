@@ -33,7 +33,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	// check the local node config in case unprotected txs are disabled
-	if !b.UnprotectedAllowed() && !tx.Protected() {
+	if !b.allowUnprotectedTxs && !tx.Protected() {
 		// Ensure only eip155 signed transactions are submitted if EIP155Required is set.
 		return common.Hash{}, errors.New("only replay-protected (EIP-155) transactions allowed over RPC")
 	}
