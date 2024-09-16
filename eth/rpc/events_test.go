@@ -59,7 +59,7 @@ func TestParseTxResult(t *testing.T) {
 						{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
 						{Key: "ethereumTxFailed", Value: "contract everted"},
 					}},
-					{Type: evm.TypeUrlEventTxLog, Attributes: []abci.EventAttribute{}},
+					{Type: evm.EventTypeTxLog, Attributes: []abci.EventAttribute{}},
 				},
 			},
 			wantEthTxs: []*ParsedTx{
@@ -144,7 +144,7 @@ func TestParseTxResult(t *testing.T) {
 						{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
 						{Key: "ethereumTxFailed", Value: "contract everted"},
 					}},
-					{Type: evm.TypeUrlEventTxLog, Attributes: []abci.EventAttribute{}},
+					{Type: evm.EventTypeTxLog, Attributes: []abci.EventAttribute{}},
 				},
 			},
 			nil,

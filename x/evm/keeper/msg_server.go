@@ -85,7 +85,7 @@ func (k *Keeper) EthereumTx(
 			attrs...,
 		),
 		sdk.NewEvent(
-			evm.TypeUrlEventTxLog,
+			evm.EventTypeTxLog,
 			txLogAttrs...,
 		),
 	})

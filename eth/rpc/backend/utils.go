@@ -207,17 +207,14 @@ func (b *Backend) processBlock(
 }
 
 // AllTxLogsFromEvents parses all ethereum logs from cosmos events
-func AllTxLogsFromEvents(events []abci.Event) (allLogs [][]*gethcore.Log, err error) {
+func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
+	allLogs := make([][]*gethcore.Log, 0, 4)
 	for _, event := range events {
-		if event.Type != evm.TypeUrlEventTxLog {
+		if event.Type != evm.EventTypeTxLog {
 			continue
 		}
-		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
-		if err != nil {
-			return allLogs, err
-		}
 
-		logs, err := ParseTxLogsFromEvent(typedEvent)
+		logs, err := ParseTxLogsFromABCIEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +229,7 @@ func TxLogsFromEvents(
 	events []abci.Event, msgIndex int,
 ) (txLogsForMsgIdx []*gethcore.Log, err error) {
 	for _, event := range events {
-		if event.Type != evm.TypeUrlEventTxLog {
+		if event.Type != evm.EventTypeTxLog {
 			continue
 		}
 
@@ -242,13 +239,27 @@ func TxLogsFromEvents(
 			continue
 		}
 
-		typedEvent, err := new(evm.EventTxLog).FromABCIEvent(event)
-		if err != nil {
-			return txLogsForMsgIdx, err
-		}
-		return ParseTxLogsFromEvent(typedEvent)
+		return ParseTxLogsFromABCIEvent(event)
 	}
 	return nil, fmt.Errorf("eth tx logs not found for message index %d", msgIndex)
+}
+
+// ParseTxLogsFromABCIEvent is similar to the [ParseTxLogsFromEvent] function,
+// except it's used for the legacy ABCI event for transaction logs.
+func ParseTxLogsFromABCIEvent(event abci.Event) ([]*gethcore.Log, error) {
+	logs := make([]*evm.Log, 0, len(event.Attributes))
+	for _, attr := range event.Attributes {
+		if attr.Key != evm.AttributeKeyTxLog {
+			continue
+		}
+
+		var log evm.Log
+		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
+			return nil, err
+		}
+		logs = append(logs, &log)
+	}
+	return evm.LogsToEthereum(logs), nil
 }
 
 // ParseTxLogsFromEvent parse tx logs from one event

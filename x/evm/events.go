@@ -10,6 +10,7 @@ import (
 // Evm module events
 const (
 	EventTypeEthereumTx = TypeMsgEthereumTx
+	EventTypeTxLog      = "tx_log"
 
 	// proto.MessageName(new(evm.EventBlockBloom))
 	TypeUrlEventBlockBloom = "eth.evm.v1.EventBlockBloom"
@@ -35,12 +36,12 @@ func (e *EventTxLog) FromABCIEvent(event abci.Event) (*EventTxLog, error) {
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
 	if err != nil {
 		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+			err, "EventTxLog.FromABCIEvent failed to parse event of type %s", typeUrl)
 	}
 	typedEvent, ok := (typedProtoEvent).(*EventTxLog)
 	if !ok {
 		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+			err, "EventTxLog.FromABCIEvent failed to parse event of type %s", typeUrl)
 	}
 	return typedEvent, nil
 }
