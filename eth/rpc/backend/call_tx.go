@@ -338,7 +338,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	if err != nil {
 		return nil, err
 	}
-	minGasPriceInt := minGasPrice.TruncateInt().BigInt()
+	minGasPriceInt := minGasPrice
 	if result.Cmp(minGasPriceInt) < 0 {
 		result = minGasPriceInt
 	}

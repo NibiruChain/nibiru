@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
@@ -22,7 +22,7 @@ import (
 
 // GetCode returns the contract code at the given address and block number.
 func (b *Backend) GetCode(
-	address common.Address, blockNrOrHash rpc.BlockNumberOrHash,
+	address gethcommon.Address, blockNrOrHash rpc.BlockNumberOrHash,
 ) (hexutil.Bytes, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
 	if err != nil {
@@ -43,7 +43,7 @@ func (b *Backend) GetCode(
 
 // GetProof returns an account object with proof and any storage proofs
 func (b *Backend) GetProof(
-	address common.Address,
+	address gethcommon.Address,
 	storageKeys []string,
 	blockNrOrHash rpc.BlockNumberOrHash,
 ) (*rpc.AccountResult, error) {
@@ -81,7 +81,7 @@ func (b *Backend) GetProof(
 	storageProofs := make([]rpc.StorageResult, len(storageKeys))
 
 	for i, key := range storageKeys {
-		hexKey := common.HexToHash(key)
+		hexKey := gethcommon.HexToHash(key)
 		valueBz, proof, err := b.queryClient.GetProof(clientCtx, evm.StoreKey, evm.StateKey(address, hexKey.Bytes()))
 		if err != nil {
 			return nil, err
@@ -120,18 +120,18 @@ func (b *Backend) GetProof(
 		Address:      address,
 		AccountProof: GetHexProofs(proof),
 		Balance:      (*hexutil.Big)(balance.BigInt()),
-		CodeHash:     common.HexToHash(res.CodeHash),
+		CodeHash:     gethcommon.HexToHash(res.CodeHash),
 		Nonce:        hexutil.Uint64(res.Nonce),
 		// NOTE: The StorageHash is blank. Consider whether this is useful in the
 		// future. Currently, all storage is handles by persistent and transient
 		// `sdk.KVStore` objects.
-		StorageHash:  common.Hash{},
+		StorageHash:  gethcommon.Hash{},
 		StorageProof: storageProofs,
 	}, nil
 }
 
 // GetStorageAt returns the contract storage at the given address, block number, and key.
-func (b *Backend) GetStorageAt(address common.Address, key string, blockNrOrHash rpc.BlockNumberOrHash) (hexutil.Bytes, error) {
+func (b *Backend) GetStorageAt(address gethcommon.Address, key string, blockNrOrHash rpc.BlockNumberOrHash) (hexutil.Bytes, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
 	if err != nil {
 		return nil, err
@@ -147,13 +147,13 @@ func (b *Backend) GetStorageAt(address common.Address, key string, blockNrOrHash
 		return nil, err
 	}
 
-	value := common.HexToHash(res.Value)
+	value := gethcommon.HexToHash(res.Value)
 	return value.Bytes(), nil
 }
 
 // GetBalance returns the provided account's balance up to the provided block number.
 func (b *Backend) GetBalance(
-	address common.Address,
+	address gethcommon.Address,
 	blockNrOrHash rpc.BlockNumberOrHash,
 ) (*hexutil.Big, error) {
 	blockNum, err := b.BlockNumberFromTendermint(blockNrOrHash)
@@ -189,7 +189,7 @@ func (b *Backend) GetBalance(
 }
 
 // GetTransactionCount returns the number of transactions at the given address up to the given block number.
-func (b *Backend) GetTransactionCount(address common.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
+func (b *Backend) GetTransactionCount(address gethcommon.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
 	n := hexutil.Uint64(0)
 	bn, err := b.BlockNumber()
 	if err != nil {

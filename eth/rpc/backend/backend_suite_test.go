@@ -77,25 +77,27 @@ func (s *BackendSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 
 	// Send 1 Transfer TX and use the results in the tests
-	transferTxBlockNumber, transferTxHash = s.sendNibiViaEthTransfer(recipient, amountToSend)
+	block, err := s.backend.BlockNumber()
+	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
+	transferTxBlockNumber = rpc.NewBlockNumber(big.NewInt(int64(block) + 1))
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
-func (s *BackendSuite) sendNibiViaEthTransfer(
+func (s *BackendSuite) SendNibiViaEthTransfer(
 	to gethcommon.Address,
 	amount *big.Int,
-) (rpc.BlockNumber, gethcommon.Hash) {
-	block, err := s.backend.BlockNumber()
-	s.Require().NoError(err)
-	s.NoError(err)
-
+	waitForNextBlock bool,
+) gethcommon.Hash {
 	signer := gethcore.LatestSignerForChainID(s.ethChainID)
 	gasPrice := evm.NativeToWei(big.NewInt(1))
+	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	s.NoError(err)
 	tx, err := gethcore.SignNewTx(
 		s.fundedAccPrivateKey,
 		signer,
 		&gethcore.LegacyTx{
 			To:       &to,
+			Nonce:    uint64(*nonce),
 			Value:    amount,
 			Gas:      params.TxGas,
 			GasPrice: gasPrice,
@@ -105,7 +107,8 @@ func (s *BackendSuite) sendNibiViaEthTransfer(
 	s.Require().NoError(err)
 	txHash, err := s.backend.SendRawTransaction(txBz)
 	s.Require().NoError(err)
-	s.Require().NoError(s.network.WaitForNextBlock())
-
-	return rpc.NewBlockNumber(big.NewInt(int64(block) + 1)), txHash
+	if waitForNextBlock {
+		s.Require().NoError(s.network.WaitForNextBlock())
+	}
+	return txHash
 }

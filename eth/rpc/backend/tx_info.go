@@ -185,10 +185,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 		status = gethcore.ReceiptStatusFailed
 	}
 
-	chainID, err := b.ChainID()
-	if err != nil {
-		return nil, err
-	}
+	chainID := b.ChainID()
 
 	from, err := ethMsg.GetSender(chainID.ToInt())
 	if err != nil {

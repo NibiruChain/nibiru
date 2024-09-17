@@ -348,7 +348,7 @@ func (e *EthAPI) MaxPriorityFeePerGas() (*hexutil.Big, error) {
 // chain config.
 func (e *EthAPI) ChainId() (*hexutil.Big, error) { //nolint
 	e.logger.Debug("eth_chainId")
-	return e.backend.ChainID()
+	return e.backend.ChainID(), nil
 }
 
 // --------------------------------------------------------------------------
