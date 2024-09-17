@@ -1,321 +1,134 @@
-package backend
+package backend_test
 
 import (
-	"fmt"
 	"math/big"
+	"strings"
 
-	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
+var traceConfig = &evm.TraceConfig{
+	Tracer: "callTracer",
+	TracerConfig: &evm.TracerConfig{
+		OnlyTopCall: true,
+	},
+}
+
 func (s *BackendSuite) TestTraceTransaction() {
-	msgEthereumTx, _ := s.buildEthereumTx()
-	msgEthereumTx2, _ := s.buildEthereumTx()
-
-	txHash := msgEthereumTx.AsTransaction().Hash()
-	txHash2 := msgEthereumTx2.AsTransaction().Hash()
-
-	priv, _ := ethsecp256k1.GenerateKey()
-	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-
-	queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-	RegisterParamsWithoutHeader(queryClient, 1)
-
-	armor := crypto.EncryptArmorPrivKey(priv, "", "eth_secp256k1")
-	_ = s.backend.clientCtx.Keyring.ImportPrivKey("test_key", armor, "")
-
-	ethSigner := gethcore.LatestSigner(s.backend.ChainConfig())
-
-	txEncoder := s.backend.clientCtx.TxConfig.TxEncoder()
-
-	msgEthereumTx.From = from.String()
-	_ = msgEthereumTx.Sign(ethSigner, s.signer)
-
-	tx, _ := msgEthereumTx.BuildTx(s.backend.clientCtx.TxConfig.NewTxBuilder(), evm.DefaultEVMDenom)
-	txBz, _ := txEncoder(tx)
-
-	msgEthereumTx2.From = from.String()
-	_ = msgEthereumTx2.Sign(ethSigner, s.signer)
-
-	tx2, _ := msgEthereumTx.BuildTx(s.backend.clientCtx.TxConfig.NewTxBuilder(), evm.DefaultEVMDenom)
-	txBz2, _ := txEncoder(tx2)
-
 	testCases := []struct {
-		name          string
-		registerMock  func()
-		block         *types.Block
-		responseBlock []*abci.ResponseDeliverTx
-		expResult     interface{}
-		expPass       bool
+		name    string
+		txHash  gethcommon.Hash
+		wantErr string
 	}{
 		{
-			"fail - tx not found",
-			func() {},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{}}},
-			[]*abci.ResponseDeliverTx{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
-					},
-				},
-			},
-			nil,
-			false,
+			name:    "sad: tx not found",
+			txHash:  gethcommon.BytesToHash([]byte("0x0")),
+			wantErr: "not found",
 		},
 		{
-			"fail - block not found",
-			func() {
-				// var header metadata.MD
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				RegisterBlockError(client, 1)
-			},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{txBz}}},
-			[]*abci.ResponseDeliverTx{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
-					},
-				},
-			},
-			map[string]interface{}{"test": "hello"},
-			false,
-		},
-		{
-			"pass - transaction found in a block with multiple transactions",
-			func() {
-				var (
-					queryClient       = s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-					client            = s.backend.clientCtx.Client.(*mocks.Client)
-					height      int64 = 1
-				)
-				_, err := RegisterBlockMultipleTxs(client, height, []types.Tx{txBz, txBz2})
-				s.Require().NoError(err)
-				RegisterTraceTransactionWithPredecessors(queryClient, msgEthereumTx, []*evm.MsgEthereumTx{msgEthereumTx})
-				RegisterConsensusParams(client, height)
-			},
-			&types.Block{Header: types.Header{Height: 1, ChainID: ChainID}, Data: types.Data{Txs: []types.Tx{txBz, txBz2}}},
-			[]*abci.ResponseDeliverTx{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
-					},
-				},
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash2.Hex()},
-							{Key: "txIndex", Value: "1"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
-					},
-				},
-			},
-			map[string]interface{}{"test": "hello"},
-			true,
-		},
-		{
-			"pass - transaction found",
-			func() {
-				var (
-					queryClient       = s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-					client            = s.backend.clientCtx.Client.(*mocks.Client)
-					height      int64 = 1
-				)
-				_, err := RegisterBlock(client, height, txBz)
-				s.Require().NoError(err)
-				RegisterTraceTransaction(queryClient, msgEthereumTx)
-				RegisterConsensusParams(client, height)
-			},
-			&types.Block{Header: types.Header{Height: 1}, Data: types.Data{Txs: []types.Tx{txBz}}},
-			[]*abci.ResponseDeliverTx{
-				{
-					Code: 0,
-					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
-					},
-				},
-			},
-			map[string]interface{}{"test": "hello"},
-			true,
+			name:    "happy: tx found",
+			txHash:  transferTxHash,
+			wantErr: "",
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			db := dbm.NewMemDB()
-			s.backend.indexer = indexer.NewKVIndexer(db, tmlog.NewNopLogger(), s.backend.clientCtx)
-
-			err := s.backend.indexer.IndexBlock(tc.block, tc.responseBlock)
-			s.Require().NoError(err)
-			txResult, err := s.backend.TraceTransaction(txHash, nil)
-
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expResult, txResult)
-			} else {
-				s.Require().Error(err)
+		s.Run(tc.name, func() {
+			res, err := s.backend.TraceTransaction(
+				tc.txHash,
+				traceConfig,
+			)
+			if tc.wantErr != "" {
+				s.ErrorContains(err, tc.wantErr)
+				return
 			}
+			s.Require().NoError(err)
+			s.Require().NotNil(res)
+			AssertTraceCall(s, res.(map[string]interface{}))
 		})
 	}
 }
 
 func (s *BackendSuite) TestTraceBlock() {
-	msgEthTx, bz := s.buildEthereumTx()
-	emptyBlock := types.MakeBlock(1, []types.Tx{}, nil, nil)
-	emptyBlock.ChainID = ChainID
-	filledBlock := types.MakeBlock(1, []types.Tx{bz}, nil, nil)
-	filledBlock.ChainID = ChainID
-	resBlockEmpty := tmrpctypes.ResultBlock{Block: emptyBlock, BlockID: emptyBlock.LastBlockID}
-	resBlockFilled := tmrpctypes.ResultBlock{Block: filledBlock, BlockID: filledBlock.LastBlockID}
+	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(transferTxBlockNumber)
+	s.Require().NoError(err)
+
+	blockNumberWithoutTx := rpc.NewBlockNumber(big.NewInt(1))
+	tmBlockWithoutTx, err := s.backend.TendermintBlockByNumber(1)
+	s.Require().NoError(err)
 
 	testCases := []struct {
-		name            string
-		registerMock    func()
-		expTraceResults []*evm.TxTraceResult
-		resBlock        *tmrpctypes.ResultBlock
-		config          *evm.TraceConfig
-		expPass         bool
+		name        string
+		blockNumber rpc.BlockNumber
+		tmBlock     *tmrpctypes.ResultBlock
+		txCount     int
 	}{
 		{
-			"pass - no transaction returning empty array",
-			func() {},
-			[]*evm.TxTraceResult{},
-			&resBlockEmpty,
-			&evm.TraceConfig{},
-			true,
+			name:        "happy: block without txs",
+			blockNumber: blockNumberWithoutTx,
+			tmBlock:     tmBlockWithoutTx,
+			txCount:     0,
 		},
 		{
-			"fail - cannot unmarshal data",
-			func() {
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				RegisterTraceBlock(queryClient, []*evm.MsgEthereumTx{msgEthTx})
-				RegisterConsensusParams(client, 1)
-			},
-			[]*evm.TxTraceResult{},
-			&resBlockFilled,
-			&evm.TraceConfig{},
-			false,
+			name:        "happy: block with txs",
+			blockNumber: transferTxBlockNumber,
+			tmBlock:     tmBlockWithTx,
+			txCount:     1,
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			traceResults, err := s.backend.TraceBlock(1, tc.config, tc.resBlock)
-
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expTraceResults, traceResults)
-			} else {
-				s.Require().Error(err)
+		s.Run(tc.name, func() {
+			res, err := s.backend.TraceBlock(
+				tc.blockNumber,
+				traceConfig,
+				tc.tmBlock,
+			)
+			s.Require().NoError(err)
+			s.Require().Equal(tc.txCount, len(res))
+			if tc.txCount > 0 {
+				AssertTraceCall(s, res[0].Result.(map[string]interface{}))
 			}
 		})
 	}
 }
 
 func (s *BackendSuite) TestTraceCall() {
-	priv, _ := ethsecp256k1.GenerateKey()
-	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
+	block, err := s.backend.BlockNumber()
+	s.Require().NoError(err)
+	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.BlockNumber(block))
+	s.NoError(err)
+	gas := hexutil.Uint64(evm.NativeToWei(big.NewInt(int64(params.TxGas))).Uint64())
+	amountToSendHex := hexutil.Big(*amountToSend)
 
 	txArgs := evm.JsonTxArgs{
-		From:  &from,
-		Value: (*hexutil.Big)(big.NewInt(1e12)),
+		Nonce: nonce,
+		From:  &s.fundedAccEthAddr,
+		To:    &recipient,
+		Value: &amountToSendHex,
+		Gas:   &gas,
 	}
+	s.Require().NoError(err)
 
-	testCases := []struct {
-		name         string
-		registerMock func()
-		expResult    interface{}
-		expPass      bool
-	}{
-		{
-			"pass - valid call",
-			func() {
-				var (
-					queryClient       = s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-					client            = s.backend.clientCtx.Client.(*mocks.Client)
-					height      int64 = 1
-				)
+	res, err := s.backend.TraceCall(
+		txArgs,
+		rpc.BlockNumber(block),
+		traceConfig,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+	AssertTraceCall(s, res.(map[string]interface{}))
+}
 
-				msgEthereumTx := txArgs.ToMsgEthTx()
-
-				_, err := RegisterBlock(client, height, nil)
-				s.Require().NoError(err)
-				RegisterTraceCall(queryClient, msgEthereumTx)
-				RegisterConsensusParams(client, height)
-			},
-			map[string]interface{}{"test": "hello"},
-			true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			txResult, err := s.backend.TraceCall(txArgs, rpc.NewBlockNumber(big.NewInt(1)), &evm.TraceConfig{})
-
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expResult, txResult)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
+func AssertTraceCall(s *BackendSuite, trace map[string]interface{}) {
+	s.Require().Equal("CALL", trace["type"])
+	s.Require().Equal(strings.ToLower(s.fundedAccEthAddr.Hex()), trace["from"])
+	s.Require().Equal(strings.ToLower(recipient.Hex()), trace["to"])
+	s.Require().Equal("0x"+gethcommon.Bytes2Hex(amountToSend.Bytes()), trace["value"])
 }
