@@ -1,12 +1,9 @@
 package backend_test
 
 import (
-	"context"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	gethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
 func (s *BackendSuite) TestBlockNumber() {
@@ -17,23 +14,96 @@ func (s *BackendSuite) TestBlockNumber() {
 	s.Greater(blockHeightU64, uint64(1))
 
 	latestHeight, _ := s.network.LatestHeight()
-	wantFullTx := true
-	resp, err := s.backend.GetBlockByNumber(
-		rpc.NewBlockNumber(big.NewInt(latestHeight)),
-		wantFullTx,
-	)
+	resp, err := s.backend.BlockNumber()
 	s.Require().NoError(err, resp)
+	s.Require().Equal(uint64(latestHeight), uint64(blockHeight))
+}
 
-	// TODO: test backend.GetBlockByHash
-	// s.backend.GetBlockByHash()
-	block, err := s.node.RPCClient.Block(
-		context.Background(),
-		&latestHeight,
-	)
-	s.NoError(err, block)
-	blockResults, err := s.node.RPCClient.BlockResults(
-		context.Background(),
-		&latestHeight,
-	)
-	s.NoError(err, blockResults)
+func (s *BackendSuite) TestGetBlockByNumberr() {
+	block, err := s.backend.GetBlockByNumber(transferTxBlockNumber, true)
+	s.Require().NoError(err)
+	s.Require().NotNil(block)
+	s.Require().Greater(len(block["transactions"].([]interface{})), 0)
+	s.Require().NotNil(block["size"])
+	s.Require().NotNil(block["nonce"])
+	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())
+}
+
+func (s *BackendSuite) TestGetBlockByHash() {
+	blockMap, err := s.backend.GetBlockByHash(transferTxBlockHash, true)
+	s.Require().NoError(err)
+	AssertBlockContents(s, blockMap)
+}
+
+func (s *BackendSuite) TestBlockNumberFromTendermint() {
+	testCases := []struct {
+		name            string
+		blockNrOrHash   gethrpc.BlockNumberOrHash
+		wantBlockNumber gethrpc.BlockNumber
+		wantErr         string
+	}{
+		{
+			name: "happy: block number specified",
+			blockNrOrHash: gethrpc.BlockNumberOrHash{
+				BlockNumber: &transferTxBlockNumber,
+			},
+			wantBlockNumber: transferTxBlockNumber,
+			wantErr:         "",
+		},
+		{
+			name: "happy: block hash specified",
+			blockNrOrHash: gethrpc.BlockNumberOrHash{
+				BlockHash: &transferTxBlockHash,
+			},
+			wantBlockNumber: transferTxBlockNumber,
+			wantErr:         "",
+		},
+		{
+			name:            "sad: neither block number nor hash specified",
+			blockNrOrHash:   gethrpc.BlockNumberOrHash{},
+			wantBlockNumber: 0,
+			wantErr:         "BlockHash and BlockNumber cannot be both nil",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			blockNumber, err := s.backend.BlockNumberFromTendermint(tc.blockNrOrHash)
+
+			if tc.wantErr != "" {
+				s.Require().Error(err)
+				return
+			}
+			s.Require().NoError(err)
+			s.Require().Equal(tc.wantBlockNumber, blockNumber)
+		})
+	}
+}
+
+func (s *BackendSuite) TestEthBlockByNumber() {
+	block, err := s.backend.EthBlockByNumber(transferTxBlockNumber)
+	s.Require().NoError(err)
+	s.Require().NotNil(block)
+	s.Require().Equal(transferTxBlockNumber.Int64(), block.Number().Int64())
+	s.Require().Greater(block.Transactions().Len(), 0)
+	s.Require().NotNil(block.ParentHash())
+	s.Require().NotNil(block.UncleHash())
+}
+
+func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
+	txCount := s.backend.GetBlockTransactionCountByHash(transferTxBlockHash)
+	s.Require().Greater((uint64)(*txCount), uint64(0))
+}
+
+func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
+	txCount := s.backend.GetBlockTransactionCountByNumber(transferTxBlockNumber)
+	s.Require().Greater((uint64)(*txCount), uint64(0))
+}
+
+func AssertBlockContents(s *BackendSuite, blockMap map[string]interface{}) {
+	s.Require().NotNil(blockMap)
+	s.Require().Greater(len(blockMap["transactions"].([]interface{})), 0)
+	s.Require().NotNil(blockMap["size"])
+	s.Require().NotNil(blockMap["nonce"])
+	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())
 }

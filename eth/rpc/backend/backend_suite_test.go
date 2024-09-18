@@ -31,6 +31,7 @@ import (
 var recipient = evmtest.NewEthPrivAcc().EthAddr
 var amountToSend = evm.NativeToWei(big.NewInt(1))
 var transferTxBlockNumber rpc.BlockNumber
+var transferTxBlockHash gethcommon.Hash
 var transferTxHash gethcommon.Hash
 
 type BackendSuite struct {
@@ -78,8 +79,13 @@ func (s *BackendSuite) SetupSuite() {
 
 	// Send 1 Transfer TX and use the results in the tests
 	block, err := s.backend.BlockNumber()
+	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
 	transferTxBlockNumber = rpc.NewBlockNumber(big.NewInt(int64(block) + 1))
+	blockResults, err := s.backend.TendermintBlockByNumber(transferTxBlockNumber)
+	s.Require().NoError(err)
+	s.Require().NotNil(blockResults)
+	transferTxBlockHash = gethcommon.BytesToHash(blockResults.Block.Hash().Bytes())
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend

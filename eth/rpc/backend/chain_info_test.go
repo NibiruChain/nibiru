@@ -3,10 +3,11 @@ package backend_test
 import (
 	"math/big"
 
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	gethrpc "github.com/ethereum/go-ethereum/rpc"
 )
 
 func (s *BackendSuite) TestChainID() {

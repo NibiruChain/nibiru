@@ -3,10 +3,11 @@ package backend_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func (s *BackendSuite) TestSetTxDefaults() {
