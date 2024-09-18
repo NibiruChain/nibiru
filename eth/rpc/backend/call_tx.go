@@ -155,9 +155,9 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	if args.Value == nil {
 		args.Value = new(hexutil.Big)
 	}
-	if args.Nonce == nil {
+	if args.Nonce == nil && args.From != nil {
 		// get the nonce from the account retriever
-		// ignore error in case tge account doesn't exist yet
+		// ignore error in case the account doesn't exist yet
 		nonce, _ := b.getAccountNonce(*args.From, true, 0, b.logger) // #nosec G703s
 		args.Nonce = (*hexutil.Uint64)(&nonce)
 	}
@@ -202,7 +202,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 			Nonce:                args.Nonce,
 		}
 
-		blockNr := rpc.NewBlockNumber(big.NewInt(0))
+		blockNr := rpc.EthPendingBlockNumber
 		estimated, err := b.EstimateGas(callArgs, &blockNr)
 		if err != nil {
 			return args, err
