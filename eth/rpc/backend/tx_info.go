@@ -11,7 +11,7 @@ import (
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -22,11 +22,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash
-func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, error) {
+// GetTransactionByHash returns the Ethereum format transaction identified by
+// Ethereum transaction hash. If the transaction is not found or has been
+// discarded from a pruning node, this resolves to nil.
+func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
-	hexTx := txHash.Hex()
-
 	if err != nil {
 		return b.getTransactionByHashPending(txHash)
 	}
@@ -57,7 +57,7 @@ func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, e
 		// Fallback to find tx index by iterating all valid eth transactions
 		msgs := b.EthMsgsFromTendermintBlock(block, blockRes)
 		for i := range msgs {
-			if msgs[i].Hash == hexTx {
+			if msgs[i].Hash == eth.EthTxHashToString(txHash) {
 				if i > math.MaxInt32 {
 					return nil, errors.New("tx index overflow")
 				}
@@ -81,7 +81,7 @@ func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, e
 	index := uint64(res.EthTxIndex) //#nosec G701 -- checked for int overflow already
 	return rpc.NewRPCTxFromMsg(
 		msg,
-		common.BytesToHash(block.BlockID.Hash.Bytes()),
+		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
 		index,
 		baseFee,
@@ -90,7 +90,7 @@ func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpc.EthTxJsonRPC, e
 }
 
 // getTransactionByHashPending find pending tx from mempool
-func (b *Backend) getTransactionByHashPending(txHash common.Hash) (*rpc.EthTxJsonRPC, error) {
+func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	hexTx := txHash.Hex()
 	// try to find tx in mempool
 	txs, err := b.PendingTransactions()
@@ -110,7 +110,7 @@ func (b *Backend) getTransactionByHashPending(txHash common.Hash) (*rpc.EthTxJso
 			// use zero block values since it's not included in a block yet
 			rpctx, err := rpc.NewRPCTxFromMsg(
 				msg,
-				common.Hash{},
+				gethcommon.Hash{},
 				uint64(0),
 				uint64(0),
 				nil,
@@ -137,7 +137,7 @@ func (b *Backend) GetGasUsed(res *eth.TxResult, price *big.Int, gas uint64) uint
 }
 
 // GetTransactionReceipt returns the transaction receipt identified by hash.
-func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error) {
+func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (map[string]interface{}, error) {
 	hexTx := hash.Hex()
 	b.logger.Debug("eth_getTransactionReceipt", "hash", hexTx)
 
@@ -230,7 +230,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 
 		// Inclusion information: These fields provide information about the inclusion of the
 		// transaction corresponding to this receipt.
-		"blockHash":        common.BytesToHash(resBlock.Block.Header.Hash()).Hex(),
+		"blockHash":        gethcommon.BytesToHash(resBlock.Block.Header.Hash()).Hex(),
 		"blockNumber":      hexutil.Uint64(res.Height),
 		"transactionIndex": hexutil.Uint64(res.EthTxIndex),
 
@@ -263,7 +263,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 }
 
 // GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.
-func (b *Backend) GetTransactionByBlockHashAndIndex(hash common.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error) {
+func (b *Backend) GetTransactionByBlockHashAndIndex(hash gethcommon.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error) {
 	b.logger.Debug("eth_getTransactionByBlockHashAndIndex", "hash", hash.Hex(), "index", idx)
 	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
 	if !ok {
@@ -303,9 +303,10 @@ func (b *Backend) GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, 
 }
 
 // GetTxByEthHash uses `/tx_query` to find transaction by ethereum tx hash
-// TODO: Don't need to convert once hashing is fixed on Tendermint
-// https://github.com/cometbft/cometbft/issues/6539
-func (b *Backend) GetTxByEthHash(hash common.Hash) (*eth.TxResult, error) {
+func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
+	// NOTE: The Tendermint hash is not the same as the gethcommon.Hash.
+	// https://github.com/cometbft/cometbft/issues/342#issuecomment-1428836340
+	// https://github.com/tendermint/tendermint/issues/6539
 	if b.indexer != nil {
 		return b.indexer.GetByTxHash(hash)
 	}
@@ -316,7 +317,7 @@ func (b *Backend) GetTxByEthHash(hash common.Hash) (*eth.TxResult, error) {
 		return txs.GetTxByHash(hash)
 	})
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetTxByEthHash %s", hash.Hex())
+		return nil, errorsmod.Wrapf(err, "GetTxByEthHash(%s)", hash.Hex())
 	}
 	return txResult, nil
 }
@@ -352,8 +353,9 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 		return nil, errors.New("ethereum tx not found")
 	}
 	txResult := resTxs.Txs[0]
-	if !rpc.TxSuccessOrExpectedFailure(&txResult.TxResult) {
-		return nil, errors.New("invalid ethereum tx")
+	isValidEnough, reason := rpc.TxIsValidEnough(&txResult.TxResult)
+	if !isValidEnough {
+		return nil, errors.Errorf("invalid ethereum tx: %s", reason)
 	}
 
 	var tx sdk.Tx
@@ -413,7 +415,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 	index := uint64(idx)                 // #nosec G701 -- checked for int overflow already
 	return rpc.NewRPCTxFromMsg(
 		msg,
-		common.BytesToHash(block.Block.Hash()),
+		gethcommon.BytesToHash(block.Block.Hash()),
 		height,
 		index,
 		baseFee,

@@ -117,6 +117,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2020](https://github.com/NibiruChain/nibiru/pull/2020) - test(evm): e2e tests for debug namespace
 - [#2022](https://github.com/NibiruChain/nibiru/pull/2022) - feat(evm): debug_traceCall method implemented
 - [#2023](https://github.com/NibiruChain/nibiru/pull/2023) - fix(evm)!: adjusted generation and parsing of the block bloom events
+- [#2030](https://github.com/NibiruChain/nibiru/pull/2030) - refactor(eth/rpc): Delete unused code and improve logging in the eth and debug namespaces
+- [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
+- [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): remove unnecessary interface code
+- [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): Remove mocks from eth/rpc/backend, partially completing [nibiru#2037](https://github.com/NibiruChain/nibiru/issue/2037). 
 
 #### Dapp modules: perp, spot, oracle, etc
 

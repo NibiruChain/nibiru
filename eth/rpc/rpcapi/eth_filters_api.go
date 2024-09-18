@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package filtersapi
+package rpcapi
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	rpcbackend "github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -26,33 +27,16 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// IFilterAPI
-type IFilterAPI interface {
-	NewPendingTransactionFilter() gethrpc.ID
-	NewBlockFilter() gethrpc.ID
-	NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, error)
-	GetFilterChanges(id gethrpc.ID) (interface{}, error)
-	GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*gethcore.Log, error)
-	UninstallFilter(id gethrpc.ID) bool
-	GetLogs(ctx context.Context, crit filters.FilterCriteria) ([]*gethcore.Log, error)
-}
-
-// IFilterEthBackend defines the methods requided by the PublicFilterAPI backend
-type IFilterEthBackend interface {
-	GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error)
-	HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, error)
-	HeaderByHash(blockHash common.Hash) (*gethcore.Header, error)
-	TendermintBlockByHash(hash common.Hash) (*coretypes.ResultBlock, error)
-	TendermintBlockResultByNumber(height *int64) (*coretypes.ResultBlockResults, error)
-	GetLogs(blockHash common.Hash) ([][]*gethcore.Log, error)
-	GetLogsByHeight(*int64) ([][]*gethcore.Log, error)
-	BlockBloom(blockRes *coretypes.ResultBlockResults) (gethcore.Bloom, error)
-
-	BloomStatus() (uint64, uint64)
-
-	RPCFilterCap() int32
-	RPCLogsCap() int32
-	RPCBlockRangeCap() int32
+// FiltersAPI offers support to create and manage filters. This will allow
+// external clients to retrieve various information related to the Ethereum
+// protocol such as blocks, transactions and logs.
+type FiltersAPI struct {
+	logger    log.Logger
+	clientCtx client.Context
+	backend   *rpcbackend.Backend
+	events    *EventSubscriber
+	filtersMu sync.Mutex
+	filters   map[gethrpc.ID]*filter
 }
 
 // consider a filter inactive if it has not been polled for within deadlineForInactivity
@@ -69,27 +53,20 @@ type filter struct {
 	s        *Subscription // associated subscription in event system
 }
 
-// FiltersAPI offers support to create and manage filters. This will allow
-// external clients to retrieve various information related to the Ethereum
-// protocol such as blocks, transactions and logs.
-type FiltersAPI struct {
-	logger    log.Logger
-	clientCtx client.Context
-	backend   IFilterEthBackend
-	events    *EventSystem
-	filtersMu sync.Mutex
-	filters   map[gethrpc.ID]*filter
-}
-
-// NewImplFiltersAPI returns a new PublicFilterAPI instance.
-func NewImplFiltersAPI(logger log.Logger, clientCtx client.Context, tmWSClient *rpcclient.WSClient, backend IFilterEthBackend) *FiltersAPI {
+// NewImplFiltersAPI returns a new FiltersAPI instance.
+func NewImplFiltersAPI(
+	logger log.Logger,
+	clientCtx client.Context,
+	tmWSClient *rpcclient.WSClient,
+	backend *rpcbackend.Backend,
+) *FiltersAPI {
 	logger = logger.With("api", "filter")
 	api := &FiltersAPI{
 		logger:    logger,
 		clientCtx: clientCtx,
 		backend:   backend,
 		filters:   make(map[gethrpc.ID]*filter),
-		events:    NewEventSystem(logger, tmWSClient),
+		events:    NewEventSubscriber(logger, tmWSClient),
 	}
 
 	go api.timeoutLoop()
@@ -189,7 +166,7 @@ func (api *FiltersAPI) NewPendingTransactionFilter() gethrpc.ID {
 				api.filtersMu.Unlock()
 			}
 		}
-	}(pendingTxSub.eventCh, pendingTxSub.Err())
+	}(pendingTxSub.EventCh, pendingTxSub.Error())
 
 	return pendingTxSub.ID()
 }
@@ -198,6 +175,7 @@ func (api *FiltersAPI) NewPendingTransactionFilter() gethrpc.ID {
 // transaction enters the transaction pool and was signed from one of the
 // transactions this nodes manages.
 func (api *FiltersAPI) NewPendingTransactions(ctx context.Context) (*gethrpc.Subscription, error) {
+	api.logger.Debug("eth_newPendingTransactions")
 	notifier, supported := gethrpc.NotifierFromContext(ctx)
 	if !supported {
 		return &gethrpc.Subscription{}, gethrpc.ErrNotificationsUnsupported
@@ -254,7 +232,7 @@ func (api *FiltersAPI) NewPendingTransactions(ctx context.Context) (*gethrpc.Sub
 				return
 			}
 		}
-	}(pendingTxSub.eventCh)
+	}(pendingTxSub.EventCh)
 
 	return rpcSub, err
 }
@@ -311,14 +289,15 @@ func (api *FiltersAPI) NewBlockFilter() gethrpc.ID {
 				return
 			}
 		}
-	}(headerSub.eventCh, headerSub.Err())
+	}(headerSub.EventCh, headerSub.Error())
 
 	return headerSub.ID()
 }
 
-// NewHeads send a notification each time a new (header) block is appended to the
-// chain.
+// NewHeads send a notification each time a new block (and thus, block header) is
+// added to the chain.
 func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, error) {
+	api.logger.Debug("eth_newHeads")
 	notifier, supported := gethrpc.NotifierFromContext(ctx)
 	if !supported {
 		return &gethrpc.Subscription{}, gethrpc.ErrNotificationsUnsupported
@@ -332,9 +311,17 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 		return &gethrpc.Subscription{}, err
 	}
 
+	// Start go routine to continue executing without blocking while the
+	// goroutine handles incoming events.
+	// The routine receives a channel that receives block header events as an
+	// argument.
 	go func(headersCh <-chan coretypes.ResultEvent) {
+		// This defer statement ensures the subscription is canceled
+		// when the goroutine exits.
 		defer cancelSubs()
 
+		// Listen for block header events and handle them based on the
+		// type of event received.
 		for {
 			select {
 			case ev, ok := <-headersCh:
@@ -350,8 +337,12 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 				}
 
 				var baseFee *big.Int = nil
-				// TODO: fetch bloom from events
-				header := rpc.EthHeaderFromTendermint(data.Header, gethcore.Bloom{}, baseFee)
+				bloom, err := ParseBloomFromEvents(data.ResultEndBlock.Events)
+				if err != nil {
+					api.logger.Error("failed to parse bloom from end block events")
+					return
+				}
+				header := rpc.EthHeaderFromTendermint(data.Header, bloom, baseFee)
 				_ = notifier.Notify(rpcSub.ID, header) // #nosec G703
 			case <-rpcSub.Err():
 				headersSub.Unsubscribe(api.events)
@@ -361,14 +352,18 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 				return
 			}
 		}
-	}(headersSub.eventCh)
+	}(headersSub.EventCh)
 
 	return rpcSub, err
 }
 
 // Logs creates a subscription that fires for all new log that match the given
 // filter criteria.
-func (api *FiltersAPI) Logs(ctx context.Context, crit filters.FilterCriteria) (*gethrpc.Subscription, error) {
+// Implements "eth_logs".
+func (api *FiltersAPI) Logs(
+	ctx context.Context, crit filters.FilterCriteria,
+) (*gethrpc.Subscription, error) {
+	api.logger.Debug("eth_logs")
 	notifier, supported := gethrpc.NotifierFromContext(ctx)
 	if !supported {
 		return &gethrpc.Subscription{}, gethrpc.ErrNotificationsUnsupported
@@ -427,7 +422,7 @@ func (api *FiltersAPI) Logs(ctx context.Context, crit filters.FilterCriteria) (*
 				return
 			}
 		}
-	}(logsSub.eventCh)
+	}(logsSub.EventCh)
 
 	return rpcSub, err
 }
@@ -446,6 +441,7 @@ func (api *FiltersAPI) Logs(ctx context.Context, crit filters.FilterCriteria) (*
 //
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_newfilter
 func (api *FiltersAPI) NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, error) {
+	api.logger.Debug("eth_newFilter")
 	api.filtersMu.Lock()
 	defer api.filtersMu.Unlock()
 
@@ -504,26 +500,28 @@ func (api *FiltersAPI) NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, e
 					f.logs = append(f.logs, logs...)
 				}
 				api.filtersMu.Unlock()
-			case <-logsSub.Err():
+			case <-logsSub.Error():
 				api.filtersMu.Lock()
 				delete(api.filters, filterID)
 				api.filtersMu.Unlock()
 				return
 			}
 		}
-	}(logsSub.eventCh)
+	}(logsSub.EventCh)
 
 	return filterID, err
 }
 
 // GetLogs returns logs matching the given argument that are stored within the state.
-//
+// This function implements the "eth_getLogs" JSON-RPC service method.
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getlogs
-func (api *FiltersAPI) GetLogs(ctx context.Context, crit filters.FilterCriteria) ([]*gethcore.Log, error) {
+func (api *FiltersAPI) GetLogs(
+	ctx context.Context, crit filters.FilterCriteria,
+) ([]*gethcore.Log, error) {
 	var filter *Filter
 	if crit.BlockHash != nil {
 		// Block filter requested, construct a single-shot filter
-		filter = NewBlockFilter(api.logger, api.backend, crit)
+		filter = NewBlockFilter(api.logger, *api.backend, crit)
 	} else {
 		// Convert the RPC block numbers into internal representations
 		begin := gethrpc.LatestBlockNumber.Int64()
@@ -535,8 +533,14 @@ func (api *FiltersAPI) GetLogs(ctx context.Context, crit filters.FilterCriteria)
 			end = crit.ToBlock.Int64()
 		}
 		// Construct the range filter
-		filter = NewRangeFilter(api.logger, api.backend, begin, end, crit.Addresses, crit.Topics)
+		filter = NewRangeFilter(api.logger, *api.backend, begin, end, crit.Addresses, crit.Topics)
 	}
+
+	api.logger.Debug("eth_getLogs",
+		"from_block", filter.criteria.FromBlock.String(),
+		"to_block", filter.criteria.ToBlock.String(),
+		"time", time.Now().UTC(),
+	)
 
 	// Run the filter and return all the logs
 	logs, err := filter.Logs(ctx, int(api.backend.RPCLogsCap()), int64(api.backend.RPCBlockRangeCap()))
@@ -568,8 +572,10 @@ func (api *FiltersAPI) UninstallFilter(id gethrpc.ID) bool {
 // GetFilterLogs returns the logs for the filter with the given id.
 // If the filter could not be found an empty array of logs is returned.
 //
+// This function implements the "eth_getFilterLogs" JSON-RPC service method.
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getfilterlogs
 func (api *FiltersAPI) GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*gethcore.Log, error) {
+	api.logger.Debug("eth_getFilterLogs")
 	api.filtersMu.Lock()
 	f, found := api.filters[id]
 	api.filtersMu.Unlock()
@@ -585,7 +591,7 @@ func (api *FiltersAPI) GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*get
 	var filter *Filter
 	if f.crit.BlockHash != nil {
 		// Block filter requested, construct a single-shot filter
-		filter = NewBlockFilter(api.logger, api.backend, f.crit)
+		filter = NewBlockFilter(api.logger, *api.backend, f.crit)
 	} else {
 		// Convert the RPC block numbers into internal representations
 		begin := gethrpc.LatestBlockNumber.Int64()
@@ -597,7 +603,7 @@ func (api *FiltersAPI) GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*get
 			end = f.crit.ToBlock.Int64()
 		}
 		// Construct the range filter
-		filter = NewRangeFilter(api.logger, api.backend, begin, end, f.crit.Addresses, f.crit.Topics)
+		filter = NewRangeFilter(api.logger, *api.backend, begin, end, f.crit.Addresses, f.crit.Topics)
 	}
 	// Run the filter and return all the logs
 	logs, err := filter.Logs(ctx, int(api.backend.RPCLogsCap()), int64(api.backend.RPCBlockRangeCap()))
@@ -607,14 +613,16 @@ func (api *FiltersAPI) GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*get
 	return returnLogs(logs), nil
 }
 
-// GetFilterChanges returns the logs for the filter with the given id since
-// last time it was called. This can be used for polling.
+// GetFilterChanges returns the logs for the filter with the given id since last
+// time it was called. This can be used for polling.
 //
 // For pending transaction and block filters the result is []common.Hash.
 // (pending)Log filters return []Log.
 //
+// This function implements the "eth_getFilterChanges" JSON-RPC service method.
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getfilterchanges
 func (api *FiltersAPI) GetFilterChanges(id gethrpc.ID) (interface{}, error) {
+	api.logger.Debug("eth_getFilterChanges")
 	api.filtersMu.Lock()
 	defer api.filtersMu.Unlock()
 

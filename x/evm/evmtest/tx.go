@@ -184,7 +184,7 @@ func DeployContract(
 // DeployAndExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
 func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
-) (*evm.MsgEthereumTx, []*evm.MsgEthereumTx) {
+) (erc20Transfer *evm.MsgEthereumTx, predecessors []*evm.MsgEthereumTx) {
 	// TX 1: Deploy ERC-20 contract
 	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20)
 	require.NoError(t, err)
@@ -194,7 +194,7 @@ func DeployAndExecuteERC20Transfer(
 	// Contract address is deterministic
 	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
 	deps.App.Commit()
-	predecessors := []*evm.MsgEthereumTx{
+	predecessors = []*evm.MsgEthereumTx{
 		deployResp.EthTxMsg,
 	}
 
@@ -210,14 +210,14 @@ func DeployAndExecuteERC20Transfer(
 		Nonce: (*hexutil.Uint64)(&nonce),
 		Data:  (*hexutil.Bytes)(&input),
 	}
-	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
+	erc20Transfer, err = GenerateAndSignEthTxMsg(txArgs, deps)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), erc20Transfer)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
-	return ethTxMsg, predecessors
+	return erc20Transfer, predecessors
 }
 
 // GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx

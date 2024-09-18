@@ -3,6 +3,7 @@ package rpcapi_test
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -36,11 +37,11 @@ import (
 )
 
 var (
-	_ suite.TearDownAllSuite = (*TestSuite)(nil)
-	_ suite.SetupAllSuite    = (*TestSuite)(nil)
+	_ suite.TearDownAllSuite = (*NodeSuite)(nil)
+	_ suite.SetupAllSuite    = (*NodeSuite)(nil)
 )
 
-type TestSuite struct {
+type NodeSuite struct {
 	suite.Suite
 	cfg     testnetwork.Config
 	network *testnetwork.Network
@@ -57,12 +58,13 @@ type TestSuite struct {
 }
 
 func TestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	suite.Run(t, new(Suite))
+	suite.Run(t, new(NodeSuite))
 }
 
 // SetupSuite runs before every test in the suite. Implements the
 // "suite.SetupAllSuite" interface.
-func (s *TestSuite) SetupSuite() {
+func (s *NodeSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
@@ -84,19 +86,22 @@ func (s *TestSuite) SetupSuite() {
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
-	s.NoError(testnetwork.FillWalletFromValidator(s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom))
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom,
+	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 }
 
 // Test_ChainID EVM method: eth_chainId
-func (s *TestSuite) Test_ChainID() {
+func (s *NodeSuite) Test_ChainID() {
 	ethChainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	s.Equal(appconst.ETH_CHAIN_ID_DEFAULT, ethChainID.Int64())
 }
 
 // Test_BlockNumber EVM method: eth_blockNumber
-func (s *TestSuite) Test_BlockNumber() {
+func (s *NodeSuite) Test_BlockNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -106,7 +111,7 @@ func (s *TestSuite) Test_BlockNumber() {
 }
 
 // Test_BlockByNumber EVM method: eth_getBlockByNumber
-func (s *TestSuite) Test_BlockByNumber() {
+func (s *NodeSuite) Test_BlockByNumber() {
 	networkBlockNumber, err := s.network.LatestHeight()
 	s.NoError(err)
 
@@ -116,7 +121,7 @@ func (s *TestSuite) Test_BlockByNumber() {
 }
 
 // Test_BalanceAt EVM method: eth_getBalance
-func (s *TestSuite) Test_BalanceAt() {
+func (s *NodeSuite) Test_BalanceAt() {
 	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 
 	// New user balance should be 0
@@ -133,7 +138,7 @@ func (s *TestSuite) Test_BalanceAt() {
 }
 
 // Test_StorageAt EVM method: eth_getStorageAt
-func (s *TestSuite) Test_StorageAt() {
+func (s *NodeSuite) Test_StorageAt() {
 	storage, err := s.ethClient.StorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{}, nil,
 	)
@@ -143,7 +148,7 @@ func (s *TestSuite) Test_StorageAt() {
 }
 
 // Test_PendingStorageAt EVM method: eth_getStorageAt | pending
-func (s *TestSuite) Test_PendingStorageAt() {
+func (s *NodeSuite) Test_PendingStorageAt() {
 	storage, err := s.ethClient.PendingStorageAt(
 		context.Background(), s.fundedAccEthAddr, gethcommon.Hash{},
 	)
@@ -154,7 +159,7 @@ func (s *TestSuite) Test_PendingStorageAt() {
 }
 
 // Test_CodeAt EVM method: eth_getCode
-func (s *TestSuite) Test_CodeAt() {
+func (s *NodeSuite) Test_CodeAt() {
 	code, err := s.ethClient.CodeAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
@@ -163,7 +168,7 @@ func (s *TestSuite) Test_CodeAt() {
 }
 
 // Test_PendingCodeAt EVM method: eth_getCode
-func (s *TestSuite) Test_PendingCodeAt() {
+func (s *NodeSuite) Test_PendingCodeAt() {
 	code, err := s.ethClient.PendingCodeAt(context.Background(), s.fundedAccEthAddr)
 	s.NoError(err)
 
@@ -172,7 +177,7 @@ func (s *TestSuite) Test_PendingCodeAt() {
 }
 
 // Test_EstimateGas EVM method: eth_estimateGas
-func (s *TestSuite) Test_EstimateGas() {
+func (s *NodeSuite) Test_EstimateGas() {
 	testAccEthAddr := gethcommon.BytesToAddress(testnetwork.NewAccount(s.network, "new-user"))
 	gasLimit := uint64(21000)
 	msg := geth.CallMsg{
@@ -196,14 +201,14 @@ func (s *TestSuite) Test_EstimateGas() {
 }
 
 // Test_SuggestGasPrice EVM method: eth_gasPrice
-func (s *TestSuite) Test_SuggestGasPrice() {
+func (s *NodeSuite) Test_SuggestGasPrice() {
 	// TODO: the backend method is stubbed to 0
 	_, err := s.ethClient.SuggestGasPrice(context.Background())
 	s.NoError(err)
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
-func (s *TestSuite) Test_SimpleTransferTransaction() {
+func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.PendingNonceAt(context.Background(), s.fundedAccEthAddr)
@@ -217,9 +222,10 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 	s.T().Log("make sure the sender has enough funds")
 	weiToSend := evm.NativeToWei(big.NewInt(1))                          // 1 unibi
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 5_000_000)) // 5 * 10^6 unibi
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
 	senderBalanceBeforeWei, err := s.ethClient.BalanceAt(
@@ -231,13 +237,15 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 	grpcConn, err := gosdk.GetGRPCConnection(grpcUrl, true, 5)
 	s.NoError(err)
 
-	querier := bank.NewQueryClient(grpcConn)
-	resp, err := querier.Balance(context.Background(), &bank.QueryBalanceRequest{
-		Address: s.fundedAccNibiAddr.String(),
-		Denom:   eth.EthBaseDenom,
-	})
-	s.Require().NoError(err)
-	s.Equal("105"+strings.Repeat("0", 6), resp.Balance.Amount.String())
+	{
+		querier := bank.NewQueryClient(grpcConn)
+		resp, err := querier.Balance(context.Background(), &bank.QueryBalanceRequest{
+			Address: s.fundedAccNibiAddr.String(),
+			Denom:   eth.EthBaseDenom,
+		})
+		s.Require().NoError(err)
+		s.Equal("105"+strings.Repeat("0", 6), resp.Balance.Amount.String())
+	}
 
 	s.T().Logf("Sending %d wei to %s", weiToSend, recipientAddr.Hex())
 	signer := gethcore.LatestSignerForChainID(chainID)
@@ -257,7 +265,36 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
-	senderAmountAfterWei, err := s.ethClient.BalanceAt(context.Background(), s.fundedAccEthAddr, nil)
+	s.NoError(s.network.WaitForNextBlock())
+	s.NoError(s.network.WaitForNextBlock())
+
+	txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
+	s.NoError(err)
+
+	s.T().Log("Assert event expectations - successful eth tx")
+	{
+		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
+		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+		s.NoError(err)
+		ethTxEvents := []sdk.Event{}
+		events := blockOfTx.TxsResults[0].Events
+		for _, event := range events {
+			if event.Type == "ethereum_tx" {
+				ethTxEvents = append(ethTxEvents,
+					sdk.Event{Type: event.Type, Attributes: event.Attributes},
+				)
+			}
+		}
+
+		eventsJson, _ := json.Marshal(events)
+		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
+		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
+		s.Require().Equal(hash0, hash1)
+	}
+
+	s.T().Log("Assert balances")
+	senderBalanceAfterWei, err := s.ethClient.BalanceAt(context.Background(), s.fundedAccEthAddr, nil)
 	s.NoError(err)
 
 	costOfTx := new(big.Int).Add(
@@ -265,7 +302,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 		new(big.Int).Mul((new(big.Int).SetUint64(params.TxGas)), gasPrice),
 	)
 	wantSenderBalWei := new(big.Int).Sub(senderBalanceBeforeWei, costOfTx)
-	s.Equal(wantSenderBalWei.String(), senderAmountAfterWei.String(), "surpising sender balance")
+	s.Equal(wantSenderBalWei.String(), senderBalanceAfterWei.String(), "surpising sender balance")
 
 	recipientBalanceAfter, err := s.ethClient.BalanceAt(context.Background(), recipientAddr, nil)
 	s.NoError(err)
@@ -275,7 +312,7 @@ func (s *TestSuite) Test_SimpleTransferTransaction() {
 var blankCtx = context.Background()
 
 // Test_SmartContract includes contract deployment, query, execution
-func (s *TestSuite) Test_SmartContract() {
+func (s *NodeSuite) Test_SmartContract() {
 	chainID, err := s.ethClient.ChainID(context.Background())
 	s.NoError(err)
 	nonce, err := s.ethClient.NonceAt(context.Background(), s.fundedAccEthAddr, nil)
@@ -284,9 +321,10 @@ func (s *TestSuite) Test_SmartContract() {
 	s.T().Log("Make sure the account has funds.")
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 1_000_000_000))
-	s.Require().NoError(testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom),
+	_, err = testnetwork.FillWalletFromValidator(
+		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
+	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
 
 	grpcUrl := s.network.Validators[0].AppConfig.GRPC.Address
@@ -376,7 +414,6 @@ func (s *TestSuite) Test_SmartContract() {
 		txBz, err := tx.MarshalBinary()
 		s.NoError(err)
 		txHash, err := s.ethAPI.SendRawTransaction(txBz)
-		// err = s.ethClient.SendTransaction(blankCtx, tx)
 		s.Require().NoError(err)
 		_ = s.network.WaitForNextBlock()
 
@@ -384,12 +421,18 @@ func (s *TestSuite) Test_SmartContract() {
 		s.Require().NoError(err)
 		s.NotNil(txReceipt)
 
-		_, err = s.ethAPI.GetTransactionLogs(txHash)
+		txHashFromReceipt := txReceipt.TxHash
+		s.Equal(txHash, txHashFromReceipt)
+
+		// TODO: Test eth_getTransactionByHash using a JSON-RPC request at the
+		// endpoint directly.
+		tx, _, err = s.ethClient.TransactionByHash(blankCtx, txHash)
 		s.NoError(err)
+		s.NotNil(tx)
 	}
 }
 
-func (s *TestSuite) TearDownSuite() {
+func (s *NodeSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
