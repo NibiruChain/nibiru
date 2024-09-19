@@ -102,7 +102,6 @@ func (s *NodeSuite) SetupSuite() {
 	)
 	s.Require().NoError(err)
 	s.txHistory = append(s.txHistory, txResp)
-
 	s.NoError(s.network.WaitForNextBlock())
 }
 

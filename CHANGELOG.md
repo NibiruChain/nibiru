@@ -121,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
 - [#2037](https://github.com/NibiruChain/nibiru/pull/2037) - test(evm-rpc-backend): Add testnetwork tests using a node with a real RPC backend
 - [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): remove unnecessary interface code
+- [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): Remove mocks from eth/rpc/backend, partially completing [nibiru#2037](https://github.com/NibiruChain/nibiru/issue/2037). 
 
 #### Dapp modules: perp, spot, oracle, etc
 
