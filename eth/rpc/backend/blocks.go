@@ -29,8 +29,7 @@ import (
 
 // BlockNumber returns the current block number in abci app state. Because abci
 // app state could lag behind from tendermint latest block, it's more stable for
-// the client to use the latest block number in abci app state than tendermint
-// gethrpc.
+// the client to use the latest block number in abci app state than tendermint rpc.
 func (b *Backend) BlockNumber() (hexutil.Uint64, error) {
 	// do any grpc query, ignore the response and use the returned block height
 	var header metadata.MD

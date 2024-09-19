@@ -1,8 +1,11 @@
 package backend_test
 
 import (
+	"context"
+	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"crypto/ecdsa"
 
@@ -84,20 +87,21 @@ func (s *BackendSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 
 	// Send Transfer TX and use the results in the tests
-	block, err := s.backend.BlockNumber()
 	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
-	transferTxBlockNumber = rpc.NewBlockNumber(big.NewInt(int64(block) + 1))
-	blockResults, err := s.backend.TendermintBlockByNumber(transferTxBlockNumber)
-	s.Require().NoError(err)
-	s.Require().NotNil(blockResults)
-	transferTxBlockHash = gethcommon.BytesToHash(blockResults.Block.Hash().Bytes())
+	blockNumber, blockHash := WaitForReceipt(s, transferTxHash)
+	s.Require().NotNil(blockNumber)
+	s.Require().NotNil(blockHash)
+	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
+	transferTxBlockHash = *blockHash
 
 	// Deploy test erc20 contract
-	block, err = s.backend.BlockNumber()
-	s.Require().NoError(err)
-	_, testContractAddress = s.DeployTestContract(true)
-	deployContractBlockNumber = rpc.NewBlockNumber(big.NewInt(int64(block) + 1))
+	deployContractTxHash, contractAddress := s.DeployTestContract(true)
+	testContractAddress = contractAddress
+	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	s.Require().NotNil(blockNumber)
+	s.Require().NotNil(blockHash)
+	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -156,4 +160,23 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 		s.Require().NoError(s.network.WaitForNextBlock())
 	}
 	return txHash
+}
+
+func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	for {
+		receipt, err := s.backend.GetTransactionReceipt(txHash)
+		if err == nil {
+			return receipt.BlockNumber, &receipt.BlockHash
+		}
+		select {
+		case <-ctx.Done():
+			fmt.Println("Timeout reached, transaction not included in a block yet.")
+			return nil, nil
+		default:
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
