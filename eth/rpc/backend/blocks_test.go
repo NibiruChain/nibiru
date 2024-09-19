@@ -3,7 +3,7 @@ package backend_test
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	gethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
 func (s *BackendSuite) TestBlockNumber() {
@@ -38,13 +38,13 @@ func (s *BackendSuite) TestGetBlockByHash() {
 func (s *BackendSuite) TestBlockNumberFromTendermint() {
 	testCases := []struct {
 		name            string
-		blockNrOrHash   gethrpc.BlockNumberOrHash
-		wantBlockNumber gethrpc.BlockNumber
+		blockNrOrHash   rpc.BlockNumberOrHash
+		wantBlockNumber rpc.BlockNumber
 		wantErr         string
 	}{
 		{
 			name: "happy: block number specified",
-			blockNrOrHash: gethrpc.BlockNumberOrHash{
+			blockNrOrHash: rpc.BlockNumberOrHash{
 				BlockNumber: &transferTxBlockNumber,
 			},
 			wantBlockNumber: transferTxBlockNumber,
@@ -52,7 +52,7 @@ func (s *BackendSuite) TestBlockNumberFromTendermint() {
 		},
 		{
 			name: "happy: block hash specified",
-			blockNrOrHash: gethrpc.BlockNumberOrHash{
+			blockNrOrHash: rpc.BlockNumberOrHash{
 				BlockHash: &transferTxBlockHash,
 			},
 			wantBlockNumber: transferTxBlockNumber,
@@ -60,7 +60,7 @@ func (s *BackendSuite) TestBlockNumberFromTendermint() {
 		},
 		{
 			name:            "sad: neither block number nor hash specified",
-			blockNrOrHash:   gethrpc.BlockNumberOrHash{},
+			blockNrOrHash:   rpc.BlockNumberOrHash{},
 			wantBlockNumber: 0,
 			wantErr:         "BlockHash and BlockNumber cannot be both nil",
 		},

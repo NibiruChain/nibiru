@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -30,9 +32,13 @@ import (
 
 var recipient = evmtest.NewEthPrivAcc().EthAddr
 var amountToSend = evm.NativeToWei(big.NewInt(1))
+
 var transferTxBlockNumber rpc.BlockNumber
 var transferTxBlockHash gethcommon.Hash
 var transferTxHash gethcommon.Hash
+
+var testContractAddress gethcommon.Address
+var deployContractBlockNumber rpc.BlockNumber
 
 type BackendSuite struct {
 	suite.Suite
@@ -77,7 +83,7 @@ func (s *BackendSuite) SetupSuite() {
 	s.Require().NotNil(txResp.TxHash)
 	s.NoError(s.network.WaitForNextBlock())
 
-	// Send 1 Transfer TX and use the results in the tests
+	// Send Transfer TX and use the results in the tests
 	block, err := s.backend.BlockNumber()
 	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
@@ -86,6 +92,12 @@ func (s *BackendSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.Require().NotNil(blockResults)
 	transferTxBlockHash = gethcommon.BytesToHash(blockResults.Block.Hash().Bytes())
+
+	// Deploy test erc20 contract
+	block, err = s.backend.BlockNumber()
+	s.Require().NoError(err)
+	_, testContractAddress = s.DeployTestContract(true)
+	deployContractBlockNumber = rpc.NewBlockNumber(big.NewInt(int64(block) + 1))
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -94,22 +106,49 @@ func (s *BackendSuite) SendNibiViaEthTransfer(
 	amount *big.Int,
 	waitForNextBlock bool,
 ) gethcommon.Hash {
-	signer := gethcore.LatestSignerForChainID(s.ethChainID)
-	gasPrice := evm.NativeToWei(big.NewInt(1))
 	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
-	s.NoError(err)
-	tx, err := gethcore.SignNewTx(
-		s.fundedAccPrivateKey,
-		signer,
+	s.Require().NoError(err)
+	return SendTransaction(
+		s,
 		&gethcore.LegacyTx{
 			To:       &to,
 			Nonce:    uint64(*nonce),
 			Value:    amount,
 			Gas:      params.TxGas,
-			GasPrice: gasPrice,
-		})
+			GasPrice: big.NewInt(1),
+		},
+		waitForNextBlock,
+	)
+}
+
+// DeployTestContract deploys test erc20 contract
+func (s *BackendSuite) DeployTestContract(waitForNextBlock bool) (gethcommon.Hash, gethcommon.Address) {
+	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
 	s.Require().NoError(err)
-	txBz, err := tx.MarshalBinary()
+	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
+	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	s.Require().NoError(err)
+
+	txHash := SendTransaction(
+		s,
+		&gethcore.LegacyTx{
+			Nonce:    uint64(*nonce),
+			Data:     bytecodeForCall,
+			Gas:      1500_000,
+			GasPrice: big.NewInt(1),
+		},
+		waitForNextBlock,
+	)
+	contractAddr := crypto.CreateAddress(s.fundedAccEthAddr, (uint64)(*nonce))
+	return txHash, contractAddr
+}
+
+// SendTransaction signs and sends raw ethereum transaction
+func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bool) gethcommon.Hash {
+	signer := gethcore.LatestSignerForChainID(s.ethChainID)
+	signedTx, err := gethcore.SignNewTx(s.fundedAccPrivateKey, signer, tx)
+	s.Require().NoError(err)
+	txBz, err := signedTx.MarshalBinary()
 	s.Require().NoError(err)
 	txHash, err := s.backend.SendRawTransaction(txBz)
 	s.Require().NoError(err)

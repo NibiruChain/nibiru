@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	gethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -59,7 +59,7 @@ func (b *Backend) BlockNumber() (hexutil.Uint64, error) {
 // GetBlockByNumber returns the JSON-RPC compatible Ethereum block identified by
 // block number. Depending on fullTx it either returns the full transaction
 // objects or if false only the hashes of the transactions.
-func (b *Backend) GetBlockByNumber(blockNum gethrpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
+func (b *Backend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, nil
@@ -137,7 +137,7 @@ func (b *Backend) GetBlockTransactionCountByHash(hash gethcommon.Hash) *hexutil.
 
 // GetBlockTransactionCountByNumber returns the number of Ethereum transactions
 // in the block identified by number.
-func (b *Backend) GetBlockTransactionCountByNumber(blockNum gethrpc.BlockNumber) *hexutil.Uint {
+func (b *Backend) GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) *hexutil.Uint {
 	block, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		b.logger.Debug("block not found", "height", blockNum.Int64(), "error", err.Error())
@@ -167,7 +167,7 @@ func (b *Backend) GetBlockTransactionCount(block *tmrpctypes.ResultBlock) *hexut
 
 // TendermintBlockByNumber returns a Tendermint-formatted block for a given
 // block number
-func (b *Backend) TendermintBlockByNumber(blockNum gethrpc.BlockNumber) (*tmrpctypes.ResultBlock, error) {
+func (b *Backend) TendermintBlockByNumber(blockNum rpc.BlockNumber) (*tmrpctypes.ResultBlock, error) {
 	height := blockNum.Int64()
 	if height <= 0 {
 		// fetch the latest block number from the app state, more accurate than the tendermint block store state.
@@ -222,20 +222,20 @@ func (b *Backend) TendermintBlockByHash(blockHash gethcommon.Hash) (*tmrpctypes.
 }
 
 // BlockNumberFromTendermint returns the BlockNumber from BlockNumberOrHash
-func (b *Backend) BlockNumberFromTendermint(blockNrOrHash gethrpc.BlockNumberOrHash) (gethrpc.BlockNumber, error) {
+func (b *Backend) BlockNumberFromTendermint(blockNrOrHash rpc.BlockNumberOrHash) (rpc.BlockNumber, error) {
 	switch {
 	case blockNrOrHash.BlockHash == nil && blockNrOrHash.BlockNumber == nil:
-		return gethrpc.EthEarliestBlockNumber, fmt.Errorf("types BlockHash and BlockNumber cannot be both nil")
+		return rpc.EthEarliestBlockNumber, fmt.Errorf("types BlockHash and BlockNumber cannot be both nil")
 	case blockNrOrHash.BlockHash != nil:
 		blockNumber, err := b.BlockNumberFromTendermintByHash(*blockNrOrHash.BlockHash)
 		if err != nil {
-			return gethrpc.EthEarliestBlockNumber, err
+			return rpc.EthEarliestBlockNumber, err
 		}
-		return gethrpc.NewBlockNumber(blockNumber), nil
+		return rpc.NewBlockNumber(blockNumber), nil
 	case blockNrOrHash.BlockNumber != nil:
 		return *blockNrOrHash.BlockNumber, nil
 	default:
-		return gethrpc.EthEarliestBlockNumber, nil
+		return rpc.EthEarliestBlockNumber, nil
 	}
 }
 
@@ -268,7 +268,7 @@ func (b *Backend) EthMsgsFromTendermintBlock(
 		//  - Include unsuccessful tx that exceeds block gas limit
 		//  - Include unsuccessful tx that failed when committing changes to stateDB
 		//  - Exclude unsuccessful tx with any other error but ExceedBlockGasLimit
-		isValidEnough, reason := gethrpc.TxIsValidEnough(txResults[i])
+		isValidEnough, reason := rpc.TxIsValidEnough(txResults[i])
 		if !isValidEnough {
 			b.logger.Debug(
 				"invalid tx result code",
@@ -298,7 +298,7 @@ func (b *Backend) EthMsgsFromTendermintBlock(
 }
 
 // HeaderByNumber returns the block header identified by height.
-func (b *Backend) HeaderByNumber(blockNum gethrpc.BlockNumber) (*gethcore.Header, error) {
+func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, err
@@ -324,7 +324,7 @@ func (b *Backend) HeaderByNumber(blockNum gethrpc.BlockNumber) (*gethcore.Header
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", resBlock.Block.Height, "error", err)
 	}
 
-	ethHeader := gethrpc.EthHeaderFromTendermint(resBlock.Block.Header, bloom, baseFee)
+	ethHeader := rpc.EthHeaderFromTendermint(resBlock.Block.Header, bloom, baseFee)
 	return ethHeader, nil
 }
 
@@ -376,7 +376,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 		tx := ethMsg.AsTransaction()
 		height := uint64(block.Height) //#nosec G701 -- checked for int overflow already
 		index := uint64(txIndex)       //#nosec G701 -- checked for int overflow already
-		rpcTx, err := gethrpc.NewRPCTxFromEthTx(
+		rpcTx, err := rpc.NewRPCTxFromEthTx(
 			tx,
 			gethcommon.BytesToHash(block.Hash()),
 			height,
@@ -402,7 +402,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 
 	var validatorAccAddr sdk.AccAddress
 
-	ctx := gethrpc.NewContextWithHeight(block.Height)
+	ctx := rpc.NewContextWithHeight(block.Height)
 	res, err := b.queryClient.ValidatorAccount(ctx, req)
 	if err != nil {
 		b.logger.Debug(
@@ -422,7 +422,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 
 	validatorAddr := gethcommon.BytesToAddress(validatorAccAddr)
 
-	gasLimit, err := gethrpc.BlockMaxGasFromConsensusParams(ctx, b.clientCtx, block.Height)
+	gasLimit, err := rpc.BlockMaxGasFromConsensusParams(ctx, b.clientCtx, block.Height)
 	if err != nil {
 		b.logger.Error("failed to query consensus params", "error", err.Error())
 	}
@@ -438,7 +438,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 		gasUsed += uint64(txsResult.GetGasUsed()) // #nosec G701 -- checked for int overflow already
 	}
 
-	formattedBlock := gethrpc.FormatBlock(
+	formattedBlock := rpc.FormatBlock(
 		block.Header, block.Size(),
 		gasLimit, new(big.Int).SetUint64(gasUsed),
 		ethRPCTxs, bloom, validatorAddr, baseFee,
@@ -447,7 +447,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 }
 
 // EthBlockByNumber returns the Ethereum Block identified by number.
-func (b *Backend) EthBlockByNumber(blockNum gethrpc.BlockNumber) (*gethcore.Block, error) {
+func (b *Backend) EthBlockByNumber(blockNum rpc.BlockNumber) (*gethcore.Block, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, err
@@ -484,7 +484,7 @@ func (b *Backend) EthBlockFromTendermintBlock(
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", height, "error", err)
 	}
 
-	ethHeader := gethrpc.EthHeaderFromTendermint(block.Header, bloom, baseFee)
+	ethHeader := rpc.EthHeaderFromTendermint(block.Header, bloom, baseFee)
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
 
 	txs := make([]*gethcore.Transaction, len(msgs))
