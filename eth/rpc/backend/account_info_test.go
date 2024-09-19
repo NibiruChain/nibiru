@@ -3,9 +3,10 @@ package backend_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/sha3"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
 	rpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
