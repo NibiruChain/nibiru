@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -605,7 +606,18 @@ func OpenEVMIndexer(
 	}
 
 	idxLogger := ctx.Logger.With("indexer", "evm")
-	return indexer.NewKVIndexer(idxDB, idxLogger, clientCtx), nil
+	evmIndexer := indexer.NewEVMTxIndexer(idxDB, idxLogger, clientCtx)
+
+	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
+	evmIndexerService.SetLogger(idxLogger)
+
+	errCh := make(chan error)
+	go func() {
+		if err := evmIndexerService.Start(); err != nil {
+			errCh <- err
+		}
+	}()
+	return evmIndexer, nil
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
