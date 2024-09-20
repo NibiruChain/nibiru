@@ -37,11 +37,7 @@ func NewBackend(
 	allowUnprotectedTxs bool,
 	indexer eth.EVMTxIndexer,
 ) *Backend {
-	chainID, err := eth.ParseEthChainID(clientCtx.ChainID)
-	if err != nil {
-		panic(err)
-	}
-
+	chainID := eth.ParseEthChainID(clientCtx.ChainID)
 	appConf, err := config.GetConfig(ctx.Viper)
 	if err != nil {
 		panic(err)
