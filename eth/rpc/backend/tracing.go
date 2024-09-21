@@ -9,7 +9,7 @@ import (
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -18,7 +18,7 @@ import (
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (b *Backend) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (interface{}, error) {
+func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig) (interface{}, error) {
 	// Get transaction by hash
 	transaction, err := b.GetTxByEthHash(hash)
 	if err != nil {
@@ -101,7 +101,7 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (i
 		Predecessors:    predecessors,
 		BlockNumber:     blk.Block.Height,
 		BlockTime:       blk.Block.Time,
-		BlockHash:       common.Bytes2Hex(blk.BlockID.Hash),
+		BlockHash:       gethcommon.Bytes2Hex(blk.BlockID.Hash),
 		ProposerAddress: sdk.ConsAddress(blk.Block.ProposerAddress),
 		ChainId:         b.chainID.Int64(),
 		BlockMaxGas:     cp.ConsensusParams.Block.MaxGas,
@@ -191,7 +191,7 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 		TraceConfig:     config,
 		BlockNumber:     block.Block.Height,
 		BlockTime:       block.Block.Time,
-		BlockHash:       common.Bytes2Hex(block.BlockID.Hash),
+		BlockHash:       gethcommon.Bytes2Hex(block.BlockID.Hash),
 		ProposerAddress: sdk.ConsAddress(block.Block.ProposerAddress),
 		ChainId:         b.chainID.Int64(),
 		BlockMaxGas:     cp.ConsensusParams.Block.MaxGas,
@@ -240,7 +240,7 @@ func (b *Backend) TraceCall(
 		Predecessors:    nil,
 		BlockNumber:     blk.Block.Height,
 		BlockTime:       blk.Block.Time,
-		BlockHash:       common.Bytes2Hex(blk.BlockID.Hash),
+		BlockHash:       gethcommon.Bytes2Hex(blk.BlockID.Hash),
 		ProposerAddress: sdk.ConsAddress(blk.Block.ProposerAddress),
 		ChainId:         b.chainID.Int64(),
 		BlockMaxGas:     cp.ConsensusParams.Block.MaxGas,

@@ -127,17 +127,22 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 	return nil, nil
 }
 
-// GetGasUsed returns gasUsed from transaction, patching to
-// price * gas in the event the tx is reverted.
-func (b *Backend) GetGasUsed(res *eth.TxResult, price *big.Int, gas uint64) uint64 {
-	if res.Failed && res.Height < b.cfg.JSONRPC.FixRevertGasRefundHeight {
-		return new(big.Int).Mul(price, new(big.Int).SetUint64(gas)).Uint64()
-	}
-	return res.GasUsed
+// TransactionReceipt represents the results of a transaction. TransactionReceipt
+// is an extension of gethcore.Receipt, the response type for the
+// "eth_getTransactionReceipt" JSON-RPC method.
+// Reason being, the gethcore.Receipt struct has an incorrect JSON struct tag on one
+// field and doesn't marshal JSON as expected, so we embed and extend it here.
+type TransactionReceipt struct {
+	gethcore.Receipt
+
+	ContractAddress   *gethcommon.Address `json:"contractAddress,omitempty"`
+	From              gethcommon.Address
+	To                *gethcommon.Address
+	EffectiveGasPrice *big.Int
 }
 
 // GetTransactionReceipt returns the transaction receipt identified by hash.
-func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (map[string]interface{}, error) {
+func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionReceipt, error) {
 	hexTx := hash.Hex()
 	b.logger.Debug("eth_getTransactionReceipt", "hash", hexTx)
 
@@ -175,16 +180,12 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (map[string]interf
 	}
 	cumulativeGasUsed += res.CumulativeGasUsed
 
-	var status hexutil.Uint
+	var status uint64 = gethcore.ReceiptStatusSuccessful
 	if res.Failed {
-		status = hexutil.Uint(gethcore.ReceiptStatusFailed)
-	} else {
-		status = hexutil.Uint(gethcore.ReceiptStatusSuccessful)
+		status = gethcore.ReceiptStatusFailed
 	}
-	chainID, err := b.ChainID()
-	if err != nil {
-		return nil, err
-	}
+
+	chainID := b.ChainID()
 
 	from, err := ethMsg.GetSender(chainID.ToInt())
 	if err != nil {
@@ -213,40 +214,38 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (map[string]interf
 		return nil, errors.New("can't find index of ethereum tx")
 	}
 
-	// TODO: refactor(evm-rpc-backend): Replace interface with gethcore.Receipt
-	// in eth_getTransactionReceipt
-	receipt := map[string]interface{}{
-		// Consensus fields: These fields are defined by the Yellow Paper
-		"status":            status,
-		"cumulativeGasUsed": hexutil.Uint64(cumulativeGasUsed),
-		"logsBloom":         gethcore.BytesToBloom(gethcore.LogsBloom(logs)),
-		"logs":              logs,
+	receipt := TransactionReceipt{
+		Receipt: gethcore.Receipt{
+			Type: ethMsg.AsTransaction().Type(),
 
-		// Implementation fields: These fields are added by geth when processing a transaction.
-		// They are stored in the chain database.
-		"transactionHash": hash,
-		"contractAddress": nil,
-		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, txData.GetGasPrice(), txData.GetGas())),
+			// Consensus fields: These fields are defined by the Etheruem Yellow Paper
+			Status:            status,
+			CumulativeGasUsed: cumulativeGasUsed,
+			Bloom:             gethcore.BytesToBloom(gethcore.LogsBloom(logs)),
+			Logs:              logs,
 
-		// Inclusion information: These fields provide information about the inclusion of the
-		// transaction corresponding to this receipt.
-		"blockHash":        gethcommon.BytesToHash(resBlock.Block.Header.Hash()).Hex(),
-		"blockNumber":      hexutil.Uint64(res.Height),
-		"transactionIndex": hexutil.Uint64(res.EthTxIndex),
+			// Implementation fields: These fields are added by geth when processing a transaction.
+			// They are stored in the chain database.
+			TxHash:  hash,
+			GasUsed: res.GasUsed,
 
-		// sender and receiver (contract or EOA) addreses
-		"from": from,
-		"to":   txData.GetTo(),
-		"type": hexutil.Uint(ethMsg.AsTransaction().Type()),
+			BlockHash:        gethcommon.BytesToHash(resBlock.Block.Header.Hash()),
+			BlockNumber:      big.NewInt(res.Height),
+			TransactionIndex: uint(res.EthTxIndex),
+		},
+		ContractAddress: nil,
+		From:            from,
+		To:              txData.GetTo(),
 	}
 
 	if logs == nil {
-		receipt["logs"] = [][]*gethcore.Log{}
+		receipt.Logs = []*gethcore.Log{}
 	}
 
 	// If the ContractAddress is 20 0x0 bytes, assume it is not a contract creation
 	if txData.GetTo() == nil {
-		receipt["contractAddress"] = crypto.CreateAddress(from, txData.GetNonce())
+		addr := crypto.CreateAddress(from, txData.GetNonce())
+		receipt.ContractAddress = &addr
 	}
 
 	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
@@ -255,11 +254,10 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (map[string]interf
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPriceWei(baseFee))
+			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWei(baseFee)
 		}
 	}
-
-	return receipt, nil
+	return &receipt, nil
 }
 
 // GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.
