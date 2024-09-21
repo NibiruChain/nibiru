@@ -45,9 +45,9 @@ nibid evm-tx-index last-indexed latest
 				logger.Error("failed to open evm indexer DB", "error", err.Error())
 				return err
 			}
-			defer evmIndexerDB.Close()
 
 			evmTxIndexer := indexer.NewEVMTxIndexer(evmIndexerDB, logger.With("module", "evmindex"), clientCtx)
+			defer evmTxIndexer.CloseDBAndExit()
 
 			tmdb, err := tmnode.DefaultDBProvider(&tmnode.DBContext{ID: "blockstore", Config: cfg})
 			if err != nil {

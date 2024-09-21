@@ -385,12 +385,12 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 	var evmIdxer eth.EVMTxIndexer
 	if conf.JSONRPC.EnableIndexer {
-		idxer, err := OpenEVMIndexer(ctx, ctx.Logger, clientCtx, home)
+		evmTxIndexer, _, err := OpenEVMIndexer(ctx, ctx.Logger, clientCtx, home)
 		if err != nil {
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
 		}
-		evmIdxer = idxer
+		evmIdxer = evmTxIndexer
 	}
 
 	if conf.API.Enable || conf.JSONRPC.Enable {
@@ -508,7 +508,9 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
-		httpSrv, httpSrvDone, err = StartJSONRPC(ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer)
+		httpSrv, httpSrvDone, err = StartJSONRPC(
+			ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer,
+		)
 		if err != nil {
 			return err
 		}
@@ -594,15 +596,12 @@ func OpenIndexerDB(rootDir string, backendType dbm.BackendType) (dbm.DB, error) 
 }
 
 func OpenEVMIndexer(
-	ctx *sdkserver.Context,
-	logger log.Logger,
-	clientCtx client.Context,
-	homeDir string,
-) (eth.EVMTxIndexer, error) {
+	ctx *sdkserver.Context, logger log.Logger, clientCtx client.Context, homeDir string,
+) (eth.EVMTxIndexer, *EVMTxIndexerService, error) {
 	idxDB, err := OpenIndexerDB(homeDir, sdkserver.GetAppDBBackend(ctx.Viper))
 	if err != nil {
 		logger.Error("failed to open evm indexer DB", "error", err.Error())
-		return nil, err
+		return nil, nil, err
 	}
 
 	idxLogger := ctx.Logger.With("indexer", "evm")
@@ -617,7 +616,7 @@ func OpenEVMIndexer(
 			errCh <- err
 		}
 	}()
-	return evmIndexer, nil
+	return evmIndexer, evmIndexerService, nil
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {

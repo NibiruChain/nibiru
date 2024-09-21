@@ -22,8 +22,9 @@ const (
 type EVMTxIndexerService struct {
 	service.BaseService
 
-	txIndexer *indexer.EVMTxIndexer
-	client    rpcclient.Client
+	txIndexer  *indexer.EVMTxIndexer
+	client     rpcclient.Client
+	cancelFunc context.CancelFunc
 }
 
 // NewEVMIndexerService returns a new service instance.
@@ -39,7 +40,9 @@ func NewEVMIndexerService(
 // OnStart implements service.Service by subscribing for new blocks
 // and indexing them by events.
 func (service *EVMTxIndexerService) OnStart() error {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	service.cancelFunc = cancel
+
 	status, err := service.client.Status(ctx)
 	if err != nil {
 		return err
@@ -57,20 +60,29 @@ func (service *EVMTxIndexerService) OnStart() error {
 		return err
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 		for {
-			msg := <-blockHeadersChan
-			eventDataHeader := msg.Data.(types.EventDataNewBlockHeader)
-			if eventDataHeader.Header.Height > latestBlock {
-				latestBlock = eventDataHeader.Header.Height
-				// notify
-				select {
-				case newBlockSignal <- struct{}{}:
-				default:
+			select {
+			case <-ctx.Done(): // Listen for context cancellation to stop the goroutine
+				service.Logger.Info("Stopping indexer goroutine")
+				err := service.txIndexer.CloseDBAndExit()
+				if err != nil {
+					service.Logger.Error("Error closing indexer DB", "err", err)
+				}
+				return
+			case msg := <-blockHeadersChan:
+				eventDataHeader := msg.Data.(types.EventDataNewBlockHeader)
+				if eventDataHeader.Header.Height > latestBlock {
+					latestBlock = eventDataHeader.Header.Height
+					// notify
+					select {
+					case newBlockSignal <- struct{}{}:
+					default:
+					}
 				}
 			}
 		}
-	}()
+	}(ctx)
 
 	lastBlock, err := service.txIndexer.LastIndexedBlock()
 	if err != nil {
@@ -104,5 +116,13 @@ func (service *EVMTxIndexerService) OnStart() error {
 			}
 			lastBlock = blockResult.Height
 		}
+	}
+}
+
+func (service *EVMTxIndexerService) OnStop() {
+	service.Logger.Info("Stopping EVMTxIndexerService")
+	if service.cancelFunc != nil {
+		// Call the cancel function to stop the goroutine
+		service.cancelFunc()
 	}
 }

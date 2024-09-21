@@ -208,6 +208,15 @@ func LoadFirstBlock(db dbm.DB) (int64, error) {
 	return parseBlockNumberFromKey(it.Key())
 }
 
+// CloseDBAndExit should be called upon stopping the indexer
+func (indexer *EVMTxIndexer) CloseDBAndExit() error {
+	err := indexer.db.Close()
+	if err != nil {
+		return errorsmod.Wrap(err, "CloseDBAndExit")
+	}
+	return nil
+}
+
 // isEthTx check if the tx is an eth tx
 func isEthTx(tx sdk.Tx) bool {
 	extTx, ok := tx.(authante.HasExtensionOptionsTx)
