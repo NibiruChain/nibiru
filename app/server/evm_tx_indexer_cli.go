@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
 	tmnode "github.com/cometbft/cometbft/node"
 	sm "github.com/cometbft/cometbft/state"
@@ -40,12 +41,12 @@ nibid evm-tx-index last-indexed latest
 			cfg := serverCtx.Config
 			logger := serverCtx.Logger
 			evmIndexerDB, err := OpenIndexerDB(cfg.RootDir, server.GetAppDBBackend(serverCtx.Viper))
-			defer evmIndexerDB.Close()
-
 			if err != nil {
 				logger.Error("failed to open evm indexer DB", "error", err.Error())
 				return err
 			}
+			defer evmIndexerDB.Close()
+
 			evmTxIndexer := indexer.NewEVMTxIndexer(evmIndexerDB, logger.With("module", "evmindex"), clientCtx)
 
 			tmdb, err := tmnode.DefaultDBProvider(&tmnode.DBContext{ID: "blockstore", Config: cfg})
@@ -69,7 +70,7 @@ nibid evm-tx-index last-indexed latest
 					fromBlock = 0
 				}
 			} else {
-				toBlock, err = strconv.ParseInt(args[1], 10, 64)
+				fromBlock, err = strconv.ParseInt(args[1], 10, 64)
 				if err != nil {
 					return fmt.Errorf("cannot parse min block number: %s", args[1])
 				}

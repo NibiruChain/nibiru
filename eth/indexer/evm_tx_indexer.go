@@ -106,7 +106,12 @@ func (indexer *EVMTxIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.
 					continue
 				}
 				if parsedTx.EthTxIndex >= 0 && parsedTx.EthTxIndex != ethTxIndex {
-					indexer.logger.Error("eth tx index don't match", "expect", ethTxIndex, "found", parsedTx.EthTxIndex)
+					indexer.logger.Error(
+						"eth tx index don't match",
+						"expect", ethTxIndex,
+						"found", parsedTx.EthTxIndex,
+						"height", height,
+					)
 				}
 				txResult.GasUsed = parsedTx.GasUsed
 				txResult.Failed = parsedTx.Failed
