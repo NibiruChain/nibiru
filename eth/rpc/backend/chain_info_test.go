@@ -1,294 +1,93 @@
-package backend
+package backend_test
 
 import (
-	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	"google.golang.org/grpc/metadata"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/cometbft/cometbft/abci/types"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend/mocks"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *BackendSuite) TestBaseFee() {
-	baseFee := sdkmath.NewInt(1)
-
-	testCases := []struct {
-		name         string
-		blockRes     *tmrpctypes.ResultBlockResults
-		registerMock func()
-		expBaseFee   *big.Int
-		expPass      bool
-	}{
-		// TODO: test(eth): Test base fee query after it's enabled.
-		// {
-		// 	"fail - grpc BaseFee error",
-		// 	&tmrpctypes.ResultBlockResults{Height: 1},
-		// 	func() {
-		// 		queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-		// 		RegisterBaseFeeError(queryClient)
-		// 	},
-		// 	nil,
-		// 	false,
-		// },
-		{
-			name: "pass - grpc BaseFee error - with non feemarket block event",
-			blockRes: &tmrpctypes.ResultBlockResults{
-				Height: 1,
-				BeginBlockEvents: []types.Event{
-					{
-						Type: evm.EventTypeBlockBloom,
-					},
-				},
-			},
-			registerMock: func() {
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterBaseFeeDisabled(queryClient)
-			},
-			expBaseFee: nil,
-			expPass:    true,
-		},
-		{
-			name:     "pass - base fee not enabled",
-			blockRes: &tmrpctypes.ResultBlockResults{Height: 1},
-			registerMock: func() {
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterBaseFeeDisabled(queryClient)
-			},
-			expBaseFee: nil,
-			expPass:    true,
-		},
-		{
-			"pass",
-			&tmrpctypes.ResultBlockResults{Height: 1},
-			func() {
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterBaseFee(queryClient, baseFee)
-			},
-			baseFee.BigInt(),
-			true,
-		},
-	}
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("Case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			baseFee, err := s.backend.BaseFee(tc.blockRes)
-
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expBaseFee, baseFee)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
+func (s *BackendSuite) TestChainID() {
+	s.Require().Equal(appconst.ETH_CHAIN_ID_DEFAULT, s.backend.ChainID().ToInt().Int64())
 }
 
-func (s *BackendSuite) TestChainId() {
-	expChainIDNumber, err := eth.ParseEthChainID(eth.EIP155ChainID_Testnet)
+func (s *BackendSuite) TestChainConfig() {
+	config := s.backend.ChainConfig()
+	s.Require().Equal(appconst.ETH_CHAIN_ID_DEFAULT, config.ChainID.Int64())
+	s.Require().Equal(int64(0), config.LondonBlock.Int64())
+}
+
+func (s *BackendSuite) TestBaseFee() {
+	resBlock, err := s.backend.TendermintBlockResultByNumber(transferTxBlockNumber.TmHeight())
 	s.Require().NoError(err)
-	expChainID := (*hexutil.Big)(expChainIDNumber)
-	testCases := []struct {
-		name         string
-		registerMock func()
-		expChainID   *hexutil.Big
-		expPass      bool
-	}{
-		{
-			"pass - block is at or past the EIP-155 replay-protection fork block, return chainID from config ",
-			func() {
-				var header metadata.MD
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				RegisterParamsInvalidHeight(queryClient, &header, int64(1))
-			},
-			expChainID,
-			true,
-		},
+	baseFee, err := s.backend.BaseFee(resBlock)
+	s.Require().NoError(err)
+	s.Require().Equal(evm.BASE_FEE_MICRONIBI, baseFee)
+}
+
+func (s *BackendSuite) TestCurrentHeader() {
+	currentHeader, err := s.backend.CurrentHeader()
+	s.Require().NoError(err)
+	s.Require().NotNil(currentHeader)
+	s.Require().GreaterOrEqual(currentHeader.Number.Int64(), transferTxBlockNumber.Int64())
+}
+
+func (s *BackendSuite) TestPendingTransactions() {
+	// Create pending tx: don't wait for next block
+	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
+	txHash := s.SendNibiViaEthTransfer(randomEthAddr, big.NewInt(123), false)
+	txs, err := s.backend.PendingTransactions()
+	s.Require().NoError(err)
+	s.Require().NotNil(txs)
+	s.Require().NotNil(txHash)
+	s.Require().Greater(len(txs), 0)
+	txFound := false
+	for _, tx := range txs {
+		msg, err := evm.UnwrapEthereumMsg(tx, txHash)
+		if err != nil {
+			// not ethereum tx
+			continue
+		}
+		if msg.Hash == txHash.String() {
+			txFound = true
+		}
 	}
+	s.Require().True(txFound, "pending tx not found")
+}
 
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
+func (s *BackendSuite) TestFeeHistory() {
+	currentBlock, err := s.backend.BlockNumber()
+	s.Require().NoError(err)
+	blockCount := 2 // blocks to search backwards from the current block
+	percentiles := []float64{50, 100}
 
-			chainID, err := s.backend.ChainID()
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.expChainID, chainID)
-			} else {
-				s.Require().Error(err)
-			}
-		})
+	res, err := s.backend.FeeHistory(
+		(gethrpc.DecimalOrHex)(blockCount),
+		gethrpc.BlockNumber(int64(currentBlock)),
+		percentiles,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+	s.Require().Len(res.Reward, blockCount)
+	s.Require().Len(res.BaseFee, blockCount+1)
+	s.Require().Len(res.GasUsedRatio, len(percentiles))
+
+	for _, gasUsed := range res.GasUsedRatio {
+		s.Require().LessOrEqual(gasUsed, float64(1))
 	}
 }
 
 func (s *BackendSuite) TestSuggestGasTipCap() {
-	testCases := []struct {
-		name         string
-		registerMock func()
-		baseFee      *big.Int
-		expGasTipCap *big.Int
-		expPass      bool
-	}{
-		{
-			"pass - Feemarket not enabled ",
-			func() {},
-			nil,
-			big.NewInt(0),
-			true,
-		},
-		{
-			"pass - Gets the suggest gas tip cap ",
-			func() {},
-			nil,
-			big.NewInt(0),
-			true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock()
-
-			maxDelta, err := s.backend.SuggestGasTipCap(tc.baseFee)
-
-			if tc.expPass {
-				s.Require().Equal(tc.expGasTipCap, maxDelta)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
+	tipCap, err := s.backend.SuggestGasTipCap(big.NewInt(1))
+	s.Require().NoError(err)
+	s.Require().Equal(big.NewInt(0), tipCap)
 }
 
-func (s *BackendSuite) TestFeeHistory() {
-	testCases := []struct {
-		name           string
-		registerMock   func(validator sdk.AccAddress)
-		userBlockCount ethrpc.DecimalOrHex
-		latestBlock    ethrpc.BlockNumber
-		expFeeHistory  *rpc.FeeHistoryResult
-		validator      sdk.AccAddress
-		expPass        bool
-	}{
-		{
-			"fail - can't get params ",
-			func(validator sdk.AccAddress) {
-				var header metadata.MD
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				s.backend.cfg.JSONRPC.FeeHistoryCap = 0
-				RegisterParamsError(queryClient, &header, ethrpc.BlockNumber(1).Int64())
-			},
-			1,
-			-1,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"fail - user block count higher than max block count ",
-			func(validator sdk.AccAddress) {
-				var header metadata.MD
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				s.backend.cfg.JSONRPC.FeeHistoryCap = 0
-				RegisterParams(queryClient, &header, ethrpc.BlockNumber(1).Int64())
-			},
-			1,
-			-1,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"fail - Tendermint block fetching error ",
-			func(validator sdk.AccAddress) {
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				s.backend.cfg.JSONRPC.FeeHistoryCap = 2
-				RegisterBlockError(client, ethrpc.BlockNumber(1).Int64())
-			},
-			1,
-			1,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"fail - Eth block fetching error",
-			func(validator sdk.AccAddress) {
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				s.backend.cfg.JSONRPC.FeeHistoryCap = 2
-				_, err := RegisterBlock(client, ethrpc.BlockNumber(1).Int64(), nil)
-				s.Require().NoError(err)
-				RegisterBlockResultsError(client, 1)
-			},
-			1,
-			1,
-			nil,
-			nil,
-			true,
-		},
-		{
-			name: "pass - Valid FeeHistoryResults object",
-			registerMock: func(validator sdk.AccAddress) {
-				baseFee := sdkmath.NewInt(1)
-				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				client := s.backend.clientCtx.Client.(*mocks.Client)
-				s.backend.cfg.JSONRPC.FeeHistoryCap = 2
-				blockHeight := int64(1)
-				_, err := RegisterBlock(client, blockHeight, nil)
-				s.Require().NoError(err)
-
-				_, err = RegisterBlockResults(client, blockHeight)
-				s.Require().NoError(err)
-
-				RegisterBaseFee(queryClient, baseFee)
-				RegisterValidatorAccount(queryClient, validator)
-				RegisterConsensusParams(client, blockHeight)
-
-				header := new(metadata.MD)
-				RegisterParams(queryClient, header, blockHeight)
-				RegisterParamsWithoutHeader(queryClient, blockHeight)
-			},
-			userBlockCount: 1,
-			latestBlock:    1,
-			expFeeHistory: &rpc.FeeHistoryResult{
-				OldestBlock:  (*hexutil.Big)(big.NewInt(1)),
-				BaseFee:      []*hexutil.Big{(*hexutil.Big)(big.NewInt(1)), (*hexutil.Big)(big.NewInt(1))},
-				GasUsedRatio: []float64{0},
-				Reward:       [][]*hexutil.Big{{(*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0))}},
-			},
-			validator: sdk.AccAddress(evmtest.NewEthPrivAcc().EthAddr.Bytes()),
-			expPass:   true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("case %s", tc.name), func() {
-			s.SetupTest() // reset test and queries
-			tc.registerMock(tc.validator)
-
-			feeHistory, err := s.backend.FeeHistory(tc.userBlockCount, tc.latestBlock, []float64{25, 50, 75, 100})
-			if tc.expPass {
-				s.Require().NoError(err)
-				s.Require().Equal(feeHistory, tc.expFeeHistory)
-			} else {
-				s.Require().Error(err)
-			}
-		})
-	}
+func (s *BackendSuite) TestGlobalMinGasPrice() {
+	gasPrice, err := s.backend.GlobalMinGasPrice()
+	s.Require().NoError(err)
+	s.Require().Equal(big.NewInt(0), gasPrice)
 }

@@ -20,6 +20,7 @@ import (
 
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"
+	cmtcore "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -264,4 +265,16 @@ func (val *Validator) AssertERC20Balance(
 	s.NoError(err)
 	balance := new(big.Int).SetBytes(recipientBalanceBeforeBytes)
 	s.Equal(expectedBalance.String(), balance.String())
+}
+
+func (node *Validator) BlockByEthTx(
+	ethTxHash gethcommon.Hash,
+) (*cmtcore.ResultBlockResults, error) {
+	blankCtx := context.Background()
+	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
+	if err != nil {
+		return nil, err
+	}
+	blockHeightOfTx := txReceipt.BlockNumber.Int64()
+	return node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
 }

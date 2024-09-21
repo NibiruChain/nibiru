@@ -38,14 +38,14 @@ func IsValidChainID(chainID string) bool {
 	return nibiruEvmChainId.MatchString(chainID)
 }
 
-// ParseEthChainID parses a string chain identifier's epoch to an
-// Ethereum-compatible chain-id in *big.Int format.
+// ParseEthChainID parses a string chain identifier's
+// to an Ethereum-compatible chain-id in *big.Int format.
 //
 // This function uses Nibiru's map of chain IDs defined in Nibiru/app/appconst
 // rather than the regex of EIP155, which is implemented by
 // ParseEthChainIDStrict.
-func ParseEthChainID(chainID string) (*big.Int, error) {
-	return appconst.GetEthChainID(chainID), nil
+func ParseEthChainID(chainID string) *big.Int {
+	return appconst.GetEthChainID(chainID)
 }
 
 // ParseEthChainIDStrict parses a string chain identifier's epoch to an
