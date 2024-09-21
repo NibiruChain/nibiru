@@ -33,7 +33,7 @@ func (b *Backend) GetLogsByHeight(height *int64) ([][]*gethcore.Log, error) {
 // BloomStatus returns:
 //   - bloomBitsBlocks: The number of blocks a single bloom bit section vector
 //     contains on the server side.
-//   - bloomSections: The number of processed sections maintained by the indexer.
+//   - bloomSections: The number of processed sections maintained by the evmTxIndexer.
 func (b *Backend) BloomStatus() (
 	bloomBitBlocks, bloomSections uint64,
 ) {

@@ -5,10 +5,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 	"github.com/cometbft/cometbft/libs/service"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cometbft/cometbft/types"
+
+	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 )
 
 const (

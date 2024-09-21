@@ -160,8 +160,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 			val.Ctx.Logger,
 			val.ClientCtx,
 			val.AppConfig.JSONRPC.AllowUnprotectedTxs,
-			// TODO: reenable indexer when we have indexer service (process which does IndexBlock) implemented
-			nil, //val.EthTxIndexer
+			val.EthTxIndexer,
 		)
 
 		val.Logger.Log("Expose typed methods for each namespace")

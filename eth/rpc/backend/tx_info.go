@@ -304,14 +304,11 @@ func (b *Backend) GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, 
 
 // GetTxByEthHash uses `/tx_query` to find transaction by ethereum tx hash
 func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
-	// NOTE: The Tendermint hash is not the same as the gethcommon.Hash.
-	// https://github.com/cometbft/cometbft/issues/342#issuecomment-1428836340
-	// https://github.com/tendermint/tendermint/issues/6539
-	if b.indexer != nil {
-		return b.indexer.GetByTxHash(hash)
+	if b.evmTxIndexer != nil {
+		return b.evmTxIndexer.GetByTxHash(hash)
 	}
 
-	// fallback to tendermint tx indexer
+	// fallback to tendermint tx evmTxIndexer
 	query := fmt.Sprintf("%s.%s='%s'", evm.TypeMsgEthereumTx, evm.AttributeKeyEthereumTxHash, hash.Hex())
 	txResult, err := b.queryTendermintTxIndexer(query, func(txs *rpc.ParsedTxs) *rpc.ParsedTx {
 		return txs.GetTxByHash(hash)
@@ -325,11 +322,11 @@ func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
 // GetTxByTxIndex uses `/tx_query` to find transaction by tx index of valid ethereum txs
 func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error) {
 	int32Index := int32(index) // #nosec G701 -- checked for int overflow already
-	if b.indexer != nil {
-		return b.indexer.GetByBlockAndIndex(height, int32Index)
+	if b.evmTxIndexer != nil {
+		return b.evmTxIndexer.GetByBlockAndIndex(height, int32Index)
 	}
 
-	// fallback to tendermint tx indexer
+	// fallback to tendermint tx evmTxIndexer
 	query := fmt.Sprintf("tx.height=%d AND %s.%s=%d",
 		height, evm.TypeMsgEthereumTx,
 		evm.AttributeKeyTxIndex, index,
@@ -343,7 +340,7 @@ func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error
 	return txResult, nil
 }
 
-// queryTendermintTxIndexer query tx in tendermint tx indexer
+// queryTendermintTxIndexer query tx in tendermint tx evmTxIndexer
 func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.ParsedTxs) *rpc.ParsedTx) (*eth.TxResult, error) {
 	resTxs, err := b.clientCtx.Client.TxSearch(b.ctx, query, false, nil, nil, "")
 	if err != nil {
@@ -378,7 +375,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 	}
 
 	var msg *evm.MsgEthereumTx
-	// find in tx indexer
+	// find in tx evmTxIndexer
 	res, err := b.GetTxByTxIndex(block.Block.Height, uint(idx))
 	if err == nil {
 		tx, err := b.clientCtx.TxConfig.TxDecoder()(block.Block.Txs[res.TxIndex])

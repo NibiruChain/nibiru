@@ -98,7 +98,7 @@ func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
 		{
 			name:        "happy: tx found",
 			blockHash:   blockHash,
-			txIndex:     1,
+			txIndex:     0,
 			wantTxFound: true,
 		},
 		{
@@ -139,13 +139,13 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 		{
 			name:        "happy: tx found",
 			blockNumber: transferTxBlockNumber,
-			txIndex:     1,
+			txIndex:     0,
 			wantTxFound: true,
 		},
 		{
 			name:        "sad: block not found",
 			blockNumber: rpc.NewBlockNumber(big.NewInt(9999999)),
-			txIndex:     1,
+			txIndex:     0,
 			wantTxFound: false,
 		},
 		{
@@ -175,5 +175,5 @@ func AssertTxResults(s *BackendSuite, tx *rpc.EthTxJsonRPC, expectedTxHash gethc
 	s.Require().Equal(&recipient, tx.To)
 	s.Require().Greater(tx.Gas, uint64(0))
 	s.Require().Equal(expectedTxHash, tx.Hash)
-	s.Require().Equal(uint64(1), uint64(*tx.TransactionIndex))
+	s.Require().Equal(uint64(0), uint64(*tx.TransactionIndex))
 }

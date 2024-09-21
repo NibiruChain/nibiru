@@ -26,7 +26,7 @@ type Backend struct {
 	chainID             *big.Int
 	cfg                 config.Config
 	allowUnprotectedTxs bool
-	indexer             eth.EVMTxIndexer
+	evmTxIndexer        eth.EVMTxIndexer
 }
 
 // NewBackend creates a new Backend instance for cosmos and ethereum namespaces
@@ -35,7 +35,7 @@ func NewBackend(
 	logger log.Logger,
 	clientCtx client.Context,
 	allowUnprotectedTxs bool,
-	indexer eth.EVMTxIndexer,
+	evmTxIndexer eth.EVMTxIndexer,
 ) *Backend {
 	chainID, err := eth.ParseEthChainID(clientCtx.ChainID)
 	if err != nil {
@@ -55,7 +55,7 @@ func NewBackend(
 		chainID:             chainID,
 		cfg:                 appConf,
 		allowUnprotectedTxs: allowUnprotectedTxs,
-		indexer:             indexer,
+		evmTxIndexer:        evmTxIndexer,
 	}
 }
 
