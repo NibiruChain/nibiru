@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/cometbft/cometbft/libs/service"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	ServiceName = "EVMTxIndexerService"
+	EVMTxIndexerServiceName = "EVMTxIndexerService"
 
 	NewBlockWaitTimeout = 60 * time.Second
 )
@@ -22,19 +23,16 @@ const (
 type EVMTxIndexerService struct {
 	service.BaseService
 
-	txIndexer  *indexer.EVMTxIndexer
-	client     rpcclient.Client
-	cancelFunc context.CancelFunc
+	evmTxIndexer *indexer.EVMTxIndexer
+	rpcClient    rpcclient.Client
+	cancelFunc   context.CancelFunc
 }
 
 // NewEVMIndexerService returns a new service instance.
-func NewEVMIndexerService(
-	txIdxr *indexer.EVMTxIndexer,
-	client rpcclient.Client,
-) *EVMTxIndexerService {
-	is := &EVMTxIndexerService{txIndexer: txIdxr, client: client}
-	is.BaseService = *service.NewBaseService(nil, ServiceName, is)
-	return is
+func NewEVMIndexerService(evmTxIndexer *indexer.EVMTxIndexer, rpcClient rpcclient.Client) *EVMTxIndexerService {
+	indexerService := &EVMTxIndexerService{evmTxIndexer: evmTxIndexer, rpcClient: rpcClient}
+	indexerService.BaseService = *service.NewBaseService(nil, EVMTxIndexerServiceName, indexerService)
+	return indexerService
 }
 
 // OnStart implements service.Service by subscribing for new blocks
@@ -43,16 +41,19 @@ func (service *EVMTxIndexerService) OnStart() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	service.cancelFunc = cancel
 
-	status, err := service.client.Status(ctx)
+	status, err := service.rpcClient.Status(ctx)
 	if err != nil {
 		return err
 	}
-	latestBlock := status.SyncInfo.LatestBlockHeight
-	newBlockSignal := make(chan struct{}, 1)
 
-	blockHeadersChan, err := service.client.Subscribe(
+	// chainHeightStorage is used within goroutine and the indexer loop so, using atomic for read/write
+	var chainHeightStorage int64
+	atomic.StoreInt64(&chainHeightStorage, status.SyncInfo.LatestBlockHeight)
+
+	newBlockSignal := make(chan struct{}, 1)
+	blockHeadersChan, err := service.rpcClient.Subscribe(
 		ctx,
-		ServiceName,
+		EVMTxIndexerServiceName,
 		types.QueryForEvent(types.EventNewBlockHeader).String(),
 		0,
 	)
@@ -60,20 +61,23 @@ func (service *EVMTxIndexerService) OnStart() error {
 		return err
 	}
 
+	// Goroutine listening for new blocks
 	go func(ctx context.Context) {
 		for {
 			select {
-			case <-ctx.Done(): // Listen for context cancellation to stop the goroutine
+			case <-ctx.Done():
 				service.Logger.Info("Stopping indexer goroutine")
-				err := service.txIndexer.CloseDBAndExit()
+				err := service.evmTxIndexer.CloseDBAndExit()
 				if err != nil {
 					service.Logger.Error("Error closing indexer DB", "err", err)
 				}
 				return
 			case msg := <-blockHeadersChan:
 				eventDataHeader := msg.Data.(types.EventDataNewBlockHeader)
-				if eventDataHeader.Header.Height > latestBlock {
-					latestBlock = eventDataHeader.Header.Height
+				currentChainHeight := eventDataHeader.Header.Height
+				chainHeight := atomic.LoadInt64(&chainHeightStorage)
+				if currentChainHeight > chainHeight {
+					atomic.StoreInt64(&chainHeightStorage, currentChainHeight)
 					// notify
 					select {
 					case newBlockSignal <- struct{}{}:
@@ -84,15 +88,18 @@ func (service *EVMTxIndexerService) OnStart() error {
 		}
 	}(ctx)
 
-	lastBlock, err := service.txIndexer.LastIndexedBlock()
+	lastIndexedHeight, err := service.evmTxIndexer.LastIndexedBlock()
 	if err != nil {
 		return err
 	}
-	if lastBlock == -1 {
-		lastBlock = latestBlock
+	if lastIndexedHeight == -1 {
+		lastIndexedHeight = atomic.LoadInt64(&chainHeightStorage)
 	}
+
+	// Indexer loop
 	for {
-		if latestBlock <= lastBlock {
+		chainHeight := atomic.LoadInt64(&chainHeightStorage)
+		if chainHeight <= lastIndexedHeight {
 			// nothing to index. wait for signal of new block
 			select {
 			case <-newBlockSignal:
@@ -100,21 +107,21 @@ func (service *EVMTxIndexerService) OnStart() error {
 			}
 			continue
 		}
-		for i := lastBlock + 1; i <= latestBlock; i++ {
-			block, err := service.client.Block(ctx, &i)
+		for i := lastIndexedHeight + 1; i <= chainHeight; i++ {
+			block, err := service.rpcClient.Block(ctx, &i)
 			if err != nil {
 				service.Logger.Error("failed to fetch block", "height", i, "err", err)
 				break
 			}
-			blockResult, err := service.client.BlockResults(ctx, &i)
+			blockResult, err := service.rpcClient.BlockResults(ctx, &i)
 			if err != nil {
 				service.Logger.Error("failed to fetch block result", "height", i, "err", err)
 				break
 			}
-			if err := service.txIndexer.IndexBlock(block.Block, blockResult.TxsResults); err != nil {
+			if err := service.evmTxIndexer.IndexBlock(block.Block, blockResult.TxsResults); err != nil {
 				service.Logger.Error("failed to index block", "height", i, "err", err)
 			}
-			lastBlock = blockResult.Height
+			lastIndexedHeight = blockResult.Height
 		}
 	}
 }

@@ -133,12 +133,17 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Set EVM indexer")
 
-		evmTxIndexer, evmTxIndexerService := server.OpenEVMIndexer(val.Ctx, db.NewMemDB(), val.ClientCtx)
+		evmTxIndexer, evmTxIndexerService, err := server.OpenEVMIndexer(val.Ctx, db.NewMemDB(), val.ClientCtx)
+		if err != nil {
+			{
+				return fmt.Errorf("failed starting evm indexer service: %w", err)
+			}
+		}
 		val.EthTxIndexer = evmTxIndexer
 		val.EthTxIndexerService = evmTxIndexerService
 
 		val.jsonrpc, val.jsonrpcDone, err =
-			server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
+			server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
 		if err != nil {
 			return errors.Wrap(err, "failed to start JSON-RPC server")
 		}
