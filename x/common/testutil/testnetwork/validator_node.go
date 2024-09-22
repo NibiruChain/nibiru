@@ -164,6 +164,7 @@ func stopValidatorNode(v *Validator) {
 		// _ = v.jsonrpc.Close()
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
+
 		if err := v.jsonrpc.Shutdown(ctx); err != nil {
 			// Log the error or handle it as appropriate for your application
 			v.Logger.Logf("❌ Error shutting down JSON-RPC server: %w", err)
@@ -173,7 +174,11 @@ func stopValidatorNode(v *Validator) {
 		}
 		if v.EthTxIndexerService != nil {
 			err := v.EthTxIndexerService.Stop()
-			v.Logger.Logf("❌ Error shutting down EVMTxIndexerService: %w", err)
+			if err != nil {
+				v.Logger.Logf("❌ Error shutting down EVMTxIndexerService: %w", err)
+			} else {
+				v.Logger.Log("✅ Successfully shut down EVMTxIndexerService")
+			}
 		}
 	}
 

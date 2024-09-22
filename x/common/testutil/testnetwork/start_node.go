@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/errors"
+	db "github.com/cometbft/cometbft-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
@@ -132,17 +133,12 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Set EVM indexer")
 
-		homeDir := val.Ctx.Config.RootDir
-		evmTxIndexer, evmTxIndexerService, err := server.OpenEVMIndexer(
-			val.Ctx, evmServerCtxLogger, val.ClientCtx, homeDir,
-		)
-		if err != nil {
-			return err
-		}
+		evmTxIndexer, evmTxIndexerService := server.OpenEVMIndexer(val.Ctx, db.NewMemDB(), val.ClientCtx)
 		val.EthTxIndexer = evmTxIndexer
 		val.EthTxIndexerService = evmTxIndexerService
 
-		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
+		val.jsonrpc, val.jsonrpcDone, err =
+			server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
 		if err != nil {
 			return errors.Wrap(err, "failed to start JSON-RPC server")
 		}

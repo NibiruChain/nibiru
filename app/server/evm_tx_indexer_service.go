@@ -122,7 +122,7 @@ func (service *EVMTxIndexerService) OnStart() error {
 func (service *EVMTxIndexerService) OnStop() {
 	service.Logger.Info("Stopping EVMTxIndexerService")
 	if service.cancelFunc != nil {
-		// Call the cancel function to stop the goroutine
+		service.Logger.Info("Calling EVMIndexerService CancelFunc")
 		service.cancelFunc()
 	}
 }

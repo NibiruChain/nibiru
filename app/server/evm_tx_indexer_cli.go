@@ -47,7 +47,6 @@ nibid evm-tx-index last-indexed latest
 			}
 
 			evmTxIndexer := indexer.NewEVMTxIndexer(evmIndexerDB, logger.With("module", "evmindex"), clientCtx)
-			defer evmTxIndexer.CloseDBAndExit()
 
 			tmdb, err := tmnode.DefaultDBProvider(&tmnode.DBContext{ID: "blockstore", Config: cfg})
 			if err != nil {
@@ -121,6 +120,10 @@ nibid evm-tx-index last-indexed latest
 					return err
 				}
 				fmt.Println(height)
+			}
+			err = evmTxIndexer.CloseDBAndExit()
+			if err != nil {
+				return err
 			}
 			fmt.Println("Indexing complete")
 			return nil

@@ -30,7 +30,6 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abciserver "github.com/cometbft/cometbft/abci/server"
 	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
@@ -385,11 +384,12 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 	var evmIdxer eth.EVMTxIndexer
 	if conf.JSONRPC.EnableIndexer {
-		evmTxIndexer, _, err := OpenEVMIndexer(ctx, ctx.Logger, clientCtx, home)
+		idxDB, err := OpenIndexerDB(home, sdkserver.GetAppDBBackend(ctx.Viper))
 		if err != nil {
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
 		}
+		evmTxIndexer, _ := OpenEVMIndexer(ctx, idxDB, clientCtx)
 		evmIdxer = evmTxIndexer
 	}
 
@@ -596,16 +596,10 @@ func OpenIndexerDB(rootDir string, backendType dbm.BackendType) (dbm.DB, error) 
 }
 
 func OpenEVMIndexer(
-	ctx *sdkserver.Context, logger log.Logger, clientCtx client.Context, homeDir string,
-) (eth.EVMTxIndexer, *EVMTxIndexerService, error) {
-	idxDB, err := OpenIndexerDB(homeDir, sdkserver.GetAppDBBackend(ctx.Viper))
-	if err != nil {
-		logger.Error("failed to open evm indexer DB", "error", err.Error())
-		return nil, nil, err
-	}
-
+	ctx *sdkserver.Context, indexerDb dbm.DB, clientCtx client.Context,
+) (eth.EVMTxIndexer, *EVMTxIndexerService) {
 	idxLogger := ctx.Logger.With("indexer", "evm")
-	evmIndexer := indexer.NewEVMTxIndexer(idxDB, idxLogger, clientCtx)
+	evmIndexer := indexer.NewEVMTxIndexer(indexerDb, idxLogger, clientCtx)
 
 	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
 	evmIndexerService.SetLogger(idxLogger)
@@ -616,7 +610,7 @@ func OpenEVMIndexer(
 			errCh <- err
 		}
 	}()
-	return evmIndexer, evmIndexerService, nil
+	return evmIndexer, evmIndexerService
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {

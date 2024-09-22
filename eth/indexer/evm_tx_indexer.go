@@ -210,6 +210,7 @@ func LoadFirstBlock(db dbm.DB) (int64, error) {
 
 // CloseDBAndExit should be called upon stopping the indexer
 func (indexer *EVMTxIndexer) CloseDBAndExit() error {
+	indexer.logger.Info("Closing EVMTxIndexer DB")
 	err := indexer.db.Close()
 	if err != nil {
 		return errorsmod.Wrap(err, "CloseDBAndExit")
