@@ -3,10 +3,11 @@ package ante
 
 import (
 	"cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/authz"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // AnteDecoratorAuthzGuard filters autz messages
