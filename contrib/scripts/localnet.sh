@@ -135,15 +135,16 @@ if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
+  exit 1
 fi
 
 # nibid config
 echo_info "Updating nibid config..."
-$BINARY config keyring-backend test
-$BINARY config chain-id $CHAIN_ID
-$BINARY config broadcast-mode sync
-$BINARY config output json
-$BINARY config # Prints config.
+$BINARY config set client keyring-backend test
+$BINARY config set client chain-id $CHAIN_ID
+$BINARY config set client broadcast-mode sync
+$BINARY config set client output json
+$BINARY config view client # Prints config.
 
 # Enable API Server
 echo_info "config/app.toml: Enabling API server"
@@ -220,4 +221,4 @@ fi
 # ------------------------------------------------------------------------
 
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home "$CHAIN_DIR" --pruning nothing
+$BINARY start --home "$CHAIN_DIR" --pruning nothing --log_level=debug

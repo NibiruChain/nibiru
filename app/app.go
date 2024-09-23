@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	_ "github.com/NibiruChain/nibiru/client/docs/statik"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
