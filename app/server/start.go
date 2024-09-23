@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -29,7 +30,6 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abciserver "github.com/cometbft/cometbft/abci/server"
 	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
@@ -362,7 +362,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 	// Add the tx service to the gRPC router. We only need to register this
 	// service if API or gRPC or JSONRPC is enabled, and avoid doing so in the general
-	// case, because it spawns a new local tendermint RPC client.
+	// case, because it spawns a new local tendermint RPC rpcClient.
 	if (conf.API.Enable || conf.GRPC.Enable || conf.JSONRPC.Enable || conf.JSONRPC.EnableIndexer) && tmNode != nil {
 		clientCtx = clientCtx.WithClient(local.New(tmNode))
 
@@ -384,12 +384,17 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 	var evmIdxer eth.EVMTxIndexer
 	if conf.JSONRPC.EnableIndexer {
-		idxer, err := OpenEVMIndexer(ctx, ctx.Logger, clientCtx, home)
+		idxDB, err := OpenIndexerDB(home, sdkserver.GetAppDBBackend(ctx.Viper))
 		if err != nil {
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
 		}
-		evmIdxer = idxer
+		evmTxIndexer, _, err := OpenEVMIndexer(ctx, idxDB, clientCtx)
+		if err != nil {
+			logger.Error("failed starting evm indexer service", "error", err.Error())
+			return err
+		}
+		evmIdxer = evmTxIndexer
 	}
 
 	if conf.API.Enable || conf.JSONRPC.Enable {
@@ -422,7 +427,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 			grpcAddress := fmt.Sprintf("127.0.0.1:%s", port)
 
-			// If grpc is enabled, configure grpc client for grpc gateway and json-rpc.
+			// If grpc is enabled, configure grpc rpcClient for grpc gateway and json-rpc.
 			grpcClient, err := grpc.Dial(
 				grpcAddress,
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -437,7 +442,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 			}
 
 			clientCtx = clientCtx.WithGRPCClient(grpcClient)
-			ctx.Logger.Debug("gRPC client assigned to client context", "address", grpcAddress)
+			ctx.Logger.Debug("gRPC rpcClient assigned to rpcClient context", "address", grpcAddress)
 		}
 	}
 
@@ -507,7 +512,9 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
-		httpSrv, httpSrvDone, err = StartJSONRPC(ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer)
+		httpSrv, httpSrvDone, err = StartJSONRPC(
+			ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer,
+		)
 		if err != nil {
 			return err
 		}
@@ -593,19 +600,26 @@ func OpenIndexerDB(rootDir string, backendType dbm.BackendType) (dbm.DB, error) 
 }
 
 func OpenEVMIndexer(
-	ctx *sdkserver.Context,
-	logger log.Logger,
-	clientCtx client.Context,
-	homeDir string,
-) (eth.EVMTxIndexer, error) {
-	idxDB, err := OpenIndexerDB(homeDir, sdkserver.GetAppDBBackend(ctx.Viper))
-	if err != nil {
-		logger.Error("failed to open evm indexer DB", "error", err.Error())
-		return nil, err
-	}
-
+	ctx *sdkserver.Context, indexerDb dbm.DB, clientCtx client.Context,
+) (eth.EVMTxIndexer, *EVMTxIndexerService, error) {
 	idxLogger := ctx.Logger.With("indexer", "evm")
-	return indexer.NewKVIndexer(idxDB, idxLogger, clientCtx), nil
+	evmIndexer := indexer.NewEVMTxIndexer(indexerDb, idxLogger, clientCtx)
+
+	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
+	evmIndexerService.SetLogger(idxLogger)
+
+	errCh := make(chan error)
+	go func() {
+		if err := evmIndexerService.Start(); err != nil {
+			errCh <- err
+		}
+	}()
+	select {
+	case err := <-errCh:
+		return nil, nil, err
+	case <-time.After(types.ServerStartTime): // assume server started successfully
+	}
+	return evmIndexer, evmIndexerService, nil
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
