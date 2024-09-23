@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
+func (s *AnteTestSuite) TestAnteDecoratorAuthzGuar() {
 	testCases := []struct {
 		name    string
 		txMsg   func() sdk.Msg
@@ -68,6 +68,46 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 			name: "happy: non authz message",
 			txMsg: func() sdk.Msg {
 				return &evm.MsgEthereumTx{}
+			},
+			wantErr: "",
+		},
+		{
+			name: "sad: authz exec with a single evm message",
+			txMsg: func() sdk.Msg {
+				msgExec := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{
+						&evm.MsgEthereumTx{},
+					},
+				)
+				return &msgExec
+			},
+			wantErr: "ExtensionOptionsEthereumTx",
+		},
+		{
+			name: "sad: authz exec with evm message and non evm message",
+			txMsg: func() sdk.Msg {
+				msgExec := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{
+						&banktypes.MsgSend{},
+						&evm.MsgEthereumTx{},
+					},
+				)
+				return &msgExec
+			},
+			wantErr: "ExtensionOptionsEthereumTx",
+		},
+		{
+			name: "happy: authz exec without evm messages",
+			txMsg: func() sdk.Msg {
+				msgExec := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{
+						&banktypes.MsgSend{},
+					},
+				)
+				return &msgExec
 			},
 			wantErr: "",
 		},
