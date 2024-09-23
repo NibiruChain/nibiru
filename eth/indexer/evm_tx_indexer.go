@@ -28,29 +28,29 @@ const (
 	TxIndexKeyLength = 1 + 8 + 8
 )
 
-var _ eth.EVMTxIndexer = &KVIndexer{}
+var _ eth.EVMTxIndexer = &EVMTxIndexer{}
 
-// KVIndexer implements a eth tx indexer on a KV db.
-type KVIndexer struct {
+// EVMTxIndexer implements a eth tx indexer on a KV db.
+type EVMTxIndexer struct {
 	db        dbm.DB
 	logger    log.Logger
 	clientCtx client.Context
 }
 
-// NewKVIndexer creates the KVIndexer
-func NewKVIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *KVIndexer {
-	return &KVIndexer{db, logger, clientCtx}
+// NewEVMTxIndexer creates the EVMTxIndexer
+func NewEVMTxIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *EVMTxIndexer {
+	return &EVMTxIndexer{db, logger, clientCtx}
 }
 
 // IndexBlock index all the eth txs in a block through the following steps:
-// - Iterates over all of the Txs in Block
+// - Iterates over all the Txs in Block
 // - Parses eth Tx infos from cosmos-sdk events for every TxResult
 // - Iterates over all the messages of the Tx
 // - Builds and stores a indexer.TxResult based on parsed events for every message
-func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.ResponseDeliverTx) error {
+func (indexer *EVMTxIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.ResponseDeliverTx) error {
 	height := block.Header.Height
 
-	batch := kv.db.NewBatch()
+	batch := indexer.db.NewBatch()
 	defer batch.Close()
 
 	// record index of valid eth tx during the iteration
@@ -59,7 +59,7 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 		result := txResults[txIndex]
 		isValidEnough, reason := rpc.TxIsValidEnough(result)
 		if !isValidEnough {
-			kv.logger.Debug(
+			indexer.logger.Debug(
 				"Skipped indexing of tx",
 				"reason", reason,
 				"tm_tx_hash", eth.TmTxHashToString(tx.Hash()),
@@ -67,9 +67,9 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 			continue
 		}
 
-		tx, err := kv.clientCtx.TxConfig.TxDecoder()(tx)
+		tx, err := indexer.clientCtx.TxConfig.TxDecoder()(tx)
 		if err != nil {
-			kv.logger.Error("Fail to decode tx", "err", err, "block", height, "txIndex", txIndex)
+			indexer.logger.Error("Fail to decode tx", "err", err, "block", height, "txIndex", txIndex)
 			continue
 		}
 
@@ -79,7 +79,7 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 
 		txs, err := rpc.ParseTxResult(result, tx)
 		if err != nil {
-			kv.logger.Error("Fail to parse event", "err", err, "block", height, "txIndex", txIndex)
+			indexer.logger.Error("Fail to parse event", "err", err, "block", height, "txIndex", txIndex)
 			continue
 		}
 
@@ -102,11 +102,16 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 			} else {
 				parsedTx := txs.GetTxByMsgIndex(msgIndex)
 				if parsedTx == nil {
-					kv.logger.Error("msg index not found in events", "msgIndex", msgIndex)
+					indexer.logger.Error("msg index not found in events", "msgIndex", msgIndex)
 					continue
 				}
 				if parsedTx.EthTxIndex >= 0 && parsedTx.EthTxIndex != ethTxIndex {
-					kv.logger.Error("eth tx index don't match", "expect", ethTxIndex, "found", parsedTx.EthTxIndex)
+					indexer.logger.Error(
+						"eth tx index don't match",
+						"expect", ethTxIndex,
+						"found", parsedTx.EthTxIndex,
+						"height", height,
+					)
 				}
 				txResult.GasUsed = parsedTx.GasUsed
 				txResult.Failed = parsedTx.Failed
@@ -116,7 +121,7 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 			txResult.CumulativeGasUsed = cumulativeGasUsed
 			ethTxIndex++
 
-			if err := saveTxResult(kv.clientCtx.Codec, batch, txHash, &txResult); err != nil {
+			if err := saveTxResult(indexer.clientCtx.Codec, batch, txHash, &txResult); err != nil {
 				return errorsmod.Wrapf(err, "IndexBlock %d", height)
 			}
 		}
@@ -128,18 +133,18 @@ func (kv *KVIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.Response
 }
 
 // LastIndexedBlock returns the latest indexed block number, returns -1 if db is empty
-func (kv *KVIndexer) LastIndexedBlock() (int64, error) {
-	return LoadLastBlock(kv.db)
+func (indexer *EVMTxIndexer) LastIndexedBlock() (int64, error) {
+	return LoadLastBlock(indexer.db)
 }
 
 // FirstIndexedBlock returns the first indexed block number, returns -1 if db is empty
-func (kv *KVIndexer) FirstIndexedBlock() (int64, error) {
-	return LoadFirstBlock(kv.db)
+func (indexer *EVMTxIndexer) FirstIndexedBlock() (int64, error) {
+	return LoadFirstBlock(indexer.db)
 }
 
 // GetByTxHash finds eth tx by eth tx hash
-func (kv *KVIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error) {
-	bz, err := kv.db.Get(TxHashKey(hash))
+func (indexer *EVMTxIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error) {
+	bz, err := indexer.db.Get(TxHashKey(hash))
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "GetByTxHash %s", hash.Hex())
 	}
@@ -147,22 +152,22 @@ func (kv *KVIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error) {
 		return nil, fmt.Errorf("tx not found, hash: %s", hash.Hex())
 	}
 	var txKey eth.TxResult
-	if err := kv.clientCtx.Codec.Unmarshal(bz, &txKey); err != nil {
+	if err := indexer.clientCtx.Codec.Unmarshal(bz, &txKey); err != nil {
 		return nil, errorsmod.Wrapf(err, "GetByTxHash %s", hash.Hex())
 	}
 	return &txKey, nil
 }
 
 // GetByBlockAndIndex finds eth tx by block number and eth tx index
-func (kv *KVIndexer) GetByBlockAndIndex(blockNumber int64, txIndex int32) (*eth.TxResult, error) {
-	bz, err := kv.db.Get(TxIndexKey(blockNumber, txIndex))
+func (indexer *EVMTxIndexer) GetByBlockAndIndex(blockNumber int64, txIndex int32) (*eth.TxResult, error) {
+	bz, err := indexer.db.Get(TxIndexKey(blockNumber, txIndex))
 	if err != nil {
 		return nil, errorsmod.Wrapf(err, "GetByBlockAndIndex %d %d", blockNumber, txIndex)
 	}
 	if len(bz) == 0 {
 		return nil, fmt.Errorf("tx not found, block: %d, eth-index: %d", blockNumber, txIndex)
 	}
-	return kv.GetByTxHash(common.BytesToHash(bz))
+	return indexer.GetByTxHash(common.BytesToHash(bz))
 }
 
 // TxHashKey returns the key for db entry: `tx hash -> tx result struct`
@@ -201,6 +206,16 @@ func LoadFirstBlock(db dbm.DB) (int64, error) {
 		return -1, nil
 	}
 	return parseBlockNumberFromKey(it.Key())
+}
+
+// CloseDBAndExit should be called upon stopping the indexer
+func (indexer *EVMTxIndexer) CloseDBAndExit() error {
+	indexer.logger.Info("Closing EVMTxIndexer DB")
+	err := indexer.db.Close()
+	if err != nil {
+		return errorsmod.Wrap(err, "CloseDBAndExit")
+	}
+	return nil
 }
 
 // isEthTx check if the tx is an eth tx

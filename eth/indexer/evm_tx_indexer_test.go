@@ -23,7 +23,7 @@ import (
 	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func TestKVIndexer(t *testing.T) {
+func TestEVMTxIndexer(t *testing.T) {
 	priv, err := ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
@@ -42,7 +42,6 @@ func TestKVIndexer(t *testing.T) {
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()
 
-	// encCfg := MakeEncodingConfig()
 	encCfg := app.MakeEncodingConfig()
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
@@ -162,7 +161,7 @@ func TestKVIndexer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db := dbm.NewMemDB()
-			idxer := indexer.NewKVIndexer(db, tmlog.NewNopLogger(), clientCtx)
+			idxer := indexer.NewEVMTxIndexer(db, tmlog.NewNopLogger(), clientCtx)
 
 			err = idxer.IndexBlock(tc.block, tc.blockResult)
 			require.NoError(t, err)

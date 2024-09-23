@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/errors"
+	db "github.com/cometbft/cometbft-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
@@ -132,16 +133,17 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Set EVM indexer")
 
-		homeDir := val.Ctx.Config.RootDir
-		evmTxIndexer, err := server.OpenEVMIndexer(
-			val.Ctx, evmServerCtxLogger, val.ClientCtx, homeDir,
-		)
+		evmTxIndexer, evmTxIndexerService, err := server.OpenEVMIndexer(val.Ctx, db.NewMemDB(), val.ClientCtx)
 		if err != nil {
-			return err
+			{
+				return fmt.Errorf("failed starting evm indexer service: %w", err)
+			}
 		}
 		val.EthTxIndexer = evmTxIndexer
+		val.EthTxIndexerService = evmTxIndexerService
 
-		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
+		val.jsonrpc, val.jsonrpcDone, err =
+			server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
 		if err != nil {
 			return errors.Wrap(err, "failed to start JSON-RPC server")
 		}
@@ -160,8 +162,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 			val.Ctx.Logger,
 			val.ClientCtx,
 			val.AppConfig.JSONRPC.AllowUnprotectedTxs,
-			// TODO: reenable indexer when we have indexer service (process which does IndexBlock) implemented
-			nil, //val.EthTxIndexer
+			val.EthTxIndexer,
 		)
 
 		val.Logger.Log("Expose typed methods for each namespace")
