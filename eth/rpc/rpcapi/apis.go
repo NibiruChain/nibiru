@@ -2,17 +2,14 @@
 package rpcapi
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi/debugapi"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi/filtersapi"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/debugapi"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
@@ -23,28 +20,14 @@ const (
 	NamespaceCosmos = "cosmos"
 
 	// Ethereum namespaces
-	NamespaceWeb3     = "web3"
-	NamespaceEth      = "eth"
-	NamespacePersonal = "personal"
-	NamespaceNet      = "net"
-	NamespaceTxPool   = "txpool"
-	NamespaceDebug    = "debug"
-	NamespaceMiner    = "miner"
+	NamespaceWeb3   = "web3"
+	NamespaceEth    = "eth"
+	NamespaceNet    = "net"
+	NamespaceTxPool = "txpool"
+	NamespaceDebug  = "debug"
 
 	apiVersion = "1.0"
 )
-
-func EthereumNamespaces() []string {
-	return []string{
-		NamespaceWeb3,
-		NamespaceEth,
-		NamespacePersonal,
-		NamespaceNet,
-		NamespaceTxPool,
-		NamespaceDebug,
-		NamespaceMiner,
-	}
-}
 
 // APICreator creates the JSON-RPC API implementations.
 type APICreator = func(
@@ -77,7 +60,7 @@ func init() {
 				{
 					Namespace: NamespaceEth,
 					Version:   apiVersion,
-					Service:   filtersapi.NewImplFiltersAPI(ctx.Logger, clientCtx, tmWSClient, evmBackend),
+					Service:   NewImplFiltersAPI(ctx.Logger, clientCtx, tmWSClient, evmBackend),
 					Public:    true,
 				},
 			}
@@ -99,22 +82,6 @@ func init() {
 					Version:   apiVersion,
 					Service:   NewImplNetAPI(clientCtx),
 					Public:    true,
-				},
-			}
-		},
-		NamespacePersonal: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespacePersonal,
-					Version:   apiVersion,
-					Service:   NewImplPersonalAPI(ctx.Logger, evmBackend),
-					Public:    false,
 				},
 			}
 		},
@@ -144,22 +111,6 @@ func init() {
 				},
 			}
 		},
-		NamespaceMiner: func(ctx *server.Context,
-			clientCtx client.Context,
-			_ *rpcclient.WSClient,
-			allowUnprotectedTxs bool,
-			indexer eth.EVMTxIndexer,
-		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
-			return []rpc.API{
-				{
-					Namespace: NamespaceMiner,
-					Version:   apiVersion,
-					Service:   NewImplMinerAPI(ctx, evmBackend),
-					Public:    false,
-				},
-			}
-		},
 	}
 }
 
@@ -182,14 +133,4 @@ func GetRPCAPIs(ctx *server.Context,
 	}
 
 	return apis
-}
-
-// RegisterAPINamespace registers a new API namespace with the API creator.
-// This function fails if the namespace is already registered.
-func RegisterAPINamespace(ns string, creator APICreator) error {
-	if _, ok := apiCreators[ns]; ok {
-		return fmt.Errorf("duplicated api namespace %s", ns)
-	}
-	apiCreators[ns] = creator
-	return nil
 }

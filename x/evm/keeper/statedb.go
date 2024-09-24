@@ -5,13 +5,14 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ statedb.Keeper = &Keeper{}
@@ -22,14 +23,14 @@ var _ statedb.Keeper = &Keeper{}
 
 // GetAccount: Ethereum account getter for a [statedb.Account].
 // Implements the `statedb.Keeper` interface.
-// Returns nil if the account does not not exist or has the wrong type.
+// Returns nil if the account does not exist or has the wrong type.
 func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {
 	acct := k.GetAccountWithoutBalance(ctx, addr)
 	if acct == nil {
 		return nil
 	}
 
-	acct.Balance = k.GetEvmGasBalance(ctx, addr)
+	acct.BalanceNative = k.GetEvmGasBalance(ctx, addr)
 	return acct
 }
 
@@ -50,18 +51,15 @@ func (k *Keeper) ForEachStorage(
 	addr gethcommon.Address,
 	stopIter func(key, value gethcommon.Hash) bool,
 ) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := evm.PrefixAccStateEthAddr(addr)
-
-	iterator := sdk.KVStorePrefixIterator(store, prefix)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		key := gethcommon.BytesToHash(iterator.Key())
-		value := gethcommon.BytesToHash(iterator.Value())
-
-		// check if iteration stops
-		if !stopIter(key, value) {
+	iter := k.EvmState.AccState.Iterate(
+		ctx,
+		collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.Prefix(addr),
+	)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		hash := iter.Key().K2()
+		val := iter.Value()
+		if !stopIter(hash, gethcommon.BytesToHash(val)) {
 			return
 		}
 	}
@@ -69,13 +67,13 @@ func (k *Keeper) ForEachStorage(
 
 // SetAccBalance update account's balance, compare with current balance first, then decide to mint or burn.
 func (k *Keeper) SetAccBalance(
-	ctx sdk.Context, addr gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {
 	nativeAddr := sdk.AccAddress(addr.Bytes())
 	params := k.GetParams(ctx)
-	coin := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom)
-	balance := coin.Amount.BigInt()
-	delta := new(big.Int).Sub(amount, balance)
+	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom).Amount.BigInt()
+	delta := new(big.Int).Sub(amountEvmDenom, balance)
+
 	switch delta.Sign() {
 	case 1:
 		// mint
@@ -128,7 +126,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.Balance); err != nil {
+	if err := k.SetAccBalance(ctx, addr, account.BalanceNative); err != nil {
 		return err
 	}
 
@@ -215,7 +213,7 @@ func (k *Keeper) GetAccountOrEmpty(
 
 	// empty account
 	return statedb.Account{
-		Balance:  new(big.Int),
-		CodeHash: evm.EmptyCodeHash,
+		BalanceNative: new(big.Int),
+		CodeHash:      evm.EmptyCodeHash,
 	}
 }

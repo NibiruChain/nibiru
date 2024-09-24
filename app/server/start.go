@@ -13,10 +13,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -44,7 +45,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
@@ -101,7 +102,7 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			serverCtx := server.GetServerContextFromCmd(cmd)
+			serverCtx := sdkserver.GetServerContextFromCmd(cmd)
 
 			// Bind flags to the Context's Viper so the app construction can set
 			// options accordingly.
@@ -110,11 +111,11 @@ which accepts a path for the resulting pprof file.
 				return err
 			}
 
-			_, err = server.GetPruningOptionsFromFlags(serverCtx.Viper)
+			_, err = sdkserver.GetPruningOptionsFromFlags(serverCtx.Viper)
 			return err
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			serverCtx := server.GetServerContextFromCmd(cmd)
+			serverCtx := sdkserver.GetServerContextFromCmd(cmd)
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -143,7 +144,7 @@ which accepts a path for the resulting pprof file.
 
 			// amino is needed here for backwards compatibility of REST routes
 			err = startInProcess(serverCtx, clientCtx, opts)
-			errCode, ok := err.(server.ErrorCode)
+			errCode, ok := err.(sdkserver.ErrorCode)
 			if !ok {
 				return err
 			}
@@ -158,18 +159,18 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(Address, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(Transport, "socket", "Transport protocol: socket, grpc")
 	cmd.Flags().String(TraceStore, "", "Enable KVStore tracing to an output file")
-	cmd.Flags().String(server.FlagMinGasPrices, "", "Minimum gas prices to accept for transactions; Any fee in a tx must meet this minimum (e.g. 5000unibi)") //nolint:lll
-	cmd.Flags().IntSlice(server.FlagUnsafeSkipUpgrades, []int{}, "Skip a set of upgrade heights to continue the old binary")
-	cmd.Flags().Uint64(server.FlagHaltHeight, 0, "Block height at which to gracefully halt the chain and shutdown the node")
-	cmd.Flags().Uint64(server.FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
-	cmd.Flags().Bool(server.FlagInterBlockCache, true, "Enable inter-block caching")
+	cmd.Flags().String(sdkserver.FlagMinGasPrices, "", "Minimum gas prices to accept for transactions; Any fee in a tx must meet this minimum (e.g. 5000unibi)") //nolint:lll
+	cmd.Flags().IntSlice(sdkserver.FlagUnsafeSkipUpgrades, []int{}, "Skip a set of upgrade heights to continue the old binary")
+	cmd.Flags().Uint64(sdkserver.FlagHaltHeight, 0, "Block height at which to gracefully halt the chain and shutdown the node")
+	cmd.Flags().Uint64(sdkserver.FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
+	cmd.Flags().Bool(sdkserver.FlagInterBlockCache, true, "Enable inter-block caching")
 	cmd.Flags().String(CPUProfile, "", "Enable CPU profiling and write to the provided file")
-	cmd.Flags().Bool(server.FlagTrace, false, "Provide full stack traces for errors in ABCI Log")
-	cmd.Flags().String(server.FlagPruning, pruningtypes.PruningOptionDefault, "Pruning strategy (default|nothing|everything|custom)")
-	cmd.Flags().Uint64(server.FlagPruningKeepRecent, 0, "Number of recent heights to keep on disk (ignored if pruning is not 'custom')")
-	cmd.Flags().Uint64(server.FlagPruningInterval, 0, "Height interval at which pruned heights are removed from disk (ignored if pruning is not 'custom')") //nolint:lll
-	cmd.Flags().Uint(server.FlagInvCheckPeriod, 0, "Assert registered invariants every N blocks")
-	cmd.Flags().Uint64(server.FlagMinRetainBlocks, 0, "Minimum block height offset during ABCI commit to prune Tendermint blocks")
+	cmd.Flags().Bool(sdkserver.FlagTrace, false, "Provide full stack traces for errors in ABCI Log")
+	cmd.Flags().String(sdkserver.FlagPruning, pruningtypes.PruningOptionDefault, "Pruning strategy (default|nothing|everything|custom)")
+	cmd.Flags().Uint64(sdkserver.FlagPruningKeepRecent, 0, "Number of recent heights to keep on disk (ignored if pruning is not 'custom')")
+	cmd.Flags().Uint64(sdkserver.FlagPruningInterval, 0, "Height interval at which pruned heights are removed from disk (ignored if pruning is not 'custom')") //nolint:lll
+	cmd.Flags().Uint(sdkserver.FlagInvCheckPeriod, 0, "Assert registered invariants every N blocks")
+	cmd.Flags().Uint64(sdkserver.FlagMinRetainBlocks, 0, "Minimum block height offset during ABCI commit to prune Tendermint blocks")
 	cmd.Flags().String(AppDBBackend, "", "The type of database for application and snapshots databases")
 
 	cmd.Flags().Bool(GRPCOnly, false, "Start the node in gRPC query only mode without Tendermint process")
@@ -185,8 +186,8 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().StringSlice(JSONRPCAPI, config.GetDefaultAPINamespaces(), "Defines a list of JSON-RPC namespaces that should be enabled")
 	cmd.Flags().String(JSONRPCAddress, config.DefaultJSONRPCAddress, "the JSON-RPC server address to listen on")
 	cmd.Flags().String(JSONWsAddress, config.DefaultJSONRPCWsAddress, "the JSON-RPC WS server address to listen on")
-	cmd.Flags().Uint64(JSONRPCGasCap, config.DefaultGasCap, "Sets a cap on gas that can be used in eth_call/estimateGas unit is unibi (0=infinite)")     //nolint:lll
-	cmd.Flags().Float64(JSONRPCTxFeeCap, config.DefaultTxFeeCap, "Sets a cap on transaction fee that can be sent via the RPC APIs (1 = default 1 nibi)") //nolint:lll
+	cmd.Flags().Uint64(JSONRPCGasCap, config.DefaultEthCallGasLimit, "Sets a cap on gas that can be used in eth_call/estimateGas unit is unibi (0=infinite)") //nolint:lll
+	cmd.Flags().Float64(JSONRPCTxFeeCap, config.DefaultTxFeeCap, "Sets a cap on transaction fee that can be sent via the RPC APIs (1 = default 1 nibi)")      //nolint:lll
 	cmd.Flags().Int32(JSONRPCFilterCap, config.DefaultFilterCap, "Sets the global cap for total number of filters that can be created")
 	cmd.Flags().Duration(JSONRPCEVMTimeout, config.DefaultEVMTimeout, "Sets a timeout used for eth_call (0=infinite)")
 	cmd.Flags().Duration(JSONRPCHTTPTimeout, config.DefaultHTTPTimeout, "Sets a read/write timeout for json-rpc http server (0=infinite)")
@@ -204,20 +205,20 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(TLSCertPath, "", "the cert.pem file path for the server TLS configuration")
 	cmd.Flags().String(TLSKeyPath, "", "the key.pem file path for the server TLS configuration")
 
-	cmd.Flags().Uint64(server.FlagStateSyncSnapshotInterval, 0, "State sync snapshot interval")
-	cmd.Flags().Uint32(server.FlagStateSyncSnapshotKeepRecent, 2, "State sync snapshot to keep")
+	cmd.Flags().Uint64(sdkserver.FlagStateSyncSnapshotInterval, 0, "State sync snapshot interval")
+	cmd.Flags().Uint32(sdkserver.FlagStateSyncSnapshotKeepRecent, 2, "State sync snapshot to keep")
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 	return cmd
 }
 
-func startStandAlone(ctx *server.Context, opts StartOptions) error {
+func startStandAlone(ctx *sdkserver.Context, opts StartOptions) error {
 	addr := ctx.Viper.GetString(Address)
 	transport := ctx.Viper.GetString(Transport)
 	home := ctx.Viper.GetString(flags.FlagHome)
 
-	db, err := openDB(home, server.GetAppDBBackend(ctx.Viper))
+	db, err := openDB(home, sdkserver.GetAppDBBackend(ctx.Viper))
 	if err != nil {
 		return err
 	}
@@ -271,16 +272,16 @@ func startStandAlone(ctx *server.Context, opts StartOptions) error {
 	}()
 
 	// Wait for SIGINT or SIGTERM signal
-	return server.WaitForQuitSignals()
+	return sdkserver.WaitForQuitSignals()
 }
 
 // legacyAminoCdc is used for the legacy REST API
-func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOptions) (err error) {
+func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts StartOptions) (err error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
 	logger := ctx.Logger
 
-	db, err := openDB(home, server.GetAppDBBackend(ctx.Viper))
+	db, err := openDB(home, sdkserver.GetAppDBBackend(ctx.Viper))
 	if err != nil {
 		logger.Error("failed to open DB", "error", err.Error())
 		return err
@@ -361,7 +362,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 	// Add the tx service to the gRPC router. We only need to register this
 	// service if API or gRPC or JSONRPC is enabled, and avoid doing so in the general
-	// case, because it spawns a new local tendermint RPC client.
+	// case, because it spawns a new local tendermint RPC rpcClient.
 	if (conf.API.Enable || conf.GRPC.Enable || conf.JSONRPC.Enable || conf.JSONRPC.EnableIndexer) && tmNode != nil {
 		clientCtx = clientCtx.WithClient(local.New(tmNode))
 
@@ -381,16 +382,19 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 		ethmetricsexp.Setup(conf.JSONRPC.MetricsAddress)
 	}
 
-	var idxer eth.EVMTxIndexer
+	var evmIdxer eth.EVMTxIndexer
 	if conf.JSONRPC.EnableIndexer {
-		idxDB, err := OpenIndexerDB(home, server.GetAppDBBackend(ctx.Viper))
+		idxDB, err := OpenIndexerDB(home, sdkserver.GetAppDBBackend(ctx.Viper))
 		if err != nil {
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
 		}
-
-		idxLogger := ctx.Logger.With("indexer", "evm")
-		idxer = indexer.NewKVIndexer(idxDB, idxLogger, clientCtx)
+		evmTxIndexer, _, err := OpenEVMIndexer(ctx, idxDB, clientCtx)
+		if err != nil {
+			logger.Error("failed starting evm indexer service", "error", err.Error())
+			return err
+		}
+		evmIdxer = evmTxIndexer
 	}
 
 	if conf.API.Enable || conf.JSONRPC.Enable {
@@ -423,7 +427,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 			grpcAddress := fmt.Sprintf("127.0.0.1:%s", port)
 
-			// If grpc is enabled, configure grpc client for grpc gateway and json-rpc.
+			// If grpc is enabled, configure grpc rpcClient for grpc gateway and json-rpc.
 			grpcClient, err := grpc.Dial(
 				grpcAddress,
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -438,7 +442,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 			}
 
 			clientCtx = clientCtx.WithGRPCClient(grpcClient)
-			ctx.Logger.Debug("gRPC client assigned to client context", "address", grpcAddress)
+			ctx.Logger.Debug("gRPC rpcClient assigned to rpcClient context", "address", grpcAddress)
 		}
 	}
 
@@ -508,7 +512,9 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
-		httpSrv, httpSrvDone, err = StartJSONRPC(ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, idxer)
+		httpSrv, httpSrvDone, err = StartJSONRPC(
+			ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer,
+		)
 		if err != nil {
 			return err
 		}
@@ -531,7 +537,7 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 	// we do not need to start Rosetta or handle any Tendermint related processes.
 	if gRPCOnly {
 		// wait for signal capture and gracefully return
-		return server.WaitForQuitSignals()
+		return sdkserver.WaitForQuitSignals()
 	}
 
 	var rosettaSrv crgserver.Server
@@ -584,13 +590,36 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 		}
 	}
 	// Wait for SIGINT or SIGTERM signal
-	return server.WaitForQuitSignals()
+	return sdkserver.WaitForQuitSignals()
 }
 
 // OpenIndexerDB opens the custom eth indexer db, using the same db backend as the main app
 func OpenIndexerDB(rootDir string, backendType dbm.BackendType) (dbm.DB, error) {
 	dataDir := filepath.Join(rootDir, "data")
 	return dbm.NewDB("evmindexer", backendType, dataDir)
+}
+
+func OpenEVMIndexer(
+	ctx *sdkserver.Context, indexerDb dbm.DB, clientCtx client.Context,
+) (eth.EVMTxIndexer, *EVMTxIndexerService, error) {
+	idxLogger := ctx.Logger.With("indexer", "evm")
+	evmIndexer := indexer.NewEVMTxIndexer(indexerDb, idxLogger, clientCtx)
+
+	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
+	evmIndexerService.SetLogger(idxLogger)
+
+	errCh := make(chan error)
+	go func() {
+		if err := evmIndexerService.Start(); err != nil {
+			errCh <- err
+		}
+	}()
+	select {
+	case err := <-errCh:
+		return nil, nil, err
+	case <-time.After(types.ServerStartTime): // assume server started successfully
+	}
+	return evmIndexer, evmIndexerService, nil
 }
 
 func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
@@ -614,15 +643,15 @@ func startTelemetry(cfg config.Config) (*telemetry.Metrics, error) {
 }
 
 // WaitForQuitSignals waits for SIGINT and SIGTERM and returns.
-func WaitForQuitSignals() server.ErrorCode {
+func WaitForQuitSignals() sdkserver.ErrorCode {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigs
-	return server.ErrorCode{Code: int(sig.(syscall.Signal)) + 128}
+	return sdkserver.ErrorCode{Code: int(sig.(syscall.Signal)) + 128}
 }
 
 // wrapCPUProfile runs callback in a goroutine, then wait for quit signals.
-func wrapCPUProfile(ctx *server.Context, callback func() error) error {
+func wrapCPUProfile(ctx *sdkserver.Context, callback func() error) error {
 	if cpuProfile := ctx.Viper.GetString(CPUProfile); cpuProfile != "" {
 		f, err := os.Create(cpuProfile)
 		if err != nil {

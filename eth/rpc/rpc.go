@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -168,7 +168,7 @@ func NewRPCTxFromMsg(
 	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFee, chainID)
 }
 
-// NewTransactionFromData returns a transaction that will serialize to the RPC
+// NewRPCTxFromEthTx returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func NewRPCTxFromEthTx(
 	tx *gethcore.Transaction,
@@ -263,8 +263,15 @@ func TxStateDBCommitError(res *abci.ResponseDeliverTx) bool {
 	return strings.Contains(res.Log, ErrStateDBCommit)
 }
 
-// TxSuccessOrExpectedFailure returns true if the transaction was successful
+// TxIsValidEnough returns true if the transaction was successful
 // or if it failed with an ExceedBlockGasLimit error or TxStateDBCommitError error
-func TxSuccessOrExpectedFailure(res *abci.ResponseDeliverTx) bool {
-	return res.Code == 0 || TxExceedBlockGasLimit(res) || TxStateDBCommitError(res)
+func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string) {
+	if res.Code == 0 {
+		return true, "tx succeeded"
+	} else if TxExceedBlockGasLimit(res) {
+		return true, "tx exceeded block gas limit"
+	} else if TxStateDBCommitError(res) {
+		return true, "tx state db commit error"
+	}
+	return false, "unexpected failure"
 }

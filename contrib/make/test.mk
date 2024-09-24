@@ -9,6 +9,7 @@ test-unit:
 .PHONY: test-coverage-unit
 test-coverage-unit:
 	go test ./... -short \
+		-tags=pebbledb \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race
@@ -18,6 +19,7 @@ test-coverage-unit:
 .PHONY: test-coverage-integration
 test-coverage-integration:
 	go test ./... \
+		-tags=pebbledb \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race

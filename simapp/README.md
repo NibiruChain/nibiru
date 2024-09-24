@@ -7,7 +7,7 @@ This directory contains the simulation tests for the `simapp` module
 ### Non-Determinism
 
 ```sh
-make test-sim-non-determinism
+make test-sim-nondeterminism
 ```
 
 This test case checks that the simulation is deterministic. It does so by

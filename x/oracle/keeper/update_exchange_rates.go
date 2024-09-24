@@ -5,10 +5,10 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
@@ -86,7 +86,7 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 ) {
 	rewardBand := k.RewardBand(ctx)
 	// Iterate through sorted keys for deterministic ordering.
-	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	orderedPairVotes := omap.SortedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
 		exchangeRate := Tally(pairVotes[pair], rewardBand, validatorPerformances)
 		k.SetPrice(ctx, pair, exchangeRate)

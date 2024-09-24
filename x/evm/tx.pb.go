@@ -8,8 +8,10 @@ import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	encoding_binary "encoding/binary"
 	fmt "fmt"
+	github_com_NibiruChain_nibiru_v2_eth "github.com/NibiruChain/nibiru/v2/eth"
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
+	types1 "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
@@ -82,8 +84,12 @@ func (m *MsgEthereumTx) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgEthereumTx proto.InternalMessageInfo
 
 // LegacyTx is the transaction data of regular Ethereum transactions.
-// NOTE: All non-protected transactions (i.e non EIP155 signed) will fail if the
-// AllowUnprotectedTxs parameter is disabled.
+//
+// Note that setting "evm.Params.AllowUnprotectedTxs" to false will cause all
+// non-EIP155 signed transactions to fail, as they'll lack replay protection.
+//
+// LegacyTx is a custom implementation of "LegacyTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type LegacyTx struct {
 	// nonce corresponds to the account nonce (transaction sequence).
 	Nonce uint64 `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -97,11 +103,19 @@ type LegacyTx struct {
 	Amount *cosmossdk_io_math.Int `protobuf:"bytes,5,opt,name=value,proto3,customtype=cosmossdk.io/math.Int" json:"value,omitempty"`
 	// data is the data payload bytes of the transaction.
 	Data []byte `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
-	// v defines the signature value
+	// v defines the recovery id as the "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,7,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,8,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,9,opt,name=s,proto3" json:"s,omitempty"`
 }
 
@@ -139,6 +153,8 @@ func (m *LegacyTx) XXX_DiscardUnknown() {
 var xxx_messageInfo_LegacyTx proto.InternalMessageInfo
 
 // AccessListTx is the data of EIP-2930 access list transactions.
+// It is a custom implementation of "AccessListTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type AccessListTx struct {
 	// chain_id of the destination EVM chain
 	ChainID *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=cosmossdk.io/math.Int" json:"chainID"`
@@ -156,11 +172,19 @@ type AccessListTx struct {
 	Data []byte `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
 	Accesses AccessList `protobuf:"bytes,8,rep,name=accesses,proto3,castrepeated=AccessList" json:"accessList"`
-	// v defines the signature value
+	// v defines the recovery id and "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,9,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,10,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,11,opt,name=s,proto3" json:"s,omitempty"`
 }
 
@@ -197,7 +221,9 @@ func (m *AccessListTx) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AccessListTx proto.InternalMessageInfo
 
-// DynamicFeeTx is the data of EIP-1559 dinamic fee transactions.
+// DynamicFeeTx is the data of EIP-1559 dynamic fee transactions. It is a custom
+// implementation of "DynamicFeeTx" from
+// "github.com/ethereum/go-ethereum/core/types".
 type DynamicFeeTx struct {
 	// chain_id of the destination EVM chain
 	ChainID *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3,customtype=cosmossdk.io/math.Int" json:"chainID"`
@@ -217,11 +243,19 @@ type DynamicFeeTx struct {
 	Data []byte `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	// accesses is an array of access tuples
 	Accesses AccessList `protobuf:"bytes,9,rep,name=accesses,proto3,castrepeated=AccessList" json:"accessList"`
-	// v defines the signature value
+	// v defines the recovery id and "v" signature value from the elliptic curve
+	// digital signatute algorithm (ECDSA). It indicates which of two possible
+	// solutions should be used to reconstruct the public key from the signature.
+	// In Ethereum, "v" takes the value 27 or 28 for transactions that are not
+	// relay-protected.
 	V []byte `protobuf:"bytes,10,opt,name=v,proto3" json:"v,omitempty"`
-	// r defines the signature value
+	// r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
+	// digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
+	// the signature.
 	R []byte `protobuf:"bytes,11,opt,name=r,proto3" json:"r,omitempty"`
-	// s define the signature value
+	// s define the signature value derived from the private key, message hash, and
+	// the value of "r". It ensures that the signature is tied to both the message
+	// and the private key of the sender.
 	S []byte `protobuf:"bytes,12,opt,name=s,proto3" json:"s,omitempty"`
 }
 
@@ -440,6 +474,203 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+// MsgCreateFunToken: Arguments to create a "FunToken" mapping. Either the ERC20
+// contract address can be given to create the mapping to a bank coin, or the
+// denomination for a bank coin can be given to create the mapping to an ERC20.
+type MsgCreateFunToken struct {
+	// Hexadecimal address of the ERC20 token to which the `FunToken` maps
+	FromErc20 *github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,1,opt,name=from_erc20,json=fromErc20,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"from_erc20,omitempty"`
+	// Coin denomination in the Bank Module.
+	FromBankDenom string `protobuf:"bytes,2,opt,name=from_bank_denom,json=fromBankDenom,proto3" json:"from_bank_denom,omitempty"`
+	// Sender: Address for the signer of the transaction.
+	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
+}
+
+func (m *MsgCreateFunToken) Reset()         { *m = MsgCreateFunToken{} }
+func (m *MsgCreateFunToken) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateFunToken) ProtoMessage()    {}
+func (*MsgCreateFunToken) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{8}
+}
+func (m *MsgCreateFunToken) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateFunToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateFunToken.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateFunToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateFunToken.Merge(m, src)
+}
+func (m *MsgCreateFunToken) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateFunToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateFunToken.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateFunToken proto.InternalMessageInfo
+
+func (m *MsgCreateFunToken) GetFromBankDenom() string {
+	if m != nil {
+		return m.FromBankDenom
+	}
+	return ""
+}
+
+func (m *MsgCreateFunToken) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+type MsgCreateFunTokenResponse struct {
+	// Fungible token mapping corresponding to ERC20 tokens.
+	FuntokenMapping FunToken `protobuf:"bytes,1,opt,name=funtoken_mapping,json=funtokenMapping,proto3" json:"funtoken_mapping"`
+}
+
+func (m *MsgCreateFunTokenResponse) Reset()         { *m = MsgCreateFunTokenResponse{} }
+func (m *MsgCreateFunTokenResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateFunTokenResponse) ProtoMessage()    {}
+func (*MsgCreateFunTokenResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{9}
+}
+func (m *MsgCreateFunTokenResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateFunTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateFunTokenResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateFunTokenResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateFunTokenResponse.Merge(m, src)
+}
+func (m *MsgCreateFunTokenResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateFunTokenResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateFunTokenResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateFunTokenResponse proto.InternalMessageInfo
+
+func (m *MsgCreateFunTokenResponse) GetFuntokenMapping() FunToken {
+	if m != nil {
+		return m.FuntokenMapping
+	}
+	return FunToken{}
+}
+
+// MsgConvertCoinToEvm: Arguments to send a bank coin to ERC-20 representation
+type MsgConvertCoinToEvm struct {
+	// Hexadecimal address of the ERC20 token to which the `FunToken` maps
+	ToEthAddr github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,1,opt,name=to_eth_addr,json=toEthAddr,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"to_eth_addr"`
+	// Sender: Address for the signer of the transaction.
+	Sender string `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Bank coin to get converted to ERC20
+	BankCoin types1.Coin `protobuf:"bytes,3,opt,name=bank_coin,json=bankCoin,proto3" json:"bank_coin" yaml:"bank_coin"`
+}
+
+func (m *MsgConvertCoinToEvm) Reset()         { *m = MsgConvertCoinToEvm{} }
+func (m *MsgConvertCoinToEvm) String() string { return proto.CompactTextString(m) }
+func (*MsgConvertCoinToEvm) ProtoMessage()    {}
+func (*MsgConvertCoinToEvm) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{10}
+}
+func (m *MsgConvertCoinToEvm) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgConvertCoinToEvm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgConvertCoinToEvm.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgConvertCoinToEvm) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgConvertCoinToEvm.Merge(m, src)
+}
+func (m *MsgConvertCoinToEvm) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgConvertCoinToEvm) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgConvertCoinToEvm.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgConvertCoinToEvm proto.InternalMessageInfo
+
+func (m *MsgConvertCoinToEvm) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgConvertCoinToEvm) GetBankCoin() types1.Coin {
+	if m != nil {
+		return m.BankCoin
+	}
+	return types1.Coin{}
+}
+
+type MsgConvertCoinToEvmResponse struct {
+}
+
+func (m *MsgConvertCoinToEvmResponse) Reset()         { *m = MsgConvertCoinToEvmResponse{} }
+func (m *MsgConvertCoinToEvmResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgConvertCoinToEvmResponse) ProtoMessage()    {}
+func (*MsgConvertCoinToEvmResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{11}
+}
+func (m *MsgConvertCoinToEvmResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgConvertCoinToEvmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgConvertCoinToEvmResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgConvertCoinToEvmResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgConvertCoinToEvmResponse.Merge(m, src)
+}
+func (m *MsgConvertCoinToEvmResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgConvertCoinToEvmResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgConvertCoinToEvmResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgConvertCoinToEvmResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgEthereumTx)(nil), "eth.evm.v1.MsgEthereumTx")
 	proto.RegisterType((*LegacyTx)(nil), "eth.evm.v1.LegacyTx")
@@ -449,72 +680,94 @@ func init() {
 	proto.RegisterType((*MsgEthereumTxResponse)(nil), "eth.evm.v1.MsgEthereumTxResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "eth.evm.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "eth.evm.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgCreateFunToken)(nil), "eth.evm.v1.MsgCreateFunToken")
+	proto.RegisterType((*MsgCreateFunTokenResponse)(nil), "eth.evm.v1.MsgCreateFunTokenResponse")
+	proto.RegisterType((*MsgConvertCoinToEvm)(nil), "eth.evm.v1.MsgConvertCoinToEvm")
+	proto.RegisterType((*MsgConvertCoinToEvmResponse)(nil), "eth.evm.v1.MsgConvertCoinToEvmResponse")
 }
 
 func init() { proto.RegisterFile("eth/evm/v1/tx.proto", fileDescriptor_82a0bfe4f0bab953) }
 
 var fileDescriptor_82a0bfe4f0bab953 = []byte{
-	// 956 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x95, 0xbf, 0x6f, 0x23, 0x45,
-	0x14, 0xc7, 0xbd, 0xf6, 0xfa, 0xd7, 0xd8, 0xe4, 0xd0, 0x90, 0x53, 0xd6, 0xe6, 0xe4, 0x35, 0x9b,
-	0xc6, 0x42, 0xca, 0x2e, 0x17, 0x24, 0xa4, 0x8b, 0x44, 0x11, 0x5f, 0x72, 0xe8, 0x50, 0x02, 0xd1,
-	0xe2, 0x34, 0x34, 0xd6, 0x64, 0x3d, 0x19, 0x8f, 0xf0, 0xee, 0xac, 0x76, 0xc6, 0x96, 0x4d, 0x79,
-	0x15, 0x12, 0x05, 0x20, 0x7a, 0x44, 0x4d, 0x45, 0x71, 0x05, 0xff, 0x01, 0x27, 0xaa, 0x13, 0x34,
-	0x88, 0xc2, 0x20, 0x07, 0x09, 0x29, 0x25, 0x05, 0x35, 0x9a, 0x99, 0x75, 0x6c, 0xdf, 0xc9, 0x01,
-	0x22, 0x74, 0xdd, 0xbc, 0x79, 0x3f, 0xe6, 0xcd, 0xf7, 0xb3, 0xfb, 0x06, 0xbc, 0x82, 0x45, 0xdf,
-	0xc3, 0xa3, 0xd0, 0x1b, 0xdd, 0xf5, 0xc4, 0xd8, 0x8d, 0x13, 0x26, 0x18, 0x04, 0x58, 0xf4, 0x5d,
-	0x3c, 0x0a, 0xdd, 0xd1, 0xdd, 0xfa, 0x56, 0xc0, 0x78, 0xc8, 0xb8, 0x17, 0x72, 0x22, 0x63, 0x42,
-	0x4e, 0x74, 0x50, 0xbd, 0xa6, 0x1d, 0x5d, 0x65, 0x79, 0xda, 0x48, 0x5d, 0x9b, 0x4b, 0x45, 0x65,
-	0x99, 0x74, 0x97, 0x30, 0xc2, 0x74, 0xb4, 0x5c, 0xa5, 0xbb, 0x77, 0x08, 0x63, 0x64, 0x80, 0x3d,
-	0x14, 0x53, 0x0f, 0x45, 0x11, 0x13, 0x48, 0x50, 0x16, 0xcd, 0x2b, 0xd5, 0x52, 0xaf, 0xb2, 0xce,
-	0x86, 0xe7, 0x1e, 0x8a, 0x26, 0xda, 0xe5, 0x7c, 0x66, 0x80, 0x97, 0x8e, 0x39, 0x39, 0x14, 0x7d,
-	0x9c, 0xe0, 0x61, 0xd8, 0x19, 0xc3, 0x16, 0x30, 0x7b, 0x48, 0x20, 0xcb, 0x68, 0x1a, 0xad, 0xca,
-	0xee, 0xa6, 0xab, 0x73, 0xdd, 0x79, 0xae, 0xbb, 0x1f, 0x4d, 0x7c, 0x15, 0x01, 0x6b, 0xc0, 0xe4,
-	0xf4, 0x63, 0x6c, 0x65, 0x9b, 0x46, 0xcb, 0x68, 0xe7, 0x2f, 0xa7, 0xb6, 0xb1, 0xe3, 0xab, 0x2d,
-	0x68, 0x03, 0xb3, 0x8f, 0x78, 0xdf, 0xca, 0x35, 0x8d, 0x56, 0xb9, 0x5d, 0xf9, 0x73, 0x6a, 0x17,
-	0x93, 0x41, 0xbc, 0xe7, 0xec, 0x38, 0xbe, 0x72, 0x40, 0x08, 0xcc, 0xf3, 0x84, 0x85, 0x96, 0x29,
-	0x03, 0x7c, 0xb5, 0xde, 0x33, 0x3f, 0xf9, 0xda, 0xce, 0x38, 0x5f, 0x64, 0x41, 0xe9, 0x08, 0x13,
-	0x14, 0x4c, 0x3a, 0x63, 0xb8, 0x09, 0xf2, 0x11, 0x8b, 0x02, 0xac, 0xba, 0x31, 0x7d, 0x6d, 0xc0,
-	0xb7, 0x40, 0x99, 0x20, 0xa9, 0x19, 0x0d, 0xf4, 0xe9, 0xe5, 0x76, 0xed, 0x97, 0xa9, 0x7d, 0x5b,
-	0xcb, 0xc7, 0x7b, 0x1f, 0xb9, 0x94, 0x79, 0x21, 0x12, 0x7d, 0xf7, 0x61, 0x24, 0xfc, 0x12, 0x41,
-	0xfc, 0x44, 0x86, 0xc2, 0x06, 0xc8, 0x11, 0xc4, 0x55, 0x53, 0x66, 0xbb, 0x3a, 0x9b, 0xda, 0xa5,
-	0x77, 0x10, 0x3f, 0xa2, 0x21, 0x15, 0xbe, 0x74, 0xc0, 0x0d, 0x90, 0x15, 0x2c, 0x6d, 0x29, 0x2b,
-	0x18, 0xbc, 0x07, 0xf2, 0x23, 0x34, 0x18, 0x62, 0x2b, 0xaf, 0xce, 0xd8, 0x5e, 0x7b, 0xc6, 0x6c,
-	0x6a, 0x17, 0xf6, 0x43, 0x36, 0x8c, 0x84, 0xaf, 0x33, 0xe4, 0xfd, 0x94, 0x8a, 0x85, 0xa6, 0xd1,
-	0xaa, 0xa6, 0x7a, 0x55, 0x81, 0x31, 0xb2, 0x8a, 0x6a, 0xc3, 0x18, 0x49, 0x2b, 0xb1, 0x4a, 0xda,
-	0x4a, 0xa4, 0xc5, 0xad, 0xb2, 0xb6, 0xf8, 0xde, 0x86, 0x54, 0xe2, 0x87, 0xc7, 0x3b, 0x85, 0xce,
-	0xf8, 0x00, 0x09, 0xe4, 0x7c, 0x97, 0x03, 0xd5, 0xfd, 0x20, 0xc0, 0x9c, 0x1f, 0x51, 0x2e, 0x3a,
-	0x63, 0xf8, 0x2e, 0x28, 0x05, 0x7d, 0x44, 0xa3, 0x2e, 0xed, 0x29, 0x69, 0xca, 0x6d, 0xef, 0xba,
-	0xe6, 0x8a, 0xf7, 0x65, 0xf0, 0xc3, 0x83, 0xcb, 0xa9, 0x5d, 0x0c, 0xf4, 0xd2, 0x4f, 0x17, 0xbd,
-	0x85, 0xc6, 0xd9, 0xb5, 0x1a, 0xe7, 0xfe, 0xb3, 0xc6, 0xe6, 0xf5, 0x1a, 0xe7, 0x9f, 0xd7, 0xb8,
-	0x70, 0x63, 0x8d, 0x8b, 0x4b, 0x1a, 0x9f, 0x82, 0x12, 0x52, 0x42, 0x61, 0x6e, 0x95, 0x9a, 0xb9,
-	0x56, 0x65, 0x77, 0xcb, 0x5d, 0xfc, 0x87, 0xae, 0x16, 0xb1, 0x33, 0x8c, 0x07, 0xb8, 0xdd, 0x7c,
-	0x32, 0xb5, 0x33, 0x97, 0x53, 0x1b, 0xa0, 0x2b, 0x65, 0xbf, 0xf9, 0xd5, 0x06, 0x0b, 0x9d, 0xfd,
-	0xab, 0x52, 0x1a, 0x5d, 0x79, 0x05, 0x1d, 0x58, 0x41, 0x57, 0x59, 0x87, 0xee, 0xaf, 0x1c, 0xa8,
-	0x1e, 0x4c, 0x22, 0x14, 0xd2, 0xe0, 0x01, 0xc6, 0x2f, 0x04, 0xdd, 0x3d, 0x50, 0x91, 0xe8, 0x04,
-	0x8d, 0xbb, 0x01, 0x8a, 0xff, 0x19, 0x9e, 0x04, 0xdd, 0xa1, 0xf1, 0x7d, 0x14, 0xcf, 0x53, 0xcf,
-	0x31, 0x56, 0xa9, 0xe6, 0xbf, 0x49, 0x7d, 0x80, 0xb1, 0x4c, 0x4d, 0xc1, 0xe7, 0xaf, 0x07, 0x5f,
-	0x78, 0x1e, 0x7c, 0xf1, 0xc6, 0xe0, 0x4b, 0x6b, 0xc0, 0x97, 0xff, 0x67, 0xf0, 0x60, 0x05, 0x7c,
-	0x65, 0x05, 0x7c, 0x75, 0x1d, 0x78, 0x07, 0xd4, 0x0f, 0xc7, 0x02, 0x47, 0x9c, 0xb2, 0xe8, 0xfd,
-	0x58, 0x8d, 0xe3, 0xc5, 0x94, 0x4d, 0x67, 0xdd, 0x57, 0x06, 0xb8, 0xbd, 0x32, 0x7d, 0x7d, 0xcc,
-	0x63, 0x16, 0x71, 0x75, 0x45, 0x35, 0x40, 0x0d, 0x3d, 0x1f, 0xd5, 0xcc, 0xdc, 0x06, 0xe6, 0x80,
-	0x11, 0x6e, 0x65, 0xd5, 0xf5, 0x6e, 0x2d, 0x5f, 0xef, 0x88, 0x11, 0x5f, 0x39, 0xe1, 0xcb, 0x20,
-	0x97, 0x60, 0xa1, 0xa0, 0x57, 0x7d, 0xb9, 0x84, 0x35, 0x50, 0x1a, 0x85, 0x5d, 0x9c, 0x24, 0x2c,
-	0x49, 0x67, 0x5b, 0x71, 0x14, 0x1e, 0x4a, 0x53, 0xba, 0x24, 0xee, 0x21, 0xc7, 0x3d, 0x0d, 0xce,
-	0x2f, 0x12, 0xc4, 0x4f, 0x39, 0xee, 0xa5, 0x0d, 0x7e, 0x6a, 0x80, 0x5b, 0xc7, 0x9c, 0x9c, 0xc6,
-	0x3d, 0x24, 0xf0, 0x09, 0x4a, 0x50, 0xc8, 0xe5, 0x64, 0x40, 0x43, 0xd1, 0x67, 0x09, 0x15, 0x93,
-	0xf4, 0x0b, 0xb6, 0x7e, 0x7c, 0xbc, 0xb3, 0x99, 0x3e, 0x5e, 0xfb, 0xbd, 0x5e, 0x82, 0x39, 0xff,
-	0x40, 0x24, 0x34, 0x22, 0xfe, 0x22, 0x14, 0xbe, 0x01, 0x0a, 0xb1, 0xaa, 0xa0, 0xbe, 0xd6, 0xca,
-	0x2e, 0x5c, 0xbe, 0x80, 0xae, 0xdd, 0x36, 0x25, 0x1a, 0x3f, 0x8d, 0xdb, 0xdb, 0x78, 0xf4, 0xc7,
-	0xb7, 0xaf, 0x2f, 0x2a, 0x38, 0x35, 0xb0, 0xf5, 0x4c, 0x33, 0x73, 0xbd, 0x76, 0xbf, 0x37, 0x40,
-	0xee, 0x98, 0x13, 0x18, 0x01, 0xb0, 0xf4, 0x96, 0xd5, 0x96, 0x8f, 0x58, 0x11, 0xba, 0xfe, 0xda,
-	0x5a, 0xd7, 0xbc, 0xa6, 0xe3, 0x3c, 0xfa, 0xe9, 0xf7, 0x2f, 0xb3, 0x77, 0x9c, 0xba, 0x17, 0xd1,
-	0x33, 0x9a, 0x0c, 0xaf, 0x1e, 0xe3, 0x34, 0xb4, 0x2b, 0xc6, 0xf0, 0x04, 0x54, 0x57, 0xc4, 0x79,
-	0xf5, 0x99, 0xb2, 0xcb, 0xce, 0xfa, 0xf6, 0x35, 0xce, 0xf9, 0xa9, 0xed, 0xb7, 0x9f, 0xcc, 0x1a,
-	0xc6, 0xd3, 0x59, 0xc3, 0xf8, 0x6d, 0xd6, 0x30, 0x3e, 0xbf, 0x68, 0x64, 0x9e, 0x5e, 0x34, 0x32,
-	0x3f, 0x5f, 0x34, 0x32, 0x1f, 0x6e, 0x13, 0x2a, 0xfa, 0xc3, 0x33, 0x37, 0x60, 0xa1, 0xf7, 0x9e,
-	0xea, 0x48, 0xcd, 0x86, 0x79, 0x77, 0x63, 0xd9, 0xdf, 0x59, 0x41, 0x3d, 0xd4, 0x6f, 0xfe, 0x1d,
-	0x00, 0x00, 0xff, 0xff, 0x10, 0x4e, 0x86, 0x00, 0x93, 0x08, 0x00, 0x00,
+	// 1246 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0xcf, 0x6f, 0x1b, 0xc5,
+	0x17, 0xcf, 0xda, 0x8e, 0x7f, 0x3c, 0xbb, 0x49, 0xbe, 0xdb, 0xf4, 0xdb, 0xb5, 0xdb, 0x7a, 0xc3,
+	0x56, 0x94, 0x08, 0x29, 0xbb, 0x8d, 0x51, 0x2b, 0x35, 0x27, 0xe2, 0xc4, 0x45, 0x45, 0x09, 0x44,
+	0x8b, 0xd3, 0x03, 0x42, 0xb2, 0xc6, 0xbb, 0x93, 0xf5, 0x2a, 0xd9, 0x99, 0xd5, 0xce, 0x78, 0xe5,
+	0x70, 0xec, 0x09, 0x89, 0x03, 0x20, 0xee, 0x88, 0x73, 0x4f, 0x1c, 0x7a, 0xe0, 0x4f, 0xa8, 0x38,
+	0x55, 0x70, 0x00, 0xf5, 0x60, 0x50, 0x8a, 0x84, 0xd4, 0x63, 0x0f, 0xdc, 0x90, 0xd0, 0xcc, 0xae,
+	0x1d, 0x3b, 0x21, 0x29, 0x54, 0x88, 0xdb, 0xbc, 0x79, 0x3f, 0xe6, 0xbd, 0xcf, 0xe7, 0xcd, 0x9b,
+	0x81, 0x8b, 0x98, 0xf7, 0x2c, 0x1c, 0x07, 0x56, 0xbc, 0x6a, 0xf1, 0x81, 0x19, 0x46, 0x94, 0x53,
+	0x15, 0x30, 0xef, 0x99, 0x38, 0x0e, 0xcc, 0x78, 0xb5, 0x76, 0xd9, 0xa1, 0x2c, 0xa0, 0xcc, 0x0a,
+	0x98, 0x27, 0x6c, 0x02, 0xe6, 0x25, 0x46, 0xb5, 0x7a, 0xaa, 0xe8, 0x22, 0x86, 0xad, 0x78, 0xb5,
+	0x8b, 0x39, 0x5a, 0xb5, 0x1c, 0xea, 0x93, 0x54, 0x5f, 0x4d, 0xf4, 0x1d, 0x29, 0x59, 0x89, 0x90,
+	0xaa, 0x16, 0x27, 0x0e, 0x15, 0xc7, 0xa4, 0xbb, 0x1e, 0xf5, 0x68, 0x62, 0x2d, 0x56, 0xe9, 0xee,
+	0x55, 0x8f, 0x52, 0xef, 0x00, 0x5b, 0x28, 0xf4, 0x2d, 0x44, 0x08, 0xe5, 0x88, 0xfb, 0x94, 0x8c,
+	0x22, 0x55, 0x53, 0xad, 0x94, 0xba, 0xfd, 0x3d, 0x0b, 0x91, 0xc3, 0x44, 0x65, 0x7c, 0xa6, 0xc0,
+	0x85, 0x6d, 0xe6, 0xb5, 0x78, 0x0f, 0x47, 0xb8, 0x1f, 0xb4, 0x07, 0xea, 0x32, 0xe4, 0x5c, 0xc4,
+	0x91, 0xa6, 0x2c, 0x29, 0xcb, 0xe5, 0xc6, 0xa2, 0x99, 0xf8, 0x9a, 0x23, 0x5f, 0x73, 0x9d, 0x1c,
+	0xda, 0xd2, 0x42, 0xad, 0x42, 0x8e, 0xf9, 0x1f, 0x63, 0x2d, 0xb3, 0xa4, 0x2c, 0x2b, 0xcd, 0xd9,
+	0xe7, 0x43, 0x5d, 0x59, 0xb1, 0xe5, 0x96, 0xaa, 0x43, 0xae, 0x87, 0x58, 0x4f, 0xcb, 0x2e, 0x29,
+	0xcb, 0xa5, 0x66, 0xf9, 0xc5, 0x50, 0x2f, 0x44, 0x07, 0xe1, 0x9a, 0xb1, 0x62, 0xd8, 0x52, 0xa1,
+	0xaa, 0x90, 0xdb, 0x8b, 0x68, 0xa0, 0xe5, 0x84, 0x81, 0x2d, 0xd7, 0x6b, 0xb9, 0x4f, 0xbe, 0xd6,
+	0x67, 0x8c, 0x2f, 0x32, 0x50, 0xdc, 0xc2, 0x1e, 0x72, 0x0e, 0xdb, 0x03, 0x75, 0x11, 0x66, 0x09,
+	0x25, 0x0e, 0x96, 0xd9, 0xe4, 0xec, 0x44, 0x50, 0x6f, 0x43, 0xc9, 0x43, 0x02, 0x33, 0xdf, 0x49,
+	0x4e, 0x2f, 0x35, 0xab, 0x4f, 0x87, 0xfa, 0xa5, 0x04, 0x3e, 0xe6, 0xee, 0x9b, 0x3e, 0xb5, 0x02,
+	0xc4, 0x7b, 0xe6, 0x3d, 0xc2, 0xed, 0xa2, 0x87, 0xd8, 0x8e, 0x30, 0x55, 0xeb, 0x90, 0xf5, 0x10,
+	0x93, 0x49, 0xe5, 0x9a, 0x95, 0xa3, 0xa1, 0x5e, 0x7c, 0x07, 0xb1, 0x2d, 0x3f, 0xf0, 0xb9, 0x2d,
+	0x14, 0xea, 0x1c, 0x64, 0x38, 0x4d, 0x53, 0xca, 0x70, 0xaa, 0xde, 0x81, 0xd9, 0x18, 0x1d, 0xf4,
+	0xb1, 0x36, 0x2b, 0xcf, 0xb8, 0x7e, 0xe6, 0x19, 0x47, 0x43, 0x3d, 0xbf, 0x1e, 0xd0, 0x3e, 0xe1,
+	0x76, 0xe2, 0x21, 0xea, 0x93, 0x28, 0xe6, 0x97, 0x94, 0xe5, 0x4a, 0x8a, 0x57, 0x05, 0x94, 0x58,
+	0x2b, 0xc8, 0x0d, 0x25, 0x16, 0x52, 0xa4, 0x15, 0x13, 0x29, 0x12, 0x12, 0xd3, 0x4a, 0x89, 0xc4,
+	0xd6, 0xe6, 0x04, 0x12, 0xdf, 0x3d, 0x5a, 0xc9, 0xb7, 0x07, 0x9b, 0x88, 0x23, 0xe3, 0xdb, 0x2c,
+	0x54, 0xd6, 0x1d, 0x07, 0x33, 0xb6, 0xe5, 0x33, 0xde, 0x1e, 0xa8, 0xef, 0x42, 0xd1, 0xe9, 0x21,
+	0x9f, 0x74, 0x7c, 0x57, 0x42, 0x53, 0x6a, 0x5a, 0xe7, 0x25, 0x57, 0xd8, 0x10, 0xc6, 0xf7, 0x36,
+	0x9f, 0x0f, 0xf5, 0x82, 0x93, 0x2c, 0xed, 0x74, 0xe1, 0x1e, 0x63, 0x9c, 0x39, 0x13, 0xe3, 0xec,
+	0x3f, 0xc6, 0x38, 0x77, 0x3e, 0xc6, 0xb3, 0xa7, 0x31, 0xce, 0xbf, 0x32, 0xc6, 0x85, 0x09, 0x8c,
+	0x77, 0xa1, 0x88, 0x24, 0x50, 0x98, 0x69, 0xc5, 0xa5, 0xec, 0x72, 0xb9, 0x71, 0xd9, 0x3c, 0xbe,
+	0xa7, 0x66, 0x02, 0x62, 0xbb, 0x1f, 0x1e, 0xe0, 0xe6, 0xd2, 0xe3, 0xa1, 0x3e, 0xf3, 0x7c, 0xa8,
+	0x03, 0x1a, 0x23, 0xfb, 0xf0, 0x67, 0x1d, 0x8e, 0x71, 0xb6, 0xc7, 0xa1, 0x12, 0xea, 0x4a, 0x53,
+	0xd4, 0xc1, 0x14, 0x75, 0xe5, 0xb3, 0xa8, 0xfb, 0x3d, 0x0b, 0x95, 0xcd, 0x43, 0x82, 0x02, 0xdf,
+	0xb9, 0x8b, 0xf1, 0x7f, 0x42, 0xdd, 0x1d, 0x28, 0x0b, 0xea, 0xb8, 0x1f, 0x76, 0x1c, 0x14, 0xbe,
+	0x9c, 0x3c, 0x41, 0x74, 0xdb, 0x0f, 0x37, 0x50, 0x38, 0x72, 0xdd, 0xc3, 0x58, 0xba, 0xe6, 0xfe,
+	0x8e, 0xeb, 0x5d, 0x8c, 0x85, 0x6b, 0x4a, 0xfc, 0xec, 0xf9, 0xc4, 0xe7, 0x4f, 0x13, 0x5f, 0x78,
+	0x65, 0xe2, 0x8b, 0x67, 0x10, 0x5f, 0xfa, 0x97, 0x89, 0x87, 0x29, 0xe2, 0xcb, 0x53, 0xc4, 0x57,
+	0xce, 0x22, 0xde, 0x80, 0x5a, 0x6b, 0xc0, 0x31, 0x61, 0x3e, 0x25, 0xef, 0x87, 0x72, 0x1c, 0x1f,
+	0x4f, 0xd9, 0x74, 0xd6, 0x7d, 0xa5, 0xc0, 0xa5, 0xa9, 0xe9, 0x6b, 0x63, 0x16, 0x52, 0xc2, 0x64,
+	0x89, 0x72, 0x80, 0x2a, 0xc9, 0x7c, 0x94, 0x33, 0xf3, 0x3a, 0xe4, 0x0e, 0xa8, 0xc7, 0xb4, 0x8c,
+	0x2c, 0x6f, 0x7e, 0xb2, 0xbc, 0x2d, 0xea, 0xd9, 0x52, 0xa9, 0x2e, 0x40, 0x36, 0xc2, 0x5c, 0x92,
+	0x5e, 0xb1, 0xc5, 0x52, 0xad, 0x42, 0x31, 0x0e, 0x3a, 0x38, 0x8a, 0x68, 0x94, 0xce, 0xb6, 0x42,
+	0x1c, 0xb4, 0x84, 0x28, 0x54, 0x82, 0xee, 0x3e, 0xc3, 0x6e, 0x42, 0x9c, 0x5d, 0xf0, 0x10, 0xdb,
+	0x65, 0xd8, 0x4d, 0x13, 0xfc, 0x54, 0x81, 0xf9, 0x6d, 0xe6, 0xed, 0x86, 0x2e, 0xe2, 0x78, 0x07,
+	0x45, 0x28, 0x60, 0x62, 0x32, 0xa0, 0x3e, 0xef, 0xd1, 0xc8, 0xe7, 0x87, 0x69, 0x07, 0x6b, 0xdf,
+	0x3f, 0x5a, 0x59, 0x4c, 0x1f, 0xaf, 0x75, 0xd7, 0x8d, 0x30, 0x63, 0x1f, 0xf0, 0xc8, 0x27, 0x9e,
+	0x7d, 0x6c, 0xaa, 0xde, 0x84, 0x7c, 0x28, 0x23, 0xc8, 0x6e, 0x2d, 0x37, 0xd4, 0xc9, 0x02, 0x92,
+	0xd8, 0xcd, 0x9c, 0xa0, 0xc6, 0x4e, 0xed, 0xd6, 0xe6, 0x1e, 0xfc, 0xf6, 0xcd, 0x9b, 0xc7, 0x11,
+	0x8c, 0x2a, 0x5c, 0x3e, 0x91, 0xcc, 0x08, 0x2f, 0xe3, 0xa1, 0x02, 0xff, 0xdb, 0x66, 0xde, 0x46,
+	0x84, 0x11, 0xc7, 0x77, 0xfb, 0xa4, 0x4d, 0xf7, 0x31, 0x51, 0x77, 0x01, 0xc4, 0xcb, 0xd2, 0xc1,
+	0x91, 0xd3, 0xb8, 0x99, 0xe6, 0x7a, 0xfb, 0xf1, 0x50, 0x57, 0x9e, 0x0e, 0x75, 0xd3, 0xf3, 0x79,
+	0xaf, 0xdf, 0x35, 0x1d, 0x1a, 0x58, 0xef, 0xf9, 0x5d, 0x3f, 0xea, 0xcb, 0x9b, 0x66, 0x11, 0xb9,
+	0xb6, 0xe2, 0x86, 0x25, 0xd2, 0x6b, 0xdd, 0xdb, 0xb9, 0x75, 0x4b, 0x94, 0x64, 0x97, 0x44, 0xa4,
+	0x96, 0x08, 0xa4, 0xde, 0x80, 0x79, 0x19, 0xb6, 0x8b, 0xc8, 0x7e, 0xc7, 0xc5, 0x84, 0x06, 0xc9,
+	0x2b, 0x64, 0x5f, 0x10, 0xdb, 0x4d, 0x44, 0xf6, 0x37, 0xc5, 0xa6, 0xfa, 0x7f, 0xc8, 0x33, 0x4c,
+	0x5c, 0x1c, 0x25, 0x77, 0xd0, 0x4e, 0x25, 0xa3, 0x0b, 0xd5, 0x53, 0xb9, 0x8e, 0x99, 0x6f, 0xc1,
+	0xc2, 0x5e, 0x9f, 0x70, 0xb1, 0xd7, 0x09, 0x50, 0x18, 0xfa, 0xc4, 0x1b, 0xbf, 0xc5, 0x13, 0x80,
+	0x8d, 0xfc, 0x52, 0xc8, 0xe6, 0x47, 0x3e, 0xdb, 0x89, 0x8b, 0xf1, 0xa3, 0x02, 0x17, 0xc5, 0x21,
+	0x94, 0xc4, 0x38, 0xe2, 0x1b, 0xd4, 0x27, 0x6d, 0xda, 0x8a, 0x03, 0xf5, 0x3e, 0x94, 0x39, 0xed,
+	0x60, 0xde, 0xeb, 0x20, 0xd7, 0x8d, 0x26, 0x30, 0x99, 0x79, 0x15, 0x4c, 0x38, 0x6d, 0xf1, 0x9e,
+	0x58, 0x4e, 0xd4, 0x9a, 0x99, 0xac, 0x55, 0xdd, 0x81, 0x92, 0x84, 0x49, 0xfc, 0x79, 0x24, 0x0c,
+	0xe5, 0x46, 0xd5, 0x4c, 0x5b, 0x45, 0x7c, 0x8a, 0xcc, 0xf4, 0x53, 0x64, 0x8a, 0x14, 0x9b, 0x9a,
+	0x48, 0xe4, 0xc5, 0x50, 0x5f, 0x38, 0x44, 0xc1, 0xc1, 0x9a, 0x31, 0xf6, 0x34, 0xec, 0xa2, 0x58,
+	0x0b, 0x1b, 0xe3, 0x1a, 0x5c, 0xf9, 0x8b, 0xc2, 0x46, 0xf8, 0x35, 0xfe, 0xc8, 0x40, 0x76, 0x9b,
+	0x79, 0x2a, 0x01, 0x98, 0xf8, 0xd5, 0x54, 0x27, 0xb1, 0x9b, 0xba, 0x72, 0xb5, 0xd7, 0xce, 0x54,
+	0x8d, 0xbb, 0xcb, 0x78, 0xf0, 0xc3, 0xaf, 0x5f, 0x66, 0xae, 0x1a, 0xb5, 0x11, 0x12, 0xa3, 0x6f,
+	0x59, 0x6a, 0xda, 0xe1, 0x03, 0x75, 0x07, 0x2a, 0x53, 0xd7, 0xe4, 0xca, 0x89, 0xb0, 0x93, 0xca,
+	0xda, 0xf5, 0x73, 0x94, 0xe3, 0x4e, 0xb8, 0x0f, 0x73, 0x27, 0xfa, 0xf9, 0xda, 0x09, 0xb7, 0x69,
+	0x75, 0xed, 0xf5, 0x73, 0xd5, 0xe3, 0xb8, 0x1f, 0xc1, 0xc2, 0xa9, 0xb6, 0xd0, 0x4f, 0xba, 0x9e,
+	0x30, 0xa8, 0xbd, 0xf1, 0x12, 0x83, 0x51, 0xf4, 0xe6, 0xdb, 0x8f, 0x8f, 0xea, 0xca, 0x93, 0xa3,
+	0xba, 0xf2, 0xcb, 0x51, 0x5d, 0xf9, 0xfc, 0x59, 0x7d, 0xe6, 0xc9, 0xb3, 0xfa, 0xcc, 0x4f, 0xcf,
+	0xea, 0x33, 0x1f, 0xde, 0x78, 0x69, 0x77, 0x0d, 0x04, 0xb0, 0xdd, 0xbc, 0xfc, 0x6b, 0xbe, 0xf5,
+	0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0x32, 0xcb, 0xec, 0xc3, 0x76, 0x0b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -534,6 +787,14 @@ type MsgClient interface {
 	// UpdateParams defined a governance operation for updating the x/evm module parameters.
 	// The authority is hard-coded to the Cosmos SDK x/gov module account
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
+	// address can be given to create the mapping to a bank coin, or the
+	// denomination for a bank coin can be given to create the mapping to an ERC20.
+	CreateFunToken(ctx context.Context, in *MsgCreateFunToken, opts ...grpc.CallOption) (*MsgCreateFunTokenResponse, error)
+	// ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
+	// given recipient address ("to_eth_addr") in the corresponding ERC20
+	// representation.
+	ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error)
 }
 
 type msgClient struct {
@@ -562,6 +823,24 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) CreateFunToken(ctx context.Context, in *MsgCreateFunToken, opts ...grpc.CallOption) (*MsgCreateFunTokenResponse, error) {
+	out := new(MsgCreateFunTokenResponse)
+	err := c.cc.Invoke(ctx, "/eth.evm.v1.Msg/CreateFunToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error) {
+	out := new(MsgConvertCoinToEvmResponse)
+	err := c.cc.Invoke(ctx, "/eth.evm.v1.Msg/ConvertCoinToEvm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// EthereumTx defines a method submitting Ethereum transactions.
@@ -569,6 +848,14 @@ type MsgServer interface {
 	// UpdateParams defined a governance operation for updating the x/evm module parameters.
 	// The authority is hard-coded to the Cosmos SDK x/gov module account
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
+	// address can be given to create the mapping to a bank coin, or the
+	// denomination for a bank coin can be given to create the mapping to an ERC20.
+	CreateFunToken(context.Context, *MsgCreateFunToken) (*MsgCreateFunTokenResponse, error)
+	// ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
+	// given recipient address ("to_eth_addr") in the corresponding ERC20
+	// representation.
+	ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -580,6 +867,12 @@ func (*UnimplementedMsgServer) EthereumTx(ctx context.Context, req *MsgEthereumT
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (*UnimplementedMsgServer) CreateFunToken(ctx context.Context, req *MsgCreateFunToken) (*MsgCreateFunTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFunToken not implemented")
+}
+func (*UnimplementedMsgServer) ConvertCoinToEvm(ctx context.Context, req *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConvertCoinToEvm not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -622,6 +915,42 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_CreateFunToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateFunToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateFunToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eth.evm.v1.Msg/CreateFunToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateFunToken(ctx, req.(*MsgCreateFunToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ConvertCoinToEvm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgConvertCoinToEvm)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ConvertCoinToEvm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eth.evm.v1.Msg/ConvertCoinToEvm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ConvertCoinToEvm(ctx, req.(*MsgConvertCoinToEvm))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "eth.evm.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -633,6 +962,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "CreateFunToken",
+			Handler:    _Msg_CreateFunToken_Handler,
+		},
+		{
+			MethodName: "ConvertCoinToEvm",
+			Handler:    _Msg_ConvertCoinToEvm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1183,6 +1520,161 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgCreateFunToken) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateFunToken) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateFunToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.FromBankDenom) > 0 {
+		i -= len(m.FromBankDenom)
+		copy(dAtA[i:], m.FromBankDenom)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.FromBankDenom)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.FromErc20 != nil {
+		{
+			size := m.FromErc20.Size()
+			i -= size
+			if _, err := m.FromErc20.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateFunTokenResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateFunTokenResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateFunTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.FuntokenMapping.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgConvertCoinToEvm) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgConvertCoinToEvm) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgConvertCoinToEvm) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.BankCoin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0x12
+	}
+	{
+		size := m.ToEthAddr.Size()
+		i -= size
+		if _, err := m.ToEthAddr.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgConvertCoinToEvmResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgConvertCoinToEvmResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgConvertCoinToEvmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1426,6 +1918,64 @@ func (m *MsgUpdateParams) Size() (n int) {
 }
 
 func (m *MsgUpdateParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCreateFunToken) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.FromErc20 != nil {
+		l = m.FromErc20.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.FromBankDenom)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCreateFunTokenResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.FuntokenMapping.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgConvertCoinToEvm) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.ToEthAddr.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.BankCoin.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgConvertCoinToEvmResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3154,6 +3704,438 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateFunToken) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateFunToken: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateFunToken: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromErc20", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_NibiruChain_nibiru_v2_eth.EIP55Addr
+			m.FromErc20 = &v
+			if err := m.FromErc20.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromBankDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromBankDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateFunTokenResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateFunTokenResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateFunTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FuntokenMapping", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FuntokenMapping.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgConvertCoinToEvm) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgConvertCoinToEvm: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgConvertCoinToEvm: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ToEthAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ToEthAddr.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BankCoin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.BankCoin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgConvertCoinToEvmResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgConvertCoinToEvmResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgConvertCoinToEvmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

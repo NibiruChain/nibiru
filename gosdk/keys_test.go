@@ -3,9 +3,10 @@ package gosdk_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/gosdk"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
 )
 
 const LOCALNET_VALIDATOR_MNEMONIC = "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
@@ -14,6 +15,7 @@ func TestCreateSigner(t *testing.T) {
 	testCases := []struct {
 		testName  string
 		mnemonic  string
+		wantAddr  string
 		expectErr bool
 	}{
 		{
@@ -24,6 +26,7 @@ func TestCreateSigner(t *testing.T) {
 		{
 			testName:  "good input (localnet genesis)",
 			mnemonic:  LOCALNET_VALIDATOR_MNEMONIC,
+			wantAddr:  "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
 			expectErr: false,
 		},
 	}
@@ -32,15 +35,15 @@ func TestCreateSigner(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			kring := gosdk.NewKeyring()
 			keyName := ""
-			signer, privKey, err := gosdk.CreateSigner(tc.mnemonic, kring, keyName)
+
+			gotAddr, err := gosdk.AddSignerToKeyringSecp256k1(kring, tc.mnemonic, keyName)
+
 			if tc.expectErr {
 				require.Error(t, err)
 				return
 			}
-			require.NoError(t, err)
-			require.NotNil(t, signer.PubKey)
 
-			err = gosdk.AddSignerToKeyring(kring, privKey, privKey.PubKey().String())
+			assert.EqualValues(t, gotAddr.String(), tc.wantAddr)
 			require.NoError(t, err)
 		})
 	}

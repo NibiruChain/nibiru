@@ -9,23 +9,20 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth/encoding"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/encoding"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 type MsgsSuite struct {
@@ -45,12 +42,12 @@ func TestMsgsSuite(t *testing.T) {
 }
 
 func (s *MsgsSuite) SetupTest() {
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 	from, privFrom := ethAcc.EthAddr, ethAcc.PrivKey
 
 	s.signer = evmtest.NewSigner(privFrom)
 	s.from = from
-	s.to = evmtest.NewEthAccInfo().EthAddr
+	s.to = evmtest.NewEthPrivAcc().EthAddr
 	s.chainID = big.NewInt(1)
 	s.hundredBigInt = big.NewInt(100)
 
@@ -264,7 +261,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_ValidateBasic() {
 			gasTipCap:  nil,
 			chainID:    validChainID,
 			expectPass: false,
-			errMsg:     "gas price cannot be nil",
+			errMsg:     "cannot be nil: invalid gas price",
 		},
 		{
 			msg:        "negative gas price - Legacy Tx",
@@ -958,7 +955,7 @@ func (s *MsgsSuite) TestUnwrapEthererumMsg() {
 }
 
 func (s *MsgsSuite) TestTransactionLogsEncodeDecode() {
-	addr := evmtest.NewEthAccInfo().EthAddr.String()
+	addr := evmtest.NewEthPrivAcc().EthAddr.String()
 
 	txLogs := evm.TransactionLogs{
 		Hash: common.BytesToHash([]byte("tx_hash")).String(),

@@ -1,11 +1,12 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -16,18 +17,19 @@ import (
 	ethlog "github.com/ethereum/go-ethereum/log"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
 // StartJSONRPC starts the JSON-RPC server
-func StartJSONRPC(ctx *server.Context,
+func StartJSONRPC(
+	ctx *server.Context,
 	clientCtx client.Context,
 	tmRPCAddr,
 	tmEndpoint string,
 	config *srvconfig.Config,
 	indexer eth.EVMTxIndexer,
 ) (*http.Server, chan struct{}, error) {
-	tmWsClient := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
+	tmWsClientForRPCApi := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
 
 	logger := ctx.Logger.With("module", "geth")
 	ethlog.Root().SetHandler(ethlog.FuncHandler(func(r *ethlog.Record) error {
@@ -47,7 +49,7 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	apis := rpcapi.GetRPCAPIs(ctx, clientCtx, tmWsClient, allowUnprotectedTxs, indexer, rpcAPIArr)
+	apis := rpcapi.GetRPCAPIs(ctx, clientCtx, tmWsClientForRPCApi, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
@@ -87,7 +89,7 @@ func StartJSONRPC(ctx *server.Context,
 	go func() {
 		ctx.Logger.Info("Starting JSON-RPC server", "address", config.JSONRPC.Address)
 		if err := httpSrv.Serve(ln); err != nil {
-			if err == http.ErrServerClosed {
+			if errors.Is(err, http.ErrServerClosed) {
 				close(httpSrvDone)
 				return
 			}
@@ -107,8 +109,8 @@ func StartJSONRPC(ctx *server.Context,
 	ctx.Logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
 
 	// allocate separate WS connection to Tendermint
-	tmWsClient = ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClient, config)
+	tmWsClientForRPCWs := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
+	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClientForRPCWs, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

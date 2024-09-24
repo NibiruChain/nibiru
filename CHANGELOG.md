@@ -47,8 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
-
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
+- [#1932](https://github.com/NibiruChain/nibiru/pull/1932) - fix(gosdk): fix keyring import functions
 
 #### Nibiru EVM
 
@@ -65,6 +65,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1887](https://github.com/NibiruChain/nibiru/pull/1887) - test(evm): eth api integration test suite
 - [#1889](https://github.com/NibiruChain/nibiru/pull/1889) - feat: implemented basic evm tx methods
 - [#1895](https://github.com/NibiruChain/nibiru/pull/1895) - refactor(geth): Reference go-ethereum as a submodule for easier change tracking with upstream
+- [#1901](https://github.com/NibiruChain/nibiru/pull/1901) - test(evm): more e2e test contracts for edge cases
+- [#1907](https://github.com/NibiruChain/nibiru/pull/1907) - test(evm): grpc_query full coverage
+- [#1909](https://github.com/NibiruChain/nibiru/pull/1909) - chore(evm): set is_london true by default and removed from config
+- [#1911](https://github.com/NibiruChain/nibiru/pull/1911) - chore(evm): simplified config by removing old eth forks
+- [#1912](https://github.com/NibiruChain/nibiru/pull/1912) - test(evm): unit tests for evm_ante
+- [#1914](https://github.com/NibiruChain/nibiru/pull/1914) - refactor(evm): Remove dead code and document non-EVM ante handler- [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
+- [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
+- [#1922](https://github.com/NibiruChain/nibiru/pull/1922) - feat(evm): tracer option is read from the config.
+- [#1936](https://github.com/NibiruChain/nibiru/pull/1936) - feat(evm): EVM fungible token protobufs and encoding tests
+- [#1947](https://github.com/NibiruChain/nibiru/pull/1947) - fix(evm): fix FunToken state marshalling
+- [#1949](https://github.com/NibiruChain/nibiru/pull/1949) - feat(evm): add fungible token mapping queries
+- [#1950](https://github.com/NibiruChain/nibiru/pull/1950) - feat(evm): Tx to create FunToken mapping from ERC20, contract embeds, and ERC20 queries.
+- [#1956](https://github.com/NibiruChain/nibiru/pull/1956) - feat(evm): msg to send bank coin to erc20
+- [#1958](https://github.com/NibiruChain/nibiru/pull/1958) - chore(evm): wiped deprecated evm apis: miner, personal
+- [#1959](https://github.com/NibiruChain/nibiru/pull/1959) - feat(evm): Add precompile to the EVM that enables transfers of ERC20 tokens to "nibi" accounts as regular Ethereum transactions
+- [#1960](https://github.com/NibiruChain/nibiru/pull/1960) - test(network): graceful cleanup for more consistent CI runs
+- [#1961](https://github.com/NibiruChain/nibiru/pull/1961) - chore(test): reverted funtoken precompile test back to the isolated state
+- [#1962](https://github.com/NibiruChain/nibiru/pull/1962) - chore(evm): code cleanup, unused code, typos, styles, warnings
+- [#1963](https://github.com/NibiruChain/nibiru/pull/1963) - feat(evm): Deduct a fee during the creation of a FunToken mapping. Implemented by `deductCreateFunTokenFee` inside of the `eth.evm.v1.MsgCreateFunToken` transaction.
+- [#1965](https://github.com/NibiruChain/nibiru/pull/1965) - refactor(evm): remove evm post-processing hooks
+- [#1966](https://github.com/NibiruChain/nibiru/pull/1966) - refactor(evm): clean up AnteHandler setup
+- [#1967](https://github.com/NibiruChain/nibiru/pull/1967) - feat(evm): export genesis
+- [#1968](https://github.com/NibiruChain/nibiru/pull/1968) - refactor(evm): funtoken events, cli commands and queries
+- [#1970](https://github.com/NibiruChain/nibiru/pull/1970) - refactor(evm): move evm antehandlers to separate package. Remove "gosdk/sequence_test.go", which causes a race condition in CI.
+- [#1971](https://github.com/NibiruChain/nibiru/pull/1971) - feat(evm): typed events for contract creation, contract execution and transfer
+- [#1973](https://github.com/NibiruChain/nibiru/pull/1973) - chore(appconst): Add chain IDs ending in "3" to the "knownEthChainIDMap". This makes it possible to use devnet 3 and testnet 3.
+- [#1976](https://github.com/NibiruChain/nibiru/pull/1976) - refactor(evm): unique chain ids for all networks
+- [#1977](https://github.com/NibiruChain/nibiru/pull/1977) - fix(localnet): rolled back change of evm validator address with cosmos derivation path
+- [#1979](https://github.com/NibiruChain/nibiru/pull/1979) - refactor(db): use pebbledb as the default db in integration tests
+- [#1981](https://github.com/NibiruChain/nibiru/pull/1981) - fix(evm): remove isCheckTx() short circuit on `AnteDecVerifyEthAcc`
+- [#1982](https://github.com/NibiruChain/nibiru/pull/1982) - feat(evm): add GlobalMinGasPrices
+- [#1983](https://github.com/NibiruChain/nibiru/pull/1983) - chore(evm): remove ExtensionOptionsWeb3Tx and ExtensionOptionDynamicFeeTx
+- [#1984](https://github.com/NibiruChain/nibiru/pull/1984) - refactor(evm): embeds
+- [#1985](https://github.com/NibiruChain/nibiru/pull/1985) - feat(evm)!: Use atto denomination for the wei units in the EVM so that NIBI is "ether" to clients. Only micronibi (unibi) amounts can be transferred. All clients follow the constraint equation, 1 ether == 1 NIBI == 10^6 unibi == 10^18 wei.
+- [#1986](https://github.com/NibiruChain/nibiru/pull/1986) - feat(evm): Combine both account queries into "/eth.evm.v1.Query/EthAccount", accepting both nibi-prefixed Bech32 addresses and Ethereum-type hexadecimal addresses as input.
+- [#1989](https://github.com/NibiruChain/nibiru/pull/1989) - refactor(evm): simplify evm module address
+- [#1996](https://github.com/NibiruChain/nibiru/pull/1996) - perf(evm-keeper-precompile): implement sorted map for `k.precompiles` to remove dead code
+- [#1997](https://github.com/NibiruChain/nibiru/pull/1997) - refactor(evm): Remove unnecessary params: "enable_call", "enable_create".
+- [#2000](https://github.com/NibiruChain/nibiru/pull/2000) - refactor(evm): simplify ERC-20 keeper methods
+- [#2001](https://github.com/NibiruChain/nibiru/pull/2001) - refactor(evm): simplify FunToken methods and tests
+- [#2002](https://github.com/NibiruChain/nibiru/pull/2002) - feat(evm): Add the account query to the EVM command. Cover the CLI with tests.
+- [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
+- [#2004](https://github.com/NibiruChain/nibiru/pull/2004) - refactor(evm)!: replace `HexAddr` with `EIP55Addr`
+- [#2006](https://github.com/NibiruChain/nibiru/pull/2006) - test(evm): e2e tests for eth_* endpoints
+- [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups 
+- [#2013](https://github.com/NibiruChain/nibiru/pull/2013) - chore(evm): Set appropriate gas value for the required gas of the "IFunToken.sol" precompile.
+- [#2014](https://github.com/NibiruChain/nibiru/pull/2014) - feat(evm): Emit block bloom event in EndBlock hook.
+- [#2017](https://github.com/NibiruChain/nibiru/pull/2017) - fix(evm): Fix DynamicFeeTx gas cap parameters
+- [#2019](https://github.com/NibiruChain/nibiru/pull/2019) - chore(evm): enabled debug rpc api on localnet.
+- [#2020](https://github.com/NibiruChain/nibiru/pull/2020) - test(evm): e2e tests for debug namespace
+- [#2022](https://github.com/NibiruChain/nibiru/pull/2022) - feat(evm): debug_traceCall method implemented
+- [#2023](https://github.com/NibiruChain/nibiru/pull/2023) - fix(evm)!: adjusted generation and parsing of the block bloom events
+- [#2030](https://github.com/NibiruChain/nibiru/pull/2030) - refactor(eth/rpc): Delete unused code and improve logging in the eth and debug namespaces
+- [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
+- [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): remove unnecessary interface code
+- [#2044](https://github.com/NibiruChain/nibiru/pull/2044) - feat(evm): evm tx indexer service implemented
+- [#2045](https://github.com/NibiruChain/nibiru/pull/2045) - test(evm): backend tests with test network and real txs
 
 #### Dapp modules: perp, spot, oracle, etc
 
@@ -89,14 +146,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Non-breaking/Compatible Improvements
 
-- [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
-- [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
 - [#1893](https://github.com/NibiruChain/nibiru/pull/1893) - feat(gosdk): migrate Go-sdk into the Nibiru blockchain repo.
+- [#1899](https://github.com/NibiruChain/nibiru/pull/1899) - build(deps): cometbft v0.37.5, cosmos-sdk v0.47.11, proto-builder v0.14.0
+- [#1913](https://github.com/NibiruChain/nibiru/pull/1913) - fix(tests): race condition from heavy Network tests
+- [#1992](https://github.com/NibiruChain/nibiru/pull/1992) - chore: enabled grpc for localnet
+- [#1999](https://github.com/NibiruChain/nibiru/pull/1999) - chore: update nibi go package version to v2
 
 ### Dependencies
 
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
-- Bump `robinraju/release-downloader` from 1.8 to 1.10 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839))
+- Bump `robinraju/release-downloader` from 1.8 to 1.11 ([#1783](https://github.com/NibiruChain/nibiru/pull/1783), [#1839](https://github.com/NibiruChain/nibiru/pull/1839), [#1948](https://github.com/NibiruChain/nibiru/pull/1948))
 - Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724), [#1843](https://github.com/NibiruChain/nibiru/pull/1843))
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
@@ -111,11 +170,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 - Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
-- Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.4 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858))
+- Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.5 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858), [#1938](https://github.com/NibiruChain/nibiru/pull/1938))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
-- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.32.1 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891))
-- Bump `github.com/cosmos/gogoproto` from 1.4.10 to 1.4.12 ([#1829](https://github.com/NibiruChain/nibiru/pull/1829))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.36.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972), [#1974](https://github.com/NibiruChain/nibiru/pull/1974), [#1988](https://github.com/NibiruChain/nibiru/pull/1988))
+- Bump `axios` from 1.7.3 to 1.7.4 ([#2016](https://github.com/NibiruChain/nibiru/pull/2016))
+
+## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
+
+Nibiru v1.5.0 enables IBC CosmWasm smart contracts.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.5.0)]
+
+### Features
+
+- [#1931](https://github.com/NibiruChain/nibiru/pull/1931) - feat(ibc): add `wasm` route to IBC router
+
+## [v1.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0) - 2024-06-04
+
+Nibiru v1.4.0 adds PebbleDB support and increases the wasm contract size limit to 3MB.
+
+- [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0)]
+- [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.4.0)]
+
+### State Machine Breaking
+
+- [#1906](https://github.com/NibiruChain/nibiru/pull/1906) - feat(wasm): increase contract size limit to 3MB
+
+### Features
+
+- [#1818](https://github.com/NibiruChain/nibiru/pull/1818) - feat: add pebbledb support
+- [#1908](https://github.com/NibiruChain/nibiru/pull/1908) - chore: make pebbledb the default db backend
+-
 
 ## [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0) - 2024-05-07
 

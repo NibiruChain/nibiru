@@ -15,12 +15,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
 // commonArgs is args for CLI test commands.
@@ -31,33 +31,35 @@ var commonArgs = []string{
 		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.NewInt(10_000_000))).String()),
 }
 
-type IntegrationTestSuite struct {
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg     testnetwork.Config
+	network *testnetwork.Network
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 
 	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
-	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
+	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
 
 	s.network = network
 	s.Require().NoError(s.network.WaitForNextBlock())
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestWasmHappyPath() {
+func (s *TestSuite) TestWasmHappyPath() {
 	s.requiredDeployedContractsLen(0)
 
 	_, err := s.deployWasmContract("testdata/cw_nameservice.wasm")
@@ -70,7 +72,7 @@ func (s *IntegrationTestSuite) TestWasmHappyPath() {
 }
 
 // deployWasmContract deploys a wasm contract located in path.
-func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
+func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 	val := s.network.Validators[0]
 	codec := val.ClientCtx.Codec
 
@@ -94,7 +96,7 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 		return 0, err
 	}
 
-	resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
+	resp, err = testnetwork.QueryTx(val.ClientCtx, resp.TxHash)
 	if err != nil {
 		return 0, err
 	}
@@ -124,10 +126,10 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 }
 
 // requiredDeployedContractsLen checks the number of deployed contracts.
-func (s *IntegrationTestSuite) requiredDeployedContractsLen(total int) {
+func (s *TestSuite) requiredDeployedContractsLen(total int) {
 	val := s.network.Validators[0]
 	var queryCodeResponse types.QueryCodesResponse
-	err := testutilcli.ExecQuery(
+	err := testnetwork.ExecQuery(
 		val.ClientCtx,
 		wasmcli.GetCmdListCode(),
 		[]string{},
@@ -138,5 +140,5 @@ func (s *IntegrationTestSuite) requiredDeployedContractsLen(total int) {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TestSuite))
 }

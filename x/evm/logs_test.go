@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
 func TestTransactionLogsValidate(t *testing.T) {
-	addr := evmtest.NewEthAccInfo().EthAddr.String()
+	addr := evmtest.NewEthPrivAcc().EthAddr.String()
 
 	testCases := []struct {
 		name    string
@@ -96,7 +96,7 @@ func TestTransactionLogsValidate(t *testing.T) {
 }
 
 func TestValidateLog(t *testing.T) {
-	addr := evmtest.NewEthAccInfo().EthAddr.String()
+	addr := evmtest.NewEthPrivAcc().EthAddr.String()
 
 	testCases := []struct {
 		name    string
@@ -169,7 +169,7 @@ func TestValidateLog(t *testing.T) {
 }
 
 func TestConversionFunctions(t *testing.T) {
-	addr := evmtest.NewEthAccInfo().EthAddr.String()
+	addr := evmtest.NewEthPrivAcc().EthAddr.String()
 
 	txLogs := evm.TransactionLogs{
 		Hash: common.BytesToHash([]byte("tx_hash")).String(),

@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // MintAndAllocateInflation mints and allocates tokens based on the polynomial
@@ -55,7 +55,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 }
 
 // AllocatePolynomialInflation allocates coins from the inflation to external
-// modules according to proportions proportions:
+// modules according to proportions:
 //
 // Returns:
 //   - staking: Tokens minted for staking inflation that go to the decentralized

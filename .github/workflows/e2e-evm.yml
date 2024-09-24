@@ -11,6 +11,7 @@ on:
         "**go.mod",
         "**go.sum",
         "contrib/docker/*",
+        "**.ts",
         "**.js",
         "**.json",
       ]
@@ -66,17 +67,17 @@ jobs:
         with:
           node-version: 18
 
-      - name: NPM Install
-        run: npm install
+      - name: "just install"
+        run: just install
         working-directory: "e2e/evm"
 
       - name: "Launch localnet"
         run: |
           just localnet --no-build &
-          sleep 6
+          sleep 10
 
-      - name: Run tests
-        run: npm test
+      - name: "Run tests (just test)"
+        run: just test
         working-directory: "e2e/evm"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545

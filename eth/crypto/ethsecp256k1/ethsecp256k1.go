@@ -15,7 +15,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/eth/eip712"
+	"github.com/NibiruChain/nibiru/v2/eth/eip712"
 )
 
 const (

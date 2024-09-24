@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,49 +14,31 @@ import (
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
-func (b *Backend) ChainID() (*hexutil.Big, error) {
-	eip155ChainID, err := eth.ParseEthChainID(b.clientCtx.ChainID)
-	if err != nil {
-		panic(err)
-	}
-	// if current block is at or past the EIP-155 replay-protection fork block, return chainID from config
-	bn, err := b.BlockNumber()
-	if err != nil {
-		b.logger.Debug("failed to fetch latest block number", "error", err.Error())
-		return (*hexutil.Big)(eip155ChainID), nil
-	}
-
-	if config := b.ChainConfig(); config.IsEIP155(new(big.Int).SetUint64(uint64(bn))) {
-		return (*hexutil.Big)(config.ChainID), nil
-	}
-
-	return nil, fmt.Errorf("chain not synced beyond EIP-155 replay-protection fork block")
+func (b *Backend) ChainID() *hexutil.Big {
+	return (*hexutil.Big)(eth.ParseEthChainID(b.clientCtx.ChainID))
 }
 
 // ChainConfig returns the latest ethereum chain configuration
 func (b *Backend) ChainConfig() *params.ChainConfig {
-	params, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
+	_, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {
 		return nil
 	}
-
-	return params.Params.ChainConfig.EthereumConfig(b.chainID)
+	return evm.EthereumConfig(b.chainID)
 }
 
 // BaseFee returns the base fee tracked by the Fee Market module.
 // If the base fee is not enabled globally, the query returns nil.
-// If the London hard fork is not activated at the current height, the query will
-// return nil.
 func (b *Backend) BaseFee(
 	blockRes *tmrpctypes.ResultBlockResults,
 ) (baseFee *big.Int, err error) {
-	// return BaseFee if London hard fork is activated and feemarket is enabled
+	// return BaseFee if feemarket is enabled
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
 		baseFee = nil
@@ -99,35 +80,10 @@ func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
 	return result, nil
 }
 
-// GetCoinbase is the address that staking rewards will be send to (alias for Etherbase).
-func (b *Backend) GetCoinbase() (sdk.AccAddress, error) {
-	node, err := b.clientCtx.GetNode()
-	if err != nil {
-		return nil, err
-	}
-
-	status, err := node.Status(b.ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &evm.QueryValidatorAccountRequest{
-		ConsAddress: sdk.ConsAddress(status.ValidatorInfo.Address).String(),
-	}
-
-	res, err := b.queryClient.ValidatorAccount(b.ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	address, _ := sdk.AccAddressFromBech32(res.AccountAddress) // #nosec G703
-	return address, nil
-}
-
 // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
 func (b *Backend) FeeHistory(
 	userBlockCount gethrpc.DecimalOrHex, // number blocks to fetch, maximum is 100
-	lastBlock gethrpc.BlockNumber, // the block to start search , to oldest
+	lastBlock gethrpc.BlockNumber, // the block to start search, to oldest
 	rewardPercentiles []float64, // percentiles to fetch reward
 ) (*rpc.FeeHistoryResult, error) {
 	blockEnd := int64(lastBlock) //#nosec G701 -- checked for int overflow already
@@ -189,7 +145,7 @@ func (b *Backend) FeeHistory(
 		}
 
 		oneFeeHistory := rpc.OneFeeHistory{}
-		err = b.processBlock(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
+		err = b.retrieveEVMTxFeesFromBlock(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
 		if err != nil {
 			return nil, err
 		}
@@ -221,18 +177,16 @@ func (b *Backend) FeeHistory(
 	return &feeHistory, nil
 }
 
-// SuggestGasTipCap: Not yet supported. Returns 0 as the suggested tip cap. After
-// implementing tx prioritization, this function can come to life.
+// SuggestGasTipCap Not yet supported. Returns 0 as the suggested tip cap.
+// After implementing tx prioritization, this function can come to life.
 func (b *Backend) SuggestGasTipCap(baseFee *big.Int) (*big.Int, error) {
 	maxDelta := big.NewInt(0)
 	return maxDelta, nil
 }
 
-func DefaultMinGasPrice() sdkmath.LegacyDec { return sdkmath.LegacyZeroDec() }
-
-// GlobalMinGasPrice returns the minimum gas price for all nodes. This is
-// distinct from the individual configuration set by the validator set.
-func (b *Backend) GlobalMinGasPrice() (sdkmath.LegacyDec, error) {
+// GlobalMinGasPrice returns the minimum gas price for all nodes.
+// This is distinct from the individual configuration set by the validator set.
+func (b *Backend) GlobalMinGasPrice() (*big.Int, error) {
 	// TODO: feat(eth): dynamic fees
-	return DefaultMinGasPrice(), nil
+	return big.NewInt(0), nil
 }

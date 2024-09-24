@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/gosdk"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -21,19 +21,22 @@ import (
 // NibiruClientSuite
 // --------------------------------------------------
 
-var _ suite.SetupAllSuite = (*TestSuite)(nil)
+var (
+	_ suite.SetupAllSuite    = (*TestSuite)(nil)
+	_ suite.TearDownAllSuite = (*TestSuite)(nil)
+)
 
 type TestSuite struct {
 	suite.Suite
 
 	nibiruSdk *gosdk.NibiruSDK
 	grpcConn  *grpc.ClientConn
-	cfg       *cli.Config
-	network   *cli.Network
-	val       *cli.Validator
+	cfg       *testnetwork.Config
+	network   *testnetwork.Network
+	val       *testnetwork.Validator
 }
 
-func TestNibiruClientTestSuite_RunAll(t *testing.T) {
+func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
@@ -44,7 +47,9 @@ func (s *TestSuite) RPCEndpoint() string {
 // SetupSuite implements the suite.SetupAllSuite interface. This function runs
 // prior to all of the other tests in the suite.
 func (s *TestSuite) SetupSuite() {
-	// testutil.BeforeIntegrationSuite(s.T())
+	testutil.BeforeIntegrationSuite(s.T())
+
+	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
 	nibiru, err := gosdk.CreateBlockchain(s.T())
 	s.NoError(err)
@@ -54,7 +59,7 @@ func (s *TestSuite) SetupSuite() {
 	s.grpcConn = nibiru.GrpcConn
 }
 
-func ConnectGrpcToVal(val *cli.Validator) (*grpc.ClientConn, error) {
+func ConnectGrpcToVal(val *testnetwork.Validator) (*grpc.ClientConn, error) {
 	grpcUrl := val.AppConfig.GRPC.Address
 	return gosdk.GetGRPCConnection(
 		grpcUrl, true, 5,
@@ -68,7 +73,7 @@ func (s *TestSuite) ConnectGrpc() {
 	s.grpcConn = grpcConn
 }
 
-func (s *TestSuite) TestNewQueryClient() {
+func (s *TestSuite) DoTestNewQueryClient() {
 	_, err := gosdk.NewQuerier(s.grpcConn)
 	s.NoError(err)
 }
@@ -80,13 +85,13 @@ func (s *TestSuite) TestNewNibiruSdk() {
 	s.nibiruSdk = &nibiruSdk
 
 	s.nibiruSdk.Keyring = s.val.ClientCtx.Keyring
-	s.T().Run("DoTestBroadcastMsgs", func(t *testing.T) {
-		s.DoTestBroadcastMsgs()
-	})
-	s.T().Run("DoTestBroadcastMsgsGrpc", func(t *testing.T) {
+
+	s.Run("DoTestBroadcastMsgs", func() { s.DoTestBroadcastMsgs() })
+	s.Run("DoTestBroadcastMsgsGrpc", func() {
 		s.NoError(s.network.WaitForNextBlock())
 		s.DoTestBroadcastMsgsGrpc()
 	})
+	s.Run("DoTestNewQueryClient", s.DoTestNewQueryClient)
 }
 
 // FIXME: Q: What is the node home for a local validator?
@@ -140,21 +145,9 @@ func (s *TestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-// --------------------------------------------------
-// NibiruClientSuite_NoNetwork
-// --------------------------------------------------
-
-type NibiruClientSuite_NoNetwork struct {
-	suite.Suite
-}
-
-func TestNibiruClientSuite_NoNetwork_RunAll(t *testing.T) {
-	suite.Run(t, new(NibiruClientSuite_NoNetwork))
-}
-
-func (s *NibiruClientSuite_NoNetwork) TestGetGrpcConnection_NoNetwork() {
+func (s *TestSuite) DoTestGetGrpcConnection_NoNetwork() {
 	grpcConn, err := gosdk.GetGRPCConnection(
-		gosdk.DefaultNetworkInfo.GrpcEndpoint, true, 2,
+		gosdk.DefaultNetworkInfo.GrpcEndpoint+"notendpoint", true, 2,
 	)
 	s.Error(err)
 	s.Nil(grpcConn)

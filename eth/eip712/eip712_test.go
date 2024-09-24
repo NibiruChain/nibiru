@@ -17,24 +17,24 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
-	"github.com/NibiruChain/nibiru/eth/eip712"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth/eip712"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/cmd/ethclient"
+	"github.com/NibiruChain/nibiru/v2/app"
 
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/eth/encoding"
+	"github.com/NibiruChain/nibiru/v2/eth/encoding"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -82,7 +82,7 @@ func (suite *EIP712TestSuite) SetupTest() {
 	suite.clientCtx = client.Context{}.WithTxConfig(suite.config.TxConfig)
 	suite.denom = evm.DefaultEVMDenom
 
-	sdk.GetConfig().SetBech32PrefixForAccount(ethclient.Bech32Prefix, "")
+	sdk.GetConfig().SetBech32PrefixForAccount(appconst.AccountAddressPrefix, "")
 	eip712.SetEncodingConfig(suite.config)
 }
 
@@ -369,7 +369,7 @@ func (suite *EIP712TestSuite) TestEIP712() {
 					AccountNumber: params.accountNumber,
 					Sequence:      params.sequence,
 					PubKey:        pubKey,
-					Address:       sdk.MustBech32ifyAddressBytes(ethclient.Bech32Prefix, pubKey.Bytes()),
+					Address:       sdk.MustBech32ifyAddressBytes(appconst.AccountAddressPrefix, pubKey.Bytes()),
 				}
 
 				bz, err := suite.clientCtx.TxConfig.SignModeHandler().GetSignBytes(

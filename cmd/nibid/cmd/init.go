@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
-	db "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
@@ -37,25 +37,6 @@ const (
 	// FlagDefaultBondDenom defines the default denom to use in the genesis file.
 	FlagDefaultBondDenom = "default-denom"
 )
-
-func customTendermintConfig() *tmcfg.Config {
-	cfg := tmcfg.DefaultConfig()
-
-	// Overwrite consensus config
-	ms := func(n time.Duration) time.Duration {
-		return n * time.Millisecond
-	}
-	cfg.Consensus.TimeoutPropose = ms(3_000)
-	cfg.Consensus.TimeoutProposeDelta = ms(500)
-	cfg.Consensus.TimeoutPrevote = ms(1_000)
-	cfg.Consensus.TimeoutPrevoteDelta = ms(500)
-	cfg.Consensus.TimeoutPrecommit = ms(1_000)
-	cfg.Consensus.TimeoutPrecommitDelta = ms(500)
-	cfg.Consensus.TimeoutCommit = ms(1_000)
-
-	cfg.DBBackend = string(db.RocksDBBackend)
-	return cfg
-}
 
 /*
 InitCmd is a stand-in replacement for genutilcli.InitCmd that overwrites the
@@ -176,7 +157,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", appState)
 
-			customCfg := customTendermintConfig()
+			customCfg := appconst.NewDefaultTendermintConfig()
 			config.Consensus = customCfg.Consensus
 			config.DBBackend = customCfg.DBBackend
 			tmcfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)

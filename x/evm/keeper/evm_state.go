@@ -2,9 +2,7 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
-	"slices"
 
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,8 +11,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type (
@@ -95,11 +93,6 @@ func NewEvmState(
 	}
 }
 
-// BytesToHex converts a byte array to a hexadecimal string
-func BytesToHex(bz []byte) string {
-	return fmt.Sprintf("%x", bz)
-}
-
 func (state EvmState) SetAccCode(ctx sdk.Context, codeHash, code []byte) {
 	if len(code) > 0 {
 		state.ContractBytecode.Insert(ctx, codeHash, code)
@@ -124,13 +117,12 @@ func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 
 // SetParams: Setter for the module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
-	slices.Sort(params.ActivePrecompiles)
 	k.EvmState.ModuleParams.Set(ctx, params)
 }
 
-// SetState update contract storage, delete if value is empty.
+// SetState updates contract storage and deletes if the value is empty.
 func (state EvmState) SetAccState(
-	ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHash, stateValue []byte,
+	ctx sdk.Context, addr gethcommon.Address, stateKey gethcommon.Hash, stateValue []byte,
 ) {
 	if len(stateValue) != 0 {
 		state.AccState.Insert(ctx, collections.Join(addr, stateKey), stateValue)
@@ -140,7 +132,7 @@ func (state EvmState) SetAccState(
 }
 
 // GetState: Implements `statedb.Keeper` interface: Loads smart contract state.
-func (k *Keeper) GetState(ctx sdk.Context, addr eth.EthAddr, stateKey eth.EthHash) eth.EthHash {
+func (k *Keeper) GetState(ctx sdk.Context, addr gethcommon.Address, stateKey gethcommon.Hash) gethcommon.Hash {
 	return gethcommon.BytesToHash(k.EvmState.AccState.GetOr(
 		ctx,
 		collections.Join(addr, stateKey),
@@ -170,12 +162,12 @@ func (state EvmState) CalcBloomFromLogs(
 
 // ResetTransientGasUsed resets gas to prepare for the next block of execution.
 // Called in an ante handler.
-func (k Keeper) ResetTransientGasUsed(ctx sdk.Context) {
+func (k *Keeper) ResetTransientGasUsed(ctx sdk.Context) {
 	k.EvmState.BlockGasUsed.Set(ctx, 0)
 }
 
 // GetAccNonce returns the sequence number of an account, returns 0 if not exists.
-func (k *Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
+func (k Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)
 	if acct == nil {

@@ -6,8 +6,8 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -14,11 +14,11 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type AnteTestSuite struct {

@@ -6,7 +6,7 @@ import "nibiru/oracle/v1/oracle.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Emitted when a price is posted
 message EventPriceUpdate {

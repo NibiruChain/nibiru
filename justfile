@@ -16,6 +16,10 @@ install-clean:
 build: 
   make build
 
+# Cleans the Go cache, modcache, and testcashe
+clean-cache:
+  go clean -cache -testcache -modcache
+
 alias b := build
 
 # Generate protobuf code (Golang) for Nibiru
@@ -82,3 +86,15 @@ test-release:
 
 release-publish:
   make release
+
+# Run Go tests (short mode)
+test-unit:
+  go test ./... -short
+
+# Run Go tests (short mode) + coverage
+test-coverage-unit:
+  make test-coverage-unit
+
+# Run Go tests, including live network tests + coverage
+test-coverage-integration:
+  make test-coverage-integration

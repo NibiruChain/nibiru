@@ -2,7 +2,10 @@
 syntax = "proto3";
 package eth.evm.v1;
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {
@@ -42,4 +45,42 @@ message EventMessage {
 message EventBlockBloom {
   // bloom is the bloom filter of the block
   string bloom = 1;
+}
+
+// EventFunTokenCreated defines a fun token creation event.
+message EventFunTokenCreated {
+  string bank_denom = 1;
+  string erc20_contract_address = 2;
+  string creator = 3;
+  bool is_made_from_coin = 4;
+}
+
+// ConvertCoinToEvm defines sending fun token to erc20 event.
+message EventConvertCoinToEvm {
+  string sender = 1;
+  string erc20_contract_address = 2;
+  string to_eth_addr = 3;
+  cosmos.base.v1beta1.Coin bank_coin = 4 [
+    (gogoproto.moretags) = "yaml:\"bank_coin\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// EventTransfer defines event for EVM transfer
+message EventTransfer {
+  string sender = 1;
+  string recipient = 2;
+  string amount = 3;
+}
+
+// EventContractDeployed defines event for EVM contract deployment
+message EventContractDeployed {
+  string sender = 1;
+  string contract_addr = 2;
+}
+
+// EventContractExecuted defines event for EVM contract execution
+message EventContractExecuted {
+  string sender = 1;
+  string contract_addr = 2;
 }

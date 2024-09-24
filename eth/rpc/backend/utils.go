@@ -24,8 +24,8 @@ import (
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type txGasAndReward struct {
@@ -47,7 +47,6 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // getAccountNonce returns the account nonce for the given account address.
 // If the pending value is true, it will iterate over the mempool (pending)
 // txs in order to compute and return the pending tx sequence.
-// Todo: include the ability to specify a blockNumber
 func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
 	adr := sdk.AccAddress(accAddr.Bytes()).String()
@@ -72,8 +71,8 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 		return nonce, nil
 	}
 
-	// the account retriever doesn't include the uncommitted transactions on the nonce so we need to
-	// to manually add them.
+	// the account retriever doesn't include the uncommitted transactions on the nonce,
+	// so we need to manually add them.
 	pendingTxs, err := b.PendingTransactions()
 	if err != nil {
 		logger.Error("failed to fetch pending transactions", "error", err.Error())
@@ -103,8 +102,10 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 	return nonce, nil
 }
 
-// output: targetOneFeeHistory
-func (b *Backend) processBlock(
+// retrieveEVMTxFeesFromBlock goes through evm txs of the block,
+// retrieves the gas fees and puts them into an object `targetOneFeeHistory`
+// See eth_feeHistory method for more details of the return format.
+func (b *Backend) retrieveEVMTxFeesFromBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
 	ethBlock *map[string]interface{},
 	rewardPercentiles []float64,
@@ -120,15 +121,12 @@ func (b *Backend) processBlock(
 	// set basefee
 	targetOneFeeHistory.BaseFee = blockBaseFee
 	cfg := b.ChainConfig()
-	if cfg.IsLondon(big.NewInt(blockHeight + 1)) {
-		header, err := b.CurrentHeader()
-		if err != nil {
-			return err
-		}
-		targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
-	} else {
-		targetOneFeeHistory.NextBaseFee = new(big.Int)
+	header, err := b.CurrentHeader()
+	if err != nil {
+		return err
 	}
+	targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
+
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
 	if !ok {
@@ -285,13 +283,13 @@ func GetLogsFromBlockResults(blockRes *tmrpctypes.ResultBlockResults) ([][]*geth
 }
 
 // GetHexProofs returns list of hex data of proof op
-func GetHexProofs(proof *crypto.ProofOps) []string {
-	if proof == nil {
+func GetHexProofs(proofOps *crypto.ProofOps) []string {
+	if proofOps == nil {
 		return []string{""}
 	}
 	proofs := []string{}
 	// check for proof
-	for _, p := range proof.Ops {
+	for _, p := range proofOps.Ops {
 		proof := ""
 		if len(p.Data) > 0 {
 			proof = hexutil.Encode(p.Data)

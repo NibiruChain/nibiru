@@ -5,14 +5,18 @@ package eth.evm.v1;
 import "eth/evm/v1/evm.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // GenesisState defines the evm module's genesis state.
 message GenesisState {
   // accounts is an array containing the ethereum genesis accounts.
   repeated GenesisAccount accounts = 1 [(gogoproto.nullable) = false];
+
   // params defines all the parameters of the module.
   Params params = 2 [(gogoproto.nullable) = false];
+  
+  // Fungible token mappings corresponding to ERC-20 smart contract tokens.
+  repeated eth.evm.v1.FunToken funtoken_mappings = 3 [(gogoproto.nullable) = false];
 }
 
 // GenesisAccount defines an account to be initialized in the genesis state.

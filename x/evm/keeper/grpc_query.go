@@ -17,9 +17,9 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -34,68 +34,46 @@ import (
 )
 
 // Compile-time interface assertion
-var _ evm.QueryServer = Keeper{}
+var _ evm.QueryServer = &Keeper{}
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
-// EthAccount retrieves the account details for a given Ethereum hex address.
+// EthAccount retrieves the account  and balance details for an account with the
+// given address.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: Request containing the Ethereum hexadecimal address.
-//
-// Returns:
-//   - A pointer to the QueryEthAccountResponse object containing the account details.
-//   - An error if the account retrieval process encounters any issues.
+//   - req: Request containing the address in either Ethereum hexadecimal or
+//     Bech32 format.
 func (k Keeper) EthAccount(
 	goCtx context.Context, req *evm.QueryEthAccountRequest,
 ) (*evm.QueryEthAccountResponse, error) {
-	if err := req.Validate(); err != nil {
+	isBech32, err := req.Validate()
+	if err != nil {
 		return nil, err
 	}
 
-	addr := gethcommon.HexToAddress(req.Address)
+	var addrEth gethcommon.Address
+	var addrBech32 sdk.AccAddress
+
+	if isBech32 {
+		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+	} else {
+		addrEth = gethcommon.HexToAddress(req.Address)
+		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	acct := k.GetAccountOrEmpty(ctx, addr)
+	acct := k.GetAccountOrEmpty(ctx, addrEth)
 
 	return &evm.QueryEthAccountResponse{
-		Balance:  acct.Balance.String(),
-		CodeHash: gethcommon.BytesToHash(acct.CodeHash).Hex(),
-		Nonce:    acct.Nonce,
+		EthAddress:    addrEth.Hex(),
+		Bech32Address: addrBech32.String(),
+		Balance:       acct.BalanceNative.String(),
+		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
+		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
+		Nonce:         acct.Nonce,
 	}, nil
-}
-
-// NibiruAccount: Implements the gRPC query for "/eth.evm.v1.Query/NibiruAccount".
-// NibiruAccount retrieves the Cosmos account details for a given Ethereum address.
-//
-// Parameters:
-//   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryNibiruAccountRequest object containing the Ethereum address.
-//
-// Returns:
-//   - A pointer to the QueryNibiruAccountResponse object containing the Cosmos account details.
-//   - An error if the account retrieval process encounters any issues.
-func (k Keeper) NibiruAccount(
-	goCtx context.Context, req *evm.QueryNibiruAccountRequest,
-) (resp *evm.QueryNibiruAccountResponse, err error) {
-	if err := req.Validate(); err != nil {
-		return resp, err
-	}
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ethAddr := gethcommon.HexToAddress(req.Address)
-	nibiruAddr := sdk.AccAddress(ethAddr.Bytes())
-
-	accountOrNil := k.accountKeeper.GetAccount(ctx, nibiruAddr)
-	resp = &evm.QueryNibiruAccountResponse{
-		Address: nibiruAddr.String(),
-	}
-
-	if accountOrNil != nil {
-		resp.Sequence = accountOrNil.GetSequence()
-		resp.AccountNumber = accountOrNil.GetAccountNumber()
-	}
-
-	return resp, nil
 }
 
 // ValidatorAccount: Implements the gRPC query for
@@ -139,8 +117,8 @@ func (k Keeper) ValidatorAccount(
 }
 
 // Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
-// Balance retrieves the balance of an Ethereum address in "Ether", which
-// actually refers to NIBI tokens on Nibiru EVM.
+// Balance retrieves the balance of an Ethereum address in "wei", the smallest
+// unit of "Ether". Ether refers to NIBI tokens on Nibiru EVM.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
@@ -156,7 +134,8 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
-		Balance: balanceInt.String(),
+		Balance:    balanceInt.String(),
+		BalanceWei: evm.NativeToWei(balanceInt).String(),
 	}, nil
 }
 
@@ -165,9 +144,7 @@ func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	params := k.GetParams(ctx)
-	ethCfg := params.ChainConfig.EthereumConfig(k.EthChainID(ctx))
-	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx, ethCfg))
+	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx))
 	return &evm.QueryBaseFeeResponse{
 		BaseFee: &baseFee,
 	}, nil
@@ -271,7 +248,7 @@ func (k Keeper) Params(
 // Returns:
 //   - A pointer to the MsgEthereumTxResponse object containing the result of the eth_call.
 //   - An error if the eth_call process encounters any issues.
-func (k Keeper) EthCall(
+func (k *Keeper) EthCall(
 	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.MsgEthereumTxResponse, error) {
 	if err := req.Validate(); err != nil {
@@ -446,7 +423,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
 			}
-			return true, nil, err // Bail out
+			return true, nil, fmt.Errorf("error applying EVM message to StateDB: %w", err) // Bail out
 		}
 		return len(rsp.VmError) > 0, rsp, nil
 	}
@@ -461,15 +438,15 @@ func (k Keeper) EstimateGasForEvmCallType(
 	if hi == gasCap {
 		failed, result, err := executable(hi)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth call exec error: %w", err)
 		}
 
 		if failed {
 			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
 				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, evm.NewExecErrorWithReason(result.Ret)
+					return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(result.Ret))
 				}
-				return nil, errors.New(result.VmError)
+				return nil, fmt.Errorf("VMError: %s", result.VmError)
 			}
 			// Otherwise, the specified gas cap is too low
 			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
@@ -512,7 +489,7 @@ func (k Keeper) TraceTx(
 	}
 
 	// compute and use base fee of the height that is being traced
-	baseFee := k.GetBaseFee(ctx, cfg.ChainConfig)
+	baseFee := k.GetBaseFee(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}
@@ -551,12 +528,99 @@ func (k Keeper) TraceTx(
 	}
 
 	var tracerConfig json.RawMessage
-	if req.TraceConfig != nil && req.TraceConfig.TracerJsonConfig != "" {
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
 		// ignore error. default to no traceConfig
-		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
-	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, tx, req.TraceConfig, false, tracerConfig)
+	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	if err != nil {
+		return nil, err
+	}
+
+	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
+	if err != nil {
+		// error will be returned with detail status from traceTx
+		return nil, err
+	}
+
+	resultData, err := json.Marshal(result)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &evm.QueryTraceTxResponse{
+		Data: resultData,
+	}, nil
+}
+
+// TraceCall configures a new tracer according to the provided configuration, and
+// executes the given message in the provided environment. The return value will
+// be tracer dependent.
+func (k Keeper) TraceCall(
+	goCtx context.Context, req *evm.QueryTraceTxRequest,
+) (*evm.QueryTraceTxResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// get the context of block beginning
+	contextHeight := req.BlockNumber
+	if contextHeight < 1 {
+		// 0 is a special value in `ContextWithHeight`
+		contextHeight = 1
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithBlockHeight(contextHeight)
+	ctx = ctx.WithBlockTime(req.BlockTime)
+	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
+	chainID := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
+	}
+
+	// compute and use base fee of the height that is being traced
+	baseFee := k.GetBaseFee(ctx)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	var tracerConfig json.RawMessage
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
+		// ignore error. default to no traceConfig
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
+	}
+
+	// req.Msg is not signed, so to gethcore.Message because it's not signed and will fail on getting
+	msgEthTx := req.Msg
+	txData, err := evm.UnpackTxData(req.Msg.Data)
+	if err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to unpack tx data: %s", err.Error())
+	}
+	msg := gethcore.NewMessage(
+		gethcommon.HexToAddress(msgEthTx.From),
+		txData.GetTo(),
+		txData.GetNonce(),
+		txData.GetValueWei(),
+		txData.GetGas(),
+		txData.GetGasPrice(),
+		txData.GetGasFeeCapWei(),
+		txData.GetGasTipCapWei(),
+		txData.GetData(),
+		txData.GetAccessList(),
+		false,
+	)
+	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -613,9 +677,14 @@ func (k Keeper) TraceBlock(
 	}
 
 	// compute and use base fee of height that is being traced
-	baseFee := k.GetBaseFeeNoCfg(ctx)
+	baseFee := k.GetBaseFee(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
+	}
+	var tracerConfig json.RawMessage
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
+		// ignore error. default to no traceConfig
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
 	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
@@ -629,7 +698,12 @@ func (k Keeper) TraceBlock(
 		ethTx := tx.AsTransaction()
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, signer, ethTx, req.TraceConfig, true, nil)
+		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		if err != nil {
+			result.Error = err.Error()
+			continue
+		}
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, true, tracerConfig)
 		if err != nil {
 			result.Error = err.Error()
 		} else {
@@ -655,8 +729,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx sdk.Context,
 	cfg *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
-	signer gethcore.Signer,
-	tx *gethcore.Transaction,
+	msg gethcore.Message,
 	traceConfig *evm.TraceConfig,
 	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
@@ -668,17 +741,8 @@ func (k *Keeper) TraceEthTxMsg(
 		err       error
 		timeout   = DefaultGethTraceTimeout
 	)
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
-	if err != nil {
-		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
-	}
-
 	if traceConfig == nil {
 		traceConfig = &evm.TraceConfig{}
-	}
-
-	if traceConfig.Overrides != nil {
-		overrides = traceConfig.Overrides.EthereumConfig(cfg.ChainConfig.ChainID)
 	}
 
 	logConfig := logger.Config{
@@ -745,4 +809,31 @@ func (k *Keeper) TraceEthTxMsg(
 	}
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
+}
+
+func (k Keeper) FunTokenMapping(
+	goCtx context.Context, req *evm.QueryFunTokenMappingRequest,
+) (*evm.QueryFunTokenMappingResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// first try lookup by cosmos denom
+	bankDenomIter := k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, req.Token)
+	funTokenMappings := k.FunTokens.Collect(ctx, bankDenomIter)
+	if len(funTokenMappings) > 0 {
+		// assumes that there is only one mapping for a given denom
+		return &evm.QueryFunTokenMappingResponse{
+			FunToken: &funTokenMappings[0],
+		}, nil
+	}
+
+	erc20AddrIter := k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, gethcommon.HexToAddress(req.Token))
+	funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
+	if len(funTokenMappings) > 0 {
+		// assumes that there is only one mapping for a given erc20 address
+		return &evm.QueryFunTokenMappingResponse{
+			FunToken: &funTokenMappings[0],
+		}, nil
+	}
+
+	return nil, grpcstatus.Errorf(grpccodes.NotFound, "token mapping not found for %s", req.Token)
 }

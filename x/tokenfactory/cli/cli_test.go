@@ -6,46 +6,49 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/cli"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ suite.SetupAllSuite = (*IntegrationTestSuite)(nil)
+var (
+	_ suite.SetupAllSuite    = (*TestSuite)(nil)
+	_ suite.TearDownAllSuite = (*TestSuite)(nil)
+)
 
-type IntegrationTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
-	val     *testutilcli.Validator
+	cfg     testnetwork.Config
+	network *testnetwork.Network
+	val     *testnetwork.Validator
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TestSuite))
 }
 
 // TestTokenFactory: Runs the test suite with a deterministic order.
-func (s *IntegrationTestSuite) TestTokenFactory() {
+func (s *TestSuite) TestTokenFactory() {
 	s.Run("CreateDenomTest", s.CreateDenomTest)
 	s.Run("MintBurnTest", s.MintBurnTest)
 	s.Run("ChangeAdminTest", s.ChangeAdminTest)
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encodingConfig)
-	cfg := testutilcli.BuildNetworkConfig(genState)
+	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
-	network, err := testutilcli.New(s.T(), s.T().TempDir(), cfg)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
 	s.NoError(err)
 
 	s.cfg = cfg
@@ -54,7 +57,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
-func (s *IntegrationTestSuite) CreateDenomTest() {
+func (s *TestSuite) CreateDenomTest() {
 	creator := s.val.Address
 	createDenom := func(subdenom string, wantErr bool) {
 		_, err := s.network.ExecTxCmd(
@@ -88,7 +91,7 @@ func (s *IntegrationTestSuite) CreateDenomTest() {
 	s.ElementsMatch(denoms, wantDenoms)
 }
 
-func (s *IntegrationTestSuite) MintBurnTest() {
+func (s *TestSuite) MintBurnTest() {
 	creator := s.val.Address
 	mint := func(coin string, mintTo string, wantErr bool) {
 		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
@@ -145,7 +148,7 @@ func (s *IntegrationTestSuite) MintBurnTest() {
 	burn(coin.String(), creator.String(), wantErr) // happy
 }
 
-func (s *IntegrationTestSuite) ChangeAdminTest() {
+func (s *TestSuite) ChangeAdminTest() {
 	creator := s.val.Address
 	admin := creator
 	newAdmin := testutil.AccAddress()
@@ -179,7 +182,7 @@ func (s *IntegrationTestSuite) ChangeAdminTest() {
 	s.Equal(infoResp.Admin, newAdmin.String())
 }
 
-func (s *IntegrationTestSuite) TestQueryModuleParams() {
+func (s *TestSuite) TestQueryModuleParams() {
 	paramResp := new(types.QueryParamsResponse)
 	s.NoError(
 		s.network.ExecQuery(
@@ -189,7 +192,7 @@ func (s *IntegrationTestSuite) TestQueryModuleParams() {
 	s.Equal(paramResp.Params, types.DefaultModuleParams())
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }

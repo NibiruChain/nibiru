@@ -11,8 +11,9 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	"github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -51,6 +52,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	// force call init() of the geth tracers
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 const (
@@ -127,6 +131,14 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 
 const DefaultMaxTxGasWanted uint64 = 0
 
+// overrideWasmVariables overrides the wasm variables to:
+//   - allow for larger wasm files
+func overrideWasmVariables() {
+	// Override Wasm size limitation from WASMD.
+	wasmtypes.MaxWasmSize = 3 * 1024 * 1024 // 3MB
+	wasmtypes.MaxProposalWasmSize = wasmtypes.MaxWasmSize
+}
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
 	logger log.Logger,
@@ -137,6 +149,7 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
+	overrideWasmVariables()
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -176,6 +189,8 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
+
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	app.setupUpgrades()
@@ -212,6 +227,8 @@ func NewNibiruApp(
 		DevGasBankKeeper:  app.BankKeeper,
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
+		EvmKeeper:      app.EvmKeeper,
+		AccountKeeper:  app.AccountKeeper,
 	})
 
 	app.SetAnteHandler(anteHandler)

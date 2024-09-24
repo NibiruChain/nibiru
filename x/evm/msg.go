@@ -20,7 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -33,6 +33,7 @@ var (
 	_ sdk.Tx     = &MsgEthereumTx{}
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
+	_ sdk.Msg    = &MsgCreateFunToken{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -181,7 +182,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	}
 
 	if err := txData.Validate(); err != nil {
-		return err
+		return errorsmod.Wrap(err, "failed \"TxData.Validate\"")
 	}
 
 	// Validate Hash field after validated txData to avoid panic
@@ -193,7 +194,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	return nil
 }
 
-// GetMsgs returns a single MsgEthereumTx as an sdk.Msg.
+// GetMsgs returns a single MsgEthereumTx as sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
@@ -279,7 +280,16 @@ func (msg MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
 	if err != nil {
 		return nil
 	}
-	return txData.EffectiveFee(baseFee)
+	return txData.EffectiveFeeWei(baseFee)
+}
+
+// GetEffectiveFee returns the fee for dynamic fee tx
+func (msg MsgEthereumTx) GetEffectiveGasPrice(baseFeeWei *big.Int) *big.Int {
+	txData, err := UnpackTxData(msg.Data)
+	if err != nil {
+		return nil
+	}
+	return txData.EffectiveGasPriceWei(baseFeeWei)
 }
 
 // GetFrom loads the ethereum sender address from the sigcache and returns an
@@ -418,7 +428,7 @@ func EncodeTransactionLogs(res *TransactionLogs) ([]byte, error) {
 	return proto.Marshal(res)
 }
 
-// DecodeTransactionLogs decodes an protobuf-encoded byte slice into
+// DecodeTransactionLogs decodes a protobuf-encoded byte slice into
 // TransactionLogs
 func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
 	var logs TransactionLogs
@@ -460,7 +470,7 @@ func BinSearch(
 		// If this errors, there was a consensus error, and the provided message
 		// call or tx will never be accepted, regardless of how high we set the
 		// gas limit.
-		// Return the error directly, don't struggle any more.
+		// Return the error directly, don't struggle anymore.
 		if err != nil {
 			return 0, err
 		}
@@ -471,4 +481,57 @@ func BinSearch(
 		}
 	}
 	return hi, nil
+}
+
+// GetSigners returns the expected signers for a MsgCreateFunToken message.
+func (m MsgCreateFunToken) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgCreateFunToken) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return fmt.Errorf("invalid sender addr")
+	}
+
+	emptyBankDenom := m.FromBankDenom == ""
+	emptyErc20 := m.FromErc20 == nil || m.FromErc20.Size() == 0
+
+	if emptyErc20 && emptyBankDenom {
+		return fmt.Errorf("either the \"from_erc20\" or \"from_bank_denom\" must be set")
+	}
+
+	if !emptyErc20 && !emptyBankDenom {
+		return fmt.Errorf("either the \"from_erc20\" or \"from_bank_denom\" must be set (but not both)")
+	}
+
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgCreateFunToken) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
+
+// GetSigners returns the expected signers for a MsgConvertCoinToEvm message.
+func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgConvertCoinToEvm) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return fmt.Errorf("invalid sender addr")
+	}
+	if m.ToEthAddr.Address.String() == "" || m.ToEthAddr.Size() == 0 {
+		return fmt.Errorf("empty to_eth_addr")
+	}
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }

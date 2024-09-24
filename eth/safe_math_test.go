@@ -8,20 +8,20 @@ import (
 	"cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 const maxInt64 = 9223372036854775807
 
-type SuiteSafeMath struct {
+type Suite struct {
 	suite.Suite
 }
 
-func TestTypesSuite(t *testing.T) {
-	suite.Run(t, new(SuiteSafeMath))
+func TestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *SuiteSafeMath) TestSafeNewIntFromBigInt() {
+func (s *Suite) TestSafeNewIntFromBigInt() {
 	tests := []struct {
 		name      string
 		input     *big.Int
@@ -57,7 +57,7 @@ func (s *SuiteSafeMath) TestSafeNewIntFromBigInt() {
 	}
 }
 
-func (s *SuiteSafeMath) TestIsValidInt256() {
+func (s *Suite) TestIsValidInt256() {
 	tests := []struct {
 		name        string
 		input       *big.Int
@@ -88,7 +88,7 @@ func (s *SuiteSafeMath) TestIsValidInt256() {
 	}
 }
 
-func (s *SuiteSafeMath) TestSafeInt64() {
+func (s *Suite) TestSafeInt64() {
 	tests := []struct {
 		name      string
 		input     uint64

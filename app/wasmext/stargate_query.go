@@ -3,12 +3,12 @@ package wasmext
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"

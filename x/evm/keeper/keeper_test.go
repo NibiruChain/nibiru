@@ -6,12 +6,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type KeeperSuite struct {
+type Suite struct {
 	suite.Suite
 }
 
-// TestKeeperSuite: Runs all of the tests in the suite.
-func TestKeeperSuite(t *testing.T) {
-	s := new(KeeperSuite)
-	suite.Run(t, s)
+// TestSuite: Runs all the tests in the suite.
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(Suite))
 }

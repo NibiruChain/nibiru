@@ -4,8 +4,6 @@ package rpcapi
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -14,11 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // Ethereum API: Allows connection to a full node of the Nibiru blockchain
@@ -43,7 +41,7 @@ type IEthAPI interface {
 	// it is a user or a smart contract.
 	GetTransactionByHash(hash common.Hash) (*rpc.EthTxJsonRPC, error)
 	GetTransactionCount(address common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*hexutil.Uint64, error)
-	GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error)
+	GetTransactionReceipt(hash common.Hash) (*backend.TransactionReceipt, error)
 	GetTransactionByBlockHashAndIndex(hash common.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	// eth_getBlockReceipts
@@ -53,9 +51,6 @@ type IEthAPI interface {
 	// Allows developers to both send ETH from one address to another, write data
 	// on-chain, and interact with smart contracts.
 	SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
-	SendTransaction(args evm.JsonTxArgs) (common.Hash, error)
-	// eth_sendPrivateTransaction
-	// eth_cancel	PrivateTransaction
 
 	// Account Information
 	//
@@ -109,34 +104,13 @@ type IEthAPI interface {
 	GetUncleCountByBlockHash(hash common.Hash) hexutil.Uint
 	GetUncleCountByBlockNumber(blockNum rpc.BlockNumber) hexutil.Uint
 
-	// Proof of Work
-	Hashrate() hexutil.Uint64
-	Mining() bool
-
 	// Other
 	Syncing() (interface{}, error)
-	Coinbase() (string, error)
-	Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error)
 	GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
-	SignTypedData(
-		address common.Address, typedData apitypes.TypedData,
-	) (hexutil.Bytes, error)
 	FillTransaction(
 		args evm.JsonTxArgs,
 	) (*rpc.SignTransactionResult, error)
-	Resend(
-		ctx context.Context, args evm.JsonTxArgs,
-		gasPrice *hexutil.Big, gasLimit *hexutil.Uint64,
-	) (common.Hash, error)
 	GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error)
-	// eth_signTransaction (on Ethereum.org)
-	// eth_getCompilers (on Ethereum.org)
-	// eth_compileSolidity (on Ethereum.org)
-	// eth_compileLLL (on Ethereum.org)
-	// eth_compileSerpent (on Ethereum.org)
-	// eth_getWork (on Ethereum.org)
-	// eth_submitWork (on Ethereum.org)
-	// eth_submitHashrate (on Ethereum.org)
 }
 
 var _ IEthAPI = (*EthAPI)(nil)
@@ -145,11 +119,11 @@ var _ IEthAPI = (*EthAPI)(nil)
 type EthAPI struct {
 	ctx     context.Context
 	logger  log.Logger
-	backend backend.EVMBackend
+	backend *backend.Backend
 }
 
 // NewImplEthAPI creates an instance of the public ETH Web3 API.
-func NewImplEthAPI(logger log.Logger, backend backend.EVMBackend) *EthAPI {
+func NewImplEthAPI(logger log.Logger, backend *backend.Backend) *EthAPI {
 	api := &EthAPI{
 		ctx:     context.Background(),
 		logger:  logger.With("client", "json-rpc"),
@@ -206,7 +180,7 @@ func (e *EthAPI) GetTransactionCount(
 // GetTransactionReceipt returns the transaction receipt identified by hash.
 func (e *EthAPI) GetTransactionReceipt(
 	hash common.Hash,
-) (map[string]interface{}, error) {
+) (*backend.TransactionReceipt, error) {
 	hexTx := hash.Hex()
 	e.logger.Debug("eth_getTransactionReceipt", "hash", hexTx)
 	return e.backend.GetTransactionReceipt(hash)
@@ -250,14 +224,6 @@ func (e *EthAPI) GetTransactionByBlockNumberAndIndex(
 func (e *EthAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	e.logger.Debug("eth_sendRawTransaction", "length", len(data))
 	return e.backend.SendRawTransaction(data)
-}
-
-// SendTransaction sends an Ethereum transaction.
-func (e *EthAPI) SendTransaction(
-	txArgs evm.JsonTxArgs,
-) (common.Hash, error) {
-	e.logger.Debug("eth_sendTransaction", "args", txArgs.String())
-	return e.backend.SendTransaction(txArgs)
 }
 
 // --------------------------------------------------------------------------
@@ -382,7 +348,7 @@ func (e *EthAPI) MaxPriorityFeePerGas() (*hexutil.Big, error) {
 // chain config.
 func (e *EthAPI) ChainId() (*hexutil.Big, error) { //nolint
 	e.logger.Debug("eth_chainId")
-	return e.backend.ChainID()
+	return e.backend.ChainID(), nil
 }
 
 // --------------------------------------------------------------------------
@@ -418,22 +384,6 @@ func (e *EthAPI) GetUncleCountByBlockNumber(_ rpc.BlockNumber) hexutil.Uint {
 }
 
 // --------------------------------------------------------------------------
-//                           Proof of Work
-// --------------------------------------------------------------------------
-
-// Hashrate returns the current node's hashrate. Always 0.
-func (e *EthAPI) Hashrate() hexutil.Uint64 {
-	e.logger.Debug("eth_hashrate")
-	return 0
-}
-
-// Mining returns whether or not this node is currently mining. Always false.
-func (e *EthAPI) Mining() bool {
-	e.logger.Debug("eth_mining")
-	return false
-}
-
-// --------------------------------------------------------------------------
 //                           Other
 // --------------------------------------------------------------------------
 
@@ -449,26 +399,6 @@ func (e *EthAPI) Mining() bool {
 func (e *EthAPI) Syncing() (interface{}, error) {
 	e.logger.Debug("eth_syncing")
 	return e.backend.Syncing()
-}
-
-// Coinbase is the address that staking rewards will be send to (alias for Etherbase).
-func (e *EthAPI) Coinbase() (string, error) {
-	e.logger.Debug("eth_coinbase")
-
-	coinbase, err := e.backend.GetCoinbase()
-	if err != nil {
-		return "", err
-	}
-	ethAddr := common.BytesToAddress(coinbase.Bytes())
-	return ethAddr.Hex(), nil
-}
-
-// Sign signs the provided data using the private key of address via Geth's signature standard.
-func (e *EthAPI) Sign(
-	address common.Address, data hexutil.Bytes,
-) (hexutil.Bytes, error) {
-	e.logger.Debug("eth_sign", "address", address.Hex(), "data", common.Bytes2Hex(data))
-	return e.backend.Sign(address, data)
 }
 
 // GetTransactionLogs returns the logs given a transaction hash.
@@ -498,16 +428,6 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 	return backend.TxLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Events, index)
 }
 
-// SignTypedData signs EIP-712 conformant typed data
-func (e *EthAPI) SignTypedData(
-	address common.Address, typedData apitypes.TypedData,
-) (hexutil.Bytes, error) {
-	e.logger.Debug(
-		"eth_signTypedData", "address", address.Hex(), "data", typedData,
-	)
-	return e.backend.SignTypedData(address, typedData)
-}
-
 // FillTransaction fills the defaults (nonce, gas, gasPrice or 1559 fields)
 // on a given unsigned transaction, and returns it to the caller for further
 // processing (signing + broadcast).
@@ -521,7 +441,7 @@ func (e *EthAPI) FillTransaction(
 	}
 
 	// Assemble the transaction and obtain rlp
-	tx := args.ToTransaction().AsTransaction()
+	tx := args.ToMsgEthTx().AsTransaction()
 
 	data, err := tx.MarshalBinary()
 	if err != nil {
@@ -532,18 +452,6 @@ func (e *EthAPI) FillTransaction(
 		Raw: data,
 		Tx:  tx,
 	}, nil
-}
-
-// Resend accepts an existing transaction and a new gas price and limit. It will
-// remove the given transaction from the pool and reinsert it with the new gas
-// price and limit.
-func (e *EthAPI) Resend(_ context.Context,
-	args evm.JsonTxArgs,
-	gasPrice *hexutil.Big,
-	gasLimit *hexutil.Uint64,
-) (common.Hash, error) {
-	e.logger.Debug("eth_resend", "args", args.String())
-	return e.backend.Resend(args, gasPrice, gasLimit)
 }
 
 // GetPendingTransactions returns the transactions that are in the transaction
