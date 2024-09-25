@@ -4,7 +4,7 @@ package backend
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -12,8 +12,8 @@ import (
 )
 
 // Accounts returns the list of accounts available to this node.
-func (b *Backend) Accounts() ([]common.Address, error) {
-	addresses := make([]common.Address, 0) // return [] instead of nil if empty
+func (b *Backend) Accounts() ([]gethcommon.Address, error) {
+	addresses := make([]gethcommon.Address, 0) // return [] instead of nil if empty
 
 	infos, err := b.clientCtx.Keyring.List()
 	if err != nil {
@@ -26,14 +26,14 @@ func (b *Backend) Accounts() ([]common.Address, error) {
 			return nil, err
 		}
 		addressBytes := pubKey.Address().Bytes()
-		addresses = append(addresses, common.BytesToAddress(addressBytes))
+		addresses = append(addresses, gethcommon.BytesToAddress(addressBytes))
 	}
 
 	return addresses, nil
 }
 
 // Syncing returns false in case the node is currently not syncing with the network. It can be up to date or has not
-// yet received the latest block headers from its pears. In case it is synchronizing:
+// yet received the latest block headers from its peers. In case it is synchronizing:
 // - startingBlock: block number this node started to synchronize from
 // - currentBlock:  block number this node is currently importing
 // - highestBlock:  block number of the highest block header this node has received from peers
@@ -58,12 +58,6 @@ func (b *Backend) Syncing() (interface{}, error) {
 	}, nil
 }
 
-// UnprotectedAllowed returns the node configuration value for allowing
-// unprotected transactions (i.e not replay-protected)
-func (b Backend) UnprotectedAllowed() bool {
-	return b.allowUnprotectedTxs
-}
-
 // RPCGasCap is the global gas cap for eth-call variants.
 func (b *Backend) RPCGasCap() uint64 {
 	return b.cfg.JSONRPC.GasCap
@@ -74,19 +68,9 @@ func (b *Backend) RPCEVMTimeout() time.Duration {
 	return b.cfg.JSONRPC.EVMTimeout
 }
 
-// RPCGasCap is the global gas cap for eth-call variants.
-func (b *Backend) RPCTxFeeCap() float64 {
-	return b.cfg.JSONRPC.TxFeeCap
-}
-
 // RPCFilterCap is the limit for total number of filters that can be created
 func (b *Backend) RPCFilterCap() int32 {
 	return b.cfg.JSONRPC.FilterCap
-}
-
-// RPCFeeHistoryCap is the limit for total number of blocks that can be fetched
-func (b *Backend) RPCFeeHistoryCap() int32 {
-	return b.cfg.JSONRPC.FeeHistoryCap
 }
 
 // RPCLogsCap defines the max number of results can be returned from single `eth_getLogs` query.
@@ -101,7 +85,6 @@ func (b *Backend) RPCBlockRangeCap() int32 {
 
 // RPCMinGasPrice returns the minimum gas price for a transaction obtained from
 // the node config. If set value is 0, it will default to 20.
-
 func (b *Backend) RPCMinGasPrice() int64 {
 	evmParams, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
 	if err != nil {

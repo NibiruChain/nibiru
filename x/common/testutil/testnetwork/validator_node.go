@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
 
+	appserver "github.com/NibiruChain/nibiru/v2/app/server"
+
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -85,10 +87,11 @@ type Validator struct {
 	// - rpc.Local
 	RPCClient tmclient.Client
 
-	JSONRPCClient     *ethclient.Client
-	EthRpcQueryClient *ethrpc.QueryClient
-	EthRpcBackend     *backend.Backend
-	EthTxIndexer      eth.EVMTxIndexer
+	JSONRPCClient       *ethclient.Client
+	EthRpcQueryClient   *ethrpc.QueryClient
+	EthRpcBackend       *backend.Backend
+	EthTxIndexer        eth.EVMTxIndexer
+	EthTxIndexerService *appserver.EVMTxIndexerService
 
 	EthRPC_ETH  *rpcapi.EthAPI
 	EthRpc_WEB3 *rpcapi.APIWeb3
@@ -161,12 +164,21 @@ func stopValidatorNode(v *Validator) {
 		// _ = v.jsonrpc.Close()
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
+
 		if err := v.jsonrpc.Shutdown(ctx); err != nil {
 			// Log the error or handle it as appropriate for your application
 			v.Logger.Logf("❌ Error shutting down JSON-RPC server: %w", err)
 		} else {
 			v.Logger.Log("✅ Successfully shut down JSON-RPC server")
 			v.jsonrpc = nil
+		}
+		if v.EthTxIndexerService != nil {
+			err := v.EthTxIndexerService.Stop()
+			if err != nil {
+				v.Logger.Logf("❌ Error shutting down EVMTxIndexerService: %w", err)
+			} else {
+				v.Logger.Log("✅ Successfully shut down EVMTxIndexerService")
+			}
 		}
 	}
 
