@@ -40,8 +40,8 @@ var (
 
 // message type and route constants
 const (
-	// TypeMsgEthereumTx defines the type string of an Ethereum transaction
-	TypeMsgEthereumTx = "ethereum_tx"
+// TypeMsgEthereumTx defines the type string of an Ethereum transaction
+// TypeMsgEthereumTx = "ethereum_tx"
 )
 
 // NewTx returns a reference to a new Ethereum transaction message.
@@ -148,7 +148,7 @@ func (msg *MsgEthereumTx) FromEthereumTx(tx *gethcore.Transaction) error {
 func (msg MsgEthereumTx) Route() string { return RouterKey }
 
 // Type returns the type value of an MsgEthereumTx.
-func (msg MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
+//func (msg MsgEthereumTx) Type() string { return TypeMsgEthereumTx }
 
 // ValidateBasic implements the sdk.Msg interface. It performs basic validation
 // checks of a Transaction. If returns an error if validation fails.

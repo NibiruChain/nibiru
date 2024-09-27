@@ -41,24 +41,10 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-
-		// emit ethereum tx hash as an event so that it can be indexed by
-		// Tendermint for query purposes it's emitted in ante handler, so we can
-		// query failed transaction (out of block gas limit).
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				evm.EventTypeEthereumTx,
-				sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, msgEthTx.Hash),
-				sdk.NewAttribute(
-					evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i),
-						10,
-					),
-				), // #nosec G701
-				// TODO: fix: It's odd that each event is emitted twice. Migrate to typed
-				// events and change EVM indexer to align.
-				// sdk.NewAttribute("emitted_from", "EthEmitEventDecorator"),
-			))
+		_ = ctx.EventManager().EmitTypedEvent(&evm.EventPendingEthereumTx{
+			EthHash: msgEthTx.Hash,
+			Index:   strconv.FormatUint(txIndex+uint64(i), 10),
+		})
 	}
-
 	return next(ctx, tx, simulate)
 }

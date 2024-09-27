@@ -7,6 +7,15 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
+// EventPendingEthereumTx is an event emitted in the ante handler.
+// Used to find executed but reverted transactions.
+message EventPendingEthereumTx {
+  // eth_hash is the Ethereum hash of the transaction
+  string eth_hash = 2;
+  // index of the transaction in the block
+  string index = 3;
+}
+
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {
   // amount

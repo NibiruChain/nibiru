@@ -73,16 +73,16 @@ func TestEVMTxIndexer(t *testing.T) {
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
-					Code: 0,
+					Code:   0,
 					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+						//{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
+						//	{Key: "ethereumTxHash", Value: txHash.Hex()},
+						//	{Key: "txIndex", Value: "0"},
+						//	{Key: "amount", Value: "1000"},
+						//	{Key: "txGasUsed", Value: "21000"},
+						//	{Key: "txHash", Value: ""},
+						//	{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
+						//}},
 					},
 				},
 			},

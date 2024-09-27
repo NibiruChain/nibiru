@@ -168,7 +168,10 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 
 	for {
 		receipt, err := s.backend.GetTransactionReceipt(txHash)
-		if err == nil {
+		if err != nil {
+			return nil, nil
+		}
+		if receipt != nil {
 			return receipt.BlockNumber, &receipt.BlockHash
 		}
 		select {

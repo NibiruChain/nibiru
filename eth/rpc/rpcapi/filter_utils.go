@@ -117,8 +117,7 @@ func returnLogs(logs []*gethcore.Log) []*gethcore.Log {
 
 // ParseBloomFromEvents iterates through the slice of events
 func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error) {
-	bloomEvent := new(evm.EventBlockBloom)
-	bloomEventType := gogoproto.MessageName(bloomEvent)
+	bloomEventType := gogoproto.MessageName(new(evm.EventBlockBloom))
 	for _, event := range events {
 		if event.Type != bloomEventType {
 			continue
@@ -128,13 +127,13 @@ func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error)
 			return bloom, errors.Wrapf(
 				err, "failed to parse event of type %s", bloomEventType)
 		}
-		bloomEvent, ok := (typedProtoEvent).(*evm.EventBlockBloom)
+		bloomTypedEvent, ok := (typedProtoEvent).(*evm.EventBlockBloom)
 		if !ok {
 			return bloom, errors.Wrapf(
 				err, "failed to parse event of type %s", bloomEventType)
 		}
 
-		return eth.BloomFromHex(bloomEvent.Bloom)
+		return eth.BloomFromHex(bloomTypedEvent.Bloom)
 	}
 	return bloom, err
 }
