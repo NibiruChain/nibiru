@@ -22,7 +22,7 @@ type ParsedTx struct {
 	MsgIndex int
 
 	// the following fields are parsed from events
-	Hash gethcommon.Hash
+	EthHash gethcommon.Hash
 
 	EthTxIndex int32 // -1 means uninitialized
 	GasUsed    uint64
@@ -39,7 +39,7 @@ type ParsedTxs struct {
 
 // ParseTxResult parses eth tx info from the ABCI events of Eth tx msgs
 func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error) {
-	eventTypePendingEthereumTx := proto.MessageName((*evm.EventPendingEthereumTx)(nil))
+	eventTypePendingEthereumTx := evm.PendingEthereumTxEvent
 	eventTypeEthereumTx := proto.MessageName((*evm.EventEthereumTx)(nil))
 
 	// Parsed txs is the structure being populated from the events
@@ -55,18 +55,17 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 		// Pending tx event could be single if tx didn't succeed
 		if event.Type == eventTypePendingEthereumTx {
 			msgIndex++
-			eventPendingEthereumTx, err := evm.EventPendingEthereumTxFromABCIEvent(event)
+			ethHash, txIndex, err := evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
 			if err != nil {
 				return nil, err
 			}
-			hash := gethcommon.HexToHash(eventPendingEthereumTx.EthHash)
 			pendingTx := ParsedTx{
 				MsgIndex:   msgIndex,
-				EthTxIndex: -1,
-				Hash:       hash,
+				EthTxIndex: txIndex,
+				EthHash:    ethHash,
 			}
 			parsedTxs.Txs = append(parsedTxs.Txs, pendingTx)
-			parsedTxs.TxHashes[hash] = msgIndex
+			parsedTxs.TxHashes[ethHash] = msgIndex
 		} else if event.Type == eventTypeEthereumTx { // Full event replaces the pending tx
 			eventEthereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
 			if err != nil {
@@ -83,16 +82,16 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 			committedTx := ParsedTx{
 				MsgIndex:   msgIndex,
 				EthTxIndex: int32(ethTxIndexFromEvent),
-				Hash:       gethcommon.HexToHash(eventEthereumTx.EthHash),
+				EthHash:    gethcommon.HexToHash(eventEthereumTx.EthHash),
 				GasUsed:    gasUsed,
 				Failed:     len(eventEthereumTx.EthTxFailed) > 0,
 			}
 			// replace pending tx with committed tx
-			if len(parsedTxs.Txs) == msgIndex+1 {
+			if msgIndex >= 0 && len(parsedTxs.Txs) == msgIndex+1 {
 				parsedTxs.Txs[msgIndex] = committedTx
 			} else {
 				// EventEthereumTx without EventPendingEthereumTx
-				return nil, errors.New("EventEthereumTx without EventPendingEthereumTx")
+				return nil, errors.New("EventEthereumTx without pending_ethereum_tx event")
 			}
 		}
 	}

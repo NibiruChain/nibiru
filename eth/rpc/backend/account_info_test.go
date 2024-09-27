@@ -195,7 +195,7 @@ func generateStorageKey(key gethcommon.Address, slot uint64) string {
 	// Concatenate key and slot
 	data := append(keyBytes, slotBytes...)
 
-	// Hash the data using Keccak256
+	// EthHash the data using Keccak256
 	hash := sha3.NewLegacyKeccak256()
 	hash.Write(data)
 	return gethcommon.BytesToHash(hash.Sum(nil)).Hex()

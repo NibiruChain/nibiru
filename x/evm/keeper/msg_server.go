@@ -705,12 +705,15 @@ func (k *Keeper) EmitEthereumTxEvents(
 	}
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
 
-	// Typed event: eth.evm.v1.EventMessage
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventMessage{
-		Module: evm.ModuleName,
-		Sender: msg.From().Hex(),
-		TxType: fmt.Sprintf("%d", tx.Type()),
-	})
+	// Untyped event: "message", used for tendermint subscription
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.From().Hex()),
+			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", tx.Type())),
+		),
+	)
 
 	// Emit typed events
 	if !evmResp.Failed() {

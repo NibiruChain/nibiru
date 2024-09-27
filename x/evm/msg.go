@@ -38,12 +38,6 @@ var (
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
 
-// message type and route constants
-const (
-// TypeMsgEthereumTx defines the type string of an Ethereum transaction
-// TypeMsgEthereumTx = "ethereum_tx"
-)
-
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
 	tx *EvmTxArgs,
@@ -185,7 +179,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 		return errorsmod.Wrap(err, "failed \"TxData.Validate\"")
 	}
 
-	// Validate Hash field after validated txData to avoid panic
+	// Validate EthHash field after validated txData to avoid panic
 	txHash := msg.AsTransaction().Hash().Hex()
 	if msg.Hash != txHash {
 		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)

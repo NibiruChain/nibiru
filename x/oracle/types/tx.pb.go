@@ -1257,7 +1257,7 @@ func (m *MsgAggregateExchangeRatePrevote) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EthHash", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {

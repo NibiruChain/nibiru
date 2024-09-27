@@ -4,8 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
@@ -57,16 +55,25 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 				return
 			}
 			s.Require().NoError(err)
+			events := deps.Ctx.EventManager().Events()
 
-			txMsg := tx.(*evm.MsgEthereumTx)
-			testutil.RequireContainsTypedEvent(
-				s.T(),
-				deps.Ctx,
-				&evm.EventPendingEthereumTx{
-					EthHash: txMsg.Hash,
-					Index:   "0",
-				},
-			)
+			s.Require().Greater(len(events), 0)
+			event := events[len(events)-1]
+			s.Require().Equal(evm.PendingEthereumTxEvent, event.Type)
+
+			// Convert tx to msg to get hash
+			txMsg, ok := tx.GetMsgs()[0].(*evm.MsgEthereumTx)
+			s.Require().True(ok)
+
+			// TX hash attr must present
+			attr, ok := event.GetAttribute(evm.PendingEthereumTxEventAttrEthHash)
+			s.Require().True(ok, "tx hash attribute not found")
+			s.Require().Equal(txMsg.Hash, attr.Value)
+
+			// TX index attr must present
+			attr, ok = event.GetAttribute(evm.PendingEthereumTxEventTxAttrIndex)
+			s.Require().True(ok, "tx index attribute not found")
+			s.Require().Equal("0", attr.Value)
 		})
 	}
 }

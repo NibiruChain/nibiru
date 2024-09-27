@@ -41,10 +41,14 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-		_ = ctx.EventManager().EmitTypedEvent(&evm.EventPendingEthereumTx{
-			EthHash: msgEthTx.Hash,
-			Index:   strconv.FormatUint(txIndex+uint64(i), 10),
-		})
+		// Untyped event: "message", used for tendermint subscription
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				evm.PendingEthereumTxEvent,
+				sdk.NewAttribute(evm.PendingEthereumTxEventAttrEthHash, msgEthTx.Hash),
+				sdk.NewAttribute(evm.PendingEthereumTxEventTxAttrIndex, strconv.FormatUint(txIndex+uint64(i), 10)),
+			),
+		)
 	}
 	return next(ctx, tx, simulate)
 }
