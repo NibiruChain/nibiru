@@ -165,8 +165,8 @@ sed -i $SEDOPTION '/\[json\-rpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DI
 echo_info "config/app.toml: Enabling debug evm api"
 sed -i $SEDOPTION '/\[json\-rpc\]/,+13 s/api = "eth,net,web3"/api = "eth,net,web3,debug"/' $CHAIN_DIR/config/app.toml
 
-#echo_info "config/app.toml: Enabling evm indexer"
-#sed -i $SEDOPTION '/\[json\-rpc\]/,+51 s/enable-indexer = false/enable-indexer = true/' $CHAIN_DIR/config/app.toml
+echo_info "config/app.toml: Enabling evm indexer"
+sed -i $SEDOPTION '/\[json\-rpc\]/,+51 s/enable-indexer = false/enable-indexer = true/' $CHAIN_DIR/config/app.toml
 
 # Enable Swagger Docs
 echo_info "config/app.toml: Enabling Swagger Docs"
