@@ -6,8 +6,6 @@ import (
 
 	"cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -122,17 +120,11 @@ func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error)
 		if event.Type != bloomEventType {
 			continue
 		}
-		typedProtoEvent, err := sdk.ParseTypedEvent(event)
+		bloomTypedEvent, err := evm.EventBlockBloomFromABCIEvent(event)
 		if err != nil {
 			return bloom, errors.Wrapf(
 				err, "failed to parse event of type %s", bloomEventType)
 		}
-		bloomTypedEvent, ok := (typedProtoEvent).(*evm.EventBlockBloom)
-		if !ok {
-			return bloom, errors.Wrapf(
-				err, "failed to parse event of type %s", bloomEventType)
-		}
-
 		return eth.BloomFromHex(bloomTypedEvent.Bloom)
 	}
 	return bloom, err

@@ -122,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): remove unnecessary interface code
 - [#2044](https://github.com/NibiruChain/nibiru/pull/2044) - feat(evm): evm tx indexer service implemented
 - [#2045](https://github.com/NibiruChain/nibiru/pull/2045) - test(evm): backend tests with test network and real txs
+- [#2053](https://github.com/NibiruChain/nibiru/pull/2053) - refactor(evm): converted untyped event to typed and cleaned up
 
 #### Dapp modules: perp, spot, oracle, etc
 
