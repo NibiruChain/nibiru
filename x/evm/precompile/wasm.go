@@ -33,8 +33,8 @@ const (
 	WasmMethod_queryRaw     PrecompileMethod = "queryRaw"
 )
 
-// Wasm: A struct embedding keepers for read and write operations in Wasm like
-// execute, instantiate, and queries.
+// Wasm: A struct embedding keepers for read and write operations in Wasm, such
+// as execute, query, and instantiate.
 type Wasm struct {
 	*wasmkeeper.PermissionedKeeper
 	wasmkeeper.Keeper
@@ -57,12 +57,11 @@ func (p precompileWasm) Address() gethcommon.Address {
 	return PrecompileAddr_Wasm
 }
 
+// RequiredGas calculates the contract gas used
 func (p precompileWasm) RequiredGas(input []byte) (gasPrice uint64) {
 	return gethparams.TxGas
 	// TODO: Lower gas requirement for queries in comparison to txs
 }
-
-// TODO: solidity: document params in Wasm.sol
 
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
@@ -99,16 +98,33 @@ func (p precompileWasm) Run(
 	case WasmMethod_executeMulti:
 		bz, err = p.executeMulti(ctx, contract.CallerAddress, method, args, readonly)
 	case WasmMethod_queryRaw:
-		bz, err = p.queryRaw(ctx, contract.CallerAddress, method, args, readonly)
+		bz, err = p.queryRaw(ctx, method, args, contract)
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
 
-	return // TODO: ...
+	return
 }
 
-// TODO: docs
+// execute  invokes a Wasm contract's "ExecuteMsg", which corresponds to
+// "wasm/types/MsgExecuteContract". This enables arbitrary smart contract
+// execution using the Wasm VM from the EVM.
+//
+// Implements "execute" from evm/embeds/contracts/Wasm.sol:
+//
+//	 ```solidity
+//		/// @param contractAddr nibi-prefixed Bech32 address of the wasm contract
+//		/// @param msgArgs JSON encoded wasm execute invocation
+//		/// @param funds Optional funds to supply during the execute call. It's
+//		/// uncommon to use this field, so you'll pass an empty array most of the time.
+//		/// @dev The three non-struct arguments are more gas efficient than encoding a
+//		/// single argument as a WasmExecuteMsg.
+//		 function query(
+//		   string memory contractAddr,
+//		   bytes memory req
+//		 ) external view returns (bytes memory response);
+//	 ```
 func (p precompileWasm) execute(
 	ctx sdk.Context,
 	caller gethcommon.Address,
@@ -133,9 +149,18 @@ func (p precompileWasm) execute(
 	return method.Outputs.Pack(data)
 }
 
-// TODO: impl wasm method
-// TODO: test happy path
-// TODO: docs
+// query runs a smart query. In Rust, this is the "WasmQuery::Smart" variant.
+// In protobuf/gRPC, it's type URL is
+// "/cosmwasm.wasm.v1.Query/SmartContractState".
+//
+// Implements "query" from evm/embeds/contracts/Wasm.sol:
+//
+//	```solidity
+//	function query(
+//	  string memory contractAddr,
+//	  bytes memory req
+//	) external view returns (bytes memory response);
+//	```
 func (p precompileWasm) query(
 	ctx sdk.Context,
 	method *gethabi.Method,
@@ -155,11 +180,28 @@ func (p precompileWasm) query(
 		err = fmt.Errorf("Query failed: %w", err)
 		return
 	}
-	fmt.Printf("respBz: (%s)\n", respBz)
 	return method.Outputs.Pack(respBz)
 }
 
-// TODO: docs
+// instantiate creates a new instance of a Wasm smart contract for some code id.
+//
+// Implements "instantiate" from evm/embeds/contracts/Wasm.sol:
+//
+//	```solidity
+//	/// @notice InstantiateContract creates a new smart contract instance for the given code id.
+//	/// @param admin The address of the contract admin (optional, can be empty string)
+//	/// @param codeID The ID of the code to instantiate
+//	/// @param msgArgs JSON encoded instantiation message
+//	/// @param label A human-readable label for the contract
+//	/// @param funds Optional funds to send to the contract upon instantiation
+//	function instantiate(
+//	  string memory admin,
+//	  uint64 codeID,
+//	  bytes memory msgArgs,
+//	  string memory label,
+//	  BankCoin[] memory funds
+//	) payable external returns (string memory contractAddr, bytes memory data);
+//	```
 func (p precompileWasm) instantiate(
 	ctx sdk.Context,
 	caller gethcommon.Address,
@@ -193,9 +235,21 @@ func (p precompileWasm) instantiate(
 	return method.Outputs.Pack(contractAddr.String(), data)
 }
 
-// TODO: impl wasm method
-// TODO: test happy path
-// TODO: docs
+// executeMulti allows executing multiple Wasm contract calls in a single transaction.
+// It corresponds to the "executeMulti" method in the IWasm interface.
+//
+// Implements "executeMulti" from evm/embeds/contracts/Wasm.sol:
+//
+//	```solidity
+//	/// @notice Identical to "execute", except for multiple contract calls.
+//	/// @param executeMsgs An array of WasmExecuteMsg structs, each containing:
+//	///   - contractAddr: nibi-prefixed Bech32 address of the wasm contract
+//	///   - msgArgs: JSON encoded wasm execute invocation
+//	///   - funds: Optional funds to supply during the execute call
+//	function executeMulti(
+//	  WasmExecuteMsg[] memory executeMsgs
+//	) payable external returns (bytes[] memory responses);
+//	```
 func (p precompileWasm) executeMulti(
 	ctx sdk.Context,
 	caller gethcommon.Address,
@@ -238,13 +292,55 @@ func (p precompileWasm) executeMulti(
 	return method.Outputs.Pack(responses)
 }
 
+// queryRaw queries the raw key-value store of a Wasm contract. This implements
+// the 'queryRaw' method of Wasm.sol:
+//
+//	```solidity
+//	function queryRaw(
+//	  string memory contractAddr,
+//	  bytes memory key
+//	) external view returns (bytes memory response);
+//	```
+//
+// Parameters:
+//   - ctx: The SDK context for the query
+//   - method: The ABI method being called
+//   - args: The arguments passed to the method
+//   - contract: The EVM contract context
+//
+// Returns:
+//   - bz: The encoded raw data stored at the queried key
+//   - err: Any error that occurred during the query
 func (p precompileWasm) queryRaw(
 	ctx sdk.Context,
-	caller gethcommon.Address,
 	method *gethabi.Method,
 	args []any,
-	readOnly bool,
+	contract *vm.Contract,
 ) (bz []byte, err error) {
-	// TODO: impl wasm method
-	return
+	if err := assertContractQuery(contract); err != nil {
+		return bz, err
+	}
+
+	wantArgsLen := 2
+	if len(args) != wantArgsLen {
+		err = fmt.Errorf("expected %d arguments but got %d", wantArgsLen, len(args))
+		return
+	}
+
+	argIdx := 0
+	wasmContract, e := parseContraAddrArg(args[argIdx])
+	if e != nil {
+		err = e
+		return
+	}
+
+	argIdx++
+	key, ok := args[argIdx].([]byte)
+	if !ok {
+		err = ErrArgTypeValidation("bytes req", args[argIdx])
+		return
+	}
+
+	respBz := p.Wasm.QueryRaw(ctx, wasmContract, []byte(key))
+	return method.Outputs.Pack(respBz)
 }

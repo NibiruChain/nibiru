@@ -28,6 +28,8 @@ type WasmContract struct {
 	CodeID uint64
 }
 
+// SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
+// instantiate each Wasm contract using the precompile.
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	contracts []WasmContract,
 ) {
@@ -216,21 +218,17 @@ func (s *WasmSuite) TestExecuteHappy() {
 	)
 }
 
-/*
-	Result of QueryMsg::Count from hello_world_counter:
-
-https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter
-
-```rust
-#[cw_serde]
-
-	pub struct State {
-		pub count: i64,
-		pub owner: Addr,
-	}
-
-```
-*/
+// Result of QueryMsg::Count from the [hello_world_counter] Wasm contract:
+//
+//	```rust
+//	#[cw_serde]
+//	pub struct State {
+//	    pub count: i64,
+//	    pub owner: Addr,
+//	}
+//	```
+//
+// [hello_world_counter]: https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter
 type QueryMsgCountResp struct {
 	Count int64  `json:"count"`
 	Owner string `json:"owner"`
@@ -244,21 +242,20 @@ func (s *WasmSuite) TestExecuteMultiHappy() {
 	s.assertWasmCounterState(deps, wasmContract, 0)                // count = 0
 	s.incrementWasmCounterWithExecuteMulti(&deps, wasmContract, 2) // count += 2
 	s.assertWasmCounterState(deps, wasmContract, 2)                // count = 2
-
-	s.incrementWasmCounterWithExecuteMulti(&deps, wasmContract, 67)
-	s.assertWasmCounterState(deps, wasmContract, 69)
+	s.assertWasmCounterStateRaw(deps, wasmContract, 2)
+	s.incrementWasmCounterWithExecuteMulti(&deps, wasmContract, 67) // count += 67
+	s.assertWasmCounterState(deps, wasmContract, 69)                // count = 69
+	s.assertWasmCounterStateRaw(deps, wasmContract, 69)
 }
 
-/*
-	 From IWasm.query of Wasm.sol:
-
-		```solidity
-		function query(
-		string memory contractAddr,
-		bytes memory req
-		) external view returns (bytes memory response);
-		```
-*/
+// From IWasm.query of Wasm.sol:
+//
+//	```solidity
+//	function query(
+//	  string memory contractAddr,
+//	  bytes memory req
+//	) external view returns (bytes memory response);
+//	```
 func (s *WasmSuite) assertWasmCounterState(
 	deps evmtest.TestDeps,
 	wasmContract WasmContract,
@@ -391,4 +388,57 @@ func (s *WasmSuite) incrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
+}
+
+// From IWasm.query of Wasm.sol:
+//
+//	```solidity
+//	function queryRaw(
+//	  string memory contractAddr,
+//	  bytes memory key
+//	) external view returns (bytes memory response);
+//	```
+func (s *WasmSuite) assertWasmCounterStateRaw(
+	deps evmtest.TestDeps,
+	wasmContract WasmContract,
+	wantCount int64,
+) {
+	keyBz := []byte(`state`)
+	callArgs := []any{
+		wasmContract.Addr.String(),
+		keyBz,
+	}
+	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_queryRaw),
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+	)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(ethTxResp.Ret)
+
+	s.T().Log("Parse the response contract addr and response bytes")
+	s.T().Logf("ethTxResp.Ret: %s", ethTxResp.Ret)
+
+	var queryResp []byte
+	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
+		&queryResp,
+		string(precompile.WasmMethod_queryRaw),
+		ethTxResp.Ret,
+	)
+	s.Require().NoError(err)
+	s.T().Logf("queryResp: %s", queryResp)
+
+	var wasmMsg wasm.RawContractMessage
+	s.NoError(wasmMsg.UnmarshalJSON(queryResp), queryResp)
+	s.T().Logf("wasmMsg: %s", wasmMsg)
+	s.NoError(wasmMsg.ValidateBasic())
+
+	var typedResp QueryMsgCountResp
+	s.NoError(json.Unmarshal(wasmMsg, &typedResp))
+	s.EqualValues(wantCount, typedResp.Count)
+	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
 }

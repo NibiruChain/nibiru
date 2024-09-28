@@ -60,9 +60,6 @@ func InitPrecompiles(
 	// staking precompile.
 	// Check if there is sufficient demand for this.
 
-	// TODO: feat(evm): implement precompiled contracts for wasm calls
-	// Check if there is sufficient demand for this.
-
 	return precompiles
 }
 

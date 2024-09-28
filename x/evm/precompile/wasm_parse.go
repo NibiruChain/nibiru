@@ -175,7 +175,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 }
 
 func (p precompileWasm) parseQueryArgs(args []any) (
-	contractAddr sdk.AccAddress,
+	wasmContract sdk.AccAddress,
 	req wasm.RawContractMessage,
 	err error,
 ) {
@@ -186,7 +186,7 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	}
 
 	argsIdx := 0
-	contractAddr, e := parseContraAddrArg(args[argsIdx])
+	wasmContract, e := parseContraAddrArg(args[argsIdx])
 	if e != nil {
 		err = e
 		return
@@ -200,7 +200,7 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 		return
 	}
 
-	return contractAddr, req, nil
+	return wasmContract, req, nil
 }
 
 func (p precompileWasm) parseExecuteMultiArgs(args []any) (

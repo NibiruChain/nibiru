@@ -25,6 +25,9 @@ func assertNotReadonlyTx(readOnly bool, isTx bool) error {
 	return nil
 }
 
+// assertContractQuery checks if a contract call is a valid query operation. This
+// function verifies that no funds (wei) are being sent with the query, as query
+// operations should be read-only and not involve any value transfer.
 func assertContractQuery(contract *vm.Contract) error {
 	weiValue := contract.Value()
 	if weiValue != nil && weiValue.Sign() != 0 {
@@ -36,6 +39,9 @@ func assertContractQuery(contract *vm.Contract) error {
 	return nil
 }
 
+// assertNumArgs checks if the number of provided arguments matches the expected
+// count. If lenArgs does not equal wantArgsLen, it returns an error describing
+// the mismatch between expected and actual argument counts.
 func assertNumArgs(lenArgs, wantArgsLen int) error {
 	if lenArgs != wantArgsLen {
 		return fmt.Errorf("expected %d arguments but got %d", wantArgsLen, lenArgs)

@@ -52,12 +52,12 @@ interface IWasm {
   /// @notice Query the raw kv-store of the contract. 
   /// Implements raw query, the "WasmQuery::Raw" variant from "cosmwas_std".
   /// @param contractAddr nibi-prefixed Bech32 address of the wasm contract
-  /// @param req JSON encoded query request
-  /// @return response The raw, unparsed data stored at that key, which may be an
-  /// empty vector if data is not present.
+  /// @param key contract state key. For example, a `cw_storage_plus::Item` of
+  /// value `Item::new("state")` creates prefix store with key, "state".
+  /// @return response JSON encoded, raw data stored at that key.
   function queryRaw(
     string memory contractAddr, 
-    bytes memory req
+    bytes memory key
   ) external view returns (bytes memory response);
 
   /// @notice InstantiateContract creates a new smart contract instance for the

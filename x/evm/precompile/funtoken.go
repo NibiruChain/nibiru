@@ -32,6 +32,7 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
+// RequiredGas calculates the contract gas used
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
 	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
 	// a contract, it's value can be used to derive an appropriate value for the
