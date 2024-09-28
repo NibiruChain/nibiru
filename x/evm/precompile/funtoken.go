@@ -35,20 +35,20 @@ func (p precompileFunToken) Address() gethcommon.Address {
 func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
 	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
 	// a contract, it's value can be used to derive an appropriate value for the
-	// precompile call. The FunToken precompile performs 3 operations, labeld 1-3
+	// precompile call. The FunToken precompile performs 3 operations, labeled 1-3
 	// below:
 	// 0 | Call the precompile (already counted in gas calculation)
 	// 1 | Send ERC20 to EVM.
 	// 2 | Convert ERC20 to coin
 	// 3 | Send coin to recipient.
-	return gethparams.TxGas * 3
+	return gethparams.TxGas * 2
 }
 
 const (
-	FunTokenMethod_BankSend FunTokenMethod = "bankSend"
+	FunTokenMethod_BankSend PrecompileMethod = "bankSend"
 )
 
-type FunTokenMethod string
+type PrecompileMethod string
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
@@ -76,7 +76,7 @@ func (p precompileFunToken) Run(
 		return nil, err
 	}
 
-	switch FunTokenMethod(method.Name) {
+	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
 		// TODO: UD-DEBUG: Test that calling non-method on the right address does
 		// nothing.
@@ -120,7 +120,7 @@ func (p precompileFunToken) bankSend(
 	ctx sdk.Context,
 	caller gethcommon.Address,
 	method *gethabi.Method,
-	args []interface{},
+	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
 	if readOnly {
@@ -207,8 +207,9 @@ func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	to string,
 	err error,
 ) {
-	if len(args) != 3 {
-		err = fmt.Errorf("expected 3 arguments but got %d", len(args))
+	wantArgsLen := 3
+	if len(args) != wantArgsLen {
+		err = fmt.Errorf("expected %d arguments but got %d", wantArgsLen, len(args))
 		return
 	}
 

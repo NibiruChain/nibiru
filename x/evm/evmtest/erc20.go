@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -85,4 +86,16 @@ func CreateFunTokenForBankCoin(
 	s.NoError(err)
 
 	return funtoken
+}
+
+func AssertBankBalanceEqual(
+	t *testing.T,
+	deps TestDeps,
+	denom string,
+	account gethcommon.Address,
+	expectedBalance *big.Int,
+) {
+	bech32Addr := eth.EthAddrToNibiruAddr(account)
+	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
+	assert.Zero(t, expectedBalance.Cmp(actualBalance), "expected %s, got %s", expectedBalance, actualBalance)
 }
