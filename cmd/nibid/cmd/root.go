@@ -136,6 +136,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		queryCommand(),
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
+
+		// EVM Tx Indexer force catch up command
+		server.NewEVMTxIndexCmd(),
 	)
 
 	// TODO add rosettaj
