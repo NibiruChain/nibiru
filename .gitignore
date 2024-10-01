@@ -20,6 +20,7 @@ temp*
 txout.json
 vote.json
 **__pycache**
+scratch-paper.md
 
 ### TypeScript and Friends
 
