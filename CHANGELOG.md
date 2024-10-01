@@ -109,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
 - [#2004](https://github.com/NibiruChain/nibiru/pull/2004) - refactor(evm)!: replace `HexAddr` with `EIP55Addr`
 - [#2006](https://github.com/NibiruChain/nibiru/pull/2006) - test(evm): e2e tests for eth_* endpoints
-- [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups 
+- [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups
 - [#2013](https://github.com/NibiruChain/nibiru/pull/2013) - chore(evm): Set appropriate gas value for the required gas of the "IFunToken.sol" precompile.
 - [#2014](https://github.com/NibiruChain/nibiru/pull/2014) - feat(evm): Emit block bloom event in EndBlock hook.
 - [#2017](https://github.com/NibiruChain/nibiru/pull/2017) - fix(evm): Fix DynamicFeeTx gas cap parameters
@@ -119,10 +119,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2023](https://github.com/NibiruChain/nibiru/pull/2023) - fix(evm)!: adjusted generation and parsing of the block bloom events
 - [#2030](https://github.com/NibiruChain/nibiru/pull/2030) - refactor(eth/rpc): Delete unused code and improve logging in the eth and debug namespaces
 - [#2031](https://github.com/NibiruChain/nibiru/pull/2031) - fix(evm): debug calls with custom tracer and tracer options
-- [#2032](https://github.com/NibiruChain/nibiru/pull/2032) - feat(evm): ante handler to prohibit authz grant evm messages 
+- [#2032](https://github.com/NibiruChain/nibiru/pull/2032) - feat(evm): ante handler to prohibit authz grant evm messages
 - [#2039](https://github.com/NibiruChain/nibiru/pull/2039) - refactor(rpc-backend): remove unnecessary interface code
 - [#2044](https://github.com/NibiruChain/nibiru/pull/2044) - feat(evm): evm tx indexer service implemented
 - [#2045](https://github.com/NibiruChain/nibiru/pull/2045) - test(evm): backend tests with test network and real txs
+- [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 
 #### Dapp modules: perp, spot, oracle, etc
 
