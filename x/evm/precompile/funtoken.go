@@ -32,8 +32,8 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
-// RequiredGas calculates the contract gas used
-func (p precompileFunToken) RequiredGas(input []byte) (gasPrice uint64) {
+// RequiredGas calculates the cost of calling the precompile in gas units.
+func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
 	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
 	// a contract, it's value can be used to derive an appropriate value for the
 	// precompile call. The FunToken precompile performs 3 operations, labeled 1-3
@@ -79,11 +79,10 @@ func (p precompileFunToken) Run(
 
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
-		// TODO: UD-DEBUG: Test that calling non-method on the right address does
-		// nothing.
 		bz, err = p.bankSend(ctx, contract.CallerAddress, method, args, readonly)
 	default:
-		// TODO: UD-DEBUG: test invalid method called
+		// Note that this code path should be impossible to reach since
+		// "DecomposeInput" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
@@ -105,18 +104,17 @@ type precompileFunToken struct {
 
 var executionGuard sync.Mutex
 
-/*
-bankSend: Implements "IFunToken.bankSend"
-
-The "args" populate the following function signature in Solidity:
-```solidity
-/// @dev bankSend sends ERC20 tokens as coins to a Nibiru base account
-/// @param erc20 the address of the ERC20 token contract
-/// @param amount the amount of tokens to send
-/// @param to the receiving Nibiru base account address as a string
-function bankSend(address erc20, uint256 amount, string memory to) external;
-```
-*/
+// bankSend: Implements "IFunToken.bankSend"
+//
+// The "args" populate the following function signature in Solidity:
+//
+//	```solidity
+//	/// @dev bankSend sends ERC20 tokens as coins to a Nibiru base account
+//	/// @param erc20 the address of the ERC20 token contract
+//	/// @param amount the amount of tokens to send
+//	/// @param to the receiving Nibiru base account address as a string
+//	function bankSend(address erc20, uint256 amount, string memory to) external;
+//	```
 func (p precompileFunToken) bankSend(
 	ctx sdk.Context,
 	caller gethcommon.Address,
@@ -124,9 +122,9 @@ func (p precompileFunToken) bankSend(
 	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
-	if readOnly {
-		// Check required for transactions but not needed for queries
-		return nil, fmt.Errorf("cannot write state from staticcall (a read-only call)")
+	if e := assertNotReadonlyTx(readOnly, true); e != nil {
+		err = e
+		return
 	}
 	if !executionGuard.TryLock() {
 		return nil, fmt.Errorf("bankSend is already in progress")
@@ -197,7 +195,6 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events
-	// TODO: UD-DEBUG: feat: Emit ABCI events
 
 	return method.Outputs.Pack()
 }
@@ -208,11 +205,9 @@ func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	to string,
 	err error,
 ) {
-	wantArgsLen := 3
-	if len(args) != wantArgsLen {
-		err = fmt.Errorf("expected %d arguments but got %d", wantArgsLen, len(args))
-		return
-	}
+	// Note: The number of arguments is valiated before this function is called
+	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
+	// which validates against the the structure of the precompile's ABI.
 
 	erc20, ok := args[0].(gethcommon.Address)
 	if !ok {

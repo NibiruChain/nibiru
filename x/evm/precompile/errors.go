@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
@@ -15,6 +16,10 @@ func ErrArgTypeValidation(solidityHint string, arg any) error {
 // Error when parsing method arguments
 func ErrInvalidArgs(err error) error {
 	return fmt.Errorf("invalid method args: %w", err)
+}
+
+func ErrMethodCalled(method *gethabi.Method, wrapped error) error {
+	return fmt.Errorf("%s method called: %w", method.Name, wrapped)
 }
 
 // Check required for transactions but not needed for queries
@@ -32,19 +37,9 @@ func assertContractQuery(contract *vm.Contract) error {
 	weiValue := contract.Value()
 	if weiValue != nil && weiValue.Sign() != 0 {
 		return fmt.Errorf(
-			"funds (value) must not be expended calling a query function; received wei value %s", weiValue,
+			"funds (wei value) must not be expended calling a query function; received wei value %s", weiValue,
 		)
 	}
 
-	return nil
-}
-
-// assertNumArgs checks if the number of provided arguments matches the expected
-// count. If lenArgs does not equal wantArgsLen, it returns an error describing
-// the mismatch between expected and actual argument counts.
-func assertNumArgs(lenArgs, wantArgsLen int) error {
-	if lenArgs != wantArgsLen {
-		return fmt.Errorf("expected %d arguments but got %d", wantArgsLen, lenArgs)
-	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -23,15 +24,10 @@ type WasmSuite struct {
 	suite.Suite
 }
 
-type WasmContract struct {
-	Addr   sdk.AccAddress
-	CodeID uint64
-}
-
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
-	contracts []WasmContract,
+	contracts []sdk.AccAddress,
 ) {
 	wasmCodes := DeployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
 
@@ -94,10 +90,7 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		s.Require().NoError(err)
 		contractAddr, err := sdk.AccAddressFromBech32(contractAddrStr)
 		s.NoError(err)
-		contracts = append(contracts, WasmContract{
-			Addr:   contractAddr,
-			CodeID: codeId,
-		})
+		contracts = append(contracts, contractAddr)
 	}
 
 	return contracts
@@ -169,7 +162,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
 
 	callArgs := []any{
-		wasmContract.Addr.String(),
+		wasmContract.String(),
 		msgArgsBz,
 		funds,
 	}
@@ -187,7 +180,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 
 	s.T().Log("Execute: mint tokens")
 	coinDenom := tokenfactory.TFDenom{
-		Creator:  wasmContract.Addr.String(),
+		Creator:  wasmContract.String(),
 		Subdenom: "ETH",
 	}.Denom().String()
 	msgArgsBz = []byte(fmt.Sprintf(`
@@ -199,7 +192,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 	}
 	`, coinDenom, deps.Sender.NibiruAddr))
 	callArgs = []any{
-		wasmContract.Addr.String(),
+		wasmContract.String(),
 		msgArgsBz,
 		funds,
 	}
@@ -258,7 +251,7 @@ func (s *WasmSuite) TestExecuteMultiHappy() {
 //	```
 func (s *WasmSuite) assertWasmCounterState(
 	deps evmtest.TestDeps,
-	wasmContract WasmContract,
+	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
 	msgArgsBz := []byte(`
@@ -269,7 +262,7 @@ func (s *WasmSuite) assertWasmCounterState(
 
 	callArgs := []any{
 		// string memory contractAddr
-		wasmContract.Addr.String(),
+		wasmContract.String(),
 		// bytes memory req
 		msgArgsBz,
 	}
@@ -341,7 +334,7 @@ func (s *WasmSuite) assertWasmCounterState(
 // [hello_world_counter]: https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter
 func (s *WasmSuite) incrementWasmCounterWithExecuteMulti(
 	deps *evmtest.TestDeps,
-	wasmContract WasmContract,
+	wasmContract sdk.AccAddress,
 	times uint,
 ) {
 	msgArgsBz := []byte(`
@@ -363,7 +356,7 @@ func (s *WasmSuite) incrementWasmCounterWithExecuteMulti(
 		MsgArgs      []byte                    `json:"msgArgs"`
 		Funds        []precompile.WasmBankCoin `json:"funds"`
 	}{
-		{wasmContract.Addr.String(), msgArgsBz, funds},
+		{wasmContract.String(), msgArgsBz, funds},
 	}
 	if times == 0 {
 		executeMsgs = executeMsgs[:0] // force empty
@@ -400,12 +393,12 @@ func (s *WasmSuite) incrementWasmCounterWithExecuteMulti(
 //	```
 func (s *WasmSuite) assertWasmCounterStateRaw(
 	deps evmtest.TestDeps,
-	wasmContract WasmContract,
+	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
 	keyBz := []byte(`state`)
 	callArgs := []any{
-		wasmContract.Addr.String(),
+		wasmContract.String(),
 		keyBz,
 	}
 	input, err := embeds.SmartContract_Wasm.ABI.Pack(
@@ -441,4 +434,154 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	s.NoError(json.Unmarshal(wasmMsg, &typedResp))
 	s.EqualValues(wantCount, typedResp.Count)
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
+}
+
+func (s *WasmSuite) TestSadArgsCount() {
+	nonsenseArgs := []any{"nonsense", "args here", "to see if", "precompile is", "called"}
+	testcases := []struct {
+		name       string
+		methodName precompile.PrecompileMethod
+		callArgs   []any
+		wantError  string
+	}{
+		{
+			name:       "execute",
+			methodName: precompile.WasmMethod_execute,
+			callArgs:   nonsenseArgs,
+			wantError:  "argument count mismatch: got 5 for 3",
+		},
+		{
+			name:       "executeMulti",
+			methodName: precompile.WasmMethod_executeMulti,
+			callArgs:   nonsenseArgs,
+			wantError:  "argument count mismatch: got 5 for 1",
+		},
+		{
+			name:       "query",
+			methodName: precompile.WasmMethod_query,
+			callArgs:   nonsenseArgs,
+			wantError:  "argument count mismatch: got 5 for 2",
+		},
+		{
+			name:       "queryRaw",
+			methodName: precompile.WasmMethod_queryRaw,
+			callArgs:   nonsenseArgs,
+			wantError:  "argument count mismatch: got 5 for 2",
+		},
+		{
+			name:       "instantiate",
+			methodName: precompile.WasmMethod_instantiate,
+			callArgs:   nonsenseArgs[:4],
+			wantError:  "argument count mismatch: got 4 for 5",
+		},
+		{
+			name:       "invalid method name",
+			methodName: "not_a_method",
+			callArgs:   nonsenseArgs,
+			wantError:  "method 'not_a_method' not found",
+		},
+	}
+
+	abi := embeds.SmartContract_Wasm.ABI
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			callArgs := tc.callArgs
+			_, err := abi.Pack(
+				string(tc.methodName),
+				callArgs...,
+			)
+			s.Require().ErrorContains(err, tc.wantError)
+		})
+	}
+}
+
+func (s *WasmSuite) TestSadArgsExecute() {
+	methodName := precompile.WasmMethod_execute
+	contractAddr := testutil.AccAddress().String()
+	wasmContractMsg := []byte(`
+	{ "create_denom": {
+		"subdenom": "ETH"
+	   }
+	}
+	`)
+	{
+		wasmMsg := wasm.RawContractMessage(wasmContractMsg)
+		s.Require().NoError(wasmMsg.ValidateBasic())
+	}
+
+	testcases := []struct {
+		name       string
+		methodName precompile.PrecompileMethod
+		callArgs   []any
+		wantError  string
+	}{
+		{
+			name:       "valid arg types, should get VM error",
+			methodName: methodName,
+			callArgs: []any{
+				// contractAddr
+				contractAddr,
+				// msgArgBz
+				wasmContractMsg,
+				// funds
+				[]precompile.WasmBankCoin{},
+			},
+			wantError: "execute method called",
+		},
+		{
+			name:       "contractAddr",
+			methodName: methodName,
+			callArgs: []any{
+				// contractAddr
+				contractAddr + "malformed", // mess up bech32
+				// msgArgBz
+				wasmContractMsg,
+				// funds
+				[]precompile.WasmBankCoin{},
+			},
+			wantError: "decoding bech32 failed",
+		},
+		{
+			name:       "funds populated",
+			methodName: methodName,
+			callArgs: []any{
+				// contractAddr
+				contractAddr,
+				// msgArgBz
+				[]byte(`[]`),
+				// funds
+				[]precompile.WasmBankCoin{
+					{
+						Denom:  "x-123a!$",
+						Amount: big.NewInt(123),
+					},
+					{
+						Denom:  "xyz",
+						Amount: big.NewInt(456),
+					},
+				},
+			},
+			wantError: "no such contract",
+		},
+	}
+
+	abi := embeds.SmartContract_Wasm.ABI
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+
+			callArgs := tc.callArgs
+			input, err := abi.Pack(
+				string(tc.methodName),
+				callArgs...,
+			)
+			s.Require().NoError(err)
+
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+				deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+			)
+			s.ErrorContains(err, tc.wantError)
+			s.Require().Nil(ethTxResp)
+		})
+	}
 }

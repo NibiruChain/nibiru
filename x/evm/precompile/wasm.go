@@ -14,7 +14,6 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -32,6 +31,16 @@ const (
 	WasmMethod_executeMulti PrecompileMethod = "executeMulti"
 	WasmMethod_queryRaw     PrecompileMethod = "queryRaw"
 )
+
+var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{
+	WasmMethod_execute:      true,
+	WasmMethod_instantiate:  true,
+	WasmMethod_executeMulti: true,
+	WasmMethod_query:        false,
+	WasmMethod_queryRaw:     false,
+
+	FunTokenMethod_BankSend: true,
+}
 
 // Wasm: A struct embedding keepers for read and write operations in Wasm, such
 // as execute, query, and instantiate.
@@ -57,10 +66,9 @@ func (p precompileWasm) Address() gethcommon.Address {
 	return PrecompileAddr_Wasm
 }
 
-// RequiredGas calculates the contract gas used
-func (p precompileWasm) RequiredGas(input []byte) (gasPrice uint64) {
-	return gethparams.TxGas
-	// TODO: Lower gas requirement for queries in comparison to txs
+// RequiredGas calculates the cost of calling the precompile in gas units.
+func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
+	return RequiredGas(input, embeds.SmartContract_Wasm.ABI)
 }
 
 // Run runs the precompiled contract
@@ -100,6 +108,8 @@ func (p precompileWasm) Run(
 	case WasmMethod_queryRaw:
 		bz, err = p.queryRaw(ctx, method, args, contract)
 	default:
+		// Note that this code path should be impossible to reach since
+		// "DecomposeInput" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
@@ -107,24 +117,25 @@ func (p precompileWasm) Run(
 	return
 }
 
-// execute  invokes a Wasm contract's "ExecuteMsg", which corresponds to
+// execute invokes a Wasm contract's "ExecuteMsg", which corresponds to
 // "wasm/types/MsgExecuteContract". This enables arbitrary smart contract
 // execution using the Wasm VM from the EVM.
 //
 // Implements "execute" from evm/embeds/contracts/Wasm.sol:
 //
-//	 ```solidity
-//		/// @param contractAddr nibi-prefixed Bech32 address of the wasm contract
-//		/// @param msgArgs JSON encoded wasm execute invocation
-//		/// @param funds Optional funds to supply during the execute call. It's
-//		/// uncommon to use this field, so you'll pass an empty array most of the time.
-//		/// @dev The three non-struct arguments are more gas efficient than encoding a
-//		/// single argument as a WasmExecuteMsg.
-//		 function query(
-//		   string memory contractAddr,
-//		   bytes memory req
-//		 ) external view returns (bytes memory response);
-//	 ```
+//	```solidity
+//	 function execute(
+//	   string memory contractAddr,
+//	   bytes memory msgArgs,
+//	   BankCoin[] memory funds
+//	 ) payable external returns (bytes memory response);
+//	```
+//
+// Contract Args:
+//   - contractAddr: nibi-prefixed Bech32 address of the wasm contract
+//   - msgArgs: JSON encoded wasm execute invocation
+//   - funds: Optional funds to supply during the execute call. It's
+//     uncommon to use this field, so you'll pass an empty array most of the time.
 func (p precompileWasm) execute(
 	ctx sdk.Context,
 	caller gethcommon.Address,
@@ -132,6 +143,12 @@ func (p precompileWasm) execute(
 	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
+
 	if err := assertNotReadonlyTx(readOnly, true); err != nil {
 		return bz, err
 	}
@@ -143,7 +160,6 @@ func (p precompileWasm) execute(
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 	data, err := p.Wasm.Execute(ctx, wasmContract, callerBech32, msgArgs, funds)
 	if err != nil {
-		err = fmt.Errorf("Execute failed: %w", err)
 		return
 	}
 	return method.Outputs.Pack(data)
@@ -167,6 +183,11 @@ func (p precompileWasm) query(
 	args []any,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
 	if err := assertContractQuery(contract); err != nil {
 		return bz, err
 	}
@@ -177,7 +198,6 @@ func (p precompileWasm) query(
 	}
 	respBz, err := p.Wasm.QuerySmart(ctx, wasmContract, req)
 	if err != nil {
-		err = fmt.Errorf("Query failed: %w", err)
 		return
 	}
 	return method.Outputs.Pack(respBz)
@@ -209,6 +229,11 @@ func (p precompileWasm) instantiate(
 	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
 	if err := assertNotReadonlyTx(readOnly, true); err != nil {
 		return bz, err
 	}
@@ -228,7 +253,6 @@ func (p precompileWasm) instantiate(
 		ctx, txMsg.CodeID, callerBech32, adminAddr, txMsg.Msg, txMsg.Label, txMsg.Funds,
 	)
 	if err != nil {
-		err = fmt.Errorf("Instantiate failed: %w", err)
 		return
 	}
 
@@ -257,6 +281,11 @@ func (p precompileWasm) executeMulti(
 	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
 	if err := assertNotReadonlyTx(readOnly, true); err != nil {
 		return bz, err
 	}
@@ -284,7 +313,7 @@ func (p precompileWasm) executeMulti(
 		}
 		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
-			err = fmt.Errorf("Execute failed: %w", e)
+			err = e
 			return
 		}
 		responses = append(responses, respBz)
@@ -317,18 +346,21 @@ func (p precompileWasm) queryRaw(
 	args []any,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
 	if err := assertContractQuery(contract); err != nil {
 		return bz, err
 	}
 
-	wantArgsLen := 2
-	if len(args) != wantArgsLen {
-		err = fmt.Errorf("expected %d arguments but got %d", wantArgsLen, len(args))
-		return
-	}
+	// Note: The number of arguments is valiated before this function is called
+	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
+	// which validates against the the structure of the precompile's ABI.
 
 	argIdx := 0
-	wasmContract, e := parseContraAddrArg(args[argIdx])
+	wasmContract, e := parseContractAddrArg(args[argIdx])
 	if e != nil {
 		err = e
 		return
