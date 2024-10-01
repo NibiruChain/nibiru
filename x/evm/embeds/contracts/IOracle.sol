@@ -5,7 +5,7 @@ pragma solidity >=0.8.19;
 interface IOracle {
   /// @dev queryExchangeRate queries the exchange rate for a given pair
   /// @param pair the pair to query
-  function queryExchangeRate(string memory pair) external;
+  function queryExchangeRate(string memory pair) external returns (string memory);
 }
 
 address constant ORACLE_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000801;

@@ -40,7 +40,10 @@ var (
 		Name:      "FunToken.sol",
 		EmbedJSON: funtokenContractJSON,
 	}
-
+	SmartContract_Oracle = CompiledEvmContract{
+		Name:      "Oracle.sol",
+		EmbedJSON: oracleContractJSON,
+	}
 	SmartContract_TestERC20 = CompiledEvmContract{
 		Name:      "TestERC20.sol",
 		EmbedJSON: testErc20Json,
