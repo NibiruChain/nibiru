@@ -62,6 +62,7 @@ func NewAnteHandlerNonEVM(
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
