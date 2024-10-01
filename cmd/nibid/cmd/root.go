@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/client/cli"
+	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the

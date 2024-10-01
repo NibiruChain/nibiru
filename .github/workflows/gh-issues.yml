@@ -1,5 +1,7 @@
 name: "Auto-add GH issues to project"
 # Add all issues opened to the issue board for triage and assignment
+# GitHub Org and Project Automation
+# https://www.notion.so/nibiru/GitHub-Org-and-Project-Automation-c771d671109849ee9fda7c8b741cd66a?pvs=4
 
 on:
   issues:
