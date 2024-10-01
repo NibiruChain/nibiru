@@ -19,6 +19,8 @@ var (
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenContractJSON []byte
+	// go:embed artifacts/contracts/IOracle.sol/IOracle.json
+	oracleContractJSON []byte
 	//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
 	testErc20Json []byte
 )
