@@ -17,10 +17,12 @@ import (
 var (
 	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
 	erc20MinterContractJSON []byte
-	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
-	funtokenContractJSON []byte
-	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
-	oracleContractJSON []byte
+  //go:embed artifacts/contracts/IOracle.sol/IOracle.json
+  oracleContractJSON []byte
+	//go:embed artifacts/contracts/FunToken.sol/IFunToken.json
+	funtokenPrecompileJSON []byte
+	//go:embed artifacts/contracts/Wasm.sol/IWasm.json
+	wasmPrecompileJSON []byte
 	//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
 	testErc20Json []byte
 )
@@ -34,11 +36,19 @@ var (
 	}
 
 	// SmartContract_Funtoken: Precompile contract interface for
-	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
+	// "FunToken.sol". This precompile enables transfers of ERC20 tokens
 	// to non-EVM accounts. Only the ABI is used.
 	SmartContract_FunToken = CompiledEvmContract{
 		Name:      "FunToken.sol",
-		EmbedJSON: funtokenContractJSON,
+		EmbedJSON: funtokenPrecompileJSON,
+	}
+
+	// SmartContract_Funtoken: Precompile contract interface for
+	// "Wasm.sol". This precompile enables contract invocations in the Wasm VM
+	// from EVM accounts. Only the ABI is used.
+	SmartContract_Wasm = CompiledEvmContract{
+		Name:      "Wasm.sol",
+		EmbedJSON: wasmPrecompileJSON,
 	}
 	SmartContract_Oracle = CompiledEvmContract{
 		Name:      "Oracle.sol",
@@ -53,7 +63,8 @@ var (
 func init() {
 	SmartContract_ERC20Minter.MustLoad()
 	SmartContract_FunToken.MustLoad()
-	SmartContract_Oracle.MustLoad()
+	SmartContract_Wasm.MustLoad()
+  SmartContract_Oracle.MustLoad()
 	SmartContract_TestERC20.MustLoad()
 }
 

@@ -18,9 +18,11 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/collections"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 )
@@ -46,7 +48,9 @@ func InitPrecompiles(
 	// Custom precompiles
 	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
 		PrecompileFunToken,
-		PrecompileOracle,
+		PrecompileWasm,
+    PrecompileOracle,
+
 	} {
 		pc := precompileSetupFn(k)
 		precompiles[pc.Address()] = pc
@@ -58,9 +62,6 @@ func InitPrecompiles(
 	// TODO: feat(evm): implement precompiled contracts for staking
 	// Note that liquid staked assets can be a useful alternative to adding a
 	// staking precompile.
-	// Check if there is sufficient demand for this.
-
-	// TODO: feat(evm): implement precompiled contracts for wasm calls
 	// Check if there is sufficient demand for this.
 
 	return precompiles
@@ -104,4 +105,29 @@ func DecomposeInput(
 	}
 
 	return method, args, nil
+}
+
+func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
+	method, _, err := DecomposeInput(abi, input)
+	if err != nil {
+		// It's appropriate to return a reasonable default here
+		// because the error from DecomposeInput will be handled automatically by
+		// "Run". In go-ethereum/core/vm/contracts.go, you can see the execution
+		// order of a precompile in the "runPrecompiledContract" function.
+		return gethparams.TxGas // return reasonable default
+	}
+	gasCfg := store.KVGasConfig()
+
+	// Map access could panic. We know that it won't panic because all methods
+	// are in the map, which is verified by unit tests.
+	methodIsTx := precompileMethodIsTxMap[PrecompileMethod(method.Name)]
+	var costPerByte, costFlat uint64
+	if methodIsTx {
+		costPerByte, costFlat = gasCfg.WriteCostPerByte, gasCfg.WriteCostFlat
+	} else {
+		costPerByte, costFlat = gasCfg.ReadCostPerByte, gasCfg.ReadCostFlat
+	}
+
+	argsBzLen := uint64(len(input[4:]))
+	return (costPerByte * argsBzLen) + costFlat
 }
