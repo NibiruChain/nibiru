@@ -17,7 +17,17 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
-func (s *Suite) TestFailToPackABI() {
+// TestSuite: Runs all the tests in the suite.
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(FuntokenSuite))
+	suite.Run(t, new(WasmSuite))
+}
+
+type FuntokenSuite struct {
+	suite.Suite
+}
+
+func (s *FuntokenSuite) TestFailToPackABI() {
 	testcases := []struct {
 		name       string
 		methodName string
@@ -67,7 +77,7 @@ func (s *Suite) TestFailToPackABI() {
 	}
 }
 
-func (s *Suite) TestHappyPath() {
+func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Create FunToken mapping and ERC20")
@@ -126,13 +136,4 @@ func (s *Suite) TestHappyPath() {
 	s.Equal(sdk.NewInt(420),
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount,
 	)
-}
-
-type Suite struct {
-	suite.Suite
-}
-
-// TestPrecompileSuite: Runs all the tests in the suite.
-func TestSuite(t *testing.T) {
-	suite.Run(t, new(Suite))
 }
