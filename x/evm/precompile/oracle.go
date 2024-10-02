@@ -66,11 +66,8 @@ func (p precompileOracle) Run(
 
 	switch OracleMethod(method.Name) {
 	case OracleMethod_QueryExchangeRate:
-		// TODO: UD-DEBUG: Test that calling non-method on the right address does
-		// nothing.
 		bz, err = p.queryExchangeRate(ctx, method, args, readonly)
 	default:
-		// TODO: UD-DEBUG: test invalid method called
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
