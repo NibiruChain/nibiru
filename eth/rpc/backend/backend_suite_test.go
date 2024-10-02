@@ -2,12 +2,11 @@ package backend_test
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"testing"
 	"time"
-
-	"crypto/ecdsa"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -33,15 +32,21 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
-var recipient = evmtest.NewEthPrivAcc().EthAddr
-var amountToSend = evm.NativeToWei(big.NewInt(1))
+var (
+	recipient    = evmtest.NewEthPrivAcc().EthAddr
+	amountToSend = evm.NativeToWei(big.NewInt(1))
+)
 
-var transferTxBlockNumber rpc.BlockNumber
-var transferTxBlockHash gethcommon.Hash
-var transferTxHash gethcommon.Hash
+var (
+	transferTxBlockNumber rpc.BlockNumber
+	transferTxBlockHash   gethcommon.Hash
+	transferTxHash        gethcommon.Hash
+)
 
-var testContractAddress gethcommon.Address
-var deployContractBlockNumber rpc.BlockNumber
+var (
+	testContractAddress       gethcommon.Address
+	deployContractBlockNumber rpc.BlockNumber
+)
 
 type BackendSuite struct {
 	suite.Suite
