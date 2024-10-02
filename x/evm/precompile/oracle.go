@@ -119,7 +119,7 @@ func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
 
 	pair, ok := args[0].(string)
 	if !ok {
-		err = fmt.Errorf("type validation for failed for (address erc20) argument")
+		err = ErrArgTypeValidation("string pair", args[0])
 		return
 	}
 
