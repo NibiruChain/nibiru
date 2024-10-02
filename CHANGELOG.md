@@ -124,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2044](https://github.com/NibiruChain/nibiru/pull/2044) - feat(evm): evm tx indexer service implemented
 - [#2045](https://github.com/NibiruChain/nibiru/pull/2045) - test(evm): backend tests with test network and real txs
 - [#2054](https://github.com/NibiruChain/nibiru/pull/2054) - feat(evm-precompile): Precompile for one-way EVM calls to invoke/execute Wasm contracts. 
+- [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 
 #### Dapp modules: perp, spot, oracle, etc
 

@@ -43,3 +43,13 @@ func assertContractQuery(contract *vm.Contract) error {
 
 	return nil
 }
+
+// assertNumArgs checks if the number of provided arguments matches the expected
+// count. If lenArgs does not equal wantArgsLen, it returns an error describing
+// the mismatch between expected and actual argument counts.
+func assertNumArgs(lenArgs, wantArgsLen int) error {
+	if lenArgs != wantArgsLen {
+		return fmt.Errorf("expected %d arguments but got %d", wantArgsLen, lenArgs)
+	}
+	return nil
+}
