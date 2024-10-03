@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/simapp/params"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
@@ -17,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
-	evmenc "github.com/NibiruChain/nibiru/v2/eth/encoding"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -50,16 +48,16 @@ func TestEVMTxIndexer(t *testing.T) {
 		WithCodec(encCfg.Codec)
 
 	// build cosmos-sdk wrapper tx
-	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), eth.EthBaseDenom)
+	validEVMTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), eth.EthBaseDenom)
 	require.NoError(t, err)
-	txBz, err := clientCtx.TxConfig.TxEncoder()(tmTx)
+	validEVMTxBz, err := clientCtx.TxConfig.TxEncoder()(validEVMTx)
 	require.NoError(t, err)
 
 	// build an invalid wrapper tx
 	builder := clientCtx.TxConfig.NewTxBuilder()
 	require.NoError(t, builder.SetMsgs(tx))
-	tmTx2 := builder.GetTx()
-	txBz2, err := clientCtx.TxConfig.TxEncoder()(tmTx2)
+	invalidTx := builder.GetTx()
+	invalidTxBz, err := clientCtx.TxConfig.TxEncoder()(invalidTx)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -69,50 +67,58 @@ func TestEVMTxIndexer(t *testing.T) {
 		expSuccess  bool
 	}{
 		{
-			"success, format 1",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+			"happy, only pending_ethereum_tx presents",
+			&tmtypes.Block{
+				Header: tmtypes.Header{Height: 1},
+				Data:   tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}},
+			},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
 					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: ""},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+						{
+							Type: evm.PendingEthereumTxEvent,
+							Attributes: []abci.EventAttribute{
+								{Key: evm.PendingEthereumTxEventAttrEthHash, Value: txHash.Hex()},
+								{Key: evm.PendingEthereumTxEventAttrIndex, Value: "0"},
+							},
+						},
 					},
 				},
 			},
 			true,
 		},
 		{
-			"success, format 2",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+			"happy: code 0, pending_ethereum_tx and typed EventEthereumTx present",
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
 					Events: []abci.Event{
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "ethereumTxHash", Value: txHash.Hex()},
-							{Key: "txIndex", Value: "0"},
-						}},
-						{Type: evm.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-							{Key: "amount", Value: "1000"},
-							{Key: "txGasUsed", Value: "21000"},
-							{Key: "txHash", Value: "14A84ED06282645EFBF080E0B7ED80D8D8D6A36337668A12B5F229F81CDD3F57"},
-							{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
-						}},
+						{
+							Type: evm.PendingEthereumTxEvent,
+							Attributes: []abci.EventAttribute{
+								{Key: evm.PendingEthereumTxEventAttrEthHash, Value: txHash.Hex()},
+								{Key: evm.PendingEthereumTxEventAttrIndex, Value: "0"},
+							},
+						},
+						{
+							Type: evm.TypeUrlEventEthereumTx,
+							Attributes: []abci.EventAttribute{
+								{Key: "amount", Value: `"1000"`},
+								{Key: "gas_used", Value: `"21000"`},
+								{Key: "index", Value: `"0"`},
+								{Key: "hash", Value: `"14A84ED06282645EFBF080E0B7ED80D8D8D6A36337668A12B5F229F81CDD3F57"`},
+							},
+						},
 					},
 				},
 			},
 			true,
 		},
 		{
-			"success, exceed block gas limit",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+			"happy: code 11, exceed block gas limit",
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   11,
@@ -123,8 +129,8 @@ func TestEVMTxIndexer(t *testing.T) {
 			true,
 		},
 		{
-			"fail, failed eth tx",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+			"sad: failed eth tx",
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   15,
@@ -135,8 +141,8 @@ func TestEVMTxIndexer(t *testing.T) {
 			false,
 		},
 		{
-			"fail, invalid events",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz}}},
+			"sad: invalid events",
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   0,
@@ -146,8 +152,8 @@ func TestEVMTxIndexer(t *testing.T) {
 			false,
 		},
 		{
-			"fail, not eth tx",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{txBz2}}},
+			"sad: not eth tx",
+			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{invalidTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   0,
@@ -191,9 +197,4 @@ func TestEVMTxIndexer(t *testing.T) {
 			}
 		})
 	}
-}
-
-// MakeEncodingConfig creates the EncodingConfig
-func MakeEncodingConfig() params.EncodingConfig {
-	return evmenc.MakeConfig(app.ModuleBasics)
 }

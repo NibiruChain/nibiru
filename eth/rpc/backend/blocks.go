@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/big"
 	"strconv"
-	"strings"
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -334,18 +333,13 @@ func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.
 		if event.Type != msgType {
 			continue
 		}
-
-		for _, attr := range event.Attributes {
-			if attr.Key == evm.AttributeKeyEthereumBloom {
-				return gethcore.BytesToBloom(
-					hexutils.HexToBytes( // Bloom stores hex bytes
-						strings.ReplaceAll(attr.Value, `"`, ""), // Unquote typed event
-					),
-				), nil
-			}
+		blockBloomEvent, err := evm.EventBlockBloomFromABCIEvent(event)
+		if err != nil {
+			continue
 		}
+		return gethcore.BytesToBloom(hexutils.HexToBytes(blockBloomEvent.Bloom)), nil
 	}
-	return gethcore.Bloom{}, errors.New("block bloom event is not found")
+	return gethcore.Bloom{}, errors.New(msgType + " not found in end block results")
 }
 
 // RPCBlockFromTendermintBlock returns a JSON-RPC compatible Ethereum block from a
