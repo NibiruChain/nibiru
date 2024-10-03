@@ -49,8 +49,7 @@ func InitPrecompiles(
 	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
 		PrecompileFunToken,
 		PrecompileWasm,
-    PrecompileOracle,
-
+		PrecompileOracle,
 	} {
 		pc := precompileSetupFn(k)
 		precompiles[pc.Address()] = pc
