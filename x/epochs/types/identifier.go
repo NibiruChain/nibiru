@@ -7,15 +7,17 @@ import (
 
 const (
 	// WeekEpochID defines the identifier for weekly epochs
+	MonthEpochID = "month"
+	// WeekEpochID defines the identifier for weekly epochs
 	WeekEpochID = "week"
 	// DayEpochID defines the identifier for daily epochs
 	DayEpochID = "day"
 	// HourEpochID defines the identifier for hourly epochs
 	HourEpochID = "hour"
-	// FifteenMinuteEpochID defines the identifier for 15 minute epochs
-	FifteenMinuteEpochID = "15 min"
 	// ThirtyMinuteEpochID defines the identifier for 30 minute epochs
 	ThirtyMinuteEpochID = "30 min"
+	// FifteenMinuteEpochID defines the identifier for 15 minute epochs
+	FifteenMinuteEpochID = "15 min"
 )
 
 // ValidateEpochIdentifierInterface performs a stateless
