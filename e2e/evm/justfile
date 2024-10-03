@@ -1,0 +1,36 @@
+# Use this justfile by 
+# (1) installing with "cargo install just" 
+# (2) running the "just" command.
+
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+
+# Install all dependencies
+install: 
+  #!/usr/bin/env bash
+
+  # Check if the given binary is in the $PATH.
+  the_cmd="bun"
+  if which "$the_cmd" >/dev/null 2>&1; then
+    echo "✅ bun is installed." 
+  else
+    log_error "$the_cmd is not present in \$PATH"
+    npm install -g bun@1.1.12
+  fi
+
+  bun install
+
+# Generate types from compiled contracts
+gen-types:
+  bun run typechain --target=ethers-v6 contracts/*Compiled.json
+
+# Runs the E2E tests
+test:
+  npm test
+
+# Format
+fmt: 
+  bun run prettier --write "test/**/*.ts"

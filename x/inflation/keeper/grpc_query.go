@@ -5,8 +5,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"cosmossdk.io/math"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // querier implements the module's gRPC "QueryServer" interface
@@ -80,7 +82,7 @@ func (k Keeper) CirculatingSupply(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
-	circulatingToDec := sdk.NewDecFromInt(circulatingSupply)
+	circulatingToDec := math.LegacyNewDecFromInt(circulatingSupply)
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
 	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil

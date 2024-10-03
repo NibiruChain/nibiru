@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestQueryParams(t *testing.T) {
@@ -35,7 +36,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	rate := sdk.NewDec(1700)
+	rate := math.LegacyNewDec(1700)
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 
 	// empty request
@@ -75,7 +76,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	rate := sdk.NewDec(1700)
+	rate := math.LegacyNewDec(1700)
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 
@@ -92,7 +93,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	input := CreateTestFixture(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	rate := sdk.NewDec(1700)
+	rate := math.LegacyNewDec(1700)
 	input.OracleKeeper.SetPrice(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rate)
 	testutilevents.RequireContainsTypedEvent(
 		t,
@@ -114,7 +115,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 
 	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)})
 	require.NoError(t, err)
-	require.Equal(t, sdk.MustNewDecFromStr("1700"), res.ExchangeRate)
+	require.Equal(t, math.LegacyMustNewDecFromStr("1700"), res.ExchangeRate)
 }
 
 func TestCalcTwap(t *testing.T) {
@@ -136,29 +137,29 @@ func TestCalcTwap(t *testing.T) {
 			priceSnapshots: []types.PriceSnapshot{
 				{
 					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					Price:       sdk.MustNewDecFromStr("90000.0"),
+					Price:       math.LegacyMustNewDecFromStr("90000.0"),
 					TimestampMs: time.UnixMilli(1).UnixMilli(),
 				},
 				{
 					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					Price:       sdk.MustNewDecFromStr("9.0"),
+					Price:       math.LegacyMustNewDecFromStr("9.0"),
 					TimestampMs: time.UnixMilli(10).UnixMilli(),
 				},
 				{
 					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					Price:       sdk.MustNewDecFromStr("8.5"),
+					Price:       math.LegacyMustNewDecFromStr("8.5"),
 					TimestampMs: time.UnixMilli(20).UnixMilli(),
 				},
 				{
 					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					Price:       sdk.MustNewDecFromStr("9.5"),
+					Price:       math.LegacyMustNewDecFromStr("9.5"),
 					TimestampMs: time.UnixMilli(30).UnixMilli(),
 				},
 			},
 			currentBlockTime:   time.UnixMilli(35),
 			currentBlockHeight: 3,
 			lookbackInterval:   30 * time.Millisecond,
-			expectedPrice:      sdk.MustNewDecFromStr("8.900000000000000000"),
+			expectedPrice:      math.LegacyMustNewDecFromStr("8.900000000000000000"),
 		},
 	}
 
@@ -205,7 +206,7 @@ func TestQueryActives(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	queryClient := NewQuerier(input.OracleKeeper)
 
-	rate := sdk.NewDec(1700)
+	rate := math.LegacyNewDec(1700)
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
@@ -297,9 +298,9 @@ func TestQueryAggregateVote(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
+	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: math.LegacyOneDec()}}, ValAddrs[0])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
-	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
+	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: math.LegacyOneDec()}}, ValAddrs[1])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[1], vote2)
 
 	// empty request
@@ -326,11 +327,11 @@ func TestQueryAggregateVotes(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
-	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[0])
+	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: math.LegacyOneDec()}}, ValAddrs[0])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
-	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[1])
+	vote2 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: math.LegacyOneDec()}}, ValAddrs[1])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[1], vote2)
-	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdk.OneDec()}}, ValAddrs[2])
+	vote3 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: math.LegacyOneDec()}}, ValAddrs[2])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[2], vote3)
 
 	expectedVotes := []types.AggregateExchangeRateVote{vote1, vote2, vote3}

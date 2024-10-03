@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	tfkeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	tfkeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

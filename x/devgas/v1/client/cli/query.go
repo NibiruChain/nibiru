@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

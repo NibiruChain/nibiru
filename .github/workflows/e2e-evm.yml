@@ -1,0 +1,84 @@
+name: EVM e2e tests
+
+on:
+  pull_request:
+    paths:
+      [
+        "**.go",
+        "**.proto",
+        "go.mod",
+        "go.sum",
+        "**go.mod",
+        "**go.sum",
+        "contrib/docker/*",
+        "**.ts",
+        "**.js",
+        "**.json",
+      ]
+
+# Allow concurrent runs on main/release branches but isolates other branches
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
+
+jobs:
+  e2e-evm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+          cache: true
+
+      # Use GitHub actions output paramters to get go paths. For more info, see
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - name: "Set output variables for go cache"
+        id: go-cache-paths
+        run: |
+          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: "Go build cache"
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+          key: go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Go mod cache"
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Build the nibid binary"
+        run: |
+          just install
+
+      - name: Setup NodeJS with npm caching
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: "just install"
+        run: just install
+        working-directory: "e2e/evm"
+
+      - name: "Launch localnet"
+        run: |
+          just localnet --no-build &
+          sleep 10
+
+      - name: "Run tests (just test)"
+        run: just test
+        working-directory: "e2e/evm"
+        env:
+          JSON_RPC_ENDPOINT: http://127.0.0.1:8545
+          MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
