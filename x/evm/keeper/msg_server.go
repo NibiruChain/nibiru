@@ -41,61 +41,6 @@ func (k *Keeper) EthereumTx(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to apply transaction")
 	}
-
-	attrs := []sdk.Attribute{
-		sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Value().String()),
-		// add event for ethereum transaction hash format
-		sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, resp.Hash),
-		// add event for index of valid ethereum tx
-		sdk.NewAttribute(evm.AttributeKeyTxIndex, strconv.FormatUint(k.EvmState.BlockTxIndex.GetOr(ctx, 0), 10)),
-		// add event for eth tx gas used, we can't get it from cosmos tx result when it contains multiple eth tx msgs.
-		sdk.NewAttribute(evm.AttributeKeyTxGasUsed, strconv.FormatUint(resp.GasUsed, 10)),
-		// TODO: fix: It's odd that each event is emitted twice. Migrate to typed
-		// events and change EVM indexer to align.
-		// sdk.NewAttribute("emitted_from", "EthereumTx"),
-	}
-
-	if len(ctx.TxBytes()) > 0 {
-		// add event for tendermint transaction hash format
-		hash := tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash())
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyTxHash, hash.String()))
-	}
-
-	if to := tx.To(); to != nil {
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyRecipient, to.Hex()))
-	}
-
-	if resp.Failed() {
-		attrs = append(attrs, sdk.NewAttribute(evm.AttributeKeyEthereumTxFailed, resp.VmError))
-	}
-
-	txLogAttrs := make([]sdk.Attribute, len(resp.Logs))
-	for i, log := range resp.Logs {
-		value, err := json.Marshal(log)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to encode log")
-		}
-		txLogAttrs[i] = sdk.NewAttribute(evm.AttributeKeyTxLog, string(value))
-	}
-
-	// emit events
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			evm.EventTypeEthereumTx,
-			attrs...,
-		),
-		sdk.NewEvent(
-			evm.EventTypeTxLog,
-			txLogAttrs...,
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, evm.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.From),
-			sdk.NewAttribute(evm.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
-		),
-	})
-
 	return resp, nil
 }
 
@@ -118,7 +63,7 @@ func (k *Keeper) ApplyEvmTx(
 	tmpCtx, commit := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	res, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
+	evmResp, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -126,9 +71,9 @@ func (k *Keeper) ApplyEvmTx(
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 
-	logs := evm.LogsToEthereum(res.Logs)
+	logs := evm.LogsToEthereum(evmResp.Logs)
 
-	cumulativeGasUsed := res.GasUsed
+	cumulativeGasUsed := evmResp.GasUsed
 	if ctx.BlockGasMeter() != nil {
 		limit := ctx.BlockGasMeter().Limit()
 		cumulativeGasUsed += ctx.BlockGasMeter().GasConsumed()
@@ -150,40 +95,24 @@ func (k *Keeper) ApplyEvmTx(
 		Logs:              logs,
 		TxHash:            txConfig.TxHash,
 		ContractAddress:   contractAddr,
-		GasUsed:           res.GasUsed,
+		GasUsed:           evmResp.GasUsed,
 		BlockHash:         txConfig.BlockHash,
 		BlockNumber:       big.NewInt(ctx.BlockHeight()),
 		TransactionIndex:  txConfig.TxIndex,
 	}
 
-	if !res.Failed() {
+	if !evmResp.Failed() {
 		receipt.Status = gethcore.ReceiptStatusSuccessful
 		commit()
-		ctx.EventManager().EmitEvents(tmpCtx.EventManager().Events())
-
-		// Emit typed events
-		if msg.To() == nil { // contract creation
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
-				Sender:       msg.From().String(),
-				ContractAddr: contractAddr.String(),
-			})
-		} else if len(msg.Data()) > 0 { // contract executed
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
-				Sender:       msg.From().String(),
-				ContractAddr: msg.To().String(),
-			})
-		} else if msg.Value().Cmp(big.NewInt(0)) > 0 { // evm transfer
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
-				Sender:    msg.From().String(),
-				Recipient: msg.To().String(),
-				Amount:    msg.Value().String(),
-			})
-		}
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
-	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, evmConfig.Params.EvmDenom); err != nil {
-		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
+	refundGas := uint64(0)
+	if msg.Gas() > evmResp.GasUsed {
+		refundGas = msg.Gas() - evmResp.GasUsed
+	}
+	if err = k.RefundGas(ctx, msg, refundGas, evmConfig.Params.EvmDenom); err != nil {
+		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
 	}
 
 	if len(receipt.Logs) > 0 {
@@ -193,17 +122,23 @@ func (k *Keeper) ApplyEvmTx(
 		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
 	}
 
-	blockTxIdx := uint64(txConfig.TxIndex) + 1
-	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
-
-	totalGasUsed, err := k.AddToBlockGasUsed(ctx, res.GasUsed)
+	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to add transient gas used")
 	}
 
 	// reset the gas meter for current cosmos transaction
 	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
-	return res, nil
+
+	err = k.EmitEthereumTxEvents(ctx, tx, msg, evmResp, contractAddr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to emit ethereum tx events")
+	}
+
+	blockTxIdx := uint64(txConfig.TxIndex) + 1
+	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+
+	return evmResp, nil
 }
 
 // NewEVM generates a go-ethereum VM.
@@ -733,4 +668,77 @@ func (k Keeper) convertCoinNativeERC20(
 	})
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
+func (k *Keeper) EmitEthereumTxEvents(
+	ctx sdk.Context,
+	tx *gethcore.Transaction,
+	msg gethcore.Message,
+	evmResp *evm.MsgEthereumTxResponse,
+	contractAddr gethcommon.Address,
+) error {
+	// Typed event: eth.evm.v1.EventEthereumTx
+	eventEthereumTx := &evm.EventEthereumTx{
+		EthHash: evmResp.Hash,
+		Index:   strconv.FormatUint(k.EvmState.BlockTxIndex.GetOr(ctx, 0), 10),
+		GasUsed: strconv.FormatUint(evmResp.GasUsed, 10),
+	}
+	if len(ctx.TxBytes()) > 0 {
+		eventEthereumTx.Hash = tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash()).String()
+	}
+	if to := tx.To(); to != nil {
+		eventEthereumTx.Recipient = to.Hex()
+	}
+	if evmResp.Failed() {
+		eventEthereumTx.EthTxFailed = evmResp.VmError
+	}
+	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
+	if err != nil {
+		return errors.Wrap(err, "failed to emit event ethereum tx")
+	}
+
+	// Typed event: eth.evm.v1.EventTxLog
+	txLogs := make([]string, len(evmResp.Logs))
+	for i, log := range evmResp.Logs {
+		value, err := json.Marshal(log)
+		if err != nil {
+			return errors.Wrap(err, "failed to encode log")
+		}
+		txLogs[i] = string(value)
+	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
+
+	// Untyped event: "message", used for tendermint subscription
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.From().Hex()),
+			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", tx.Type())),
+		),
+	)
+
+	// Emit typed events
+	if !evmResp.Failed() {
+		if tx.To() == nil { // contract creation
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
+				Sender:       msg.From().Hex(),
+				ContractAddr: contractAddr.String(),
+			})
+		} else if len(msg.Data()) > 0 { // contract executed
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
+				Sender:       msg.From().Hex(),
+				ContractAddr: msg.To().String(),
+			})
+		} else if msg.Value().Cmp(big.NewInt(0)) > 0 { // evm transfer
+			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
+				Sender:    msg.From().Hex(),
+				Recipient: msg.To().Hex(),
+				Amount:    msg.Value().String(),
+			})
+		}
+	}
+
+	return nil
 }

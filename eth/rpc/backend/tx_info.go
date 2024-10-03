@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
-
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -307,7 +306,8 @@ func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
 	}
 
 	// fallback to tendermint tx evmTxIndexer
-	query := fmt.Sprintf("%s.%s='%s'", evm.TypeMsgEthereumTx, evm.AttributeKeyEthereumTxHash, hash.Hex())
+	query := fmt.Sprintf("%s.%s='%s'", evm.PendingEthereumTxEvent, evm.PendingEthereumTxEventAttrEthHash, hash.Hex())
+
 	txResult, err := b.queryTendermintTxIndexer(query, func(txs *rpc.ParsedTxs) *rpc.ParsedTx {
 		return txs.GetTxByHash(hash)
 	})
@@ -326,8 +326,10 @@ func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error
 
 	// fallback to tendermint tx evmTxIndexer
 	query := fmt.Sprintf("tx.height=%d AND %s.%s=%d",
-		height, evm.TypeMsgEthereumTx,
-		evm.AttributeKeyTxIndex, index,
+		height,
+		evm.PendingEthereumTxEvent,
+		evm.PendingEthereumTxEventAttrIndex,
+		index,
 	)
 	txResult, err := b.queryTendermintTxIndexer(query, func(txs *rpc.ParsedTxs) *rpc.ParsedTx {
 		return txs.GetTxByTxIndex(int(index)) // #nosec G701 -- checked for int overflow already

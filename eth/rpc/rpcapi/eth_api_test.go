@@ -3,7 +3,6 @@ package rpcapi_test
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -171,8 +170,6 @@ func (s *NodeSuite) Test_CodeAt() {
 func (s *NodeSuite) Test_PendingCodeAt() {
 	code, err := s.ethClient.PendingCodeAt(context.Background(), s.fundedAccEthAddr)
 	s.NoError(err)
-
-	// TODO: add more checks
 	s.NotNil(code)
 }
 
@@ -276,21 +273,30 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
 		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
 		s.NoError(err)
-		ethTxEvents := []sdk.Event{}
 		events := blockOfTx.TxsResults[0].Events
+		pendingEthTxEventHash := gethcommon.Hash{}
+		pendingEthTxEventIndex := int32(-1)
 		for _, event := range events {
-			if event.Type == "ethereum_tx" {
-				ethTxEvents = append(ethTxEvents,
-					sdk.Event{Type: event.Type, Attributes: event.Attributes},
+			if event.Type == evm.PendingEthereumTxEvent {
+				pendingEthTxEventHash, pendingEthTxEventIndex, err =
+					evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
+				s.Require().NoError(err)
+			}
+			if event.Type == evm.TypeUrlEventEthereumTx {
+				ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
+				s.Require().NoError(err)
+				s.Require().Equal(
+					pendingEthTxEventHash.Hex(),
+					ethereumTx.EthHash,
+					"hash of pending ethereum tx event and ethereum tx event must be equal",
+				)
+				s.Require().Equal(
+					fmt.Sprintf("%d", pendingEthTxEventIndex),
+					ethereumTx.Index,
+					"index of pending ethereum tx event and ethereum tx event must be equal",
 				)
 			}
 		}
-
-		eventsJson, _ := json.Marshal(events)
-		s.Require().Equal(len(ethTxEvents), 2, "events: ", eventsJson)
-		hash0, _ := ethTxEvents[0].GetAttribute(evm.AttributeKeyEthereumTxHash)
-		hash1, _ := ethTxEvents[1].GetAttribute(evm.AttributeKeyEthereumTxHash)
-		s.Require().Equal(hash0, hash1)
 	}
 
 	s.T().Log("Assert balances")
