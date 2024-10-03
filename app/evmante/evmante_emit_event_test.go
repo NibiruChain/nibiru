@@ -71,7 +71,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 			s.Require().Equal(txMsg.Hash, attr.Value)
 
 			// TX index attr must present
-			attr, ok = event.GetAttribute(evm.PendingEthereumTxEventTxAttrIndex)
+			attr, ok = event.GetAttribute(evm.PendingEthereumTxEventAttrIndex)
 			s.Require().True(ok, "tx index attribute not found")
 			s.Require().Equal("0", attr.Value)
 		})

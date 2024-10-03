@@ -41,12 +41,15 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-		// Untyped event: "message", used for tendermint subscription
+		// Untyped event "pending_ethereum_tx" is emitted for then indexing purposes.
+		// Tendermint tx_search can only search the untyped events.
+		// TxHash and TxIndex values are exposed in the ante handler (before the actual tx execution)
+		// to allow searching for txs which are failed due to "out of block gas limit" error.
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				evm.PendingEthereumTxEvent,
 				sdk.NewAttribute(evm.PendingEthereumTxEventAttrEthHash, msgEthTx.Hash),
-				sdk.NewAttribute(evm.PendingEthereumTxEventTxAttrIndex, strconv.FormatUint(txIndex+uint64(i), 10)),
+				sdk.NewAttribute(evm.PendingEthereumTxEventAttrIndex, strconv.FormatUint(txIndex+uint64(i), 10)),
 			),
 		)
 	}

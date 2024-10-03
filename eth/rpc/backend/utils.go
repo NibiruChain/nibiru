@@ -214,7 +214,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 	allLogs := make([][]*gethcore.Log, 0, 4)
 	for _, event := range events {
-		if event.Type != proto.MessageName((*evm.EventTxLog)(nil)) {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -231,7 +231,7 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
 func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
 	for _, event := range events {
-		if event.Type != proto.MessageName((*evm.EventTxLog)(nil)) {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -256,7 +256,7 @@ func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
 	for _, logString := range eventTxLog.TxLogs {
 		var evmLog evm.Log
 		if err = json.Unmarshal([]byte(logString), &evmLog); err != nil {
-			return nil, errors.Wrapf(err, "failed unmarshal event tx log")
+			return nil, errors.Wrapf(err, "failed to unmarshal event tx log")
 		}
 		evmLogs = append(evmLogs, &evmLog)
 	}

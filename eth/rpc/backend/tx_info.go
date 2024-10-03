@@ -326,8 +326,9 @@ func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error
 
 	// fallback to tendermint tx evmTxIndexer
 	query := fmt.Sprintf("tx.height=%d AND %s.%s=%d",
-		height, evm.PendingEthereumTxEventTxAttrIndex,
-		evm.PendingEthereumTxEventTxAttrIndex,
+		height,
+		evm.PendingEthereumTxEvent,
+		evm.PendingEthereumTxEventAttrIndex,
 		index,
 	)
 	txResult, err := b.queryTendermintTxIndexer(query, func(txs *rpc.ParsedTxs) *rpc.ParsedTx {

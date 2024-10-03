@@ -30,7 +30,7 @@ const (
 	// Used in non-typed event "pending_ethereum_tx"
 	PendingEthereumTxEvent            = "pending_ethereum_tx"
 	PendingEthereumTxEventAttrEthHash = "eth_hash"
-	PendingEthereumTxEventTxAttrIndex = "index"
+	PendingEthereumTxEventAttrIndex   = "index"
 )
 
 func EventTxLogFromABCIEvent(event abci.Event) (*EventTxLog, error) {
@@ -86,7 +86,7 @@ func GetEthHashAndIndexFromPendingEthereumTxEvent(event abci.Event) (gethcommon.
 		if attr.Key == PendingEthereumTxEventAttrEthHash {
 			ethHash = gethcommon.HexToHash(attr.Value)
 		}
-		if attr.Key == PendingEthereumTxEventTxAttrIndex {
+		if attr.Key == PendingEthereumTxEventAttrIndex {
 			parsedIndex, err := strconv.ParseInt(attr.Value, 10, 32)
 			if err != nil {
 				return ethHash, -1, fmt.Errorf(

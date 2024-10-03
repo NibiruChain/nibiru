@@ -73,11 +73,11 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 			}
 			ethTxIndexFromEvent, err := strconv.ParseUint(eventEthereumTx.Index, 10, 31)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse EthTxIndex from event: %w", err)
 			}
 			gasUsed, err := strconv.ParseUint(eventEthereumTx.GasUsed, 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse GasUsed from event: %w", err)
 			}
 			committedTx := ParsedTx{
 				MsgIndex:   msgIndex,
@@ -102,7 +102,11 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 			parsedTxs.Txs[i].Failed = true
 
 			// replace gasUsed with gasLimit because that's what's actually deducted.
-			gasLimit := tx.GetMsgs()[i].(*evm.MsgEthereumTx).GetGas()
+			msgEthereumTx, ok := tx.GetMsgs()[i].(*evm.MsgEthereumTx)
+			if !ok {
+				return nil, fmt.Errorf("unexpected message type at index %d", i)
+			}
+			gasLimit := msgEthereumTx.GetGas()
 			parsedTxs.Txs[i].GasUsed = gasLimit
 		}
 	}
@@ -162,6 +166,9 @@ func (p *ParsedTxs) GetTxByTxIndex(txIndex int) *ParsedTx {
 
 // AccumulativeGasUsed calculates the accumulated gas used within the batch of txs
 func (p *ParsedTxs) AccumulativeGasUsed(msgIndex int) (result uint64) {
+	if msgIndex < 0 || msgIndex >= len(p.Txs) {
+		return 0
+	}
 	for i := 0; i <= msgIndex; i++ {
 		result += p.Txs[i].GasUsed
 	}

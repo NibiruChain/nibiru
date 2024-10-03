@@ -107,8 +107,12 @@ func (k *Keeper) ApplyEvmTx(
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
-	if err = k.RefundGas(ctx, msg, msg.Gas()-evmResp.GasUsed, evmConfig.Params.EvmDenom); err != nil {
-		return nil, errors.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
+	refundGas := uint64(0)
+	if msg.Gas() > evmResp.GasUsed {
+		refundGas = msg.Gas() - evmResp.GasUsed
+	}
+	if err = k.RefundGas(ctx, msg, refundGas, evmConfig.Params.EvmDenom); err != nil {
+		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
 	}
 
 	if len(receipt.Logs) > 0 {

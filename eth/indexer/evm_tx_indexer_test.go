@@ -80,7 +80,7 @@ func TestEVMTxIndexer(t *testing.T) {
 							Type: evm.PendingEthereumTxEvent,
 							Attributes: []abci.EventAttribute{
 								{Key: evm.PendingEthereumTxEventAttrEthHash, Value: txHash.Hex()},
-								{Key: evm.PendingEthereumTxEventTxAttrIndex, Value: "0"},
+								{Key: evm.PendingEthereumTxEventAttrIndex, Value: "0"},
 							},
 						},
 					},
@@ -99,7 +99,7 @@ func TestEVMTxIndexer(t *testing.T) {
 							Type: evm.PendingEthereumTxEvent,
 							Attributes: []abci.EventAttribute{
 								{Key: evm.PendingEthereumTxEventAttrEthHash, Value: txHash.Hex()},
-								{Key: evm.PendingEthereumTxEventTxAttrIndex, Value: "0"},
+								{Key: evm.PendingEthereumTxEventAttrIndex, Value: "0"},
 							},
 						},
 						{

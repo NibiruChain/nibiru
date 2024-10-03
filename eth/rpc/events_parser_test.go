@@ -176,7 +176,7 @@ func pendingEthereumTxEvent(txHash string, txIndex int) abci.Event {
 		Type: evm.PendingEthereumTxEvent,
 		Attributes: []abci.EventAttribute{
 			{Key: evm.PendingEthereumTxEventAttrEthHash, Value: txHash},
-			{Key: evm.PendingEthereumTxEventTxAttrIndex, Value: strconv.Itoa(txIndex)},
+			{Key: evm.PendingEthereumTxEventAttrIndex, Value: strconv.Itoa(txIndex)},
 		},
 	}
 }
