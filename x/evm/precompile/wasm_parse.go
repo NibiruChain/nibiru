@@ -84,9 +84,10 @@ func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
 	txMsg wasm.MsgInstantiateContract,
 	err error,
 ) {
-	// Note: The number of arguments is valiated before this function is called
-	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
-	// which validates against the the structure of the precompile's ABI.
+	if e := assertNumArgs(len(args), 5); e != nil {
+		err = e
+		return
+	}
 
 	argIdx := 0
 	admin, ok := args[argIdx].(string)
@@ -142,9 +143,10 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 	funds sdk.Coins,
 	err error,
 ) {
-	// Note: The number of arguments is valiated before this function is called
-	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
-	// which validates against the the structure of the precompile's ABI.
+	if e := assertNumArgs(len(args), 3); e != nil {
+		err = e
+		return
+	}
 
 	argIdx := 0
 	contractAddrStr, ok := args[argIdx].(string)
@@ -187,9 +189,10 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	req wasm.RawContractMessage,
 	err error,
 ) {
-	// Note: The number of arguments is valiated before this function is called
-	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
-	// which validates against the the structure of the precompile's ABI.
+	if e := assertNumArgs(len(args), 2); e != nil {
+		err = e
+		return
+	}
 
 	argsIdx := 0
 	wasmContract, e := parseContractAddrArg(args[argsIdx])
@@ -220,9 +223,10 @@ func (p precompileWasm) parseExecuteMultiArgs(args []any) (
 	},
 	err error,
 ) {
-	// Note: The number of arguments is valiated before this function is called
-	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
-	// which validates against the the structure of the precompile's ABI.
+	if e := assertNumArgs(len(args), 1); e != nil {
+		err = e
+		return
+	}
 
 	arg := args[0]
 	execMsgs, ok := arg.([]struct {

@@ -205,9 +205,10 @@ func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	to string,
 	err error,
 ) {
-	// Note: The number of arguments is valiated before this function is called
-	// during "DecomposeInput". DecomposeInput calls "method.Inputs.Unpack",
-	// which validates against the the structure of the precompile's ABI.
+	if e := assertNumArgs(len(args), 3); e != nil {
+		err = e
+		return
+	}
 
 	erc20, ok := args[0].(gethcommon.Address)
 	if !ok {
