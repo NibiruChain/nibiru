@@ -8,8 +8,10 @@ import (
 	"sort"
 	"strings"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -212,7 +214,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 	allLogs := make([][]*gethcore.Log, 0, 4)
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -229,7 +231,7 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
 func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -246,20 +248,19 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 
 // ParseTxLogsFromEvent parse tx logs from one event
 func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
-	logs := make([]*evm.Log, 0, len(event.Attributes))
-	for _, attr := range event.Attributes {
-		if attr.Key != evm.AttributeKeyTxLog {
-			continue
-		}
-
-		var log evm.Log
-		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
-			return nil, err
-		}
-
-		logs = append(logs, &log)
+	eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse event tx log")
 	}
-	return evm.LogsToEthereum(logs), nil
+	var evmLogs []*evm.Log
+	for _, logString := range eventTxLog.TxLogs {
+		var evmLog evm.Log
+		if err = json.Unmarshal([]byte(logString), &evmLog); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal event tx log")
+		}
+		evmLogs = append(evmLogs, &evmLog)
+	}
+	return evm.LogsToEthereum(evmLogs), nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored

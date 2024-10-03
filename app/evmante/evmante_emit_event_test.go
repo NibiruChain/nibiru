@@ -59,19 +59,19 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 
 			s.Require().Greater(len(events), 0)
 			event := events[len(events)-1]
-			s.Require().Equal(evm.EventTypeEthereumTx, event.Type)
+			s.Require().Equal(evm.PendingEthereumTxEvent, event.Type)
 
 			// Convert tx to msg to get hash
 			txMsg, ok := tx.GetMsgs()[0].(*evm.MsgEthereumTx)
 			s.Require().True(ok)
 
 			// TX hash attr must present
-			attr, ok := event.GetAttribute(evm.AttributeKeyEthereumTxHash)
+			attr, ok := event.GetAttribute(evm.PendingEthereumTxEventAttrEthHash)
 			s.Require().True(ok, "tx hash attribute not found")
 			s.Require().Equal(txMsg.Hash, attr.Value)
 
 			// TX index attr must present
-			attr, ok = event.GetAttribute(evm.AttributeKeyTxIndex)
+			attr, ok = event.GetAttribute(evm.PendingEthereumTxEventAttrIndex)
 			s.Require().True(ok, "tx index attribute not found")
 			s.Require().Equal("0", attr.Value)
 		})
