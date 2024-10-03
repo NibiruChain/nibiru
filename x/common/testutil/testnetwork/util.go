@@ -126,7 +126,7 @@ func writeFile(name string, dir string, contents []byte) error {
 // validator.
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
-) error {
+) (*sdk.TxResponse, error) {
 	rawResp, err := clitestutil.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
@@ -137,19 +137,19 @@ func FillWalletFromValidator(
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10000)),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
-func txOK(jsonCodec sdkcodec.JSONCodec, txBytes []byte) error {
+func txOK(jsonCodec sdkcodec.JSONCodec, txBytes []byte) (*sdk.TxResponse, error) {
 	resp := new(sdk.TxResponse)
 	jsonCodec.MustUnmarshalJSON(txBytes, resp)
 	if resp.Code != tmtypes.CodeTypeOK {
-		return fmt.Errorf("%s", resp.RawLog)
+		return resp, fmt.Errorf("%s", resp.RawLog)
 	}
 
-	return nil
+	return resp, nil
 }
 
 /*

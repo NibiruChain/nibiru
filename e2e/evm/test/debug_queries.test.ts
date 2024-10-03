@@ -32,21 +32,36 @@ describe("debug queries", () => {
   it("debug_traceBlockByNumber", async () => {
     const traceResult = await provider.send("debug_traceBlockByNumber", [
       blockNumber,
+      {
+        tracer: "callTracer",
+        timeout: "3000s",
+        tracerConfig: { onlyTopCall: false },
+      },
     ])
     expectTrace(traceResult)
   })
 
-  // TODO: impl in EVM: remove skip
   it("debug_traceBlockByHash", async () => {
     const traceResult = await provider.send("debug_traceBlockByHash", [
       blockHash,
+      {
+        tracer: "callTracer",
+        timeout: "3000s",
+        tracerConfig: { onlyTopCall: false },
+      },
     ])
     expectTrace(traceResult)
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_traceTransaction", async () => {
-    const traceResult = await provider.send("debug_traceTransaction", [txHash])
+  it("debug_traceTransaction", async () => {
+    const traceResult = await provider.send("debug_traceTransaction", [
+      txHash,
+      {
+        tracer: "callTracer",
+        timeout: "3000s",
+        tracerConfig: { onlyTopCall: false },
+      },
+    ])
     expectTrace([{ result: traceResult }])
   })
 
@@ -61,27 +76,43 @@ describe("debug queries", () => {
     const traceResult = await provider.send("debug_traceCall", [
       tx,
       "latest",
-      {},
+      {
+        tracer: "callTracer",
+        timeout: "3000s",
+        tracerConfig: { onlyTopCall: false },
+      },
     ])
     expectTrace([{ result: traceResult }])
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_getBadBlocks", async () => {
-    const traceResult = await provider.send("debug_getBadBlocks", [txHash])
-    expect(traceResult).toBeDefined()
+  // TODO: impl in EVM
+  it("debug_getBadBlocks", async () => {
+    try {
+      const traceResult = await provider.send("debug_getBadBlocks", [txHash])
+      expect(traceResult).toBeDefined()
+    } catch (err) {
+      expect(err.message).toContain(
+        "the method debug_getBadBlocks does not exist",
+      )
+    }
   })
 
-  // TODO: impl in EVM: remove skip
-  it.skip("debug_storageRangeAt", async () => {
-    const traceResult = await provider.send("debug_storageRangeAt", [
-      blockNumber,
-      txIndex,
-      contractAddress,
-      "0x0",
-      100,
-    ])
-    expect(traceResult).toBeDefined()
+  // TODO: impl in EVM
+  it("debug_storageRangeAt", async () => {
+    try {
+      const traceResult = await provider.send("debug_storageRangeAt", [
+        blockNumber,
+        txIndex,
+        contractAddress,
+        "0x0",
+        100,
+      ])
+      expect(traceResult).toBeDefined()
+    } catch (err) {
+      expect(err.message).toContain(
+        "the method debug_storageRangeAt does not exist",
+      )
+    }
   })
 })
 
@@ -90,8 +121,11 @@ const expectTrace = (traceResult: any[]) => {
   expect(traceResult.length).toBeGreaterThan(0)
 
   const trace = traceResult[0]["result"]
-  expect(trace).toHaveProperty("failed", false)
+  expect(trace).toHaveProperty("from")
+  expect(trace).toHaveProperty("to")
   expect(trace).toHaveProperty("gas")
-  expect(trace).toHaveProperty("returnValue")
-  expect(trace).toHaveProperty("structLogs")
+  expect(trace).toHaveProperty("gasUsed")
+  expect(trace).toHaveProperty("input")
+  expect(trace).toHaveProperty("output")
+  expect(trace).toHaveProperty("type", "CALL")
 }

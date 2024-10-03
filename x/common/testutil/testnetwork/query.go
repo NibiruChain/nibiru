@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/client/cli"
+	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudocli "github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"

@@ -528,9 +528,9 @@ func (k Keeper) TraceTx(
 	}
 
 	var tracerConfig json.RawMessage
-	if req.TraceConfig != nil && req.TraceConfig.TracerJsonConfig != "" {
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
 		// ignore error. default to no traceConfig
-		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
 	msg, err := tx.AsMessage(signer, cfg.BaseFee)
@@ -596,9 +596,9 @@ func (k Keeper) TraceCall(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
 	var tracerConfig json.RawMessage
-	if req.TraceConfig != nil && req.TraceConfig.TracerJsonConfig != "" {
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
 		// ignore error. default to no traceConfig
-		_ = json.Unmarshal([]byte(req.TraceConfig.TracerJsonConfig), &tracerConfig)
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
 	// req.Msg is not signed, so to gethcore.Message because it's not signed and will fail on getting
@@ -681,6 +681,11 @@ func (k Keeper) TraceBlock(
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}
+	var tracerConfig json.RawMessage
+	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
+		// ignore error. default to no traceConfig
+		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
+	}
 
 	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 	txsLength := len(req.Txs)
@@ -698,7 +703,7 @@ func (k Keeper) TraceBlock(
 			result.Error = err.Error()
 			continue
 		}
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, true, nil)
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, true, tracerConfig)
 		if err != nil {
 			result.Error = err.Error()
 		} else {

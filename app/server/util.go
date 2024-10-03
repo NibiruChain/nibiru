@@ -68,13 +68,13 @@ func ConnectTmWS(tmRPCAddr, tmEndpoint string, logger tmlog.Logger) *rpcclient.W
 
 	if err != nil {
 		logger.Error(
-			"Tendermint WS client could not be created",
+			"Tendermint WS rpcClient could not be created",
 			"address", tmRPCAddr+tmEndpoint,
 			"error", err,
 		)
 	} else if err := tmWsClient.OnStart(); err != nil {
 		logger.Error(
-			"Tendermint WS client could not start",
+			"Tendermint WS rpcClient could not start",
 			"address", tmRPCAddr+tmEndpoint,
 			"error", err,
 		)
