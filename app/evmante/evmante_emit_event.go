@@ -41,21 +41,17 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 				msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-
-		// emit ethereum tx hash as an event so that it can be indexed by
-		// Tendermint for query purposes it's emitted in ante handler, so we can
-		// query failed transaction (out of block gas limit).
+		// Untyped event "pending_ethereum_tx" is emitted for then indexing purposes.
+		// Tendermint tx_search can only search the untyped events.
+		// TxHash and TxIndex values are exposed in the ante handler (before the actual tx execution)
+		// to allow searching for txs which are failed due to "out of block gas limit" error.
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				evm.EventTypeEthereumTx,
-				sdk.NewAttribute(evm.AttributeKeyEthereumTxHash, msgEthTx.Hash),
-				sdk.NewAttribute(
-					evm.AttributeKeyTxIndex, strconv.FormatUint(txIndex+uint64(i),
-						10,
-					),
-				), // #nosec G701
-			))
+				evm.PendingEthereumTxEvent,
+				sdk.NewAttribute(evm.PendingEthereumTxEventAttrEthHash, msgEthTx.Hash),
+				sdk.NewAttribute(evm.PendingEthereumTxEventAttrIndex, strconv.FormatUint(txIndex+uint64(i), 10)),
+			),
+		)
 	}
-
 	return next(ctx, tx, simulate)
 }

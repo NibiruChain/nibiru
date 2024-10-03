@@ -47,5 +47,6 @@ export const sendTestNibi = async () => {
   }
   const txResponse = await account.sendTransaction(transaction)
   await txResponse.wait(1, 10e3)
+  console.log(txResponse)
   return txResponse
 }

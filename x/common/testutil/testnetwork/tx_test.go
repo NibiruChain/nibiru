@@ -69,7 +69,8 @@ func (s *TestSuite) TestFillWalletFromValidator() {
 		sdk.NewInt64Coin(denoms.NIBI, 420),
 	)
 	feeDenom := denoms.NIBI
-	s.NoError(testnetwork.FillWalletFromValidator(
+	_, err := testnetwork.FillWalletFromValidator(
 		toAddr, funds, val, feeDenom,
-	))
+	)
+	s.Require().NoError(err)
 }

@@ -48,6 +48,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+
+	// force call init() of the geth tracers
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 const (

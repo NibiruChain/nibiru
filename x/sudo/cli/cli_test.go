@@ -130,9 +130,11 @@ func (s *TestSuite) FundRoot(root Account) {
 		sdk.NewInt64Coin(denoms.NIBI, 420*common.TO_MICRO),
 	)
 	feeDenom := denoms.NIBI
-	s.NoError(testnetwork.FillWalletFromValidator(
+
+	_, err := testnetwork.FillWalletFromValidator(
 		root.addr, funds, val, feeDenom,
-	))
+	)
+	s.NoError(err)
 }
 
 func (s *TestSuite) AddRootToKeyring(root Account) {

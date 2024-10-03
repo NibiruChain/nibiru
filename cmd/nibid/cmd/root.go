@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/client/cli"
+	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -136,6 +136,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		queryCommand(),
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
+
+		// EVM Tx Indexer force catch up command
+		server.NewEVMTxIndexCmd(),
 	)
 
 	// TODO add rosettaj

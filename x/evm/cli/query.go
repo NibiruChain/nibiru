@@ -93,8 +93,6 @@ func CmdQueryAccount() *cobra.Command {
 			}
 
 			isBech32, err := req.Validate()
-			fmt.Printf("TODO: UD-DEBUG: req.String(): %v\n", req.String())
-			fmt.Printf("TODO: UD-DEBUG: err: %v\n", err)
 			if err != nil {
 				return err
 			}

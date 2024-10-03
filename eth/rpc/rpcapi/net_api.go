@@ -22,14 +22,10 @@ type NetAPI struct {
 
 // NewImplNetAPI creates an instance of the public Net Web3 API.
 func NewImplNetAPI(clientCtx client.Context) *NetAPI {
-	// parse the chainID from a integer string
-	chainIDEpoch, err := eth.ParseEthChainID(clientCtx.ChainID)
-	if err != nil {
-		panic(err)
-	}
+	chainID := eth.ParseEthChainID(clientCtx.ChainID)
 
 	return &NetAPI{
-		networkVersion: chainIDEpoch.Uint64(),
+		networkVersion: chainID.Uint64(),
 		tmClient:       clientCtx.Client.(rpcclient.Client),
 	}
 }

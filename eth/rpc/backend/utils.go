@@ -8,8 +8,10 @@ import (
 	"sort"
 	"strings"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -47,7 +49,6 @@ func (s sortGasAndReward) Less(i, j int) bool {
 // getAccountNonce returns the account nonce for the given account address.
 // If the pending value is true, it will iterate over the mempool (pending)
 // txs in order to compute and return the pending tx sequence.
-// Todo: include the ability to specify a blockNumber
 func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height int64, logger log.Logger) (uint64, error) {
 	queryClient := authtypes.NewQueryClient(b.clientCtx)
 	adr := sdk.AccAddress(accAddr.Bytes()).String()
@@ -72,8 +73,8 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 		return nonce, nil
 	}
 
-	// the account retriever doesn't include the uncommitted transactions on the nonce so we need to
-	// to manually add them.
+	// the account retriever doesn't include the uncommitted transactions on the nonce,
+	// so we need to manually add them.
 	pendingTxs, err := b.PendingTransactions()
 	if err != nil {
 		logger.Error("failed to fetch pending transactions", "error", err.Error())
@@ -103,8 +104,10 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 	return nonce, nil
 }
 
-// output: targetOneFeeHistory
-func (b *Backend) processBlock(
+// retrieveEVMTxFeesFromBlock goes through evm txs of the block,
+// retrieves the gas fees and puts them into an object `targetOneFeeHistory`
+// See eth_feeHistory method for more details of the return format.
+func (b *Backend) retrieveEVMTxFeesFromBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
 	ethBlock *map[string]interface{},
 	rewardPercentiles []float64,
@@ -211,7 +214,7 @@ func (b *Backend) processBlock(
 func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 	allLogs := make([][]*gethcore.Log, 0, 4)
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -228,7 +231,7 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
 func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
 	for _, event := range events {
-		if event.Type != evm.EventTypeTxLog {
+		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
 			continue
 		}
 
@@ -245,20 +248,19 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 
 // ParseTxLogsFromEvent parse tx logs from one event
 func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
-	logs := make([]*evm.Log, 0, len(event.Attributes))
-	for _, attr := range event.Attributes {
-		if attr.Key != evm.AttributeKeyTxLog {
-			continue
-		}
-
-		var log evm.Log
-		if err := json.Unmarshal([]byte(attr.Value), &log); err != nil {
-			return nil, err
-		}
-
-		logs = append(logs, &log)
+	eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse event tx log")
 	}
-	return evm.LogsToEthereum(logs), nil
+	var evmLogs []*evm.Log
+	for _, logString := range eventTxLog.TxLogs {
+		var evmLog evm.Log
+		if err = json.Unmarshal([]byte(logString), &evmLog); err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal event tx log")
+		}
+		evmLogs = append(evmLogs, &evmLog)
+	}
+	return evm.LogsToEthereum(evmLogs), nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
@@ -282,13 +284,13 @@ func GetLogsFromBlockResults(blockRes *tmrpctypes.ResultBlockResults) ([][]*geth
 }
 
 // GetHexProofs returns list of hex data of proof op
-func GetHexProofs(proof *crypto.ProofOps) []string {
-	if proof == nil {
+func GetHexProofs(proofOps *crypto.ProofOps) []string {
+	if proofOps == nil {
 		return []string{""}
 	}
 	proofs := []string{}
 	// check for proof
-	for _, p := range proof.Ops {
+	for _, p := range proofOps.Ops {
 		proof := ""
 		if len(p.Data) > 0 {
 			proof = hexutil.Encode(p.Data)

@@ -263,8 +263,15 @@ func TxStateDBCommitError(res *abci.ResponseDeliverTx) bool {
 	return strings.Contains(res.Log, ErrStateDBCommit)
 }
 
-// TxSuccessOrExpectedFailure returns true if the transaction was successful
+// TxIsValidEnough returns true if the transaction was successful
 // or if it failed with an ExceedBlockGasLimit error or TxStateDBCommitError error
-func TxSuccessOrExpectedFailure(res *abci.ResponseDeliverTx) bool {
-	return res.Code == 0 || TxExceedBlockGasLimit(res) || TxStateDBCommitError(res)
+func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string) {
+	if res.Code == 0 {
+		return true, "tx succeeded"
+	} else if TxExceedBlockGasLimit(res) {
+		return true, "tx exceeded block gas limit"
+	} else if TxStateDBCommitError(res) {
+		return true, "tx state db commit error"
+	}
+	return false, "unexpected failure"
 }

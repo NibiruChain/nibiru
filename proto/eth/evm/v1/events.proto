@@ -31,16 +31,6 @@ message EventTxLog {
   repeated string tx_logs = 1;
 }
 
-// EventMessage
-message EventMessage {
-  // module which emits the event
-  string module = 1;
-  // sender of the message
-  string sender = 2;
-  // tx_type is the type of the message
-  string tx_type = 3;
-}
-
 // EventBlockBloom defines an Ethereum block bloom filter event
 message EventBlockBloom {
   // bloom is the bloom filter of the block
