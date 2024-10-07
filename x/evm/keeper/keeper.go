@@ -89,13 +89,7 @@ func NewKeeper(
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	evmParams := k.GetParams(ctx)
-	evmDenom := evmParams.GetEvmDenom()
-	// if node is pruned, params is empty. Return invalid value
-	if evmDenom == "" {
-		return big.NewInt(-1)
-	}
-	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom).Amount.BigInt()
+	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {

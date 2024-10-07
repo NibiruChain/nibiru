@@ -86,13 +86,8 @@ func (b *Backend) RPCBlockRangeCap() int32 {
 // RPCMinGasPrice returns the minimum gas price for a transaction obtained from
 // the node config. If set value is 0, it will default to 20.
 func (b *Backend) RPCMinGasPrice() int64 {
-	evmParams, err := b.queryClient.Params(b.ctx, &evm.QueryParamsRequest{})
-	if err != nil {
-		return eth.DefaultGasPrice
-	}
-
 	minGasPrice := b.cfg.GetMinGasPrices()
-	amt := minGasPrice.AmountOf(evmParams.Params.EvmDenom).TruncateInt64()
+	amt := minGasPrice.AmountOf(evm.EVMBankDenom).TruncateInt64()
 	if amt == 0 {
 		return eth.DefaultGasPrice
 	}

@@ -278,8 +278,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		pendingEthTxEventIndex := int32(-1)
 		for _, event := range events {
 			if event.Type == evm.PendingEthereumTxEvent {
-				pendingEthTxEventHash, pendingEthTxEventIndex, err =
-					evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
+				pendingEthTxEventHash, pendingEthTxEventIndex, err = evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
 				s.Require().NoError(err)
 			}
 			if event.Type == evm.TypeUrlEventEthereumTx {
