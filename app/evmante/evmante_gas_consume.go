@@ -64,9 +64,6 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 		return next(newCtx, tx, simulate)
 	}
 
-	evmParams := anteDec.evmKeeper.GetParams(ctx)
-	evmDenom := evmParams.GetEvmDenom()
-
 	var events sdk.Events
 
 	// Use the lowest priority of all the messages as the final one.
@@ -100,7 +97,12 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			gasWanted += txData.GetGas()
 		}
 
-		fees, err := keeper.VerifyFee(txData, evmDenom, baseFeeMicronibiPerGas, ctx.IsCheckTx())
+		fees, err := keeper.VerifyFee(
+			txData,
+			evm.EVMBankDenom,
+			baseFeeMicronibiPerGas,
+			ctx.IsCheckTx(),
+		)
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to verify the fees")
 		}

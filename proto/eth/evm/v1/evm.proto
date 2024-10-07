@@ -29,9 +29,8 @@ message FunToken {
 // Params defines the EVM module parameters
 message Params {
   option (gogoproto.equal) = true;
-  // evm_denom represents the token denomination used to run the EVM state
-  // transitions.
-  string evm_denom = 1 [ (gogoproto.moretags) = "yaml:\"evm_denom\"" ];
+  // DEPRECATED: evm_denom
+  reserved 1;
   // DEPRECATED: enable_create
   reserved 2;
   // DEPRECATED: enable_call
@@ -44,9 +43,9 @@ message Params {
   ];
   // DEPRECATED: chain_config
   reserved 5;
-  // allow_unprotected_txs defines if replay-protected (i.e non EIP155
-  // signed) transactions can be executed on the state machine.
-  bool allow_unprotected_txs = 6;
+  // DEPRECATED: allow_unprotected_txs
+  reserved 6;
+
   // DEPRECATED: active_precompiles
   // All precompiles present according to the VM are active.
   reserved 7;

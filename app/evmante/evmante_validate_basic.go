@@ -89,9 +89,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	txFee := sdk.Coins{}
 	txGasLimit := uint64(0)
 
-	evmParams := vbd.evmKeeper.GetParams(ctx)
 	baseFee := vbd.evmKeeper.GetBaseFee(ctx)
-	evmDenom := evmParams.GetEvmDenom()
 
 	for _, msg := range protoTx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -126,7 +124,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 		txFee = txFee.Add(
 			sdk.Coin{
-				Denom:  evmDenom,
+				Denom:  evm.EVMBankDenom,
 				Amount: sdkmath.NewIntFromBigInt(txData.Fee()),
 			},
 		)

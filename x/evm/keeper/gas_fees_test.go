@@ -96,7 +96,7 @@ func (s *Suite) TestVerifyFee() {
 			}
 		},
 	} {
-		feeDenom := evm.DefaultEVMDenom
+		feeDenom := evm.EVMBankDenom
 		isCheckTx := true
 		tc := getTestCase()
 		s.Run(tc.name, func() {
