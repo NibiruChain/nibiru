@@ -209,11 +209,11 @@ func (s *GenesisSuite) TestValidateGenesis() {
 			expPass: false,
 		},
 		{
-			name: "invalid params",
+			name: "happy: empty params",
 			genState: &evm.GenesisState{
 				Params: evm.Params{},
 			},
-			expPass: false,
+			expPass: true,
 		},
 	}
 
