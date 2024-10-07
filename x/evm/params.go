@@ -6,7 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
@@ -17,19 +16,21 @@ import (
 )
 
 const (
-	// DefaultEVMDenom defines the default EVM denomination
-	DefaultEVMDenom = appconst.BondDenom
+	// EVMBankDenom specifies the bank denomination for the asset used to run EVM
+	// state transitions as the analog to "ether". 1 ether in solidity means 1
+	// NIBI on Nibru EVM, implying that the EVMBankDenom is "unibi", the coin
+	// base of the NIBI token.
+	EVMBankDenom = appconst.BondDenom
 )
 
 // DefaultParams returns default evm parameters
 // ExtraEIPs is empty to prevent overriding the latest hard fork instruction set
 func DefaultParams() Params {
 	return Params{
-		EvmDenom:            DefaultEVMDenom,
-		ExtraEIPs:           []int64{},
-		AllowUnprotectedTxs: false,
-		EVMChannels:         []string{},
-		CreateFuntokenFee:   math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
+		ExtraEIPs: []int64{},
+		// EVMChannels: Unused but intended for use with future IBC functionality
+		EVMChannels:       []string{},
+		CreateFuntokenFee: math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
 	}
 }
 
@@ -53,15 +54,7 @@ func validateChannels(i interface{}) error {
 
 // Validate performs basic validation on evm parameters.
 func (p Params) Validate() error {
-	if err := validateEVMDenom(p.EvmDenom); err != nil {
-		return err
-	}
-
 	if err := validateEIPs(p.ExtraEIPs); err != nil {
-		return err
-	}
-
-	if err := validateBool(p.AllowUnprotectedTxs); err != nil {
 		return err
 	}
 
@@ -81,23 +74,6 @@ func (p Params) EIPs() []int {
 // EVM channels
 func (p Params) IsEVMChannel(channel string) bool {
 	return slices.Contains(p.EVMChannels, channel)
-}
-
-func validateEVMDenom(i interface{}) error {
-	denom, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter EVM denom type: %T", i)
-	}
-
-	return sdk.ValidateDenom(denom)
-}
-
-func validateBool(i interface{}) error {
-	_, ok := i.(bool)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
 }
 
 func validateEIPs(i interface{}) error {

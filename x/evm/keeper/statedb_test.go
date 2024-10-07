@@ -29,7 +29,7 @@ func (s *Suite) TestStateDBBalance() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 42)),
+			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 42)),
 		)
 		s.NoError(err)
 		s.Equal(
@@ -38,7 +38,7 @@ func (s *Suite) TestStateDBBalance() {
 		)
 		s.Equal(
 			"42",
-			deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.DefaultEVMDenom).Amount.String(),
+			deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom).Amount.String(),
 		)
 	}
 
@@ -70,13 +70,13 @@ func (s *Suite) TestStateDBBalance() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 8)),
+			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 8)),
 		)
 		s.NoError(err)
 		err = deps.App.BankKeeper.SendCoins(
 			deps.Ctx, deps.Sender.NibiruAddr,
 			toNibiAddr,
-			sdk.NewCoins(sdk.NewInt64Coin(evm.DefaultEVMDenom, 3)),
+			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 3)),
 		)
 		s.NoError(err)
 
