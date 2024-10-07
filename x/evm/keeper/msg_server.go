@@ -111,7 +111,7 @@ func (k *Keeper) ApplyEvmTx(
 	if msg.Gas() > evmResp.GasUsed {
 		refundGas = msg.Gas() - evmResp.GasUsed
 	}
-	if err = k.RefundGas(ctx, msg, refundGas, evmConfig.Params.EvmDenom); err != nil {
+	if err = k.RefundGas(ctx, msg, refundGas, evm.EVMBankDenom); err != nil {
 		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
 	}
 
@@ -503,7 +503,7 @@ func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunTo
 
 func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 	evmParams := k.GetParams(ctx)
-	return sdk.NewCoins(sdk.NewCoin(evmParams.EvmDenom, evmParams.CreateFuntokenFee))
+	return sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, evmParams.CreateFuntokenFee))
 }
 
 // ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the

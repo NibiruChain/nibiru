@@ -34,7 +34,6 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	chainID := esvd.evmKeeper.EthChainID(ctx)
-	evmParams := esvd.evmKeeper.GetParams(ctx)
 	ethCfg := evm.EthereumConfig(chainID)
 	blockNum := big.NewInt(ctx.BlockHeight())
 	signer := gethcore.MakeSigner(ethCfg, blockNum)
@@ -48,7 +47,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 			)
 		}
 
-		allowUnprotectedTxs := evmParams.GetAllowUnprotectedTxs()
+		allowUnprotectedTxs := false
 		ethTx := msgEthTx.AsTransaction()
 		if !allowUnprotectedTxs && !ethTx.Protected() {
 			return ctx, errors.Wrapf(
