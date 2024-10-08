@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/gosdk"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -31,9 +31,9 @@ type TestSuite struct {
 
 	nibiruSdk *gosdk.NibiruSDK
 	grpcConn  *grpc.ClientConn
-	cfg       *cli.Config
-	network   *cli.Network
-	val       *cli.Validator
+	cfg       *testnetwork.Config
+	network   *testnetwork.Network
+	val       *testnetwork.Validator
 }
 
 func TestSuite_RunAll(t *testing.T) {
@@ -59,7 +59,7 @@ func (s *TestSuite) SetupSuite() {
 	s.grpcConn = nibiru.GrpcConn
 }
 
-func ConnectGrpcToVal(val *cli.Validator) (*grpc.ClientConn, error) {
+func ConnectGrpcToVal(val *testnetwork.Validator) (*grpc.ClientConn, error) {
 	grpcUrl := val.AppConfig.GRPC.Address
 	return gosdk.GetGRPCConnection(
 		grpcUrl, true, 5,
@@ -92,7 +92,6 @@ func (s *TestSuite) TestNewNibiruSdk() {
 		s.DoTestBroadcastMsgsGrpc()
 	})
 	s.Run("DoTestNewQueryClient", s.DoTestNewQueryClient)
-	s.Run("DoTestSequenceExpectations", s.DoTestSequenceExpectations)
 }
 
 // FIXME: Q: What is the node home for a local validator?

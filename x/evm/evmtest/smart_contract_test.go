@@ -4,45 +4,41 @@ package evmtest_test
 import (
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/evm"
-	"github.com/NibiruChain/nibiru/x/evm/evmtest"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *SuiteEVMTest) TestCreateContractTxMsg() {
+func (s *Suite) TestCreateContractTxMsg() {
 	deps := evmtest.NewTestDeps()
-	ethAcc := evmtest.NewEthAccInfo()
+	ethAcc := evmtest.NewEthPrivAcc()
 
 	args := evmtest.ArgsCreateContract{
 		EthAcc:        ethAcc,
-		EthChainIDInt: deps.K.EthChainID(deps.Ctx),
+		EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:      big.NewInt(1),
 		Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 	}
 
-	ethTxMsg, err := evmtest.CreateContractTxMsg(args)
+	ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 }
 
-func (s *SuiteEVMTest) TestCreateContractGethCoreMsg() {
+func (s *Suite) TestExecuteContractTxMsg() {
 	deps := evmtest.NewTestDeps()
-	ethAcc := evmtest.NewEthAccInfo()
-
-	args := evmtest.ArgsCreateContract{
-		EthAcc:        ethAcc,
-		EthChainIDInt: deps.K.EthChainID(deps.Ctx),
-		GasPrice:      big.NewInt(1),
-		Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
+	ethAcc := evmtest.NewEthPrivAcc()
+	contractAddress := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	args := evmtest.ArgsExecuteContract{
+		EthAcc:          ethAcc,
+		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
+		GasPrice:        big.NewInt(1),
+		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
+		ContractAddress: &contractAddress,
+		Data:            nil,
 	}
 
-	// chain config
-	cfg := evm.EthereumConfig(args.EthChainIDInt)
-
-	// block height
-	blockHeight := big.NewInt(deps.Ctx.BlockHeight())
-
-	_, err := evmtest.CreateContractGethCoreMsg(
-		args, cfg, blockHeight,
-	)
+	ethTxMsg, err := evmtest.ExecuteContractMsgEthereumTx(args)
 	s.NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
 }

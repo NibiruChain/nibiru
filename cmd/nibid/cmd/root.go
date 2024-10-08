@@ -5,11 +5,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/NibiruChain/nibiru/app/server"
-	srvconfig "github.com/NibiruChain/nibiru/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/app/server"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
@@ -30,8 +30,8 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/app"
-	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
+	"github.com/NibiruChain/nibiru/v2/app"
+	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -76,7 +76,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 			}
 
 			customAppTemplate, customAppConfig := srvconfig.AppConfig("unibi")
-			tmCfg := customTendermintConfig()
+			tmCfg := appconst.NewDefaultTendermintConfig()
 
 			return sdkserver.InterceptConfigsPreRunHandler(
 				cmd,
@@ -136,6 +136,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		queryCommand(),
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
+
+		// EVM Tx Indexer force catch up command
+		server.NewEVMTxIndexCmd(),
 	)
 
 	// TODO add rosettaj

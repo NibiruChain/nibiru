@@ -7,10 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// TxConfig encapulates the readonly information of current tx for `StateDB`.
+// TxConfig encapsulates the readonly information of current tx for `StateDB`.
 type TxConfig struct {
 	BlockHash common.Hash // hash of current block
 	TxHash    common.Hash // hash of current tx

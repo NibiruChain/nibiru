@@ -6,9 +6,8 @@ import (
 	"github.com/NibiruChain/collections"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {
@@ -34,14 +33,6 @@ func assertBijectiveValue[T any](t *testing.T, encoder collections.ValueEncoder[
 	require.NotEmpty(t, encoder.Name())
 }
 
-type Suite struct {
-	suite.Suite
-}
-
-func TestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(Suite))
-}
-
 func (s *Suite) TestEncoderBytes() {
 	testCases := []struct {
 		name  string
@@ -64,7 +55,7 @@ func (s *Suite) TestEncoderBytes() {
 func (s *Suite) TestEncoderEthAddr() {
 	testCases := []struct {
 		name      string
-		given     eth.EthAddr
+		given     gethcommon.Address
 		wantPanic bool
 	}{
 		{
@@ -77,7 +68,7 @@ func (s *Suite) TestEncoderEthAddr() {
 		},
 		{
 			name:  "Nibiru Bech 32 addr (hypothetically)",
-			given: eth.EthAddr([]byte("nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l")),
+			given: gethcommon.Address([]byte("nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l")),
 		},
 	}
 	for _, tc := range testCases {

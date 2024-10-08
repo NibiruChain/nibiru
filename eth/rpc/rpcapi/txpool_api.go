@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/NibiruChain/nibiru/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
 // TxPoolAPI offers and API for the transaction pool. It only operates on data

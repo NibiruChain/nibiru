@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestStoreWrite() {

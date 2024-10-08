@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
@@ -18,15 +18,15 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 // ———————————————————————————————————————————————————————————————————
@@ -70,7 +70,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 }
 
 func (MsgEditSudoersPlus) Exec(
-	network *testutilcli.Network,
+	network *testnetwork.Network,
 	fileName string,
 	from sdk.AccAddress,
 ) (*sdk.TxResponse, error) {
@@ -84,8 +84,8 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
-	cfg     testutilcli.Config
-	network *testutilcli.Network
+	cfg     testnetwork.Config
+	network *testnetwork.Network
 	root    Account
 }
 
@@ -115,8 +115,8 @@ func (s *TestSuite) SetupSuite() {
 		passphrase: "secure-password",
 	}
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genState)
-	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
+	s.cfg = testnetwork.BuildNetworkConfig(genState)
+	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 
 	s.network = network
@@ -130,9 +130,11 @@ func (s *TestSuite) FundRoot(root Account) {
 		sdk.NewInt64Coin(denoms.NIBI, 420*common.TO_MICRO),
 	)
 	feeDenom := denoms.NIBI
-	s.NoError(testutilcli.FillWalletFromValidator(
+
+	_, err := testnetwork.FillWalletFromValidator(
 		root.addr, funds, val, feeDenom,
-	))
+	)
+	s.NoError(err)
 }
 
 func (s *TestSuite) AddRootToKeyring(root Account) {
@@ -184,7 +186,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 	out, err = msg.Exec(s.network, fileName, sender)
 	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	state, err := testutilcli.QuerySudoers(val.ClientCtx)
+	state, err := testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 
 	gotRoot := state.Sudoers.Root
@@ -209,7 +211,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 	out, err = msg.Exec(s.network, fileName, sender)
 	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	state, err = testutilcli.QuerySudoers(val.ClientCtx)
+	state, err = testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 
 	gotRoot = state.Sudoers.Root
@@ -226,7 +228,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 func (s *TestSuite) Test_ZCmdChangeRoot() {
 	val := s.network.Validators[0]
 
-	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
+	sudoers, err := testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 	initialRoot := sudoers.Sudoers.Root
 
@@ -235,7 +237,7 @@ func (s *TestSuite) Test_ZCmdChangeRoot() {
 		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
 	require.NoError(s.T(), err)
 
-	sudoers, err = testutilcli.QuerySudoers(val.ClientCtx)
+	sudoers, err = testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 	require.NotEqual(s.T(), sudoers.Sudoers.Root, initialRoot)
 	require.Equal(s.T(), sudoers.Sudoers.Root, newRoot.String())

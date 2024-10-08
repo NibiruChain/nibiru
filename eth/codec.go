@@ -2,13 +2,10 @@
 package eth
 
 import (
-	"math/big"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (
@@ -26,12 +23,6 @@ const (
 	// See https://github.com/ethereum/devp2p/blob/master/caps/eth.md#change-log
 	// for the historical summary of each version.
 	ProtocolVersion = 65
-)
-
-// Transaction extension protobuf type URLs
-const (
-	TYPE_URL_WEB3_TX        = "/eth.types.v1.ExtensionOptionsWeb3Tx"
-	TYPE_URL_DYNAMIC_FEE_TX = "/eth.types.v1.ExtensionOptionDynamicFeeTx"
 )
 
 // RegisterInterfaces registers the tendermint concrete client-related
@@ -56,19 +47,4 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		//   &authtypes.ModuleAccount{},
 		// ]
 	)
-
-	// proto name: "cosmos.tx.v1beta1.TxExtensionOptionI"
-	registry.RegisterImplementations(
-		(*sdktx.TxExtensionOptionI)(nil),
-		&ExtensionOptionsWeb3Tx{},
-		&ExtensionOptionDynamicFeeTx{},
-	)
-}
-
-func ParseEIP155ChainIDNumber(chainId string) *big.Int {
-	idNum, err := ParseEthChainID(chainId)
-	if err != nil {
-		panic(err)
-	}
-	return idNum
 }

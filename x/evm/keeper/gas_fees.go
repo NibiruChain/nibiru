@@ -16,24 +16,34 @@ import (
 
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
-func (k *Keeper) GetEthIntrinsicGas(ctx sdk.Context, msg core.Message, cfg *params.ChainConfig, isContractCreation bool) (uint64, error) {
+func (k *Keeper) GetEthIntrinsicGas(
+	ctx sdk.Context,
+	msg core.Message,
+	cfg *params.ChainConfig,
+	isContractCreation bool,
+) (uint64, error) {
 	return core.IntrinsicGas(
 		msg.Data(), msg.AccessList(),
 		isContractCreation, true, true,
 	)
 }
 
-// RefundGas transfers the leftover gas to the sender of the message, caped to half of the total gas
-// consumed in the transaction. Additionally, the function sets the total gas consumed to the value
-// returned by the EVM execution, thus ignoring the previous intrinsic gas consumed during in the
-// AnteHandler.
-func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64, denom string) error {
+// RefundGas transfers the leftover gas to the sender of the message, caped to
+// half of the total gas consumed in the transaction. Additionally, the function
+// sets the total gas consumed to the value returned by the EVM execution, thus
+// ignoring the previous intrinsic gas consumed during in the AnteHandler.
+func (k *Keeper) RefundGas(
+	ctx sdk.Context,
+	msg core.Message,
+	leftoverGas uint64,
+	denom string,
+) error {
 	// Return EVM tokens for remaining gas, exchanged at the original rate.
 	remaining := new(big.Int).Mul(new(big.Int).SetUint64(leftoverGas), msg.GasPrice())
 
@@ -59,17 +69,17 @@ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64
 	return nil
 }
 
-// ResetGasMeterAndConsumeGas reset first the gas meter consumed value to zero and set it back to the new value
-// 'gasUsed'
+// ResetGasMeterAndConsumeGas reset first the gas meter consumed value to zero
+// and set it back to the new value 'gasUsed'.
 func (k *Keeper) ResetGasMeterAndConsumeGas(ctx sdk.Context, gasUsed uint64) {
 	// reset the gas count
 	ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset the gas count")
 	ctx.GasMeter().ConsumeGas(gasUsed, "apply evm transaction")
 }
 
-// GasToRefund calculates the amount of gas the state machine should refund to the sender. It is
-// capped by the refund quotient value.
-// Note: do not pass 0 to refundQuotient
+// GasToRefund calculates the amount of gas the state machine should refund to
+// the sender. It is capped by the refund quotient value. Note that passing a
+// jrefundQuotient of 0 will cause problems.
 func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
 	// Apply refund counter
 	refund := gasConsumed / refundQuotient
@@ -82,7 +92,7 @@ func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
 // CheckSenderBalance validates that the tx cost value is positive and that the
 // sender has enough funds to pay for the fees and value of the transaction.
 func CheckSenderBalance(
-	balance sdkmath.Int,
+	balanceWei *big.Int,
 	txData evm.TxData,
 ) error {
 	cost := txData.Cost()
@@ -94,10 +104,10 @@ func CheckSenderBalance(
 		)
 	}
 
-	if balance.IsNegative() || balance.BigInt().Cmp(cost) < 0 {
+	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
 		return errors.Wrapf(
 			errortypes.ErrInsufficientFunds,
-			"sender balance < tx cost (%s < %s)", balance, txData.Cost(),
+			"sender balance < tx cost (%s < %s)", balanceWei, cost,
 		)
 	}
 	return nil
@@ -125,13 +135,14 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	return nil
 }
 
-// VerifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
-// gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
-// base fee is higher than the gas fee cap.
+// VerifyFee is used to return the fee for the given transaction data in
+// sdk.Coins. It checks that the gas limit is not reached, the gas limit is
+// higher than the intrinsic gas and that the base fee is lower than the gas fee
+// cap.
 func VerifyFee(
 	txData evm.TxData,
 	denom string,
-	baseFee *big.Int,
+	baseFeeMicronibi *big.Int,
 	isCheckTx bool,
 ) (sdk.Coins, error) {
 	isContractCreation := txData.GetTo() == nil
@@ -160,18 +171,26 @@ func VerifyFee(
 		)
 	}
 
-	if baseFee != nil && txData.GetGasFeeCap().Cmp(baseFee) < 0 {
-		return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
-			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
-			txData.GetGasFeeCap(),
-			baseFee)
+	if baseFeeMicronibi == nil {
+		baseFeeMicronibi = evm.BASE_FEE_MICRONIBI
 	}
 
-	feeAmt := txData.EffectiveFee(baseFee)
-	if feeAmt.Sign() == 0 {
+	// gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
+	// if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
+	// 	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+	// 	return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
+	// 		"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) wei per gas",
+	// 		txData.GetGasFeeCapWei(),
+	// 		baseFeeWei,
+	// 	)
+	// }
+
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
+	if feeAmtMicronibi.Sign() == 0 {
 		// zero fee, no need to deduct
-		return sdk.Coins{}, nil
+		return sdk.Coins{{Denom: denom, Amount: sdkmath.ZeroInt()}}, nil
 	}
 
-	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmt)}}, nil
+	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
 }

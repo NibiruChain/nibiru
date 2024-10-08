@@ -13,7 +13,7 @@ import (
 
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -103,10 +103,7 @@ func decodeAminoSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 		return apitypes.TypedData{}, err
 	}
 
-	chainID, err := eth.ParseEthChainID(aminoDoc.ChainID)
-	if err != nil {
-		return apitypes.TypedData{}, errors.New("invalid chain ID passed as argument")
-	}
+	chainID := eth.ParseEthChainID(aminoDoc.ChainID)
 
 	typedData, err := WrapTxToTypedData(
 		chainID.Uint64(),
@@ -167,10 +164,7 @@ func decodeProtobufSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 
 	signerInfo := authInfo.SignerInfos[0]
 
-	chainID, err := eth.ParseEthChainID(signDoc.ChainId)
-	if err != nil {
-		return apitypes.TypedData{}, fmt.Errorf("invalid chain ID passed as argument: %w", err)
-	}
+	chainID := eth.ParseEthChainID(signDoc.ChainId)
 
 	stdFee := &legacytx.StdFee{
 		Amount: authInfo.Fee.Amount,

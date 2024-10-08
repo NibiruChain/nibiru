@@ -4,7 +4,7 @@ package evm
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // Validate performs a basic validation of a GenesisAccount fields.
@@ -30,7 +30,7 @@ func (gs GenesisState) Validate() error {
 	seenAccounts := make(map[string]bool)
 	for _, acc := range gs.Accounts {
 		if seenAccounts[acc.Address] {
-			return fmt.Errorf("duplicated genesis account %s", acc.Address)
+			return fmt.Errorf("duplicate genesis account %s", acc.Address)
 		}
 		if err := acc.Validate(); err != nil {
 			return fmt.Errorf("invalid genesis account %s: %w", acc.Address, err)

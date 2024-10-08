@@ -9,10 +9,10 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // groupVotesByPair takes a collection of votes and groups them by their
@@ -118,7 +118,7 @@ func (k Keeper) removeInvalidVotes(
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	orderedPairVotes := omap.SortedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
 		// If pair is not whitelisted, or the votes for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency

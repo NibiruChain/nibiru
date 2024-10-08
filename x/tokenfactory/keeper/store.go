@@ -6,7 +6,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // StoreAPI isolates the collections for the x/tokenfactory module.

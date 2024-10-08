@@ -54,9 +54,9 @@ echo_success() {
 
 echo_info "Parsing flags for the script..."
 
-# $FLAG_NO_BUILD: toggles whether to build from source. The default
-#   behavior of the script is to run make install if the flag --no-build is not present.
-FLAG_NO_BUILD=false
+# $FLAG_SKIP_BUILD: toggles whether to build from source. The default
+#   behavior of the script is to run make install if the flag --no-build is omitted.
+FLAG_SKIP_BUILD=false
 
 
 build_from_source() {
@@ -81,7 +81,7 @@ enable_feature_flag() {
 while [[ $# -gt 0 ]]; do
   case $1 in
   --no-build)
-    FLAG_NO_BUILD=true
+    FLAG_SKIP_BUILD=true
     shift
     ;;
   --features)
@@ -96,13 +96,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-# Check if FLAG_NO_BUILD was set to true
-if ! $FLAG_NO_BUILD; then
+# Check if FLAG_SKIP_BUILD was set to true
+if ! $FLAG_SKIP_BUILD; then
   build_from_source
 fi
 
 echo_info "Features flags:"
-echo "FLAG_NO_BUILD: $FLAG_NO_BUILD"
+echo "FLAG_SKIP_BUILD: $FLAG_SKIP_BUILD"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -119,9 +119,11 @@ if pgrep -x "$BINARY" >/dev/null; then
   killall nibid
 fi
 
-# Remove previous data
+# Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
-rm -rf "$CHAIN_DIR"
+$BINARY tendermint unsafe-reset-all
+rm -f "$CHAIN_DIR/config/genesis.json"
+rm -rf "$CHAIN_DIR/config/gentx/"
 
 # Add directory for chain, exit if error
 if ! mkdir -p "$CHAIN_DIR" 2>/dev/null; then
@@ -135,6 +137,7 @@ if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
+  exit 1
 fi
 
 # nibid config
@@ -143,15 +146,27 @@ $BINARY config keyring-backend test
 $BINARY config chain-id $CHAIN_ID
 $BINARY config broadcast-mode sync
 $BINARY config output json
+$BINARY config node "http://localhost:26657"
 $BINARY config # Prints config.
 
 # Enable API Server
 echo_info "config/app.toml: Enabling API server"
 sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
 
+# Enable GRPC Server
+echo_info "config/app.toml: Enabling GRPC server"
+sed -i $SEDOPTION '/\[grpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+
+
 # Enable JSON RPC Server
 echo_info "config/app.toml: Enabling JSON API server"
 sed -i $SEDOPTION '/\[json\-rpc\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
+
+echo_info "config/app.toml: Enabling debug evm api"
+sed -i $SEDOPTION '/\[json\-rpc\]/,+13 s/api = "eth,net,web3"/api = "eth,net,web3,debug"/' $CHAIN_DIR/config/app.toml
+
+echo_info "config/app.toml: Enabling evm indexer"
+sed -i $SEDOPTION '/\[json\-rpc\]/,+51 s/enable-indexer = false/enable-indexer = true/' $CHAIN_DIR/config/app.toml
 
 # Enable Swagger Docs
 echo_info "config/app.toml: Enabling Swagger Docs"
@@ -165,14 +180,19 @@ echo_info "Adding genesis accounts..."
 
 val_key_name="validator"
 
-echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
-$BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS
-# EVM encrypted nibi address for the same account
-$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
-echo_success "Successfully added genesis account: $val_key_name"
+if ! $BINARY keys show $val_key_name; then 
+  echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
+  echo_success "Successfully added key: $val_key_name"
+fi
 
-val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
+val_address=$($BINARY keys show $val_key_name -a)
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
+
+$BINARY add-genesis-account $val_address $GENESIS_COINS
+# EVM encoded nibi address for the same account
+$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
+$BINARY add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS
+echo_success "Successfully added genesis account: $val_key_name"
 
 # ------------------------------------------------------------------------
 # Configure genesis params

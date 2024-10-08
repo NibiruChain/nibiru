@@ -7,10 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 type AnteHandlerOptions struct {
@@ -18,6 +20,8 @@ type AnteHandlerOptions struct {
 	IBCKeeper        *ibckeeper.Keeper
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
+	EvmKeeper        evmkeeper.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
 
 	TxCounterStoreKey types.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig
@@ -25,9 +29,6 @@ type AnteHandlerOptions struct {
 }
 
 func (opts *AnteHandlerOptions) ValidateAndClean() error {
-	if opts.AccountKeeper == nil {
-		return AnteHandlerError("account keeper")
-	}
 	if opts.BankKeeper == nil {
 		return AnteHandlerError("bank keeper")
 	}

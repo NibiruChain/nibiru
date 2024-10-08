@@ -8,7 +8,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/eth"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // NewTransactionLogs creates a new NewTransactionLogs instance.
@@ -98,7 +98,7 @@ func NewLogsFromEth(ethlogs []*gethcore.Log) []*Log {
 	return logs
 }
 
-// LogsToEthereum casts the Ethermint Logs to a slice of Ethereum Logs.
+// LogsToEthereum casts the Proto Logs to a slice of Ethereum Logs.
 func LogsToEthereum(logs []*Log) []*gethcore.Log {
 	var ethLogs []*gethcore.Log //nolint: prealloc
 	for i := range logs {
@@ -107,7 +107,7 @@ func LogsToEthereum(logs []*Log) []*gethcore.Log {
 	return ethLogs
 }
 
-// NewLogFromEth creates a new Log instance from a Ethereum type Log.
+// NewLogFromEth creates a new Log instance from an Ethereum type Log.
 func NewLogFromEth(log *gethcore.Log) *Log {
 	topics := make([]string, len(log.Topics))
 	for i, topic := range log.Topics {

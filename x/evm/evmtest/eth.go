@@ -2,7 +2,6 @@
 package evmtest
 
 import (
-	"crypto/ecdsa"
 	"math/big"
 	"testing"
 
@@ -12,56 +11,49 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/eth"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// NewEthAccInfo returns an Ethereum private key, its corresponding Eth address,
-// public key, and Nibiru address.
-func NewEthAccInfo() EthPrivKeyAcc {
+// NewEthPrivAcc returns an Ethereum private key, its corresponding Eth address, Nibiru address, and keyring signer.
+func NewEthPrivAcc() EthPrivKeyAcc {
 	privkey, _ := ethsecp256k1.GenerateKey()
 	privKeyE, _ := privkey.ToECDSA()
 	ethAddr := crypto.PubkeyToAddress(privKeyE.PublicKey)
 	return EthPrivKeyAcc{
 		EthAddr:       ethAddr,
-		NibiruAddr:    EthAddrToNibiruAddr(ethAddr),
+		NibiruAddr:    eth.EthAddrToNibiruAddr(ethAddr),
 		PrivKey:       privkey,
-		PrivKeyE:      privKeyE,
 		KeyringSigner: NewSigner(privkey),
 	}
 }
 
-func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
-	return ethAddr.Bytes()
+// NewEthPrivAccs calls [NewEthAccInfo] n times.
+func NewEthPrivAccs(n int) []EthPrivKeyAcc {
+	infos := make([]EthPrivKeyAcc, n)
+	for idx := 0; idx < n; idx++ {
+		infos[idx] = NewEthPrivAcc()
+	}
+	return infos
 }
 
 type EthPrivKeyAcc struct {
 	EthAddr       gethcommon.Address
 	NibiruAddr    sdk.AccAddress
 	PrivKey       *ethsecp256k1.PrivKey
-	PrivKeyE      *ecdsa.PrivateKey
 	KeyringSigner keyring.Signer
 }
 
-func (acc EthPrivKeyAcc) GethSigner(ethChainID *big.Int) gethcore.Signer {
-	return gethcore.LatestSignerForChainID(ethChainID)
-}
-
-// NewEthTxMsg: Helper that returns a valid instance of [*evm.MsgEthereumTx].
-func NewEthTxMsg() *evm.MsgEthereumTx {
-	return NewEthTxMsgs(1)[0]
-}
-
 func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
-	ethAddr := NewEthAccInfo().EthAddr
+	ethAddr := NewEthPrivAcc().EthAddr
 	startIdx := uint64(1)
 	for nonce := startIdx; nonce-startIdx < count; nonce++ {
 		ethTxMsgs = append(ethTxMsgs, evm.NewTx(&evm.EvmTxArgs{

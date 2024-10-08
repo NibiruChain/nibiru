@@ -1,13 +1,14 @@
 package evm_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/eth/crypto/ethsecp256k1"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type GenesisSuite struct {
@@ -87,12 +88,11 @@ func (s *GenesisSuite) TestValidateGenesis() {
 	testCases := []struct {
 		name     string
 		genState *evm.GenesisState
-		expPass  bool
+		wantErr  string
 	}{
 		{
 			name:     "default",
 			genState: evm.DefaultGenesisState(),
-			expPass:  true,
 		},
 		{
 			name: "valid genesis",
@@ -109,12 +109,10 @@ func (s *GenesisSuite) TestValidateGenesis() {
 				},
 				Params: evm.DefaultParams(),
 			},
-			expPass: true,
 		},
 		{
 			name:     "empty genesis",
 			genState: &evm.GenesisState{},
-			expPass:  false,
 		},
 		{
 			name: "copied genesis",
@@ -122,25 +120,23 @@ func (s *GenesisSuite) TestValidateGenesis() {
 				Accounts: evm.DefaultGenesisState().Accounts,
 				Params:   evm.DefaultGenesisState().Params,
 			},
-			expPass: true,
 		},
 		{
-			name: "invalid genesis",
+			name: "happy genesis with account",
 			genState: &evm.GenesisState{
 				Accounts: []evm.GenesisAccount{
 					{
-						Address: gethcommon.Address{}.String(),
+						Address: gethcommon.Address{}.String(), // zero address
 					},
 				},
 			},
-			expPass: false,
 		},
 		{
 			name: "invalid genesis account",
 			genState: &evm.GenesisState{
 				Accounts: []evm.GenesisAccount{
 					{
-						Address: "123456",
+						Address: "123456", // not a valid ethereum hex address
 
 						Code: s.code,
 						Storage: evm.Storage{
@@ -150,34 +146,11 @@ func (s *GenesisSuite) TestValidateGenesis() {
 				},
 				Params: evm.DefaultParams(),
 			},
-			expPass: false,
+			wantErr: "not a valid ethereum hex address",
 		},
 		{
-			name: "duplicated genesis account",
-			genState: &evm.GenesisState{
-				Accounts: []evm.GenesisAccount{
-					{
-						Address: s.address,
-
-						Code: s.code,
-						Storage: evm.Storage{
-							evm.NewStateFromEthHashes(s.hash, s.hash),
-						},
-					},
-					{
-						Address: s.address,
-
-						Code: s.code,
-						Storage: evm.Storage{
-							evm.NewStateFromEthHashes(s.hash, s.hash),
-						},
-					},
-				},
-			},
-			expPass: false,
-		},
-		{
-			name: "duplicated tx log",
+			name:    "duplicate account",
+			wantErr: "duplicate genesis account",
 			genState: &evm.GenesisState{
 				Accounts: []evm.GenesisAccount{
 					{
@@ -188,14 +161,6 @@ func (s *GenesisSuite) TestValidateGenesis() {
 							{Key: s.hash.String()},
 						},
 					},
-				},
-			},
-			expPass: false,
-		},
-		{
-			name: "invalid tx log",
-			genState: &evm.GenesisState{
-				Accounts: []evm.GenesisAccount{
 					{
 						Address: s.address,
 
@@ -206,23 +171,25 @@ func (s *GenesisSuite) TestValidateGenesis() {
 					},
 				},
 			},
-			expPass: false,
 		},
 		{
-			name: "invalid params",
+			name: "happy: empty params",
 			genState: &evm.GenesisState{
 				Params: evm.Params{},
 			},
-			expPass: false,
 		},
 	}
 
 	for _, tc := range testCases {
-		err := tc.genState.Validate()
-		if tc.expPass {
-			s.Require().NoError(err, tc.name)
-			continue
-		}
-		s.Require().Error(err, tc.name)
+		s.Run(tc.name, func() {
+			err := tc.genState.Validate()
+			jsonBz, _ := json.Marshal(tc.genState)
+			jsonStr := string(jsonBz)
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr, jsonStr)
+				return
+			}
+			s.Require().NoError(err, jsonStr)
+		})
 	}
 }

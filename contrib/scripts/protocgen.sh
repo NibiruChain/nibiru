@@ -16,5 +16,5 @@ done
 
 cd ..
 # move proto files to the right places
-cp -r github.com/NibiruChain/nibiru/* ./
+cp -r github.com/NibiruChain/nibiru/v2/* ./
 rm -rf github.com

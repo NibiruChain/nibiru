@@ -9,23 +9,13 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
-	proto "github.com/cosmos/gogoproto/proto"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 var (
 	amino = codec.NewLegacyAmino()
-	// ModuleCdc references the global evm module codec. Note, the codec should
-	// ONLY be used in certain instances of tests and for JSON encoding.
-	ModuleCdc = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-
 	// AminoCdc is a amino codec created to support amino JSON compatible msgs.
 	AminoCdc = codec.NewAminoCodec(amino)
-)
-
-const (
-	// Protobuf type URL for a consensus tx holding Ethereum transaction msgs.
-	// Corresponds with [ExtensionOptionsEthereumTx].
-	TYPE_URL_ETHEREUM_TX = "/eth.evm.v1.ExtensionOptionsEthereumTx"
 )
 
 // NOTE: This is required for the GetSignBytes function
@@ -57,7 +47,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 }
 
 // PackTxData constructs a new Any packed with the given tx data value. It returns
-// an error if the client state can't be casted to a protobuf message or if the concrete
+// an error if the client state can't be cast to a protobuf message or if the concrete
 // implementation is not registered to the protobuf codec.
 func PackTxData(txData TxData) (*codectypes.Any, error) {
 	msg, ok := txData.(proto.Message)

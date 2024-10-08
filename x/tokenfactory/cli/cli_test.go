@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/cli"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -25,9 +25,9 @@ var (
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
-	val     *testutilcli.Validator
+	cfg     testnetwork.Config
+	network *testnetwork.Network
+	val     *testnetwork.Validator
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -46,9 +46,9 @@ func (s *TestSuite) SetupSuite() {
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encodingConfig)
-	cfg := testutilcli.BuildNetworkConfig(genState)
+	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
-	network, err := testutilcli.New(s.T(), s.T().TempDir(), cfg)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
 	s.NoError(err)
 
 	s.cfg = cfg

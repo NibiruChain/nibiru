@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	types "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	types "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

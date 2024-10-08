@@ -11,8 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 	"github.com/ethereum/go-ethereum/params"
-
-	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
 const (
@@ -22,10 +20,6 @@ const (
 	TracerMarkdown   = "markdown"
 )
 
-func TracerTypes() set.Set[string] {
-	return set.New(TracerAccessList, TracerJSON, TracerStruct, TracerMarkdown)
-}
-
 // NewTracer creates a new Logger tracer to collect execution traces from an
 // EVM transaction.
 func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64) vm.EVMLogger {
@@ -34,13 +28,18 @@ func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height 
 		Debug: true,
 	}
 
-	// FIXME: inconsistent logging between stdout and stderr
 	switch tracer {
 	case TracerAccessList:
-		preCompiles := vm.DefaultActivePrecompiles(cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil))
-		return logger.NewAccessListTracer(msg.AccessList(), msg.From(), *msg.To(), preCompiles)
+		rules := cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil)
+		precompileAddrs := vm.DefaultActivePrecompiles(rules)
+		return logger.NewAccessListTracer(
+			msg.AccessList(),
+			msg.From(),
+			*msg.To(),
+			precompileAddrs,
+		)
 	case TracerJSON:
-		return logger.NewJSONLogger(logCfg, os.Stderr)
+		return logger.NewJSONLogger(logCfg, os.Stdout)
 	case TracerMarkdown:
 		return logger.NewMarkdownLogger(logCfg, os.Stdout)
 	case TracerStruct:

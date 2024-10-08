@@ -30,11 +30,10 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app/server/config"
-	"github.com/NibiruChain/nibiru/eth/rpc"
-	"github.com/NibiruChain/nibiru/eth/rpc/pubsub"
-	rpcfilters "github.com/NibiruChain/nibiru/eth/rpc/rpcapi/filtersapi"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type WebsocketsServer interface {
@@ -348,7 +347,7 @@ func (s *websocketsServer) tcpGetAndSendResponse(wsConn *wsConn, mb []byte) erro
 
 // pubSubAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec
 type pubSubAPI struct {
-	events    *rpcfilters.EventSystem
+	events    *EventSubscriber
 	logger    log.Logger
 	clientCtx client.Context
 }
@@ -357,7 +356,7 @@ type pubSubAPI struct {
 func newPubSubAPI(clientCtx client.Context, logger log.Logger, tmWSClient *rpcclient.WSClient) *pubSubAPI {
 	logger = logger.With("module", "websocket-client")
 	return &pubSubAPI{
-		events:    rpcfilters.NewEventSystem(logger, tmWSClient),
+		events:    NewEventSubscriber(logger, tmWSClient),
 		logger:    logger,
 		clientCtx: clientCtx,
 	}
@@ -397,8 +396,8 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 	baseFee := big.NewInt(params.InitialBaseFee)
 
 	go func() {
-		headersCh := sub.Event()
-		errCh := sub.Err()
+		headersCh := sub.EventCh
+		errCh := sub.Error()
 		for {
 			select {
 			case event, ok := <-headersCh:
@@ -570,8 +569,8 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 	}
 
 	go func() {
-		ch := sub.Event()
-		errCh := sub.Err()
+		ch := sub.EventCh
+		errCh := sub.Error()
 		for {
 			select {
 			case event, ok := <-ch:
@@ -591,7 +590,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 					return
 				}
 
-				logs := rpcfilters.FilterLogs(evm.LogsToEthereum(txResponse.Logs), crit.FromBlock, crit.ToBlock, crit.Addresses, crit.Topics)
+				logs := FilterLogs(evm.LogsToEthereum(txResponse.Logs), crit.FromBlock, crit.ToBlock, crit.Addresses, crit.Topics)
 				if len(logs) == 0 {
 					continue
 				}
@@ -634,8 +633,8 @@ func (api *pubSubAPI) subscribePendingTransactions(wsConn *wsConn, subID gethrpc
 	}
 
 	go func() {
-		txsCh := sub.Event()
-		errCh := sub.Err()
+		txsCh := sub.EventCh
+		errCh := sub.Error()
 		for {
 			select {
 			case ev := <-txsCh:

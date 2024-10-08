@@ -18,9 +18,9 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	nibiruante "github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/app"
+	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.

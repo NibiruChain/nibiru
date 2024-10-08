@@ -1,54 +1,76 @@
-import { describe, it, expect, beforeAll } from "bun:test" // eslint-disable-line import/no-unresolved
-import { AddressLike, ethers } from "ethers"
-import { account, provider, deployContract } from "./setup"
-import { SendNibiCompiled } from "../types/ethers-contracts"
-import { TypedContractMethod } from "../types/ethers-contracts/common"
+/**
+ * @file sendNibi.test.ts
+ *
+ * This test suite is designed to validate the functionality of the for sending
+ * NIBI via various mechanisms like transfer, send, and call. The tests ensure
+ * that the correct amount of NIBI is transferred and that balances are updated
+ * accordingly.
+ *
+ * The methods tested are from the smart contract,
+ * "e2e/evm/contracts/SendReceiveNibi.sol".
+ */
+import { describe, expect, it } from "@jest/globals"
+import { toBigInt, Wallet } from "ethers"
+import { account, provider } from "./setup"
+import { deployContractSendNibi } from "./utils"
 
-type SendMethod = TypedContractMethod<[_to: AddressLike], [void], "payable">
+async function testSendNibi(
+  method: "sendViaTransfer" | "sendViaSend" | "sendViaCall",
+  weiToSend: bigint,
+) {
+  const contract = await deployContractSendNibi()
+  const recipient = Wallet.createRandom()
 
-const doContractSend = async (sendMethod: SendMethod) => {
-  const recipientAddress = ethers.Wallet.createRandom().address
-  const transferValue = 100n * 10n ** 6n // NIBI
-
-  const ownerBalanceBefore = await provider.getBalance(account.address) // NIBI
-  const recipientBalanceBefore = await provider.getBalance(recipientAddress) // NIBI
+  const ownerBalanceBefore = await provider.getBalance(account)
+  const recipientBalanceBefore = await provider.getBalance(recipient)
   expect(recipientBalanceBefore).toEqual(BigInt(0))
 
-  const tx = await sendMethod(recipientAddress, {
-    value: transferValue,
+  const tx = await contract[method](recipient, { value: weiToSend })
+  const receipt = await tx.wait(1, 5e3)
+
+  const tenPow12 = toBigInt(1e12)
+  const txCostMicronibi = weiToSend / tenPow12 + receipt.gasUsed
+  const txCostWei = txCostMicronibi * tenPow12
+  const expectedOwnerWei = ownerBalanceBefore - txCostWei
+
+  console.debug(`DEBUG method ${method} %o:`, {
+    ownerBalanceBefore,
+    weiToSend,
+    gasUsed: receipt.gasUsed,
+    gasPrice: `${receipt.gasPrice.toString()} micronibi`,
+    expectedOwnerWei,
   })
-  const [blockConfirmations, timeout] = [1, 5_000]
-  await tx.wait(blockConfirmations, timeout)
 
-  const ownerBalanceAfter = await provider.getBalance(account.address) // NIBI
-  const recipientBalanceAfter = await provider.getBalance(recipientAddress) // NIBI
-
-  expect(ownerBalanceAfter).toBeLessThanOrEqual(
-    ownerBalanceBefore - transferValue,
-  )
-  expect(recipientBalanceAfter).toEqual(transferValue)
+  await expect(provider.getBalance(account)).resolves.toBe(expectedOwnerWei)
+  await expect(provider.getBalance(recipient)).resolves.toBe(weiToSend)
 }
 
-describe("Send NIBI from smart contract", async () => {
-  let contract: SendNibiCompiled
-  contract = (await deployContract("SendNibiCompiled.json")) as SendNibiCompiled
+describe("Send NIBI via smart contract", () => {
+  const TIMEOUT_MS = 20e3
+  it(
+    "method sendViaTransfer",
+    async () => {
+      const weiToSend: bigint = toBigInt(5e12) * toBigInt(1e6)
+      await testSendNibi("sendViaTransfer", weiToSend)
+    },
+    TIMEOUT_MS,
+  )
 
-  expect(contract).toBeDefined()
-  const sendMethods: SendMethod[] = [
-    contract.sendViaTransfer,
-    contract.sendViaSend,
-    contract.sendViaCall,
-  ]
-  sendMethods.forEach((m) => expect(m).toBeFunction())
-  // Contract initialized properly.
+  it(
+    "method sendViaSend",
+    async () => {
+      const weiToSend: bigint = toBigInt(100e12) * toBigInt(1e6)
+      await testSendNibi("sendViaSend", weiToSend)
+    },
+    TIMEOUT_MS,
+  )
 
-  const testCases = sendMethods.map((sendMethod) => ({
-    testName: sendMethod.name,
-    sendMethod,
-  }))
-  testCases.forEach(({ testName, sendMethod }) => {
-    it(`send nibi via ${testName} method`, async () => {
-      await doContractSend(sendMethod)
-    }, 20000)
-  })
+  it(
+    "method sendViaCall",
+    async () => {
+      const weiToSend: bigint = toBigInt(100e12) * toBigInt(1e6)
+      await testSendNibi("sendViaCall", weiToSend)
+    },
+    TIMEOUT_MS,
+  )
 })

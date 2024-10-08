@@ -38,7 +38,7 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 	period := uint64(0)
 	totalInflation := math.LegacyZeroDec()
 
-	// Only the first 8 years have inflation with default params but we run
+	// Only the first 8 years have inflation with default params, but we run
 	// for 10 years expecting 0 inflation in the last 2 years.
 	for year := uint64(0); year < 10; year++ {
 		yearlyInflation := math.LegacyZeroDec()
@@ -67,7 +67,7 @@ func TestCalculateEpochMintProvisionInflationNotEnabled(t *testing.T) {
 	epochId := uint64(0)
 	totalInflation := math.LegacyZeroDec()
 
-	// Only the first 8 years have inflation with default params but we run
+	// Only the first 8 years have inflation with default params, but we run
 	// for 10 years expecting 0 inflation
 	for year := uint64(0); year < 10; year++ {
 		yearlyInflation := math.LegacyZeroDec()

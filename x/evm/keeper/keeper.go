@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
@@ -18,8 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/app/appconst"
-	"github.com/NibiruChain/nibiru/x/evm"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 type Keeper struct {
@@ -32,23 +32,32 @@ type Keeper struct {
 	// EvmState isolates the key-value stores (collections) for the x/evm module.
 	EvmState EvmState
 
-	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
+	// FunTokens isolates the key-value stores (collections) for fungible token
+	// mappings.
+	FunTokens FunTokenState
+
+	// the address capable of executing a MsgUpdateParams message. Typically,
+	// this should be the x/gov module account.
 	authority sdk.AccAddress
 
 	bankKeeper    evm.BankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
-	// Integer for the Ethereum EIP155 Chain ID
-	// eip155ChainIDInt *big.Int
-	hooks       evm.EvmHooks                                  //nolint:unused
-	precompiles map[gethcommon.Address]vm.PrecompiledContract //nolint:unused
+	// precompiles is the set of active precompiled contracts used in the EVM.
+	// Precompiles are special, built-in contract interfaces that exist at
+	// predefined address and run custom logic outside of what is possible only
+	// in Solidity.
+	precompiles omap.SortedMap[gethcommon.Address, vm.PrecompiledContract]
+
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.
 	tracer string
 }
 
+// NewKeeper is a constructor for an x/evm [Keeper]. This function is necessary
+// because the [Keeper] struct has private fields.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey, transientKey storetypes.StoreKey,
@@ -67,6 +76,7 @@ func NewKeeper(
 		transientKey:  transientKey,
 		authority:     authority,
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
+		FunTokens:     NewFunTokenState(cdc, storeKey),
 		accountKeeper: accKeeper,
 		bankKeeper:    bankKeeper,
 		stakingKeeper: stakingKeeper,
@@ -75,18 +85,11 @@ func NewKeeper(
 }
 
 // GetEvmGasBalance: Implements `evm.EVMKeeper` from
-// "github.com/NibiruChain/nibiru/app/ante/evm": Load account's balance of gas
-// tokens for EVM execution
-func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) *big.Int {
+// "github.com/NibiruChain/nibiru/v2/app/ante/evm": Load account's balance of gas
+// tokens for EVM execution in EVM denom units.
+func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	evmParams := k.GetParams(ctx)
-	evmDenom := evmParams.GetEvmDenom()
-	// if node is pruned, params is empty. Return invalid value
-	if evmDenom == "" {
-		return big.NewInt(-1)
-	}
-	coin := k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom)
-	return coin.Amount.BigInt()
+	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
@@ -95,14 +98,14 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 
 // AddToBlockGasUsed accumulate gas used by each eth msgs included in current
 // block tx.
-func (k Keeper) AddToBlockGasUsed(
+func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
 ) (uint64, error) {
 	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
 	if result < gasUsed {
 		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
 	}
-	k.EvmState.BlockGasUsed.Set(ctx, gasUsed)
+	k.EvmState.BlockGasUsed.Set(ctx, result)
 	return result, nil
 }
 
@@ -111,15 +114,12 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
-	// TODO: plug in fee market keeper
-	return big.NewInt(0)
-}
-
-func (k Keeper) GetBaseFeeNoCfg(
-	ctx sdk.Context,
-) *big.Int {
-	return k.GetBaseFee(ctx)
+// GetBaseFee returns the gas base fee in units of the EVM denom. Note that this
+// function is currently constant/stateless.
+func (k Keeper) GetBaseFee(_ sdk.Context) *big.Int {
+	// TODO: (someday maybe):  Consider making base fee dynamic based on
+	// congestion in the previous block.
+	return evm.BASE_FEE_MICRONIBI
 }
 
 // Logger returns a module-specific logger.
@@ -132,15 +132,4 @@ func (k Keeper) Tracer(
 	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
 	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
-}
-
-// PostTxProcessing: Called after tx is processed successfully. If it errors,
-// the tx will revert.
-func (k *Keeper) PostTxProcessing(
-	ctx sdk.Context, msg core.Message, receipt *gethcore.Receipt,
-) error {
-	if k.hooks == nil {
-		return nil
-	}
-	return k.hooks.PostTxProcessing(ctx, msg, receipt)
 }
