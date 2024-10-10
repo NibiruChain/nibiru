@@ -25,7 +25,7 @@ require (
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/armon/go-metrics v0.4.1
-	github.com/btcsuite/btcd v0.24.0
+	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.4.10
