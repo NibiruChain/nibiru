@@ -128,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
+- [#2073](https://github.com/NibiruChain/nibiru/pull/2073) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation
 
 
 #### Dapp modules: perp, spot, oracle, etc
