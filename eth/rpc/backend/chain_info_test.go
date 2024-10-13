@@ -23,9 +23,9 @@ func (s *BackendSuite) TestChainConfig() {
 func (s *BackendSuite) TestBaseFee() {
 	resBlock, err := s.backend.TendermintBlockResultByNumber(transferTxBlockNumber.TmHeight())
 	s.Require().NoError(err)
-	baseFee, err := s.backend.BaseFee(resBlock)
+	baseFeeWei, err := s.backend.BaseFeeWei(resBlock)
 	s.Require().NoError(err)
-	s.Require().Equal(evm.BASE_FEE_MICRONIBI, baseFee)
+	s.Require().Equal(evm.BASE_FEE_WEI, baseFeeWei)
 }
 
 func (s *BackendSuite) TestCurrentHeader() {

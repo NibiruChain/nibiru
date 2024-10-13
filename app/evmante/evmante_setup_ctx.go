@@ -12,10 +12,10 @@ import (
 // EthSetupContextDecorator is adapted from SetUpContextDecorator from cosmos-sdk, it ignores gas consumption
 // by setting the gas meter to infinite
 type EthSetupContextDecorator struct {
-	evmKeeper EVMKeeper
+	evmKeeper *EVMKeeper
 }
 
-func NewEthSetUpContextDecorator(k EVMKeeper) EthSetupContextDecorator {
+func NewEthSetUpContextDecorator(k *EVMKeeper) EthSetupContextDecorator {
 	return EthSetupContextDecorator{
 		evmKeeper: k,
 	}

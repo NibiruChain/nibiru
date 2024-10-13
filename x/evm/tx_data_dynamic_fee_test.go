@@ -577,7 +577,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(6)),
 		},
 		{
@@ -590,7 +590,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(2)),
 		},
 		{
@@ -603,7 +603,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(1)),
 		},
 	}

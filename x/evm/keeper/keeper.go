@@ -84,8 +84,8 @@ func NewKeeper(
 	}
 }
 
-// GetEvmGasBalance: Implements `evm.EVMKeeper` from
-// "github.com/NibiruChain/nibiru/v2/app/ante/evm": Load account's balance of gas
+// GetEvmGasBalance: Used in the EVM Ante Handler,
+// "github.com/NibiruChain/nibiru/v2/app/evmante": Load account's balance of gas
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())

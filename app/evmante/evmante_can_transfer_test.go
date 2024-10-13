@@ -89,7 +89,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.StateDB()
-			anteDec := evmante.NewCanTransferDecorator(&deps.App.AppKeepers.EvmKeeper)
+			anteDec := evmante.CanTransferDecorator{&deps.App.AppKeepers.EvmKeeper}
 			tx := tc.txSetup(&deps)
 
 			if tc.ctxSetup != nil {

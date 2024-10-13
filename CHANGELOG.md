@@ -129,7 +129,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
 - [#2073](https://github.com/NibiruChain/nibiru/pull/2073) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation
-- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - fix(evm-gas-fees): fix(gas-fees): use effective gas price in RefundGas
+- [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
+Use effective gas price in RefundGas and make sure that units are properly
+reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 
 
 #### Dapp modules: perp, spot, oracle, etc

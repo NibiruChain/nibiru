@@ -56,7 +56,7 @@ func (k *Keeper) ApplyEvmTx(
 
 	// get the signer according to the chain rules from the config and block height
 	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, evmConfig.BaseFee)
+	msg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
@@ -112,7 +112,7 @@ func (k *Keeper) ApplyEvmTx(
 	if msg.Gas() > evmResp.GasUsed {
 		refundGas = msg.Gas() - evmResp.GasUsed
 	}
-	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFee)
+	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, msg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
 	}
@@ -162,12 +162,12 @@ func (k *Keeper) NewEVM(
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
 		GetHash:     k.GetHashFn(ctx),
-		Coinbase:    evmConfig.CoinBase,
+		Coinbase:    evmConfig.BlockCoinbase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
 		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
-		BaseFee:     evmConfig.BaseFee,
+		BaseFee:     evmConfig.BaseFeeWei,
 		Random:      nil, // not supported
 	}
 

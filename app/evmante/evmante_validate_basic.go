@@ -15,11 +15,11 @@ import (
 
 // EthValidateBasicDecorator is adapted from ValidateBasicDecorator from cosmos-sdk, it ignores ErrNoSignatures
 type EthValidateBasicDecorator struct {
-	evmKeeper EVMKeeper
+	evmKeeper *EVMKeeper
 }
 
 // NewEthValidateBasicDecorator creates a new EthValidateBasicDecorator
-func NewEthValidateBasicDecorator(k EVMKeeper) EthValidateBasicDecorator {
+func NewEthValidateBasicDecorator(k *EVMKeeper) EthValidateBasicDecorator {
 	return EthValidateBasicDecorator{
 		evmKeeper: k,
 	}

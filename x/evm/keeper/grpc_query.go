@@ -144,10 +144,13 @@ func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	baseFee := sdkmath.NewIntFromBigInt(k.BaseFeeMicronibiPerGas(ctx))
+	baseFeeMicronibiPerGas := sdkmath.NewIntFromBigInt(k.BaseFeeMicronibiPerGas(ctx))
+	baseFeeWei := sdkmath.NewIntFromBigInt(
+		evm.NativeToWei(baseFeeMicronibiPerGas.BigInt()),
+	)
 	return &evm.QueryBaseFeeResponse{
-		BaseFee: &baseFee,
-		// TODO: Show both units
+		BaseFee:      &baseFeeWei,
+		BaseFeeUnibi: &baseFeeMicronibiPerGas,
 	}, nil
 }
 
@@ -273,7 +276,7 @@ func (k *Keeper) EthCall(
 	nonce := k.GetAccNonce(ctx, args.GetFrom())
 	args.Nonce = (*hexutil.Uint64)(&nonce)
 
-	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee)
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFeeWei)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
@@ -370,7 +373,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
 	// convert the tx args to an ethereum message
-	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee)
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFeeWei)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -490,9 +493,9 @@ func (k Keeper) TraceTx(
 	}
 
 	// compute and use base fee of the height that is being traced
-	baseFee := k.BaseFeeMicronibiPerGas(ctx)
-	if baseFee != nil {
-		cfg.BaseFee = baseFee
+	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
+	if baseFeeMicronibiPerGas != nil {
+		cfg.BaseFeeWei = baseFeeMicronibiPerGas
 	}
 
 	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
@@ -505,7 +508,7 @@ func (k Keeper) TraceTx(
 
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
-		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		msg, err := ethTx.AsMessage(signer, cfg.BaseFeeWei)
 		if err != nil {
 			continue
 		}
@@ -534,7 +537,7 @@ func (k Keeper) TraceTx(
 		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
+	msg, err := tx.AsMessage(signer, cfg.BaseFeeWei)
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +594,7 @@ func (k Keeper) TraceCall(
 	// compute and use base fee of the height that is being traced
 	baseFeeMicronibi := k.BaseFeeMicronibiPerGas(ctx)
 	if baseFeeMicronibi != nil {
-		cfg.BaseFee = baseFeeMicronibi
+		cfg.BaseFeeWei = baseFeeMicronibi
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
@@ -678,9 +681,9 @@ func (k Keeper) TraceBlock(
 	}
 
 	// compute and use base fee of height that is being traced
-	baseFee := k.BaseFeeMicronibiPerGas(ctx)
-	if baseFee != nil {
-		cfg.BaseFee = baseFee
+	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
+	if baseFeeMicronibiPerGas != nil {
+		cfg.BaseFeeWei = baseFeeMicronibiPerGas
 	}
 	var tracerConfig json.RawMessage
 	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
@@ -699,7 +702,7 @@ func (k Keeper) TraceBlock(
 		ethTx := tx.AsTransaction()
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
-		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
+		msg, err := ethTx.AsMessage(signer, cfg.BaseFeeWei)
 		if err != nil {
 			result.Error = err.Error()
 			continue

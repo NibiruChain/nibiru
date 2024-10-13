@@ -17,14 +17,7 @@ import (
 // CanTransferDecorator checks if the sender is allowed to transfer funds according to the EVM block
 // context rules.
 type CanTransferDecorator struct {
-	evmKeeper EVMKeeper
-}
-
-// NewCanTransferDecorator creates a new CanTransferDecorator instance.
-func NewCanTransferDecorator(k EVMKeeper) CanTransferDecorator {
-	return CanTransferDecorator{
-		evmKeeper: k,
-	}
+	*EVMKeeper
 }
 
 // AnteHandle creates an EVM from the message and calls the BlockContext CanTransfer function to
@@ -32,8 +25,8 @@ func NewCanTransferDecorator(k EVMKeeper) CanTransferDecorator {
 func (ctd CanTransferDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
-	params := ctd.evmKeeper.GetParams(ctx)
-	ethCfg := evm.EthereumConfig(ctd.evmKeeper.EthChainID(ctx))
+	params := ctd.GetParams(ctx)
+	ethCfg := evm.EthereumConfig(ctd.EVMKeeper.EthChainID(ctx))
 	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()))
 
 	for _, msg := range tx.GetMsgs() {
@@ -44,7 +37,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-		baseFeeMicronibiPerGas := ctd.evmKeeper.BaseFeeMicronibiPerGas(ctx)
+		baseFeeMicronibiPerGas := ctd.EVMKeeper.BaseFeeMicronibiPerGas(ctx)
 		baseFeeWeiPerGas := evm.NativeToWei(baseFeeMicronibiPerGas)
 
 		coreMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
@@ -71,18 +64,18 @@ func (ctd CanTransferDecorator) AnteHandle(
 
 		// NOTE: pass in an empty coinbase address and nil tracer as we don't need them for the check below
 		cfg := &statedb.EVMConfig{
-			ChainConfig: ethCfg,
-			Params:      params,
-			CoinBase:    gethcommon.Address{},
-			BaseFee:     baseFeeMicronibiPerGas,
+			ChainConfig:   ethCfg,
+			Params:        params,
+			BlockCoinbase: gethcommon.Address{},
+			BaseFeeWei:    baseFeeMicronibiPerGas,
 		}
 
 		stateDB := statedb.New(
 			ctx,
-			ctd.evmKeeper,
+			ctd.EVMKeeper,
 			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
 		)
-		evmInstance := ctd.evmKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
+		evmInstance := ctd.EVMKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
