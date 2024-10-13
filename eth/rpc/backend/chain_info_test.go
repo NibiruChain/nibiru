@@ -20,7 +20,7 @@ func (s *BackendSuite) TestChainConfig() {
 	s.Require().Equal(int64(0), config.LondonBlock.Int64())
 }
 
-func (s *BackendSuite) TestBaseFee() {
+func (s *BackendSuite) TestBaseFeeWei() {
 	resBlock, err := s.backend.TendermintBlockResultByNumber(transferTxBlockNumber.TmHeight())
 	s.Require().NoError(err)
 	baseFeeWei, err := s.backend.BaseFeeWei(resBlock)

@@ -37,8 +37,8 @@ func (ctd CanTransferDecorator) AnteHandle(
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-		baseFeeMicronibiPerGas := ctd.EVMKeeper.BaseFeeMicronibiPerGas(ctx)
-		baseFeeWeiPerGas := evm.NativeToWei(baseFeeMicronibiPerGas)
+
+		baseFeeWeiPerGas := evm.NativeToWei(ctd.EVMKeeper.BaseFeeMicronibiPerGas(ctx))
 
 		coreMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
 		if err != nil {
@@ -48,26 +48,27 @@ func (ctd CanTransferDecorator) AnteHandle(
 			)
 		}
 
-		if baseFeeMicronibiPerGas == nil {
+		if baseFeeWeiPerGas == nil {
 			return ctx, errors.Wrap(
 				evm.ErrInvalidBaseFee,
-				"base fee is supported but evm block context value is nil",
+				"base fee is nil for this block.",
 			)
 		}
-		if coreMsg.GasFeeCap().Cmp(baseFeeMicronibiPerGas) < 0 {
+		if coreMsg.GasFeeCap().Cmp(baseFeeWeiPerGas) < 0 {
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
-				"max fee per gas less than block base fee (%s < %s)",
-				coreMsg.GasFeeCap(), baseFeeMicronibiPerGas,
+				"gas fee cap (wei) less than block base fee (wei); (%s < %s)",
+				coreMsg.GasFeeCap(), baseFeeWeiPerGas,
 			)
 		}
 
-		// NOTE: pass in an empty coinbase address and nil tracer as we don't need them for the check below
 		cfg := &statedb.EVMConfig{
-			ChainConfig:   ethCfg,
-			Params:        params,
+			ChainConfig: ethCfg,
+			Params:      params,
+			// Note that we use an empty coinbase here  because the field is not
+			// used during this Ante Handler.
 			BlockCoinbase: gethcommon.Address{},
-			BaseFeeWei:    baseFeeMicronibiPerGas,
+			BaseFeeWei:    baseFeeWeiPerGas,
 		}
 
 		stateDB := statedb.New(

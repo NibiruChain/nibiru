@@ -2,8 +2,9 @@
 package evmante
 
 import (
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 type EVMKeeper = evmkeeper.Keeper

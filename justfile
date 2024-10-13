@@ -50,7 +50,13 @@ localnet *PASS_FLAGS:
 # Clears the logs directory
 log-clear:
   #!/usr/bin/env bash
-  rm logs/*
+  if [ -d "logs" ] && [ "$(ls -A logs)" ]; then
+    rm logs/* && echo "Logs cleared successfully."
+  elif [ ! -d "logs" ]; then
+    echo "Logs directory does not exist. Nothing to clear."
+  else
+    echo "Logs directory is already empty."
+  fi
 
 # Runs "just localnet" with logging (logs/localnet.txt)
 log-localnet:
@@ -70,7 +76,6 @@ test-e2e:
   log_info "Make sure the localnet is running! (just localnet)"
 
   cd e2e/evm
-  nvm use
   just test
 
 

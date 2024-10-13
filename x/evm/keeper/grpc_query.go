@@ -681,9 +681,9 @@ func (k Keeper) TraceBlock(
 	}
 
 	// compute and use base fee of height that is being traced
-	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
-	if baseFeeMicronibiPerGas != nil {
-		cfg.BaseFeeWei = baseFeeMicronibiPerGas
+	if baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx); baseFeeMicronibiPerGas != nil {
+		baseFeeWeiPerGas := evm.NativeToWei(baseFeeMicronibiPerGas)
+		cfg.BaseFeeWei = baseFeeWeiPerGas
 	}
 	var tracerConfig json.RawMessage
 	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {

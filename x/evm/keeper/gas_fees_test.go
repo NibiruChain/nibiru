@@ -202,7 +202,7 @@ func (s *Suite) TestRefundGas() {
 		func(deps *evmtest.TestDeps) testCase {
 			fundFeeCollectorEvmBal(deps, s, feeCollectorInitialBalance)
 			return testCase{
-				name:        "sad: geth tx gas, negative ?? base fee (impossible but here for compelteness",
+				name:        "sad: geth tx gas, negative base fee (impossible but here for completeness",
 				msgFrom:     deps.Sender.EthAddr,
 				leftoverGas: gethparams.TxGas,
 				weiPerGas:   new(big.Int).Neg(evm.BASE_FEE_WEI),
