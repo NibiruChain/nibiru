@@ -44,9 +44,10 @@ func (ctd CanTransferDecorator) AnteHandle(
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
 		}
-		baseFee := ctd.evmKeeper.GetBaseFee(ctx)
+		baseFeeMicronibiPerGas := ctd.evmKeeper.BaseFeeMicronibiPerGas(ctx)
+		baseFeeWeiPerGas := evm.NativeToWei(baseFeeMicronibiPerGas)
 
-		coreMsg, err := msgEthTx.AsMessage(signer, baseFee)
+		coreMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
 		if err != nil {
 			return ctx, errors.Wrapf(
 				err,
@@ -54,17 +55,17 @@ func (ctd CanTransferDecorator) AnteHandle(
 			)
 		}
 
-		if baseFee == nil {
+		if baseFeeMicronibiPerGas == nil {
 			return ctx, errors.Wrap(
 				evm.ErrInvalidBaseFee,
 				"base fee is supported but evm block context value is nil",
 			)
 		}
-		if coreMsg.GasFeeCap().Cmp(baseFee) < 0 {
+		if coreMsg.GasFeeCap().Cmp(baseFeeMicronibiPerGas) < 0 {
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"max fee per gas less than block base fee (%s < %s)",
-				coreMsg.GasFeeCap(), baseFee,
+				coreMsg.GasFeeCap(), baseFeeMicronibiPerGas,
 			)
 		}
 
@@ -73,7 +74,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			ChainConfig: ethCfg,
 			Params:      params,
 			CoinBase:    gethcommon.Address{},
-			BaseFee:     baseFee,
+			BaseFee:     baseFeeMicronibiPerGas,
 		}
 
 		stateDB := statedb.New(

@@ -27,7 +27,7 @@ type EVMKeeper interface {
 
 	EVMState() evmkeeper.EvmState
 	EthChainID(ctx sdk.Context) *big.Int
-	GetBaseFee(ctx sdk.Context) *big.Int
+	BaseFeeMicronibiPerGas(ctx sdk.Context) *big.Int
 }
 
 type protoTxProvider interface {

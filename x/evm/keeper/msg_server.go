@@ -35,9 +35,8 @@ func (k *Keeper) EthereumTx(
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	tx := msg.AsTransaction()
 
-	resp, err = k.ApplyEvmTx(ctx, tx)
+	resp, err = k.ApplyEvmTx(ctx, msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to apply transaction")
 	}
@@ -45,8 +44,10 @@ func (k *Keeper) EthereumTx(
 }
 
 func (k *Keeper) ApplyEvmTx(
-	ctx sdk.Context, tx *gethcore.Transaction,
+	ctx sdk.Context, txMsg *evm.MsgEthereumTx,
 ) (*evm.MsgEthereumTxResponse, error) {
+	tx := txMsg.AsTransaction()
+
 	evmConfig, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
@@ -111,7 +112,8 @@ func (k *Keeper) ApplyEvmTx(
 	if msg.Gas() > evmResp.GasUsed {
 		refundGas = msg.Gas() - evmResp.GasUsed
 	}
-	if err = k.RefundGas(ctx, msg, refundGas, evm.EVMBankDenom); err != nil {
+	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFee)
+	if err = k.RefundGas(ctx, msg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
 	}
 

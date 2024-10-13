@@ -698,7 +698,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_Getters() {
 			fee = tx.GetFee()
 			s.Require().Equal(tc.exp, fee)
 		case strings.Contains(tc.name, "get effective fee"):
-			effFee = tx.GetEffectiveFee(big.NewInt(0))
+			effFee = tx.EffectiveFeeWei(big.NewInt(0))
 			s.Require().Equal(tc.exp, effFee)
 		case strings.Contains(tc.name, "get gas"):
 			gas := tx.GetGas()

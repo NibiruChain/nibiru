@@ -60,7 +60,7 @@ func NewBackend(
 // TODO: feat(eth): Implement the cosmos JSON-RPC defined by Wallet Connect V2:
 // https://docs.walletconnect.com/2.0/json-rpc/cosmos.
 type CosmosBackend interface {
-	// TODO: GetAccounts()
-	// TODO: SignDirect()
-	// TODO: SignAmino()
+	// TODO: for Wallet Connect V2: GetAccounts()
+	// TODO: for Wallet Connect V2: SignDirect()
+	// TODO: for Wallet Connect V2: SignAmino()
 }

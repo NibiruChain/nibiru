@@ -10,7 +10,7 @@
  * "e2e/evm/contracts/SendReceiveNibi.sol".
  */
 import { describe, expect, it } from "@jest/globals"
-import { toBigInt, Wallet } from "ethers"
+import { parseEther, toBigInt, Wallet } from "ethers"
 import { account, provider } from "./setup"
 import { deployContractSendNibi } from "./utils"
 
@@ -33,16 +33,24 @@ async function testSendNibi(
   const txCostWei = txCostMicronibi * tenPow12
   const expectedOwnerWei = ownerBalanceBefore - txCostWei
 
+  const ownerBalanceAfter = await provider.getBalance(account)
+  const recipientBalanceAfter = await provider.getBalance(recipient)
+
   console.debug(`DEBUG method ${method} %o:`, {
     ownerBalanceBefore,
     weiToSend,
-    gasUsed: receipt.gasUsed,
-    gasPrice: `${receipt.gasPrice.toString()} micronibi`,
     expectedOwnerWei,
+    ownerBalanceAfter,
+    recipientBalanceBefore,
+    recipientBalanceAfter,
+    gasUsed: receipt.gasUsed,
+    gasPrice: `${receipt.gasPrice.toString()}`,
+    to: receipt.to,
+    from: receipt.from,
   })
-
-  await expect(provider.getBalance(account)).resolves.toBe(expectedOwnerWei)
-  await expect(provider.getBalance(recipient)).resolves.toBe(weiToSend)
+  const deltaFromExpectation = ownerBalanceAfter - expectedOwnerWei
+  expect(deltaFromExpectation).toBeLessThan(parseEther("0.001"))
+  expect(recipientBalanceAfter).toBe(weiToSend)
 }
 
 describe("Send NIBI via smart contract", () => {

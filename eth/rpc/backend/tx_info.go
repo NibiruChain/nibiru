@@ -253,7 +253,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWei(baseFee)
+			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWeiPerGas(baseFee)
 		}
 	}
 	return &receipt, nil

@@ -610,7 +610,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 
 	for _, tc := range testCases {
 		txData := tc.tx()
-		actual := txData.EffectiveGasPriceWei(tc.baseFeeWei)
+		actual := txData.EffectiveGasPriceWeiPerGas(tc.baseFeeWei)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

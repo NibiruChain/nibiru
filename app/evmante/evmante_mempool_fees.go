@@ -39,7 +39,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	}
 
 	minGasPrice := ctx.MinGasPrices().AmountOf(evm.EVMBankDenom)
-	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibi := d.evmKeeper.BaseFeeMicronibiPerGas(ctx)
 	baseFeeDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
 
 	// if MinGasPrices is not set, skip the check
@@ -61,7 +61,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 
 		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 		effectiveGasPriceDec := math.LegacyNewDecFromBigInt(
-			evm.WeiToNative(ethTx.GetEffectiveGasPrice(baseFeeWei)),
+			evm.WeiToNative(ethTx.EffectiveGasPriceWeiPerGas(baseFeeWei)),
 		)
 		if effectiveGasPriceDec.LT(minGasPrice) {
 			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {

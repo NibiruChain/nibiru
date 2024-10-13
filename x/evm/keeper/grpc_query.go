@@ -144,9 +144,10 @@ func (k Keeper) BaseFee(
 	goCtx context.Context, _ *evm.QueryBaseFeeRequest,
 ) (*evm.QueryBaseFeeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	baseFee := sdkmath.NewIntFromBigInt(k.GetBaseFee(ctx))
+	baseFee := sdkmath.NewIntFromBigInt(k.BaseFeeMicronibiPerGas(ctx))
 	return &evm.QueryBaseFeeResponse{
 		BaseFee: &baseFee,
+		// TODO: Show both units
 	}, nil
 }
 
@@ -489,7 +490,7 @@ func (k Keeper) TraceTx(
 	}
 
 	// compute and use base fee of the height that is being traced
-	baseFee := k.GetBaseFee(ctx)
+	baseFee := k.BaseFeeMicronibiPerGas(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}
@@ -588,9 +589,9 @@ func (k Keeper) TraceCall(
 	}
 
 	// compute and use base fee of the height that is being traced
-	baseFee := k.GetBaseFee(ctx)
-	if baseFee != nil {
-		cfg.BaseFee = baseFee
+	baseFeeMicronibi := k.BaseFeeMicronibiPerGas(ctx)
+	if baseFeeMicronibi != nil {
+		cfg.BaseFee = baseFeeMicronibi
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
@@ -677,7 +678,7 @@ func (k Keeper) TraceBlock(
 	}
 
 	// compute and use base fee of height that is being traced
-	baseFee := k.GetBaseFee(ctx)
+	baseFee := k.BaseFeeMicronibiPerGas(ctx)
 	if baseFee != nil {
 		cfg.BaseFee = baseFee
 	}

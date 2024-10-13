@@ -286,18 +286,19 @@ func (tx AccessListTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValueWei())
 }
 
-// EffectiveGasPriceWei is the same as GasPrice for AccessListTx
-func (tx AccessListTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+// EffectiveGasPriceWeiPerGas is the same as GasPrice for AccessListTx
+func (tx AccessListTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int {
 	return BigIntMax(tx.GetGasPrice(), baseFeeWei)
 }
 
 // EffectiveFeeWei is the same as Fee for AccessListTx
 func (tx AccessListTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
-	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GetGas())
+	return priceTimesGas(tx.EffectiveGasPriceWeiPerGas(baseFeeWei), tx.GetGas())
 }
 
 // EffectiveCost is the same as Cost for AccessListTx
 func (tx AccessListTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
-	txFee := tx.EffectiveFeeWei(baseFeeWei)
-	return cost(txFee, tx.GetValueWei())
+	return cost(
+		tx.EffectiveFeeWei(baseFeeWei), tx.GetValueWei(),
+	)
 }

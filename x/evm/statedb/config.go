@@ -45,5 +45,6 @@ type EVMConfig struct {
 	Params      evm.Params
 	ChainConfig *params.ChainConfig
 	CoinBase    common.Address
-	BaseFee     *big.Int
+	// BaseFee is the EVM base fee in units of micronibi per gas
+	BaseFee *big.Int
 }

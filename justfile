@@ -47,6 +47,33 @@ lint:
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
 
+# Clears the logs directory
+log-clear:
+  #!/usr/bin/env bash
+  rm logs/*
+
+# Runs "just localnet" with logging (logs/localnet.txt)
+log-localnet:
+  #!/usr/bin/env bash
+  mkdir -p logs
+  just localnet 2>&1 | tee -a logs/localnet.txt
+
+# Runs the EVM E2E test with logging (logs/e2e.txt)
+log-e2e:
+  #!/usr/bin/env bash
+  just test-e2e 2>&1 | tee -a ../../logs/e2e.txt
+
+# Runs the EVM E2E tests
+test-e2e:
+  #!/usr/bin/env bash
+  source contrib/bashlib.sh
+  log_info "Make sure the localnet is running! (just localnet)"
+
+  cd e2e/evm
+  nvm use
+  just test
+
+
 # Test: "localnet.sh" script
 test-localnet:
   #!/usr/bin/env bash

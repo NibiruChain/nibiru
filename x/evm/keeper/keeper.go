@@ -114,9 +114,9 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-// GetBaseFee returns the gas base fee in units of the EVM denom. Note that this
-// function is currently constant/stateless.
-func (k Keeper) GetBaseFee(_ sdk.Context) *big.Int {
+// BaseFeeMicronibiPerGas returns the gas base fee in units of the EVM denom. Note
+// that this function is currently constant/stateless.
+func (k Keeper) BaseFeeMicronibiPerGas(_ sdk.Context) *big.Int {
 	// TODO: (someday maybe):  Consider making base fee dynamic based on
 	// congestion in the previous block.
 	return evm.BASE_FEE_MICRONIBI
