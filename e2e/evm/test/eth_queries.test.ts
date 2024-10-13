@@ -49,7 +49,7 @@ describe("eth queries", () => {
   it("eth_gasPrice", async () => {
     const gasPrice = await provider.send("eth_gasPrice", [])
     expect(gasPrice).toBeDefined()
-    expect(gasPrice).toEqual(hexify(1))
+    expect(gasPrice).toEqual(hexify(1000000000000)) // 1 micronibi == 10^{12} wei
   })
 
   it("eth_getBalance", async () => {

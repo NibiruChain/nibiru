@@ -57,10 +57,13 @@ func NewBackend(
 
 // CosmosBackend: Currently unused. Backend functionality for the shared
 // "cosmos" RPC namespace. Implements [BackendI] in combination with [Backend].
-// TODO: feat(eth): Implement the cosmos JSON-RPC defined by Wallet Connect V2:
-// https://docs.walletconnect.com/2.0/json-rpc/cosmos.
+// TODO: feat(eth): Implement the cosmos JSON-RPC defined by [Wallet Connect V2].
+// [Reference ticket].
+//
+// [Wallet Connect V2]: https://docs.walletconnect.com/2.0/json-rpc/cosmos.
+// [Reference ticket]: https://github.com/NibiruChain/nibiru/issues/2077
 type CosmosBackend interface {
-	// TODO: GetAccounts()
-	// TODO: SignDirect()
-	// TODO: SignAmino()
+	// for Wallet Connect V2: GetAccounts()
+	// for Wallet Connect V2: SignDirect()
+	// for Wallet Connect V2: SignAmino()
 }

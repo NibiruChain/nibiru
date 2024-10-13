@@ -17,13 +17,13 @@ import (
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    EVMKeeper
+	evmKeeper    *EVMKeeper
 	maxGasWanted uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
-	k EVMKeeper,
+	k *EVMKeeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
@@ -68,7 +68,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
-	baseFeeMicronibiPerGas := anteDec.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibiPerGas := anteDec.evmKeeper.BaseFeeMicronibiPerGas(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)

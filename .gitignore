@@ -21,6 +21,7 @@ txout.json
 vote.json
 **__pycache**
 scratch-paper.md
+logs
 
 ### TypeScript and Friends
 

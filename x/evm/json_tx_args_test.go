@@ -104,7 +104,7 @@ func (suite *Suite) TestToMessageEVM() {
 		name         string
 		txArgs       evm.JsonTxArgs
 		globalGasCap uint64
-		baseFee      *big.Int
+		baseFeeWei   *big.Int
 		expError     bool
 	}{
 		{
@@ -216,7 +216,7 @@ func (suite *Suite) TestToMessageEVM() {
 		},
 	}
 	for _, tc := range testCases {
-		res, err := tc.txArgs.ToMessage(tc.globalGasCap, tc.baseFee)
+		res, err := tc.txArgs.ToMessage(tc.globalGasCap, tc.baseFeeWei)
 
 		if tc.expError {
 			suite.Require().NotNil(err)

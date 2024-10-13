@@ -17,12 +17,12 @@ var _ sdk.AnteDecorator = MempoolGasPriceDecorator{}
 // is rejected. This applies to CheckTx only.
 // If fee is high enough, then call next AnteHandler
 type MempoolGasPriceDecorator struct {
-	evmKeeper EVMKeeper
+	evmKeeper *EVMKeeper
 }
 
 // NewMempoolGasPriceDecorator creates a new MinGasPriceDecorator instance used only for
 // Ethereum transactions.
-func NewMempoolGasPriceDecorator(k EVMKeeper) MempoolGasPriceDecorator {
+func NewMempoolGasPriceDecorator(k *EVMKeeper) MempoolGasPriceDecorator {
 	return MempoolGasPriceDecorator{
 		evmKeeper: k,
 	}
@@ -39,14 +39,14 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	}
 
 	minGasPrice := ctx.MinGasPrices().AmountOf(evm.EVMBankDenom)
-	baseFeeMicronibi := d.evmKeeper.GetBaseFee(ctx)
-	baseFeeDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
+	baseFeeMicronibi := d.evmKeeper.BaseFeeMicronibiPerGas(ctx)
+	baseFeeMicronibiDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
 
 	// if MinGasPrices is not set, skip the check
 	if minGasPrice.IsZero() {
 		return next(ctx, tx, simulate)
-	} else if minGasPrice.LT(baseFeeDec) {
-		minGasPrice = baseFeeDec
+	} else if minGasPrice.LT(baseFeeMicronibiDec) {
+		minGasPrice = baseFeeMicronibiDec
 	}
 
 	for _, msg := range tx.GetMsgs() {
@@ -61,7 +61,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 
 		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 		effectiveGasPriceDec := math.LegacyNewDecFromBigInt(
-			evm.WeiToNative(ethTx.GetEffectiveGasPrice(baseFeeWei)),
+			evm.WeiToNative(ethTx.EffectiveGasPriceWeiPerGas(baseFeeWei)),
 		)
 		if effectiveGasPriceDec.LT(minGasPrice) {
 			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
