@@ -29,24 +29,23 @@ import (
 var _ evm.MsgServer = &Keeper{}
 
 func (k *Keeper) EthereumTx(
-	goCtx context.Context, msg *evm.MsgEthereumTx,
-) (resp *evm.MsgEthereumTxResponse, err error) {
-	if err := msg.ValidateBasic(); err != nil {
-		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
+	goCtx context.Context, txMsg *evm.MsgEthereumTx,
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	// This is a `defer` pattern to add behavior that runs in the case that the error is
+	// non-nil, creating a concise way to add extra information.
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("EthereumTx error: %w", err)
+		}
+	}()
+
+	if err := txMsg.ValidateBasic(); err != nil {
+		return evmResp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	tx := msg.AsTransaction()
 
-	resp, err = k.ApplyEvmTx(ctx, tx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to apply transaction")
-	}
-	return resp, nil
-}
+	tx := txMsg.AsTransaction()
 
-func (k *Keeper) ApplyEvmTx(
-	ctx sdk.Context, tx *gethcore.Transaction,
-) (*evm.MsgEthereumTxResponse, error) {
 	evmConfig, err := k.GetEVMConfig(ctx, ctx.BlockHeader().ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load evm config")
@@ -55,7 +54,7 @@ func (k *Keeper) ApplyEvmTx(
 
 	// get the signer according to the chain rules from the config and block height
 	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, evmConfig.BaseFee)
+	msg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
@@ -63,7 +62,7 @@ func (k *Keeper) ApplyEvmTx(
 	tmpCtx, commit := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	evmResp, err := k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
+	evmResp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -111,8 +110,9 @@ func (k *Keeper) ApplyEvmTx(
 	if msg.Gas() > evmResp.GasUsed {
 		refundGas = msg.Gas() - evmResp.GasUsed
 	}
-	if err = k.RefundGas(ctx, msg, refundGas, evm.EVMBankDenom); err != nil {
-		return nil, errors.Wrapf(err, "failed to refund leftover gas to sender %s", msg.From())
+	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
+	if err = k.RefundGas(ctx, msg.From(), refundGas, weiPerGas); err != nil {
+		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", msg.From())
 	}
 
 	if len(receipt.Logs) > 0 {
@@ -124,7 +124,7 @@ func (k *Keeper) ApplyEvmTx(
 
 	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to add transient gas used")
+		return nil, errors.Wrap(err, "error adding transient gas used to block")
 	}
 
 	// reset the gas meter for current cosmos transaction
@@ -132,7 +132,7 @@ func (k *Keeper) ApplyEvmTx(
 
 	err = k.EmitEthereumTxEvents(ctx, tx, msg, evmResp, contractAddr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to emit ethereum tx events")
+		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
@@ -160,12 +160,12 @@ func (k *Keeper) NewEVM(
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
 		GetHash:     k.GetHashFn(ctx),
-		Coinbase:    evmConfig.CoinBase,
+		Coinbase:    evmConfig.BlockCoinbase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
 		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
-		BaseFee:     evmConfig.BaseFee,
+		BaseFee:     evmConfig.BaseFeeWei,
 		Random:      nil, // not supported
 	}
 

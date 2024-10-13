@@ -393,7 +393,7 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 	}
 
 	// TODO: use events
-	baseFee := big.NewInt(params.InitialBaseFee)
+	baseFeeWeiPerGas := big.NewInt(params.InitialBaseFee)
 
 	go func() {
 		headersCh := sub.EventCh
@@ -411,7 +411,7 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 					continue
 				}
 
-				header := rpc.EthHeaderFromTendermint(data.Header, gethcore.Bloom{}, baseFee)
+				header := rpc.EthHeaderFromTendermint(data.Header, gethcore.Bloom{}, baseFeeWeiPerGas)
 
 				// write to ws conn
 				res := &SubscriptionNotification{

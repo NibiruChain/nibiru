@@ -33,17 +33,14 @@ func (b *Backend) ChainConfig() *params.ChainConfig {
 	return evm.EthereumConfig(b.chainID)
 }
 
-// BaseFee returns the base fee tracked by the Fee Market module.
+// BaseFeeWei returns the EIP-1559 base fee.
 // If the base fee is not enabled globally, the query returns nil.
-func (b *Backend) BaseFee(
+func (b *Backend) BaseFeeWei(
 	blockRes *tmrpctypes.ResultBlockResults,
-) (baseFee *big.Int, err error) {
-	// return BaseFee if feemarket is enabled
+) (baseFeeWei *big.Int, err error) {
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
-		baseFee = nil
-		// TODO: feat: dynamic fee handling on events
-		return baseFee, nil
+		return nil, nil
 	}
 	return res.BaseFee.BigInt(), nil
 }

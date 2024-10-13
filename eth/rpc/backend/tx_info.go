@@ -70,7 +70,7 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		return nil, errors.New("can't find index of ethereum tx")
 	}
 
-	baseFee, err := b.BaseFee(blockRes)
+	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", blockRes.Height, "error", err)
@@ -83,7 +83,7 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
 		index,
-		baseFee,
+		baseFeeWei,
 		b.chainID,
 	)
 }
@@ -248,12 +248,12 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	}
 
 	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
-		baseFee, err := b.BaseFee(blockRes)
+		baseFeeWei, err := b.BaseFeeWei(blockRes)
 		if err != nil {
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWei(baseFee)
+			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei)
 		}
 	}
 	return &receipt, nil
@@ -402,7 +402,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		msg = ethMsgs[i]
 	}
 
-	baseFee, err := b.BaseFee(blockRes)
+	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", block.Block.Height, "error", err)
@@ -415,7 +415,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		gethcommon.BytesToHash(block.Block.Hash()),
 		height,
 		index,
-		baseFee,
+		baseFeeWei,
 		b.chainID,
 	)
 }

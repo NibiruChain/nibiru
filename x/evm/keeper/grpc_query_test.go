@@ -608,9 +608,11 @@ func (s *Suite) TestQueryBaseFee() {
 			name: "happy: base fee value",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBaseFeeRequest{}
-				zeroFee := math.NewInt(1)
+				defaultFeeWei := math.NewIntFromBigInt(evm.BASE_FEE_WEI)
+				defaultFeeUnibi := math.NewIntFromBigInt(evm.BASE_FEE_MICRONIBI)
 				wantResp = &evm.QueryBaseFeeResponse{
-					BaseFee: &zeroFee,
+					BaseFee:      &defaultFeeWei,
+					BaseFeeUnibi: &defaultFeeUnibi,
 				}
 				return req, wantResp
 			},

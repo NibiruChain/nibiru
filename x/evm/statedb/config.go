@@ -4,22 +4,22 @@ package statedb
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/params"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // TxConfig encapsulates the readonly information of current tx for `StateDB`.
 type TxConfig struct {
-	BlockHash common.Hash // hash of current block
-	TxHash    common.Hash // hash of current tx
-	TxIndex   uint        // the index of current transaction
-	LogIndex  uint        // the index of next log within current block
+	BlockHash gethcommon.Hash // hash of current block
+	TxHash    gethcommon.Hash // hash of current tx
+	TxIndex   uint            // the index of current transaction
+	LogIndex  uint            // the index of next log within current block
 }
 
 // NewTxConfig returns a TxConfig
-func NewTxConfig(bhash, thash common.Hash, txIndex, logIndex uint) TxConfig {
+func NewTxConfig(bhash, thash gethcommon.Hash, txIndex, logIndex uint) TxConfig {
 	return TxConfig{
 		BlockHash: bhash,
 		TxHash:    thash,
@@ -30,20 +30,29 @@ func NewTxConfig(bhash, thash common.Hash, txIndex, logIndex uint) TxConfig {
 
 // NewEmptyTxConfig construct an empty TxConfig,
 // used in context where there's no transaction, e.g. `eth_call`/`eth_estimateGas`.
-func NewEmptyTxConfig(bhash common.Hash) TxConfig {
+func NewEmptyTxConfig(bhash gethcommon.Hash) TxConfig {
 	return TxConfig{
 		BlockHash: bhash,
-		TxHash:    common.Hash{},
+		TxHash:    gethcommon.Hash{},
 		TxIndex:   0,
 		LogIndex:  0,
 	}
 }
 
-// EVMConfig encapsulates common parameters needed to create an EVM to execute a message
-// It's mainly to reduce the number of method parameters
+// EVMConfig encapsulates parameters needed to create an instance of the EVM
+// ("go-ethereum/core/vm.EVM").
 type EVMConfig struct {
 	Params      evm.Params
-	ChainConfig *params.ChainConfig
-	CoinBase    common.Address
-	BaseFee     *big.Int
+	ChainConfig *gethparams.ChainConfig
+
+	// BlockCoinbase: In Ethereum, the coinbase (or "benficiary") is the address that
+	// proposed the current block. It corresponds to the [COINBASE op code]
+	// (the "block.coinbase" stack output).
+	//
+	// [COINBASE op code]: https://ethereum.org/en/developers/docs/evm/opcodes/
+	BlockCoinbase gethcommon.Address
+
+	// BaseFeeWei is the EVM base fee in units of wei per gas. The term "base
+	// fee" comes from EIP-1559.
+	BaseFeeWei *big.Int
 }
