@@ -67,7 +67,7 @@ log-localnet:
 # Runs the EVM E2E test with logging (logs/e2e.txt)
 log-e2e:
   #!/usr/bin/env bash
-  just test-e2e 2>&1 | tee -a ../../logs/e2e.txt
+  just test-e2e 2>&1 | tee -a logs/e2e.txt
 
 # Runs the EVM E2E tests
 test-e2e:

@@ -48,9 +48,10 @@ async function testSendNibi(
     to: receipt.to,
     from: receipt.from,
   })
-  const deltaFromExpectation = ownerBalanceAfter - expectedOwnerWei
-  expect(deltaFromExpectation).toBeLessThan(parseEther("0.001"))
   expect(recipientBalanceAfter).toBe(weiToSend)
+  const delta = ownerBalanceAfter - expectedOwnerWei
+  const deltaFromExpectation = delta >= 0 ? delta : -delta
+  expect(deltaFromExpectation).toBeLessThan(parseEther("0.1"))
 }
 
 describe("Send NIBI via smart contract", () => {

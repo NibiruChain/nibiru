@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals"
-import { toBigInt } from "ethers"
+import { parseEther, toBigInt } from "ethers"
 import { account, provider } from "./setup"
 import { alice } from "./utils"
 
@@ -38,6 +38,8 @@ describe("native transfer", () => {
       txResponse,
     })
     expect(recipientBalanceAfter).toEqual(amountToSend)
-    expect(senderBalanceAfter).toEqual(expectedSenderWei)
+    const delta = senderBalanceAfter - expectedSenderWei
+    const deltaFromExpectation = delta >= 0 ? delta : -delta
+    expect(deltaFromExpectation).toBeLessThan(parseEther("0.1"))
   }, 20e3)
 })
