@@ -54,7 +54,8 @@ func (ctd CanTransferDecorator) AnteHandle(
 				"base fee is nil for this block.",
 			)
 		}
-		if coreMsg.GasFeeCap().Cmp(baseFeeWeiPerGas) < 0 {
+
+		if msgEthTx.EffectiveGasCapWei(baseFeeWeiPerGas).Cmp(baseFeeWeiPerGas) < 0 {
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"gas fee cap (wei) less than block base fee (wei); (%s < %s)",

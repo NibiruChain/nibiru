@@ -104,6 +104,10 @@ func (tx *LegacyTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
+func (tx *LegacyTx) EffectiveGasFeeCapWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(baseFeeWei, tx.GetGasFeeCapWei())
+}
+
 // GetValueWei returns the tx amount.
 func (tx *LegacyTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {

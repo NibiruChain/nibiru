@@ -286,6 +286,14 @@ func (msg MsgEthereumTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.In
 	return txData.EffectiveGasPriceWeiPerGas(baseFeeWei)
 }
 
+func (msg MsgEthereumTx) EffectiveGasCapWei(baseFeeWei *big.Int) *big.Int {
+	txData, err := UnpackTxData(msg.Data)
+	if err != nil {
+		return nil
+	}
+	return txData.EffectiveGasFeeCapWei(baseFeeWei)
+}
+
 // GetFrom loads the ethereum sender address from the sigcache and returns an
 // sdk.AccAddress from its bytes
 func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {

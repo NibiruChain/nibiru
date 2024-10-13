@@ -185,6 +185,10 @@ func (tx *AccessListTx) GetGasFeeCapWei() *big.Int {
 	return tx.GetGasPrice()
 }
 
+func (tx *AccessListTx) EffectiveGasFeeCapWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(baseFeeWei, tx.GetGasFeeCapWei())
+}
+
 // GetValueWei returns the tx amount.
 func (tx *AccessListTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {

@@ -167,6 +167,10 @@ func (tx *DynamicFeeTx) GetGasFeeCapWei() *big.Int {
 	return tx.GasFeeCap.BigInt()
 }
 
+func (tx *DynamicFeeTx) EffectiveGasFeeCapWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(baseFeeWei, tx.GetGasFeeCapWei())
+}
+
 // GetValueWei returns the tx amount.
 func (tx *DynamicFeeTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {

@@ -72,6 +72,7 @@ type TxData interface {
 	//
 	// [Alchemy Docs - maxPriorityFeePerGas vs maxFeePerGas]: https://docs.alchemy.com/docs/maxpriorityfeepergas-vs-maxfeepergas.
 	GetGasFeeCapWei() *big.Int
+	EffectiveGasFeeCapWei(baseFeeWei *big.Int) *big.Int
 
 	// GetValueWei: amount of ether (wei units) sent in the transaction.
 	GetValueWei() *big.Int
