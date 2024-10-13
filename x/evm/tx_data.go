@@ -93,7 +93,7 @@ type TxData interface {
 	// effective gasPrice/fee/cost according to current base fee
 	EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int
 	EffectiveFeeWei(baseFeeWei *big.Int) *big.Int
-	EffectiveCost(baseFeeWei *big.Int) *big.Int
+	EffectiveCostWei(baseFeeWei *big.Int) *big.Int
 }
 
 // NOTE: All non-protected transactions (i.e. non EIP155 signed) will fail if the

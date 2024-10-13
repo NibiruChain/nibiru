@@ -200,8 +200,8 @@ func (tx LegacyTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
 	return priceTimesGas(tx.EffectiveGasPriceWeiPerGas(baseFeeWei), tx.GetGas())
 }
 
-// EffectiveCost is the same as Cost for LegacyTx
-func (tx LegacyTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+// EffectiveCostWei is the same as Cost for LegacyTx
+func (tx LegacyTx) EffectiveCostWei(baseFeeWei *big.Int) *big.Int {
 	txFee := tx.EffectiveFeeWei(baseFeeWei)
 	return cost(txFee, tx.GetValueWei())
 }

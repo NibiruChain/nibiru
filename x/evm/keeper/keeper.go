@@ -122,6 +122,12 @@ func (k Keeper) BaseFeeMicronibiPerGas(_ sdk.Context) *big.Int {
 	return evm.BASE_FEE_MICRONIBI
 }
 
+// BaseFeeWeiPerGas is the same as BaseFeeMicronibiPerGas, except its in units of
+// wei per gas.
+func (k Keeper) BaseFeeWeiPerGas(_ sdk.Context) *big.Int {
+	return evm.NativeToWei(k.BaseFeeMicronibiPerGas(sdk.Context{}))
+}
+
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)

@@ -52,7 +52,9 @@ func (k *Keeper) RefundGas(
 	case -1:
 		// Should be impossible since leftoverGas is a uint64. Reaching this case
 		// would imply a critical error in the effective gas calculation.
-		return errors.Wrapf(evm.ErrInvalidRefund, "refunded amount value cannot be negative %d", leftoverMicronibi.Int64())
+		return errors.Wrapf(evm.ErrInvalidRefund,
+			"refunded amount value cannot be negative %s", leftoverMicronibi,
+		)
 	case 1:
 		refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}
 

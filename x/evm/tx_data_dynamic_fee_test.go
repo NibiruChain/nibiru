@@ -663,7 +663,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveCost() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveCost(tc.baseFee)
+		actual := tc.tx.EffectiveCostWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

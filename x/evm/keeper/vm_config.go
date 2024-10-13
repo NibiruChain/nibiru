@@ -27,12 +27,11 @@ func (k *Keeper) GetEVMConfig(
 		return nil, errors.Wrap(err, "failed to obtain coinbase address")
 	}
 
-	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
 	return &statedb.EVMConfig{
 		Params:        params,
 		ChainConfig:   ethCfg,
 		BlockCoinbase: coinbase,
-		BaseFeeWei:    baseFeeMicronibiPerGas,
+		BaseFeeWei:    k.BaseFeeWeiPerGas(ctx),
 	}, nil
 }
 

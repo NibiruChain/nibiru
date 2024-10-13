@@ -29,14 +29,14 @@ import (
 var _ evm.MsgServer = &Keeper{}
 
 func (k *Keeper) EthereumTx(
-	goCtx context.Context, msg *evm.MsgEthereumTx,
+	goCtx context.Context, txMsg *evm.MsgEthereumTx,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
-	if err := msg.ValidateBasic(); err != nil {
+	if err := txMsg.ValidateBasic(); err != nil {
 		return resp, errors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	resp, err = k.ApplyEvmTx(ctx, msg)
+	resp, err = k.ApplyEvmTx(ctx, txMsg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to apply transaction")
 	}

@@ -306,7 +306,7 @@ func (tx DynamicFeeTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
 	return priceTimesGas(tx.EffectiveGasPriceWeiPerGas(baseFeeWei), tx.GasLimit)
 }
 
-// EffectiveCost returns amount + effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+// EffectiveCostWei returns amount + effective_gasprice * gaslimit.
+func (tx DynamicFeeTx) EffectiveCostWei(baseFeeWei *big.Int) *big.Int {
 	return cost(tx.EffectiveFeeWei(baseFeeWei), tx.GetValueWei())
 }
