@@ -14,7 +14,7 @@ require (
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.47.11
-	github.com/cosmos/ibc-go/v7 v7.3.2
+	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.10.17
 )
 
@@ -105,6 +105,7 @@ require (
 	github.com/cosmos/cosmos-db v1.0.2 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v0.21.0-beta.1 // indirect
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.3.2-0.20240730185603-13c071f0b34d // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
