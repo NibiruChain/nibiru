@@ -167,6 +167,10 @@ func (tx *DynamicFeeTx) GetGasFeeCapWei() *big.Int {
 	return tx.GasFeeCap.BigInt()
 }
 
+func (tx *DynamicFeeTx) EffectiveGasFeeCapWei(baseFeeWei *big.Int) *big.Int {
+	return BigIntMax(baseFeeWei, tx.GetGasFeeCapWei())
+}
+
 // GetValueWei returns the tx amount.
 func (tx *DynamicFeeTx) GetValueWei() *big.Int {
 	if tx.Amount == nil {
@@ -291,9 +295,9 @@ func (tx DynamicFeeTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValueWei())
 }
 
-// EffectiveGasPriceWei returns the effective gas price based on EIP-1559 rules.
+// EffectiveGasPriceWeiPerGas returns the effective gas price based on EIP-1559 rules.
 // `effectiveGasPrice = min(baseFee + tipCap, feeCap)`
-func (tx *DynamicFeeTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
+func (tx *DynamicFeeTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int {
 	feeWithSpecifiedTip := new(big.Int).Add(tx.GasTipCap.BigInt(), baseFeeWei)
 
 	// Enforce base fee as the minimum [EffectiveGasPriceWei]:
@@ -303,10 +307,10 @@ func (tx *DynamicFeeTx) EffectiveGasPriceWei(baseFeeWei *big.Int) *big.Int {
 
 // EffectiveFeeWei returns effective_gasprice * gaslimit.
 func (tx DynamicFeeTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
-	return priceTimesGas(tx.EffectiveGasPriceWei(baseFeeWei), tx.GasLimit)
+	return priceTimesGas(tx.EffectiveGasPriceWeiPerGas(baseFeeWei), tx.GasLimit)
 }
 
-// EffectiveCost returns amount + effective_gasprice * gaslimit.
-func (tx DynamicFeeTx) EffectiveCost(baseFeeWei *big.Int) *big.Int {
+// EffectiveCostWei returns amount + effective_gasprice * gaslimit.
+func (tx DynamicFeeTx) EffectiveCostWei(baseFeeWei *big.Int) *big.Int {
 	return cost(tx.EffectiveFeeWei(baseFeeWei), tx.GetValueWei())
 }

@@ -18,7 +18,7 @@ func NewAnteHandlerEVM(
 		NewEthValidateBasicDecorator(&options.EvmKeeper),
 		NewEthSigVerificationDecorator(&options.EvmKeeper),
 		NewAnteDecVerifyEthAcc(&options.EvmKeeper, options.AccountKeeper),
-		NewCanTransferDecorator(&options.EvmKeeper),
+		CanTransferDecorator{&options.EvmKeeper},
 		NewAnteDecEthGasConsume(&options.EvmKeeper, options.MaxTxGasWanted),
 		NewAnteDecEthIncrementSenderSequence(&options.EvmKeeper, options.AccountKeeper),
 		ante.AnteDecoratorGasWanted{},

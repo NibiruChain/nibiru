@@ -15,11 +15,11 @@ import (
 
 // EthValidateBasicDecorator is adapted from ValidateBasicDecorator from cosmos-sdk, it ignores ErrNoSignatures
 type EthValidateBasicDecorator struct {
-	evmKeeper EVMKeeper
+	evmKeeper *EVMKeeper
 }
 
 // NewEthValidateBasicDecorator creates a new EthValidateBasicDecorator
-func NewEthValidateBasicDecorator(k EVMKeeper) EthValidateBasicDecorator {
+func NewEthValidateBasicDecorator(k *EVMKeeper) EthValidateBasicDecorator {
 	return EthValidateBasicDecorator{
 		evmKeeper: k,
 	}
@@ -89,7 +89,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	txFee := sdk.Coins{}
 	txGasLimit := uint64(0)
 
-	baseFee := vbd.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibi := vbd.evmKeeper.BaseFeeMicronibiPerGas(ctx)
 
 	for _, msg := range protoTx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -115,7 +115,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 			return ctx, errorsmod.Wrap(err, "failed to unpack MsgEthereumTx Data")
 		}
 
-		if baseFee == nil && txData.TxType() == gethcore.DynamicFeeTxType {
+		if baseFeeMicronibi == nil && txData.TxType() == gethcore.DynamicFeeTxType {
 			return ctx, errorsmod.Wrap(
 				gethcore.ErrTxTypeNotSupported,
 				"dynamic fee tx not supported",

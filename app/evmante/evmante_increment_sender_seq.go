@@ -13,12 +13,12 @@ import (
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.
 type AnteDecEthIncrementSenderSequence struct {
-	evmKeeper     EVMKeeper
+	evmKeeper     *EVMKeeper
 	accountKeeper ante.AccountKeeper
 }
 
 // NewAnteDecEthIncrementSenderSequence creates a new EthIncrementSenderSequenceDecorator.
-func NewAnteDecEthIncrementSenderSequence(k EVMKeeper, ak ante.AccountKeeper) AnteDecEthIncrementSenderSequence {
+func NewAnteDecEthIncrementSenderSequence(k *EVMKeeper, ak ante.AccountKeeper) AnteDecEthIncrementSenderSequence {
 	return AnteDecEthIncrementSenderSequence{
 		evmKeeper:     k,
 		accountKeeper: ak,

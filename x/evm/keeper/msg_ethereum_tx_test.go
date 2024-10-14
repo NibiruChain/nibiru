@@ -32,7 +32,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				deps := evmtest.NewTestDeps()
 				ethAcc := deps.Sender
 
-				// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
+				// Leftover gas fee is refunded within EthereumTx from the FeeCollector
 				// so, the module must have some coins
 				err := testapp.FundModuleAccount(
 					deps.App.BankKeeper,
@@ -115,7 +115,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
 
-	// Leftover gas fee is refunded within ApplyEvmTx from the FeeCollector
+	// Leftover gas fee is refunded within EthereumTx from the FeeCollector
 	// so, the module must have some coins
 	err := testapp.FundModuleAccount(
 		deps.App.BankKeeper,

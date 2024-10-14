@@ -50,6 +50,22 @@ func (k Keeper) FindERC20Metadata(
 	}, nil
 }
 
+// ERC20Metadata: Optional metadata fields parsed from an ERC20 contract.
+// The [Wrapped Ether contract] is a good example for reference.
+//
+//	```solidity
+//	constract WETH9 {
+//	  string public name     = "Wrapped Ether";
+//	  string public symbol   = "WETH"
+//	  uint8  public decimals = 18;
+//	}
+//	```
+//
+// Note that the name and symbol fields may be empty, according to the [ERC20
+// specification].
+//
+// [Wrapped Ether contract]: https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2#code
+// [ERC20 specification]: https://eips.ethereum.org/EIPS/eip-20
 type ERC20Metadata struct {
 	Name     string
 	Symbol   string
@@ -98,7 +114,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 
 	// 2 | Get existing ERC20 metadata
-	info, err := k.FindERC20Metadata(ctx, erc20)
+	erc20Info, err := k.FindERC20Metadata(ctx, erc20)
 	if err != nil {
 		return funtoken, err
 	}
@@ -115,21 +131,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 
 	// 4 | Set bank coin denom metadata in state
-	bankMetadata := bank.Metadata{
-		Description: fmt.Sprintf(
-			"ERC20 token \"%s\" represented as a bank coin with a corresponding FunToken mapping", erc20.String(),
-		),
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0, // TODO(k-yang): determine which exponent to use
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  info.Symbol,
-	}
+	bankMetadata := erc20Info.ToBankMetadata(bankDenom, erc20)
 
 	err = bankMetadata.Validate()
 	if err != nil {
@@ -149,4 +151,54 @@ func (k *Keeper) createFunTokenFromERC20(
 	return funtoken, k.FunTokens.SafeInsert(
 		ctx, erc20, bankDenom, false,
 	)
+}
+
+// ToBankMetadata produces the "bank.Metadata" corresponding to a FunToken
+// mapping created from an ERC20 token.
+//
+// The first argument of DenomUnits is required and the official base unit
+// onchain, meaning the denom must be equivalent to bank.Metadata.Base.
+//
+// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
+// they mean for external clients like wallets.
+func (erc20Info ERC20Metadata) ToBankMetadata(
+	bankDenom string, erc20 gethcommon.Address,
+) bank.Metadata {
+	var symbol string
+	if erc20Info.Symbol != "" {
+		symbol = erc20Info.Symbol
+	} else {
+		symbol = bankDenom
+	}
+
+	var name string
+	if erc20Info.Name != "" {
+		name = erc20Info.Name
+	} else {
+		name = bankDenom
+	}
+
+	denomUnits := []*bank.DenomUnit{
+		{
+			Denom:    bankDenom,
+			Exponent: 0,
+		},
+	}
+	display := symbol
+	if erc20Info.Decimals > 0 {
+		denomUnits = append(denomUnits, &bank.DenomUnit{
+			Denom:    display,
+			Exponent: uint32(erc20Info.Decimals),
+		})
+	}
+	return bank.Metadata{
+		Description: fmt.Sprintf(
+			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20.String(),
+		),
+		DenomUnits: denomUnits,
+		Base:       bankDenom,
+		Display:    display,
+		Name:       name,
+		Symbol:     symbol,
+	}
 }

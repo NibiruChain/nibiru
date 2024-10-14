@@ -56,7 +56,7 @@ func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereum
 
 // EthHeaderFromTendermint: Converts a Tendermint block header to an Eth header.
 func EthHeaderFromTendermint(
-	header tmtypes.Header, bloom gethcore.Bloom, baseFee *big.Int,
+	header tmtypes.Header, bloom gethcore.Bloom, baseFeeWei *big.Int,
 ) *gethcore.Header {
 	txHash := gethcore.EmptyRootHash
 	if len(header.DataHash) == 0 {
@@ -80,7 +80,7 @@ func EthHeaderFromTendermint(
 		Extra:       []byte{},
 		MixDigest:   gethcommon.Hash{},
 		Nonce:       gethcore.BlockNonce{},
-		BaseFee:     baseFee,
+		BaseFee:     baseFeeWei,
 	}
 }
 
@@ -161,11 +161,11 @@ func NewRPCTxFromMsg(
 	msg *evm.MsgEthereumTx,
 	blockHash gethcommon.Hash,
 	blockNumber, index uint64,
-	baseFee *big.Int,
+	baseFeeWei *big.Int,
 	chainID *big.Int,
 ) (*EthTxJsonRPC, error) {
 	tx := msg.AsTransaction()
-	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFee, chainID)
+	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFeeWei, chainID)
 }
 
 // NewRPCTxFromEthTx returns a transaction that will serialize to the RPC

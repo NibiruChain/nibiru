@@ -316,13 +316,13 @@ func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, er
 		b.logger.Debug("HeaderByNumber BlockBloom failed", "height", resBlock.Block.Height)
 	}
 
-	baseFee, err := b.BaseFee(blockRes)
+	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", resBlock.Block.Height, "error", err)
 	}
 
-	ethHeader := rpc.EthHeaderFromTendermint(resBlock.Block.Header, bloom, baseFee)
+	ethHeader := rpc.EthHeaderFromTendermint(resBlock.Block.Header, bloom, baseFeeWei)
 	return ethHeader, nil
 }
 
@@ -352,7 +352,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 	ethRPCTxs := []interface{}{}
 	block := resBlock.Block
 
-	baseFee, err := b.BaseFee(blockRes)
+	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", block.Height, "error", err)
@@ -374,7 +374,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 			gethcommon.BytesToHash(block.Hash()),
 			height,
 			index,
-			baseFee,
+			baseFeeWei,
 			b.chainID,
 		)
 		if err != nil {
@@ -434,7 +434,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 	formattedBlock := rpc.FormatBlock(
 		block.Header, block.Size(),
 		gasLimit, new(big.Int).SetUint64(gasUsed),
-		ethRPCTxs, bloom, validatorAddr, baseFee,
+		ethRPCTxs, bloom, validatorAddr, baseFeeWei,
 	)
 	return formattedBlock, nil
 }
@@ -471,13 +471,13 @@ func (b *Backend) EthBlockFromTendermintBlock(
 		b.logger.Debug("HeaderByNumber BlockBloom failed", "height", height)
 	}
 
-	baseFee, err := b.BaseFee(blockRes)
+	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle error for pruned node and log
 		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", height, "error", err)
 	}
 
-	ethHeader := rpc.EthHeaderFromTendermint(block.Header, bloom, baseFee)
+	ethHeader := rpc.EthHeaderFromTendermint(block.Header, bloom, baseFeeWei)
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
 
 	txs := make([]*gethcore.Transaction, len(msgs))

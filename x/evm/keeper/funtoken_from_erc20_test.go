@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -101,6 +102,22 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 			IsMadeFromCoin:       false,
 		},
 	)
+	bankMetadata, _ := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, expectedBankDenom)
+	s.Require().Equal(bank.Metadata{
+		Description: fmt.Sprintf(
+			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr.String(),
+		),
+		DenomUnits: []*bank.DenomUnit{
+			{Denom: expectedBankDenom, Exponent: 0},
+			{Denom: metadata.Symbol, Exponent: uint32(metadata.Decimals)},
+		},
+		Base:    expectedBankDenom,
+		Display: metadata.Symbol,
+		Name:    metadata.Name,
+		Symbol:  metadata.Symbol,
+		URI:     "",
+		URIHash: "",
+	}, bankMetadata)
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
 	// Give the sender funds for the fee
