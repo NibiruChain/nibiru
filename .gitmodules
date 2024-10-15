@@ -1,3 +1,6 @@
 [submodule "geth"]
 	path = geth
 	url = git@github.com:NibiruChain/go-ethereum.git
+[submodule "evm-forge/lib/openzeppelin-contracts"]
+	path = evm-forge/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
