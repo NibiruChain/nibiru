@@ -231,6 +231,8 @@ func (k Keeper) CallContractWithInput(
 		if err != nil {
 			return nil, errors.Wrap(err, "error emitting ethereum tx events")
 		}
+		blockTxIdx := uint64(txConfig.TxIndex) + 1
+		k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 	}
 
 	return evmResp, nil
