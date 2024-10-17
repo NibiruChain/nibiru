@@ -225,7 +225,17 @@ func (k Keeper) CallContractWithInput(
 		return nil, errors.Wrapf(err, "EVM execution failed: %s", evmResp.VmError)
 	}
 
-	return evmResp, err
+	if commit {
+		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+		err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
+		if err != nil {
+			return nil, errors.Wrap(err, "error emitting ethereum tx events")
+		}
+		blockTxIdx := uint64(txConfig.TxIndex) + 1
+		k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+	}
+
+	return evmResp, nil
 }
 
 // computeCommitGasLimit: If the transition is meant to mutate state, this
