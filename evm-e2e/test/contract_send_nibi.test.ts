@@ -7,7 +7,7 @@
  * accordingly.
  *
  * The methods tested are from the smart contract,
- * "e2e/evm/contracts/SendReceiveNibi.sol".
+ * "evm-e2e/contracts/SendReceiveNibi.sol".
  */
 import { describe, expect, it } from "@jest/globals"
 import { parseEther, toBigInt, Wallet } from "ethers"
