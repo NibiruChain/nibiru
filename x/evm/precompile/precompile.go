@@ -16,6 +16,7 @@ package precompile
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
@@ -24,7 +25,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
@@ -129,4 +133,60 @@ func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
 
 	argsBzLen := uint64(len(input[4:]))
 	return (costPerByte * argsBzLen) + costFlat
+}
+
+// This is a `defer` pattern to add behavior that runs in the case that the error is
+// non-nil, creating a concise way to add extra information.
+func ErrPrecompileRun(err error, p vm.PrecompiledContract) func() {
+	return func() {
+		if err != nil {
+			precompileType := reflect.TypeOf(p).Name()
+			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
+		}
+	}
+}
+
+type PrecompileStartResult struct {
+	Args              []any
+	Ctx               sdk.Context
+	WriteCtx          func()
+	Method            *gethabi.Method
+	SnapshotBeforeRun statedb.PrecompileSnapshotBeforeRun
+	StateDB           *statedb.StateDB
+}
+
+func OnRunStart(
+	evm *vm.EVM, contract *vm.Contract, abi *gethabi.ABI,
+) (res PrecompileStartResult, err error) {
+	method, args, err := DecomposeInput(abi, contract.Input)
+	if err != nil {
+		return res, err
+	}
+
+	stateDB, ok := evm.StateDB.(*statedb.StateDB)
+	if !ok {
+		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
+		return
+	}
+	cacheCtx, writeCacheCtx, stateDBSnapshot := stateDB.CacheCtxForPrecompile()
+	if err = stateDB.CommitContext(cacheCtx); err != nil {
+		return res, fmt.Errorf("error committing dirty journal entries for the precompile call to the cache ctx: %w", err)
+	}
+
+	return PrecompileStartResult{
+		Args:              args,
+		Ctx:               cacheCtx,
+		WriteCtx:          writeCacheCtx,
+		Method:            method,
+		SnapshotBeforeRun: stateDBSnapshot,
+		StateDB:           stateDB,
+	}, nil
+}
+
+func OnRunEnd(
+	stateDB *statedb.StateDB,
+	snapshot statedb.PrecompileSnapshotBeforeRun,
+	precompileAddr gethcommon.Address,
+) error {
+	return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
 }

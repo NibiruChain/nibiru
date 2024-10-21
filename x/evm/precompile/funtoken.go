@@ -3,7 +3,6 @@ package precompile
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 	"sync"
 
 	"cosmossdk.io/math"
@@ -12,13 +11,11 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -34,15 +31,7 @@ func (p precompileFunToken) Address() gethcommon.Address {
 
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
-	// a contract, it's value can be used to derive an appropriate value for the
-	// precompile call. The FunToken precompile performs 3 operations, labeled 1-3
-	// below:
-	// 0 | Call the precompile (already counted in gas calculation)
-	// 1 | Send ERC20 to EVM.
-	// 2 | Convert ERC20 to coin
-	// 3 | Send coin to recipient.
-	return gethparams.TxGas * 2
+	return RequiredGas(input, embeds.SmartContract_FunToken.ABI)
 }
 
 const (
@@ -55,27 +44,13 @@ type PrecompileMethod string
 func (p precompileFunToken) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
-	defer func() {
-		if err != nil {
-			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
-		}
-	}()
-
-	// 1 | Get context from StateDB
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx := stateDB.GetContext()
-
-	method, args, err := DecomposeInput(embeds.SmartContract_FunToken.ABI, contract.Input)
+	defer ErrPrecompileRun(err, p)()
+	res, err := OnRunStart(evm, contract, embeds.SmartContract_FunToken.ABI)
 	if err != nil {
 		return nil, err
 	}
+	method, args := res.Method, res.Args
+	ctx := res.Ctx
 
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
@@ -87,7 +62,11 @@ func (p precompileFunToken) Run(
 		return
 	}
 
-	return
+	if err := OnRunEnd(res.StateDB, res.SnapshotBeforeRun, p.Address()); err != nil {
+		return nil, err
+	}
+	res.WriteCtx()
+	return bz, nil
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {

@@ -30,7 +30,18 @@ var _ vm.StateDB = &StateDB{}
 // * Accounts
 type StateDB struct {
 	keeper Keeper
-	ctx    sdk.Context
+	// ctx is the persistent context used for official `StateDB.Commit` calls.
+	ctx sdk.Context
+	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
+	// multi-store cached and a new event manager. The cached context
+	// (`cacheCtx`) is written to the persistent context (`ctx`) when
+	// `writeCacheCtx` is called.
+	cacheCtx sdk.Context
+	// Events are automatically emitted on the parent context's
+	// EventManager when the caller executes the [writeCacheCtxFn].
+	writeCacheCtxFn func()
+	// THe number of precompiled contract calls within the current transaction
+	precompileSnapshotsCount uint8
 
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
@@ -449,20 +460,21 @@ func errorf(format string, args ...any) error {
 	return fmt.Errorf("StateDB error: "+format, args...)
 }
 
-// Commit writes the dirty states to keeper
-// the StateDB object should be discarded after committed.
-func (s *StateDB) Commit() error {
+// CommitContext writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [CommitContext] has completed. A new
+// object needs to be created from the EVM.
+func (s *StateDB) CommitContext(ctx sdk.Context) error {
 	for _, addr := range s.journal.sortedDirties() {
 		obj := s.stateObjects[addr]
 		if obj.suicided {
-			if err := s.keeper.DeleteAccount(s.ctx, obj.Address()); err != nil {
+			if err := s.keeper.DeleteAccount(ctx, obj.Address()); err != nil {
 				return errorf("failed to delete account: %w")
 			}
 		} else {
 			if obj.code != nil && obj.dirtyCode {
-				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
+				s.keeper.SetCode(ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account.ToNative()); err != nil {
+			if err := s.keeper.SetAccount(ctx, obj.Address(), obj.account.ToNative()); err != nil {
 				return errorf("failed to set account: %w")
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {
@@ -471,11 +483,19 @@ func (s *StateDB) Commit() error {
 				if value == obj.originStorage[key] {
 					continue
 				}
-				s.keeper.SetState(s.ctx, obj.Address(), key, value.Bytes())
+				s.keeper.SetState(ctx, obj.Address(), key, value.Bytes())
 			}
 		}
 	}
 	return nil
+}
+
+// Commit writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [CommitContext] has completed. A new
+// object needs to be created from the EVM.
+func (s *StateDB) Commit() error {
+	ctx := s.ctx
+	return s.CommitContext(ctx)
 }
 
 // StateObjects: Returns a copy of the [StateDB.stateObjects] map.
@@ -486,3 +506,31 @@ func (s *StateDB) StateObjects() map[common.Address]*stateObject {
 	}
 	return copyOfMap
 }
+
+func (s *StateDB) CacheCtxForPrecompile() (
+	sdk.Context, func(), PrecompileSnapshotBeforeRun,
+) {
+	if s.writeCacheCtxFn == nil {
+		s.cacheCtx, s.writeCacheCtxFn = s.ctx.CacheContext()
+	}
+	return s.cacheCtx, s.writeCacheCtxFn, PrecompileSnapshotBeforeRun{
+		MultiStore: s.cacheCtx.MultiStore().CacheMultiStore(),
+		Events:     s.cacheCtx.EventManager().Events(),
+	}
+}
+
+func (s *StateDB) SavePrecompileSnapshotToJournal(
+	precompileAddr common.Address,
+	snapshot PrecompileSnapshotBeforeRun,
+) error {
+	fmt.Println("SavePrecompileSnapshotToJournal was called")
+	obj := s.getOrNewStateObject(precompileAddr)
+	obj.db.journal.append(snapshot)
+	s.precompileSnapshotsCount++
+	if s.precompileSnapshotsCount > maxPrecompileCalls {
+		return fmt.Errorf("exceeded maximum allowed number of precompiled contract calls in one transaction (%d)", maxPrecompileCalls)
+	}
+	return nil
+}
+
+const maxPrecompileCalls uint8 = 10

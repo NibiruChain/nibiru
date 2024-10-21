@@ -133,7 +133,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000))
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
-	s.Equal(sdk.NewInt(420),
-		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount,
+	s.Equal(sdk.NewInt(420).String(),
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
 }
