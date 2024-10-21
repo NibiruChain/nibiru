@@ -2,7 +2,6 @@ package precompile
 
 import (
 	"fmt"
-	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -14,8 +13,6 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileWasm)(nil)
@@ -75,26 +72,12 @@ func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
 func (p precompileWasm) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
-	defer func() {
-		if err != nil {
-			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
-		}
-	}()
-
-	method, args, err := DecomposeInput(embeds.SmartContract_Wasm.ABI, contract.Input)
+	defer ErrPrecompileRun(err, p)()
+	res, err := OnRunStart(evm, contract, embeds.SmartContract_Wasm.ABI)
 	if err != nil {
 		return nil, err
 	}
-
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx := stateDB.GetContext()
+	method, args, ctx := res.Method, res.Args, res.Ctx
 
 	switch PrecompileMethod(method.Name) {
 	case WasmMethod_execute:
@@ -114,6 +97,10 @@ func (p precompileWasm) Run(
 		return
 	}
 
+	if err := OnRunEnd(res.StateDB, res.SnapshotBeforeRun, p.Address()); err != nil {
+		return nil, err
+	}
+	res.WriteCtx()
 	return
 }
 

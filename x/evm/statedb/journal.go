@@ -18,15 +18,18 @@ package statedb
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 
+	store "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// JournalEntry is a modification entry in the state change journal that can be
+// JournalChange is a modification entry in the state change journal that can be
 // Reverted on demand.
-type JournalEntry interface {
+type JournalChange interface {
 	// Revert undoes the changes introduced by this journal entry.
 	Revert(*StateDB)
 
@@ -38,7 +41,7 @@ type JournalEntry interface {
 // commit. These are tracked to be able to be reverted in the case of an execution
 // exception or request for reversal.
 type journal struct {
-	entries []JournalEntry         // Current changes tracked by the journal
+	entries []JournalChange        // Current changes tracked by the journal
 	dirties map[common.Address]int // Dirty accounts and the number of changes
 }
 
@@ -62,7 +65,7 @@ func (j *journal) sortedDirties() []common.Address {
 }
 
 // append inserts a new modification entry to the end of the change journal.
-func (j *journal) append(entry JournalEntry) {
+func (j *journal) append(entry JournalChange) {
 	j.entries = append(j.entries, entry)
 	if addr := entry.Dirtied(); addr != nil {
 		j.dirties[*addr]++
@@ -92,10 +95,14 @@ func (j *journal) length() int {
 }
 
 type (
-	// Changes to the account trie.
+	// createObjectChange: [JournalChange] implementation for when
+	// a new account (called an "object" in this context) is created in state.
 	createObjectChange struct {
 		account *common.Address
 	}
+	// resetObjectChange: [JournalChange] implementation for when
+	// a backup for a state object is needed in order to revert state changes
+	// that overwrite an existing object.
 	resetObjectChange struct {
 		prev *stateObject
 	}
@@ -105,11 +112,12 @@ type (
 		prevbalance *big.Int
 	}
 
-	// Changes to individual accounts.
+	// balanceChange: [JournalChange] for an update to an account's wei balance
 	balanceChange struct {
 		account *common.Address
-		prev    *big.Int
+		prevWei *big.Int
 	}
+	// nonceChange: [JournalChange] for an update to an account's nonce.
 	nonceChange struct {
 		account *common.Address
 		prev    uint64
@@ -133,10 +141,53 @@ type (
 	accessListAddAccountChange struct {
 		address *common.Address
 	}
+	// accessListAddSlotChange: [JournalChange] implementations for
 	accessListAddSlotChange struct {
 		address *common.Address
 		slot    *common.Hash
 	}
+)
+
+// ------------------------------------------------------
+// PrecompileSnapshotBeforeRun
+
+var _ JournalChange = PrecompileSnapshotBeforeRun{}
+
+type PrecompileSnapshotBeforeRun struct {
+	MultiStore store.CacheMultiStore
+	Events     sdk.Events
+}
+
+func (ch PrecompileSnapshotBeforeRun) Revert(s *StateDB) {
+	// TODO: Revert PrecompileSnapshotBeforeRun
+	// Restore the multistore recorded in the journal entry
+
+	fmt.Printf("\"Revert was called.\"\n")
+
+	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
+	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
+	s.writeCacheCtxFn = func() {
+		s.ctx.EventManager().EmitEvents(ch.Events)
+		ch.MultiStore.Write()
+	}
+}
+
+func (ch PrecompileSnapshotBeforeRun) Dirtied() *common.Address {
+	return nil
+}
+
+var (
+	_ JournalChange = accessListAddSlotChange{}
+	_ JournalChange = createObjectChange{}
+	_ JournalChange = resetObjectChange{}
+	_ JournalChange = suicideChange{}
+	_ JournalChange = balanceChange{}
+	_ JournalChange = nonceChange{}
+	_ JournalChange = storageChange{}
+	_ JournalChange = codeChange{}
+	_ JournalChange = refundChange{}
+	_ JournalChange = addLogChange{}
+	_ JournalChange = accessListAddAccountChange{}
 )
 
 func (ch createObjectChange) Revert(s *StateDB) {
@@ -168,7 +219,7 @@ func (ch suicideChange) Dirtied() *common.Address {
 }
 
 func (ch balanceChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setBalance(ch.prev)
+	s.getStateObject(*ch.account).setBalance(ch.prevWei)
 }
 
 func (ch balanceChange) Dirtied() *common.Address {
@@ -215,16 +266,15 @@ func (ch addLogChange) Dirtied() *common.Address {
 	return nil
 }
 
+// When an (address, slot) combination is added, it always results in two
+// journal entries if the address is not already present:
+//  1. `accessListAddAccountChange`: a journal change for the address
+//  2. `accessListAddSlotChange`: a journal change for the (address, slot)
+//     combination.
+//
+// Thus, when reverting, we can safely delete the address, as no storage slots
+// remain once the address entry is reverted.
 func (ch accessListAddAccountChange) Revert(s *StateDB) {
-	/*
-		One important invariant here, is that whenever a (addr, slot) is added, if the
-		addr is not already present, the add causes two journal entries:
-		- one for the address,
-		- one for the (address,slot)
-		Therefore, when unrolling the change, we can always blindly delete the
-		(addr) at this point, since no storage adds can remain when come upon
-		a single (addr) change.
-	*/
 	s.accessList.DeleteAddress(*ch.address)
 }
 

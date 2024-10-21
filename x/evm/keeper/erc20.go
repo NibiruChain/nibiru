@@ -213,7 +213,12 @@ func (k Keeper) CallContractWithInput(
 		return nil, errors.Wrapf(err, "failed to load evm config")
 	}
 
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
+	blockHash := gethcommon.BytesToHash(ctx.HeaderHash())
+	// txIdx := uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0))    // TxIndex
+	// txLogIdx := uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)) // LogIndex
+	ctx.TxBytes()
+	txConfig := statedb.NewEmptyTxConfig(blockHash)
+
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
