@@ -133,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Use effective gas price in RefundGas and make sure that units are properly
 reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
 and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
+- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - fix(evm-precompiles): It is possible for the `Run` function of a custom rpecompile to retrieve stale state because EVM state changes can occur before the precompile is called that are recorded as entries in the StateDB journal for the transaction without being reflected in the `sdk.Context`. This pull request makes sure that state is committed as expected.
 
 
 #### Dapp modules: perp, spot, oracle, etc
