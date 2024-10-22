@@ -24,7 +24,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 type GethTxType = uint8
@@ -191,7 +190,11 @@ func DeployContract(
 // DeployAndExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
 func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
-) (erc20Transfer *evm.MsgEthereumTx, predecessors []*evm.MsgEthereumTx) {
+) (
+	erc20Transfer *evm.MsgEthereumTx,
+	predecessors []*evm.MsgEthereumTx,
+	contractAddr gethcommon.Address,
+) {
 	// TX 1: Deploy ERC-20 contract
 	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20)
 	require.NoError(t, err)
@@ -199,7 +202,7 @@ func DeployAndExecuteERC20Transfer(
 	nonce := deployResp.Nonce
 
 	// Contract address is deterministic
-	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
+	contractAddr = crypto.CreateAddress(deps.Sender.EthAddr, nonce)
 	deps.App.Commit()
 	predecessors = []*evm.MsgEthereumTx{
 		deployResp.EthTxMsg,
@@ -213,7 +216,7 @@ func DeployAndExecuteERC20Transfer(
 	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
-		To:    &contractAddress,
+		To:    &contractAddr,
 		Nonce: (*hexutil.Uint64)(&nonce),
 		Data:  (*hexutil.Bytes)(&input),
 	}
@@ -226,7 +229,7 @@ func DeployAndExecuteERC20Transfer(
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
-	return erc20Transfer, predecessors
+	return erc20Transfer, predecessors, contractAddr
 }
 
 func CallContractTx(
@@ -244,13 +247,6 @@ func CallContractTx(
 	}, deps, sender)
 	if err != nil {
 		err = fmt.Errorf("CallContract error during tx generation: %w", err)
-		return
-	}
-
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.HexToHash(ethTxMsg.Hash))
-	stateDB := statedb.New(deps.Ctx, &deps.EvmKeeper, txConfig)
-	err = stateDB.Commit()
-	if err != nil {
 		return
 	}
 

@@ -663,15 +663,14 @@ func (k Keeper) TraceBlock(
 		contextHeight = 1
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithBlockHeight(contextHeight)
-	ctx = ctx.WithBlockTime(req.BlockTime)
-	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
-
-	// to get the base fee we only need the block max gas in the consensus params
-	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
-		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
-	})
+	ctx := sdk.UnwrapSDKContext(goCtx).
+		WithBlockHeight(contextHeight).
+		WithBlockTime(req.BlockTime).
+		WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash)).
+		// to get the base fee we only need the block max gas in the consensus params
+		WithConsensusParams(&cmtproto.ConsensusParams{
+			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+		})
 
 	chainID := k.EthChainID(ctx)
 
