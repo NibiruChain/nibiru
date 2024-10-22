@@ -523,7 +523,6 @@ func (s *StateDB) SavePrecompileSnapshotToJournal(
 	precompileAddr common.Address,
 	snapshot PrecompileSnapshotBeforeRun,
 ) error {
-	fmt.Println("SavePrecompileSnapshotToJournal was called")
 	obj := s.getOrNewStateObject(precompileAddr)
 	obj.db.journal.append(snapshot)
 	s.precompileSnapshotsCount++

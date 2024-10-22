@@ -214,10 +214,9 @@ func (k Keeper) CallContractWithInput(
 	}
 
 	blockHash := gethcommon.BytesToHash(ctx.HeaderHash())
-	// txIdx := uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0))    // TxIndex
-	// txLogIdx := uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)) // LogIndex
-	ctx.TxBytes()
 	txConfig := statedb.NewEmptyTxConfig(blockHash)
+	txConfig.TxIndex = uint(k.EvmState.BlockLogSize.GetOr(ctx, 0))
+	txConfig.LogIndex = uint(k.EvmState.BlockLogSize.GetOr(ctx, 0))
 
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,

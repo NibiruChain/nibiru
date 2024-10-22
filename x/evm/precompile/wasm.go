@@ -96,6 +96,9 @@ func (p precompileWasm) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	if err := OnRunEnd(res.StateDB, res.SnapshotBeforeRun, p.Address()); err != nil {
 		return nil, err

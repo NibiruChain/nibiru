@@ -45,6 +45,7 @@ func (p precompileFunToken) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
 	defer ErrPrecompileRun(err, p)()
+
 	res, err := OnRunStart(evm, contract, embeds.SmartContract_FunToken.ABI)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,9 @@ func (p precompileFunToken) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	if err := OnRunEnd(res.StateDB, res.SnapshotBeforeRun, p.Address()); err != nil {
 		return nil, err
 	}

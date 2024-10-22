@@ -162,7 +162,7 @@ func (ch PrecompileSnapshotBeforeRun) Revert(s *StateDB) {
 	// TODO: Revert PrecompileSnapshotBeforeRun
 	// Restore the multistore recorded in the journal entry
 
-	fmt.Printf("\"Revert was called.\"\n")
+	fmt.Printf("TODO: UD-DEBUG: PrecompileSnapshotBeforeRun.Revert called\n")
 
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
