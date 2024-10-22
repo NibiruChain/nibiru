@@ -2,7 +2,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -10,10 +9,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -180,10 +180,9 @@ func (k Keeper) CallContractWithInput(
 	}()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
+	// Gas cap sufficient for all "honest" ERC20 calls without malicious (gas intensive) code in contracts
 	gasLimit := serverconfig.DefaultEthCallGasLimit
-	gasLimit, err = computeCommitGasLimit(
-		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
-	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -217,63 +216,38 @@ func (k Keeper) CallContractWithInput(
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
+	var gasUsed uint64
+	if evmResp != nil {
+		gasUsed = evmResp.GasUsed
+	} else {
+		gasUsed = ctx.GasMeter().Limit()
+	}
+	totalGasUsed, err := k.AddToBlockGasUsed(ctx, gasUsed)
+	if err != nil {
+		return nil, errors.Wrap(err, "error adding transient gas used to block")
+	}
+	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to apply EVM message")
 	}
-
+	if evmResp == nil {
+		return nil, fmt.Errorf("failed to apply EVM message")
+	}
 	if evmResp.Failed() {
-		return nil, errors.Wrapf(err, "EVM execution failed: %s", evmResp.VmError)
+		if evmResp.VmError != vm.ErrOutOfGas.Error() {
+			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
+				return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+			}
+			return nil, fmt.Errorf("VMError: %s", evmResp.VmError)
+		}
+		// Otherwise, the specified gas cap is too low
+		return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
 	}
 
-	return evmResp, err
-}
+	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 
-// computeCommitGasLimit: If the transition is meant to mutate state, this
-// function computes an appopriates gas limit for the call with "contractInput"
-// bytes against the given contract address.
-//
-// ℹ️ This creates a cached context for gas estimation, which is essential
-// because state transitions can occur outside of the EVM that are triggered
-// by Ethereum transactions, like in the case of precompiled contract or
-// custom EVM hook that runs after tx execution. Gas estimation in that case
-// could mutate the "ctx" object and result in falty resulting state, so we
-// must cache here to avoid this issue.
-func computeCommitGasLimit(
-	commit bool,
-	gasLimit uint64,
-	fromAcc, contract *gethcommon.Address,
-	contractInput []byte,
-	k Keeper,
-	ctx sdk.Context,
-) (newGasLimit uint64, err error) {
-	if !commit {
-		return gasLimit, nil
-	}
-
-	cachedCtx, _ := ctx.CacheContext() // IMPORTANT!
-
-	jsonArgs, err := json.Marshal(evm.JsonTxArgs{
-		From: fromAcc,
-		To:   contract,
-		Data: (*hexutil.Bytes)(&contractInput),
-	})
-	if err != nil {
-		return gasLimit, fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
-	}
-
-	gasRes, err := k.EstimateGasForEvmCallType(
-		sdk.WrapSDKContext(cachedCtx),
-		&evm.EthCallRequest{
-			Args:   jsonArgs,
-			GasCap: gasLimit,
-		},
-		evm.CallTypeSmart,
-	)
-	if err != nil {
-		return gasLimit, fmt.Errorf("failed to compute gas limit: %w", err)
-	}
-
-	return gasRes.Gas, nil
+	return evmResp, nil
 }
 
 func (k Keeper) LoadERC20Name(

@@ -158,7 +158,6 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 }
 
 // deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
-// If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
 func (anteDec AnteDecEthGasConsume) deductFee(
 	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
 ) error {

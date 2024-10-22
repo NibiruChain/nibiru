@@ -70,38 +70,7 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 
-	logs := evm.LogsToEthereum(evmResp.Logs)
-
-	cumulativeGasUsed := evmResp.GasUsed
-	if ctx.BlockGasMeter() != nil {
-		limit := ctx.BlockGasMeter().Limit()
-		cumulativeGasUsed += ctx.BlockGasMeter().GasConsumed()
-		if cumulativeGasUsed > limit {
-			cumulativeGasUsed = limit
-		}
-	}
-
-	var contractAddr gethcommon.Address
-	if msg.To() == nil {
-		contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
-	}
-
-	receipt := &gethcore.Receipt{
-		Type:              tx.Type(),
-		PostState:         nil, // TODO: intermediate state root
-		CumulativeGasUsed: cumulativeGasUsed,
-		Bloom:             k.EvmState.CalcBloomFromLogs(ctx, logs),
-		Logs:              logs,
-		TxHash:            txConfig.TxHash,
-		ContractAddress:   contractAddr,
-		GasUsed:           evmResp.GasUsed,
-		BlockHash:         txConfig.BlockHash,
-		BlockNumber:       big.NewInt(ctx.BlockHeight()),
-		TransactionIndex:  txConfig.TxIndex,
-	}
-
 	if !evmResp.Failed() {
-		receipt.Status = gethcore.ReceiptStatusSuccessful
 		commit()
 	}
 
@@ -115,12 +84,7 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", msg.From())
 	}
 
-	if len(receipt.Logs) > 0 {
-		// Update transient block bloom filter
-		k.EvmState.BlockBloom.Set(ctx, receipt.Bloom.Bytes())
-		blockLogSize := uint64(txConfig.LogIndex) + uint64(len(receipt.Logs))
-		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
-	}
+	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
 	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if err != nil {
@@ -130,7 +94,7 @@ func (k *Keeper) EthereumTx(
 	// reset the gas meter for current cosmos transaction
 	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 
-	err = k.EmitEthereumTxEvents(ctx, tx, msg, evmResp, contractAddr)
+	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), msg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
@@ -673,10 +637,10 @@ func (k Keeper) convertCoinNativeERC20(
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
 func (k *Keeper) EmitEthereumTxEvents(
 	ctx sdk.Context,
-	tx *gethcore.Transaction,
+	recipient *gethcommon.Address,
+	txType uint8,
 	msg gethcore.Message,
 	evmResp *evm.MsgEthereumTxResponse,
-	contractAddr gethcommon.Address,
 ) error {
 	// Typed event: eth.evm.v1.EventEthereumTx
 	eventEthereumTx := &evm.EventEthereumTx{
@@ -687,8 +651,8 @@ func (k *Keeper) EmitEthereumTxEvents(
 	if len(ctx.TxBytes()) > 0 {
 		eventEthereumTx.Hash = tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash()).String()
 	}
-	if to := tx.To(); to != nil {
-		eventEthereumTx.Recipient = to.Hex()
+	if recipient != nil {
+		eventEthereumTx.Recipient = recipient.Hex()
 	}
 	if evmResp.Failed() {
 		eventEthereumTx.EthTxFailed = evmResp.VmError
@@ -715,13 +679,14 @@ func (k *Keeper) EmitEthereumTxEvents(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.From().Hex()),
-			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", tx.Type())),
+			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", txType)),
 		),
 	)
 
 	// Emit typed events
 	if !evmResp.Failed() {
-		if tx.To() == nil { // contract creation
+		if recipient == nil { // contract creation
+			var contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
 				Sender:       msg.From().Hex(),
 				ContractAddr: contractAddr.String(),
@@ -741,4 +706,18 @@ func (k *Keeper) EmitEthereumTxEvents(
 	}
 
 	return nil
+}
+
+// updateBlockBloom updates transient block bloom filter
+func (k *Keeper) updateBlockBloom(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+	logIndex uint64,
+) {
+	logs := evm.LogsToEthereum(evmResp.Logs)
+	if len(logs) > 0 {
+		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())
+		blockLogSize := logIndex + uint64(len(logs))
+		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
+	}
 }
