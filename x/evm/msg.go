@@ -315,8 +315,8 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 }
 
 // AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFee *big.Int) (core.Message, error) {
-	return msg.AsTransaction().AsMessage(signer, baseFee)
+func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFeeWei *big.Int) (core.Message, error) {
+	return msg.AsTransaction().AsMessage(signer, baseFeeWei)
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
