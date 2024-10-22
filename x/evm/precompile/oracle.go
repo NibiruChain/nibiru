@@ -35,7 +35,9 @@ const (
 func (p precompileOracle) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	defer ErrPrecompileRun(err, p)()
+	defer func() {
+		err = ErrPrecompileRun(err, p)
+	}()
 	res, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
 	if err != nil {
 		return nil, err

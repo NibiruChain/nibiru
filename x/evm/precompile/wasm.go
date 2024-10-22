@@ -33,7 +33,9 @@ const (
 func (p precompileWasm) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	defer ErrPrecompileRun(err, p)()
+	defer func() {
+		err = ErrPrecompileRun(err, p)
+	}()
 	res, err := OnRunStart(evm, contract, p.ABI())
 	if err != nil {
 		return nil, err
