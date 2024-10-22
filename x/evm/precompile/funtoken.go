@@ -29,9 +29,13 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
+func (p precompileFunToken) ABI() *gethabi.ABI {
+	return embeds.SmartContract_FunToken.ABI
+}
+
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	return RequiredGas(input, embeds.SmartContract_FunToken.ABI)
+	return RequiredGas(input, p.ABI())
 }
 
 const (
@@ -46,12 +50,11 @@ func (p precompileFunToken) Run(
 ) (bz []byte, err error) {
 	defer ErrPrecompileRun(err, p)()
 
-	res, err := OnRunStart(evm, contract, embeds.SmartContract_FunToken.ABI)
+	res, err := OnRunStart(evm, contract, p.ABI())
 	if err != nil {
 		return nil, err
 	}
-	method, args := res.Method, res.Args
-	ctx := res.Ctx
+	method, args, ctx := res.Method, res.Args, res.Ctx
 
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
