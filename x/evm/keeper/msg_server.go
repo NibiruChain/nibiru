@@ -592,10 +592,10 @@ func (k Keeper) convertCoinNativeERC20(
 
 	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
+		return nil, errors.Wrap(err, "failed to retrieve EVM module account balance")
 	}
 	if recipientBalanceBefore == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+		return nil, fmt.Errorf("failed to retrieve EVM module account balance, balance is nil")
 	}
 
 	// Escrow Coins on module account
@@ -626,45 +626,39 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// unescrow ERC-20 tokens from EVM module address
-	res, err := k.ERC20().Transfer(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		recipient,
-		coin.Amount.BigInt(),
-		ctx,
-	)
+	input, err := k.ERC20().ABI.Pack("transfer", recipient, coin.Amount.BigInt())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to pack ABI args")
+	}
+	_, err = k.ERC20().CallContractWithInput(ctx, evm.EVM_MODULE_ADDRESS, &erc20Addr, true, input)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
 	}
-	if !res {
-		return nil, fmt.Errorf("failed to transfer ERC20 tokens")
-	}
 
-	// Check expected Receiver balance after transfer execution
+	// For fee-on-transfer tokens, the actual amount received may be less than the amount transferred.
+	// Retrieve the recipient's balance after the transfer to calculate the actual received amount.
 	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
+		return nil, errors.Wrap(err, "failed to retrieve recipient balance after transfer")
 	}
 	if recipientBalanceAfter == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+		return nil, fmt.Errorf("failed to retrieve recipient balance after transfer, balance is nil")
 	}
 
-	expectedFinalBalance := big.NewInt(0).Add(recipientBalanceBefore, coin.Amount.BigInt())
-	if r := recipientBalanceAfter.Cmp(expectedFinalBalance); r != 0 {
-		return nil, fmt.Errorf("expected balance after transfer to be %s, got %s", expectedFinalBalance, recipientBalanceAfter)
-	}
-
-	// Burn escrowed Coins
-	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
+	// Burn escrowed Coins based on the actual amount received by the recipient
+	actualReceivedAmount := big.NewInt(0).Sub(recipientBalanceAfter, recipientBalanceBefore)
+	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualReceivedAmount))
+	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}
 
+	// Emit event with the actual amount received
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
 		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
+		BankCoin:             burnCoin,
 	})
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
