@@ -43,9 +43,14 @@ lint:
 
   golangci-lint run --allow-parallel-runners --fix
 
+
 # Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
+
+# Runs a Nibiru local network without building and installing. "just localnet --no-build"
+localnet-fast:
+  make localnet FLAGS="--no-build"
 
 # Clears the logs directory
 log-clear:
@@ -75,7 +80,7 @@ test-e2e:
   source contrib/bashlib.sh
   log_info "Make sure the localnet is running! (just localnet)"
 
-  cd e2e/evm
+  cd evm-e2e
   just test
 
 
