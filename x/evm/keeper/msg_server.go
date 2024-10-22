@@ -647,6 +647,10 @@ func (k Keeper) convertCoinNativeERC20(
 
 	// Burn escrowed Coins based on the actual amount received by the recipient
 	actualReceivedAmount := big.NewInt(0).Sub(recipientBalanceAfter, recipientBalanceBefore)
+	if actualReceivedAmount.Cmp(coin.Amount.BigInt()) == 0 {
+		return nil, fmt.Errorf("no ERC20 tokens were received by the recipient")
+	}
+
 	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualReceivedAmount))
 	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
