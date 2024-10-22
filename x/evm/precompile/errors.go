@@ -3,10 +3,23 @@ package precompile
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
+
+// ErrPrecompileRun is error function intended for use in a `defer` pattern,
+// which modifies the input error in the event that its value becomes non-nil.
+// This creates a concise way to prepend extra information to the original error.
+func ErrPrecompileRun(err error, p vm.PrecompiledContract) func() {
+	return func() {
+		if err != nil {
+			precompileType := reflect.TypeOf(p).Name()
+			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
+		}
+	}
+}
 
 // Error short-hand for type validation
 func ErrArgTypeValidation(solidityHint string, arg any) error {

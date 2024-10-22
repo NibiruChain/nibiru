@@ -16,7 +16,6 @@ package precompile
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
@@ -135,29 +134,58 @@ func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
 	return (costPerByte * argsBzLen) + costFlat
 }
 
-// This is a `defer` pattern to add behavior that runs in the case that the error is
-// non-nil, creating a concise way to add extra information.
-func ErrPrecompileRun(err error, p vm.PrecompiledContract) func() {
-	return func() {
-		if err != nil {
-			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
-		}
-	}
-}
+type OnRunStartResult struct {
+	// Args contains the decoded (ABI unpacked) arguments passed to the contract
+	// as input.
+	Args []any
 
-type PrecompileStartResult struct {
-	Args              []any
-	Ctx               sdk.Context
-	WriteCtx          func()
-	Method            *gethabi.Method
+	// Ctx is a cached SDK context that allows isolated state
+	// operations to occur that can be reverted by the EVM's [statedb.StateDB].
+	Ctx sdk.Context
+
+	// WriteCtx commits the cached context changes to the parent context.
+	WriteCtx func()
+
+	// Method is the ABI method for the precompiled contract call.
+	Method *gethabi.Method
+
+	// SnapshotBeforeRun captures the state before precompile execution to enable
+	// proper state reversal if the call fails or if [statedb.JournalChange]
+	// is reverted in general.
 	SnapshotBeforeRun statedb.PrecompileSnapshotBeforeRun
 	StateDB           *statedb.StateDB
 }
 
+// OnRunStart prepares the execution environment for a precompiled contract call.
+// It handles decoding the input data according the to contract ABI, creates an
+// isolated cache context for state changes, and sets up a snapshot for potential
+// EVM "reverts".
+//
+// Args:
+//   - evm: Instance of the EVM executing the contract
+//   - contract: Precompiled contract being called
+//   - abi: [gethabi.ABI] defining the contract's invokable methods.
+//
+// Example Usage:
+//
+//	```go
+//	func (p newPrecompile) Run(
+//	  evm *vm.EVM, contract *vm.Contract, readonly bool
+//	) (bz []byte, err error) {
+//		res, err := OnRunStart(evm, contract, p.ABI())
+//		if err != nil {
+//		    return nil, err
+//		}
+//		// ...
+//		// Use res.Ctx for state changes
+//		// Use res.WriteCtx to commit changes to the multistore
+//		// after successful execution
+//		res.WriteCtx()
+//	}
+//	```
 func OnRunStart(
 	evm *vm.EVM, contract *vm.Contract, abi *gethabi.ABI,
-) (res PrecompileStartResult, err error) {
+) (res OnRunStartResult, err error) {
 	method, args, err := DecomposeInput(abi, contract.Input)
 	if err != nil {
 		return res, err
@@ -173,7 +201,7 @@ func OnRunStart(
 		return res, fmt.Errorf("error committing dirty journal entries for the precompile call to the cache ctx: %w", err)
 	}
 
-	return PrecompileStartResult{
+	return OnRunStartResult{
 		Args:              args,
 		Ctx:               cacheCtx,
 		WriteCtx:          writeCacheCtx,
@@ -183,10 +211,34 @@ func OnRunStart(
 	}, nil
 }
 
+// OnRunEnd finalizes a precompile execution by saving its state snapshot to the
+// journal. This ensures that any state changes can be properly reverted if needed.
+//
+// Args:
+//   - stateDB: The EVM state database
+//   - snapshot: The state snapshot taken before the precompile executed
+//   - precompileAddr: The address of the precompiled contract
+//
+// The snapshot is critical for maintaining state consistency when:
+//   - The operation gets reverted ([statedb.JournalChange] Revert).
+//   - The precompile modifies state in other modules (e.g., bank, wasm)
+//   - Multiple precompiles are called within a single transaction
 func OnRunEnd(
 	stateDB *statedb.StateDB,
 	snapshot statedb.PrecompileSnapshotBeforeRun,
 	precompileAddr gethcommon.Address,
 ) error {
 	return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
+}
+
+var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{
+	WasmMethod_execute:      true,
+	WasmMethod_instantiate:  true,
+	WasmMethod_executeMulti: true,
+	WasmMethod_query:        false,
+	WasmMethod_queryRaw:     false,
+
+	FunTokenMethod_BankSend: true,
+
+	OracleMethod_queryExchangeRate: false,
 }

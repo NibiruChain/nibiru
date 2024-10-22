@@ -28,10 +28,8 @@ func (p precompileOracle) RequiredGas(input []byte) (gasPrice uint64) {
 }
 
 const (
-	OracleMethod_QueryExchangeRate OracleMethod = "queryExchangeRate"
+	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
 )
-
-type OracleMethod string
 
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
@@ -44,8 +42,8 @@ func (p precompileOracle) Run(
 	}
 	method, args, ctx := res.Method, res.Args, res.Ctx
 
-	switch OracleMethod(method.Name) {
-	case OracleMethod_QueryExchangeRate:
+	switch PrecompileMethod(method.Name) {
+	case OracleMethod_queryExchangeRate:
 		bz, err = p.queryExchangeRate(ctx, method, args, readonly)
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)

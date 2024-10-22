@@ -18,7 +18,6 @@ package statedb
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"sort"
 
@@ -27,8 +26,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// JournalChange is a modification entry in the state change journal that can be
-// Reverted on demand.
+// JournalChange, also called a "journal entry", is a modification entry in the
+// state change journal that can be reverted on demand.
 type JournalChange interface {
 	// Revert undoes the changes introduced by this journal entry.
 	Revert(*StateDB)
@@ -94,76 +93,32 @@ func (j *journal) length() int {
 	return len(j.entries)
 }
 
-type (
-	// createObjectChange: [JournalChange] implementation for when
-	// a new account (called an "object" in this context) is created in state.
-	createObjectChange struct {
-		account *common.Address
-	}
-	// resetObjectChange: [JournalChange] implementation for when
-	// a backup for a state object is needed in order to revert state changes
-	// that overwrite an existing object.
-	resetObjectChange struct {
-		prev *stateObject
-	}
-	suicideChange struct {
-		account     *common.Address
-		prev        bool // whether account had already suicided
-		prevbalance *big.Int
-	}
-
-	// balanceChange: [JournalChange] for an update to an account's wei balance
-	balanceChange struct {
-		account *common.Address
-		prevWei *big.Int
-	}
-	// nonceChange: [JournalChange] for an update to an account's nonce.
-	nonceChange struct {
-		account *common.Address
-		prev    uint64
-	}
-	storageChange struct {
-		account       *common.Address
-		key, prevalue common.Hash
-	}
-	codeChange struct {
-		account            *common.Address
-		prevcode, prevhash []byte
-	}
-
-	// Changes to other state values.
-	refundChange struct {
-		prev uint64
-	}
-	addLogChange struct{}
-
-	// Changes to the access list
-	accessListAddAccountChange struct {
-		address *common.Address
-	}
-	// accessListAddSlotChange: [JournalChange] implementations for
-	accessListAddSlotChange struct {
-		address *common.Address
-		slot    *common.Hash
-	}
-)
-
 // ------------------------------------------------------
 // PrecompileSnapshotBeforeRun
 
-var _ JournalChange = PrecompileSnapshotBeforeRun{}
-
+// PrecompileSnapshotBeforeRun: Precompiles can alter persistent storage of other
+// modules. These changes to persistent storage are not reverted by a `Revert` of
+// [JournalChange] by default, as it generally manages only changes to accounts
+// and Bank balances for ether (NIBI).
+//
+// As a workaround to make state changes from precompiles reversible, we store
+// [PrecompileSnapshotBeforeRun] snapshots that sync and record the prior state
+// of the other modules, allowing precompile calls to truly be reverted.
+//
+// As a simple example, suppose that a transaction calls a precompile.
+//  1. If the precompile changes the state in the Bank Module or Wasm module
+//  2. The call gets reverted (`revert()` in Solidity), which shoud restore the
+//     state to a in-memory snapshot recorded on the StateDB journal.
+//  3. This could cause a problem where changes to the rest of the blockchain state
+//     are still in effect following the reversion in the EVM state DB.
 type PrecompileSnapshotBeforeRun struct {
 	MultiStore store.CacheMultiStore
 	Events     sdk.Events
 }
 
+var _ JournalChange = PrecompileSnapshotBeforeRun{}
+
 func (ch PrecompileSnapshotBeforeRun) Revert(s *StateDB) {
-	// TODO: Revert PrecompileSnapshotBeforeRun
-	// Restore the multistore recorded in the journal entry
-
-	fmt.Printf("TODO: UD-DEBUG: PrecompileSnapshotBeforeRun.Revert called\n")
-
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
 	s.writeCacheCtxFn = func() {
@@ -176,19 +131,16 @@ func (ch PrecompileSnapshotBeforeRun) Dirtied() *common.Address {
 	return nil
 }
 
-var (
-	_ JournalChange = accessListAddSlotChange{}
-	_ JournalChange = createObjectChange{}
-	_ JournalChange = resetObjectChange{}
-	_ JournalChange = suicideChange{}
-	_ JournalChange = balanceChange{}
-	_ JournalChange = nonceChange{}
-	_ JournalChange = storageChange{}
-	_ JournalChange = codeChange{}
-	_ JournalChange = refundChange{}
-	_ JournalChange = addLogChange{}
-	_ JournalChange = accessListAddAccountChange{}
-)
+// ------------------------------------------------------
+// createObjectChange
+
+// createObjectChange: [JournalChange] implementation for when
+// a new account (called an "object" in this context) is created in state.
+type createObjectChange struct {
+	account *common.Address
+}
+
+var _ JournalChange = createObjectChange{}
 
 func (ch createObjectChange) Revert(s *StateDB) {
 	delete(s.stateObjects, *ch.account)
@@ -198,6 +150,18 @@ func (ch createObjectChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// resetObjectChange
+
+// resetObjectChange: [JournalChange] for an account that needs its
+// original state reset. This is used when an account's state is being replaced
+// and we need to revert to the previous version.
+type resetObjectChange struct {
+	prev *stateObject
+}
+
+var _ JournalChange = resetObjectChange{}
+
 func (ch resetObjectChange) Revert(s *StateDB) {
 	s.setStateObject(ch.prev)
 }
@@ -205,6 +169,17 @@ func (ch resetObjectChange) Revert(s *StateDB) {
 func (ch resetObjectChange) Dirtied() *common.Address {
 	return nil
 }
+
+// ------------------------------------------------------
+// suicideChange
+
+type suicideChange struct {
+	account     *common.Address
+	prev        bool // whether account had already suicided
+	prevbalance *big.Int
+}
+
+var _ JournalChange = suicideChange{}
 
 func (ch suicideChange) Revert(s *StateDB) {
 	obj := s.getStateObject(*ch.account)
@@ -218,6 +193,17 @@ func (ch suicideChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// balanceChange
+
+// balanceChange: [JournalChange] for an update to the wei balance of an account.
+type balanceChange struct {
+	account *common.Address
+	prevWei *big.Int
+}
+
+var _ JournalChange = balanceChange{}
+
 func (ch balanceChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setBalance(ch.prevWei)
 }
@@ -225,6 +211,18 @@ func (ch balanceChange) Revert(s *StateDB) {
 func (ch balanceChange) Dirtied() *common.Address {
 	return ch.account
 }
+
+// ------------------------------------------------------
+// nonceChange
+
+// nonceChange: [JournalChange] for an update to the nonce of an account.
+// The nonce is a counter of the number of transactions sent from an account.
+type nonceChange struct {
+	account *common.Address
+	prev    uint64
+}
+
+var _ JournalChange = nonceChange{}
 
 func (ch nonceChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setNonce(ch.prev)
@@ -234,6 +232,19 @@ func (ch nonceChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// codeChange
+
+// codeChange: [JournalChange] for an update to an account's code (smart contract
+// bytecode). The previous code and hash for the code are stored to enable
+// reversion.
+type codeChange struct {
+	account            *common.Address
+	prevcode, prevhash []byte
+}
+
+var _ JournalChange = codeChange{}
+
 func (ch codeChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setCode(common.BytesToHash(ch.prevhash), ch.prevcode)
 }
@@ -241,6 +252,18 @@ func (ch codeChange) Revert(s *StateDB) {
 func (ch codeChange) Dirtied() *common.Address {
 	return ch.account
 }
+
+// ------------------------------------------------------
+// storageChange
+
+// storageChange: [JournalChange] for the modification of a single key and value
+// within a contract's storage.
+type storageChange struct {
+	account       *common.Address
+	key, prevalue common.Hash
+}
+
+var _ JournalChange = storageChange{}
 
 func (ch storageChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setState(ch.key, ch.prevalue)
@@ -250,6 +273,17 @@ func (ch storageChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// refundChange
+
+// refundChange: [JournalChange] for the global gas refund counter.
+// This tracks changes to the gas refund value during contract execution.
+type refundChange struct {
+	prev uint64
+}
+
+var _ JournalChange = refundChange{}
+
 func (ch refundChange) Revert(s *StateDB) {
 	s.refund = ch.prev
 }
@@ -258,12 +292,31 @@ func (ch refundChange) Dirtied() *common.Address {
 	return nil
 }
 
+// ------------------------------------------------------
+// addLogChange
+
+// addLogChange represents [JournalChange] for a new log addition.
+// When reverted, it removes the last log from the accumulated logs list.
+type addLogChange struct{}
+
+var _ JournalChange = addLogChange{}
+
 func (ch addLogChange) Revert(s *StateDB) {
 	s.logs = s.logs[:len(s.logs)-1]
 }
 
 func (ch addLogChange) Dirtied() *common.Address {
 	return nil
+}
+
+// ------------------------------------------------------
+// accessListAddAccountChange
+
+// accessListAddAccountChange represents [JournalChange] for when an address
+// is added to the access list. Access lists track warm storage slots for
+// gas cost calculations.
+type accessListAddAccountChange struct {
+	address *common.Address
 }
 
 // When an (address, slot) combination is added, it always results in two
@@ -281,6 +334,20 @@ func (ch accessListAddAccountChange) Revert(s *StateDB) {
 func (ch accessListAddAccountChange) Dirtied() *common.Address {
 	return nil
 }
+
+// ------------------------------------------------------
+// accessListAddSlotChange
+
+// accessListAddSlotChange: [JournalChange] implementations for
+type accessListAddSlotChange struct {
+	address *common.Address
+	slot    *common.Hash
+}
+
+// accessListAddSlotChange represents a [JournalChange] for when a storage slot
+// is added to an address's access list entry. This tracks individual storage
+// slots that have been accessed.
+var _ JournalChange = accessListAddSlotChange{}
 
 func (ch accessListAddSlotChange) Revert(s *StateDB) {
 	s.accessList.DeleteSlot(*ch.address, *ch.slot)

@@ -21,13 +21,13 @@ func (s *OracleSuite) TestOracle_FailToPackABI() {
 	}{
 		{
 			name:       "wrong amount of call args",
-			methodName: string(precompile.OracleMethod_QueryExchangeRate),
+			methodName: string(precompile.OracleMethod_queryExchangeRate),
 			callArgs:   []any{"nonsense", "args here", "to see if", "precompile is", "called"},
 			wantError:  "argument count mismatch: got 5 for 1",
 		},
 		{
 			name:       "wrong type for pair",
-			methodName: string(precompile.OracleMethod_QueryExchangeRate),
+			methodName: string(precompile.OracleMethod_queryExchangeRate),
 			callArgs:   []any{common.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6")},
 			wantError:  "abi: cannot use array as type string as argument",
 		},
@@ -64,7 +64,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.NoError(err)
 
 		// Check the response
-		out, err := embeds.SmartContract_Oracle.ABI.Unpack(string(precompile.OracleMethod_QueryExchangeRate), resp.Ret)
+		out, err := embeds.SmartContract_Oracle.ABI.Unpack(string(precompile.OracleMethod_queryExchangeRate), resp.Ret)
 		s.NoError(err)
 
 		// Check the response

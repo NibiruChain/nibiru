@@ -29,49 +29,6 @@ const (
 	WasmMethod_queryRaw     PrecompileMethod = "queryRaw"
 )
 
-var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{
-	WasmMethod_execute:      true,
-	WasmMethod_instantiate:  true,
-	WasmMethod_executeMulti: true,
-	WasmMethod_query:        false,
-	WasmMethod_queryRaw:     false,
-
-	FunTokenMethod_BankSend: true,
-}
-
-// Wasm: A struct embedding keepers for read and write operations in Wasm, such
-// as execute, query, and instantiate.
-type Wasm struct {
-	*wasmkeeper.PermissionedKeeper
-	wasmkeeper.Keeper
-}
-
-func PrecompileWasm(keepers keepers.PublicKeepers) vm.PrecompiledContract {
-	return precompileWasm{
-		Wasm: Wasm{
-			wasmkeeper.NewDefaultPermissionKeeper(keepers.WasmKeeper),
-			keepers.WasmKeeper,
-		},
-	}
-}
-
-type precompileWasm struct {
-	Wasm Wasm
-}
-
-func (p precompileWasm) Address() gethcommon.Address {
-	return PrecompileAddr_Wasm
-}
-
-func (p precompileWasm) ABI() *gethabi.ABI {
-	return embeds.SmartContract_Wasm.ABI
-}
-
-// RequiredGas calculates the cost of calling the precompile in gas units.
-func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
-	return RequiredGas(input, p.ABI())
-}
-
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
@@ -109,6 +66,39 @@ func (p precompileWasm) Run(
 	}
 	res.WriteCtx()
 	return
+}
+
+type precompileWasm struct {
+	Wasm Wasm
+}
+
+func (p precompileWasm) Address() gethcommon.Address {
+	return PrecompileAddr_Wasm
+}
+
+func (p precompileWasm) ABI() *gethabi.ABI {
+	return embeds.SmartContract_Wasm.ABI
+}
+
+// RequiredGas calculates the cost of calling the precompile in gas units.
+func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
+	return RequiredGas(input, p.ABI())
+}
+
+// Wasm: A struct embedding keepers for read and write operations in Wasm, such
+// as execute, query, and instantiate.
+type Wasm struct {
+	*wasmkeeper.PermissionedKeeper
+	wasmkeeper.Keeper
+}
+
+func PrecompileWasm(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+	return precompileWasm{
+		Wasm: Wasm{
+			wasmkeeper.NewDefaultPermissionKeeper(keepers.WasmKeeper),
+			keepers.WasmKeeper,
+		},
+	}
 }
 
 // execute invokes a Wasm contract's "ExecuteMsg", which corresponds to

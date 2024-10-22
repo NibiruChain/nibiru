@@ -32,15 +32,18 @@ type StateDB struct {
 	keeper Keeper
 	// ctx is the persistent context used for official `StateDB.Commit` calls.
 	ctx sdk.Context
+
 	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
 	// multi-store cached and a new event manager. The cached context
 	// (`cacheCtx`) is written to the persistent context (`ctx`) when
 	// `writeCacheCtx` is called.
 	cacheCtx sdk.Context
+
 	// Events are automatically emitted on the parent context's
 	// EventManager when the caller executes the [writeCacheCtxFn].
 	writeCacheCtxFn func()
-	// THe number of precompiled contract calls within the current transaction
+
+	// The number of precompiled contract calls within the current transaction
 	precompileSnapshotsCount uint8
 
 	// Journal of state modifications. This is the backbone of
@@ -519,6 +522,14 @@ func (s *StateDB) CacheCtxForPrecompile() (
 	}
 }
 
+// SavePrecompileSnapshotToJournal adds a snapshot of the commit multistore
+// ([PrecompileSnapshotBeforeRun]) to the [StateDB] journal at the end of
+// successful invocation of a precompiled contract. This is necessary to revert
+// intermediate states where an EVM contract augments the multistore with a
+// precompile and an inconsistency occurs between the EVM module and other
+// modules.
+//
+// See [PrecompileSnapshotBeforeRun] for more info.
 func (s *StateDB) SavePrecompileSnapshotToJournal(
 	precompileAddr common.Address,
 	snapshot PrecompileSnapshotBeforeRun,
