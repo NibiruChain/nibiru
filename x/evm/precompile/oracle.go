@@ -112,8 +112,8 @@ func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {
-	if len(args) != 1 {
-		err = fmt.Errorf("expected 3 arguments but got %d", len(args))
+	if e := assertNumArgs(len(args), 1); e != nil {
+		err = e
 		return
 	}
 
