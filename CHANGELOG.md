@@ -133,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Use effective gas price in RefundGas and make sure that units are properly
 reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
 and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
+- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 
 
