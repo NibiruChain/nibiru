@@ -170,7 +170,7 @@ func (s *stateObject) SubBalance(amount *big.Int) {
 
 // SetBalance update account balance.
 func (s *stateObject) SetBalance(amount *big.Int) {
-	s.db.journal.append(balanceChange{
+	s.db.Journal.append(balanceChange{
 		account: &s.address,
 		prevWei: new(big.Int).Set(s.account.BalanceWei),
 	})
@@ -212,7 +212,7 @@ func (s *stateObject) CodeSize() int {
 // SetCode set contract code to account
 func (s *stateObject) SetCode(codeHash common.Hash, code []byte) {
 	prevcode := s.Code()
-	s.db.journal.append(codeChange{
+	s.db.Journal.append(codeChange{
 		account:  &s.address,
 		prevhash: s.CodeHash(),
 		prevcode: prevcode,
@@ -228,7 +228,7 @@ func (s *stateObject) setCode(codeHash common.Hash, code []byte) {
 
 // SetNonce set nonce to account
 func (s *stateObject) SetNonce(nonce uint64) {
-	s.db.journal.append(nonceChange{
+	s.db.Journal.append(nonceChange{
 		account: &s.address,
 		prev:    s.account.Nonce,
 	})
@@ -281,7 +281,7 @@ func (s *stateObject) SetState(key common.Hash, value common.Hash) {
 		return
 	}
 	// New value is different, update and journal the change
-	s.db.journal.append(storageChange{
+	s.db.Journal.append(storageChange{
 		account:  &s.address,
 		key:      key,
 		prevalue: prev,

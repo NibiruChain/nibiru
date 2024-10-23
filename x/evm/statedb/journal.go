@@ -21,8 +21,6 @@ import (
 	"math/big"
 	"sort"
 
-	store "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -88,47 +86,17 @@ func (j *journal) Revert(statedb *StateDB, snapshot int) {
 	j.entries = j.entries[:snapshot]
 }
 
-// length returns the current number of entries in the journal.
-func (j *journal) length() int {
+// Length returns the current number of entries in the journal.
+func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-// ------------------------------------------------------
-// PrecompileSnapshotBeforeRun
-
-// PrecompileSnapshotBeforeRun: Precompiles can alter persistent storage of other
-// modules. These changes to persistent storage are not reverted by a `Revert` of
-// [JournalChange] by default, as it generally manages only changes to accounts
-// and Bank balances for ether (NIBI).
-//
-// As a workaround to make state changes from precompiles reversible, we store
-// [PrecompileSnapshotBeforeRun] snapshots that sync and record the prior state
-// of the other modules, allowing precompile calls to truly be reverted.
-//
-// As a simple example, suppose that a transaction calls a precompile.
-//  1. If the precompile changes the state in the Bank Module or Wasm module
-//  2. The call gets reverted (`revert()` in Solidity), which shoud restore the
-//     state to a in-memory snapshot recorded on the StateDB journal.
-//  3. This could cause a problem where changes to the rest of the blockchain state
-//     are still in effect following the reversion in the EVM state DB.
-type PrecompileSnapshotBeforeRun struct {
-	MultiStore store.CacheMultiStore
-	Events     sdk.Events
+func (j *journal) EntriesCopy() []JournalChange {
+	return j.entries
 }
 
-var _ JournalChange = PrecompileSnapshotBeforeRun{}
-
-func (ch PrecompileSnapshotBeforeRun) Revert(s *StateDB) {
-	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
-	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
-	s.writeCacheCtxFn = func() {
-		s.ctx.EventManager().EmitEvents(ch.Events)
-		ch.MultiStore.Write()
-	}
-}
-
-func (ch PrecompileSnapshotBeforeRun) Dirtied() *common.Address {
-	return nil
+func (j *journal) DirtiesLen() int {
+	return len(j.dirties)
 }
 
 // ------------------------------------------------------

@@ -33,22 +33,9 @@ type StateDB struct {
 	// ctx is the persistent context used for official `StateDB.Commit` calls.
 	ctx sdk.Context
 
-	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
-	// multi-store cached and a new event manager. The cached context
-	// (`cacheCtx`) is written to the persistent context (`ctx`) when
-	// `writeCacheCtx` is called.
-	cacheCtx sdk.Context
-
-	// Events are automatically emitted on the parent context's
-	// EventManager when the caller executes the [writeCacheCtxFn].
-	writeCacheCtxFn func()
-
-	// The number of precompiled contract calls within the current transaction
-	precompileSnapshotsCount uint8
-
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
-	journal        *journal
+	Journal        *journal
 	validRevisions []revision
 	nextRevisionID int
 
@@ -72,7 +59,7 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 		keeper:       keeper,
 		ctx:          ctx,
 		stateObjects: make(map[common.Address]*stateObject),
-		journal:      newJournal(),
+		Journal:      newJournal(),
 		accessList:   newAccessList(),
 
 		txConfig: txConfig,
@@ -91,7 +78,7 @@ func (s *StateDB) GetContext() sdk.Context {
 
 // AddLog adds a log, called by evm.
 func (s *StateDB) AddLog(log *gethcore.Log) {
-	s.journal.append(addLogChange{})
+	s.Journal.append(addLogChange{})
 
 	log.TxHash = s.txConfig.TxHash
 	log.BlockHash = s.txConfig.BlockHash
@@ -107,14 +94,14 @@ func (s *StateDB) Logs() []*gethcore.Log {
 
 // AddRefund adds gas to the refund counter
 func (s *StateDB) AddRefund(gas uint64) {
-	s.journal.append(refundChange{prev: s.refund})
+	s.Journal.append(refundChange{prev: s.refund})
 	s.refund += gas
 }
 
 // SubRefund removes gas from the refund counter.
 // This method will panic if the refund counter goes below zero
 func (s *StateDB) SubRefund(gas uint64) {
-	s.journal.append(refundChange{prev: s.refund})
+	s.Journal.append(refundChange{prev: s.refund})
 	if gas > s.refund {
 		panic(fmt.Sprintf("Refund counter below zero (gas: %d > refund: %d)", gas, s.refund))
 	}
@@ -253,9 +240,9 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 
 	newobj = newObject(s, addr, Account{})
 	if prev == nil {
-		s.journal.append(createObjectChange{account: &addr})
+		s.Journal.append(createObjectChange{account: &addr})
 	} else {
-		s.journal.append(resetObjectChange{prev: prev})
+		s.Journal.append(resetObjectChange{prev: prev})
 	}
 	s.setStateObject(newobj)
 	if prev != nil {
@@ -357,7 +344,7 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	if stateObject == nil {
 		return false
 	}
-	s.journal.append(suicideChange{
+	s.Journal.append(suicideChange{
 		account:     &addr,
 		prev:        stateObject.suicided,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
@@ -402,7 +389,7 @@ func (s *StateDB) PrepareAccessList(
 // AddAddressToAccessList adds the given address to the access list
 func (s *StateDB) AddAddressToAccessList(addr common.Address) {
 	if s.accessList.AddAddress(addr) {
-		s.journal.append(accessListAddAccountChange{&addr})
+		s.Journal.append(accessListAddAccountChange{&addr})
 	}
 }
 
@@ -414,10 +401,10 @@ func (s *StateDB) AddSlotToAccessList(addr common.Address, slot common.Hash) {
 		// scope of 'address' without having the 'address' become already added
 		// to the access list (via call-variant, create, etc).
 		// Better safe than sorry, though
-		s.journal.append(accessListAddAccountChange{&addr})
+		s.Journal.append(accessListAddAccountChange{&addr})
 	}
 	if slotMod {
-		s.journal.append(accessListAddSlotChange{
+		s.Journal.append(accessListAddSlotChange{
 			address: &addr,
 			slot:    &slot,
 		})
@@ -438,7 +425,7 @@ func (s *StateDB) SlotInAccessList(addr common.Address, slot common.Hash) (addre
 func (s *StateDB) Snapshot() int {
 	id := s.nextRevisionID
 	s.nextRevisionID++
-	s.validRevisions = append(s.validRevisions, revision{id, s.journal.length()})
+	s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
 	return id
 }
 
@@ -454,7 +441,7 @@ func (s *StateDB) RevertToSnapshot(revid int) {
 	snapshot := s.validRevisions[idx].journalIndex
 
 	// Replay the journal to undo changes and remove invalidated snapshots
-	s.journal.Revert(s, snapshot)
+	s.Journal.Revert(s, snapshot)
 	s.validRevisions = s.validRevisions[:idx]
 }
 
@@ -467,18 +454,18 @@ func errorf(format string, args ...any) error {
 // StateDB object cannot be reused after [CommitContext] has completed. A new
 // object needs to be created from the EVM.
 func (s *StateDB) CommitContext(ctx sdk.Context) error {
-	for _, addr := range s.journal.sortedDirties() {
+	for _, addr := range s.Journal.sortedDirties() {
 		obj := s.stateObjects[addr]
 		if obj.suicided {
 			if err := s.keeper.DeleteAccount(ctx, obj.Address()); err != nil {
-				return errorf("failed to delete account: %w")
+				return errorf("failed to delete account: %w", err)
 			}
 		} else {
 			if obj.code != nil && obj.dirtyCode {
 				s.keeper.SetCode(ctx, obj.CodeHash(), obj.code)
 			}
 			if err := s.keeper.SetAccount(ctx, obj.Address(), obj.account.ToNative()); err != nil {
-				return errorf("failed to set account: %w")
+				return errorf("failed to set account: %w", err)
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {
 				value := obj.dirtyStorage[key]
@@ -497,8 +484,7 @@ func (s *StateDB) CommitContext(ctx sdk.Context) error {
 // StateDB object cannot be reused after [CommitContext] has completed. A new
 // object needs to be created from the EVM.
 func (s *StateDB) Commit() error {
-	ctx := s.ctx
-	return s.CommitContext(ctx)
+	return s.CommitContext(s.ctx)
 }
 
 // StateObjects: Returns a copy of the [StateDB.stateObjects] map.
@@ -509,38 +495,3 @@ func (s *StateDB) StateObjects() map[common.Address]*stateObject {
 	}
 	return copyOfMap
 }
-
-func (s *StateDB) CacheCtxForPrecompile() (
-	sdk.Context, func(), PrecompileSnapshotBeforeRun,
-) {
-	if s.writeCacheCtxFn == nil {
-		s.cacheCtx, s.writeCacheCtxFn = s.ctx.CacheContext()
-	}
-	return s.cacheCtx, s.writeCacheCtxFn, PrecompileSnapshotBeforeRun{
-		MultiStore: s.cacheCtx.MultiStore().CacheMultiStore(),
-		Events:     s.cacheCtx.EventManager().Events(),
-	}
-}
-
-// SavePrecompileSnapshotToJournal adds a snapshot of the commit multistore
-// ([PrecompileSnapshotBeforeRun]) to the [StateDB] journal at the end of
-// successful invocation of a precompiled contract. This is necessary to revert
-// intermediate states where an EVM contract augments the multistore with a
-// precompile and an inconsistency occurs between the EVM module and other
-// modules.
-//
-// See [PrecompileSnapshotBeforeRun] for more info.
-func (s *StateDB) SavePrecompileSnapshotToJournal(
-	precompileAddr common.Address,
-	snapshot PrecompileSnapshotBeforeRun,
-) error {
-	obj := s.getOrNewStateObject(precompileAddr)
-	obj.db.journal.append(snapshot)
-	s.precompileSnapshotsCount++
-	if s.precompileSnapshotsCount > maxPrecompileCalls {
-		return fmt.Errorf("exceeded maximum allowed number of precompiled contract calls in one transaction (%d)", maxPrecompileCalls)
-	}
-	return nil
-}
-
-const maxPrecompileCalls uint8 = 10

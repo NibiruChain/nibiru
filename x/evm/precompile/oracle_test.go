@@ -58,7 +58,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
 		input, err := embeds.SmartContract_Oracle.ABI.Pack("queryExchangeRate", "unibi:uusd")
 		s.NoError(err)
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, _, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Oracle, true, input,
 		)
 		s.NoError(err)

@@ -112,7 +112,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	{
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.NoError(err)
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, _, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
