@@ -16,7 +16,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
@@ -152,18 +151,17 @@ func (k Keeper) CallContract(
 	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
 }
 
-// CallContractWithInput invokes a smart contract with the given [contractInput].
+// CallContractWithInput invokes a smart contract with the given [contractInput] or deploys new contract.
 //
 // Parameters:
 //   - ctx: The SDK context for the transaction.
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract to be called.
+//   - contract: Pointer to the Ethereum address of the contract. Nil if new contract is deployed.
 //   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
-//   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
+//   - input: Hexadecimal-encoded bytes use as input data to the call.
 //
 // Note: This function handles both contract method calls and simulations,
-// depending on the 'commit' parameter. It uses a default gas limit for
-// simulations and estimates gas for actual transactions.
+// depending on the 'commit' parameter. It uses a default gas limit.
 func (k Keeper) CallContractWithInput(
 	ctx sdk.Context,
 	fromAcc gethcommon.Address,
@@ -182,10 +180,6 @@ func (k Keeper) CallContractWithInput(
 
 	// Gas cap sufficient for all "honest" ERC20 calls without malicious (gas intensive) code in contracts
 	gasLimit := serverconfig.DefaultEthCallGasLimit
-
-	if err != nil {
-		return nil, err
-	}
 
 	unusedBigInt := big.NewInt(0)
 	evmMsg := gethcore.NewMessage(
@@ -212,42 +206,49 @@ func (k Keeper) CallContractWithInput(
 		return nil, errors.Wrapf(err, "failed to load evm config")
 	}
 
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
-	)
-	var gasUsed uint64
-	if evmResp != nil {
-		gasUsed = evmResp.GasUsed
-	} else {
-		gasUsed = ctx.GasMeter().Limit()
-	}
-	totalGasUsed, err := k.AddToBlockGasUsed(ctx, gasUsed)
-	if err != nil {
-		return nil, errors.Wrap(err, "error adding transient gas used to block")
-	}
-	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+	// Generating TxConfig with an empty tx hash as there is no actual eth tx sent by a user
+	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
+	// Using tmp context to not modify the state in case of evm revert
+	tmpCtx, commitFn := ctx.CacheContext()
+
+	evmResp, err = k.ApplyEvmMsg(
+		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
+	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to apply EVM message")
-	}
-	if evmResp == nil {
-		return nil, fmt.Errorf("failed to apply EVM message")
+		// We don't know the actual gas used, so consuming the gas limit
+		k.ResetGasMeterAndConsumeGas(ctx, gasLimit)
+		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 	if evmResp.Failed() {
+		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
 		if evmResp.VmError != vm.ErrOutOfGas.Error() {
 			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
 				return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
 			}
 			return nil, fmt.Errorf("VMError: %s", evmResp.VmError)
 		}
-		// Otherwise, the specified gas cap is too low
 		return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
+	} else {
+		// Success, committing the state to ctx
+		if commit {
+			commitFn()
+			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+			if err != nil {
+				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
+				return nil, errors.Wrap(err, "error adding transient gas used to block")
+			}
+			k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+			err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
+			if err != nil {
+				return nil, errors.Wrap(err, "error emitting ethereum tx events")
+			}
+			blockTxIdx := uint64(txConfig.TxIndex) + 1
+			k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+		}
+		return evmResp, nil
 	}
-
-	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
-
-	return evmResp, nil
 }
 
 func (k Keeper) LoadERC20Name(
