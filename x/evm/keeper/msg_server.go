@@ -592,10 +592,10 @@ func (k Keeper) convertCoinNativeERC20(
 
 	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve EVM module account balance")
+		return nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 	if recipientBalanceBefore == nil {
-		return nil, fmt.Errorf("failed to retrieve EVM module account balance, balance is nil")
+		return nil, fmt.Errorf("failed to retrieve recipient balance, balance is nil")
 	}
 
 	// Escrow Coins on module account
@@ -619,7 +619,7 @@ func (k Keeper) convertCoinNativeERC20(
 		return nil, errors.Wrap(err, "failed to retrieve balance")
 	}
 	if evmModuleBalance == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+		return nil, fmt.Errorf("failed to retrieve EVM module account balance, balance is nil")
 	}
 	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
 		return nil, fmt.Errorf("insufficient balance in EVM module account")
@@ -647,7 +647,7 @@ func (k Keeper) convertCoinNativeERC20(
 
 	// Burn escrowed Coins based on the actual amount received by the recipient
 	actualReceivedAmount := big.NewInt(0).Sub(recipientBalanceAfter, recipientBalanceBefore)
-	if actualReceivedAmount.Sign() == 0 {
+	if actualReceivedAmount.Sign() <= 0 {
 		return nil, fmt.Errorf("no ERC20 tokens were received by the recipient")
 	}
 
