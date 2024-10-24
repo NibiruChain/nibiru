@@ -284,7 +284,7 @@ func (k *Keeper) EthCall(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
 	// pass false to not commit StateDB
-	res, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig)
+	res, _, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -422,7 +422,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 				WithTransientKVGasConfig(storetypes.GasConfig{})
 		}
 		// pass false to not commit StateDB
-		rsp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig)
+		rsp, _, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -518,7 +518,7 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		rsp, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
+		rsp, _, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
 		if err != nil {
 			continue
 		}
@@ -663,15 +663,14 @@ func (k Keeper) TraceBlock(
 		contextHeight = 1
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithBlockHeight(contextHeight)
-	ctx = ctx.WithBlockTime(req.BlockTime)
-	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
-
-	// to get the base fee we only need the block max gas in the consensus params
-	ctx = ctx.WithConsensusParams(&cmtproto.ConsensusParams{
-		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
-	})
+	ctx := sdk.UnwrapSDKContext(goCtx).
+		WithBlockHeight(contextHeight).
+		WithBlockTime(req.BlockTime).
+		WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash)).
+		// to get the base fee we only need the block max gas in the consensus params
+		WithConsensusParams(&cmtproto.ConsensusParams{
+			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
+		})
 
 	chainID := k.EthChainID(ctx)
 
@@ -801,7 +800,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	res, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig)
+	res, _, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}

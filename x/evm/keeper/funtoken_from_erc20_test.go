@@ -160,7 +160,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
 }
 
-func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
+func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy ERC20")
@@ -210,7 +210,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 
 	randomAcc := testutil.AccAddress()
 
-	s.T().Log("send erc20 tokens to cosmos")
+	s.T().Log("send erc20 tokens to Bank")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_FunToken.ABI,
@@ -231,8 +231,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
 
-	s.T().Log("sad: send too many erc20 tokens to cosmos")
-	_, err = deps.EvmKeeper.CallContract(
+	s.T().Log("sad: send too many erc20 tokens to Bank")
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_FunToken.ABI,
 		deps.Sender.EthAddr,
@@ -243,9 +243,10 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		big.NewInt(70_000),
 		randomAcc.String(),
 	)
-	s.Require().Error(err)
+	s.T().Log("check balances")
+	s.Require().Error(err, evmResp.String())
 
-	s.T().Log("send cosmos tokens back to erc20")
+	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
@@ -264,7 +265,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)),
 	)
 
-	s.T().Log("sad: send too many cosmos tokens back to erc20")
+	s.T().Log("sad: send too many Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{

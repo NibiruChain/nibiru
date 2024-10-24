@@ -23,7 +23,7 @@ func AssertERC20BalanceEqual(
 ) {
 	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx)
 	assert.NoError(t, err)
-	assert.Zero(t, expectedBalance.Cmp(actualBalance), "expected %s, got %s", expectedBalance, actualBalance)
+	assert.Equal(t, expectedBalance.String(), actualBalance.String(), "expected %s, got %s", expectedBalance, actualBalance)
 }
 
 // CreateFunTokenForBankCoin: Uses the "TestDeps.Sender" account to create a
@@ -98,4 +98,10 @@ func AssertBankBalanceEqual(
 	bech32Addr := eth.EthAddrToNibiruAddr(account)
 	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
 	assert.Zero(t, expectedBalance.Cmp(actualBalance), "expected %s, got %s", expectedBalance, actualBalance)
+}
+
+// BigPow multiplies "amount" by 10 to the "pow10Exp".
+func BigPow(amount *big.Int, pow10Exp uint8) (powAmount *big.Int) {
+	pow10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(pow10Exp)), nil)
+	return new(big.Int).Mul(amount, pow10)
 }

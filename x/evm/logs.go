@@ -11,14 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
-// NewTransactionLogs creates a new NewTransactionLogs instance.
-func NewTransactionLogs(hash gethcommon.Hash, logs []*Log) TransactionLogs {
-	return TransactionLogs{
-		Hash: hash.String(),
-		Logs: logs,
-	}
-}
-
 // NewTransactionLogsFromEth creates a new NewTransactionLogs instance using []*ethtypes.Log.
 func NewTransactionLogsFromEth(hash gethcommon.Hash, ethlogs []*gethcore.Log) TransactionLogs {
 	return TransactionLogs{

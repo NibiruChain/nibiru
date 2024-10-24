@@ -24,9 +24,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// JournalEntry is a modification entry in the state change journal that can be
-// Reverted on demand.
-type JournalEntry interface {
+// JournalChange, also called a "journal entry", is a modification entry in the
+// state change journal that can be reverted on demand.
+type JournalChange interface {
 	// Revert undoes the changes introduced by this journal entry.
 	Revert(*StateDB)
 
@@ -38,7 +38,7 @@ type JournalEntry interface {
 // commit. These are tracked to be able to be reverted in the case of an execution
 // exception or request for reversal.
 type journal struct {
-	entries []JournalEntry         // Current changes tracked by the journal
+	entries []JournalChange        // Current changes tracked by the journal
 	dirties map[common.Address]int // Dirty accounts and the number of changes
 }
 
@@ -62,7 +62,7 @@ func (j *journal) sortedDirties() []common.Address {
 }
 
 // append inserts a new modification entry to the end of the change journal.
-func (j *journal) append(entry JournalEntry) {
+func (j *journal) append(entry JournalChange) {
 	j.entries = append(j.entries, entry)
 	if addr := entry.Dirtied(); addr != nil {
 		j.dirties[*addr]++
@@ -86,58 +86,40 @@ func (j *journal) Revert(statedb *StateDB, snapshot int) {
 	j.entries = j.entries[:snapshot]
 }
 
-// length returns the current number of entries in the journal.
-func (j *journal) length() int {
+// Length returns the current number of entries in the journal.
+func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-type (
-	// Changes to the account trie.
-	createObjectChange struct {
-		account *common.Address
+// DirtiesCount is a test helper to inspect how many entries in the journal are
+// still dirty (uncommitted). After calling [StateDB.Commit], this function should
+// return zero.
+func (s *StateDB) DirtiesCount() int {
+	dirtiesCount := 0
+	for _, dirtyCount := range s.Journal.dirties {
+		dirtiesCount += dirtyCount
 	}
-	resetObjectChange struct {
-		prev *stateObject
-	}
-	suicideChange struct {
-		account     *common.Address
-		prev        bool // whether account had already suicided
-		prevbalance *big.Int
-	}
+	return dirtiesCount
+}
 
-	// Changes to individual accounts.
-	balanceChange struct {
-		account *common.Address
-		prev    *big.Int
-	}
-	nonceChange struct {
-		account *common.Address
-		prev    uint64
-	}
-	storageChange struct {
-		account       *common.Address
-		key, prevalue common.Hash
-	}
-	codeChange struct {
-		account            *common.Address
-		prevcode, prevhash []byte
-	}
+func (s *StateDB) Dirties() map[common.Address]int {
+	return s.Journal.dirties
+}
 
-	// Changes to other state values.
-	refundChange struct {
-		prev uint64
-	}
-	addLogChange struct{}
+func (s *StateDB) Entries() []JournalChange {
+	return s.Journal.entries
+}
 
-	// Changes to the access list
-	accessListAddAccountChange struct {
-		address *common.Address
-	}
-	accessListAddSlotChange struct {
-		address *common.Address
-		slot    *common.Hash
-	}
-)
+// ------------------------------------------------------
+// createObjectChange
+
+// createObjectChange: [JournalChange] implementation for when
+// a new account (called an "object" in this context) is created in state.
+type createObjectChange struct {
+	account *common.Address
+}
+
+var _ JournalChange = createObjectChange{}
 
 func (ch createObjectChange) Revert(s *StateDB) {
 	delete(s.stateObjects, *ch.account)
@@ -147,6 +129,18 @@ func (ch createObjectChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// resetObjectChange
+
+// resetObjectChange: [JournalChange] for an account that needs its
+// original state reset. This is used when an account's state is being replaced
+// and we need to revert to the previous version.
+type resetObjectChange struct {
+	prev *stateObject
+}
+
+var _ JournalChange = resetObjectChange{}
+
 func (ch resetObjectChange) Revert(s *StateDB) {
 	s.setStateObject(ch.prev)
 }
@@ -155,10 +149,21 @@ func (ch resetObjectChange) Dirtied() *common.Address {
 	return nil
 }
 
+// ------------------------------------------------------
+// suicideChange
+
+type suicideChange struct {
+	account     *common.Address
+	prev        bool // whether account had already suicided
+	prevbalance *big.Int
+}
+
+var _ JournalChange = suicideChange{}
+
 func (ch suicideChange) Revert(s *StateDB) {
 	obj := s.getStateObject(*ch.account)
 	if obj != nil {
-		obj.suicided = ch.prev
+		obj.Suicided = ch.prev
 		obj.setBalance(ch.prevbalance)
 	}
 }
@@ -167,13 +172,36 @@ func (ch suicideChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// balanceChange
+
+// balanceChange: [JournalChange] for an update to the wei balance of an account.
+type balanceChange struct {
+	account *common.Address
+	prevWei *big.Int
+}
+
+var _ JournalChange = balanceChange{}
+
 func (ch balanceChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setBalance(ch.prev)
+	s.getStateObject(*ch.account).setBalance(ch.prevWei)
 }
 
 func (ch balanceChange) Dirtied() *common.Address {
 	return ch.account
 }
+
+// ------------------------------------------------------
+// nonceChange
+
+// nonceChange: [JournalChange] for an update to the nonce of an account.
+// The nonce is a counter of the number of transactions sent from an account.
+type nonceChange struct {
+	account *common.Address
+	prev    uint64
+}
+
+var _ JournalChange = nonceChange{}
 
 func (ch nonceChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setNonce(ch.prev)
@@ -183,6 +211,19 @@ func (ch nonceChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// codeChange
+
+// codeChange: [JournalChange] for an update to an account's code (smart contract
+// bytecode). The previous code and hash for the code are stored to enable
+// reversion.
+type codeChange struct {
+	account            *common.Address
+	prevcode, prevhash []byte
+}
+
+var _ JournalChange = codeChange{}
+
 func (ch codeChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setCode(common.BytesToHash(ch.prevhash), ch.prevcode)
 }
@@ -190,6 +231,18 @@ func (ch codeChange) Revert(s *StateDB) {
 func (ch codeChange) Dirtied() *common.Address {
 	return ch.account
 }
+
+// ------------------------------------------------------
+// storageChange
+
+// storageChange: [JournalChange] for the modification of a single key and value
+// within a contract's storage.
+type storageChange struct {
+	account       *common.Address
+	key, prevalue common.Hash
+}
+
+var _ JournalChange = storageChange{}
 
 func (ch storageChange) Revert(s *StateDB) {
 	s.getStateObject(*ch.account).setState(ch.key, ch.prevalue)
@@ -199,6 +252,17 @@ func (ch storageChange) Dirtied() *common.Address {
 	return ch.account
 }
 
+// ------------------------------------------------------
+// refundChange
+
+// refundChange: [JournalChange] for the global gas refund counter.
+// This tracks changes to the gas refund value during contract execution.
+type refundChange struct {
+	prev uint64
+}
+
+var _ JournalChange = refundChange{}
+
 func (ch refundChange) Revert(s *StateDB) {
 	s.refund = ch.prev
 }
@@ -206,6 +270,15 @@ func (ch refundChange) Revert(s *StateDB) {
 func (ch refundChange) Dirtied() *common.Address {
 	return nil
 }
+
+// ------------------------------------------------------
+// addLogChange
+
+// addLogChange represents [JournalChange] for a new log addition.
+// When reverted, it removes the last log from the accumulated logs list.
+type addLogChange struct{}
+
+var _ JournalChange = addLogChange{}
 
 func (ch addLogChange) Revert(s *StateDB) {
 	s.logs = s.logs[:len(s.logs)-1]
@@ -215,22 +288,45 @@ func (ch addLogChange) Dirtied() *common.Address {
 	return nil
 }
 
+// ------------------------------------------------------
+// accessListAddAccountChange
+
+// accessListAddAccountChange represents [JournalChange] for when an address
+// is added to the access list. Access lists track warm storage slots for
+// gas cost calculations.
+type accessListAddAccountChange struct {
+	address *common.Address
+}
+
+// When an (address, slot) combination is added, it always results in two
+// journal entries if the address is not already present:
+//  1. `accessListAddAccountChange`: a journal change for the address
+//  2. `accessListAddSlotChange`: a journal change for the (address, slot)
+//     combination.
+//
+// Thus, when reverting, we can safely delete the address, as no storage slots
+// remain once the address entry is reverted.
 func (ch accessListAddAccountChange) Revert(s *StateDB) {
-	/*
-		One important invariant here, is that whenever a (addr, slot) is added, if the
-		addr is not already present, the add causes two journal entries:
-		- one for the address,
-		- one for the (address,slot)
-		Therefore, when unrolling the change, we can always blindly delete the
-		(addr) at this point, since no storage adds can remain when come upon
-		a single (addr) change.
-	*/
 	s.accessList.DeleteAddress(*ch.address)
 }
 
 func (ch accessListAddAccountChange) Dirtied() *common.Address {
 	return nil
 }
+
+// ------------------------------------------------------
+// accessListAddSlotChange
+
+// accessListAddSlotChange: [JournalChange] implementations for
+type accessListAddSlotChange struct {
+	address *common.Address
+	slot    *common.Hash
+}
+
+// accessListAddSlotChange represents a [JournalChange] for when a storage slot
+// is added to an address's access list entry. This tracks individual storage
+// slots that have been accessed.
+var _ JournalChange = accessListAddSlotChange{}
 
 func (ch accessListAddSlotChange) Revert(s *StateDB) {
 	s.accessList.DeleteSlot(*ch.address, *ch.slot)

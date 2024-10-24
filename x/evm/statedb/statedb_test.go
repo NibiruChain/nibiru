@@ -513,11 +513,12 @@ func (s *Suite) TestLog() {
 		txIdx       = uint(1)
 		logIdx      = uint(1)
 	)
-	txConfig := statedb.NewTxConfig(
-		blockHash,
-		txHash,
-		txIdx, logIdx,
-	)
+	txConfig := statedb.TxConfig{
+		BlockHash: blockHash,
+		TxHash:    txHash,
+		TxIndex:   txIdx,
+		LogIndex:  logIdx,
+	}
 
 	deps := evmtest.NewTestDeps()
 	db := statedb.New(deps.Ctx, &deps.App.EvmKeeper, txConfig)
