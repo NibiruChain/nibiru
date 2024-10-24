@@ -23,7 +23,10 @@ func InitGenesis(
 	accountKeeper evm.AccountKeeper,
 	genState evm.GenesisState,
 ) []abci.ValidatorUpdate {
-	k.SetParams(ctx, genState.Params)
+	err := k.SetParams(ctx, genState.Params)
+	if err != nil {
+		panic(fmt.Errorf("failed to set params: %w", err))
+	}
 
 	// Note that "GetModuleAccount" initializes the module account with permissions
 	// under the hood if it did not already exist. This is important because the

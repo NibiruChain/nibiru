@@ -37,6 +37,18 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			wantErr: "",
 		},
 		{
+			name: "sad: fail to set params",
+			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+				return evmtest.HappyCreateContractTx(deps)
+			},
+			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
+				return evm.Params{
+					CreateFuntokenFee: sdk.NewInt(-1),
+				}
+			},
+			wantErr: "createFuntokenFee cannot be negative: -1",
+		},
+		{
 			name: "happy: ctx recheck should ignore validation",
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
@@ -195,12 +207,16 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			if tc.ctxSetup != nil {
 				tc.ctxSetup(&deps)
 			}
+			var err error
 			if tc.paramsSetup != nil {
-				deps.EvmKeeper.SetParams(deps.Ctx, tc.paramsSetup(&deps))
+				err = deps.EvmKeeper.SetParams(deps.Ctx, tc.paramsSetup(&deps))
 			}
-			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
-			)
+
+			if err == nil {
+				_, err = anteDec.AnteHandle(
+					deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				)
+			}
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
