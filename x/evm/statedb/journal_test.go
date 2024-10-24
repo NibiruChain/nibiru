@@ -61,9 +61,11 @@ func (s *Suite) TestPrecompileSnapshots() {
 	s.Require().NoError(err, deployResp)
 
 	contract := deployResp.ContractAddr
-	_, evmObj, err := deps.EvmKeeper.ERC20().Mint(
-		contract, deps.Sender.EthAddr, deps.Sender.EthAddr,
-		big.NewInt(69_420), deps.Ctx,
+	to, amount := deps.Sender.EthAddr, big.NewInt(69_420)
+	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", to, amount)
+	s.Require().NoError(err)
+	_, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, deps.Sender.EthAddr, &contract, true, input,
 	)
 	s.Require().NoError(err)
 

@@ -590,7 +590,7 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// unescrow ERC-20 tokens from EVM module address
-	res, _, err := k.ERC20().Transfer(
+	res, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,

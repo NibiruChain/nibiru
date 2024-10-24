@@ -18,21 +18,11 @@ type TxConfig struct {
 	LogIndex  uint            // the index of next log within current block
 }
 
-// NewTxConfig returns a TxConfig
-func NewTxConfig(bhash, thash gethcommon.Hash, txIndex, logIndex uint) TxConfig {
-	return TxConfig{
-		BlockHash: bhash,
-		TxHash:    thash,
-		TxIndex:   txIndex,
-		LogIndex:  logIndex,
-	}
-}
-
 // NewEmptyTxConfig construct an empty TxConfig,
 // used in context where there's no transaction, e.g. `eth_call`/`eth_estimateGas`.
-func NewEmptyTxConfig(bhash gethcommon.Hash) TxConfig {
+func NewEmptyTxConfig(blockHash gethcommon.Hash) TxConfig {
 	return TxConfig{
-		BlockHash: bhash,
+		BlockHash: blockHash,
 		TxHash:    gethcommon.Hash{},
 		TxIndex:   0,
 		LogIndex:  0,

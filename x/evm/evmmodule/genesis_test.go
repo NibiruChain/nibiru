@@ -54,11 +54,11 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user A
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx)
+	_, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx)
 	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user B
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx)
+	_, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx)
 	s.Require().NoError(err)
 
 	// Create fungible token from bank coin

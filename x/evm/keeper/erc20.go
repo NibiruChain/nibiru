@@ -16,7 +16,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
@@ -52,12 +51,13 @@ See [nibiru/x/evm/embeds].
 func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	input, err := e.ABI.Pack("mint", to, amount)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to pack ABI args: %w", err)
+		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return e.CallContractWithInput(ctx, from, &contract, true, input)
+	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input)
+	return evmResp, err
 }
 
 /*
@@ -73,23 +73,23 @@ Transfer implements "ERC20.transfer"
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (out bool, evmObj *vm.EVM, err error) {
+) (out bool, err error) {
 	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to pack ABI args: %w", err)
+		return false, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	resp, evmObj, err := e.CallContractWithInput(ctx, from, &contract, true, input)
+	resp, _, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
-		return false, nil, err
+		return false, err
 	}
 
 	var erc20Bool ERC20Bool
 	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
 	if err != nil {
-		return false, nil, err
+		return false, err
 	}
 
-	return erc20Bool.Value, evmObj, nil
+	return erc20Bool.Value, nil
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
@@ -216,10 +216,7 @@ func (k Keeper) CallContractWithInput(
 
 	// Generating TxConfig with an empty tx hash as there is no actual eth tx
 	// sent by a user
-	blockHash := gethcommon.BytesToHash(ctx.HeaderHash())
-	txConfig := statedb.NewEmptyTxConfig(blockHash)
-	txConfig.TxIndex = uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0))
-	txConfig.LogIndex = uint(k.EvmState.BlockLogSize.GetOr(ctx, 0))
+	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
 	// Using tmp context to not modify the state in case of evm revert
 	tmpCtx, commitCtx := ctx.CacheContext()
