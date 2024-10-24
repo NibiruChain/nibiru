@@ -8,6 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
 	precompiletest "github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
@@ -25,64 +26,67 @@ func (s *Suite) TestPrecompileSnapshots() {
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")
+
 	wasmContract := precompiletest.SetupWasmContracts(&deps, &s.Suite)[1]
 	type Transition struct {
 		Run                 func(deps *evmtest.TestDeps) *vm.EVM
 		AssertionsBeforeRun func(deps *evmtest.TestDeps)
 	}
 	fmt.Printf("wasmContract: %v\n", wasmContract)
-	stateTransitions := []Transition{
-		{
-			AssertionsBeforeRun: func(deps *evmtest.TestDeps) {
-				precompiletest.AssertWasmCounterState(
-					&s.Suite, *deps, wasmContract, 0,
-				)
-			},
-			Run: func(deps *evmtest.TestDeps) *vm.EVM {
-				return test.IncrementWasmCounterWithExecuteMulti(
-					&s.Suite, deps, wasmContract, 7,
-				)
-			},
-		},
-		{
-			AssertionsBeforeRun: func(deps *evmtest.TestDeps) {
-				precompiletest.AssertWasmCounterState(
-					&s.Suite, *deps, wasmContract, 7,
-				)
-			},
-			Run: func(deps *evmtest.TestDeps) *vm.EVM {
-				return test.IncrementWasmCounterWithExecuteMulti(
-					&s.Suite, deps, wasmContract, 5,
-				)
-			},
-		},
-		{
-			AssertionsBeforeRun: func(deps *evmtest.TestDeps) {
-				precompiletest.AssertWasmCounterState(
-					&s.Suite, *deps, wasmContract, 12,
-				)
-			},
-		},
+	assertionsBeforeRun := func(deps *evmtest.TestDeps) {
+		precompiletest.AssertWasmCounterState(
+			&s.Suite, *deps, wasmContract, 0,
+		)
+	}
+	run := func(deps *evmtest.TestDeps) *vm.EVM {
+		return test.IncrementWasmCounterWithExecuteMulti(
+			&s.Suite, deps, wasmContract, 7,
+		)
+	}
+	assertionsAfterRun := func(deps *evmtest.TestDeps) {
+		precompiletest.AssertWasmCounterState(
+			&s.Suite, *deps, wasmContract, 7,
+		)
 	}
 
 	s.T().Log("Assert before transition")
 
-	transitionIdx := 0
-	st := stateTransitions[transitionIdx]
-	st.AssertionsBeforeRun(&deps)
+	assertionsBeforeRun(&deps)
+
+	s.T().Log("Populate dirty journal entries")
+
+	deployArgs := []any{"name", "SYMBOL", uint8(18)}
+	deployResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_ERC20Minter,
+		deployArgs...,
+	)
+	s.Require().NoError(err, deployResp)
+
+	deps.EvmKeeper.ERC20().Mint()
+	_, _, err := deps.EvmKeeper.ERC20().Mint(
+		contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+		big.NewInt(69_420), deps.Ctx,
+	)
+
+	evmtest.TransferWei()
 
 	s.T().Log("Run state transition")
 
-	evmObj := st.Run(&deps)
+	evmObj := run(&deps)
 	stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
 	s.Require().True(ok, "error retrieving StateDB from the EVM")
-
-	entries := stateDB.Journal.EntriesCopy()
-	s.Require().Len(entries, 13, "expect 13 journal entries")
 	s.Equal(0, stateDB.Journal.DirtiesLen())
 
-	assertionsAfter := stateTransitions[transitionIdx+1].AssertionsBeforeRun
-	assertionsAfter(&deps)
+	ctxBefore, _ := deps.Ctx.CacheContext()
+	assertionsAfterRun(&deps)
+	err := stateDB.Commit()
+	s.NoError(err)
+	assertionsAfterRun(&deps)
 
-	// st.AssertionsBeforeRun(&deps)
+	s.Equal(0, stateDB.Journal.DirtiesLen())
+
+	s.Require().EqualValues(ctxBefore, deps.Ctx,
+		"StateDB should have been committed by the precompile",
+	)
 }

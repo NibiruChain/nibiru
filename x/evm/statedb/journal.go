@@ -91,10 +91,6 @@ func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-func (j *journal) EntriesCopy() []JournalChange {
-	return j.entries
-}
-
 func (j *journal) DirtiesLen() int {
 	return len(j.dirties)
 }

@@ -53,13 +53,12 @@ See [nibiru/x/evm/embeds].
 func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
+) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
 	input, err := e.ABI.Pack("mint", to, amount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
+		return nil, nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input)
-	return
+	return e.CallContractWithInput(ctx, from, &contract, true, input)
 }
 
 /*

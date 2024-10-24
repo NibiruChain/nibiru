@@ -16,13 +16,16 @@ func (s *Suite) TestERC20Calls() {
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
-		_, err := deps.EvmKeeper.ERC20().Mint(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), deps.Ctx)
+		_, _, err := deps.EvmKeeper.ERC20().Mint(
+			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+			big.NewInt(69_420), deps.Ctx,
+		)
 		s.ErrorContains(err, evm.ErrOwnable)
 	}
 
 	s.T().Log("Mint tokens - Success")
 	{
-		_, err := deps.EvmKeeper.ERC20().Mint(contract, evm.EVM_MODULE_ADDRESS, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), deps.Ctx)
+		_, _, err := deps.EvmKeeper.ERC20().Mint(contract, evm.EVM_MODULE_ADDRESS, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), deps.Ctx)
 		s.Require().NoError(err)
 
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
