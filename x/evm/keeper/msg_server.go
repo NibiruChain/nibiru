@@ -590,14 +590,6 @@ func (k Keeper) convertCoinNativeERC20(
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 
-	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve recipient balance")
-	}
-	if recipientBalanceBefore == nil {
-		return nil, fmt.Errorf("failed to retrieve recipient balance, balance is nil")
-	}
-
 	// Escrow Coins on module account
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
@@ -626,29 +618,15 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// unescrow ERC-20 tokens from EVM module address
-	input, err := k.ERC20().ABI.Pack("transfer", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to pack ABI args")
-	}
-	_, err = k.ERC20().CallContractWithInput(ctx, evm.EVM_MODULE_ADDRESS, &erc20Addr, true, input)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
-	}
-
-	// For fee-on-transfer tokens, the actual amount received may be less than the amount transferred.
-	// Retrieve the recipient's balance after the transfer to calculate the actual received amount.
-	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve recipient balance after transfer")
-	}
-	if recipientBalanceAfter == nil {
-		return nil, fmt.Errorf("failed to retrieve recipient balance after transfer, balance is nil")
-	}
-
-	// Burn escrowed Coins based on the actual amount received by the recipient
-	actualReceivedAmount := big.NewInt(0).Sub(recipientBalanceAfter, recipientBalanceBefore)
-	if actualReceivedAmount.Sign() <= 0 {
-		return nil, fmt.Errorf("no ERC20 tokens were received by the recipient")
+	success, err, actualReceivedAmount := k.ERC20().Transfer(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		recipient,
+		coin.Amount.BigInt(),
+		ctx,
+	)
+	if err != nil || !success {
+		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
 	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualReceivedAmount))

@@ -159,7 +159,7 @@ func (p precompileFunToken) bankSend(
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
-	_, err = p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
+	_, err, _ = p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send from caller to the EVM account: %w", err)
 	}

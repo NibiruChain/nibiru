@@ -73,23 +73,53 @@ Transfer implements "ERC20.transfer"
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (out bool, err error) {
+) (success bool, err error, received *big.Int) {
+	received = big.NewInt(0)
+
+	recipientBalanceBefore, err := e.BalanceOf(contract, to, ctx)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to retrieve recipient balance"), received
+	}
+
 	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
-		return false, fmt.Errorf("failed to pack ABI args: %w", err)
+		return false, fmt.Errorf("failed to pack ABI args: %w", err), received
 	}
 	resp, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
-		return false, err
+		return false, err, received
+	}
+
+	recipientBalanceAfter, err := e.BalanceOf(contract, to, ctx)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to retrieve recipient balance"), received
+	}
+
+	received = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)
+
+	// we can't check that received = amount because the recipient could have
+	// a transfer fee or other deductions. We can only check that the recipient
+	// received some tokens
+	if received.Sign() <= 0 {
+		return false, fmt.Errorf("no (or negative) ERC20 tokens were received by the recipient"), received
 	}
 
 	var erc20Bool ERC20Bool
 	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
-	if err != nil {
-		return false, err
+
+	// per erc20 standard, the transfer function should return a boolean value
+	// indicating whether the operation succeeded. If the unpacking failed, we
+	// need to check the recipient balance to determine if the transfer was successful.
+	if err == nil {
+		// should be true if the transfer was successful but we do it anyway
+		// to respect the contract's return value
+		success = erc20Bool.Value
+
+		return success, nil, received
 	}
 
-	return erc20Bool.Value, nil
+	success = true
+	return
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
