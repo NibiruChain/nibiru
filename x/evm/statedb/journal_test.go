@@ -10,13 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
-	precompiletest "github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -32,10 +30,10 @@ func (s *Suite) TestPrecompileSnapshots() {
 
 	s.T().Log("Set up helloworldcounter.wasm")
 
-	wasmContract := precompiletest.SetupWasmContracts(&deps, &s.Suite)[1]
+	wasmContract := test.SetupWasmContracts(&deps, &s.Suite)[1]
 	fmt.Printf("wasmContract: %s\n", wasmContract)
 	assertionsBeforeRun := func(deps *evmtest.TestDeps) {
-		precompiletest.AssertWasmCounterState(
+		test.AssertWasmCounterState(
 			&s.Suite, *deps, wasmContract, 0,
 		)
 	}
@@ -45,7 +43,7 @@ func (s *Suite) TestPrecompileSnapshots() {
 		)
 	}
 	assertionsAfterRun := func(deps *evmtest.TestDeps) {
-		precompiletest.AssertWasmCounterState(
+		test.AssertWasmCounterState(
 			&s.Suite, *deps, wasmContract, 7,
 		)
 	}

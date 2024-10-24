@@ -100,29 +100,6 @@ func (s *StateDB) DirtiesCount() int {
 		dirtiesCount += dirtyCount
 	}
 	return dirtiesCount
-	// for addr := range s.Journal.dirties {
-	// 	obj := s.stateObjects[addr]
-	// 	// suicided without deletion means obj is dirty
-	// 	if obj.Suicided {
-	// 		dirtiesCount++
-	// 		// continue
-	// 	}
-	// 	// dirty code means obj is dirty
-	// 	if obj.code != nil && obj.DirtyCode {
-	// 		dirtiesCount++
-	// 		// continue
-	// 	}
-
-	// 	// mismatch between dirty storage and origin means obj is dirty
-	// 	for k, v := range obj.DirtyStorage {
-	// 		// All object (k,v) tuples matching between dirty and origin storage
-	// 		// signifies that the entry is committed.
-	// 		if v != obj.OriginStorage[k] {
-	// 			dirtiesCount++
-	// 		}
-	// 	}
-	// }
-	// return dirtiesCount
 }
 
 func (s *StateDB) Dirties() map[common.Address]int {
