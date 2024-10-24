@@ -208,7 +208,7 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 - Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.5 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858), [#1938](https://github.com/NibiruChain/nibiru/pull/1938))
-- Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.0 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862))
+- Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.2 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862), [#2070](https://github.com/NibiruChain/nibiru/pull/2070))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
 - Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.45.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972), [#1974](https://github.com/NibiruChain/nibiru/pull/1974), [#1988](https://github.com/NibiruChain/nibiru/pull/1988), [#2043](https://github.com/NibiruChain/nibiru/pull/2043), [#2057](https://github.com/NibiruChain/nibiru/pull/2057), [#2062](https://github.com/NibiruChain/nibiru/pull/2062), [#2069](https://github.com/NibiruChain/nibiru/pull/2069))
 - Bump `axios` from 1.7.3 to 1.7.4 ([#2016](https://github.com/NibiruChain/nibiru/pull/2016))
