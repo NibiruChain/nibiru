@@ -171,7 +171,7 @@ type OnRunStartResult struct {
 //		}
 //		// ...
 //		// Use res.Ctx for state changes
-//		// Use res.StateDB.CommitContext() before any non-EVM state changes
+//		// Use res.StateDB.Commit() before any non-EVM state changes
 //		// to guarantee the context and [statedb.StateDB] are in sync.
 //	}
 //	```
@@ -189,7 +189,7 @@ func OnRunStart(
 		return
 	}
 	ctx := stateDB.GetContext()
-	if err = stateDB.CommitContext(ctx); err != nil {
+	if err = stateDB.Commit(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 

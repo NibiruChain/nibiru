@@ -3,9 +3,13 @@ package statedb_test
 import (
 	"fmt"
 	"math/big"
+	"strings"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -50,8 +54,6 @@ func (s *Suite) TestPrecompileSnapshots() {
 
 	assertionsBeforeRun(&deps)
 
-	s.T().Log("Populate dirty journal entries")
-
 	deployArgs := []any{"name", "SYMBOL", uint8(18)}
 	deployResp, err := evmtest.DeployContract(
 		&deps,
@@ -60,34 +62,120 @@ func (s *Suite) TestPrecompileSnapshots() {
 	)
 	s.Require().NoError(err, deployResp)
 
-	// deps.EvmKeeper.ERC20().Mint()
 	contract := deployResp.ContractAddr
 	_, evmObj, err := deps.EvmKeeper.ERC20().Mint(
-		contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+		contract, deps.Sender.EthAddr, deps.Sender.EthAddr,
 		big.NewInt(69_420), deps.Ctx,
 	)
 	s.Require().NoError(err)
 
-	stateDB := evmObj.StateDB.(*statedb.StateDB)
-	s.Equal(50, stateDB.Journal.DirtiesLen())
-	// evmtest.TransferWei()
+	s.Run("Populate dirty journal entries. Remove with Commit", func() {
+		stateDB := evmObj.StateDB.(*statedb.StateDB)
+		s.Equal(0, stateDB.DirtiesCount())
 
-	s.T().Log("Run state transition")
+		randomAcc := evmtest.NewEthPrivAcc().EthAddr
+		balDelta := evm.NativeToWei(big.NewInt(4))
+		// 2 dirties from [createObjectChange, balanceChange]
+		stateDB.AddBalance(randomAcc, balDelta)
+		// 1 dirties from [balanceChange]
+		stateDB.AddBalance(randomAcc, balDelta)
+		// 1 dirties from [balanceChange]
+		stateDB.SubBalance(randomAcc, balDelta)
+		if stateDB.DirtiesCount() != 4 {
+			debugDirtiesCountMismatch(stateDB, s.T())
+			s.FailNow("expected 4 dirty journal changes")
+		}
 
-	evmObj = run(&deps)
-	stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
-	s.Require().True(ok, "error retrieving StateDB from the EVM")
-	s.Equal(0, stateDB.Journal.DirtiesLen())
+		err = stateDB.Commit() // Dirties should be gone
+		s.NoError(err)
+		if stateDB.DirtiesCount() != 0 {
+			debugDirtiesCountMismatch(stateDB, s.T())
+			s.FailNow("expected 0 dirty journal changes")
+		}
+	})
 
-	_, _ = deps.Ctx.CacheContext()
-	assertionsAfterRun(&deps)
-	err = stateDB.Commit()
-	s.NoError(err)
-	assertionsAfterRun(&deps)
+	s.Run("Emulate a contract that calls another contract", func() {
+		randomAcc := evmtest.NewEthPrivAcc().EthAddr
+		to, amount := randomAcc, big.NewInt(69_000)
+		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("transfer", to, amount)
+		s.Require().NoError(err)
 
-	s.Equal(0, stateDB.Journal.DirtiesLen())
+		leftoverGas := serverconfig.DefaultEthCallGasLimit
+		_, _, err = evmObj.Call(
+			vm.AccountRef(deps.Sender.EthAddr),
+			contract,
+			input,
+			leftoverGas,
+			big.NewInt(0),
+		)
+		s.Require().NoError(err)
+		stateDB := evmObj.StateDB.(*statedb.StateDB)
+		if stateDB.DirtiesCount() != 2 {
+			debugDirtiesCountMismatch(stateDB, s.T())
+			s.FailNow("expected 2 dirty journal changes")
+		}
 
-	// s.Require().EqualValues(ctxBefore, deps.Ctx,
-	// 	"StateDB should have been committed by the precompile",
-	// )
+		// The contract calling itself is invalid in this context.
+		// Note the comment in vm.Contract:
+		//
+		// type Contract struct {
+		// 	// CallerAddress is the result of the caller which initialized this
+		// 	// contract. However when the "call method" is delegated this value
+		// 	// needs to be initialized to that of the caller's caller.
+		// 	CallerAddress common.Address
+		// 	// ...
+		// 	}
+		// 	//
+		_, _, err = evmObj.Call(
+			vm.AccountRef(contract),
+			contract,
+			input,
+			leftoverGas,
+			big.NewInt(0),
+		)
+		s.Require().ErrorContains(err, vm.ErrExecutionReverted.Error())
+	})
+
+	s.Run("Precompile calls also start and end clean (no dirty changes)", func() {
+		evmObj = run(&deps)
+		assertionsAfterRun(&deps)
+		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
+		s.Require().True(ok, "error retrieving StateDB from the EVM")
+		if stateDB.DirtiesCount() != 0 {
+			debugDirtiesCountMismatch(stateDB, s.T())
+			s.FailNow("expected 0 dirty journal changes")
+		}
+	})
+}
+
+func debugDirtiesCountMismatch(db *statedb.StateDB, t *testing.T) string {
+	lines := []string{}
+	dirties := db.Dirties()
+	stateObjects := db.StateObjects()
+	for addr, dirtyCountForAddr := range dirties {
+		lines = append(lines, fmt.Sprintf("Dirty addr: %s, dirtyCountForAddr=%d", addr, dirtyCountForAddr))
+
+		// Inspect the actual state object
+		maybeObj := stateObjects[addr]
+		if maybeObj == nil {
+			lines = append(lines, "  no state object found!")
+			continue
+		}
+		obj := *maybeObj
+
+		lines = append(lines, fmt.Sprintf("  balance: %s", obj.Balance()))
+		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.Suicided))
+		lines = append(lines, fmt.Sprintf("  dirtyCode: %v", obj.DirtyCode))
+
+		// Print storage state
+		lines = append(lines, fmt.Sprintf("  len(obj.DirtyStorage) entries: %d", len(obj.DirtyStorage)))
+		for k, v := range obj.DirtyStorage {
+			lines = append(lines, fmt.Sprintf("    key: %s, value: %s", k.Hex(), v.Hex()))
+			origVal := obj.OriginStorage[k]
+			lines = append(lines, fmt.Sprintf("    origin value: %s", origVal.Hex()))
+		}
+	}
+
+	t.Log("debugDirtiesCountMismatch:\n", strings.Join(lines, "\n"))
+	return ""
 }

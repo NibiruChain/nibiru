@@ -194,7 +194,7 @@ func (s *StateDB) GetRefund() uint64 {
 func (s *StateDB) HasSuicided(addr common.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.suicided
+		return stateObject.Suicided
 	}
 	return false
 }
@@ -275,7 +275,7 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 		return nil
 	}
 	s.keeper.ForEachStorage(s.ctx, addr, func(key, value common.Hash) bool {
-		if value, dirty := so.dirtyStorage[key]; dirty {
+		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}
 		if len(value) > 0 {
@@ -346,10 +346,10 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	}
 	s.Journal.append(suicideChange{
 		account:     &addr,
-		prev:        stateObject.suicided,
+		prev:        stateObject.Suicided,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
-	stateObject.suicided = true
+	stateObject.Suicided = true
 	stateObject.account.BalanceWei = new(big.Int)
 
 	return true
@@ -450,41 +450,47 @@ func errorf(format string, args ...any) error {
 	return fmt.Errorf("StateDB error: "+format, args...)
 }
 
-// CommitContext writes the dirty journal state changes to the EVM Keeper. The
-// StateDB object cannot be reused after [CommitContext] has completed. A new
+// Commit writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [Commit] has completed. A new
 // object needs to be created from the EVM.
-func (s *StateDB) CommitContext(ctx sdk.Context) error {
+func (s *StateDB) Commit() error {
+	ctx := s.GetContext()
 	for _, addr := range s.Journal.sortedDirties() {
-		obj := s.stateObjects[addr]
-		if obj.suicided {
+		obj := s.getStateObject(addr)
+		if obj == nil {
+			continue
+		}
+		if obj.Suicided {
+			// Invariant: After [StateDB.Suicide] for some address, the
+			// corresponding account's state object is only available until the
+			// state is committed.
 			if err := s.keeper.DeleteAccount(ctx, obj.Address()); err != nil {
 				return errorf("failed to delete account: %w", err)
 			}
+			delete(s.stateObjects, addr)
 		} else {
-			if obj.code != nil && obj.dirtyCode {
+			if obj.code != nil && obj.DirtyCode {
 				s.keeper.SetCode(ctx, obj.CodeHash(), obj.code)
 			}
 			if err := s.keeper.SetAccount(ctx, obj.Address(), obj.account.ToNative()); err != nil {
 				return errorf("failed to set account: %w", err)
 			}
-			for _, key := range obj.dirtyStorage.SortedKeys() {
-				value := obj.dirtyStorage[key]
-				// Skip noop changes, persist actual changes
-				if value == obj.originStorage[key] {
+			for _, key := range obj.DirtyStorage.SortedKeys() {
+				dirtyVal := obj.DirtyStorage[key]
+				// Values that match origin storage are not dirty.
+				if dirtyVal == obj.OriginStorage[key] {
 					continue
 				}
-				s.keeper.SetState(ctx, obj.Address(), key, value.Bytes())
+				// Persist committed changes
+				s.keeper.SetState(ctx, obj.Address(), key, dirtyVal.Bytes())
+				obj.OriginStorage[key] = dirtyVal
 			}
 		}
+		// Clear the dirty counts because all state changes have been
+		// committed.
+		s.Journal.dirties[addr] = 0
 	}
 	return nil
-}
-
-// Commit writes the dirty journal state changes to the EVM Keeper. The
-// StateDB object cannot be reused after [CommitContext] has completed. A new
-// object needs to be created from the EVM.
-func (s *StateDB) Commit() error {
-	return s.CommitContext(s.ctx)
 }
 
 // StateObjects: Returns a copy of the [StateDB.stateObjects] map.

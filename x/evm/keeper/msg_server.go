@@ -590,7 +590,7 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// unescrow ERC-20 tokens from EVM module address
-	res, err := k.ERC20().Transfer(
+	res, _, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
@@ -686,7 +686,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 	// Emit typed events
 	if !evmResp.Failed() {
 		if recipient == nil { // contract creation
-			var contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
+			contractAddr := crypto.CreateAddress(msg.From(), msg.Nonce())
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
 				Sender:       msg.From().Hex(),
 				ContractAddr: contractAddr.String(),

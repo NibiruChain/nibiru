@@ -91,8 +91,46 @@ func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-func (j *journal) DirtiesLen() int {
-	return len(j.dirties)
+// DirtiesCount is a test helper to inspect how many entries in the journal are
+// still dirty (uncommitted). After calling [StateDB.Commit], this function should
+// return zero.
+func (s *StateDB) DirtiesCount() int {
+	dirtiesCount := 0
+	for _, dirtyCount := range s.Journal.dirties {
+		dirtiesCount += dirtyCount
+	}
+	return dirtiesCount
+	// for addr := range s.Journal.dirties {
+	// 	obj := s.stateObjects[addr]
+	// 	// suicided without deletion means obj is dirty
+	// 	if obj.Suicided {
+	// 		dirtiesCount++
+	// 		// continue
+	// 	}
+	// 	// dirty code means obj is dirty
+	// 	if obj.code != nil && obj.DirtyCode {
+	// 		dirtiesCount++
+	// 		// continue
+	// 	}
+
+	// 	// mismatch between dirty storage and origin means obj is dirty
+	// 	for k, v := range obj.DirtyStorage {
+	// 		// All object (k,v) tuples matching between dirty and origin storage
+	// 		// signifies that the entry is committed.
+	// 		if v != obj.OriginStorage[k] {
+	// 			dirtiesCount++
+	// 		}
+	// 	}
+	// }
+	// return dirtiesCount
+}
+
+func (s *StateDB) Dirties() map[common.Address]int {
+	return s.Journal.dirties
+}
+
+func (s *StateDB) Entries() []JournalChange {
+	return s.Journal.entries
 }
 
 // ------------------------------------------------------
@@ -148,7 +186,7 @@ var _ JournalChange = suicideChange{}
 func (ch suicideChange) Revert(s *StateDB) {
 	obj := s.getStateObject(*ch.account)
 	if obj != nil {
-		obj.suicided = ch.prev
+		obj.Suicided = ch.prev
 		obj.setBalance(ch.prevbalance)
 	}
 }
