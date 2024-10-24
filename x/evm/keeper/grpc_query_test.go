@@ -794,7 +794,7 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: trace erc-20 transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, predecessors, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
@@ -873,7 +873,7 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, _, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
