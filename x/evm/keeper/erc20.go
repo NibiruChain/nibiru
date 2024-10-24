@@ -151,14 +151,17 @@ func (k Keeper) CallContract(
 	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
 }
 
-// CallContractWithInput invokes a smart contract with the given [contractInput] or deploys new contract.
+// CallContractWithInput invokes a smart contract with the given [contractInput]
+// or deploys a new contract.
 //
 // Parameters:
 //   - ctx: The SDK context for the transaction.
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract. Nil if new contract is deployed.
-//   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
-//   - input: Hexadecimal-encoded bytes use as input data to the call.
+//   - contract: Pointer to the Ethereum address of the contract. Nil if new
+//     contract is deployed.
+//   - commit: Boolean flag indicating whether to commit the transaction (true)
+//     or simulate it (false).
+//   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
 //
 // Note: This function handles both contract method calls and simulations,
 // depending on the 'commit' parameter. It uses a default gas limit.
@@ -169,8 +172,8 @@ func (k Keeper) CallContractWithInput(
 	commit bool,
 	contractInput []byte,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
+	// This is a `defer` pattern to add behavior that runs in the case that the
+	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("CallContractError: %w", err)
@@ -178,7 +181,8 @@ func (k Keeper) CallContractWithInput(
 	}()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
-	// Gas cap sufficient for all "honest" ERC20 calls without malicious (gas intensive) code in contracts
+	// Gas cap sufficient for all "honest" ERC20 calls without malicious (gas
+	// intensive) code in contracts
 	gasLimit := serverconfig.DefaultEthCallGasLimit
 
 	unusedBigInt := big.NewInt(0)
@@ -206,11 +210,12 @@ func (k Keeper) CallContractWithInput(
 		return nil, errors.Wrapf(err, "failed to load evm config")
 	}
 
-	// Generating TxConfig with an empty tx hash as there is no actual eth tx sent by a user
+	// Generating TxConfig with an empty tx hash as there is no actual eth tx
+	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
 	// Using tmp context to not modify the state in case of evm revert
-	tmpCtx, commitFn := ctx.CacheContext()
+	tmpCtx, commitCtx := ctx.CacheContext()
 
 	evmResp, err = k.ApplyEvmMsg(
 		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
@@ -232,7 +237,7 @@ func (k Keeper) CallContractWithInput(
 	} else {
 		// Success, committing the state to ctx
 		if commit {
-			commitFn()
+			commitCtx()
 			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 			if err != nil {
 				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())

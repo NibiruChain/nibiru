@@ -31,8 +31,8 @@ var _ evm.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(
 	goCtx context.Context, txMsg *evm.MsgEthereumTx,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
+	// This is a `defer` pattern to add behavior that runs in the case that the
+	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("EthereumTx error: %w", err)
@@ -54,15 +54,15 @@ func (k *Keeper) EthereumTx(
 
 	// get the signer according to the chain rules from the config and block height
 	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
+	evmMsg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	tmpCtx, commit := ctx.CacheContext()
+	tmpCtx, commitCtx := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	evmResp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
+	evmResp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -71,17 +71,18 @@ func (k *Keeper) EthereumTx(
 	}
 
 	if !evmResp.Failed() {
-		commit()
+		commitCtx()
 	}
 
-	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
+	// refund gas in order to match the Ethereum gas consumption instead of the
+	// default SDK one.
 	refundGas := uint64(0)
-	if msg.Gas() > evmResp.GasUsed {
-		refundGas = msg.Gas() - evmResp.GasUsed
+	if evmMsg.Gas() > evmResp.GasUsed {
+		refundGas = evmMsg.Gas() - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
-	if err = k.RefundGas(ctx, msg.From(), refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", msg.From())
+	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
+		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
@@ -91,17 +92,16 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "error adding transient gas used to block")
 	}
 
-	// reset the gas meter for current cosmos transaction
+	// reset the gas meter for current TxMsg (EthereumTx)
 	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 
-	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), msg, evmResp)
+	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
 	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
-
 	return evmResp, nil
 }
 
