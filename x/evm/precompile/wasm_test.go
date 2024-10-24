@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -584,4 +585,189 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			s.Require().Nil(ethTxResp)
 		})
 	}
+}
+
+type WasmExecuteMsg struct {
+	ContractAddr string                    `json:"contractAddr"`
+	MsgArgs      []byte                    `json:"msgArgs"`
+	Funds        []precompile.WasmBankCoin `json:"funds"`
+}
+
+func (s *WasmSuite) TestExecuteMultiValidation() {
+	deps := evmtest.NewTestDeps()
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
+	))
+
+	wasmContracts := SetupWasmContracts(&deps, &s.Suite)
+	wasmContract := wasmContracts[1] // hello_world_counter.wasm
+
+	invalidMsgArgsBz := []byte(`{"invalid": "json"}`) // Invalid message format
+	validMsgArgsBz := []byte(`{"increment": {}}`)     // Valid increment message
+
+	var emptyFunds []precompile.WasmBankCoin
+	validFunds := []precompile.WasmBankCoin{{
+		Denom:  "unibi",
+		Amount: big.NewInt(100),
+	}}
+	invalidFunds := []precompile.WasmBankCoin{{
+		Denom:  "invalid!denom",
+		Amount: big.NewInt(100),
+	}}
+
+	testCases := []struct {
+		name        string
+		executeMsgs []WasmExecuteMsg
+		wantError   string
+	}{
+		{
+			name: "valid - single message",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      validMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+			},
+			wantError: "",
+		},
+		{
+			name: "valid - multiple messages",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      validMsgArgsBz,
+					Funds:        validFunds,
+				},
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      validMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+			},
+			wantError: "",
+		},
+		{
+			name: "invalid - malformed contract address",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: "invalid-address",
+					MsgArgs:      validMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+			},
+			wantError: "decoding bech32 failed",
+		},
+		{
+			name: "invalid - malformed message args",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      invalidMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+			},
+			wantError: "unknown variant",
+		},
+		{
+			name: "invalid - malformed funds",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      validMsgArgsBz,
+					Funds:        invalidFunds,
+				},
+			},
+			wantError: "invalid coins",
+		},
+		{
+			name: "invalid - second message fails validation",
+			executeMsgs: []WasmExecuteMsg{
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      validMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+				{
+					ContractAddr: wasmContract.String(),
+					MsgArgs:      invalidMsgArgsBz,
+					Funds:        emptyFunds,
+				},
+			},
+			wantError: "unknown variant",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			callArgs := []any{tc.executeMsgs}
+			input, err := embeds.SmartContract_Wasm.ABI.Pack(
+				string(precompile.WasmMethod_executeMulti),
+				callArgs...,
+			)
+			s.Require().NoError(err)
+
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+				deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+			)
+
+			if tc.wantError != "" {
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), tc.wantError)
+				s.Require().Nil(ethTxResp)
+			} else {
+				s.Require().NoError(err)
+				s.Require().NotNil(ethTxResp)
+				s.Require().NotEmpty(ethTxResp.Ret)
+			}
+		})
+	}
+}
+
+// TestExecuteMultiPartialExecution ensures that no state changes occur if any message
+// in the batch fails validation
+func (s *WasmSuite) TestExecuteMultiPartialExecution() {
+	deps := evmtest.NewTestDeps()
+	wasmContracts := SetupWasmContracts(&deps, &s.Suite)
+	wasmContract := wasmContracts[1] // hello_world_counter.wasm
+
+	// First verify initial state is 0
+	s.assertWasmCounterState(deps, wasmContract, 0)
+
+	// Create a batch where the second message will fail validation
+	executeMsgs := []WasmExecuteMsg{
+		{
+			ContractAddr: wasmContract.String(),
+			MsgArgs:      []byte(`{"increment": {}}`),
+			Funds:        []precompile.WasmBankCoin{},
+		},
+		{
+			ContractAddr: wasmContract.String(),
+			MsgArgs:      []byte(`{"invalid": "json"}`), // This will fail validation
+			Funds:        []precompile.WasmBankCoin{},
+		},
+	}
+
+	callArgs := []any{executeMsgs}
+	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_executeMulti),
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+	)
+
+	// Verify that the call failed
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "unknown variant")
+	s.Require().Nil(ethTxResp)
+
+	// Verify that no state changes occurred
+	s.assertWasmCounterState(deps, wasmContract, 0)
 }
