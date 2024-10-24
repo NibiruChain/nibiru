@@ -59,7 +59,6 @@ and the [related comments from @Unique-Divine and @berndartmueller](https://gith
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 
-
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
 - [#1837](https://github.com/NibiruChain/nibiru/pull/1837) - feat(eth): protos, eth types, and evm module types

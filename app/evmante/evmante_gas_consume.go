@@ -157,8 +157,8 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	return next(newCtx, tx, simulate)
 }
 
-// deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
-// If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
+// deductFee checks if the fee payer has enough funds to pay for the fees and
+// deducts them.
 func (anteDec AnteDecEthGasConsume) deductFee(
 	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
 ) error {
@@ -166,9 +166,9 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		return nil
 	}
 
-	// If the account balance is not sufficient, try to withdraw enough staking rewards
-
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
+	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+		ctx, fees, gethcommon.BytesToAddress(feePayer),
+	); err != nil {
 		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil
