@@ -309,8 +309,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
 			)
-			s.ErrorContains(err, tc.wantError)
-			s.Require().Nil(ethTxResp)
+			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
 		})
 	}
 }

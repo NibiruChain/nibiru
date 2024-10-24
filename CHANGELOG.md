@@ -58,6 +58,7 @@ and the [related comments from @Unique-Divine and @berndartmueller](https://gith
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precompiles): It is possible for the `Run` function of a custom precompile to retrieve stale state because EVM state changes can occur before the precompile is called that are recorded as entries in the StateDB journal for the transaction without being reflected in the `sdk.Context`. This pull request makes sure that state is committed as expected.
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
+- [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
@@ -138,7 +139,6 @@ and the [related comments from @Unique-Divine and @berndartmueller](https://gith
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
-
 
 ### State Machine Breaking (Other)
 
