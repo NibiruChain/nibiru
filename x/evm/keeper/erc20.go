@@ -56,7 +56,8 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return e.CallContractWithInput(ctx, from, &contract, true, input)
+	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input)
+	return evmResp, err
 }
 
 /*
@@ -77,7 +78,7 @@ func (e erc20Calls) Transfer(
 	if err != nil {
 		return false, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	resp, err := e.CallContractWithInput(ctx, from, &contract, true, input)
+	resp, _, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
 		return false, err
 	}
@@ -117,7 +118,8 @@ func (e erc20Calls) Burn(
 		return
 	}
 	commit := true
-	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, commit, input)
+	return
 }
 
 // CallContract invokes a smart contract on the method specified by [methodName]
@@ -148,7 +150,8 @@ func (k Keeper) CallContract(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
+	evmResp, _, err = k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
+	return evmResp, err
 }
 
 // CallContractWithInput invokes a smart contract with the given [contractInput]
@@ -171,7 +174,7 @@ func (k Keeper) CallContractWithInput(
 	contract *gethcommon.Address,
 	commit bool,
 	contractInput []byte,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
+) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
@@ -207,7 +210,8 @@ func (k Keeper) CallContractWithInput(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load evm config")
+		err = errors.Wrapf(err, "failed to load EVM config")
+		return
 	}
 
 	// Generating TxConfig with an empty tx hash as there is no actual eth tx
@@ -217,23 +221,27 @@ func (k Keeper) CallContractWithInput(
 	// Using tmp context to not modify the state in case of evm revert
 	tmpCtx, commitCtx := ctx.CacheContext()
 
-	evmResp, err = k.ApplyEvmMsg(
+	evmResp, evmObj, err = k.ApplyEvmMsg(
 		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
 		// We don't know the actual gas used, so consuming the gas limit
 		k.ResetGasMeterAndConsumeGas(ctx, gasLimit)
-		return nil, errors.Wrap(err, "failed to apply ethereum core message")
+		err = errors.Wrap(err, "failed to apply ethereum core message")
+		return
 	}
 	if evmResp.Failed() {
 		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
 		if evmResp.VmError != vm.ErrOutOfGas.Error() {
 			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
-				return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+				err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+				return
 			}
-			return nil, fmt.Errorf("VMError: %s", evmResp.VmError)
+			err = fmt.Errorf("VMError: %s", evmResp.VmError)
+			return
 		}
-		return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
+		err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
+		return
 	} else {
 		// Success, committing the state to ctx
 		if commit {
@@ -241,18 +249,18 @@ func (k Keeper) CallContractWithInput(
 			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 			if err != nil {
 				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-				return nil, errors.Wrap(err, "error adding transient gas used to block")
+				return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
 			}
 			k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 			err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
 			if err != nil {
-				return nil, errors.Wrap(err, "error emitting ethereum tx events")
+				return nil, nil, errors.Wrap(err, "error emitting ethereum tx events")
 			}
 			blockTxIdx := uint64(txConfig.TxIndex) + 1
 			k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 		}
-		return evmResp, nil
+		return evmResp, evmObj, nil
 	}
 }
 

@@ -20,6 +20,8 @@ import (
 
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
@@ -123,7 +125,9 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 		To:    &recipient,
 		Nonce: (*hexutil.Uint64)(&nonce),
 	}
-	ethTxMsg, err := GenerateAndSignEthTxMsg(txArgs, deps)
+	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(txArgs, deps, deps.Sender)
+	require.NoError(t, err)
+	err = ethTxMsg.Sign(gethSigner, krSigner)
 	require.NoError(t, err)
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
@@ -153,18 +157,20 @@ func DeployContract(
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
 	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
-	msgEthTx, err := GenerateAndSignEthTxMsg(
+	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
 			Input: (*hexutil.Bytes)(&bytecodeForCall),
 			From:  &deps.Sender.EthAddr,
-		}, deps,
+		}, deps, deps.Sender,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+	} else if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
+		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), msgEthTx)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute ethereum tx")
 	}
@@ -174,7 +180,7 @@ func DeployContract(
 
 	return &DeployContractResult{
 		TxResp:       resp,
-		EthTxMsg:     msgEthTx,
+		EthTxMsg:     ethTxMsg,
 		ContractData: contract,
 		Nonce:        nonce,
 		ContractAddr: crypto.CreateAddress(deps.Sender.EthAddr, nonce),
@@ -184,7 +190,11 @@ func DeployContract(
 // DeployAndExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
 func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
-) (erc20Transfer *evm.MsgEthereumTx, predecessors []*evm.MsgEthereumTx) {
+) (
+	erc20Transfer *evm.MsgEthereumTx,
+	predecessors []*evm.MsgEthereumTx,
+	contractAddr gethcommon.Address,
+) {
 	// TX 1: Deploy ERC-20 contract
 	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20)
 	require.NoError(t, err)
@@ -192,7 +202,7 @@ func DeployAndExecuteERC20Transfer(
 	nonce := deployResp.Nonce
 
 	// Contract address is deterministic
-	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
+	contractAddr = crypto.CreateAddress(deps.Sender.EthAddr, nonce)
 	deps.App.Commit()
 	predecessors = []*evm.MsgEthereumTx{
 		deployResp.EthTxMsg,
@@ -206,27 +216,67 @@ func DeployAndExecuteERC20Transfer(
 	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
-		To:    &contractAddress,
+		To:    &contractAddr,
 		Nonce: (*hexutil.Uint64)(&nonce),
 		Data:  (*hexutil.Bytes)(&input),
 	}
-	erc20Transfer, err = GenerateAndSignEthTxMsg(txArgs, deps)
+	erc20Transfer, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(txArgs, deps, deps.Sender)
+	require.NoError(t, err)
+	err = erc20Transfer.Sign(gethSigner, krSigner)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), erc20Transfer)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), erc20Transfer)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
-	return erc20Transfer, predecessors
+	return erc20Transfer, predecessors, contractAddr
 }
 
-// GenerateAndSignEthTxMsg estimates gas, sets gas limit and sings the tx
-func GenerateAndSignEthTxMsg(
-	jsonTxArgs evm.JsonTxArgs, deps *TestDeps,
-) (*evm.MsgEthereumTx, error) {
+func CallContractTx(
+	deps *TestDeps,
+	contractAddr gethcommon.Address,
+	input []byte,
+	sender EthPrivKeyAcc,
+) (ethTxMsg *evm.MsgEthereumTx, resp *evm.MsgEthereumTxResponse, err error) {
+	nonce := deps.StateDB().GetNonce(sender.EthAddr)
+	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(evm.JsonTxArgs{
+		From:  &sender.EthAddr,
+		To:    &contractAddr,
+		Nonce: (*hexutil.Uint64)(&nonce),
+		Data:  (*hexutil.Bytes)(&input),
+	}, deps, sender)
+	if err != nil {
+		err = fmt.Errorf("CallContract error during tx generation: %w", err)
+		return
+	}
+
+	err = ethTxMsg.Sign(gethSigner, krSigner)
+	if err != nil {
+		err = fmt.Errorf("CallContract error during signature: %w", err)
+		return
+	}
+
+	resp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
+	return ethTxMsg, resp, err
+}
+
+// GenerateEthTxMsgAndSigner estimates gas, sets gas limit and returns signer for
+// the tx.
+//
+// Usage:
+//
+//	```go
+//	evmTxMsg, gethSigner, krSigner, _ := GenerateEthTxMsgAndSigner(
+//	    jsonTxArgs, &deps, sender,
+//	)
+//	err := evmTxMsg.Sign(gethSigner, sender.KeyringSigner)
+//	```
+func GenerateEthTxMsgAndSigner(
+	jsonTxArgs evm.JsonTxArgs, deps *TestDeps, sender EthPrivKeyAcc,
+) (evmTxMsg *evm.MsgEthereumTx, gethSigner gethcore.Signer, krSigner keyring.Signer, err error) {
 	estimateArgs, err := json.Marshal(&jsonTxArgs)
 	if err != nil {
-		return nil, err
+		return
 	}
 	res, err := deps.App.EvmKeeper.EstimateGas(
 		sdk.WrapSDKContext(deps.Ctx),
@@ -238,13 +288,13 @@ func GenerateAndSignEthTxMsg(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return
 	}
 	jsonTxArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
-	msgEthTx := jsonTxArgs.ToMsgEthTx()
-	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-	return msgEthTx, msgEthTx.Sign(gethSigner, deps.Sender.KeyringSigner)
+	evmTxMsg = jsonTxArgs.ToMsgEthTx()
+	gethSigner = gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+	return evmTxMsg, gethSigner, sender.KeyringSigner, nil
 }
 
 func TransferWei(
