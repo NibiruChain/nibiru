@@ -68,6 +68,7 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
    - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
+- [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -127,7 +128,7 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - [#2002](https://github.com/NibiruChain/nibiru/pull/2002) - feat(evm): Add the account query to the EVM command. Cover the CLI with tests.
 - [#2003](https://github.com/NibiruChain/nibiru/pull/2003) - fix(evm): fix FunToken conversions between Cosmos and EVM
 - [#2004](https://github.com/NibiruChain/nibiru/pull/2004) - refactor(evm)!: replace `HexAddr` with `EIP55Addr`
-- [#2006](https://github.com/NibiruChain/nibiru/pull/2006) - test(evm): e2e tests for eth_* endpoints
+- [#2006](https://github.com/NibiruChain/nibiru/pull/2006) - test(evm): e2e tests for eth\_\* endpoints
 - [#2008](https://github.com/NibiruChain/nibiru/pull/2008) - refactor(evm): clean up precompile setups
 - [#2013](https://github.com/NibiruChain/nibiru/pull/2013) - chore(evm): Set appropriate gas value for the required gas of the "IFunToken.sol" precompile.
 - [#2014](https://github.com/NibiruChain/nibiru/pull/2014) - feat(evm): Emit block bloom event in EndBlock hook.
@@ -143,7 +144,7 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - [#2044](https://github.com/NibiruChain/nibiru/pull/2044) - feat(evm): evm tx indexer service implemented
 - [#2045](https://github.com/NibiruChain/nibiru/pull/2045) - test(evm): backend tests with test network and real txs
 - [#2053](https://github.com/NibiruChain/nibiru/pull/2053) - refactor(evm): converted untyped event to typed and cleaned up
-- [#2054](https://github.com/NibiruChain/nibiru/pull/2054) - feat(evm-precompile): Precompile for one-way EVM calls to invoke/execute Wasm contracts. 
+- [#2054](https://github.com/NibiruChain/nibiru/pull/2054) - feat(evm-precompile): Precompile for one-way EVM calls to invoke/execute Wasm contracts.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
