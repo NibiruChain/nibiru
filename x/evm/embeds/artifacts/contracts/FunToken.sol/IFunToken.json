@@ -1,6 +1,6 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "FunToken",
+  "contractName": "IFunToken",
   "sourceName": "contracts/FunToken.sol",
   "abi": [
     {

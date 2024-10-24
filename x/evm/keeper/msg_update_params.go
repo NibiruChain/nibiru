@@ -18,6 +18,9 @@ func (k *Keeper) UpdateParams(
 		return nil, errors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority, expected %s, got %s", k.authority.String(), req.Authority)
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	k.SetParams(ctx, req.Params)
+	err = k.SetParams(ctx, req.Params)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to set params")
+	}
 	return &evm.MsgUpdateParamsResponse{}, nil
 }
