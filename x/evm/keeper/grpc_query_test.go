@@ -447,7 +447,9 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
+
 	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.NoError(err)
 	got := gotResp.Params
@@ -458,7 +460,8 @@ func (s *Suite) TestQueryParams() {
 
 	// Empty params to test the setter
 	want.EVMChannels = []string{"channel-420"}
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err = deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
 	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
