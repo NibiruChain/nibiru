@@ -267,8 +267,8 @@ func (msg MsgEthereumTx) GetFee() *big.Int {
 	return txData.Fee()
 }
 
-// GetEffectiveFee returns the fee for dynamic fee tx
-func (msg MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
+// EffectiveFeeWei returns the fee for dynamic fee tx
+func (msg MsgEthereumTx) EffectiveFeeWei(baseFee *big.Int) *big.Int {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
@@ -276,13 +276,22 @@ func (msg MsgEthereumTx) GetEffectiveFee(baseFee *big.Int) *big.Int {
 	return txData.EffectiveFeeWei(baseFee)
 }
 
-// GetEffectiveFee returns the fee for dynamic fee tx
-func (msg MsgEthereumTx) GetEffectiveGasPrice(baseFeeWei *big.Int) *big.Int {
+// EffectiveGasPriceWeiPerGas returns the effective gas price according to the base
+// fee. This value is in units of "wei per unit gas".
+func (msg MsgEthereumTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int {
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
 		return nil
 	}
-	return txData.EffectiveGasPriceWei(baseFeeWei)
+	return txData.EffectiveGasPriceWeiPerGas(baseFeeWei)
+}
+
+func (msg MsgEthereumTx) EffectiveGasCapWei(baseFeeWei *big.Int) *big.Int {
+	txData, err := UnpackTxData(msg.Data)
+	if err != nil {
+		return nil
+	}
+	return txData.EffectiveGasFeeCapWei(baseFeeWei)
 }
 
 // GetFrom loads the ethereum sender address from the sigcache and returns an
@@ -306,8 +315,8 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 }
 
 // AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFee *big.Int) (core.Message, error) {
-	return msg.AsTransaction().AsMessage(signer, baseFee)
+func (msg MsgEthereumTx) AsMessage(signer gethcore.Signer, baseFeeWei *big.Int) (core.Message, error) {
+	return msg.AsTransaction().AsMessage(signer, baseFeeWei)
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.

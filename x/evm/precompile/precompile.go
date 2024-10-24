@@ -24,7 +24,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
@@ -129,4 +132,83 @@ func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
 
 	argsBzLen := uint64(len(input[4:]))
 	return (costPerByte * argsBzLen) + costFlat
+}
+
+type OnRunStartResult struct {
+	// Args contains the decoded (ABI unpacked) arguments passed to the contract
+	// as input.
+	Args []any
+
+	// Ctx is a cached SDK context that allows isolated state
+	// operations to occur that can be reverted by the EVM's [statedb.StateDB].
+	Ctx sdk.Context
+
+	// Method is the ABI method for the precompiled contract call.
+	Method *gethabi.Method
+
+	StateDB *statedb.StateDB
+}
+
+// OnRunStart prepares the execution environment for a precompiled contract call.
+// It handles decoding the input data according the to contract ABI, creates an
+// isolated cache context for state changes, and sets up a snapshot for potential
+// EVM "reverts".
+//
+// Args:
+//   - evm: Instance of the EVM executing the contract
+//   - contract: Precompiled contract being called
+//   - abi: [gethabi.ABI] defining the contract's invokable methods.
+//
+// Example Usage:
+//
+//	```go
+//	func (p newPrecompile) Run(
+//	  evm *vm.EVM, contract *vm.Contract, readonly bool
+//	) (bz []byte, err error) {
+//		res, err := OnRunStart(evm, contract, p.ABI())
+//		if err != nil {
+//		    return nil, err
+//		}
+//		// ...
+//		// Use res.Ctx for state changes
+//		// Use res.StateDB.Commit() before any non-EVM state changes
+//		// to guarantee the context and [statedb.StateDB] are in sync.
+//	}
+//	```
+func OnRunStart(
+	evm *vm.EVM, contract *vm.Contract, abi *gethabi.ABI,
+) (res OnRunStartResult, err error) {
+	method, args, err := DecomposeInput(abi, contract.Input)
+	if err != nil {
+		return res, err
+	}
+
+	stateDB, ok := evm.StateDB.(*statedb.StateDB)
+	if !ok {
+		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
+		return
+	}
+	ctx := stateDB.GetContext()
+	if err = stateDB.Commit(); err != nil {
+		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
+	}
+
+	return OnRunStartResult{
+		Args:    args,
+		Ctx:     ctx,
+		Method:  method,
+		StateDB: stateDB,
+	}, nil
+}
+
+var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{
+	WasmMethod_execute:      true,
+	WasmMethod_instantiate:  true,
+	WasmMethod_executeMulti: true,
+	WasmMethod_query:        false,
+	WasmMethod_queryRaw:     false,
+
+	FunTokenMethod_BankSend: true,
+
+	OracleMethod_queryExchangeRate: false,
 }

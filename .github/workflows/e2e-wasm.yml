@@ -1,4 +1,4 @@
-name: CosmWasm e2e tests
+name: Wasm E2E tests
 
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.

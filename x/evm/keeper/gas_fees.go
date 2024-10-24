@@ -34,36 +34,44 @@ func (k *Keeper) GetEthIntrinsicGas(
 	)
 }
 
-// RefundGas transfers the leftover gas to the sender of the message, caped to
-// half of the total gas consumed in the transaction. Additionally, the function
-// sets the total gas consumed to the value returned by the EVM execution, thus
-// ignoring the previous intrinsic gas consumed during in the AnteHandler.
+// RefundGas transfers the leftover gas to the sender of the message.
 func (k *Keeper) RefundGas(
 	ctx sdk.Context,
-	msg core.Message,
+	msgFrom gethcommon.Address,
 	leftoverGas uint64,
-	denom string,
+	weiPerGas *big.Int,
 ) error {
 	// Return EVM tokens for remaining gas, exchanged at the original rate.
-	remaining := new(big.Int).Mul(new(big.Int).SetUint64(leftoverGas), msg.GasPrice())
+	leftoverWei := new(big.Int).Mul(
+		new(big.Int).SetUint64(leftoverGas),
+		weiPerGas,
+	)
+	leftoverMicronibi := evm.WeiToNative(leftoverWei)
 
-	switch remaining.Sign() {
+	switch leftoverMicronibi.Sign() {
 	case -1:
-		// negative refund errors
-		return errors.Wrapf(evm.ErrInvalidRefund, "refunded amount value cannot be negative %d", remaining.Int64())
+		// Should be impossible since leftoverGas is a uint64. Reaching this case
+		// would imply a critical error in the effective gas calculation.
+		return errors.Wrapf(evm.ErrInvalidRefund,
+			"refunded amount value cannot be negative %s", leftoverMicronibi,
+		)
 	case 1:
-		// positive amount refund
-		refundedCoins := sdk.Coins{sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(remaining))}
+		refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}
 
-		// refund to sender from the fee collector module account, which is the escrow account in charge of collecting tx fees
-
-		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, msg.From().Bytes(), refundedCoins)
+		// Refund to sender from the fee collector module account. This account
+		// manages the collection of gas fees.
+		err := k.bankKeeper.SendCoinsFromModuleToAccount(
+			ctx,
+			authtypes.FeeCollectorName, // sender
+			msgFrom.Bytes(),            // recipient
+			refundedCoins,
+		)
 		if err != nil {
 			err = errors.Wrapf(errortypes.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
 			return errors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
 		}
 	default:
-		// no refund, consume gas and update the tx gas meter
+		// no refund
 	}
 
 	return nil

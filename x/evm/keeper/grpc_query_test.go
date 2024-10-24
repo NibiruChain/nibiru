@@ -447,7 +447,9 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
+
 	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.NoError(err)
 	got := gotResp.Params
@@ -458,7 +460,8 @@ func (s *Suite) TestQueryParams() {
 
 	// Empty params to test the setter
 	want.EVMChannels = []string{"channel-420"}
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err = deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
 	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
@@ -608,9 +611,11 @@ func (s *Suite) TestQueryBaseFee() {
 			name: "happy: base fee value",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBaseFeeRequest{}
-				zeroFee := math.NewInt(1)
+				defaultFeeWei := math.NewIntFromBigInt(evm.BASE_FEE_WEI)
+				defaultFeeUnibi := math.NewIntFromBigInt(evm.BASE_FEE_MICRONIBI)
 				wantResp = &evm.QueryBaseFeeResponse{
-					BaseFee: &zeroFee,
+					BaseFee:      &defaultFeeWei,
+					BaseFeeUnibi: &defaultFeeUnibi,
 				}
 				return req, wantResp
 			},
@@ -789,7 +794,7 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: trace erc-20 transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, predecessors, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
@@ -868,7 +873,7 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, _, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,

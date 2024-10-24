@@ -17,13 +17,13 @@ import (
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    EVMKeeper
+	evmKeeper    *EVMKeeper
 	maxGasWanted uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
-	k EVMKeeper,
+	k *EVMKeeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
@@ -68,7 +68,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
-	baseFeeMicronibiPerGas := anteDec.evmKeeper.GetBaseFee(ctx)
+	baseFeeMicronibiPerGas := anteDec.evmKeeper.BaseFeeMicronibiPerGas(ctx)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -157,8 +157,8 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	return next(newCtx, tx, simulate)
 }
 
-// deductFee checks if the fee payer has enough funds to pay for the fees and deducts them.
-// If the spendable balance is not enough, it tries to claim enough staking rewards to cover the fees.
+// deductFee checks if the fee payer has enough funds to pay for the fees and
+// deducts them.
 func (anteDec AnteDecEthGasConsume) deductFee(
 	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
 ) error {
@@ -166,9 +166,9 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		return nil
 	}
 
-	// If the account balance is not sufficient, try to withdraw enough staking rewards
-
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(ctx, fees, gethcommon.BytesToAddress(feePayer)); err != nil {
+	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+		ctx, fees, gethcommon.BytesToAddress(feePayer),
+	); err != nil {
 		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil

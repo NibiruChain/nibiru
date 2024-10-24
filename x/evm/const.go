@@ -12,7 +12,10 @@ import (
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.
-var BASE_FEE_MICRONIBI = big.NewInt(1)
+var (
+	BASE_FEE_MICRONIBI = big.NewInt(1)
+	BASE_FEE_WEI       = NativeToWei(BASE_FEE_MICRONIBI)
+)
 
 const (
 	// ModuleName string name of module
