@@ -31,8 +31,8 @@ var _ evm.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(
 	goCtx context.Context, txMsg *evm.MsgEthereumTx,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
+	// This is a `defer` pattern to add behavior that runs in the case that the
+	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("EthereumTx error: %w", err)
@@ -54,15 +54,15 @@ func (k *Keeper) EthereumTx(
 
 	// get the signer according to the chain rules from the config and block height
 	signer := gethcore.MakeSigner(evmConfig.ChainConfig, big.NewInt(ctx.BlockHeight()))
-	msg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
+	evmMsg, err := tx.AsMessage(signer, evmConfig.BaseFeeWei)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	tmpCtx, commit := ctx.CacheContext()
+	tmpCtx, commitCtx := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	evmResp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, true, evmConfig, txConfig)
+	evmResp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -70,74 +70,38 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 
-	logs := evm.LogsToEthereum(evmResp.Logs)
-
-	cumulativeGasUsed := evmResp.GasUsed
-	if ctx.BlockGasMeter() != nil {
-		limit := ctx.BlockGasMeter().Limit()
-		cumulativeGasUsed += ctx.BlockGasMeter().GasConsumed()
-		if cumulativeGasUsed > limit {
-			cumulativeGasUsed = limit
-		}
-	}
-
-	var contractAddr gethcommon.Address
-	if msg.To() == nil {
-		contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
-	}
-
-	receipt := &gethcore.Receipt{
-		Type:              tx.Type(),
-		PostState:         nil, // TODO: intermediate state root
-		CumulativeGasUsed: cumulativeGasUsed,
-		Bloom:             k.EvmState.CalcBloomFromLogs(ctx, logs),
-		Logs:              logs,
-		TxHash:            txConfig.TxHash,
-		ContractAddress:   contractAddr,
-		GasUsed:           evmResp.GasUsed,
-		BlockHash:         txConfig.BlockHash,
-		BlockNumber:       big.NewInt(ctx.BlockHeight()),
-		TransactionIndex:  txConfig.TxIndex,
-	}
-
 	if !evmResp.Failed() {
-		receipt.Status = gethcore.ReceiptStatusSuccessful
-		commit()
+		commitCtx()
 	}
 
-	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
+	// refund gas in order to match the Ethereum gas consumption instead of the
+	// default SDK one.
 	refundGas := uint64(0)
-	if msg.Gas() > evmResp.GasUsed {
-		refundGas = msg.Gas() - evmResp.GasUsed
+	if evmMsg.Gas() > evmResp.GasUsed {
+		refundGas = evmMsg.Gas() - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
-	if err = k.RefundGas(ctx, msg.From(), refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", msg.From())
+	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
+		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
-	if len(receipt.Logs) > 0 {
-		// Update transient block bloom filter
-		k.EvmState.BlockBloom.Set(ctx, receipt.Bloom.Bytes())
-		blockLogSize := uint64(txConfig.LogIndex) + uint64(len(receipt.Logs))
-		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
-	}
+	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
 	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if err != nil {
 		return nil, errors.Wrap(err, "error adding transient gas used to block")
 	}
 
-	// reset the gas meter for current cosmos transaction
+	// reset the gas meter for current TxMsg (EthereumTx)
 	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
 
-	err = k.EmitEthereumTxEvents(ctx, tx, msg, evmResp, contractAddr)
+	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
 	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
-
 	return evmResp, nil
 }
 
@@ -673,10 +637,10 @@ func (k Keeper) convertCoinNativeERC20(
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
 func (k *Keeper) EmitEthereumTxEvents(
 	ctx sdk.Context,
-	tx *gethcore.Transaction,
+	recipient *gethcommon.Address,
+	txType uint8,
 	msg gethcore.Message,
 	evmResp *evm.MsgEthereumTxResponse,
-	contractAddr gethcommon.Address,
 ) error {
 	// Typed event: eth.evm.v1.EventEthereumTx
 	eventEthereumTx := &evm.EventEthereumTx{
@@ -687,8 +651,8 @@ func (k *Keeper) EmitEthereumTxEvents(
 	if len(ctx.TxBytes()) > 0 {
 		eventEthereumTx.Hash = tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash()).String()
 	}
-	if to := tx.To(); to != nil {
-		eventEthereumTx.Recipient = to.Hex()
+	if recipient != nil {
+		eventEthereumTx.Recipient = recipient.Hex()
 	}
 	if evmResp.Failed() {
 		eventEthereumTx.EthTxFailed = evmResp.VmError
@@ -715,13 +679,14 @@ func (k *Keeper) EmitEthereumTxEvents(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
 			sdk.NewAttribute(sdk.AttributeKeySender, msg.From().Hex()),
-			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", tx.Type())),
+			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", txType)),
 		),
 	)
 
 	// Emit typed events
 	if !evmResp.Failed() {
-		if tx.To() == nil { // contract creation
+		if recipient == nil { // contract creation
+			var contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
 				Sender:       msg.From().Hex(),
 				ContractAddr: contractAddr.String(),
@@ -741,4 +706,18 @@ func (k *Keeper) EmitEthereumTxEvents(
 	}
 
 	return nil
+}
+
+// updateBlockBloom updates transient block bloom filter
+func (k *Keeper) updateBlockBloom(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+	logIndex uint64,
+) {
+	logs := evm.LogsToEthereum(evmResp.Logs)
+	if len(logs) > 0 {
+		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())
+		blockLogSize := logIndex + uint64(len(logs))
+		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
+	}
 }

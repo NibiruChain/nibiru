@@ -1198,8 +1198,9 @@ func (m *QueryBaseFeeRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryBaseFeeRequest proto.InternalMessageInfo
 
 // QueryBaseFeeResponse returns the EIP1559 base fee.
+// See https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
 type QueryBaseFeeResponse struct {
-	// base_fee is the EIP1559 base fee
+	// base_fee is the EIP1559 base fee in units of wei.
 	BaseFee *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=base_fee,json=baseFee,proto3,customtype=cosmossdk.io/math.Int" json:"base_fee,omitempty"`
 	// base_fee is the EIP1559 base fee in units of micronibi ("unibi").
 	BaseFeeUnibi *cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=base_fee_unibi,json=baseFeeUnibi,proto3,customtype=cosmossdk.io/math.Int" json:"base_fee_unibi,omitempty"`
@@ -1239,7 +1240,8 @@ func (m *QueryBaseFeeResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryBaseFeeResponse proto.InternalMessageInfo
 
 type QueryFunTokenMappingRequest struct {
-	// either the 0x contract address of the ERC-20 token or the cosmos denom
+	// Either the hexadecimal-encoded ERC20 contract address or denomination of the
+	// Bank Coin.
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 }
 
@@ -1277,7 +1279,7 @@ func (m *QueryFunTokenMappingRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryFunTokenMappingRequest proto.InternalMessageInfo
 
 type QueryFunTokenMappingResponse struct {
-	// fun_token is a mapping between the Cosmos native coin and the ERC20 contract address
+	// fun_token is a mapping between the Bank Coin and the ERC20 contract address
 	FunToken *FunToken `protobuf:"bytes,1,opt,name=fun_token,json=funToken,proto3" json:"fun_token,omitempty"`
 }
 

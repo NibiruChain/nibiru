@@ -314,6 +314,6 @@ message QueryFunTokenMappingResponse {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;  
 
-  // fun_token is a mapping between the Cosmos native coin and the ERC20 contract address
+  // fun_token is a mapping between the Bank Coin and the ERC20 contract address
   eth.evm.v1.FunToken fun_token = 1;
 }

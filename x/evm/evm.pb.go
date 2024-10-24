@@ -25,8 +25,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// FunToken is a fungible token mapping between a bank coin and a corresponding
-// ERC-20 smart contract. Bank coins here refer to tokens like NIBI, IBC
+// FunToken is a fungible token mapping between a Bank Coin and a corresponding
+// ERC-20 smart contract. Bank Coins here refer to tokens like NIBI, IBC
 // coins (ICS-20), and token factory coins, which are each represented by the
 // "Coin" type in Golang.
 type FunToken struct {
@@ -34,7 +34,7 @@ type FunToken struct {
 	Erc20Addr github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,1,opt,name=erc20_addr,json=erc20Addr,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"erc20_addr"`
 	// bank_denom: Coin denomination in the Bank Module.
 	BankDenom string `protobuf:"bytes,2,opt,name=bank_denom,json=bankDenom,proto3" json:"bank_denom,omitempty"`
-	// True if the `FunToken` mapping was created from an existing bank coin and
+	// True if the `FunToken` mapping was created from an existing Bank Coin and
 	// the ERC-20 contract gets deployed by the module account. False if the
 	// mapping was created from an externally owned ERC-20 contract.
 	IsMadeFromCoin bool `protobuf:"varint,3,opt,name=is_made_from_coin,json=isMadeFromCoin,proto3" json:"is_made_from_coin,omitempty"`

@@ -6,8 +6,8 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
-// FunToken is a fungible token mapping between a bank coin and a corresponding
-// ERC-20 smart contract. Bank coins here refer to tokens like NIBI, IBC
+// FunToken is a fungible token mapping between a Bank Coin and a corresponding
+// ERC-20 smart contract. Bank Coins here refer to tokens like NIBI, IBC
 // coins (ICS-20), and token factory coins, which are each represented by the
 // "Coin" type in Golang.
 message FunToken {
@@ -20,7 +20,7 @@ message FunToken {
   // bank_denom: Coin denomination in the Bank Module.
   string bank_denom = 2;
 
-  // True if the `FunToken` mapping was created from an existing bank coin and
+  // True if the `FunToken` mapping was created from an existing Bank Coin and
   // the ERC-20 contract gets deployed by the module account. False if the
   // mapping was created from an externally owned ERC-20 contract.
   bool is_made_from_coin = 3;
