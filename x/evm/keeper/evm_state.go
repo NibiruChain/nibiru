@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/NibiruChain/collections"
@@ -116,8 +117,13 @@ func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 }
 
 // SetParams: Setter for the module parameters.
-func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) (err error) {
+	if params.CreateFuntokenFee.IsNegative() {
+		return fmt.Errorf("createFuntokenFee cannot be negative: %s", params.CreateFuntokenFee)
+	}
+
 	k.EvmState.ModuleParams.Set(ctx, params)
+	return
 }
 
 // SetState updates contract storage and deletes if the value is empty.
