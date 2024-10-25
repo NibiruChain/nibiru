@@ -43,6 +43,21 @@ type StateDB struct {
 
 	txConfig TxConfig
 
+	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
+	// multi-store cached and a new event manager. The cached context
+	// (`cacheCtx`) is written to the persistent context (`ctx`) when
+	// `writeCacheCtx` is called.
+	cacheCtx sdk.Context
+
+	// writeToCommitCtxFromCacheCtx is the "write" function received from
+	// `s.ctx.CacheContext()`. It saves mutations on s.cacheCtx to the StateDB's
+	// commit context (s.ctx). This synchronizes the multistore and event manager
+	// of the two contexts.
+	writeToCommitCtxFromCacheCtx func()
+
+	// The number of precompiled contract calls within the current transaction
+	precompileSnapshotsCount uint8
+
 	// The refund counter, also used by state transitioning.
 	refund uint64
 
@@ -212,6 +227,16 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	if obj := s.stateObjects[addr]; obj != nil {
 		return obj
 	}
+
+	if s.keeper.IsPrecompile(addr) {
+		obj := newObject(s, addr, Account{
+			Nonce: 0,
+		})
+		obj.IsPrecompile = true
+		s.setStateObject(obj)
+		return obj
+	}
+
 	// If no live objects are available, load it from keeper
 	account := s.keeper.GetAccount(s.ctx, addr)
 	if account == nil {
@@ -461,13 +486,38 @@ func errorf(format string, args ...any) error {
 // StateDB object cannot be reused after [Commit] has completed. A new
 // object needs to be created from the EVM.
 func (s *StateDB) Commit() error {
-	ctx := s.GetContext()
+	if s.writeToCommitCtxFromCacheCtx != nil {
+		// cacheCtxSyncNeeded: If a precompile was called, a [JournalChange]
+		// of type [PrecompileSnapshotBeforeRun] gets added and we branch off a
+		// cache of the commit context (s.ctx).
+		s.writeToCommitCtxFromCacheCtx()
+	}
+	return s.commitCtx(s.GetContext())
+}
+
+// CommitCacheCtx is identical to [StateDB.Commit], except it:
+// (1) uses the cacheCtx of the [StateDB] and
+// (2) does not save mutations of the cacheCtx to the commit context (s.ctx).
+// The reason for (2) is that the overall EVM transaction (block, not internal)
+// is only finalized when [Commit] is called, not when [CommitCacheCtx] is
+// called.
+func (s *StateDB) CommitCacheCtx() error {
+	return s.commitCtx(s.cacheCtx)
+}
+
+// commitCtx writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [commitCtx] has completed. A new
+// object needs to be created from the EVM.
+func (s *StateDB) commitCtx(ctx sdk.Context) error {
 	for _, addr := range s.Journal.sortedDirties() {
 		obj := s.getStateObject(addr)
 		if obj == nil {
 			continue
 		}
-		if obj.Suicided {
+		if obj.IsPrecompile {
+			s.Journal.dirties[addr] = 0
+			continue
+		} else if obj.Suicided {
 			// Invariant: After [StateDB.Suicide] for some address, the
 			// corresponding account's state object is only available until the
 			// state is committed.
@@ -493,12 +543,48 @@ func (s *StateDB) Commit() error {
 				obj.OriginStorage[key] = dirtyVal
 			}
 		}
-		// Clear the dirty counts because all state changes have been
-		// committed.
+		// Reset the dirty count to 0 because all state changes for this dirtied
+		// address in the journal have been committed.
 		s.Journal.dirties[addr] = 0
 	}
 	return nil
 }
+
+func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
+	sdk.Context, PrecompileSnapshotBeforeRun,
+) {
+	if s.writeToCommitCtxFromCacheCtx == nil {
+		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.ctx.CacheContext()
+	}
+	return s.cacheCtx, PrecompileSnapshotBeforeRun{
+		MultiStore: s.cacheCtx.MultiStore().CacheMultiStore(),
+		Events:     s.cacheCtx.EventManager().Events(),
+		Precompile: precompileAddr,
+	}
+}
+
+// SavePrecompileSnapshotToJournal adds a snapshot of the commit multistore
+// ([PrecompileSnapshotBeforeRun]) to the [StateDB] journal at the end of
+// successful invocation of a precompiled contract. This is necessary to revert
+// intermediate states where an EVM contract augments the multistore with a
+// precompile and an inconsistency occurs between the EVM module and other
+// modules.
+//
+// See [PrecompileSnapshotBeforeRun] for more info.
+func (s *StateDB) SavePrecompileSnapshotToJournal(
+	precompileAddr common.Address,
+	snapshot PrecompileSnapshotBeforeRun,
+) error {
+	obj := s.getOrNewStateObject(precompileAddr)
+	obj.db.Journal.append(snapshot)
+	s.precompileSnapshotsCount++
+	if s.precompileSnapshotsCount > maxPrecompileCalls {
+		return fmt.Errorf("exceeded maximum allowed number of precompiled contract calls in one transaction (%d)", maxPrecompileCalls)
+	}
+	return nil
+}
+
+const maxPrecompileCalls uint8 = 10
 
 // StateObjects: Returns a copy of the [StateDB.stateObjects] map.
 func (s *StateDB) StateObjects() map[common.Address]*stateObject {

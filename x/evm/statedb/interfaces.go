@@ -38,4 +38,6 @@ type Keeper interface {
 	// DeleteAccount handles contract's suicide call, clearing the balance,
 	// contract bytecode, contract state, and its native account.
 	DeleteAccount(ctx sdk.Context, addr common.Address) error
+
+	IsPrecompile(addr common.Address) bool
 }

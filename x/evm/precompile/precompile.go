@@ -147,6 +147,11 @@ type OnRunStartResult struct {
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
+
+	// SnapshotBeforeRun captures the state before precompile execution to enable
+	// proper state reversal if the call fails or if [statedb.JournalChange]
+	// is reverted in general.
+	SnapshotBeforeRun statedb.PrecompileSnapshotBeforeRun
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -188,17 +193,38 @@ func OnRunStart(
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
 	}
-	ctx := stateDB.GetContext()
-	if err = stateDB.Commit(); err != nil {
+	cacheCtx, snapshot := stateDB.CacheCtxForPrecompile(contract.Address())
+	if err = stateDB.CommitCacheCtx(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
 	return OnRunStartResult{
-		Args:    args,
-		Ctx:     ctx,
-		Method:  method,
-		StateDB: stateDB,
+		Args:              args,
+		Ctx:               cacheCtx,
+		Method:            method,
+		StateDB:           stateDB,
+		SnapshotBeforeRun: snapshot,
 	}, nil
+}
+
+// OnRunEnd finalizes a precompile execution by saving its state snapshot to the
+// journal. This ensures that any state changes can be properly reverted if needed.
+//
+// Args:
+//   - stateDB: The EVM state database
+//   - snapshot: The state snapshot taken before the precompile executed
+//   - precompileAddr: The address of the precompiled contract
+//
+// The snapshot is critical for maintaining state consistency when:
+//   - The operation gets reverted ([statedb.JournalChange] Revert).
+//   - The precompile modifies state in other modules (e.g., bank, wasm)
+//   - Multiple precompiles are called within a single transaction
+func OnRunEnd(
+	stateDB *statedb.StateDB,
+	snapshot statedb.PrecompileSnapshotBeforeRun,
+	precompileAddr gethcommon.Address,
+) error {
+	return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
 }
 
 var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{

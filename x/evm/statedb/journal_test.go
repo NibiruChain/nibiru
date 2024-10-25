@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-func (s *Suite) TestPrecompileSnapshots() {
+func (s *Suite) TestComplexJournalChanges() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := evm.EVMBankDenom
 	s.Require().NoError(testapp.FundAccount(
@@ -32,25 +32,11 @@ func (s *Suite) TestPrecompileSnapshots() {
 
 	wasmContract := test.SetupWasmContracts(&deps, &s.Suite)[1]
 	fmt.Printf("wasmContract: %s\n", wasmContract)
-	assertionsBeforeRun := func(deps *evmtest.TestDeps) {
-		test.AssertWasmCounterState(
-			&s.Suite, *deps, wasmContract, 0,
-		)
-	}
-	run := func(deps *evmtest.TestDeps) *vm.EVM {
-		return test.IncrementWasmCounterWithExecuteMulti(
-			&s.Suite, deps, wasmContract, 7,
-		)
-	}
-	assertionsAfterRun := func(deps *evmtest.TestDeps) {
-		test.AssertWasmCounterState(
-			&s.Suite, *deps, wasmContract, 7,
-		)
-	}
 
 	s.T().Log("Assert before transition")
-
-	assertionsBeforeRun(&deps)
+	test.AssertWasmCounterState(
+		&s.Suite, deps, wasmContract, 0,
+	)
 
 	deployArgs := []any{"name", "SYMBOL", uint8(18)}
 	deployResp, err := evmtest.DeployContract(
@@ -136,15 +122,48 @@ func (s *Suite) TestPrecompileSnapshots() {
 		s.Require().ErrorContains(err, vm.ErrExecutionReverted.Error())
 	})
 
-	s.Run("Precompile calls also start and end clean (no dirty changes)", func() {
-		evmObj = run(&deps)
-		assertionsAfterRun(&deps)
+	s.Run("Precompile calls populate snapshots", func() {
+		s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
+		commitEvmTx := true
+		evmObj = test.IncrementWasmCounterWithExecuteMulti(
+			&s.Suite, &deps, wasmContract, 7, commitEvmTx,
+		)
+		// assertions after run
+		test.AssertWasmCounterState(
+			&s.Suite, deps, wasmContract, 7,
+		)
 		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
 		if stateDB.DirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 0 dirty journal changes")
 		}
+
+		s.T().Log("commitEvmTx=false, expect dirty journal entries")
+		commitEvmTx = false
+		evmObj = test.IncrementWasmCounterWithExecuteMulti(
+			&s.Suite, &deps, wasmContract, 5, commitEvmTx,
+		)
+		stateDB, ok = evmObj.StateDB.(*statedb.StateDB)
+		s.Require().True(ok, "error retrieving StateDB from the EVM")
+
+		s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
+		if stateDB.DirtiesCount() != 1 {
+			debugDirtiesCountMismatch(stateDB, s.T())
+			s.FailNow("expected 1 dirty journal changes")
+		}
+
+		s.T().Log("Expect no change since the StateDB has not been committed")
+		test.AssertWasmCounterState(
+			&s.Suite, deps, wasmContract, 7, // 7 = 7 + 0
+		)
+
+		s.T().Log("Expect change after the StateDB gets committed")
+		err = stateDB.Commit()
+		s.Require().NoError(err)
+		test.AssertWasmCounterState(
+			&s.Suite, deps, wasmContract, 12, // 12 = 7 + 5
+		)
 	})
 }
 

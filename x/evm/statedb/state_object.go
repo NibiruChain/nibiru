@@ -121,8 +121,9 @@ type stateObject struct {
 	address common.Address
 
 	// flags
-	DirtyCode bool
-	Suicided  bool
+	DirtyCode    bool
+	Suicided     bool
+	IsPrecompile bool
 }
 
 // newObject creates a state object.

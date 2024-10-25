@@ -62,9 +62,7 @@ func (p precompileWasm) Run(
 	if err != nil {
 		return nil, err
 	}
-
-	// Dirty journal entries in `StateDB` must be committed
-	return bz, start.StateDB.Commit()
+	return bz, OnRunEnd(start.StateDB, start.SnapshotBeforeRun, p.Address())
 }
 
 type precompileWasm struct {
