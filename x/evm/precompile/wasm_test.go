@@ -53,7 +53,12 @@ func (s *WasmSuite) TestExecuteHappy() {
 	s.Require().NoError(err)
 
 	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		input,
+		precompile.WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -82,7 +87,12 @@ func (s *WasmSuite) TestExecuteHappy() {
 	)
 	s.Require().NoError(err)
 	ethTxResp, _, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		input,
+		precompile.WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -137,7 +147,12 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	s.Require().NoError(err)
 
 	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		input,
+		precompile.WasmGasLimitQuery,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -307,7 +322,12 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			s.Require().NoError(err)
 
 			ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
-				deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+				deps.Ctx,
+				deps.Sender.EthAddr,
+				&precompile.PrecompileAddr_Wasm,
+				true,
+				input,
+				precompile.WasmGasLimitExecute,
 			)
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
 		})

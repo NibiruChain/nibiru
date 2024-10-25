@@ -19,6 +19,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -147,6 +148,8 @@ type OnRunStartResult struct {
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
+
+	initialGas storetypes.Gas
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -193,11 +196,23 @@ func OnRunStart(
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
+	initialGas := ctx.GasMeter().GasConsumed()
+
+	defer HandleGasError(ctx, contract, initialGas, &err)()
+
+	// set the default SDK gas configuration to track gas usage
+	// we are changing the gas meter type, so it panics gracefully when out of gas
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(contract.Gas)).
+		WithKVGasConfig(storetypes.GasConfig{}).
+		WithTransientKVGasConfig(storetypes.GasConfig{})
+	ctx.GasMeter().ConsumeGas(initialGas, "creating a new gas meter")
+
 	return OnRunStartResult{
-		Args:    args,
-		Ctx:     ctx,
-		Method:  method,
-		StateDB: stateDB,
+		Args:       args,
+		Ctx:        ctx,
+		Method:     method,
+		StateDB:    stateDB,
+		initialGas: initialGas,
 	}, nil
 }
 
@@ -211,4 +226,26 @@ var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]boo
 	FunTokenMethod_BankSend: true,
 
 	OracleMethod_queryExchangeRate: false,
+}
+
+// HandleGasError handles the out of gas panic by resetting the gas meter and returning an error.
+// This is used in order to avoid panics and to allow for the EVM to continue cleanup if the tx or query run out of gas.
+func HandleGasError(ctx sdk.Context, contract *vm.Contract, initialGas storetypes.Gas, err *error) func() {
+	return func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case storetypes.ErrorOutOfGas:
+				// update contract gas
+				usedGas := ctx.GasMeter().GasConsumed() - initialGas
+				_ = contract.UseGas(usedGas)
+
+				*err = vm.ErrOutOfGas
+				// FIXME: add InfiniteGasMeter with previous Gas limit.
+				ctx = ctx.WithKVGasConfig(storetypes.GasConfig{}).
+					WithTransientKVGasConfig(storetypes.GasConfig{})
+			default:
+				panic(r)
+			}
+		}
+	}
 }

@@ -29,6 +29,14 @@ const (
 	WasmMethod_queryRaw     PrecompileMethod = "queryRaw"
 )
 
+const (
+	// rough gas limits for wasm execution
+
+	WasmGasLimitInstantiate uint64 = 10_000_000
+	WasmGasLimitQuery       uint64 = 10_000_000
+	WasmGasLimitExecute     uint64 = 10_000_000
+)
+
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
@@ -41,6 +49,10 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 	method := start.Method
+
+	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
+	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
+	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
 
 	switch PrecompileMethod(method.Name) {
 	case WasmMethod_execute:
@@ -61,6 +73,11 @@ func (p precompileWasm) Run(
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	if !contract.UseGas(gasUsed) {
+		return nil, vm.ErrOutOfGas
 	}
 
 	// Dirty journal entries in `StateDB` must be committed

@@ -4,12 +4,12 @@ package keeper
 import (
 	"math/big"
 
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	sdkerrors "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -109,8 +109,11 @@ func (k *Keeper) AddToBlockGasUsed(
 	return result, nil
 }
 
-// GetMinGasMultiplier returns minimum gas multiplier.
-func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
+// GetMinGasUsedMultiplier - value from 0 to 1
+// When executing evm msg, user specifies gasLimit.
+// If the gasLimit is X times higher than the actual gasUsed then
+// we update gasUsed = max(gasUsed, gasLimit * minGasUsedPct)
+func (k Keeper) GetMinGasUsedMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 

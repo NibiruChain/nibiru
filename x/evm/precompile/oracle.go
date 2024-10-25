@@ -31,6 +31,11 @@ const (
 	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
 )
 
+const (
+	// OracleGasLimitQuery is a rough limit. Actual gas used for this precompile is 22_880
+	OracleGasLimitQuery uint64 = 100_000
+)
+
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
@@ -38,11 +43,15 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	res, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
+	start, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
 	if err != nil {
 		return nil, err
 	}
-	method, args, ctx := res.Method, res.Args, res.Ctx
+	method, args, ctx := start.Method, start.Args, start.Ctx
+
+	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
+	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
+	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
@@ -50,6 +59,11 @@ func (p precompileOracle) Run(
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
+	}
+
+	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	if !contract.UseGas(gasUsed) {
+		return nil, vm.ErrOutOfGas
 	}
 
 	return

@@ -8,6 +8,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
@@ -113,7 +115,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.NoError(err)
 		_, _, err = deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input,
+			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input, keeper.Erc20GasLimitQuery,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}

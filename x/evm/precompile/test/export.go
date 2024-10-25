@@ -71,7 +71,12 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		s.Require().NoError(err)
 
 		ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+			deps.Ctx,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			input,
+			precompile.WasmGasLimitInstantiate,
 		)
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
@@ -186,7 +191,12 @@ func AssertWasmCounterState(
 	s.Require().NoError(err)
 
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		input,
+		precompile.WasmGasLimitInstantiate,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -308,7 +318,12 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		input,
+		precompile.WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)

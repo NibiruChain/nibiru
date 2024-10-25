@@ -28,6 +28,18 @@ var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 // using the ERC20's `FunToken` mapping.
 var PrecompileAddr_FunToken = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
 
+const (
+	// FunTokenGasLimitBankSend consists of gas for 3 calls:
+	// 1. transfer erc20 from sender to module
+	//    ~60_000 gas for regular erc20 transfer (our own ERC20Minter contract)
+	//    could be higher for user created contracts, let's cap with 200_000
+	// 2. mint native coin (made from erc20) or burn erc20 token (made from coin)
+	//	  ~60_000 gas for either mint or burn
+	// 3. send from module to account:
+	//	  ~65_000 gas (bank send)
+	FunTokenGasLimitBankSend uint64 = 400_000
+)
+
 func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
@@ -59,6 +71,10 @@ func (p precompileFunToken) Run(
 		return nil, err
 	}
 
+	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
+	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
+	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
+
 	method := start.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
@@ -72,6 +88,12 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
+
+	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	if !contract.UseGas(gasUsed) {
+		return nil, vm.ErrOutOfGas
+	}
+
 	// Dirty journal entries in `StateDB` must be committed
 	return bz, start.StateDB.Commit()
 }

@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -65,7 +67,12 @@ func (s *Suite) TestPrecompileSnapshots() {
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", to, amount)
 	s.Require().NoError(err)
 	_, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &contract, true, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&contract,
+		true,
+		input,
+		keeper.Erc20GasLimitExecute,
 	)
 	s.Require().NoError(err)
 

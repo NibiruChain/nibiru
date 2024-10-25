@@ -59,7 +59,12 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		input, err := embeds.SmartContract_Oracle.ABI.Pack("queryExchangeRate", "unibi:uusd")
 		s.NoError(err)
 		resp, _, err := deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Oracle, true, input,
+			deps.Ctx,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Oracle,
+			false,
+			input,
+			precompile.OracleGasLimitQuery,
 		)
 		s.NoError(err)
 
