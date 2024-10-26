@@ -151,7 +151,7 @@ type OnRunStartResult struct {
 	// SnapshotBeforeRun captures the state before precompile execution to enable
 	// proper state reversal if the call fails or if [statedb.JournalChange]
 	// is reverted in general.
-	SnapshotBeforeRun statedb.PrecompileSnapshotBeforeRun
+	SnapshotBeforeRun statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -194,6 +194,7 @@ func OnRunStart(
 		return
 	}
 	cacheCtx, snapshot := stateDB.CacheCtxForPrecompile(contract.Address())
+	stateDB.SavePrecompileSnapshotToJournal(contract.Address(), snapshot)
 	if err = stateDB.CommitCacheCtx(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
@@ -221,10 +222,12 @@ func OnRunStart(
 //   - Multiple precompiles are called within a single transaction
 func OnRunEnd(
 	stateDB *statedb.StateDB,
-	snapshot statedb.PrecompileSnapshotBeforeRun,
+	snapshot statedb.PrecompileCalled,
 	precompileAddr gethcommon.Address,
 ) error {
-	return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
+	// TODO: UD-DEBUG: Not needed because it's been added to start.
+	// return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
+	return nil
 }
 
 var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sort"
 
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -89,6 +90,14 @@ func (s *StateDB) Keeper() Keeper {
 // GetContext returns the transaction Context.
 func (s *StateDB) GetContext() sdk.Context {
 	return s.ctx
+}
+
+// GetCacheContext: Getter for testing purposes.
+func (s *StateDB) GetCacheContext() *sdk.Context {
+	if s.writeToCommitCtxFromCacheCtx == nil {
+		return nil
+	}
+	return &s.cacheCtx
 }
 
 // AddLog adds a log, called by evm.
@@ -463,6 +472,9 @@ func (s *StateDB) Snapshot() int {
 
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *StateDB) RevertToSnapshot(revid int) {
+	fmt.Printf("len(s.validRevisions): %d\n", len(s.validRevisions))
+	fmt.Printf("s.validRevisions: %v\n", s.validRevisions)
+
 	// Find the snapshot in the stack of valid snapshots.
 	idx := sort.Search(len(s.validRevisions), func(i int) bool {
 		return s.validRevisions[i].id >= revid
@@ -515,6 +527,7 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 			continue
 		}
 		if obj.IsPrecompile {
+			// TODO: UD-DEBUG: Assume clean to pretend for tests
 			s.Journal.dirties[addr] = 0
 			continue
 		} else if obj.Suicided {
@@ -543,6 +556,7 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 				obj.OriginStorage[key] = dirtyVal
 			}
 		}
+		// TODO: UD-DEBUG: Assume clean to pretend for tests
 		// Reset the dirty count to 0 because all state changes for this dirtied
 		// address in the journal have been committed.
 		s.Journal.dirties[addr] = 0
@@ -551,29 +565,29 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 }
 
 func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
-	sdk.Context, PrecompileSnapshotBeforeRun,
+	sdk.Context, PrecompileCalled,
 ) {
 	if s.writeToCommitCtxFromCacheCtx == nil {
 		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.ctx.CacheContext()
 	}
-	return s.cacheCtx, PrecompileSnapshotBeforeRun{
-		MultiStore: s.cacheCtx.MultiStore().CacheMultiStore(),
+	return s.cacheCtx, PrecompileCalled{
+		MultiStore: s.cacheCtx.MultiStore().(store.CacheMultiStore).Copy(),
 		Events:     s.cacheCtx.EventManager().Events(),
 		Precompile: precompileAddr,
 	}
 }
 
 // SavePrecompileSnapshotToJournal adds a snapshot of the commit multistore
-// ([PrecompileSnapshotBeforeRun]) to the [StateDB] journal at the end of
+// ([PrecompileCalled]) to the [StateDB] journal at the end of
 // successful invocation of a precompiled contract. This is necessary to revert
 // intermediate states where an EVM contract augments the multistore with a
 // precompile and an inconsistency occurs between the EVM module and other
 // modules.
 //
-// See [PrecompileSnapshotBeforeRun] for more info.
+// See [PrecompileCalled] for more info.
 func (s *StateDB) SavePrecompileSnapshotToJournal(
 	precompileAddr common.Address,
-	snapshot PrecompileSnapshotBeforeRun,
+	snapshot PrecompileCalled,
 ) error {
 	obj := s.getOrNewStateObject(precompileAddr)
 	obj.db.Journal.append(snapshot)

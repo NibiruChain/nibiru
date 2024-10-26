@@ -341,13 +341,13 @@ func (ch accessListAddSlotChange) Dirtied() *common.Address {
 // ------------------------------------------------------
 // PrecompileSnapshotBeforeRun
 
-// PrecompileSnapshotBeforeRun: Precompiles can alter persistent storage of other
+// PrecompileCalled: Precompiles can alter persistent storage of other
 // modules. These changes to persistent storage are not reverted by a `Revert` of
 // [JournalChange] by default, as it generally manages only changes to accounts
 // and Bank balances for ether (NIBI).
 //
 // As a workaround to make state changes from precompiles reversible, we store
-// [PrecompileSnapshotBeforeRun] snapshots that sync and record the prior state
+// [PrecompileCalled] snapshots that sync and record the prior state
 // of the other modules, allowing precompile calls to truly be reverted.
 //
 // As a simple example, suppose that a transaction calls a precompile.
@@ -356,23 +356,33 @@ func (ch accessListAddSlotChange) Dirtied() *common.Address {
 //     state to a in-memory snapshot recorded on the StateDB journal.
 //  3. This could cause a problem where changes to the rest of the blockchain state
 //     are still in effect following the reversion in the EVM state DB.
-type PrecompileSnapshotBeforeRun struct {
+type PrecompileCalled struct {
 	MultiStore store.CacheMultiStore
 	Events     sdk.Events
 	Precompile common.Address
 }
 
-var _ JournalChange = PrecompileSnapshotBeforeRun{}
+var _ JournalChange = PrecompileCalled{}
 
-func (ch PrecompileSnapshotBeforeRun) Revert(s *StateDB) {
+func (ch PrecompileCalled) Revert(s *StateDB) {
+	// TEMP: trying something
+	// If the wasm state is not in the cacheCtx,
+	// s.CommitCacheCtx()
+
+	// Old Code
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
 	s.writeToCommitCtxFromCacheCtx = func() {
 		s.ctx.EventManager().EmitEvents(ch.Events)
+		// TODO: UD-DEBUG: Overwriting events might fix an issue with
+		// appending too many
+		// s.ctx.WithEventManager(
+		// 	sdk.NewEventManager().EmitEvents(ch.Events),
+		// )
 		ch.MultiStore.Write()
 	}
 }
 
-func (ch PrecompileSnapshotBeforeRun) Dirtied() *common.Address {
+func (ch PrecompileCalled) Dirtied() *common.Address {
 	return &ch.Precompile
 }
