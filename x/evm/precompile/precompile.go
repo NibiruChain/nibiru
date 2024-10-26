@@ -148,10 +148,7 @@ type OnRunStartResult struct {
 
 	StateDB *statedb.StateDB
 
-	// SnapshotBeforeRun captures the state before precompile execution to enable
-	// proper state reversal if the call fails or if [statedb.JournalChange]
-	// is reverted in general.
-	SnapshotBeforeRun statedb.PrecompileCalled
+	PrecompileJournalEntry statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -193,41 +190,24 @@ func OnRunStart(
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
 	}
-	cacheCtx, snapshot := stateDB.CacheCtxForPrecompile(contract.Address())
-	stateDB.SavePrecompileSnapshotToJournal(contract.Address(), snapshot)
+
+	// journalEntry captures the state before precompile execution to enable
+	// proper state reversal if the call fails or if [statedb.JournalChange]
+	// is reverted in general.
+	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile(contract.Address())
+	if err = stateDB.SavePrecompileCalledJournalChange(contract.Address(), journalEntry); err != nil {
+		return res, err
+	}
 	if err = stateDB.CommitCacheCtx(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
 	return OnRunStartResult{
-		Args:              args,
-		Ctx:               cacheCtx,
-		Method:            method,
-		StateDB:           stateDB,
-		SnapshotBeforeRun: snapshot,
+		Args:    args,
+		Ctx:     cacheCtx,
+		Method:  method,
+		StateDB: stateDB,
 	}, nil
-}
-
-// OnRunEnd finalizes a precompile execution by saving its state snapshot to the
-// journal. This ensures that any state changes can be properly reverted if needed.
-//
-// Args:
-//   - stateDB: The EVM state database
-//   - snapshot: The state snapshot taken before the precompile executed
-//   - precompileAddr: The address of the precompiled contract
-//
-// The snapshot is critical for maintaining state consistency when:
-//   - The operation gets reverted ([statedb.JournalChange] Revert).
-//   - The precompile modifies state in other modules (e.g., bank, wasm)
-//   - Multiple precompiles are called within a single transaction
-func OnRunEnd(
-	stateDB *statedb.StateDB,
-	snapshot statedb.PrecompileCalled,
-	precompileAddr gethcommon.Address,
-) error {
-	// TODO: UD-DEBUG: Not needed because it's been added to start.
-	// return stateDB.SavePrecompileSnapshotToJournal(precompileAddr, snapshot)
-	return nil
 }
 
 var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{

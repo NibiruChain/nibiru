@@ -1,3 +1,5 @@
+package statedb
+
 // Copyright 2016 The go-ethereum Authors
 // This file is part of the go-ethereum library.
 //
@@ -13,8 +15,6 @@
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
-
-package statedb
 
 import (
 	"bytes"
@@ -359,7 +359,6 @@ func (ch accessListAddSlotChange) Dirtied() *common.Address {
 type PrecompileCalled struct {
 	MultiStore store.CacheMultiStore
 	Events     sdk.Events
-	Precompile common.Address
 }
 
 var _ JournalChange = PrecompileCalled{}
@@ -373,16 +372,14 @@ func (ch PrecompileCalled) Revert(s *StateDB) {
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
 	s.writeToCommitCtxFromCacheCtx = func() {
-		s.ctx.EventManager().EmitEvents(ch.Events)
+		s.evmTxCtx.EventManager().EmitEvents(ch.Events)
 		// TODO: UD-DEBUG: Overwriting events might fix an issue with
 		// appending too many
-		// s.ctx.WithEventManager(
-		// 	sdk.NewEventManager().EmitEvents(ch.Events),
-		// )
+		// Check correctness of the emitted events
 		ch.MultiStore.Write()
 	}
 }
 
 func (ch PrecompileCalled) Dirtied() *common.Address {
-	return &ch.Precompile
+	return nil
 }

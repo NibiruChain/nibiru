@@ -74,7 +74,8 @@ func (s *Suite) TestComplexJournalChanges() {
 			s.FailNow("expected 4 dirty journal changes")
 		}
 
-		err = stateDB.Commit() // Dirties should be gone
+		s.T().Log("StateDB.Commit, then Dirties should be gone")
+		err = stateDB.Commit()
 		s.NoError(err)
 		if stateDB.DirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
@@ -212,7 +213,7 @@ snapshots and see the prior states.`))
 		)
 
 		err = stateDB.Commit()
-		deps.Ctx = stateDB.GetContext()
+		deps.Ctx = stateDB.GetEvmTxContext()
 		test.AssertWasmCounterState(
 			&s.Suite, deps, wasmContract, 7, // state before precompile called
 		)
@@ -221,7 +222,6 @@ snapshots and see the prior states.`))
 	s.Run("too many precompile calls in one tx will fail", func() {
 		// currently
 		// evmObj
-
 	})
 }
 

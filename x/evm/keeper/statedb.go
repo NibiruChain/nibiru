@@ -65,31 +65,34 @@ func (k *Keeper) ForEachStorage(
 	}
 }
 
-// SetAccBalance update account's balance, compare with current balance first, then decide to mint or burn.
+// SetAccBalance update account's balance, compare with current balance first,
+// then decide to mint or burn.
+// Implements the `statedb.Keeper` interface.
+// Only called by `StateDB.Commit()`.
 func (k *Keeper) SetAccBalance(
 	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {
 	nativeAddr := sdk.AccAddress(addr.Bytes())
-	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, evm.EVMBankDenom).Amount.BigInt()
+	balance := k.bankKeeper.BaseKeeper.GetBalance(ctx, nativeAddr, evm.EVMBankDenom).Amount.BigInt()
 	delta := new(big.Int).Sub(amountEvmDenom, balance)
 
 	switch delta.Sign() {
 	case 1:
 		// mint
 		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
-		if err := k.bankKeeper.MintCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.BaseKeeper.MintCoins(ctx, evm.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, nativeAddr, coins); err != nil {
+		if err := k.bankKeeper.BaseKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, nativeAddr, coins); err != nil {
 			return err
 		}
 	case -1:
 		// burn
 		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, nativeAddr, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.BaseKeeper.SendCoinsFromAccountToModule(ctx, nativeAddr, evm.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := k.bankKeeper.BaseKeeper.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
 			return err
 		}
 	default:

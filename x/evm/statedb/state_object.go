@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package statedb
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"bytes"
@@ -121,9 +122,8 @@ type stateObject struct {
 	address common.Address
 
 	// flags
-	DirtyCode    bool
-	Suicided     bool
-	IsPrecompile bool
+	DirtyCode bool
+	Suicided  bool
 }
 
 // newObject creates a state object.
@@ -199,7 +199,7 @@ func (s *stateObject) Code() []byte {
 	if bytes.Equal(s.CodeHash(), emptyCodeHash) {
 		return nil
 	}
-	code := s.db.keeper.GetCode(s.db.ctx, common.BytesToHash(s.CodeHash()))
+	code := s.db.keeper.GetCode(s.db.evmTxCtx, common.BytesToHash(s.CodeHash()))
 	s.code = code
 	return code
 }
@@ -261,7 +261,7 @@ func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 		return value
 	}
 	// If no live objects are available, load it from keeper
-	value := s.db.keeper.GetState(s.db.ctx, s.Address(), key)
+	value := s.db.keeper.GetState(s.db.evmTxCtx, s.Address(), key)
 	s.OriginStorage[key] = value
 	return value
 }

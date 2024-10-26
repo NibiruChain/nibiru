@@ -72,7 +72,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
-	return bz, OnRunEnd(start.StateDB, start.SnapshotBeforeRun, p.Address())
+	return bz, err
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {

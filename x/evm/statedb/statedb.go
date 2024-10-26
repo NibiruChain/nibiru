@@ -1,5 +1,21 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
+// The "evm/statedb" package implements a go-ethereum [vm.StateDB] with state
+// management and journal changes specific to the Nibiru EVM.
+//
+// This package plays a critical role in managing the state of accounts,
+// contracts, and storage while handling atomicity, caching, and state
+// modifications. It ensures that state transitions made during the
+// execution of smart contracts are either committed or reverted based
+// on transaction outcomes.
+//
+// StateDB structs used to store anything within the state tree, including
+// accounts, contracts, and contract storage.
+// Note that Nibiru's state tree is an IAVL tree, which differs from the Merkle
+// Patricia Trie structure seen on Ethereum mainnet.
+//
+// StateDBs also take care of caching and handling nested states.
 package statedb
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"fmt"
@@ -14,14 +30,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// revision is the identifier of a version of state.
-// it consists of an auto-increment id and a journal index.
-// it's safer to use than using journal index alone.
-type revision struct {
-	id           int
-	journalIndex int
-}
-
 var _ vm.StateDB = &StateDB{}
 
 // StateDB structs within the ethereum protocol are used to store anything
@@ -31,8 +39,9 @@ var _ vm.StateDB = &StateDB{}
 // * Accounts
 type StateDB struct {
 	keeper Keeper
-	// ctx is the persistent context used for official `StateDB.Commit` calls.
-	ctx sdk.Context
+
+	// evmTxCtx is the persistent context used for official `StateDB.Commit` calls.
+	evmTxCtx sdk.Context
 
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
@@ -51,13 +60,13 @@ type StateDB struct {
 	cacheCtx sdk.Context
 
 	// writeToCommitCtxFromCacheCtx is the "write" function received from
-	// `s.ctx.CacheContext()`. It saves mutations on s.cacheCtx to the StateDB's
-	// commit context (s.ctx). This synchronizes the multistore and event manager
+	// `s.evmTxCtx.CacheContext()`. It saves mutations on s.cacheCtx to the StateDB's
+	// commit context (s.evmTxCtx). This synchronizes the multistore and event manager
 	// of the two contexts.
 	writeToCommitCtxFromCacheCtx func()
 
 	// The number of precompiled contract calls within the current transaction
-	precompileSnapshotsCount uint8
+	multistoreCacheCount uint8
 
 	// The refund counter, also used by state transitioning.
 	refund uint64
@@ -73,7 +82,7 @@ type StateDB struct {
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	return &StateDB{
 		keeper:       keeper,
-		ctx:          ctx,
+		evmTxCtx:     ctx,
 		stateObjects: make(map[common.Address]*stateObject),
 		Journal:      newJournal(),
 		accessList:   newAccessList(),
@@ -82,14 +91,22 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	}
 }
 
+// revision is the identifier of a version of state.
+// it consists of an auto-increment id and a journal index.
+// it's safer to use than using journal index alone.
+type revision struct {
+	id           int
+	journalIndex int
+}
+
 // Keeper returns the underlying `Keeper`
 func (s *StateDB) Keeper() Keeper {
 	return s.keeper
 }
 
-// GetContext returns the transaction Context.
-func (s *StateDB) GetContext() sdk.Context {
-	return s.ctx
+// GetEvmTxContext returns the EVM transaction context.
+func (s *StateDB) GetEvmTxContext() sdk.Context {
+	return s.evmTxCtx
 }
 
 // GetCacheContext: Getter for testing purposes.
@@ -237,17 +254,8 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 		return obj
 	}
 
-	if s.keeper.IsPrecompile(addr) {
-		obj := newObject(s, addr, Account{
-			Nonce: 0,
-		})
-		obj.IsPrecompile = true
-		s.setStateObject(obj)
-		return obj
-	}
-
 	// If no live objects are available, load it from keeper
-	account := s.keeper.GetAccount(s.ctx, addr)
+	account := s.keeper.GetAccount(s.evmTxCtx, addr)
 	if account == nil {
 		return nil
 	}
@@ -308,7 +316,7 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 	if so == nil {
 		return nil
 	}
-	s.keeper.ForEachStorage(s.ctx, addr, func(key, value common.Hash) bool {
+	s.keeper.ForEachStorage(s.evmTxCtx, addr, func(key, value common.Hash) bool {
 		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}
@@ -497,19 +505,22 @@ func errorf(format string, args ...any) error {
 // Commit writes the dirty journal state changes to the EVM Keeper. The
 // StateDB object cannot be reused after [Commit] has completed. A new
 // object needs to be created from the EVM.
+//
+// cacheCtxSyncNeeded: If one of the [Nibiru-Specific Precompiled Contracts] was
+// called, a [JournalChange] of type [PrecompileSnapshotBeforeRun] gets added and
+// we branch off a cache of the commit context (s.evmTxCtx).
+//
+// [Nibiru-Specific Precompiled Contracts]: https://nibiru.fi/docs/evm/precompiles/nibiru.html
 func (s *StateDB) Commit() error {
 	if s.writeToCommitCtxFromCacheCtx != nil {
-		// cacheCtxSyncNeeded: If a precompile was called, a [JournalChange]
-		// of type [PrecompileSnapshotBeforeRun] gets added and we branch off a
-		// cache of the commit context (s.ctx).
 		s.writeToCommitCtxFromCacheCtx()
 	}
-	return s.commitCtx(s.GetContext())
+	return s.commitCtx(s.GetEvmTxContext())
 }
 
 // CommitCacheCtx is identical to [StateDB.Commit], except it:
 // (1) uses the cacheCtx of the [StateDB] and
-// (2) does not save mutations of the cacheCtx to the commit context (s.ctx).
+// (2) does not save mutations of the cacheCtx to the commit context (s.evmTxCtx).
 // The reason for (2) is that the overall EVM transaction (block, not internal)
 // is only finalized when [Commit] is called, not when [CommitCacheCtx] is
 // called.
@@ -524,13 +535,10 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 	for _, addr := range s.Journal.sortedDirties() {
 		obj := s.getStateObject(addr)
 		if obj == nil {
-			continue
-		}
-		if obj.IsPrecompile {
-			// TODO: UD-DEBUG: Assume clean to pretend for tests
 			s.Journal.dirties[addr] = 0
 			continue
-		} else if obj.Suicided {
+		}
+		if obj.Suicided {
 			// Invariant: After [StateDB.Suicide] for some address, the
 			// corresponding account's state object is only available until the
 			// state is committed.
@@ -568,16 +576,15 @@ func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
 	sdk.Context, PrecompileCalled,
 ) {
 	if s.writeToCommitCtxFromCacheCtx == nil {
-		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.ctx.CacheContext()
+		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.evmTxCtx.CacheContext()
 	}
 	return s.cacheCtx, PrecompileCalled{
 		MultiStore: s.cacheCtx.MultiStore().(store.CacheMultiStore).Copy(),
 		Events:     s.cacheCtx.EventManager().Events(),
-		Precompile: precompileAddr,
 	}
 }
 
-// SavePrecompileSnapshotToJournal adds a snapshot of the commit multistore
+// SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
 // ([PrecompileCalled]) to the [StateDB] journal at the end of
 // successful invocation of a precompiled contract. This is necessary to revert
 // intermediate states where an EVM contract augments the multistore with a
@@ -585,20 +592,22 @@ func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
 // modules.
 //
 // See [PrecompileCalled] for more info.
-func (s *StateDB) SavePrecompileSnapshotToJournal(
+func (s *StateDB) SavePrecompileCalledJournalChange(
 	precompileAddr common.Address,
-	snapshot PrecompileCalled,
+	journalChange PrecompileCalled,
 ) error {
-	obj := s.getOrNewStateObject(precompileAddr)
-	obj.db.Journal.append(snapshot)
-	s.precompileSnapshotsCount++
-	if s.precompileSnapshotsCount > maxPrecompileCalls {
-		return fmt.Errorf("exceeded maximum allowed number of precompiled contract calls in one transaction (%d)", maxPrecompileCalls)
+	s.Journal.append(journalChange)
+	s.multistoreCacheCount++
+	if s.multistoreCacheCount > maxMultistoreCacheCount {
+		return fmt.Errorf(
+			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d). Called address %s",
+			maxMultistoreCacheCount, precompileAddr.Hex(),
+		)
 	}
 	return nil
 }
 
-const maxPrecompileCalls uint8 = 10
+const maxMultistoreCacheCount uint8 = 10
 
 // StateObjects: Returns a copy of the [StateDB.stateObjects] map.
 func (s *StateDB) StateObjects() map[common.Address]*stateObject {

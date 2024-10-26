@@ -62,7 +62,7 @@ func (p precompileWasm) Run(
 	if err != nil {
 		return nil, err
 	}
-	return bz, OnRunEnd(start.StateDB, start.SnapshotBeforeRun, p.Address())
+	return bz, err
 }
 
 type precompileWasm struct {

@@ -40,7 +40,7 @@ type Keeper struct {
 	// this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	bankKeeper    evm.BankKeeper
+	bankKeeper    *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
@@ -63,13 +63,14 @@ func NewKeeper(
 	storeKey, transientKey storetypes.StoreKey,
 	authority sdk.AccAddress,
 	accKeeper evm.AccountKeeper,
-	bankKeeper evm.BankKeeper,
+	bankKeeper *NibiruBankKeeper,
 	stakingKeeper evm.StakingKeeper,
 	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
 	}
+
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
