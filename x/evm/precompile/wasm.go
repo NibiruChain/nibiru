@@ -52,7 +52,7 @@ func (p precompileWasm) Run(
 
 	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
+	defer ReturnToParentGasMeter(start.Ctx, contract, start.parentGasMeter, &err)()
 
 	switch PrecompileMethod(method.Name) {
 	case WasmMethod_execute:
@@ -75,7 +75,8 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 
-	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	// Gas consumed by a local gas meter
+	gasUsed := start.Ctx.GasMeter().GasConsumed()
 	if !contract.UseGas(gasUsed) {
 		return nil, vm.ErrOutOfGas
 	}

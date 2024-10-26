@@ -51,7 +51,7 @@ func (p precompileOracle) Run(
 
 	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
+	defer ReturnToParentGasMeter(start.Ctx, contract, start.parentGasMeter, &err)()
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
@@ -61,7 +61,8 @@ func (p precompileOracle) Run(
 		return
 	}
 
-	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	// Gas consumed by a local gas meter
+	gasUsed := start.Ctx.GasMeter().GasConsumed()
 	if !contract.UseGas(gasUsed) {
 		return nil, vm.ErrOutOfGas
 	}

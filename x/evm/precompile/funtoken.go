@@ -37,7 +37,9 @@ const (
 	//	  ~60_000 gas for either mint or burn
 	// 3. send from module to account:
 	//	  ~65_000 gas (bank send)
-	FunTokenGasLimitBankSend uint64 = 400_000
+	// additional cosmos calls seem to bump the total value a way higher
+	// TODO (ON): check deeper
+	FunTokenGasLimitBankSend uint64 = 2_000_000
 )
 
 func (p precompileFunToken) Address() gethcommon.Address {
@@ -73,7 +75,7 @@ func (p precompileFunToken) Run(
 
 	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer HandleGasError(start.Ctx, contract, start.initialGas, &err)()
+	defer ReturnToParentGasMeter(start.Ctx, contract, start.parentGasMeter, &err)()
 
 	method := start.Method
 	switch PrecompileMethod(method.Name) {
@@ -89,7 +91,8 @@ func (p precompileFunToken) Run(
 		return nil, err
 	}
 
-	gasUsed := start.Ctx.GasMeter().GasConsumed() - start.initialGas
+	// Gas consumed by a local gas meter
+	gasUsed := start.Ctx.GasMeter().GasConsumed()
 	if !contract.UseGas(gasUsed) {
 		return nil, vm.ErrOutOfGas
 	}
