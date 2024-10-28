@@ -79,13 +79,15 @@ fixes.
    if there are complex, multi-step Ethereum transactions, such as in the case of
    an EthereumTx that influences the `StateDB`, then calls a precompile that also
    changes non-EVM state, and then EVM reverts inside of a try-catch.
-   2. Second, the solution from #2086 that records NIBI (ether) transfers on the
-      `StateDB` during precompiled contract calls is generalized as
-   `NibiruBankKeeper`, which is struct extension of the `bankkeeper.BaseKeeper`
-   that is used throughout the Nibiru base application. The `NibiruBankKeeper`
-   holds a reference to the current EVM `StateDB` if there is one and records
-   balance changes in wei as journal changes automatically.
-
+- [#2095](https://github.com/NibiruChain/nibiru/pull/2095) - fix(evm): This
+change records NIBI (ether) transfers on the `StateDB` during precompiled
+contract calls using the `NibiruBankKeeper`, which is struct extension of
+the `bankkeeper.BaseKeeper` that is used throughout Nibiru.
+The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and records
+balance changes in wei as journal changes automatically. This guarantees that
+commits and reversions of the `StateDB` do not misalign with the state of the
+Bank module. This code change uses the `NibiruBankKeeper` on all modules that
+depend on x/bank, such as the EVM and Wasm modules. 
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
