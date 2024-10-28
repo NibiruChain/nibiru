@@ -60,7 +60,7 @@ func (k *Keeper) RefundGas(
 
 		// Refund to sender from the fee collector module account. This account
 		// manages the collection of gas fees.
-		err := k.bankKeeper.SendCoinsFromModuleToAccount(
+		err := k.Bank.SendCoinsFromModuleToAccount(
 			ctx,
 			authtypes.FeeCollectorName, // sender
 			msgFrom.Bytes(),            // recipient
@@ -136,7 +136,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	}
 
 	// deduct the full gas cost from the user balance
-	if err := authante.DeductFees(k.bankKeeper, ctx, signerAcc, fees); err != nil {
+	if err := authante.DeductFees(k.Bank, ctx, signerAcc, fees); err != nil {
 		return errors.Wrapf(err, "failed to deduct full gas cost %s from the user %s balance", fees, from)
 	}
 

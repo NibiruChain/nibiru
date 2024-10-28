@@ -63,7 +63,7 @@ type PublicKeepers struct {
 	SudoKeeper         keeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
-	EvmKeeper          evmkeeper.Keeper
+	EvmKeeper          *evmkeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasmkeeper.Keeper

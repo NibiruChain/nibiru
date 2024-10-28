@@ -82,7 +82,7 @@ func (s *Suite) TestAccount() {
 			s.Require().EqualValues(statedb.NewEmptyAccount(), acct)
 			s.Require().Empty(CollectContractStorage(db))
 
-			db = deps.StateDB()
+			db = deps.NewStateDB()
 			s.Require().Equal(true, db.Exist(address))
 			s.Require().Equal(true, db.Empty(address))
 			s.Require().Equal(big.NewInt(0), db.GetBalance(address))
@@ -104,7 +104,7 @@ func (s *Suite) TestAccount() {
 			s.Require().NoError(db.Commit())
 
 			// suicide
-			db = deps.StateDB()
+			db = deps.NewStateDB()
 			s.Require().False(db.HasSuicided(address))
 			s.Require().True(db.Suicide(address))
 
@@ -119,7 +119,7 @@ func (s *Suite) TestAccount() {
 			s.Require().NoError(db.Commit())
 
 			// not accessible from StateDB anymore
-			db = deps.StateDB()
+			db = deps.NewStateDB()
 			s.Require().False(db.Exist(address))
 			s.Require().Empty(CollectContractStorage(db))
 		}},
@@ -127,7 +127,7 @@ func (s *Suite) TestAccount() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.StateDB()
+			db := deps.NewStateDB()
 			tc.malleate(&deps, db)
 		})
 	}
@@ -135,7 +135,7 @@ func (s *Suite) TestAccount() {
 
 func (s *Suite) TestAccountOverride() {
 	deps := evmtest.NewTestDeps()
-	db := deps.StateDB()
+	db := deps.NewStateDB()
 	// test balance carry over when overwritten
 	amount := big.NewInt(1)
 
@@ -168,7 +168,7 @@ func (s *Suite) TestDBError() {
 	}
 	for _, tc := range testCases {
 		deps := evmtest.NewTestDeps()
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		tc.malleate(db)
 		s.Require().NoError(db.Commit())
 	}
@@ -201,7 +201,7 @@ func (s *Suite) TestBalance() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.StateDB()
+			db := deps.NewStateDB()
 			tc.malleate(db)
 
 			// check dirty state
@@ -254,7 +254,7 @@ func (s *Suite) TestState() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.StateDB()
+			db := deps.NewStateDB()
 			tc.malleate(db)
 			s.Require().NoError(db.Commit())
 
@@ -264,7 +264,7 @@ func (s *Suite) TestState() {
 			}
 
 			// check ForEachStorage
-			db = deps.StateDB()
+			db = deps.NewStateDB()
 			collected := CollectContractStorage(db)
 			if len(tc.expStates) > 0 {
 				s.Require().Equal(tc.expStates, collected)
@@ -297,7 +297,7 @@ func (s *Suite) TestCode() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.StateDB()
+			db := deps.NewStateDB()
 			tc.malleate(db)
 
 			// check dirty state
@@ -308,7 +308,7 @@ func (s *Suite) TestCode() {
 			s.Require().NoError(db.Commit())
 
 			// check again
-			db = deps.StateDB()
+			db = deps.NewStateDB()
 			s.Require().Equal(tc.expCode, db.GetCode(address))
 			s.Require().Equal(len(tc.expCode), db.GetCodeSize(address))
 			s.Require().Equal(tc.expCodeHash, db.GetCodeHash(address))
@@ -364,7 +364,7 @@ func (s *Suite) TestRevertSnapshot() {
 			deps := evmtest.NewTestDeps()
 
 			// do some arbitrary changes to the storage
-			db := deps.StateDB()
+			db := deps.NewStateDB()
 			db.SetNonce(address, 1)
 			db.AddBalance(address, big.NewInt(100))
 			db.SetCode(address, []byte("hello world"))
@@ -406,7 +406,7 @@ func (s *Suite) TestNestedSnapshot() {
 	value2 := common.BigToHash(big.NewInt(2))
 
 	deps := evmtest.NewTestDeps()
-	db := deps.StateDB()
+	db := deps.NewStateDB()
 
 	rev1 := db.Snapshot()
 	db.SetState(address, key, value1)
@@ -424,7 +424,7 @@ func (s *Suite) TestNestedSnapshot() {
 
 func (s *Suite) TestInvalidSnapshotId() {
 	deps := evmtest.NewTestDeps()
-	db := deps.StateDB()
+	db := deps.NewStateDB()
 
 	s.Require().Panics(func() {
 		db.RevertToSnapshot(1)
@@ -499,7 +499,7 @@ func (s *Suite) TestAccessList() {
 
 	for _, tc := range testCases {
 		deps := evmtest.NewTestDeps()
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		tc.malleate(db)
 	}
 }
@@ -521,7 +521,7 @@ func (s *Suite) TestLog() {
 	}
 
 	deps := evmtest.NewTestDeps()
-	db := statedb.New(deps.Ctx, &deps.App.EvmKeeper, txConfig)
+	db := statedb.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
 	log := &gethcore.Log{
@@ -576,7 +576,7 @@ func (s *Suite) TestRefund() {
 	}
 	for _, tc := range testCases {
 		deps := evmtest.NewTestDeps()
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		if !tc.expPanic {
 			tc.malleate(db)
 			s.Require().Equal(tc.expRefund, db.GetRefund())
@@ -595,7 +595,7 @@ func (s *Suite) TestIterateStorage() {
 	value2 := common.BigToHash(big.NewInt(4))
 
 	deps := evmtest.NewTestDeps()
-	db := deps.StateDB()
+	db := deps.NewStateDB()
 	db.SetState(address, key1, value1)
 	db.SetState(address, key2, value2)
 
