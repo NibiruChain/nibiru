@@ -12,6 +12,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
+const OracleGasLimitQuery = 100_000
+
 func (s *OracleSuite) TestOracle_FailToPackABI() {
 	testcases := []struct {
 		name       string
@@ -64,7 +66,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			&precompile.PrecompileAddr_Oracle,
 			false,
 			input,
-			precompile.OracleGasLimitQuery,
+			OracleGasLimitQuery,
 		)
 		s.NoError(err)
 

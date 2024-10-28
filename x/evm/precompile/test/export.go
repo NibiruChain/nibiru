@@ -21,6 +21,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
+// rough gas limits for wasm execution - used in tests only
+const (
+	WasmGasLimitInstantiate uint64 = 1_000_000
+	WasmGasLimitExecute     uint64 = 10_000_000
+)
+
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
@@ -76,7 +82,7 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 			&precompile.PrecompileAddr_Wasm,
 			true,
 			input,
-			precompile.WasmGasLimitInstantiate,
+			WasmGasLimitInstantiate,
 		)
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
@@ -196,7 +202,7 @@ func AssertWasmCounterState(
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		precompile.WasmGasLimitInstantiate,
+		WasmGasLimitInstantiate,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -317,13 +323,15 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
+	deps.ResetGasMeter()
+
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		precompile.WasmGasLimitExecute,
+		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)

@@ -18,6 +18,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// rough gas limits for wasm execution - used in tests only
+const (
+	WasmGasLimitQuery   uint64 = 200_000
+	WasmGasLimitExecute uint64 = 1_000_000
+)
+
 type WasmSuite struct {
 	suite.Suite
 }
@@ -58,7 +64,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		precompile.WasmGasLimitExecute,
+		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -92,7 +98,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		precompile.WasmGasLimitExecute,
+		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -146,13 +152,15 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	)
 	s.Require().NoError(err)
 
+	deps.ResetGasMeter()
+
 	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		precompile.WasmGasLimitQuery,
+		WasmGasLimitQuery,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -327,7 +335,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 				&precompile.PrecompileAddr_Wasm,
 				true,
 				input,
-				precompile.WasmGasLimitExecute,
+				WasmGasLimitExecute,
 			)
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
 		})

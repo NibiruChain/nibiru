@@ -31,11 +31,6 @@ const (
 	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
 )
 
-const (
-	// OracleGasLimitQuery is a rough limit. Actual gas used for this precompile is 22_880
-	OracleGasLimitQuery uint64 = 100_000
-)
-
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
@@ -49,8 +44,7 @@ func (p precompileOracle) Run(
 	}
 	method, args, ctx := start.Method, start.Args, start.Ctx
 
-	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
-	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
+	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
 	defer ReturnToParentGasMeter(start.Ctx, contract, start.parentGasMeter, &err)()
 
 	switch PrecompileMethod(method.Name) {

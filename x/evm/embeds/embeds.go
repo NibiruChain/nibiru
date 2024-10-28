@@ -29,6 +29,8 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
+	testFunTokenPrecompileLocalGasJson []byte
 )
 
 var (
@@ -76,6 +78,12 @@ var (
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
 	}
+	// SmartContract_TestFunTokenPrecompileLocalGas is a test contract
+	// which allows precompile execution with custom local gas set (calling precompile within contract)
+	SmartContract_TestFunTokenPrecompileLocalGas = CompiledEvmContract{
+		Name:      "TestFunTokenPrecompileLocalGas.sol",
+		EmbedJSON: testFunTokenPrecompileLocalGasJson,
+	}
 )
 
 func init() {
@@ -86,6 +94,7 @@ func init() {
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 }
 
 type CompiledEvmContract struct {

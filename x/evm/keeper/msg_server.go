@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 
 	"cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -668,7 +669,7 @@ func (k Keeper) CallContractWithInput(
 	}
 	if evmResp.Failed() {
 		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
-		if evmResp.VmError != vm.ErrOutOfGas.Error() {
+		if !strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {
 			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
 				err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
 				return
