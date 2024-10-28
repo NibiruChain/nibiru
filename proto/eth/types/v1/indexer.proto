@@ -12,15 +12,17 @@ message TxResult {
 
   // height of the blockchain
   int64 height = 1;
-  // tx_index of the cosmos transaction
+  // tx_index is the index of the block transaction. It is not the index of an
+  // "internal transaction"
   uint32 tx_index = 2;
   // msg_index in a batch transaction
   uint32 msg_index = 3;
 
-  // eth_tx_index is the index in the list of valid eth tx in the block,
-  // aka. the transaction list returned by eth_getBlock api.
+  // eth_tx_index is the index in the list of valid eth tx in the block. Said
+  // another way, it is the index of the transaction list returned by
+  // eth_getBlock API.
   int32 eth_tx_index = 4;
-  // failed is true if the eth transaction did not go succeed
+  // failed is true if the eth transaction did not succeed
   bool failed = 5;
   // gas_used by the transaction. If it exceeds the block gas limit,
   // it's set to gas limit, which is what's actually deducted by ante handler.

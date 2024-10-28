@@ -2,7 +2,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -10,13 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
@@ -57,7 +56,8 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return e.CallContractWithInput(ctx, from, &contract, true, input)
+	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input)
+	return evmResp, err
 }
 
 /*
@@ -85,7 +85,7 @@ func (e erc20Calls) Transfer(
 	if err != nil {
 		return false, fmt.Errorf("failed to pack ABI args: %w", err), received
 	}
-	resp, err := e.CallContractWithInput(ctx, from, &contract, true, input)
+	resp, _, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
 		return false, err, received
 	}
@@ -148,7 +148,8 @@ func (e erc20Calls) Burn(
 		return
 	}
 	commit := true
-	return e.CallContractWithInput(ctx, from, &contract, commit, input)
+	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, commit, input)
+	return
 }
 
 // CallContract invokes a smart contract on the method specified by [methodName]
@@ -179,30 +180,33 @@ func (k Keeper) CallContract(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
+	evmResp, _, err = k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
+	return evmResp, err
 }
 
-// CallContractWithInput invokes a smart contract with the given [contractInput].
+// CallContractWithInput invokes a smart contract with the given [contractInput]
+// or deploys a new contract.
 //
 // Parameters:
 //   - ctx: The SDK context for the transaction.
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract to be called.
-//   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
+//   - contract: Pointer to the Ethereum address of the contract. Nil if new
+//     contract is deployed.
+//   - commit: Boolean flag indicating whether to commit the transaction (true)
+//     or simulate it (false).
 //   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
 //
 // Note: This function handles both contract method calls and simulations,
-// depending on the 'commit' parameter. It uses a default gas limit for
-// simulations and estimates gas for actual transactions.
+// depending on the 'commit' parameter. It uses a default gas limit.
 func (k Keeper) CallContractWithInput(
 	ctx sdk.Context,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
 	commit bool,
 	contractInput []byte,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
+) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
+	// This is a `defer` pattern to add behavior that runs in the case that the
+	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("CallContractError: %w", err)
@@ -210,13 +214,9 @@ func (k Keeper) CallContractWithInput(
 	}()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
+	// Gas cap sufficient for all "honest" ERC20 calls without malicious (gas
+	// intensive) code in contracts
 	gasLimit := serverconfig.DefaultEthCallGasLimit
-	gasLimit, err = computeCommitGasLimit(
-		commit, gasLimit, &fromAcc, contract, contractInput, k, ctx,
-	)
-	if err != nil {
-		return nil, err
-	}
 
 	unusedBigInt := big.NewInt(0)
 	evmMsg := gethcore.NewMessage(
@@ -240,70 +240,58 @@ func (k Keeper) CallContractWithInput(
 		k.EthChainID(ctx),
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load evm config")
+		err = errors.Wrapf(err, "failed to load EVM config")
+		return
 	}
 
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
+	// Generating TxConfig with an empty tx hash as there is no actual eth tx
+	// sent by a user
+	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+
+	// Using tmp context to not modify the state in case of evm revert
+	tmpCtx, commitCtx := ctx.CacheContext()
+
+	evmResp, evmObj, err = k.ApplyEvmMsg(
+		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to apply EVM message")
+		// We don't know the actual gas used, so consuming the gas limit
+		k.ResetGasMeterAndConsumeGas(ctx, gasLimit)
+		err = errors.Wrap(err, "failed to apply ethereum core message")
+		return
 	}
-
 	if evmResp.Failed() {
-		return nil, errors.Wrapf(err, "EVM execution failed: %s", evmResp.VmError)
+		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
+		if evmResp.VmError != vm.ErrOutOfGas.Error() {
+			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
+				err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+				return
+			}
+			err = fmt.Errorf("VMError: %s", evmResp.VmError)
+			return
+		}
+		err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
+		return
+	} else {
+		// Success, committing the state to ctx
+		if commit {
+			commitCtx()
+			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+			if err != nil {
+				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
+				return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
+			}
+			k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+			err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
+			if err != nil {
+				return nil, nil, errors.Wrap(err, "error emitting ethereum tx events")
+			}
+			blockTxIdx := uint64(txConfig.TxIndex) + 1
+			k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+		}
+		return evmResp, evmObj, nil
 	}
-
-	return evmResp, err
-}
-
-// computeCommitGasLimit: If the transition is meant to mutate state, this
-// function computes an appopriates gas limit for the call with "contractInput"
-// bytes against the given contract address.
-//
-// ℹ️ This creates a cached context for gas estimation, which is essential
-// because state transitions can occur outside of the EVM that are triggered
-// by Ethereum transactions, like in the case of precompiled contract or
-// custom EVM hook that runs after tx execution. Gas estimation in that case
-// could mutate the "ctx" object and result in falty resulting state, so we
-// must cache here to avoid this issue.
-func computeCommitGasLimit(
-	commit bool,
-	gasLimit uint64,
-	fromAcc, contract *gethcommon.Address,
-	contractInput []byte,
-	k Keeper,
-	ctx sdk.Context,
-) (newGasLimit uint64, err error) {
-	if !commit {
-		return gasLimit, nil
-	}
-
-	cachedCtx, _ := ctx.CacheContext() // IMPORTANT!
-
-	jsonArgs, err := json.Marshal(evm.JsonTxArgs{
-		From: fromAcc,
-		To:   contract,
-		Data: (*hexutil.Bytes)(&contractInput),
-	})
-	if err != nil {
-		return gasLimit, fmt.Errorf("failed compute gas limit to marshal tx args: %w", err)
-	}
-
-	gasRes, err := k.EstimateGasForEvmCallType(
-		sdk.WrapSDKContext(cachedCtx),
-		&evm.EthCallRequest{
-			Args:   jsonArgs,
-			GasCap: gasLimit,
-		},
-		evm.CallTypeSmart,
-	)
-	if err != nil {
-		return gasLimit, fmt.Errorf("failed to compute gas limit: %w", err)
-	}
-
-	return gasRes.Gas, nil
 }
 
 func (k Keeper) LoadERC20Name(

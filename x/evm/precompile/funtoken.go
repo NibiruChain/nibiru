@@ -3,18 +3,18 @@ package precompile
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 	"sync"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
@@ -32,17 +32,13 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
+func (p precompileFunToken) ABI() *gethabi.ABI {
+	return embeds.SmartContract_FunToken.ABI
+}
+
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
-	// a contract, it's value can be used to derive an appropriate value for the
-	// precompile call. The FunToken precompile performs 3 operations, labeled 1-3
-	// below:
-	// 0 | Call the precompile (already counted in gas calculation)
-	// 1 | Send ERC20 to EVM.
-	// 2 | Convert ERC20 to coin
-	// 3 | Send coin to recipient.
-	return gethparams.TxGas * 2
+	return RequiredGas(input, p.ABI())
 }
 
 const (
@@ -55,39 +51,29 @@ type PrecompileMethod string
 func (p precompileFunToken) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
 	defer func() {
-		if err != nil {
-			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
-		}
+		err = ErrPrecompileRun(err, p)
 	}()
-
-	// 1 | Get context from StateDB
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx := stateDB.GetContext()
-
-	method, args, err := DecomposeInput(embeds.SmartContract_FunToken.ABI, contract.Input)
+	start, err := OnRunStart(evm, contract, p.ABI())
 	if err != nil {
 		return nil, err
 	}
 
+	method := start.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
-		bz, err = p.bankSend(ctx, contract.CallerAddress, method, args, readonly)
+		bz, err = p.bankSend(start, contract.CallerAddress, readonly)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "DecomposeInput" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
-
-	return
+	if err != nil {
+		return nil, err
+	}
+	// Dirty journal entries in `StateDB` must be committed
+	return bz, start.StateDB.Commit()
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
@@ -116,12 +102,11 @@ var executionGuard sync.Mutex
 //	function bankSend(address erc20, uint256 amount, string memory to) external;
 //	```
 func (p precompileFunToken) bankSend(
-	ctx sdk.Context,
+	start OnRunStartResult,
 	caller gethcommon.Address,
-	method *gethabi.Method,
-	args []any,
 	readOnly bool,
 ) (bz []byte, err error) {
+	ctx, method, args := start.Ctx, start.Method, start.Args
 	if e := assertNotReadonlyTx(readOnly, true); e != nil {
 		err = e
 		return
@@ -166,7 +151,7 @@ func (p precompileFunToken) bankSend(
 
 	// EVM account mints FunToken.BankDenom to module account
 	amt := math.NewIntFromBigInt(amount)
-	coins := sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, amt))
+	coinToSend := sdk.NewCoin(funtoken.BankDenom, amt)
 	if funtoken.IsMadeFromCoin {
 		// If the FunToken mapping was created from a bank coin, then the EVM account
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
@@ -178,7 +163,7 @@ func (p precompileFunToken) bankSend(
 			return
 		}
 	} else {
-		err = p.bankKeeper.MintCoins(ctx, evm.ModuleName, coins)
+		err = SafeMintCoins(ctx, evm.ModuleName, coinToSend, p.bankKeeper, start.StateDB)
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
 				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -187,7 +172,14 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// Transfer the bank coin
-	err = p.bankKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddr, coins)
+	err = SafeSendCoinFromModuleToAccount(
+		ctx,
+		evm.ModuleName,
+		toAddr,
+		coinToSend,
+		p.bankKeeper,
+		start.StateDB,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -197,6 +189,58 @@ func (p precompileFunToken) bankSend(
 	// TODO: UD-DEBUG: feat: Emit EVM events
 
 	return method.Outputs.Pack()
+}
+
+func SafeMintCoins(
+	ctx sdk.Context,
+	moduleName string,
+	amt sdk.Coin,
+	bk bankkeeper.Keeper,
+	db *statedb.StateDB,
+) error {
+	err := bk.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(amt))
+	if err != nil {
+		return err
+	}
+	if amt.Denom == evm.EVMBankDenom {
+		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		balAfter := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			evm.EVM_MODULE_ADDRESS,
+			evm.NativeToWei(balAfter),
+		)
+	}
+
+	return nil
+}
+
+func SafeSendCoinFromModuleToAccount(
+	ctx sdk.Context,
+	senderModule string,
+	recipientAddr sdk.AccAddress,
+	amt sdk.Coin,
+	bk bankkeeper.Keeper,
+	db *statedb.StateDB,
+) error {
+	err := bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(amt))
+	if err != nil {
+		return err
+	}
+	if amt.Denom == evm.EVMBankDenom {
+		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		balAfterFrom := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			evm.EVM_MODULE_ADDRESS,
+			evm.NativeToWei(balAfterFrom),
+		)
+
+		balAfterTo := bk.GetBalance(ctx, recipientAddr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			eth.NibiruAddrToEthAddr(recipientAddr),
+			evm.NativeToWei(balAfterTo),
+		)
+	}
+	return nil
 }
 
 func (p precompileFunToken) decomposeBankSendArgs(args []any) (

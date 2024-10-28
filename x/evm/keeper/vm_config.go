@@ -39,12 +39,12 @@ func (k *Keeper) GetEVMConfig(
 func (k *Keeper) TxConfig(
 	ctx sdk.Context, txHash common.Hash,
 ) statedb.TxConfig {
-	return statedb.NewTxConfig(
-		common.BytesToHash(ctx.HeaderHash()), // BlockHash
-		txHash,                               // TxHash
-		uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0)), // TxIndex
-		uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)), // LogIndex
-	)
+	return statedb.TxConfig{
+		BlockHash: common.BytesToHash(ctx.HeaderHash()),
+		TxHash:    txHash,
+		TxIndex:   uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0)),
+		LogIndex:  uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)),
+	}
 }
 
 // VMConfig creates an EVM configuration from the debug setting and the extra

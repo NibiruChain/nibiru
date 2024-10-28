@@ -30,11 +30,12 @@ var _ vm.StateDB = &StateDB{}
 // * Accounts
 type StateDB struct {
 	keeper Keeper
-	ctx    sdk.Context
+	// ctx is the persistent context used for official `StateDB.Commit` calls.
+	ctx sdk.Context
 
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
-	journal        *journal
+	Journal        *journal
 	validRevisions []revision
 	nextRevisionID int
 
@@ -58,7 +59,7 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 		keeper:       keeper,
 		ctx:          ctx,
 		stateObjects: make(map[common.Address]*stateObject),
-		journal:      newJournal(),
+		Journal:      newJournal(),
 		accessList:   newAccessList(),
 
 		txConfig: txConfig,
@@ -77,7 +78,7 @@ func (s *StateDB) GetContext() sdk.Context {
 
 // AddLog adds a log, called by evm.
 func (s *StateDB) AddLog(log *gethcore.Log) {
-	s.journal.append(addLogChange{})
+	s.Journal.append(addLogChange{})
 
 	log.TxHash = s.txConfig.TxHash
 	log.BlockHash = s.txConfig.BlockHash
@@ -93,14 +94,14 @@ func (s *StateDB) Logs() []*gethcore.Log {
 
 // AddRefund adds gas to the refund counter
 func (s *StateDB) AddRefund(gas uint64) {
-	s.journal.append(refundChange{prev: s.refund})
+	s.Journal.append(refundChange{prev: s.refund})
 	s.refund += gas
 }
 
 // SubRefund removes gas from the refund counter.
 // This method will panic if the refund counter goes below zero
 func (s *StateDB) SubRefund(gas uint64) {
-	s.journal.append(refundChange{prev: s.refund})
+	s.Journal.append(refundChange{prev: s.refund})
 	if gas > s.refund {
 		panic(fmt.Sprintf("Refund counter below zero (gas: %d > refund: %d)", gas, s.refund))
 	}
@@ -193,7 +194,7 @@ func (s *StateDB) GetRefund() uint64 {
 func (s *StateDB) HasSuicided(addr common.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.suicided
+		return stateObject.Suicided
 	}
 	return false
 }
@@ -239,9 +240,9 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 
 	newobj = newObject(s, addr, Account{})
 	if prev == nil {
-		s.journal.append(createObjectChange{account: &addr})
+		s.Journal.append(createObjectChange{account: &addr})
 	} else {
-		s.journal.append(resetObjectChange{prev: prev})
+		s.Journal.append(resetObjectChange{prev: prev})
 	}
 	s.setStateObject(newobj)
 	if prev != nil {
@@ -274,7 +275,7 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 		return nil
 	}
 	s.keeper.ForEachStorage(s.ctx, addr, func(key, value common.Hash) bool {
-		if value, dirty := so.dirtyStorage[key]; dirty {
+		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}
 		if len(value) > 0 {
@@ -294,18 +295,25 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) AddBalance(addr common.Address, wei *big.Int) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.AddBalance(amount)
+		stateObject.AddBalance(wei)
 	}
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, amount *big.Int) {
+func (s *StateDB) SubBalance(addr common.Address, wei *big.Int) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SubBalance(amount)
+		stateObject.SubBalance(wei)
+	}
+}
+
+func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int) {
+	stateObject := s.getOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SetBalance(wei)
 	}
 }
 
@@ -343,12 +351,12 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	if stateObject == nil {
 		return false
 	}
-	s.journal.append(suicideChange{
+	s.Journal.append(suicideChange{
 		account:     &addr,
-		prev:        stateObject.suicided,
+		prev:        stateObject.Suicided,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
-	stateObject.suicided = true
+	stateObject.Suicided = true
 	stateObject.account.BalanceWei = new(big.Int)
 
 	return true
@@ -388,7 +396,7 @@ func (s *StateDB) PrepareAccessList(
 // AddAddressToAccessList adds the given address to the access list
 func (s *StateDB) AddAddressToAccessList(addr common.Address) {
 	if s.accessList.AddAddress(addr) {
-		s.journal.append(accessListAddAccountChange{&addr})
+		s.Journal.append(accessListAddAccountChange{&addr})
 	}
 }
 
@@ -400,10 +408,10 @@ func (s *StateDB) AddSlotToAccessList(addr common.Address, slot common.Hash) {
 		// scope of 'address' without having the 'address' become already added
 		// to the access list (via call-variant, create, etc).
 		// Better safe than sorry, though
-		s.journal.append(accessListAddAccountChange{&addr})
+		s.Journal.append(accessListAddAccountChange{&addr})
 	}
 	if slotMod {
-		s.journal.append(accessListAddSlotChange{
+		s.Journal.append(accessListAddSlotChange{
 			address: &addr,
 			slot:    &slot,
 		})
@@ -424,7 +432,7 @@ func (s *StateDB) SlotInAccessList(addr common.Address, slot common.Hash) (addre
 func (s *StateDB) Snapshot() int {
 	id := s.nextRevisionID
 	s.nextRevisionID++
-	s.validRevisions = append(s.validRevisions, revision{id, s.journal.length()})
+	s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
 	return id
 }
 
@@ -440,7 +448,7 @@ func (s *StateDB) RevertToSnapshot(revid int) {
 	snapshot := s.validRevisions[idx].journalIndex
 
 	// Replay the journal to undo changes and remove invalidated snapshots
-	s.journal.Revert(s, snapshot)
+	s.Journal.Revert(s, snapshot)
 	s.validRevisions = s.validRevisions[:idx]
 }
 
@@ -449,31 +457,45 @@ func errorf(format string, args ...any) error {
 	return fmt.Errorf("StateDB error: "+format, args...)
 }
 
-// Commit writes the dirty states to keeper
-// the StateDB object should be discarded after committed.
+// Commit writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [Commit] has completed. A new
+// object needs to be created from the EVM.
 func (s *StateDB) Commit() error {
-	for _, addr := range s.journal.sortedDirties() {
-		obj := s.stateObjects[addr]
-		if obj.suicided {
-			if err := s.keeper.DeleteAccount(s.ctx, obj.Address()); err != nil {
-				return errorf("failed to delete account: %w")
+	ctx := s.GetContext()
+	for _, addr := range s.Journal.sortedDirties() {
+		obj := s.getStateObject(addr)
+		if obj == nil {
+			continue
+		}
+		if obj.Suicided {
+			// Invariant: After [StateDB.Suicide] for some address, the
+			// corresponding account's state object is only available until the
+			// state is committed.
+			if err := s.keeper.DeleteAccount(ctx, obj.Address()); err != nil {
+				return errorf("failed to delete account: %w", err)
 			}
+			delete(s.stateObjects, addr)
 		} else {
-			if obj.code != nil && obj.dirtyCode {
-				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
+			if obj.code != nil && obj.DirtyCode {
+				s.keeper.SetCode(ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account.ToNative()); err != nil {
-				return errorf("failed to set account: %w")
+			if err := s.keeper.SetAccount(ctx, obj.Address(), obj.account.ToNative()); err != nil {
+				return errorf("failed to set account: %w", err)
 			}
-			for _, key := range obj.dirtyStorage.SortedKeys() {
-				value := obj.dirtyStorage[key]
-				// Skip noop changes, persist actual changes
-				if value == obj.originStorage[key] {
+			for _, key := range obj.DirtyStorage.SortedKeys() {
+				dirtyVal := obj.DirtyStorage[key]
+				// Values that match origin storage are not dirty.
+				if dirtyVal == obj.OriginStorage[key] {
 					continue
 				}
-				s.keeper.SetState(s.ctx, obj.Address(), key, value.Bytes())
+				// Persist committed changes
+				s.keeper.SetState(ctx, obj.Address(), key, dirtyVal.Bytes())
+				obj.OriginStorage[key] = dirtyVal
 			}
 		}
+		// Clear the dirty counts because all state changes have been
+		// committed.
+		s.Journal.dirties[addr] = 0
 	}
 	return nil
 }

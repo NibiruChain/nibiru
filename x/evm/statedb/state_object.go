@@ -115,14 +115,14 @@ type stateObject struct {
 	code    []byte
 
 	// state storage
-	originStorage Storage
-	dirtyStorage  Storage
+	OriginStorage Storage
+	DirtyStorage  Storage
 
 	address common.Address
 
 	// flags
-	dirtyCode bool
-	suicided  bool
+	DirtyCode bool
+	Suicided  bool
 }
 
 // newObject creates a state object.
@@ -138,8 +138,8 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 		address: address,
 		// Reflect the micronibi (unibi) balance in wei
 		account:       account.ToWei(),
-		originStorage: make(Storage),
-		dirtyStorage:  make(Storage),
+		OriginStorage: make(Storage),
+		DirtyStorage:  make(Storage),
 	}
 }
 
@@ -170,9 +170,9 @@ func (s *stateObject) SubBalance(amount *big.Int) {
 
 // SetBalance update account balance.
 func (s *stateObject) SetBalance(amount *big.Int) {
-	s.db.journal.append(balanceChange{
+	s.db.Journal.append(balanceChange{
 		account: &s.address,
-		prev:    new(big.Int).Set(s.account.BalanceWei),
+		prevWei: new(big.Int).Set(s.account.BalanceWei),
 	})
 	s.setBalance(amount)
 }
@@ -212,7 +212,7 @@ func (s *stateObject) CodeSize() int {
 // SetCode set contract code to account
 func (s *stateObject) SetCode(codeHash common.Hash, code []byte) {
 	prevcode := s.Code()
-	s.db.journal.append(codeChange{
+	s.db.Journal.append(codeChange{
 		account:  &s.address,
 		prevhash: s.CodeHash(),
 		prevcode: prevcode,
@@ -223,12 +223,12 @@ func (s *stateObject) SetCode(codeHash common.Hash, code []byte) {
 func (s *stateObject) setCode(codeHash common.Hash, code []byte) {
 	s.code = code
 	s.account.CodeHash = codeHash[:]
-	s.dirtyCode = true
+	s.DirtyCode = true
 }
 
 // SetNonce set nonce to account
 func (s *stateObject) SetNonce(nonce uint64) {
-	s.db.journal.append(nonceChange{
+	s.db.Journal.append(nonceChange{
 		account: &s.address,
 		prev:    s.account.Nonce,
 	})
@@ -256,18 +256,18 @@ func (s *stateObject) Nonce() uint64 {
 
 // GetCommittedState query the committed state
 func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
-	if value, cached := s.originStorage[key]; cached {
+	if value, cached := s.OriginStorage[key]; cached {
 		return value
 	}
 	// If no live objects are available, load it from keeper
 	value := s.db.keeper.GetState(s.db.ctx, s.Address(), key)
-	s.originStorage[key] = value
+	s.OriginStorage[key] = value
 	return value
 }
 
 // GetState query the current state (including dirty state)
 func (s *stateObject) GetState(key common.Hash) common.Hash {
-	if value, dirty := s.dirtyStorage[key]; dirty {
+	if value, dirty := s.DirtyStorage[key]; dirty {
 		return value
 	}
 	return s.GetCommittedState(key)
@@ -281,7 +281,7 @@ func (s *stateObject) SetState(key common.Hash, value common.Hash) {
 		return
 	}
 	// New value is different, update and journal the change
-	s.db.journal.append(storageChange{
+	s.db.Journal.append(storageChange{
 		account:  &s.address,
 		key:      key,
 		prevalue: prev,
@@ -290,5 +290,5 @@ func (s *stateObject) SetState(key common.Hash, value common.Hash) {
 }
 
 func (s *stateObject) setState(key, value common.Hash) {
-	s.dirtyStorage[key] = value
+	s.DirtyStorage[key] = value
 }

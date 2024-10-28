@@ -282,7 +282,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	// Check 3: erc-20 balance
 	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenErc20Addr.Address, alice.EthAddr, deps.Ctx)
 	s.Require().NoError(err)
-	s.Require().Zero(balance.Cmp(big.NewInt(0)))
+	s.Require().Equal("0", balance.String())
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	_, err = deps.EvmKeeper.CallContract(
