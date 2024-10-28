@@ -37,7 +37,7 @@ const (
 	//	  ~60_000 gas for either mint or burn
 	// 3. send from module to account:
 	//	  ~65_000 gas (bank send)
-	FunTokenGasLimitBankSend uint64 = 200_000
+	FunTokenGasLimitBankSend uint64 = 400_000
 )
 
 func (p precompileFunToken) Address() gethcommon.Address {
