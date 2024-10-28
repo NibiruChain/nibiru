@@ -40,7 +40,7 @@ type Keeper struct {
 	// this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	bankKeeper    *NibiruBankKeeper
+	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
@@ -79,7 +79,7 @@ func NewKeeper(
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
 		FunTokens:     NewFunTokenState(cdc, storeKey),
 		accountKeeper: accKeeper,
-		bankKeeper:    bankKeeper,
+		Bank:          bankKeeper,
 		stakingKeeper: stakingKeeper,
 		tracer:        tracer,
 	}
@@ -90,7 +90,7 @@ func NewKeeper(
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
+	return k.Bank.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {

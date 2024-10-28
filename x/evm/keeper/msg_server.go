@@ -351,6 +351,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
+		fmt.Println("stateDB.Commit in ApplyEvmMsg")
 		if err := stateDB.Commit(); err != nil {
 			return nil, evmObj, fmt.Errorf("failed to commit stateDB: %w", err)
 		}
@@ -455,11 +456,11 @@ func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunTo
 	fee := k.FeeForCreateFunToken(ctx)
 	from := sdk.MustAccAddressFromBech32(msg.Sender) // validation in msg.ValidateBasic
 
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx, from, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("unable to pay the \"create_fun_token_fee\": %w", err)
 	}
-	if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
+	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("failed to burn the \"create_fun_token_fee\" after payment: %w", err)
 	}
 	return nil
@@ -507,7 +508,7 @@ func (k Keeper) convertCoinNativeCoin(
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	// Step 1: Escrow bank coins with EVM module account
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
@@ -563,7 +564,7 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// Escrow Coins on module account
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx,
 		sender,
 		evm.ModuleName,
@@ -619,7 +620,7 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// Burn escrowed Coins
-	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
+	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}

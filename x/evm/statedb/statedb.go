@@ -78,8 +78,13 @@ type StateDB struct {
 	accessList *accessList
 }
 
+func FromVM(evmObj *vm.EVM) *StateDB {
+	return evmObj.StateDB.(*StateDB)
+}
+
 // New creates a new state from a given trie.
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
+	fmt.Println("statedb.New called")
 	return &StateDB{
 		keeper:       keeper,
 		evmTxCtx:     ctx,
@@ -480,9 +485,6 @@ func (s *StateDB) Snapshot() int {
 
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *StateDB) RevertToSnapshot(revid int) {
-	fmt.Printf("len(s.validRevisions): %d\n", len(s.validRevisions))
-	fmt.Printf("s.validRevisions: %v\n", s.validRevisions)
-
 	// Find the snapshot in the stack of valid snapshots.
 	idx := sort.Search(len(s.validRevisions), func(i int) bool {
 		return s.validRevisions[i].id >= revid
