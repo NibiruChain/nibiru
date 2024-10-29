@@ -491,22 +491,23 @@ func (k *Keeper) ConvertCoinToEvm(
 	fungibleTokenMapping := funTokens[0]
 
 	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinNativeCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
 	} else {
-		return k.convertCoinNativeERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
 	}
 }
 
-// Converts a native coin to an ERC20 token.
-// EVM module owns the ERC-20 contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinNativeCoin(
+// Converts Bank Coins for FunToken mapping that was born from a coin
+// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
+// contract and can mint the ERC-20 tokens.
+func (k Keeper) convertCoinToEvmBornCoin(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
 	coin sdk.Coin,
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// Step 1: Escrow bank coins with EVM module account
+	// Step 1: Send Bank Coins to the EVM module
 	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send coins to module account")
@@ -514,7 +515,7 @@ func (k Keeper) convertCoinNativeCoin(
 
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 
-	// Step 2: mint ERC-20 tokens for recipient
+	// Step 2: Mint ERC20 tokens to the recipient
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
@@ -542,10 +543,11 @@ func (k Keeper) convertCoinNativeCoin(
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
 
-// Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
-// EVM module does not own the ERC-20 contract and cannot mint the ERC-20 tokens.
-// EVM module has escrowed tokens in the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinNativeERC20(
+// Converts a coin that was originally an ERC20 token, and that was converted to
+// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
+// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
+// the first conversion from ERC-20 to bank coin.
+func (k Keeper) convertCoinToEvmBornERC20(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
@@ -581,19 +583,19 @@ func (k Keeper) convertCoinNativeERC20(
 		return nil, fmt.Errorf("insufficient balance in EVM module account")
 	}
 
-	// unescrow ERC-20 tokens from EVM module address
-	success, err, actualReceivedAmount := k.ERC20().Transfer(
+	// Supply ERC-20 tokens from EVM module address
+	actualSentAmount, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
 		coin.Amount.BigInt(),
 		ctx,
 	)
-	if err != nil || !success {
+	if err != nil {
 		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
-	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualReceivedAmount))
+	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualSentAmount))
 	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")

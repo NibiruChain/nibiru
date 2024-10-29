@@ -73,53 +73,53 @@ Transfer implements "ERC20.transfer"
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (success bool, err error, received *big.Int) {
-	received = big.NewInt(0)
-
+) (balanceIncrease *big.Int, err error) {
 	recipientBalanceBefore, err := e.BalanceOf(contract, to, ctx)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to retrieve recipient balance"), received
+		return balanceIncrease, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
 	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
-		return false, fmt.Errorf("failed to pack ABI args: %w", err), received
+		return balanceIncrease, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
+
 	resp, _, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
-		return false, err, received
-	}
-
-	recipientBalanceAfter, err := e.BalanceOf(contract, to, ctx)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to retrieve recipient balance"), received
-	}
-
-	received = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)
-
-	// we can't check that received = amount because the recipient could have
-	// a transfer fee or other deductions. We can only check that the recipient
-	// received some tokens
-	if received.Sign() <= 0 {
-		return false, fmt.Errorf("no (or negative) ERC20 tokens were received by the recipient"), received
+		return balanceIncrease, err
 	}
 
 	var erc20Bool ERC20Bool
 	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
-
-	// per erc20 standard, the transfer function should return a boolean value
-	// indicating whether the operation succeeded. If the unpacking failed, we
-	// need to check the recipient balance to determine if the transfer was successful.
-	if err == nil {
-		// should be true if the transfer was successful but we do it anyway
-		// to respect the contract's return value
-		success = erc20Bool.Value
-
-		return success, nil, received
+	if err != nil {
+		return balanceIncrease, err
 	}
 
-	success = true
-	return
+	// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
+	success := erc20Bool.Value
+	if !success {
+		return balanceIncrease, fmt.Errorf("transfer executed but returned success=false")
+	}
+
+	recipientBalanceAfter, err := e.BalanceOf(contract, to, ctx)
+	if err != nil {
+		return balanceIncrease, errors.Wrap(err, "failed to retrieve recipient balance")
+	}
+
+	balanceIncrease = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)
+
+	// For flexibility with fee on transfer tokens and other types of deductions,
+	// we cannot assume that the amount received by the recipient is equal to
+	// the call "amount". Instead, verify that the recipient got tokens and
+	// return the amount.
+	if balanceIncrease.Sign() <= 0 {
+		return balanceIncrease, fmt.Errorf(
+			"amount of ERC20 tokens received MUST be positive: the balance of recipient %s would've changed by %v for token %s",
+			to.Hex(), balanceIncrease.String(), contract.Hex(),
+		)
+	}
+
+	return balanceIncrease, err
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.

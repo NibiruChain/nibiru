@@ -162,7 +162,6 @@ about the expected resulting balance for the transfer recipient.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
-- [#2073](https://github.com/NibiruChain/nibiru/pull/2073) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation
 
 ### State Machine Breaking (Other)
 
