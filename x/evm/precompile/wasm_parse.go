@@ -16,15 +16,28 @@ type WasmBankCoin struct {
 	Amount *big.Int `json:"amount"`
 }
 
-func parseSdkCoins(unparsed []struct {
-	Denom  string   `json:"denom"`
-	Amount *big.Int `json:"amount"`
-},
-) sdk.Coins {
-	parsed := sdk.Coins{}
-	for _, coin := range unparsed {
-		parsed = append(
-			parsed,
+// Parses [sdk.Coins] from a "BankCoin[]" solidity argument:
+//
+//	```solidity
+//	    BankCoin[] memory funds
+//	```
+func parseFundsArg(arg any) (funds sdk.Coins, err error) {
+	if arg == nil {
+		return funds, nil
+	}
+
+	raw, ok := arg.([]struct {
+		Denom  string   `json:"denom"`
+		Amount *big.Int `json:"amount"`
+	})
+
+	if !ok {
+		return funds, ErrArgTypeValidation("BankCoin[] funds", arg)
+	}
+
+	for _, coin := range raw {
+		funds = append(
+			funds,
 			// Favor the sdk.Coin constructor over sdk.NewCoin because sdk.NewCoin
 			// is not panic-safe. Validation will be handled when the coin is used
 			// as an argument during the execution of a transaction.
@@ -34,33 +47,7 @@ func parseSdkCoins(unparsed []struct {
 			},
 		)
 	}
-	return parsed
-}
-
-// Parses [sdk.Coins] from a "BankCoin[]" solidity argument:
-//
-//	```solidity
-//	    BankCoin[] memory funds
-//	```
-func parseFundsArg(arg any) (funds sdk.Coins, err error) {
-	bankCoinsUnparsed, ok := arg.([]struct {
-		Denom  string   `json:"denom"`
-		Amount *big.Int `json:"amount"`
-	})
-	switch {
-	case arg == nil:
-		bankCoinsUnparsed = []struct {
-			Denom  string   `json:"denom"`
-			Amount *big.Int `json:"amount"`
-		}{}
-	case !ok:
-		err = ErrArgTypeValidation("BankCoin[] funds", arg)
-		return
-	case ok:
-		// Type assertion succeeded
-	}
-	funds = parseSdkCoins(bankCoinsUnparsed)
-	return
+	return funds, nil
 }
 
 // Parses [sdk.AccAddress] from a "string" solidity argument:
