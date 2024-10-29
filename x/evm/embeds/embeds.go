@@ -19,7 +19,7 @@ var (
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
 	oracleContractJSON []byte
-	//go:embed artifacts/contracts/FunToken.sol/IFunToken.json
+	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenPrecompileJSON []byte
 	//go:embed artifacts/contracts/Wasm.sol/IWasm.json
 	wasmPrecompileJSON []byte
@@ -29,6 +29,10 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestERC20TransferThenPrecompileSend.sol/TestERC20TransferThenPrecompileSend.json
+	testERC20TransferThenPrecompileSendJson []byte
+	//go:embed artifacts/contracts/TestNativeSendThenPrecompileSend.sol/TestNativeSendThenPrecompileSend.json
+	testNativeSendThenPrecompileSendJson []byte
 )
 
 var (
@@ -40,10 +44,10 @@ var (
 	}
 
 	// SmartContract_Funtoken: Precompile contract interface for
-	// "FunToken.sol". This precompile enables transfers of ERC20 tokens
+	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
 	// to non-EVM accounts. Only the ABI is used.
 	SmartContract_FunToken = CompiledEvmContract{
-		Name:      "FunToken.sol",
+		Name:      "IFunToken.sol",
 		EmbedJSON: funtokenPrecompileJSON,
 	}
 
@@ -76,6 +80,22 @@ var (
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
 	}
+	// SmartContract_TestNativeSendThenPrecompileSendJson is a test contract
+	// that performs two sends in a single call: a native nibi send and a precompile bankSend.
+	// It tests a race condition where the state DB commit
+	// may overwrite the state after the precompile execution, potentially causing a loss of funds.
+	SmartContract_TestNativeSendThenPrecompileSendJson = CompiledEvmContract{
+		Name:      "TestNativeSendThenPrecompileSend.sol",
+		EmbedJSON: testNativeSendThenPrecompileSendJson,
+	}
+	// SmartContract_TestERC20TransferThenPrecompileSend is a test contract
+	// that performs two sends in a single call: an erc20 token transfer and a precompile bankSend.
+	// It tests a race condition where the state DB commit
+	// may overwrite the state after the precompile execution, potentially causing an infinite token mint.
+	SmartContract_TestERC20TransferThenPrecompileSend = CompiledEvmContract{
+		Name:      "TestERC20TransferThenPrecompileSend.sol",
+		EmbedJSON: testERC20TransferThenPrecompileSendJson,
+	}
 )
 
 func init() {
@@ -86,6 +106,8 @@ func init() {
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
+	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
 }
 
 type CompiledEvmContract struct {

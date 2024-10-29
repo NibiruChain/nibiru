@@ -23,7 +23,7 @@ import (
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 
-// Precompile address for "FunToken.sol", the contract that
+// Precompile address for "IFunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
 var PrecompileAddr_FunToken = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
@@ -72,8 +72,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
-	// Dirty journal entries in `StateDB` must be committed
-	return bz, start.StateDB.Commit()
+	return bz, err
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
