@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -49,19 +49,19 @@ func (s *FuntokenSuite) TestFailToPackABI() {
 		{
 			name:       "wrong type for amount",
 			methodName: string(precompile.FunTokenMethod_BankSend),
-			callArgs:   []any{common.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), "foo", testutil.AccAddress().String()},
+			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), "foo", testutil.AccAddress().String()},
 			wantError:  "abi: cannot use string as type ptr as argument",
 		},
 		{
 			name:       "wrong type for recipient",
 			methodName: string(precompile.FunTokenMethod_BankSend),
-			callArgs:   []any{common.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), 111},
+			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), 111},
 			wantError:  "abi: cannot use int as type string as argument",
 		},
 		{
 			name:       "invalid method name",
 			methodName: "foo",
-			callArgs:   []any{common.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), testutil.AccAddress().String()},
+			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), testutil.AccAddress().String()},
 			wantError:  "method 'foo' not found",
 		},
 	}
@@ -112,7 +112,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	{
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.NoError(err)
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, _, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
@@ -126,14 +126,18 @@ func (s *FuntokenSuite) TestHappyPath() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
 	s.NoError(err)
 
-	_, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_FunToken, true, input,
+	_, resp, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		input,
+		deps.Sender,
 	)
 	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
 
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000))
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
-	s.Equal(sdk.NewInt(420),
-		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount,
+	s.Equal(sdk.NewInt(420).String(),
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
 }
