@@ -140,7 +140,6 @@ type AppKeepers struct {
 }
 
 type privateKeepers struct {
-	bankBaseKeeper   bankkeeper.BaseKeeper
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	crisisKeeper     crisiskeeper.Keeper
@@ -264,16 +263,15 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
-	app.bankBaseKeeper = bankkeeper.NewBaseKeeper(
-		appCodec,
-		keys[banktypes.StoreKey],
-		app.AccountKeeper,
-		BlockedAddresses(),
-		govModuleAddr,
-	)
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: app.bankBaseKeeper,
-		StateDB:    nil,
+		BaseKeeper: bankkeeper.NewBaseKeeper(
+			appCodec,
+			keys[banktypes.StoreKey],
+			app.AccountKeeper,
+			BlockedAddresses(),
+			govModuleAddr,
+		),
+		StateDB: nil,
 	}
 	app.BankKeeper = nibiruBankKeeper
 
@@ -614,7 +612,7 @@ func (app *NibiruApp) initAppModules(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		bank.NewAppModule(appCodec, app.bankBaseKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
