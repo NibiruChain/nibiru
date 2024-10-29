@@ -3,13 +3,11 @@ package precompile
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -32,20 +30,14 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
-func (p precompileFunToken) ABI() *gethabi.ABI {
-	return embeds.SmartContract_FunToken.ABI
-}
-
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	return requiredGas(input, p.ABI())
+	return requiredGas(input, embeds.SmartContract_FunToken.ABI)
 }
 
 const (
 	FunTokenMethod_BankSend PrecompileMethod = "bankSend"
 )
-
-type PrecompileMethod string
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
@@ -54,7 +46,7 @@ func (p precompileFunToken) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	start, err := OnRunStart(evm, contract, p.ABI())
+	start, err := OnRunStart(evm, contract.Input, embeds.SmartContract_FunToken.ABI)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +79,6 @@ type precompileFunToken struct {
 	evmKeeper  evmkeeper.Keeper
 }
 
-var executionGuard sync.Mutex
-
 // bankSend: Implements "IFunToken.bankSend"
 //
 // The "args" populate the following function signature in Solidity:
@@ -105,14 +95,10 @@ func (p precompileFunToken) bankSend(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	ctx, method, args := start.Ctx, start.Method, start.Args
+	ctx, method, args := start.CacheCtx, start.Method, start.Args
 	if readOnly {
 		return nil, fmt.Errorf("bankSend cannot be called in read-only mode")
 	}
-	if !executionGuard.TryLock() {
-		return nil, fmt.Errorf("bankSend is already in progress")
-	}
-	defer executionGuard.Unlock()
 
 	erc20, amount, to, err := p.decomposeBankSendArgs(args)
 	if err != nil {
@@ -241,7 +227,7 @@ func SafeSendCoinFromModuleToAccount(
 	return nil
 }
 
-func (p precompileFunToken) decomposeBankSendArgs(args []any) (
+func (p precompileFunToken) decomposeBankSendArgs(args []interface{}) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,

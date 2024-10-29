@@ -11,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
@@ -37,27 +36,26 @@ func (p precompileWasm) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	start, err := OnRunStart(evm, contract, p.ABI())
+	startResult, err := OnRunStart(evm, contract.Input, embeds.SmartContract_Wasm.ABI)
 	if err != nil {
 		return nil, err
 	}
-	method := start.Method
 
-	switch PrecompileMethod(method.Name) {
+	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
-		bz, err = p.execute(start, contract.CallerAddress, readonly)
+		bz, err = p.execute(startResult, contract.CallerAddress, readonly)
 	case WasmMethod_query:
-		bz, err = p.query(start, contract)
+		bz, err = p.query(startResult, contract)
 	case WasmMethod_instantiate:
-		bz, err = p.instantiate(start, contract.CallerAddress, readonly)
+		bz, err = p.instantiate(startResult, contract.CallerAddress, readonly)
 	case WasmMethod_executeMulti:
-		bz, err = p.executeMulti(start, contract.CallerAddress, readonly)
+		bz, err = p.executeMulti(startResult, contract.CallerAddress, readonly)
 	case WasmMethod_queryRaw:
-		bz, err = p.queryRaw(start, contract)
+		bz, err = p.queryRaw(startResult, contract)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "DecomposeInput" parses methods directly from the ABI.
-		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
+		err = fmt.Errorf("invalid method called with name \"%s\"", startResult.Method.Name)
 		return
 	}
 	if err != nil {
@@ -74,13 +72,9 @@ func (p precompileWasm) Address() gethcommon.Address {
 	return PrecompileAddr_Wasm
 }
 
-func (p precompileWasm) ABI() *gethabi.ABI {
-	return embeds.SmartContract_Wasm.ABI
-}
-
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
-	return requiredGas(input, p.ABI())
+	return requiredGas(input, embeds.SmartContract_Wasm.ABI)
 }
 
 // Wasm: A struct embedding keepers for read and write operations in Wasm, such
@@ -123,7 +117,7 @@ func (p precompileWasm) execute(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -133,12 +127,12 @@ func (p precompileWasm) execute(
 		return nil, errors.New("wasm execute cannot be called in read-only mode")
 	}
 
-	wasmContract, msgArgs, funds, err := p.parseExecuteArgs(args)
+	wasmContract, msgArgsBz, funds, err := p.parseExecuteArgs(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
 	}
-	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(caller), msgArgs, funds)
+	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(caller), msgArgsBz, funds)
 	if err != nil {
 		return
 	}
@@ -161,7 +155,7 @@ func (p precompileWasm) query(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -170,6 +164,7 @@ func (p precompileWasm) query(
 	if err := assertContractQuery(contract); err != nil {
 		return bz, err
 	}
+
 	wasmContract, req, err := p.parseQueryArgs(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
@@ -206,7 +201,7 @@ func (p precompileWasm) instantiate(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -257,7 +252,7 @@ func (p precompileWasm) executeMulti(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -321,7 +316,7 @@ func (p precompileWasm) queryRaw(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)

@@ -21,7 +21,7 @@ type WasmBankCoin struct {
 //	```solidity
 //	    BankCoin[] memory funds
 //	```
-func parseFundsArg(arg any) (funds sdk.Coins, err error) {
+func parseFundsArg(arg interface{}) (funds sdk.Coins, err error) {
 	if arg == nil {
 		return funds, nil
 	}
@@ -67,7 +67,7 @@ func parseContractAddrArg(arg any) (addr sdk.AccAddress, err error) {
 	return addr, nil
 }
 
-func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
+func (p precompileWasm) parseInstantiateArgs(args []interface{}, sender string) (
 	txMsg wasm.MsgInstantiateContract,
 	err error,
 ) {
@@ -124,7 +124,7 @@ func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
 	return txMsg, txMsg.ValidateBasic()
 }
 
-func (p precompileWasm) parseExecuteArgs(args []any) (
+func (p precompileWasm) parseExecuteArgs(args []interface{}) (
 	wasmContract sdk.AccAddress,
 	msgArgs []byte,
 	funds sdk.Coins,
@@ -135,6 +135,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 		return
 	}
 
+	// contract address
 	argIdx := 0
 	contractAddrStr, ok := args[argIdx].(string)
 	if !ok {
@@ -149,6 +150,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 		return
 	}
 
+	// msg args
 	argIdx++
 	msgArgs, ok = args[argIdx].([]byte)
 	if !ok {
@@ -161,6 +163,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 		return
 	}
 
+	// funds
 	argIdx++
 	funds, e := parseFundsArg(args[argIdx])
 	if e != nil {
@@ -171,7 +174,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 	return contractAddr, msgArgs, funds, nil
 }
 
-func (p precompileWasm) parseQueryArgs(args []any) (
+func (p precompileWasm) parseQueryArgs(args []interface{}) (
 	wasmContract sdk.AccAddress,
 	req wasm.RawContractMessage,
 	err error,
@@ -189,7 +192,11 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	}
 
 	argsIdx++
-	reqBz := args[argsIdx].([]byte)
+	reqBz, ok := args[argsIdx].([]byte)
+	if !ok {
+		err = ErrArgTypeValidation("bytes req", args[argsIdx])
+		return
+	}
 	req = wasm.RawContractMessage(reqBz)
 	if e := req.ValidateBasic(); e != nil {
 		err = e
@@ -199,7 +206,7 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	return wasmContract, req, nil
 }
 
-func (p precompileWasm) parseExecuteMultiArgs(args []any) (
+func (p precompileWasm) parseExecuteMultiArgs(args []interface{}) (
 	wasmExecMsgs []struct {
 		ContractAddr string `json:"contractAddr"`
 		MsgArgs      []byte `json:"msgArgs"`

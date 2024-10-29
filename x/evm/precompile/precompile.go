@@ -133,21 +133,21 @@ func requiredGas(input []byte, abi *gethabi.ABI) uint64 {
 	return (costPerByte * uint64(len(input[4:]))) + costFlat
 }
 
+type PrecompileMethod string
+
 type OnRunStartResult struct {
 	// Args contains the decoded (ABI unpacked) arguments passed to the contract
 	// as input.
-	Args []any
+	Args []interface{}
 
-	// Ctx is a cached SDK context that allows isolated state
+	// CacheCtx is a cached SDK context that allows isolated state
 	// operations to occur that can be reverted by the EVM's [statedb.StateDB].
-	Ctx sdk.Context
+	CacheCtx sdk.Context
 
 	// Method is the ABI method for the precompiled contract call.
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
-
-	PrecompileJournalEntry statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -177,9 +177,9 @@ type OnRunStartResult struct {
 //	}
 //	```
 func OnRunStart(
-	evm *vm.EVM, contract *vm.Contract, abi *gethabi.ABI,
+	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI,
 ) (res OnRunStartResult, err error) {
-	method, args, err := decomposeInput(abi, contract.Input)
+	method, args, err := decomposeInput(abi, contractInput)
 	if err != nil {
 		return res, err
 	}
@@ -202,10 +202,10 @@ func OnRunStart(
 	}
 
 	return OnRunStartResult{
-		Args:    args,
-		Ctx:     cacheCtx,
-		Method:  method,
-		StateDB: stateDB,
+		Args:     args,
+		CacheCtx: cacheCtx,
+		Method:   method,
+		StateDB:  stateDB,
 	}, nil
 }
 

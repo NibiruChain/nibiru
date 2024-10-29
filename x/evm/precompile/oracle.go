@@ -38,11 +38,11 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	res, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
+	res, err := OnRunStart(evm, contract.Input, embeds.SmartContract_Oracle.ABI)
 	if err != nil {
 		return nil, err
 	}
-	method, args, ctx := res.Method, res.Args, res.Ctx
+	method, args, ctx := res.Method, res.Args, res.CacheCtx
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
@@ -88,7 +88,7 @@ func (p precompileOracle) queryExchangeRate(
 	return method.Outputs.Pack(price.String())
 }
 
-func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
+func (p precompileOracle) decomposeQueryExchangeRateArgs(args []interface{}) (
 	pair string,
 	err error,
 ) {
