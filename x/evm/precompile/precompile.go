@@ -148,6 +148,8 @@ type OnRunStartResult struct {
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
+
+	PrecompileJournalEntry statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.

@@ -8,6 +8,8 @@ import (
 	"path"
 	"strings"
 
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
