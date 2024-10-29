@@ -131,6 +131,9 @@ message QueryDatedExchangeRateResponse {
 
   // milliseconds since unix epoch
   int64 timestamp_ms = 2;
+
+  // height of the block
+  uint64 height = 3;
 }
 
 // QueryExchangeRatesResponse is response type for the

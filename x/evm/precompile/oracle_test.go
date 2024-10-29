@@ -1,7 +1,9 @@
 package precompile_test
 
 import (
+	"math/big"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -55,7 +57,9 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 
 	s.T().Log("Query exchange rate")
 	{
+		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
 		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
+
 		input, err := embeds.SmartContract_Oracle.ABI.Pack("queryExchangeRate", "unibi:uusd")
 		s.NoError(err)
 		resp, _, err := deps.EvmKeeper.CallContractWithInput(
@@ -68,7 +72,9 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.NoError(err)
 
 		// Check the response
-		s.Equal("exchange_rate:\"67000000000000000\" created_block:1 ", out[0].(string))
+		s.Equal(out[0].(*big.Int), big.NewInt(67000000000000000))
+		s.Equal(out[1].(uint64), uint64(69000))
+		s.Equal(out[2].(uint64), uint64(69))
 	}
 }
 

@@ -86,11 +86,11 @@ func (q querier) DatedExchangeRate(c context.Context, req *types.QueryExchangeRa
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	snapshot, err := q.Keeper.GetDatedExchangeRate(ctx, req.Pair)
+	price, blockTime, blockHeight, err := q.Keeper.GetDatedExchangeRate(ctx, req.Pair)
 	if err != nil {
 		return &types.QueryDatedExchangeRateResponse{}, err
 	}
-	return &types.QueryDatedExchangeRateResponse{Price: snapshot.Price, TimestampMs: snapshot.TimestampMs}, nil
+	return &types.QueryDatedExchangeRateResponse{Price: price, TimestampMs: blockTime, Height: blockHeight}, nil
 }
 
 // ExchangeRates queries exchange rates of all pairs

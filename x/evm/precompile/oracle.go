@@ -80,12 +80,12 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	price, err := p.oracleKeeper.GetDatedExchangeRate(ctx, assetPair)
+	price, blockTime, blockHeight, err := p.oracleKeeper.GetDatedExchangeRate(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}
 
-	return method.Outputs.Pack(price.String())
+	return method.Outputs.Pack(price.BigInt(), uint64(blockTime), blockHeight)
 }
 
 func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
