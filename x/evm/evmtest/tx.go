@@ -259,6 +259,8 @@ func ValidLegacyTx() *evm.LegacyTx {
 	}
 }
 
+// GethTxType represents different Ethereum transaction types as defined in
+// go-ethereum, such as Legacy, AccessList, and DynamicFee transactions.
 type GethTxType = uint8
 
 func TxTemplateAccessListTx() *gethcore.AccessListTx {
@@ -292,6 +294,25 @@ func TxTemplateDynamicFeeTx() *gethcore.DynamicFeeTx {
 	}
 }
 
+// NewEthTxMsgFromTxData creates an Ethereum transaction message based on
+// the specified txType (Legacy, AccessList, or DynamicFee). This function
+// populates transaction fields like nonce, recipient, value, and gas, with
+// an optional access list for AccessList and DynamicFee types. The transaction
+// is signed using the provided dependencies.
+//
+// Parameters:
+//   - deps: Required dependencies including the sender address and signer.
+//   - txType: Transaction type (Legacy, AccessList, or DynamicFee).
+//   - innerTxData: Byte slice of transaction data (input).
+//   - nonce: Transaction nonce.
+//   - to: Recipient address.
+//   - value: ETH value (in wei) to transfer.
+//   - gas: Gas limit for the transaction.
+//   - accessList: Access list for AccessList and DynamicFee types.
+//
+// Returns:
+//   - *evm.MsgEthereumTx: Ethereum transaction message ready for submission.
+//   - error: Any error encountered during creation or signing.
 func NewEthTxMsgFromTxData(
 	deps *TestDeps,
 	txType GethTxType,

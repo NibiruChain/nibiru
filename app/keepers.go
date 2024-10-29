@@ -271,15 +271,9 @@ func (app *NibiruApp) InitKeepers(
 		BlockedAddresses(),
 		govModuleAddr,
 	)
-	nibiruBankKeeper := evmkeeper.NibiruBankKeeper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(
-			appCodec,
-			keys[banktypes.StoreKey],
-			app.AccountKeeper,
-			BlockedAddresses(),
-			govModuleAddr,
-		),
-		StateDB: nil,
+	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+		BaseKeeper: app.bankBaseKeeper,
+		StateDB:    nil,
 	}
 	app.BankKeeper = nibiruBankKeeper
 
@@ -384,7 +378,7 @@ func (app *NibiruApp) InitKeepers(
 		tkeys[evm.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		&nibiruBankKeeper,
+		nibiruBankKeeper,
 		app.StakingKeeper,
 		cast.ToString(appOpts.Get("evm.tracer")),
 	)

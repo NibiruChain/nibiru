@@ -75,24 +75,25 @@ func (k *Keeper) SetAccBalance(
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
 	balance := k.Bank.BaseKeeper.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 	delta := new(big.Int).Sub(amountEvmDenom, balance)
+	bk := k.Bank.BaseKeeper
 
 	switch delta.Sign() {
 	case 1:
 		// mint
 		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
-		if err := k.Bank.BaseKeeper.MintCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := bk.MintCoins(ctx, evm.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.Bank.BaseKeeper.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, addrBech32, coins); err != nil {
+		if err := bk.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, addrBech32, coins); err != nil {
 			return err
 		}
 	case -1:
 		// burn
 		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
-		if err := k.Bank.BaseKeeper.SendCoinsFromAccountToModule(ctx, addrBech32, evm.ModuleName, coins); err != nil {
+		if err := bk.SendCoinsFromAccountToModule(ctx, addrBech32, evm.ModuleName, coins); err != nil {
 			return err
 		}
-		if err := k.Bank.BaseKeeper.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
+		if err := bk.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
 			return err
 		}
 	default:

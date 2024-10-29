@@ -59,7 +59,7 @@ func (s *Suite) TestComplexJournalChanges() {
 
 	s.Run("Populate dirty journal entries. Remove with Commit", func() {
 		stateDB := evmObj.StateDB.(*statedb.StateDB)
-		s.Equal(0, stateDB.DirtiesCount())
+		s.Equal(0, stateDB.DebugDirtiesCount())
 
 		randomAcc := evmtest.NewEthPrivAcc().EthAddr
 		balDelta := evm.NativeToWei(big.NewInt(4))
@@ -69,7 +69,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		stateDB.AddBalance(randomAcc, balDelta)
 		// 1 dirties from [balanceChange]
 		stateDB.SubBalance(randomAcc, balDelta)
-		if stateDB.DirtiesCount() != 4 {
+		if stateDB.DebugDirtiesCount() != 4 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 4 dirty journal changes")
 		}
@@ -77,7 +77,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.T().Log("StateDB.Commit, then Dirties should be gone")
 		err = stateDB.Commit()
 		s.NoError(err)
-		if stateDB.DirtiesCount() != 0 {
+		if stateDB.DebugDirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 0 dirty journal changes")
 		}
@@ -99,7 +99,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		)
 		s.Require().NoError(err)
 		stateDB := evmObj.StateDB.(*statedb.StateDB)
-		if stateDB.DirtiesCount() != 2 {
+		if stateDB.DebugDirtiesCount() != 2 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 2 dirty journal changes")
 		}
@@ -137,7 +137,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		)
 		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
-		if stateDB.DirtiesCount() != 0 {
+		if stateDB.DebugDirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 0 dirty journal changes")
 		}
@@ -151,7 +151,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
 
 		s.T().Log("Expect exactly 0 dirty journal entry for the precompile snapshot")
-		if stateDB.DirtiesCount() != 0 {
+		if stateDB.DebugDirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 0 dirty journal changes")
 		}
@@ -222,8 +222,8 @@ snapshots and see the prior states.`))
 
 func debugDirtiesCountMismatch(db *statedb.StateDB, t *testing.T) string {
 	lines := []string{}
-	dirties := db.Dirties()
-	stateObjects := db.StateObjects()
+	dirties := db.DebugDirties()
+	stateObjects := db.DebugStateObjects()
 	for addr, dirtyCountForAddr := range dirties {
 		lines = append(lines, fmt.Sprintf("Dirty addr: %s, dirtyCountForAddr=%d", addr, dirtyCountForAddr))
 

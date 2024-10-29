@@ -93,25 +93,6 @@ func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-// DirtiesCount is a test helper to inspect how many entries in the journal are
-// still dirty (uncommitted). After calling [StateDB.Commit], this function should
-// return zero.
-func (s *StateDB) DirtiesCount() int {
-	dirtiesCount := 0
-	for _, dirtyCount := range s.Journal.dirties {
-		dirtiesCount += dirtyCount
-	}
-	return dirtiesCount
-}
-
-func (s *StateDB) Dirties() map[common.Address]int {
-	return s.Journal.dirties
-}
-
-func (s *StateDB) Entries() []JournalChange {
-	return s.Journal.entries
-}
-
 // ------------------------------------------------------
 // createObjectChange
 
@@ -363,18 +344,16 @@ type PrecompileCalled struct {
 
 var _ JournalChange = PrecompileCalled{}
 
+// Revert rolls back the [StateDB] cache context to the state it was in prior to
+// the precompile call. Modifications to this cache context are pushed to the
+// commit context (s.evmTxCtx) when [StateDB.Commit] is executed.
 func (ch PrecompileCalled) Revert(s *StateDB) {
-	// TEMP: trying something
-	// If the wasm state is not in the cacheCtx,
-	// s.CommitCacheCtx()
-
-	// Old Code
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
 	s.writeToCommitCtxFromCacheCtx = func() {
 		s.evmTxCtx.EventManager().EmitEvents(ch.Events)
-		// TODO: UD-DEBUG: Overwriting events might fix an issue with appending
-		// too many Check correctness of the emitted events
+		// TODO: Check correctness of the emitted events
+		// https://github.com/NibiruChain/nibiru/issues/2096
 		ch.MultiStore.Write()
 	}
 }
