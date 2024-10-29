@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -235,4 +236,114 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 	return err
+}
+
+// --------------------------------------------------
+// Templates
+// --------------------------------------------------
+
+// ValidLegacyTx: Useful initial condition for tests
+// Exported only for use in tests.
+func ValidLegacyTx() *evm.LegacyTx {
+	sdkInt := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
+	return &evm.LegacyTx{
+		Nonce:    24,
+		GasLimit: 50_000,
+		To:       gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Hex(),
+		GasPrice: &sdkInt,
+		Amount:   &sdkInt,
+		Data:     []byte{},
+		V:        []byte{},
+		R:        []byte{},
+		S:        []byte{},
+	}
+}
+
+type GethTxType = uint8
+
+func TxTemplateAccessListTx() *gethcore.AccessListTx {
+	return &gethcore.AccessListTx{
+		GasPrice: big.NewInt(1),
+		Gas:      gethparams.TxGas,
+		To:       &gethcommon.Address{},
+		Value:    big.NewInt(0),
+		Data:     []byte{},
+	}
+}
+
+func TxTemplateLegacyTx() *gethcore.LegacyTx {
+	return &gethcore.LegacyTx{
+		GasPrice: big.NewInt(1),
+		Gas:      gethparams.TxGas,
+		To:       &gethcommon.Address{},
+		Value:    big.NewInt(0),
+		Data:     []byte{},
+	}
+}
+
+func TxTemplateDynamicFeeTx() *gethcore.DynamicFeeTx {
+	return &gethcore.DynamicFeeTx{
+		GasFeeCap: big.NewInt(10),
+		GasTipCap: big.NewInt(2),
+		Gas:       gethparams.TxGas,
+		To:        &gethcommon.Address{},
+		Value:     big.NewInt(0),
+		Data:      []byte{},
+	}
+}
+
+func NewEthTxMsgFromTxData(
+	deps *TestDeps,
+	txType GethTxType,
+	innerTxData []byte,
+	nonce uint64,
+	to *gethcommon.Address,
+	value *big.Int,
+	gas uint64,
+	accessList gethcore.AccessList,
+) (*evm.MsgEthereumTx, error) {
+	if innerTxData == nil {
+		innerTxData = []byte{}
+	}
+
+	var ethCoreTx *gethcore.Transaction
+	switch txType {
+	case gethcore.LegacyTxType:
+		innerTx := TxTemplateLegacyTx()
+		innerTx.Nonce = nonce
+		innerTx.Data = innerTxData
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
+		ethCoreTx = gethcore.NewTx(innerTx)
+	case gethcore.AccessListTxType:
+		innerTx := TxTemplateAccessListTx()
+		innerTx.Nonce = nonce
+		innerTx.Data = innerTxData
+		innerTx.AccessList = accessList
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
+		ethCoreTx = gethcore.NewTx(innerTx)
+	case gethcore.DynamicFeeTxType:
+		innerTx := TxTemplateDynamicFeeTx()
+		innerTx.Nonce = nonce
+		innerTx.Data = innerTxData
+		innerTx.To = to
+		innerTx.Value = value
+		innerTx.Gas = gas
+		innerTx.AccessList = accessList
+		ethCoreTx = gethcore.NewTx(innerTx)
+	default:
+		return nil, fmt.Errorf(
+			"received unknown tx type (%v) in NewEthTxMsgFromTxData", txType)
+	}
+
+	ethTxMsg := new(evm.MsgEthereumTx)
+	if err := ethTxMsg.FromEthereumTx(ethCoreTx); err != nil {
+		return ethTxMsg, err
+	}
+
+	ethTxMsg.From = deps.Sender.EthAddr.Hex()
+	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
 }
