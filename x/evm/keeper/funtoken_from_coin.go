@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"cosmossdk.io/errors"
@@ -87,77 +86,4 @@ func (k *Keeper) deployERC20ForBankCoin(
 	}
 
 	return erc20Addr, nil
-}
-
-// ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
-// given recipient address ("to_eth_addr") in the corresponding ERC20
-// representation.
-func (k *Keeper) ConvertCoinToEvm(
-	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
-) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
-	if len(funTokens) == 0 {
-		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", msg.BankCoin.Denom)
-	}
-	if len(funTokens) > 1 {
-		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", msg.BankCoin.Denom)
-	}
-
-	fungibleTokenMapping := funTokens[0]
-
-	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinNativeCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
-	} else {
-		return k.convertCoinNativeERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
-	}
-}
-
-// Converts a native coin to an ERC20 token.
-// EVM module owns the ERC-20 contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinNativeCoin(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// Step 1: Escrow bank coins with EVM module account
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to send coins to module account")
-	}
-
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	// Step 2: mint ERC-20 tokens for recipient
-	evmResp, err := k.CallContract(
-		ctx,
-		embeds.SmartContract_ERC20Minter.ABI,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		true,
-		Erc20GasLimitExecute,
-		"mint",
-		recipient,
-		coin.Amount.BigInt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if evmResp.Failed() {
-		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
-	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }

@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"strings"
 
 	"cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -272,6 +272,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
+
 	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
 	if err != nil {
 		// should have already been checked on Ante Handler
@@ -474,6 +475,171 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 	return sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, evmParams.CreateFuntokenFee))
 }
 
+// ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
+// given recipient address ("to_eth_addr") in the corresponding ERC20
+// representation.
+func (k *Keeper) ConvertCoinToEvm(
+	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
+) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender := sdk.MustAccAddressFromBech32(msg.Sender)
+
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
+	if len(funTokens) == 0 {
+		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", msg.BankCoin.Denom)
+	}
+	if len(funTokens) > 1 {
+		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", msg.BankCoin.Denom)
+	}
+
+	fungibleTokenMapping := funTokens[0]
+
+	if fungibleTokenMapping.IsMadeFromCoin {
+		return k.convertCoinNativeCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+	} else {
+		return k.convertCoinNativeERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+	}
+}
+
+// Converts a native coin to an ERC20 token.
+// EVM module owns the ERC-20 contract and can mint the ERC-20 tokens.
+func (k Keeper) convertCoinNativeCoin(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	funTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	// Step 1: Escrow bank coins with EVM module account
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to send coins to module account")
+	}
+
+	erc20Addr := funTokenMapping.Erc20Addr.Address
+
+	// Step 2: mint ERC-20 tokens for recipient
+	evmResp, err := k.CallContract(
+		ctx,
+		embeds.SmartContract_ERC20Minter.ABI,
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Addr,
+		true,
+		Erc20GasLimitExecute,
+		"mint",
+		recipient,
+		coin.Amount.BigInt(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if evmResp.Failed() {
+		return nil,
+			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
+	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
+		Erc20ContractAddress: erc20Addr.String(),
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
+// EVM module does not own the ERC-20 contract and cannot mint the ERC-20 tokens.
+// EVM module has escrowed tokens in the first conversion from ERC-20 to bank coin.
+func (k Keeper) convertCoinNativeERC20(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	funTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	erc20Addr := funTokenMapping.Erc20Addr.Address
+
+	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if recipientBalanceBefore == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+
+	// Escrow Coins on module account
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		ctx,
+		sender,
+		evm.ModuleName,
+		sdk.NewCoins(coin),
+	); err != nil {
+		return nil, errors.Wrap(err, "failed to escrow coins")
+	}
+
+	// verify that the EVM module account has enough escrowed ERC-20 to transfer
+	// should never fail, because the coins were minted from the escrowed tokens, but check just in case
+	evmModuleBalance, err := k.ERC20().BalanceOf(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		ctx,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if evmModuleBalance == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
+		return nil, fmt.Errorf("insufficient balance in EVM module account")
+	}
+
+	// unescrow ERC-20 tokens from EVM module address
+	res, err := k.ERC20().Transfer(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		recipient,
+		coin.Amount.BigInt(),
+		ctx,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
+	}
+	if !res {
+		return nil, fmt.Errorf("failed to transfer ERC20 tokens")
+	}
+
+	// Check expected Receiver balance after transfer execution
+	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve balance")
+	}
+	if recipientBalanceAfter == nil {
+		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
+	}
+
+	expectedFinalBalance := big.NewInt(0).Add(recipientBalanceBefore, coin.Amount.BigInt())
+	if r := recipientBalanceAfter.Cmp(expectedFinalBalance); r != 0 {
+		return nil, fmt.Errorf("expected balance after transfer to be %s, got %s", expectedFinalBalance, recipientBalanceAfter)
+	}
+
+	// Burn escrowed Coins
+	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to burn coins")
+	}
+
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
+		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
 func (k *Keeper) EmitEthereumTxEvents(
 	ctx sdk.Context,
@@ -559,144 +725,5 @@ func (k *Keeper) updateBlockBloom(
 		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())
 		blockLogSize := logIndex + uint64(len(logs))
 		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
-	}
-}
-
-// CallContract invokes a smart contract on the method specified by [methodName]
-// using the given [args].
-//
-// Parameters:
-//   - ctx: The SDK context for the transaction.
-//   - abi: The ABI (Application Binary Interface) of the smart contract.
-//   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract to be called.
-//   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
-//   - methodName: The name of the contract method to be called.
-//   - args: Variadic parameter for the arguments to be passed to the contract method.
-//
-// Note: This function handles both contract method calls and simulations,
-// depending on the 'commit' parameter.
-func (k Keeper) CallContract(
-	ctx sdk.Context,
-	abi *gethabi.ABI,
-	fromAcc gethcommon.Address,
-	contract *gethcommon.Address,
-	commit bool,
-	gasLimit uint64,
-	methodName string,
-	args ...any,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	contractInput, err := abi.Pack(methodName, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
-	}
-	evmResp, _, err = k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput, gasLimit)
-	return evmResp, err
-}
-
-// CallContractWithInput invokes a smart contract with the given [contractInput]
-// or deploys a new contract.
-//
-// Parameters:
-//   - ctx: The SDK context for the transaction.
-//   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract. Nil if new
-//     contract is deployed.
-//   - commit: Boolean flag indicating whether to commit the transaction (true)
-//     or simulate it (false).
-//   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
-//
-// Note: This function handles both contract method calls and simulations,
-// depending on the 'commit' parameter. It uses a default gas limit.
-func (k Keeper) CallContractWithInput(
-	ctx sdk.Context,
-	fromAcc gethcommon.Address,
-	contract *gethcommon.Address,
-	commit bool,
-	contractInput []byte,
-	gasLimit uint64,
-) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the
-	// error is non-nil, creating a concise way to add extra information.
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("CallContractError: %w", err)
-		}
-	}()
-	nonce := k.GetAccNonce(ctx, fromAcc)
-
-	unusedBigInt := big.NewInt(0)
-	evmMsg := gethcore.NewMessage(
-		fromAcc,
-		contract,
-		nonce,
-		unusedBigInt, // amount
-		gasLimit,
-		unusedBigInt, // gasFeeCap
-		unusedBigInt, // gasTipCap
-		unusedBigInt, // gasPrice
-		contractInput,
-		gethcore.AccessList{},
-		!commit, // isFake
-	)
-
-	// Apply EVM message
-	evmCfg, err := k.GetEVMConfig(
-		ctx,
-		sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
-		k.EthChainID(ctx),
-	)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to load EVM config")
-		return
-	}
-
-	// Generating TxConfig with an empty tx hash as there is no actual eth tx
-	// sent by a user
-	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-
-	// Using tmp context to not modify the state in case of evm revert
-	tmpCtx, commitCtx := ctx.CacheContext()
-
-	evmResp, evmObj, err = k.ApplyEvmMsg(
-		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
-	)
-	if err != nil {
-		// We don't know the actual gas used, so consuming the gas limit
-		k.ResetGasMeterAndConsumeGas(ctx, gasLimit)
-		err = errors.Wrap(err, "failed to apply ethereum core message")
-		return
-	}
-	if evmResp.Failed() {
-		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
-		if !strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {
-			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
-				err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
-				return
-			}
-			err = fmt.Errorf("VMError: %s", evmResp.VmError)
-			return
-		}
-		err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
-		return
-	} else {
-		// Success, committing the state to ctx
-		if commit {
-			commitCtx()
-			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-			if err != nil {
-				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-				return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
-			}
-			k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
-			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-			err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
-			if err != nil {
-				return nil, nil, errors.Wrap(err, "error emitting ethereum tx events")
-			}
-			blockTxIdx := uint64(txConfig.TxIndex) + 1
-			k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
-		}
-		return evmResp, evmObj, nil
 	}
 }

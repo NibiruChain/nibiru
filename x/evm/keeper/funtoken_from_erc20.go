@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -202,96 +201,4 @@ func (erc20Info ERC20Metadata) ToBankMetadata(
 		Name:       name,
 		Symbol:     symbol,
 	}
-}
-
-// Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
-// EVM module does not own the ERC-20 contract and cannot mint the ERC-20 tokens.
-// EVM module has escrowed tokens in the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinNativeERC20(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if recipientBalanceBefore == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-
-	// Escrow Coins on module account
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx,
-		sender,
-		evm.ModuleName,
-		sdk.NewCoins(coin),
-	); err != nil {
-		return nil, errors.Wrap(err, "failed to escrow coins")
-	}
-
-	// verify that the EVM module account has enough escrowed ERC-20 to transfer
-	// should never fail, because the coins were minted from the escrowed tokens, but check just in case
-	evmModuleBalance, err := k.ERC20().BalanceOf(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		ctx,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if evmModuleBalance == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
-		return nil, fmt.Errorf("insufficient balance in EVM module account")
-	}
-
-	// unescrow ERC-20 tokens from EVM module address
-	res, err := k.ERC20().Transfer(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		recipient,
-		coin.Amount.BigInt(),
-		ctx,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
-	}
-	if !res {
-		return nil, fmt.Errorf("failed to transfer ERC20 tokens")
-	}
-
-	// Check expected Receiver balance after transfer execution
-	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if recipientBalanceAfter == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-
-	expectedFinalBalance := big.NewInt(0).Add(recipientBalanceBefore, coin.Amount.BigInt())
-	if r := recipientBalanceAfter.Cmp(expectedFinalBalance); r != 0 {
-		return nil, fmt.Errorf("expected balance after transfer to be %s, got %s", expectedFinalBalance, recipientBalanceAfter)
-	}
-
-	// Burn escrowed Coins
-	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to burn coins")
-	}
-
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
