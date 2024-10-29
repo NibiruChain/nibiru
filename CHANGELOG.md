@@ -78,7 +78,7 @@ non-EVM and EVM state will be in sync even if there are complex, multi-step
 Ethereum transactions, such as in the case of an EthereumTx that influences the
 `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
 reverts inside of a try-catch.
-
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 

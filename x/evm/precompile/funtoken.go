@@ -23,7 +23,7 @@ import (
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 
-// Precompile address for "FunToken.sol", the contract that
+// Precompile address for "IFunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
 var PrecompileAddr_FunToken = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
