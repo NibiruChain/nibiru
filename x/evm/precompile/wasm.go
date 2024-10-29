@@ -1,6 +1,7 @@
 package precompile
 
 import (
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -79,7 +80,7 @@ func (p precompileWasm) ABI() *gethabi.ABI {
 
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
-	return RequiredGas(input, p.ABI())
+	return requiredGas(input, p.ABI())
 }
 
 // Wasm: A struct embedding keepers for read and write operations in Wasm, such
@@ -128,17 +129,16 @@ func (p precompileWasm) execute(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-
-	if err := assertNotReadonlyTx(readOnly, true); err != nil {
-		return bz, err
+	if readOnly {
+		return nil, errors.New("wasm execute cannot be called in read-only mode")
 	}
+
 	wasmContract, msgArgs, funds, err := p.parseExecuteArgs(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
 	}
-	callerBech32 := eth.EthAddrToNibiruAddr(caller)
-	data, err := p.Wasm.Execute(ctx, wasmContract, callerBech32, msgArgs, funds)
+	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(caller), msgArgs, funds)
 	if err != nil {
 		return
 	}
@@ -212,8 +212,8 @@ func (p precompileWasm) instantiate(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-	if err := assertNotReadonlyTx(readOnly, true); err != nil {
-		return bz, err
+	if readOnly {
+		return nil, errors.New("wasm instantiate cannot be called in read-only mode")
 	}
 
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
@@ -263,8 +263,8 @@ func (p precompileWasm) executeMulti(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-	if err := assertNotReadonlyTx(readOnly, true); err != nil {
-		return bz, err
+	if readOnly {
+		return nil, errors.New("wasm executeMulti cannot be called in read-only mode")
 	}
 
 	wasmExecMsgs, err := p.parseExecuteMultiArgs(args)

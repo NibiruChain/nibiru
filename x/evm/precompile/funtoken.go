@@ -38,7 +38,7 @@ func (p precompileFunToken) ABI() *gethabi.ABI {
 
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	return RequiredGas(input, p.ABI())
+	return requiredGas(input, p.ABI())
 }
 
 const (
@@ -106,9 +106,8 @@ func (p precompileFunToken) bankSend(
 	readOnly bool,
 ) (bz []byte, err error) {
 	ctx, method, args := start.Ctx, start.Method, start.Args
-	if e := assertNotReadonlyTx(readOnly, true); e != nil {
-		err = e
-		return
+	if readOnly {
+		return nil, fmt.Errorf("bankSend cannot be called in read-only mode")
 	}
 	if !executionGuard.TryLock() {
 		return nil, fmt.Errorf("bankSend is already in progress")

@@ -109,7 +109,7 @@ func decomposeInput(
 	return method, args, nil
 }
 
-func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
+func requiredGas(input []byte, abi *gethabi.ABI) uint64 {
 	method, err := methodById(abi, input[:4])
 	if err != nil {
 		// It's appropriate to return a reasonable default here
@@ -193,8 +193,8 @@ func OnRunStart(
 	// journalEntry captures the state before precompile execution to enable
 	// proper state reversal if the call fails or if [statedb.JournalChange]
 	// is reverted in general.
-	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile(contract.Address())
-	if err = stateDB.SavePrecompileCalledJournalChange(contract.Address(), journalEntry); err != nil {
+	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile()
+	if err = stateDB.SavePrecompileCalledJournalChange(journalEntry); err != nil {
 		return res, err
 	}
 	if err = stateDB.CommitCacheCtx(); err != nil {

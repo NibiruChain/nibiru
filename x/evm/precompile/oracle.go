@@ -24,7 +24,7 @@ func (p precompileOracle) Address() gethcommon.Address {
 }
 
 func (p precompileOracle) RequiredGas(input []byte) (gasPrice uint64) {
-	return RequiredGas(input, embeds.SmartContract_Oracle.ABI)
+	return requiredGas(input, embeds.SmartContract_Oracle.ABI)
 }
 
 const (

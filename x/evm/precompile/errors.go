@@ -1,7 +1,6 @@
 package precompile
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -32,14 +31,6 @@ func ErrInvalidArgs(err error) error {
 
 func ErrMethodCalled(method *gethabi.Method, wrapped error) error {
 	return fmt.Errorf("%s method called: %w", method.Name, wrapped)
-}
-
-// Check required for transactions but not needed for queries
-func assertNotReadonlyTx(readOnly bool, isTx bool) error {
-	if readOnly && isTx {
-		return errors.New("cannot write state from staticcall (a read-only call)")
-	}
-	return nil
 }
 
 // assertContractQuery checks if a contract call is a valid query operation. This
