@@ -218,6 +218,11 @@ snapshots and see the prior states.`))
 			&s.Suite, deps, wasmContract, 7, // state before precompile called
 		)
 	})
+
+	s.Run("too many precompile calls in one tx will fail", func() {
+		// currently
+		// evmObj
+	})
 }
 
 func debugDirtiesCountMismatch(db *statedb.StateDB, t *testing.T) string {

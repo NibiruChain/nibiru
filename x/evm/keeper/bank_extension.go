@@ -17,16 +17,23 @@ var (
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
-	StateDB *statedb.StateDB
+	StateDB                  *statedb.StateDB
+	balanceChangesForStateDB uint64
 }
 
 func (evmKeeper *Keeper) NewStateDB(
 	ctx sdk.Context, txConfig statedb.TxConfig,
 ) *statedb.StateDB {
 	stateDB := statedb.New(ctx, evmKeeper, txConfig)
-	evmKeeper.Bank.ResetStateDB(stateDB)
+	bk := evmKeeper.bankKeeper
+	bk.StateDB = stateDB
+	bk.balanceChangesForStateDB = 0
 	return stateDB
 }
+
+// BalanceChangesForStateDB returns the count of [statedb.JournalChange] entries
+// that were added to the current [statedb.StateDB]
+func (bk *NibiruBankKeeper) BalanceChangesForStateDB() uint64 { return bk.balanceChangesForStateDB }
 
 func (bk NibiruBankKeeper) MintCoins(
 	ctx sdk.Context,
@@ -43,17 +50,6 @@ func (bk NibiruBankKeeper) MintCoins(
 	}
 	return nil
 }
-
-func (bk *NibiruBankKeeper) ResetStateDB(db *statedb.StateDB) {
-	bk.StateDB = db
-}
-
-// s.Require().Equal(
-// 	statedb.FromVM(evmObj).GetBalance(
-// 		eth.NibiruAddrToEthAddr(randomAcc),
-// 	).String(),
-// 	"420"+strings.Repeat("0", 12),
-// )
 
 func (bk NibiruBankKeeper) BurnCoins(
 	ctx sdk.Context,
@@ -99,6 +95,7 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 		bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
 	)
 	bk.StateDB.SetBalanceWei(eth.NibiruAddrToEthAddr(acc), balanceWei)
+	bk.balanceChangesForStateDB += 1
 }
 
 func findEtherBalanceChangeFromCoins(coins sdk.Coins) (found bool) {

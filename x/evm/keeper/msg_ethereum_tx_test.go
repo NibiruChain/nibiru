@@ -47,7 +47,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					EthAcc:        ethAcc,
 					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
-					Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 					GasLimit:      gasLimit,
 				}
 				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
@@ -87,7 +87,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					EthAcc:        ethAcc,
 					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
 					GasPrice:      big.NewInt(1),
-					Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+					Nonce:         deps.StateDB().GetNonce(ethAcc.EthAddr),
 				}
 				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
 				s.NoError(err)
@@ -139,7 +139,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 		EthAcc:          ethAcc,
 		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
 		GasPrice:        big.NewInt(1),
-		Nonce:           deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+		Nonce:           deps.StateDB().GetNonce(ethAcc.EthAddr),
 		GasLimit:        gasLimit,
 		ContractAddress: &contractAddr,
 		Data:            input,
@@ -205,7 +205,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 			&deps,
 			tc.txType,
 			innerTxData,
-			deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+			deps.StateDB().GetNonce(ethAcc.EthAddr),
 			&to,
 			big.NewInt(fundedAmount),
 			gethparams.TxGas,

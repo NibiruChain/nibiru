@@ -22,7 +22,7 @@ type TestDeps struct {
 	App       *app.NibiruApp
 	Ctx       sdk.Context
 	EncCfg    codec.EncodingConfig
-	EvmKeeper *keeper.Keeper
+	EvmKeeper keeper.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc
 }
@@ -45,7 +45,7 @@ func NewTestDeps() TestDeps {
 	}
 }
 
-func (deps TestDeps) NewStateDB() *statedb.StateDB {
+func (deps TestDeps) StateDB() *statedb.StateDB {
 	return deps.EvmKeeper.NewStateDB(
 		deps.Ctx,
 		statedb.NewEmptyTxConfig(

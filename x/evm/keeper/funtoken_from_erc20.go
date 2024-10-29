@@ -122,7 +122,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
 	// 3 | Coin already registered with FunToken?
-	_, isFound := k.Bank.GetDenomMetaData(ctx, bankDenom)
+	_, isFound := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 	if isFound {
 		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
@@ -137,7 +137,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	if err != nil {
 		return funtoken, fmt.Errorf("failed to validate bank metadata: %w", err)
 	}
-	k.Bank.SetDenomMetaData(ctx, bankMetadata)
+	k.bankKeeper.SetDenomMetaData(ctx, bankMetadata)
 
 	// 5 | Officially create the funtoken mapping
 	funtoken = &evm.FunToken{

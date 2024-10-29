@@ -82,7 +82,7 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := evmante.NewMempoolGasPriceDecorator(deps.App.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewMempoolGasPriceDecorator(&deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 

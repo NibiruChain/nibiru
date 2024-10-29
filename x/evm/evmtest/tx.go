@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -25,6 +27,37 @@ import (
 )
 
 type GethTxType = uint8
+
+func TxTemplateAccessListTx() *gethcore.AccessListTx {
+	return &gethcore.AccessListTx{
+		GasPrice: big.NewInt(1),
+		Gas:      gethparams.TxGas,
+		To:       &gethcommon.Address{},
+		Value:    big.NewInt(0),
+		Data:     []byte{},
+	}
+}
+
+func TxTemplateLegacyTx() *gethcore.LegacyTx {
+	return &gethcore.LegacyTx{
+		GasPrice: big.NewInt(1),
+		Gas:      gethparams.TxGas,
+		To:       &gethcommon.Address{},
+		Value:    big.NewInt(0),
+		Data:     []byte{},
+	}
+}
+
+func TxTemplateDynamicFeeTx() *gethcore.DynamicFeeTx {
+	return &gethcore.DynamicFeeTx{
+		GasFeeCap: big.NewInt(10),
+		GasTipCap: big.NewInt(2),
+		Gas:       gethparams.TxGas,
+		To:        &gethcommon.Address{},
+		Value:     big.NewInt(0),
+		Data:      []byte{},
+	}
+}
 
 func NewEthTxMsgFromTxData(
 	deps *TestDeps,
@@ -84,7 +117,7 @@ func NewEthTxMsgFromTxData(
 
 // ExecuteNibiTransfer executes nibi transfer
 func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
-	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	recipient := NewEthPrivAcc().EthAddr
 
 	txArgs := evm.JsonTxArgs{
@@ -123,7 +156,7 @@ func DeployContract(
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
-	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
@@ -180,7 +213,7 @@ func DeployAndExecuteERC20Transfer(
 		"transfer", NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
 	)
 	require.NoError(t, err)
-	nonce = deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
 		To:    &contractAddr,
@@ -205,7 +238,7 @@ func CallContractTx(
 	input []byte,
 	sender EthPrivKeyAcc,
 ) (ethTxMsg *evm.MsgEthereumTx, resp *evm.MsgEthereumTxResponse, err error) {
-	nonce := deps.NewStateDB().GetNonce(sender.EthAddr)
+	nonce := deps.StateDB().GetNonce(sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(evm.JsonTxArgs{
 		From:  &sender.EthAddr,
 		To:    &contractAddr,
@@ -226,8 +259,6 @@ func CallContractTx(
 	resp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	return ethTxMsg, resp, err
 }
-
-var DefaultEthCallGasLimit = srvconfig.DefaultEthCallGasLimit
 
 // GenerateEthTxMsgAndSigner estimates gas, sets gas limit and returns signer for
 // the tx.
@@ -278,7 +309,7 @@ func TransferWei(
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
-		deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+		deps.StateDB().GetNonce(ethAcc.EthAddr),
 		&to,
 		amountWei,
 		gethparams.TxGas,
@@ -293,4 +324,21 @@ func TransferWei(
 		return fmt.Errorf("error while transferring wei: %w", err)
 	}
 	return err
+}
+
+// ValidLegacyTx: Useful initial condition for tests
+// Exported only for use in tests.
+func ValidLegacyTx() *evm.LegacyTx {
+	sdkInt := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
+	return &evm.LegacyTx{
+		Nonce:    24,
+		GasLimit: 50_000,
+		To:       gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed").Hex(),
+		GasPrice: &sdkInt,
+		Amount:   &sdkInt,
+		Data:     []byte{},
+		V:        []byte{},
+		R:        []byte{},
+		S:        []byte{},
+	}
 }

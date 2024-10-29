@@ -373,8 +373,9 @@ func (ch PrecompileCalled) Revert(s *StateDB) {
 	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
 	s.writeToCommitCtxFromCacheCtx = func() {
 		s.evmTxCtx.EventManager().EmitEvents(ch.Events)
-		// TODO: UD-DEBUG: Overwriting events might fix an issue with appending
-		// too many Check correctness of the emitted events
+		// TODO: UD-DEBUG: Overwriting events might fix an issue with
+		// appending too many
+		// Check correctness of the emitted events
 		ch.MultiStore.Write()
 	}
 }

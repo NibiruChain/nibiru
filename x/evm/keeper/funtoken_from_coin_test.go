@@ -25,7 +25,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	deps := evmtest.NewTestDeps()
 
 	// Compute contract address. FindERC20 should fail
-	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
 	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
 	metadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, contractAddress)
 	s.Require().Error(err)

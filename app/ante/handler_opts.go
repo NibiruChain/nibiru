@@ -20,7 +20,7 @@ type AnteHandlerOptions struct {
 	IBCKeeper        *ibckeeper.Keeper
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
-	EvmKeeper        *evmkeeper.Keeper
+	EvmKeeper        evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
 	TxCounterStoreKey types.StoreKey

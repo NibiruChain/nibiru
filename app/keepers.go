@@ -378,7 +378,7 @@ func (app *NibiruApp) InitKeepers(
 		),
 	)
 
-	evmKeeper := evmkeeper.NewKeeper(
+	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec,
 		keys[evm.StoreKey],
 		tkeys[evm.TransientKey],
@@ -388,7 +388,6 @@ func (app *NibiruApp) InitKeepers(
 		app.StakingKeeper,
 		cast.ToString(appOpts.Get("evm.tracer")),
 	)
-	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
@@ -645,7 +644,7 @@ func (app *NibiruApp) initAppModules(
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 
-		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
+		evmmodule.NewAppModule(&app.EvmKeeper, app.AccountKeeper),
 
 		// wasm
 		wasm.NewAppModule(
