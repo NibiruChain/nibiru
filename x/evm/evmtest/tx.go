@@ -24,64 +24,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 
-type GethTxType = uint8
-
-func NewEthTxMsgFromTxData(
-	deps *TestDeps,
-	txType GethTxType,
-	innerTxData []byte,
-	nonce uint64,
-	to *gethcommon.Address,
-	value *big.Int,
-	gas uint64,
-	accessList gethcore.AccessList,
-) (*evm.MsgEthereumTx, error) {
-	if innerTxData == nil {
-		innerTxData = []byte{}
-	}
-
-	var ethCoreTx *gethcore.Transaction
-	switch txType {
-	case gethcore.LegacyTxType:
-		innerTx := TxTemplateLegacyTx()
-		innerTx.Nonce = nonce
-		innerTx.Data = innerTxData
-		innerTx.To = to
-		innerTx.Value = value
-		innerTx.Gas = gas
-		ethCoreTx = gethcore.NewTx(innerTx)
-	case gethcore.AccessListTxType:
-		innerTx := TxTemplateAccessListTx()
-		innerTx.Nonce = nonce
-		innerTx.Data = innerTxData
-		innerTx.AccessList = accessList
-		innerTx.To = to
-		innerTx.Value = value
-		innerTx.Gas = gas
-		ethCoreTx = gethcore.NewTx(innerTx)
-	case gethcore.DynamicFeeTxType:
-		innerTx := TxTemplateDynamicFeeTx()
-		innerTx.Nonce = nonce
-		innerTx.Data = innerTxData
-		innerTx.To = to
-		innerTx.Value = value
-		innerTx.Gas = gas
-		innerTx.AccessList = accessList
-		ethCoreTx = gethcore.NewTx(innerTx)
-	default:
-		return nil, fmt.Errorf(
-			"received unknown tx type (%v) in NewEthTxMsgFromTxData", txType)
-	}
-
-	ethTxMsg := new(evm.MsgEthereumTx)
-	if err := ethTxMsg.FromEthereumTx(ethCoreTx); err != nil {
-		return ethTxMsg, err
-	}
-
-	ethTxMsg.From = deps.Sender.EthAddr.Hex()
-	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
-}
-
 // ExecuteNibiTransfer executes nibi transfer
 func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
