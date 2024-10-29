@@ -193,7 +193,10 @@ func TestConversionFunctions(t *testing.T) {
 	conversionErr := conversionLogs.Validate()
 
 	// create new transaction logs as copy of old valid one (and validate)
-	copyLogs := evm.NewTransactionLogs(common.BytesToHash([]byte("tx_hash")), txLogs.Logs)
+	copyLogs := evm.TransactionLogs{
+		Hash: common.BytesToHash([]byte("tx_hash")).Hex(),
+		Logs: txLogs.Logs,
+	}
 	copyErr := copyLogs.Validate()
 
 	require.Nil(t, conversionErr)

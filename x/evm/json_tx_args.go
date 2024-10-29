@@ -158,7 +158,7 @@ func (args *JsonTxArgs) ToMsgEthTx() *MsgEthereumTx {
 
 // ToMessage converts the arguments to the Message type used by the core evm.
 // This assumes that setTxDefaults has been called.
-func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.Message, error) {
+func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (geth.Message, error) {
 	// Reject invalid combinations of pre- and post-1559 fee styles
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
 		return geth.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
@@ -183,7 +183,7 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.M
 		gasFeeCap *big.Int
 		gasTipCap *big.Int
 	)
-	if baseFee == nil {
+	if baseFeeWei == nil {
 		// If there's no basefee, then it must be a non-1559 execution
 		gasPrice = new(big.Int)
 		if args.GasPrice != nil {
@@ -209,7 +209,7 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (geth.M
 			// Backfill the legacy gasPrice for EVM execution, unless we're all zeroes
 			gasPrice = new(big.Int)
 			if gasFeeCap.BitLen() > 0 || gasTipCap.BitLen() > 0 {
-				gasPrice = math.BigMin(new(big.Int).Add(gasTipCap, baseFee), gasFeeCap)
+				gasPrice = math.BigMin(new(big.Int).Add(gasTipCap, baseFeeWei), gasFeeCap)
 			}
 		}
 	}

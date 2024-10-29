@@ -18,13 +18,13 @@ service Msg {
   rpc EthereumTx(MsgEthereumTx) returns (MsgEthereumTxResponse) {
     option (google.api.http).post = "/nibiru/evm/v1/ethereum_tx";
   };
-  // UpdateParams defined a governance operation for updating the x/evm module parameters.
-  // The authority is hard-coded to the Cosmos SDK x/gov module account
+  // UpdateParams defined a governance operation for updating the x/evm module
+  // parameters. The authority is hard-coded to the x/gov module account
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 
   // CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
-  // address can be given to create the mapping to a bank coin, or the
-  // denomination for a bank coin can be given to create the mapping to an ERC20.
+  // address can be given to create the mapping to a Bank Coin, or the
+  // denomination for a Bank Coin can be given to create the mapping to an ERC20.
   rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 
   // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
@@ -229,8 +229,8 @@ message MsgUpdateParams {
 message MsgUpdateParamsResponse {}
 
 // MsgCreateFunToken: Arguments to create a "FunToken" mapping. Either the ERC20
-// contract address can be given to create the mapping to a bank coin, or the
-// denomination for a bank coin can be given to create the mapping to an ERC20.
+// contract address can be given to create the mapping to a Bank Coin, or the
+// denomination for a Bank Coin can be given to create the mapping to an ERC20.
 message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
@@ -250,7 +250,7 @@ message MsgCreateFunTokenResponse {
   eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
 }
 
-// MsgConvertCoinToEvm: Arguments to send a bank coin to ERC-20 representation
+// MsgConvertCoinToEvm: Arguments to send a Bank Coin to ERC-20 representation
 message MsgConvertCoinToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
@@ -261,7 +261,7 @@ message MsgConvertCoinToEvm {
   // Sender: Address for the signer of the transaction.
   string sender = 2;
 
-  // Bank coin to get converted to ERC20
+  // Bank Coin to get converted to ERC20
   cosmos.base.v1beta1.Coin bank_coin = 3 [
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false

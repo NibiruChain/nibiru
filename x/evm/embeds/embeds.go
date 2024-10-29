@@ -25,6 +25,10 @@ var (
 	wasmPrecompileJSON []byte
 	//go:embed artifacts/contracts/TestERC20.sol/TestERC20.json
 	testErc20Json []byte
+	//go:embed artifacts/contracts/TestERC20MaliciousName.sol/TestERC20MaliciousName.json
+	testErc20MaliciousNameJson []byte
+	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
+	testErc20MaliciousTransferJson []byte
 )
 
 var (
@@ -58,6 +62,20 @@ var (
 		Name:      "TestERC20.sol",
 		EmbedJSON: testErc20Json,
 	}
+	// SmartContract_TestERC20MaliciousName is a test contract
+	// which simulates malicious ERC20 behavior by adding gas intensive operation
+	// for function name() intended to attack funtoken creation
+	SmartContract_TestERC20MaliciousName = CompiledEvmContract{
+		Name:      "TestERC20MaliciousName.sol",
+		EmbedJSON: testErc20MaliciousNameJson,
+	}
+	// SmartContract_TestERC20MaliciousTransfer is a test contract
+	// which simulates malicious ERC20 behavior by adding gas intensive operation
+	// for function transfer() intended to attack funtoken conversion from erc20 to bank coin
+	SmartContract_TestERC20MaliciousTransfer = CompiledEvmContract{
+		Name:      "TestERC20MaliciousTransfer.sol",
+		EmbedJSON: testErc20MaliciousTransferJson,
+	}
 )
 
 func init() {
@@ -66,6 +84,8 @@ func init() {
 	SmartContract_Wasm.MustLoad()
 	SmartContract_Oracle.MustLoad()
 	SmartContract_TestERC20.MustLoad()
+	SmartContract_TestERC20MaliciousName.MustLoad()
+	SmartContract_TestERC20MaliciousTransfer.MustLoad()
 }
 
 type CompiledEvmContract struct {

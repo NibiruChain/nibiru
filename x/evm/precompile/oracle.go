@@ -2,18 +2,15 @@ package precompile
 
 import (
 	"fmt"
-	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
@@ -27,45 +24,28 @@ func (p precompileOracle) Address() gethcommon.Address {
 }
 
 func (p precompileOracle) RequiredGas(input []byte) (gasPrice uint64) {
-	// Since [gethparams.TxGas] is the cost per (Ethereum) transaction that does not create
-	// a contract, it's value can be used to derive an appropriate value for the precompile call.
-	return gethparams.TxGas
+	return RequiredGas(input, embeds.SmartContract_Oracle.ABI)
 }
 
 const (
-	OracleMethod_QueryExchangeRate OracleMethod = "queryExchangeRate"
+	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
 )
-
-type OracleMethod string
 
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
 	evm *vm.EVM, contract *vm.Contract, readonly bool,
 ) (bz []byte, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the error is
-	// non-nil, creating a concise way to add extra information.
 	defer func() {
-		if err != nil {
-			precompileType := reflect.TypeOf(p).Name()
-			err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
-		}
+		err = ErrPrecompileRun(err, p)
 	}()
-
-	// 1 | Get context from StateDB
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
-	if !ok {
-		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
-		return
-	}
-	ctx := stateDB.GetContext()
-
-	method, args, err := DecomposeInput(embeds.SmartContract_Oracle.ABI, contract.Input)
+	res, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
 	if err != nil {
 		return nil, err
 	}
+	method, args, ctx := res.Method, res.Args, res.Ctx
 
-	switch OracleMethod(method.Name) {
-	case OracleMethod_QueryExchangeRate:
+	switch PrecompileMethod(method.Name) {
+	case OracleMethod_queryExchangeRate:
 		bz, err = p.queryExchangeRate(ctx, method, args, readonly)
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
@@ -112,8 +92,8 @@ func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {
-	if len(args) != 1 {
-		err = fmt.Errorf("expected 3 arguments but got %d", len(args))
+	if e := assertNumArgs(len(args), 1); e != nil {
+		err = e
 		return
 	}
 

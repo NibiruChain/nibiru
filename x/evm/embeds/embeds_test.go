@@ -14,5 +14,7 @@ func TestLoadContracts(t *testing.T) {
 		embeds.SmartContract_ERC20Minter.MustLoad()
 		embeds.SmartContract_FunToken.MustLoad()
 		embeds.SmartContract_TestERC20.MustLoad()
+		embeds.SmartContract_TestERC20MaliciousName.MustLoad()
+		embeds.SmartContract_TestERC20MaliciousTransfer.MustLoad()
 	})
 }

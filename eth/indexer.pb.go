@@ -27,14 +27,16 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type TxResult struct {
 	// height of the blockchain
 	Height int64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	// tx_index of the cosmos transaction
+	// tx_index is the index of the block transaction. It is not the index of an
+	// "internal transaction"
 	TxIndex uint32 `protobuf:"varint,2,opt,name=tx_index,json=txIndex,proto3" json:"tx_index,omitempty"`
 	// msg_index in a batch transaction
 	MsgIndex uint32 `protobuf:"varint,3,opt,name=msg_index,json=msgIndex,proto3" json:"msg_index,omitempty"`
-	// eth_tx_index is the index in the list of valid eth tx in the block,
-	// aka. the transaction list returned by eth_getBlock api.
+	// eth_tx_index is the index in the list of valid eth tx in the block. Said
+	// another way, it is the index of the transaction list returned by
+	// eth_getBlock API.
 	EthTxIndex int32 `protobuf:"varint,4,opt,name=eth_tx_index,json=ethTxIndex,proto3" json:"eth_tx_index,omitempty"`
-	// failed is true if the eth transaction did not go succeed
+	// failed is true if the eth transaction did not succeed
 	Failed bool `protobuf:"varint,5,opt,name=failed,proto3" json:"failed,omitempty"`
 	// gas_used by the transaction. If it exceeds the block gas limit,
 	// it's set to gas limit, which is what's actually deducted by ante handler.

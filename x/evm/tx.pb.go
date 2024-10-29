@@ -475,8 +475,8 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 // MsgCreateFunToken: Arguments to create a "FunToken" mapping. Either the ERC20
-// contract address can be given to create the mapping to a bank coin, or the
-// denomination for a bank coin can be given to create the mapping to an ERC20.
+// contract address can be given to create the mapping to a Bank Coin, or the
+// denomination for a Bank Coin can be given to create the mapping to an ERC20.
 type MsgCreateFunToken struct {
 	// Hexadecimal address of the ERC20 token to which the `FunToken` maps
 	FromErc20 *github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,1,opt,name=from_erc20,json=fromErc20,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"from_erc20,omitempty"`
@@ -578,13 +578,13 @@ func (m *MsgCreateFunTokenResponse) GetFuntokenMapping() FunToken {
 	return FunToken{}
 }
 
-// MsgConvertCoinToEvm: Arguments to send a bank coin to ERC-20 representation
+// MsgConvertCoinToEvm: Arguments to send a Bank Coin to ERC-20 representation
 type MsgConvertCoinToEvm struct {
 	// Hexadecimal address of the ERC20 token to which the `FunToken` maps
 	ToEthAddr github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,1,opt,name=to_eth_addr,json=toEthAddr,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"to_eth_addr"`
 	// Sender: Address for the signer of the transaction.
 	Sender string `protobuf:"bytes,2,opt,name=sender,proto3" json:"sender,omitempty"`
-	// Bank coin to get converted to ERC20
+	// Bank Coin to get converted to ERC20
 	BankCoin types1.Coin `protobuf:"bytes,3,opt,name=bank_coin,json=bankCoin,proto3" json:"bank_coin" yaml:"bank_coin"`
 }
 
@@ -784,12 +784,12 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	// EthereumTx defines a method submitting Ethereum transactions.
 	EthereumTx(ctx context.Context, in *MsgEthereumTx, opts ...grpc.CallOption) (*MsgEthereumTxResponse, error)
-	// UpdateParams defined a governance operation for updating the x/evm module parameters.
-	// The authority is hard-coded to the Cosmos SDK x/gov module account
+	// UpdateParams defined a governance operation for updating the x/evm module
+	// parameters. The authority is hard-coded to the x/gov module account
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
-	// address can be given to create the mapping to a bank coin, or the
-	// denomination for a bank coin can be given to create the mapping to an ERC20.
+	// address can be given to create the mapping to a Bank Coin, or the
+	// denomination for a Bank Coin can be given to create the mapping to an ERC20.
 	CreateFunToken(ctx context.Context, in *MsgCreateFunToken, opts ...grpc.CallOption) (*MsgCreateFunTokenResponse, error)
 	// ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
@@ -845,12 +845,12 @@ func (c *msgClient) ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEv
 type MsgServer interface {
 	// EthereumTx defines a method submitting Ethereum transactions.
 	EthereumTx(context.Context, *MsgEthereumTx) (*MsgEthereumTxResponse, error)
-	// UpdateParams defined a governance operation for updating the x/evm module parameters.
-	// The authority is hard-coded to the Cosmos SDK x/gov module account
+	// UpdateParams defined a governance operation for updating the x/evm module
+	// parameters. The authority is hard-coded to the x/gov module account
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
-	// address can be given to create the mapping to a bank coin, or the
-	// denomination for a bank coin can be given to create the mapping to an ERC20.
+	// address can be given to create the mapping to a Bank Coin, or the
+	// denomination for a Bank Coin can be given to create the mapping to an ERC20.
 	CreateFunToken(context.Context, *MsgCreateFunToken) (*MsgCreateFunTokenResponse, error)
 	// ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
 	// given recipient address ("to_eth_addr") in the corresponding ERC20

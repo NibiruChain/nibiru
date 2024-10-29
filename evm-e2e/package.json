@@ -10,8 +10,9 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@typechain/ethers-v6": "^0.5.1",
     "@types/jest": "^29.5.12",
-    "bun": "^1.0.3",
+    "bun": "^1.1.30",
     "bun-types": "^1.0.3",
     "dotenv": "^16.4.5",
     "eslint": "^8.0.0",
@@ -26,6 +27,6 @@
   },
   "scripts": {
     "test": "jest",
-    "gen-types": "bun run typechain --target=ethers-v6 contracts/*Compiled.json"
+    "gen-types": "typechain --target=ethers-v6 contracts/*Compiled.json"
   }
 }

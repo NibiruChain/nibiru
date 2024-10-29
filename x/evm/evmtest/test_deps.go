@@ -1,6 +1,8 @@
 package evmtest
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -53,4 +55,8 @@ func (deps TestDeps) StateDB() *statedb.StateDB {
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
 	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+}
+
+func (deps TestDeps) GoCtx() context.Context {
+	return sdk.WrapSDKContext(deps.Ctx)
 }

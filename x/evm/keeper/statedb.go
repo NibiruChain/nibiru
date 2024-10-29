@@ -70,14 +70,13 @@ func (k *Keeper) SetAccBalance(
 	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {
 	nativeAddr := sdk.AccAddress(addr.Bytes())
-	params := k.GetParams(ctx)
-	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, params.EvmDenom).Amount.BigInt()
+	balance := k.bankKeeper.GetBalance(ctx, nativeAddr, evm.EVMBankDenom).Amount.BigInt()
 	delta := new(big.Int).Sub(amountEvmDenom, balance)
 
 	switch delta.Sign() {
 	case 1:
 		// mint
-		coins := sdk.NewCoins(sdk.NewCoin(params.EvmDenom, sdkmath.NewIntFromBigInt(delta)))
+		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
 		if err := k.bankKeeper.MintCoins(ctx, evm.ModuleName, coins); err != nil {
 			return err
 		}
@@ -86,7 +85,7 @@ func (k *Keeper) SetAccBalance(
 		}
 	case -1:
 		// burn
-		coins := sdk.NewCoins(sdk.NewCoin(params.EvmDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
+		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
 		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, nativeAddr, evm.ModuleName, coins); err != nil {
 			return err
 		}
