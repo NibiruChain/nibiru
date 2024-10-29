@@ -79,6 +79,10 @@ Ethereum transactions, such as in the case of an EthereumTx that influences the
 `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
 reverts inside of a try-catch.
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -159,13 +163,6 @@ reverts inside of a try-catch.
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
 - [#2073](https://github.com/NibiruChain/nibiru/pull/2073) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation
-- [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
-Use effective gas price in RefundGas and make sure that units are properly
-reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
-and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
-- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
-- [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
-- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): transfer for native to erc20 for specific tokens
 
 ### State Machine Breaking (Other)
 
