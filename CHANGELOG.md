@@ -63,9 +63,9 @@ committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
 closely, and solves for a critical state inconsistency producible from the
 FunToken.sol precompiled contract. It also aligns the precompiles to use
 consistent setup and dynamic gas calculations, addressing the following tickets.
-   - https://github.com/NibiruChain/nibiru/issues/2083
-   - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43
-   - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47
+  - <https://github.com/NibiruChain/nibiru/issues/2083>
+  - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43>
+  - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
@@ -158,6 +158,7 @@ reverts inside of a try-catch.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
+- [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 
 ### State Machine Breaking (Other)
 
