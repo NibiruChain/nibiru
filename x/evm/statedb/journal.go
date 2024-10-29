@@ -93,25 +93,6 @@ func (j *journal) Length() int {
 	return len(j.entries)
 }
 
-// DirtiesCount is a test helper to inspect how many entries in the journal are
-// still dirty (uncommitted). After calling [StateDB.Commit], this function should
-// return zero.
-func (s *StateDB) DirtiesCount() int {
-	dirtiesCount := 0
-	for _, dirtyCount := range s.Journal.dirties {
-		dirtiesCount += dirtyCount
-	}
-	return dirtiesCount
-}
-
-func (s *StateDB) Dirties() map[common.Address]int {
-	return s.Journal.dirties
-}
-
-func (s *StateDB) Entries() []JournalChange {
-	return s.Journal.entries
-}
-
 // ------------------------------------------------------
 // createObjectChange
 

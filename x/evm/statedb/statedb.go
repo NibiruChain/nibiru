@@ -608,12 +608,3 @@ func (s *StateDB) SavePrecompileCalledJournalChange(
 }
 
 const maxMultistoreCacheCount uint8 = 10
-
-// StateObjects: Returns a copy of the [StateDB.stateObjects] map.
-func (s *StateDB) StateObjects() map[common.Address]*stateObject {
-	copyOfMap := make(map[common.Address]*stateObject)
-	for key, val := range s.stateObjects {
-		copyOfMap[key] = val
-	}
-	return copyOfMap
-}

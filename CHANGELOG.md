@@ -70,21 +70,14 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
-from the changs in #2086, this pull request implements two critical security
-fixes. 
-   1. First, we add new `JournalChange` struct that saves a deep copy of the
-      state multi store before each state-modifying, Nibiru-specific precompiled
-   contract is called (`OnRunStart`). Additionally, we commit the `StateDB` there
-   as well. This guarantees that the non-EVM and EVM state will be in sync even
-   if there are complex, multi-step Ethereum transactions, such as in the case of
-   an EthereumTx that influences the `StateDB`, then calls a precompile that also
-   changes non-EVM state, and then EVM reverts inside of a try-catch.
-   2. Second, the solution from #2086 that records NIBI (ether) transfers on the
-      `StateDB` during precompiled contract calls is generalized as
-   `NibiruBankKeeper`, which is struct extension of the `bankkeeper.BaseKeeper`
-   that is used throughout the Nibiru base application. The `NibiruBankKeeper`
-   holds a reference to the current EVM `StateDB` if there is one and records
-   balance changes in wei as journal changes automatically.
+from the changs in #2086, this pull request implements a new `JournalChange`
+struct that saves a deep copy of the state multi store before each
+state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
+Additionally, we commit the `StateDB` there as well. This guarantees that the
+non-EVM and EVM state will be in sync even if there are complex, multi-step
+Ethereum transactions, such as in the case of an EthereumTx that influences the
+`StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
+reverts inside of a try-catch.
 
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
