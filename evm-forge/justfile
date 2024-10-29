@@ -1,0 +1,64 @@
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Remove build artifacts and cache
+clean:
+    rm -rf cache out
+
+# Build the contracts
+build:
+    forge build
+
+# Run linters
+lint: lint-sol prettier-check
+
+# Run Solidity linter
+lint-sol:
+    forge fmt --check
+    bun solhint "{script,src,test}/**/*.sol"
+
+# Check formatting with Prettier
+prettier-check:
+    prettier --check "**/*.{json,md,yml}" --ignore-path ".prettierignore"
+
+# Format files with Prettier
+prettier-write:
+    prettier --write "**/*.{json,md,yml}" --ignore-path ".prettierignore"
+
+# Run tests
+test:
+    forge test
+
+# Run all tests with verbose output
+test-verbose:
+    forge test -vvv
+
+# Run test coverage
+coverage:
+    forge coverage
+
+# Generate test coverage report
+coverage-report:
+    forge coverage --report lcov
+    genhtml lcov.info --branch-coverage --output-dir coverage
+
+# Install dependencies
+install:
+    bun install
+    forge install
+
+# Update dependencies
+update:
+    bun update
+    forge update
+
+# Get gas report
+gas-report:
+    forge test --gas-report
+
+# Format Solidity files
+fmt:
+    forge fmt
+    just prettier-write

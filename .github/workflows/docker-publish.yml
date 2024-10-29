@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push tagged chaosnet image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           file: contrib/docker/chaosnet.Dockerfile
@@ -42,7 +42,7 @@ jobs:
           tags: ghcr.io/nibiruchain/chaosnet:${{ steps.get_version.outputs.version }}
       
       - name: Build and push latest chaosnet image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         if: startsWith(github.ref, 'refs/heads/main')
         with:
           file: contrib/docker/chaosnet.Dockerfile

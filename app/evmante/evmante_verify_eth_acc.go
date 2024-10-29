@@ -14,12 +14,12 @@ import (
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
-	evmKeeper     EVMKeeper
+	evmKeeper     *EVMKeeper
 	accountKeeper evm.AccountKeeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
 		evmKeeper:     k,
 		accountKeeper: ak,

@@ -112,7 +112,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_BuildTx() {
 			tc.msg.Data = nil
 		}
 
-		tx, err := tc.msg.BuildTx(s.clientCtx.TxConfig.NewTxBuilder(), evm.DefaultEVMDenom)
+		tx, err := tc.msg.BuildTx(s.clientCtx.TxConfig.NewTxBuilder(), evm.EVMBankDenom)
 		if tc.expError {
 			s.Require().Error(err)
 		} else {
@@ -121,7 +121,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_BuildTx() {
 			s.Require().Empty(tx.GetMemo())
 			s.Require().Empty(tx.GetTimeoutHeight())
 			s.Require().Equal(uint64(100000), tx.GetGas())
-			s.Require().Equal(sdk.NewCoins(sdk.NewCoin(evm.DefaultEVMDenom, sdkmath.NewInt(100000))), tx.GetFee())
+			s.Require().Equal(sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(100000))), tx.GetFee())
 		}
 	}
 }
@@ -698,7 +698,7 @@ func (s *MsgsSuite) TestMsgEthereumTx_Getters() {
 			fee = tx.GetFee()
 			s.Require().Equal(tc.exp, fee)
 		case strings.Contains(tc.name, "get effective fee"):
-			effFee = tx.GetEffectiveFee(big.NewInt(0))
+			effFee = tx.EffectiveFeeWei(big.NewInt(0))
 			s.Require().Equal(tc.exp, effFee)
 		case strings.Contains(tc.name, "get gas"):
 			gas := tx.GetGas()

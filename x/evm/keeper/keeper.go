@@ -84,18 +84,12 @@ func NewKeeper(
 	}
 }
 
-// GetEvmGasBalance: Implements `evm.EVMKeeper` from
-// "github.com/NibiruChain/nibiru/v2/app/ante/evm": Load account's balance of gas
+// GetEvmGasBalance: Used in the EVM Ante Handler,
+// "github.com/NibiruChain/nibiru/v2/app/evmante": Load account's balance of gas
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	evmParams := k.GetParams(ctx)
-	evmDenom := evmParams.GetEvmDenom()
-	// if node is pruned, params is empty. Return invalid value
-	if evmDenom == "" {
-		return big.NewInt(-1)
-	}
-	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evmDenom).Amount.BigInt()
+	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
@@ -120,12 +114,18 @@ func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
 	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
-// GetBaseFee returns the gas base fee in units of the EVM denom. Note that this
-// function is currently constant/stateless.
-func (k Keeper) GetBaseFee(_ sdk.Context) *big.Int {
+// BaseFeeMicronibiPerGas returns the gas base fee in units of the EVM denom. Note
+// that this function is currently constant/stateless.
+func (k Keeper) BaseFeeMicronibiPerGas(_ sdk.Context) *big.Int {
 	// TODO: (someday maybe):  Consider making base fee dynamic based on
 	// congestion in the previous block.
 	return evm.BASE_FEE_MICRONIBI
+}
+
+// BaseFeeWeiPerGas is the same as BaseFeeMicronibiPerGas, except its in units of
+// wei per gas.
+func (k Keeper) BaseFeeWeiPerGas(_ sdk.Context) *big.Int {
+	return evm.NativeToWei(k.BaseFeeMicronibiPerGas(sdk.Context{}))
 }
 
 // Logger returns a module-specific logger.

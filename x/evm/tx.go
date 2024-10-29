@@ -39,7 +39,7 @@ var DefaultPriorityReduction = sdk.DefaultPowerReduction
 //	tx_priority = tip_price / priority_reduction
 func GetTxPriority(txData TxData, baseFee *big.Int) (priority int64) {
 	// calculate priority based on effective gas price
-	tipPrice := txData.EffectiveGasPriceWei(baseFee)
+	tipPrice := txData.EffectiveGasPriceWeiPerGas(baseFee)
 
 	// Return the min of the max possible priorty and the derived priority
 	priority = math.MaxInt64

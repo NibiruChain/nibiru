@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -101,6 +102,22 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 			IsMadeFromCoin:       false,
 		},
 	)
+	bankMetadata, _ := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, expectedBankDenom)
+	s.Require().Equal(bank.Metadata{
+		Description: fmt.Sprintf(
+			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr.String(),
+		),
+		DenomUnits: []*bank.DenomUnit{
+			{Denom: expectedBankDenom, Exponent: 0},
+			{Denom: metadata.Symbol, Exponent: uint32(metadata.Decimals)},
+		},
+		Base:    expectedBankDenom,
+		Display: metadata.Symbol,
+		Name:    metadata.Name,
+		Symbol:  metadata.Symbol,
+		URI:     "",
+		URIHash: "",
+	}, bankMetadata)
 
 	s.T().Log("sad: CreateFunToken for the ERC20: already registered")
 	// Give the sender funds for the fee
@@ -143,7 +160,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
 }
 
-func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
+func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy ERC20")
@@ -193,7 +210,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 
 	randomAcc := testutil.AccAddress()
 
-	s.T().Log("send erc20 tokens to cosmos")
+	s.T().Log("send erc20 tokens to Bank")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_FunToken.ABI,
@@ -214,8 +231,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
 
-	s.T().Log("sad: send too many erc20 tokens to cosmos")
-	_, err = deps.EvmKeeper.CallContract(
+	s.T().Log("sad: send too many erc20 tokens to Bank")
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_FunToken.ABI,
 		deps.Sender.EthAddr,
@@ -226,9 +243,10 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		big.NewInt(70_000),
 		randomAcc.String(),
 	)
-	s.Require().Error(err)
+	s.T().Log("check balances")
+	s.Require().Error(err, evmResp.String())
 
-	s.T().Log("send cosmos tokens back to erc20")
+	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
@@ -247,7 +265,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)),
 	)
 
-	s.T().Log("sad: send too many cosmos tokens back to erc20")
+	s.T().Log("sad: send too many Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
@@ -258,6 +276,101 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToCosmos() {
 		},
 	)
 	s.Require().Error(err)
+}
+
+// TestCreateFunTokenFromERC20MaliciousName tries to create funtoken from a contract
+// with a malicious (gas intensive) name() function.
+// Fun token should fail creation with "out of gas"
+func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20MaliciousName() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy ERC20MaliciousName")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20MaliciousName,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("sad: CreateFunToken for ERC20 with malicious name")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().ErrorContains(err, "gas required exceeds allowance")
+}
+
+// TestFunTokenFromERC20MaliciousTransfer creates a funtoken from a contract
+// with a malicious (gas intensive) transfer() function.
+// Fun token should be created but sending from erc20 to bank should fail with out of gas
+func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy ERC20MaliciousTransfer")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20MaliciousTransfer,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with malicious transfer")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err)
+	randomAcc := testutil.AccAddress()
+
+	s.T().Log("send erc20 tokens to cosmos")
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_FunToken.ABI,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_FunToken,
+		true,
+		"bankSend",
+		deployResp.ContractAddr,
+		big.NewInt(1),
+		randomAcc.String(),
+	)
+	s.Require().ErrorContains(err, "gas required exceeds allowance")
 }
 
 type FunTokenFromErc20Suite struct {

@@ -1,5 +1,6 @@
 version: v1
-name: buf.build/NibiruChain/nibiru
+# Corresponds to Buf Schema Registry repo: https://buf.build/nibiru-chain/nibiru
+name: buf.build/nibiru-chain/nibiru
 deps:
   - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/cosmos-sdk:v0.47.3

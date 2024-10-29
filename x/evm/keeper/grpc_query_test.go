@@ -76,7 +76,7 @@ func (s *Suite) TestQueryEvmAccount() {
 			setup: func(deps *evmtest.TestDeps) {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
 				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
@@ -101,7 +101,7 @@ func (s *Suite) TestQueryEvmAccount() {
 			setup: func(deps *evmtest.TestDeps) {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
 				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
@@ -447,7 +447,9 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
+
 	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.NoError(err)
 	got := gotResp.Params
@@ -457,8 +459,9 @@ func (s *Suite) TestQueryParams() {
 	s.Require().True(want.Equal(got), "want %s, got %s", want, got)
 
 	// Empty params to test the setter
-	want.EvmDenom = "wei"
-	deps.EvmKeeper.SetParams(deps.Ctx, want)
+	want.EVMChannels = []string{"channel-420"}
+	err = deps.EvmKeeper.SetParams(deps.Ctx, want)
+	s.NoError(err)
 	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
@@ -560,7 +563,7 @@ func (s *Suite) TestQueryBalance() {
 				ethAddr := deps.Sender.EthAddr
 
 				// fund account with 420 tokens
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 420)}
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
 				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
@@ -608,9 +611,11 @@ func (s *Suite) TestQueryBaseFee() {
 			name: "happy: base fee value",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBaseFeeRequest{}
-				zeroFee := math.NewInt(1)
+				defaultFeeWei := math.NewIntFromBigInt(evm.BASE_FEE_WEI)
+				defaultFeeUnibi := math.NewIntFromBigInt(evm.BASE_FEE_MICRONIBI)
 				wantResp = &evm.QueryBaseFeeResponse{
-					BaseFee: &zeroFee,
+					BaseFee:      &defaultFeeWei,
+					BaseFeeUnibi: &defaultFeeUnibi,
 				}
 				return req, wantResp
 			},
@@ -677,7 +682,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				// fund the account
 				chain := deps.App
 				ethAddr := deps.Sender.EthAddr
-				coins := sdk.Coins{sdk.NewInt64Coin(evm.DefaultEVMDenom, 1000)}
+				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 1000)}
 				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
@@ -789,7 +794,7 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: trace erc-20 transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, predecessors, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
@@ -868,7 +873,7 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, _, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,

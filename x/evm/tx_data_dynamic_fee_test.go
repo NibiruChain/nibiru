@@ -577,7 +577,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(6)),
 		},
 		{
@@ -590,7 +590,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(2)),
 		},
 		{
@@ -603,14 +603,14 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 					GasFeeCap: &gasFeeCap,
 				}
 			},
-			baseFeeWei: evm.NativeToWei(evm.BASE_FEE_MICRONIBI),
+			baseFeeWei: evm.BASE_FEE_WEI,
 			exp:        evm.NativeToWei(big.NewInt(1)),
 		},
 	}
 
 	for _, tc := range testCases {
 		txData := tc.tx()
-		actual := txData.EffectiveGasPriceWei(tc.baseFeeWei)
+		actual := txData.EffectiveGasPriceWeiPerGas(tc.baseFeeWei)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}
@@ -663,7 +663,7 @@ func (suite *Suite) TestDynamicFeeTxEffectiveCost() {
 	}
 
 	for _, tc := range testCases {
-		actual := tc.tx.EffectiveCost(tc.baseFee)
+		actual := tc.tx.EffectiveCostWei(tc.baseFee)
 
 		suite.Require().Equal(tc.exp, actual, tc.name)
 	}

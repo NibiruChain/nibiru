@@ -13,11 +13,11 @@ import (
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).
 type EthEmitEventDecorator struct {
-	evmKeeper EVMKeeper
+	evmKeeper *EVMKeeper
 }
 
 // NewEthEmitEventDecorator creates a new EthEmitEventDecorator
-func NewEthEmitEventDecorator(k EVMKeeper) EthEmitEventDecorator {
+func NewEthEmitEventDecorator(k *EVMKeeper) EthEmitEventDecorator {
 	return EthEmitEventDecorator{
 		evmKeeper: k,
 	}

@@ -27,12 +27,11 @@ func (k *Keeper) GetEVMConfig(
 		return nil, errors.Wrap(err, "failed to obtain coinbase address")
 	}
 
-	baseFee := k.GetBaseFee(ctx)
 	return &statedb.EVMConfig{
-		Params:      params,
-		ChainConfig: ethCfg,
-		CoinBase:    coinbase,
-		BaseFee:     baseFee,
+		Params:        params,
+		ChainConfig:   ethCfg,
+		BlockCoinbase: coinbase,
+		BaseFeeWei:    k.BaseFeeWeiPerGas(ctx),
 	}, nil
 }
 
@@ -40,12 +39,12 @@ func (k *Keeper) GetEVMConfig(
 func (k *Keeper) TxConfig(
 	ctx sdk.Context, txHash common.Hash,
 ) statedb.TxConfig {
-	return statedb.NewTxConfig(
-		common.BytesToHash(ctx.HeaderHash()), // BlockHash
-		txHash,                               // TxHash
-		uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0)), // TxIndex
-		uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)), // LogIndex
-	)
+	return statedb.TxConfig{
+		BlockHash: common.BytesToHash(ctx.HeaderHash()),
+		TxHash:    txHash,
+		TxIndex:   uint(k.EvmState.BlockTxIndex.GetOr(ctx, 0)),
+		LogIndex:  uint(k.EvmState.BlockLogSize.GetOr(ctx, 0)),
+	}
 }
 
 // VMConfig creates an EVM configuration from the debug setting and the extra
@@ -68,6 +67,10 @@ func (k Keeper) VMConfig(
 }
 
 // GetCoinbaseAddress returns the block proposer's validator operator address.
+// In Ethereum, the coinbase (or "benficiary") is the address that proposed the
+// current block. It corresponds to the [COINBASE op code].
+//
+// [COINBASE op code]: https://ethereum.org/en/developers/docs/evm/opcodes/
 func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) (common.Address, error) {
 	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, ParseProposerAddr(ctx, proposerAddress))
 	if !found {

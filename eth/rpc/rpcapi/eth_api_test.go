@@ -278,8 +278,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		pendingEthTxEventIndex := int32(-1)
 		for _, event := range events {
 			if event.Type == evm.PendingEthereumTxEvent {
-				pendingEthTxEventHash, pendingEthTxEventIndex, err =
-					evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
+				pendingEthTxEventHash, pendingEthTxEventIndex, err = evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
 				s.Require().NoError(err)
 			}
 			if event.Type == evm.TypeUrlEventEthereumTx {
@@ -386,7 +385,7 @@ func (s *NodeSuite) Test_SmartContract() {
 
 		// This query will succeed only if a receipt is found
 		_, err = s.ethClient.TransactionReceipt(blankCtx, txHash)
-		s.Require().Errorf(err, "receipt for txHash: %s", txHash.Hex())
+		s.Require().NoErrorf(err, "receipt for txHash: %s", txHash.Hex())
 
 		// This query succeeds if no receipt is found
 		_, err = s.ethAPI.GetTransactionReceipt(txHash)

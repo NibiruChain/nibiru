@@ -78,7 +78,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 	bytecodeForCall := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
 
 	// nil address for contract creation
-	_, err = k.CallContractWithInput(
+	_, _, err = k.CallContractWithInput(
 		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall,
 	)
 	if err != nil {

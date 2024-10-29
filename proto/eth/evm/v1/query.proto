@@ -293,16 +293,20 @@ message QueryTraceBlockResponse {
 message QueryBaseFeeRequest {}
 
 // QueryBaseFeeResponse returns the EIP1559 base fee.
+// See https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
 message QueryBaseFeeResponse {
-  // base_fee is the EIP1559 base fee
+  // base_fee is the EIP1559 base fee in units of wei.
   string base_fee = 1 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  // base_fee is the EIP1559 base fee in units of micronibi ("unibi").
+  string base_fee_unibi = 2 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
 }
 
 message QueryFunTokenMappingRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // either the 0x contract address of the ERC-20 token or the cosmos denom
+  // Either the hexadecimal-encoded ERC20 contract address or denomination of the
+  // Bank Coin.
   string token = 1;
 }
 
@@ -310,6 +314,6 @@ message QueryFunTokenMappingResponse {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;  
 
-  // fun_token is a mapping between the Cosmos native coin and the ERC20 contract address
-  FunToken fun_token = 1;
+  // fun_token is a mapping between the Bank Coin and the ERC20 contract address
+  eth.evm.v1.FunToken fun_token = 1;
 }
