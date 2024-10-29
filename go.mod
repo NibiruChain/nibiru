@@ -244,6 +244,9 @@ require (
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
+	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
+	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru
+
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.27-nibiru

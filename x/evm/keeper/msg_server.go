@@ -252,7 +252,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
-	stateDB := statedb.New(ctx, k, txConfig)
+	stateDB := k.NewStateDB(ctx, txConfig)
 	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	leftoverGas := msg.Gas()

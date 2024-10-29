@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package statedb
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"math/big"

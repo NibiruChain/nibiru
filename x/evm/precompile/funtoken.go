@@ -72,8 +72,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
-	// Dirty journal entries in `StateDB` must be committed
-	return bz, start.StateDB.Commit()
+	return bz, err
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {

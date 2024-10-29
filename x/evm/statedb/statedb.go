@@ -1,25 +1,34 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
+// The "evm/statedb" package implements a go-ethereum [vm.StateDB] with state
+// management and journal changes specific to the Nibiru EVM.
+//
+// This package plays a critical role in managing the state of accounts,
+// contracts, and storage while handling atomicity, caching, and state
+// modifications. It ensures that state transitions made during the
+// execution of smart contracts are either committed or reverted based
+// on transaction outcomes.
+//
+// StateDB structs used to store anything within the state tree, including
+// accounts, contracts, and contract storage.
+// Note that Nibiru's state tree is an IAVL tree, which differs from the Merkle
+// Patricia Trie structure seen on Ethereum mainnet.
+//
+// StateDBs also take care of caching and handling nested states.
 package statedb
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"fmt"
 	"math/big"
 	"sort"
 
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 )
-
-// revision is the identifier of a version of state.
-// it consists of an auto-increment id and a journal index.
-// it's safer to use than using journal index alone.
-type revision struct {
-	id           int
-	journalIndex int
-}
 
 var _ vm.StateDB = &StateDB{}
 
@@ -30,8 +39,9 @@ var _ vm.StateDB = &StateDB{}
 // * Accounts
 type StateDB struct {
 	keeper Keeper
-	// ctx is the persistent context used for official `StateDB.Commit` calls.
-	ctx sdk.Context
+
+	// evmTxCtx is the persistent context used for official `StateDB.Commit` calls.
+	evmTxCtx sdk.Context
 
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
@@ -42,6 +52,21 @@ type StateDB struct {
 	stateObjects map[common.Address]*stateObject
 
 	txConfig TxConfig
+
+	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
+	// multi-store cached and a new event manager. The cached context
+	// (`cacheCtx`) is written to the persistent context (`ctx`) when
+	// `writeCacheCtx` is called.
+	cacheCtx sdk.Context
+
+	// writeToCommitCtxFromCacheCtx is the "write" function received from
+	// `s.evmTxCtx.CacheContext()`. It saves mutations on s.cacheCtx to the StateDB's
+	// commit context (s.evmTxCtx). This synchronizes the multistore and event manager
+	// of the two contexts.
+	writeToCommitCtxFromCacheCtx func()
+
+	// The number of precompiled contract calls within the current transaction
+	multistoreCacheCount uint8
 
 	// The refund counter, also used by state transitioning.
 	refund uint64
@@ -57,7 +82,7 @@ type StateDB struct {
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	return &StateDB{
 		keeper:       keeper,
-		ctx:          ctx,
+		evmTxCtx:     ctx,
 		stateObjects: make(map[common.Address]*stateObject),
 		Journal:      newJournal(),
 		accessList:   newAccessList(),
@@ -66,14 +91,30 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	}
 }
 
+// revision is the identifier of a version of state.
+// it consists of an auto-increment id and a journal index.
+// it's safer to use than using journal index alone.
+type revision struct {
+	id           int
+	journalIndex int
+}
+
 // Keeper returns the underlying `Keeper`
 func (s *StateDB) Keeper() Keeper {
 	return s.keeper
 }
 
-// GetContext returns the transaction Context.
-func (s *StateDB) GetContext() sdk.Context {
-	return s.ctx
+// GetEvmTxContext returns the EVM transaction context.
+func (s *StateDB) GetEvmTxContext() sdk.Context {
+	return s.evmTxCtx
+}
+
+// GetCacheContext: Getter for testing purposes.
+func (s *StateDB) GetCacheContext() *sdk.Context {
+	if s.writeToCommitCtxFromCacheCtx == nil {
+		return nil
+	}
+	return &s.cacheCtx
 }
 
 // AddLog adds a log, called by evm.
@@ -212,8 +253,9 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	if obj := s.stateObjects[addr]; obj != nil {
 		return obj
 	}
+
 	// If no live objects are available, load it from keeper
-	account := s.keeper.GetAccount(s.ctx, addr)
+	account := s.keeper.GetAccount(s.evmTxCtx, addr)
 	if account == nil {
 		return nil
 	}
@@ -274,7 +316,7 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 	if so == nil {
 		return nil
 	}
-	s.keeper.ForEachStorage(s.ctx, addr, func(key, value common.Hash) bool {
+	s.keeper.ForEachStorage(s.evmTxCtx, addr, func(key, value common.Hash) bool {
 		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}
@@ -438,6 +480,9 @@ func (s *StateDB) Snapshot() int {
 
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *StateDB) RevertToSnapshot(revid int) {
+	fmt.Printf("len(s.validRevisions): %d\n", len(s.validRevisions))
+	fmt.Printf("s.validRevisions: %v\n", s.validRevisions)
+
 	// Find the snapshot in the stack of valid snapshots.
 	idx := sort.Search(len(s.validRevisions), func(i int) bool {
 		return s.validRevisions[i].id >= revid
@@ -460,11 +505,37 @@ func errorf(format string, args ...any) error {
 // Commit writes the dirty journal state changes to the EVM Keeper. The
 // StateDB object cannot be reused after [Commit] has completed. A new
 // object needs to be created from the EVM.
+//
+// cacheCtxSyncNeeded: If one of the [Nibiru-Specific Precompiled Contracts] was
+// called, a [JournalChange] of type [PrecompileSnapshotBeforeRun] gets added and
+// we branch off a cache of the commit context (s.evmTxCtx).
+//
+// [Nibiru-Specific Precompiled Contracts]: https://nibiru.fi/docs/evm/precompiles/nibiru.html
 func (s *StateDB) Commit() error {
-	ctx := s.GetContext()
+	if s.writeToCommitCtxFromCacheCtx != nil {
+		s.writeToCommitCtxFromCacheCtx()
+	}
+	return s.commitCtx(s.GetEvmTxContext())
+}
+
+// CommitCacheCtx is identical to [StateDB.Commit], except it:
+// (1) uses the cacheCtx of the [StateDB] and
+// (2) does not save mutations of the cacheCtx to the commit context (s.evmTxCtx).
+// The reason for (2) is that the overall EVM transaction (block, not internal)
+// is only finalized when [Commit] is called, not when [CommitCacheCtx] is
+// called.
+func (s *StateDB) CommitCacheCtx() error {
+	return s.commitCtx(s.cacheCtx)
+}
+
+// commitCtx writes the dirty journal state changes to the EVM Keeper. The
+// StateDB object cannot be reused after [commitCtx] has completed. A new
+// object needs to be created from the EVM.
+func (s *StateDB) commitCtx(ctx sdk.Context) error {
 	for _, addr := range s.Journal.sortedDirties() {
 		obj := s.getStateObject(addr)
 		if obj == nil {
+			s.Journal.dirties[addr] = 0
 			continue
 		}
 		if obj.Suicided {
@@ -493,18 +564,47 @@ func (s *StateDB) Commit() error {
 				obj.OriginStorage[key] = dirtyVal
 			}
 		}
-		// Clear the dirty counts because all state changes have been
-		// committed.
+		// TODO: UD-DEBUG: Assume clean to pretend for tests
+		// Reset the dirty count to 0 because all state changes for this dirtied
+		// address in the journal have been committed.
 		s.Journal.dirties[addr] = 0
 	}
 	return nil
 }
 
-// StateObjects: Returns a copy of the [StateDB.stateObjects] map.
-func (s *StateDB) StateObjects() map[common.Address]*stateObject {
-	copyOfMap := make(map[common.Address]*stateObject)
-	for key, val := range s.stateObjects {
-		copyOfMap[key] = val
+func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
+	sdk.Context, PrecompileCalled,
+) {
+	if s.writeToCommitCtxFromCacheCtx == nil {
+		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.evmTxCtx.CacheContext()
 	}
-	return copyOfMap
+	return s.cacheCtx, PrecompileCalled{
+		MultiStore: s.cacheCtx.MultiStore().(store.CacheMultiStore).Copy(),
+		Events:     s.cacheCtx.EventManager().Events(),
+	}
 }
+
+// SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
+// ([PrecompileCalled]) to the [StateDB] journal at the end of
+// successful invocation of a precompiled contract. This is necessary to revert
+// intermediate states where an EVM contract augments the multistore with a
+// precompile and an inconsistency occurs between the EVM module and other
+// modules.
+//
+// See [PrecompileCalled] for more info.
+func (s *StateDB) SavePrecompileCalledJournalChange(
+	precompileAddr common.Address,
+	journalChange PrecompileCalled,
+) error {
+	s.Journal.append(journalChange)
+	s.multistoreCacheCount++
+	if s.multistoreCacheCount > maxMultistoreCacheCount {
+		return fmt.Errorf(
+			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d). Called address %s",
+			maxMultistoreCacheCount, precompileAddr.Hex(),
+		)
+	}
+	return nil
+}
+
+const maxMultistoreCacheCount uint8 = 10

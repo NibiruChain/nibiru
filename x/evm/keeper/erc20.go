@@ -218,11 +218,8 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
-	// Using tmp context to not modify the state in case of evm revert
-	tmpCtx, commitCtx := ctx.CacheContext()
-
 	evmResp, evmObj, err = k.ApplyEvmMsg(
-		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
+		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig,
 	)
 	if err != nil {
 		// We don't know the actual gas used, so consuming the gas limit
@@ -245,7 +242,6 @@ func (k Keeper) CallContractWithInput(
 	} else {
 		// Success, committing the state to ctx
 		if commit {
-			commitCtx()
 			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 			if err != nil {
 				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())

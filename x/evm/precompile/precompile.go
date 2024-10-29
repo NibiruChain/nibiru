@@ -147,6 +147,8 @@ type OnRunStartResult struct {
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
+
+	PrecompileJournalEntry statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -188,14 +190,21 @@ func OnRunStart(
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
 	}
-	ctx := stateDB.GetContext()
-	if err = stateDB.Commit(); err != nil {
+
+	// journalEntry captures the state before precompile execution to enable
+	// proper state reversal if the call fails or if [statedb.JournalChange]
+	// is reverted in general.
+	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile(contract.Address())
+	if err = stateDB.SavePrecompileCalledJournalChange(contract.Address(), journalEntry); err != nil {
+		return res, err
+	}
+	if err = stateDB.CommitCacheCtx(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
 	return OnRunStartResult{
 		Args:    args,
-		Ctx:     ctx,
+		Ctx:     cacheCtx,
 		Method:  method,
 		StateDB: stateDB,
 	}, nil
