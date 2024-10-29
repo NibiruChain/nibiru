@@ -50,22 +50,22 @@ Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 period. This section describes code changes that occured after that audit in
 preparation for a second audit starting in November 2024.
 
-- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol.  This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
+- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
-Use effective gas price in RefundGas and make sure that units are properly
-reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
-and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
+  Use effective gas price in RefundGas and make sure that units are properly
+  reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+  and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
-Fix state consistency in precompile execution by ensuring proper journaling of
-state changes in the StateDB. This pull request makes sure that state is
-committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
-closely, and solves for a critical state inconsistency producible from the
-FunToken.sol precompiled contract. It also aligns the precompiles to use
-consistent setup and dynamic gas calculations, addressing the following tickets.
-   - https://github.com/NibiruChain/nibiru/issues/2083
-   - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43
-   - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47
+  Fix state consistency in precompile execution by ensuring proper journaling of
+  state changes in the StateDB. This pull request makes sure that state is
+  committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
+  closely, and solves for a critical state inconsistency producible from the
+  FunToken.sol precompiled contract. It also aligns the precompiles to use
+  consistent setup and dynamic gas calculations, addressing the following tickets.
+  - https://github.com/NibiruChain/nibiru/issues/2083
+  - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43
+  - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
@@ -148,6 +148,7 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
+- [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 
 ### State Machine Breaking (Other)
 
