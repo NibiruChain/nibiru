@@ -22,6 +22,12 @@ service Query {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate_twap";
   }
 
+  // DatedExchangeRate returns latest price of a pair
+  rpc DatedExchangeRate(QueryExchangeRateRequest)
+      returns (QueryDatedExchangeRateResponse) {
+    option (google.api.http).get = "/nibiru/oracle/v1beta1/dated_exchange_rate";
+  }
+
   // ExchangeRates returns exchange rates of all pairs
   rpc ExchangeRates(QueryExchangeRatesRequest)
       returns (QueryExchangeRatesResponse) {
@@ -112,7 +118,20 @@ message QueryExchangeRateResponse {
 
 // QueryExchangeRatesRequest is the request type for the Query/ExchangeRates RPC
 // method.
-message QueryExchangeRatesRequest {}
+message QueryExchangeRatesRequest {
+}
+
+// QueryDatedExchangeRateResponse is the request type for the 
+// Query/DatedExchangeRate RPC method.
+message QueryDatedExchangeRateResponse {
+  string price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 2;
+}
 
 // QueryExchangeRatesResponse is response type for the
 // Query/ExchangeRates RPC method.

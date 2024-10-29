@@ -80,7 +80,7 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	price, err := p.oracleKeeper.GetExchangeRate(ctx, assetPair)
+	price, err := p.oracleKeeper.GetDatedExchangeRate(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}

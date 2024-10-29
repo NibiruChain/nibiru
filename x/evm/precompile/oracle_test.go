@@ -68,7 +68,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.NoError(err)
 
 		// Check the response
-		s.Equal("0.067000000000000000", out[0].(string))
+		s.Equal("exchange_rate:\"67000000000000000\" created_block:1 ", out[0].(string))
 	}
 }
 

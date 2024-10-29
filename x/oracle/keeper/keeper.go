@@ -187,6 +187,23 @@ func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec
 	return
 }
 
+func (k Keeper) GetDatedExchangeRate(ctx sdk.Context, pair asset.Pair) (exchangeRate types.PriceSnapshot, err error) {
+	iterator := k.PriceSnapshots.Iterate(
+		ctx,
+		collections.PairRange[asset.Pair, time.Time]{}.
+			Prefix(pair).
+			Descending(),
+	)
+	defer iterator.Close()
+
+	if iterator.Valid() {
+		exchangeRate = iterator.Value()
+		return exchangeRate, nil
+	} else {
+		return types.PriceSnapshot{}, types.ErrInvalidExchangeRate.Wrapf("no snapshots for pair %s", pair.String())
+	}
+}
+
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
 	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, CreatedBlock: uint64(ctx.BlockHeight())})
