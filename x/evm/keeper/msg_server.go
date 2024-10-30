@@ -491,9 +491,13 @@ func (k *Keeper) ConvertCoinToEvm(
 	fungibleTokenMapping := funTokens[0]
 
 	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinToEvmBornCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornCoin(
+			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		)
 	} else {
-		return k.convertCoinToEvmBornERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornERC20(
+			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		)
 	}
 }
 
@@ -555,35 +559,25 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	// Escrow Coins on module account
+	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		sender,
 		evm.ModuleName,
 		sdk.NewCoins(coin),
 	); err != nil {
-		return nil, errors.Wrap(err, "failed to escrow coins")
+		return nil, errors.Wrap(err, "error sending Bank Coins to the EVM")
 	}
 
-	// verify that the EVM module account has enough escrowed ERC-20 to transfer
-	// should never fail, because the coins were minted from the escrowed tokens, but check just in case
-	evmModuleBalance, err := k.ERC20().BalanceOf(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		ctx,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if evmModuleBalance == nil {
-		return nil, fmt.Errorf("failed to retrieve EVM module account balance, balance is nil")
-	}
-	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
-		return nil, fmt.Errorf("insufficient balance in EVM module account")
-	}
-
-	// Supply ERC-20 tokens from EVM module address
+	// 2 | EVM sends ERC20 tokens to the "to" account.
+	// This should never fail due to the EVM account lacking ERc20 fund because
+	// the an account must have sent the EVM module ERC20 tokens in the mapping
+	// in order to create the coins originally.
+	//
+	// Said another way, if an asset is created as an ERC20 and some amount is
+	// converted to its Bank Coin representation, a balance of the ERC20 is left
+	// inside the EVM module account in order to convert the coins back to
+	// ERC20s.
 	actualSentAmount, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
@@ -595,6 +589,10 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
+	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
+	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
+	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
+	// in the BC → ERC20 conversion.
 	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualSentAmount))
 	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
