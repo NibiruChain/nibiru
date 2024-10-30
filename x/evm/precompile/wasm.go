@@ -1,7 +1,6 @@
 package precompile
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -128,8 +127,8 @@ func (p precompileWasm) execute(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-	if readOnly {
-		return nil, errors.New("wasm execute cannot be called in read-only mode")
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
 	}
 
 	wasmContract, msgArgsBz, funds, err := p.parseExecuteArgs(args)
@@ -212,8 +211,8 @@ func (p precompileWasm) instantiate(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-	if readOnly {
-		return nil, errors.New("wasm instantiate cannot be called in read-only mode")
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
 	}
 
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
@@ -263,8 +262,8 @@ func (p precompileWasm) executeMulti(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-	if readOnly {
-		return nil, errors.New("wasm executeMulti cannot be called in read-only mode")
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
 	}
 
 	wasmExecMsgs, err := p.parseExecuteMultiArgs(args)

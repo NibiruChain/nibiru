@@ -101,8 +101,8 @@ func (p precompileFunToken) bankSend(
 	readOnly bool,
 ) (bz []byte, err error) {
 	ctx, method, args := start.CacheCtx, start.Method, start.Args
-	if readOnly {
-		return nil, fmt.Errorf("bankSend cannot be called in read-only mode")
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
 	}
 
 	erc20, amount, to, err := p.decomposeBankSendArgs(args)

@@ -8,6 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
+func assertNotReadonlyTx(readOnly bool, method *gethabi.Method) error {
+	if readOnly {
+		return fmt.Errorf("method %s cannot be called in a read-only context (e.g. staticcall)", method.Name)
+	}
+	return nil
+}
+
 // ErrPrecompileRun is error function intended for use in a `defer` pattern,
 // which modifies the input error in the event that its value becomes non-nil.
 // This creates a concise way to prepend extra information to the original error.
