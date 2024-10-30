@@ -19,7 +19,7 @@ import (
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
 
-// Precompile address for "FunToken.sol", the contract that
+// Precompile address for "IFunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
 // using the ERC20's `FunToken` mapping.
 var PrecompileAddr_FunToken = gethcommon.HexToAddress("0x0000000000000000000000000000000000000800")
@@ -139,20 +139,19 @@ func (p precompileFunToken) bankSend(
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
-	_, err = p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
+	gotAmount, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send from caller to the EVM account: %w", err)
+		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
-	amt := math.NewIntFromBigInt(amount)
-	coinToSend := sdk.NewCoin(funtoken.BankDenom, amt)
+	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(gotAmount))
 	if funtoken.IsMadeFromCoin {
 		// If the FunToken mapping was created from a bank coin, then the EVM account
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		_, err = p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, amount, ctx)
+		_, err = p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx)
 		if err != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", err)
 			return
@@ -181,7 +180,7 @@ func (p precompileFunToken) bankSend(
 
 	// TODO: UD-DEBUG: feat: Emit EVM events
 
-	return method.Outputs.Pack()
+	return method.Outputs.Pack(gotAmount)
 }
 
 func (p precompileFunToken) decomposeBankSendArgs(args []any) (

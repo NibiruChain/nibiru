@@ -274,7 +274,6 @@ func (app *NibiruApp) InitKeepers(
 		StateDB: nil,
 	}
 	app.BankKeeper = nibiruBankKeeper
-
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
