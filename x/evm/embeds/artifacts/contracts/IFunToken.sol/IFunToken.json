@@ -22,7 +22,13 @@
         }
       ],
       "name": "bankSend",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "sentAmount",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     }

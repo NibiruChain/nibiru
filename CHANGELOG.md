@@ -79,6 +79,10 @@ Ethereum transactions, such as in the case of an EthereumTx that influences the
 `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
 reverts inside of a try-catch.
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
