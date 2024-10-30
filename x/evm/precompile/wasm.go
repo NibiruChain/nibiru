@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -274,10 +275,15 @@ func (p precompileWasm) executeMulti(
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
 	var responses [][]byte
-	for _, m := range wasmExecMsgs {
+	for i, m := range wasmExecMsgs {
 		wasmContract, e := sdk.AccAddressFromBech32(m.ContractAddr)
 		if e != nil {
-			err = fmt.Errorf("Execute failed: %w", e)
+			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
+			return
+		}
+		msgArgsCopy := wasm.RawContractMessage(m.MsgArgs)
+		if e := msgArgsCopy.ValidateBasic(); e != nil {
+			err = fmt.Errorf("Execute failed at index %d: error parsing msg args: %w", i, e)
 			return
 		}
 		var funds sdk.Coins
@@ -289,7 +295,7 @@ func (p precompileWasm) executeMulti(
 		}
 		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
-			err = e
+			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
 			return
 		}
 		responses = append(responses, respBz)
