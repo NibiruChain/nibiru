@@ -227,7 +227,7 @@ func SafeSendCoinFromModuleToAccount(
 	return nil
 }
 
-func (p precompileFunToken) decomposeBankSendArgs(args []interface{}) (
+func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,

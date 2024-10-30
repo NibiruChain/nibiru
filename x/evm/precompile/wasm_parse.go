@@ -21,7 +21,7 @@ type WasmBankCoin struct {
 //	```solidity
 //	    BankCoin[] memory funds
 //	```
-func parseFundsArg(arg interface{}) (funds sdk.Coins, err error) {
+func parseFundsArg(arg any) (funds sdk.Coins, err error) {
 	if arg == nil {
 		return funds, nil
 	}
@@ -67,7 +67,7 @@ func parseContractAddrArg(arg any) (addr sdk.AccAddress, err error) {
 	return addr, nil
 }
 
-func (p precompileWasm) parseInstantiateArgs(args []interface{}, sender string) (
+func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
 	txMsg wasm.MsgInstantiateContract,
 	err error,
 ) {
@@ -124,7 +124,7 @@ func (p precompileWasm) parseInstantiateArgs(args []interface{}, sender string) 
 	return txMsg, txMsg.ValidateBasic()
 }
 
-func (p precompileWasm) parseExecuteArgs(args []interface{}) (
+func (p precompileWasm) parseExecuteArgs(args []any) (
 	wasmContract sdk.AccAddress,
 	msgArgs []byte,
 	funds sdk.Coins,
@@ -174,7 +174,7 @@ func (p precompileWasm) parseExecuteArgs(args []interface{}) (
 	return contractAddr, msgArgs, funds, nil
 }
 
-func (p precompileWasm) parseQueryArgs(args []interface{}) (
+func (p precompileWasm) parseQueryArgs(args []any) (
 	wasmContract sdk.AccAddress,
 	req wasm.RawContractMessage,
 	err error,
@@ -206,7 +206,7 @@ func (p precompileWasm) parseQueryArgs(args []interface{}) (
 	return wasmContract, req, nil
 }
 
-func (p precompileWasm) parseExecuteMultiArgs(args []interface{}) (
+func (p precompileWasm) parseExecuteMultiArgs(args []any) (
 	wasmExecMsgs []struct {
 		ContractAddr string `json:"contractAddr"`
 		MsgArgs      []byte `json:"msgArgs"`

@@ -71,7 +71,7 @@ func DefaultParams() Params {
 	}
 }
 
-func validatePolynomialFactors(i interface{}) error {
+func validatePolynomialFactors(i any) error {
 	v, ok := i.([]sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -83,7 +83,7 @@ func validatePolynomialFactors(i interface{}) error {
 	return nil
 }
 
-func validateInflationDistribution(i interface{}) error {
+func validateInflationDistribution(i any) error {
 	v, ok := i.(InflationDistribution)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -109,7 +109,7 @@ func validateInflationDistribution(i interface{}) error {
 	return nil
 }
 
-func validateBool(i interface{}) error {
+func validateBool(i any) error {
 	_, ok := i.(bool)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -118,7 +118,7 @@ func validateBool(i interface{}) error {
 	return nil
 }
 
-func validateUint64(i interface{}) error {
+func validateUint64(i any) error {
 	_, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid genesis state type: %T", i)
@@ -126,7 +126,7 @@ func validateUint64(i interface{}) error {
 	return nil
 }
 
-func validateEpochsPerPeriod(i interface{}) error {
+func validateEpochsPerPeriod(i any) error {
 	val, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -139,7 +139,7 @@ func validateEpochsPerPeriod(i interface{}) error {
 	return nil
 }
 
-func validatePeriodsPerYear(i interface{}) error {
+func validatePeriodsPerYear(i any) error {
 	val, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

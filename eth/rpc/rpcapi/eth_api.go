@@ -30,8 +30,8 @@ type IEthAPI interface {
 	//
 	// Retrieves information from a particular block in the blockchain.
 	BlockNumber() (hexutil.Uint64, error)
-	GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error)
-	GetBlockByHash(hash common.Hash, fullTx bool) (map[string]interface{}, error)
+	GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]any, error)
+	GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, error)
 	GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint
 	GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) *hexutil.Uint
 
@@ -97,15 +97,15 @@ type IEthAPI interface {
 	// and replaced by a canonical block instead.
 	GetUncleByBlockHashAndIndex(
 		hash common.Hash, idx hexutil.Uint,
-	) map[string]interface{}
+	) map[string]any
 	GetUncleByBlockNumberAndIndex(
 		number, idx hexutil.Uint,
-	) map[string]interface{}
+	) map[string]any
 	GetUncleCountByBlockHash(hash common.Hash) hexutil.Uint
 	GetUncleCountByBlockNumber(blockNum rpc.BlockNumber) hexutil.Uint
 
 	// Other
-	Syncing() (interface{}, error)
+	Syncing() (any, error)
 	GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 	FillTransaction(
 		args evm.JsonTxArgs,
@@ -144,13 +144,13 @@ func (e *EthAPI) BlockNumber() (hexutil.Uint64, error) {
 }
 
 // GetBlockByNumber returns the block identified by number.
-func (e *EthAPI) GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
+func (e *EthAPI) GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]any, error) {
 	e.logger.Debug("eth_getBlockByNumber", "number", ethBlockNum, "full", fullTx)
 	return e.backend.GetBlockByNumber(ethBlockNum, fullTx)
 }
 
 // GetBlockByHash returns the block identified by hash.
-func (e *EthAPI) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]interface{}, error) {
+func (e *EthAPI) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, error) {
 	e.logger.Debug("eth_getBlockByHash", "hash", hash.Hex(), "full", fullTx)
 	return e.backend.GetBlockByHash(hash, fullTx)
 }
@@ -359,7 +359,7 @@ func (e *EthAPI) ChainId() (*hexutil.Big, error) { //nolint
 // Always returns nil.
 func (e *EthAPI) GetUncleByBlockHashAndIndex(
 	_ common.Hash, _ hexutil.Uint,
-) map[string]interface{} {
+) map[string]any {
 	return nil
 }
 
@@ -367,7 +367,7 @@ func (e *EthAPI) GetUncleByBlockHashAndIndex(
 // index. Always returns nil.
 func (e *EthAPI) GetUncleByBlockNumberAndIndex(
 	_, _ hexutil.Uint,
-) map[string]interface{} {
+) map[string]any {
 	return nil
 }
 
@@ -396,7 +396,7 @@ func (e *EthAPI) GetUncleCountByBlockNumber(_ rpc.BlockNumber) hexutil.Uint {
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (e *EthAPI) Syncing() (interface{}, error) {
+func (e *EthAPI) Syncing() (any, error) {
 	e.logger.Debug("eth_syncing")
 	return e.backend.Syncing()
 }

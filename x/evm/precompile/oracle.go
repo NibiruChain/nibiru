@@ -66,7 +66,7 @@ type precompileOracle struct {
 func (p precompileOracle) queryExchangeRate(
 	ctx sdk.Context,
 	method *gethabi.Method,
-	args []interface{},
+	args []any,
 ) (bz []byte, err error) {
 	pair, err := p.parseQueryExchangeRateArgs(args)
 	if err != nil {
@@ -85,7 +85,7 @@ func (p precompileOracle) queryExchangeRate(
 	return method.Outputs.Pack(price.String())
 }
 
-func (p precompileOracle) parseQueryExchangeRateArgs(args []interface{}) (
+func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {

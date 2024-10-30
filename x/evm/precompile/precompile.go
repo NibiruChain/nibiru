@@ -87,7 +87,7 @@ func methodById(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 
 func decomposeInput(
 	abi *gethabi.ABI, input []byte,
-) (method *gethabi.Method, args []interface{}, err error) {
+) (method *gethabi.Method, args []any, err error) {
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
 	if len(input) < 4 {
 		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", collections.HumanizeBytes(input))
@@ -138,7 +138,7 @@ type PrecompileMethod string
 type OnRunStartResult struct {
 	// Args contains the decoded (ABI unpacked) arguments passed to the contract
 	// as input.
-	Args []interface{}
+	Args []any
 
 	// CacheCtx is a cached SDK context that allows isolated state
 	// operations to occur that can be reverted by the EVM's [statedb.StateDB].

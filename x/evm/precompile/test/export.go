@@ -56,7 +56,7 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
-		callArgs := []interface{}{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}
+		callArgs := []any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}
 		input, err := embeds.SmartContract_Wasm.ABI.Pack(
 			string(precompile.WasmMethod_instantiate),
 			callArgs...,
@@ -157,7 +157,7 @@ func AssertWasmCounterState(
 		}
 		`)
 
-	callArgs := []interface{}{
+	callArgs := []any{
 		// string memory contractAddr
 		wasmContract.String(),
 		// bytes memory req
@@ -181,7 +181,7 @@ func AssertWasmCounterState(
 	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
 		// Since there's only one return value, don't unpack as a slice.
 		// If there were two or more return values, we'd use
-		// &[]interface{}{...}
+		// &[]any{...}
 		&queryResp,
 		string(precompile.WasmMethod_query),
 		ethTxResp.Ret,
@@ -283,7 +283,7 @@ func IncrementWasmCounterWithExecuteMulti(
 	}
 	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
 
-	callArgs := []interface{}{
+	callArgs := []any{
 		executeMsgs,
 	}
 	input, err := embeds.SmartContract_Wasm.ABI.Pack(
@@ -338,7 +338,7 @@ func IncrementWasmCounterWithExecuteMultiViaVMCall(
 	}
 	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
 
-	callArgs := []interface{}{
+	callArgs := []any{
 		executeMsgs,
 	}
 	input, err := embeds.SmartContract_Wasm.ABI.Pack(
