@@ -17,14 +17,24 @@ var (
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
-	StateDB *statedb.StateDB
+	StateDB   *statedb.StateDB
+	TxStateDB *statedb.StateDB
 }
 
 func (evmKeeper *Keeper) NewStateDB(
 	ctx sdk.Context, txConfig statedb.TxConfig,
 ) *statedb.StateDB {
 	stateDB := statedb.New(ctx, evmKeeper, txConfig)
-	evmKeeper.Bank.ResetStateDB(stateDB)
+	evmKeeper.Bank.StateDB = stateDB
+	return stateDB
+}
+
+func (evmKeeper *Keeper) NewTxStateDB(
+	ctx sdk.Context, txConfig statedb.TxConfig,
+) *statedb.StateDB {
+	stateDB := statedb.New(ctx, evmKeeper, txConfig)
+	evmKeeper.Bank.StateDB = stateDB
+	evmKeeper.Bank.TxStateDB = stateDB
 	return stateDB
 }
 
@@ -43,17 +53,6 @@ func (bk NibiruBankKeeper) MintCoins(
 	}
 	return nil
 }
-
-func (bk *NibiruBankKeeper) ResetStateDB(db *statedb.StateDB) {
-	bk.StateDB = db
-}
-
-// s.Require().Equal(
-// 	statedb.FromVM(evmObj).GetBalance(
-// 		eth.NibiruAddrToEthAddr(randomAcc),
-// 	).String(),
-// 	"420"+strings.Repeat("0", 12),
-// )
 
 func (bk NibiruBankKeeper) BurnCoins(
 	ctx sdk.Context,

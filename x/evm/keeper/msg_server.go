@@ -351,7 +351,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
-		fmt.Println("stateDB.Commit in ApplyEvmMsg")
 		if err := stateDB.Commit(); err != nil {
 			return nil, evmObj, fmt.Errorf("failed to commit stateDB: %w", err)
 		}

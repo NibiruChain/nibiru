@@ -3,18 +3,20 @@ package precompile
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -54,6 +56,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
+	p.evmKeeper.Bank.StateDB = start.StateDB
 
 	method := start.Method
 	switch PrecompileMethod(method.Name) {
@@ -73,17 +76,13 @@ func (p precompileFunToken) Run(
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	return precompileFunToken{
-		bankKeeper: keepers.EvmKeeper.Bank,
-		evmKeeper:  keepers.EvmKeeper,
+		evmKeeper: keepers.EvmKeeper,
 	}
 }
 
 type precompileFunToken struct {
-	bankKeeper *evmkeeper.NibiruBankKeeper
-	evmKeeper  *evmkeeper.Keeper
+	evmKeeper *evmkeeper.Keeper
 }
-
-var executionGuard sync.Mutex
 
 // bankSend: Implements "IFunToken.bankSend"
 //
@@ -106,10 +105,6 @@ func (p precompileFunToken) bankSend(
 		err = e
 		return
 	}
-	if !executionGuard.TryLock() {
-		return nil, fmt.Errorf("bankSend is already in progress")
-	}
-	defer executionGuard.Unlock()
 
 	erc20, amount, to, err := p.decomposeBankSendArgs(args)
 	if err != nil {
@@ -157,7 +152,9 @@ func (p precompileFunToken) bankSend(
 			return
 		}
 	} else {
+		p.evmKeeper.Bank.StateDB = start.StateDB
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
+		// err = SafeMintCoins(ctx, evm.ModuleName, coinToSend, p.evmKeeper, start.StateDB)
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
 				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -166,12 +163,21 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// Transfer the bank coin
+	p.evmKeeper.Bank.StateDB = start.StateDB
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,
 		toAddr,
 		sdk.NewCoins(coinToSend),
 	)
+	// err = SafeSendCoinFromModuleToAccount(
+	// 	ctx,
+	// 	evm.ModuleName,
+	// 	toAddr,
+	// 	coinToSend,
+	// 	p.evmKeeper,
+	// 	start.StateDB,
+	// )
 	if err != nil {
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -213,4 +219,56 @@ func (p precompileFunToken) decomposeBankSendArgs(args []any) (
 	}
 
 	return
+}
+func SafeMintCoins(
+	ctx sdk.Context,
+	moduleName string,
+	amt sdk.Coin,
+	ek *evmkeeper.Keeper,
+	db *statedb.StateDB,
+) error {
+	bk := ek.Bank
+	err := bk.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(amt))
+	if err != nil {
+		return err
+	}
+	if amt.Denom == evm.EVMBankDenom {
+		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		balAfter := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			evm.EVM_MODULE_ADDRESS,
+			evm.NativeToWei(balAfter),
+		)
+	}
+
+	return nil
+}
+func SafeSendCoinFromModuleToAccount(
+	ctx sdk.Context,
+	senderModule string,
+	recipientAddr sdk.AccAddress,
+	amt sdk.Coin,
+	ek *evmkeeper.Keeper,
+	db *statedb.StateDB,
+) error {
+	bk := ek.Bank
+	err := bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(amt))
+	if err != nil {
+		return err
+	}
+	if amt.Denom == evm.EVMBankDenom {
+		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		balAfterFrom := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			evm.EVM_MODULE_ADDRESS,
+			evm.NativeToWei(balAfterFrom),
+		)
+
+		balAfterTo := bk.GetBalance(ctx, recipientAddr, amt.Denom).Amount.BigInt()
+		db.SetBalanceWei(
+			eth.NibiruAddrToEthAddr(recipientAddr),
+			evm.NativeToWei(balAfterTo),
+		)
+	}
+	return nil
 }

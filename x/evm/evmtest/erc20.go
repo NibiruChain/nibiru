@@ -105,3 +105,19 @@ func BigPow(amount *big.Int, pow10Exp uint8) (powAmount *big.Int) {
 	pow10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(pow10Exp)), nil)
 	return new(big.Int).Mul(amount, pow10)
 }
+
+type FunTokenBalanceAssert struct {
+	FunToken     evm.FunToken
+	Account      gethcommon.Address
+	BalanceBank  *big.Int
+	BalanceERC20 *big.Int
+}
+
+func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps) {
+	AssertERC20BalanceEqual(
+		t, deps, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
+	)
+	AssertBankBalanceEqual(
+		t, deps, bals.FunToken.BankDenom, bals.Account, bals.BalanceBank,
+	)
+}

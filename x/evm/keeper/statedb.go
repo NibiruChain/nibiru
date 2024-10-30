@@ -73,7 +73,7 @@ func (k *Keeper) SetAccBalance(
 	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
-	balance := k.Bank.BaseKeeper.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
+	balance := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 	delta := new(big.Int).Sub(amountEvmDenom, balance)
 	bk := k.Bank.BaseKeeper
 
