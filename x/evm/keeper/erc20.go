@@ -73,23 +73,53 @@ Transfer implements "ERC20.transfer"
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
-) (out bool, err error) {
+) (balanceIncrease *big.Int, err error) {
+	recipientBalanceBefore, err := e.BalanceOf(contract, to, ctx)
+	if err != nil {
+		return balanceIncrease, errors.Wrap(err, "failed to retrieve recipient balance")
+	}
+
 	input, err := e.ABI.Pack("transfer", to, amount)
 	if err != nil {
-		return false, fmt.Errorf("failed to pack ABI args: %w", err)
+		return balanceIncrease, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
+
 	resp, _, err := e.CallContractWithInput(ctx, from, &contract, true, input)
 	if err != nil {
-		return false, err
+		return balanceIncrease, err
 	}
 
 	var erc20Bool ERC20Bool
 	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
 	if err != nil {
-		return false, err
+		return balanceIncrease, err
 	}
 
-	return erc20Bool.Value, nil
+	// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
+	success := erc20Bool.Value
+	if !success {
+		return balanceIncrease, fmt.Errorf("transfer executed but returned success=false")
+	}
+
+	recipientBalanceAfter, err := e.BalanceOf(contract, to, ctx)
+	if err != nil {
+		return balanceIncrease, errors.Wrap(err, "failed to retrieve recipient balance")
+	}
+
+	balanceIncrease = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)
+
+	// For flexibility with fee on transfer tokens and other types of deductions,
+	// we cannot assume that the amount received by the recipient is equal to
+	// the call "amount". Instead, verify that the recipient got tokens and
+	// return the amount.
+	if balanceIncrease.Sign() <= 0 {
+		return balanceIncrease, fmt.Errorf(
+			"amount of ERC20 tokens received MUST be positive: the balance of recipient %s would've changed by %v for token %s",
+			to.Hex(), balanceIncrease.String(), contract.Hex(),
+		)
+	}
+
+	return balanceIncrease, err
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
