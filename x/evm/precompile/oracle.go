@@ -24,7 +24,11 @@ func (p precompileOracle) Address() gethcommon.Address {
 }
 
 func (p precompileOracle) RequiredGas(input []byte) (gasPrice uint64) {
-	return requiredGas(input, embeds.SmartContract_Oracle.ABI)
+	return requiredGas(input, p.ABI())
+}
+
+func (p precompileOracle) ABI() *gethabi.ABI {
+	return embeds.SmartContract_Oracle.ABI
 }
 
 const (
@@ -38,7 +42,7 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, embeds.SmartContract_Oracle.ABI)
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI())
 	if err != nil {
 		return nil, err
 	}

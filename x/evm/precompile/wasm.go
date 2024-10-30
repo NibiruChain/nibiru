@@ -11,6 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
@@ -36,7 +37,7 @@ func (p precompileWasm) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, embeds.SmartContract_Wasm.ABI)
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +75,11 @@ func (p precompileWasm) Address() gethcommon.Address {
 
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileWasm) RequiredGas(input []byte) (gasCost uint64) {
-	return requiredGas(input, embeds.SmartContract_Wasm.ABI)
+	return requiredGas(input, p.ABI())
+}
+
+func (p precompileWasm) ABI() *gethabi.ABI {
+	return embeds.SmartContract_Wasm.ABI
 }
 
 // Wasm: A struct embedding keepers for read and write operations in Wasm, such

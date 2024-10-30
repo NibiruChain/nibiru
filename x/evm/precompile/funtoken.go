@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -32,7 +33,11 @@ func (p precompileFunToken) Address() gethcommon.Address {
 
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	return requiredGas(input, embeds.SmartContract_FunToken.ABI)
+	return requiredGas(input, p.ABI())
+}
+
+func (p precompileFunToken) ABI() *gethabi.ABI {
+	return embeds.SmartContract_FunToken.ABI
 }
 
 const (
@@ -46,7 +51,7 @@ func (p precompileFunToken) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	start, err := OnRunStart(evm, contract.Input, embeds.SmartContract_FunToken.ABI)
+	start, err := OnRunStart(evm, contract.Input, p.ABI())
 	if err != nil {
 		return nil, err
 	}
