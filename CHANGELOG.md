@@ -83,6 +83,7 @@ reverts inside of a try-catch.
 for (1) ERC20 transfers with tokens that return false success values instead of
 throwing an error and (2) ERC20 transfers with other operations that don't bring
 about the expected resulting balance for the transfer recipient.
+- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -162,16 +163,6 @@ about the expected resulting balance for the transfer recipient.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
-- [#2073](https://github.com/NibiruChain/nibiru/pull/2073) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation
-- [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
-Use effective gas price in RefundGas and make sure that units are properly
-reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
-and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
-- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
-- [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
-- [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
-- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
-
 
 ### State Machine Breaking (Other)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -263,7 +264,6 @@ func (p precompileWasm) executeMulti(
 			err = ErrMethodCalled(method, err)
 		}
 	}()
-
 	if err := assertNotReadonlyTx(readOnly, true); err != nil {
 		return bz, err
 	}
@@ -273,51 +273,34 @@ func (p precompileWasm) executeMulti(
 		err = ErrInvalidArgs(err)
 		return
 	}
+	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
-	// Validate all messages before executing any of them
-	type validatedMsg struct {
-		contract sdk.AccAddress
-		msgArgs  []byte
-		funds    sdk.Coins
-	}
-
-	validatedMsgs := make([]validatedMsg, 0, len(wasmExecMsgs))
-
-	// Validate each message using parseExecuteArgs
-	for _, msg := range wasmExecMsgs {
-		// Create args array in the format expected by parseExecuteArgs
-		singleMsgArgs := []any{
-			msg.ContractAddr,
-			msg.MsgArgs,
-			msg.Funds,
-		}
-
-		contract, msgArgs, funds, e := p.parseExecuteArgs(singleMsgArgs)
+	var responses [][]byte
+	for i, m := range wasmExecMsgs {
+		wasmContract, e := sdk.AccAddressFromBech32(m.ContractAddr)
 		if e != nil {
-			err = fmt.Errorf("validation failed for contract %s: %w", msg.ContractAddr, e)
+			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
 			return
 		}
-
-		validatedMsgs = append(validatedMsgs, validatedMsg{
-			contract: contract,
-			msgArgs:  msgArgs,
-			funds:    funds,
-		})
-	}
-
-	callerBech32 := eth.EthAddrToNibiruAddr(caller)
-	var responses [][]byte
-
-	// Execute all messages after validation
-	for _, msg := range validatedMsgs {
-		respBz, e := p.Wasm.Execute(ctx, msg.contract, callerBech32, msg.msgArgs, msg.funds)
+		msgArgsCopy := wasm.RawContractMessage(m.MsgArgs)
+		if e := msgArgsCopy.ValidateBasic(); e != nil {
+			err = fmt.Errorf("Execute failed at index %d: error parsing msg args: %w", i, e)
+			return
+		}
+		var funds sdk.Coins
+		for _, fund := range m.Funds {
+			funds = append(funds, sdk.Coin{
+				Denom:  fund.Denom,
+				Amount: sdk.NewIntFromBigInt(fund.Amount),
+			})
+		}
+		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
-			err = fmt.Errorf("execute failed for contract %s: %w", msg.contract.String(), e)
+			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
 			return
 		}
 		responses = append(responses, respBz)
 	}
-
 	return method.Outputs.Pack(responses)
 }
 

@@ -331,7 +331,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 		sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
 	))
 
-	wasmContracts := SetupWasmContracts(&deps, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	invalidMsgArgsBz := []byte(`{"invalid": "json"}`) // Invalid message format
@@ -439,19 +439,17 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 			)
 			s.Require().NoError(err)
 
-			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
 			)
 
 			if tc.wantError != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tc.wantError)
-				s.Require().Nil(ethTxResp)
-			} else {
-				s.Require().NoError(err)
-				s.Require().NotNil(ethTxResp)
-				s.Require().NotEmpty(ethTxResp.Ret)
+				s.Require().ErrorContains(err, tc.wantError)
+				return
 			}
+			s.Require().NoError(err)
+			s.NotNil(ethTxResp)
+			s.NotEmpty(ethTxResp.Ret)
 		})
 	}
 }
@@ -460,11 +458,11 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := SetupWasmContracts(&deps, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	// First verify initial state is 0
-	s.assertWasmCounterState(deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 
 	// Create a batch where the second message will fail validation
 	executeMsgs := []WasmExecuteMsg{
@@ -487,15 +485,14 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	)
 	s.Require().NoError(err)
 
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
 	)
 
 	// Verify that the call failed
-	s.Require().Error(err)
+	s.Require().Error(err, "ethTxResp: ", ethTxResp)
 	s.Require().Contains(err.Error(), "unknown variant")
-	s.Require().Nil(ethTxResp)
 
 	// Verify that no state changes occurred
-	s.assertWasmCounterState(deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 }
