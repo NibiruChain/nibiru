@@ -2,10 +2,13 @@ package test
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -267,6 +270,7 @@ func IncrementWasmCounterWithExecuteMulti(
 	deps *evmtest.TestDeps,
 	wasmContract sdk.AccAddress,
 	times uint,
+	finalizeTx bool,
 ) (evmObj *vm.EVM) {
 	msgArgsBz := []byte(`
 	{ 
@@ -308,9 +312,68 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, finalizeTx, input,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 	return evmObj
+}
+
+func IncrementWasmCounterWithExecuteMultiViaVMCall(
+	s *suite.Suite,
+	deps *evmtest.TestDeps,
+	wasmContract sdk.AccAddress,
+	times uint,
+	finalizeTx bool,
+	evmObj *vm.EVM,
+) error {
+	msgArgsBz := []byte(`
+	{ 
+	  "increment": {}
+	}
+	`)
+
+	// Parse funds argument.
+	var funds []precompile.WasmBankCoin // blank funds
+	fundsJson, err := json.Marshal(funds)
+	s.NoErrorf(err, "fundsJson: %s", fundsJson)
+	err = json.Unmarshal(fundsJson, &funds)
+	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
+
+	// The "times" arg determines the number of messages in the executeMsgs slice
+	executeMsgs := []struct {
+		ContractAddr string                    `json:"contractAddr"`
+		MsgArgs      []byte                    `json:"msgArgs"`
+		Funds        []precompile.WasmBankCoin `json:"funds"`
+	}{
+		{wasmContract.String(), msgArgsBz, funds},
+	}
+	if times == 0 {
+		executeMsgs = executeMsgs[:0] // force empty
+	} else {
+		for i := uint(1); i < times; i++ {
+			executeMsgs = append(executeMsgs, executeMsgs[0])
+		}
+	}
+	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
+
+	callArgs := []any{
+		executeMsgs,
+	}
+	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_executeMulti),
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	contract := precompile.PrecompileAddr_Wasm
+	leftoverGas := serverconfig.DefaultEthCallGasLimit
+	_, _, err = evmObj.Call(
+		vm.AccountRef(deps.Sender.EthAddr),
+		contract,
+		input,
+		leftoverGas,
+		big.NewInt(0),
+	)
+	return err
 }

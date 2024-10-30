@@ -17,6 +17,13 @@ import (
 
 var _ statedb.Keeper = &Keeper{}
 
+func (k *Keeper) NewStateDB(
+	ctx sdk.Context,
+	txConfig statedb.TxConfig,
+) *statedb.StateDB {
+	return statedb.New(ctx, k, txConfig)
+}
+
 // ----------------------------------------------------------------------------
 // StateDB Keeper implementation
 // ----------------------------------------------------------------------------
@@ -65,7 +72,10 @@ func (k *Keeper) ForEachStorage(
 	}
 }
 
-// SetAccBalance update account's balance, compare with current balance first, then decide to mint or burn.
+// SetAccBalance update account's balance, compare with current balance first,
+// then decide to mint or burn.
+// Implements the `statedb.Keeper` interface.
+// Only called by `StateDB.Commit()`.
 func (k *Keeper) SetAccBalance(
 	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
 ) error {

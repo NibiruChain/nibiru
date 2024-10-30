@@ -221,8 +221,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v1.1.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRrLeDnvGIM=
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
-github.com/CosmWasm/wasmd v0.44.0 h1:2sbcoCAvfjCs1O0SWt53xULKjkV06dbSFthEViIC6Zg=
-github.com/CosmWasm/wasmd v0.44.0/go.mod h1:tDyYN050qUcdd7LOxGeo2e185sEShyO3nJGl2Cf59+k=
 github.com/CosmWasm/wasmvm v1.5.5 h1:XlZI3xO5iUhiBqMiyzsrWEfUtk5gcBMNYIdHnsTB+NI=
 github.com/CosmWasm/wasmvm v1.5.5/go.mod h1:Q0bSEtlktzh7W2hhEaifrFp1Erx11ckQZmjq8FLCyys=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -237,8 +235,12 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL9G/z3X7k=
 github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru h1:PgFpxDe+7+OzWHs4zXlml5j2i9sGq2Zpd3ndYQG29/0=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru h1:o6lRFt57izoYwzN5cG8tnnBtJcaO3X7MjjN7PGGNCFg=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru/go.mod h1:kvvL3nDceUcB+1qGUBAsVf5dW23RBR77fqxgx2PGNrQ=
+github.com/NibiruChain/wasmd v0.44.0-nibiru h1:b+stNdbMFsl0+o4KedXyF83qRnEpB/jCiTGZZgv2h2U=
+github.com/NibiruChain/wasmd v0.44.0-nibiru/go.mod h1:inrbdsixQ0Kdu4mFUg1u7fn3XPOEkzqieGv0H/gR0ck=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
@@ -426,8 +428,6 @@ github.com/cosmos/cosmos-db v1.0.2 h1:hwMjozuY1OlJs/uh6vddqnk9j7VamLv+0DBlbEXbAK
 github.com/cosmos/cosmos-db v1.0.2/go.mod h1:Z8IXcFJ9PqKK6BIsVOB3QXtkKoqUOp1vRvPT39kOXEA=
 github.com/cosmos/cosmos-proto v1.0.0-beta.5 h1:eNcayDLpip+zVLRLYafhzLvQlSmyab+RC5W7ZfmxJLA=
 github.com/cosmos/cosmos-proto v1.0.0-beta.5/go.mod h1:hQGLpiIUloJBMdQMMWb/4wRApmI9hjHH05nefC0Ojec=
-github.com/cosmos/cosmos-sdk v0.47.11 h1:0Qx7eORw0RJqPv+mvDuU8NQ1LV3nJJKJnPoYblWHolc=
-github.com/cosmos/cosmos-sdk v0.47.11/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
 github.com/cosmos/go-bip39 v1.0.0/go.mod h1:RNJv0H/pOIVgxw6KS7QeX2a0Uo0aKUlfhZ4xuwvCdJw=

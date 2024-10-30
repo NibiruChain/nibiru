@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IFunToken",
-  "sourceName": "contracts/FunToken.sol",
+  "sourceName": "contracts/IFunToken.sol",
   "abi": [
     {
       "inputs": [
@@ -22,7 +22,13 @@
         }
       ],
       "name": "bankSend",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "sentAmount",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     }

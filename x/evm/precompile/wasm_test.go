@@ -101,13 +101,13 @@ func (s *WasmSuite) TestExecuteMultiHappy() {
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 	// count += 2
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 2)
+		&s.Suite, &deps, wasmContract, 2, true)
 	// count = 2
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 2)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 2)
 	// count += 67
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 67)
+		&s.Suite, &deps, wasmContract, 67, true)
 	// count = 69
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 69)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 69)
