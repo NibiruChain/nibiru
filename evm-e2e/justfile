@@ -10,7 +10,7 @@ setup:
 # Install all dependencies
 install:
   npm install
-  hardhat typechain
+  npx hardhat typechain
 
 # Runs the E2E tests
 test:
