@@ -202,10 +202,10 @@ func (s *BackendSuite) TestReceiptMarshalJson() {
 		ContractAddress:   nil,
 		From:              evmtest.NewEthPrivAcc().EthAddr,
 		To:                &toAddr,
-		EffectiveGasPrice: big.NewInt(1),
+		EffectiveGasPrice: (*hexutil.Big)(big.NewInt(1)),
 	}
 
-	jsonBz, err := json.Marshal(tr)
+	jsonBz, err := tr.MarshalJSON()
 	s.Require().NoError(err)
 
 	gethReceipt := new(gethcore.Receipt)
