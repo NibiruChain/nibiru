@@ -19,13 +19,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -209,9 +207,9 @@ func OnRunStart(
 	// Temporarily switching to a local gas meter to enforce gas limit check for a precompile
 	// returning parent gas meter after execution or failure
 	parentGasMeter := cacheCtx.GasMeter()
-	cacheCtx = cacheCtx.WithGasMeter(storetypes.NewGasMeter(gasLimit)).
-		WithKVGasConfig(storetypes.GasConfig{}).
-		WithTransientKVGasConfig(storetypes.GasConfig{})
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+		WithKVGasConfig(sdk.GasConfig{}).
+		WithTransientKVGasConfig(sdk.GasConfig{})
 
 	return OnRunStartResult{
 		Args:           args,
@@ -241,7 +239,7 @@ func ReturnToParentGasMeter(ctx sdk.Context, contract *vm.Contract, parentGasMet
 	return func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
-			case storetypes.ErrorOutOfGas:
+			case sdk.ErrorOutOfGas:
 				_ = contract.UseGas(ctx.GasMeter().GasConsumed())
 
 				*err = vm.ErrOutOfGas
@@ -251,7 +249,7 @@ func ReturnToParentGasMeter(ctx sdk.Context, contract *vm.Contract, parentGasMet
 		}
 		// Back to parent ctx gas meter (before entering precompile)
 		ctx = ctx.WithGasMeter(parentGasMeter).
-			WithKVGasConfig(storetypes.GasConfig{}).
-			WithTransientKVGasConfig(storetypes.GasConfig{})
+			WithKVGasConfig(sdk.GasConfig{}).
+			WithTransientKVGasConfig(sdk.GasConfig{})
 	}
 }
