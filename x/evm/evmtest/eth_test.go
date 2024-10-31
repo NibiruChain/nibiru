@@ -36,11 +36,10 @@ func (s *Suite) TestSampleFns() {
 func (s *Suite) TestERC20Helpers() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, "token", &s.Suite)
-
-	evmtest.AssertERC20BalanceEqual(
-		s.T(), deps,
-		funtoken.Erc20Addr.Address,
-		deps.Sender.EthAddr,
-		big.NewInt(0),
-	)
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funtoken,
+		Account:      deps.Sender.EthAddr,
+		BalanceBank:  big.NewInt(0),
+		BalanceERC20: big.NewInt(0),
+	}.Assert(s.T(), deps)
 }
