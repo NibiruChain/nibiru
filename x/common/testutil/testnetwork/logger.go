@@ -11,8 +11,8 @@ import (
 // Typically, a `testing.T` struct is used as the logger for both the "Network"
 // and corresponding "Validators".
 type Logger interface {
-	Log(args ...interface{})
-	Logf(format string, args ...interface{})
+	Log(args ...any)
+	Logf(format string, args ...any)
 }
 
 var _ Logger = (*testing.T)(nil)

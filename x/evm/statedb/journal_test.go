@@ -31,13 +31,12 @@ func (s *Suite) TestComplexJournalChanges() {
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")
-
-	wasmContract := test.SetupWasmContracts(&deps, &s.Suite)[1]
-	fmt.Printf("wasmContract: %s\n", wasmContract)
+	helloWorldCounterWasm := test.SetupWasmContracts(&deps, &s.Suite)[1]
+	fmt.Printf("wasmContract: %s\n", helloWorldCounterWasm)
 
 	s.T().Log("Assert before transition")
 	test.AssertWasmCounterState(
-		&s.Suite, deps, wasmContract, 0,
+		&s.Suite, deps, helloWorldCounterWasm, 0,
 	)
 
 	deployArgs := []any{"name", "SYMBOL", uint8(18)}
@@ -129,11 +128,11 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
 		commitEvmTx := true
 		evmObj = test.IncrementWasmCounterWithExecuteMulti(
-			&s.Suite, &deps, wasmContract, 7, commitEvmTx,
+			&s.Suite, &deps, helloWorldCounterWasm, 7, commitEvmTx,
 		)
 		// assertions after run
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7,
+			&s.Suite, deps, helloWorldCounterWasm, 7,
 		)
 		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
@@ -145,7 +144,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.T().Log("commitEvmTx=false, expect dirty journal entries")
 		commitEvmTx = false
 		evmObj = test.IncrementWasmCounterWithExecuteMulti(
-			&s.Suite, &deps, wasmContract, 5, commitEvmTx,
+			&s.Suite, &deps, helloWorldCounterWasm, 5, commitEvmTx,
 		)
 		stateDB, ok = evmObj.StateDB.(*statedb.StateDB)
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
@@ -158,7 +157,7 @@ func (s *Suite) TestComplexJournalChanges() {
 
 		s.T().Log("Expect no change since the StateDB has not been committed")
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7, // 7 = 7 + 0
+			&s.Suite, deps, helloWorldCounterWasm, 7, // 7 = 7 + 0
 		)
 
 		s.T().Log("Expect change to persist on the StateDB cacheCtx")
@@ -166,14 +165,14 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.NotNil(cacheCtx)
 		deps.Ctx = *cacheCtx
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 12, // 12 = 7 + 5
+			&s.Suite, deps, helloWorldCounterWasm, 12, // 12 = 7 + 5
 		)
 		// NOTE: that the [StateDB.Commit] fn has not been called yet. We're still
 		// mid-transaction.
 
 		s.T().Log("EVM revert operation should bring about the old state")
 		err = test.IncrementWasmCounterWithExecuteMultiViaVMCall(
-			&s.Suite, &deps, wasmContract, 50, commitEvmTx, evmObj,
+			&s.Suite, &deps, helloWorldCounterWasm, 50, commitEvmTx, evmObj,
 		)
 		stateDBPtr := evmObj.StateDB.(*statedb.StateDB)
 		s.Require().Equal(stateDB, stateDBPtr)
@@ -185,7 +184,7 @@ snapshots and see the prior states.`))
 		cacheCtx = stateDB.GetCacheContext()
 		deps.Ctx = *cacheCtx
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7+5+50,
+			&s.Suite, deps, helloWorldCounterWasm, 7+5+50,
 		)
 
 		errFn := common.TryCatch(func() {
@@ -201,7 +200,7 @@ snapshots and see the prior states.`))
 		s.NotNil(cacheCtx)
 		deps.Ctx = *cacheCtx
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7+5,
+			&s.Suite, deps, helloWorldCounterWasm, 7+5,
 		)
 
 		stateDB.RevertToSnapshot(0)
@@ -209,13 +208,13 @@ snapshots and see the prior states.`))
 		s.NotNil(cacheCtx)
 		deps.Ctx = *cacheCtx
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7, // state before precompile called
+			&s.Suite, deps, helloWorldCounterWasm, 7, // state before precompile called
 		)
 
 		err = stateDB.Commit()
 		deps.Ctx = stateDB.GetEvmTxContext()
 		test.AssertWasmCounterState(
-			&s.Suite, deps, wasmContract, 7, // state before precompile called
+			&s.Suite, deps, helloWorldCounterWasm, 7, // state before precompile called
 		)
 	})
 }

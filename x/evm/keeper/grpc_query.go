@@ -736,7 +736,7 @@ func (k *Keeper) TraceEthTxMsg(
 	traceConfig *evm.TraceConfig,
 	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
-) (*interface{}, uint, error) {
+) (*any, uint, error) {
 	// Assemble the structured logger or the JavaScript tracer
 	var (
 		tracer    tracers.Tracer
@@ -805,7 +805,7 @@ func (k *Keeper) TraceEthTxMsg(
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	var result interface{}
+	var result any
 	result, err = tracer.GetResult()
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())

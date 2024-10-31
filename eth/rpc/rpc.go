@@ -114,9 +114,9 @@ func BlockMaxGasFromConsensusParams(
 // transactions.
 func FormatBlock(
 	header tmtypes.Header, size int, gasLimit int64,
-	gasUsed *big.Int, transactions []interface{}, bloom gethcore.Bloom,
+	gasUsed *big.Int, transactions []any, bloom gethcore.Bloom,
 	validatorAddr gethcommon.Address, baseFee *big.Int,
-) map[string]interface{} {
+) map[string]any {
 	var transactionsRoot gethcommon.Hash
 	if len(transactions) == 0 {
 		transactionsRoot = gethcore.EmptyRootHash
@@ -124,7 +124,7 @@ func FormatBlock(
 		transactionsRoot = gethcommon.BytesToHash(header.DataHash)
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"number":           hexutil.Uint64(header.Height),
 		"hash":             hexutil.Bytes(header.Hash()),
 		"parentHash":       gethcommon.BytesToHash(header.LastBlockID.Hash.Bytes()),

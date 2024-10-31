@@ -109,7 +109,7 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 // See eth_feeHistory method for more details of the return format.
 func (b *Backend) retrieveEVMTxFeesFromBlock(
 	tendermintBlock *tmrpctypes.ResultBlock,
-	ethBlock *map[string]interface{},
+	ethBlock *map[string]any,
 	rewardPercentiles []float64,
 	tendermintBlockResult *tmrpctypes.ResultBlockResults,
 	targetOneFeeHistory *rpc.OneFeeHistory,

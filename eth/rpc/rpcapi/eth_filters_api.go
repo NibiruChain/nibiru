@@ -621,7 +621,7 @@ func (api *FiltersAPI) GetFilterLogs(ctx context.Context, id gethrpc.ID) ([]*get
 //
 // This function implements the "eth_getFilterChanges" JSON-RPC service method.
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getfilterchanges
-func (api *FiltersAPI) GetFilterChanges(id gethrpc.ID) (interface{}, error) {
+func (api *FiltersAPI) GetFilterChanges(id gethrpc.ID) (any, error) {
 	api.logger.Debug("eth_getFilterChanges")
 	api.filtersMu.Lock()
 	defer api.filtersMu.Unlock()
