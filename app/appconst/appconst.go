@@ -53,39 +53,39 @@ func RuntimeVersion() string {
 
 // EIP 155 Chain IDs exported for tests.
 const (
-	ETH_CHAIN_ID_MAINNET int64 = 7200
+	ETH_CHAIN_ID_MAINNET int64 = 6900
 
-	ETH_CHAIN_ID_TESTNET_1 int64 = 7210
-	ETH_CHAIN_ID_TESTNET_2 int64 = 7211
-	ETH_CHAIN_ID_TESTNET_3 int64 = 7212
+	ETH_CHAIN_ID_TESTNET_1 int64 = 6910
+	ETH_CHAIN_ID_TESTNET_2 int64 = 6911
+	ETH_CHAIN_ID_TESTNET_3 int64 = 6912
 
-	ETH_CHAIN_ID_DEVNET_1 int64 = 7220
-	ETH_CHAIN_ID_DEVNET_2 int64 = 7221
-	ETH_CHAIN_ID_DEVNET_3 int64 = 7222
+	ETH_CHAIN_ID_DEVNET_1 int64 = 6920
+	ETH_CHAIN_ID_DEVNET_2 int64 = 6921
+	ETH_CHAIN_ID_DEVNET_3 int64 = 6922
 
-	ETH_CHAIN_ID_LOCALNET_0 int64 = 7230
-	ETH_CHAIN_ID_LOCALNET_1 int64 = 7231
-	ETH_CHAIN_ID_LOCALNET_2 int64 = 7232
-	ETH_CHAIN_ID_LOCALNET_3 int64 = 7233
+	ETH_CHAIN_ID_LOCALNET_0 int64 = 6930
+	ETH_CHAIN_ID_LOCALNET_1 int64 = 6931
+	ETH_CHAIN_ID_LOCALNET_2 int64 = 6932
+	ETH_CHAIN_ID_LOCALNET_3 int64 = 6933
 
-	ETH_CHAIN_ID_DEFAULT int64 = 7230
+	ETH_CHAIN_ID_DEFAULT int64 = 6930
 )
 
 var knownEthChainIDMap = map[string]int64{
-	"cataclysm-1": 7200,
+	"cataclysm-1": 6900,
 
-	"nibiru-testnet-1": 7210,
-	"nibiru-testnet-2": 7211,
-	"nibiru-testnet-3": 7212,
+	"nibiru-testnet1": 6910,
+	"nibiru-testnet2": 6911,
+	"nibiru-testnet3": 6912,
 
-	"nibiru-devnet-1": 7220,
-	"nibiru-devnet-2": 7221,
-	"nibiru-devnet-3": 7222,
+	"nibiru-devnet1": 6920,
+	"nibiru-devnet2": 6921,
+	"nibiru-devnet3": 6922,
 
-	"nibiru-localnet-0": 7230,
-	"nibiru-localnet-1": 7231,
-	"nibiru-localnet-2": 7232,
-	"nibiru-localnet-3": 7233,
+	"nibiru-localnet0": 6930,
+	"nibiru-localnet1": 6931,
+	"nibiru-localnet2": 6932,
+	"nibiru-localnet3": 6933,
 }
 
 // GetEthChainID: Maps the given chain ID from the block's `sdk.Context` to an
