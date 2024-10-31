@@ -94,6 +94,8 @@ Bank module. This code change uses the `NibiruBankKeeper` on all modules that
 depend on x/bank, such as the EVM and Wasm modules. 
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
 tests for race conditions within funtoken precompile
+- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
+- [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
