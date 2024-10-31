@@ -202,9 +202,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	}
 }
 
-// ApplyEvmMsg computes the new state by applying the given message against the existing state.
-// If the message fails, the VM execution error with the reason will be returned to the client
-// and the transaction won't be committed to the store.
+// ApplyEvmMsg computes the new state by applying the given message against the
+// existing state. If the message fails, the VM execution error with the reason
+// will be returned to the client and the transaction won't be committed to the
+// store.
 //
 // # Reverted state
 //

@@ -17,8 +17,7 @@ var (
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
-	StateDB   *statedb.StateDB
-	TxStateDB *statedb.StateDB
+	StateDB *statedb.StateDB
 }
 
 func (evmKeeper *Keeper) NewStateDB(
@@ -26,15 +25,6 @@ func (evmKeeper *Keeper) NewStateDB(
 ) *statedb.StateDB {
 	stateDB := statedb.New(ctx, evmKeeper, txConfig)
 	evmKeeper.Bank.StateDB = stateDB
-	return stateDB
-}
-
-func (evmKeeper *Keeper) NewTxStateDB(
-	ctx sdk.Context, txConfig statedb.TxConfig,
-) *statedb.StateDB {
-	stateDB := statedb.New(ctx, evmKeeper, txConfig)
-	evmKeeper.Bank.StateDB = stateDB
-	evmKeeper.Bank.TxStateDB = stateDB
 	return stateDB
 }
 
