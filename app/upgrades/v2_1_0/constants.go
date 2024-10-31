@@ -17,10 +17,21 @@ var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
 	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator, clientKeeper clientkeeper.Keeper) upgradetypes.UpgradeHandler {
 		return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			// explicitly update the IBC 02-client params, adding the wasm client type
+			// explicitly update the IBC 02-client params, adding the wasm client type if it is not there
 			params := clientKeeper.GetParams(ctx)
-			params.AllowedClients = append(params.AllowedClients, ibcwasmtypes.Wasm)
-			clientKeeper.SetParams(ctx, params)
+
+			hasWasmClient := false
+			for _, client := range params.AllowedClients {
+				if client == ibcwasmtypes.Wasm {
+					hasWasmClient = true
+					break
+				}
+			}
+
+			if !hasWasmClient {
+				params.AllowedClients = append(params.AllowedClients, ibcwasmtypes.Wasm)
+				clientKeeper.SetParams(ctx, params)
+			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
 		}
