@@ -129,11 +129,13 @@ message QueryDatedExchangeRateResponse {
     (gogoproto.nullable) = false
   ];
 
-  // milliseconds since unix epoch
-  int64 timestamp_ms = 2;
+  // Block timestamp for the block where the oracle came to consensus for this
+  // price. This timestamp is a conventional Unix millisecond time, i.e. the
+  // number of milliseconds elapsed since January 1, 1970 UTC. 
+  int64 block_timestamp_ms = 2;
 
-  // height of the block
-  uint64 height = 3;
+  // Block height when the oracle came to consensus for this price.
+  uint64 block_height = 3;
 }
 
 // QueryExchangeRatesResponse is response type for the

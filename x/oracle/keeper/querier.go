@@ -90,7 +90,11 @@ func (q querier) DatedExchangeRate(c context.Context, req *types.QueryExchangeRa
 	if err != nil {
 		return &types.QueryDatedExchangeRateResponse{}, err
 	}
-	return &types.QueryDatedExchangeRateResponse{Price: price, TimestampMs: blockTime, Height: blockHeight}, nil
+	return &types.QueryDatedExchangeRateResponse{
+		Price:            price,
+		BlockTimestampMs: blockTime,
+		BlockHeight:      blockHeight,
+	}, nil
 }
 
 // ExchangeRates queries exchange rates of all pairs

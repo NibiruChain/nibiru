@@ -200,16 +200,22 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	ctx := sdk.WrapSDKContext(input.Ctx)
 
 	// --- Query latest snapshot for BTC/NUSD ---
-	resBTC, err := querier.DatedExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairBTC})
+	resBTC, err := querier.DatedExchangeRate(
+		ctx,
+		&types.QueryExchangeRateRequest{Pair: pairBTC},
+	)
 	require.NoError(t, err)
 	require.Equal(t, rateBTC2, resBTC.Price)
-	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resBTC.TimestampMs)
+	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resBTC.BlockTimestampMs)
 
 	// --- Query latest snapshot for ETH/NUSD ---
-	resETH, err := querier.DatedExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairETH})
+	resETH, err := querier.DatedExchangeRate(
+		ctx,
+		&types.QueryExchangeRateRequest{Pair: pairETH},
+	)
 	require.NoError(t, err)
 	require.Equal(t, rateETH2, resETH.Price)
-	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resETH.TimestampMs)
+	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resETH.BlockTimestampMs)
 
 	// --- Query a pair with no snapshots (should return an error) ---
 	pairATOM := asset.Registry.Pair(denoms.ATOM, denoms.NUSD)
