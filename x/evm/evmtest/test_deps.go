@@ -46,7 +46,8 @@ func NewTestDeps() TestDeps {
 }
 
 func (deps TestDeps) StateDB() *statedb.StateDB {
-	return statedb.New(deps.Ctx, &deps.App.EvmKeeper,
+	return deps.EvmKeeper.NewStateDB(
+		deps.Ctx,
 		statedb.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),
 		),

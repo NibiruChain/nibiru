@@ -90,8 +90,12 @@ func (s *FuntokenSuite) TestFailToPackABI() {
 }
 
 func (s *FuntokenSuite) TestHappyPath() {
-	deps := s.deps
-	erc20 := s.funtoken.Erc20Addr.Address
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Create FunToken mapping and ERC20")
+	bankDenom := "unibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	erc20 := funtoken.Erc20Addr.Address
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(0))
@@ -129,27 +133,40 @@ func (s *FuntokenSuite) TestHappyPath() {
 	randomAcc := testutil.AccAddress()
 
 	s.T().Log("Send using precompile")
-	{
-		amtToSend := int64(420)
-		callArgs := []any{erc20, big.NewInt(amtToSend), randomAcc.String()}
-		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
-		s.NoError(err)
+	amtToSend := int64(420)
+	callArgs := []any{erc20, big.NewInt(amtToSend), randomAcc.String()}
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
+	s.NoError(err)
 
-		_, resp, err := evmtest.CallContractTx(
-			&deps,
-			precompile.PrecompileAddr_FunToken,
-			input,
-			deps.Sender,
-		)
-		s.Require().NoError(err)
-		s.Require().Empty(resp.VmError)
+	_, ethTxResp, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		input,
+		deps.Sender,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(ethTxResp.VmError)
 
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
-		s.Equal(sdk.NewInt(420).String(),
-			deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, s.funtoken.BankDenom).Amount.String(),
-		)
-	}
+	evmtest.AssertERC20BalanceEqual(
+		s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000),
+	)
+	evmtest.AssertERC20BalanceEqual(
+		s.T(), deps, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0),
+	)
+	s.Equal(sdk.NewInt(420).String(),
+		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
+	)
+	s.deps.ResetGasMeter()
+
+	s.T().Log("Parse the response contract addr and response bytes")
+	var sentAmt *big.Int
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&sentAmt,
+		string(precompile.FunTokenMethod_BankSend),
+		ethTxResp.Ret,
+	)
+	s.NoError(err)
+	s.Require().Equal("420", sentAmt.String())
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {

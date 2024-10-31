@@ -17,5 +17,7 @@ func TestLoadContracts(t *testing.T) {
 		embeds.SmartContract_TestERC20MaliciousName.MustLoad()
 		embeds.SmartContract_TestERC20MaliciousTransfer.MustLoad()
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
+		embeds.SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
+		embeds.SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
 	})
 }

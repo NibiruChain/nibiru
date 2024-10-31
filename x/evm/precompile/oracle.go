@@ -24,7 +24,11 @@ func (p precompileOracle) Address() gethcommon.Address {
 }
 
 func (p precompileOracle) RequiredGas(input []byte) (gasPrice uint64) {
-	return RequiredGas(input, embeds.SmartContract_Oracle.ABI)
+	return requiredGas(input, p.ABI())
+}
+
+func (p precompileOracle) ABI() *gethabi.ABI {
+	return embeds.SmartContract_Oracle.ABI
 }
 
 const (
@@ -38,30 +42,22 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	start, err := OnRunStart(evm, contract, embeds.SmartContract_Oracle.ABI)
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
-	method, args, ctx := start.Method, start.Args, start.Ctx
+	method, args, ctx := startResult.Method, startResult.Args, startResult.CacheCtx
 
 	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
-	defer ReturnToParentGasMeter(start.Ctx, contract, start.parentGasMeter, &err)()
+	defer ReturnToParentGasMeter(startResult.CacheCtx, contract, startResult.parentGasMeter, &err)()
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
-		bz, err = p.queryExchangeRate(ctx, method, args, readonly)
+		return p.queryExchangeRate(ctx, method, args)
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
-
-	// Gas consumed by a local gas meter
-	gasUsed := start.Ctx.GasMeter().GasConsumed()
-	if !contract.UseGas(gasUsed) {
-		return nil, vm.ErrOutOfGas
-	}
-
-	return
 }
 
 func PrecompileOracle(keepers keepers.PublicKeepers) vm.PrecompiledContract {
@@ -77,10 +73,9 @@ type precompileOracle struct {
 func (p precompileOracle) queryExchangeRate(
 	ctx sdk.Context,
 	method *gethabi.Method,
-	args []interface{},
-	readOnly bool,
+	args []any,
 ) (bz []byte, err error) {
-	pair, err := p.decomposeQueryExchangeRateArgs(args)
+	pair, err := p.parseQueryExchangeRateArgs(args)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +92,7 @@ func (p precompileOracle) queryExchangeRate(
 	return method.Outputs.Pack(price.String())
 }
 
-func (p precompileOracle) decomposeQueryExchangeRateArgs(args []any) (
+func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {
