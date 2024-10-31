@@ -13,8 +13,6 @@
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/jest": "^29.5.12",
-    "bun": "^1.1.30",
-    "bun-types": "^1.0.3",
     "dotenv": "^16.4.5",
     "eslint": "^8.0.0",
     "eslint-config-airbnb": "^19.0.4",

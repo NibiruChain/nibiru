@@ -68,9 +68,7 @@ jobs:
           node-version: 18
 
       - name: "just install"
-        run: |
-          hardhat compile
-          hardhat typechain
+        run: just install
         working-directory: "evm-e2e"
 
       - name: "Launch localnet"
@@ -79,9 +77,7 @@ jobs:
           sleep 10
 
       - name: "Run tests (just test)"
-        run: | 
-          just test
-
+        run: just test
         working-directory: "evm-e2e"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
