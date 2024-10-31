@@ -5,7 +5,7 @@ import { deployContractEventsEmitter, deployContractTransactionReverter, TENPOW1
 import { TestERC20__factory } from '../types';
 
 describe('Transaction Receipt Tests', () => {
-  jest.setTimeout(115e3);
+  jest.setTimeout(15e3);
 
   let recipient = ethers.Wallet.createRandom().address;
 
