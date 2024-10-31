@@ -261,7 +261,7 @@ func NewNibiruApp(
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
-			cmtos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 
 		/* Applications that wish to enforce statically created ScopedKeepers should
