@@ -20,7 +20,7 @@ const (
 
 // ValidateEpochIdentifierInterface performs a stateless
 // validation of the epoch ID interface.
-func ValidateEpochIdentifierInterface(i interface{}) error {
+func ValidateEpochIdentifierInterface(i any) error {
 	v, ok := i.(string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

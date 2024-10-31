@@ -58,7 +58,7 @@ func TX_MSG_TYPE_URLS() []string {
 // Amino JSON serialization and EIP-712 compatibility.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	for _, ele := range []struct {
-		MsgType interface{}
+		MsgType any
 		Name    string
 	}{
 		{&MsgCreateDenom{}, "nibiru/tokenfactory/create-denom"},

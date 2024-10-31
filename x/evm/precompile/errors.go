@@ -1,13 +1,19 @@
 package precompile
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
+
+func assertNotReadonlyTx(readOnly bool, method *gethabi.Method) error {
+	if readOnly {
+		return fmt.Errorf("method %s cannot be called in a read-only context (e.g. staticcall)", method.Name)
+	}
+	return nil
+}
 
 // ErrPrecompileRun is error function intended for use in a `defer` pattern,
 // which modifies the input error in the event that its value becomes non-nil.
@@ -32,14 +38,6 @@ func ErrInvalidArgs(err error) error {
 
 func ErrMethodCalled(method *gethabi.Method, wrapped error) error {
 	return fmt.Errorf("%s method called: %w", method.Name, wrapped)
-}
-
-// Check required for transactions but not needed for queries
-func assertNotReadonlyTx(readOnly bool, isTx bool) error {
-	if readOnly && isTx {
-		return errors.New("cannot write state from staticcall (a read-only call)")
-	}
-	return nil
 }
 
 // assertContractQuery checks if a contract call is a valid query operation. This
