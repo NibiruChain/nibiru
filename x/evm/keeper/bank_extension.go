@@ -38,7 +38,7 @@ func (bk NibiruBankKeeper) MintCoins(
 		return err
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
-		moduleBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		moduleBech32Addr := auth.NewModuleAddress(moduleName)
 		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
 	}
 	return nil
@@ -54,7 +54,7 @@ func (bk NibiruBankKeeper) BurnCoins(
 		return err
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
-		moduleBech32Addr := auth.NewModuleAddress(evm.ModuleName)
+		moduleBech32Addr := auth.NewModuleAddress(moduleName)
 		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
 	}
 	return nil
