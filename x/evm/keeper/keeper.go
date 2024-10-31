@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -41,7 +40,7 @@ type Keeper struct {
 	// this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	bankKeeper    bankkeeper.Keeper
+	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
 
@@ -64,7 +63,7 @@ func NewKeeper(
 	storeKey, transientKey storetypes.StoreKey,
 	authority sdk.AccAddress,
 	accKeeper evm.AccountKeeper,
-	bankKeeper bankkeeper.Keeper,
+	bankKeeper *NibiruBankKeeper,
 	stakingKeeper evm.StakingKeeper,
 	tracer string,
 ) Keeper {
@@ -80,7 +79,7 @@ func NewKeeper(
 		EvmState:      NewEvmState(cdc, storeKey, transientKey),
 		FunTokens:     NewFunTokenState(cdc, storeKey),
 		accountKeeper: accKeeper,
-		bankKeeper:    bankKeeper,
+		Bank:          bankKeeper,
 		stakingKeeper: stakingKeeper,
 		tracer:        tracer,
 	}
@@ -91,7 +90,7 @@ func NewKeeper(
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	return k.bankKeeper.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
+	return k.Bank.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {

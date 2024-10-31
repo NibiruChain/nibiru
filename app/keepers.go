@@ -146,7 +146,6 @@ type AppKeepers struct {
 }
 
 type privateKeepers struct {
-	bankBaseKeeper   bankkeeper.BaseKeeper
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	crisisKeeper     crisiskeeper.Keeper
@@ -271,14 +270,17 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
-	app.bankBaseKeeper = bankkeeper.NewBaseKeeper(
-		appCodec,
-		keys[banktypes.StoreKey],
-		app.AccountKeeper,
-		BlockedAddresses(),
-		govModuleAddr,
-	)
-	app.BankKeeper = app.bankBaseKeeper
+	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+		BaseKeeper: bankkeeper.NewBaseKeeper(
+			appCodec,
+			keys[banktypes.StoreKey],
+			app.AccountKeeper,
+			BlockedAddresses(),
+			govModuleAddr,
+		),
+		StateDB: nil,
+	}
+	app.BankKeeper = nibiruBankKeeper
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
@@ -374,16 +376,17 @@ func (app *NibiruApp) InitKeepers(
 		),
 	)
 
-	app.EvmKeeper = evmkeeper.NewKeeper(
+	evmKeeper := evmkeeper.NewKeeper(
 		appCodec,
 		keys[evm.StoreKey],
 		tkeys[evm.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		app.BankKeeper,
+		nibiruBankKeeper,
 		app.StakingKeeper,
 		cast.ToString(appOpts.Get("evm.tracer")),
 	)
+	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
@@ -631,7 +634,7 @@ func (app *NibiruApp) initAppModules(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		bank.NewAppModule(appCodec, app.bankBaseKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
@@ -657,7 +660,7 @@ func (app *NibiruApp) initAppModules(
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
 
-		evmmodule.NewAppModule(&app.EvmKeeper, app.AccountKeeper),
+		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 
 		// wasm
 		wasm.NewAppModule(

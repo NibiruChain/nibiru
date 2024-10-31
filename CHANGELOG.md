@@ -50,11 +50,12 @@ Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 period. This section describes code changes that occured after that audit in
 preparation for a second audit starting in November 2024.
 
-- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol.  This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
+- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
+- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
-Use effective gas price in RefundGas and make sure that units are properly
-reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
-and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
+  Use effective gas price in RefundGas and make sure that units are properly
+  reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+  and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
 Fix state consistency in precompile execution by ensuring proper journaling of
@@ -68,8 +69,13 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
 - [#2093](https://github.com/NibiruChain/nibiru/pull/2093) - feat(evm): gas usage in precompiles: limits, local gas meters
+- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
 from the changs in #2086, this pull request implements a new `JournalChange`
 struct that saves a deep copy of the state multi store before each
@@ -79,13 +85,19 @@ non-EVM and EVM state will be in sync even if there are complex, multi-step
 Ethereum transactions, such as in the case of an EthereumTx that influences the
 `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
 reverts inside of a try-catch.
-- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
-- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
-for (1) ERC20 transfers with tokens that return false success values instead of
-throwing an error and (2) ERC20 transfers with other operations that don't bring
-about the expected resulting balance for the transfer recipient.
-- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
-- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
+- [#2095](https://github.com/NibiruChain/nibiru/pull/2095) - fix(evm): This
+change records NIBI (ether) transfers on the `StateDB` during precompiled
+contract calls using the `NibiruBankKeeper`, which is struct extension of
+the `bankkeeper.BaseKeeper` that is used throughout Nibiru.
+The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and records
+balance changes in wei as journal changes automatically. This guarantees that
+commits and reversions of the `StateDB` do not misalign with the state of the
+Bank module. This code change uses the `NibiruBankKeeper` on all modules that
+depend on x/bank, such as the EVM and Wasm modules.
+- [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
+tests for race conditions within funtoken precompile
+- [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
@@ -166,7 +178,6 @@ about the expected resulting balance for the transfer recipient.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
-- [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 
 ### State Machine Breaking (Other)
 
