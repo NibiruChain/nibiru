@@ -27,20 +27,18 @@ func (p precompileFunToken) Address() gethcommon.Address {
 	return PrecompileAddr_FunToken
 }
 
-func (p precompileFunToken) ABI() *gethabi.ABI {
-	return embeds.SmartContract_FunToken.ABI
-}
-
 // RequiredGas calculates the cost of calling the precompile in gas units.
 func (p precompileFunToken) RequiredGas(input []byte) (gasCost uint64) {
-	return RequiredGas(input, p.ABI())
+	return requiredGas(input, p.ABI())
+}
+
+func (p precompileFunToken) ABI() *gethabi.ABI {
+	return embeds.SmartContract_FunToken.ABI
 }
 
 const (
 	FunTokenMethod_BankSend PrecompileMethod = "bankSend"
 )
-
-type PrecompileMethod string
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
@@ -49,7 +47,7 @@ func (p precompileFunToken) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	start, err := OnRunStart(evm, contract, p.ABI())
+	start, err := OnRunStart(evm, contract.Input, p.ABI())
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +95,9 @@ func (p precompileFunToken) bankSend(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	ctx, method, args := start.Ctx, start.Method, start.Args
-	if e := assertNotReadonlyTx(readOnly, true); e != nil {
-		err = e
-		return
+	ctx, method, args := start.CacheCtx, start.Method, start.Args
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
 	}
 
 	erc20, amount, to, err := p.decomposeBankSendArgs(args)

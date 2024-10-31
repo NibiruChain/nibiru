@@ -27,7 +27,7 @@ import (
 //     from the provided JSON data.
 //   - err error: An error object, which is nil if the operation is successful.
 func YieldStargateMsgs(jsonBz []byte) (sgMsgs []wasmvm.StargateMsg, err error) {
-	var data interface{}
+	var data any
 	if err := json.Unmarshal(jsonBz, &data); err != nil {
 		return sgMsgs, err
 	}
@@ -50,7 +50,7 @@ func YieldStargateMsgs(jsonBz []byte) (sgMsgs []wasmvm.StargateMsg, err error) {
 //     encoded base 64 string.
 func parseStargateMsgs(jsonData any, msgs *[]wasmvm.StargateMsg) {
 	switch v := jsonData.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		if typeURL, ok := v["type_url"].(string); ok {
 			if value, ok := v["value"].(string); ok {
 				*msgs = append(*msgs, wasmvm.StargateMsg{
@@ -62,7 +62,7 @@ func parseStargateMsgs(jsonData any, msgs *[]wasmvm.StargateMsg) {
 		for _, value := range v {
 			parseStargateMsgs(value, msgs)
 		}
-	case []interface{}:
+	case []any:
 		for _, value := range v {
 			parseStargateMsgs(value, msgs)
 		}
@@ -93,7 +93,7 @@ func DecodeBase64StargateMsgs(
 ) (newSgMsgs []StargateMsgDecoded, err error) {
 	codec := clientCtx.Codec
 
-	var data interface{}
+	var data any
 	if err := json.Unmarshal(jsonBz, &data); err != nil {
 		return newSgMsgs, fmt.Errorf(
 			"failed to decode stargate msgs due to invalid JSON: %w", err)
