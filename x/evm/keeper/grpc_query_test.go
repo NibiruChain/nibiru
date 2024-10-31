@@ -330,7 +330,7 @@ func (s *Suite) TestQueryStorage() {
 					Key:     storageKey.String(),
 				}
 
-				stateDB := deps.StateDB()
+				stateDB := deps.NewStateDB()
 				storageValue := gethcommon.BytesToHash([]byte("value"))
 
 				stateDB.SetState(addr, storageKey, storageValue)
@@ -404,7 +404,7 @@ func (s *Suite) TestQueryCode() {
 					Address: addr.Hex(),
 				}
 
-				stateDB := deps.StateDB()
+				stateDB := deps.NewStateDB()
 				contractBytecode := []byte("bytecode")
 				stateDB.SetCode(addr, contractBytecode)
 				s.Require().NoError(stateDB.Commit())
