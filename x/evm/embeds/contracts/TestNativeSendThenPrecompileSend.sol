@@ -20,15 +20,20 @@ contract TestNativeSendThenPrecompileSend {
         bool isSent = nativeRecipient.send(nativeAmount);
         require(isSent, "Failed to send native token");
 
-        (bool success, ) = FUNTOKEN_PRECOMPILE_ADDRESS.call(
-            abi.encodeWithSignature(
-                "bankSend(address,uint256,string)",
-                erc20,
-                precompileAmount,
-                precompileRecipient
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+            erc20,
+            precompileAmount,
+            precompileRecipient
+        );
+        require(
+            sentAmount == precompileAmount,
+            string.concat(
+                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "sentAmount ",
+                Strings.toString(sentAmount),
+                "expected ",
+                Strings.toString(precompileAmount)
             )
         );
-
-        require(success, string.concat("Failed to call precompile bankSend"));
     }
 }

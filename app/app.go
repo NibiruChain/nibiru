@@ -10,6 +10,9 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
@@ -240,6 +243,10 @@ func NewNibiruApp(
 				app.CommitMultiStore(),
 				&app.WasmKeeper,
 			),
+			ibcwasmkeeper.NewWasmSnapshotter(
+				app.CommitMultiStore(),
+				&app.WasmClientKeeper,
+			),
 		); err != nil {
 			panic("failed to add wasm snapshot extension.")
 		}
@@ -248,6 +255,13 @@ func NewNibiruApp(
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+
+		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 
 		/* Applications that wish to enforce statically created ScopedKeepers should

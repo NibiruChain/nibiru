@@ -59,9 +59,9 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.StateDB()
+			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewAnteDecEthGasConsume(
-				&deps.App.AppKeepers.EvmKeeper, tc.maxGasWanted,
+				deps.App.AppKeepers.EvmKeeper, tc.maxGasWanted,
 			)
 
 			tc.beforeTxSetup(&deps, stateDB)

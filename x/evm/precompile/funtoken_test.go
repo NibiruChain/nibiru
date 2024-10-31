@@ -120,7 +120,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	randomAcc := testutil.AccAddress()
 
-	s.T().Log("Send using precompile")
+	s.T().Log("Send NIBI (FunToken) using precompile")
 	amtToSend := int64(420)
 	callArgs := []any{erc20, big.NewInt(amtToSend), randomAcc.String()}
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
@@ -134,6 +134,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	)
 	s.Require().NoError(err)
 	s.Require().Empty(ethTxResp.VmError)
+	s.True(deps.App.BankKeeper == deps.App.EvmKeeper.Bank)
 
 	evmtest.AssertERC20BalanceEqual(
 		s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000),
@@ -144,6 +145,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Equal(sdk.NewInt(420).String(),
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
+	s.Require().NotNil(deps.EvmKeeper.Bank.StateDB)
 
 	s.T().Log("Parse the response contract addr and response bytes")
 	var sentAmt *big.Int
