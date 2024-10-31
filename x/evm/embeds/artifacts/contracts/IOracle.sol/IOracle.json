@@ -14,9 +14,19 @@
       "name": "queryExchangeRate",
       "outputs": [
         {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint64",
+          "name": "blockTimeMs",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "blockHeight",
+          "type": "uint64"
         }
       ],
       "stateMutability": "view",
