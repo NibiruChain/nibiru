@@ -120,6 +120,7 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 
 		// nibiru oracle
 		"/nibiru.oracle.v1.Query/ExchangeRate":      new(oracle.QueryExchangeRateResponse),
+		"/nibiru.oracle.v1.Query/DatedExchangeRate": new(oracle.QueryDatedExchangeRateResponse),
 		"/nibiru.oracle.v1.Query/ExchangeRateTwap":  new(oracle.QueryExchangeRateResponse),
 		"/nibiru.oracle.v1.Query/ExchangeRates":     new(oracle.QueryExchangeRatesResponse),
 		"/nibiru.oracle.v1.Query/Actives":           new(oracle.QueryActivesResponse),

@@ -118,6 +118,111 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	require.Equal(t, math.LegacyMustNewDecFromStr("1700"), res.ExchangeRate)
 }
 
+func TestQueryDatedExchangeRate(t *testing.T) {
+	input := CreateTestFixture(t)
+	querier := NewQuerier(input.OracleKeeper)
+
+	// Set initial block time and height
+	initialTime := input.Ctx.BlockTime()
+	initialHeight := input.Ctx.BlockHeight()
+
+	// Pair 1: BTC/NUSD
+	pairBTC := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	rateBTC1 := math.LegacyNewDec(1700)
+	rateBTC2 := math.LegacyNewDec(1800)
+
+	// Pair 2: ETH/NUSD
+	pairETH := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
+	rateETH1 := math.LegacyNewDec(100)
+	rateETH2 := math.LegacyNewDec(110)
+
+	// --- Set first price for BTC/NUSD ---
+	input.OracleKeeper.SetPrice(input.Ctx, pairBTC, rateBTC1)
+	testutilevents.RequireContainsTypedEvent(
+		t,
+		input.Ctx,
+		&types.EventPriceUpdate{
+			Pair:        pairBTC.String(),
+			Price:       rateBTC1,
+			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
+
+	// Advance time and block height
+	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(1 * time.Second)).
+		WithBlockHeight(initialHeight + 1)
+
+	// --- Set first price for ETH/NUSD ---
+	input.OracleKeeper.SetPrice(input.Ctx, pairETH, rateETH1)
+	testutilevents.RequireContainsTypedEvent(
+		t,
+		input.Ctx,
+		&types.EventPriceUpdate{
+			Pair:        pairETH.String(),
+			Price:       rateETH1,
+			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
+
+	// Advance time and block height
+	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(2 * time.Second)).
+		WithBlockHeight(initialHeight + 2)
+
+	// --- Set second price for BTC/NUSD ---
+	input.OracleKeeper.SetPrice(input.Ctx, pairBTC, rateBTC2)
+	testutilevents.RequireContainsTypedEvent(
+		t,
+		input.Ctx,
+		&types.EventPriceUpdate{
+			Pair:        pairBTC.String(),
+			Price:       rateBTC2,
+			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
+
+	// Advance time and block height
+	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(3 * time.Second)).
+		WithBlockHeight(initialHeight + 3)
+
+	// --- Set second price for ETH/NUSD ---
+	input.OracleKeeper.SetPrice(input.Ctx, pairETH, rateETH2)
+	testutilevents.RequireContainsTypedEvent(
+		t,
+		input.Ctx,
+		&types.EventPriceUpdate{
+			Pair:        pairETH.String(),
+			Price:       rateETH2,
+			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
+
+	// Wrap context for querying
+	ctx := sdk.WrapSDKContext(input.Ctx)
+
+	// --- Query latest snapshot for BTC/NUSD ---
+	resBTC, err := querier.DatedExchangeRate(
+		ctx,
+		&types.QueryExchangeRateRequest{Pair: pairBTC},
+	)
+	require.NoError(t, err)
+	require.Equal(t, rateBTC2, resBTC.Price)
+	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resBTC.BlockTimestampMs)
+
+	// --- Query latest snapshot for ETH/NUSD ---
+	resETH, err := querier.DatedExchangeRate(
+		ctx,
+		&types.QueryExchangeRateRequest{Pair: pairETH},
+	)
+	require.NoError(t, err)
+	require.Equal(t, rateETH2, resETH.Price)
+	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resETH.BlockTimestampMs)
+
+	// --- Query a pair with no snapshots (should return an error) ---
+	pairATOM := asset.Registry.Pair(denoms.ATOM, denoms.NUSD)
+	_, err = querier.DatedExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
+	require.Error(t, err)
+}
+
 func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
