@@ -95,6 +95,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.T().Log("Create FunToken mapping and ERC20")
 	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+
 	erc20 := funtoken.Erc20Addr.Address
 
 	s.T().Log("Balances of the ERC20 should start empty")
@@ -124,6 +125,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 	{
 		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.NoError(err)
+
+		s.deps.ResetGasMeter()
 		_, _, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input, keeper.Erc20GasLimitQuery,
 		)
@@ -138,6 +141,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
 	s.NoError(err)
 
+	deps.ResetGasMeter()
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,

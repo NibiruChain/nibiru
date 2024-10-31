@@ -69,7 +69,7 @@ func (p precompileFunToken) Run(
 	}
 
 	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
-	defer ReturnToParentGasMeter(startResult.CacheCtx, contract, startResult.parentGasMeter, &err)()
+	defer HandleOutOfGasPanic(&err)()
 
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
@@ -86,10 +86,7 @@ func (p precompileFunToken) Run(
 	}
 
 	// Gas consumed by a local gas meter
-	gasUsed := startResult.CacheCtx.GasMeter().GasConsumed()
-	if !contract.UseGas(gasUsed) {
-		return nil, vm.ErrOutOfGas
-	}
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	return bz, err
 }
 

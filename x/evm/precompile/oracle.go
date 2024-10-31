@@ -48,9 +48,6 @@ func (p precompileOracle) Run(
 	}
 	method, args, ctx := startResult.Method, startResult.Args, startResult.CacheCtx
 
-	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
-	defer ReturnToParentGasMeter(startResult.CacheCtx, contract, startResult.parentGasMeter, &err)()
-
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
 		return p.queryExchangeRate(ctx, method, args)

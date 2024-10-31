@@ -150,7 +150,9 @@ type OnRunStartResult struct {
 
 	StateDB *statedb.StateDB
 
-	parentGasMeter sdk.GasMeter
+	parentGasMeter           sdk.GasMeter
+	parentKVGasConfig        sdk.GasConfig
+	parentTransientGasConfig sdk.GasConfig
 
 	PrecompileJournalEntry statedb.PrecompileCalled
 }
@@ -209,9 +211,11 @@ func OnRunStart(
 	// Temporarily switching to a local gas meter to enforce gas limit check for a precompile
 	// returning parent gas meter after execution or failure
 	parentGasMeter := cacheCtx.GasMeter()
-	cacheCtx = cacheCtx.WithGasMeter(storetypes.NewGasMeter(gasLimit)).
-		WithKVGasConfig(storetypes.GasConfig{}).
-		WithTransientKVGasConfig(storetypes.GasConfig{})
+
+	cacheCtx = cacheCtx.
+		WithGasMeter(storetypes.NewGasMeter(gasLimit)).
+		WithKVGasConfig(storetypes.KVGasConfig()).
+		WithTransientKVGasConfig(storetypes.TransientGasConfig())
 
 	return OnRunStartResult{
 		Args:           args,
@@ -234,24 +238,15 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 	OracleMethod_queryExchangeRate: false,
 }
 
-// ReturnToParentGasMeter resets the ctx.GasMeter back to a parent GasMeter before precompile execution.
-// Additionally, handles the out of gas panic by resetting the gas meter and returning an error.
-// This is used in order to avoid panics and to allow for the EVM to continue cleanup if the tx or query run out of gas.
-func ReturnToParentGasMeter(ctx sdk.Context, contract *vm.Contract, parentGasMeter sdk.GasMeter, err *error) func() {
+func HandleOutOfGasPanic(err *error) func() {
 	return func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
 			case storetypes.ErrorOutOfGas:
-				_ = contract.UseGas(ctx.GasMeter().GasConsumed())
-
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)
 			}
 		}
-		// Back to parent ctx gas meter (before entering precompile)
-		ctx = ctx.WithGasMeter(parentGasMeter).
-			WithKVGasConfig(storetypes.GasConfig{}).
-			WithTransientKVGasConfig(storetypes.GasConfig{})
 	}
 }
