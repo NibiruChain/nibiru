@@ -202,11 +202,10 @@ func OnRunStart(
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
-	// Temporarily switching to a local gas meter to enforce gas limit check for a precompile
-	// returning parent gas meter after execution or failure
+	// Switching to a local gas meter to enforce gas limit check for a precompile
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
-		WithKVGasConfig(sdk.GasConfig{}).
-		WithTransientKVGasConfig(sdk.GasConfig{})
+		WithKVGasConfig(store.KVGasConfig()).
+		WithTransientKVGasConfig(store.TransientGasConfig())
 
 	return OnRunStartResult{
 		Args:     args,
