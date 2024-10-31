@@ -84,6 +84,7 @@ for (1) ERC20 transfers with tokens that return false success values instead of
 throwing an error and (2) ERC20 transfers with other operations that don't bring
 about the expected resulting balance for the transfer recipient.
 - [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
+- [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
