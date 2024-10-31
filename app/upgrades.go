@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_2_0"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_3_0"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_4_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_1_0"
 )
 
 var Upgrades = []upgrades.Upgrade{
@@ -17,6 +18,7 @@ var Upgrades = []upgrades.Upgrade{
 	v1_2_0.Upgrade,
 	v1_3_0.Upgrade,
 	v1_4_0.Upgrade,
+	v2_1_0.Upgrade,
 }
 
 func (app *NibiruApp) setupUpgrades() {
@@ -26,7 +28,7 @@ func (app *NibiruApp) setupUpgrades() {
 
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
-		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler(app.ModuleManager, app.configurator))
+		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler(app.ModuleManager, app.configurator, app.ibcKeeper.ClientKeeper))
 	}
 }
 

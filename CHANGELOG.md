@@ -174,6 +174,7 @@ about the expected resulting balance for the transfer recipient.
 - [#1872](https://github.com/NibiruChain/nibiru/pull/1872) - chore(math): use cosmossdk.io/math to replace sdk types
 - [#1874](https://github.com/NibiruChain/nibiru/pull/1874) - chore(proto): remove the proto stringer as per Cosmos SDK migration guidelines
 - [#1932](https://github.com/NibiruChain/nibiru/pull/1932) - fix(gosdk): fix keyring import functions
+- [#3949](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 
 #### Dapp modules: perp, spot, oracle, etc
 
