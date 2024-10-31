@@ -233,4 +233,21 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		big.NewInt(int64(precompile.FunTokenGasLimitBankSend)), // customGas
 	)
 	s.Require().NoError(err)
+
+	s.deps.ResetGasMeter()
+
+	s.T().Log("Sad: callBankSend with local gas - insufficient gas amount")
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
+		deps.Sender.EthAddr,
+		&contractAddr,
+		true,
+		precompile.FunTokenGasLimitBankSend, // gasLimit for the entire call
+		"callBankSendLocalGas",
+		big.NewInt(1),      // erc20 amount
+		randomAcc.String(), // to
+		big.NewInt(50_000), // customGas - too small
+	)
+	s.Require().ErrorContains(err, "Failed to call bankSend")
 }
