@@ -63,7 +63,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
-	p.evmKeeper.Bank.StateDB = start.StateDB
+	p.evmKeeper.Bank.StateDB = startResult.StateDB
 
 	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
 	defer ReturnToParentGasMeter(startResult.CacheCtx, contract, startResult.parentGasMeter, &err)()
