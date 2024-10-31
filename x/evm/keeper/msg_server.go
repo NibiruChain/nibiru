@@ -203,9 +203,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	}
 }
 
-// ApplyEvmMsg computes the new state by applying the given message against the existing state.
-// If the message fails, the VM execution error with the reason will be returned to the client
-// and the transaction won't be committed to the store.
+// ApplyEvmMsg computes the new state by applying the given message against the
+// existing state. If the message fails, the VM execution error with the reason
+// will be returned to the client and the transaction won't be committed to the
+// store.
 //
 // # Reverted state
 //
@@ -460,11 +461,11 @@ func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunTo
 	fee := k.FeeForCreateFunToken(ctx)
 	from := sdk.MustAccAddressFromBech32(msg.Sender) // validation in msg.ValidateBasic
 
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx, from, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("unable to pay the \"create_fun_token_fee\": %w", err)
 	}
-	if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
+	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("failed to burn the \"create_fun_token_fee\" after payment: %w", err)
 	}
 	return nil
@@ -516,15 +517,14 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	coin sdk.Coin,
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// Step 1: Send Bank Coins to the EVM module
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+	// 1 | Send Bank Coins to the EVM module
+	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
 
+	// 2 | Mint ERC20 tokens to the recipient
 	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	// Step 2: Mint ERC20 tokens to the recipient
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
@@ -566,7 +566,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx,
 		sender,
 		evm.ModuleName,
@@ -600,7 +600,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
 	// in the BC → ERC20 conversion.
 	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualSentAmount))
-	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
+	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}

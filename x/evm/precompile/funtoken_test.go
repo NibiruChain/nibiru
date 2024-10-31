@@ -4,19 +4,17 @@ import (
 	"math/big"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
 )
 
 // TestSuite: Runs all the tests in the suite.
@@ -132,7 +130,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	randomAcc := testutil.AccAddress()
 
-	s.T().Log("Send using precompile")
+	s.T().Log("Send NIBI (FunToken) using precompile")
 	amtToSend := int64(420)
 	callArgs := []any{erc20, big.NewInt(amtToSend), randomAcc.String()}
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
@@ -146,6 +144,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	)
 	s.Require().NoError(err)
 	s.Require().Empty(ethTxResp.VmError)
+	s.True(deps.App.BankKeeper == deps.App.EvmKeeper.Bank)
 
 	evmtest.AssertERC20BalanceEqual(
 		s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(69_000),
@@ -157,6 +156,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
 	s.deps.ResetGasMeter()
+	s.Require().NotNil(deps.EvmKeeper.Bank.StateDB)
 
 	s.T().Log("Parse the response contract addr and response bytes")
 	var sentAmt *big.Int
