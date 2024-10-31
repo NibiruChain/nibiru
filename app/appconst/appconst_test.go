@@ -27,16 +27,16 @@ func (s *TestSuite) TestGetEthChainID() {
 	s.Run("localnet", func() {
 		s.EqualValues(
 			big.NewInt(appconst.ETH_CHAIN_ID_LOCALNET_0),
-			appconst.GetEthChainID("nibiru-localnet0"),
+			appconst.GetEthChainID("nibiru-localnet-0"),
 		)
 	})
 	s.Run("devnet", func() {
 		want := big.NewInt(appconst.ETH_CHAIN_ID_TESTNET_1)
-		given := "nibiru-testnet1"
+		given := "nibiru-testnet-1"
 		s.EqualValues(want, appconst.GetEthChainID(given))
 
 		want = big.NewInt(appconst.ETH_CHAIN_ID_DEVNET_2)
-		given = "nibiru-devnet2"
+		given = "nibiru-devnet-2"
 		s.EqualValues(want, appconst.GetEthChainID(given))
 	})
 	s.Run("else", func() {
