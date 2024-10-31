@@ -480,9 +480,6 @@ func (s *StateDB) Snapshot() int {
 
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *StateDB) RevertToSnapshot(revid int) {
-	fmt.Printf("len(s.validRevisions): %d\n", len(s.validRevisions))
-	fmt.Printf("s.validRevisions: %v\n", s.validRevisions)
-
 	// Find the snapshot in the stack of valid snapshots.
 	idx := sort.Search(len(s.validRevisions), func(i int) bool {
 		return s.validRevisions[i].id >= revid
@@ -572,7 +569,7 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 	return nil
 }
 
-func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
+func (s *StateDB) CacheCtxForPrecompile() (
 	sdk.Context, PrecompileCalled,
 ) {
 	if s.writeToCommitCtxFromCacheCtx == nil {
@@ -593,15 +590,14 @@ func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
 //
 // See [PrecompileCalled] for more info.
 func (s *StateDB) SavePrecompileCalledJournalChange(
-	precompileAddr common.Address,
 	journalChange PrecompileCalled,
 ) error {
 	s.Journal.append(journalChange)
 	s.multistoreCacheCount++
 	if s.multistoreCacheCount > maxMultistoreCacheCount {
 		return fmt.Errorf(
-			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d). Called address %s",
-			maxMultistoreCacheCount, precompileAddr.Hex(),
+			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d).",
+			maxMultistoreCacheCount,
 		)
 	}
 	return nil

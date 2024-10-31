@@ -41,9 +41,9 @@ type WebsocketsServer interface {
 }
 
 type SubscriptionResponseJSON struct {
-	Jsonrpc string      `json:"jsonrpc"`
-	Result  interface{} `json:"result"`
-	ID      float64     `json:"id"`
+	Jsonrpc string  `json:"jsonrpc"`
+	Result  any     `json:"result"`
+	ID      float64 `json:"id"`
 }
 
 type SubscriptionNotification struct {
@@ -53,8 +53,8 @@ type SubscriptionNotification struct {
 }
 
 type SubscriptionResult struct {
-	Subscription gethrpc.ID  `json:"subscription"`
-	Result       interface{} `json:"result"`
+	Subscription gethrpc.ID `json:"subscription"`
+	Result       any        `json:"result"`
 }
 
 type ErrorResponseJSON struct {
@@ -157,7 +157,7 @@ type wsConn struct {
 	mux  *sync.Mutex
 }
 
-func (w *wsConn) WriteJSON(v interface{}) error {
+func (w *wsConn) WriteJSON(v any) error {
 	w.mux.Lock()
 	defer w.mux.Unlock()
 
@@ -203,7 +203,7 @@ func (s *websocketsServer) readLoop(wsConn *wsConn) {
 			continue
 		}
 
-		var msg map[string]interface{}
+		var msg map[string]any
 		if err = json.Unmarshal(mb, &msg); err != nil {
 			s.sendErrResponse(wsConn, err.Error())
 			continue
@@ -299,8 +299,8 @@ func (s *websocketsServer) readLoop(wsConn *wsConn) {
 }
 
 // tcpGetAndSendResponse sends error response to client if params is invalid
-func (s *websocketsServer) getParamsAndCheckValid(msg map[string]interface{}, wsConn *wsConn) ([]interface{}, bool) {
-	params, ok := msg["params"].([]interface{})
+func (s *websocketsServer) getParamsAndCheckValid(msg map[string]any, wsConn *wsConn) ([]any, bool) {
+	params, ok := msg["params"].([]any)
 	if !ok {
 		s.sendErrResponse(wsConn, "invalid parameters")
 		return nil, false
@@ -336,7 +336,7 @@ func (s *websocketsServer) tcpGetAndSendResponse(wsConn *wsConn, mb []byte) erro
 		return errors.Wrap(err, "could not read body from response")
 	}
 
-	var wsSend interface{}
+	var wsSend any
 	err = json.Unmarshal(body, &wsSend)
 	if err != nil {
 		return errors.Wrap(err, "failed to unmarshal rest-server response")
@@ -362,7 +362,7 @@ func newPubSubAPI(clientCtx client.Context, logger log.Logger, tmWSClient *rpccl
 	}
 }
 
-func (api *pubSubAPI) subscribe(wsConn *wsConn, subID gethrpc.ID, params []interface{}) (pubsub.UnsubscribeFunc, error) {
+func (api *pubSubAPI) subscribe(wsConn *wsConn, subID gethrpc.ID, params []any) (pubsub.UnsubscribeFunc, error) {
 	method, ok := params[0].(string)
 	if !ok {
 		return nil, errors.New("invalid parameters")
@@ -462,11 +462,11 @@ func try(fn func(), l log.Logger, desc string) {
 	fn()
 }
 
-func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra interface{}) (pubsub.UnsubscribeFunc, error) {
+func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any) (pubsub.UnsubscribeFunc, error) {
 	crit := filters.FilterCriteria{}
 
 	if extra != nil {
-		params, ok := extra.(map[string]interface{})
+		params, ok := extra.(map[string]any)
 		if !ok {
 			err := errors.New("invalid criteria")
 			api.logger.Debug("invalid criteria", "type", fmt.Sprintf("%T", extra))
@@ -475,7 +475,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 
 		if params["address"] != nil {
 			address, isString := params["address"].(string)
-			addresses, isSlice := params["address"].([]interface{})
+			addresses, isSlice := params["address"].([]any)
 			if !isString && !isSlice {
 				err := errors.New("invalid addresses; must be address or array of addresses")
 				api.logger.Debug("invalid addresses", "type", fmt.Sprintf("%T", params["address"]))
@@ -502,7 +502,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 		}
 
 		if params["topics"] != nil {
-			topics, ok := params["topics"].([]interface{})
+			topics, ok := params["topics"].([]any)
 			if !ok {
 				err := errors.Errorf("invalid topics: %s", topics)
 				api.logger.Error("invalid topics", "type", fmt.Sprintf("%T", topics))
@@ -511,7 +511,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 
 			crit.Topics = make([][]common.Hash, len(topics))
 
-			addCritTopic := func(topicIdx int, topic interface{}) error {
+			addCritTopic := func(topicIdx int, topic any) error {
 				tstr, ok := topic.(string)
 				if !ok {
 					err := errors.Errorf("invalid topic: %s", topic)
@@ -538,7 +538,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra inte
 				}
 
 				// in case we actually have a list of subtopics
-				subtopicsList, ok := subtopics.([]interface{})
+				subtopicsList, ok := subtopics.([]any)
 				if !ok {
 					err := errors.New("invalid subtopics")
 					api.logger.Error("invalid subtopic", "type", fmt.Sprintf("%T", subtopics))
