@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+
 ### Nibiru EVM
 
 #### Nibiru EVM | Before Audit 2 [Nov, 2024]
@@ -50,19 +52,19 @@ Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 period. This section describes code changes that occured after that audit in
 preparation for a second audit starting in November 2024.
 
-- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol.  This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
+- [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
-Use effective gas price in RefundGas and make sure that units are properly
-reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
-and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
+  Use effective gas price in RefundGas and make sure that units are properly
+  reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+  and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
-Fix state consistency in precompile execution by ensuring proper journaling of
-state changes in the StateDB. This pull request makes sure that state is
-committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
-closely, and solves for a critical state inconsistency producible from the
-FunToken.sol precompiled contract. It also aligns the precompiles to use
-consistent setup and dynamic gas calculations, addressing the following tickets.
+  Fix state consistency in precompile execution by ensuring proper journaling of
+  state changes in the StateDB. This pull request makes sure that state is
+  committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
+  closely, and solves for a critical state inconsistency producible from the
+  FunToken.sol precompiled contract. It also aligns the precompiles to use
+  consistent setup and dynamic gas calculations, addressing the following tickets.
   - <https://github.com/NibiruChain/nibiru/issues/2083>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
@@ -70,19 +72,19 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
-from the changs in #2086, this pull request implements a new `JournalChange`
-struct that saves a deep copy of the state multi store before each
-state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
-Additionally, we commit the `StateDB` there as well. This guarantees that the
-non-EVM and EVM state will be in sync even if there are complex, multi-step
-Ethereum transactions, such as in the case of an EthereumTx that influences the
-`StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
-reverts inside of a try-catch.
+  from the changs in #2086, this pull request implements a new `JournalChange`
+  struct that saves a deep copy of the state multi store before each
+  state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
+  Additionally, we commit the `StateDB` there as well. This guarantees that the
+  non-EVM and EVM state will be in sync even if there are complex, multi-step
+  Ethereum transactions, such as in the case of an EthereumTx that influences the
+  `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
+  reverts inside of a try-catch.
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
 - [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
-for (1) ERC20 transfers with tokens that return false success values instead of
-throwing an error and (2) ERC20 transfers with other operations that don't bring
-about the expected resulting balance for the transfer recipient.
+  for (1) ERC20 transfers with tokens that return false success values instead of
+  throwing an error and (2) ERC20 transfers with other operations that don't bring
+  about the expected resulting balance for the transfer recipient.
 - [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
