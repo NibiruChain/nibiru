@@ -21,9 +21,7 @@ func AssertERC20BalanceEqual(
 	erc20, account gethcommon.Address,
 	expectedBalance *big.Int,
 ) {
-	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedBalance.String(), actualBalance.String(), "expected %s, got %s", expectedBalance, actualBalance)
+	AssertERC20BalanceEqualWithDescription(t, deps, erc20, account, expectedBalance, "")
 }
 
 // CreateFunTokenForBankCoin: Uses the "TestDeps.Sender" account to create a
@@ -95,9 +93,9 @@ func AssertBankBalanceEqual(
 	account gethcommon.Address,
 	expectedBalance *big.Int,
 ) {
-	bech32Addr := eth.EthAddrToNibiruAddr(account)
-	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
-	assert.Zero(t, expectedBalance.Cmp(actualBalance), "expected %s, got %s", expectedBalance, actualBalance)
+	AssertBankBalanceEqualWithDescription(
+		t, deps, denom, account, expectedBalance, "",
+	)
 }
 
 // BigPow multiplies "amount" by 10 to the "pow10Exp".
@@ -111,13 +109,57 @@ type FunTokenBalanceAssert struct {
 	Account      gethcommon.Address
 	BalanceBank  *big.Int
 	BalanceERC20 *big.Int
+	Description  string
 }
 
 func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps) {
-	AssertERC20BalanceEqual(
+	AssertERC20BalanceEqualWithDescription(
 		t, deps, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
+		bals.Description,
 	)
-	AssertBankBalanceEqual(
+	AssertBankBalanceEqualWithDescription(
 		t, deps, bals.FunToken.BankDenom, bals.Account, bals.BalanceBank,
+		bals.Description,
 	)
+}
+
+func AssertERC20BalanceEqualWithDescription(
+	t *testing.T,
+	deps TestDeps,
+	erc20, account gethcommon.Address,
+	expectedBalance *big.Int,
+	description string,
+) {
+	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx)
+	var errSuffix string
+	if description == "" {
+		errSuffix = description
+	} else {
+		errSuffix = ": " + description
+	}
+	assert.NoError(t, err, errSuffix)
+	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
+		"expected %s, got %s", expectedBalance, actualBalance,
+		errSuffix,
+	)
+}
+
+func AssertBankBalanceEqualWithDescription(
+	t *testing.T,
+	deps TestDeps,
+	denom string,
+	account gethcommon.Address,
+	expectedBalance *big.Int,
+	description string,
+) {
+	bech32Addr := eth.EthAddrToNibiruAddr(account)
+	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
+	var errSuffix string
+	if description == "" {
+		errSuffix = description
+	} else {
+		errSuffix = ": " + description
+	}
+	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
+		"expected %s, got %s", expectedBalance, actualBalance, errSuffix)
 }
