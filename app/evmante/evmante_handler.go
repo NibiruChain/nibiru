@@ -13,16 +13,16 @@ func NewAnteHandlerEVM(
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		// outermost AnteDecorator. SetUpContext must be called first
-		NewEthSetUpContextDecorator(&options.EvmKeeper),
-		NewMempoolGasPriceDecorator(&options.EvmKeeper),
-		NewEthValidateBasicDecorator(&options.EvmKeeper),
-		NewEthSigVerificationDecorator(&options.EvmKeeper),
-		NewAnteDecVerifyEthAcc(&options.EvmKeeper, options.AccountKeeper),
-		CanTransferDecorator{&options.EvmKeeper},
-		NewAnteDecEthGasConsume(&options.EvmKeeper, options.MaxTxGasWanted),
-		NewAnteDecEthIncrementSenderSequence(&options.EvmKeeper, options.AccountKeeper),
+		NewEthSetUpContextDecorator(options.EvmKeeper),
+		NewMempoolGasPriceDecorator(options.EvmKeeper),
+		NewEthValidateBasicDecorator(options.EvmKeeper),
+		NewEthSigVerificationDecorator(options.EvmKeeper),
+		NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper),
+		CanTransferDecorator{options.EvmKeeper},
+		NewAnteDecEthGasConsume(options.EvmKeeper, options.MaxTxGasWanted),
+		NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),
 		ante.AnteDecoratorGasWanted{},
 		// emit eth tx hash and index at the very last ante handler.
-		NewEthEmitEventDecorator(&options.EvmKeeper),
+		NewEthEmitEventDecorator(options.EvmKeeper),
 	)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -42,6 +43,11 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 
+	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
+	// any operation that has the potential to use Bank send methods. This will
+	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
+	// recorded if wei (NIBI) is transferred.
+	p.Bank.StateDB = startResult.StateDB
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
 		bz, err = p.execute(startResult, contract.CallerAddress, readonly)
@@ -66,6 +72,7 @@ func (p precompileWasm) Run(
 }
 
 type precompileWasm struct {
+	*evmkeeper.Keeper
 	Wasm Wasm
 }
 
@@ -91,6 +98,7 @@ type Wasm struct {
 
 func PrecompileWasm(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	return precompileWasm{
+		Keeper: keepers.EvmKeeper,
 		Wasm: Wasm{
 			wasmkeeper.NewDefaultPermissionKeeper(keepers.WasmKeeper),
 			keepers.WasmKeeper,

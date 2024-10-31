@@ -25,7 +25,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	deps := evmtest.NewTestDeps()
 
 	// assert that the ERC20 contract is not deployed
-	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.StateDB().GetNonce(deps.Sender.EthAddr))
+	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.NewStateDB().GetNonce(deps.Sender.EthAddr))
 	_, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, expectedERC20Addr)
 	s.Error(err)
 

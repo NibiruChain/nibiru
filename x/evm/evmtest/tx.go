@@ -7,9 +7,8 @@ import (
 	"math/big"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	"cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,7 +27,7 @@ import (
 
 // ExecuteNibiTransfer executes nibi transfer
 func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
-	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
 	recipient := NewEthPrivAcc().EthAddr
 
 	txArgs := evm.JsonTxArgs{
@@ -67,7 +66,7 @@ func DeployContract(
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
-	nonce := deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
@@ -124,7 +123,7 @@ func DeployAndExecuteERC20Transfer(
 		"transfer", NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
 	)
 	require.NoError(t, err)
-	nonce = deps.StateDB().GetNonce(deps.Sender.EthAddr)
+	nonce = deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
 	txArgs := evm.JsonTxArgs{
 		From:  &deps.Sender.EthAddr,
 		To:    &contractAddr,
@@ -149,7 +148,7 @@ func CallContractTx(
 	input []byte,
 	sender EthPrivKeyAcc,
 ) (ethTxMsg *evm.MsgEthereumTx, resp *evm.MsgEthereumTxResponse, err error) {
-	nonce := deps.StateDB().GetNonce(sender.EthAddr)
+	nonce := deps.NewStateDB().GetNonce(sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(evm.JsonTxArgs{
 		From:  &sender.EthAddr,
 		To:    &contractAddr,
@@ -170,6 +169,8 @@ func CallContractTx(
 	resp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
 	return ethTxMsg, resp, err
 }
+
+var DefaultEthCallGasLimit = srvconfig.DefaultEthCallGasLimit
 
 // GenerateEthTxMsgAndSigner estimates gas, sets gas limit and returns signer for
 // the tx.
@@ -220,7 +221,7 @@ func TransferWei(
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
-		deps.StateDB().GetNonce(ethAcc.EthAddr),
+		deps.NewStateDB().GetNonce(ethAcc.EthAddr),
 		&to,
 		amountWei,
 		gethparams.TxGas,

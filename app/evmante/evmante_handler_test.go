@@ -69,7 +69,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.StateDB()
+			stateDB := deps.NewStateDB()
 
 			anteHandlerEVM := evmante.NewAnteHandlerEVM(
 				ante.AnteHandlerOptions{

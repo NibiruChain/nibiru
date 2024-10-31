@@ -72,9 +72,8 @@ func (ctd CanTransferDecorator) AnteHandle(
 			BaseFeeWei:    baseFeeWeiPerGas,
 		}
 
-		stateDB := statedb.New(
+		stateDB := ctd.NewStateDB(
 			ctx,
-			ctd.EVMKeeper,
 			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
 		)
 		evmInstance := ctd.EVMKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)

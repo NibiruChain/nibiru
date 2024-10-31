@@ -78,6 +78,10 @@ type StateDB struct {
 	accessList *accessList
 }
 
+func FromVM(evmObj *vm.EVM) *StateDB {
+	return evmObj.StateDB.(*StateDB)
+}
+
 // New creates a new state from a given trie.
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	return &StateDB{

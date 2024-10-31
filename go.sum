@@ -235,8 +235,8 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL9G/z3X7k=
 github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
-github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru h1:PgFpxDe+7+OzWHs4zXlml5j2i9sGq2Zpd3ndYQG29/0=
-github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.2 h1:HtLNrkp0HhgxtbpdNwsasOod4uUNFpuwYpyceFtbj3E=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.2/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru h1:o6lRFt57izoYwzN5cG8tnnBtJcaO3X7MjjN7PGGNCFg=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru/go.mod h1:kvvL3nDceUcB+1qGUBAsVf5dW23RBR77fqxgx2PGNrQ=
 github.com/NibiruChain/wasmd v0.44.0-nibiru h1:b+stNdbMFsl0+o4KedXyF83qRnEpB/jCiTGZZgv2h2U=

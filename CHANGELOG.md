@@ -68,7 +68,12 @@ consistent setup and dynamic gas calculations, addressing the following tickets.
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
+- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
 from the changs in #2086, this pull request implements a new `JournalChange`
 struct that saves a deep copy of the state multi store before each
@@ -78,12 +83,17 @@ non-EVM and EVM state will be in sync even if there are complex, multi-step
 Ethereum transactions, such as in the case of an EthereumTx that influences the
 `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
 reverts inside of a try-catch.
-- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
-- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
-for (1) ERC20 transfers with tokens that return false success values instead of
-throwing an error and (2) ERC20 transfers with other operations that don't bring
-about the expected resulting balance for the transfer recipient.
-- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
+- [#2095](https://github.com/NibiruChain/nibiru/pull/2095) - fix(evm): This
+change records NIBI (ether) transfers on the `StateDB` during precompiled
+contract calls using the `NibiruBankKeeper`, which is struct extension of
+the `bankkeeper.BaseKeeper` that is used throughout Nibiru.
+The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and records
+balance changes in wei as journal changes automatically. This guarantees that
+commits and reversions of the `StateDB` do not misalign with the state of the
+Bank module. This code change uses the `NibiruBankKeeper` on all modules that
+depend on x/bank, such as the EVM and Wasm modules. 
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
+tests for race conditions within funtoken precompile
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 
