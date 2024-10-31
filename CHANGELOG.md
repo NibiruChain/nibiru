@@ -57,18 +57,35 @@ preparation for a second audit starting in November 2024.
   and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
-  Fix state consistency in precompile execution by ensuring proper journaling of
-  state changes in the StateDB. This pull request makes sure that state is
-  committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
-  closely, and solves for a critical state inconsistency producible from the
-  FunToken.sol precompiled contract. It also aligns the precompiles to use
-  consistent setup and dynamic gas calculations, addressing the following tickets.
-  - https://github.com/NibiruChain/nibiru/issues/2083
-  - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43
-  - https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47
+Fix state consistency in precompile execution by ensuring proper journaling of
+state changes in the StateDB. This pull request makes sure that state is
+committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
+closely, and solves for a critical state inconsistency producible from the
+FunToken.sol precompiled contract. It also aligns the precompiles to use
+consistent setup and dynamic gas calculations, addressing the following tickets.
+  - <https://github.com/NibiruChain/nibiru/issues/2083>
+  - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43>
+  - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
+- [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
+from the changs in #2086, this pull request implements a new `JournalChange`
+struct that saves a deep copy of the state multi store before each
+state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
+Additionally, we commit the `StateDB` there as well. This guarantees that the
+non-EVM and EVM state will be in sync even if there are complex, multi-step
+Ethereum transactions, such as in the case of an EthereumTx that influences the
+`StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
+reverts inside of a try-catch.
+- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
+- [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
+- [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -148,7 +165,6 @@ preparation for a second audit starting in November 2024.
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
-- [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 
 ### State Machine Breaking (Other)
 
