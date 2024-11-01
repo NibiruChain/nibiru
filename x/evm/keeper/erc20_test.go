@@ -35,7 +35,7 @@ func (s *Suite) TestERC20Calls() {
 	s.T().Log("Transfer - Not enough funds")
 	{
 		amt := big.NewInt(9_420)
-		_, err := deps.EvmKeeper.ERC20().Transfer(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, amt, deps.Ctx)
+		_, _, err := deps.EvmKeeper.ERC20().Transfer(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, amt, deps.Ctx)
 		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
 		// balances unchanged
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
@@ -45,7 +45,7 @@ func (s *Suite) TestERC20Calls() {
 	s.T().Log("Transfer - Success (sanity check)")
 	{
 		amt := big.NewInt(9_420)
-		sentAmt, err := deps.EvmKeeper.ERC20().Transfer(
+		sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
 			contract, evm.EVM_MODULE_ADDRESS, deps.Sender.EthAddr, amt, deps.Ctx,
 		)
 		s.Require().NoError(err)

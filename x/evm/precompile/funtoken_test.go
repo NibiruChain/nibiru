@@ -254,5 +254,5 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		randomAcc.String(), // to
 		big.NewInt(50_000), // customGas - too small
 	)
-	s.Require().ErrorContains(err, "Failed to call bankSend")
+	s.Require().ErrorContains(err, "execution reverted")
 }

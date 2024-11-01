@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./FunToken.sol";
+import "./IFunToken.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract TestFunTokenPrecompileLocalGas {
     address erc20;
@@ -16,15 +17,21 @@ contract TestFunTokenPrecompileLocalGas {
         uint256 amount,
         string memory bech32Recipient
     ) public {
-        (bool success,) = FUNTOKEN_PRECOMPILE_ADDRESS.call(
-            abi.encodeWithSignature(
-                "bankSend(address,uint256,string)",
-                erc20,
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+            erc20,
                 amount,
-                bech32Recipient
+            bech32Recipient
+        );
+        require(
+            sentAmount == amount,
+            string.concat(
+                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "sentAmount ",
+                Strings.toString(sentAmount),
+                "expected ",
+                Strings.toString(amount)
             )
         );
-        require(success, "Failed to call bankSend");
     }
 
     // Calls bankSend of the FunToken Precompile with the gas amount set in parameter.
@@ -34,14 +41,20 @@ contract TestFunTokenPrecompileLocalGas {
         string memory bech32Recipient,
         uint256 customGas
     ) public {
-        (bool success,) = FUNTOKEN_PRECOMPILE_ADDRESS.call{gas: customGas}(
-            abi.encodeWithSignature(
-                "bankSend(address,uint256,string)",
-                erc20,
-                amount,
-                bech32Recipient
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend{gas: customGas}(
+            erc20,
+            amount,
+            bech32Recipient
+        );
+        require(
+            sentAmount == amount,
+            string.concat(
+                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "sentAmount ",
+                Strings.toString(sentAmount),
+                "expected ",
+                Strings.toString(amount)
             )
         );
-        require(success, "Failed to call bankSend with custom gas");
     }
 }

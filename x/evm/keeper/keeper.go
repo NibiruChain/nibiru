@@ -103,7 +103,6 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
 ) (blockGasUsed uint64, err error) {
-
 	// Either k.EvmState.BlockGasUsed.GetOr() or k.EvmState.BlockGasUsed.Set()
 	// also consume gas and could panic.
 	defer HandleOutOfGasPanic(&err, "")
