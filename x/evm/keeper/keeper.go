@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -101,13 +102,19 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 // block tx.
 func (k *Keeper) AddToBlockGasUsed(
 	ctx sdk.Context, gasUsed uint64,
-) (uint64, error) {
-	result := k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
-	if result < gasUsed {
+) (blockGasUsed uint64, err error) {
+
+	// Either k.EvmState.BlockGasUsed.GetOr() or k.EvmState.BlockGasUsed.Set()
+	// also consume gas and could panic.
+	defer HandleOutOfGasPanic(&err, "")
+
+	blockGasUsed = k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
+	if blockGasUsed < gasUsed {
 		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
 	}
-	k.EvmState.BlockGasUsed.Set(ctx, result)
-	return result, nil
+	k.EvmState.BlockGasUsed.Set(ctx, blockGasUsed)
+
+	return blockGasUsed, nil
 }
 
 // GetMinGasUsedMultiplier - value from 0 to 1
@@ -142,4 +149,21 @@ func (k Keeper) Tracer(
 	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
 ) vm.EVMLogger {
 	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+}
+
+// HandleOutOfGasPanic gracefully captures "out of gas" panic and just sets the value to err
+func HandleOutOfGasPanic(err *error, format string) func() {
+	return func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case sdk.ErrorOutOfGas:
+				*err = vm.ErrOutOfGas
+			default:
+				panic(r)
+			}
+		}
+		if err != nil && format != "" {
+			*err = fmt.Errorf("%s: %w", format, *err)
+		}
+	}
 }

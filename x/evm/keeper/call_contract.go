@@ -71,11 +71,7 @@ func (k Keeper) CallContractWithInput(
 ) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("CallContractError: %w", err)
-		}
-	}()
+	defer HandleOutOfGasPanic(&err, "CallContractError")
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
@@ -108,11 +104,8 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
-	// Using tmp context to not modify the state in case of evm revert
-	tmpCtx, commitCtx := ctx.CacheContext()
-
 	evmResp, evmObj, err = k.ApplyEvmMsg(
-		tmpCtx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
+		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
 	)
 	if err != nil {
 		// We don't know the actual gas used, so consuming the gas limit
@@ -135,20 +128,21 @@ func (k Keeper) CallContractWithInput(
 	} else {
 		// Success, committing the state to ctx
 		if commit {
-			commitCtx()
-			totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+			blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 			if err != nil {
 				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 				return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
 			}
-			k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+			k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-			err = k.EmitEthereumTxEvents(ctx, contract, gethcore.LegacyTxType, evmMsg, evmResp)
-			if err != nil {
-				return nil, nil, errors.Wrap(err, "error emitting ethereum tx events")
-			}
-			blockTxIdx := uint64(txConfig.TxIndex) + 1
-			k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+			// TODO: remove after migrating logs
+			//err = k.EmitLogEvents(ctx, evmResp)
+			//if err != nil {
+			//	return nil, nil, errors.Wrap(err, "error emitting tx logs")
+			//}
+
+			//blockTxIdx := uint64(txConfig.TxIndex) + 1
+			//k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 		}
 		return evmResp, evmObj, nil
 	}

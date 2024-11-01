@@ -109,11 +109,11 @@ type precompileFunToken struct {
 //	function bankSend(address erc20, uint256 amount, string memory to) external;
 //	```
 func (p precompileFunToken) bankSend(
-	start OnRunStartResult,
+	startResult OnRunStartResult,
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	ctx, method, args := start.CacheCtx, start.Method, start.Args
+	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
@@ -122,6 +122,8 @@ func (p precompileFunToken) bankSend(
 	if err != nil {
 		return
 	}
+
+	var evmResponses []*evm.MsgEthereumTxResponse
 
 	// ERC20 must have FunToken mapping
 	funtokens := p.evmKeeper.FunTokens.Collect(
@@ -146,10 +148,11 @@ func (p precompileFunToken) bankSend(
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
-	gotAmount, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
+	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
 	}
+	evmResponses = append(evmResponses, transferResp)
 
 	// EVM account mints FunToken.BankDenom to module account
 	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(gotAmount))
@@ -158,17 +161,18 @@ func (p precompileFunToken) bankSend(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		_, err = p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx)
-		if err != nil {
-			err = fmt.Errorf("ERC20.Burn: %w", err)
+		burnResp, e := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx)
+		if e != nil {
+			err = fmt.Errorf("ERC20.Burn: %w", e)
 			return
 		}
+		evmResponses = append(evmResponses, burnResp)
 	} else {
 		// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
 		// any operation that has the potential to use Bank send methods. This will
 		// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
 		// recorded if wei (NIBI) is transferred.
-		p.evmKeeper.Bank.StateDB = start.StateDB
+		p.evmKeeper.Bank.StateDB = startResult.StateDB
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
@@ -183,7 +187,7 @@ func (p precompileFunToken) bankSend(
 	// any operation that has the potential to use Bank send methods. This will
 	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
 	// recorded if wei (NIBI) is transferred.
-	p.evmKeeper.Bank.StateDB = start.StateDB
+	p.evmKeeper.Bank.StateDB = startResult.StateDB
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,
@@ -194,6 +198,11 @@ func (p precompileFunToken) bankSend(
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
+	}
+	for _, resp := range evmResponses {
+		for _, log := range resp.Logs {
+			startResult.StateDB.AddLog(log.ToEthereum())
+		}
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events

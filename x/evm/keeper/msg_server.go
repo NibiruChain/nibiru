@@ -64,6 +64,7 @@ func (k *Keeper) EthereumTx(
 
 	// pass true to commit the StateDB
 	evmResp, _, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig, false)
+
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -74,31 +75,34 @@ func (k *Keeper) EthereumTx(
 	if !evmResp.Failed() {
 		commitCtx()
 	}
+	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+
+	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+	if err != nil {
+		return nil, errors.Wrap(err, "error adding transient gas used to block")
+	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
 	refundGas := uint64(0)
-	if evmMsg.Gas() > evmResp.GasUsed {
-		refundGas = evmMsg.Gas() - evmResp.GasUsed
+	if evmMsg.Gas() > blockGasUsed {
+		refundGas = evmMsg.Gas() - blockGasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
-	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-
-	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if err != nil {
-		return nil, errors.Wrap(err, "error adding transient gas used to block")
-	}
-
 	// reset the gas meter for current TxMsg (EthereumTx)
-	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
+	}
+	err = k.EmitLogEvents(ctx, evmResp)
+	if err != nil {
+		return nil, errors.Wrap(err, "error emitting tx logs")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
@@ -584,7 +588,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// converted to its Bank Coin representation, a balance of the ERC20 is left
 	// inside the EVM module account in order to convert the coins back to
 	// ERC20s.
-	actualSentAmount, err := k.ERC20().Transfer(
+	actualSentAmount, _, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
@@ -644,17 +648,6 @@ func (k *Keeper) EmitEthereumTxEvents(
 		return errors.Wrap(err, "failed to emit event ethereum tx")
 	}
 
-	// Typed event: eth.evm.v1.EventTxLog
-	txLogs := make([]string, len(evmResp.Logs))
-	for i, log := range evmResp.Logs {
-		value, err := json.Marshal(log)
-		if err != nil {
-			return errors.Wrap(err, "failed to encode log")
-		}
-		txLogs[i] = string(value)
-	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
-
 	// Untyped event: "message", used for tendermint subscription
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -686,6 +679,25 @@ func (k *Keeper) EmitEthereumTxEvents(
 			})
 		}
 	}
+
+	return nil
+}
+
+// EmitLogEvents emits all types of EVM events applicable to a particular execution case
+func (k *Keeper) EmitLogEvents(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+) error {
+	// Typed event: eth.evm.v1.EventTxLog
+	txLogs := make([]string, len(evmResp.Logs))
+	for i, log := range evmResp.Logs {
+		value, err := json.Marshal(log)
+		if err != nil {
+			return errors.Wrap(err, "failed to encode log")
+		}
+		txLogs[i] = string(value)
+	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
 
 	return nil
 }
