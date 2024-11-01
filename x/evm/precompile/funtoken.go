@@ -6,18 +6,14 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -55,6 +51,7 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
+	p.evmKeeper.Bank.StateDB = start.StateDB
 
 	method := start.Method
 	switch PrecompileMethod(method.Name) {
@@ -74,14 +71,12 @@ func (p precompileFunToken) Run(
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
 	return precompileFunToken{
-		bankKeeper: keepers.BankKeeper,
-		evmKeeper:  keepers.EvmKeeper,
+		evmKeeper: keepers.EvmKeeper,
 	}
 }
 
 type precompileFunToken struct {
-	bankKeeper bankkeeper.Keeper
-	evmKeeper  evmkeeper.Keeper
+	evmKeeper *evmkeeper.Keeper
 }
 
 // bankSend: Implements "IFunToken.bankSend"
@@ -151,7 +146,12 @@ func (p precompileFunToken) bankSend(
 			return
 		}
 	} else {
-		err = SafeMintCoins(ctx, evm.ModuleName, coinToSend, p.bankKeeper, start.StateDB)
+		// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
+		// any operation that has the potential to use Bank send methods. This will
+		// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
+		// recorded if wei (NIBI) is transferred.
+		p.evmKeeper.Bank.StateDB = start.StateDB
+		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
 				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
@@ -160,13 +160,17 @@ func (p precompileFunToken) bankSend(
 	}
 
 	// Transfer the bank coin
-	err = SafeSendCoinFromModuleToAccount(
+	//
+	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
+	// any operation that has the potential to use Bank send methods. This will
+	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
+	// recorded if wei (NIBI) is transferred.
+	p.evmKeeper.Bank.StateDB = start.StateDB
+	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,
 		toAddr,
-		coinToSend,
-		p.bankKeeper,
-		start.StateDB,
+		sdk.NewCoins(coinToSend),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
@@ -177,58 +181,6 @@ func (p precompileFunToken) bankSend(
 	// TODO: UD-DEBUG: feat: Emit EVM events
 
 	return method.Outputs.Pack(gotAmount)
-}
-
-func SafeMintCoins(
-	ctx sdk.Context,
-	moduleName string,
-	amt sdk.Coin,
-	bk bankkeeper.Keeper,
-	db *statedb.StateDB,
-) error {
-	err := bk.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(amt))
-	if err != nil {
-		return err
-	}
-	if amt.Denom == evm.EVMBankDenom {
-		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
-		balAfter := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
-		db.SetBalanceWei(
-			evm.EVM_MODULE_ADDRESS,
-			evm.NativeToWei(balAfter),
-		)
-	}
-
-	return nil
-}
-
-func SafeSendCoinFromModuleToAccount(
-	ctx sdk.Context,
-	senderModule string,
-	recipientAddr sdk.AccAddress,
-	amt sdk.Coin,
-	bk bankkeeper.Keeper,
-	db *statedb.StateDB,
-) error {
-	err := bk.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, sdk.NewCoins(amt))
-	if err != nil {
-		return err
-	}
-	if amt.Denom == evm.EVMBankDenom {
-		evmBech32Addr := auth.NewModuleAddress(evm.ModuleName)
-		balAfterFrom := bk.GetBalance(ctx, evmBech32Addr, amt.Denom).Amount.BigInt()
-		db.SetBalanceWei(
-			evm.EVM_MODULE_ADDRESS,
-			evm.NativeToWei(balAfterFrom),
-		)
-
-		balAfterTo := bk.GetBalance(ctx, recipientAddr, amt.Denom).Amount.BigInt()
-		db.SetBalanceWei(
-			eth.NibiruAddrToEthAddr(recipientAddr),
-			evm.NativeToWei(balAfterTo),
-		)
-	}
-	return nil
 }
 
 func (p precompileFunToken) decomposeBankSendArgs(args []any) (

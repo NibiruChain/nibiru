@@ -83,7 +83,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.StateDB()
+			stateDB := deps.NewStateDB()
 			anteDec := ante.AnteDecoratorGasWanted{}
 
 			tx := tc.txSetup(&deps)
