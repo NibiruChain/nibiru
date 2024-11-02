@@ -438,6 +438,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		return nil, err
 	}
 
+	// The gas limit is now the highest gas limit that results in an executable transaction
 	// Reject the transaction as invalid if it still fails at the highest allowance
 	if hi == gasCap {
 		failed, result, err := executable(hi)
@@ -445,17 +446,19 @@ func (k Keeper) EstimateGasForEvmCallType(
 			return nil, fmt.Errorf("eth call exec error: %w", err)
 		}
 
-		if failed {
-			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
-				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(result.Ret))
-				}
-				return nil, fmt.Errorf("VMError: %s", result.VmError)
+		if failed && result != nil {
+			if result.VmError == vm.ErrExecutionReverted.Error() {
+				return nil, fmt.Errorf("Estimate gas VMError: %w", evm.NewExecErrorWithReason(result.Ret))
 			}
-			// Otherwise, the specified gas cap is too low
-			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+
+			if result.VmError == vm.ErrOutOfGas.Error() {
+				return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+			}
+
+			return nil, fmt.Errorf("Estimgate gas VMError: %s", result.VmError)
 		}
 	}
+
 	return &evm.EstimateGasResponse{Gas: hi}, nil
 }
 
