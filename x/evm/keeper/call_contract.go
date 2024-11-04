@@ -113,37 +113,38 @@ func (k Keeper) CallContractWithInput(
 		err = errors.Wrap(err, "failed to apply ethereum core message")
 		return
 	}
+
 	if evmResp.Failed() {
 		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
-		if !strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {
-			if evmResp.VmError == vm.ErrExecutionReverted.Error() {
-				err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
-				return
-			}
-			err = fmt.Errorf("VMError: %s", evmResp.VmError)
+		if strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {
+			err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
 			return
 		}
-		err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
-		return
-	} else {
-		// Success, committing the state to ctx
-		if commit {
-			blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-			if err != nil {
-				k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-				return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
-			}
-			k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
-			k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-			// TODO: remove after migrating logs
-			//err = k.EmitLogEvents(ctx, evmResp)
-			//if err != nil {
-			//	return nil, nil, errors.Wrap(err, "error emitting tx logs")
-			//}
-
-			//blockTxIdx := uint64(txConfig.TxIndex) + 1
-			//k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+		if evmResp.VmError == vm.ErrExecutionReverted.Error() {
+			err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+			return
 		}
-		return evmResp, evmObj, nil
+		err = fmt.Errorf("VMError: %s", evmResp.VmError)
+		return
 	}
+
+	// Success, update block gas used and bloom filter
+	if commit {
+		blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+		if err != nil {
+			k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
+			return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
+		}
+		k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
+		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+		// TODO: remove after migrating logs
+		//err = k.EmitLogEvents(ctx, evmResp)
+		//if err != nil {
+		//	return nil, nil, errors.Wrap(err, "error emitting tx logs")
+		//}
+
+		// blockTxIdx := uint64(txConfig.TxIndex) + 1
+		// k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+	}
+	return evmResp, evmObj, nil
 }
