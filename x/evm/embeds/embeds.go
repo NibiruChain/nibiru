@@ -35,6 +35,8 @@ var (
 	testERC20TransferThenPrecompileSendJson []byte
 	//go:embed artifacts/contracts/TestNativeSendThenPrecompileSend.sol/TestNativeSendThenPrecompileSend.json
 	testNativeSendThenPrecompileSendJson []byte
+	//go:embed artifacts/contracts/TestPrecompileSelfCallRevert.sol/TestPrecompileSelfCallRevert.json
+	testPrecompileSelfCallRevertJson []byte
 )
 
 var (
@@ -104,6 +106,16 @@ var (
 		Name:      "TestERC20TransferThenPrecompileSend.sol",
 		EmbedJSON: testERC20TransferThenPrecompileSendJson,
 	}
+
+	// SmartContract_TestPrecompileSelfCallRevert is a test contract
+	// that creates another instance of itself, calls the precompile method and then force reverts.
+	// It tests a race condition where the state DB commit
+	// may save the wrong state before the precompile execution, not revert it entirely,
+	// potentially causing an infinite mint of funds.
+	SmartContract_TestPrecompileSelfCallRevert = CompiledEvmContract{
+		Name:      "TestPrecompileSelfCallRevert.sol",
+		EmbedJSON: testPrecompileSelfCallRevertJson,
+	}
 )
 
 func init() {
@@ -117,6 +129,7 @@ func init() {
 	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
+	SmartContract_TestPrecompileSelfCallRevert.MustLoad()
 }
 
 type CompiledEvmContract struct {
