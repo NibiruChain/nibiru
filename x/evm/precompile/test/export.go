@@ -25,6 +25,7 @@ import (
 const (
 	WasmGasLimitInstantiate uint64 = 1_000_000
 	WasmGasLimitExecute     uint64 = 10_000_000
+	WasmGasLimitQuery       uint64 = 200_000
 )
 
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
@@ -186,7 +187,7 @@ func AssertWasmCounterState(
 		&precompile.PrecompileAddr_Wasm,
 		true,
 		input,
-		WasmGasLimitInstantiate,
+		WasmGasLimitQuery,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -207,12 +208,11 @@ func AssertWasmCounterState(
 
 	s.T().Log("Response is a JSON-encoded struct from the Wasm contract")
 	var wasmMsg wasm.RawContractMessage
-	err = json.Unmarshal(queryResp, &wasmMsg)
-	s.NoError(err)
+	s.NoError(json.Unmarshal(queryResp, &wasmMsg))
 	s.NoError(wasmMsg.ValidateBasic())
+
 	var typedResp QueryMsgCountResp
-	err = json.Unmarshal(wasmMsg, &typedResp)
-	s.NoError(err)
+	s.NoError(json.Unmarshal(queryResp, &typedResp))
 
 	s.EqualValues(wantCount, typedResp.Count)
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
