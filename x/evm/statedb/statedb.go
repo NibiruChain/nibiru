@@ -78,6 +78,10 @@ type StateDB struct {
 	accessList *accessList
 }
 
+func FromVM(evmObj *vm.EVM) *StateDB {
+	return evmObj.StateDB.(*StateDB)
+}
+
 // New creates a new state from a given trie.
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	return &StateDB{
@@ -569,7 +573,7 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 	return nil
 }
 
-func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
+func (s *StateDB) CacheCtxForPrecompile() (
 	sdk.Context, PrecompileCalled,
 ) {
 	if s.writeToCommitCtxFromCacheCtx == nil {
@@ -590,15 +594,14 @@ func (s *StateDB) CacheCtxForPrecompile(precompileAddr common.Address) (
 //
 // See [PrecompileCalled] for more info.
 func (s *StateDB) SavePrecompileCalledJournalChange(
-	precompileAddr common.Address,
 	journalChange PrecompileCalled,
 ) error {
 	s.Journal.append(journalChange)
 	s.multistoreCacheCount++
 	if s.multistoreCacheCount > maxMultistoreCacheCount {
 		return fmt.Errorf(
-			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d). Called address %s",
-			maxMultistoreCacheCount, precompileAddr.Hex(),
+			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d).",
+			maxMultistoreCacheCount,
 		)
 	}
 	return nil

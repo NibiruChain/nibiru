@@ -180,7 +180,9 @@ func (k Keeper) CallContract(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	evmResp, _, err = k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput)
+	evmResp, _, err = k.CallContractWithInput(
+		ctx, fromAcc, contract, commit, contractInput,
+	)
 	return evmResp, err
 }
 

@@ -57,7 +57,7 @@ func (b *Backend) BlockNumber() (hexutil.Uint64, error) {
 // GetBlockByNumber returns the JSON-RPC compatible Ethereum block identified by
 // block number. Depending on fullTx it either returns the full transaction
 // objects or if false only the hashes of the transactions.
-func (b *Backend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]interface{}, error) {
+func (b *Backend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[string]any, error) {
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, nil
@@ -85,7 +85,7 @@ func (b *Backend) GetBlockByNumber(blockNum rpc.BlockNumber, fullTx bool) (map[s
 
 // GetBlockByHash returns the JSON-RPC compatible Ethereum block identified by
 // hash.
-func (b *Backend) GetBlockByHash(hash gethcommon.Hash, fullTx bool) (map[string]interface{}, error) {
+func (b *Backend) GetBlockByHash(hash gethcommon.Hash, fullTx bool) (map[string]any, error) {
 	resBlock, err := b.TendermintBlockByHash(hash)
 	if err != nil {
 		return nil, err
@@ -348,8 +348,8 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 	resBlock *tmrpctypes.ResultBlock,
 	blockRes *tmrpctypes.ResultBlockResults,
 	fullTx bool,
-) (map[string]interface{}, error) {
-	ethRPCTxs := []interface{}{}
+) (map[string]any, error) {
+	ethRPCTxs := []any{}
 	block := resBlock.Block
 
 	baseFeeWei, err := b.BaseFeeWei(blockRes)
