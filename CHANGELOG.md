@@ -98,6 +98,7 @@ depend on x/bank, such as the EVM and Wasm modules.
 tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
+- [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
