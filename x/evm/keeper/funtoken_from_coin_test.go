@@ -550,6 +550,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
+		precompile.FunTokenGasLimitBankSend,
 		"selfCallTransferFunds",
 		alice.EthAddr,
 		evm.NativeToWei(big.NewInt(1e6)), // native send uses wei units,
