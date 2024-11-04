@@ -43,7 +43,7 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 
-	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
+	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
 
 	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before

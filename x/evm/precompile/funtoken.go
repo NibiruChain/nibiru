@@ -65,7 +65,7 @@ func (p precompileFunToken) Run(
 	}
 	p.evmKeeper.Bank.StateDB = startResult.StateDB
 
-	// Resets the gas meter to parent one after precompile execution and gracefully handles "out of gas"
+	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
 
 	method := startResult.Method
