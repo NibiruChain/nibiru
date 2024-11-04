@@ -48,24 +48,19 @@ func (s *WasmSuite) TestExecuteHappy() {
 	err = json.Unmarshal(fundsJson, &funds)
 	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
 
-	callArgs := []any{
-		wasmContract.String(),
-		msgArgsBz,
-		funds,
-	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_execute),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
-	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
-		input,
 		WasmGasLimitExecute,
+		string(precompile.WasmMethod_execute),
+		[]any{
+			wasmContract.String(),
+			msgArgsBz,
+			funds,
+		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -83,28 +78,26 @@ func (s *WasmSuite) TestExecuteHappy() {
 		} 
 	}
 	`, coinDenom, deps.Sender.NibiruAddr))
-	callArgs = []any{
-		wasmContract.String(),
-		msgArgsBz,
-		funds,
-	}
-	input, err = embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_execute),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-	ethTxResp, _, err = deps.EvmKeeper.CallContractWithInput(
+
+	ethTxResp, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
-		input,
 		WasmGasLimitExecute,
+		string(precompile.WasmMethod_execute),
+		[]any{
+			wasmContract.String(),
+			msgArgsBz,
+			funds,
+		}...,
 	)
+
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 	evmtest.AssertBankBalanceEqual(
-		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69420),
+		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420),
 	)
 }
 
@@ -142,26 +135,20 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
-	keyBz := []byte(`state`)
-	callArgs := []any{
-		wasmContract.String(),
-		keyBz,
-	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_queryRaw),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
 	deps.ResetGasMeter()
 
-	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
-		input,
 		WasmGasLimitQuery,
+		string(precompile.WasmMethod_queryRaw),
+		[]any{
+			wasmContract.String(),
+			[]byte(`state`),
+		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -323,21 +310,17 @@ func (s *WasmSuite) TestSadArgsExecute() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 
-			callArgs := tc.callArgs
-			input, err := abi.Pack(
-				string(tc.methodName),
-				callArgs...,
-			)
-			s.Require().NoError(err)
-
-			ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+			ethTxResp, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
+				abi,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
-				input,
 				WasmGasLimitExecute,
+				string(tc.methodName),
+				tc.callArgs...,
 			)
+
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
 		})
 	}
@@ -460,20 +443,15 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			callArgs := []any{tc.executeMsgs}
-			input, err := embeds.SmartContract_Wasm.ABI.Pack(
-				string(precompile.WasmMethod_executeMulti),
-				callArgs...,
-			)
-			s.Require().NoError(err)
-
-			ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+			ethTxResp, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
+				embeds.SmartContract_Wasm.ABI,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
-				input,
 				WasmGasLimitExecute,
+				string(precompile.WasmMethod_executeMulti),
+				[]any{tc.executeMsgs}...,
 			)
 
 			if tc.wantError != "" {
@@ -511,20 +489,15 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		},
 	}
 
-	callArgs := []any{executeMsgs}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_executeMulti),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
-	ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
-		input,
 		WasmGasLimitExecute,
+		string(precompile.WasmMethod_executeMulti),
+		[]any{executeMsgs}...,
 	)
 
 	// Verify that the call failed

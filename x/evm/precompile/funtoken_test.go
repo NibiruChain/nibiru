@@ -122,13 +122,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
-		input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
-		s.NoError(err)
-
 		s.deps.ResetGasMeter()
-		_, _, err = deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, deps.Sender.EthAddr, &erc20, true, input, keeper.Erc20GasLimitQuery,
-		)
+		_, err = deps.EvmKeeper.CallContract(deps.Ctx, embeds.SmartContract_ERC20Minter.ABI, deps.Sender.EthAddr, &erc20, true, keeper.Erc20GasLimitExecute, "mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 

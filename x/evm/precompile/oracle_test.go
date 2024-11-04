@@ -62,15 +62,15 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
 		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
 
-		input, err := embeds.SmartContract_Oracle.ABI.Pack("queryExchangeRate", "unibi:uusd")
-		s.NoError(err)
-		resp, _, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
+			embeds.SmartContract_Oracle.ABI,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
-			input,
 			OracleGasLimitQuery,
+			"queryExchangeRate",
+			"unibi:uusd",
 		)
 		s.NoError(err)
 

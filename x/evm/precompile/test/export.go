@@ -63,21 +63,17 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
-		callArgs := []any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}
-		input, err := embeds.SmartContract_Wasm.ABI.Pack(
-			string(precompile.WasmMethod_instantiate),
-			callArgs...,
-		)
-		s.Require().NoError(err)
-
-		ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
+			embeds.SmartContract_Wasm.ABI,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
 			true,
-			input,
 			WasmGasLimitInstantiate,
+			string(precompile.WasmMethod_instantiate),
+			[]any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}...,
 		)
+
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
 
@@ -162,32 +158,27 @@ func AssertWasmCounterState(
 	deps evmtest.TestDeps,
 	wasmContract sdk.AccAddress,
 	wantCount int64,
-) (evmObj *vm.EVM) {
+) {
 	msgArgsBz := []byte(`
 		{ 
 		  "count": {}
 		}
-		`)
+`)
 
-	callArgs := []any{
-		// string memory contractAddr
-		wasmContract.String(),
-		// bytes memory req
-		msgArgsBz,
-	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_query),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
-	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
-		input,
 		WasmGasLimitQuery,
+		string(precompile.WasmMethod_query),
+		[]any{
+			// string memory contractAddr
+			wasmContract.String(),
+			// bytes memory req
+			msgArgsBz,
+		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -216,7 +207,6 @@ func AssertWasmCounterState(
 
 	s.EqualValues(wantCount, typedResp.Count)
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
-	return evmObj
 }
 
 // Result of QueryMsg::Count from the [hello_world_counter] Wasm contract:

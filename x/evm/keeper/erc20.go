@@ -60,12 +60,7 @@ func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	input, err := e.ABI.Pack("mint", to, amount)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
-	}
-	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input, Erc20GasLimitExecute)
-	return evmResp, err
+	return e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "mint", to, amount)
 }
 
 /*
@@ -87,12 +82,7 @@ func (e erc20Calls) Transfer(
 		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
-	input, err := e.ABI.Pack("transfer", to, amount)
-	if err != nil {
-		return balanceIncrease, nil, fmt.Errorf("failed to pack ABI args: %w", err)
-	}
-
-	resp, _, err = e.CallContractWithInput(ctx, from, &contract, true, input, Erc20GasLimitExecute)
+	resp, err = e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "transfer", to, amount)
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -151,13 +141,7 @@ func (e erc20Calls) Burn(
 	contract, from gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	input, err := e.ABI.Pack("burn", amount)
-	if err != nil {
-		return
-	}
-	commit := true
-	evmResp, _, err = e.CallContractWithInput(ctx, from, &contract, commit, input, Erc20GasLimitExecute)
-	return
+	return e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "burn", amount)
 }
 
 func (k Keeper) LoadERC20Name(
