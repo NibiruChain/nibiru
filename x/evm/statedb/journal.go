@@ -1,3 +1,5 @@
+package statedb
+
 // Copyright 2016 The go-ethereum Authors
 // This file is part of the go-ethereum library.
 //
@@ -14,13 +16,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package statedb
-
 import (
 	"bytes"
 	"math/big"
 	"sort"
 
+	store "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -89,25 +91,6 @@ func (j *journal) Revert(statedb *StateDB, snapshot int) {
 // Length returns the current number of entries in the journal.
 func (j *journal) Length() int {
 	return len(j.entries)
-}
-
-// DirtiesCount is a test helper to inspect how many entries in the journal are
-// still dirty (uncommitted). After calling [StateDB.Commit], this function should
-// return zero.
-func (s *StateDB) DirtiesCount() int {
-	dirtiesCount := 0
-	for _, dirtyCount := range s.Journal.dirties {
-		dirtiesCount += dirtyCount
-	}
-	return dirtiesCount
-}
-
-func (s *StateDB) Dirties() map[common.Address]int {
-	return s.Journal.dirties
-}
-
-func (s *StateDB) Entries() []JournalChange {
-	return s.Journal.entries
 }
 
 // ------------------------------------------------------
@@ -333,5 +316,48 @@ func (ch accessListAddSlotChange) Revert(s *StateDB) {
 }
 
 func (ch accessListAddSlotChange) Dirtied() *common.Address {
+	return nil
+}
+
+// ------------------------------------------------------
+// PrecompileSnapshotBeforeRun
+
+// PrecompileCalled: Precompiles can alter persistent storage of other
+// modules. These changes to persistent storage are not reverted by a `Revert` of
+// [JournalChange] by default, as it generally manages only changes to accounts
+// and Bank balances for ether (NIBI).
+//
+// As a workaround to make state changes from precompiles reversible, we store
+// [PrecompileCalled] snapshots that sync and record the prior state
+// of the other modules, allowing precompile calls to truly be reverted.
+//
+// As a simple example, suppose that a transaction calls a precompile.
+//  1. If the precompile changes the state in the Bank Module or Wasm module
+//  2. The call gets reverted (`revert()` in Solidity), which shoud restore the
+//     state to a in-memory snapshot recorded on the StateDB journal.
+//  3. This could cause a problem where changes to the rest of the blockchain state
+//     are still in effect following the reversion in the EVM state DB.
+type PrecompileCalled struct {
+	MultiStore store.CacheMultiStore
+	Events     sdk.Events
+}
+
+var _ JournalChange = PrecompileCalled{}
+
+// Revert rolls back the [StateDB] cache context to the state it was in prior to
+// the precompile call. Modifications to this cache context are pushed to the
+// commit context (s.evmTxCtx) when [StateDB.Commit] is executed.
+func (ch PrecompileCalled) Revert(s *StateDB) {
+	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
+	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
+	s.writeToCommitCtxFromCacheCtx = func() {
+		s.evmTxCtx.EventManager().EmitEvents(ch.Events)
+		// TODO: Check correctness of the emitted events
+		// https://github.com/NibiruChain/nibiru/issues/2096
+		ch.MultiStore.Write()
+	}
+}
+
+func (ch PrecompileCalled) Dirtied() *common.Address {
 	return nil
 }

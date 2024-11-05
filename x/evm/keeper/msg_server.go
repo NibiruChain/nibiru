@@ -62,42 +62,45 @@ func (k *Keeper) EthereumTx(
 	tmpCtx, commitCtx := ctx.CacheContext()
 
 	// pass true to commit the StateDB
-	evmResp, _, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig)
+	evmResp, _, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig, false)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
 		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-		return nil, errors.Wrap(err, "failed to apply ethereum core message")
+		return nil, errors.Wrap(err, "EthereumTx: failed to apply ethereum core message")
 	}
 
 	if !evmResp.Failed() {
 		commitCtx()
 	}
+	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+
+	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+	if err != nil {
+		return nil, errors.Wrap(err, "EthereumTx: error adding transient gas used to block")
+	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
 	refundGas := uint64(0)
-	if evmMsg.Gas() > evmResp.GasUsed {
-		refundGas = evmMsg.Gas() - evmResp.GasUsed
+	if evmMsg.Gas() > blockGasUsed {
+		refundGas = evmMsg.Gas() - blockGasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
-	}
-
-	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-
-	totalGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if err != nil {
-		return nil, errors.Wrap(err, "error adding transient gas used to block")
+		return nil, errors.Wrapf(err, "EthereumTx: error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
 	// reset the gas meter for current TxMsg (EthereumTx)
-	k.ResetGasMeterAndConsumeGas(ctx, totalGasUsed)
+	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
-		return nil, errors.Wrap(err, "error emitting ethereum tx events")
+		return nil, errors.Wrap(err, "EthereumTx: error emitting ethereum tx events")
+	}
+	err = k.EmitLogEvents(ctx, evmResp)
+	if err != nil {
+		return nil, errors.Wrap(err, "EthereumTx: error emitting tx logs")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
@@ -202,9 +205,10 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	}
 }
 
-// ApplyEvmMsg computes the new state by applying the given message against the existing state.
-// If the message fails, the VM execution error with the reason will be returned to the client
-// and the transaction won't be committed to the store.
+// ApplyEvmMsg computes the new state by applying the given message against the
+// existing state. If the message fails, the VM execution error with the reason
+// will be returned to the client and the transaction won't be committed to the
+// store.
 //
 // # Reverted state
 //
@@ -234,25 +238,28 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 // 1. set up the initial access list
 //
 // # Tracer parameter
-//
 // It should be a `vm.Tracer` object or nil, if pass `nil`, it'll create a default one based on keeper options.
 //
 // # Commit parameter
-//
 // If commit is true, the `StateDB` will be committed, otherwise discarded.
+//
+// # fullRefundLeftoverGas parameter
+// For internal calls like funtokens, user does not specify gas limit explicitly.
+// In this case we don't apply any caps for refund and refund 100%
 func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msg core.Message,
 	tracer vm.EVMLogger,
 	commit bool,
 	evmConfig *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
+	fullRefundLeftoverGas bool,
 ) (resp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
 	var (
 		ret   []byte // return bytes from evm execution
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
-	stateDB := statedb.New(ctx, k, txConfig)
+	stateDB := k.NewStateDB(ctx, txConfig)
 	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	leftoverGas := msg.Gas()
@@ -269,10 +276,13 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
 
-	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, evmConfig.ChainConfig, contractCreation)
+	intrinsicGas, err := core.IntrinsicGas(
+		msg.Data(), msg.AccessList(),
+		contractCreation, true, true,
+	)
 	if err != nil {
 		// should have already been checked on Ante Handler
-		return nil, evmObj, errors.Wrap(err, "intrinsic gas failed")
+		return nil, evmObj, errors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
 	}
 
 	// Check if the provided gas in the message is enough to cover the intrinsic
@@ -285,7 +295,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		// eth_estimateGas will check for this exact error
 		return nil, evmObj, errors.Wrapf(
 			core.ErrIntrinsicGas,
-			"apply message msg.Gas = %d, intrinsic gas = %d.",
+			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
 			leftoverGas, intrinsicGas,
 		)
 	}
@@ -303,7 +313,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 
 	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
 	if err != nil {
-		return nil, evmObj, err
+		return nil, evmObj, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
 	}
 
 	if contractCreation {
@@ -328,21 +338,6 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		)
 	}
 
-	// After EIP-3529: refunds are capped to gasUsed / 5
-	refundQuotient := params.RefundQuotientEIP3529
-
-	// calculate gas refund
-	if msg.Gas() < leftoverGas {
-		return nil, evmObj, errors.Wrap(evm.ErrGasOverflow, "apply message")
-	}
-	// refund gas
-	temporaryGasUsed := msg.Gas() - leftoverGas
-	refund := GasToRefund(stateDB.GetRefund(), temporaryGasUsed, refundQuotient)
-
-	// update leftoverGas and temporaryGasUsed with refund amount
-	leftoverGas += refund
-	temporaryGasUsed -= refund
-
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
 	if vmErr != nil {
@@ -352,22 +347,38 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := stateDB.Commit(); err != nil {
-			return nil, evmObj, fmt.Errorf("failed to commit stateDB: %w", err)
+			return nil, evmObj, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
 	}
-
-	gasLimit := math.LegacyNewDec(int64(msg.Gas()))
-	minGasMultiplier := k.GetMinGasMultiplier(ctx)
-	minimumGasUsed := gasLimit.Mul(minGasMultiplier)
-
-	if !minimumGasUsed.TruncateInt().IsUint64() {
-		return nil, evmObj, errors.Wrapf(evm.ErrGasOverflow, "minimumGasUsed(%s) is not a uint64", minimumGasUsed.TruncateInt().String())
-	}
-
+	// Rare case of uint64 gas overflow
 	if msg.Gas() < leftoverGas {
-		return nil, evmObj, errors.Wrapf(evm.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
+		return nil, evmObj, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
 	}
 
+	// GAS REFUND
+	// If msg.Gas() > gasUsed, we need to refund extra gas.
+	// leftoverGas = amount of extra (not used) gas.
+	// If the msg comes from user, we apply refundQuotient capping the refund to 20% of used gas
+	// If msg is internal (funtoken), we refund 100%
+
+	refundQuotient := params.RefundQuotientEIP3529  // EIP-3529: refunds are capped to gasUsed / 5
+	minGasUsedPct := k.GetMinGasUsedMultiplier(ctx) // Evmos invention: https://github.com/evmos/ethermint/issues/1085
+	if fullRefundLeftoverGas {
+		refundQuotient = 1                   // 100% refund
+		minGasUsedPct = math.LegacyZeroDec() // no minimum, get the actual gasUsed value
+	}
+	temporaryGasUsed := msg.Gas() - leftoverGas
+	refund := GasToRefund(stateDB.GetRefund(), temporaryGasUsed, refundQuotient)
+
+	// update leftoverGas and temporaryGasUsed with refund amount
+	leftoverGas += refund
+	temporaryGasUsed -= refund
+	if msg.Gas() < leftoverGas {
+		return nil, evmObj, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
+	}
+
+	// Min gas used is a % of gasLimit
+	minimumGasUsed := math.LegacyNewDec(int64(msg.Gas())).Mul(minGasUsedPct)
 	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
 
 	// This resulting "leftoverGas" is used by the tracer. This happens as a
@@ -394,7 +405,7 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err err
 	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
 	if weiInt.Cmp(tenPow12) < 0 {
 		return weiInt, fmt.Errorf(
-			"wei amount is too small (%s), cannot transfer less than 1 micronibi. 10^18 wei == 1 NIBI == 10^6 micronibi", weiInt)
+			"wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
 	}
 
 	// truncate to highest micronibi amount
@@ -455,11 +466,11 @@ func (k Keeper) deductCreateFunTokenFee(ctx sdk.Context, msg *evm.MsgCreateFunTo
 	fee := k.FeeForCreateFunToken(ctx)
 	from := sdk.MustAccAddressFromBech32(msg.Sender) // validation in msg.ValidateBasic
 
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx, from, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("unable to pay the \"create_fun_token_fee\": %w", err)
 	}
-	if err := k.bankKeeper.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
+	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, fee); err != nil {
 		return fmt.Errorf("failed to burn the \"create_fun_token_fee\" after payment: %w", err)
 	}
 	return nil
@@ -491,36 +502,41 @@ func (k *Keeper) ConvertCoinToEvm(
 	fungibleTokenMapping := funTokens[0]
 
 	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinNativeCoin(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornCoin(
+			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		)
 	} else {
-		return k.convertCoinNativeERC20(ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping)
+		return k.convertCoinToEvmBornERC20(
+			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		)
 	}
 }
 
-// Converts a native coin to an ERC20 token.
-// EVM module owns the ERC-20 contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinNativeCoin(
+// Converts Bank Coins for FunToken mapping that was born from a coin
+// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
+// contract and can mint the ERC-20 tokens.
+func (k Keeper) convertCoinToEvmBornCoin(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
 	coin sdk.Coin,
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// Step 1: Escrow bank coins with EVM module account
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+	// 1 | Send Bank Coins to the EVM module
+	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to send coins to module account")
 	}
 
+	// 2 | Mint ERC20 tokens to the recipient
 	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	// Step 2: mint ERC-20 tokens for recipient
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
 		true,
+		Erc20GasLimitExecute,
 		"mint",
 		recipient,
 		coin.Amount.BigInt(),
@@ -542,10 +558,11 @@ func (k Keeper) convertCoinNativeCoin(
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
 
-// Converts a coin that was originally an ERC20 token, and that was converted to a bank coin, back to an ERC20 token.
-// EVM module does not own the ERC-20 contract and cannot mint the ERC-20 tokens.
-// EVM module has escrowed tokens in the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinNativeERC20(
+// Converts a coin that was originally an ERC20 token, and that was converted to
+// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
+// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
+// the first conversion from ERC-20 to bank coin.
+func (k Keeper) convertCoinToEvmBornERC20(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	recipient gethcommon.Address,
@@ -553,44 +570,26 @@ func (k Keeper) convertCoinNativeERC20(
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	erc20Addr := funTokenMapping.Erc20Addr.Address
-
-	recipientBalanceBefore, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if recipientBalanceBefore == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-
-	// Escrow Coins on module account
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(
+	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
+	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx,
 		sender,
 		evm.ModuleName,
 		sdk.NewCoins(coin),
 	); err != nil {
-		return nil, errors.Wrap(err, "failed to escrow coins")
+		return nil, errors.Wrap(err, "error sending Bank Coins to the EVM")
 	}
 
-	// verify that the EVM module account has enough escrowed ERC-20 to transfer
-	// should never fail, because the coins were minted from the escrowed tokens, but check just in case
-	evmModuleBalance, err := k.ERC20().BalanceOf(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		ctx,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if evmModuleBalance == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-	if evmModuleBalance.Cmp(coin.Amount.BigInt()) < 0 {
-		return nil, fmt.Errorf("insufficient balance in EVM module account")
-	}
-
-	// unescrow ERC-20 tokens from EVM module address
-	res, err := k.ERC20().Transfer(
+	// 2 | EVM sends ERC20 tokens to the "to" account.
+	// This should never fail due to the EVM account lacking ERc20 fund because
+	// the an account must have sent the EVM module ERC20 tokens in the mapping
+	// in order to create the coins originally.
+	//
+	// Said another way, if an asset is created as an ERC20 and some amount is
+	// converted to its Bank Coin representation, a balance of the ERC20 is left
+	// inside the EVM module account in order to convert the coins back to
+	// ERC20s.
+	actualSentAmount, _, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
@@ -598,37 +597,25 @@ func (k Keeper) convertCoinNativeERC20(
 		ctx,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to transfer ERC20 tokens")
-	}
-	if !res {
-		return nil, fmt.Errorf("failed to transfer ERC20 tokens")
+		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
-	// Check expected Receiver balance after transfer execution
-	recipientBalanceAfter, err := k.ERC20().BalanceOf(erc20Addr, recipient, ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve balance")
-	}
-	if recipientBalanceAfter == nil {
-		return nil, fmt.Errorf("failed to retrieve balance, balance is nil")
-	}
-
-	expectedFinalBalance := big.NewInt(0).Add(recipientBalanceBefore, coin.Amount.BigInt())
-	if r := recipientBalanceAfter.Cmp(expectedFinalBalance); r != 0 {
-		return nil, fmt.Errorf("expected balance after transfer to be %s, got %s", expectedFinalBalance, recipientBalanceAfter)
-	}
-
-	// Burn escrowed Coins
-	err = k.bankKeeper.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
+	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
+	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
+	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
+	// in the BC → ERC20 conversion.
+	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualSentAmount))
+	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}
 
+	// Emit event with the actual amount received
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
 		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
+		BankCoin:             burnCoin,
 	})
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
@@ -659,19 +646,8 @@ func (k *Keeper) EmitEthereumTxEvents(
 	}
 	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
 	if err != nil {
-		return errors.Wrap(err, "failed to emit event ethereum tx")
+		return errors.Wrap(err, "EmitEthereumTxEvents: failed to emit event ethereum tx")
 	}
-
-	// Typed event: eth.evm.v1.EventTxLog
-	txLogs := make([]string, len(evmResp.Logs))
-	for i, log := range evmResp.Logs {
-		value, err := json.Marshal(log)
-		if err != nil {
-			return errors.Wrap(err, "failed to encode log")
-		}
-		txLogs[i] = string(value)
-	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
 
 	// Untyped event: "message", used for tendermint subscription
 	ctx.EventManager().EmitEvent(
@@ -704,6 +680,25 @@ func (k *Keeper) EmitEthereumTxEvents(
 			})
 		}
 	}
+
+	return nil
+}
+
+// EmitLogEvents emits all types of EVM events applicable to a particular execution case
+func (k *Keeper) EmitLogEvents(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+) error {
+	// Typed event: eth.evm.v1.EventTxLog
+	txLogs := make([]string, len(evmResp.Logs))
+	for i, log := range evmResp.Logs {
+		value, err := json.Marshal(log)
+		if err != nil {
+			return errors.Wrap(err, "failed to encode log")
+		}
+		txLogs[i] = string(value)
+	}
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
 
 	return nil
 }

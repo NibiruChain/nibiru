@@ -4,21 +4,18 @@ package keeper
 import (
 	"math/big"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
@@ -60,7 +57,7 @@ func (k *Keeper) RefundGas(
 
 		// Refund to sender from the fee collector module account. This account
 		// manages the collection of gas fees.
-		err := k.bankKeeper.SendCoinsFromModuleToAccount(
+		err := k.Bank.SendCoinsFromModuleToAccount(
 			ctx,
 			authtypes.FeeCollectorName, // sender
 			msgFrom.Bytes(),            // recipient
@@ -136,7 +133,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	}
 
 	// deduct the full gas cost from the user balance
-	if err := authante.DeductFees(k.bankKeeper, ctx, signerAcc, fees); err != nil {
+	if err := authante.DeductFees(k.Bank, ctx, signerAcc, fees); err != nil {
 		return errors.Wrapf(err, "failed to deduct full gas cost %s from the user %s balance", fees, from)
 	}
 

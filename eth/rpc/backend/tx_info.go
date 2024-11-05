@@ -2,6 +2,7 @@
 package backend
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
@@ -134,10 +135,39 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 type TransactionReceipt struct {
 	gethcore.Receipt
 
-	ContractAddress   *gethcommon.Address `json:"contractAddress,omitempty"`
+	ContractAddress   *gethcommon.Address
 	From              gethcommon.Address
 	To                *gethcommon.Address
-	EffectiveGasPrice *big.Int
+	EffectiveGasPrice *hexutil.Big
+}
+
+// MarshalJSON is necessary because without it non gethcore.Receipt fields are omitted
+func (r *TransactionReceipt) MarshalJSON() ([]byte, error) {
+	// Marshal / unmarshal gethcore.Receipt to produce map[string]interface{}
+	receiptJson, err := json.Marshal(r.Receipt)
+	if err != nil {
+		return nil, err
+	}
+
+	var output map[string]interface{}
+	if err := json.Unmarshal(receiptJson, &output); err != nil {
+		return nil, err
+	}
+
+	// Add extra (non gethcore.Receipt) fields:
+	if r.ContractAddress != nil && *r.ContractAddress != (gethcommon.Address{}) {
+		output["contractAddress"] = r.ContractAddress
+	}
+	if r.From != (gethcommon.Address{}) {
+		output["from"] = r.From
+	}
+	if r.To != nil {
+		output["to"] = r.To
+	}
+	if r.EffectiveGasPrice != nil {
+		output["effectiveGasPrice"] = r.EffectiveGasPrice
+	}
+	return json.Marshal(output)
 }
 
 // GetTransactionReceipt returns the transaction receipt identified by hash.
@@ -253,7 +283,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt.EffectiveGasPrice = dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei)
+			receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
 		}
 	}
 	return &receipt, nil

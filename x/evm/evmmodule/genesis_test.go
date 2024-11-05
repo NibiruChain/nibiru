@@ -54,11 +54,11 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user A
-	_, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx)
+	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx)
 	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user B
-	_, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx)
+	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx)
 	s.Require().NoError(err)
 
 	// Create fungible token from bank coin
@@ -89,13 +89,13 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Export genesis
-	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper)
+	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper)
 	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 
 	// Init genesis from the exported state
 	deps = evmtest.NewTestDeps()
 	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-	evmmodule.InitGenesis(deps.Ctx, &deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
+	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	// Verify erc20 balances for users A, B and sender
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx)

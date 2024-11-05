@@ -22,7 +22,7 @@ type TestDeps struct {
 	App       *app.NibiruApp
 	Ctx       sdk.Context
 	EncCfg    codec.EncodingConfig
-	EvmKeeper keeper.Keeper
+	EvmKeeper *keeper.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc
 }
@@ -45,8 +45,9 @@ func NewTestDeps() TestDeps {
 	}
 }
 
-func (deps TestDeps) StateDB() *statedb.StateDB {
-	return statedb.New(deps.Ctx, &deps.App.EvmKeeper,
+func (deps TestDeps) NewStateDB() *statedb.StateDB {
+	return deps.EvmKeeper.NewStateDB(
+		deps.Ctx,
 		statedb.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),
 		),
@@ -59,4 +60,9 @@ func (deps *TestDeps) GethSigner() gethcore.Signer {
 
 func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
+}
+
+func (deps TestDeps) ResetGasMeter() {
+	deps.EvmKeeper.ResetTransientGasUsed(deps.Ctx)
+	deps.EvmKeeper.ResetGasMeterAndConsumeGas(deps.Ctx, 0)
 }

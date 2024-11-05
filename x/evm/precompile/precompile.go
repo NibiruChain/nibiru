@@ -19,12 +19,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -85,15 +84,15 @@ func methodById(abi *gethabi.ABI, sigdata []byte) (*gethabi.Method, error) {
 	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
 }
 
-func DecomposeInput(
+func decomposeInput(
 	abi *gethabi.ABI, input []byte,
-) (method *gethabi.Method, args []interface{}, err error) {
+) (method *gethabi.Method, args []any, err error) {
 	// ABI method IDs are exactly 4 bytes according to "gethabi.ABI.MethodByID".
 	if len(input) < 4 {
-		readableBz := collections.HumanizeBytes(input)
-		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", readableBz)
+		err = fmt.Errorf("input \"%s\" too short to extract method ID (less than 4 bytes)", collections.HumanizeBytes(input))
 		return
 	}
+
 	method, err = methodById(abi, input[:4])
 	if err != nil {
 		err = fmt.Errorf("unable to parse ABI method by its 4-byte ID: %w", err)
@@ -109,8 +108,8 @@ func DecomposeInput(
 	return method, args, nil
 }
 
-func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
-	method, _, err := DecomposeInput(abi, input)
+func requiredGas(input []byte, abi *gethabi.ABI) uint64 {
+	method, err := methodById(abi, input[:4])
 	if err != nil {
 		// It's appropriate to return a reasonable default here
 		// because the error from DecomposeInput will be handled automatically by
@@ -122,31 +121,34 @@ func RequiredGas(input []byte, abi *gethabi.ABI) uint64 {
 
 	// Map access could panic. We know that it won't panic because all methods
 	// are in the map, which is verified by unit tests.
-	methodIsTx := precompileMethodIsTxMap[PrecompileMethod(method.Name)]
 	var costPerByte, costFlat uint64
-	if methodIsTx {
+	if isMutation[PrecompileMethod(method.Name)] {
 		costPerByte, costFlat = gasCfg.WriteCostPerByte, gasCfg.WriteCostFlat
 	} else {
 		costPerByte, costFlat = gasCfg.ReadCostPerByte, gasCfg.ReadCostFlat
 	}
 
-	argsBzLen := uint64(len(input[4:]))
-	return (costPerByte * argsBzLen) + costFlat
+	// Calculate the total gas required based on the input size and flat cost
+	return (costPerByte * uint64(len(input[4:]))) + costFlat
 }
+
+type PrecompileMethod string
 
 type OnRunStartResult struct {
 	// Args contains the decoded (ABI unpacked) arguments passed to the contract
 	// as input.
 	Args []any
 
-	// Ctx is a cached SDK context that allows isolated state
+	// CacheCtx is a cached SDK context that allows isolated state
 	// operations to occur that can be reverted by the EVM's [statedb.StateDB].
-	Ctx sdk.Context
+	CacheCtx sdk.Context
 
 	// Method is the ABI method for the precompiled contract call.
 	Method *gethabi.Method
 
 	StateDB *statedb.StateDB
+
+	PrecompileJournalEntry statedb.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -176,9 +178,9 @@ type OnRunStartResult struct {
 //	}
 //	```
 func OnRunStart(
-	evm *vm.EVM, contract *vm.Contract, abi *gethabi.ABI,
+	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
 ) (res OnRunStartResult, err error) {
-	method, args, err := DecomposeInput(abi, contract.Input)
+	method, args, err := decomposeInput(abi, contractInput)
 	if err != nil {
 		return res, err
 	}
@@ -188,20 +190,32 @@ func OnRunStart(
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
 	}
-	ctx := stateDB.GetContext()
-	if err = stateDB.Commit(); err != nil {
+
+	// journalEntry captures the state before precompile execution to enable
+	// proper state reversal if the call fails or if [statedb.JournalChange]
+	// is reverted in general.
+	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile()
+	if err = stateDB.SavePrecompileCalledJournalChange(journalEntry); err != nil {
+		return res, err
+	}
+	if err = stateDB.CommitCacheCtx(); err != nil {
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
+	// Switching to a local gas meter to enforce gas limit check for a precompile
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+		WithKVGasConfig(store.KVGasConfig()).
+		WithTransientKVGasConfig(store.TransientGasConfig())
+
 	return OnRunStartResult{
-		Args:    args,
-		Ctx:     ctx,
-		Method:  method,
-		StateDB: stateDB,
+		Args:     args,
+		CacheCtx: cacheCtx,
+		Method:   method,
+		StateDB:  stateDB,
 	}, nil
 }
 
-var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]bool{
+var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 	WasmMethod_execute:      true,
 	WasmMethod_instantiate:  true,
 	WasmMethod_executeMulti: true,
@@ -211,4 +225,17 @@ var precompileMethodIsTxMap map[PrecompileMethod]bool = map[PrecompileMethod]boo
 	FunTokenMethod_BankSend: true,
 
 	OracleMethod_queryExchangeRate: false,
+}
+
+func HandleOutOfGasPanic(err *error) func() {
+	return func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case sdk.ErrorOutOfGas:
+				*err = vm.ErrOutOfGas
+			default:
+				panic(r)
+			}
+		}
+	}
 }
