@@ -295,10 +295,10 @@ func (b *Backend) DoCall(
 	}
 
 	if res.Failed() {
-		if res.VmError != vm.ErrExecutionReverted.Error() {
-			return nil, status.Error(codes.Internal, res.VmError)
+		if res.VmError == vm.ErrExecutionReverted.Error() {
+			return nil, evm.NewRevertError(res.Ret)
 		}
-		return nil, evm.NewExecErrorWithReason(res.Ret)
+		return nil, status.Error(codes.Internal, res.VmError)
 	}
 
 	return res, nil

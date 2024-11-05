@@ -15,7 +15,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -154,7 +154,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 
 	// Validate Size_ field, should be kept empty
 	if msg.Size_ != 0 {
-		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "tx size is deprecated")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
 	}
 
 	txData, err := UnpackTxData(msg.Data)
@@ -166,12 +166,12 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 
 	// prevent txs with 0 gas to fill up the mempool
 	if gas == 0 {
-		return errorsmod.Wrap(ErrInvalidGasLimit, "gas limit must not be zero")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
 	}
 
 	// prevent gas limit from overflow
 	if g := new(big.Int).SetUint64(gas); !g.IsInt64() {
-		return errorsmod.Wrap(ErrGasOverflow, "gas limit must be less than math.MaxInt64")
+		return errorsmod.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
 	}
 
 	if err := txData.Validate(); err != nil {
@@ -181,7 +181,7 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 	// Validate EthHash field after validated txData to avoid panic
 	txHash := msg.AsTransaction().Hash().Hex()
 	if msg.Hash != txHash {
-		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
 	}
 
 	return nil

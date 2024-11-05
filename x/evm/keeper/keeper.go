@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -109,7 +109,7 @@ func (k *Keeper) AddToBlockGasUsed(
 
 	blockGasUsed = k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
 	if blockGasUsed < gasUsed {
-		return 0, sdkerrors.Wrap(evm.ErrGasOverflow, "transient gas used")
+		return 0, errors.Wrap(core.ErrGasUintOverflow, "transient gas used")
 	}
 	k.EvmState.BlockGasUsed.Set(ctx, blockGasUsed)
 

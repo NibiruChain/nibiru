@@ -20,7 +20,7 @@ func (s *Suite) TestERC20Calls() {
 			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
 			big.NewInt(69_420), deps.Ctx,
 		)
-		s.ErrorContains(err, evm.ErrOwnable)
+		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
 	s.T().Log("Mint tokens - Success")

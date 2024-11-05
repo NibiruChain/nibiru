@@ -121,7 +121,7 @@ func (k Keeper) CallContractWithInput(
 			return
 		}
 		if evmResp.VmError == vm.ErrExecutionReverted.Error() {
-			err = fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(evmResp.Ret))
+			err = fmt.Errorf("VMError: %w", evm.NewRevertError(evmResp.Ret))
 			return
 		}
 		err = fmt.Errorf("VMError: %s", evmResp.VmError)

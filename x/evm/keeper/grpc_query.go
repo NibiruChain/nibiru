@@ -447,7 +447,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 
 		if failed && result != nil {
 			if result.VmError == vm.ErrExecutionReverted.Error() {
-				return nil, fmt.Errorf("Estimate gas VMError: %w", evm.NewExecErrorWithReason(result.Ret))
+				return nil, fmt.Errorf("Estimate gas VMError: %w", evm.NewRevertError(result.Ret))
 			}
 
 			if result.VmError == vm.ErrOutOfGas.Error() {
