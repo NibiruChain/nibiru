@@ -21,3 +21,7 @@ func (k *Keeper) AddPrecompiles(
 		}
 	}
 }
+
+func (k *Keeper) IsPrecompile(addr gethcommon.Address) bool {
+	return k.precompiles.Has(addr)
+}

@@ -13,7 +13,9 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -37,6 +39,7 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/types"
@@ -235,6 +238,10 @@ func NewNibiruApp(
 				app.CommitMultiStore(),
 				&app.WasmKeeper,
 			),
+			ibcwasmkeeper.NewWasmSnapshotter(
+				app.CommitMultiStore(),
+				&app.WasmClientKeeper,
+			),
 		); err != nil {
 			panic("failed to add wasm snapshot extension.")
 		}
@@ -243,6 +250,13 @@ func NewNibiruApp(
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+
+		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 
 		/* Applications that wish to enforce statically created ScopedKeepers should

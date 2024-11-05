@@ -21,7 +21,7 @@ import (
 func (s *Suite) TestStateDBBalance() {
 	deps := evmtest.NewTestDeps()
 	{
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		s.Equal("0", db.GetBalance(deps.Sender.EthAddr).String())
 
 		s.T().Log("fund account in unibi. See expected wei amount.")
@@ -47,7 +47,7 @@ func (s *Suite) TestStateDBBalance() {
 	{
 		err := evmtest.TransferWei(&deps, to, evm.NativeToWei(big.NewInt(12)))
 		s.Require().NoError(err)
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		s.Equal(
 			"30"+strings.Repeat("0", 12),
 			db.GetBalance(deps.Sender.EthAddr).String(),
@@ -80,7 +80,7 @@ func (s *Suite) TestStateDBBalance() {
 		)
 		s.NoError(err)
 
-		db := deps.StateDB()
+		db := deps.NewStateDB()
 		s.Equal(
 			"3"+strings.Repeat("0", 12),
 			db.GetBalance(to).String(),

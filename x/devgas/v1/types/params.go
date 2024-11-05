@@ -28,7 +28,7 @@ func DefaultParams() ModuleParams {
 	}
 }
 
-func validateBool(i interface{}) error {
+func validateBool(i any) error {
 	_, ok := i.(bool)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -37,7 +37,7 @@ func validateBool(i interface{}) error {
 	return nil
 }
 
-func validateShares(i interface{}) error {
+func validateShares(i any) error {
 	v, ok := i.(sdk.Dec)
 
 	if !ok {
@@ -59,7 +59,7 @@ func validateShares(i interface{}) error {
 	return nil
 }
 
-func validateArray(i interface{}) error {
+func validateArray(i any) error {
 	_, ok := i.([]string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

@@ -35,7 +35,7 @@ func DefaultParams() Params {
 }
 
 // validateChannels checks if channels ids are valid
-func validateChannels(i interface{}) error {
+func validateChannels(i any) error {
 	channels, ok := i.([]string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -76,7 +76,7 @@ func (p Params) IsEVMChannel(channel string) bool {
 	return slices.Contains(p.EVMChannels, channel)
 }
 
-func validateEIPs(i interface{}) error {
+func validateEIPs(i any) error {
 	eips, ok := i.([]int64)
 	if !ok {
 		return fmt.Errorf("invalid EIP slice type: %T", i)

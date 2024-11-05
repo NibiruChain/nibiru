@@ -23,7 +23,7 @@ func (k *Keeper) createFunTokenFromCoin(
 	}
 
 	// 2 | Check for denom metadata in bank state
-	bankMetadata, isFound := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
+	bankMetadata, isFound := k.Bank.GetDenomMetaData(ctx, bankDenom)
 	if !isFound {
 		return nil, fmt.Errorf("bank coin denom should have bank metadata for denom \"%s\"", bankDenom)
 	}
@@ -79,7 +79,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 
 	// nil address for contract creation
 	_, _, err = k.CallContractWithInput(
-		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall,
+		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall, Erc20GasLimitDeploy,
 	)
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")

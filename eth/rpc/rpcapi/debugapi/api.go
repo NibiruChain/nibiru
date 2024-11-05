@@ -65,7 +65,7 @@ func NewImplDebugAPI(
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (a *DebugAPI) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (interface{}, error) {
+func (a *DebugAPI) TraceTransaction(hash common.Hash, config *evm.TraceConfig) (any, error) {
 	a.logger.Debug("debug_traceTransaction", "hash", hash)
 	return a.backend.TraceTransaction(hash, config)
 }
@@ -115,7 +115,7 @@ func (a *DebugAPI) TraceCall(
 	args evm.JsonTxArgs,
 	blockNrOrHash rpc.BlockNumberOrHash,
 	config *evm.TraceConfig,
-) (interface{}, error) {
+) (any, error) {
 	a.logger.Debug("debug_traceCall", args.String(), "block number or hash", blockNrOrHash)
 
 	// Get Tendermint Block
