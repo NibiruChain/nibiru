@@ -74,6 +74,7 @@ for (1) ERC20 transfers with tokens that return false success values instead of
 throwing an error and (2) ERC20 transfers with other operations that don't bring
 about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
+- [#2093](https://github.com/NibiruChain/nibiru/pull/2093) - feat(evm): gas usage in precompiles: limits, local gas meters
 - [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
 from the changs in #2086, this pull request implements a new `JournalChange`
@@ -92,14 +93,13 @@ The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and record
 balance changes in wei as journal changes automatically. This guarantees that
 commits and reversions of the `StateDB` do not misalign with the state of the
 Bank module. This code change uses the `NibiruBankKeeper` on all modules that
-depend on x/bank, such as the EVM and Wasm modules. 
+depend on x/bank, such as the EVM and Wasm modules.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
 tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
-
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 

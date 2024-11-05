@@ -284,7 +284,7 @@ func (k *Keeper) EthCall(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
 	// pass false to not commit StateDB
-	res, _, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig)
+	res, _, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig, false)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -323,16 +323,24 @@ func (k Keeper) EstimateGasForEvmCallType(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	chainID := k.EthChainID(ctx)
+	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	if err != nil {
+		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
+	}
 
 	if req.GasCap < gethparams.TxGas {
 		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "gas cap cannot be lower than %d", gethparams.TxGas)
 	}
 
 	var args evm.JsonTxArgs
-	err := json.Unmarshal(req.Args, &args)
+	err = json.Unmarshal(req.Args, &args)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
+
+	// ApplyMessageWithConfig expect correct nonce set in msg
+	nonce := k.GetAccNonce(ctx, args.GetFrom())
+	args.Nonce = (*hexutil.Uint64)(&nonce)
 
 	// Binary search the gas requirement, as it may be higher than the amount used
 	var (
@@ -361,16 +369,6 @@ func (k Keeper) EstimateGasForEvmCallType(
 	}
 
 	gasCap = hi
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
-	}
-
-	// ApplyMessageWithConfig expect correct nonce set in msg
-	nonce := k.GetAccNonce(ctx, args.GetFrom())
-	args.Nonce = (*hexutil.Uint64)(&nonce)
-
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
 	// convert the tx args to an ethereum message
 	msg, err := args.ToMessage(req.GasCap, cfg.BaseFeeWei)
@@ -422,7 +420,8 @@ func (k Keeper) EstimateGasForEvmCallType(
 				WithTransientKVGasConfig(storetypes.GasConfig{})
 		}
 		// pass false to not commit StateDB
-		rsp, _, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig)
+		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+		rsp, _, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig, false)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -438,6 +437,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		return nil, err
 	}
 
+	// The gas limit is now the highest gas limit that results in an executable transaction
 	// Reject the transaction as invalid if it still fails at the highest allowance
 	if hi == gasCap {
 		failed, result, err := executable(hi)
@@ -445,17 +445,19 @@ func (k Keeper) EstimateGasForEvmCallType(
 			return nil, fmt.Errorf("eth call exec error: %w", err)
 		}
 
-		if failed {
-			if result != nil && result.VmError != vm.ErrOutOfGas.Error() {
-				if result.VmError == vm.ErrExecutionReverted.Error() {
-					return nil, fmt.Errorf("VMError: %w", evm.NewExecErrorWithReason(result.Ret))
-				}
-				return nil, fmt.Errorf("VMError: %s", result.VmError)
+		if failed && result != nil {
+			if result.VmError == vm.ErrExecutionReverted.Error() {
+				return nil, fmt.Errorf("Estimate gas VMError: %w", evm.NewRevertError(result.Ret))
 			}
-			// Otherwise, the specified gas cap is too low
-			return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+
+			if result.VmError == vm.ErrOutOfGas.Error() {
+				return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+			}
+
+			return nil, fmt.Errorf("Estimgate gas VMError: %s", result.VmError)
 		}
 	}
+
 	return &evm.EstimateGasResponse{Gas: hi}, nil
 }
 
@@ -518,7 +520,7 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		rsp, _, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig)
+		rsp, _, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig, false)
 		if err != nil {
 			continue
 		}
@@ -800,7 +802,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	res, _, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig)
+	res, _, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig, false)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}

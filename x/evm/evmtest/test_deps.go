@@ -61,3 +61,8 @@ func (deps *TestDeps) GethSigner() gethcore.Signer {
 func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
 }
+
+func (deps TestDeps) ResetGasMeter() {
+	deps.EvmKeeper.ResetTransientGasUsed(deps.Ctx)
+	deps.EvmKeeper.ResetGasMeterAndConsumeGas(deps.Ctx, 0)
+}

@@ -21,6 +21,13 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
+// rough gas limits for wasm execution - used in tests only
+const (
+	WasmGasLimitInstantiate uint64 = 1_000_000
+	WasmGasLimitExecute     uint64 = 10_000_000
+	WasmGasLimitQuery       uint64 = 200_000
+)
+
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
@@ -56,16 +63,17 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
-		callArgs := []any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}
-		input, err := embeds.SmartContract_Wasm.ABI.Pack(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
+			deps.Ctx,
+			embeds.SmartContract_Wasm.ABI,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			WasmGasLimitInstantiate,
 			string(precompile.WasmMethod_instantiate),
-			callArgs...,
+			[]any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}...,
 		)
-		s.Require().NoError(err)
 
-		ethTxResp, _, err := deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
-		)
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
 
@@ -150,27 +158,27 @@ func AssertWasmCounterState(
 	deps evmtest.TestDeps,
 	wasmContract sdk.AccAddress,
 	wantCount int64,
-) (evmObj *vm.EVM) {
+) {
 	msgArgsBz := []byte(`
 		{ 
 		  "count": {}
 		}
-		`)
+`)
 
-	callArgs := []any{
-		// string memory contractAddr
-		wasmContract.String(),
-		// bytes memory req
-		msgArgsBz,
-	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_Wasm.ABI,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		true,
+		WasmGasLimitQuery,
 		string(precompile.WasmMethod_query),
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
-	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, true, input,
+		[]any{
+			// string memory contractAddr
+			wasmContract.String(),
+			// bytes memory req
+			msgArgsBz,
+		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -191,16 +199,14 @@ func AssertWasmCounterState(
 
 	s.T().Log("Response is a JSON-encoded struct from the Wasm contract")
 	var wasmMsg wasm.RawContractMessage
-	err = json.Unmarshal(queryResp, &wasmMsg)
-	s.NoError(err)
+	s.NoError(json.Unmarshal(queryResp, &wasmMsg))
 	s.NoError(wasmMsg.ValidateBasic())
+
 	var typedResp QueryMsgCountResp
-	err = json.Unmarshal(wasmMsg, &typedResp)
-	s.NoError(err)
+	s.NoError(json.Unmarshal(queryResp, &typedResp))
 
 	s.EqualValues(wantCount, typedResp.Count)
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
-	return evmObj
 }
 
 // Result of QueryMsg::Count from the [hello_world_counter] Wasm contract:
@@ -292,8 +298,15 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
+	deps.ResetGasMeter()
+
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx, deps.Sender.EthAddr, &precompile.PrecompileAddr_Wasm, finalizeTx, input,
+		deps.Ctx,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		finalizeTx,
+		input,
+		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)

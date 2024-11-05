@@ -19,12 +19,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -179,7 +178,7 @@ type OnRunStartResult struct {
 //	}
 //	```
 func OnRunStart(
-	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI,
+	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
 ) (res OnRunStartResult, err error) {
 	method, args, err := decomposeInput(abi, contractInput)
 	if err != nil {
@@ -203,6 +202,11 @@ func OnRunStart(
 		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
 	}
 
+	// Switching to a local gas meter to enforce gas limit check for a precompile
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+		WithKVGasConfig(store.KVGasConfig()).
+		WithTransientKVGasConfig(store.TransientGasConfig())
+
 	return OnRunStartResult{
 		Args:     args,
 		CacheCtx: cacheCtx,
@@ -221,4 +225,17 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 	FunTokenMethod_BankSend: true,
 
 	OracleMethod_queryExchangeRate: false,
+}
+
+func HandleOutOfGasPanic(err *error) func() {
+	return func() {
+		if r := recover(); r != nil {
+			switch r.(type) {
+			case sdk.ErrorOutOfGas:
+				*err = vm.ErrOutOfGas
+			default:
+				panic(r)
+			}
+		}
+	}
 }

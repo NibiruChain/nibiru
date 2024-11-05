@@ -25,15 +25,21 @@ contract TestERC20TransferThenPrecompileSend {
             "ERC-20 transfer failed"
         );
 
-        (bool success, ) = FUNTOKEN_PRECOMPILE_ADDRESS.call(
-            abi.encodeWithSignature(
-                "bankSend(address,uint256,string)",
-                erc20,
-                uint256(precompileAmount),
-                    precompileRecipient
-            )
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+            erc20,
+            precompileAmount,
+            precompileRecipient
         );
 
-        require(success, string.concat("Failed to call bankSend"));
+        require(
+            sentAmount == precompileAmount,
+            string.concat(
+                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "sentAmount ",
+                Strings.toString(sentAmount),
+                "expected ",
+                Strings.toString(precompileAmount)
+            )
+        );
     }
 }

@@ -29,6 +29,8 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
+	testFunTokenPrecompileLocalGasJson []byte
 	//go:embed artifacts/contracts/TestERC20TransferThenPrecompileSend.sol/TestERC20TransferThenPrecompileSend.json
 	testERC20TransferThenPrecompileSendJson []byte
 	//go:embed artifacts/contracts/TestNativeSendThenPrecompileSend.sol/TestNativeSendThenPrecompileSend.json
@@ -82,6 +84,12 @@ var (
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
 	}
+	// SmartContract_TestFunTokenPrecompileLocalGas is a test contract
+	// which allows precompile execution with custom local gas set (calling precompile within contract)
+	SmartContract_TestFunTokenPrecompileLocalGas = CompiledEvmContract{
+		Name:      "TestFunTokenPrecompileLocalGas.sol",
+		EmbedJSON: testFunTokenPrecompileLocalGasJson,
+	}
 	// SmartContract_TestNativeSendThenPrecompileSendJson is a test contract
 	// that performs two sends in a single call: a native nibi send and a precompile bankSend.
 	// It tests a race condition where the state DB commit
@@ -118,6 +126,7 @@ func init() {
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
 	SmartContract_TestPrecompileSelfCallRevert.MustLoad()

@@ -38,10 +38,13 @@ func (p precompileWasm) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI())
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
+
+	// Gracefully handles "out of gas"
+	defer HandleOutOfGasPanic(&err)()
 
 	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
 	// any operation that has the potential to use Bank send methods. This will
@@ -68,6 +71,10 @@ func (p precompileWasm) Run(
 	if err != nil {
 		return nil, err
 	}
+
+	// Gas consumed by a local gas meter
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+
 	return bz, err
 }
 
