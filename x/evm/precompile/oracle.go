@@ -42,7 +42,7 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI())
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}

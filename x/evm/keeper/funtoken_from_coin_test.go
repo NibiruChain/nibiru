@@ -225,6 +225,8 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	)
 	s.Require().ErrorContains(err, "insufficient funds")
 
+	deps.ResetGasMeter()
+
 	s.T().Log("Convert erc-20 to back to bank coin")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -232,6 +234,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
+		precompile.FunTokenGasLimitBankSend,
 		"bankSend",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
@@ -259,6 +262,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
+		precompile.FunTokenGasLimitBankSend,
 		"bankSend",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
@@ -354,6 +358,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
+		10_000_000, // 100% sufficient gas
 		"nativeSendThenPrecompileSend",
 		[]any{
 			alice.EthAddr,
@@ -439,6 +444,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
+		10_000_000, // 100% sufficient gas
 		"erc20TransferThenPrecompileSend",
 		alice.EthAddr,
 		big.NewInt(1e6), // erc20 created with 6 decimals
@@ -544,6 +550,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
+		precompile.FunTokenGasLimitBankSend,
 		"selfCallTransferFunds",
 		alice.EthAddr,
 		evm.NativeToWei(big.NewInt(1e6)), // native send uses wei units,

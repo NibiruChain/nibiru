@@ -4,21 +4,18 @@ package keeper
 import (
 	"math/big"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
