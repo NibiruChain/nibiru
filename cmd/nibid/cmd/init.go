@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	tmcfg "github.com/cometbft/cometbft/config"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 
@@ -26,9 +25,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/types"
 )
 
 const (
@@ -132,11 +128,6 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				sdk.DefaultBondDenom = defaultDenom
 			}
 			appGenState := mbm.DefaultGenesis(cdc)
-
-			// add 08-wasm to AllowedClients
-			ibcState := ibctypes.DefaultGenesisState()
-			ibcState.ClientGenesis.Params.AllowedClients = append(ibcState.ClientGenesis.Params.AllowedClients, ibcwasmtypes.Wasm)
-			appGenState[ibcexported.ModuleName] = cdc.MustMarshalJSON(ibcState)
 
 			appState, err := json.MarshalIndent(appGenState, "", " ")
 			if err != nil {

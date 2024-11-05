@@ -50,7 +50,6 @@ Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 period. This section describes code changes that occured after that audit in
 preparation for a second audit starting in November 2024.
 
-- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
   Use effective gas price in RefundGas and make sure that units are properly
@@ -98,6 +97,12 @@ depend on x/bank, such as the EVM and Wasm modules.
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
 tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
+- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
+for (1) ERC20 transfers with tokens that return false success values instead of
+throwing an error and (2) ERC20 transfers with other operations that don't bring
+about the expected resulting balance for the transfer recipient.
+- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 

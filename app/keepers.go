@@ -4,8 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -18,7 +16,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -87,7 +84,6 @@ import (
 	// ---------------------------------------------------------------
 	// IBC imports
 
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
@@ -125,7 +121,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	"github.com/NibiruChain/nibiru/v2/x/oracle"
+	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
@@ -133,12 +129,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/tokenfactory"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
-
-const wasmVmContractMemoryLimit = 32
 
 type AppKeepers struct {
 	keepers.PublicKeepers
@@ -198,7 +192,6 @@ func initStoreKeys() (
 		ibcexported.StoreKey,
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		ibcwasmtypes.StoreKey,
 
 		// nibiru x/ keys
 		oracletypes.StoreKey,
@@ -259,7 +252,7 @@ func (app *NibiruApp) InitKeepers(
 	// seal capability keeper after scoping modules
 	// app.capabilityKeeper.Seal()
 
-	// TODO: chore(upgrade): Potential breaking change on AccountKeeper due
+	// TODO: chore(upgrade): Potential breaking change on AccountKeeper dur
 	// to ProtoBaseAccount replacement.
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
@@ -460,13 +453,6 @@ func (app *NibiruApp) InitKeepers(
 	// For example, if there are bindings for the x/inflation module, then the app
 	// passed to GetWasmOpts must already have a non-nil InflationKeeper.
 	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
-
-	// Create wasm VM outside keeper so it can be re-used in client keeper
-	wasmVM, err := wasmvm.NewVM(filepath.Join(wasmDir, "wasm"), supportedFeatures, wasmVmContractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
-	if err != nil {
-		panic(err)
-	}
-
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
@@ -485,16 +471,7 @@ func (app *NibiruApp) InitKeepers(
 		wasmConfig,
 		supportedFeatures,
 		govModuleAddr,
-		append(GetWasmOpts(*app, appOpts), wasmkeeper.WithWasmEngine(wasmVM))...,
-	)
-
-	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
-		appCodec,
-		keys[ibcwasmtypes.StoreKey],
-		app.ibcKeeper.ClientKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmVM,
-		app.GRPCQueryRouter(),
+		GetWasmOpts(*app, appOpts)...,
 	)
 
 	// DevGas uses WasmKeeper
@@ -658,7 +635,6 @@ func (app *NibiruApp) initAppModules(
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
-		ibcwasm.NewAppModule(app.WasmClientKeeper),
 
 		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 
@@ -730,7 +706,6 @@ func orderedModuleNames() []string {
 		ibcexported.ModuleName,
 		ibcfeetypes.ModuleName,
 		icatypes.ModuleName,
-		ibcwasmtypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		evm.ModuleName,
@@ -837,7 +812,6 @@ func ModuleBasicManager() module.BasicManager {
 		ibctransfer.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		ibcwasm.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
 		oracle.AppModuleBasic{},
