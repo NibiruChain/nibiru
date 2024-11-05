@@ -193,7 +193,7 @@ func (s *NodeSuite) Test_EstimateGas() {
 	} {
 		msg.Value = msgValue
 		_, err = s.ethClient.EstimateGas(context.Background(), msg)
-		s.ErrorContains(err, "StateDB: wei amount is too small")
+		s.ErrorContains(err, "wei amount is too small")
 	}
 }
 
