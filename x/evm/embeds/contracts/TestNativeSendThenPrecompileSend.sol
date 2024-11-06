@@ -20,7 +20,7 @@ contract TestNativeSendThenPrecompileSend {
         bool isSent = nativeRecipient.send(nativeAmount);
         require(isSent, "Failed to send native token");
 
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
             erc20,
             precompileAmount,
             precompileRecipient
@@ -28,7 +28,7 @@ contract TestNativeSendThenPrecompileSend {
         require(
             sentAmount == precompileAmount,
             string.concat(
-                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
                 Strings.toString(sentAmount),
                 "expected ",

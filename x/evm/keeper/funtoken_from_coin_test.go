@@ -235,7 +235,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		precompile.FunTokenGasLimitBankSend,
-		"bankSend",
+		"sendToBank",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
@@ -263,7 +263,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		&precompile.PrecompileAddr_FunToken,
 		true,
 		precompile.FunTokenGasLimitBankSend,
-		"bankSend",
+		"sendToBank",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
@@ -273,7 +273,8 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 
 // TestNativeSendThenPrecompileSend
 // 1. Creates a funtoken from coin.
-// 2. Using the test contract, performs two sends in a single call: a native nibi send and a precompile bankSend.
+// 2. Using the test contract, performs two sends in a single call: a native nibi
+// send and a precompile sendToBank.
 // It tests a race condition where the state DB commit may overwrite the state after the precompile execution,
 // potentially causing a loss of funds.
 //
@@ -364,7 +365,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 			alice.EthAddr,
 			evm.NativeToWei(sendAmt), // native send uses wei units
 			alice.NibiruAddr.String(),
-			sendAmt, // amount for precompile bankSend
+			sendAmt, // amount for precompile sendToBank
 		}...,
 	)
 	s.Require().NoError(err)
@@ -394,7 +395,8 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 
 // TestERC20TransferThenPrecompileSend
 // 1. Creates a funtoken from coin.
-// 2. Using the test contract, performs two sends in a single call: a erc20 transfer and a precompile bankSend.
+// 2. Using the test contract, performs two sends in a single call: a erc20
+// transfer and a precompile sendToBank.
 // It tests a race condition where the state DB commit may overwrite the state after the precompile execution,
 // potentially causing an infinite minting of funds.
 //
@@ -449,7 +451,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		alice.EthAddr,
 		big.NewInt(1e6), // erc20 created with 6 decimals
 		alice.NibiruAddr.String(),
-		big.NewInt(9e6), // for precompile bankSend: 6 decimals
+		big.NewInt(9e6), // for precompile sendToBank: 6 decimals
 	)
 	s.Require().NoError(err)
 
@@ -539,7 +541,8 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		Description:  "Initial contract state sanity check: 10 NIBI / 10 WNIBI",
 	}.Assert(s.T(), deps)
 
-	// Create Alice and Charles. Contract will try to send Alice native coins and send Charles tokens via bankSend
+	// Create Alice and Charles. Contract will try to send Alice native coins and
+	// send Charles tokens via sendToBank
 	alice := evmtest.NewEthPrivAcc()
 	charles := evmtest.NewEthPrivAcc()
 
@@ -555,7 +558,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		alice.EthAddr,
 		evm.NativeToWei(big.NewInt(1e6)), // native send uses wei units,
 		charles.NibiruAddr.String(),
-		big.NewInt(9e6), // for precompile bankSend: 6 decimals
+		big.NewInt(9e6), // for precompile sendToBank: 6 decimals
 	)
 	s.Require().NoError(err)
 

@@ -49,7 +49,7 @@ func (p precompileFunToken) ABI() *gethabi.ABI {
 }
 
 const (
-	FunTokenMethod_BankSend PrecompileMethod = "bankSend"
+	FunTokenMethod_BankSend PrecompileMethod = "sendToBank"
 )
 
 // Run runs the precompiled contract
@@ -71,7 +71,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_BankSend:
-		bz, err = p.bankSend(startResult, contract.CallerAddress, readonly)
+		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "DecomposeInput" parses methods directly from the ABI.
@@ -97,18 +97,18 @@ type precompileFunToken struct {
 	evmKeeper *evmkeeper.Keeper
 }
 
-// bankSend: Implements "IFunToken.bankSend"
+// sendToBank: Implements "IFunToken.sendToBank"
 //
 // The "args" populate the following function signature in Solidity:
 //
 //	```solidity
-//	/// @dev bankSend sends ERC20 tokens as coins to a Nibiru base account
+//	/// @dev sendToBank sends ERC20 tokens as coins to a Nibiru base account
 //	/// @param erc20 the address of the ERC20 token contract
 //	/// @param amount the amount of tokens to send
 //	/// @param to the receiving Nibiru base account address as a string
-//	function bankSend(address erc20, uint256 amount, string memory to) external;
+//	function sendToBank(address erc20, uint256 amount, string memory to) external;
 //	```
-func (p precompileFunToken) bankSend(
+func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
 	readOnly bool,
