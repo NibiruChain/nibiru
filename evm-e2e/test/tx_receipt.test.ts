@@ -10,7 +10,7 @@ describe('Transaction Receipt Tests', () => {
   let recipient = ethers.Wallet.createRandom().address;
 
   it('simple transfer receipt', async () => {
-    const value = ethers.parseEther('1');
+    const value = ethers.parseEther('0.0001');
     const tx = await account.sendTransaction({
       to: recipient,
       value,
