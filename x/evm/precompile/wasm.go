@@ -73,8 +73,10 @@ func (p precompileWasm) Run(
 	}
 
 	// Gas consumed by a local gas meter
+	// The reason it's unnecessary to check for a success value is because
+	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
+	// meter was initialized....
 	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
-
 	return bz, err
 }
 
@@ -351,7 +353,7 @@ func (p precompileWasm) queryRaw(
 		return bz, err
 	}
 
-	if e := assertNumArgs(len(args), 2); e != nil {
+	if e := assertNumArgs(args, 2); e != nil {
 		err = e
 		return
 	}

@@ -36,4 +36,25 @@ contract TestNativeSendThenPrecompileSend {
             )
         );
     }
+
+    function justPrecompileSend(
+        string memory precompileRecipient,
+        uint256 precompileAmount
+    ) public {
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
+            erc20,
+            precompileAmount,
+            precompileRecipient
+        );
+        require(
+            sentAmount == precompileAmount,
+            string.concat(
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
+                "sentAmount ",
+                Strings.toString(sentAmount),
+                "expected ",
+                Strings.toString(precompileAmount)
+            )
+        );
+    }
 }

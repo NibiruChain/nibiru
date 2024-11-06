@@ -7,6 +7,110 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "who",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "funtoken",
+          "type": "address"
+        }
+      ],
+      "name": "balance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "erc20Balance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "bankBalance",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "erc20",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "bankDenom",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IFunToken.FunToken",
+          "name": "token",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "ethAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "bech32Addr",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IFunToken.NibiruAccount",
+          "name": "whoAddrs",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "who",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "bankDenom",
+          "type": "string"
+        }
+      ],
+      "name": "bankBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "bankBalance",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "ethAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "bech32Addr",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IFunToken.NibiruAccount",
+          "name": "whoAddrs",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "erc20",
           "type": "address"
         },

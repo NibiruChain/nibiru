@@ -50,11 +50,17 @@ func (p precompileOracle) Run(
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
-		return p.queryExchangeRate(ctx, method, args)
+		bz, err = p.queryExchangeRate(ctx, method, args)
 	default:
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	return bz, err
 }
 
 func PrecompileOracle(keepers keepers.PublicKeepers) vm.PrecompiledContract {
@@ -93,7 +99,7 @@ func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {
-	if e := assertNumArgs(len(args), 1); e != nil {
+	if e := assertNumArgs(args, 1); e != nil {
 		err = e
 		return
 	}

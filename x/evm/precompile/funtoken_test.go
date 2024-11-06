@@ -47,25 +47,25 @@ func (s *FuntokenSuite) TestFailToPackABI() {
 	}{
 		{
 			name:       "wrong amount of call args",
-			methodName: string(precompile.FunTokenMethod_BankSend),
+			methodName: string(precompile.FunTokenMethod_sendToBank),
 			callArgs:   []any{"nonsense", "args here", "to see if", "precompile is", "called"},
 			wantError:  "argument count mismatch: got 5 for 3",
 		},
 		{
 			name:       "wrong type for address",
-			methodName: string(precompile.FunTokenMethod_BankSend),
+			methodName: string(precompile.FunTokenMethod_sendToBank),
 			callArgs:   []any{"nonsense", "foo", "bar"},
 			wantError:  "abi: cannot use string as type array as argument",
 		},
 		{
 			name:       "wrong type for amount",
-			methodName: string(precompile.FunTokenMethod_BankSend),
+			methodName: string(precompile.FunTokenMethod_sendToBank),
 			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), "foo", testutil.AccAddress().String()},
 			wantError:  "abi: cannot use string as type ptr as argument",
 		},
 		{
 			name:       "wrong type for recipient",
-			methodName: string(precompile.FunTokenMethod_BankSend),
+			methodName: string(precompile.FunTokenMethod_sendToBank),
 			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), 111},
 			wantError:  "abi: cannot use int as type string as argument",
 		},
@@ -108,6 +108,30 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
+	s.Run("IFunToken.bankBalance", func() {
+		s.Require().NotEmpty(funtoken.BankDenom)
+		evmResp, err := deps.EvmKeeper.CallContract(
+			deps.Ctx,
+			embeds.SmartContract_FunToken.ABI,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false,
+			keeper.Erc20GasLimitExecute,
+			"bankBalance",
+			[]any{
+				deps.Sender.EthAddr, // who
+				funtoken.BankDenom,  // bankDenom
+			}...,
+		)
+		s.Require().NoError(err, evmResp)
+
+		bal, ethAddr, bech32Addr, err := new(FunTokenBankBalanceReturn).ParseFromResp(evmResp)
+		s.NoError(err)
+		s.Require().Equal("69420", bal.String())
+		s.Equal(deps.Sender.EthAddr.Hex(), ethAddr.Hex())
+		s.Equal(deps.Sender.NibiruAddr.String(), bech32Addr)
+	})
+
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
@@ -132,7 +156,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.T().Log("Send NIBI (FunToken) using precompile")
 	amtToSend := int64(420)
 	callArgs := []any{erc20, big.NewInt(amtToSend), randomAcc.String()}
-	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_BankSend), callArgs...)
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), callArgs...)
 	s.NoError(err)
 
 	deps.ResetGasMeter()
@@ -162,17 +186,98 @@ func (s *FuntokenSuite) TestHappyPath() {
 	var sentAmt *big.Int
 	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
 		&sentAmt,
-		string(precompile.FunTokenMethod_BankSend),
+		string(precompile.FunTokenMethod_sendToBank),
 		ethTxResp.Ret,
 	)
 	s.NoError(err)
 	s.Require().Equal("420", sentAmt.String())
+
+	s.Run("IFuntoken.balance", func() {
+		evmResp, err := deps.EvmKeeper.CallContract(
+			deps.Ctx,
+			embeds.SmartContract_FunToken.ABI,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false,
+			keeper.Erc20GasLimitExecute,
+			"balance",
+			[]any{
+				deps.Sender.EthAddr, // who
+				erc20,               // funtoken
+			}...,
+		)
+		s.Require().NoError(err, evmResp)
+
+		bals, err := new(FunTokenBalanceReturn).ParseFromResp(evmResp)
+		s.NoError(err)
+		s.Equal(funtoken.Erc20Addr, bals.FunToken.Erc20Addr)
+		s.Equal(funtoken.BankDenom, bals.FunToken.BankDenom)
+		s.Equal(deps.Sender.EthAddr, bals.Account)
+		s.Equal("0", bals.BalanceBank.String())
+		s.Equal("69000", bals.BalanceERC20.String())
+	})
+}
+
+type FunTokenBalanceReturn struct {
+	Erc20Bal *big.Int `abi:"erc20Balance"`
+	BankBal  *big.Int `abi:"bankBalance"`
+	Token    struct {
+		Erc20     gethcommon.Address `abi:"erc20"`
+		BankDenom string             `abi:"bankDenom"`
+	} `abi:"token"`
+	NibiruAcc struct {
+		EthAddr    gethcommon.Address `abi:"ethAddr"`
+		Bech32Addr string             `abi:"bech32Addr"`
+	} `abi:"whoAddrs"`
+}
+
+func (out FunTokenBalanceReturn) ParseFromResp(
+	evmResp *evm.MsgEthereumTxResponse,
+) (bals evmtest.FunTokenBalanceAssert, err error) {
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&out,
+		"balance",
+		evmResp.Ret,
+	)
+	if err != nil {
+		return
+	}
+	return evmtest.FunTokenBalanceAssert{
+		FunToken: evm.FunToken{
+			Erc20Addr: eth.EIP55Addr{Address: out.Token.Erc20},
+			BankDenom: out.Token.BankDenom,
+		},
+		Account:      out.NibiruAcc.EthAddr,
+		BalanceBank:  out.BankBal,
+		BalanceERC20: out.Erc20Bal,
+	}, nil
+}
+
+type FunTokenBankBalanceReturn struct {
+	BankBal   *big.Int `abi:"bankBalance"`
+	NibiruAcc struct {
+		EthAddr    gethcommon.Address `abi:"ethAddr"`
+		Bech32Addr string             `abi:"bech32Addr"`
+	} `abi:"whoAddrs"`
+}
+
+func (out FunTokenBankBalanceReturn) ParseFromResp(
+	evmResp *evm.MsgEthereumTxResponse,
+) (bal *big.Int, ethAddr gethcommon.Address, bech32Addr string, err error) {
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&out,
+		"bankBalance",
+		evmResp.Ret,
+	)
+	if err != nil {
+		return
+	}
+	return out.BankBal, out.NibiruAcc.EthAddr, out.NibiruAcc.Bech32Addr, nil
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := s.deps
 	randomAcc := testutil.AccAddress()
-
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
 		s.funtoken.Erc20Addr.Address,
@@ -201,49 +306,46 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	)
 	s.Require().NoError(err)
 
-	s.deps.ResetGasMeter()
-
 	s.T().Log("Happy: callBankSend with default gas")
+	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
-		precompile.FunTokenGasLimitBankSend,
+		evmtest.FunTokenGasLimitSendToEvm,
 		"callBankSend",
 		big.NewInt(1),
 		randomAcc.String(),
 	)
 	s.Require().NoError(err)
 
-	s.deps.ResetGasMeter()
-
 	s.T().Log("Happy: callBankSend with local gas - sufficient gas amount")
+	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
-		precompile.FunTokenGasLimitBankSend, // gasLimit for the entire call
+		evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 		"callBankSendLocalGas",
 		big.NewInt(1),      // erc20 amount
 		randomAcc.String(), // to
-		big.NewInt(int64(precompile.FunTokenGasLimitBankSend)), // customGas
+		big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)), // customGas
 	)
 	s.Require().NoError(err)
 
-	s.deps.ResetGasMeter()
-
 	s.T().Log("Sad: callBankSend with local gas - insufficient gas amount")
+	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
-		precompile.FunTokenGasLimitBankSend, // gasLimit for the entire call
+		evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 		"callBankSendLocalGas",
 		big.NewInt(1),      // erc20 amount
 		randomAcc.String(), // to

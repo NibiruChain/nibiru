@@ -234,7 +234,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
-		precompile.FunTokenGasLimitBankSend,
+		evmtest.FunTokenGasLimitSendToEvm,
 		"sendToBank",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
@@ -262,7 +262,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
-		precompile.FunTokenGasLimitBankSend,
+		evmtest.FunTokenGasLimitSendToEvm,
 		"sendToBank",
 		funToken.Erc20Addr.Address,
 		big.NewInt(10),
@@ -353,6 +353,9 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	}.Assert(s.T(), deps)
 
 	s.T().Log("call test contract")
+	deps.ResetGasMeter()
+	newSendAmtSendToBank := new(big.Int).Quo(sendAmt, big.NewInt(2))
+	newSendAmtEvmTransfer := evm.NativeToWei(newSendAmtSendToBank)
 	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI,
@@ -362,26 +365,68 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		10_000_000, // 100% sufficient gas
 		"nativeSendThenPrecompileSend",
 		[]any{
-			alice.EthAddr,
-			evm.NativeToWei(sendAmt), // native send uses wei units
-			alice.NibiruAddr.String(),
-			sendAmt, // amount for precompile sendToBank
+			alice.EthAddr,             // nativeRecipient
+			newSendAmtEvmTransfer,     // nativeAmount (wei units)
+			alice.NibiruAddr.String(), // precompileRecipient
+			newSendAmtSendToBank,      // precompileAmount
 		}...,
 	)
 	s.Require().NoError(err)
 	s.Empty(evmResp.VmError)
+	gasUsedFor2Ops := evmResp.GasUsed
 
 	evmtest.FunTokenBalanceAssert{
-		FunToken:     funtoken,
-		Account:      alice.EthAddr,
-		BalanceBank:  new(big.Int).Mul(sendAmt, big.NewInt(2)),
+		FunToken: funtoken,
+		Account:  alice.EthAddr,
+		BalanceBank: new(big.Int).Mul(
+			newSendAmtSendToBank, big.NewInt(2)),
 		BalanceERC20: big.NewInt(0),
 	}.Assert(s.T(), deps)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      testContractAddr,
-		BalanceBank:  big.NewInt(0),
+		BalanceBank:  big.NewInt(5),
+		BalanceERC20: big.NewInt(5),
+	}.Assert(s.T(), deps)
+
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funtoken,
+		Account:      evm.EVM_MODULE_ADDRESS,
+		BalanceBank:  big.NewInt(5),
+		BalanceERC20: big.NewInt(0),
+	}.Assert(s.T(), deps)
+
+	deps.ResetGasMeter()
+	evmResp, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI,
+		deps.Sender.EthAddr,
+		&testContractAddr,
+		true,
+		10_000_000, // 100% sufficient gas
+		"justPrecompileSend",
+		[]any{
+			alice.NibiruAddr.String(), // precompileRecipient
+			newSendAmtSendToBank,      // precompileAmount
+		}...,
+	)
+	s.Require().NoError(err)
+	s.Empty(evmResp.VmError)
+	gasUsedFor1Op := evmResp.GasUsed
+
+	evmtest.FunTokenBalanceAssert{
+		FunToken: funtoken,
+		Account:  alice.EthAddr,
+		BalanceBank: new(big.Int).Mul(
+			newSendAmtSendToBank, big.NewInt(3)),
+		BalanceERC20: big.NewInt(0),
+	}.Assert(s.T(), deps)
+
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funtoken,
+		Account:      testContractAddr,
+		BalanceBank:  big.NewInt(5),
 		BalanceERC20: big.NewInt(0),
 	}.Assert(s.T(), deps)
 
@@ -391,6 +436,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
 	}.Assert(s.T(), deps)
+	s.Require().Greater(gasUsedFor2Ops, gasUsedFor1Op, "2 operations should consume more gas")
 }
 
 // TestERC20TransferThenPrecompileSend
@@ -553,7 +599,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
-		precompile.FunTokenGasLimitBankSend,
+		evmtest.FunTokenGasLimitSendToEvm,
 		"selfCallTransferFunds",
 		alice.EthAddr,
 		evm.NativeToWei(big.NewInt(1e6)), // native send uses wei units,
