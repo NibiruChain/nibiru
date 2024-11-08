@@ -167,6 +167,9 @@ func (r *TransactionReceipt) MarshalJSON() ([]byte, error) {
 	if r.EffectiveGasPrice != nil {
 		output["effectiveGasPrice"] = r.EffectiveGasPrice
 	}
+	// delete deprecated (pre Byzantium) key which is always set to 0x and fails parsing within hardhat
+	delete(output, "root")
+
 	return json.Marshal(output)
 }
 
