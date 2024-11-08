@@ -245,9 +245,23 @@ func (p precompileFunToken) parseArgsSendToBank(args []any) (
 	return
 }
 
-// TODO: UD-DEBUG: impl
-// TODO: UD-DEBUG: test
-// TODO: UD-DEBUG: docs
+// balance: Implements "IFunToken.balance"
+//
+// The "args" populate the following function signature in Solidity:
+//
+//	```solidity
+//	function balance(
+//	    address who,
+//	    address funtoken
+//	)
+//	    external
+//	    returns (
+//	        uint256 erc20Balance,
+//	        uint256 bankBalance,
+//	        FunToken memory token,
+//	        NibiruAccount memory whoAddrs
+//	    );
+//	```
 func (p precompileFunToken) balance(
 	start OnRunStartResult,
 	contract *vm.Contract,
@@ -337,9 +351,16 @@ func (p precompileFunToken) parseArgsBalance(args []any, ctx sdk.Context) (
 	return addrEth, addrBech32, *resp.FunToken, nil
 }
 
-// TODO: UD-DEBUG: impl
-// TODO: UD-DEBUG: test
-// TODO: UD-DEBUG: docs
+// bankBalance: Implements "IFunToken.bankBalance"
+//
+// The "args" populate the following function signature in Solidity:
+//
+//	```solidity
+//	function bankBalance(
+//	    address who,
+//	    string calldata bankDenom
+//	) external returns (uint256 bankBalance, NibiruAccount memory whoAddrs);
+//	```
 func (p precompileFunToken) bankBalance(
 	start OnRunStartResult,
 	contract *vm.Contract,
@@ -409,8 +430,15 @@ func (p precompileFunToken) parseArgsBankBalance(args []any) (
 	return addrEth, addrBech32, bankDenom, nil
 }
 
-// TODO: UD-DEBUG: test
-// TODO: UD-DEBUG: docs
+// whoAmI: Implements "IFunToken.whoAmI"
+//
+// The "args" populate the following function signature in Solidity:
+//
+//	```solidity
+//	function whoAmI(
+//	    string calldata who
+//	) external returns (NibiruAccount memory whoAddrs);
+//	```
 func (p precompileFunToken) whoAmI(
 	start OnRunStartResult,
 	contract *vm.Contract,
