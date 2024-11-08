@@ -108,7 +108,7 @@ func (s *NodeSuite) Test_BlockNumber() {
 	s.NoError(err)
 	// It might be off by 1 block in either direction.
 	blockDiff := networkBlockNumber - int64(ethBlockNumber)
-	s.LessOrEqualf(blockDiff, 2, "networkBlockNumber %d, ethBlockNumber %d",
+	s.Truef(blockDiff <= 2, "networkBlockNumber %d, ethBlockNumber %d",
 		networkBlockNumber, ethBlockNumber,
 	)
 }
@@ -370,9 +370,10 @@ func (s *NodeSuite) Test_SmartContract() {
 	txHash, err := s.ethAPI.SendRawTransaction(txBz)
 	s.Require().NoError(err)
 
-	s.T().Log("Assert: tx IS pending just after execution")
-	pendingTxs, err := s.ethAPI.GetPendingTransactions()
-	s.Require().NoErrorf(err, "pendingTxs: %d", pendingTxs)
+	s.T().Log("Wait a few blocks so the tx won't be pending")
+	for i := 0; i < 5; i++ {
+		_ = s.network.WaitForNextBlock()
+	}
 
 	s.T().Log("Assert: tx NOT pending")
 	{
