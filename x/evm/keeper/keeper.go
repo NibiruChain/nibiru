@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
@@ -114,14 +113,6 @@ func (k *Keeper) AddToBlockGasUsed(
 	k.EvmState.BlockGasUsed.Set(ctx, blockGasUsed)
 
 	return blockGasUsed, nil
-}
-
-// GetMinGasUsedMultiplier - value from 0 to 1
-// When executing evm msg, user specifies gasLimit.
-// If the gasLimit is X times higher than the actual gasUsed then
-// we update gasUsed = max(gasUsed, gasLimit * minGasUsedPct)
-func (k Keeper) GetMinGasUsedMultiplier(ctx sdk.Context) math.LegacyDec {
-	return math.LegacyNewDecWithPrec(50, 2) // 50%
 }
 
 // BaseFeeMicronibiPerGas returns the gas base fee in units of the EVM denom. Note
