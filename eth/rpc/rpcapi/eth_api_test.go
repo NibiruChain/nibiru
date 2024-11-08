@@ -106,7 +106,11 @@ func (s *NodeSuite) Test_BlockNumber() {
 
 	ethBlockNumber, err := s.ethClient.BlockNumber(context.Background())
 	s.NoError(err)
-	s.Equal(networkBlockNumber, int64(ethBlockNumber))
+	// It might be off by 1 block in either direction.
+	blockDiff := networkBlockNumber - int64(ethBlockNumber)
+	s.LessOrEqualf(blockDiff, 2, "networkBlockNumber %d, ethBlockNumber %d",
+		networkBlockNumber, ethBlockNumber,
+	)
 }
 
 // Test_BlockByNumber EVM method: eth_getBlockByNumber
