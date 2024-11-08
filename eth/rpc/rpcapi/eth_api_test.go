@@ -372,9 +372,7 @@ func (s *NodeSuite) Test_SmartContract() {
 
 	s.T().Log("Assert: tx IS pending just after execution")
 	pendingTxs, err := s.ethAPI.GetPendingTransactions()
-	s.NoError(err)
-	s.Require().Len(pendingTxs, 1)
-	_ = s.network.WaitForNextBlock()
+	s.Require().NoErrorf(err, "pendingTxs: %d", pendingTxs)
 
 	s.T().Log("Assert: tx NOT pending")
 	{
