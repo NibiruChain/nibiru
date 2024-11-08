@@ -1,6 +1,7 @@
 package precompile_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -86,6 +87,68 @@ func (s *FuntokenSuite) TestFailToPackABI() {
 			s.Nil(input)
 		})
 	}
+}
+
+func (s *FuntokenSuite) TestWhoAmI() {
+	deps := evmtest.NewTestDeps()
+
+	for accIdx, acc := range []evmtest.EthPrivKeyAcc{
+		deps.Sender, evmtest.NewEthPrivAcc(),
+	} {
+		s.T().Logf("test account %d, use both address formats", accIdx)
+		callWhoAmIWithArg := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
+			fmt.Printf("arg: %s", arg)
+			return deps.EvmKeeper.CallContract(
+				deps.Ctx,
+				embeds.SmartContract_FunToken.ABI,
+				deps.Sender.EthAddr,
+				&precompile.PrecompileAddr_FunToken,
+				false,
+				keeper.Erc20GasLimitExecute,
+				"whoAmI",
+				[]any{
+					arg, // who
+				}...,
+			)
+		}
+		for _, arg := range []string{acc.NibiruAddr.String(), acc.EthAddr.Hex()} {
+			evmResp, err := callWhoAmIWithArg(arg)
+			s.Require().NoError(err, evmResp)
+			gotAddrEth, gotAddrBech32, err := new(FunTokenWhoAmIReturn).ParseFromResp(evmResp)
+			s.NoError(err)
+			s.Equal(acc.EthAddr.Hex(), gotAddrEth.Hex())
+			s.Equal(acc.NibiruAddr.String(), gotAddrBech32)
+		}
+		// Sad path check
+		evmResp, err := callWhoAmIWithArg("not_an_address")
+		s.Require().ErrorContains(
+			err, "could not parse address as Nibiru Bech32 or Ethereum hexadecimal", evmResp,
+		)
+	}
+}
+
+// FunTokenWhoAmIReturn holds the return values from the "IFuntoken.whoAmI"
+// method. The return bytes from successful calls of that method can be ABI
+// unpacked into this struct.
+type FunTokenWhoAmIReturn struct {
+	NibiruAcc struct {
+		EthAddr    gethcommon.Address `abi:"ethAddr"`
+		Bech32Addr string             `abi:"bech32Addr"`
+	} `abi:"whoAddrs"`
+}
+
+func (out FunTokenWhoAmIReturn) ParseFromResp(
+	evmResp *evm.MsgEthereumTxResponse,
+) (ethAddr gethcommon.Address, bech32Addr string, err error) {
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&out,
+		"whoAmI",
+		evmResp.Ret,
+	)
+	if err != nil {
+		return
+	}
+	return out.NibiruAcc.EthAddr, out.NibiruAcc.Bech32Addr, nil
 }
 
 func (s *FuntokenSuite) TestHappyPath() {
@@ -218,6 +281,9 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 }
 
+// FunTokenBalanceReturn holds the return values from the "IFuntoken.balance"
+// method. The return bytes from successful calls of that method can be ABI
+// unpacked into this struct.
 type FunTokenBalanceReturn struct {
 	Erc20Bal *big.Int `abi:"erc20Balance"`
 	BankBal  *big.Int `abi:"bankBalance"`
@@ -253,6 +319,9 @@ func (out FunTokenBalanceReturn) ParseFromResp(
 	}, nil
 }
 
+// FunTokenBankBalanceReturn holds the return values from the
+// "IFuntoken.bankBalance" method. The return bytes from successful calls of that
+// method can be ABI unpacked into this struct.
 type FunTokenBankBalanceReturn struct {
 	BankBal   *big.Int `abi:"bankBalance"`
 	NibiruAcc struct {

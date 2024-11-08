@@ -51,7 +51,7 @@ func parseFundsArg(arg any) (funds sdk.Coins, err error) {
 }
 
 // Parses [sdk.AccAddress] from a "string" solidity argument:
-func parseContractAddrArg(arg any) (addr sdk.AccAddress, err error) {
+func parseArgContractAddr(arg any) (addr sdk.AccAddress, err error) {
 	addrStr, ok := arg.(string)
 	if !ok {
 		err = ErrArgTypeValidation("string contractAddr", arg)
@@ -67,7 +67,7 @@ func parseContractAddrArg(arg any) (addr sdk.AccAddress, err error) {
 	return addr, nil
 }
 
-func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
+func (p precompileWasm) parseArgsWasmInstantiate(args []any, sender string) (
 	txMsg wasm.MsgInstantiateContract,
 	err error,
 ) {
@@ -124,7 +124,7 @@ func (p precompileWasm) parseInstantiateArgs(args []any, sender string) (
 	return txMsg, txMsg.ValidateBasic()
 }
 
-func (p precompileWasm) parseExecuteArgs(args []any) (
+func (p precompileWasm) parseArgsWasmExecute(args []any) (
 	wasmContract sdk.AccAddress,
 	msgArgs []byte,
 	funds sdk.Coins,
@@ -174,7 +174,7 @@ func (p precompileWasm) parseExecuteArgs(args []any) (
 	return contractAddr, msgArgs, funds, nil
 }
 
-func (p precompileWasm) parseQueryArgs(args []any) (
+func (p precompileWasm) parseArgsWasmQuery(args []any) (
 	wasmContract sdk.AccAddress,
 	req wasm.RawContractMessage,
 	err error,
@@ -185,7 +185,7 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	}
 
 	argsIdx := 0
-	wasmContract, e := parseContractAddrArg(args[argsIdx])
+	wasmContract, e := parseArgContractAddr(args[argsIdx])
 	if e != nil {
 		err = e
 		return
@@ -206,7 +206,7 @@ func (p precompileWasm) parseQueryArgs(args []any) (
 	return wasmContract, req, nil
 }
 
-func (p precompileWasm) parseExecuteMultiArgs(args []any) (
+func (p precompileWasm) parseArgsWasmExecuteMulti(args []any) (
 	wasmExecMsgs []struct {
 		ContractAddr string `json:"contractAddr"`
 		MsgArgs      []byte `json:"msgArgs"`

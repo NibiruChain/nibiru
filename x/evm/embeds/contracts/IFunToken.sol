@@ -46,4 +46,8 @@ interface IFunToken {
         address who,
         string calldata bankDenom
     ) external returns (uint256 bankBalance, NibiruAccount memory whoAddrs);
+
+    function whoAmI(
+        string calldata who
+    ) external returns (NibiruAccount memory whoAddrs);
 }

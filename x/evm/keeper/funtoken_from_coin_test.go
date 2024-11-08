@@ -271,12 +271,15 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().ErrorContains(err, "transfer amount exceeds balance")
 }
 
-// TestNativeSendThenPrecompileSend
-// 1. Creates a funtoken from coin.
-// 2. Using the test contract, performs two sends in a single call: a native nibi
-// send and a precompile sendToBank.
-// It tests a race condition where the state DB commit may overwrite the state after the precompile execution,
-// potentially causing a loss of funds.
+// TestNativeSendThenPrecompileSend tests a race condition where the state DB
+// commit may overwrite the state after the precompile execution, potentially
+// causing a loss of funds.
+//
+// The order of operations is to:
+//  1. Create a funtoken mapping from NIBI, a bank coin.
+//  2. Use a test Solidity contract to perform two transfers in a single call: a
+//     transfer of NIBI with native send and a precompile "IFunToken.sendToBank"
+//     transfer for the same asset.
 //
 // INITIAL STATE:
 // - Test contract funds: 10 NIBI, 10 WNIBI

@@ -52,6 +52,8 @@ func (p precompileOracle) Run(
 	case OracleMethod_queryExchangeRate:
 		bz, err = p.queryExchangeRate(ctx, method, args)
 	default:
+		// Note that this code path should be impossible to reach since
+		// "[decomposeInput]" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}

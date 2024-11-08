@@ -41,6 +41,7 @@ const (
 	FunTokenMethod_sendToBank  PrecompileMethod = "sendToBank"
 	FunTokenMethod_balance     PrecompileMethod = "balance"
 	FunTokenMethod_bankBalance PrecompileMethod = "bankBalance"
+	FunTokenMethod_whoAmI      PrecompileMethod = "whoAmI"
 )
 
 // Run runs the precompiled contract
@@ -67,9 +68,11 @@ func (p precompileFunToken) Run(
 		bz, err = p.balance(startResult, contract)
 	case FunTokenMethod_bankBalance:
 		bz, err = p.bankBalance(startResult, contract)
+	case FunTokenMethod_whoAmI:
+		bz, err = p.whoAmI(startResult, contract)
 	default:
 		// Note that this code path should be impossible to reach since
-		// "DecomposeInput" parses methods directly from the ABI.
+		// "[decomposeInput]" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
@@ -113,7 +116,7 @@ func (p precompileFunToken) sendToBank(
 		return nil, err
 	}
 
-	erc20, amount, to, err := p.parseSendToBankArgs(args)
+	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
 		return
 	}
@@ -201,11 +204,13 @@ func (p precompileFunToken) sendToBank(
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events
+	// TODO: emit event for balance change of sender
+	// TODO: emit event for balance change of recipient
 
 	return method.Outputs.Pack(gotAmount)
 }
 
-func (p precompileFunToken) parseSendToBankArgs(args []any) (
+func (p precompileFunToken) parseArgsSendToBank(args []any) (
 	erc20 gethcommon.Address,
 	amount *big.Int,
 	to string,
@@ -268,9 +273,6 @@ func (p precompileFunToken) balance(
 		return
 	}
 	bankBal := p.evmKeeper.Bank.GetBalance(ctx, addrBech32, funtoken.BankDenom).Amount.BigInt()
-
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
 
 	return method.Outputs.Pack([]any{
 		erc20Bal,
@@ -355,9 +357,6 @@ func (p precompileFunToken) bankBalance(
 	addrEth, addrBech32, bankDenom, err := p.parseArgsBankBalance(args)
 	bankBal := p.evmKeeper.Bank.GetBalance(ctx, addrBech32, bankDenom).Amount.BigInt()
 
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
-
 	return method.Outputs.Pack([]any{
 		bankBal,
 		struct {
@@ -408,4 +407,68 @@ func (p precompileFunToken) parseArgsBankBalance(args []any) (
 	}
 
 	return addrEth, addrBech32, bankDenom, nil
+}
+
+// TODO: UD-DEBUG: test
+// TODO: UD-DEBUG: docs
+func (p precompileFunToken) whoAmI(
+	start OnRunStartResult,
+	contract *vm.Contract,
+) (bz []byte, err error) {
+	method, args := start.Method, start.Args
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
+	if err := assertContractQuery(contract); err != nil {
+		return bz, err
+	}
+
+	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
+	if err != nil {
+		return bz, err
+	}
+
+	return method.Outputs.Pack([]any{
+		struct {
+			EthAddr    gethcommon.Address `json:"ethAddr"`
+			Bech32Addr string             `json:"bech32Addr"`
+		}{
+			EthAddr:    addrEth,
+			Bech32Addr: addrBech32.String(),
+		},
+	}...)
+}
+
+func (p precompileFunToken) parseArgsWhoAmI(args []any) (
+	addrEth gethcommon.Address,
+	addrBech32 sdk.AccAddress,
+	err error,
+) {
+	if e := assertNumArgs(args, 1); e != nil {
+		err = e
+		return
+	}
+
+	argIdx := 0
+	who, ok := args[argIdx].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string calldata who", args[argIdx])
+		return
+	}
+	req := &evm.QueryEthAccountRequest{Address: who}
+	isBech32, e := req.Validate()
+	if e != nil {
+		err = e
+		return
+	}
+	if isBech32 {
+		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+	} else {
+		addrEth = gethcommon.HexToAddress(req.Address)
+		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+	}
+	return addrEth, addrBech32, nil
 }

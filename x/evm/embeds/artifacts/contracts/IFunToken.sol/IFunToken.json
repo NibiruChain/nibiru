@@ -135,6 +135,37 @@
       ],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "who",
+          "type": "string"
+        }
+      ],
+      "name": "whoAmI",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "ethAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "bech32Addr",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IFunToken.NibiruAccount",
+          "name": "whoAddrs",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
     }
   ],
   "bytecode": "0x",
