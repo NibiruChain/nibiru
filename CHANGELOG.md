@@ -101,6 +101,10 @@ tests for race conditions within funtoken precompile
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint
+- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) -
+feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+- [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
+
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
