@@ -16,6 +16,10 @@ install:
 test:
   npm test
 
+# Runs tx receipt tests. Used for testnet quick check.
+test-basic:
+  npm test -- tx_receipt.test.ts
+
 # Format
 fmt: 
   npm run format
