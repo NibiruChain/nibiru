@@ -104,7 +104,7 @@ tests for race conditions within funtoken precompile
 - [#2107](https://github.com/NibiruChain/nibiru/pull/2107) -
 feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
 - [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
-
+- [#2108](https://github.com/NibiruChain/nibiru/pull/2110) - fix(evm): get rid of non-deterministic gas usage of NibiruBankKeeper
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
