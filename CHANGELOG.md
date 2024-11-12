@@ -105,6 +105,7 @@ tests for race conditions within funtoken precompile
 feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
 - [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
 - [#2110](https://github.com/NibiruChain/nibiru/pull/2110) - fix(evm): Restore StateDB to its state prior to ApplyEvmMsg call to ensure deterministic gas usage. This fixes an issue where the StateDB pointer field in NibiruBankKeeper was being updated during readonly query endpoints like eth_estimateGas, leading to non-deterministic gas usage in subsequent transactions.
+- [#2111](https://github.com/NibiruChain/nibiru/pull/2111) - fix: e2e-evm-cron.yml
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
