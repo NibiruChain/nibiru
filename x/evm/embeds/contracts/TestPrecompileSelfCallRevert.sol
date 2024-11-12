@@ -40,16 +40,16 @@ contract TestPrecompileSelfCallRevert {
     ) external {
         require(nativeRecipient.send(nativeAmount), "ETH transfer failed"); // wei
 
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
             erc20,
-            precompileAmount,  // micro-WNIBI
-                precompileRecipient
+            precompileAmount, // micro-WNIBI
+            precompileRecipient
         );
 
         require(
             sentAmount == precompileAmount,
             string.concat(
-                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
                 Strings.toString(nativeAmount),
                 "expected ",

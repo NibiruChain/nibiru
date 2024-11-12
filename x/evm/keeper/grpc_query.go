@@ -454,7 +454,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 				return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
 			}
 
-			return nil, fmt.Errorf("Estimgate gas VMError: %s", result.VmError)
+			return nil, fmt.Errorf("Estimate gas VMError: %s", result.VmError)
 		}
 	}
 
