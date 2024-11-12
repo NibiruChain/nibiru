@@ -163,3 +163,15 @@ func AssertBankBalanceEqualWithDescription(
 	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
 		"expected %s, got %s", expectedBalance, actualBalance, errSuffix)
 }
+
+const (
+	// FunTokenGasLimitSendToEvm consists of gas for 3 calls:
+	// 1. transfer erc20 from sender to module
+	//    ~60_000 gas for regular erc20 transfer (our own ERC20Minter contract)
+	//    could be higher for user created contracts, let's cap with 200_000
+	// 2. mint native coin (made from erc20) or burn erc20 token (made from coin)
+	//	  ~60_000 gas for either mint or burn
+	// 3. send from module to account:
+	//	  ~65_000 gas (bank send)
+	FunTokenGasLimitSendToEvm uint64 = 400_000
+)

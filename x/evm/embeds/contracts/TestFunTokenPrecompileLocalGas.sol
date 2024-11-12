@@ -11,21 +11,21 @@ contract TestFunTokenPrecompileLocalGas {
         erc20 = erc20_;
     }
 
-    // Calls bankSend of the FunToken Precompile with the default gas.
+    // Calls sendToBank of the FunToken Precompile with the default gas.
     // Internal call could use all the gas for the parent call.
     function callBankSend(
         uint256 amount,
         string memory bech32Recipient
     ) public {
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
             erc20,
-                amount,
+            amount,
             bech32Recipient
         );
         require(
             sentAmount == amount,
             string.concat(
-                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
                 Strings.toString(sentAmount),
                 "expected ",
@@ -34,14 +34,14 @@ contract TestFunTokenPrecompileLocalGas {
         );
     }
 
-    // Calls bankSend of the FunToken Precompile with the gas amount set in parameter.
+    // Calls sendToBank of the FunToken Precompile with the gas amount set in parameter.
     // Internal call should fail if the gas provided is insufficient.
     function callBankSendLocalGas(
         uint256 amount,
         string memory bech32Recipient,
         uint256 customGas
     ) public {
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend{gas: customGas}(
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank{gas: customGas}(
             erc20,
             amount,
             bech32Recipient
@@ -49,7 +49,7 @@ contract TestFunTokenPrecompileLocalGas {
         require(
             sentAmount == amount,
             string.concat(
-                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
                 Strings.toString(sentAmount),
                 "expected ",

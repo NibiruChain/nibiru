@@ -222,7 +222,10 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 	WasmMethod_query:        false,
 	WasmMethod_queryRaw:     false,
 
-	FunTokenMethod_BankSend: true,
+	FunTokenMethod_sendToBank:  true,
+	FunTokenMethod_balance:     false,
+	FunTokenMethod_bankBalance: false,
+	FunTokenMethod_whoAmI:      false,
 
 	OracleMethod_queryExchangeRate: false,
 }
