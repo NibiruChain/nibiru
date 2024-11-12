@@ -259,6 +259,12 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
+	// save a reference to return to the previous stateDB
+	oldStateDb := k.Bank.StateDB
+	defer func() {
+		k.Bank.StateDB = oldStateDb
+	}()
+
 	stateDB := k.NewStateDB(ctx, txConfig)
 	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
