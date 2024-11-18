@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "nibiru/oracle/v1/oracle.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -20,6 +20,12 @@ service Query {
   rpc ExchangeRateTwap(QueryExchangeRateRequest)
       returns (QueryExchangeRateResponse) {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate_twap";
+  }
+
+  // DatedExchangeRate returns latest price of a pair
+  rpc DatedExchangeRate(QueryExchangeRateRequest)
+      returns (QueryDatedExchangeRateResponse) {
+    option (google.api.http).get = "/nibiru/oracle/v1beta1/dated_exchange_rate";
   }
 
   // ExchangeRates returns exchange rates of all pairs
@@ -95,7 +101,7 @@ message QueryExchangeRateRequest {
   // pair defines the pair to query for.
   string pair = 1 [
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -112,7 +118,25 @@ message QueryExchangeRateResponse {
 
 // QueryExchangeRatesRequest is the request type for the Query/ExchangeRates RPC
 // method.
-message QueryExchangeRatesRequest {}
+message QueryExchangeRatesRequest {
+}
+
+// QueryDatedExchangeRateResponse is the request type for the 
+// Query/DatedExchangeRate RPC method.
+message QueryDatedExchangeRateResponse {
+  string price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Block timestamp for the block where the oracle came to consensus for this
+  // price. This timestamp is a conventional Unix millisecond time, i.e. the
+  // number of milliseconds elapsed since January 1, 1970 UTC. 
+  int64 block_timestamp_ms = 2;
+
+  // Block height when the oracle came to consensus for this price.
+  uint64 block_height = 3;
+}
 
 // QueryExchangeRatesResponse is response type for the
 // Query/ExchangeRates RPC method.
@@ -134,7 +158,7 @@ message QueryActivesResponse {
   // actives defines a list of the pair which oracle prices agreed upon.
   repeated string actives = 1 [
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -150,7 +174,7 @@ message QueryVoteTargetsResponse {
   // should vote in the current vote period.
   repeated string vote_targets = 1 [
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }

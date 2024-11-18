@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/errors"
-
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type msgServer struct {
@@ -118,7 +116,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
 		return nil, sdkerrors.Wrapf(
-			types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
+			types.ErrHashVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
 		)
 	}
 
@@ -173,6 +171,8 @@ func (ms msgServer) DelegateFeedConsent(
 	return &types.MsgDelegateFeedConsentResponse{}, err
 }
 
+// EditOracleParams: gRPC tx msg for editing the oracle module params.
+// [SUDO] Only callable by sudoers.
 func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

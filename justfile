@@ -16,6 +16,10 @@ install-clean:
 build: 
   make build
 
+# Cleans the Go cache, modcache, and testcashe
+clean-cache:
+  go clean -cache -testcache -modcache
+
 alias b := build
 
 # Generate protobuf code (Golang) for Nibiru
@@ -39,9 +43,46 @@ lint:
 
   golangci-lint run --allow-parallel-runners --fix
 
-# Runs a Nibiru local network. Ex: "just localnet --features perp spot" 
+
+# Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
+
+# Runs a Nibiru local network without building and installing. "just localnet --no-build"
+localnet-fast:
+  make localnet FLAGS="--no-build"
+
+# Clears the logs directory
+log-clear:
+  #!/usr/bin/env bash
+  if [ -d "logs" ] && [ "$(ls -A logs)" ]; then
+    rm logs/* && echo "Logs cleared successfully."
+  elif [ ! -d "logs" ]; then
+    echo "Logs directory does not exist. Nothing to clear."
+  else
+    echo "Logs directory is already empty."
+  fi
+
+# Runs "just localnet" with logging (logs/localnet.txt)
+log-localnet:
+  #!/usr/bin/env bash
+  mkdir -p logs
+  just localnet 2>&1 | tee -a logs/localnet.txt
+
+# Runs the EVM E2E test with logging (logs/e2e.txt)
+log-e2e:
+  #!/usr/bin/env bash
+  just test-e2e 2>&1 | tee -a logs/e2e.txt
+
+# Runs the EVM E2E tests
+test-e2e:
+  #!/usr/bin/env bash
+  source contrib/bashlib.sh
+  log_info "Make sure the localnet is running! (just localnet)"
+
+  cd evm-e2e
+  just test
+
 
 # Test: "localnet.sh" script
 test-localnet:
@@ -67,7 +108,7 @@ stop:
 
 # Runs golang formatter (gofumpt)
 fmt:
-  gofumpt -w x app
+  gofumpt -w x app gosdk eth
 
 # Format and lint
 tidy: 
@@ -82,3 +123,15 @@ test-release:
 
 release-publish:
   make release
+
+# Run Go tests (short mode)
+test-unit:
+  go test ./... -short
+
+# Run Go tests (short mode) + coverage
+test-coverage-unit:
+  make test-coverage-unit
+
+# Run Go tests, including live network tests + coverage
+test-coverage-integration:
+  make test-coverage-integration

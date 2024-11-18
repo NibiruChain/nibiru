@@ -9,10 +9,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/genmsg"
-	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/genmsg"
+	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
 func TestIntegration(t *testing.T) {
@@ -20,9 +20,9 @@ func TestIntegration(t *testing.T) {
 	recvAddr := sdk.AccAddress("recv")
 
 	encoding := app.MakeEncodingConfig()
-	appGenesis := app.NewDefaultGenesisState(encoding.Marshaler)
+	appGenesis := app.NewDefaultGenesisState(encoding.Codec)
 
-	appGenesis[banktypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(&banktypes.GenesisState{
+	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(&banktypes.GenesisState{
 		Balances: []banktypes.Balance{
 			{
 				Address: senderAddr.String(),
@@ -40,7 +40,7 @@ func TestIntegration(t *testing.T) {
 	anyMsg, err := codectypes.NewAnyWithValue(testMsg)
 	require.NoError(t, err)
 
-	appGenesis[genmsg.ModuleName] = encoding.Marshaler.MustMarshalJSON(
+	appGenesis[genmsg.ModuleName] = encoding.Codec.MustMarshalJSON(
 		&v1.GenesisState{
 			Messages: []*codectypes.Any{anyMsg},
 		},

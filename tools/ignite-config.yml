@@ -1,0 +1,32 @@
+# This is a config file for Ignite CLI.
+#
+# It works with:
+# - Cosmos-SDK v0.47.5
+# - Ignite CLI v0.27.2
+#
+# To generate and OpenAPI specification (openapi.yml) for use Swagger UI,
+# run the following command from the current directory (nibiru/tools).
+# ```bash
+# ignite generate openapi --yes --path ../
+# ```
+#
+# See:
+# https://github.com/ignite/cli
+# https://github.com/swagger-api/swagger-ui
+version: 1
+accounts:
+  - name: alice
+    coins:
+      - 9000555unibi
+  - name: bob
+validators:
+  - name: guard
+    bonded: 9000555unibi
+faucet:
+  name: faucet-acc
+  coins:
+    - 999999999unibi
+    - 999999999unusd
+client:
+  openapi:
+    path: dist/openapi.yml

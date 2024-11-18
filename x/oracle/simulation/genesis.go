@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // Simulation parameter constants
@@ -32,12 +33,12 @@ func GenVotePeriod(r *rand.Rand) uint64 {
 
 // GenVoteThreshold randomized VoteThreshold
 func GenVoteThreshold(r *rand.Rand) sdk.Dec {
-	return sdk.NewDecWithPrec(333, 3).Add(sdk.NewDecWithPrec(int64(r.Intn(333)), 3))
+	return math.LegacyNewDecWithPrec(333, 3).Add(math.LegacyNewDecWithPrec(int64(r.Intn(333)), 3))
 }
 
 // GenRewardBand randomized RewardBand
 func GenRewardBand(r *rand.Rand) sdk.Dec {
-	return sdk.ZeroDec().Add(sdk.NewDecWithPrec(int64(r.Intn(100)), 3))
+	return math.LegacyZeroDec().Add(math.LegacyNewDecWithPrec(int64(r.Intn(100)), 3))
 }
 
 // GenRewardDistributionWindow randomized RewardDistributionWindow
@@ -47,7 +48,7 @@ func GenRewardDistributionWindow(r *rand.Rand) uint64 {
 
 // GenSlashFraction randomized SlashFraction
 func GenSlashFraction(r *rand.Rand) sdk.Dec {
-	return sdk.ZeroDec().Add(sdk.NewDecWithPrec(int64(r.Intn(100)), 3))
+	return math.LegacyZeroDec().Add(math.LegacyNewDecWithPrec(int64(r.Intn(100)), 3))
 }
 
 // GenSlashWindow randomized SlashWindow
@@ -57,7 +58,7 @@ func GenSlashWindow(r *rand.Rand) uint64 {
 
 // GenMinValidPerWindow randomized MinValidPerWindow
 func GenMinValidPerWindow(r *rand.Rand) sdk.Dec {
-	return sdk.ZeroDec().Add(sdk.NewDecWithPrec(int64(r.Intn(500)), 3))
+	return math.LegacyZeroDec().Add(math.LegacyNewDecWithPrec(int64(r.Intn(500)), 3))
 }
 
 // RandomizedGenState generates a random GenesisState for oracle
@@ -108,7 +109,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 			MinValidPerWindow: minValidPerWindow,
 		},
 		[]types.ExchangeRateTuple{
-			{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.NewDec(20_000)},
+			{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: math.LegacyNewDec(20_000)},
 		},
 		[]types.FeederDelegation{},
 		[]types.MissCounter{},

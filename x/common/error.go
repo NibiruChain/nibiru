@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 // TryCatch is an implementation of the try-catch block from languages like C++ and JS.
@@ -179,4 +182,14 @@ func CombineErrorsFromStrings(strs ...string) (err error) {
 		errs = append(errs, err)
 	}
 	return CombineErrors(errs...)
+}
+
+var ErrNilGrpcMsg = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
+
+// ErrNotImplemented: Represents an function error value.
+func ErrNotImplemented() error { return fmt.Errorf("fn not implemented yet") }
+
+// ErrNotImplementedGprc: Represents an unimplemented gRPC method.
+func ErrNotImplementedGprc() error {
+	return grpcstatus.Error(grpccodes.Unimplemented, ErrNotImplemented().Error())
 }
