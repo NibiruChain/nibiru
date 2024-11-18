@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -84,6 +85,14 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	if bk.StateDB == nil {
 		return
 	}
+
+	cachedGasConfig := ctx.KVGasConfig()
+	defer func() {
+		ctx = ctx.WithKVGasConfig(cachedGasConfig)
+	}()
+
+	// set gas cost to zero for this conditional operation
+	ctx = ctx.WithKVGasConfig(storetypes.GasConfig{})
 	balanceWei := evm.NativeToWei(
 		bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
 	)
