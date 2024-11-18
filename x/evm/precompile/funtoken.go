@@ -9,6 +9,7 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -63,7 +64,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly)
+		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly, evm.FirehoseContext())
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract)
 	case FunTokenMethod_bankBalance:
@@ -81,7 +82,7 @@ func (p precompileFunToken) Run(
 	}
 
 	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed(), firehose.GasChangeReason("run_funtoken_contract"))
 	return bz, err
 }
 
@@ -110,6 +111,7 @@ func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
 	readOnly bool,
+	firehoseContext *firehose.Context,
 ) (bz []byte, err error) {
 	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
@@ -199,7 +201,7 @@ func (p precompileFunToken) sendToBank(
 	}
 	for _, resp := range evmResponses {
 		for _, log := range resp.Logs {
-			startResult.StateDB.AddLog(log.ToEthereum())
+			startResult.StateDB.AddLog(log.ToEthereum(), firehoseContext)
 		}
 	}
 

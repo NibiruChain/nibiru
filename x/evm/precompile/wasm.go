@@ -15,6 +15,7 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/firehose"
 )
 
 var _ vm.PrecompiledContract = (*precompileWasm)(nil)
@@ -76,7 +77,7 @@ func (p precompileWasm) Run(
 	// The reason it's unnecessary to check for a success value is because
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
 	// meter was initialized....
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed(), firehose.GasChangeReason("run_wasm_contract"))
 	return bz, err
 }
 

@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
@@ -32,6 +33,9 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 				sdb.AddBalance(
 					deps.Sender.EthAddr,
 					evm.NativeToWei(balanceMicronibi),
+					false,
+					firehose.NoOpContext,
+					"test",
 				)
 			},
 			ctxSetup: func(deps *evmtest.TestDeps) {

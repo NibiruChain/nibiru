@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -22,7 +23,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: single message",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalance(deps.Sender.EthAddr, balance, false, firehose.NoOpContext, "test")
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return evmtest.HappyTransferTx(deps, 0)
@@ -34,7 +35,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: two messages",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalance(deps.Sender.EthAddr, balance, false, firehose.NoOpContext, "test")
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txMsgOne := evmtest.HappyTransferTx(deps, 0)

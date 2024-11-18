@@ -8,6 +8,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/firehose"
 	s "github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -74,7 +75,7 @@ func (s *Suite) TestAccount() {
 			s.Require().Equal(uint64(0), db.GetNonce(address))
 		}},
 		{"empty account", func(deps *evmtest.TestDeps, db *statedb.StateDB) {
-			db.CreateAccount(address)
+			db.CreateAccount(address, firehose.NoOpContext)
 			s.Require().NoError(db.Commit())
 
 			k := db.Keeper()
@@ -91,22 +92,24 @@ func (s *Suite) TestAccount() {
 			s.Require().Equal(uint64(0), db.GetNonce(address))
 		}},
 		{"suicide", func(deps *evmtest.TestDeps, db *statedb.StateDB) {
+			firehoseContext := firehose.NoOpContext
+
 			// non-exist account.
-			s.Require().False(db.Suicide(address))
+			s.Require().False(db.Suicide(address, firehoseContext))
 			s.Require().False(db.HasSuicided(address))
 
 			// create a contract account
-			db.CreateAccount(address)
-			db.SetCode(address, []byte("hello world"))
-			db.AddBalance(address, big.NewInt(100))
-			db.SetState(address, key1, value1)
-			db.SetState(address, key2, value2)
+			db.CreateAccount(address, firehoseContext)
+			db.SetCode(address, []byte("hello world"), firehoseContext)
+			db.AddBalance(address, big.NewInt(100), false, firehoseContext, "test")
+			db.SetState(address, key1, value1, firehoseContext)
+			db.SetState(address, key2, value2, firehoseContext)
 			s.Require().NoError(db.Commit())
 
 			// suicide
 			db = deps.NewStateDB()
 			s.Require().False(db.HasSuicided(address))
-			s.Require().True(db.Suicide(address))
+			s.Require().True(db.Suicide(address, firehoseContext))
 
 			// check dirty state
 			s.Require().True(db.HasSuicided(address))
@@ -134,17 +137,18 @@ func (s *Suite) TestAccount() {
 }
 
 func (s *Suite) TestAccountOverride() {
+	firehoseContext := firehose.NoOpContext
 	deps := evmtest.NewTestDeps()
 	db := deps.NewStateDB()
 	// test balance carry over when overwritten
 	amount := big.NewInt(1)
 
 	// init an EOA account, account overridden only happens on EOA account.
-	db.AddBalance(address, amount)
-	db.SetNonce(address, 1)
+	db.AddBalance(address, amount, false, firehoseContext, "test")
+	db.SetNonce(address, 1, firehoseContext)
 
 	// override
-	db.CreateAccount(address)
+	db.CreateAccount(address, firehoseContext)
 
 	// check balance is not lost
 	s.Require().Equal(amount, db.GetBalance(address))
@@ -158,11 +162,11 @@ func (s *Suite) TestDBError() {
 		malleate func(vm.StateDB)
 	}{
 		{"set account", func(db vm.StateDB) {
-			db.SetNonce(errAddress, 1)
+			db.SetNonce(errAddress, 1, firehose.NoOpContext)
 		}},
 		{"delete account", func(db vm.StateDB) {
-			db.SetNonce(errAddress, 1)
-			s.Require().True(db.Suicide(errAddress))
+			db.SetNonce(errAddress, 1, firehose.NoOpContext)
+			s.Require().True(db.Suicide(errAddress, firehose.NoOpContext))
 			s.True(db.HasSuicided(errAddress))
 		}},
 	}
@@ -182,19 +186,19 @@ func (s *Suite) TestBalance() {
 		expBalance *big.Int
 	}{
 		{"add balance", func(db *statedb.StateDB) {
-			db.AddBalance(address, big.NewInt(10))
+			db.AddBalance(address, big.NewInt(10), false, firehose.NoOpContext, "test")
 		}, big.NewInt(10)},
 		{"sub balance", func(db *statedb.StateDB) {
-			db.AddBalance(address, big.NewInt(10))
+			db.AddBalance(address, big.NewInt(10), false, firehose.NoOpContext, "test")
 			// get dirty balance
 			s.Require().Equal(big.NewInt(10), db.GetBalance(address))
-			db.SubBalance(address, big.NewInt(2))
+			db.SubBalance(address, big.NewInt(2), firehose.NoOpContext, "test")
 		}, big.NewInt(8)},
 		{"add zero balance", func(db *statedb.StateDB) {
-			db.AddBalance(address, big.NewInt(0))
+			db.AddBalance(address, big.NewInt(0), false, firehose.NoOpContext, "test")
 		}, big.NewInt(0)},
 		{"sub zero balance", func(db *statedb.StateDB) {
-			db.SubBalance(address, big.NewInt(0))
+			db.SubBalance(address, big.NewInt(0), firehose.NoOpContext, "test")
 		}, big.NewInt(0)},
 	}
 
@@ -215,6 +219,7 @@ func (s *Suite) TestBalance() {
 }
 
 func (s *Suite) TestState() {
+	firehoseContext := firehose.NoOpContext
 	key1 := common.BigToHash(big.NewInt(1))
 	value1 := common.BigToHash(big.NewInt(1))
 	testCases := []struct {
@@ -225,11 +230,11 @@ func (s *Suite) TestState() {
 		{"empty state", func(db *statedb.StateDB) {
 		}, nil},
 		{"set empty value", func(db *statedb.StateDB) {
-			db.SetState(address, key1, common.Hash{})
+			db.SetState(address, key1, common.Hash{}, firehoseContext)
 		}, statedb.Storage{}},
 		{"noop state change", func(db *statedb.StateDB) {
-			db.SetState(address, key1, value1)
-			db.SetState(address, key1, common.Hash{})
+			db.SetState(address, key1, value1, firehoseContext)
+			db.SetState(address, key1, common.Hash{}, firehoseContext)
 		}, statedb.Storage{}},
 		{"set state", func(db *statedb.StateDB) {
 			// check empty initial state
@@ -237,14 +242,14 @@ func (s *Suite) TestState() {
 			s.Require().Equal(common.Hash{}, db.GetCommittedState(address, key1))
 
 			// set state
-			db.SetState(address, key1, value1)
+			db.SetState(address, key1, value1, firehoseContext)
 			// query dirty state
 			s.Require().Equal(value1, db.GetState(address, key1))
 			// check committed state is still not exist
 			s.Require().Equal(common.Hash{}, db.GetCommittedState(address, key1))
 
 			// set same value again, should be noop
-			db.SetState(address, key1, value1)
+			db.SetState(address, key1, value1, firehoseContext)
 			s.Require().Equal(value1, db.GetState(address, key1))
 		}, statedb.Storage{
 			key1: value1,
@@ -276,6 +281,7 @@ func (s *Suite) TestState() {
 }
 
 func (s *Suite) TestCode() {
+	firehoseContext := firehose.NoOpContext
 	code := []byte("hello world")
 	codeHash := crypto.Keccak256Hash(code)
 
@@ -287,10 +293,10 @@ func (s *Suite) TestCode() {
 	}{
 		{"non-exist account", func(vm.StateDB) {}, nil, common.Hash{}},
 		{"empty account", func(db vm.StateDB) {
-			db.CreateAccount(address)
+			db.CreateAccount(address, firehoseContext)
 		}, nil, common.BytesToHash(emptyCodeHash)},
 		{"set code", func(db vm.StateDB) {
-			db.SetCode(address, code)
+			db.SetCode(address, code, firehoseContext)
 		}, code, codeHash},
 	}
 
@@ -317,6 +323,7 @@ func (s *Suite) TestCode() {
 }
 
 func (s *Suite) TestRevertSnapshot() {
+	firehoseContext := firehose.NoOpContext
 	v1 := common.BigToHash(big.NewInt(1))
 	v2 := common.BigToHash(big.NewInt(2))
 	v3 := common.BigToHash(big.NewInt(3))
@@ -325,30 +332,28 @@ func (s *Suite) TestRevertSnapshot() {
 		malleate func(vm.StateDB)
 	}{
 		{"set state", func(db vm.StateDB) {
-			db.SetState(address, v1, v3)
+			db.SetState(address, v1, v3, firehoseContext)
 		}},
 		{"set nonce", func(db vm.StateDB) {
-			db.SetNonce(address, 10)
+			db.SetNonce(address, 10, firehoseContext)
 		}},
 		{"change balance", func(db vm.StateDB) {
-			db.AddBalance(address, big.NewInt(10))
-			db.SubBalance(address, big.NewInt(5))
+			db.AddBalance(address, big.NewInt(10), false, firehoseContext, "test")
+			db.SubBalance(address, big.NewInt(5), firehoseContext, "test")
 		}},
 		{"override account", func(db vm.StateDB) {
-			db.CreateAccount(address)
+			db.CreateAccount(address, firehoseContext)
 		}},
 		{"set code", func(db vm.StateDB) {
-			db.SetCode(address, []byte("hello world"))
+			db.SetCode(address, []byte("hello world"), firehoseContext)
 		}},
 		{"suicide", func(db vm.StateDB) {
-			db.SetState(address, v1, v2)
-			db.SetCode(address, []byte("hello world"))
-			s.Require().True(db.Suicide(address))
+			db.SetState(address, v1, v2, firehoseContext)
+			db.SetCode(address, []byte("hello world"), firehoseContext)
+			s.Require().True(db.Suicide(address, firehoseContext))
 		}},
 		{"add log", func(db vm.StateDB) {
-			db.AddLog(&gethcore.Log{
-				Address: address,
-			})
+			db.AddLog(&gethcore.Log{Address: address}, firehoseContext)
 		}},
 		{"add refund", func(db vm.StateDB) {
 			db.AddRefund(10)
@@ -365,11 +370,11 @@ func (s *Suite) TestRevertSnapshot() {
 
 			// do some arbitrary changes to the storage
 			db := deps.NewStateDB()
-			db.SetNonce(address, 1)
-			db.AddBalance(address, big.NewInt(100))
-			db.SetCode(address, []byte("hello world"))
-			db.SetState(address, v1, v2)
-			db.SetNonce(address2, 1)
+			db.SetNonce(address, 1, firehoseContext)
+			db.AddBalance(address, big.NewInt(100), false, firehoseContext, "test")
+			db.SetCode(address, []byte("hello world"), firehoseContext)
+			db.SetState(address, v1, v2, firehoseContext)
+			db.SetNonce(address2, 1, firehoseContext)
 			s.Require().NoError(db.Commit())
 
 			// Store original state values
@@ -401,6 +406,7 @@ func (s *Suite) TestRevertSnapshot() {
 }
 
 func (s *Suite) TestNestedSnapshot() {
+	firehoseContext := firehose.NoOpContext
 	key := common.BigToHash(big.NewInt(1))
 	value1 := common.BigToHash(big.NewInt(1))
 	value2 := common.BigToHash(big.NewInt(2))
@@ -409,10 +415,10 @@ func (s *Suite) TestNestedSnapshot() {
 	db := deps.NewStateDB()
 
 	rev1 := db.Snapshot()
-	db.SetState(address, key, value1)
+	db.SetState(address, key, value1, firehoseContext)
 
 	rev2 := db.Snapshot()
-	db.SetState(address, key, value2)
+	db.SetState(address, key, value2, firehoseContext)
 	s.Require().Equal(value2, db.GetState(address, key))
 
 	db.RevertToSnapshot(rev2)
@@ -505,6 +511,7 @@ func (s *Suite) TestAccessList() {
 }
 
 func (s *Suite) TestLog() {
+	firehoseContext := firehose.NoOpContext
 	txHash := common.BytesToHash([]byte("tx"))
 
 	// use a non-default tx config
@@ -530,7 +537,7 @@ func (s *Suite) TestLog() {
 		Data:        logData,
 		BlockNumber: blockNumber,
 	}
-	db.AddLog(log)
+	db.AddLog(log, firehoseContext)
 	s.Require().Equal(1, len(db.Logs()))
 
 	wantLog := &gethcore.Log{
@@ -548,7 +555,7 @@ func (s *Suite) TestLog() {
 	s.Require().Equal(wantLog, db.Logs()[0])
 
 	// Add a second log and assert values
-	db.AddLog(log)
+	db.AddLog(log, firehoseContext)
 	wantLog.Index++
 	s.Require().Equal(2, len(db.Logs()))
 	gotLog := db.Logs()[1]
@@ -589,6 +596,8 @@ func (s *Suite) TestRefund() {
 }
 
 func (s *Suite) TestIterateStorage() {
+	firehoseContext := firehose.NoOpContext
+
 	key1 := common.BigToHash(big.NewInt(1))
 	value1 := common.BigToHash(big.NewInt(2))
 	key2 := common.BigToHash(big.NewInt(3))
@@ -596,8 +605,8 @@ func (s *Suite) TestIterateStorage() {
 
 	deps := evmtest.NewTestDeps()
 	db := deps.NewStateDB()
-	db.SetState(address, key1, value1)
-	db.SetState(address, key2, value2)
+	db.SetState(address, key1, value1, firehoseContext)
+	db.SetState(address, key2, value2, firehoseContext)
 
 	// ForEachStorage only iterate committed state
 	s.Require().Empty(CollectContractStorage(db))

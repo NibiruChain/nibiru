@@ -9,6 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
@@ -64,17 +65,19 @@ func (s *Suite) TestComplexJournalChanges() {
 	s.Require().NoError(err)
 
 	s.Run("Populate dirty journal entries. Remove with Commit", func() {
+		firehoseContext := firehose.NoOpContext
+
 		stateDB := evmObj.StateDB.(*statedb.StateDB)
 		s.Equal(0, stateDB.DebugDirtiesCount())
 
 		randomAcc := evmtest.NewEthPrivAcc().EthAddr
 		balDelta := evm.NativeToWei(big.NewInt(4))
 		// 2 dirties from [createObjectChange, balanceChange]
-		stateDB.AddBalance(randomAcc, balDelta)
+		stateDB.AddBalance(randomAcc, balDelta, false, firehoseContext, "test")
 		// 1 dirties from [balanceChange]
-		stateDB.AddBalance(randomAcc, balDelta)
+		stateDB.AddBalance(randomAcc, balDelta, false, firehoseContext, "test")
 		// 1 dirties from [balanceChange]
-		stateDB.SubBalance(randomAcc, balDelta)
+		stateDB.SubBalance(randomAcc, balDelta, firehoseContext, "test")
 		if stateDB.DebugDirtiesCount() != 4 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 4 dirty journal changes")

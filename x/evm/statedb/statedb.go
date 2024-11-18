@@ -28,6 +28,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/firehose"
 )
 
 var _ vm.StateDB = &StateDB{}
@@ -122,13 +123,18 @@ func (s *StateDB) GetCacheContext() *sdk.Context {
 }
 
 // AddLog adds a log, called by evm.
-func (s *StateDB) AddLog(log *gethcore.Log) {
+func (s *StateDB) AddLog(log *gethcore.Log, firehoseContext *firehose.Context) {
 	s.Journal.append(addLogChange{})
 
 	log.TxHash = s.txConfig.TxHash
 	log.BlockHash = s.txConfig.BlockHash
 	log.TxIndex = s.txConfig.TxIndex
 	log.Index = s.txConfig.LogIndex + uint(len(s.logs))
+
+	if firehoseContext.Enabled() {
+		firehoseContext.RecordLog(log)
+	}
+
 	s.logs = append(s.logs, log)
 }
 
@@ -271,17 +277,17 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 }
 
 // getOrNewStateObject retrieves a state object or create a new state object if nil.
-func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
+func (s *StateDB) getOrNewStateObject(addr common.Address, isPrecompiledAddr bool, firehoseContext *firehose.Context) *stateObject {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
-		stateObject, _ = s.createObject(addr)
+		stateObject, _ = s.createObject(addr, isPrecompiledAddr, firehoseContext)
 	}
 	return stateObject
 }
 
 // createObject creates a new state object. If there is an existing account with
 // the given address, it is overwritten and returned as the second return value.
-func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) {
+func (s *StateDB) createObject(addr common.Address, isPrecompiledAddr bool, firehoseContext *firehose.Context) (newobj, prev *stateObject) {
 	prev = s.getStateObject(addr)
 
 	newobj = newObject(s, addr, Account{})
@@ -290,6 +296,11 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 	} else {
 		s.Journal.append(resetObjectChange{prev: prev})
 	}
+
+	if firehoseContext.Enabled() && !isPrecompiledAddr {
+		firehoseContext.RecordNewAccount(addr)
+	}
+
 	s.setStateObject(newobj)
 	if prev != nil {
 		return newobj, prev
@@ -307,8 +318,8 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 // 2. tx_create(sha(account ++ nonce)) (note that this gets the address of 1)
 //
 // Carrying over the balance ensures that Ether doesn't disappear.
-func (s *StateDB) CreateAccount(addr common.Address) {
-	newObj, prev := s.createObject(addr)
+func (s *StateDB) CreateAccount(addr common.Address, firehoseContext *firehose.Context) {
+	newObj, prev := s.createObject(addr, false, firehoseContext)
 	if prev != nil {
 		newObj.setBalance(prev.account.BalanceWei)
 	}
@@ -341,47 +352,47 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, wei *big.Int) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) AddBalance(addr common.Address, wei *big.Int, isPrecompiledAddr bool, firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
+	stateObject := s.getOrNewStateObject(addr, isPrecompiledAddr, firehoseContext)
 	if stateObject != nil {
-		stateObject.AddBalance(wei)
+		stateObject.AddBalance(wei, firehoseContext, reason)
 	}
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, wei *big.Int) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) SubBalance(addr common.Address, wei *big.Int, firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
+	stateObject := s.getOrNewStateObject(addr, false, firehoseContext)
 	if stateObject != nil {
-		stateObject.SubBalance(wei)
+		stateObject.SubBalance(wei, firehoseContext, reason)
 	}
 }
 
-func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int, firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
+	stateObject := s.getOrNewStateObject(addr, false, firehoseContext)
 	if stateObject != nil {
-		stateObject.SetBalance(wei)
+		stateObject.SetBalance(wei, firehoseContext, reason)
 	}
 }
 
 // SetNonce sets the nonce of account.
-func (s *StateDB) SetNonce(addr common.Address, nonce uint64) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) SetNonce(addr common.Address, nonce uint64, firehoseContext *firehose.Context) {
+	stateObject := s.getOrNewStateObject(addr, false, firehoseContext)
 	if stateObject != nil {
 		stateObject.SetNonce(nonce)
 	}
 }
 
 // SetCode sets the code of account.
-func (s *StateDB) SetCode(addr common.Address, code []byte) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) SetCode(addr common.Address, code []byte, firehoseContext *firehose.Context) {
+	stateObject := s.getOrNewStateObject(addr, false, firehoseContext)
 	if stateObject != nil {
 		stateObject.SetCode(crypto.Keccak256Hash(code), code)
 	}
 }
 
 // SetState sets the contract state.
-func (s *StateDB) SetState(addr common.Address, key, value common.Hash) {
-	stateObject := s.getOrNewStateObject(addr)
+func (s *StateDB) SetState(addr common.Address, key, value common.Hash, firehoseContext *firehose.Context) {
+	stateObject := s.getOrNewStateObject(addr, false, firehoseContext)
 	if stateObject != nil {
 		stateObject.SetState(key, value)
 	}
@@ -392,7 +403,7 @@ func (s *StateDB) SetState(addr common.Address, key, value common.Hash) {
 //
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after Suicide.
-func (s *StateDB) Suicide(addr common.Address) bool {
+func (s *StateDB) Suicide(addr common.Address, firehoseContext *firehose.Context) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
 		return false
@@ -402,8 +413,13 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 		prev:        stateObject.Suicided,
 		prevbalance: new(big.Int).Set(stateObject.Balance()),
 	})
+
 	stateObject.Suicided = true
 	stateObject.account.BalanceWei = new(big.Int)
+
+	if firehoseContext.Enabled() {
+		firehoseContext.RecordSuicide(stateObject.address, stateObject.Suicided, stateObject.Balance())
+	}
 
 	return true
 }

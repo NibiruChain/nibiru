@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -153,24 +154,28 @@ func (s *stateObject) isEmpty() bool {
 
 // AddBalance adds amount to s's balance.
 // It is used to add funds to the destination account of a transfer.
-func (s *stateObject) AddBalance(amount *big.Int) {
+func (s *stateObject) AddBalance(amount *big.Int,  firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
 	if amount.Sign() == 0 {
 		return
 	}
-	s.SetBalance(new(big.Int).Add(s.Balance(), amount))
+	s.SetBalance(new(big.Int).Add(s.Balance(), amount), firehoseContext, reason)
 }
 
 // SubBalance removes amount from s's balance.
 // It is used to remove funds from the origin account of a transfer.
-func (s *stateObject) SubBalance(amount *big.Int) {
+func (s *stateObject) SubBalance(amount *big.Int, firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
 	if amount.Sign() == 0 {
 		return
 	}
-	s.SetBalance(new(big.Int).Sub(s.Balance(), amount))
+	s.SetBalance(new(big.Int).Sub(s.Balance(), amount), firehoseContext, reason)
 }
 
 // SetBalance update account balance.
-func (s *stateObject) SetBalance(amount *big.Int) {
+func (s *stateObject) SetBalance(amount *big.Int, firehoseContext *firehose.Context, reason firehose.BalanceChangeReason) {
+	if firehoseContext.Enabled() {
+		firehoseContext.RecordBalanceChange(s.address, s.account.BalanceWei, amount, reason)
+	}
+
 	s.db.Journal.append(balanceChange{
 		account: &s.address,
 		prevWei: new(big.Int).Set(s.account.BalanceWei),

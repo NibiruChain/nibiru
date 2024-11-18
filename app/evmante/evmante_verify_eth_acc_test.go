@@ -3,6 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/firehose"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
@@ -21,7 +22,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		{
 			name: "happy: sender with funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				sdb.AddBalance(deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()))
+				sdb.AddBalance(deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()), false, firehose.NoOpContext, "test")
 			},
 			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "",
@@ -36,7 +37,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			name: "sad: sender cannot be a contract -> no contract bytecode",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				// Force account to be a smart contract
-				sdb.SetCode(deps.Sender.EthAddr, []byte("evm bytecode stuff"))
+				sdb.SetCode(deps.Sender.EthAddr, []byte("evm bytecode stuff"), firehose.NoOpContext)
 			},
 			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "sender is not EOA",

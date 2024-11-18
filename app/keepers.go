@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -270,6 +272,8 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
+	firehoseContext := firehose.MaybeSyncContext()
+	firehoseContext.RecordFailedTransaction(errors.New("firehose: testtttt transaction error"))
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
 			appCodec,
@@ -278,7 +282,8 @@ func (app *NibiruApp) InitKeepers(
 			BlockedAddresses(),
 			govModuleAddr,
 		),
-		StateDB: nil,
+		StateDB:         nil,
+		FirehoseContext: firehoseContext,
 	}
 	app.BankKeeper = nibiruBankKeeper
 	app.StakingKeeper = stakingkeeper.NewKeeper(

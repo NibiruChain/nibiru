@@ -141,7 +141,14 @@ func (k *Keeper) NewEVM(
 		tracer = k.Tracer(ctx, msg, evmConfig.ChainConfig)
 	}
 	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
-	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
+	theEvm := vm.NewEVM(
+		blockCtx,
+		txCtx,
+		stateDB,
+		evmConfig.ChainConfig,
+		vmConfig,
+		k.Bank.FirehoseContext,
+	)
 	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
 }
@@ -320,14 +327,14 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		// take over the nonce management from evm:
 		// - reset sender's nonce to msg.Nonce() before calling evm.
 		// - increase sender's nonce by one no matter the result.
-		stateDB.SetNonce(sender.Address(), msg.Nonce())
+		stateDB.SetNonce(sender.Address(), msg.Nonce(), evmObj.FirehoseContext())
 		ret, _, leftoverGas, vmErr = evmObj.Create(
 			sender,
 			msg.Data(),
 			leftoverGas,
 			msgWei,
 		)
-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
+		stateDB.SetNonce(sender.Address(), msg.Nonce()+1, evmObj.FirehoseContext())
 	} else {
 		ret, leftoverGas, vmErr = evmObj.Call(
 			sender,

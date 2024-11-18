@@ -7,6 +7,7 @@ import (
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -61,7 +62,7 @@ func (p precompileOracle) Run(
 		return nil, err
 	}
 
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed(), firehose.GasChangeReason("run_oracle_contract"))
 	return bz, err
 }
 

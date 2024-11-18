@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -26,7 +27,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalance(deps.Sender.EthAddr, balance, false, firehose.NoOpContext, "test")
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "",
@@ -47,7 +48,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalance(deps.Sender.EthAddr, balance, false, firehose.NoOpContext, "test")
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "exceeds block gas limit (0)",

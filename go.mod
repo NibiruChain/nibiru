@@ -136,6 +136,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
+	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -250,7 +251,7 @@ replace (
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.27-nibiru
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.28-nibiru-fh
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.12

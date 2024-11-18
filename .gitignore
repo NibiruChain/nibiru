@@ -360,3 +360,8 @@ playwright/playwright-report/
 playwright/playwright/.cache/
 playwright/chrome-extensions/keplr/
 playwright/yarn.lock
+
+# evm tests
+evm-e2e/types/
+evm-e2e/cache/
+evm-e2e/artifacts/

@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	"github.com/ethereum/go-ethereum/firehose"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -17,7 +18,8 @@ var (
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
-	StateDB *statedb.StateDB
+	StateDB         *statedb.StateDB
+	FirehoseContext *firehose.Context
 }
 
 func (evmKeeper *Keeper) NewStateDB(
@@ -39,7 +41,7 @@ func (bk NibiruBankKeeper) MintCoins(
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
 		moduleBech32Addr := auth.NewModuleAddress(moduleName)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr, firehose.BalanceChangeReason("mint_coins"))
 	}
 	return nil
 }
@@ -55,7 +57,7 @@ func (bk NibiruBankKeeper) BurnCoins(
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
 		moduleBech32Addr := auth.NewModuleAddress(moduleName)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr, firehose.BalanceChangeReason("burn_coins"))
 	}
 	return nil
 }
@@ -71,14 +73,16 @@ func (bk NibiruBankKeeper) SendCoins(
 		return err
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
-		bk.SyncStateDBWithAccount(ctx, fromAddr)
-		bk.SyncStateDBWithAccount(ctx, toAddr)
+		bk.SyncStateDBWithAccount(ctx, fromAddr, firehose.BalanceChangeReason("send_coins"))
+		bk.SyncStateDBWithAccount(ctx, toAddr, firehose.BalanceChangeReason("receive_coins"))
 	}
 	return nil
 }
 
 func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
-	ctx sdk.Context, acc sdk.AccAddress,
+	ctx sdk.Context,
+	acc sdk.AccAddress,
+	reason firehose.BalanceChangeReason,
 ) {
 	// If there's no StateDB set, it means we're not in an EthereumTx.
 	if bk.StateDB == nil {
@@ -87,7 +91,7 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	balanceWei := evm.NativeToWei(
 		bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
 	)
-	bk.StateDB.SetBalanceWei(eth.NibiruAddrToEthAddr(acc), balanceWei)
+	bk.StateDB.SetBalanceWei(eth.NibiruAddrToEthAddr(acc), balanceWei, bk.FirehoseContext, reason)
 }
 
 func findEtherBalanceChangeFromCoins(coins sdk.Coins) (found bool) {
@@ -110,9 +114,9 @@ func (bk NibiruBankKeeper) SendCoinsFromAccountToModule(
 		return err
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
-		bk.SyncStateDBWithAccount(ctx, senderAddr)
+		bk.SyncStateDBWithAccount(ctx, senderAddr, firehose.BalanceChangeReason("send_coins"))
 		moduleBech32Addr := auth.NewModuleAddress(recipientModule)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr, firehose.BalanceChangeReason("receive_coins"))
 	}
 	return nil
 }
@@ -129,8 +133,8 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToAccount(
 	}
 	if findEtherBalanceChangeFromCoins(coins) {
 		moduleBech32Addr := auth.NewModuleAddress(senderModule)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
-		bk.SyncStateDBWithAccount(ctx, recipientAddr)
+		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr, firehose.BalanceChangeReason("send_coins"))
+		bk.SyncStateDBWithAccount(ctx, recipientAddr, firehose.BalanceChangeReason("receive_coins"))
 	}
 	return nil
 }
@@ -148,8 +152,8 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 	if findEtherBalanceChangeFromCoins(coins) {
 		senderBech32Addr := auth.NewModuleAddress(senderModule)
 		recipientBech32Addr := auth.NewModuleAddress(recipientModule)
-		bk.SyncStateDBWithAccount(ctx, senderBech32Addr)
-		bk.SyncStateDBWithAccount(ctx, recipientBech32Addr)
+		bk.SyncStateDBWithAccount(ctx, senderBech32Addr, firehose.BalanceChangeReason("send_coins"))
+		bk.SyncStateDBWithAccount(ctx, recipientBech32Addr, firehose.BalanceChangeReason("receive_coins"))
 	}
 	return nil
 }

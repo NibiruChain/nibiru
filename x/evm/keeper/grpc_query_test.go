@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/firehose"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -333,7 +334,7 @@ func (s *Suite) TestQueryStorage() {
 				stateDB := deps.NewStateDB()
 				storageValue := gethcommon.BytesToHash([]byte("value"))
 
-				stateDB.SetState(addr, storageKey, storageValue)
+				stateDB.SetState(addr, storageKey, storageValue, firehose.NoOpContext)
 				s.NoError(stateDB.Commit())
 
 				wantResp = &evm.QueryStorageResponse{
@@ -406,7 +407,7 @@ func (s *Suite) TestQueryCode() {
 
 				stateDB := deps.NewStateDB()
 				contractBytecode := []byte("bytecode")
-				stateDB.SetCode(addr, contractBytecode)
+				stateDB.SetCode(addr, contractBytecode, firehose.NoOpContext)
 				s.Require().NoError(stateDB.Commit())
 
 				s.NotNil(stateDB.Keeper().GetAccount(deps.Ctx, addr))
