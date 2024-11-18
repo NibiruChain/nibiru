@@ -26,7 +26,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
 
 	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
-	require.Len(t, genesis.Epochs, 3)
+	require.Len(t, genesis.Epochs, 4)
 
 	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
 	require.Equal(t, genesis.Epochs[0].Identifier, "30 min")
@@ -45,13 +45,21 @@ func TestEpochsExportGenesis(t *testing.T) {
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[1].EpochCountingStarted, false)
 
-	require.Equal(t, genesis.Epochs[2].Identifier, "week")
+	require.Equal(t, genesis.Epochs[2].Identifier, "month")
 	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime, errMsg)
-	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24*7)
+	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24*30)
 	require.Equal(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[2].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[2].EpochCountingStarted, false)
+
+	require.Equal(t, genesis.Epochs[3].Identifier, "week")
+	require.Equal(t, genesis.Epochs[3].StartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[3].Duration, time.Hour*24*7)
+	require.Equal(t, genesis.Epochs[3].CurrentEpoch, uint64(0))
+	require.Equal(t, genesis.Epochs[3].CurrentEpochStartHeight, int64(0))
+	require.Equal(t, genesis.Epochs[3].CurrentEpochStartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[3].EpochCountingStarted, false)
 }
 
 func TestEpochsInitGenesis(t *testing.T) {

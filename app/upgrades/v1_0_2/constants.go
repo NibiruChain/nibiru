@@ -1,4 +1,4 @@
-package v1_1_0
+package v1_0_2
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/types"
@@ -7,11 +7,11 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
-const UpgradeName = "v1.1.0"
+const UpgradeName = "v1.0.2"
 
+// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
 	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator) upgradetypes.UpgradeHandler {
@@ -19,7 +19,5 @@ var Upgrade = upgrades.Upgrade{
 			return mm.RunMigrations(ctx, cfg, fromVM)
 		}
 	},
-	StoreUpgrades: types.StoreUpgrades{
-		Added: []string{inflationtypes.ModuleName},
-	},
+	StoreUpgrades: types.StoreUpgrades{},
 }
