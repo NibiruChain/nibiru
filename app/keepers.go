@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"path/filepath"
 	"strings"
 
@@ -272,8 +271,8 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
+	firehose.Enabled = true
 	firehoseContext := firehose.MaybeSyncContext()
-	firehoseContext.RecordFailedTransaction(errors.New("firehose: testtttt transaction error"))
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
 			appCodec,
