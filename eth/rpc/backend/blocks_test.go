@@ -16,7 +16,9 @@ func (s *BackendSuite) TestBlockNumber() {
 	latestHeight, _ := s.network.LatestHeight()
 	resp, err := s.backend.BlockNumber()
 	s.Require().NoError(err, resp)
-	s.Require().Equal(uint64(latestHeight), uint64(blockHeight))
+	// Rather than checking exact equality, which might not be true due to
+	// latency. Add a cushion of 2 blocks.
+	s.Require().LessOrEqual(uint64(latestHeight)-uint64(blockHeight), uint64(2))
 }
 
 func (s *BackendSuite) TestGetBlockByNumberr() {

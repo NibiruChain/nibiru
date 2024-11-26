@@ -50,12 +50,15 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	exchangeRate, err := q.Keeper.GetExchangeRate(ctx, req.Pair)
+	out, err := q.Keeper.ExchangeRates.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
-
-	return &types.QueryExchangeRateResponse{ExchangeRate: exchangeRate}, nil
+	return &types.QueryExchangeRateResponse{
+		ExchangeRate:     out.ExchangeRate,
+		BlockTimestampMs: out.BlockTimestampMs,
+		BlockHeight:      out.CreatedBlock,
+	}, nil
 }
 
 /*
@@ -77,24 +80,6 @@ func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRat
 		return &types.QueryExchangeRateResponse{}, err
 	}
 	return &types.QueryExchangeRateResponse{ExchangeRate: twap}, nil
-}
-
-// get the latest price snapshot from the oracle for a pair
-func (q querier) DatedExchangeRate(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryDatedExchangeRateResponse, err error) {
-	if _, err = q.ExchangeRate(c, req); err != nil {
-		return
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	price, blockTime, blockHeight, err := q.Keeper.GetDatedExchangeRate(ctx, req.Pair)
-	if err != nil {
-		return &types.QueryDatedExchangeRateResponse{}, err
-	}
-	return &types.QueryDatedExchangeRateResponse{
-		Price:            price,
-		BlockTimestampMs: blockTime,
-		BlockHeight:      blockHeight,
-	}, nil
 }
 
 // ExchangeRates queries exchange rates of all pairs
