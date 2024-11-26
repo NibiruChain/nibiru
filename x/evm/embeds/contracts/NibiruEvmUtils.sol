@@ -18,7 +18,7 @@ interface INibiruEvm {
     /// "pending_ethereum_tx" or "message", while protobuf typed events use the
     /// proto message name as their event type (e.g.
     /// "eth.evm.v1.EventEthereumTx").
-    /// @param attrs Arbitrary data payload associated with the event, typically
-    /// encoding state changes or metadata.
-    event AbciEvent(string indexed eventType, bytes attrs);
+    /// @param abciEvent JSON object string with the event type and fields of an
+    /// ABCI event.
+    event AbciEvent(string indexed eventType, string abciEvent);
 }

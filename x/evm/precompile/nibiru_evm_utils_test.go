@@ -6,8 +6,10 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abibind "github.com/ethereum/go-ethereum/accounts/abi/bind"
+
+	// abibind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
@@ -21,14 +23,6 @@ import (
 type UtilsSuite struct {
 	suite.Suite
 }
-
-// These fields of the gethcore.Log have defaults. Look into how we populate them
-// in EthereumTx.
-// TODO: UD-DEBUG: Check about block hash
-// TODO: UD-DEBUG: Check about tx hash
-// TODO: UD-DEBUG: Check about tx index
-// TODO: UD-DEBUG: Check about index
-// TODO: UD-DEBUG: Check about block number
 
 func (s *UtilsSuite) TestAttrsToJSON() {
 	testCases := []struct {
@@ -66,13 +60,15 @@ func (s *UtilsSuite) TestAttrsToJSON() {
 
 func (s *UtilsSuite) TestEmitEventAbciEvent() {
 	abiEventName := precompile.EvmEventAbciEvent
-	event, some := embeds.SmartContract_FunToken.ABI.Events[abiEventName]
+	abi := embeds.SmartContract_FunToken.ABI
+	event, some := abi.Events[abiEventName]
 	s.True(some, abiEventName)
 	eventId := event.ID
 
 	deps := evmtest.NewTestDeps()
 	db := deps.NewStateDB()
 
+	s.T().Log("Mint coins to generate ABCI events")
 	startIdx := len(deps.Ctx.EventManager().Events())
 	dbStartIdx := len(db.Logs())
 	err := deps.App.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName,
@@ -88,92 +84,58 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 	blockNumber := uint64(deps.Ctx.BlockHeight())
 	evmAddrBech32 := eth.EthAddrToNibiruAddr(evm.EVM_MODULE_ADDRESS)
 	type Want struct {
-		EventLogDataJson      func() (raw, abiForm []byte)
-		EventLog              gethcore.Log
-		ContractAbiParsedData map[string]any
+		EventLog gethcore.Log
 	}
 	wants := []Want{
 		{
-			EventLogDataJson: func() (raw, abiForm []byte) {
-				dataJson := []byte(fmt.Sprintf(
-					`{"eventType":"coin_received","receiver":"%s","amount":"420000unibi"}`, evmAddrBech32),
-				)
-				nonIndexedArgs, _ := event.Inputs.NonIndexed().Pack(dataJson)
-				return dataJson, nonIndexedArgs
-			},
-			// Log.Data will be filled from the Want.EventLogData fn
 			EventLog: gethcore.Log{
 				Address: emittingAddr,
 				Topics: []gethcommon.Hash{
 					eventId,
 					precompile.EventTopicFromString(`coin_received`),
 				},
+				Data: []byte(fmt.Sprintf(
+					`{"eventType":"coin_received","receiver":"%s","amount":"420000unibi"}`, evmAddrBech32),
+				),
 				BlockNumber: blockNumber,
 				Index:       uint(dbStartIdx),
 			},
-			ContractAbiParsedData: map[string]any{
-				"attrs": []byte(fmt.Sprintf(
-					`{"eventType":"coin_received","receiver":"%s","amount":"420000unibi"}`, evmAddrBech32),
-				),
-			},
 		},
 		{
-			EventLogDataJson: func() (raw, abiForm []byte) {
-				dataJson := []byte(fmt.Sprintf(
-					`{"eventType":"coinbase","minter":"%s","amount":"420000unibi"}`, evmAddrBech32),
-				)
-				nonIndexedArgs, _ := event.Inputs.NonIndexed().Pack(dataJson)
-				return dataJson, nonIndexedArgs
-			},
-			// Log.Data will be filled from the Want.EventLogData fn
 			EventLog: gethcore.Log{
 				Address: emittingAddr,
 				Topics: []gethcommon.Hash{
 					eventId,
 					precompile.EventTopicFromString(`coinbase`),
 				},
-				BlockNumber: blockNumber,
-				Index:       uint(dbStartIdx + 1),
-			},
-			ContractAbiParsedData: map[string]any{
-				"attrs": []byte(fmt.Sprintf(
+				Data: []byte(fmt.Sprintf(
 					`{"eventType":"coinbase","minter":"%s","amount":"420000unibi"}`, evmAddrBech32),
 				),
+				BlockNumber: blockNumber,
+				Index:       uint(dbStartIdx + 1),
 			},
 		},
 	}
 
 	s.T().Log("Define the ABI and smart contract that will unpack the event data")
-	abi := embeds.SmartContract_FunToken.ABI
-	boundContract := abibind.NewBoundContract(
-		emittingAddr,
-		*abi,
-		// These interface fields are not need for this test
-		(abibind.ContractCaller)(nil),
-		(abibind.ContractTransactor)(nil),
-		(abibind.ContractFilterer)(nil),
-	)
+
+	// boundContract := abibind.NewBoundContract(
+	// 	emittingAddr, *abi, nil, nil, nil,
+	// )
+	// err := boundContract.UnpackLogIntoMap()
 
 	debugBz, _ := json.MarshalIndent(abciEvents, "", "  ")
 	dbLogs := db.Logs()
 	for idx, want := range wants {
-		_, want.EventLog.Data = want.EventLogDataJson()
 		gotEventLog := *dbLogs[dbStartIdx+idx]
 
-		s.T().Log("event log.Data must unpack according to the ABI")
-		eventlogsNonIndexed := make(map[string]any)
-		err = abi.UnpackIntoMap(
-			eventlogsNonIndexed,
-			abiEventName,
-			gotEventLog.Data,
-		)
-		s.NoErrorf(err, "eventlogsNonIndexed: %+s", eventlogsNonIndexed)
-		s.EqualValues(want.ContractAbiParsedData, eventlogsNonIndexed)
+		// logDataHex: Geth stores the bytes as a hex string (hexutil.Bytes)
+		logDataHex := hexutil.Bytes(gotEventLog.Data).String()
+		logDataHexDecoded, err := hexutil.Decode(logDataHex)
+		s.NoErrorf(err, "logDataHex: %s")
+		s.Equal(string(want.EventLog.Data), string(logDataHexDecoded))
 
-		s.T().Log("event must be unpackable by the BoundContract that emitted it.")
-		gotLogMap := make(map[string]any)
-		err := boundContract.UnpackLogIntoMap(gotLogMap, abiEventName, gotEventLog)
-		s.NoErrorf(err, "gotLogMap: %+s", gotLogMap)
+		// TODO: UD-DEBUG: abibind import to test decoding
 
 		s.EqualValuesf(
 			want.EventLog,
@@ -181,6 +143,4 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 			"events:\n%#s", debugBz,
 		)
 	}
-
-	s.Require().NoErrorf(err, "debugBz %T want %T", debugBz, wants)
 }

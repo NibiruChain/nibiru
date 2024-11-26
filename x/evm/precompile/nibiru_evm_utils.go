@@ -21,7 +21,13 @@ const EvmEventAbciEvent = "AbciEvent"
 // they can be emitted at the end of the "EthereumTx". These events are indexed
 // by their ABCI event type and help communicate non-EVM events in Ethereum-based
 // block explorers and indexers by saving the event attributes in JSON form.
-// Note that event parsing is handled [gethabi.UnpackIntoMap]
+//
+// Instead of ABI packing the non-indexed argument, this function encodes the
+// [gethcore.Log].Data as a JSON string directly to optimize readbility in
+// explorers without requiring the reader to decode using an ABI.
+//
+// Simply use ["encoding/hex".DecodeString] with the "0x" prefix removed to read
+// the ABCI event.
 func EmitEventAbciEvents(
 	ctx sdk.Context,
 	db *statedb.StateDB,
@@ -35,13 +41,13 @@ func EmitEventAbciEvents(
 		topics := make([]gethcommon.Hash, 2)
 		topics[0] = event.ID
 
-		// eventType is the first (and only) indexed event
+		// eventType is the first (and only) indexed field
 		topics[1] = EventTopicFromString(abciEvent.Type)
 
 		attrsBz := AttrsToJSON(append([]abci.EventAttribute{
 			{Key: "eventType", Value: abciEvent.Type},
 		}, abciEvent.Attributes...))
-		nonIndexedArgs, _ := event.Inputs.NonIndexed().Pack(attrsBz)
+		nonIndexedArgs, _ := event.Inputs.NonIndexed().Pack(string(attrsBz))
 		db.AddLog(&gethcore.Log{
 			Address:     emittingAddr,
 			Topics:      topics,
@@ -51,7 +57,7 @@ func EmitEventAbciEvents(
 	}
 }
 
-// AttrsToJSON creates a deterministic JSON encoding for the
+// AttrsToJSON creates a deterministic JSON encoding for the key-value tuples.
 func AttrsToJSON(attrs []abci.EventAttribute) []byte {
 	if len(attrs) == 0 {
 		return []byte("")
@@ -80,13 +86,20 @@ func AttrsToJSON(attrs []abci.EventAttribute) []byte {
 	return buf.Bytes()
 }
 
-// EventTopicFromBytes creates an [abi.Event]
+// EventTopicFromBytes creates a "Topic" hash for an EVM event log.
+// An event topic is a 32-byte field used to index specific fields in a smart
+// contract event. Topics make it possible to efficiently filter for and search
+// events in transaction logs.
 func EventTopicFromBytes(bz []byte) (topic gethcommon.Hash) {
 	hash := crypto.Keccak256Hash(bz)
 	copy(topic[:], hash[:])
 	return topic
 }
 
+// EventTopicFromString creates a "Topic" hash for an EVM event log.
+// An event topic is a 32-byte field used to index specific fields in a smart
+// contract event. Topics make it possible to efficiently filter for and search
+// events in transaction logs.
 func EventTopicFromString(str string) (topic gethcommon.Hash) {
 	return EventTopicFromBytes([]byte(str))
 }

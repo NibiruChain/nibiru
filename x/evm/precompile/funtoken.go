@@ -84,7 +84,7 @@ func (p precompileFunToken) Run(
 
 	// Emit extra events for the EVM if this is a transaction
 	// https://github.com/NibiruChain/nibiru/issues/2121
-	if !readonly {
+	if isMutation[PrecompileMethod(startResult.Method.Name)] {
 		EmitEventAbciEvents(
 			startResult.CacheCtx,
 			startResult.StateDB,

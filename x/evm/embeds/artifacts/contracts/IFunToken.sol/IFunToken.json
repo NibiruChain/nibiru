@@ -14,9 +14,9 @@
         },
         {
           "indexed": false,
-          "internalType": "bytes",
-          "name": "attrs",
-          "type": "bytes"
+          "internalType": "string",
+          "name": "abciEvent",
+          "type": "string"
         }
       ],
       "name": "AbciEvent",
