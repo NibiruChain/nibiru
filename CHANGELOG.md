@@ -107,6 +107,12 @@ tests for race conditions within funtoken precompile
 - [#2111](https://github.com/NibiruChain/nibiru/pull/2111) - fix: e2e-evm-cron.yml
 - [#2114](https://github.com/NibiruChain/nibiru/pull/2114) - fix(evm): make gas cost zero in conditional bank keeper flow
 - [#2116](https://github.com/NibiruChain/nibiru/pull/2116) - fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
+- [#2117](https://github.com/NibiruChain/nibiru/pull/2117) - fix(oracle): The
+timestamps resulting from ctx.WithBlock* don't actually correspond to the block
+header information from specified blocks in the chain's history, so the oracle
+exchange rates need a way to correctly retrieve this information. This change
+fixes that discrepency, giving the expected block timesamp for the EVM's oracle
+precompiled contract. The change also simplifies and corrects the code in x/oracle.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 

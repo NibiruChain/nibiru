@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	testutilevents "github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -37,7 +38,15 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := math.LegacyNewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(
+		input.Ctx,
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     rate,
+			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
+			BlockTimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -77,8 +86,24 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := math.LegacyNewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(
+		input.Ctx,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     rate,
+			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
+			BlockTimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
+	input.OracleKeeper.ExchangeRates.Insert(
+		input.Ctx,
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     rate,
+			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
+			BlockTimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
+	)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
@@ -122,9 +147,12 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	input := CreateTestFixture(t)
 	querier := NewQuerier(input.OracleKeeper)
 
-	// Set initial block time and height
 	initialTime := input.Ctx.BlockTime()
 	initialHeight := input.Ctx.BlockHeight()
+	t.Logf("Set initial block time and height\ninitialTimeSeconds: %d, intialHeight: %d",
+		initialTime.Unix(),
+		initialHeight,
+	)
 
 	// Pair 1: BTC/NUSD
 	pairBTC := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
@@ -148,11 +176,17 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 		},
 	)
 
-	// Advance time and block height
-	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(1 * time.Second)).
-		WithBlockHeight(initialHeight + 1)
+	blockTime := initialTime.Add(1 * time.Second)
+	blockHeight := initialHeight + 1
+	t.Logf("Advance time and block height\nblockTimeSeconds: %d, blockHeight: %d",
+		blockTime.Unix(),
+		blockHeight,
+	)
+	input.Ctx = input.Ctx.
+		WithBlockTime(blockTime).
+		WithBlockHeight(blockHeight)
 
-	// --- Set first price for ETH/NUSD ---
+	t.Log("Set first price for ETH")
 	input.OracleKeeper.SetPrice(input.Ctx, pairETH, rateETH1)
 	testutilevents.RequireContainsTypedEvent(
 		t,
@@ -164,11 +198,17 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 		},
 	)
 
-	// Advance time and block height
-	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(2 * time.Second)).
-		WithBlockHeight(initialHeight + 2)
+	blockTime = initialTime.Add(2 * time.Second)
+	blockHeight = initialHeight + 2
+	t.Logf("Advance time and block height\nblockTimeSeconds: %d, blockHeight: %d",
+		blockTime.Unix(),
+		blockHeight,
+	)
+	input.Ctx = input.Ctx.
+		WithBlockTime(blockTime).
+		WithBlockHeight(blockHeight)
 
-	// --- Set second price for BTC/NUSD ---
+	t.Log("Set second price for BTC")
 	input.OracleKeeper.SetPrice(input.Ctx, pairBTC, rateBTC2)
 	testutilevents.RequireContainsTypedEvent(
 		t,
@@ -180,11 +220,12 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 		},
 	)
 
-	// Advance time and block height
-	input.Ctx = input.Ctx.WithBlockTime(initialTime.Add(3 * time.Second)).
+	t.Log("Advance time and block height")
+	input.Ctx = input.Ctx.
+		WithBlockTime(initialTime.Add(3 * time.Second)).
 		WithBlockHeight(initialHeight + 3)
 
-	// --- Set second price for ETH/NUSD ---
+	t.Log("Set second price for ETH")
 	input.OracleKeeper.SetPrice(input.Ctx, pairETH, rateETH2)
 	testutilevents.RequireContainsTypedEvent(
 		t,
@@ -199,28 +240,33 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	// Wrap context for querying
 	ctx := sdk.WrapSDKContext(input.Ctx)
 
-	// --- Query latest snapshot for BTC/NUSD ---
-	resBTC, err := querier.DatedExchangeRate(
+	t.Log("Query latest snapshot for BTC")
+	resBTC, err := querier.ExchangeRate(
 		ctx,
 		&types.QueryExchangeRateRequest{Pair: pairBTC},
 	)
 	require.NoError(t, err)
-	require.Equal(t, rateBTC2, resBTC.Price)
-	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resBTC.BlockTimestampMs)
+	res := resBTC
+	require.Equal(t, rateBTC2.String(), resBTC.ExchangeRate.String())
+	require.Equal(t, initialTime.Add(2*time.Second).UnixMilli(), res.BlockTimestampMs)
+	require.Equal(t, uint64(initialHeight+2), res.BlockHeight)
 
-	// --- Query latest snapshot for ETH/NUSD ---
-	resETH, err := querier.DatedExchangeRate(
+	t.Log("Query latest snapshot for ETH")
+	resETH, err := querier.ExchangeRate(
 		ctx,
 		&types.QueryExchangeRateRequest{Pair: pairETH},
 	)
 	require.NoError(t, err)
-	require.Equal(t, rateETH2, resETH.Price)
-	require.Equal(t, input.Ctx.BlockTime().UnixMilli(), resETH.BlockTimestampMs)
+	res = resETH
+	require.Equal(t, rateETH2, res.ExchangeRate)
+	require.Equal(t, initialTime.Add(3*time.Second).UnixMilli(), res.BlockTimestampMs)
+	require.Equal(t, uint64(initialHeight+3), res.BlockHeight)
 
-	// --- Query a pair with no snapshots (should return an error) ---
-	pairATOM := asset.Registry.Pair(denoms.ATOM, denoms.NUSD)
-	_, err = querier.DatedExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
-	require.Error(t, err)
+	t.Run("Query a pair with no snapshots (should return an error)", func(t *testing.T) {
+		pairATOM := asset.Registry.Pair(denoms.ATOM, denoms.NUSD)
+		_, err = querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
+		require.Error(t, err)
+	})
 }
 
 func TestCalcTwap(t *testing.T) {
@@ -312,20 +358,26 @@ func TestQueryActives(t *testing.T) {
 	queryClient := NewQuerier(input.OracleKeeper)
 
 	rate := math.LegacyNewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	targetPairs := set.New[asset.Pair]()
+	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, denoms.NIBI} {
+		pair := asset.Registry.Pair(bankDenom, denoms.NUSD)
+		targetPairs.Add(pair)
+		input.OracleKeeper.ExchangeRates.Insert(
+			input.Ctx,
+			pair,
+			types.ExchangeRateAtBlock{
+				ExchangeRate:     rate,
+				CreatedBlock:     uint64(input.Ctx.BlockHeight()),
+				BlockTimestampMs: input.Ctx.BlockTime().UnixMilli(),
+			},
+		)
+	}
 
 	res, err := queryClient.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
-
-	targetPairs := []asset.Pair{
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+	for _, pair := range res.Actives {
+		require.True(t, targetPairs.Has(pair))
 	}
-
-	require.Equal(t, targetPairs, res.Actives)
 }
 
 func TestQueryFeederDelegation(t *testing.T) {

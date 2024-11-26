@@ -89,12 +89,16 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	price, blockTime, blockHeight, err := p.oracleKeeper.GetDatedExchangeRate(ctx, assetPair)
+	priceAtBlock, err := p.oracleKeeper.ExchangeRates.Get(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}
 
-	return method.Outputs.Pack(price.BigInt(), uint64(blockTime), blockHeight)
+	return method.Outputs.Pack(
+		priceAtBlock.ExchangeRate.BigInt(),
+		uint64(priceAtBlock.BlockTimestampMs),
+		priceAtBlock.CreatedBlock,
+	)
 }
 
 func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
