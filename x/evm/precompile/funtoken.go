@@ -118,6 +118,7 @@ func (p precompileFunToken) sendToBank(
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
+		err = ErrInvalidArgs(err)
 		return
 	}
 
@@ -376,6 +377,10 @@ func (p precompileFunToken) bankBalance(
 	}
 
 	addrEth, addrBech32, bankDenom, err := p.parseArgsBankBalance(args)
+	if err != nil {
+		err = ErrInvalidArgs(err)
+		return
+	}
 	bankBal := p.evmKeeper.Bank.GetBalance(ctx, addrBech32, bankDenom).Amount.BigInt()
 
 	return method.Outputs.Pack([]any{
@@ -455,7 +460,8 @@ func (p precompileFunToken) whoAmI(
 
 	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
 	if err != nil {
-		return bz, err
+		err = ErrInvalidArgs(err)
+		return
 	}
 
 	return method.Outputs.Pack([]any{

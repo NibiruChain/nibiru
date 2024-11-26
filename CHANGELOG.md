@@ -101,11 +101,18 @@ tests for race conditions within funtoken precompile
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint
-- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) -
-feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) - feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
 - [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
 - [#2110](https://github.com/NibiruChain/nibiru/pull/2110) - fix(evm): Restore StateDB to its state prior to ApplyEvmMsg call to ensure deterministic gas usage. This fixes an issue where the StateDB pointer field in NibiruBankKeeper was being updated during readonly query endpoints like eth_estimateGas, leading to non-deterministic gas usage in subsequent transactions.
 - [#2111](https://github.com/NibiruChain/nibiru/pull/2111) - fix: e2e-evm-cron.yml
+- [#2114](https://github.com/NibiruChain/nibiru/pull/2114) - fix(evm): make gas cost zero in conditional bank keeper flow
+- [#2116](https://github.com/NibiruChain/nibiru/pull/2116) - fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
+- [#2117](https://github.com/NibiruChain/nibiru/pull/2117) - fix(oracle): The
+timestamps resulting from ctx.WithBlock* don't actually correspond to the block
+header information from specified blocks in the chain's history, so the oracle
+exchange rates need a way to correctly retrieve this information. This change
+fixes that discrepency, giving the expected block timesamp for the EVM's oracle
+precompiled contract. The change also simplifies and corrects the code in x/oracle.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -235,7 +242,7 @@ feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 - Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
 - Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
-- Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
+- Bump `cosmossdk.io/math` from 1.1.2 to 1.4.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676), [#2115](https://github.com/NibiruChain/nibiru/pull/2115))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
