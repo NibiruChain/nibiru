@@ -23,3 +23,6 @@ test-basic:
 # Format
 fmt: 
   npm run format
+
+gen-types:
+  npx hardhat typechain

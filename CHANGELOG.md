@@ -101,12 +101,12 @@ tests for race conditions within funtoken precompile
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint
-- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) -
-feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) - feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
 - [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
 - [#2110](https://github.com/NibiruChain/nibiru/pull/2110) - fix(evm): Restore StateDB to its state prior to ApplyEvmMsg call to ensure deterministic gas usage. This fixes an issue where the StateDB pointer field in NibiruBankKeeper was being updated during readonly query endpoints like eth_estimateGas, leading to non-deterministic gas usage in subsequent transactions.
 - [#2111](https://github.com/NibiruChain/nibiru/pull/2111) - fix: e2e-evm-cron.yml
 - [#2114](https://github.com/NibiruChain/nibiru/pull/2114) - fix(evm): make gas cost zero in conditional bank keeper flow
+- [#2116](https://github.com/NibiruChain/nibiru/pull/2116) - fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
