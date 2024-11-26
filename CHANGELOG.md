@@ -101,7 +101,8 @@ tests for race conditions within funtoken precompile
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2107](https://github.com/NibiruChain/nibiru/pull/2107) -
-feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) -feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
