@@ -10,7 +10,8 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // ExchangeRate returns exchange rate of a pair
+  // ExchangeRate returns exchange rate of a pair along with the block height and
+  // block time that the exchange rate was set by the oracle module.
   rpc ExchangeRate(QueryExchangeRateRequest)
       returns (QueryExchangeRateResponse) {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate";
@@ -20,12 +21,6 @@ service Query {
   rpc ExchangeRateTwap(QueryExchangeRateRequest)
       returns (QueryExchangeRateResponse) {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate_twap";
-  }
-
-  // DatedExchangeRate returns latest price of a pair
-  rpc DatedExchangeRate(QueryExchangeRateRequest)
-      returns (QueryDatedExchangeRateResponse) {
-    option (google.api.http).get = "/nibiru/oracle/v1beta1/dated_exchange_rate";
   }
 
   // ExchangeRates returns exchange rates of all pairs
@@ -114,20 +109,6 @@ message QueryExchangeRateResponse {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-}
-
-// QueryExchangeRatesRequest is the request type for the Query/ExchangeRates RPC
-// method.
-message QueryExchangeRatesRequest {
-}
-
-// QueryDatedExchangeRateResponse is the request type for the 
-// Query/DatedExchangeRate RPC method.
-message QueryDatedExchangeRateResponse {
-  string price = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
 
   // Block timestamp for the block where the oracle came to consensus for this
   // price. This timestamp is a conventional Unix millisecond time, i.e. the
@@ -136,6 +117,11 @@ message QueryDatedExchangeRateResponse {
 
   // Block height when the oracle came to consensus for this price.
   uint64 block_height = 3;
+}
+
+// QueryExchangeRatesRequest is the request type for the Query/ExchangeRates RPC
+// method.
+message QueryExchangeRatesRequest {
 }
 
 // QueryExchangeRatesResponse is response type for the
