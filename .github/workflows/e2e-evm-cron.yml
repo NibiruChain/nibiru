@@ -1,0 +1,54 @@
+name: EVM E2E Cron
+
+on:
+  schedule:
+    - cron: '0 * * * *' # every hour at 00 min
+    # cron syntax: https://jasonet.co/posts/scheduled-actions/
+
+jobs:
+  # The "evm-e2e-cron" job runs end-to-end tests on a schedule against instances
+  # of Nibiru to ensure core functionality remains stable. This is intended to
+  # highlight any outage or catch degredations in public endpoint functionality
+  # early. Failures trigger immediate Slack notifications to alert the team.
+  #
+  # This workflow:
+  # 1. Executes basic EVM integration tests against the testnet
+  # 2. Uses a dedicated test wallet (configured via secrets)
+  # 3. Reports failures to the testnet Slack channel
+  #
+  # Environment requirements:
+  # - WALLET_MNEMONIC_TESTNET: Secret for test wallet access
+  # - SLACK_WEBHOOK_TESTNET: Webhook URL for failure notifications
+  evm-e2e-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: 'just install'
+        run: just install
+        working-directory: 'evm-e2e'
+
+      - name: 'Run tests (just test-basic)'
+        run: just test-basic
+        working-directory: 'evm-e2e'
+        # 2024-11-12: We're using the Testnet 1 validator account because it has 
+        #   a lot of funds in NIBI. 
+        env:
+          JSON_RPC_ENDPOINT: https://evm-rpc.testnet-1.nibiru.fi
+          MNEMONIC: ${{ secrets.MNEMONIC_TESTNET1_VALIDATOR }}
+
+      - name: Send failure to slack channel
+        if: always()
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ job.status }}
+          notify_when: 'failure'
+          notification_title: 'EVM basic tests failed on Testnet'
+          message_format: '{emoji} *{workflow}* {status_message} Run: {run_url}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
