@@ -258,6 +258,7 @@ precompiled contract. The change also simplifies and corrects the code in x/orac
 - Bump `axios` from 1.7.3 to 1.7.4 ([#2016](https://github.com/NibiruChain/nibiru/pull/2016))
 - Bump `github.com/CosmWasm/wasmvm` from 1.5.0 to 1.5.5 ([#2047](https://github.com/NibiruChain/nibiru/pull/2047))
 - Bump `docker/build-push-action` from 5 to 6 ([#1924](https://github.com/NibiruChain/nibiru/pull/1924))
+- Bump `codecov/codecov-action` from 4 to 5 ([#2112](https://github.com/NibiruChain/nibiru/pull/2112))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 
