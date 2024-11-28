@@ -4,6 +4,8 @@ package keeper_test
 import (
 	"math/big"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
@@ -12,7 +14,7 @@ func (s *Suite) TestERC20Calls() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "ibc/btc"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	contract := funtoken.Erc20Addr.Address
+	contract := gethcommon.HexToAddress(funtoken.Erc20Addr)
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{

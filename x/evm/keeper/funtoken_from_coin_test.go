@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -104,12 +105,12 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 
 	s.T().Log("Expect ERC20 to be deployed")
 	_, err = deps.EvmKeeper.Code(deps.Ctx, &evm.QueryCodeRequest{
-		Address: erc20Addr.String(),
+		Address: erc20Addr,
 	})
 	s.Require().NoError(err)
 
 	s.T().Log("Expect ERC20 metadata on contract")
-	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, erc20Addr.Address)
+	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, gethcommon.HexToAddress(erc20Addr))
 	s.Require().NoError(err, info)
 	s.Equal(
 		keeper.ERC20Metadata{
@@ -125,7 +126,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 		deps.Ctx,
 		&evm.EventFunTokenCreated{
 			BankDenom:            bankDenom,
-			Erc20ContractAddress: erc20Addr.String(),
+			Erc20ContractAddress: erc20Addr,
 			Creator:              deps.Sender.NibiruAddr.String(),
 			IsMadeFromCoin:       true,
 		},
@@ -182,7 +183,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			BankCoin: sdk.NewCoin(bankDenom, sdk.NewInt(10)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: alice.EthAddr,
-			},
+			}.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -193,7 +194,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		deps.Ctx,
 		&evm.EventConvertCoinToEvm{
 			Sender:               deps.Sender.NibiruAddr.String(),
-			Erc20ContractAddress: funToken.Erc20Addr.String(),
+			Erc20ContractAddress: funToken.Erc20Addr,
 			ToEthAddr:            alice.EthAddr.String(),
 			BankCoin:             sdk.NewCoin(bankDenom, sdk.NewInt(10)),
 		},
@@ -208,7 +209,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal(sdk.NewInt(90), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
-	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx)
+	balance, err := deps.EvmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(funToken.Erc20Addr), alice.EthAddr, deps.Ctx)
 	s.Require().NoError(err)
 	s.Require().Zero(balance.Cmp(big.NewInt(10)))
 
@@ -220,7 +221,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			BankCoin: sdk.NewCoin(bankDenom, sdk.NewInt(100)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: alice.EthAddr,
-			},
+			}.String(),
 		},
 	)
 	s.Require().ErrorContains(err, "insufficient funds")
@@ -236,7 +237,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		true,
 		precompile.FunTokenGasLimitBankSend,
 		"bankSend",
-		funToken.Erc20Addr.Address,
+		gethcommon.HexToAddress(funToken.Erc20Addr),
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
 	)
@@ -251,7 +252,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal(sdk.NewInt(100), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(funToken.Erc20Addr), alice.EthAddr, deps.Ctx)
 	s.Require().NoError(err)
 	s.Require().Equal("0", balance.String())
 
@@ -264,7 +265,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		true,
 		precompile.FunTokenGasLimitBankSend,
 		"bankSend",
-		funToken.Erc20Addr.Address,
+		gethcommon.HexToAddress(funToken.Erc20Addr),
 		big.NewInt(10),
 		deps.Sender.NibiruAddr.String(),
 	)
@@ -297,7 +298,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	deployResp, err := evmtest.DeployContract(
 		&deps,
 		embeds.SmartContract_TestNativeSendThenPrecompileSendJson,
-		funtoken.Erc20Addr.Address,
+		gethcommon.HexToAddress(funtoken.Erc20Addr),
 	)
 	s.Require().NoError(err)
 
@@ -324,7 +325,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewIntFromBigInt(sendAmt)),
-			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
+			ToEthAddr: eth.EIP55Addr{Address: testContractAddr}.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -417,7 +418,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	deployResp, err := evmtest.DeployContract(
 		&deps,
 		embeds.SmartContract_TestERC20TransferThenPrecompileSend,
-		funToken.Erc20Addr.Address,
+		gethcommon.HexToAddress(funToken.Erc20Addr),
 	)
 	s.Require().NoError(err)
 
@@ -429,7 +430,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(10e6)),
-			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
+			ToEthAddr: eth.EIP55Addr{Address: testContractAddr}.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -506,7 +507,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	deployResp, err := evmtest.DeployContract(
 		&deps,
 		embeds.SmartContract_TestPrecompileSelfCallRevert,
-		funToken.Erc20Addr.Address,
+		gethcommon.HexToAddress(funToken.Erc20Addr),
 	)
 	s.Require().NoError(err)
 
@@ -518,7 +519,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(10e6)),
-			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
+			ToEthAddr: eth.EIP55Addr{Address: testContractAddr}.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -635,7 +636,7 @@ func (s *FunTokenFromCoinSuite) fundAndCreateFunToken(deps evmtest.TestDeps, uni
 	erc20Decimals, err := deps.EvmKeeper.LoadERC20Decimals(
 		deps.Ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
-		createFunTokenResp.FuntokenMapping.Erc20Addr.Address,
+		gethcommon.HexToAddress(createFunTokenResp.FuntokenMapping.Erc20Addr),
 	)
 	s.Require().NoError(err)
 	s.Require().Equal(erc20Decimals, uint8(6))

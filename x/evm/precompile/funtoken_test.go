@@ -95,7 +95,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	bankDenom := "unibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
 
-	erc20 := funtoken.Erc20Addr.Address
+	erc20 := gethcommon.HexToAddress(funtoken.Erc20Addr)
 
 	s.T().Log("Balances of the ERC20 should start empty")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20, deps.Sender.EthAddr, big.NewInt(0))
@@ -115,7 +115,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
-			},
+			}.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -175,7 +175,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
-		s.funtoken.Erc20Addr.Address,
+		gethcommon.HexToAddress(s.funtoken.Erc20Addr),
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
@@ -196,7 +196,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: contractAddr,
-			},
+			}.String(),
 		},
 	)
 	s.Require().NoError(err)

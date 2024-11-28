@@ -64,7 +64,7 @@ func (s *Suite) TestExportInitGenesis() {
 	// Create fungible token from bank coin
 	funToken := evmtest.CreateFunTokenForBankCoin(&deps, "unibi", &s.Suite)
 	s.Require().NoError(err)
-	funTokenAddr := funToken.Erc20Addr.Address
+	funTokenAddr := funToken.Erc20Addr
 
 	// Fund sender's wallet
 	spendableCoins := sdk.NewCoins(sdk.NewInt64Coin("unibi", totalSupply.Int64()))
@@ -83,7 +83,7 @@ func (s *Suite) TestExportInitGenesis() {
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			BankCoin:  sdk.Coin{Denom: "unibi", Amount: math.NewInt(amountToSendC.Int64())},
-			ToEthAddr: eip55Addr,
+			ToEthAddr: eip55Addr.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -117,12 +117,12 @@ func (s *Suite) TestExportInitGenesis() {
 	iter := deps.EvmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(deps.Ctx, "unibi")
 	funTokens := deps.EvmKeeper.FunTokens.Collect(deps.Ctx, iter)
 	s.Require().Len(funTokens, 1)
-	s.Require().Equal(funTokenAddr.String(), funTokens[0].Erc20Addr.String())
+	s.Require().Equal(funTokenAddr, funTokens[0].Erc20Addr)
 	s.Require().Equal("unibi", funTokens[0].BankDenom)
 	s.Require().True(funTokens[0].IsMadeFromCoin)
 
 	// Check that fungible token balance of user C is correct
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenAddr, toUserC, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(funTokenAddr), toUserC, deps.Ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(amountToSendC, balance)
 }

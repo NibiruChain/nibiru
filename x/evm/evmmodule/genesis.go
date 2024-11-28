@@ -72,7 +72,7 @@ func InitGenesis(
 	// Create fungible token mappings
 	for _, funToken := range genState.FuntokenMappings {
 		err := k.FunTokens.SafeInsert(
-			ctx, gethcommon.HexToAddress(funToken.Erc20Addr.String()), funToken.BankDenom, funToken.IsMadeFromCoin,
+			ctx, gethcommon.HexToAddress(funToken.Erc20Addr), funToken.BankDenom, funToken.IsMadeFromCoin,
 		)
 		if err != nil {
 			panic(fmt.Errorf("failed creating funtoken: %w", err))

@@ -15,7 +15,7 @@ import (
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
 func (fun FunToken) ID() []byte {
-	return NewFunTokenID(fun.Erc20Addr.Address, fun.BankDenom)
+	return NewFunTokenID(gethcommon.HexToAddress(fun.Erc20Addr), fun.BankDenom)
 }
 
 func NewFunTokenID(erc20 gethcommon.Address, bankDenom string) []byte {
@@ -43,7 +43,7 @@ func NewFunToken(
 	return FunToken{
 		Erc20Addr: eth.EIP55Addr{
 			Address: erc20,
-		},
+		}.String(),
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: isMadeFromCoin,
 	}

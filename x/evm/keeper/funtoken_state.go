@@ -33,7 +33,7 @@ func NewFunTokenState(
 				eth.KeyEncoderEthAddr, //  indexing key (IK): ERC-20 addr
 				primaryKeyEncoder,
 				func(v evm.FunToken) gethcommon.Address {
-					return v.Erc20Addr.Address
+					return gethcommon.HexToAddress(v.Erc20Addr)
 				},
 			),
 			BankDenom: collections.NewMultiIndex(

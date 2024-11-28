@@ -498,7 +498,7 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 	}
 
 	emptyBankDenom := m.FromBankDenom == ""
-	emptyErc20 := m.FromErc20 == nil || m.FromErc20.Size() == 0
+	emptyErc20 := len(m.FromErc20) == 0
 
 	if emptyErc20 && emptyBankDenom {
 		return fmt.Errorf("either the \"from_erc20\" or \"from_bank_denom\" must be set")
@@ -527,7 +527,7 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender addr")
 	}
-	if m.ToEthAddr.Address.String() == "" || m.ToEthAddr.Size() == 0 {
+	if m.ToEthAddr == "" || len(m.ToEthAddr) == 0 {
 		return fmt.Errorf("empty to_eth_addr")
 	}
 	return nil

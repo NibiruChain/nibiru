@@ -78,7 +78,7 @@ func CmdCreateFunToken() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				msg.FromErc20 = &erc20Addr
+				msg.FromErc20 = erc20Addr.String()
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -115,7 +115,7 @@ func CmdConvertCoinToEvm() *cobra.Command {
 			msg := &evm.MsgConvertCoinToEvm{
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
-				ToEthAddr: eip55Addr,
+				ToEthAddr: eip55Addr.String(),
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

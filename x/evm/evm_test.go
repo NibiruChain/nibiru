@@ -64,7 +64,7 @@ func (s *TestSuite) TestFunToken() {
 			s.Require().NoError(err)
 
 			funtoken := evm.FunToken{
-				Erc20Addr: eip55Addr,
+				Erc20Addr: eip55Addr.String(),
 				BankDenom: tc.bankDenom,
 			}
 			if tc.wantErr {
@@ -109,10 +109,10 @@ func (s *TestSuite) TestFunToken() {
 			addrB, err := eth.NewEIP55AddrFromStr(tc.B)
 			s.Require().NoError(err)
 
-			funA := evm.FunToken{Erc20Addr: addrA}
-			funB := evm.FunToken{Erc20Addr: addrB}
+			funA := evm.FunToken{Erc20Addr: addrA.String()}
+			funB := evm.FunToken{Erc20Addr: addrB.String()}
 
-			s.EqualValues(funA.Erc20Addr.Address, funB.Erc20Addr.Address)
+			s.EqualValues(funA.Erc20Addr, funB.Erc20Addr)
 		})
 	}
 }

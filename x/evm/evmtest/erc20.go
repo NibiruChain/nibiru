@@ -78,7 +78,7 @@ func CreateFunTokenForBankCoin(
 	s.T().Log("Expect ERC20 to be deployed")
 	_, err = deps.EvmKeeper.Code(deps.Ctx,
 		&evm.QueryCodeRequest{
-			Address: erc20.String(),
+			Address: erc20,
 		},
 	)
 	s.NoError(err)
@@ -114,7 +114,7 @@ type FunTokenBalanceAssert struct {
 
 func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps) {
 	AssertERC20BalanceEqualWithDescription(
-		t, deps, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
+		t, deps, gethcommon.HexToAddress(bals.FunToken.Erc20Addr), bals.Account, bals.BalanceERC20,
 		bals.Description,
 	)
 	AssertBankBalanceEqualWithDescription(

@@ -152,7 +152,7 @@ func (s *Suite) TestCmdQueryFunToken() {
 			name: "happy: query funtoken (erc20 addr)",
 			args: []string{
 				"funtoken",
-				dummyFuntoken.Erc20Addr.String(),
+				dummyFuntoken.Erc20Addr,
 			},
 			wantErr: "",
 		},

@@ -396,8 +396,8 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 }
 
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
-	// if "weiValue" is nil, 0, or negative, early return
-	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
+	// Return early if "weiInt" is nil or non-positive (0 or negative)
+	if weiInt == nil || weiInt.Cmp(big.NewInt(1)) <= 0 {
 		return weiInt, nil
 	}
 
@@ -435,10 +435,10 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
-	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
+	emptyErc20 := len(msg.FromErc20) == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Address)
+		funtoken, err = k.createFunTokenFromERC20(ctx, gethcommon.HexToAddress(msg.FromErc20))
 	case emptyErc20 && msg.FromBankDenom != "":
 		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
 	default:
@@ -453,7 +453,7 @@ func (k *Keeper) CreateFunToken(
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventFunTokenCreated{
 		Creator:              msg.Sender,
 		BankDenom:            funtoken.BankDenom,
-		Erc20ContractAddress: funtoken.Erc20Addr.String(),
+		Erc20ContractAddress: funtoken.Erc20Addr,
 		IsMadeFromCoin:       emptyErc20,
 	})
 
@@ -503,11 +503,11 @@ func (k *Keeper) ConvertCoinToEvm(
 
 	if fungibleTokenMapping.IsMadeFromCoin {
 		return k.convertCoinToEvmBornCoin(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, sender, gethcommon.HexToAddress(msg.ToEthAddr), msg.BankCoin, fungibleTokenMapping,
 		)
 	} else {
 		return k.convertCoinToEvmBornERC20(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, sender, gethcommon.HexToAddress(msg.ToEthAddr), msg.BankCoin, fungibleTokenMapping,
 		)
 	}
 }
@@ -529,7 +529,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	}
 
 	// 2 | Mint ERC20 tokens to the recipient
-	erc20Addr := funTokenMapping.Erc20Addr.Address
+	erc20Addr := gethcommon.HexToAddress(funTokenMapping.Erc20Addr)
 	evmResp, err := k.CallContract(
 		ctx,
 		embeds.SmartContract_ERC20Minter.ABI,
@@ -569,7 +569,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	coin sdk.Coin,
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
-	erc20Addr := funTokenMapping.Erc20Addr.Address
+	erc20Addr := gethcommon.HexToAddress(funTokenMapping.Erc20Addr)
 	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
 	if err := k.Bank.SendCoinsFromAccountToModule(
 		ctx,
@@ -613,7 +613,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// Emit event with the actual amount received
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
-		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
+		Erc20ContractAddress: funTokenMapping.Erc20Addr,
 		ToEthAddr:            recipient.String(),
 		BankCoin:             burnCoin,
 	})

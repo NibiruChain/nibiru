@@ -53,13 +53,13 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 	erc20Addr := eth.EIP55Addr{
 		Address: deployResp.ContractAddr,
-	}
+	}.String()
 
 	s.T().Log("sad: insufficient funds to create FunToken mapping")
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -76,7 +76,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	resp, err := deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -97,7 +97,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 		deps.Ctx,
 		&evm.EventFunTokenCreated{
 			BankDenom:            expectedBankDenom,
-			Erc20ContractAddress: erc20Addr.String(),
+			Erc20ContractAddress: erc20Addr,
 			Creator:              deps.Sender.NibiruAddr.String(),
 			IsMadeFromCoin:       false,
 		},
@@ -105,7 +105,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	bankMetadata, _ := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, expectedBankDenom)
 	s.Require().Equal(bank.Metadata{
 		Description: fmt.Sprintf(
-			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr.String(),
+			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr,
 		),
 		DenomUnits: []*bank.DenomUnit{
 			{Denom: expectedBankDenom, Exponent: 0},
@@ -131,7 +131,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -142,7 +142,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr,
 		},
 	)
 	s.ErrorContains(err, "invalid sender")
@@ -152,7 +152,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20:     nil,
+			FromErc20:     "",
 			FromBankDenom: "",
 			Sender:        deps.Sender.NibiruAddr.String(),
 		},
@@ -186,9 +186,9 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 	resp, err := deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &eth.EIP55Addr{
+			FromErc20: eth.EIP55Addr{
 				Address: deployResp.ContractAddr,
-			},
+			}.String(),
 			Sender: deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -260,7 +260,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
-			},
+			}.String(),
 			Sender:   randomAcc.String(),
 			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
 		},
@@ -279,7 +279,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
-			},
+			}.String(),
 			Sender:   randomAcc.String(),
 			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
 		},
@@ -320,7 +320,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20MaliciousName() {
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr.String(),
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
@@ -360,7 +360,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
-			FromErc20: &erc20Addr,
+			FromErc20: erc20Addr.String(),
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)

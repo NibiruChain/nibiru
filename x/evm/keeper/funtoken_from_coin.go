@@ -43,7 +43,7 @@ func (k *Keeper) createFunTokenFromCoin(
 	funtoken = &evm.FunToken{
 		Erc20Addr: eth.EIP55Addr{
 			Address: erc20Addr,
-		},
+		}.String(),
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: true,
 	}
