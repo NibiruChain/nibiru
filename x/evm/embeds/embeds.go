@@ -90,18 +90,20 @@ var (
 		Name:      "TestFunTokenPrecompileLocalGas.sol",
 		EmbedJSON: testFunTokenPrecompileLocalGasJson,
 	}
-	// SmartContract_TestNativeSendThenPrecompileSendJson is a test contract
-	// that performs two sends in a single call: a native nibi send and a precompile bankSend.
-	// It tests a race condition where the state DB commit
-	// may overwrite the state after the precompile execution, potentially causing a loss of funds.
+	// SmartContract_TestNativeSendThenPrecompileSendJson is a test contract that
+	// performs two sends in a single call: a native nibi send and a precompile
+	// sendToBank. It tests a race condition where the state DB commit may
+	// overwrite the state after the precompile execution, potentially causing a
+	// loss of funds.
 	SmartContract_TestNativeSendThenPrecompileSendJson = CompiledEvmContract{
 		Name:      "TestNativeSendThenPrecompileSend.sol",
 		EmbedJSON: testNativeSendThenPrecompileSendJson,
 	}
-	// SmartContract_TestERC20TransferThenPrecompileSend is a test contract
-	// that performs two sends in a single call: an erc20 token transfer and a precompile bankSend.
-	// It tests a race condition where the state DB commit
-	// may overwrite the state after the precompile execution, potentially causing an infinite token mint.
+	// SmartContract_TestERC20TransferThenPrecompileSend is a test contract that
+	// performs two sends in a single call: an erc20 token transfer and a
+	// precompile sendToBank. It tests a race condition where the state DB commit
+	// may overwrite the state after the precompile execution, potentially
+	// causing an infinite token mint.
 	SmartContract_TestERC20TransferThenPrecompileSend = CompiledEvmContract{
 		Name:      "TestERC20TransferThenPrecompileSend.sol",
 		EmbedJSON: testERC20TransferThenPrecompileSendJson,

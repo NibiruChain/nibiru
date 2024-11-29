@@ -259,6 +259,12 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
 	)
 
+	// save a reference to return to the previous stateDB
+	oldStateDb := k.Bank.StateDB
+	defer func() {
+		k.Bank.StateDB = oldStateDb
+	}()
+
 	stateDB := k.NewStateDB(ctx, txConfig)
 	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
@@ -355,17 +361,20 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, evmObj, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
 	}
 
+	// TODO: UD-DEBUG: Clarify text below.
 	// GAS REFUND
 	// If msg.Gas() > gasUsed, we need to refund extra gas.
 	// leftoverGas = amount of extra (not used) gas.
 	// If the msg comes from user, we apply refundQuotient capping the refund to 20% of used gas
 	// If msg is internal (funtoken), we refund 100%
-
-	refundQuotient := params.RefundQuotientEIP3529  // EIP-3529: refunds are capped to gasUsed / 5
-	minGasUsedPct := k.GetMinGasUsedMultiplier(ctx) // Evmos invention: https://github.com/evmos/ethermint/issues/1085
+	//
+	// EIP-3529: refunds are capped to gasUsed / 5
+	// We evaluate "fullRefundLeftoverGas" and use only the gas consumed (not the
+	// gas limit) if the `ApplyEvmMsg` call originated from a state transition
+	// where the chain set the gas limit and not an end-user.
+	refundQuotient := params.RefundQuotientEIP3529
 	if fullRefundLeftoverGas {
-		refundQuotient = 1                   // 100% refund
-		minGasUsedPct = math.LegacyZeroDec() // no minimum, get the actual gasUsed value
+		refundQuotient = 1 // 100% refund
 	}
 	temporaryGasUsed := msg.Gas() - leftoverGas
 	refund := GasToRefund(stateDB.GetRefund(), temporaryGasUsed, refundQuotient)
@@ -378,8 +387,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}
 
 	// Min gas used is a % of gasLimit
-	minimumGasUsed := math.LegacyNewDec(int64(msg.Gas())).Mul(minGasUsedPct)
-	gasUsed := math.LegacyMaxDec(minimumGasUsed, math.LegacyNewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
+	gasUsed := math.LegacyNewDec(int64(temporaryGasUsed)).TruncateInt().Uint64()
 
 	// This resulting "leftoverGas" is used by the tracer. This happens as a
 	// result of the defer statement near the beginning of the function with

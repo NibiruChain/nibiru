@@ -50,11 +50,19 @@ func (p precompileOracle) Run(
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
-		return p.queryExchangeRate(ctx, method, args)
+		bz, err = p.queryExchangeRate(ctx, method, args)
 	default:
+		// Note that this code path should be impossible to reach since
+		// "[decomposeInput]" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	return bz, err
 }
 
 func PrecompileOracle(keepers keepers.PublicKeepers) vm.PrecompiledContract {
@@ -81,19 +89,23 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	price, blockTime, blockHeight, err := p.oracleKeeper.GetDatedExchangeRate(ctx, assetPair)
+	priceAtBlock, err := p.oracleKeeper.ExchangeRates.Get(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}
 
-	return method.Outputs.Pack(price.BigInt(), uint64(blockTime), blockHeight)
+	return method.Outputs.Pack(
+		priceAtBlock.ExchangeRate.BigInt(),
+		uint64(priceAtBlock.BlockTimestampMs),
+		priceAtBlock.CreatedBlock,
+	)
 }
 
 func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	pair string,
 	err error,
 ) {
-	if e := assertNumArgs(len(args), 1); e != nil {
+	if e := assertNumArgs(args, 1); e != nil {
 		err = e
 		return
 	}

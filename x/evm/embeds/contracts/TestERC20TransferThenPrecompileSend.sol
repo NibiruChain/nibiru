@@ -25,7 +25,7 @@ contract TestERC20TransferThenPrecompileSend {
             "ERC-20 transfer failed"
         );
 
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.bankSend(
+        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
             erc20,
             precompileAmount,
             precompileRecipient
@@ -34,7 +34,7 @@ contract TestERC20TransferThenPrecompileSend {
         require(
             sentAmount == precompileAmount,
             string.concat(
-                "IFunToken.bankSend succeeded but transferred the wrong amount",
+                "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
                 Strings.toString(sentAmount),
                 "expected ",
