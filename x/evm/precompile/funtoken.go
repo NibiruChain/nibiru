@@ -283,7 +283,7 @@ func (p precompileFunToken) balance(
 		return
 	}
 
-	erc20Bal, err := p.evmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, addrEth, ctx)
+	erc20Bal, err := p.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(funtoken.Erc20Addr), addrEth, ctx)
 	if err != nil {
 		return
 	}
@@ -296,7 +296,7 @@ func (p precompileFunToken) balance(
 			Erc20     gethcommon.Address `json:"erc20"`
 			BankDenom string             `json:"bankDenom"`
 		}{
-			Erc20:     funtoken.Erc20Addr.Address,
+			Erc20:     gethcommon.HexToAddress(funtoken.Erc20Addr),
 			BankDenom: funtoken.BankDenom,
 		},
 		struct {

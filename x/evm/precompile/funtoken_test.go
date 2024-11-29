@@ -310,7 +310,7 @@ func (out FunTokenBalanceReturn) ParseFromResp(
 	}
 	return evmtest.FunTokenBalanceAssert{
 		FunToken: evm.FunToken{
-			Erc20Addr: eth.EIP55Addr{Address: out.Token.Erc20},
+			Erc20Addr: eth.EIP55Addr{Address: out.Token.Erc20}.String(),
 			BankDenom: out.Token.BankDenom,
 		},
 		Account:      out.NibiruAcc.EthAddr,
