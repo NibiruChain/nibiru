@@ -36,7 +36,7 @@ func NewEIP55AddrFromStr(input string) (EIP55Addr, error) {
 // Marshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Marshal() ([]byte, error) {
-	return h.Bytes(), nil
+	return h.Address.Bytes(), nil
 }
 
 // MarshalJSON returns the [EIP55Addr] as JSON bytes.
