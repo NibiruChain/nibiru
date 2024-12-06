@@ -276,7 +276,7 @@ func (s *MsgsTestSuite) TestQuery_ValidateBasic() {
 			},
 		},
 	} {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			tc.test()
 		})
 	}
