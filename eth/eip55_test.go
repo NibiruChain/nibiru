@@ -116,15 +116,15 @@ func (s *EIP55AddrSuite) TestProtobufEncoding() {
 	}{
 		{
 			input:        threeValidAddrs[0],
-			expectedJson: "\"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\"",
+			expectedJson: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
 		},
 		{
 			input:        threeValidAddrs[1],
-			expectedJson: "\"0xAe967917c465db8578ca9024c205720b1a3651A9\"",
+			expectedJson: "0xAe967917c465db8578ca9024c205720b1a3651A9",
 		},
 		{
 			input:        threeValidAddrs[2],
-			expectedJson: "\"0x1111111111111111111112222222222223333323\"",
+			expectedJson: "0x1111111111111111111112222222222223333323",
 		},
 	} {
 		s.Run(strconv.Itoa(tcIdx), func() {
@@ -140,7 +140,7 @@ func (s *EIP55AddrSuite) TestProtobufEncoding() {
 
 			bz, err := tc.input.Marshal()
 			s.NoError(err)
-			s.Equal(tc.input.Bytes(), bz,
+			s.Equal(tc.expectedJson, string(bz),
 				"Marshaling to bytes gives different value than the test case specifies. test case #%d", tcIdx)
 
 			err = eip55Addr.Unmarshal(bz)
@@ -148,7 +148,8 @@ func (s *EIP55AddrSuite) TestProtobufEncoding() {
 			s.Equal(tc.input.Address, eip55Addr.Address,
 				"Given -> Marshal -> Unmarshal returns a different value than the given when it should be an identity operation (no-op). test case #%d", tcIdx)
 
-			s.Equal(len(tc.input.Bytes()), tc.input.Size())
+			s.Equal(len([]byte(tc.input.Hex())), tc.input.Size())
+			s.Equal(len(tc.input.Hex()), tc.input.Size())
 		})
 	}
 }
@@ -172,4 +173,25 @@ type EIP55AddrSuite struct {
 
 func TestEIP55AddrSuite(t *testing.T) {
 	suite.Run(t, new(EIP55AddrSuite))
+}
+
+func (s *EIP55AddrSuite) TestStringEncoding() {
+	addrHex := "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+	addr := new(eth.EIP55Addr)
+	err := addr.Unmarshal([]byte(addrHex))
+	s.NoError(err)
+	s.Equal(addrHex, addr.Address.Hex())
+
+	addrBytes, err := addr.Marshal()
+	s.NoError(err)
+	s.Equal(addrHex, string(addrBytes))
+
+	bz, err := addr.MarshalJSON()
+	s.NoError(err)
+	s.Equal(addrHex, string(bz))
+
+	addrb := new(eth.EIP55Addr)
+	err = addrb.UnmarshalJSON([]byte(addrHex))
+	s.NoError(err)
+	s.EqualValues(addrb, addr)
 }
