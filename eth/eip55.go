@@ -1,7 +1,6 @@
 package eth
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,14 +35,14 @@ func NewEIP55AddrFromStr(input string) (EIP55Addr, error) {
 // Marshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Marshal() ([]byte, error) {
-	return h.Bytes(), nil
+	return []byte(h.Address.Hex()), nil
 }
 
 // MarshalJSON returns the [EIP55Addr] as JSON bytes.
 // Implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) MarshalJSON() ([]byte, error) {
-	return json.Marshal(h.String())
+	return []byte(h.String()), nil
 }
 
 // MarshalTo serializes a EIP55Addr directly into a pre-allocated byte slice ("data").
@@ -51,38 +50,34 @@ func (h EIP55Addr) MarshalJSON() ([]byte, error) {
 // Implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) MarshalTo(data []byte) (n int, err error) {
-	copy(data, h.Bytes())
+	copy(data, []byte(h.Address.Hex()))
 	return h.Size(), nil
 }
 
 // Unmarshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) Unmarshal(data []byte) error {
-	addr := gethcommon.BytesToAddress(data)
-	*h = EIP55Addr{Address: addr}
+	addr, err := NewEIP55AddrFromStr(string(data))
+	if err != nil {
+		return err
+	}
+	*h = addr
 	return nil
 }
 
 // UnmarshalJSON implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
-	text := new(string)
-	if err := json.Unmarshal(bz, text); err != nil {
-		return err
-	}
-
-	addr, err := NewEIP55AddrFromStr(*text)
+	addr, err := NewEIP55AddrFromStr(string(bz))
 	if err != nil {
 		return err
 	}
-
 	*h = addr
-
 	return nil
 }
 
 // Size implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Size() int {
-	return len(h.Bytes())
+	return len([]byte(h.Address.Hex()))
 }

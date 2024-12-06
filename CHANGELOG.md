@@ -45,22 +45,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
 that gas consumed during any send operation of the "NibiruBankKeeper" depends
 only on the "bankkeeper.BaseKeeper"'s gas consumption.
+- [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding 
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
 Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 2024-11-01 and including both a primary review period and mitigation/remission
-period. This section describes code changes that occured after that audit in
+period. This section describes code changes that occurred after that audit in
 preparation for a second audit starting in November 2024.
 
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
   Use effective gas price in RefundGas and make sure that units are properly
-  reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+  reflected on all occurrences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
   and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
-- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
+- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM development
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
 Fix state consistency in precompile execution by ensuring proper journaling of
 state changes in the StateDB. This pull request makes sure that state is
@@ -115,7 +116,7 @@ tests for race conditions within funtoken precompile
 timestamps resulting from ctx.WithBlock* don't actually correspond to the block
 header information from specified blocks in the chain's history, so the oracle
 exchange rates need a way to correctly retrieve this information. This change
-fixes that discrepency, giving the expected block timesamp for the EVM's oracle
+fixes that discrepancy, giving the expected block timestamp for the EVM's oracle
 precompiled contract. The change also simplifies and corrects the code in x/oracle.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
