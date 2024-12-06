@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/rs/zerolog/log"
+	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // TODO: UD-DEBUG:
@@ -15,13 +15,13 @@ import (
 // nil StaetDB bank send and record gas consumed
 // Both should be equal.
 
-// TestGasConsumedInvariant: The "NibiruBankKeeper" is defined such that
+// TestGasConsumedInvariantSend: The "NibiruBankKeeper" is defined such that
 // send operations are meant to have consistent gas consumption regardless of the
 // whether the active "StateDB" instance is defined or undefined (nil). This is
 // important to prevent consensus failures resulting from nodes reaching an
 // inconsistent state after processing the same state transitions and gettng
 // conflicting gas results.
-func (s *Suite) TestGasConsumedInvariant() {
+func (s *Suite) TestGasConsumedInvariantSend() {
 	to := evmtest.NewEthPrivAcc() // arbitrary constant
 
 	testCases := []struct {
@@ -93,7 +93,8 @@ func (scenario GasConsumedInvariantScenario) Run(
 	if nilStateDB {
 		s.Require().Nil(deps.EvmKeeper.Bank.StateDB)
 	} else {
-		s.populateStateDB(&deps)
+		deps.NewStateDB()
+		s.NotNil(deps.EvmKeeper.Bank.StateDB)
 	}
 
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, 420))
@@ -108,9 +109,6 @@ func (scenario GasConsumedInvariantScenario) Run(
 		),
 	)
 	gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
-	log.Debug().Msgf("gasConsumedBefore: %d", gasConsumedBefore)
-	log.Debug().Msgf("gasConsumedAfter: %d", gasConsumedAfter)
-	log.Debug().Msgf("nilStateDB: %v", nilStateDB)
 
 	s.GreaterOrEqualf(gasConsumedAfter, gasConsumedBefore,
 		"gas meter consumed should not be negative: gas consumed after = %d, gas consumed before = %d ",
@@ -120,7 +118,7 @@ func (scenario GasConsumedInvariantScenario) Run(
 	return gasConsumedAfter - gasConsumedBefore
 }
 
-func (s *Suite) TestGasConsumedInvariantNotNibi() {
+func (s *Suite) TestGasConsumedInvariantSendNotNibi() {
 	to := evmtest.NewEthPrivAcc() // arbitrary constant
 
 	testCases := []struct {
@@ -177,5 +175,145 @@ func (s *Suite) TestGasConsumedInvariantNotNibi() {
 			)
 		})
 	}
+}
+
+type FunctionalGasConsumedInvariantScenario struct {
+	Setup   func(deps *evmtest.TestDeps)
+	Measure func(deps *evmtest.TestDeps)
+}
+
+func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
+	var (
+		gasConsumedA uint64 // nil StateDB
+		gasConsumedB uint64 // not nil StateDB
+	)
+
+	{
+		deps := evmtest.NewTestDeps()
+		s.Nil(deps.EvmKeeper.Bank.StateDB)
+
+		f.Setup(&deps)
+
+		gasConsumedBefore := deps.Ctx.GasMeter().GasConsumed()
+		f.Measure(&deps)
+		gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedA = gasConsumedAfter - gasConsumedBefore
+	}
+
+	{
+		deps := evmtest.NewTestDeps()
+		deps.NewStateDB()
+		s.NotNil(deps.EvmKeeper.Bank.StateDB)
+
+		f.Setup(&deps)
+
+		gasConsumedBefore := deps.Ctx.GasMeter().GasConsumed()
+		f.Measure(&deps)
+		gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedB = gasConsumedAfter - gasConsumedBefore
+	}
+
+	s.Equalf(
+		fmt.Sprintf("%d", gasConsumedA),
+		fmt.Sprintf("%d", gasConsumedB),
+		"Gas consumed should be equal",
+	)
+}
+
+func (s *Suite) TestGasConsumedInvariantOther() {
+	to := evmtest.NewEthPrivAcc() // arbitrary constant
+	bankDenom := evm.EVMBankDenom
+	coins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, 420)) // arbitrary constant
+	// Use this value because the gas token is involved in both the BaseOp and
+	// AfterOp of the "ForceGasInvariant" function.
+	s.Run("MintCoins", func() {
+		FunctionalGasConsumedInvariantScenario{
+			Setup: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins),
+				)
+			},
+			Measure: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					deps.App.BankKeeper.MintCoins(
+						deps.Ctx, evm.ModuleName, coins,
+					),
+				)
+			},
+		}.Run(s)
+
+	})
+
+	s.Run("BurnCoins", func() {
+		FunctionalGasConsumedInvariantScenario{
+			Setup: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+				)
+			},
+			Measure: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					deps.App.BankKeeper.BurnCoins(
+						deps.Ctx, evm.ModuleName, coins,
+					),
+				)
+			},
+		}.Run(s)
+
+	})
+
+	s.Run("SendCoinsFromAccountToModule", func() {
+		FunctionalGasConsumedInvariantScenario{
+			Setup: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins),
+				)
+			},
+			Measure: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					deps.App.BankKeeper.SendCoinsFromAccountToModule(
+						deps.Ctx, deps.Sender.NibiruAddr, evm.ModuleName, coins,
+					),
+				)
+			},
+		}.Run(s)
+
+	})
+
+	s.Run("SendCoinsFromModuleToAccount", func() {
+		FunctionalGasConsumedInvariantScenario{
+			Setup: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+				)
+			},
+			Measure: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					deps.App.BankKeeper.SendCoinsFromModuleToAccount(
+						deps.Ctx, evm.ModuleName, to.NibiruAddr, coins,
+					),
+				)
+			},
+		}.Run(s)
+
+	})
+
+	s.Run("SendCoinsFromModuleToModule", func() {
+		FunctionalGasConsumedInvariantScenario{
+			Setup: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+				)
+			},
+			Measure: func(deps *evmtest.TestDeps) {
+				s.NoError(
+					deps.App.BankKeeper.SendCoinsFromModuleToModule(
+						deps.Ctx, evm.ModuleName, staking.NotBondedPoolName, coins,
+					),
+				)
+			},
+		}.Run(s)
+
+	})
 
 }
