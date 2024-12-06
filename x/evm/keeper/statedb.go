@@ -184,6 +184,16 @@ func (k *Keeper) DeleteAccount(ctx sdk.Context, addr gethcommon.Address) error {
 	return nil
 }
 
+func GaslessOperation(ctx sdk.Context, op func(ctx sdk.Context)) {
+	gasMeterBeforeOp := ctx.GasMeter()
+	defer func() {
+		ctx = ctx.WithGasMeter(gasMeterBeforeOp)
+	}()
+
+	freeGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBeforeOp.Limit()))
+	op(freeGasCtx)
+}
+
 // GetAccountWithoutBalance load nonce and codehash without balance,
 // more efficient in cases where balance is not needed.
 func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {

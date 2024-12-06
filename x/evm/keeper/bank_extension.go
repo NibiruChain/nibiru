@@ -1,10 +1,12 @@
 package keeper
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	// storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	// "github.com/rs/zerolog/log"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -61,16 +63,86 @@ func (bk NibiruBankKeeper) BurnCoins(
 	return nil
 }
 
+func (bk NibiruBankKeeper) ForceConstantGas(
+	ctx sdk.Context,
+	BaseOp func(ctx sdk.Context) error,
+	AfterOp func(ctx sdk.Context),
+) error {
+
+	gasMeterBefore := ctx.GasMeter()
+	gasConsumedBefore := gasMeterBefore.GasConsumed()
+	baseGasConsumed := uint64(0)
+	defer func() {
+		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
+		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseGasConsumed, "NibiruBankKeeper invariant")
+	}()
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit()))
+
+	err := BaseOp(ctx)
+	baseGasConsumed = ctx.GasMeter().GasConsumed()
+	if err != nil {
+		return err
+	}
+
+	AfterOp(ctx)
+	return nil
+}
+
 func (bk NibiruBankKeeper) SendCoins(
 	ctx sdk.Context,
 	fromAddr sdk.AccAddress,
 	toAddr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
+	// Force constant gas regardless of the whether the StateDB is defined or
+	// whether the "findEtherBalance*" block would consume gas.
+	gasMeterBefore := ctx.GasMeter()
+	gasConsumedBefore := gasMeterBefore.GasConsumed()
+	baseGasConsumed := uint64(0)
+	defer func() {
+		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
+		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseGasConsumed, "NibiruBankKeeper invariant")
+	}()
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit()))
+
 	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, coins); err != nil {
+	err := bk.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, coins)
+	baseGasConsumed = ctx.GasMeter().GasConsumed()
+	if err != nil {
 		return err
 	}
+
+	if findEtherBalanceChangeFromCoins(coins) {
+		bk.SyncStateDBWithAccount(ctx, fromAddr)
+		bk.SyncStateDBWithAccount(ctx, toAddr)
+	}
+	return nil
+}
+
+func (bk NibiruBankKeeper) SendCoins_Original(
+	ctx sdk.Context,
+	fromAddr sdk.AccAddress,
+	toAddr sdk.AccAddress,
+	coins sdk.Coins,
+) error {
+	// Force constant gas regardless of the whether the StateDB is defined or
+	// whether the "findEtherBalance*" block would consume gas.
+	gasMeterBefore := ctx.GasMeter()
+	gasConsumedBefore := gasMeterBefore.GasConsumed()
+	baseGasConsumed := uint64(0)
+	defer func() {
+		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
+		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseGasConsumed, "NibiruBankKeeper invariant")
+	}()
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit()))
+
+	// Use the embedded function from [bankkeeper.Keeper]
+	err := bk.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, coins)
+	baseGasConsumed = ctx.GasMeter().GasConsumed()
+	if err != nil {
+		return err
+	}
+
 	if findEtherBalanceChangeFromCoins(coins) {
 		bk.SyncStateDBWithAccount(ctx, fromAddr)
 		bk.SyncStateDBWithAccount(ctx, toAddr)
@@ -86,13 +158,6 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 		return
 	}
 
-	cachedGasConfig := ctx.KVGasConfig()
-	defer func() {
-		ctx = ctx.WithKVGasConfig(cachedGasConfig)
-	}()
-
-	// set gas cost to zero for this conditional operation
-	ctx = ctx.WithKVGasConfig(storetypes.GasConfig{})
 	balanceWei := evm.NativeToWei(
 		bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
 	)
