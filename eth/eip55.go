@@ -57,7 +57,6 @@ func (h *EIP55Addr) MarshalTo(data []byte) (n int, err error) {
 // Unmarshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) Unmarshal(data []byte) error {
-	fmt.Printf("Unmarshal data: %s\n", data)
 	addr, err := NewEIP55AddrFromStr(string(data))
 	if err != nil {
 		return err
