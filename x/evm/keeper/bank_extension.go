@@ -1,12 +1,9 @@
 package keeper
 
 import (
-	// storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	// "github.com/rs/zerolog/log"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -36,15 +33,19 @@ func (bk NibiruBankKeeper) MintCoins(
 	moduleName string,
 	coins sdk.Coins,
 ) error {
-	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.MintCoins(ctx, moduleName, coins); err != nil {
-		return err
-	}
-	if findEtherBalanceChangeFromCoins(coins) {
-		moduleBech32Addr := auth.NewModuleAddress(moduleName)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
-	}
-	return nil
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			// Use the embedded function from [bankkeeper.Keeper]
+			return bk.BaseKeeper.MintCoins(ctx, moduleName, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				moduleBech32Addr := auth.NewModuleAddress(moduleName)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+			}
+		},
+	)
 }
 
 func (bk NibiruBankKeeper) BurnCoins(
@@ -52,15 +53,19 @@ func (bk NibiruBankKeeper) BurnCoins(
 	moduleName string,
 	coins sdk.Coins,
 ) error {
-	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.BurnCoins(ctx, moduleName, coins); err != nil {
-		return err
-	}
-	if findEtherBalanceChangeFromCoins(coins) {
-		moduleBech32Addr := auth.NewModuleAddress(moduleName)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
-	}
-	return nil
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			// Use the embedded function from [bankkeeper.Keeper]
+			return bk.BaseKeeper.BurnCoins(ctx, moduleName, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				moduleBech32Addr := auth.NewModuleAddress(moduleName)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+			}
+		},
+	)
 }
 
 // Each Send* operation on the [NibiruBankKeeper] can be described as having a
@@ -128,37 +133,6 @@ func (bk NibiruBankKeeper) SendCoins(
 	)
 }
 
-func (bk NibiruBankKeeper) SendCoins_Original(
-	ctx sdk.Context,
-	fromAddr sdk.AccAddress,
-	toAddr sdk.AccAddress,
-	coins sdk.Coins,
-) error {
-	// Force constant gas regardless of the whether the StateDB is defined or
-	// whether the "findEtherBalance*" block would consume gas.
-	gasMeterBefore := ctx.GasMeter()
-	gasConsumedBefore := gasMeterBefore.GasConsumed()
-	baseGasConsumed := uint64(0)
-	defer func() {
-		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
-		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseGasConsumed, "NibiruBankKeeper invariant")
-	}()
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit()))
-
-	// Use the embedded function from [bankkeeper.Keeper]
-	err := bk.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, coins)
-	baseGasConsumed = ctx.GasMeter().GasConsumed()
-	if err != nil {
-		return err
-	}
-
-	if findEtherBalanceChangeFromCoins(coins) {
-		bk.SyncStateDBWithAccount(ctx, fromAddr)
-		bk.SyncStateDBWithAccount(ctx, toAddr)
-	}
-	return nil
-}
-
 func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	ctx sdk.Context, acc sdk.AccAddress,
 ) {
@@ -188,16 +162,20 @@ func (bk NibiruBankKeeper) SendCoinsFromAccountToModule(
 	recipientModule string,
 	coins sdk.Coins,
 ) error {
-	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, coins); err != nil {
-		return err
-	}
-	if findEtherBalanceChangeFromCoins(coins) {
-		bk.SyncStateDBWithAccount(ctx, senderAddr)
-		moduleBech32Addr := auth.NewModuleAddress(recipientModule)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
-	}
-	return nil
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			// Use the embedded function from [bankkeeper.Keeper]
+			return bk.BaseKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				bk.SyncStateDBWithAccount(ctx, senderAddr)
+				moduleBech32Addr := auth.NewModuleAddress(recipientModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+			}
+		},
+	)
 }
 
 func (bk NibiruBankKeeper) SendCoinsFromModuleToAccount(
@@ -206,16 +184,20 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToAccount(
 	recipientAddr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
-	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, coins); err != nil {
-		return err
-	}
-	if findEtherBalanceChangeFromCoins(coins) {
-		moduleBech32Addr := auth.NewModuleAddress(senderModule)
-		bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
-		bk.SyncStateDBWithAccount(ctx, recipientAddr)
-	}
-	return nil
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			// Use the embedded function from [bankkeeper.Keeper]
+			return bk.BaseKeeper.SendCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				moduleBech32Addr := auth.NewModuleAddress(senderModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+				bk.SyncStateDBWithAccount(ctx, recipientAddr)
+			}
+		},
+	)
 }
 
 func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
@@ -224,15 +206,19 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 	recipientModule string,
 	coins sdk.Coins,
 ) error {
-	// Use the embedded function from [bankkeeper.Keeper]
-	if err := bk.BaseKeeper.SendCoinsFromModuleToModule(ctx, senderModule, recipientModule, coins); err != nil {
-		return err
-	}
-	if findEtherBalanceChangeFromCoins(coins) {
-		senderBech32Addr := auth.NewModuleAddress(senderModule)
-		recipientBech32Addr := auth.NewModuleAddress(recipientModule)
-		bk.SyncStateDBWithAccount(ctx, senderBech32Addr)
-		bk.SyncStateDBWithAccount(ctx, recipientBech32Addr)
-	}
-	return nil
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			// Use the embedded function from [bankkeeper.Keeper]
+			return bk.BaseKeeper.SendCoinsFromModuleToModule(ctx, senderModule, recipientModule, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				senderBech32Addr := auth.NewModuleAddress(senderModule)
+				recipientBech32Addr := auth.NewModuleAddress(recipientModule)
+				bk.SyncStateDBWithAccount(ctx, senderBech32Addr)
+				bk.SyncStateDBWithAccount(ctx, recipientBech32Addr)
+			}
+		},
+	)
 }

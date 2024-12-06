@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // TODO: UD-DEBUG:
@@ -70,13 +71,6 @@ func (s *Suite) TestGasConsumedInvariantSend() {
 			)
 		})
 	}
-
-}
-
-func (s *Suite) populateStateDB(deps *evmtest.TestDeps) {
-	// evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
-	deps.NewStateDB()
-	s.NotNil(deps.EvmKeeper.Bank.StateDB)
 }
 
 type GasConsumedInvariantScenario struct {
@@ -241,7 +235,6 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 				)
 			},
 		}.Run(s)
-
 	})
 
 	s.Run("BurnCoins", func() {
@@ -259,7 +252,6 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 				)
 			},
 		}.Run(s)
-
 	})
 
 	s.Run("SendCoinsFromAccountToModule", func() {
@@ -277,7 +269,6 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 				)
 			},
 		}.Run(s)
-
 	})
 
 	s.Run("SendCoinsFromModuleToAccount", func() {
@@ -295,7 +286,6 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 				)
 			},
 		}.Run(s)
-
 	})
 
 	s.Run("SendCoinsFromModuleToModule", func() {
@@ -313,7 +303,5 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 				)
 			},
 		}.Run(s)
-
 	})
-
 }
