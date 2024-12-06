@@ -51,8 +51,6 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	})
 	s.Require().NoError(err)
 
-	fmt.Printf("deployResp.ContractAddr.Hex(): %s\n", deployResp.ContractAddr.Hex())
-
 	erc20Addr := eth.EIP55Addr{
 		Address: deployResp.ContractAddr,
 	}
