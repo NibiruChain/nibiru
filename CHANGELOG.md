@@ -42,7 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Nibiru EVM
 
-#### Nibiru EVM | Before Audit 2 [Nov, 2024]
+- [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
+that gas consumed during any send operation of the "NibiruBankKeeper" depends
+only on the "bankkeeper.BaseKeeper"'s gas consumption.
+
+#### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
 Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until

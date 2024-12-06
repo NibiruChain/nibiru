@@ -255,17 +255,28 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	fullRefundLeftoverGas bool,
 ) (resp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
 	var (
-		ret   []byte // return bytes from evm execution
-		vmErr error  // vm errors do not effect consensus and are therefore not assigned to err
+		// return bytes from evm execution
+		ret []byte
+		// vm errors do not imply a failed query, thus they don't populate the
+		// function's "err" value.
+		vmErr error
 	)
 
-	// save a reference to return to the previous stateDB
-	oldStateDb := k.Bank.StateDB
+	var (
+		stateDB *statedb.StateDB
+		// save a reference to return to the previous stateDB
+		oldStateDB *statedb.StateDB = k.Bank.StateDB
+	)
+
 	defer func() {
-		k.Bank.StateDB = oldStateDb
+		if commit && err == nil && resp != nil && !resp.Failed() {
+			k.Bank.StateDB = stateDB
+		} else {
+			k.Bank.StateDB = oldStateDB
+		}
 	}()
 
-	stateDB := k.NewStateDB(ctx, txConfig)
+	stateDB = k.NewStateDB(ctx, txConfig)
 	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	leftoverGas := msg.Gas()

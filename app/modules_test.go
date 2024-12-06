@@ -60,7 +60,7 @@ func (s *TestSuite) TestGenesis() {
 			wantErr: "min_commission must be positive",
 		},
 	} {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			genStakingJson := s.encCfg.Codec.MustMarshalJSON(tc.gen)
 			err := app.StakingModule{}.ValidateGenesis(
 				s.encCfg.Codec,

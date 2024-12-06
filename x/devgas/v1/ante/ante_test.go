@@ -236,7 +236,8 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 	}
 
 	for _, tc := range testCases {
-		suite.T().Run(tc.name, func(t *testing.T) {
+		suite.Run(tc.name, func() {
+			t := suite.T()
 			bapp, ctx := tc.setup()
 			ctx = ctx.WithChainID("mock-chain-id")
 			anteDecorator := devgasante.NewDevGasPayoutDecorator(

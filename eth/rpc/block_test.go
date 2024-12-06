@@ -7,6 +7,7 @@ import (
 
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/metadata"
 )
@@ -129,7 +130,7 @@ func (s *BlockSuite) TestUnmarshalBlockNumberOrHash() {
 	}
 
 	for _, tc := range testCases {
-		fmt.Printf("Case %s", tc.msg)
+		log.Info().Msgf("Case %s", tc.msg)
 		// reset input
 		bnh = new(BlockNumberOrHash)
 		err := bnh.UnmarshalJSON(tc.input)
