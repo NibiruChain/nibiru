@@ -11,11 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-// TODO: UD-DEBUG:
-// non-nil StaetDB bank send and record gas consumed
-// nil StaetDB bank send and record gas consumed
-// Both should be equal.
-
 // TestGasConsumedInvariantSend: The "NibiruBankKeeper" is defined such that
 // send operations are meant to have consistent gas consumption regardless of the
 // whether the active "StateDB" instance is defined or undefined (nil). This is
@@ -214,6 +209,7 @@ func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
 	)
 }
 
+// See [Suite.TestGasConsumedInvariantSend].
 func (s *Suite) TestGasConsumedInvariantOther() {
 	to := evmtest.NewEthPrivAcc() // arbitrary constant
 	bankDenom := evm.EVMBankDenom

@@ -269,7 +269,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 
 	defer func() {
-		if commit && err == nil && !resp.Failed() {
+		if commit && err == nil && resp != nil && !resp.Failed() {
 			k.Bank.StateDB = stateDB
 		} else {
 			k.Bank.StateDB = oldStateDB

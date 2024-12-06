@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Nibiru EVM
 
-- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - fix(evm): Guarantee
+- [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
 that gas consumed during any send operation of the "NibiruBankKeeper" depends
 only on the "bankkeeper.BaseKeeper"'s gas consumption.
 
