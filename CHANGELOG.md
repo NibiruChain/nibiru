@@ -44,21 +44,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Nibiru EVM
 
-#### Nibiru EVM | Before Audit 2 [Nov, 2024]
+- [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
+that gas consumed during any send operation of the "NibiruBankKeeper" depends
+only on the "bankkeeper.BaseKeeper"'s gas consumption.
+- [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding 
+
+#### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
 Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 2024-11-01 and including both a primary review period and mitigation/remission
-period. This section describes code changes that occured after that audit in
+period. This section describes code changes that occurred after that audit in
 preparation for a second audit starting in November 2024.
 
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
   Use effective gas price in RefundGas and make sure that units are properly
-  reflected on all occurences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
+  reflected on all occurrences of "base fee" in the codebase. This fixes [#2059](https://github.com/NibiruChain/nibiru/issues/2059)
   and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
-- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM develoment
+- [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM development
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
   Fix state consistency in precompile execution by ensuring proper journaling of
   state changes in the StateDB. This pull request makes sure that state is
@@ -76,6 +81,7 @@ for (1) ERC20 transfers with tokens that return false success values instead of
 throwing an error and (2) ERC20 transfers with other operations that don't bring
 about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
+- [#2093](https://github.com/NibiruChain/nibiru/pull/2093) - feat(evm): gas usage in precompiles: limits, local gas meters
 - [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
 from the changs in #2086, this pull request implements a new `JournalChange`
@@ -94,12 +100,26 @@ The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and record
 balance changes in wei as journal changes automatically. This guarantees that
 commits and reversions of the `StateDB` do not misalign with the state of the
 Bank module. This code change uses the `NibiruBankKeeper` on all modules that
-depend on x/bank, such as the EVM and Wasm modules. 
+depend on x/bank, such as the EVM and Wasm modules.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
 tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
+- [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
+- [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint
+- [#2107](https://github.com/NibiruChain/nibiru/pull/2107) - feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
+- [#2108](https://github.com/NibiruChain/nibiru/pull/2108) - fix(evm): removed deprecated root key from eth_getTransactionReceipt
+- [#2110](https://github.com/NibiruChain/nibiru/pull/2110) - fix(evm): Restore StateDB to its state prior to ApplyEvmMsg call to ensure deterministic gas usage. This fixes an issue where the StateDB pointer field in NibiruBankKeeper was being updated during readonly query endpoints like eth_estimateGas, leading to non-deterministic gas usage in subsequent transactions.
+- [#2111](https://github.com/NibiruChain/nibiru/pull/2111) - fix: e2e-evm-cron.yml
+- [#2114](https://github.com/NibiruChain/nibiru/pull/2114) - fix(evm): make gas cost zero in conditional bank keeper flow
+- [#2116](https://github.com/NibiruChain/nibiru/pull/2116) - fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
+- [#2117](https://github.com/NibiruChain/nibiru/pull/2117) - fix(oracle): The
+timestamps resulting from ctx.WithBlock* don't actually correspond to the block
+header information from specified blocks in the chain's history, so the oracle
+exchange rates need a way to correctly retrieve this information. This change
+fixes that discrepancy, giving the expected block timestamp for the EVM's oracle
+precompiled contract. The change also simplifies and corrects the code in x/oracle.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -229,7 +249,7 @@ tests for race conditions within funtoken precompile
 - Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 - Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
 - Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
-- Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
+- Bump `cosmossdk.io/math` from 1.1.2 to 1.4.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676), [#2115](https://github.com/NibiruChain/nibiru/pull/2115))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
@@ -241,10 +261,11 @@ tests for race conditions within funtoken precompile
 - Bump `github.com/hashicorp/go-getter` from 1.7.1 to 1.7.5 ([#1858](https://github.com/NibiruChain/nibiru/pull/1858), [#1938](https://github.com/NibiruChain/nibiru/pull/1938))
 - Bump `github.com/btcsuite/btcd` from 0.23.3 to 0.24.2 ([#1862](https://github.com/NibiruChain/nibiru/pull/1862), [#2070](https://github.com/NibiruChain/nibiru/pull/2070))
 - Bump `pozetroninc/github-action-get-latest-release` from 0.7.0 to 0.8.0 ([#1863](https://github.com/NibiruChain/nibiru/pull/1863))
-- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.46.0 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972), [#1974](https://github.com/NibiruChain/nibiru/pull/1974), [#1988](https://github.com/NibiruChain/nibiru/pull/1988), [#2043](https://github.com/NibiruChain/nibiru/pull/2043), [#2057](https://github.com/NibiruChain/nibiru/pull/2057), [#2062](https://github.com/NibiruChain/nibiru/pull/2062), [#2069](https://github.com/NibiruChain/nibiru/pull/2069), [#2102](https://github.com/NibiruChain/nibiru/pull/2102))
+- Bump `bufbuild/buf-setup-action` from 1.30.1 to 1.47.2 ([#1891](https://github.com/NibiruChain/nibiru/pull/1891), [#1900](https://github.com/NibiruChain/nibiru/pull/1900), [#1923](https://github.com/NibiruChain/nibiru/pull/1923), [#1972](https://github.com/NibiruChain/nibiru/pull/1972), [#1974](https://github.com/NibiruChain/nibiru/pull/1974), [#1988](https://github.com/NibiruChain/nibiru/pull/1988), [#2043](https://github.com/NibiruChain/nibiru/pull/2043), [#2057](https://github.com/NibiruChain/nibiru/pull/2057), [#2062](https://github.com/NibiruChain/nibiru/pull/2062), [#2069](https://github.com/NibiruChain/nibiru/pull/2069), [#2102](https://github.com/NibiruChain/nibiru/pull/2102), [#2113](https://github.com/NibiruChain/nibiru/pull/2113))
 - Bump `axios` from 1.7.3 to 1.7.4 ([#2016](https://github.com/NibiruChain/nibiru/pull/2016))
 - Bump `github.com/CosmWasm/wasmvm` from 1.5.0 to 1.5.5 ([#2047](https://github.com/NibiruChain/nibiru/pull/2047))
 - Bump `docker/build-push-action` from 5 to 6 ([#1924](https://github.com/NibiruChain/nibiru/pull/1924))
+- Bump `codecov/codecov-action` from 4 to 5 ([#2112](https://github.com/NibiruChain/nibiru/pull/2112))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 

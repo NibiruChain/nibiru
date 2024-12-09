@@ -74,7 +74,7 @@ func (s *paginateSuite) TestParsePagination() {
 			wantOffset: 99,
 		},
 	} {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			gotPageReq, gotPage, gotErr := common.ParsePagination(tc.pageReq)
 
 			s.EqualValues(tc.wantPage, gotPage)

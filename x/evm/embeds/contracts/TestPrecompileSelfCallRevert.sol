@@ -4,57 +4,59 @@ pragma solidity ^0.8.24;
 import "./IFunToken.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract TestNativeSendThenPrecompileSend {
+contract TestPrecompileSelfCallRevert {
     address erc20;
+    uint counter = 0;
 
-    constructor(address erc20_) {
+    constructor(address erc20_) payable {
         erc20 = erc20_;
     }
 
-    function nativeSendThenPrecompileSend(
+    function selfCallTransferFunds(
         address payable nativeRecipient,
         uint256 nativeAmount,
         string memory precompileRecipient,
         uint256 precompileAmount
-    ) public {
-        bool isSent = nativeRecipient.send(nativeAmount);
-        require(isSent, "Failed to send native token");
-
-        uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
-            erc20,
-            precompileAmount,
-            precompileRecipient
-        );
-        require(
-            sentAmount == precompileAmount,
-            string.concat(
-                "IFunToken.sendToBank succeeded but transferred the wrong amount",
-                "sentAmount ",
-                Strings.toString(sentAmount),
-                "expected ",
-                Strings.toString(precompileAmount)
+    ) external {
+        counter++;
+        try
+            TestPrecompileSelfCallRevert(payable(address(this))).transferFunds(
+                nativeRecipient,
+                nativeAmount,
+                precompileRecipient,
+                precompileAmount
             )
-        );
+        {} catch // [1]
+        {
+            counter++;
+        }
     }
 
-    function justPrecompileSend(
+    function transferFunds(
+        address payable nativeRecipient,
+        uint256 nativeAmount,
         string memory precompileRecipient,
         uint256 precompileAmount
-    ) public {
+    ) external {
+        require(nativeRecipient.send(nativeAmount), "ETH transfer failed"); // wei
+
         uint256 sentAmount = FUNTOKEN_PRECOMPILE.sendToBank(
             erc20,
-            precompileAmount,
+            precompileAmount, // micro-WNIBI
             precompileRecipient
         );
+
         require(
             sentAmount == precompileAmount,
             string.concat(
                 "IFunToken.sendToBank succeeded but transferred the wrong amount",
                 "sentAmount ",
-                Strings.toString(sentAmount),
+                Strings.toString(nativeAmount),
                 "expected ",
                 Strings.toString(precompileAmount)
             )
         );
+
+        revert(); // [4]
     }
 }

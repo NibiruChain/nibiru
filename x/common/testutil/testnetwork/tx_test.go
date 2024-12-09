@@ -1,8 +1,6 @@
 package testnetwork_test
 
 import (
-	"testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/math"
@@ -37,7 +35,7 @@ func (s *TestSuite) TestExecTx() {
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
 
-	s.T().Run("test tx option changes", func(t *testing.T) {
+	s.Run("test tx option changes", func() {
 		defaultOpts := testnetwork.DEFAULT_TX_OPTIONS
 		opts := testnetwork.WithTxOptions(testnetwork.TxOptionChanges{
 			BroadcastMode:    &defaultOpts.BroadcastMode,
@@ -52,7 +50,7 @@ func (s *TestSuite) TestExecTx() {
 		s.EqualValues(0, txResp.Code)
 	})
 
-	s.T().Run("fail when validators are missing", func(t *testing.T) {
+	s.Run("fail when validators are missing", func() {
 		networkNoVals := new(testnetwork.Network)
 		*networkNoVals = *s.network
 		networkNoVals.Validators = []*testnetwork.Validator{}

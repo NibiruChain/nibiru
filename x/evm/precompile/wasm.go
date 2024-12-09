@@ -38,10 +38,13 @@ func (p precompileWasm) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI())
+	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
+
+	// Gracefully handles "out of gas"
+	defer HandleOutOfGasPanic(&err)()
 
 	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
 	// any operation that has the potential to use Bank send methods. This will
@@ -61,13 +64,19 @@ func (p precompileWasm) Run(
 		bz, err = p.queryRaw(startResult, contract)
 	default:
 		// Note that this code path should be impossible to reach since
-		// "DecomposeInput" parses methods directly from the ABI.
+		// "[decomposeInput]" parses methods directly from the ABI.
 		err = fmt.Errorf("invalid method called with name \"%s\"", startResult.Method.Name)
 		return
 	}
 	if err != nil {
 		return nil, err
 	}
+
+	// Gas consumed by a local gas meter
+	// The reason it's unnecessary to check for a success value is because
+	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
+	// meter was initialized....
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	return bz, err
 }
 
@@ -140,7 +149,7 @@ func (p precompileWasm) execute(
 		return nil, err
 	}
 
-	wasmContract, msgArgsBz, funds, err := p.parseExecuteArgs(args)
+	wasmContract, msgArgsBz, funds, err := p.parseArgsWasmExecute(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
@@ -178,7 +187,7 @@ func (p precompileWasm) query(
 		return bz, err
 	}
 
-	wasmContract, req, err := p.parseQueryArgs(args)
+	wasmContract, req, err := p.parseArgsWasmQuery(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
@@ -225,7 +234,7 @@ func (p precompileWasm) instantiate(
 	}
 
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
-	txMsg, err := p.parseInstantiateArgs(args, callerBech32.String())
+	txMsg, err := p.parseArgsWasmInstantiate(args, callerBech32.String())
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
@@ -275,7 +284,7 @@ func (p precompileWasm) executeMulti(
 		return nil, err
 	}
 
-	wasmExecMsgs, err := p.parseExecuteMultiArgs(args)
+	wasmExecMsgs, err := p.parseArgsWasmExecuteMulti(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
@@ -344,13 +353,13 @@ func (p precompileWasm) queryRaw(
 		return bz, err
 	}
 
-	if e := assertNumArgs(len(args), 2); e != nil {
+	if e := assertNumArgs(args, 2); e != nil {
 		err = e
 		return
 	}
 
 	argIdx := 0
-	wasmContract, e := parseContractAddrArg(args[argIdx])
+	wasmContract, e := parseArgContractAddr(args[argIdx])
 	if e != nil {
 		err = e
 		return

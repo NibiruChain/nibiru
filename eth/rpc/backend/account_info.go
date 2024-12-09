@@ -61,7 +61,8 @@ func (b *Backend) GetProof(
 	}
 	ctx := rpc.NewContextWithHeight(height)
 
-	// if the height is equal to zero, meaning the query condition of the block is either "pending" or "latest"
+	// if the height is equal to zero, meaning the query condition of the block
+	// is either "pending" or "latest"
 	if height == 0 {
 		bn, err := b.BlockNumber()
 		if err != nil {
