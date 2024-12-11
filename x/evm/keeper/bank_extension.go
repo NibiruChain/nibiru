@@ -93,13 +93,8 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// Assign vars for the tx gas meter
 	gasMeterBefore := ctx.GasMeter() // Tx gas meter MUST be defined
 	gasConsumedBefore := gasMeterBefore.GasConsumed()
-
-	// Assign vars for the block gas meter (can be nil)
-	blockGasMeterBefore := ctx.BlockGasMeter() // Block gas meter can be nil
-	var blockGasConsumedBefore uint64
-	if blockGasMeterBefore != nil {
-		blockGasConsumedBefore = blockGasMeterBefore.GasConsumed()
-	}
+	// Don't modify the "ctx.BlockGasMeter()" directly because this is
+	// handled in "BaseApp.runTx"
 
 	// Start baseGasConsumed at 0 in case we panic before BaseOp completes and
 	// baseGasConsumed gets a value assignment
@@ -108,11 +103,6 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	defer func() {
 		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
 		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseOpGasConsumed, "NibiruBankKeeper invariant")
-
-		if blockGasMeterBefore != nil {
-			blockGasMeterBefore.RefundGas(blockGasMeterBefore.GasConsumed(), "")
-			blockGasMeterBefore.ConsumeGas(blockGasConsumedBefore+baseOpGasConsumed, "NibiruBankKeeper invariant")
-		}
 	}()
 
 	// Note that because the ctx gas meter uses private variables to track gas,
