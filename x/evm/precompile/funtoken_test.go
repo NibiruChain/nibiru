@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -223,6 +224,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.NoError(err)
 
 	deps.ResetGasMeter()
+	err = testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
+		sdkmath.NewInt(70_000),
+	)
+	s.NoError(err)
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,

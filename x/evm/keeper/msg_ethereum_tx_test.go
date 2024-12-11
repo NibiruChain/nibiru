@@ -38,7 +38,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					deps.App.BankKeeper,
 					deps.Ctx,
 					authtypes.FeeCollectorName,
-					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
+					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1_000_000))),
 				)
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
