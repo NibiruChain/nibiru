@@ -47,6 +47,10 @@ that gas consumed during any send operation of the "NibiruBankKeeper" depends
 only on the "bankkeeper.BaseKeeper"'s gas consumption.
 - [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding 
 - [#2122](https://github.com/NibiruChain/nibiru/pull/2122) - test(evm): more bank extension tests and EVM ABCI integration tests to prevent regressions
+- [#2124](https://github.com/NibiruChain/nibiru/pull/2124) - refactor(evm):
+Remove unnecessary argument in the `VerifyFee` function, which returns the token
+payment required based on the effective fee from the tx data. Improve
+documentation.
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
