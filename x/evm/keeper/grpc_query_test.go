@@ -489,10 +489,9 @@ func (s *Suite) TestQueryEthCall() {
 			wantErr: "InvalidArgument",
 		},
 		{
-			name: "happy: eth call for erc20 token transfer",
+			name: "happy: eth call to deploy erc20 contract",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				fungibleTokenContract := embeds.SmartContract_ERC20Minter
-
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),

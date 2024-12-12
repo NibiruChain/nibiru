@@ -1,14 +1,21 @@
 package keeper_test
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/rs/zerolog/log"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // TestGasConsumedInvariantSend: The "NibiruBankKeeper" is defined such that
@@ -300,4 +307,137 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 			},
 		}.Run(s)
 	})
+}
+
+// TestStateDBReadonlyInvariant: The EVM Keeper's "ApplyEvmMsg" function is used
+// in both queries and transaction messages. Queries such as "eth_call",
+// "eth_estimateGas", "debug_traceTransaction", "debugTraceCall", and
+// "debug_traceBlock" interact with the EVM StateDB inside of "ApplyEvmMsg".
+//
+// Queries MUST NOT result in lingering effects on the blockchain multistore or
+// the keepers, as doing so would result in potential inconsistencies between
+// nodes and consensus failures. This test adds cases to make sure that invariant
+// is held.
+func (s *Suite) TestStateDBReadonlyInvariant() {
+	deps := evmtest.NewTestDeps()
+	_, _, erc20Contract := evmtest.DeployAndExecuteERC20Transfer(&deps, s.T())
+	to := evmtest.NewEthPrivAcc()
+
+	type StateDBWithExplanation struct {
+		StateDB     *statedb.StateDB
+		Explanation string
+		ExpectEqual bool
+	}
+
+	var stateDBs []StateDBWithExplanation
+	stateDBs = append(stateDBs, StateDBWithExplanation{
+		StateDB:     deps.App.EvmKeeper.Bank.StateDB,
+		Explanation: "initial DB after some EthereumTx",
+		ExpectEqual: true,
+	})
+	resetBank := func(deps *evmtest.TestDeps) {
+		deps.App.EvmKeeper.Bank.StateDB = stateDBs[0].StateDB
+	}
+
+	s.T().Log("eth_call")
+	{
+		fungibleTokenContract := embeds.SmartContract_ERC20Minter
+		jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
+			From: &deps.Sender.EthAddr,
+			Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
+		})
+		s.Require().NoError(err)
+		req := &evm.EthCallRequest{Args: jsonTxArgs}
+		_, err = deps.EvmKeeper.EthCall(deps.GoCtx(), req)
+		s.Require().NoError(err)
+		stateDBs = append(stateDBs, StateDBWithExplanation{
+			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
+			Explanation: "DB after eth_call query",
+			ExpectEqual: true,
+		})
+	}
+
+	s.T().Log(`EthereumTx success, err == nil, vmError="insufficient balance for transfer"`)
+	{
+		balOfSender := deps.App.BankKeeper.GetBalance(
+			deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
+		tooManyTokensWei := evm.NativeToWei(balOfSender.Amount.AddRaw(420).BigInt())
+		evmResp, err := evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        to.EthAddr,
+			AmountWei: tooManyTokensWei,
+		}.Run()
+		s.Require().NoErrorf(err, "%#v", evmResp)
+		s.Require().Contains(evmResp.VmError, "insufficient balance for transfer")
+		stateDBs = append(stateDBs, StateDBWithExplanation{
+			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
+			Explanation: "DB after EthereumTx with vmError",
+			ExpectEqual: false,
+		})
+	}
+
+	resetBank(&deps)
+	stateDBs = append(stateDBs, StateDBWithExplanation{
+		StateDB:     deps.App.EvmKeeper.Bank.StateDB,
+		Explanation: "sanity check with original ctx",
+		ExpectEqual: true,
+	})
+
+	s.T().Log(`EthereumTx success, err == nil, no vmError"`)
+	{
+		sendCoins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 420))
+		s.NoError(
+			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
+		)
+
+		ctx := deps.Ctx
+		log.Log().Msgf("ctx.GasMeter().GasConsumed() %d", ctx.GasMeter().GasConsumed())
+		log.Log().Msgf("ctx.GasMeter().Limit() %d", ctx.GasMeter().Limit())
+
+		wei := evm.NativeToWei(sendCoins[0].Amount.BigInt())
+		evmResp, err := evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        to.EthAddr,
+			AmountWei: wei,
+		}.Run()
+
+		s.Require().NoErrorf(err, "%#v", evmResp)
+		s.Require().Falsef(evmResp.Failed(), "%#v", evmResp)
+		stateDBs = append(stateDBs, StateDBWithExplanation{
+			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
+			Explanation: "DB after EthereumTx success",
+			ExpectEqual: false,
+		})
+
+		for _, err := range []error{
+			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
+			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
+				math.NewIntFromUint64(gethparams.TxGas),
+			),
+		} {
+			s.NoError(err)
+		}
+		evmResp, err = evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        erc20Contract,
+			AmountWei: wei,
+			GasLimit:  gethparams.TxGas * 2,
+		}.Run()
+		s.Require().NoErrorf(err, "%#v", evmResp)
+		s.Require().Contains(evmResp.VmError, "execution reverted")
+	}
+
+	s.T().Log("Verify that the NibiruBankKeeper.StateDB is unaffected")
+	var first *statedb.StateDB
+	for idx, db := range stateDBs {
+		if idx == 0 {
+			first = db.StateDB
+			continue
+		}
+		if db.ExpectEqual {
+			s.True(first == db.StateDB, db.Explanation)
+			continue
+		}
+		s.False(first == db.StateDB, db.Explanation)
+	}
 }

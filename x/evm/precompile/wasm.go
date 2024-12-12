@@ -72,6 +72,9 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 
+	// TODO: Emit EVM events
+	// https://github.com/NibiruChain/nibiru/issues/2121
+
 	// Gas consumed by a local gas meter
 	// The reason it's unnecessary to check for a success value is because
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas

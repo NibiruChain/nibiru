@@ -90,21 +90,28 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	BaseOp func(ctx sdk.Context) error,
 	AfterOp func(ctx sdk.Context),
 ) error {
-	gasMeterBefore := ctx.GasMeter()
+	// Assign vars for the tx gas meter
+	gasMeterBefore := ctx.GasMeter() // Tx gas meter MUST be defined
 	gasConsumedBefore := gasMeterBefore.GasConsumed()
+	// Don't modify the "ctx.BlockGasMeter()" directly because this is
+	// handled in "BaseApp.runTx"
+
 	// Start baseGasConsumed at 0 in case we panic before BaseOp completes and
 	// baseGasConsumed gets a value assignment
 	baseOpGasConsumed := uint64(0)
+
 	defer func() {
 		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
 		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseOpGasConsumed, "NibiruBankKeeper invariant")
 	}()
+
 	// Note that because the ctx gas meter uses private variables to track gas,
 	// we have to branch off with a new gas meter instance to avoid mutating the
 	// "true" gas meter (called GasMeterBefore here).
 	ctx = ctx.
 		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
-		WithKVGasConfig(store.GasConfig{})
+		WithKVGasConfig(zeroCostGasConfig).
+		WithTransientKVGasConfig(zeroCostGasConfig)
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
@@ -114,6 +121,16 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 
 	AfterOp(ctx)
 	return nil
+}
+
+var zeroCostGasConfig store.GasConfig = store.GasConfig{
+	HasCost:          0,
+	DeleteCost:       0,
+	ReadCostFlat:     0,
+	ReadCostPerByte:  0,
+	WriteCostFlat:    0,
+	WriteCostPerByte: 0,
+	IterNextCostFlat: 0,
 }
 
 func (bk NibiruBankKeeper) SendCoins(
