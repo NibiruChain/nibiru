@@ -650,7 +650,7 @@ const DefaultGethTraceTimeout = 5 * time.Second
 // Configures a Nibiru EVM tracer that is used to "trace" and analyze
 // the execution of transactions within a given block. Block information is read
 // from the context (goCtx). [TraceBlock] is responsible iterates over each Eth
-// transacion message and calls [TraceEthTxMsg] on it.
+// transaction message and calls [TraceEthTxMsg] on it.
 func (k Keeper) TraceBlock(
 	goCtx context.Context, req *evm.QueryTraceBlockRequest,
 ) (*evm.QueryTraceBlockResponse, error) {
