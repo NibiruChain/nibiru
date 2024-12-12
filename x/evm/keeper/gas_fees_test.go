@@ -101,19 +101,18 @@ func (s *Suite) TestVerifyFee() {
 			}
 		},
 	} {
-		feeDenom := evm.EVMBankDenom
 		isCheckTx := true
 		tc := getTestCase()
 		s.Run(tc.name, func() {
 			gotCoins, err := evmkeeper.VerifyFee(
-				tc.txData, feeDenom, tc.baseFeeMicronibi, isCheckTx,
+				tc.txData, tc.baseFeeMicronibi, isCheckTx,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
 			}
 			s.Require().NoError(err)
-			s.Equal(tc.wantCoinAmt, gotCoins.AmountOf(feeDenom).String())
+			s.Equal(tc.wantCoinAmt, gotCoins.AmountOf(evm.EVMBankDenom).String())
 		})
 	}
 }

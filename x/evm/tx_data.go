@@ -32,6 +32,8 @@ var (
 // provide custom implementations for these methods without creating a new TxData
 // data structure. Thus, the current interface exists.
 type TxData interface {
+	// TxType returns a byte (uint8) identifying the tx as a [LegacyTx] (0),
+	// [AccessListTx] (1), or [DynamicFeeTx] (2).
 	TxType() byte
 	Copy() TxData
 	GetChainID() *big.Int
@@ -86,14 +88,24 @@ type TxData interface {
 	AsEthereumData() gethcore.TxData
 	Validate() error
 
-	// static fee
+	// Fee in units of wei := gasPrice (wei per gas)  * gasLimit (gas).
 	Fee() *big.Int
-	// Cost is the gas cost of the transaction in wei
+	// Cost in units of wei := Fee * Value. Cost is the gas cost of the
+	// transaction in wei, accounting for value transferred.
 	Cost() *big.Int
 
-	// effective gasPrice/fee/cost according to current base fee
+	// EffectiveGasPriceWeiPerGas is effective gas price in units of wei per gas.
+	// "Effective" means depending on the base fee of the network.
 	EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int
+
+	// EffectiveFeeWei := effectiveGasPrice (wei per gas) * gasLimit (gas).
+	// "Effective" means depending on the base fee of the network.
 	EffectiveFeeWei(baseFeeWei *big.Int) *big.Int
+
+	// EffectiveCostWei is the same as cost, except it uses effective fee in wei
+	// rathen than fee. Effective cost is the gas cost of the transaction in wei,
+	// accounting for value (wei) transferred and using effective gas price (wei
+	// per gas).
 	EffectiveCostWei(baseFeeWei *big.Int) *big.Int
 }
 
