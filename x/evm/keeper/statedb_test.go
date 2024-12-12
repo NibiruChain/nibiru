@@ -45,7 +45,11 @@ func (s *Suite) TestStateDBBalance() {
 	s.T().Log("Send via EVM transfer. See expected wei amounts.")
 	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	{
-		err := evmtest.TransferWei(&deps, to, evm.NativeToWei(big.NewInt(12)))
+		_, err := evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        to,
+			AmountWei: evm.NativeToWei(big.NewInt(12)),
+		}.Run()
 		s.Require().NoError(err)
 		db := deps.NewStateDB()
 		s.Equal(
@@ -58,7 +62,11 @@ func (s *Suite) TestStateDBBalance() {
 		)
 
 		s.T().Log("Send via EVM transfer with too little wei. Should error")
-		err = evmtest.TransferWei(&deps, to, big.NewInt(12))
+		_, err = evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        to,
+			AmountWei: big.NewInt(12),
+		}.Run()
 		s.Require().ErrorContains(err, "wei amount is too small")
 	}
 

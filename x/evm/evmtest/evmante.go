@@ -41,22 +41,22 @@ func NonEvmMsgTx(deps *TestDeps) sdk.Tx {
 		ToAddress:   NewEthPrivAcc().NibiruAddr.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
 	}
-	return buildTx(deps, true, msg, gasLimit, fees)
+	return BuildTx(deps, true, gasLimit, fees, msg)
 }
 
-func buildTx(
+func BuildTx(
 	deps *TestDeps,
 	ethExtentions bool,
-	msg sdk.Msg,
 	gasLimit uint64,
 	fees sdk.Coins,
+	msgs ...sdk.Msg,
 ) sdk.FeeTx {
 	txBuilder, _ := deps.EncCfg.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 	if ethExtentions {
 		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})
 		txBuilder.SetExtensionOptions(option)
 	}
-	err := txBuilder.SetMsgs(msg)
+	err := txBuilder.SetMsgs(msgs...)
 	if err != nil {
 		panic(err)
 	}

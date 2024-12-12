@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 that gas consumed during any send operation of the "NibiruBankKeeper" depends
 only on the "bankkeeper.BaseKeeper"'s gas consumption.
 - [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding 
+- [#2122](https://github.com/NibiruChain/nibiru/pull/2122) - test(evm): more bank extension tests and EVM ABCI integration tests to prevent regressions
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 

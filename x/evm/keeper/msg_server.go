@@ -59,25 +59,22 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	tmpCtx, commitCtx := ctx.CacheContext()
-
-	// pass true to commit the StateDB
-	evmResp, _, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig, false)
+	// ApplyEvmMsg - Perform the EVM State transition
+	refundLeftoverGas := false
+	var tracer vm.EVMLogger = nil
+	evmResp, _, err = k.ApplyEvmMsg(ctx, evmMsg, tracer, true, evmConfig, txConfig, refundLeftoverGas)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
 		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-		return nil, errors.Wrap(err, "EthereumTx: failed to apply ethereum core message")
+		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
 
-	if !evmResp.Failed() {
-		commitCtx()
-	}
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
 	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if err != nil {
-		return nil, errors.Wrap(err, "EthereumTx: error adding transient gas used to block")
+		return nil, errors.Wrap(err, "error adding transient gas used to block")
 	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
@@ -88,7 +85,7 @@ func (k *Keeper) EthereumTx(
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "EthereumTx: error refunding leftover gas to sender %s", evmMsg.From())
+		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
 	// reset the gas meter for current TxMsg (EthereumTx)
@@ -96,15 +93,16 @@ func (k *Keeper) EthereumTx(
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
-		return nil, errors.Wrap(err, "EthereumTx: error emitting ethereum tx events")
+		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
 	err = k.EmitLogEvents(ctx, evmResp)
 	if err != nil {
-		return nil, errors.Wrap(err, "EthereumTx: error emitting tx logs")
+		return nil, errors.Wrap(err, "error emitting tx logs")
 	}
 
 	blockTxIdx := uint64(txConfig.TxIndex) + 1
 	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+
 	return evmResp, nil
 }
 
@@ -210,18 +208,18 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 // will be returned to the client and the transaction won't be committed to the
 // store.
 //
-// # Reverted state
+// ## Reverted state
 //
 // The snapshot and rollback are supported by the `statedb.StateDB`.
 //
-// # Different Callers
+// ## Different Callers
 //
 // It's called in three scenarios:
 // 1. `ApplyTransaction`, in the transaction processing flow.
 // 2. `EthCall/EthEstimateGas` grpc query handler.
 // 3. Called by other native modules directly.
 //
-// # Prechecks and Preprocessing
+// ## Prechecks and Preprocessing
 //
 // All relevant state transition prechecks for the MsgEthereumTx are performed on the AnteHandler,
 // prior to running the transaction against the state. The prechecks run are the following:
@@ -237,13 +235,17 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 //
 // 1. set up the initial access list
 //
-// # Tracer parameter
-// It should be a `vm.Tracer` object or nil, if pass `nil`, it'll create a default one based on keeper options.
+// ## Tracer parameter
 //
-// # Commit parameter
+// It should be a `vm.Tracer` object or nil, if pass `nil`, it'll create a
+// default one based on keeper options.
+//
+// ## Commit parameter
+//
 // If commit is true, the `StateDB` will be committed, otherwise discarded.
 //
-// # fullRefundLeftoverGas parameter
+// ## fullRefundLeftoverGas parameter
+//
 // For internal calls like funtokens, user does not specify gas limit explicitly.
 // In this case we don't apply any caps for refund and refund 100%
 func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
@@ -269,7 +271,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 
 	defer func() {
-		if commit && err == nil && resp != nil && !resp.Failed() {
+		if commit && err == nil && resp != nil {
 			k.Bank.StateDB = stateDB
 		} else {
 			k.Bank.StateDB = oldStateDB
