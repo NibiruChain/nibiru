@@ -216,7 +216,7 @@ type TxTransferWei struct {
 	GasLimit  uint64
 }
 
-func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
+func (tx TxTransferWei) Build() (evmTxMsg *evm.MsgEthereumTx, err error) {
 	gasLimit := tx.GasLimit
 	if tx.GasLimit == 0 {
 		gasLimit = gethparams.TxGas
@@ -226,7 +226,7 @@ func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
 	ethAcc := deps.Sender
 	var innerTxData []byte = nil
 	var accessList gethcore.AccessList = nil
-	ethTxMsg, err := NewEthTxMsgFromTxData(
+	evmTxMsg, err = NewEthTxMsgFromTxData(
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
@@ -237,10 +237,18 @@ func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
 		accessList,
 	)
 	if err != nil {
-		return evmResp, fmt.Errorf("error while transferring wei: %w", err)
+		err = fmt.Errorf("error building tx: %w", err)
 	}
+	return
+}
 
-	evmResp, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
+	deps := tx.Deps
+	evmTxMsg, err := tx.Build()
+	if err != nil {
+		return
+	}
+	evmResp, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), evmTxMsg)
 	if err != nil {
 		err = fmt.Errorf("error while transferring wei: %w", err)
 	}

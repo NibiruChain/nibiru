@@ -59,10 +59,10 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "failed to return ethereum transaction as core message")
 	}
 
-	tmpCtx, commitCtx := ctx.CacheContext()
-
-	// pass true to commit the StateDB
-	evmResp, _, err = k.ApplyEvmMsg(tmpCtx, evmMsg, nil, true, evmConfig, txConfig, false)
+	// ApplyEvmMsg - Perform the EVM State transition
+	refundLeftoverGas := false
+	var tracer vm.EVMLogger = nil
+	evmResp, _, err = k.ApplyEvmMsg(ctx, evmMsg, tracer, true, evmConfig, txConfig, refundLeftoverGas)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -70,9 +70,6 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
 
-	if !evmResp.Failed() {
-		commitCtx()
-	}
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
 	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
@@ -90,6 +87,9 @@ func (k *Keeper) EthereumTx(
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
+
+	// reset the gas meter for current TxMsg (EthereumTx)
+	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
