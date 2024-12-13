@@ -406,7 +406,7 @@ var (
 
 	pattern_Msg_DelegateFeedConsent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "oracle", "feeder-delegate"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_EditOracleParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "oracle", "edit-oracle-params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_EditOracleParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "oracle", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
