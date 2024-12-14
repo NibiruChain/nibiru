@@ -88,6 +88,9 @@ func (k *Keeper) EthereumTx(
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
+	// reset the gas meter for current TxMsg (EthereumTx)
+	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
+
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
