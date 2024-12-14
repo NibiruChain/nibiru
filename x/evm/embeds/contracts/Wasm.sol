@@ -5,14 +5,9 @@ address constant WASM_PRECOMPILE_ADDRESS = 0x00000000000000000000000000000000000
 
 IWasm constant WASM_PRECOMPILE = IWasm(WASM_PRECOMPILE_ADDRESS);
 
-import "./AbciEvent.sol";
+import "./NibiruEvmUtils.sol";
 
-interface IWasm is IAbciEventEmitter {
-    struct BankCoin {
-        string denom;
-        uint256 amount;
-    }
-
+interface IWasm is INibiruEvm {
     /// @notice Invoke a contract's "ExecuteMsg", which corresponds to
     /// "wasm/types/MsgExecuteContract". This enables arbitrary smart contract
     /// execution using the Wasm VM from the EVM.
@@ -25,13 +20,13 @@ interface IWasm is IAbciEventEmitter {
     function execute(
         string memory contractAddr,
         bytes memory msgArgs,
-        BankCoin[] memory funds
+        INibiruEvm.BankCoin[] memory funds
     ) external payable returns (bytes memory response);
 
     struct WasmExecuteMsg {
         string contractAddr;
         bytes msgArgs;
-        BankCoin[] funds;
+        INibiruEvm.BankCoin[] funds;
     }
 
     /// @notice Identical to "execute", except for multiple contract calls.
@@ -69,6 +64,6 @@ interface IWasm is IAbciEventEmitter {
         uint64 codeID,
         bytes memory msgArgs,
         string memory label,
-        BankCoin[] memory funds
+        INibiruEvm.BankCoin[] memory funds
     ) external payable returns (string memory contractAddr, bytes memory data);
 }

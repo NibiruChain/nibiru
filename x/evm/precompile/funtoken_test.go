@@ -22,6 +22,7 @@ import (
 
 // TestSuite: Runs all the tests in the suite.
 func TestSuite(t *testing.T) {
+	suite.Run(t, new(UtilsSuite))
 	suite.Run(t, new(FuntokenSuite))
 	suite.Run(t, new(WasmSuite))
 }
