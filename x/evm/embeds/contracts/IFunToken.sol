@@ -4,10 +4,12 @@ pragma solidity >=0.8.19;
 address constant FUNTOKEN_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000800;
 IFunToken constant FUNTOKEN_PRECOMPILE = IFunToken(FUNTOKEN_PRECOMPILE_ADDRESS);
 
+import "./NibiruEvmUtils.sol";
+
 /// @dev Implements the functionality for sending ERC20 tokens and bank
 /// coins to various Nibiru accounts using either the Nibiru Bech32 address
 /// using the "FunToken" mapping between the ERC20 and bank.
-interface IFunToken {
+interface IFunToken is INibiruEvm {
     /// @dev sendToBank sends ERC20 tokens as coins to a Nibiru base account
     /// @param erc20 - the address of the ERC20 token contract
     /// @param amount - the amount of tokens to send

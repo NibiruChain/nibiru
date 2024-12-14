@@ -20,17 +20,29 @@ build:
 clean-cache:
   go clean -cache -testcache -modcache
 
-alias b := build
-
-# Generate protobuf code (Golang) for Nibiru
+# Generate protobuf-based types in Golang
 proto-gen: 
   #!/usr/bin/env bash
   make proto-gen
 
-alias proto := proto-gen
+# Generate Solidity artifacts for x/evm/embeds
+gen-embeds:
+  #!/usr/bin/env bash
+  source contrib/bashlib.sh
 
-# Build protobuf types (Rust)
-proto-rs:
+  embeds_dir="x/evm/embeds"
+  log_info "Begin to compile Solidity in $embeds_dir"
+  which_ok npm
+  log_info "Using system node version: $(npm exec -- node -v)"
+
+  cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit)
+  npx hardhat compile
+  log_success "Compiled Solidity in $embeds_dir"
+
+alias gen-proto := proto-gen
+
+# Generate protobuf-based types in Rust
+gen-proto-rs:
   bash proto/buf.gen.rs.sh
 
 lint: 
