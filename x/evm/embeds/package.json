@@ -1,7 +1,7 @@
 {
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "bun": "^1.1.18",
+    "bun": "^1.1.30",
     "hardhat": "^2.22.5"
   },
   "dependencies": {
