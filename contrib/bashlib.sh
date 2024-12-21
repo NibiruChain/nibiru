@@ -29,26 +29,26 @@ export COLOR_BRIGHT_WHITE="\033[97m"
 
 # log_debug: Simple wrapper for `echo` with a DEBUG prefix.
 log_debug() {
-  echo "${COLOR_CYAN}DEBUG${COLOR_RESET}" "$@"
+  echo -e "${COLOR_CYAN}DEBUG${COLOR_RESET}" "$@"
 }
 
 # log_error: ERROR messages in red, output to stderr.
 log_error() {
-  echo "❌ ${COLOR_RED}ERROR:${COLOR_RESET}" "$@" >&2
+  echo -e "❌ ${COLOR_RED}ERROR:${COLOR_RESET}" "$@" >&2
 }
 
 log_success() {
-  echo "${COLOR_GREEN}✅ SUCCESS:${COLOR_RESET}" "$@"
+  echo -e "${COLOR_GREEN}✅ SUCCESS:${COLOR_RESET}" "$@"
 }
 
 # log_warning: WARNING messages represent non-critical issues that might not
 # require immediate action but should be noted as points of concern or failure.
 log_warning() {
-  echo "${COLOR_YELLOW}WARNING${COLOR_RESET}" "$@" >&2
+  echo -e "${COLOR_YELLOW}WARNING${COLOR_RESET}" "$@" >&2
 }
 
 log_info() {
-  echo "${COLOR_MAGENTA}INFO${COLOR_RESET}" "$@"
+  echo -e "${COLOR_MAGENTA}INFO${COLOR_RESET}" "$@"
 }
 
 # —————————————————————————————————————————————————
