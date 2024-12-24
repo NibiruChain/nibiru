@@ -26,6 +26,14 @@ const (
 	Erc20GasLimitExecute uint64 = 200_000
 )
 
+// getCallGas returns the gas limit for a call to an ERC20 contract following 63/64 rule (EIP-150)
+// protection against recursive calls ERC20 -> precompile -> ERC20.
+func getCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
+	availableGas := ctx.GasMeter().GasRemaining()
+	callGas := (availableGas * 63) / 64
+	return min(callGas, gasLimit)
+}
+
 // ERC20 returns a mutable reference to the keeper with an ERC20 contract ABI and
 // Go functions corresponding to contract calls in the ERC20 standard like "mint"
 // and "transfer" in the ERC20 standard.
@@ -60,7 +68,7 @@ func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "mint", to, amount)
+	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "mint", to, amount)
 }
 
 /*
@@ -82,7 +90,7 @@ func (e erc20Calls) Transfer(
 		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
-	resp, err = e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "transfer", to, amount)
+	resp, err = e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "transfer", to, amount)
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -141,7 +149,7 @@ func (e erc20Calls) Burn(
 	contract, from gethcommon.Address, amount *big.Int,
 	ctx sdk.Context,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, Erc20GasLimitExecute, "burn", amount)
+	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "burn", amount)
 }
 
 func (k Keeper) LoadERC20Name(
@@ -174,7 +182,7 @@ func (k Keeper) LoadERC20String(
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
-		Erc20GasLimitQuery,
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
 		methodName,
 	)
 	if err != nil {
@@ -202,7 +210,7 @@ func (k Keeper) loadERC20Uint8(
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
-		Erc20GasLimitQuery,
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
 		methodName,
 	)
 	if err != nil {
@@ -232,7 +240,7 @@ func (k Keeper) LoadERC20BigInt(
 		evm.EVM_MODULE_ADDRESS,
 		&contract,
 		false,
-		Erc20GasLimitQuery,
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
 		methodName,
 		args...,
 	)

@@ -37,6 +37,8 @@ var (
 	testNativeSendThenPrecompileSendJson []byte
 	//go:embed artifacts/contracts/TestPrecompileSelfCallRevert.sol/TestPrecompileSelfCallRevert.json
 	testPrecompileSelfCallRevertJson []byte
+	//go:embed artifacts/contracts/TestInfiniteRecursionERC20.sol/TestInfiniteRecursionERC20.json
+	testInfiniteRecursionERC20Json []byte
 )
 
 var (
@@ -118,6 +120,12 @@ var (
 		Name:      "TestPrecompileSelfCallRevert.sol",
 		EmbedJSON: testPrecompileSelfCallRevertJson,
 	}
+	// SmartContract_TestInfiniteRecursionERC20 is a test contract
+	// which simulates malicious ERC20 behavior by adding infinite recursion in transfer() and balanceOf() functions
+	SmartContract_TestInfiniteRecursionERC20 = CompiledEvmContract{
+		Name:      "TestInfiniteRecursionERC20.sol",
+		EmbedJSON: testInfiniteRecursionERC20Json,
+	}
 )
 
 func init() {
@@ -132,6 +140,7 @@ func init() {
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
 	SmartContract_TestPrecompileSelfCallRevert.MustLoad()
+	SmartContract_TestInfiniteRecursionERC20.MustLoad()
 }
 
 type CompiledEvmContract struct {
