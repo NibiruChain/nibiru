@@ -72,22 +72,21 @@ func (k *Keeper) EthereumTx(
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
-	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if err != nil {
-		return nil, errors.Wrap(err, "error adding transient gas used to block")
-	}
-
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
 	refundGas := uint64(0)
-	if evmMsg.Gas() > blockGasUsed {
-		refundGas = evmMsg.Gas() - blockGasUsed
+	if evmMsg.Gas() > evmResp.GasUsed {
+		refundGas = evmMsg.Gas() - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
 
+	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+	if err != nil {
+		return nil, errors.Wrap(err, "error adding transient gas used to block")
+	}
 	// reset the gas meter for current TxMsg (EthereumTx)
 	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 
