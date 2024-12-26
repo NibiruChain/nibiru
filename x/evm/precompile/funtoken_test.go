@@ -171,6 +171,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
+	deps.ResetGasMeter()
+
 	s.Run("IFunToken.bankBalance", func() {
 		s.Require().NotEmpty(funtoken.BankDenom)
 		evmResp, err := deps.EvmKeeper.CallContract(
@@ -222,7 +224,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), callArgs...)
 	s.NoError(err)
 
-	deps.ResetGasMeter()
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -242,7 +243,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Equal(sdk.NewInt(420).String(),
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
-	s.deps.ResetGasMeter()
 	s.Require().NotNil(deps.EvmKeeper.Bank.StateDB)
 
 	s.T().Log("Parse the response contract addr and response bytes")
@@ -254,6 +254,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 	)
 	s.NoError(err)
 	s.Require().Equal("420", sentAmt.String())
+
+	deps.ResetGasMeter()
 
 	s.Run("IFuntoken.balance", func() {
 		evmResp, err := deps.EvmKeeper.CallContract(
