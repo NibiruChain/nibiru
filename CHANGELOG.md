@@ -51,6 +51,7 @@ only on the "bankkeeper.BaseKeeper"'s gas consumption.
 Remove unnecessary argument in the `VerifyFee` function, which returns the token
 payment required based on the effective fee from the tx data. Improve
 documentation.
+- [#2131](https://github.com/NibiruChain/nibiru/pull/2131) - fix(evm): proper block gas calculation in precompile calls
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
