@@ -91,7 +91,7 @@ func (k Keeper) CallContractWithInput(
 	// Apply EVM message
 	evmCfg, err := k.GetEVMConfig(
 		ctx,
-		sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
+		ctx.BlockHeader().ProposerAddress,
 		k.EthChainID(ctx),
 	)
 	if err != nil {

@@ -135,7 +135,7 @@ func (k *Keeper) NewEVM(
 	if tracer == nil {
 		tracer = evm.NewTracer(k.tracer, msg)
 	}
-	theEvm := vm.NewEVM(blockCtx, core.NewEVMTxContext(msg), stateDB, evmConfig.ChainConfig, NewVMConfig(ctx, msg, evmConfig, tracer))
+	theEvm := vm.NewEVM(blockCtx, core.NewEVMTxContext(msg), stateDB, evmConfig.ChainConfig, NewVMConfig(ctx, evmConfig, tracer))
 	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
 }

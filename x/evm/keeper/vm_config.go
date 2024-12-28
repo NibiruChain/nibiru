@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -31,7 +30,7 @@ func (k *Keeper) GetEVMConfig(
 		Params:        params,
 		ChainConfig:   ethCfg,
 		BlockCoinbase: coinbase,
-		BaseFeeWei:    k.BaseFeeWeiPerGas(ctx),
+		BaseFeeWei:    evm.NativeToWei(k.BaseFeeMicronibiPerGas(ctx)),
 	}, nil
 }
 
@@ -51,7 +50,7 @@ func (k *Keeper) TxConfig(
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
 func NewVMConfig(
-	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
+	ctx sdk.Context, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
 	var debug bool = false
 	if _, ok := tracer.(evm.NoOpTracer); !ok {
@@ -72,7 +71,7 @@ func NewVMConfig(
 //
 // [COINBASE op code]: https://ethereum.org/en/developers/docs/evm/opcodes/
 func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) (common.Address, error) {
-	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, ParseProposerAddr(ctx, proposerAddress))
+	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, proposerAddress)
 	if !found {
 		return common.Address{}, errors.Wrapf(
 			stakingtypes.ErrNoValidatorFound,
@@ -81,17 +80,5 @@ func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddr
 		)
 	}
 
-	coinbase := common.BytesToAddress(validator.GetOperator())
-	return coinbase, nil
-}
-
-// ParseProposerAddr returns current block proposer's address when provided
-// proposer address is empty.
-func ParseProposerAddr(
-	ctx sdk.Context, proposerAddress sdk.ConsAddress,
-) sdk.ConsAddress {
-	if len(proposerAddress) == 0 {
-		proposerAddress = ctx.BlockHeader().ProposerAddress
-	}
-	return proposerAddress
+	return common.BytesToAddress(validator.GetOperator()), nil
 }
