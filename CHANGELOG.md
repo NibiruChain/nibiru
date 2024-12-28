@@ -51,6 +51,7 @@ only on the "bankkeeper.BaseKeeper"'s gas consumption.
 Remove unnecessary argument in the `VerifyFee` function, which returns the token
 payment required based on the effective fee from the tx data. Improve
 documentation.
+- [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
