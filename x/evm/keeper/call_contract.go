@@ -108,15 +108,9 @@ func (k Keeper) CallContractWithInput(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
 	)
 	if err != nil {
-		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		err = errors.Wrap(err, "failed to apply ethereum core message")
 		return
 	}
-	blockGasUsed, errBlockGasUsed := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if errBlockGasUsed != nil {
-		return nil, nil, errors.Wrap(errBlockGasUsed, "error adding transient gas used to block")
-	}
-	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 
 	if evmResp.Failed() {
 		if strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {

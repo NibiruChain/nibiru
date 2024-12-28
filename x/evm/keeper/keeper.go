@@ -104,7 +104,7 @@ func (k *Keeper) AddToBlockGasUsed(
 ) (blockGasUsed uint64, err error) {
 	// Either k.EvmState.BlockGasUsed.GetOr() or k.EvmState.BlockGasUsed.Set()
 	// also consume gas and could panic.
-	defer HandleOutOfGasPanic(&err, "")
+	defer HandleOutOfGasPanic(&err, "")()
 
 	blockGasUsed = k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
 	if blockGasUsed < gasUsed {
@@ -147,6 +147,7 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
 			case sdk.ErrorOutOfGas:
+
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)
