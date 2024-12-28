@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
-	"github.com/ethereum/go-ethereum/params"
 )
 
 const (
@@ -22,7 +21,7 @@ const (
 
 // NewTracer creates a new Logger tracer to collect execution traces from an
 // EVM transaction.
-func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64) vm.EVMLogger {
+func NewTracer(tracer string, msg core.Message) vm.EVMLogger {
 	// TODO: enable additional log configuration
 	logCfg := &logger.Config{
 		Debug: true,
@@ -30,8 +29,7 @@ func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height 
 
 	switch tracer {
 	case TracerAccessList:
-		rules := cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil)
-		precompileAddrs := vm.DefaultActivePrecompiles(rules)
+		precompileAddrs := vm.PrecompiledAddressesBerlin
 		return logger.NewAccessListTracer(
 			msg.AccessList(),
 			msg.From(),

@@ -43,8 +43,7 @@ func (k Keeper) CallContract(
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
 	}
-	evmResp, _, err = k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput, gasLimit)
-	return evmResp, err
+	return k.CallContractWithInput(ctx, fromAcc, contract, commit, contractInput, gasLimit)
 }
 
 // CallContractWithInput invokes a smart contract with the given [contractInput]
@@ -68,7 +67,7 @@ func (k Keeper) CallContractWithInput(
 	commit bool,
 	contractInput []byte,
 	gasLimit uint64,
-) (evmResp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
 	defer HandleOutOfGasPanic(&err, "CallContractError")
@@ -104,7 +103,7 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 
-	evmResp, evmObj, err = k.ApplyEvmMsg(
+	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
 	)
 	if err != nil {
@@ -133,7 +132,7 @@ func (k Keeper) CallContractWithInput(
 		blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 		if err != nil {
 			k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-			return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
+			return nil, errors.Wrap(err, "error adding transient gas used to block")
 		}
 		k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
@@ -146,5 +145,5 @@ func (k Keeper) CallContractWithInput(
 		// blockTxIdx := uint64(txConfig.TxIndex) + 1
 		// k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 	}
-	return evmResp, evmObj, nil
+	return evmResp, nil
 }

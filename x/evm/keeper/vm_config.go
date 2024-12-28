@@ -47,13 +47,13 @@ func (k *Keeper) TxConfig(
 	}
 }
 
-// VMConfig creates an EVM configuration from the debug setting and the extra
+// NewVMConfig creates an EVM configuration from the debug setting and the extra
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
-func (k Keeper) VMConfig(
+func NewVMConfig(
 	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
-	var debug bool
+	var debug bool = false
 	if _, ok := tracer.(evm.NoOpTracer); !ok {
 		debug = true
 	}

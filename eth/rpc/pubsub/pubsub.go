@@ -66,9 +66,9 @@ func (m *memEventBus) Topics() (topics []string) {
 }
 
 // AddTopic adds a new topic with the specified name and message source
-func (m *memEventBus) AddTopic(name string, src <-chan coretypes.ResultEvent) error {
+func (m *memEventBus) AddTopic(topicName string, src <-chan coretypes.ResultEvent) error {
 	m.topicsMux.RLock()
-	_, ok := m.topics[name]
+	_, ok := m.topics[topicName]
 	m.topicsMux.RUnlock()
 
 	if ok {
@@ -76,10 +76,10 @@ func (m *memEventBus) AddTopic(name string, src <-chan coretypes.ResultEvent) er
 	}
 
 	m.topicsMux.Lock()
-	m.topics[name] = src
+	m.topics[topicName] = src
 	m.topicsMux.Unlock()
 
-	go m.publishTopic(name, src)
+	go m.publishTopic(topicName, src)
 
 	return nil
 }
@@ -123,17 +123,17 @@ func (m *memEventBus) Subscribe(name string) (<-chan coretypes.ResultEvent, Unsu
 	return ch, unsubscribe, nil
 }
 
-func (m *memEventBus) publishTopic(name string, src <-chan coretypes.ResultEvent) {
+func (m *memEventBus) publishTopic(topicName string, src <-chan coretypes.ResultEvent) {
 	for {
 		msg, ok := <-src
 		if !ok {
-			m.closeAllSubscribers(name)
+			m.closeAllSubscribers(topicName)
 			m.topicsMux.Lock()
-			delete(m.topics, name)
+			delete(m.topics, topicName)
 			m.topicsMux.Unlock()
 			return
 		}
-		m.publishAllSubscribers(name, msg)
+		m.publishAllSubscribers(topicName, msg)
 	}
 }
 
@@ -160,10 +160,10 @@ func (m *memEventBus) closeAllSubscribers(name string) {
 // message (i.e., the channel is full), the message is skipped for that
 // subscriber to avoid blocking the publisher. This function ensures thread-safe
 // access to subscribers by using a read lock.
-func (m *memEventBus) publishAllSubscribers(name string, msg coretypes.ResultEvent) {
+func (m *memEventBus) publishAllSubscribers(topicName string, msg coretypes.ResultEvent) {
 	m.subscribersMux.RLock()
 	defer m.subscribersMux.RUnlock()
-	subscribers := m.subscribers[name]
+	subscribers := m.subscribers[topicName]
 	// #nosec G705
 	for _, sub := range subscribers {
 		select {

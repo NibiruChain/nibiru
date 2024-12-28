@@ -60,9 +60,7 @@ func (k *Keeper) EthereumTx(
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	refundLeftoverGas := false
-	var tracer vm.EVMLogger = nil
-	evmResp, _, err = k.ApplyEvmMsg(ctx, evmMsg, tracer, true, evmConfig, txConfig, refundLeftoverGas)
+	evmResp, err = k.ApplyEvmMsg(ctx, evmMsg, nil, true, evmConfig, txConfig, false)
 	if err != nil {
 		// when a transaction contains multiple msg, as long as one of the msg fails
 		// all gas will be deducted. so is not msg.Gas()
@@ -134,12 +132,10 @@ func (k *Keeper) NewEVM(
 		Random:      nil, // not supported
 	}
 
-	txCtx := core.NewEVMTxContext(msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, evmConfig.ChainConfig)
+		tracer = evm.NewTracer(k.tracer, msg)
 	}
-	vmConfig := k.VMConfig(ctx, msg, evmConfig, tracer)
-	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmConfig.ChainConfig, vmConfig)
+	theEvm := vm.NewEVM(blockCtx, core.NewEVMTxContext(msg), stateDB, evmConfig.ChainConfig, NewVMConfig(ctx, msg, evmConfig, tracer))
 	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
 	return theEvm
 }
@@ -248,14 +244,14 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 //
 // For internal calls like funtokens, user does not specify gas limit explicitly.
 // In this case we don't apply any caps for refund and refund 100%
-func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
+func (evmKeeper *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	msg core.Message,
 	tracer vm.EVMLogger,
 	commit bool,
 	evmConfig *statedb.EVMConfig,
 	txConfig statedb.TxConfig,
 	fullRefundLeftoverGas bool,
-) (resp *evm.MsgEthereumTxResponse, evmObj *vm.EVM, err error) {
+) (resp *evm.MsgEthereumTxResponse, err error) {
 	var (
 		// return bytes from evm execution
 		ret []byte
@@ -267,19 +263,19 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	var (
 		stateDB *statedb.StateDB
 		// save a reference to return to the previous stateDB
-		oldStateDB *statedb.StateDB = k.Bank.StateDB
+		oldStateDB *statedb.StateDB = evmKeeper.Bank.StateDB
 	)
 
 	defer func() {
 		if commit && err == nil && resp != nil {
-			k.Bank.StateDB = stateDB
+			evmKeeper.Bank.StateDB = stateDB
 		} else {
-			k.Bank.StateDB = oldStateDB
+			evmKeeper.Bank.StateDB = oldStateDB
 		}
 	}()
 
-	stateDB = k.NewStateDB(ctx, txConfig)
-	evmObj = k.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
+	stateDB = evmKeeper.NewStateDB(ctx, txConfig)
+	evmObj := evmKeeper.NewEVM(ctx, msg, evmConfig, tracer, stateDB)
 
 	leftoverGas := msg.Gas()
 
@@ -301,7 +297,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	)
 	if err != nil {
 		// should have already been checked on Ante Handler
-		return nil, evmObj, errors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
+		return nil, errors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
 	}
 
 	// Check if the provided gas in the message is enough to cover the intrinsic
@@ -312,7 +308,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// don't go through Ante Handler.
 	if leftoverGas < intrinsicGas {
 		// eth_estimateGas will check for this exact error
-		return nil, evmObj, errors.Wrapf(
+		return nil, errors.Wrapf(
 			core.ErrIntrinsicGas,
 			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
 			leftoverGas, intrinsicGas,
@@ -330,9 +326,9 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		msg.AccessList(),
 	)
 
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
+	msgWei, err := TruncateWei(msg.Value())
 	if err != nil {
-		return nil, evmObj, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
+		return nil, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
 	}
 
 	if contractCreation {
@@ -366,12 +362,12 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := stateDB.Commit(); err != nil {
-			return nil, evmObj, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+			return nil, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
 	}
 	// Rare case of uint64 gas overflow
 	if msg.Gas() < leftoverGas {
-		return nil, evmObj, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
+		return nil, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
 	}
 
 	// TODO: UD-DEBUG: Clarify text below.
@@ -396,7 +392,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	leftoverGas += refund
 	temporaryGasUsed -= refund
 	if msg.Gas() < leftoverGas {
-		return nil, evmObj, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
+		return nil, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
 	}
 
 	// Min gas used is a % of gasLimit
@@ -413,10 +409,10 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		Ret:     ret,
 		Logs:    evm.NewLogsFromEth(stateDB.Logs()),
 		Hash:    txConfig.TxHash.Hex(),
-	}, evmObj, nil
+	}, nil
 }
 
-func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
+func TruncateWei(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return
 	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
 		return weiInt, nil
