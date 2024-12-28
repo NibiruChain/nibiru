@@ -562,8 +562,15 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		coin.Amount.BigInt(),
 	)
 	if err != nil {
+		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		return nil, err
 	}
+	blockGasUsed, errBlockGasUsed := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
+	if errBlockGasUsed != nil {
+		return nil, errors.Wrap(errBlockGasUsed, "error adding transient gas used")
+	}
+	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
+
 	if evmResp.Failed() {
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
