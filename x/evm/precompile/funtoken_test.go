@@ -428,3 +428,132 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	)
 	s.Require().ErrorContains(err, "execution reverted")
 }
+
+func (s *FuntokenSuite) TestSendToEvm() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("1) Create a new FunToken from coin 'unibi'")
+	bankDenom := "unibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	erc20Addr := funtoken.Erc20Addr.Address
+
+	s.T().Log("2) Fund the sender with some unibi on the bank side")
+	err := testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("Check the user starts with 0 ERC20 tokens")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, big.NewInt(0))
+
+	s.T().Log("3) Call the new method: sendToEvm(string bankDenom, uint256 amount, string to)")
+	callArgs := []any{
+		bankDenom,
+		big.NewInt(1000),          // amount
+		deps.Sender.EthAddr.Hex(), // 'to' can be bech32 or hex
+	}
+
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(
+		"sendToEvm",
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	deps.ResetGasMeter()
+	_, ethTxResp, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		input,
+		deps.Sender,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(ethTxResp.VmError, "sendToEvm VMError")
+
+	s.T().Log("4) The response returns the actual minted/unescrowed amount")
+	var actualMinted *big.Int
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&actualMinted, "sendToEvm", ethTxResp.Ret,
+	)
+	s.Require().NoError(err)
+	s.Require().EqualValues(1000, actualMinted.Int64(), "expect 1000 minted to EVM")
+
+	s.T().Log("Check the user lost 1000 unibi in bank")
+	wantBank := big.NewInt(234) // 1234 - 1000 => 234
+	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, bankDenom).Amount.BigInt()
+	s.EqualValues(wantBank, bankBal, "did user lose 1000 unibi from bank?")
+
+	s.T().Log("Check the user gained 1000 in ERC20 representation")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, big.NewInt(1000))
+}
+
+func (s *FuntokenSuite) TestBankMsgSend() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("1) Create a new FunToken from coin 'unibi'")
+	bankDenom := "unibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	s.Require().NotEmpty(funtoken.BankDenom)
+
+	s.T().Log("2) Fund the sender with 500 unibi in the bank module")
+	startAmount := int64(500)
+	err := testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(startAmount))),
+	)
+	s.Require().NoError(err)
+
+	senderBalBefore := deps.App.BankKeeper.GetBalance(
+		deps.Ctx, deps.Sender.NibiruAddr, bankDenom,
+	).Amount.Int64()
+
+	s.T().Log("3) Call bankMsgSend(to, bankDenom, amount) from the EVM")
+	toAddr := testutil.AccAddress()
+	callArgs := []any{
+		toAddr.String(), // 'to', can be hex or bech32
+		bankDenom,       // 'bankDenom'
+		big.NewInt(200), // amount
+	}
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(
+		"bankMsgSend",
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	deps.ResetGasMeter()
+	_, ethTxResp, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		input,
+		deps.Sender,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(ethTxResp.VmError)
+
+	s.T().Log("4) The return value for bankMsgSend is a single bool (true if success)")
+	var success bool
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&success,
+		"bankMsgSend",
+		ethTxResp.Ret,
+	)
+	s.Require().NoError(err)
+	s.True(success, "bankMsgSend should return bool=true if no error")
+
+	s.T().Log("Confirm the user lost 200 unibi")
+	wantSenderBal := senderBalBefore - 200
+	gotSenderBal := deps.App.BankKeeper.GetBalance(
+		deps.Ctx, deps.Sender.NibiruAddr, bankDenom,
+	).Amount.Int64()
+	s.EqualValues(wantSenderBal, gotSenderBal, "sender unibi after bankMsgSend")
+
+	s.T().Log("Confirm the 'toAddr' gained 200 unibi")
+	gotRecipientBal := deps.App.BankKeeper.GetBalance(
+		deps.Ctx, toAddr, bankDenom,
+	).Amount.Int64()
+	s.EqualValues(200, gotRecipientBal, "recipient unibi after bankMsgSend")
+}
