@@ -7,7 +7,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// abibind "github.com/ethereum/go-ethereum/accounts/abi/bind"
+	abibind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -119,28 +119,51 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 
 	s.T().Log("Define the ABI and smart contract that will unpack the event data")
 
-	// boundContract := abibind.NewBoundContract(
-	// 	emittingAddr, *abi, nil, nil, nil,
-	// )
-	// err := boundContract.UnpackLogIntoMap()
+	boundContract := abibind.NewBoundContract(
+		emittingAddr,
+		*abi,
+		// verbose but descriptive to write out the interface implementations that are unused
+		(abibind.ContractCaller)(nil),
+		(abibind.ContractTransactor)(nil),
+		(abibind.ContractFilterer)(nil),
+	)
 
 	debugBz, _ := json.MarshalIndent(abciEvents, "", "  ")
 	dbLogs := db.Logs()
 	for idx, want := range wants {
 		gotEventLog := *dbLogs[dbStartIdx+idx]
 
+		s.T().Log("Check event log fields")
 		// logDataHex: Geth stores the bytes as a hex string (hexutil.Bytes)
 		logDataHex := hexutil.Bytes(gotEventLog.Data).String()
 		logDataHexDecoded, err := hexutil.Decode(logDataHex)
 		s.NoErrorf(err, "logDataHex: %s")
-		s.Equal(string(want.EventLog.Data), string(logDataHexDecoded))
+		s.Contains(string(logDataHexDecoded), string(want.EventLog.Data))
+		{
+			w, g := want.EventLog.Topics, gotEventLog.Topics
+			s.Require().EqualValuesf(w, g, "events:\n%#s", debugBz)
+		}
+		{
+			w, g := want.EventLog.Address.Hex(), gotEventLog.Address.Hex()
+			s.Require().EqualValuesf(w, g, "events:\n%#s", debugBz)
+		}
+		{
+			w, g := string(want.EventLog.Data), string(gotEventLog.Data)
+			s.Require().Containsf(g, w, "events:\n%#s", debugBz)
+		}
 
-		// TODO: UD-DEBUG: abibind import to test decoding
+		s.T().Log("Use geth/.../abi/bind Go bindings to test ABI event decoding")
+		eventMap := make(map[string]any)
+		err = boundContract.UnpackLogIntoMap(eventMap, abiEventName, gotEventLog)
+		s.Require().NoError(err)
 
-		s.EqualValuesf(
-			want.EventLog,
-			gotEventLog,
-			"events:\n%#s", debugBz,
-		)
+		abciEventValUntyped, isSome := eventMap["abciEvent"]
+		s.Truef(isSome, "%+s", eventMap)
+		abciEventVal, ok := abciEventValUntyped.(string)
+		s.True(ok, "%+s\nttype of abciEventVal: %T", eventMap, abciEventValUntyped)
+		s.Equal(string(want.EventLog.Data), string(abciEventVal), "%+s", eventMap)
+
+		_, isSome = eventMap["eventType"]
+		s.Truef(isSome, "%+s", eventMap)
 	}
 }

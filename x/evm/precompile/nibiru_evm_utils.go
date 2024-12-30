@@ -15,6 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
+// EvmEventAbciEvent is the string key used to retrieve the "AbciEvent" Ethereum
+// ABI event for a precompiled contract that implements the "INibiruEvm"
+// interface from "Nibiru/x/evm/embeds/contracts/NibiruEvmUtils.sol".
 const EvmEventAbciEvent = "AbciEvent"
 
 // EmitEventAbciEvents adds a sequence of ABCI events to the EVM state DB so that
