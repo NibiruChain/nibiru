@@ -60,6 +60,8 @@ func (p precompileFunToken) Run(
 	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
 
+	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
+
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
@@ -78,6 +80,17 @@ func (p precompileFunToken) Run(
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	// Emit extra events for the EVM if this is a transaction
+	// https://github.com/NibiruChain/nibiru/issues/2121
+	if isMutation[PrecompileMethod(startResult.Method.Name)] {
+		EmitEventAbciEvents(
+			startResult.CacheCtx,
+			startResult.StateDB,
+			startResult.CacheCtx.EventManager().Events()[abciEventsStartIdx:],
+			p.Address(),
+		)
 	}
 
 	// Gas consumed by a local gas meter

@@ -121,7 +121,9 @@ func (s *StateDB) GetCacheContext() *sdk.Context {
 	return &s.cacheCtx
 }
 
-// AddLog adds a log, called by evm.
+// AddLog adds to the EVM's event log for the current transaction.
+// [AddLog] uses the [TxConfig] to populate the tx hash, block hash, tx index,
+// and event log index.
 func (s *StateDB) AddLog(log *gethcore.Log) {
 	s.Journal.append(addLogChange{})
 
@@ -132,7 +134,7 @@ func (s *StateDB) AddLog(log *gethcore.Log) {
 	s.logs = append(s.logs, log)
 }
 
-// Logs returns the logs of current transaction.
+// Logs returns the event logs of current transaction.
 func (s *StateDB) Logs() []*gethcore.Log {
 	return s.logs
 }
