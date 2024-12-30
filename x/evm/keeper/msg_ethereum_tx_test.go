@@ -18,6 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -38,7 +40,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					deps.App.BankKeeper,
 					deps.Ctx,
 					authtypes.FeeCollectorName,
-					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
+					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1_000_000))),
 				)
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
@@ -231,5 +233,42 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 				Amount:    strconv.FormatInt(fundedAmount, 10),
 			},
 		)
+	}
+}
+
+func (s *Suite) TestEthereumTx_ABCI() {
+	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+	))
+
+	blockHeader := deps.Ctx.BlockHeader()
+	// blockHeader := tmproto.Header{Height: deps.Ctx.BlockHeight()}
+	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+	to := evmtest.NewEthPrivAcc()
+	evmTxMsg, err := evmtest.TxTransferWei{
+		Deps:      &deps,
+		To:        to.EthAddr,
+		AmountWei: evm.NativeToWei(big.NewInt(420)),
+	}.Build()
+	s.NoError(err)
+
+	txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
+	s.Require().NoError(err)
+
+	txBz, err := deps.EncCfg.TxConfig.TxEncoder()(blockTx)
+	s.Require().NoError(err)
+	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
+	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
+	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx.BlockHeight()})
+
+	{
+		r := deliverTxResp
+		s.EqualValuesf(21000, r.GasUsed, "%d", r.GasUsed)
+		s.EqualValuesf(21000, r.GasWanted, "%d", r.GasWanted)
 	}
 }

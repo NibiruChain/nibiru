@@ -43,7 +43,8 @@ func NewLegacyTx(tx *gethcore.Transaction) (*LegacyTx, error) {
 	return txData, nil
 }
 
-// TxType returns the tx type
+// TxType returns a byte (uint8) identifying the tx as a [LegacyTx] (0),
+// [AccessListTx] (1), or [DynamicFeeTx] (2).
 func (tx *LegacyTx) TxType() uint8 {
 	return gethcore.LegacyTxType
 }
@@ -184,12 +185,13 @@ func (tx LegacyTx) Validate() error {
 	return nil
 }
 
-// Fee returns gasprice * gaslimit.
+// Fee := gasPrice (wei per gas)  * gasLimit (gas). Thus, fee is in units of
+// wei.
 func (tx LegacyTx) Fee() *big.Int {
 	return priceTimesGas(tx.GetGasPrice(), tx.GetGas())
 }
 
-// Cost returns amount + gasprice * gaslimit.
+// Cost returns amount + gasPrice * gasLimit.
 func (tx LegacyTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValueWei())
 }

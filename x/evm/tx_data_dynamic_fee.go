@@ -75,7 +75,8 @@ func NewDynamicFeeTx(tx *gethcore.Transaction) (*DynamicFeeTx, error) {
 	return txData, nil
 }
 
-// TxType returns the tx type
+// TxType returns a byte (uint8) identifying the tx as a [LegacyTx] (0),
+// [AccessListTx] (1), or [DynamicFeeTx] (2).
 func (tx *DynamicFeeTx) TxType() uint8 {
 	return gethcore.DynamicFeeTxType
 }
@@ -285,12 +286,12 @@ func (tx DynamicFeeTx) Validate() error {
 	return nil
 }
 
-// Fee returns gasprice * gaslimit.
+// Fee returns gasPrice * gasLimit.
 func (tx DynamicFeeTx) Fee() *big.Int {
 	return priceTimesGas(tx.GetGasFeeCapWei(), tx.GasLimit)
 }
 
-// Cost returns amount + gasprice * gaslimit.
+// Cost returns amount + gasPrice * gasLimit.
 func (tx DynamicFeeTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValueWei())
 }
@@ -305,12 +306,12 @@ func (tx *DynamicFeeTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int
 	return BigIntMax(baseFeeWei, rawEffectiveGasPrice)
 }
 
-// EffectiveFeeWei returns effective_gasprice * gaslimit.
+// EffectiveFeeWei returns effective_gasPrice * gasLimit.
 func (tx DynamicFeeTx) EffectiveFeeWei(baseFeeWei *big.Int) *big.Int {
 	return priceTimesGas(tx.EffectiveGasPriceWeiPerGas(baseFeeWei), tx.GasLimit)
 }
 
-// EffectiveCostWei returns amount + effective_gasprice * gaslimit.
+// EffectiveCostWei returns amount + effective_gasPrice * gasLimit.
 func (tx DynamicFeeTx) EffectiveCostWei(baseFeeWei *big.Int) *big.Int {
 	return cost(tx.EffectiveFeeWei(baseFeeWei), tx.GetValueWei())
 }

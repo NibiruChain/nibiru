@@ -101,7 +101,8 @@ func newAccessListTx(tx *gethcore.Transaction) (*AccessListTx, error) {
 	return txData, nil
 }
 
-// TxType returns the tx type
+// TxType returns a byte (uint8) identifying the tx as a [LegacyTx] (0),
+// [AccessListTx] (1), or [DynamicFeeTx] (2).
 func (tx *AccessListTx) TxType() uint8 {
 	return gethcore.AccessListTxType
 }
@@ -280,12 +281,12 @@ func (tx AccessListTx) Validate() error {
 	return nil
 }
 
-// Fee returns gasprice * gaslimit.
+// Fee returns gasPrice * gasLimit.
 func (tx AccessListTx) Fee() *big.Int {
 	return priceTimesGas(tx.GetGasPrice(), tx.GetGas())
 }
 
-// Cost returns amount + gasprice * gaslimit.
+// Cost returns amount + gasPrice * gasLimit.
 func (tx AccessListTx) Cost() *big.Int {
 	return cost(tx.Fee(), tx.GetValueWei())
 }
