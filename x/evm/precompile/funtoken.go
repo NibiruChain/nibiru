@@ -576,7 +576,7 @@ func (p precompileFunToken) sendToEvm(
 	// 2) mint (or unescrow) the ERC20
 	erc20Addr := funtoken.Erc20Addr.Address
 	actualAmt, err := p.mintOrUnescrowERC20(
-		ctx, caller, erc20Addr, toEthAddr, coinToSend.Amount.BigInt(), funtoken,
+		ctx, erc20Addr, toEthAddr, coinToSend.Amount.BigInt(), funtoken,
 	)
 	if err != nil {
 		return nil, err
@@ -588,7 +588,6 @@ func (p precompileFunToken) sendToEvm(
 
 func (p precompileFunToken) mintOrUnescrowERC20(
 	ctx sdk.Context,
-	caller gethcommon.Address,
 	erc20Addr gethcommon.Address,
 	to gethcommon.Address,
 	amount *big.Int,
@@ -597,7 +596,7 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 	// If funtoken is "IsMadeFromCoin", we own the ERC20 contract, so we can mint.
 	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
 	if funtoken.IsMadeFromCoin {
-		mintResp, err := p.evmKeeper.ERC20().Mint(
+		_, err := p.evmKeeper.ERC20().Mint(
 			erc20Addr,
 			evm.EVM_MODULE_ADDRESS,
 			to,
@@ -608,20 +607,18 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 			return nil, fmt.Errorf("mint erc20 error: %w", err)
 		}
 		// For an owner-minted contract, the entire `amount` is minted.
-		_ = mintResp // do something if needed, or remove
 		return amount, nil
 	} else {
 		balBefore, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
 		if err != nil {
 			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
 		}
-		_, transferResp, err := p.evmKeeper.ERC20().Transfer(
+		_, _, err = p.evmKeeper.ERC20().Transfer(
 			erc20Addr, evm.EVM_MODULE_ADDRESS, to, amount, ctx,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erc20.transfer from module to user: %w", err)
 		}
-		_ = transferResp // do something if needed, or remove
 
 		balAfter, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
 		if err != nil {
@@ -676,10 +673,6 @@ func parseToAddr(toStr string) (gethcommon.Address, error) {
 	}
 	return eth.NibiruAddrToEthAddr(nibAddr), nil
 }
-
-// -------------------
-// 2) bankMsgSend
-// -------------------
 
 func (p precompileFunToken) bankMsgSend(
 	startResult OnRunStartResult,
