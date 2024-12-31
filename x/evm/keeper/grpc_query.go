@@ -65,12 +65,13 @@ func (k Keeper) EthAccount(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	acct := k.GetAccountOrEmpty(ctx, addrEth)
+	balNative := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 
 	return &evm.QueryEthAccountResponse{
 		EthAddress:    addrEth.Hex(),
 		Bech32Address: addrBech32.String(),
-		Balance:       acct.BalanceNative.String(),
-		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
+		Balance:       balNative.String(),
+		BalanceWei:    evm.NativeToWei(balNative).String(),
 		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:         acct.Nonce,
 	}, nil
