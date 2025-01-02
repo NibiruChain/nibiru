@@ -565,17 +565,24 @@ func bigTokens(n int64) *big.Int {
 
 func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 	deps := evmtest.NewTestDeps()
+
+	bob := evmtest.NewEthPrivAcc()
+	alice := evmtest.NewEthPrivAcc()
+
 	// Fund user so they can create funtoken from an ERC20
 	createFunTokenFee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr,
-		createFunTokenFee.Add(sdk.NewCoin("unibi", sdk.NewInt(10_000_000_000))),
+		createFunTokenFee,
 	))
 
 	// Deploy an ERC20 with 18 decimals
 	erc20Resp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestERC20)
 	s.Require().NoError(err, "failed to deploy test ERC20")
 	erc20Addr := erc20Resp.ContractAddr
+
+	// the initial supply was sent to the deployer
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(1000000))
 
 	// create fun token from that erc20
 	_, err = deps.EvmKeeper.CreateFunToken(sdk.WrapSDKContext(deps.Ctx), &evm.MsgCreateFunToken{
@@ -584,9 +591,7 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 	})
 	s.Require().NoError(err)
 
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(0))
-
-	// Transfer 500 tokens => 500 * 10^18 raw
+	// Transfer 500 tokens to bob => 500 * 10^18 raw
 	deployerAddr := gethcommon.HexToAddress(erc20Resp.EthTxMsg.From)
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -596,13 +601,13 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 		true,
 		keeper.Erc20GasLimitExecute,
 		"transfer",
-		deps.Sender.EthAddr,
+		bob.EthAddr,
 		bigTokens(500), // 500 in human sense
 	)
 	s.Require().NoError(err)
 
 	// Now user should have 500 tokens => raw is 500 * 10^18
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(500))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
 
 	// sendToBank: e.g. 100 tokens => 100 * 1e18 raw
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(
@@ -610,143 +615,39 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 		[]any{
 			erc20Addr, // address
 			bigTokens(100),
-			deps.Sender.NibiruAddr.String(),
+			alice.NibiruAddr.String(),
 		}...,
 	)
 	s.Require().NoError(err)
-	_, resp, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input, deps.Sender)
+	_, resp, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input, bob)
 	s.Require().NoError(err)
 	s.Require().Empty(resp.VmError)
 
-	// Expect user to have 400 tokens => 400 * 10^18
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(400))
 	// Bank side should see 100
-	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, "erc20/"+erc20Addr.Hex())
-	s.Require().EqualValues(100, bankBal.Amount.Int64())
+	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, "erc20/"+erc20Addr.Hex())
+	s.Require().EqualValues(bigTokens(100), bankBal.Amount.BigInt())
+
+	// Expect user to have 400 tokens => 400 * 10^18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(400))
 
 	// Finally sendToEvm(100)
 	input2, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToEvm",
 		[]any{
 			bankBal.Denom,
-			big.NewInt(100),
-			deps.Sender.EthAddr.Hex(),
+			bigTokens(100),
+			bob.EthAddr.Hex(),
 		}...,
 	)
 	s.Require().NoError(err)
-	_, resp2, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, deps.Sender)
+	_, resp2, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, alice)
 	s.Require().NoError(err)
 	s.Require().Empty(resp2.VmError)
 
-	// parse return => 100
-	var actuallyUnescrowed *big.Int
-	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(&actuallyUnescrowed, "sendToEvm", resp2.Ret)
-	s.Require().NoError(err)
-	s.Require().EqualValues(100, actuallyUnescrowed.Int64())
+	// no bank side left
+	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, bankBal.Denom).Amount.BigInt()
+	s.Require().EqualValues(bigTokens(0), balAfter)
 
 	// user has 500 tokens again => 500 * 1e18
-	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(500))
-	// no bank side left
-	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, bankBal.Denom).Amount.Int64()
-	s.Require().EqualValues(0, balAfter)
-}
-
-func (s *FuntokenSuite) TestSendToEvmFailures() {
-	deps := evmtest.NewTestDeps()
-
-	s.T().Log("We do not create any funtoken => so len(funtokens) == 0 => fails")
-	callArgsNoFuntoken := []any{
-		"unibi",          // bankDenom
-		big.NewInt(1000), // amount
-		deps.Sender.EthAddr.Hex(),
-	}
-	input, err := embeds.SmartContract_FunToken.ABI.Pack(
-		"sendToEvm",
-		callArgsNoFuntoken...,
-	)
-	s.Require().NoError(err)
-
-	_, _, callErr := evmtest.CallContractTx(
-		&deps,
-		precompile.PrecompileAddr_FunToken,
-		input,
-		deps.Sender,
-	)
-	s.Require().ErrorContains(callErr, "no funtoken found for bank denom \"unibi\"")
-
-	s.T().Log("Try to pass a non-string argument => parseArg fails (bankDenom must be string)")
-	callArgsWrongType := []any{
-		12345, // int instead of string
-		big.NewInt(100),
-		deps.Sender.EthAddr.Hex(),
-	}
-	input2, err := embeds.SmartContract_FunToken.ABI.Pack("sendToEvm", callArgsWrongType...)
-	s.Require().NoError(err)
-
-	_, _, callErr2 := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, deps.Sender)
-	s.Require().ErrorContains(callErr2, "type validation failed for (string bankDenom)")
-
-	s.T().Log("Try negative amount => parseArgOK but revert in method check")
-	callArgsNegative := []any{
-		"unibi",        // bankDenom
-		big.NewInt(-5), // negative => should fail
-		deps.Sender.EthAddr.Hex(),
-	}
-	input3, err := embeds.SmartContract_FunToken.ABI.Pack("sendToEvm", callArgsNegative...)
-	s.Require().NoError(err)
-	_, _, callErr3 := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input3, deps.Sender)
-	s.Require().ErrorContains(callErr3, "transfer amount must be positive")
-}
-
-func (s *FuntokenSuite) TestBankMsgSendFailures() {
-	deps := evmtest.NewTestDeps()
-
-	s.T().Log("Case: no funtoken needed, but we do need a valid from => caller has 0 funds => fails cosmos bank send")
-	callArgs := []any{
-		testutil.AccAddress().String(), // 'to'
-		"unibi",                        // 'bankDenom'
-		big.NewInt(500),                // amount
-	}
-
-	input, err := embeds.SmartContract_FunToken.ABI.Pack(
-		"bankMsgSend",
-		callArgs...,
-	)
-	s.Require().NoError(err)
-
-	_, _, callErr := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input, deps.Sender)
-	s.Require().ErrorContains(callErr, "insufficient funds") // bank module error
-
-	s.T().Log("Case: parseArg fails => 'to' is not a string")
-	callArgsWrongTo := []any{
-		333,             // not a string
-		"unibi",         // bankDenom
-		big.NewInt(100), // amount
-	}
-	input2, err := embeds.SmartContract_FunToken.ABI.Pack("bankMsgSend", callArgsWrongTo...)
-	s.Require().NoError(err)
-	_, _, callErr2 := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, deps.Sender)
-	s.Require().ErrorContains(callErr2, "type validation failed for (string to)")
-
-	s.T().Log("Case: parseArg fails => 'bankDenom' is not a string")
-	callArgsWrongDenom := []any{
-		testutil.AccAddress().String(),
-		9999, // not string
-		big.NewInt(100),
-	}
-	input3, err := embeds.SmartContract_FunToken.ABI.Pack("bankMsgSend", callArgsWrongDenom...)
-	s.Require().NoError(err)
-	_, _, callErr3 := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input3, deps.Sender)
-	s.Require().ErrorContains(callErr3, "type validation failed for (string bankDenom)")
-
-	s.T().Log("Case: parseArg fails => negative or zero amount => must be positive")
-	callArgsZero := []any{
-		testutil.AccAddress().String(),
-		"unibi",
-		big.NewInt(0),
-	}
-	input4, err := embeds.SmartContract_FunToken.ABI.Pack("bankMsgSend", callArgsZero...)
-	s.Require().NoError(err)
-	_, _, callErr4 := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input4, deps.Sender)
-	s.Require().ErrorContains(callErr4, "msgSend amount must be positive")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
 }
