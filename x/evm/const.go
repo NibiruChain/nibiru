@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
@@ -84,9 +85,11 @@ const (
 )
 
 var EVM_MODULE_ADDRESS gethcommon.Address
+var EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
 
 func init() {
-	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(authtypes.NewModuleAddress(ModuleName))
+	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
+	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
 }
 
 // NativeToWei converts a "unibi" amount to "wei" units for the EVM.
