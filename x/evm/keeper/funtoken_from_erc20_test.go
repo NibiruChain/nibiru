@@ -385,6 +385,73 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	s.Require().ErrorContains(err, "gas required exceeds allowance")
 }
 
+// TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
+// with a malicious recursive balanceOf() and transfer() functions.
+func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy InfiniteRecursionERC20")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestInfiniteRecursionERC20,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err)
+
+	deps.ResetGasMeter()
+
+	s.T().Log("happy: call attackBalance()")
+	res, err := deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_TestInfiniteRecursionERC20.ABI,
+		deps.Sender.EthAddr,
+		&erc20Addr.Address,
+		false,
+		10_000_000,
+		"attackBalance",
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+	s.Require().Empty(res.VmError)
+
+	s.T().Log("sad: call attackBalance()")
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_TestInfiniteRecursionERC20.ABI,
+		deps.Sender.EthAddr,
+		&erc20Addr.Address,
+		true,
+		10_000_000,
+		"attackTransfer",
+	)
+	s.Require().ErrorContains(err, "execution reverted")
+}
+
 type FunTokenFromErc20Suite struct {
 	suite.Suite
 }

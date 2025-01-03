@@ -83,7 +83,11 @@ func (b *Backend) GetProof(
 
 	for i, key := range storageKeys {
 		hexKey := gethcommon.HexToHash(key)
-		valueBz, proof, err := b.queryClient.GetProof(clientCtx, evm.StoreKey, evm.StateKey(address, hexKey.Bytes()))
+		valueBz, proof, err := b.queryClient.GetProof(
+			clientCtx,
+			evm.StoreKey,
+			evm.StateKey(address, hexKey.Bytes()),
+		)
 		if err != nil {
 			return nil, err
 		}

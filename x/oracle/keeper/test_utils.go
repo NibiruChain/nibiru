@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -222,9 +222,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
-	distrParams.CommunityTax = math.LegacyNewDecWithPrec(2, 2)
-	distrParams.BaseProposerReward = math.LegacyNewDecWithPrec(1, 2)
-	distrParams.BonusProposerReward = math.LegacyNewDecWithPrec(4, 2)
+	distrParams.CommunityTax = sdkmath.LegacyNewDecWithPrec(2, 2)
 	distrKeeper.SetParams(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
 
@@ -283,12 +281,12 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 // NewTestMsgCreateValidator test msg creator
 func NewTestMsgCreateValidator(
-	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int,
+	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdkmath.Int,
 ) *stakingtypes.MsgCreateValidator {
-	commission := stakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
+	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
-		stakingtypes.Description{}, commission, math.OneInt(),
+		stakingtypes.Description{}, commission, sdkmath.OneInt(),
 	)
 
 	return msg
@@ -312,7 +310,7 @@ func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePer
 
 var (
 	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	testExchangeRate = math.LegacyNewDec(1700)
+	testExchangeRate = sdkmath.LegacyNewDec(1700)
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {

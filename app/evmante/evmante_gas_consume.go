@@ -99,7 +99,6 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 		fees, err := keeper.VerifyFee(
 			txData,
-			evm.EVMBankDenom,
 			baseFeeMicronibiPerGas,
 			ctx.IsCheckTx(),
 		)

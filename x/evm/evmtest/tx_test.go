@@ -77,8 +77,13 @@ func (s *Suite) TestTransferWei() {
 
 	randomAcc := evmtest.NewEthPrivAcc()
 	to := randomAcc.EthAddr
-	err := evmtest.TransferWei(&deps, to, evm.NativeToWei(big.NewInt(420)))
-	s.Require().NoError(err)
+	evmResp, err := evmtest.TxTransferWei{
+		Deps:      &deps,
+		To:        to,
+		AmountWei: evm.NativeToWei(big.NewInt(420)),
+	}.Run()
+	s.Require().NoErrorf(err, "%#v", evmResp)
+	s.False(evmResp.Failed(), "%#v", evmResp)
 
 	evmtest.AssertBankBalanceEqual(
 		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000),

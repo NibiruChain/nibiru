@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -181,6 +182,19 @@ func FundModuleAccount(
 	}
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
+}
+
+// FundFeeCollector funds the module account that collects gas fees with some
+// amount of "unibi", the gas token.
+func FundFeeCollector(
+	bk bankkeeper.Keeper, ctx sdk.Context, amount math.Int,
+) error {
+	return FundModuleAccount(
+		bk,
+		ctx,
+		auth.FeeCollectorName,
+		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, amount)),
+	)
 }
 
 // EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than

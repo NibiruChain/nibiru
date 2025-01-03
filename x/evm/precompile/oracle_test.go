@@ -1,6 +1,7 @@
 package precompile_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -56,14 +58,12 @@ func (s *OracleSuite) TestOracle_FailToPackABI() {
 
 func (s *OracleSuite) TestOracle_HappyPath() {
 	deps := evmtest.NewTestDeps()
-
-	s.T().Log("Query exchange rate")
-	{
-		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
-		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
-
-		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
+	runQuery := func(ctx sdk.Context) (
+		resp *evm.MsgEthereumTxResponse,
+		err error,
+	) {
+		return deps.EvmKeeper.CallContract(
+			ctx,
 			embeds.SmartContract_Oracle.ABI,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
@@ -72,16 +72,47 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			"queryExchangeRate",
 			"unibi:uusd",
 		)
+	}
+
+	s.T().Log("Query exchange rate")
+	{
+		// 69 seconds + 420 nanoseconds === 69000 milliseconds for the
+		// return value from the UnixMilli() function
+		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
+		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
+
+		resp, err := runQuery(deps.Ctx)
 		s.NoError(err)
 
 		// Check the response
-		out, err := embeds.SmartContract_Oracle.ABI.Unpack(string(precompile.OracleMethod_queryExchangeRate), resp.Ret)
+		out, err := embeds.SmartContract_Oracle.ABI.Unpack(
+			string(precompile.OracleMethod_queryExchangeRate), resp.Ret,
+		)
+		s.NoError(err)
+		s.Equal(out[0].(*big.Int), big.NewInt(67_000_000_000_000_000))
+		s.Equal(fmt.Sprintf("%d", out[1].(uint64)), "69000")
+		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
+	}
+
+	s.T().Log("Query from a later time")
+	{
+		secondsLater := deps.Ctx.BlockTime().Add(100 * time.Second)
+		resp, err := runQuery(deps.Ctx.
+			WithBlockTime(secondsLater).
+			WithBlockHeight(deps.Ctx.BlockHeight() + 50),
+		)
 		s.NoError(err)
 
 		// Check the response
-		s.Equal(out[0].(*big.Int), big.NewInt(67000000000000000))
-		s.Equal(out[1].(uint64), uint64(69000))
-		s.Equal(out[2].(uint64), uint64(69))
+		out, err := embeds.SmartContract_Oracle.ABI.Unpack(
+			string(precompile.OracleMethod_queryExchangeRate), resp.Ret,
+		)
+		s.NoError(err)
+		// These terms should still be equal because the latest exchange rate
+		// has not changed.
+		s.Equal(out[0].(*big.Int), big.NewInt(67_000_000_000_000_000))
+		s.Equal(fmt.Sprintf("%d", out[1].(uint64)), "69000")
+		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
 	}
 }
 

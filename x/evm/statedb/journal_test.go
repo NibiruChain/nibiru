@@ -107,7 +107,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		stateDB := evmObj.StateDB.(*statedb.StateDB)
 		if stateDB.DebugDirtiesCount() != 2 {
 			debugDirtiesCountMismatch(stateDB, s.T())
-			s.FailNow("expected 2 dirty journal changes")
+			s.FailNowf("expected 2 dirty journal changes", "%#v", stateDB.Journal)
 		}
 
 		// The contract calling itself is invalid in this context.

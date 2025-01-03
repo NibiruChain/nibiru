@@ -140,13 +140,25 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	return nil
 }
 
-// VerifyFee is used to return the fee for the given transaction data in
-// sdk.Coins. It checks that the gas limit is not reached, the gas limit is
-// higher than the intrinsic gas and that the base fee is lower than the gas fee
-// cap.
+// VerifyFee is used to return the fee, or token payment, for the given
+// transaction data in [sdk.Coin]s. It checks that the the gas limit and uses the
+// "effective fee" from the [evm.TxData].
+//
+//   - For [evm.DynamicFeeTx], the effective gas price is the minimum of
+//     (baseFee + tipCap) and the gas fee cap (feeCap).
+//   - For [evm.LegacyTx] and [evm.AccessListTx], the effective gas price is the
+//     max of the gas price and baseFee.
+//
+// Transactions where the baseFee exceeds the feeCap are priced out
+// under EIP-1559 and will not pass validation.
+//
+// Args:
+//   - txData: Tx data related to gas, effectie gas, nonce, and chain ID
+//     implemented by every Ethereum tx type.
+//   - baseFeeMicronibi:EIP1559 base fee in units of micronibi ("unibi").
+//   - isCheckTx: Comes from `[sdk.Context].isCheckTx()`
 func VerifyFee(
 	txData evm.TxData,
-	denom string,
 	baseFeeMicronibi *big.Int,
 	isCheckTx bool,
 ) (sdk.Coins, error) {
@@ -180,22 +192,13 @@ func VerifyFee(
 		baseFeeMicronibi = evm.BASE_FEE_MICRONIBI
 	}
 
-	// gasFeeCapMicronibi := evm.WeiToNative(txData.GetGasFeeCapWei())
-	// if baseFeeMicronibi != nil && gasFeeCapMicronibi.Cmp(baseFeeMicronibi) < 0 {
-	// 	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
-	// 	return nil, errors.Wrapf(errortypes.ErrInsufficientFee,
-	// 		"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) wei per gas",
-	// 		txData.GetGasFeeCapWei(),
-	// 		baseFeeWei,
-	// 	)
-	// }
-
 	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
 	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
+	bankDenom := evm.EVMBankDenom
 	if feeAmtMicronibi.Sign() == 0 {
 		// zero fee, no need to deduct
-		return sdk.Coins{{Denom: denom, Amount: sdkmath.ZeroInt()}}, nil
+		return sdk.Coins{{Denom: bankDenom, Amount: sdkmath.ZeroInt()}}, nil
 	}
 
-	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
+	return sdk.Coins{{Denom: bankDenom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
 }
