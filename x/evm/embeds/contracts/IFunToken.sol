@@ -52,4 +52,37 @@ interface IFunToken is INibiruEvm {
     function whoAmI(
         string calldata who
     ) external returns (NibiruAccount memory whoAddrs);
+
+    /**
+     * @dev sendToEvm transfers the caller's bank coin `denom` to its ERC-20 representation on the EVM side.
+     * The `to` argument must be either an Ethereum hex address (0x...) or a Bech32 address.
+     *
+     * The underlying logic mints (or un-escrows) the ERC-20 tokens to the `to` address if
+     * the funtoken mapping was originally minted from a coin.
+     *
+     * @param bankDenom The bank denom of the coin to send from the caller to the EVM side.
+     * @param amount The number of coins to send.
+     * @param to The Ethereum hex or bech32 address receiving the ERC-20.
+     * @return sentAmount The number of ERC-20 tokens minted or un-escrowed.
+     */
+    function sendToEvm(
+        string calldata bankDenom,
+        uint256 amount,
+        string calldata to
+    ) external returns (uint256 sentAmount);
+
+    /**
+     * @dev bankMsgSend performs a `cosmos.bank.v1beta1.MsgSend` from the caller
+     * into the Cosmos side, akin to running the standard `bank` module's send operation.
+     *
+     * @param to The recipient address (hex or bech32).
+     * @param bankDenom The bank coin denom to send.
+     * @param amount The number of coins to send.
+     * @return success True if the bank send succeeded, false otherwise.
+     */
+    function bankMsgSend(
+        string calldata to,
+        string calldata bankDenom,
+        uint256 amount
+    ) external returns (bool success);
 }
