@@ -4,6 +4,25 @@
   "sourceName": "contracts/Wasm.sol",
   "abi": [
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "string",
+          "name": "eventType",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "abciEvent",
+          "type": "string"
+        }
+      ],
+      "name": "AbciEvent",
+      "type": "event"
+    },
+    {
       "inputs": [
         {
           "internalType": "string",
@@ -28,7 +47,7 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IWasm.BankCoin[]",
+          "internalType": "struct INibiruEvm.BankCoin[]",
           "name": "funds",
           "type": "tuple[]"
         }
@@ -71,7 +90,7 @@
                   "type": "uint256"
                 }
               ],
-              "internalType": "struct IWasm.BankCoin[]",
+              "internalType": "struct INibiruEvm.BankCoin[]",
               "name": "funds",
               "type": "tuple[]"
             }
@@ -127,7 +146,7 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IWasm.BankCoin[]",
+          "internalType": "struct INibiruEvm.BankCoin[]",
           "name": "funds",
           "type": "tuple[]"
         }

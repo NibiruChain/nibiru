@@ -35,7 +35,7 @@ type Keeper struct {
 
 	// Module parameters
 	Params            collections.Item[types.Params]
-	ExchangeRates     collections.Map[asset.Pair, types.DatedPrice]
+	ExchangeRates     collections.Map[asset.Pair, types.ExchangeRateAtBlock]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
@@ -80,7 +80,7 @@ func NewKeeper(
 		sudoKeeper:        sudoKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
-		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.DatedPrice](cdc)),
+		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.ExchangeRateAtBlock](cdc)),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
@@ -168,7 +168,8 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	for i, s := range snapshots {
 		var nextTimestampMs int64
 		if i == len(snapshots)-1 {
-			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			// if we're at the last snapshot, then consider that price as ongoing
+			// until the current blocktime
 			nextTimestampMs = ctx.BlockTime().UnixMilli()
 		} else {
 			nextTimestampMs = snapshots[i+1].TimestampMs
@@ -181,37 +182,26 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimestampMs), nil
 }
 
-func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
-	exchangeRate, err := k.ExchangeRates.Get(ctx, pair)
-	price = exchangeRate.ExchangeRate
-	return
-}
-
-func (k Keeper) GetDatedExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, blockTimeMs int64, BlockHeight uint64, err error) {
-	exchangeRate, err := k.ExchangeRates.Get(ctx, pair)
-	if err != nil {
-		return
-	}
-	time := ctx.WithBlockHeight(int64(exchangeRate.CreatedBlock)).BlockTime()
-
-	return exchangeRate.ExchangeRate, time.UnixMilli(), exchangeRate.CreatedBlock, nil
-}
-
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
-	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, CreatedBlock: uint64(ctx.BlockHeight())})
+	blockTimestampMs := ctx.BlockTime().UnixMilli()
+	k.ExchangeRates.Insert(ctx, pair,
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     price,
+			CreatedBlock:     uint64(ctx.BlockHeight()),
+			BlockTimestampMs: blockTimestampMs,
+		})
 
 	key := collections.Join(pair, ctx.BlockTime())
-	timestampMs := ctx.BlockTime().UnixMilli()
 	k.PriceSnapshots.Insert(ctx, key, types.PriceSnapshot{
 		Pair:        pair,
 		Price:       price,
-		TimestampMs: timestampMs,
+		TimestampMs: blockTimestampMs,
 	})
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
 		Pair:        pair.String(),
 		Price:       price,
-		TimestampMs: timestampMs,
+		TimestampMs: blockTimestampMs,
 	}); err != nil {
 		ctx.Logger().Error("failed to emit OraclePriceUpdate", "pair", pair, "error", err)
 	}

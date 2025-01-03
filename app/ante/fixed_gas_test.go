@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -62,7 +62,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Feeder:    addr.String(),
 					Validator: addr.String(),
 				},
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
@@ -74,7 +74,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote) permutation 2",
 			messages: []sdk.Msg{
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
@@ -97,7 +97,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Feeder:        addr.String(),
 					Validator:     addr.String(),
 				},
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
@@ -109,7 +109,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote) permutation 2",
 			messages: []sdk.Msg{
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
@@ -169,7 +169,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Feeder:        addr.String(),
 					Validator:     addr.String(),
 				},
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
@@ -186,25 +186,25 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 		{
 			name: "Other two messages",
 			messages: []sdk.Msg{
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
 				},
-				&types.MsgSend{
+				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 200)),
 				},
 			},
-			expectedGas: 67193,
+			expectedGas: 38175,
 			expectedErr: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
-		suite.T().Run(tc.name, func(t *testing.T) {
+		suite.Run(tc.name, func() {
 			suite.SetupTest() // setup
 			suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 

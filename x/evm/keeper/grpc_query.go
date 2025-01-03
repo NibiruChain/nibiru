@@ -65,12 +65,13 @@ func (k Keeper) EthAccount(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	acct := k.GetAccountOrEmpty(ctx, addrEth)
+	balNative := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 
 	return &evm.QueryEthAccountResponse{
 		EthAddress:    addrEth.Hex(),
 		Bech32Address: addrBech32.String(),
-		Balance:       acct.BalanceNative.String(),
-		BalanceWei:    evm.NativeToWei(acct.BalanceNative).String(),
+		Balance:       balNative.String(),
+		BalanceWei:    evm.NativeToWei(balNative).String(),
 		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:         acct.Nonce,
 	}, nil
@@ -650,7 +651,7 @@ const DefaultGethTraceTimeout = 5 * time.Second
 // Configures a Nibiru EVM tracer that is used to "trace" and analyze
 // the execution of transactions within a given block. Block information is read
 // from the context (goCtx). [TraceBlock] is responsible iterates over each Eth
-// transacion message and calls [TraceEthTxMsg] on it.
+// transaction message and calls [TraceEthTxMsg] on it.
 func (k Keeper) TraceBlock(
 	goCtx context.Context, req *evm.QueryTraceBlockRequest,
 ) (*evm.QueryTraceBlockResponse, error) {

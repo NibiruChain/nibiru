@@ -46,6 +46,8 @@ func (p precompileWasm) Run(
 	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
 
+	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
+
 	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
 	// any operation that has the potential to use Bank send methods. This will
 	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
@@ -70,6 +72,17 @@ func (p precompileWasm) Run(
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	// Emit extra events for the EVM if this is a transaction
+	// https://github.com/NibiruChain/nibiru/issues/2121
+	if isMutation[PrecompileMethod(startResult.Method.Name)] {
+		EmitEventAbciEvents(
+			startResult.CacheCtx,
+			startResult.StateDB,
+			startResult.CacheCtx.EventManager().Events()[abciEventsStartIdx:],
+			p.Address(),
+		)
 	}
 
 	// Gas consumed by a local gas meter

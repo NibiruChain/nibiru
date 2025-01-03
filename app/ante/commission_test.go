@@ -1,8 +1,6 @@
 package ante_test
 
 import (
-	"testing"
-
 	"cosmossdk.io/math"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -109,7 +107,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 			wantErr: ante.ErrMaxValidatorCommission.Error(),
 		},
 	} {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			txGasCoins := sdk.NewCoins(
 				sdk.NewCoin("unibi", math.NewInt(1_000)),
 				sdk.NewCoin("utoken", math.NewInt(500)),

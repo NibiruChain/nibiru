@@ -60,6 +60,8 @@ func (p precompileFunToken) Run(
 	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
 
+	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
+
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
@@ -78,6 +80,17 @@ func (p precompileFunToken) Run(
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	// Emit extra events for the EVM if this is a transaction
+	// https://github.com/NibiruChain/nibiru/issues/2121
+	if isMutation[PrecompileMethod(startResult.Method.Name)] {
+		EmitEventAbciEvents(
+			startResult.CacheCtx,
+			startResult.StateDB,
+			startResult.CacheCtx.EventManager().Events()[abciEventsStartIdx:],
+			p.Address(),
+		)
 	}
 
 	// Gas consumed by a local gas meter
@@ -118,6 +131,7 @@ func (p precompileFunToken) sendToBank(
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
+		err = ErrInvalidArgs(err)
 		return
 	}
 
@@ -204,6 +218,7 @@ func (p precompileFunToken) sendToBank(
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events
+	// https://github.com/NibiruChain/nibiru/issues/2121
 	// TODO: emit event for balance change of sender
 	// TODO: emit event for balance change of recipient
 
@@ -376,6 +391,10 @@ func (p precompileFunToken) bankBalance(
 	}
 
 	addrEth, addrBech32, bankDenom, err := p.parseArgsBankBalance(args)
+	if err != nil {
+		err = ErrInvalidArgs(err)
+		return
+	}
 	bankBal := p.evmKeeper.Bank.GetBalance(ctx, addrBech32, bankDenom).Amount.BigInt()
 
 	return method.Outputs.Pack([]any{
@@ -455,7 +474,8 @@ func (p precompileFunToken) whoAmI(
 
 	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
 	if err != nil {
-		return bz, err
+		err = ErrInvalidArgs(err)
+		return
 	}
 
 	return method.Outputs.Pack([]any{
