@@ -109,9 +109,7 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// we have to branch off with a new gas meter instance to avoid mutating the
 	// "true" gas meter (called GasMeterBefore here).
 	ctx = ctx.
-		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
-		WithKVGasConfig(zeroCostGasConfig).
-		WithTransientKVGasConfig(zeroCostGasConfig)
+		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.GasRemaining()))
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
