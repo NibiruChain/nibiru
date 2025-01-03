@@ -18,9 +18,9 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/NibiruChain/nibiru/app"
-	nibiruante "github.com/NibiruChain/nibiru/app/ante"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/app"
+	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.
@@ -39,7 +39,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,
@@ -66,7 +66,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
-		nibiruante.NewPostPriceFixedPriceDecorator(),
+		nibiruante.AnteDecoratorEnsureSinglePostPriceMessage{},
 		nibiruante.AnteDecoratorStakingCommission{},
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
 		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.

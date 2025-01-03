@@ -5,16 +5,17 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // TestEpochIdentifierAfterEpochEnd: Ensures that the amount in the community
@@ -224,22 +225,22 @@ func TestManual(t *testing.T) {
 	params.EpochsPerPeriod = 30
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
-	params.PolynomialFactors = []sdk.Dec{sdk.NewDec(3), sdk.NewDec(3)}
+	params.PolynomialFactors = []sdk.Dec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
-		CommunityPool:     sdk.ZeroDec(),
-		StakingRewards:    sdk.OneDec(),
-		StrategicReserves: sdk.ZeroDec(),
+		CommunityPool:     math.LegacyZeroDec(),
+		StakingRewards:    math.LegacyOneDec(),
+		StrategicReserves: math.LegacyZeroDec(),
 	}
 
 	inflationKeeper.Params.Set(ctx, params)
 
-	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, math.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
 	for i := 0; i < 42069; i++ {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
-	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, math.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(0), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -259,10 +260,10 @@ func TestManual(t *testing.T) {
 	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
 	for i := 0; i < 30; i++ {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
-		require.Equal(t, sdk.NewInt(100_000).Mul(sdk.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
+		require.Equal(t, math.NewInt(100_000).Mul(math.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, math.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -273,7 +274,7 @@ func TestManual(t *testing.T) {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
-	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, math.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -283,10 +284,10 @@ func TestManual(t *testing.T) {
 	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch
 	for i := 0; i < 30; i++ {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
-		require.Equal(t, sdk.NewInt(3_000_000).Add(sdk.NewInt(200_000).Mul(sdk.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
+		require.Equal(t, math.NewInt(3_000_000).Add(math.NewInt(200_000).Mul(math.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.Equal(t, sdk.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, math.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(2), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 

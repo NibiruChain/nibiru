@@ -9,10 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 func TestQueryEpochInfos(t *testing.T) {

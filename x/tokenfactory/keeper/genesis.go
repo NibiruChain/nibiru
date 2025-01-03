@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // InitGenesis initializes the tokenfactory module's state from a provided genesis
@@ -36,13 +36,13 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		denom := iter.Value()
 
 		authorityMetadata, err := k.Store.GetDenomAuthorityMetadata(
-			ctx, denom.String())
+			ctx, denom.Denom().String())
 		if err != nil {
 			panic(err)
 		}
 
 		genDenoms = append(genDenoms, types.GenesisDenom{
-			Denom:             denom.String(),
+			Denom:             denom.Denom().String(),
 			AuthorityMetadata: authorityMetadata,
 		})
 	}
