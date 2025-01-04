@@ -62,6 +62,7 @@ func (s *Suite) TestGasConsumedInvariantSend() {
 		s.Run(tc.name, func() {
 			gasConsumed := tc.GasConsumedInvariantScenario.Run(s, to)
 			s.T().Logf("gasConsumed: %d", gasConsumed)
+			s.Require().NotZerof(gasConsumed, "gasConsumed should not be zero")
 			if idx == 0 {
 				first = gasConsumed
 				return
