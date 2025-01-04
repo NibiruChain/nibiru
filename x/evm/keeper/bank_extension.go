@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -120,16 +119,6 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 
 	AfterOp(ctx)
 	return nil
-}
-
-var zeroCostGasConfig store.GasConfig = store.GasConfig{
-	HasCost:          0,
-	DeleteCost:       0,
-	ReadCostFlat:     0,
-	ReadCostPerByte:  0,
-	WriteCostFlat:    0,
-	WriteCostPerByte: 0,
-	IterNextCostFlat: 0,
 }
 
 func (bk NibiruBankKeeper) SendCoins(
