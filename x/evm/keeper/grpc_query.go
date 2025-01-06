@@ -64,7 +64,10 @@ func (k Keeper) EthAccount(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	acct := k.GetAccountOrEmpty(ctx, addrEth)
+	acct := k.getAccountWithoutBalance(ctx, addrEth)
+	if acct == nil {
+		return nil, fmt.Errorf("account not found for %s", addrEth.Hex())
+	}
 	balNative := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 
 	return &evm.QueryEthAccountResponse{
@@ -205,7 +208,7 @@ func (k Keeper) Code(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	address := gethcommon.HexToAddress(req.Address)
-	acct := k.GetAccountWithoutBalance(ctx, address)
+	acct := k.getAccountWithoutBalance(ctx, address)
 
 	var code []byte
 	if acct != nil && acct.IsContract() {
