@@ -485,6 +485,11 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, bankDenom).Amount.BigInt()
 	s.EqualValues(wantBank, bankBal, "did user lose 1000 unibi from bank?")
 
+	// check the evm module account balance
+	wantEvm := big.NewInt(1000)
+	evmBal := deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankDenom).Amount.BigInt()
+	s.EqualValues(wantEvm, evmBal, "did evm module gain 1000 unibi?")
+
 	s.T().Log("Check the user gained 1000 in ERC20 representation")
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, big.NewInt(1000))
 }
@@ -559,7 +564,7 @@ func (s *FuntokenSuite) TestBankMsgSend() {
 }
 
 func bigTokens(n int64) *big.Int {
-	e18 := big.NewInt(1_000_000_000_000_000_000) // 1e18
+	e18 := big.NewInt(1e18) // 1e18
 	return new(big.Int).Mul(big.NewInt(n), e18)
 }
 
@@ -647,6 +652,13 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 	// no bank side left
 	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, bankBal.Denom).Amount.BigInt()
 	s.Require().EqualValues(bigTokens(0), balAfter)
+
+	// check bob has 500 tokens again => 500 * 1e18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
+
+	// check evm module account's balance
+	evmBal := deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankBal.Denom).Amount.BigInt()
+	s.Require().EqualValues(bigTokens(0), evmBal)
 
 	// user has 500 tokens again => 500 * 1e18
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))

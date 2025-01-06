@@ -573,6 +573,14 @@ func (p precompileFunToken) sendToEvm(
 		return nil, fmt.Errorf("failed to send coins to module: %w", err)
 	}
 
+	// burn if funtoken was created from EVM side
+	if !funtoken.IsMadeFromCoin {
+		err := p.evmKeeper.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
+		if err != nil {
+			return nil, fmt.Errorf("failed to burn coins: %w", err)
+		}
+	}
+
 	// 2) mint (or unescrow) the ERC20
 	erc20Addr := funtoken.Erc20Addr.Address
 	actualAmt, err := p.mintOrUnescrowERC20(
