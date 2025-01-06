@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -169,10 +168,9 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// Note that because the ctx gas meter uses private variables to track gas,
 	// we have to branch off with a new gas meter instance to avoid mutating the
 	// "true" gas meter (called GasMeterBefore here).
-	ctx = ctx.
-		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
-		WithKVGasConfig(zeroCostGasConfig).
-		WithTransientKVGasConfig(zeroCostGasConfig)
+	// We use an infinite gas meter because we consume gas in the deferred function
+	// and gasMeterBefore will panic if we consume too much gas.
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
@@ -182,16 +180,6 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 
 	AfterOp(ctx)
 	return nil
-}
-
-var zeroCostGasConfig store.GasConfig = store.GasConfig{
-	HasCost:          0,
-	DeleteCost:       0,
-	ReadCostFlat:     0,
-	ReadCostPerByte:  0,
-	WriteCostFlat:    0,
-	WriteCostPerByte: 0,
-	IterNextCostFlat: 0,
 }
 
 func (bk NibiruBankKeeper) SendCoins(
