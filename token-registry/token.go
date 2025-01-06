@@ -1,5 +1,7 @@
 package tokenregistry
 
+import "encoding/json"
+
 // some: Helper to create pointers for literals
 func some[T any](v T) *T {
 	return &v
@@ -38,6 +40,12 @@ type AssetList struct {
 	Schema    string  `json:"$schema"`
 	ChainName string  `json:"chain_name"`
 	Assets    []Token `json:"assets"`
+}
+
+// String returns a "pretty" JSON version of the [AssetList].
+func (a AssetList) String() string {
+	jsonBz, _ := json.MarshalIndent(a, "", "  ")
+	return string(jsonBz)
 }
 
 type SocialLinks struct {
