@@ -61,14 +61,16 @@ func (s *Suite) TestGasConsumedInvariantSend() {
 	for idx, tc := range testCases {
 		s.Run(tc.name, func() {
 			gasConsumed := tc.GasConsumedInvariantScenario.Run(s, to)
+			s.T().Logf("gasConsumed: %d", gasConsumed)
+			s.Require().NotZerof(gasConsumed, "gasConsumed should not be zero")
 			if idx == 0 {
 				first = gasConsumed
 				return
 			}
 			// Each elem being equal to "first" implies that each elem is equal
 			s.Equalf(
-				fmt.Sprintf("%d", first),
-				fmt.Sprintf("%d", gasConsumed),
+				first,
+				gasConsumed,
 				"Gas consumed should be equal",
 			)
 		})
@@ -106,7 +108,7 @@ func (scenario GasConsumedInvariantScenario) Run(
 	)
 	gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
 
-	s.GreaterOrEqualf(gasConsumedAfter, gasConsumedBefore,
+	s.Greaterf(gasConsumedAfter, gasConsumedBefore,
 		"gas meter consumed should not be negative: gas consumed after = %d, gas consumed before = %d ",
 		gasConsumedAfter, gasConsumedBefore,
 	)
