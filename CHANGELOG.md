@@ -45,15 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
 that gas consumed during any send operation of the "NibiruBankKeeper" depends
 only on the "bankkeeper.BaseKeeper"'s gas consumption.
-- [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding 
+- [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding
 - [#2122](https://github.com/NibiruChain/nibiru/pull/2122) - test(evm): more bank extension tests and EVM ABCI integration tests to prevent regressions
 - [#2124](https://github.com/NibiruChain/nibiru/pull/2124) - refactor(evm):
 Remove unnecessary argument in the `VerifyFee` function, which returns the token
 payment required based on the effective fee from the tx data. Improve
 documentation.
-- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information. 
+- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
+- [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
