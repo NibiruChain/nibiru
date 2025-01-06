@@ -8,8 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
@@ -94,7 +96,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
-	blockNumber, blockHash := WaitForReceipt(s, transferTxHash)
+	blockNumber, blockHash, _ := WaitForReceipt(s, transferTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -103,7 +105,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Deploy test erc20 contract
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
-	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	blockNumber, blockHash, _ = WaitForReceipt(s, deployContractTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -167,24 +169,44 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	return txHash
 }
 
-func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash) {
+func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	for {
 		receipt, err := s.backend.GetTransactionReceipt(txHash)
 		if err != nil {
-			return nil, nil
+			return nil, nil, nil
 		}
 		if receipt != nil {
-			return receipt.BlockNumber, &receipt.BlockHash
+			return receipt.BlockNumber, &receipt.BlockHash, receipt
 		}
 		select {
 		case <-ctx.Done():
 			fmt.Println("Timeout reached, transaction not included in a block yet.")
-			return nil, nil
+			return nil, nil, nil
 		default:
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+// broadcastSDKTx broadcasts the given SDK transaction and returns the response
+func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
+	txBytes, err := s.backend.ClientCtx().TxConfig.TxEncoder()(sdkTx)
+	s.Require().NoError(err)
+
+	syncCtx := s.backend.ClientCtx().WithBroadcastMode(flags.BroadcastSync)
+	rsp, err := syncCtx.BroadcastTx(txBytes)
+	s.Require().NoError(err)
+	return rsp
+}
+
+// broadcastSDKTx broadcasts the given SDK transaction and returns the response
+func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *hexutil.Big {
+	latestBlock := rpc.EthLatestBlockNumber
+	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
+	balance, err := s.backend.GetBalance(s.fundedAccEthAddr, latestBlockOrHash)
+	s.Require().NoError(err)
+	return balance
 }
