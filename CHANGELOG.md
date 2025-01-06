@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+
 ### Nibiru EVM
 
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
@@ -75,12 +77,12 @@ preparation for a second audit starting in November 2024.
   and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM development
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
-Fix state consistency in precompile execution by ensuring proper journaling of
-state changes in the StateDB. This pull request makes sure that state is
-committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
-closely, and solves for a critical state inconsistency producible from the
-FunToken.sol precompiled contract. It also aligns the precompiles to use
-consistent setup and dynamic gas calculations, addressing the following tickets.
+  Fix state consistency in precompile execution by ensuring proper journaling of
+  state changes in the StateDB. This pull request makes sure that state is
+  committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
+  closely, and solves for a critical state inconsistency producible from the
+  FunToken.sol precompiled contract. It also aligns the precompiles to use
+  consistent setup and dynamic gas calculations, addressing the following tickets.
   - <https://github.com/NibiruChain/nibiru/issues/2083>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
