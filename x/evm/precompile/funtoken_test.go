@@ -29,16 +29,11 @@ func TestSuite(t *testing.T) {
 
 type FuntokenSuite struct {
 	suite.Suite
-	deps     evmtest.TestDeps
-	funtoken evm.FunToken
+	deps evmtest.TestDeps
 }
 
 func (s *FuntokenSuite) SetupSuite() {
 	s.deps = evmtest.NewTestDeps()
-
-	s.T().Log("Create FunToken from coin")
-	bankDenom := "unibi"
-	s.funtoken = evmtest.CreateFunTokenForBankCoin(&s.deps, bankDenom, &s.Suite)
 }
 
 func (s *FuntokenSuite) TestFailToPackABI() {
@@ -157,7 +152,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	bankDenom := "unibi"
+	bankDenom := "anycoin"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
 
 	erc20 := funtoken.Erc20Addr.Address
@@ -170,7 +165,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
 	deps.ResetGasMeter()
@@ -203,7 +198,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420)),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
 			},
@@ -354,11 +349,15 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
+
 	deps := s.deps
 	randomAcc := testutil.AccAddress()
+	bankDenom := "unibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&s.deps, bankDenom, &s.Suite)
+
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
-		s.funtoken.Erc20Addr.Address,
+		funtoken.Erc20Addr.Address,
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
@@ -368,7 +367,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
 	))
 
 	s.T().Log("Fund contract with erc20 coins")
@@ -376,7 +375,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000)),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: contractAddr,
 			},
