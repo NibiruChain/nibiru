@@ -51,7 +51,8 @@ only on the "bankkeeper.BaseKeeper"'s gas consumption.
 Remove unnecessary argument in the `VerifyFee` function, which returns the token
 payment required based on the effective fee from the tx data. Improve
 documentation.
-- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
+- [#2127](https://github.com/NibiruChain/nibiru/pull/2127) - fix(vesting): disabled built in auth/vesting module functionality
+- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile): Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2132](https://github.com/NibiruChain/nibiru/pull/2132) - fix(evm): proper tx gas refund
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
