@@ -1,5 +1,7 @@
 package tokenregistry
 
+import "bytes"
+
 func NibiruAssetList() AssetList {
 	var tokens = TOKENS()
 	for idx, token := range tokens {
@@ -11,6 +13,12 @@ func NibiruAssetList() AssetList {
 		ChainName: "nibiru",
 		Assets:    tokens,
 	}
+}
+
+func PointImagesToCosmosChainRegistry(assetListJson []byte) (out []byte) {
+	oldImgPath := []byte("raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img")
+	newImgPath := []byte("raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images")
+	return bytes.ReplaceAll(assetListJson, oldImgPath, newImgPath)
 }
 
 func TOKENS() []Token {
@@ -168,6 +176,7 @@ func TOKENS() []Token {
 			Name:                "Astrovault Nibiru LST (xNIBI)",
 			Description:         "Astrovault Nibiru LST (xNIBI)",
 			TypeAsset:           TypeAsset_CW20,
+			Address:             some("nibi1cehpv50vl90g9qkwwny8mw7txw79zs6f7wsfe8ey7dgp238gpy4qhdqjhm"),
 			ExtendedDescription: some("xNIBI is a liquid staking derivative for NIBI created by Astrovault."),
 			Socials: &SocialLinks{
 				Website: some("https://astrovault.io/"),

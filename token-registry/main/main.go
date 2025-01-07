@@ -27,6 +27,7 @@ func findRootPath() (string, error) {
 }
 
 const SAVE_PATH_ASSETLIST = "dist/assetlist.json"
+const SAVE_PATH_COSMOS_ASSETLIST = "dist/cosmos-assetlist.json"
 
 func main() {
 	assetList := tokenregistry.NibiruAssetList()
@@ -60,5 +61,25 @@ func main() {
 		return
 	}
 
-	fmt.Printf("✅ Generation complete! See %v\n", SAVE_PATH_ASSETLIST)
+	savePath = path.Join(rootPath, SAVE_PATH_COSMOS_ASSETLIST)
+	saveBz := tokenregistry.PointImagesToCosmosChainRegistry(prettyBz)
+	err = os.WriteFile(savePath, saveBz, perm)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return
+	}
+
+	fmt.Printf("✅ Generation complete!\n")
+	fmt.Printf(
+		"File \"%v\" contains the asset list using images only from the Nibiru repo\n",
+		SAVE_PATH_ASSETLIST,
+	)
+	fmt.Printf(
+		"File \"%v\" contains the asset list for the cosmos/chain-registry\n",
+		SAVE_PATH_COSMOS_ASSETLIST,
+	)
+	fmt.Println("You can submit a PR to cosmos/chain-registry using " +
+		SAVE_PATH_COSMOS_ASSETLIST +
+		" as the file chain-registry/nibiru/assetlist.json",
+	)
 }
