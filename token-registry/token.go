@@ -10,8 +10,12 @@ func some[T any](v T) *T {
 }
 
 type Token struct {
+	// The human-readable name of the asset
+	Name string `json:"name"`
 	// A short description of the asset
 	Description string `json:"description"`
+	// Contract address for the token. Required for [TypeAsset] "erc20" and "cw20".
+	Address *string `json:"address,omitempty"`
 	// An extended, detailed description of the asset (optional)
 	ExtendedDescription *string `json:"extended_description,omitempty"`
 	// Links to social platforms and official websites (optional)
@@ -20,8 +24,6 @@ type Token struct {
 	DenomUnits []DenomUnit `json:"denom_units"`
 	// The base denomination for the asset (canonical name)
 	Base string `json:"base"`
-	// The human-readable name of the asset
-	Name string `json:"name"`
 	// The display name or symbol used in UI for the asset
 	Display string `json:"display"`
 	// The ticker or symbol of the asset
