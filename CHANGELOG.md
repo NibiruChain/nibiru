@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2141](https://github.com/NibiruChain/nibiru/pull/2141) - refactor: simplify account retrieval operation in `nibid q evm account`.
 - [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
 - [#2144](https://github.com/NibiruChain/nibiru/pull/2144) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
+- [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
