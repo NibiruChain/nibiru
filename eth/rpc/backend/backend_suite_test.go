@@ -10,7 +10,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
@@ -168,6 +167,7 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	return txHash
 }
 
+// WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
 func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -190,11 +190,11 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 	}
 }
 
-// broadcastSDKTx broadcasts the given SDK transaction and returns the response
-func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *hexutil.Big {
+// getUnibiBalance returns the balance of an address in unibi
+func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
 	latestBlock := rpc.EthLatestBlockNumber
 	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
-	balance, err := s.backend.GetBalance(s.fundedAccEthAddr, latestBlockOrHash)
+	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
 	s.Require().NoError(err)
-	return balance
+	return evm.WeiToNative(balance.ToInt())
 }

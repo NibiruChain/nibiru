@@ -54,7 +54,7 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
 	s.Require().Equal(
 		receipt1.GasUsed+receipt2.GasUsed+2,
-		evm.WeiToNative(balanceBefore.ToInt()).Uint64()-evm.WeiToNative(balanceAfter.ToInt()).Uint64(),
+		balanceBefore.Uint64()-balanceAfter.Uint64(),
 	)
 }
 
@@ -175,6 +175,6 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
 	s.Require().Equal(
 		receipt1.GasUsed+receipt2.GasUsed+receipt3.GasUsed,
-		evm.WeiToNative(balanceBefore.ToInt()).Uint64()-evm.WeiToNative(balanceAfter.ToInt()).Uint64(),
+		balanceBefore.Uint64()-balanceAfter.Uint64(),
 	)
 }
