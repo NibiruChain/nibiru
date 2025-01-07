@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19;
 
+// import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+
 /// @notice Oracle interface for querying exchange rates
 interface IOracle {
     /// @notice Queries the dated exchange rate for a given pair
@@ -17,6 +19,19 @@ interface IOracle {
         external
         view
         returns (uint256 price, uint64 blockTimeMs, uint64 blockHeight);
+
+    function latestRoundData(
+        string memory pair
+    )
+        external
+        view
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        );
 }
 
 address constant ORACLE_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000801;
