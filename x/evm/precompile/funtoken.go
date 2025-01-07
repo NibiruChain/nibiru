@@ -527,6 +527,9 @@ func (p precompileFunToken) parseArgsWhoAmI(args []any) (
 	return addrEth, addrBech32, nil
 }
 
+// SendToEvm: Implements "IFunToken.sendToEvm"
+// Transfers the caller's bank coin `denom` to its ERC-20 representation on
+// the EVM side.
 func (p precompileFunToken) sendToEvm(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
@@ -573,14 +576,6 @@ func (p precompileFunToken) sendToEvm(
 		return nil, fmt.Errorf("failed to send coins to module: %w", err)
 	}
 
-	// burn if funtoken was created from EVM side
-	if !funtoken.IsMadeFromCoin {
-		err := p.evmKeeper.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
-		if err != nil {
-			return nil, fmt.Errorf("failed to burn coins: %w", err)
-		}
-	}
-
 	// 2) mint (or unescrow) the ERC20
 	erc20Addr := funtoken.Erc20Addr.Address
 	actualAmt, err := p.mintOrUnescrowERC20(
@@ -588,6 +583,15 @@ func (p precompileFunToken) sendToEvm(
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if !funtoken.IsMadeFromCoin {
+		// If the tokens is from an ERC20, we need to burn the cosmos coin
+		// and unescrow the ERC20 tokens to the recipient.
+		err := p.evmKeeper.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
+		if err != nil {
+			return nil, fmt.Errorf("failed to burn coins: %w", err)
+		}
 	}
 
 	// return the number of tokens minted
