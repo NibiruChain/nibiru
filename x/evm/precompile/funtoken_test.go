@@ -349,7 +349,6 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
-
 	deps := s.deps
 	randomAcc := testutil.AccAddress()
 	bankDenom := "unibi"

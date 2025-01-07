@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -189,17 +188,6 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 			time.Sleep(1 * time.Second)
 		}
 	}
-}
-
-// broadcastSDKTx broadcasts the given SDK transaction and returns the response
-func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
-	txBytes, err := s.backend.ClientCtx().TxConfig.TxEncoder()(sdkTx)
-	s.Require().NoError(err)
-
-	syncCtx := s.backend.ClientCtx().WithBroadcastMode(flags.BroadcastSync)
-	rsp, err := syncCtx.BroadcastTx(txBytes)
-	s.Require().NoError(err)
-	return rsp
 }
 
 // broadcastSDKTx broadcasts the given SDK transaction and returns the response

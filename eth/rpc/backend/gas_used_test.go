@@ -3,6 +3,9 @@ package backend_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -10,8 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
 // TestGasUsedTransfers verifies that gas used is correctly calculated for simple transfers.
@@ -67,7 +68,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	erc20Addr, err := eth.NewEIP55AddrFromStr(testContractAddress.String())
 	s.Require().NoError(err)
 
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	_, err = s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 
 	txResp, err := s.network.BroadcastMsgs(s.node.Address, &evm.MsgCreateFunToken{
@@ -87,7 +88,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	)
 	s.Require().NoError(err)
 
-	nonce, err = s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 
 	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
