@@ -26,6 +26,9 @@ func localImageToGitHub(local string) string {
 // isLocalImage returns true if an image URI is meant for a local file in
 // the "token-registry/img" directory.
 func isLocalImage(maybeLocal *string) bool {
+	if maybeLocal == nil {
+		return false
+	}
 	return strings.HasPrefix(*maybeLocal, "./img")
 }
 
