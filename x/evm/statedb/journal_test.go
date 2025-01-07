@@ -159,7 +159,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
 		if stateDB.DebugDirtiesCount() != 1 {
 			debugDirtiesCountMismatch(stateDB, s.T())
-			s.FailNow("expected 1 dirty journal changes")
+			s.FailNow("expected 1 dirty journal change")
 		}
 
 		s.T().Log("Expect no change since the StateDB has not been committed")
