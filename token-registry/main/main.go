@@ -8,8 +8,9 @@ import (
 	"path"
 	"strings"
 
-	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 	"github.com/rs/zerolog/log"
+
+	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 )
 
 // findRootPath returns the absolute path of the repository root
@@ -28,7 +29,6 @@ func findRootPath() (string, error) {
 const SAVE_PATH_ASSETLIST = "dist/assetlist.json"
 
 func main() {
-
 	assetList := tokenregistry.NibiruAssetList()
 
 	prettyBz, err := json.MarshalIndent(assetList, "", "  ")

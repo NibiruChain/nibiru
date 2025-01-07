@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 	"github.com/stretchr/testify/suite"
+
+	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 )
 
 type Suite struct {
@@ -48,8 +49,6 @@ func (s *Suite) TestImagesPresent() {
 					s.NoError(err)
 				}
 			}
-
 		})
 	}
-
 }
