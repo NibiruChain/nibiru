@@ -54,7 +54,7 @@ documentation.
 - [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information. 
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
-- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
+- [#2144](https://github.com/NibiruChain/nibiru/pull/2144) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
