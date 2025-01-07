@@ -43,22 +43,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Nibiru EVM
 
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
-that gas consumed during any send operation of the "NibiruBankKeeper" depends
-only on the "bankkeeper.BaseKeeper"'s gas consumption.
+  that gas consumed during any send operation of the "NibiruBankKeeper" depends
+  only on the "bankkeeper.BaseKeeper"'s gas consumption.
 - [#2120](https://github.com/NibiruChain/nibiru/pull/2120) - fix: Use canonical hexadecimal strings for Eip155 address encoding
 - [#2122](https://github.com/NibiruChain/nibiru/pull/2122) - test(evm): more bank extension tests and EVM ABCI integration tests to prevent regressions
 - [#2124](https://github.com/NibiruChain/nibiru/pull/2124) - refactor(evm):
-Remove unnecessary argument in the `VerifyFee` function, which returns the token
-payment required based on the effective fee from the tx data. Improve
-documentation.
+  Remove unnecessary argument in the `VerifyFee` function, which returns the token
+  payment required based on the effective fee from the tx data. Improve
+  documentation.
 - [#2127](https://github.com/NibiruChain/nibiru/pull/2127) - fix(vesting): disabled built in auth/vesting module functionality
-- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile): Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
+- [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
 - [#2140](https://github.com/NibiruChain/nibiru/pull/2140) - fix(bank): bank keeper extension now charges gas for the bank operations
 - [#2141](https://github.com/NibiruChain/nibiru/pull/2141) - refactor: simplify account retrieval operation in `nibid q evm account`.
 - [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
-
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
@@ -76,45 +75,45 @@ preparation for a second audit starting in November 2024.
   and the [related comments from @Unique-Divine and @berndartmueller](https://github.com/NibiruChain/nibiru/issues/2059#issuecomment-2408625724).
 - [#2084](https://github.com/NibiruChain/nibiru/pull/2084) - feat(evm-forge): foundry support and template for Nibiru EVM development
 - [#2086](https://github.com/NibiruChain/nibiru/pull/2086) - fix(evm-precomples):
-Fix state consistency in precompile execution by ensuring proper journaling of
-state changes in the StateDB. This pull request makes sure that state is
-committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
-closely, and solves for a critical state inconsistency producible from the
-FunToken.sol precompiled contract. It also aligns the precompiles to use
-consistent setup and dynamic gas calculations, addressing the following tickets.
+  Fix state consistency in precompile execution by ensuring proper journaling of
+  state changes in the StateDB. This pull request makes sure that state is
+  committed as expected, fixes the `StateDB.Commit` to follow its guidelines more
+  closely, and solves for a critical state inconsistency producible from the
+  FunToken.sol precompiled contract. It also aligns the precompiles to use
+  consistent setup and dynamic gas calculations, addressing the following tickets.
   - <https://github.com/NibiruChain/nibiru/issues/2083>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/43>
   - <https://github.com/code-423n4/2024-10-nibiru-zenith/issues/47>
 - [#2088](https://github.com/NibiruChain/nibiru/pull/2088) - refactor(evm): remove outdated comment and improper error message text
 - [#2089](https://github.com/NibiruChain/nibiru/pull/2089) - better handling of gas consumption within erc20 contract execution
 - [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
-for (1) ERC20 transfers with tokens that return false success values instead of
-throwing an error and (2) ERC20 transfers with other operations that don't bring
-about the expected resulting balance for the transfer recipient.
+  for (1) ERC20 transfers with tokens that return false success values instead of
+  throwing an error and (2) ERC20 transfers with other operations that don't bring
+  about the expected resulting balance for the transfer recipient.
 - [#2091](https://github.com/NibiruChain/nibiru/pull/2091) - feat(evm): add fun token creation fee validation
 - [#2093](https://github.com/NibiruChain/nibiru/pull/2093) - feat(evm): gas usage in precompiles: limits, local gas meters
 - [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2094](https://github.com/NibiruChain/nibiru/pull/2094) - fix(evm): Following
-from the changs in #2086, this pull request implements a new `JournalChange`
-struct that saves a deep copy of the state multi store before each
-state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
-Additionally, we commit the `StateDB` there as well. This guarantees that the
-non-EVM and EVM state will be in sync even if there are complex, multi-step
-Ethereum transactions, such as in the case of an EthereumTx that influences the
-`StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
-reverts inside of a try-catch.
+  from the changs in #2086, this pull request implements a new `JournalChange`
+  struct that saves a deep copy of the state multi store before each
+  state-modifying, Nibiru-specific precompiled contract is called (`OnRunStart`).
+  Additionally, we commit the `StateDB` there as well. This guarantees that the
+  non-EVM and EVM state will be in sync even if there are complex, multi-step
+  Ethereum transactions, such as in the case of an EthereumTx that influences the
+  `StateDB`, then calls a precompile that also changes non-EVM state, and then EVM
+  reverts inside of a try-catch.
 - [#2095](https://github.com/NibiruChain/nibiru/pull/2095) - fix(evm): This
-change records NIBI (ether) transfers on the `StateDB` during precompiled
-contract calls using the `NibiruBankKeeper`, which is struct extension of
-the `bankkeeper.BaseKeeper` that is used throughout Nibiru.
-The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and records
-balance changes in wei as journal changes automatically. This guarantees that
-commits and reversions of the `StateDB` do not misalign with the state of the
-Bank module. This code change uses the `NibiruBankKeeper` on all modules that
-depend on x/bank, such as the EVM and Wasm modules.
+  change records NIBI (ether) transfers on the `StateDB` during precompiled
+  contract calls using the `NibiruBankKeeper`, which is struct extension of
+  the `bankkeeper.BaseKeeper` that is used throughout Nibiru.
+  The `NibiruBankKeeper` holds a reference to the current EVM `StateDB` and records
+  balance changes in wei as journal changes automatically. This guarantees that
+  commits and reversions of the `StateDB` do not misalign with the state of the
+  Bank module. This code change uses the `NibiruBankKeeper` on all modules that
+  depend on x/bank, such as the EVM and Wasm modules.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
-tests for race conditions within funtoken precompile
+  tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
@@ -126,11 +125,11 @@ tests for race conditions within funtoken precompile
 - [#2114](https://github.com/NibiruChain/nibiru/pull/2114) - fix(evm): make gas cost zero in conditional bank keeper flow
 - [#2116](https://github.com/NibiruChain/nibiru/pull/2116) - fix(precompile-funtoken.go): Fixes a bug where the err != nil check is missing in the bankBalance precompile method
 - [#2117](https://github.com/NibiruChain/nibiru/pull/2117) - fix(oracle): The
-timestamps resulting from ctx.WithBlock* don't actually correspond to the block
-header information from specified blocks in the chain's history, so the oracle
-exchange rates need a way to correctly retrieve this information. This change
-fixes that discrepancy, giving the expected block timestamp for the EVM's oracle
-precompiled contract. The change also simplifies and corrects the code in x/oracle.
+  timestamps resulting from ctx.WithBlock\* don't actually correspond to the block
+  header information from specified blocks in the chain's history, so the oracle
+  exchange rates need a way to correctly retrieve this information. This change
+  fixes that discrepancy, giving the expected block timestamp for the EVM's oracle
+  precompiled contract. The change also simplifies and corrects the code in x/oracle.
 
 #### Nibiru EVM | Before Audit 1 - 2024-10-18
 
@@ -210,6 +209,7 @@ precompiled contract. The change also simplifies and corrects the code in x/orac
 - [#2060](https://github.com/NibiruChain/nibiru/pull/2060) - fix(evm-precompiles): add assertNumArgs validation
 - [#2056](https://github.com/NibiruChain/nibiru/pull/2056) - feat(evm): add oracle precompile
 - [#2065](https://github.com/NibiruChain/nibiru/pull/2065) - refactor(evm)!: Refactor out dead code from the evm.Params
+- [#2135](https://github.com/NibiruChain/nibiru/pull/2135) - feat(evm): add precompile for calling bank to evm from evm
 
 ### State Machine Breaking (Other)
 

@@ -42,6 +42,8 @@ const (
 	FunTokenMethod_balance     PrecompileMethod = "balance"
 	FunTokenMethod_bankBalance PrecompileMethod = "bankBalance"
 	FunTokenMethod_whoAmI      PrecompileMethod = "whoAmI"
+	FunTokenMethod_sendToEvm   PrecompileMethod = "sendToEvm"
+	FunTokenMethod_bankMsgSend PrecompileMethod = "bankMsgSend"
 )
 
 // Run runs the precompiled contract
@@ -72,6 +74,10 @@ func (p precompileFunToken) Run(
 		bz, err = p.bankBalance(startResult, contract)
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
+	case FunTokenMethod_sendToEvm:
+		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly)
+	case FunTokenMethod_bankMsgSend:
+		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "[decomposeInput]" parses methods directly from the ABI.
@@ -519,4 +525,232 @@ func (p precompileFunToken) parseArgsWhoAmI(args []any) (
 		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
 	}
 	return addrEth, addrBech32, nil
+}
+
+// SendToEvm: Implements "IFunToken.sendToEvm"
+// Transfers the caller's bank coin `denom` to its ERC-20 representation on
+// the EVM side.
+func (p precompileFunToken) sendToEvm(
+	startResult OnRunStartResult,
+	caller gethcommon.Address,
+	readOnly bool,
+) ([]byte, error) {
+	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+	// parse call: (string bankDenom, uint256 amount, string to)
+	bankDenom, amount, toStr, err := parseArgsSendToEvm(args)
+	if err != nil {
+		return nil, ErrInvalidArgs(err)
+	}
+
+	// load the FunToken mapping
+	//   For bankDenom, check if there's an existing funtoken
+	funtokens := p.evmKeeper.FunTokens.Collect(
+		ctx, p.evmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom),
+	)
+	if len(funtokens) == 0 {
+		return nil, fmt.Errorf("no funtoken found for bank denom \"%s\"", bankDenom)
+	}
+	funtoken := funtokens[0]
+
+	if amount == nil || amount.Sign() != 1 {
+		return nil, fmt.Errorf("transfer amount must be positive")
+	}
+
+	// parse the `to` argument as hex or bech32 address
+	toEthAddr, err := parseToAddr(toStr)
+	if err != nil {
+		return nil, fmt.Errorf("recipient address invalid: %w", err)
+	}
+
+	// 1) remove (burn or escrow) the bank coin from caller
+	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(amount))
+	senderBech32 := eth.EthAddrToNibiruAddr(caller)
+
+	// bank send from account => module
+	if err := p.evmKeeper.Bank.SendCoinsFromAccountToModule(
+		ctx, senderBech32, evm.ModuleName, sdk.NewCoins(coinToSend),
+	); err != nil {
+		return nil, fmt.Errorf("failed to send coins to module: %w", err)
+	}
+
+	// 2) mint (or unescrow) the ERC20
+	erc20Addr := funtoken.Erc20Addr.Address
+	actualAmt, err := p.mintOrUnescrowERC20(
+		ctx, erc20Addr, toEthAddr, coinToSend.Amount.BigInt(), funtoken,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if !funtoken.IsMadeFromCoin {
+		// If the tokens is from an ERC20, we need to burn the cosmos coin
+		// and unescrow the ERC20 tokens to the recipient.
+		err := p.evmKeeper.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
+		if err != nil {
+			return nil, fmt.Errorf("failed to burn coins: %w", err)
+		}
+	}
+
+	// return the number of tokens minted
+	return method.Outputs.Pack(actualAmt)
+}
+
+func (p precompileFunToken) mintOrUnescrowERC20(
+	ctx sdk.Context,
+	erc20Addr gethcommon.Address,
+	to gethcommon.Address,
+	amount *big.Int,
+	funtoken evm.FunToken,
+) (*big.Int, error) {
+	// If funtoken is "IsMadeFromCoin", we own the ERC20 contract, so we can mint.
+	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
+	if funtoken.IsMadeFromCoin {
+		_, err := p.evmKeeper.ERC20().Mint(
+			erc20Addr,
+			evm.EVM_MODULE_ADDRESS,
+			to,
+			amount,
+			ctx,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("mint erc20 error: %w", err)
+		}
+		// For an owner-minted contract, the entire `amount` is minted.
+		return amount, nil
+	} else {
+		balBefore, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
+		}
+		_, _, err = p.evmKeeper.ERC20().Transfer(
+			erc20Addr, evm.EVM_MODULE_ADDRESS, to, amount, ctx,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("erc20.transfer from module to user: %w", err)
+		}
+
+		balAfter, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
+		}
+		actualReceived := new(big.Int).Sub(balAfter, balBefore)
+		if actualReceived.Sign() <= 0 {
+			return nil, fmt.Errorf("failed: no tokens were actually unescrowed")
+		}
+		return actualReceived, nil
+	}
+}
+
+// parse the arguments: (string bankDenom, uint256 amount, string to)
+func parseArgsSendToEvm(args []any) (bankDenom string, amount *big.Int, to string, err error) {
+	if e := assertNumArgs(args, 3); e != nil {
+		return "", nil, "", e
+	}
+	var ok bool
+	// 0) bankDenom
+	bankDenom, ok = args[0].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string bankDenom", args[0])
+		return
+	}
+	// 1) amount
+	amount, ok = args[1].(*big.Int)
+	if !ok {
+		err = ErrArgTypeValidation("uint256 amount", args[1])
+		return
+	}
+	// 2) to
+	to, ok = args[2].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string to", args[2])
+		return
+	}
+	return
+}
+
+// parse a user-specified address "toStr" that might be bech32 or hex
+func parseToAddr(toStr string) (gethcommon.Address, error) {
+	// check if bech32 or hex
+	if err := eth.ValidateAddress(toStr); err == nil {
+		// hex address
+		return gethcommon.HexToAddress(toStr), nil
+	}
+	// else try bech32
+	nibAddr, e := sdk.AccAddressFromBech32(toStr)
+	if e != nil {
+		return gethcommon.Address{}, fmt.Errorf("invalid bech32 or hex address: %w", e)
+	}
+	return eth.NibiruAddrToEthAddr(nibAddr), nil
+}
+
+func (p precompileFunToken) bankMsgSend(
+	startResult OnRunStartResult,
+	caller gethcommon.Address,
+	readOnly bool,
+) ([]byte, error) {
+	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
+	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+
+	// parse call: (string to, string denom, uint256 amount)
+	toStr, denom, amount, err := parseArgsBankMsgSend(args)
+	if err != nil {
+		return nil, ErrInvalidArgs(err)
+	}
+	if amount.Sign() != 1 {
+		return nil, fmt.Errorf("msgSend amount must be positive")
+	}
+
+	// parse toStr (bech32 or hex)
+	toEthAddr, e := parseToAddr(toStr)
+	if e != nil {
+		return nil, e
+	}
+	fromBech32 := eth.EthAddrToNibiruAddr(caller)
+	toBech32 := eth.EthAddrToNibiruAddr(toEthAddr)
+
+	// do the bank send
+	coin := sdk.NewCoins(sdk.NewCoin(denom, math.NewIntFromBigInt(amount)))
+	if err := p.evmKeeper.Bank.SendCoins(
+		ctx, fromBech32, toBech32, coin,
+	); err != nil {
+		return nil, fmt.Errorf("bankMsgSend: %w", err)
+	}
+	// Return bool success
+	return method.Outputs.Pack(true)
+}
+
+func parseArgsBankMsgSend(args []any) (toStr, denom string, amount *big.Int, err error) {
+	if e := assertNumArgs(args, 3); e != nil {
+		err = e
+		return
+	}
+	// 0) to
+	var ok bool
+	toStr, ok = args[0].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string to", args[0])
+		return
+	}
+
+	// 1) denom
+	denom, ok = args[1].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string bankDenom", args[1])
+		return
+	}
+
+	// 2) amount
+	tmpAmount, ok := args[2].(*big.Int)
+	if !ok {
+		err = ErrArgTypeValidation("uint256 amount", args[2])
+		return
+	}
+	amount = tmpAmount
+
+	return
 }

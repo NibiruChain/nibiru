@@ -227,6 +227,9 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 	FunTokenMethod_bankBalance: false,
 	FunTokenMethod_whoAmI:      false,
 
+	FunTokenMethod_sendToEvm:   true,
+	FunTokenMethod_bankMsgSend: true,
+
 	OracleMethod_queryExchangeRate: false,
 }
 
