@@ -119,7 +119,7 @@ const (
 	TraceType_IBC         TraceType = "ibc"
 	TraceType_LiquidStake TraceType = "liquid-stake"
 	TraceType_Wrapped     TraceType = "wrapped"
-	Trace_Type_Bridge     TraceType = "bridge"
+	TraceType_Bridge      TraceType = "bridge"
 )
 
 // Counterparty represents the counterparty information for an asset trace.

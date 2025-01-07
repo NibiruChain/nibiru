@@ -16,17 +16,22 @@ func (t Token) GitHubify() Token {
 	return out
 }
 
+// localImageToGitHub converts a path to a local image into a GitHub download
+// link in the NibiruChain/nibiru repository.
 func localImageToGitHub(local string) string {
 	trimmed := strings.TrimPrefix(local, "./img/")
 	return "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/" + trimmed
 }
 
+// isLocalImage returns true if an image URI is meant for a local file in
+// the "token-registry/img" directory.
 func isLocalImage(maybeLocal *string) bool {
 	return strings.HasPrefix(*maybeLocal, "./img")
 }
 
 func (logouris LogoURIs) GitHubify() *LogoURIs {
 	out := new(LogoURIs)
+	out.Png, out.Svg = logouris.Png, logouris.Svg
 	if logouris.Png != nil && isLocalImage(logouris.Png) {
 		out.Png = some(localImageToGitHub(*logouris.Png))
 	}
@@ -38,6 +43,7 @@ func (logouris LogoURIs) GitHubify() *LogoURIs {
 
 func (ai AssetImage) GitHubify() AssetImage {
 	out := AssetImage{}
+	out.Png, out.Svg = ai.Png, ai.Svg
 	if ai.Png != nil && isLocalImage(ai.Png) {
 		out.Png = some(localImageToGitHub(*ai.Png))
 	}
