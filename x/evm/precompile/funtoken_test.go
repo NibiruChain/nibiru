@@ -428,3 +428,252 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	)
 	s.Require().ErrorContains(err, "execution reverted")
 }
+
+func (s *FuntokenSuite) TestSendToEvm() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
+	bankDenom := "ulibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
+	fmt.Println(funtoken)
+	erc20Addr := funtoken.Erc20Addr.Address
+
+	s.T().Log("2) Fund the sender with some ulibi on the bank side")
+	err := testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("Check the user starts with 0 ERC20 tokens")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, big.NewInt(0))
+
+	s.T().Log("3) Call the new method: sendToEvm(string bankDenom, uint256 amount, string to)")
+	callArgs := []any{
+		bankDenom,
+		big.NewInt(1000),          // amount
+		deps.Sender.EthAddr.Hex(), // 'to' can be bech32 or hex
+	}
+
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(
+		"sendToEvm",
+		callArgs...,
+	)
+	s.Require().NoError(err)
+
+	deps.ResetGasMeter()
+	_, ethTxResp, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		input,
+		deps.Sender,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(ethTxResp.VmError, "sendToEvm VMError")
+
+	// 1000 tokens are escrowed on module address
+	s.EqualValues(1000, deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankDenom).Amount.BigInt().Int64())
+
+	s.T().Log("4) The response returns the actual minted/unescrowed amount")
+	var actualMinted *big.Int
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&actualMinted, "sendToEvm", ethTxResp.Ret,
+	)
+	s.Require().NoError(err)
+	s.Require().EqualValues(1000, actualMinted.Int64(), "expect 1000 minted to EVM")
+
+	s.T().Log("Check the user lost 1000 ulibi in bank")
+	wantBank := big.NewInt(234) // 1234 - 1000 => 234
+	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, bankDenom).Amount.BigInt()
+	s.EqualValues(wantBank, bankBal, "did user lose 1000 ulibi from bank?")
+
+	// check the evm module account balance
+	wantEvm := big.NewInt(1000)
+	evmBal := deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankDenom).Amount.BigInt()
+	s.EqualValues(wantEvm, evmBal, "did evm module properly mint ulibi?")
+
+	s.T().Log("Check the user gained 1000 in ERC20 representation")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, big.NewInt(1000))
+
+	//-----------------------------------------------------------------------
+	// 5) Now send some tokens *back* to the bank via `sendToBank`.
+	//-----------------------------------------------------------------------
+	// We'll pick a brand new random account to receive them.
+	recipient := testutil.AccAddress()
+	s.T().Logf("5) Sending 400 tokens back from EVM to Cosmos bank => recipient: %s", recipient)
+
+	sendBackArgs := []any{
+		erc20Addr,          // address erc20
+		big.NewInt(400),    // amount
+		recipient.String(), // to
+	}
+
+	inputSendBack, err := embeds.SmartContract_FunToken.ABI.Pack(
+		string(precompile.FunTokenMethod_sendToBank),
+		sendBackArgs...,
+	)
+	s.Require().NoError(err)
+
+	deps.ResetGasMeter()
+	_, ethTxResp2, err := evmtest.CallContractTx(
+		&deps,
+		precompile.PrecompileAddr_FunToken,
+		inputSendBack,
+		deps.Sender,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(ethTxResp2.VmError, "sendToBank VMError")
+
+	s.T().Log("Parse the returned amount from `sendToBank`")
+	var actualSentBack *big.Int
+	err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		&actualSentBack, string(precompile.FunTokenMethod_sendToBank),
+		ethTxResp2.Ret,
+	)
+	s.Require().NoError(err)
+	s.Require().EqualValues(400, actualSentBack.Int64(), "expect 400 minted back to bank")
+
+	s.T().Log("Check sender's EVM balance has decreased by 400")
+	// The sender started with 1000 after the first sendToEvm
+	evmtest.AssertERC20BalanceEqual(
+		s.T(),
+		deps,
+		erc20Addr,
+		deps.Sender.EthAddr,
+		big.NewInt(600), // 1000 - 400
+	)
+
+	s.T().Log("Check the bank side got 400 more")
+	recipientBal := deps.App.BankKeeper.GetBalance(deps.Ctx, recipient, bankDenom).Amount.BigInt()
+	s.Require().EqualValues(400, recipientBal.Int64(), "did the recipient get 400?")
+
+	s.T().Log("Confirm module account doesn't keep them (burn or escrow) for bank-based tokens")
+	moduleBal := deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankDenom).Amount.BigInt()
+	s.Require().EqualValues(600, moduleBal.Int64(), "module should now have 600 left escrowed")
+
+	s.T().Log("Done! We sent tokens to EVM, then back to the bank, verifying the final balances.")
+}
+
+func bigTokens(n int64) *big.Int {
+	e18 := big.NewInt(1e18) // 1e18
+	return new(big.Int).Mul(big.NewInt(n), e18)
+}
+
+func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
+	// Create ERC20 token
+
+	// EVM Transfer - Send 500 tokens to Bob (EVM)
+
+	// sendToBank -  Send 100 tokens from bob to alice's bank balance (EVM -> Cosmos)
+	// 	- mint cosmos token
+	// 	- escrow erc20 token
+
+	// sendToEVM - Send 100 tokens from alice to bob's EVM address (Cosmos -> EVM)
+	// 	- burn cosmos token
+	// 	- unescrow erc20 token
+
+	deps := evmtest.NewTestDeps()
+
+	bob := evmtest.NewEthPrivAcc()
+	alice := evmtest.NewEthPrivAcc()
+
+	// Fund user so they can create funtoken from an ERC20
+	createFunTokenFee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx)
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr,
+		createFunTokenFee,
+	))
+
+	// Deploy an ERC20 with 18 decimals
+	erc20Resp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestERC20)
+
+	s.Require().NoError(err, "failed to deploy test ERC20")
+	erc20Addr := erc20Resp.ContractAddr
+
+	// the initial supply was sent to the deployer
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, deps.Sender.EthAddr, bigTokens(1000000))
+
+	// create fun token from that erc20
+	_, err = deps.EvmKeeper.CreateFunToken(sdk.WrapSDKContext(deps.Ctx), &evm.MsgCreateFunToken{
+		Sender:    deps.Sender.NibiruAddr.String(),
+		FromErc20: &eth.EIP55Addr{Address: erc20Addr},
+	})
+	s.Require().NoError(err)
+
+	// Transfer 500 tokens to bob => 500 * 10^18 raw
+	deployerAddr := gethcommon.HexToAddress(erc20Resp.EthTxMsg.From)
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_TestERC20.ABI,
+		deployerAddr,
+		&erc20Addr,
+		true,
+		keeper.Erc20GasLimitExecute,
+		"transfer",
+		bob.EthAddr,
+		bigTokens(500), // 500 in human sense
+	)
+	s.Require().NoError(err)
+
+	// Now user should have 500 tokens => raw is 500 * 10^18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
+
+	// sendToBank: e.g. 100 tokens => 100 * 1e18 raw
+	// expects to escrow on EVM side and mint on cosmos side
+	input, err := embeds.SmartContract_FunToken.ABI.Pack(
+		string(precompile.FunTokenMethod_sendToBank),
+		[]any{
+			erc20Addr, // address
+			bigTokens(100),
+			alice.NibiruAddr.String(),
+		}...,
+	)
+	s.Require().NoError(err)
+	_, resp, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input, bob)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	// Bank side should see 100
+	bankBal := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, "erc20/"+erc20Addr.Hex())
+	s.Require().EqualValues(bigTokens(100), bankBal.Amount.BigInt())
+
+	// Expect user to have 400 tokens => 400 * 10^18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(400))
+
+	// 100 tokens are escrowed
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, evm.EVM_MODULE_ADDRESS, bigTokens(100))
+
+	// Finally sendToEvm(100) -> (expects to burn on cosmos side and unescrow in the EVM side)
+	input2, err := embeds.SmartContract_FunToken.ABI.Pack(
+		"sendToEvm",
+		[]any{
+			bankBal.Denom,
+			bigTokens(100),
+			bob.EthAddr.Hex(),
+		}...,
+	)
+	s.Require().NoError(err)
+	_, resp2, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, alice)
+	s.Require().NoError(err)
+	s.Require().Empty(resp2.VmError)
+
+	// no bank side left for alice
+	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, bankBal.Denom).Amount.BigInt()
+	s.Require().EqualValues(bigTokens(0), balAfter)
+
+	// check bob has 500 tokens again => 500 * 1e18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
+
+	// check evm module account's balance, it should have escrowed some tokens
+	// unescrow the tokens
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, evm.EVM_MODULE_ADDRESS, bigTokens(0))
+
+	// burns the bank tokens
+	evmBal2 := deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS[:], bankBal.Denom).Amount.BigInt()
+	s.Require().EqualValues(bigTokens(0), evmBal2)
+
+	// user has 500 tokens again => 500 * 1e18
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, erc20Addr, bob.EthAddr, bigTokens(500))
+}
