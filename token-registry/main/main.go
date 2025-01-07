@@ -60,5 +60,5 @@ func main() {
 		return
 	}
 
-	fmt.Println("FOO!!")
+	fmt.Printf("✅ Generation complete! See %v\n", SAVE_PATH_ASSETLIST)
 }

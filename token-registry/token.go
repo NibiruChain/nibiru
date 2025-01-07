@@ -1,6 +1,8 @@
 package tokenregistry
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // some: Helper to create pointers for literals
 func some[T any](v T) *T {
