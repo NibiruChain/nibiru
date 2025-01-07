@@ -222,10 +222,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.NoError(err)
 
 	deps.ResetGasMeter()
-	err = testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
-		sdkmath.NewInt(70_000),
-	)
-	s.NoError(err)
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -432,6 +429,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 func (s *FuntokenSuite) TestSendToEvm() {
 	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
@@ -576,6 +574,7 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 	// 	- unescrow erc20 token
 
 	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 
 	bob := evmtest.NewEthPrivAcc()
 	alice := evmtest.NewEthPrivAcc()
