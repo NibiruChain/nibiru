@@ -194,7 +194,7 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *hexutil.Big {
 	latestBlock := rpc.EthLatestBlockNumber
 	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
-	balance, err := s.backend.GetBalance(s.fundedAccEthAddr, latestBlockOrHash)
+	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
 	s.Require().NoError(err)
 	return balance
 }
