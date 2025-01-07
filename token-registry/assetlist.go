@@ -16,6 +16,7 @@ func NibiruAssetList() AssetList {
 func TOKENS() []Token {
 	return []Token{
 		{
+			Name:                "Nibiru",
 			Description:         "The native token of Nibiru blockchain",
 			ExtendedDescription: some("Nibiru is a smart contract ecosystem with a high-performance, EVM-equivalent execution layer. Nibiru is engineered to meet the growing demand for versatile, scalable, and easy-to-use Web3 applications."),
 			Socials: &SocialLinks{
@@ -28,7 +29,6 @@ func TOKENS() []Token {
 				{Denom: "attonibi", Exponent: 18},
 			},
 			Base:    "unibi",
-			Name:    "Nibiru",
 			Display: "nibi",
 			Symbol:  "NIBI",
 			LogoURIs: &LogoURIs{
@@ -48,6 +48,7 @@ func TOKENS() []Token {
 			TypeAsset: TypeAsset_SDKCoin,
 		},
 		{
+			Name:                "Liquid Staked Nibiru (Eris)",
 			Description:         "Liquid Staked Nibiru (Eris)",
 			ExtendedDescription: some("Liquid Staked Nibiru, powered by Eris Protocol's amplifier contracts. Nibiru is a smart contract ecosystem with a high-performance, EVM-equivalent execution layer. Nibiru is engineered to meet the growing demand for versatile, scalable, and easy-to-use Web3 applications."),
 			Socials: &SocialLinks{
@@ -59,7 +60,6 @@ func TOKENS() []Token {
 				{Denom: "stNIBI", Exponent: 6},
 			},
 			Base:    "tf/nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m/ampNIBI",
-			Name:    "Liquid Staked Nibiru (Eris)",
 			Display: "stNIBI",
 			Symbol:  "stNIBI",
 			LogoURIs: &LogoURIs{
@@ -88,13 +88,13 @@ func TOKENS() []Token {
 			TypeAsset: TypeAsset_SDKCoin,
 		},
 		{
+			Name:        "Noble USDC",
 			Description: "Noble USDC on Nibiru",
 			DenomUnits: []DenomUnit{
 				{Denom: "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349", Exponent: 0},
 				{Denom: "usdc", Exponent: 6},
 			},
 			Base:    "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
-			Name:    "Noble USDC",
 			Display: "usdc",
 			Symbol:  "USDC",
 			Traces: []Trace{
@@ -131,7 +131,9 @@ func TOKENS() []Token {
 			},
 			TypeAsset: TypeAsset_ICS20,
 		},
+
 		{
+			Name:                "Astrovault token",
 			Description:         "AXV",
 			ExtendedDescription: some("AXV is the Astrovault token."),
 			Socials: &SocialLinks{
@@ -143,7 +145,6 @@ func TOKENS() []Token {
 				{Denom: "AXV", Exponent: 6},
 			},
 			Base:    "tf/nibi1vetfuua65frvf6f458xgtjerf0ra7wwjykrdpuyn0jur5x07awxsfka0ga/axv",
-			Name:    "AXV",
 			Display: "AXV",
 			Symbol:  "AXV",
 			LogoURIs: &LogoURIs{
@@ -162,6 +163,33 @@ func TOKENS() []Token {
 			},
 			TypeAsset: TypeAsset_SDKCoin,
 		},
+
+		{
+			Name:                "Astrovault Nibiru LST (xNIBI)",
+			Description:         "Astrovault Nibiru LST (xNIBI)",
+			TypeAsset:           TypeAsset_CW20,
+			ExtendedDescription: some("xNIBI is a liquid staking derivative for NIBI created by Astrovault."),
+			Socials: &SocialLinks{
+				Website: some("https://astrovault.io/"),
+				Twitter: some("https://x.com/axvdex"),
+			},
+			DenomUnits: []DenomUnit{
+				{Denom: "cw20:nibi1cehpv50vl90g9qkwwny8mw7txw79zs6f7wsfe8ey7dgp238gpy4qhdqjhm", Exponent: 0},
+				{Denom: "xNIBI", Exponent: 6},
+			},
+			Base:    "cw20:nibi1cehpv50vl90g9qkwwny8mw7txw79zs6f7wsfe8ey7dgp238gpy4qhdqjhm",
+			Display: "xNIBI",
+			Symbol:  "xNIBI",
+			LogoURIs: &LogoURIs{
+				Svg: some("./img/0004_astrovault-xnibi.svg"),
+			},
+			Images: []AssetImage{
+				{
+					Svg: some("./img/0004_astrovault-xnibi.svg"),
+				},
+			},
+		},
+
 		{
 			Description: "uoprek",
 			DenomUnits: []DenomUnit{
