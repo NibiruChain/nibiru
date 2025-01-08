@@ -20,7 +20,7 @@ interface IOracle {
         view
         returns (uint256 price, uint64 blockTimeMs, uint64 blockHeight);
 
-    function latestRoundData(
+    function chainLinkLatestRoundData(
         string memory pair
     )
         external
@@ -36,4 +36,4 @@ interface IOracle {
 
 address constant ORACLE_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000801;
 
-IOracle constant ORACLE_GATEWAY = IOracle(ORACLE_PRECOMPILE_ADDRESS);
+IOracle constant NIBIRU_ORACLE = IOracle(ORACLE_PRECOMPILE_ADDRESS);

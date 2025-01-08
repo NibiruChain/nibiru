@@ -33,8 +33,8 @@ func (p precompileOracle) ABI() *gethabi.ABI {
 }
 
 const (
-	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
-	OracleMethod_latestRoundData   PrecompileMethod = "latestRoundData"
+	OracleMethod_queryExchangeRate        PrecompileMethod = "queryExchangeRate"
+	OracleMethod_chainLinkLatestRoundData PrecompileMethod = "chainLinkLatestRoundData"
 )
 
 // Run runs the precompiled contract
@@ -54,8 +54,8 @@ func (p precompileOracle) Run(
 	case OracleMethod_queryExchangeRate:
 		bz, err = p.queryExchangeRate(ctx, method, args)
 	// For "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol"
-	case OracleMethod_latestRoundData:
-		bz, err = p.latestRoundData(ctx, method, args)
+	case OracleMethod_chainLinkLatestRoundData:
+		bz, err = p.chainLinkLatestRoundData(ctx, method, args)
 
 	default:
 		// Note that this code path should be impossible to reach since
@@ -135,11 +135,11 @@ func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	return pair, nil
 }
 
-// Implements "IOracle.latestRoundData"
-// ```solidity
+// Implements "IOracle.chainLinkLatestRoundData"
 //
+//	```solidity
 //	interface IOracle {
-//	  function latestRoundData(
+//	  function chainLinkLatestRoundData(
 //	    string memory pair
 //	  )
 //	      external
@@ -154,7 +154,7 @@ func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 //	  // ...
 //	}
 //	```
-func (p precompileOracle) latestRoundData(
+func (p precompileOracle) chainLinkLatestRoundData(
 	ctx sdk.Context,
 	method *gethabi.Method,
 	args []any,
@@ -174,11 +174,7 @@ func (p precompileOracle) latestRoundData(
 	}
 
 	roundId := new(big.Int).SetUint64(priceAtBlock.CreatedBlock)
-	// answer will have 8 decimals
-	answer := new(big.Int).Quo(
-		priceAtBlock.ExchangeRate.BigInt(), // 10^{18}
-		big.NewInt(10_000_000_000),         // 10^{10}
-	)
+	answer := priceAtBlock.ExchangeRate.BigInt() // 18 decimals
 	timestampSeconds := big.NewInt(priceAtBlock.BlockTimestampMs / 1000)
 	answeredInRound := big.NewInt(420) // for no reason in particular / unused
 	return method.Outputs.Pack(
