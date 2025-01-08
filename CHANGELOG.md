@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
+- [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20 
 - [#2140](https://github.com/NibiruChain/nibiru/pull/2140) - fix(bank): bank keeper extension now charges gas for the bank operations
 - [#2141](https://github.com/NibiruChain/nibiru/pull/2141) - refactor: simplify account retrieval operation in `nibid q evm account`.
 - [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
