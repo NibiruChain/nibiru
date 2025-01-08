@@ -19,6 +19,10 @@ import (
 // Test creates 2 eth transfer txs that are supposed to be included in the same block.
 // It checks that gas used is the same for both txs and the total block gas is greater than the sum of 2 gas used.
 func (s *BackendSuite) TestGasUsedTransfers() {
+	// Test is broadcasting txs. Lock to avoid nonce conflicts.
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
 	// Start with new block
 	s.Require().NoError(s.network.WaitForNextBlock())
 	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
@@ -64,6 +68,10 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 // It also checks that txs are included in the same block and block gas is greater or equals
 // to the total gas used by txs.
 func (s *BackendSuite) TestGasUsedFunTokens() {
+	// Test is broadcasting txs. Lock to avoid nonce conflicts.
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
 	// Create funtoken from erc20
 	erc20Addr, err := eth.NewEIP55AddrFromStr(testContractAddress.String())
 	s.Require().NoError(err)

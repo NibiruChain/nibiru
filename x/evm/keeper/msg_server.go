@@ -334,18 +334,17 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, evmObj, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
 	}
 
+	// take over the nonce management from evm:
+	// - reset sender's nonce to msg.Nonce() before calling evm.
+	// - increase sender's nonce by one no matter the result.
+	stateDB.SetNonce(sender.Address(), msg.Nonce())
 	if contractCreation {
-		// take over the nonce management from evm:
-		// - reset sender's nonce to msg.Nonce() before calling evm.
-		// - increase sender's nonce by one no matter the result.
-		stateDB.SetNonce(sender.Address(), msg.Nonce())
 		ret, _, leftoverGas, vmErr = evmObj.Create(
 			sender,
 			msg.Data(),
 			leftoverGas,
 			msgWei,
 		)
-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 	} else {
 		ret, leftoverGas, vmErr = evmObj.Call(
 			sender,
@@ -355,6 +354,8 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 			msgWei,
 		)
 	}
+	// Increment nonce after processing the message
+	stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
@@ -609,14 +610,14 @@ func (k Keeper) convertCoinToEvmBornERC20(
 
 	// 2 | EVM sends ERC20 tokens to the "to" account.
 	// This should never fail due to the EVM account lacking ERc20 fund because
-	// the an account must have sent the EVM module ERC20 tokens in the mapping
+	// the account must have sent the EVM module ERC20 tokens in the mapping
 	// in order to create the coins originally.
 	//
 	// Said another way, if an asset is created as an ERC20 and some amount is
 	// converted to its Bank Coin representation, a balance of the ERC20 is left
 	// inside the EVM module account in order to convert the coins back to
 	// ERC20s.
-	actualSentAmount, _, err := k.ERC20().Transfer(
+	_, _, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
@@ -631,8 +632,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
 	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
 	// in the BC → ERC20 conversion.
-	burnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(actualSentAmount))
-	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(burnCoin))
+	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to burn coins")
 	}
@@ -642,7 +642,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		Sender:               sender.String(),
 		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
-		BankCoin:             burnCoin,
+		BankCoin:             coin,
 	})
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
