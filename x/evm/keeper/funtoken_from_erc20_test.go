@@ -452,6 +452,89 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	s.Require().ErrorContains(err, "execution reverted")
 }
 
+// TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.
+// Test ensures that after sending ERC20 token to coin and back, all bank coins are burned.
+func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy ERC20")
+	metadata := keeper.ERC20Metadata{
+		Name:   "erc20name",
+		Symbol: "TOKEN",
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20TransferWithFee,
+		metadata.Name, metadata.Symbol,
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("CreateFunToken for the ERC20 with fee")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	resp, err := deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &eth.EIP55Addr{
+				Address: deployResp.ContractAddr,
+			},
+			Sender: deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err, "erc20 %s", deployResp.ContractAddr)
+	bankDemon := resp.FuntokenMapping.BankDenom
+
+	randomAcc := testutil.AccAddress()
+
+	deps.ResetGasMeter()
+
+	s.T().Log("send erc20 tokens to Bank")
+	_, err = deps.EvmKeeper.CallContract(
+		deps.Ctx,
+		embeds.SmartContract_FunToken.ABI,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_FunToken,
+		true,
+		evmtest.FunTokenGasLimitSendToEvm,
+		"sendToBank",
+		deployResp.ContractAddr,
+		big.NewInt(100),
+		randomAcc.String(),
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("check balances")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(900))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(10))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(90))
+	s.Require().Equal(sdk.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
+
+	deps.ResetGasMeter()
+
+	s.T().Log("send Bank tokens back to erc20")
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgConvertCoinToEvm{
+			ToEthAddr: eth.EIP55Addr{
+				Address: deps.Sender.EthAddr,
+			},
+			Sender:   randomAcc.String(),
+			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(90)),
+		},
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("check balances")
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(981))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(19))
+	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0))
+	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)))
+	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS_NIBI, bankDemon).Amount.Equal(sdk.NewInt(0)))
+}
+
 type FunTokenFromErc20Suite struct {
 	suite.Suite
 }
