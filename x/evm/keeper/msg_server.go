@@ -3,6 +3,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -121,6 +122,10 @@ func (k *Keeper) NewEVM(
 	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
 ) *vm.EVM {
+	pseudoRandomBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(pseudoRandomBytes, uint64(ctx.BlockHeader().Time.UnixNano()))
+	pseudoRandom := crypto.Keccak256Hash(append(pseudoRandomBytes, ctx.BlockHeader().LastCommitHash...))
+
 	blockCtx := vm.BlockContext{
 		CanTransfer: core.CanTransfer,
 		Transfer:    core.Transfer,
@@ -131,7 +136,7 @@ func (k *Keeper) NewEVM(
 		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
 		BaseFee:     evmConfig.BaseFeeWei,
-		Random:      nil, // not supported
+		Random:      &pseudoRandom,
 	}
 
 	txCtx := core.NewEVMTxContext(msg)

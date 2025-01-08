@@ -84,6 +84,8 @@ func (p precompileFunToken) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+	// Gas consumed by a local gas meter
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +101,6 @@ func (p precompileFunToken) Run(
 		)
 	}
 
-	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	return bz, err
 }
 
