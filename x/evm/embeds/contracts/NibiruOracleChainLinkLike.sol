@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19;
 
-import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "./IOracle.sol";
 
 /// @title NibiruOracleChainLinkLike
@@ -17,7 +16,7 @@ import "./IOracle.sol";
 ///  | |\  | _| |_ | |_) |_| |_ | | \ \ | |__| |
 ///  |_| \_||_____||____/|_____||_|  \_\ \____/
 ///
-contract NibiruOracleChainLinkLike is AggregatorV3Interface {
+contract NibiruOracleChainLinkLike is ChainLinkAggregatorV3Interface {
     string public pair;
     uint8 public _decimals;
 

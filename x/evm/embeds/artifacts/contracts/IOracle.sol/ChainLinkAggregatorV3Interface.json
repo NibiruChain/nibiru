@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "AggregatorV3Interface",
-  "sourceName": "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol",
+  "contractName": "ChainLinkAggregatorV3Interface",
+  "sourceName": "contracts/IOracle.sol",
   "abi": [
     {
       "inputs": [],

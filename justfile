@@ -39,6 +39,9 @@ gen-embeds:
   npx hardhat compile
   log_success "Compiled Solidity in $embeds_dir"
 
+  go run "gen-abi/main.go"
+  log_success "Saved ABI JSON files to $embeds_dir/abi for npm publishing"
+
 alias gen-proto := proto-gen
 
 # Generate the Nibiru Token Registry files
