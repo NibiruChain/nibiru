@@ -57,11 +57,11 @@ func (p precompileOracle) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
+	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	if err != nil {
 		return nil, err
 	}
 
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
 	return bz, err
 }
 

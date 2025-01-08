@@ -56,13 +56,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
 - [#2130](https://github.com/NibiruChain/nibiru/pull/2130) - fix(evm): proper nonce management in statedb
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
-- [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20 
+- [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20
 - [#2140](https://github.com/NibiruChain/nibiru/pull/2140) - fix(bank): bank keeper extension now charges gas for the bank operations
 - [#2141](https://github.com/NibiruChain/nibiru/pull/2141) - refactor: simplify account retrieval operation in `nibid q evm account`.
 - [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
 - [#2144](https://github.com/NibiruChain/nibiru/pull/2144) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
+- [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
