@@ -335,18 +335,17 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 		return nil, evmObj, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
 	}
 
+	// take over the nonce management from evm:
+	// - reset sender's nonce to msg.Nonce() before calling evm.
+	// - increase sender's nonce by one no matter the result.
+	stateDB.SetNonce(sender.Address(), msg.Nonce())
 	if contractCreation {
-		// take over the nonce management from evm:
-		// - reset sender's nonce to msg.Nonce() before calling evm.
-		// - increase sender's nonce by one no matter the result.
-		stateDB.SetNonce(sender.Address(), msg.Nonce())
 		ret, _, leftoverGas, vmErr = evmObj.Create(
 			sender,
 			msg.Data(),
 			leftoverGas,
 			msgWei,
 		)
-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 	} else {
 		ret, leftoverGas, vmErr = evmObj.Call(
 			sender,
@@ -356,6 +355,8 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 			msgWei,
 		)
 	}
+	// Increment nonce after processing the message
+	stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string

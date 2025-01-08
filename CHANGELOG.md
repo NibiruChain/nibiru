@@ -51,9 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Remove unnecessary argument in the `VerifyFee` function, which returns the token
   payment required based on the effective fee from the tx data. Improve
   documentation.
-- [#2127](https://github.com/NibiruChain/nibiru/pull/2127) - fix(vesting): disabled built in auth/vesting module functionality
 - [#2125](https://github.com/NibiruChain/nibiru/pull/2125) - feat(evm-precompile):Emit EVM events created to reflect the ABCI events that occur outside the EVM to make sure that block explorers and indexers can find indexed ABCI event information.
+- [#2127](https://github.com/NibiruChain/nibiru/pull/2127) - fix(vesting): disabled built in auth/vesting module functionality
 - [#2129](https://github.com/NibiruChain/nibiru/pull/2129) - fix(evm): issue with infinite recursion in erc20 funtoken contracts
+- [#2130](https://github.com/NibiruChain/nibiru/pull/2130) - fix(evm): proper nonce management in statedb
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
 - [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20 
 - [#2140](https://github.com/NibiruChain/nibiru/pull/2140) - fix(bank): bank keeper extension now charges gas for the bank operations

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -115,13 +116,12 @@ func (s *BackendSuite) SendNibiViaEthTransfer(
 	amount *big.Int,
 	waitForNextBlock bool,
 ) gethcommon.Hash {
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
-	s.Require().NoError(err)
+	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 	return SendTransaction(
 		s,
 		&gethcore.LegacyTx{
 			To:       &to,
-			Nonce:    uint64(*nonce),
+			Nonce:    uint64(nonce),
 			Value:    amount,
 			Gas:      params.TxGas,
 			GasPrice: big.NewInt(1),
@@ -135,20 +135,20 @@ func (s *BackendSuite) DeployTestContract(waitForNextBlock bool) (gethcommon.Has
 	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
 	s.Require().NoError(err)
 	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 	s.Require().NoError(err)
 
 	txHash := SendTransaction(
 		s,
 		&gethcore.LegacyTx{
-			Nonce:    uint64(*nonce),
+			Nonce:    uint64(nonce),
 			Data:     bytecodeForCall,
 			Gas:      1500_000,
 			GasPrice: big.NewInt(1),
 		},
 		waitForNextBlock,
 	)
-	contractAddr := crypto.CreateAddress(s.fundedAccEthAddr, (uint64)(*nonce))
+	contractAddr := crypto.CreateAddress(s.fundedAccEthAddr, nonce)
 	return txHash, contractAddr
 }
 
@@ -187,4 +187,74 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+// getCurrentNonce returns the current nonce of the funded account
+func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
+	bn, err := s.backend.BlockNumber()
+	s.Require().NoError(err)
+	currentHeight := rpc.BlockNumber(bn)
+
+	nonce, err := s.backend.GetTransactionCount(address, currentHeight)
+	s.Require().NoError(err)
+
+	return uint64(*nonce)
+}
+
+// broadcastSDKTx broadcasts the given SDK transaction and returns the response
+func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
+	txBytes, err := s.backend.ClientCtx().TxConfig.TxEncoder()(sdkTx)
+	s.Require().NoError(err)
+
+	syncCtx := s.backend.ClientCtx().WithBroadcastMode(flags.BroadcastSync)
+	rsp, err := syncCtx.BroadcastTx(txBytes)
+	s.Require().NoError(err)
+	return rsp
+}
+
+// buildContractCreationTx builds a contract creation transaction
+func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transaction {
+	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
+	s.Require().NoError(err)
+	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
+
+	creationTx := &gethcore.LegacyTx{
+		Nonce:    nonce,
+		Data:     bytecodeForCall,
+		Gas:      1_500_000,
+		GasPrice: big.NewInt(1),
+	}
+
+	signer := gethcore.LatestSignerForChainID(s.ethChainID)
+	signedTx, err := gethcore.SignNewTx(s.fundedAccPrivateKey, signer, creationTx)
+	s.Require().NoError(err)
+
+	return *signedTx
+}
+
+// buildContractCallTx builds a contract call transaction
+func (s *BackendSuite) buildContractCallTx(nonce uint64, contractAddr gethcommon.Address) gethcore.Transaction {
+	//recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
+	transferAmount := big.NewInt(100)
+
+	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack(
+		"transfer",
+		recipient,
+		transferAmount,
+	)
+	s.Require().NoError(err)
+
+	transferTx := &gethcore.LegacyTx{
+		Nonce:    nonce,
+		Data:     packedArgs,
+		Gas:      100_000,
+		GasPrice: big.NewInt(1),
+		To:       &contractAddr,
+	}
+
+	signer := gethcore.LatestSignerForChainID(s.ethChainID)
+	signedTx, err := gethcore.SignNewTx(s.fundedAccPrivateKey, signer, transferTx)
+	s.Require().NoError(err)
+
+	return *signedTx
 }

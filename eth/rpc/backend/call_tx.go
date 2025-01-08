@@ -9,6 +9,7 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -337,4 +338,8 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	}
 
 	return (*hexutil.Big)(result), nil
+}
+
+func (b *Backend) ClientCtx() client.Context {
+	return b.clientCtx
 }
