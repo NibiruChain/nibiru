@@ -75,6 +75,11 @@ func (k Keeper) HasMethodInContract(
 
 	_, err = k.EstimateGasForEvmCallType(goCtx, &ethCallRequest, evm.CallTypeRPC)
 
+	if err == nil {
+		fmt.Println("err: ", err)
+		return false, fmt.Errorf("error calling contract: %w", err)
+	}
+
 	// Distinguish an error that indicates "function not found" vs. a normal revert
 	if strings.Contains(err.Error(), "invalid opcode") || strings.Contains(err.Error(), "does not exist") {
 		return false, nil
