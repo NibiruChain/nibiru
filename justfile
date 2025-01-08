@@ -41,6 +41,10 @@ gen-embeds:
 
 alias gen-proto := proto-gen
 
+# Generate the Nibiru Token Registry files
+gen-token-registry:
+  go run token-registry/main/main.go
+
 # Generate protobuf-based types in Rust
 gen-proto-rs:
   bash proto/buf.gen.rs.sh
