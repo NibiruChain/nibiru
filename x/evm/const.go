@@ -84,8 +84,10 @@ const (
 	CallTypeSmart
 )
 
-var EVM_MODULE_ADDRESS gethcommon.Address
-var EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+var (
+	EVM_MODULE_ADDRESS      gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+)
 
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)

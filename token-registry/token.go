@@ -90,13 +90,16 @@ type ImageSync struct {
 }
 
 // TypeAsset is an enum type for "type_asset". Valid values include "sdk.coin",
-// "ics20", and "erc20".
+// "ics20", and "erc20". See [Examples].
+//
+// [Examples]: https://www.notion.so/nibiru/Nibiru-Token-Registry-Info-Fungible-Tokens-on-Nibiru-cf46d37ccd9c4c33bb083e20e0fa8e20?pvs=4
 type TypeAsset string
 
 const (
 	TypeAsset_SDKCoin TypeAsset = "sdk.coin"
 	TypeAsset_ICS20   TypeAsset = "ics20"
 	TypeAsset_ERC20   TypeAsset = "erc20"
+	TypeAsset_CW20    TypeAsset = "cw20"
 )
 
 // Trace represents trace data for cross-chain or liquid staking assets.
