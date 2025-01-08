@@ -51,7 +51,6 @@ func main() {
 			filepath.Ext(path) == ".json" && // .json files that
 			!strings.Contains(path, ".dbg") && // are NOT "dbg" files
 			!strings.HasPrefix(info.Name(), "Test") { // are NOT for tests
-
 			// Read the JSON file
 			data, err := os.ReadFile(path)
 			if err != nil {
@@ -83,7 +82,7 @@ func main() {
 			outputPath := filepath.Join(outputDir, outputFileName)
 
 			// Write the ABI JSON to the output directory
-			err = os.WriteFile(outputPath, abiData, 0644)
+			err = os.WriteFile(outputPath, abiData, 0o644)
 			if err != nil {
 				return fmt.Errorf("failed to write ABI to file %s: %v", outputPath, err)
 			}
@@ -93,7 +92,6 @@ func main() {
 
 		return nil
 	})
-
 	if err != nil {
 		log.Fatalf("Error processing files: %v", err)
 	}
