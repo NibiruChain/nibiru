@@ -205,7 +205,7 @@ func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
 
 // getCurrentNonce returns the current nonce of the funded account
 func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
+	nonce, err := s.backend.GetTransactionCount(address, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 
 	return uint64(*nonce)
