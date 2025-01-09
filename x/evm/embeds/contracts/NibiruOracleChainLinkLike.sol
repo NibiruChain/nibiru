@@ -22,6 +22,7 @@ contract NibiruOracleChainLinkLike is ChainLinkAggregatorV3Interface {
 
     constructor(string memory _pair, uint8 _dec) {
         require(_dec <= 18, "Decimals cannot exceed 18");
+        require(bytes(_pair).length > 0, "Pair string cannot be empty");
         pair = _pair;
         _decimals = _dec;
     }
