@@ -114,6 +114,41 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Equal(fmt.Sprintf("%d", out[1].(uint64)), "69000")
 		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
 	}
+
+	s.T().Log("test IOracle.chainLinkLatestRoundData")
+	{
+		secondsLater := deps.Ctx.BlockTime().Add(100 * time.Second)
+		ctx := deps.Ctx.
+			WithBlockTime(secondsLater).
+			WithBlockHeight(deps.Ctx.BlockHeight() + 50)
+		resp, err := deps.EvmKeeper.CallContract(
+			ctx,
+			embeds.SmartContract_Oracle.ABI,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Oracle,
+			false,
+			OracleGasLimitQuery,
+			"chainLinkLatestRoundData",
+			"unibi:uusd",
+		)
+		s.NoError(err)
+
+		// Check the response
+		out, err := embeds.SmartContract_Oracle.ABI.Unpack(
+			string(precompile.OracleMethod_chainLinkLatestRoundData), resp.Ret,
+		)
+		s.NoError(err)
+		// roundId : created at block height 69
+		s.Equal(out[0].(*big.Int), big.NewInt(69))
+		// answer : exchange rate with 18 decimals.
+		// In this case, 0.067 = 67 * 10^{15}.
+		s.Equal(out[1].(*big.Int), big.NewInt(67_000_000_000_000_000))
+		// startedAt, updatedAt : created at block timestamp
+		s.Equal(out[2].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
+		s.Equal(out[3].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
+		// answeredInRound
+		s.Equal(out[4].(*big.Int), big.NewInt(420))
+	}
 }
 
 type OracleSuite struct {
