@@ -1,6 +1,7 @@
 package evm_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/encoding"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -979,4 +981,44 @@ func (s *MsgsSuite) TestTransactionLogsEncodeDecode() {
 	txLogsEncodedDecoded, decodeErr := evm.DecodeTransactionLogs(txLogsEncoded)
 	s.Nil(decodeErr)
 	s.Equal(txLogs, txLogsEncodedDecoded)
+}
+
+func (s *MsgsSuite) TestMarshalJSON() {
+	addrHex := "0x1111111111111111122222222222222222222222"
+	{
+		jsonBz, err := json.Marshal(addrHex)
+		s.NoError(err)
+		eip55Addr := new(eth.EIP55Addr)
+		s.Require().NoError(eip55Addr.UnmarshalJSON(jsonBz))
+		s.Require().Equal(addrHex, eip55Addr.Hex())
+	}
+
+	sender := "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	{
+		fromErc20, err := eth.NewEIP55AddrFromStr(addrHex)
+		s.NoError(err)
+		goType := evm.MsgCreateFunToken{
+			FromErc20: &fromErc20,
+			Sender:    sender,
+		}
+
+		outJsonBz, err := json.Marshal(goType)
+		s.Require().NoError(err)
+
+		var outGoType evm.MsgCreateFunToken
+		err = json.Unmarshal(outJsonBz, &outGoType)
+		s.NoError(err)
+		s.Equal(goType, outGoType)
+	}
+
+	var goType evm.MsgCreateFunToken
+	err := json.Unmarshal([]byte(`
+		{
+			"from_erc20": "0x1111111111111111122222222222222222222222",
+			"sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+		}
+	`), &goType)
+	s.NoError(err)
+	s.Equal(addrHex, goType.FromErc20.Hex())
+	s.Equal(sender, goType.Sender)
 }
