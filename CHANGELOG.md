@@ -69,6 +69,9 @@ ChainLink interface. Publish all precompiled contracts and ABIs on npm under
 the `@nibiruchain/solidity` package.
 - [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
 - [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
+- [#2154](https://github.com/NibiruChain/nibiru/pull/2154) - fix(evm):
+JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
+needed to include double quotes around the hexadecimal string.
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 

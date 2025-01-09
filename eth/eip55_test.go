@@ -1,7 +1,9 @@
 package eth_test
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -116,15 +118,15 @@ func (s *EIP55AddrSuite) TestProtobufEncoding() {
 	}{
 		{
 			input:        threeValidAddrs[0],
-			expectedJson: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+			expectedJson: `"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"`,
 		},
 		{
 			input:        threeValidAddrs[1],
-			expectedJson: "0xAe967917c465db8578ca9024c205720b1a3651A9",
+			expectedJson: `"0xAe967917c465db8578ca9024c205720b1a3651A9"`,
 		},
 		{
 			input:        threeValidAddrs[2],
-			expectedJson: "0x1111111111111111111112222222222223333323",
+			expectedJson: `"0x1111111111111111111112222222222223333323"`,
 		},
 	} {
 		s.Run(strconv.Itoa(tcIdx), func() {
@@ -140,7 +142,7 @@ func (s *EIP55AddrSuite) TestProtobufEncoding() {
 
 			bz, err := tc.input.Marshal()
 			s.NoError(err)
-			s.Equal(tc.expectedJson, string(bz),
+			s.Equal(strings.Trim(tc.expectedJson, `"`), string(bz),
 				"Marshaling to bytes gives different value than the test case specifies. test case #%d", tcIdx)
 
 			err = eip55Addr.Unmarshal(bz)
@@ -188,10 +190,10 @@ func (s *EIP55AddrSuite) TestStringEncoding() {
 
 	bz, err := addr.MarshalJSON()
 	s.NoError(err)
-	s.Equal(addrHex, string(bz))
+	s.Equal(fmt.Sprintf(`"%s"`, addrHex), string(bz))
 
 	addrb := new(eth.EIP55Addr)
-	err = addrb.UnmarshalJSON([]byte(addrHex))
+	err = addrb.UnmarshalJSON([]byte(fmt.Sprintf(`"%s"`, addrHex)))
 	s.NoError(err)
 	s.EqualValues(addrb, addr)
 }
