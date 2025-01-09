@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,7 +43,7 @@ func (h EIP55Addr) Marshal() ([]byte, error) {
 // Implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) MarshalJSON() ([]byte, error) {
-	return []byte(h.String()), nil
+	return json.Marshal(h.String())
 }
 
 // MarshalTo serializes a EIP55Addr directly into a pre-allocated byte slice ("data").
@@ -68,7 +69,13 @@ func (h *EIP55Addr) Unmarshal(data []byte) error {
 // UnmarshalJSON implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
-	addr, err := NewEIP55AddrFromStr(string(bz))
+	var addrStr string
+	if err := json.Unmarshal(bz, &addrStr); err != nil {
+		return fmt.Errorf(
+			"EIP55AddrError: UnmarhsalJSON had invalid input %s: %w", bz, err,
+		)
+	}
+	addr, err := NewEIP55AddrFromStr(addrStr)
 	if err != nil {
 		return err
 	}
