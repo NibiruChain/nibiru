@@ -63,6 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2144](https://github.com/NibiruChain/nibiru/pull/2144) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
+- [#2149](https://github.com/NibiruChain/nibiru/pull/2149) - feat(evm-oracle):
+add Solidity contract that we can use to expose the Nibiru Oracle in the
+ChainLink interface. Publish all precompiled contracts and ABIs on npm under
+the `@nibiruchain/solidity` package.
 - [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
 - [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
 
