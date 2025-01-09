@@ -41,6 +41,8 @@ var (
 	testInfiniteRecursionERC20Json []byte
 	//go:embed artifacts/contracts/TestERC20TransferWithFee.sol/TestERC20TransferWithFee.json
 	testERC20TransferWithFee []byte
+	//go:embed artifacts/contracts/TestRandom.sol/TestRandom.json
+	testRandom []byte
 )
 
 var (
@@ -134,6 +136,11 @@ var (
 		Name:      "TestERC20TransferWithFee.sol",
 		EmbedJSON: testERC20TransferWithFee,
 	}
+	// SmartContract_TestRandom is a test contract which tests random function
+	SmartContract_TestRandom = CompiledEvmContract{
+		Name:      "TestRandom.sol",
+		EmbedJSON: testRandom,
+	}
 )
 
 func init() {
@@ -150,6 +157,7 @@ func init() {
 	SmartContract_TestPrecompileSelfCallRevert.MustLoad()
 	SmartContract_TestInfiniteRecursionERC20.MustLoad()
 	SmartContract_TestERC20TransferWithFee.MustLoad()
+	SmartContract_TestRandom.MustLoad()
 }
 
 type CompiledEvmContract struct {
