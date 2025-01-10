@@ -22,7 +22,9 @@ import (
 )
 
 func TestIntegrationTestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(TestSuite))
+	}, 2)
 }
 
 // Assert network cleanup
