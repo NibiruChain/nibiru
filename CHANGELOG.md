@@ -73,6 +73,7 @@ the `@nibiruchain/solidity` package.
 JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
 needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
+- [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
