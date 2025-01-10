@@ -177,7 +177,9 @@ func (s *TestSuite) currentPrices() map[asset.Pair]sdk.Dec {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(TestSuite))
+	}, 2)
 }
 
 func (s *TestSuite) TearDownSuite() {
