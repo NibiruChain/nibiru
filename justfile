@@ -21,7 +21,7 @@ clean-cache:
   go clean -cache -testcache -modcache
 
 # Generate protobuf-based types in Golang
-proto-gen: 
+gen-proto: 
   #!/usr/bin/env bash
   make proto-gen
 
@@ -41,8 +41,6 @@ gen-embeds:
 
   go run "gen-abi/main.go"
   log_success "Saved ABI JSON files to $embeds_dir/abi for npm publishing"
-
-alias gen-proto := proto-gen
 
 # Generate the Nibiru Token Registry files
 gen-token-registry:
@@ -120,6 +118,10 @@ test-chaosnet:
   source contrib/bashlib.sh
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
+
+# Alias for "gen-proto"
+proto-gen:
+  just gen-proto
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop: 
