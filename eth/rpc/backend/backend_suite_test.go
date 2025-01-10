@@ -194,15 +194,6 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 	}
 }
 
-// getUnibiBalance returns the balance of an address in unibi
-func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
-	latestBlock := rpc.EthLatestBlockNumber
-	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
-	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
-	s.Require().NoError(err)
-	return evm.WeiToNative(balance.ToInt())
-}
-
 // getCurrentNonce returns the current nonce of the funded account
 func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
 	nonce, err := s.backend.GetTransactionCount(address, rpc.EthPendingBlockNumber)

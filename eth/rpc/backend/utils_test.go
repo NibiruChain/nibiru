@@ -7,8 +7,9 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 )
 
 func (s *BackendSuite) TestGetLogsFromBlockResults() {
@@ -31,7 +32,6 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 			},
 		},
 	}, logs[0], "deploy contract tx")
-
 }
 
 func (s *BackendSuite) TestGetHexProofs() {
