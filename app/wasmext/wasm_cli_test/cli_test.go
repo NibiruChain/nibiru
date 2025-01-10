@@ -140,5 +140,7 @@ func (s *TestSuite) requiredDeployedContractsLen(total int) {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(TestSuite))
+	}, 2)
 }
