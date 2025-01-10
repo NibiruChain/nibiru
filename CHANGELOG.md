@@ -57,13 +57,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2130](https://github.com/NibiruChain/nibiru/pull/2130) - fix(evm): proper nonce management in statedb
 - [#2132](https://github.com/NibiruChain/nibiru/pull/2132) - fix(evm): proper tx gas refund
 - [#2134](https://github.com/NibiruChain/nibiru/pull/2134) - fix(evm): query of NIBI should use bank state, not the StateDB
-- [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20 
+- [#2139](https://github.com/NibiruChain/nibiru/pull/2139) - fix(evm): erc20 born funtoken: properly burn bank coins after converting coin back to erc20
 - [#2140](https://github.com/NibiruChain/nibiru/pull/2140) - fix(bank): bank keeper extension now charges gas for the bank operations
 - [#2141](https://github.com/NibiruChain/nibiru/pull/2141) - refactor: simplify account retrieval operation in `nibid q evm account`.
 - [#2142](https://github.com/NibiruChain/nibiru/pull/2142) - fix(bank): add additional missing methods to the NibiruBankKeeper
 - [#2144](https://github.com/NibiruChain/nibiru/pull/2144) - feat(token-registry): Implement strongly typed Nibiru Token Registry and generation command
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
+- [#2149](https://github.com/NibiruChain/nibiru/pull/2149) - feat(evm-oracle):
+add Solidity contract that we can use to expose the Nibiru Oracle in the
+ChainLink interface. Publish all precompiled contracts and ABIs on npm under
+the `@nibiruchain/solidity` package.
+- [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
+- [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
+- [#2154](https://github.com/NibiruChain/nibiru/pull/2154) - fix(evm):
+JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
+needed to include double quotes around the hexadecimal string.
+- [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
+- [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
+- [#2160](https://github.com/NibiruChain/nibiru/pull/2160) - fix(evm-precompile): use bank.MsgServer Send in precompile IFunToken.bankMsgSend
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 

@@ -27,6 +27,7 @@
     "typechain": "^8.3.2",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.1.0",
+    "@nibiruchain/solidity": "^0.0.2",
     "hardhat": "^2.22.15"
   },
   "scripts": {
