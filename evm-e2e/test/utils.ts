@@ -1,11 +1,13 @@
 import { account } from './setup';
-import { parseEther, toBigInt, TransactionRequest, Wallet } from 'ethers';
+import { ContractTransactionResponse, parseEther, toBigInt, TransactionRequest, Wallet } from 'ethers';
 import {
   InifiniteLoopGas__factory,
   SendNibi__factory,
   TestERC20__factory,
   EventsEmitter__factory,
   TransactionReverter__factory,
+  NibiruOracleChainLinkLike__factory,
+  NibiruOracleChainLinkLike,
 } from '../types';
 
 export const alice = Wallet.createRandom();
@@ -65,4 +67,17 @@ export const sendTestNibi = async () => {
   await txResponse.wait(1, 10e3);
   console.log(txResponse);
   return txResponse;
+};
+
+export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
+  oraclePair: string;
+  contract: NibiruOracleChainLinkLike & {
+    deploymentTransaction(): ContractTransactionResponse;
+  };
+}> => {
+  const oraclePair = 'ueth:uuusd';
+  const factory = new NibiruOracleChainLinkLike__factory(account);
+  const contract = await factory.deploy(oraclePair, toBigInt(8));
+  await contract.waitForDeployment();
+  return { oraclePair, contract };
 };
