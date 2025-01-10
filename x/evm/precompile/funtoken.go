@@ -127,6 +127,10 @@ type precompileFunToken struct {
 //	/// @param to the receiving Nibiru base account address as a string
 //	function sendToBank(address erc20, uint256 amount, string memory to) external;
 //	```
+//
+// Because [sendToBank] uses "SendCoinsFromModuleToAccount" to send Bank Coins,
+// this method correctly avoids sending funds to addresses blocked by the Bank
+// module.
 func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
