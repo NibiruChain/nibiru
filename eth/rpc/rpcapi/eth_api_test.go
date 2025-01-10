@@ -58,7 +58,10 @@ type NodeSuite struct {
 
 func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(Suite))
-	suite.Run(t, new(NodeSuite))
+
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(NodeSuite))
+	}, 2)
 }
 
 // SetupSuite runs before every test in the suite. Implements the
