@@ -6,6 +6,8 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -125,6 +127,10 @@ type precompileFunToken struct {
 //	/// @param to the receiving Nibiru base account address as a string
 //	function sendToBank(address erc20, uint256 amount, string memory to) external;
 //	```
+//
+// Because [sendToBank] uses "SendCoinsFromModuleToAccount" to send Bank Coins,
+// this method correctly avoids sending funds to addresses blocked by the Bank
+// module.
 func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
@@ -701,9 +707,6 @@ func (p precompileFunToken) bankMsgSend(
 	if err != nil {
 		return nil, ErrInvalidArgs(err)
 	}
-	if amount.Sign() != 1 {
-		return nil, fmt.Errorf("msgSend amount must be positive")
-	}
 
 	// parse toStr (bech32 or hex)
 	toEthAddr, e := parseToAddr(toStr)
@@ -715,8 +718,16 @@ func (p precompileFunToken) bankMsgSend(
 
 	// do the bank send
 	coin := sdk.NewCoins(sdk.NewCoin(denom, math.NewIntFromBigInt(amount)))
-	if err := p.evmKeeper.Bank.SendCoins(
-		ctx, fromBech32, toBech32, coin,
+	bankMsg := &bank.MsgSend{
+		FromAddress: fromBech32.String(),
+		ToAddress:   toBech32.String(),
+		Amount:      coin,
+	}
+	if err := bankMsg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+	if _, err := bankkeeper.NewMsgServerImpl(p.evmKeeper.Bank).Send(
+		sdk.WrapSDKContext(ctx), bankMsg,
 	); err != nil {
 		return nil, fmt.Errorf("bankMsgSend: %w", err)
 	}
