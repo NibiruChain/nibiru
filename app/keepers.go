@@ -108,6 +108,7 @@ import (
 	// Nibiru Custom Modules
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
@@ -465,6 +466,16 @@ func (app *NibiruApp) InitKeepers(
 		panic(err)
 	}
 
+	wmha := wasmext.MsgHandlerArgs{
+		Router:           app.MsgServiceRouter(),
+		Ics4Wrapper:      app.ibcFeeKeeper,
+		ChannelKeeper:    app.ibcKeeper.ChannelKeeper,
+		CapabilityKeeper: app.ScopedWasmKeeper,
+		BankKeeper:       app.BankKeeper,
+		Unpacker:         appCodec,
+		PortSource:       app.ibcTransferKeeper,
+	}
+	app.WasmMsgHandlerArgs = wmha
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
@@ -472,18 +483,18 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.ibcFeeKeeper, // ISC4 Wrapper: fee IBC middleware
-		app.ibcKeeper.ChannelKeeper,
+		wmha.Ics4Wrapper, // ISC4 Wrapper: fee IBC middleware
+		wmha.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
-		app.ScopedWasmKeeper,
-		app.ibcTransferKeeper,
-		app.MsgServiceRouter(),
+		wmha.CapabilityKeeper,
+		wmha.PortSource,
+		wmha.Router,
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
 		govModuleAddr,
-		append(GetWasmOpts(*app, appOpts), wasmkeeper.WithWasmEngine(wasmVM))...,
+		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)
 
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
