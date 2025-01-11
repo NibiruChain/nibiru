@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,6 +33,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
+
+// testMutex is used to synchronize the tests which are broadcasting transactions concurrently
+var testMutex sync.Mutex
 
 var (
 	recipient    = evmtest.NewEthPrivAcc().EthAddr
@@ -95,7 +99,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
-	blockNumber, blockHash := WaitForReceipt(s, transferTxHash)
+	blockNumber, blockHash, _ := WaitForReceipt(s, transferTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -104,7 +108,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Deploy test erc20 contract
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
-	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	blockNumber, blockHash, _ = WaitForReceipt(s, deployContractTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -167,35 +171,41 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	return txHash
 }
 
-func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash) {
+// WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
+func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	for {
 		receipt, err := s.backend.GetTransactionReceipt(txHash)
 		if err != nil {
-			return nil, nil
+			return nil, nil, nil
 		}
 		if receipt != nil {
-			return receipt.BlockNumber, &receipt.BlockHash
+			return receipt.BlockNumber, &receipt.BlockHash, receipt
 		}
 		select {
 		case <-ctx.Done():
 			fmt.Println("Timeout reached, transaction not included in a block yet.")
-			return nil, nil
+			return nil, nil, nil
 		default:
 			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
+// getUnibiBalance returns the balance of an address in unibi
+func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
+	latestBlock := rpc.EthLatestBlockNumber
+	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
+	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
+	s.Require().NoError(err)
+	return evm.WeiToNative(balance.ToInt())
+}
+
 // getCurrentNonce returns the current nonce of the funded account
 func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
-	bn, err := s.backend.BlockNumber()
-	s.Require().NoError(err)
-	currentHeight := rpc.BlockNumber(bn)
-
-	nonce, err := s.backend.GetTransactionCount(address, currentHeight)
+	nonce, err := s.backend.GetTransactionCount(address, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 
 	return uint64(*nonce)
