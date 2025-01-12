@@ -2,6 +2,7 @@ package precompile
 
 import (
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
@@ -32,7 +33,8 @@ func (p precompileOracle) ABI() *gethabi.ABI {
 }
 
 const (
-	OracleMethod_queryExchangeRate PrecompileMethod = "queryExchangeRate"
+	OracleMethod_queryExchangeRate        PrecompileMethod = "queryExchangeRate"
+	OracleMethod_chainLinkLatestRoundData PrecompileMethod = "chainLinkLatestRoundData"
 )
 
 // Run runs the precompiled contract
@@ -51,6 +53,10 @@ func (p precompileOracle) Run(
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
 		bz, err = p.queryExchangeRate(ctx, method, args)
+	// For "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol"
+	case OracleMethod_chainLinkLatestRoundData:
+		bz, err = p.chainLinkLatestRoundData(ctx, method, args)
+
 	default:
 		// Note that this code path should be impossible to reach since
 		// "[decomposeInput]" parses methods directly from the ABI.
@@ -75,6 +81,16 @@ type precompileOracle struct {
 	oracleKeeper oraclekeeper.Keeper
 }
 
+// Implements "IOracle.queryExchangeRate"
+//
+//	```solidity
+//	function queryExchangeRate(
+//	    string memory pair
+//	)
+//	    external
+//	    view
+//	    returns (uint256 price, uint64 blockTimeMs, uint64 blockHeight);
+//	```
 func (p precompileOracle) queryExchangeRate(
 	ctx sdk.Context,
 	method *gethabi.Method,
@@ -117,4 +133,55 @@ func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	}
 
 	return pair, nil
+}
+
+// Implements "IOracle.chainLinkLatestRoundData"
+//
+//	```solidity
+//	interface IOracle {
+//	  function chainLinkLatestRoundData(
+//	    string memory pair
+//	  )
+//	      external
+//	      view
+//	      returns (
+//	          uint80 roundId,
+//	          int256 answer,
+//	          uint256 startedAt,
+//	          uint256 updatedAt,
+//	          uint80 answeredInRound
+//	      );
+//	  // ...
+//	}
+//	```
+func (p precompileOracle) chainLinkLatestRoundData(
+	ctx sdk.Context,
+	method *gethabi.Method,
+	args []any,
+) (bz []byte, err error) {
+	pair, err := p.parseQueryExchangeRateArgs(args)
+	if err != nil {
+		return nil, err
+	}
+	assetPair, err := asset.TryNewPair(pair)
+	if err != nil {
+		return nil, err
+	}
+
+	priceAtBlock, err := p.oracleKeeper.ExchangeRates.Get(ctx, assetPair)
+	if err != nil {
+		return nil, err
+	}
+
+	roundId := new(big.Int).SetUint64(priceAtBlock.CreatedBlock)
+	answer := priceAtBlock.ExchangeRate.BigInt() // 18 decimals
+	timestampSeconds := big.NewInt(priceAtBlock.BlockTimestampMs / 1000)
+	answeredInRound := big.NewInt(420) // for no reason in particular / unused
+	return method.Outputs.Pack(
+		roundId,
+		answer,
+		timestampSeconds, // startedAt (seconds)
+		timestampSeconds, // updatedAt (seconds)
+		answeredInRound,
+	)
 }
