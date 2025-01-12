@@ -1,4 +1,15 @@
 {
+  "name": "@nibiruchain/solidity",
+  "description": "Nibiru EVM solidity contracts and ABIs for Nibiru-specific precompiles and core protocol functionality",
+  "version": "0.0.2",
+  "private": false,
+  "files": [
+    "/contracts/**/*.sol",
+    "/abi",
+    "!/contracts/**/Test*.sol"
+  ],
+  "keywords": ["solidity", "ethereum", "smart", "contracts", "evm", "nibiru", "blockchain"],
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "bun": "^1.1.30",
