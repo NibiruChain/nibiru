@@ -216,9 +216,10 @@ func NewNibiruApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
-			AccountKeeper:          app.AccountKeeper,
-			BankKeeper:             app.BankKeeper,
-			FeegrantKeeper:         app.FeeGrantKeeper,
+			AccountKeeper:  app.AccountKeeper,
+			BankKeeper:     app.BankKeeper,
+			FeegrantKeeper: app.FeeGrantKeeper,
+
 			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
@@ -228,6 +229,8 @@ func NewNibiruApp(
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
+		StakingKeeper:     *app.StakingKeeper,
+		OracleKeeper:      app.OracleKeeper,
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
