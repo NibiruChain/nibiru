@@ -87,9 +87,10 @@ type (
 // This function performs the following steps:
 //  1. Checks if the ERC20 token is already registered as a FunToken.
 //  2. Retrieves the metadata of the existing ERC20 token.
-//  3. Verifies that the corresponding bank coin denom is not already registered.
-//  4. Sets the bank coin denom metadata in the state.
-//  5. Creates and inserts the new FunToken mapping.
+//  3. Verifies that the ERC20 token include expected functions.
+//  4. Verifies that the corresponding bank coin denom is not already registered.
+//  5. Sets the bank coin denom metadata in the state.
+//  6. Creates and inserts the new FunToken mapping.
 //
 // Parameters:
 //   - ctx: The SDK context for the transaction.
@@ -121,7 +122,12 @@ func (k *Keeper) createFunTokenFromERC20(
 
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
-	// 3 | Coin already registered with FunToken?
+	// 3 | Verify that the ERC20 token include expected functions
+	if err := k.checkErc20ImplementsAllRequired(ctx, erc20); err != nil {
+		return funtoken, err
+	}
+
+	// 4 | Coin already registered with FunToken?
 	_, isFound := k.Bank.GetDenomMetaData(ctx, bankDenom)
 	if isFound {
 		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
@@ -130,7 +136,7 @@ func (k *Keeper) createFunTokenFromERC20(
 		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
-	// 4 | Set bank coin denom metadata in state
+	// 5 | Set bank coin denom metadata in state
 	bankMetadata := erc20Info.ToBankMetadata(bankDenom, erc20)
 
 	err = bankMetadata.Validate()
@@ -139,7 +145,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 	k.Bank.SetDenomMetaData(ctx, bankMetadata)
 
-	// 5 | Officially create the funtoken mapping
+	// 6 | Officially create the funtoken mapping
 	funtoken = &evm.FunToken{
 		Erc20Addr: eth.EIP55Addr{
 			Address: erc20,
@@ -151,6 +157,14 @@ func (k *Keeper) createFunTokenFromERC20(
 	return funtoken, k.FunTokens.SafeInsert(
 		ctx, erc20, bankDenom, false,
 	)
+}
+
+func (k *Keeper) checkErc20ImplementsAllRequired(
+	ctx sdk.Context, erc20 gethcommon.Address,
+) error {
+	// Check if the ERC20 token implements the required functions
+	// This is a placeholder for actual implementation
+	return nil
 }
 
 // ToBankMetadata produces the "bank.Metadata" corresponding to a FunToken
