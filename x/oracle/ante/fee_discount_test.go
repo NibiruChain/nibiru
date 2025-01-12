@@ -23,14 +23,14 @@ import (
 // MockStakingKeeperI implements ante.StakingKeeperI
 type MockStakingKeeperI struct {
 	validators  map[string]stakingtypes.Validator
-	totalBonded sdk.Int
+	totalBonded math.Int
 }
 
 func (m MockStakingKeeperI) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (stakingtypes.Validator, bool) {
 	v, ok := m.validators[addr.String()]
 	return v, ok
 }
-func (m MockStakingKeeperI) TotalBondedTokens(ctx sdk.Context) sdk.Int {
+func (m MockStakingKeeperI) TotalBondedTokens(ctx sdk.Context) math.Int {
 	return m.totalBonded
 }
 

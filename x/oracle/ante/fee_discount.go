@@ -1,9 +1,10 @@
 package ante
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -43,7 +44,7 @@ func (vfd VoteFeeDiscountDecorator) AnteHandle(
 	//    If your chain supports multiple signers, adapt accordingly.
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
-		return ctx, sdkerrors.Wrapf(sdkerrors.ErrTxDecode, "invalid tx type %T", tx)
+		return ctx, sdkerrors.Wrapf(errortypes.ErrTxDecode, "invalid tx type %T", tx)
 	}
 
 	sigs, err := sigTx.GetSignaturesV2()
