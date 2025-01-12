@@ -238,6 +238,7 @@ func (es *EventSubscriber) EventLoop() {
 			}
 			es.IndexMux.Unlock()
 			close(f.Installed)
+
 		case f := <-es.Uninstall:
 			es.IndexMux.Lock()
 			delete(es.Index[f.Typ], f.Id)

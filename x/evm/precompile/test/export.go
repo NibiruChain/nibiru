@@ -258,7 +258,7 @@ func IncrementWasmCounterWithExecuteMulti(
 	wasmContract sdk.AccAddress,
 	times uint,
 	finalizeTx bool,
-) (evmObj *vm.EVM) {
+) {
 	msgArgsBz := []byte(`
 	{ 
 	  "increment": {}
@@ -300,7 +300,7 @@ func IncrementWasmCounterWithExecuteMulti(
 
 	deps.ResetGasMeter()
 
-	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -310,7 +310,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
-	return evmObj
 }
 
 func IncrementWasmCounterWithExecuteMultiViaVMCall(

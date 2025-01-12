@@ -11,6 +11,7 @@ import (
 	s "github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -624,4 +625,30 @@ func (s *Suite) TestIterateStorage() {
 	})
 	s.Require().NoError(err)
 	s.Require().Equal(1, len(storage))
+}
+
+func (s *Suite) TestDirtyCount() {
+	deps := evmtest.NewTestDeps()
+	stateDB := deps.NewStateDB()
+	s.Equal(0, stateDB.DebugDirtiesCount())
+
+	randomAcc := evmtest.NewEthPrivAcc().EthAddr
+	balDelta := evm.NativeToWei(big.NewInt(4))
+	// 2 dirties from [createObjectChange, balanceChange]
+	stateDB.AddBalance(randomAcc, balDelta)
+	// 1 dirties from [balanceChange]
+	stateDB.AddBalance(randomAcc, balDelta)
+	// 1 dirties from [balanceChange]
+	stateDB.SubBalance(randomAcc, balDelta)
+	if stateDB.DebugDirtiesCount() != 4 {
+		debugDirtiesCountMismatch(stateDB, s.T())
+		s.FailNow("expected 4 dirty journal changes")
+	}
+
+	s.T().Log("StateDB.Commit, then Dirties should be gone")
+	s.NoError(stateDB.Commit())
+	if stateDB.DebugDirtiesCount() != 0 {
+		debugDirtiesCountMismatch(stateDB, s.T())
+		s.FailNow("expected 0 dirty journal changes")
+	}
 }

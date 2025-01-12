@@ -271,7 +271,7 @@ func (k *Keeper) EthCall(
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
 	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	cfg, err := k.GetEVMConfig(ctx, req.ProposerAddress, chainID)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -288,7 +288,7 @@ func (k *Keeper) EthCall(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
 	// pass false to not commit StateDB
-	res, _, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig, false)
+	res, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig, false)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -327,7 +327,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	cfg, err := k.GetEVMConfig(ctx, req.ProposerAddress, chainID)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
 	}
@@ -425,7 +425,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		}
 		// pass false to not commit StateDB
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		rsp, _, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig, false)
+		rsp, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig, false)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -493,7 +493,7 @@ func (k Keeper) TraceTx(
 	})
 
 	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	cfg, err := k.GetEVMConfig(ctx, req.ProposerAddress, chainID)
 	if err != nil {
 		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
 	}
@@ -524,7 +524,7 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		rsp, _, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig, false)
+		rsp, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig, false)
 		if err != nil {
 			continue
 		}
@@ -592,7 +592,7 @@ func (k Keeper) TraceCall(
 	})
 
 	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	cfg, err := k.GetEVMConfig(ctx, req.ProposerAddress, chainID)
 	if err != nil {
 		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
 	}
@@ -678,9 +678,7 @@ func (k Keeper) TraceBlock(
 			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 		})
 
-	chainID := k.EthChainID(ctx)
-
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
+	cfg, err := k.GetEVMConfig(ctx, req.ProposerAddress, k.EthChainID(ctx))
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
 	}
@@ -806,7 +804,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	res, _, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig, false)
+	res, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig, false)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
