@@ -248,6 +248,7 @@ preparation for a second audit starting in November 2024.
 - [#1755](https://github.com/NibiruChain/nibiru/pull/1755) - feat(oracle): Add more events on validator's performance
 - [#1764](https://github.com/NibiruChain/nibiru/pull/1764) - fix(perp): make updateswapinvariant aware of total short supply to avoid panics
 - [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
+- [#2163](https://github.com/NibiruChain/nibiru/pull/1710) - feat: reduce gas for first vote by validators
 
 ### Non-breaking/Compatible Improvements
 
