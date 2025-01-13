@@ -64,7 +64,7 @@ func (s *Suite) TestComplexJournalChanges() {
 	s.Require().NoError(err)
 
 	s.Run("Populate dirty journal entries. Remove with Commit", func() {
-		stateDB := evmObj.StateDB.(*statedb.StateDB)
+		stateDB := deps.EvmKeeper.Bank.StateDB
 		s.Equal(0, stateDB.DebugDirtiesCount())
 
 		randomAcc := evmtest.NewEthPrivAcc().EthAddr
@@ -104,7 +104,7 @@ func (s *Suite) TestComplexJournalChanges() {
 			big.NewInt(0),
 		)
 		s.Require().NoError(err)
-		stateDB := evmObj.StateDB.(*statedb.StateDB)
+		stateDB := deps.EvmKeeper.Bank.StateDB
 		if stateDB.DebugDirtiesCount() != 2 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNowf("expected 2 dirty journal changes", "%#v", stateDB.Journal)
@@ -133,27 +133,26 @@ func (s *Suite) TestComplexJournalChanges() {
 
 	s.Run("Precompile calls populate snapshots", func() {
 		s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
-		commitEvmTx := true
+		commit := true
 		evmObj = test.IncrementWasmCounterWithExecuteMulti(
-			&s.Suite, &deps, helloWorldCounterWasm, 7, commitEvmTx,
+			&s.Suite, &deps, helloWorldCounterWasm, 7, commit,
 		)
 		// assertions after run
 		test.AssertWasmCounterState(
 			&s.Suite, deps, helloWorldCounterWasm, 7,
 		)
-		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
-		s.Require().True(ok, "error retrieving StateDB from the EVM")
+		stateDB := deps.EvmKeeper.Bank.StateDB
 		if stateDB.DebugDirtiesCount() != 0 {
 			debugDirtiesCountMismatch(stateDB, s.T())
 			s.FailNow("expected 0 dirty journal changes")
 		}
 
 		s.T().Log("commitEvmTx=false, expect dirty journal entries")
-		commitEvmTx = false
+		commit = false
 		evmObj = test.IncrementWasmCounterWithExecuteMulti(
-			&s.Suite, &deps, helloWorldCounterWasm, 5, commitEvmTx,
+			&s.Suite, &deps, helloWorldCounterWasm, 5, commit,
 		)
-		stateDB, ok = evmObj.StateDB.(*statedb.StateDB)
+		stateDB, ok := evmObj.StateDB.(*statedb.StateDB)
 		s.Require().True(ok, "error retrieving StateDB from the EVM")
 
 		s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
@@ -179,9 +178,9 @@ func (s *Suite) TestComplexJournalChanges() {
 
 		s.T().Log("EVM revert operation should bring about the old state")
 		err = test.IncrementWasmCounterWithExecuteMultiViaVMCall(
-			&s.Suite, &deps, helloWorldCounterWasm, 50, commitEvmTx, evmObj,
+			&s.Suite, &deps, helloWorldCounterWasm, 50, commit, evmObj,
 		)
-		stateDBPtr := evmObj.StateDB.(*statedb.StateDB)
+		stateDBPtr := deps.EvmKeeper.Bank.StateDB
 		s.Require().Equal(stateDB, stateDBPtr)
 		s.Require().NoError(err)
 		s.T().Log(heredoc.Doc(`At this point, 2 precompile calls have succeeded.

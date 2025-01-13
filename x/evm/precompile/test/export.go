@@ -353,12 +353,9 @@ func IncrementWasmCounterWithExecuteMultiViaVMCall(
 	}
 	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
 
-	callArgs := []any{
-		executeMsgs,
-	}
 	input, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_executeMulti),
-		callArgs...,
+		executeMsgs,
 	)
 	s.Require().NoError(err)
 
