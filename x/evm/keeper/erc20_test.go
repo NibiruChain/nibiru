@@ -4,8 +4,13 @@ package keeper_test
 import (
 	"math/big"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 func (s *Suite) TestERC20Calls() {
@@ -16,16 +21,53 @@ func (s *Suite) TestERC20Calls() {
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
-		_, err := deps.EvmKeeper.ERC20().Mint(
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", evm.EVM_MODULE_ADDRESS, big.NewInt(69_420))
+		s.Require().NoError(err)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&contract,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			true,
+		)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		_, err = deps.EvmKeeper.ERC20().Mint(
 			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
-			big.NewInt(69_420), deps.Ctx,
+			big.NewInt(69_420), deps.Ctx, evmObj,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
 	s.T().Log("Mint tokens - Success")
 	{
-		_, err := deps.EvmKeeper.ERC20().Mint(contract, evm.EVM_MODULE_ADDRESS, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), deps.Ctx)
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", evm.EVM_MODULE_ADDRESS, big.NewInt(69_420))
+		s.Require().NoError(err)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&contract,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			true,
+		)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		_, err = deps.EvmKeeper.ERC20().Mint(
+			contract, evm.EVM_MODULE_ADDRESS, evm.EVM_MODULE_ADDRESS,
+			big.NewInt(69_420), deps.Ctx, evmObj,
+		)
 		s.Require().NoError(err)
 
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
@@ -35,7 +77,27 @@ func (s *Suite) TestERC20Calls() {
 	s.T().Log("Transfer - Not enough funds")
 	{
 		amt := big.NewInt(9_420)
-		_, _, err := deps.EvmKeeper.ERC20().Transfer(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, amt, deps.Ctx)
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("transfer", evm.EVM_MODULE_ADDRESS, amt)
+		s.Require().NoError(err)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&contract,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			true,
+		)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		_, _, err = deps.EvmKeeper.ERC20().Transfer(
+			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+			amt, deps.Ctx, evmObj,
+		)
 		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
 		// balances unchanged
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
@@ -45,8 +107,26 @@ func (s *Suite) TestERC20Calls() {
 	s.T().Log("Transfer - Success (sanity check)")
 	{
 		amt := big.NewInt(9_420)
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("transfer", evm.EVM_MODULE_ADDRESS, amt)
+		s.Require().NoError(err)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&contract,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			true,
+		)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 		sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
-			contract, evm.EVM_MODULE_ADDRESS, deps.Sender.EthAddr, amt, deps.Ctx,
+			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+			amt, deps.Ctx, evmObj,
 		)
 		s.Require().NoError(err)
 		evmtest.AssertERC20BalanceEqual(
@@ -58,10 +138,27 @@ func (s *Suite) TestERC20Calls() {
 
 	s.T().Log("Burn tokens - Allowed as non-owner")
 	{
-		_, err := deps.EvmKeeper.ERC20().Burn(contract, deps.Sender.EthAddr, big.NewInt(420), deps.Ctx)
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("burn", evm.EVM_MODULE_ADDRESS, big.NewInt(420))
+		s.Require().NoError(err)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&contract,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			true,
+		)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		_, err = deps.EvmKeeper.ERC20().Burn(contract, deps.Sender.EthAddr, big.NewInt(420), deps.Ctx, evmObj)
 		s.Require().NoError(err)
 
-		_, err = deps.EvmKeeper.ERC20().Burn(contract, evm.EVM_MODULE_ADDRESS, big.NewInt(6_000), deps.Ctx)
+		_, err = deps.EvmKeeper.ERC20().Burn(contract, evm.EVM_MODULE_ADDRESS, big.NewInt(6_000), deps.Ctx, evmObj)
 		s.Require().NoError(err)
 
 		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(9_000))

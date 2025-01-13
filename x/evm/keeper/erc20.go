@@ -10,6 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -67,9 +69,9 @@ See [nibiru/x/evm/embeds].
 */
 func (e erc20Calls) Mint(
 	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "mint", to, amount)
+	return e.CallContract(ctx, evmObj, e.ABI, from, &contract, true /*commit*/, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "mint", to, amount)
 }
 
 /*
@@ -84,14 +86,14 @@ Transfer implements "ERC20.transfer"
 */
 func (e erc20Calls) Transfer(
 	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (balanceIncrease *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
 	recipientBalanceBefore, err := e.BalanceOf(contract, to, ctx)
 	if err != nil {
 		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
-	resp, err = e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "transfer", to, amount)
+	resp, err = e.CallContract(ctx, evmObj, e.ABI, from, &contract, true /*commit*/, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "transfer", to, amount)
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -148,9 +150,9 @@ Burn implements "ERC20Burnable.burn"
 */
 func (e erc20Calls) Burn(
 	contract, from gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "burn", amount)
+	return e.CallContract(ctx, evmObj, e.ABI, from, &contract, true /*commit*/, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "burn", amount)
 }
 
 func (k Keeper) LoadERC20Name(
@@ -177,14 +179,33 @@ func (k Keeper) LoadERC20String(
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out string, err error) {
-	res, err := k.CallContract(
+	input, err := erc20Abi.Pack(methodName)
+	if err != nil {
+		return out, err
+	}
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Contract,
+		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),                                /*value*/
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery), /*gasLimit*/
+		big.NewInt(0),                                /*gasPrice*/
+		big.NewInt(0),                                /*gasFeeCap*/
+		big.NewInt(0),                                /*gasTipCap*/
+		input,                                        /*data*/
+		gethcore.AccessList{},                        /*accessList*/
+		false,
+	)
+	stateDB := k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0))))
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	res, err := k.CallContractWithInput(
 		ctx,
-		erc20Abi,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
 	)
 	if err != nil {
 		return out, err
@@ -206,13 +227,33 @@ func (k Keeper) loadERC20Uint8(
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out uint8, err error) {
-	res, err := k.CallContract(
-		ctx, erc20Abi,
+	input, err := erc20Abi.Pack(methodName)
+	if err != nil {
+		return out, err
+	}
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Contract,
+		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),                                /*value*/
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery), /*gasLimit*/
+		big.NewInt(0),                                /*gasPrice*/
+		big.NewInt(0),                                /*gasFeeCap*/
+		big.NewInt(0),                                /*gasTipCap*/
+		input,                                        /*data*/
+		gethcore.AccessList{},                        /*accessList*/
+		false,
+	)
+	stateDB := k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0))))
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	res, err := k.CallContractWithInput(
+		ctx,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
 	)
 	if err != nil {
 		return out, err
@@ -235,15 +276,33 @@ func (k Keeper) LoadERC20BigInt(
 	methodName string,
 	args ...any,
 ) (out *big.Int, err error) {
-	res, err := k.CallContract(
+	input, err := abi.Pack(methodName, args...)
+	if err != nil {
+		return nil, err
+	}
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&contract,
+		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS), /*nonce*/
+		big.NewInt(0), /*value*/
+		getCallGasWithLimit(ctx, Erc20GasLimitQuery), /*gasLimit*/
+		big.NewInt(0),         /*gasPrice*/
+		big.NewInt(0),         /*gasFeeCap*/
+		big.NewInt(0),         /*gasTipCap*/
+		input,                 /*data*/
+		gethcore.AccessList{}, /*accessList*/
+		false,
+	)
+	stateDB := k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0))))
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	res, err := k.CallContractWithInput(
 		ctx,
-		abi,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
-		args...,
 	)
 	if err != nil {
 		return nil, err

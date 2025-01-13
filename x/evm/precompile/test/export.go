@@ -11,11 +11,14 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -62,8 +65,27 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
+		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&evm.EVM_MODULE_ADDRESS,
+			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			evmtest.FunTokenGasLimitSendToEvm,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			[]byte{},
+			gethcore.AccessList{},
+			false,
+		)
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
 		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
+			evmObj,
 			embeds.SmartContract_Wasm.ABI,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
@@ -167,8 +189,26 @@ func AssertWasmCounterState(
 		}
 `)
 
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		[]byte{},
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
+		evmObj,
 		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -302,8 +342,26 @@ func IncrementWasmCounterWithExecuteMulti(
 
 	deps.ResetGasMeter()
 
-	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		[]byte{},
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		finalizeTx,

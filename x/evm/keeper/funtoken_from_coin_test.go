@@ -8,6 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -228,17 +230,32 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	deps.ResetGasMeter()
 
 	s.T().Log("Convert erc-20 to back to bank coin")
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", funToken.Erc20Addr.Address, big.NewInt(10), deps.Sender.NibiruAddr.String())
+	s.Require().NoError(err)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,              /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),                     /*value*/
+		evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+		big.NewInt(0),                     /*gasPrice*/
+		big.NewInt(0),                     /*gasFeeCap*/
+		big.NewInt(0),                     /*gasTipCap*/
+		contractInput,                     /*data*/
+		gethcore.AccessList{},             /*accessList*/
+		false,                             /*isFake*/
+	)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_FunToken.ABI,
+		evmObj,
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
-		"sendToBank",
-		funToken.Erc20Addr.Address,
-		big.NewInt(10),
-		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
 
@@ -256,17 +273,14 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal("0", balance.String())
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
-	_, err = deps.EvmKeeper.CallContract(
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_FunToken.ABI,
+		evmObj,
 		alice.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
-		"sendToBank",
-		funToken.Erc20Addr.Address,
-		big.NewInt(10),
-		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().ErrorContains(err, "transfer amount exceeds balance")
 }
@@ -359,20 +373,33 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	deps.ResetGasMeter()
 	newSendAmtSendToBank := new(big.Int).Quo(sendAmt, big.NewInt(2))
 	newSendAmtEvmTransfer := evm.NativeToWei(newSendAmtSendToBank)
-	evmResp, err := deps.EvmKeeper.CallContract(
+
+	contractInput, err := embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI.Pack("nativeSendThenPrecompileSend", alice.EthAddr, newSendAmtEvmTransfer, alice.NibiruAddr.String(), newSendAmtSendToBank)
+	s.Require().NoError(err)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&testContractAddr,
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
-		10_000_000, // 100% sufficient gas
-		"nativeSendThenPrecompileSend",
-		[]any{
-			alice.EthAddr,             // nativeRecipient
-			newSendAmtEvmTransfer,     // nativeAmount (wei units)
-			alice.NibiruAddr.String(), // precompileRecipient
-			newSendAmtSendToBank,      // precompileAmount
-		}...,
+		contractInput,
+		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
 	s.Empty(evmResp.VmError)
@@ -401,18 +428,32 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	}.Assert(s.T(), deps)
 
 	deps.ResetGasMeter()
-	evmResp, err = deps.EvmKeeper.CallContract(
+	contractInput, err = embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI.Pack("justPrecompileSend", alice.NibiruAddr.String(), newSendAmtSendToBank)
+	s.Require().NoError(err)
+	evmMsg = gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&testContractAddr,
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.DefaultEthCallGasLimit,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	txConfig = deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
-		10_000_000, // 100% sufficient gas
-		"justPrecompileSend",
-		[]any{
-			alice.NibiruAddr.String(), // precompileRecipient
-			newSendAmtSendToBank,      // precompileAmount
-		}...,
+		contractInput,
+		evmtest.DefaultEthCallGasLimit,
 	)
 	s.Require().NoError(err)
 	s.Empty(evmResp.VmError)
@@ -459,9 +500,6 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 // - Module account: 1 NIBI escrowed (which Alice holds as 1 WNIBI)
 func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := evm.EVMBankDenom
-
-	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
 
 	s.T().Log("Deploy Test Contract")
@@ -479,7 +517,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -489,18 +527,32 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	alice := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_TestERC20TransferThenPrecompileSend.ABI.Pack("erc20TransferThenPrecompileSend", alice.EthAddr, big.NewInt(1e6), alice.NibiruAddr.String(), big.NewInt(9e6))
+	s.Require().NoError(err)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&testContractAddr,
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestERC20TransferThenPrecompileSend.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
-		10_000_000, // 100% sufficient gas
-		"erc20TransferThenPrecompileSend",
-		alice.EthAddr,
-		big.NewInt(1e6), // erc20 created with 6 decimals
-		alice.NibiruAddr.String(),
-		big.NewInt(9e6), // for precompile sendToBank: 6 decimals
+		contractInput,
+		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
 
@@ -548,7 +600,6 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 // - Module account: 10 NIBI escrowed (which Test contract holds as 10 WNIBI)
 func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := evm.EVMBankDenom
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -568,7 +619,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -579,7 +630,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		eth.EthAddrToNibiruAddr(testContractAddr),
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(10e6))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
 	))
 
 	evmtest.FunTokenBalanceAssert{
@@ -596,18 +647,32 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	charles := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack("selfCallTransferFunds", alice.EthAddr, evm.NativeToWei(big.NewInt(1e6)), charles.NibiruAddr.String(), big.NewInt(9e6))
+	s.Require().NoError(err)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&testContractAddr,
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestPrecompileSelfCallRevert.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
-		"selfCallTransferFunds",
-		alice.EthAddr,
-		evm.NativeToWei(big.NewInt(1e6)), // native send uses wei units,
-		charles.NibiruAddr.String(),
-		big.NewInt(9e6), // for precompile sendToBank: 6 decimals
 	)
 	s.Require().NoError(err)
 

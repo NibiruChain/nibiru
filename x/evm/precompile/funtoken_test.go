@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -100,17 +101,33 @@ func (s *FuntokenSuite) TestWhoAmI() {
 		s.T().Logf("test account %d, use both address formats", accIdx)
 		callWhoAmIWithArg := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
 			fmt.Printf("arg: %s", arg)
-			return deps.EvmKeeper.CallContract(
+			contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
+			s.Require().NoError(err)
+			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+			evmMsg := gethcore.NewMessage(
+				evm.EVM_MODULE_ADDRESS,              /*from*/
+				&precompile.PrecompileAddr_FunToken, /*to*/
+				deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+				big.NewInt(0),                     /*value*/
+				evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+				big.NewInt(0),                     /*gasPrice*/
+				big.NewInt(0),                     /*gasFeeCap*/
+				big.NewInt(0),                     /*gasTipCap*/
+				contractInput,                     /*data*/
+				gethcore.AccessList{},             /*accessList*/
+				false,                             /*isFake*/
+			)
+			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+			return deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
-				embeds.SmartContract_FunToken.ABI,
+				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_FunToken,
 				false,
-				keeper.Erc20GasLimitExecute,
-				"whoAmI",
-				[]any{
-					arg, // who
-				}...,
+				contractInput,
+				evmtest.FunTokenGasLimitSendToEvm,
 			)
 		}
 		for _, arg := range []string{acc.NibiruAddr.String(), acc.EthAddr.Hex()} {
@@ -174,19 +191,33 @@ func (s *FuntokenSuite) TestHappyPath() {
 	))
 
 	s.Run("IFunToken.bankBalance", func() {
-		s.Require().NotEmpty(funtoken.BankDenom)
-		evmResp, err := deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("bankBalance", deps.Sender.EthAddr, funtoken.BankDenom)
+		s.Require().NoError(err)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,              /*from*/
+			&precompile.PrecompileAddr_FunToken, /*to*/
+			deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),                     /*value*/
+			evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+			big.NewInt(0),                     /*gasPrice*/
+			big.NewInt(0),                     /*gasFeeCap*/
+			big.NewInt(0),                     /*gasTipCap*/
+			contractInput,                     /*data*/
+			gethcore.AccessList{},             /*accessList*/
+			false,                             /*isFake*/
+		)
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
-			embeds.SmartContract_FunToken.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
 			false,
-			keeper.Erc20GasLimitExecute,
-			"bankBalance",
-			[]any{
-				deps.Sender.EthAddr, // who
-				funtoken.BankDenom,  // bankDenom
-			}...,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -212,7 +243,34 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
 		s.deps.ResetGasMeter()
-		_, err = deps.EvmKeeper.CallContract(deps.Ctx, embeds.SmartContract_ERC20Minter.ABI, deps.Sender.EthAddr, &erc20, true, keeper.Erc20GasLimitExecute, "mint", deps.Sender.EthAddr, big.NewInt(69_420))
+		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+		s.Require().NoError(err)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,              /*from*/
+			&precompile.PrecompileAddr_FunToken, /*to*/
+			deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),                     /*value*/
+			evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+			big.NewInt(0),                     /*gasPrice*/
+			big.NewInt(0),                     /*gasFeeCap*/
+			big.NewInt(0),                     /*gasTipCap*/
+			contractInput,                     /*data*/
+			gethcore.AccessList{},             /*accessList*/
+			false,                             /*isFake*/
+		)
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
 
@@ -262,18 +320,33 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Require().Equal("420", sentAmt.String())
 
 	s.Run("IFuntoken.balance", func() {
-		evmResp, err := deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("balance", deps.Sender.EthAddr, erc20)
+		s.Require().NoError(err)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,              /*from*/
+			&precompile.PrecompileAddr_FunToken, /*to*/
+			deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),                     /*value*/
+			evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+			big.NewInt(0),                     /*gasPrice*/
+			big.NewInt(0),                     /*gasFeeCap*/
+			big.NewInt(0),                     /*gasTipCap*/
+			contractInput,                     /*data*/
+			gethcore.AccessList{},             /*accessList*/
+			false,                             /*isFake*/
+		)
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
-			embeds.SmartContract_FunToken.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
 			false,
-			keeper.Erc20GasLimitExecute,
-			"balance",
-			[]any{
-				deps.Sender.EthAddr, // who
-				erc20,               // funtoken
-			}...,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -383,48 +456,84 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 	s.T().Log("Happy: callBankSend with default gas")
 	s.deps.ResetGasMeter()
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack("callBankSend", big.NewInt(1), randomAcc.String(), big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)))
+	s.Require().NoError(err)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,              /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),                     /*value*/
+		evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+		big.NewInt(0),                     /*gasPrice*/
+		big.NewInt(0),                     /*gasFeeCap*/
+		big.NewInt(0),                     /*gasTipCap*/
+		contractInput,                     /*data*/
+		gethcore.AccessList{},             /*accessList*/
+		false,                             /*isFake*/
+	)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
-		"callBankSend",
-		big.NewInt(1),
-		randomAcc.String(),
 	)
 	s.Require().NoError(err)
 
 	s.T().Log("Happy: callBankSend with local gas - sufficient gas amount")
 	s.deps.ResetGasMeter()
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err = embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack("callBankSendLocalGas", big.NewInt(1), randomAcc.String(), big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)))
+	s.Require().NoError(err)
+	evmCfg = deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	txConfig = deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
-		"callBankSendLocalGas",
-		big.NewInt(1),      // erc20 amount
-		randomAcc.String(), // to
-		big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)), // customGas
 	)
 	s.Require().NoError(err)
 
 	s.T().Log("Sad: callBankSend with local gas - insufficient gas amount")
 	s.deps.ResetGasMeter()
-	_, err = deps.EvmKeeper.CallContract(
+	contractInput, err = embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack("callBankSendLocalGas", big.NewInt(1), randomAcc.String(), big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)))
+	s.Require().NoError(err)
+	evmCfg = deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	txConfig = deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmMsg = gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,              /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),                     /*value*/
+		evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
+		big.NewInt(0),                     /*gasPrice*/
+		big.NewInt(0),                     /*gasFeeCap*/
+		big.NewInt(0),                     /*gasTipCap*/
+		contractInput,                     /*data*/
+		gethcore.AccessList{},             /*accessList*/
+		false,                             /*isFake*/
+	)
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&contractAddr,
 		true,
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
-		"callBankSendLocalGas",
-		big.NewInt(1),      // erc20 amount
-		randomAcc.String(), // to
-		big.NewInt(50_000), // customGas - too small
 	)
 	s.Require().ErrorContains(err, "execution reverted")
 }
@@ -604,16 +713,37 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 
 	// Transfer 500 tokens to bob => 500 * 10^18 raw
 	deployerAddr := gethcommon.HexToAddress(erc20Resp.EthTxMsg.From)
-	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		embeds.SmartContract_TestERC20.ABI,
-		deployerAddr,
-		&erc20Addr,
-		true,
-		keeper.Erc20GasLimitExecute,
+	contractInput, err := embeds.SmartContract_TestERC20.ABI.Pack(
 		"transfer",
 		bob.EthAddr,
 		bigTokens(500), // 500 in human sense
+	)
+	s.Require().NoError(err)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmMsg := gethcore.NewMessage(
+		deployerAddr,
+		&erc20Addr,
+		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, deployerAddr),
+		big.NewInt(0),
+		keeper.Erc20GasLimitExecute,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx,
+		evmObj,
+		deployerAddr,
+		&erc20Addr,
+		true,
+		contractInput,
+		keeper.Erc20GasLimitExecute,
 	)
 	s.Require().NoError(err)
 

@@ -10,12 +10,14 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
@@ -172,7 +174,24 @@ func (p precompileFunToken) sendToBank(
 
 	// Caller transfers ERC20 to the EVM account
 	transferTo := evm.EVM_MODULE_ADDRESS
-	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx)
+	txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
+	evmCfg := p.evmKeeper.GetEVMConfig(ctx)
+	evmMsg := gethcore.NewMessage(
+		caller,                               /*from*/
+		&transferTo,                          /*to*/
+		p.evmKeeper.GetAccNonce(ctx, caller), /*nonce*/
+		big.NewInt(0),                        /*value*/
+		keeper.Erc20GasLimitExecute,          /*gasLimit*/
+		big.NewInt(0),                        /*gasPrice*/
+		big.NewInt(0),                        /*gasFeeCap*/
+		big.NewInt(0),                        /*gasTipCap*/
+		[]byte{},                             /*data*/
+		gethcore.AccessList{},                /*accessList*/
+		false,                                /*isFake*/
+	)
+	evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx, evmObj)
 	if err != nil {
 		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
 	}
@@ -185,7 +204,24 @@ func (p precompileFunToken) sendToBank(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		burnResp, e := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx)
+		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
+		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS, /*from*/
+			&erc20,                 /*to*/
+			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS), /*nonce*/
+			big.NewInt(0),               /*value*/
+			keeper.Erc20GasLimitExecute, /*gasLimit*/
+			big.NewInt(0),               /*gasPrice*/
+			big.NewInt(0),               /*gasFeeCap*/
+			big.NewInt(0),               /*gasTipCap*/
+			[]byte{},                    /*data*/
+			gethcore.AccessList{},       /*accessList*/
+			false,                       /*isFake*/
+		)
+		evmObj = p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		burnResp, e := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
 		if e != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", e)
 			return
@@ -614,12 +650,30 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 	// If funtoken is "IsMadeFromCoin", we own the ERC20 contract, so we can mint.
 	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
 	if funtoken.IsMadeFromCoin {
+		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
+		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&evm.EVM_MODULE_ADDRESS,
+			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			[]byte{},
+			gethcore.AccessList{},
+			false,
+		)
+		evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		_, err := p.evmKeeper.ERC20().Mint(
 			erc20Addr,
 			evm.EVM_MODULE_ADDRESS,
 			to,
 			amount,
 			ctx,
+			evmObj,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("mint erc20 error: %w", err)
@@ -631,8 +685,26 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 		if err != nil {
 			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
 		}
+
+		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
+		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&evm.EVM_MODULE_ADDRESS,
+			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			keeper.Erc20GasLimitExecute,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			[]byte{},
+			gethcore.AccessList{},
+			false,
+		)
+		evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		_, _, err = p.evmKeeper.ERC20().Transfer(
-			erc20Addr, evm.EVM_MODULE_ADDRESS, to, amount, ctx,
+			erc20Addr, evm.EVM_MODULE_ADDRESS, to, amount, ctx, evmObj,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erc20.transfer from module to user: %w", err)

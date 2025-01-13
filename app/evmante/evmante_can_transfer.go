@@ -63,7 +63,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			)
 		}
 
-		cfg := &statedb.EVMConfig{
+		evmCfg := statedb.EVMConfig{
 			ChainConfig: ethCfg,
 			Params:      params,
 			// Note that we use an empty coinbase here  because the field is not
@@ -76,7 +76,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			ctx,
 			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
 		)
-		evmInstance := ctd.EVMKeeper.NewEVM(ctx, coreMsg, cfg, evm.NewNoOpTracer(), stateDB)
+		evmInstance := ctd.EVMKeeper.NewEVM(ctx, coreMsg, evmCfg, evm.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter

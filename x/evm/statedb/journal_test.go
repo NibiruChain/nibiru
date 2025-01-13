@@ -24,12 +24,11 @@ import (
 
 func (s *Suite) TestComplexJournalChanges() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := evm.EVMBankDenom
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")
@@ -49,14 +48,14 @@ func (s *Suite) TestComplexJournalChanges() {
 	)
 	s.Require().NoError(err, deployResp)
 
-	contract := deployResp.ContractAddr
+	erc20Contract := deployResp.ContractAddr
 	to, amount := deps.Sender.EthAddr, big.NewInt(69_420)
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", to, amount)
 	s.Require().NoError(err)
 	_, evmObj, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		deps.Sender.EthAddr,
-		&contract,
+		&erc20Contract,
 		true,
 		input,
 		keeper.Erc20GasLimitExecute,
@@ -98,7 +97,7 @@ func (s *Suite) TestComplexJournalChanges() {
 		leftoverGas := serverconfig.DefaultEthCallGasLimit
 		_, _, err = evmObj.Call(
 			vm.AccountRef(deps.Sender.EthAddr),
-			contract,
+			erc20Contract,
 			input,
 			leftoverGas,
 			big.NewInt(0),
@@ -122,8 +121,8 @@ func (s *Suite) TestComplexJournalChanges() {
 		// 	}
 		// 	//
 		_, _, err = evmObj.Call(
-			vm.AccountRef(contract),
-			contract,
+			vm.AccountRef(erc20Contract),
+			erc20Contract,
 			input,
 			leftoverGas,
 			big.NewInt(0),
