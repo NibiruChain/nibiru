@@ -33,7 +33,7 @@ const (
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
-	wasmCodes := DeployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
+	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
 
 	instantiateArgs := []struct {
 		InstantiateMsg []byte
@@ -51,11 +51,10 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 
 	for i, wasmCode := range wasmCodes {
 		s.T().Logf("Instantiate using Wasm precompile: %s", wasmCode.binPath)
-		codeId := wasmCode.codeId
 
 		m := wasm.MsgInstantiateContract{
 			Admin:  "",
-			CodeID: codeId,
+			CodeID: wasmCode.codeId,
 			Label:  instantiateArgs[i].Label,
 			Msg:    instantiateArgs[i].InstantiateMsg,
 		}
@@ -78,7 +77,10 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		s.Require().NotEmpty(ethTxResp.Ret)
 
 		s.T().Log("Parse the response contract addr and response bytes")
-		vals, err := embeds.SmartContract_Wasm.ABI.Unpack(string(precompile.WasmMethod_instantiate), ethTxResp.Ret)
+		vals, err := embeds.SmartContract_Wasm.ABI.Unpack(
+			string(precompile.WasmMethod_instantiate),
+			ethTxResp.Ret,
+		)
 		s.Require().NoError(err)
 
 		contractAddr, err := sdk.AccAddressFromBech32(vals[0].(string))
@@ -89,9 +91,9 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	return contracts
 }
 
-// DeployWasmBytecode is a setup function that stores all Wasm bytecode used in
+// deployWasmBytecode is a setup function that stores all Wasm bytecode used in
 // the test suite.
-func DeployWasmBytecode(
+func deployWasmBytecode(
 	s *suite.Suite,
 	ctx sdk.Context,
 	sender sdk.AccAddress,
@@ -170,7 +172,7 @@ func AssertWasmCounterState(
 		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		true,
+		false,
 		WasmGasLimitQuery,
 		string(precompile.WasmMethod_query),
 		[]any{
@@ -185,6 +187,7 @@ func AssertWasmCounterState(
 
 	s.T().Log("Parse the response contract addr and response bytes")
 	s.T().Logf("ethTxResp.Ret: %s", ethTxResp.Ret)
+
 	var queryResp []byte
 	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
 		// Since there's only one return value, don't unpack as a slice.
@@ -197,7 +200,6 @@ func AssertWasmCounterState(
 	s.Require().NoError(err)
 	s.T().Logf("queryResp: %s", queryResp)
 
-	s.T().Log("Response is a JSON-encoded struct from the Wasm contract")
 	var wasmMsg wasm.RawContractMessage
 	s.NoError(json.Unmarshal(queryResp, &wasmMsg))
 	s.NoError(wasmMsg.ValidateBasic())
