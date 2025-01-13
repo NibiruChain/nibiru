@@ -26,7 +26,7 @@ import (
 )
 
 // ExecuteNibiTransfer executes nibi transfer
-func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
+func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, *evm.MsgEthereumTxResponse) {
 	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
 	recipient := NewEthPrivAcc().EthAddr
 
@@ -43,7 +43,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) *evm.MsgEthereumTx {
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
-	return ethTxMsg
+	return ethTxMsg, resp
 }
 
 type DeployContractResult struct {

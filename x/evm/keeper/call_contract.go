@@ -137,14 +137,13 @@ func (k Keeper) CallContractWithInput(
 		}
 		k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-		// TODO: remove after migrating logs
-		//err = k.EmitLogEvents(ctx, evmResp)
-		//if err != nil {
-		//	return nil, nil, errors.Wrap(err, "error emitting tx logs")
-		//}
 
-		// blockTxIdx := uint64(txConfig.TxIndex) + 1
-		// k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+		err = k.EmitLogEvents(ctx, evmResp)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "error emitting tx logs")
+		}
+		blockTxIdx := uint64(txConfig.TxIndex) + 1
+		k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 	}
 	return evmResp, evmObj, nil
 }
