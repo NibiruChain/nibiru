@@ -251,7 +251,11 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			}
 			ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
 			s.Require().NoError(err)
-			s.Require().Equal(fmt.Sprintf("%d", txIndex), ethereumTx.Index)
+			s.Require().Equal(
+				fmt.Sprintf("%d", txIndex),
+				ethereumTx.Index,
+				"tx index mismatch, %s", txInfo,
+			)
 		}
 	}
 	if expectedEthTx && !foundEthTx {
