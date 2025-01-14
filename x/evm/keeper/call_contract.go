@@ -142,8 +142,6 @@ func (k Keeper) CallContractWithInput(
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "error emitting tx logs")
 		}
-		blockTxIdx := uint64(txConfig.TxIndex) + 1
-		k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
 	}
 	return evmResp, evmObj, nil
 }

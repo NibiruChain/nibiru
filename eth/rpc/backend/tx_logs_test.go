@@ -203,6 +203,7 @@ func (s *BackendSuite) TestLogs() {
 	s.Require().NoError(err)
 	s.Require().NotNil(blockRes)
 	txIndex := 0
+	ethTxIndex := 0
 	for idx, check := range checks {
 		if txIndex+1 > len(blockRes.TxsResults) {
 			blockNumber++
@@ -210,12 +211,16 @@ func (s *BackendSuite) TestLogs() {
 				s.Fail("TX %d not found in block results", idx)
 			}
 			txIndex = 0
+			ethTxIndex = 0
 			blockRes, err = s.backend.TendermintBlockResultByNumber(&blockNumber)
 			s.Require().NoError(err)
 			s.Require().NotNil(blockRes)
 		}
-		s.assertTxLogsAndTxIndex(blockRes, txIndex, check.logs, check.expectEthTx, check.txInfo)
+		s.assertTxLogsAndTxIndex(blockRes, txIndex, ethTxIndex, check.logs, check.expectEthTx, check.txInfo)
 		txIndex++
+		if check.expectEthTx {
+			ethTxIndex++
+		}
 	}
 }
 
@@ -223,6 +228,7 @@ func (s *BackendSuite) TestLogs() {
 func (s *BackendSuite) assertTxLogsAndTxIndex(
 	blockRes *tmrpctypes.ResultBlockResults,
 	txIndex int,
+	ethTxIndex int,
 	expectedTxLogs []*gethcore.Log,
 	expectedEthTx bool,
 	txInfo string,
@@ -252,7 +258,7 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
 			s.Require().NoError(err)
 			s.Require().Equal(
-				fmt.Sprintf("%d", txIndex),
+				fmt.Sprintf("%d", ethTxIndex),
 				ethereumTx.Index,
 				"tx index mismatch, %s", txInfo,
 			)
