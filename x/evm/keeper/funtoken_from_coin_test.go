@@ -255,6 +255,8 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().NoError(err)
 	s.Require().Equal("0", balance.String())
 
+	deps.ResetGasMeter()
+
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
