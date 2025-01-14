@@ -8,6 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -62,15 +64,36 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		resp *evm.MsgEthereumTxResponse,
 		err error,
 	) {
-		return deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_queryExchangeRate),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		txConfig := deps.EvmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(ctx, txConfig)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&evm.EVM_MODULE_ADDRESS,
+			deps.EvmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			OracleGasLimitQuery,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			false,
+		)
+		evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		return deps.EvmKeeper.CallContractWithInput(
 			ctx,
-			embeds.SmartContract_Oracle.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
+			contractInput,
 			OracleGasLimitQuery,
-			"queryExchangeRate",
-			"unibi:uusd",
 		)
 	}
 
@@ -121,15 +144,37 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		ctx := deps.Ctx.
 			WithBlockTime(secondsLater).
 			WithBlockHeight(deps.Ctx.BlockHeight() + 50)
-		resp, err := deps.EvmKeeper.CallContract(
+
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_chainLinkLatestRoundData),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		txConfig := deps.EvmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+		stateDB := deps.EvmKeeper.NewStateDB(ctx, txConfig)
+		evmCfg := deps.EvmKeeper.GetEVMConfig(ctx)
+		evmMsg := gethcore.NewMessage(
+			evm.EVM_MODULE_ADDRESS,
+			&evm.EVM_MODULE_ADDRESS,
+			deps.EvmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+			big.NewInt(0),
+			OracleGasLimitQuery,
+			big.NewInt(0),
+			big.NewInt(0),
+			big.NewInt(0),
+			contractInput,
+			gethcore.AccessList{},
+			false,
+		)
+		evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		resp, err := deps.EvmKeeper.CallContractWithInput(
 			ctx,
-			embeds.SmartContract_Oracle.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
+			contractInput,
 			OracleGasLimitQuery,
-			"chainLinkLatestRoundData",
-			"unibi:uusd",
 		)
 		s.NoError(err)
 

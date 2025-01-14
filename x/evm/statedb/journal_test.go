@@ -8,9 +8,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/common"
@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -52,8 +53,26 @@ func (s *Suite) TestComplexJournalChanges() {
 	to, amount := deps.Sender.EthAddr, big.NewInt(69_420)
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", to, amount)
 	s.Require().NoError(err)
-	_, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		keeper.Erc20GasLimitExecute,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		input,
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
+		evmObj,
 		deps.Sender.EthAddr,
 		&erc20Contract,
 		true,

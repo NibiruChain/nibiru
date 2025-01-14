@@ -6,9 +6,12 @@ import (
 	"math/big"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -48,19 +51,39 @@ func (s *WasmSuite) TestExecuteHappy() {
 	err = json.Unmarshal(fundsJson, &funds)
 	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_execute),
+		wasmContract.String(),
+		msgArgsBz,
+		funds,
+	)
+	s.Require().NoError(err)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		evmtest.FunTokenGasLimitSendToEvm,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitExecute,
-		string(precompile.WasmMethod_execute),
-		[]any{
-			wasmContract.String(),
-			msgArgsBz,
-			funds,
-		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -79,19 +102,14 @@ func (s *WasmSuite) TestExecuteHappy() {
 	}
 	`, coinDenom, deps.Sender.NibiruAddr))
 
-	ethTxResp, err = deps.EvmKeeper.CallContract(
+	ethTxResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitExecute,
-		string(precompile.WasmMethod_execute),
-		[]any{
-			wasmContract.String(),
-			msgArgsBz,
-			funds,
-		}...,
 	)
 
 	s.Require().NoError(err)
@@ -137,18 +155,38 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 ) {
 	deps.ResetGasMeter()
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_queryRaw),
+		wasmContract.String(),
+		[]byte(`state`),
+	)
+	s.Require().NoError(err)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		WasmGasLimitQuery,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitQuery,
-		string(precompile.WasmMethod_queryRaw),
-		[]any{
-			wasmContract.String(),
-			[]byte(`state`),
-		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -310,15 +348,37 @@ func (s *WasmSuite) TestSadArgsExecute() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 
-			ethTxResp, err := deps.EvmKeeper.CallContract(
+			contractInput, err := abi.Pack(
+				string(tc.methodName),
+				tc.callArgs...,
+			)
+			s.Require().NoError(err)
+			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+			evmMsg := gethcore.NewMessage(
+				evm.EVM_MODULE_ADDRESS,
+				&evm.EVM_MODULE_ADDRESS,
+				deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+				big.NewInt(0),
+				WasmGasLimitExecute,
+				big.NewInt(0),
+				big.NewInt(0),
+				big.NewInt(0),
+				contractInput,
+				gethcore.AccessList{},
+				false,
+			)
+			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
-				abi,
+				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
+				contractInput,
 				WasmGasLimitExecute,
-				string(tc.methodName),
-				tc.callArgs...,
 			)
 
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
@@ -443,15 +503,36 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			ethTxResp, err := deps.EvmKeeper.CallContract(
+			contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+				string(precompile.WasmMethod_executeMulti),
+				tc.executeMsgs,
+			)
+			s.Require().NoError(err)
+			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+			evmMsg := gethcore.NewMessage(
+				evm.EVM_MODULE_ADDRESS,
+				&evm.EVM_MODULE_ADDRESS,
+				deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+				big.NewInt(0),
+				WasmGasLimitExecute,
+				big.NewInt(0),
+				big.NewInt(0),
+				big.NewInt(0),
+				contractInput,
+				gethcore.AccessList{},
+				false,
+			)
+			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
-				embeds.SmartContract_Wasm.ABI,
+				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
+				contractInput,
 				WasmGasLimitExecute,
-				string(precompile.WasmMethod_executeMulti),
-				[]any{tc.executeMsgs}...,
 			)
 
 			if tc.wantError != "" {
@@ -489,15 +570,36 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		},
 	}
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_executeMulti),
+		executeMsgs,
+	)
+	s.Require().NoError(err)
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		WasmGasLimitExecute,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		contractInput,
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitExecute,
-		string(precompile.WasmMethod_executeMulti),
-		[]any{executeMsgs}...,
 	)
 
 	// Verify that the call failed

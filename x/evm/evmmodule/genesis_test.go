@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -15,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 type Suite struct {
@@ -53,12 +55,30 @@ func (s *Suite) TestExportInitGenesis() {
 	)
 	s.Require().NoError(err)
 
+	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
+	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&evm.EVM_MODULE_ADDRESS,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0),
+		keeper.Erc20GasLimitExecute,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		[]byte{},
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
 	// Transfer ERC-20 tokens to user A
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx)
+	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user B
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx)
+	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 
 	// Create fungible token from bank coin
