@@ -68,14 +68,14 @@ See [nibiru/x/evm/embeds].
 [nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/v2/tree/main/x/evm/embeds
 */
 func (e erc20Calls) Mint(
-	contract, from, to gethcommon.Address, amount *big.Int,
+	erc20Contract, sender, recipient gethcommon.Address, amount *big.Int,
 	ctx sdk.Context, evmObj *vm.EVM,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	contractInput, err := e.ABI.Pack("mint", to, amount)
+	contractInput, err := e.ABI.Pack("mint", recipient, amount)
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, from, &contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
 /*

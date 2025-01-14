@@ -19,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -647,26 +648,28 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 	amount *big.Int,
 	funtoken evm.FunToken,
 ) (*big.Int, error) {
+	// create a new StateDB and EVM object
+	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+	stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
+	evmCfg := p.evmKeeper.GetEVMConfig(ctx)
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS, /*from*/
+		&erc20Addr,             /*to*/
+		p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS), /*nonce*/
+		big.NewInt(0),               /*value*/
+		keeper.Erc20GasLimitExecute, /*gasLimit*/
+		big.NewInt(0),               /*gasPrice*/
+		big.NewInt(0),               /*gasTipCap*/
+		big.NewInt(0),               /*gasFeeCap*/
+		[]byte{},                    /*input*/
+		gethcore.AccessList{},       /*accessList*/
+		false,                       /*commit*/
+	)
+	evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+
 	// If funtoken is "IsMadeFromCoin", we own the ERC20 contract, so we can mint.
 	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
 	if funtoken.IsMadeFromCoin {
-		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
-		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS,
-			&evm.EVM_MODULE_ADDRESS,
-			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-			big.NewInt(0),
-			keeper.Erc20GasLimitExecute,
-			big.NewInt(0),
-			big.NewInt(0),
-			big.NewInt(0),
-			[]byte{},
-			gethcore.AccessList{},
-			false,
-		)
-		evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		_, err := p.evmKeeper.ERC20().Mint(
 			erc20Addr,
 			evm.EVM_MODULE_ADDRESS,
@@ -681,44 +684,13 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 		// For an owner-minted contract, the entire `amount` is minted.
 		return amount, nil
 	} else {
-		balBefore, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
-		if err != nil {
-			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
-		}
-
-		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
-		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS,
-			&evm.EVM_MODULE_ADDRESS,
-			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-			big.NewInt(0),
-			keeper.Erc20GasLimitExecute,
-			big.NewInt(0),
-			big.NewInt(0),
-			big.NewInt(0),
-			[]byte{},
-			gethcore.AccessList{},
-			false,
-		)
-		evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-		_, _, err = p.evmKeeper.ERC20().Transfer(
+		balanceIncrease, _, err := p.evmKeeper.ERC20().Transfer(
 			erc20Addr, evm.EVM_MODULE_ADDRESS, to, amount, ctx, evmObj,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erc20.transfer from module to user: %w", err)
 		}
-
-		balAfter, err := p.evmKeeper.ERC20().BalanceOf(erc20Addr, to, ctx)
-		if err != nil {
-			return nil, fmt.Errorf("balanceOf to check erc20 error: %w", err)
-		}
-		actualReceived := new(big.Int).Sub(balAfter, balBefore)
-		if actualReceived.Sign() <= 0 {
-			return nil, fmt.Errorf("failed: no tokens were actually unescrowed")
-		}
-		return actualReceived, nil
+		return balanceIncrease, nil
 	}
 }
 
