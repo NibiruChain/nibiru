@@ -40,7 +40,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 
 		baseFeeWeiPerGas := evm.NativeToWei(ctd.EVMKeeper.BaseFeeMicronibiPerGas(ctx))
 
-		coreMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
+		evmMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
 		if err != nil {
 			return ctx, errors.Wrapf(
 				err,
@@ -59,9 +59,14 @@ func (ctd CanTransferDecorator) AnteHandle(
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"gas fee cap (wei) less than block base fee (wei); (%s < %s)",
-				coreMsg.GasFeeCap(), baseFeeWeiPerGas,
+				evmMsg.GasFeeCap(), baseFeeWeiPerGas,
 			)
 		}
+
+		stateDB := ctd.NewStateDB(
+			ctx,
+			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
+		)
 
 		evmCfg := statedb.EVMConfig{
 			ChainConfig: ethCfg,
@@ -71,24 +76,19 @@ func (ctd CanTransferDecorator) AnteHandle(
 			BlockCoinbase: gethcommon.Address{},
 			BaseFeeWei:    baseFeeWeiPerGas,
 		}
-
-		stateDB := ctd.NewStateDB(
-			ctx,
-			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
-		)
-		evmInstance := ctd.EVMKeeper.NewEVM(ctx, coreMsg, evmCfg, evm.NewNoOpTracer(), stateDB)
+		evmObj := ctd.EVMKeeper.NewEVM(ctx, evmMsg, evmCfg, evm.NewNoOpTracer(), stateDB)
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
-		if coreMsg.Value().Sign() > 0 &&
-			!evmInstance.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
-			balanceWei := stateDB.GetBalance(coreMsg.From())
+		if evmMsg.Value().Sign() > 0 &&
+			!evmObj.Context.CanTransfer(stateDB, evmMsg.From(), evmMsg.Value()) {
+			balanceWei := stateDB.GetBalance(evmMsg.From())
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFunds,
 				"failed to transfer %s wei (balance=%s) from address %s using the EVM block context transfer function",
-				coreMsg.Value(),
+				evmMsg.Value(),
 				balanceWei,
-				coreMsg.From(),
+				evmMsg.From(),
 			)
 		}
 	}

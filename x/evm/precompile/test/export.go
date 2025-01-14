@@ -65,6 +65,11 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_instantiate),
+			m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{},
+		)
+		s.NoError(err)
 		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
 		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
 		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
@@ -77,22 +82,20 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 			big.NewInt(0),
 			big.NewInt(0),
 			big.NewInt(0),
-			[]byte{},
+			contractInput,
 			gethcore.AccessList{},
 			false,
 		)
 		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 
-		ethTxResp, err := deps.EvmKeeper.CallContract(
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
-			embeds.SmartContract_Wasm.ABI,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
 			true,
+			contractInput,
 			WasmGasLimitInstantiate,
-			string(precompile.WasmMethod_instantiate),
-			[]any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}...,
 		)
 
 		s.Require().NoError(err)
@@ -189,6 +192,12 @@ func AssertWasmCounterState(
 		}
 `)
 
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_query),
+		wasmContract.String(),
+		msgArgsBz,
+	)
+	s.Require().NoError(err)
 	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
 	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
@@ -201,26 +210,20 @@ func AssertWasmCounterState(
 		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
-		[]byte{},
+		contractInput,
 		gethcore.AccessList{},
 		false,
 	)
 	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		embeds.SmartContract_Wasm.ABI,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		false,
+		contractInput,
 		WasmGasLimitQuery,
-		string(precompile.WasmMethod_query),
-		[]any{
-			// string memory contractAddr
-			wasmContract.String(),
-			// bytes memory req
-			msgArgsBz,
-		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)

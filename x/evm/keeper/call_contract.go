@@ -7,46 +7,12 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
-
-// CallContract invokes a smart contract on the method specified by [methodName]
-// using the given [args].
-//
-// Parameters:
-//   - ctx: The SDK context for the transaction.
-//   - abi: The ABI (Application Binary Interface) of the smart contract.
-//   - fromAcc: The Ethereum address of the account initiating the contract call.
-//   - contract: Pointer to the Ethereum address of the contract to be called.
-//   - commit: Boolean flag indicating whether to commit the transaction (true) or simulate it (false).
-//   - methodName: The name of the contract method to be called.
-//   - args: Variadic parameter for the arguments to be passed to the contract method.
-//
-// Note: This function handles both contract method calls and simulations,
-// depending on the 'commit' parameter.
-func (k Keeper) CallContract(
-	ctx sdk.Context,
-	evmObj *vm.EVM,
-	abi *gethabi.ABI,
-	fromAcc gethcommon.Address,
-	contract *gethcommon.Address,
-	commit bool,
-	gasLimit uint64,
-	methodName string,
-	args ...any,
-) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	contractInput, err := abi.Pack(methodName, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pack ABI args: %w", err)
-	}
-	evmResp, err = k.CallContractWithInput(ctx, evmObj, fromAcc, contract, commit, contractInput, gasLimit)
-	return evmResp, err
-}
 
 // CallContractWithInput invokes a smart contract with the given [contractInput]
 // or deploys a new contract.
