@@ -435,7 +435,6 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	fmt.Println(funtoken)
 	erc20Addr := funtoken.Erc20Addr.Address
 
 	s.T().Log("2) Fund the sender with some ulibi on the bank side")

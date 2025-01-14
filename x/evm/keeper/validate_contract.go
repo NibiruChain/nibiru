@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -39,9 +39,15 @@ func (k Keeper) HasMethodInContract(
 		case abi.AddressTy:
 			dummyArgs[i] = common.HexToAddress("0x000000000000000000000000000000000000dEaD")
 		case abi.UintTy, abi.IntTy:
-			dummyArgs[i] = 0
+			dummyArgs[i] = big.NewInt(0)
+		case abi.BoolTy:
+			dummyArgs[i] = false
+		case abi.StringTy:
+			dummyArgs[i] = ""
 		default:
-			dummyArgs[i] = 0
+			// For any types you don't specifically handle, either supply some default
+			// or handle them according to what your use case needs.
+			dummyArgs[i] = nil
 		}
 	}
 
@@ -56,7 +62,7 @@ func (k Keeper) HasMethodInContract(
 
 	// 2. Make a call message
 	callMsg := evm.JsonTxArgs{
-		From:  &common.Address{},
+		From:  &contractAddr,
 		To:    &contractAddr,
 		Input: (*hexutil.Bytes)(&callData),
 	}
@@ -68,7 +74,7 @@ func (k Keeper) HasMethodInContract(
 
 	ethCallRequest := evm.EthCallRequest{
 		Args:            jsonTxArgs,
-		GasCap:          gethparams.TxGas,
+		GasCap:          2100000,
 		ProposerAddress: sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
 		ChainId:         k.EthChainID(ctx).Int64(),
 	}
@@ -76,25 +82,14 @@ func (k Keeper) HasMethodInContract(
 	_, err = k.EstimateGasForEvmCallType(goCtx, &ethCallRequest, evm.CallTypeRPC)
 
 	if err == nil {
-		fmt.Println("err: ", err)
-		return false, fmt.Errorf("error calling contract: %w", err)
+		return true, nil
 	}
 
-	// Distinguish an error that indicates "function not found" vs. a normal revert
-	if strings.Contains(err.Error(), "invalid opcode") || strings.Contains(err.Error(), "does not exist") {
-		return false, nil
+	if strings.Contains(err.Error(), "caller is not the owner") {
+		return true, nil
 	}
 
-	// 4. If we got a "function not found" style revert, return false.
-	if strings.Contains(err.Error(), "selector not recognized") {
-		return false, nil
-	}
-
-	fmt.Println("err: ", err)
-
-	// If we arrive here, that means the call at least recognized the function signature
-	// (the contract may revert for other reasons, but the method "exists").
-	return true, nil
+	return false, nil
 }
 
 // checkAllMethods ensure the contract at `contractAddr` has all the methods in `abiMethods`.

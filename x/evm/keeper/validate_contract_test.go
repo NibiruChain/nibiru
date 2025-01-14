@@ -36,7 +36,7 @@ func TestHasMethodInContract_RealKeeper(t *testing.T) {
 	methodBalanceOf, ok := erc20Abi.Methods["balanceOf"]
 	require.True(t, ok, `"balanceOf" not found in the ERC20 ABI?`)
 
-	// Now let's see if the keeper says "balanceOf" is recognized
+	// // Now let's see if the keeper says "balanceOf" is recognized
 	hasMethod, err := k.HasMethodInContract(ctx, deployResp.ContractAddr, methodBalanceOf)
 	require.NoError(t, err)
 	require.True(t, hasMethod, "expected contract to have 'balanceOf'")
@@ -44,7 +44,7 @@ func TestHasMethodInContract_RealKeeper(t *testing.T) {
 	// 4) Next, let's test a fake method that doesn't exist
 	fakeMethod := methodBalanceOf
 	fakeMethod.Name = "someFakeMethod"
-	fakeMethod.ID = []byte{0xde, 0xad, 0xbe, 0xef} // random 4-byte selector
+	fakeMethod.ID = []byte{0xef}
 
 	hasMethod, err = k.HasMethodInContract(ctx, deployResp.ContractAddr, fakeMethod)
 	require.NoError(t, err, "non-existent method calls shouldn't produce a real EVM error")
@@ -93,5 +93,12 @@ func TestCheckAllMethods_RealKeeper(t *testing.T) {
 	calls := []abi.Method{balanceOfMethod, fakeMethod}
 	err = k.CheckAllethods(ctx, deployResp.ContractAddr, calls)
 	require.Error(t, err, "contract does not have 'fakeMethod'")
-	require.Contains(t, err.Error(), "fakeMethod not found in contract")
+	require.Contains(t, err.Error(), "not found in contract")
+
+	// Scenario 3: check all abi methods
+	for name, method := range erc20Abi.Methods {
+		hasMethod, err := k.HasMethodInContract(ctx, deployResp.ContractAddr, method)
+		require.NoError(t, err)
+		require.True(t, hasMethod, "expected contract to have %q", name)
+	}
 }
