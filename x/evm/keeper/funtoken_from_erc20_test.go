@@ -43,8 +43,8 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	s.Require().NoError(err)
 	s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
 
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	actualMetadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr)
 	s.Require().NoError(err)
@@ -189,8 +189,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	)
 	s.Require().NoError(err)
 
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.T().Log("CreateFunToken for the ERC20")
 	resp, err := deps.EvmKeeper.CreateFunToken(
@@ -498,8 +498,8 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
 
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.T().Log("Deploy ERC20")
 	metadata := keeper.ERC20Metadata{

@@ -161,7 +161,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.T().Log("set up evmObj")
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.T().Log("Call IFunToken.bankBalance()")
 	s.Run("IFunToken.bankBalance()", func() {
@@ -294,7 +294,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 	s.T().Log("create evmObj")
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 
 	s.T().Log("Fund sender's wallet")
 	s.Require().NoError(testapp.FundAccount(
@@ -386,7 +386,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 
 	s.T().Log("create evmObj")
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
@@ -521,8 +521,8 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	deps := evmtest.NewTestDeps()
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	// Fund user so they can create funtoken from an ERC20
 	createFunTokenFee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx)
@@ -580,7 +580,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		}...,
 	)
 	s.Require().NoError(err)
-	_, resp, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input, bob)
+	resp, err := deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx,
+		evmObj,
+		bob.EthAddr,
+		&precompile.PrecompileAddr_FunToken,
+		true,
+		input,
+		evmtest.FunTokenGasLimitSendToEvm,
+	)
 	s.Require().NoError(err)
 	s.Require().Empty(resp.VmError)
 
@@ -604,9 +612,17 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		}...,
 	)
 	s.Require().NoError(err)
-	_, resp2, err := evmtest.CallContractTx(&deps, precompile.PrecompileAddr_FunToken, input2, alice)
+	resp, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx,
+		evmObj,
+		alice.EthAddr,
+		&precompile.PrecompileAddr_FunToken,
+		true,
+		input2,
+		evmtest.FunTokenGasLimitSendToEvm,
+	)
 	s.Require().NoError(err)
-	s.Require().Empty(resp2.VmError)
+	s.Require().Empty(resp.VmError)
 
 	// no bank side left for alice
 	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, bankBal.Denom).Amount.BigInt()

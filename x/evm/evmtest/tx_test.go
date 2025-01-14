@@ -5,68 +5,11 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
-
-func (s *Suite) TestCallContractTx() {
-	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-
-	s.T().Log("Deploy some ERC20")
-	deployArgs := []any{"name", "SYMBOL", uint8(18)}
-	deployResp, err := evmtest.DeployContract(
-		&deps,
-		embeds.SmartContract_ERC20Minter,
-		deployArgs...,
-	)
-	s.Require().NoError(err, deployResp)
-	contractAddr := crypto.CreateAddress(deps.Sender.EthAddr, deployResp.Nonce)
-	gotContractAddr := deployResp.ContractAddr
-	s.Require().Equal(contractAddr, gotContractAddr)
-
-	s.T().Log("expect zero balance")
-	{
-		evmtest.AssertERC20BalanceEqualWithDescription(
-			s.T(), deps, evmObj, contractAddr, deps.Sender.EthAddr, big.NewInt(0), "expect zero balance",
-		)
-	}
-
-	abi := deployResp.ContractData.ABI
-	s.T().Log("mint some tokens")
-	{
-		amount := big.NewInt(69_420)
-		to := deps.Sender.EthAddr
-		callArgs := []any{to, amount}
-		input, err := abi.Pack(
-			"mint", callArgs...,
-		)
-		s.Require().NoError(err)
-		_, resp, err := evmtest.CallContractTx(
-			&deps,
-			contractAddr,
-			input,
-			deps.Sender,
-		)
-		s.Require().NoError(err)
-		s.Require().Empty(resp.VmError)
-	}
-
-	s.T().Log("expect nonzero balance")
-	{
-		evmtest.AssertERC20BalanceEqualWithDescription(
-			s.T(), deps, evmObj, contractAddr, deps.Sender.EthAddr, big.NewInt(69_420), "expect nonzero balance",
-		)
-	}
-}
 
 func (s *Suite) TestTransferWei() {
 	deps := evmtest.NewTestDeps()

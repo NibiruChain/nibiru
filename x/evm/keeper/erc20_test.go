@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -19,7 +18,7 @@ func (s *Suite) TestERC20Calls() {
 
 	s.T().Log("create evmObj")
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		_, err := deps.EvmKeeper.ERC20().Mint(

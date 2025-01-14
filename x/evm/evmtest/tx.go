@@ -142,34 +142,6 @@ func DeployAndExecuteERC20Transfer(
 	return erc20Transfer, predecessors, contractAddr
 }
 
-func CallContractTx(
-	deps *TestDeps,
-	contractAddr gethcommon.Address,
-	input []byte,
-	sender EthPrivKeyAcc,
-) (ethTxMsg *evm.MsgEthereumTx, resp *evm.MsgEthereumTxResponse, err error) {
-	nonce := deps.NewStateDB().GetNonce(sender.EthAddr)
-	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(evm.JsonTxArgs{
-		From:  &sender.EthAddr,
-		To:    &contractAddr,
-		Nonce: (*hexutil.Uint64)(&nonce),
-		Data:  (*hexutil.Bytes)(&input),
-	}, deps, sender)
-	if err != nil {
-		err = fmt.Errorf("CallContract error during tx generation: %w", err)
-		return
-	}
-
-	err = ethTxMsg.Sign(gethSigner, krSigner)
-	if err != nil {
-		err = fmt.Errorf("CallContract error during signature: %w", err)
-		return
-	}
-
-	resp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
-	return ethTxMsg, resp, err
-}
-
 var DefaultEthCallGasLimit = srvconfig.DefaultEthCallGasLimit
 
 // GenerateEthTxMsgAndSigner estimates gas, sets gas limit and returns signer for
@@ -385,3 +357,17 @@ func NewEthTxMsgFromTxData(
 	ethTxMsg.From = deps.Sender.EthAddr.Hex()
 	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
 }
+
+var MOCK_GETH_MESSAGE = gethcore.NewMessage(
+	evm.EVM_MODULE_ADDRESS,
+	nil,
+	0,
+	big.NewInt(0),
+	0,
+	big.NewInt(0),
+	big.NewInt(0),
+	big.NewInt(0),
+	[]byte{},
+	gethcore.AccessList{},
+	false,
+)
