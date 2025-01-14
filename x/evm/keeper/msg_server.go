@@ -297,6 +297,7 @@ func (k *Keeper) ApplyEvmMsg(ctx sdk.Context,
 	}
 
 	sender := vm.AccountRef(msg.From())
+
 	contractCreation := msg.To() == nil
 
 	intrinsicGas, err := core.IntrinsicGas(
