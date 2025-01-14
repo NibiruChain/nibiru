@@ -8,10 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // FindERC20Metadata retrieves the metadata of an ERC20 token.
@@ -25,20 +28,21 @@ import (
 //   - err: An error if metadata retrieval fails.
 func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
+	evmObj *vm.EVM,
 	contract gethcommon.Address,
 ) (info *ERC20Metadata, err error) {
 	// Load name, symbol, decimals
-	name, err := k.LoadERC20Name(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	name, err := k.ERC20().LoadERC20Name(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	symbol, err := k.LoadERC20Symbol(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	symbol, err := k.ERC20().LoadERC20Symbol(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	decimals, err := k.LoadERC20Decimals(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	decimals, err := k.ERC20().LoadERC20Decimals(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +118,10 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 
 	// 2 | Get existing ERC20 metadata
-	erc20Info, err := k.FindERC20Metadata(ctx, erc20)
+	// We use dummy values for the tx config and evm config because we aren't in an actual end user transaction, it's just a state query.
+	stateDB := k.NewStateDB(ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(ctx.HeaderHash())))
+	evmObj := k.NewEVM(ctx, gethcore.Message{}, k.GetEVMConfig(ctx), evm.NewNoOpTracer(), stateDB)
+	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20)
 	if err != nil {
 		return funtoken, err
 	}

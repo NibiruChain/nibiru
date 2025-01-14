@@ -49,7 +49,7 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 	return deps.EvmKeeper.NewStateDB(
 		deps.Ctx,
 		statedb.NewEmptyTxConfig(
-			gethcommon.BytesToHash(deps.Ctx.HeaderHash().Bytes()),
+			gethcommon.BytesToHash(deps.Ctx.HeaderHash()),
 		),
 	)
 }

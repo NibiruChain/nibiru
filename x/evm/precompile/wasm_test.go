@@ -114,9 +114,8 @@ func (s *WasmSuite) TestExecuteHappy() {
 
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
-	evmtest.AssertBankBalanceEqual(
-		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420),
-	)
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance")
 }
 
 func (s *WasmSuite) TestExecuteMultiHappy() {

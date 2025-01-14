@@ -50,10 +50,6 @@ func (s *Suite) TestExportInitGenesis() {
 	deployResp, err := evmtest.DeployContract(&deps, erc20Contract)
 	s.Require().NoError(err)
 	erc20Addr := deployResp.ContractAddr
-	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
-		deps.Ctx, erc20Contract.ABI, erc20Addr, "totalSupply",
-	)
-	s.Require().NoError(err)
 
 	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
@@ -72,6 +68,10 @@ func (s *Suite) TestExportInitGenesis() {
 		false,
 	)
 	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
+		deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
+	)
+	s.Require().NoError(err)
 
 	// Transfer ERC-20 tokens to user A
 	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx, evmObj)
@@ -82,7 +82,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 
 	// Create fungible token from bank coin
-	funToken := evmtest.CreateFunTokenForBankCoin(&deps, "unibi", &s.Suite)
+	funToken := evmtest.CreateFunTokenForBankCoin(deps, "unibi", &s.Suite)
 	s.Require().NoError(err)
 	funTokenAddr := funToken.Erc20Addr.Address
 
@@ -118,15 +118,15 @@ func (s *Suite) TestExportInitGenesis() {
 	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	// Verify erc20 balances for users A, B and sender
-	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx)
+	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Equal(amountToSendA, balance)
 
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserB, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserB, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Equal(amountToSendB, balance)
 
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, fromUser, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, fromUser, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Equal(
 		new(big.Int).Sub(totalSupply, big.NewInt(amountToSendA.Int64()+amountToSendB.Int64())),
@@ -142,7 +142,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().True(funTokens[0].IsMadeFromCoin)
 
 	// Check that fungible token balance of user C is correct
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenAddr, toUserC, deps.Ctx)
+	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funTokenAddr, toUserC, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Equal(amountToSendC, balance)
 }

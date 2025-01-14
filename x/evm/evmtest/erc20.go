@@ -7,27 +7,63 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-func AssertERC20BalanceEqual(
+func AssertERC20BalanceEqualWithDescription(
 	t *testing.T,
 	deps TestDeps,
+	evmObj *vm.EVM,
 	erc20, account gethcommon.Address,
 	expectedBalance *big.Int,
+	description string,
 ) {
-	AssertERC20BalanceEqualWithDescription(t, deps, erc20, account, expectedBalance, "")
+	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx, evmObj)
+	var errSuffix string
+	if description == "" {
+		errSuffix = description
+	} else {
+		errSuffix = ": " + description
+	}
+	assert.NoError(t, err, errSuffix)
+	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
+		"expected %s, got %s", expectedBalance, actualBalance,
+		errSuffix,
+	)
+}
+
+func AssertBankBalanceEqualWithDescription(
+	t *testing.T,
+	deps TestDeps,
+	denom string,
+	account gethcommon.Address,
+	expectedBalance *big.Int,
+	description string,
+) {
+	bech32Addr := eth.EthAddrToNibiruAddr(account)
+	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
+	var errSuffix string
+	if description == "" {
+		errSuffix = description
+	} else {
+		errSuffix = ": " + description
+	}
+	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
+		"expected %s, got %s", expectedBalance, actualBalance, errSuffix)
 }
 
 // CreateFunTokenForBankCoin: Uses the "TestDeps.Sender" account to create a
 // "FunToken" mapping for a new coin
 func CreateFunTokenForBankCoin(
-	deps *TestDeps, bankDenom string, s *suite.Suite,
+	deps TestDeps, bankDenom string, s *suite.Suite,
 ) (funtoken evm.FunToken) {
 	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
 		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
@@ -86,18 +122,6 @@ func CreateFunTokenForBankCoin(
 	return funtoken
 }
 
-func AssertBankBalanceEqual(
-	t *testing.T,
-	deps TestDeps,
-	denom string,
-	account gethcommon.Address,
-	expectedBalance *big.Int,
-) {
-	AssertBankBalanceEqualWithDescription(
-		t, deps, denom, account, expectedBalance, "",
-	)
-}
-
 // BigPow multiplies "amount" by 10 to the "pow10Exp".
 func BigPow(amount *big.Int, pow10Exp uint8) (powAmount *big.Int) {
 	pow10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(pow10Exp)), nil)
@@ -113,55 +137,16 @@ type FunTokenBalanceAssert struct {
 }
 
 func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps) {
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	AssertERC20BalanceEqualWithDescription(
-		t, deps, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
+		t, deps, evmObj, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
 		bals.Description,
 	)
 	AssertBankBalanceEqualWithDescription(
 		t, deps, bals.FunToken.BankDenom, bals.Account, bals.BalanceBank,
 		bals.Description,
 	)
-}
-
-func AssertERC20BalanceEqualWithDescription(
-	t *testing.T,
-	deps TestDeps,
-	erc20, account gethcommon.Address,
-	expectedBalance *big.Int,
-	description string,
-) {
-	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx)
-	var errSuffix string
-	if description == "" {
-		errSuffix = description
-	} else {
-		errSuffix = ": " + description
-	}
-	assert.NoError(t, err, errSuffix)
-	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
-		"expected %s, got %s", expectedBalance, actualBalance,
-		errSuffix,
-	)
-}
-
-func AssertBankBalanceEqualWithDescription(
-	t *testing.T,
-	deps TestDeps,
-	denom string,
-	account gethcommon.Address,
-	expectedBalance *big.Int,
-	description string,
-) {
-	bech32Addr := eth.EthAddrToNibiruAddr(account)
-	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
-	var errSuffix string
-	if description == "" {
-		errSuffix = description
-	} else {
-		errSuffix = ": " + description
-	}
-	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
-		"expected %s, got %s", expectedBalance, actualBalance, errSuffix)
 }
 
 const (

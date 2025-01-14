@@ -74,7 +74,7 @@ func (p precompileFunToken) Run(
 	case FunTokenMethod_sendToBank:
 		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly)
 	case FunTokenMethod_balance:
-		bz, err = p.balance(startResult, contract)
+		bz, err = p.balance(startResult, contract, evm)
 	case FunTokenMethod_bankBalance:
 		bz, err = p.bankBalance(startResult, contract)
 	case FunTokenMethod_whoAmI:
@@ -329,6 +329,7 @@ func (p precompileFunToken) parseArgsSendToBank(args []any) (
 func (p precompileFunToken) balance(
 	start OnRunStartResult,
 	contract *vm.Contract,
+	evmObj *vm.EVM,
 ) (bz []byte, err error) {
 	method, args, ctx := start.Method, start.Args, start.CacheCtx
 	defer func() {
@@ -346,7 +347,7 @@ func (p precompileFunToken) balance(
 		return
 	}
 
-	erc20Bal, err := p.evmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, addrEth, ctx)
+	erc20Bal, err := p.evmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, addrEth, ctx, evmObj)
 	if err != nil {
 		return
 	}
@@ -622,7 +623,11 @@ func (p precompileFunToken) sendToEvm(
 	// 2) mint (or unescrow) the ERC20
 	erc20Addr := funtoken.Erc20Addr.Address
 	actualAmt, err := p.mintOrUnescrowERC20(
-		ctx, erc20Addr, toEthAddr, coinToSend.Amount.BigInt(), funtoken,
+		ctx,
+		erc20Addr,                  /*erc20Contract*/
+		toEthAddr,                  /*to*/
+		coinToSend.Amount.BigInt(), /*amount*/
+		funtoken,                   /*funtoken*/
 	)
 	if err != nil {
 		return nil, err
@@ -671,9 +676,9 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
 	if funtoken.IsMadeFromCoin {
 		_, err := p.evmKeeper.ERC20().Mint(
-			erc20Addr,
-			evm.EVM_MODULE_ADDRESS,
-			to,
+			erc20Addr,              /*erc20Contract*/
+			evm.EVM_MODULE_ADDRESS, /*from*/
+			to,                     /*to*/
 			amount,
 			ctx,
 			evmObj,

@@ -5,16 +5,21 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *Suite) TestCallContractTx() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.Hash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, gethcore.Message{}, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.T().Log("Deploy some ERC20")
 	deployArgs := []any{"name", "SYMBOL", uint8(18)}
@@ -30,9 +35,8 @@ func (s *Suite) TestCallContractTx() {
 
 	s.T().Log("expect zero balance")
 	{
-		wantBal := big.NewInt(0)
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contractAddr, deps.Sender.EthAddr, wantBal,
+		evmtest.AssertERC20BalanceEqualWithDescription(
+			s.T(), deps, evmObj, contractAddr, deps.Sender.EthAddr, big.NewInt(0), "expect zero balance",
 		)
 	}
 
@@ -58,9 +62,8 @@ func (s *Suite) TestCallContractTx() {
 
 	s.T().Log("expect nonzero balance")
 	{
-		wantBal := big.NewInt(69_420)
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contractAddr, deps.Sender.EthAddr, wantBal,
+		evmtest.AssertERC20BalanceEqualWithDescription(
+			s.T(), deps, evmObj, contractAddr, deps.Sender.EthAddr, big.NewInt(69_420), "expect nonzero balance",
 		)
 	}
 }
@@ -85,8 +88,8 @@ func (s *Suite) TestTransferWei() {
 	s.Require().NoErrorf(err, "%#v", evmResp)
 	s.False(evmResp.Failed(), "%#v", evmResp)
 
-	evmtest.AssertBankBalanceEqual(
-		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000),
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000), "expect nonzero balance",
 	)
 
 	s.Run("DeployAndExecuteERC20Transfer", func() {
