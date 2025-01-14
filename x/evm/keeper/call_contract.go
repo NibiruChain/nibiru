@@ -108,14 +108,11 @@ func (k Keeper) CallContractWithInput(
 		ctx, evmMsg, evm.NewNoOpTracer(), commit, evmCfg, txConfig, true,
 	)
 	if err != nil {
-		// We don't know the actual gas used, so consuming the gas limit
-		k.ResetGasMeterAndConsumeGas(ctx, gasLimit)
 		err = errors.Wrap(err, "failed to apply ethereum core message")
 		return
 	}
 
 	if evmResp.Failed() {
-		k.ResetGasMeterAndConsumeGas(ctx, evmResp.GasUsed)
 		if strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {
 			err = fmt.Errorf("gas required exceeds allowance (%d)", gasLimit)
 			return
@@ -130,12 +127,6 @@ func (k Keeper) CallContractWithInput(
 
 	// Success, update block gas used and bloom filter
 	if commit {
-		blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-		if err != nil {
-			k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
-			return nil, nil, errors.Wrap(err, "error adding transient gas used to block")
-		}
-		k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
 		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 		// TODO: remove after migrating logs
 		//err = k.EmitLogEvents(ctx, evmResp)
