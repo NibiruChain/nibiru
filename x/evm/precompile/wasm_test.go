@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,88 +35,83 @@ type WasmSuite struct {
 
 func (s *WasmSuite) TestExecuteHappy() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 
-	s.T().Log("Execute: create denom")
-	msgArgsBz := []byte(`
-	{ "create_denom": { 
+	s.Run("create denom", func() {
+		msgArgsBz := []byte(`
+	{ 
+		"create_denom": { 
 	    "subdenom": "ETH" 
-	   }
+	  }
 	}
 	`)
 
-	var funds []precompile.WasmBankCoin
-	fundsJson, err := json.Marshal(funds)
-	s.NoErrorf(err, "fundsJson: %s", fundsJson)
-	err = json.Unmarshal(fundsJson, &funds)
-	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
+		var funds []precompile.WasmBankCoin
+		fundsJson, err := json.Marshal(funds)
+		s.NoErrorf(err, "fundsJson: %s", fundsJson)
+		err = json.Unmarshal(fundsJson, &funds)
+		s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
 
-	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_execute),
-		wasmContract.String(),
-		msgArgsBz,
-		funds,
-	)
-	s.Require().NoError(err)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx,
-		evmObj,
-		deps.Sender.EthAddr,
-		&precompile.PrecompileAddr_Wasm,
-		true,
-		contractInput,
-		WasmGasLimitExecute,
-	)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_execute),
+			wasmContract.String(),
+			msgArgsBz,
+			funds,
+		)
+		s.Require().NoError(err)
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			contractInput,
+			WasmGasLimitExecute,
+		)
+		s.Require().NoError(err)
+		s.Require().NotEmpty(ethTxResp.Ret)
+	})
 
 	s.T().Log("Execute: mint tokens")
-	coinDenom := tokenfactory.TFDenom{
-		Creator:  wasmContract.String(),
-		Subdenom: "ETH",
-	}.Denom().String()
-	msgArgsBz = []byte(fmt.Sprintf(`
-	{ 
-		"mint": { 
-			"coin": { "amount": "69420", "denom": "%s" }, 
-			"mint_to": "%s" 
-		} 
-	}
-	`, coinDenom, deps.Sender.NibiruAddr))
+	s.Run("mint tokens", func() {
+		coinDenom := tokenfactory.TFDenom{
+			Creator:  wasmContract.String(),
+			Subdenom: "ETH",
+		}.Denom().String()
+		msgArgsBz := []byte(fmt.Sprintf(`
+		{ 
+			"mint": { 
+				"coin": { "amount": "69420", "denom": "%s" }, 
+				"mint_to": "%s" 
+			} 
+		}
+		`, coinDenom, deps.Sender.NibiruAddr))
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_execute),
+			wasmContract.String(),
+			msgArgsBz,
+			[]precompile.WasmBankCoin{},
+		)
+		s.Require().NoError(err)
 
-	ethTxResp, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx,
-		evmObj,
-		deps.Sender.EthAddr,
-		&precompile.PrecompileAddr_Wasm,
-		true,
-		contractInput,
-		WasmGasLimitExecute,
-	)
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			contractInput,
+			WasmGasLimitExecute,
+		)
 
-	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
-	evmtest.AssertBankBalanceEqualWithDescription(
-		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance")
+		s.Require().NoError(err)
+		s.Require().NotEmpty(ethTxResp.Ret)
+		evmtest.AssertBankBalanceEqualWithDescription(
+			s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance")
+	})
 }
 
 func (s *WasmSuite) TestExecuteMultiHappy() {

@@ -205,7 +205,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
-			&precompile.PrecompileAddr_FunToken,
+			&erc20,
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
@@ -365,7 +365,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			"callBankSendLocalGas",
 			big.NewInt(1),
 			randomAcc.String(),
-			big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)),
+			big.NewInt(50_000), // customGas - too small
 		)
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContractWithInput(
@@ -511,44 +511,45 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// EVM Transfer - Send 500 tokens to Bob (EVM)
 
 	// sendToBank -  Send 100 tokens from bob to alice's bank balance (EVM -> Cosmos)
-	// 	- mint cosmos token
 	// 	- escrow erc20 token
+	// 	- mint cosmos token
 
 	// sendToEVM - Send 100 tokens from alice to bob's EVM address (Cosmos -> EVM)
 	// 	- burn cosmos token
 	// 	- unescrow erc20 token
 
 	deps := evmtest.NewTestDeps()
-	alice := evmtest.NewEthPrivAcc()
-	bob := evmtest.NewEthPrivAcc()
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
+	alice := evmtest.NewEthPrivAcc()
+	bob := evmtest.NewEthPrivAcc()
+
 	// Fund user so they can create funtoken from an ERC20
-	createFunTokenFee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr,
-		createFunTokenFee,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
 
 	// Deploy an ERC20 with 18 decimals
 	erc20Resp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestERC20)
-
 	s.Require().NoError(err, "failed to deploy test ERC20")
 	erc20Addr := erc20Resp.ContractAddr
 
 	// the initial supply was sent to the deployer
-	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, deps.Sender.EthAddr, bigTokens(1000000), "expect nonzero balance")
+	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, deps.Sender.EthAddr, bigTokens(1_000_000), "expect nonzero balance")
 
 	// create fun token from that erc20
-	_, err = deps.EvmKeeper.CreateFunToken(sdk.WrapSDKContext(deps.Ctx), &evm.MsgCreateFunToken{
-		Sender:    deps.Sender.NibiruAddr.String(),
-		FromErc20: &eth.EIP55Addr{Address: erc20Addr},
-	})
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			Sender:    deps.Sender.NibiruAddr.String(),
+			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
+		},
+	)
 	s.Require().NoError(err)
 
 	// Transfer 500 tokens to bob => 500 * 10^18 raw
-	deployerAddr := gethcommon.HexToAddress(erc20Resp.EthTxMsg.From)
 	contractInput, err := embeds.SmartContract_TestERC20.ABI.Pack(
 		"transfer",
 		bob.EthAddr,
@@ -558,7 +559,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		deployerAddr,
+		deps.Sender.EthAddr,
 		&erc20Addr,
 		true,
 		contractInput,
@@ -571,23 +572,21 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// sendToBank: e.g. 100 tokens => 100 * 1e18 raw
 	// expects to escrow on EVM side and mint on cosmos side
-	input, err := embeds.SmartContract_FunToken.ABI.Pack(
+	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack(
 		string(precompile.FunTokenMethod_sendToBank),
-		[]any{
-			erc20Addr, // address
-			bigTokens(100),
-			alice.NibiruAddr.String(),
-		}...,
+		erc20Addr, // address
+		bigTokens(100),
+		alice.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
 	resp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		bob.EthAddr,
-		&precompile.PrecompileAddr_FunToken,
-		true,
-		input,
-		evmtest.FunTokenGasLimitSendToEvm,
+		bob.EthAddr,                         /* from */
+		&precompile.PrecompileAddr_FunToken, /* to */
+		true,                                /* commit */
+		contractInput,
+		evmtest.FunTokenGasLimitSendToEvm, /* gasLimit */
 	)
 	s.Require().NoError(err)
 	s.Require().Empty(resp.VmError)
@@ -597,32 +596,32 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	s.Require().EqualValues(bigTokens(100), bankBal.Amount.BigInt())
 
 	// Expect user to have 400 tokens => 400 * 10^18
-	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, bob.EthAddr, bigTokens(400), "expect nonzero balance")
+	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, bob.EthAddr, bigTokens(400), "expect Bob's balance to be 400")
 
 	// 100 tokens are escrowed
-	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, evm.EVM_MODULE_ADDRESS, bigTokens(100), "expect nonzero balance")
+	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20Addr, evm.EVM_MODULE_ADDRESS, bigTokens(100), "expect EVM module to escrow 100 tokens")
 
 	// Finally sendToEvm(100) -> (expects to burn on cosmos side and unescrow in the EVM side)
-	input2, err := embeds.SmartContract_FunToken.ABI.Pack(
-		"sendToEvm",
-		[]any{
+	s.Run("send 100 tokens back to Bob", func() {
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
+			"sendToEvm",
 			bankBal.Denom,
 			bigTokens(100),
 			bob.EthAddr.Hex(),
-		}...,
-	)
-	s.Require().NoError(err)
-	resp, err = deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx,
-		evmObj,
-		alice.EthAddr,
-		&precompile.PrecompileAddr_FunToken,
-		true,
-		input2,
-		evmtest.FunTokenGasLimitSendToEvm,
-	)
-	s.Require().NoError(err)
-	s.Require().Empty(resp.VmError)
+		)
+		s.Require().NoError(err)
+		resp, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			alice.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			true,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+		s.Require().NoError(err)
+		s.Require().Empty(resp.VmError)
+	})
 
 	// no bank side left for alice
 	balAfter := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, bankBal.Denom).Amount.BigInt()

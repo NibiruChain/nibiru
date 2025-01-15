@@ -10,16 +10,13 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -80,7 +77,7 @@ func (p precompileFunToken) Run(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly)
+		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly, evm)
 	case FunTokenMethod_bankMsgSend:
 		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
 	default:
@@ -549,6 +546,7 @@ func (p precompileFunToken) sendToEvm(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
 	readOnly bool,
+	evmObj *vm.EVM,
 ) ([]byte, error) {
 	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
@@ -599,6 +597,7 @@ func (p precompileFunToken) sendToEvm(
 		toEthAddr,                  /*to*/
 		coinToSend.Amount.BigInt(), /*amount*/
 		funtoken,                   /*funtoken*/
+		evmObj,
 	)
 	if err != nil {
 		return nil, err
@@ -623,26 +622,8 @@ func (p precompileFunToken) mintOrUnescrowERC20(
 	to gethcommon.Address,
 	amount *big.Int,
 	funtoken evm.FunToken,
+	evmObj *vm.EVM,
 ) (*big.Int, error) {
-	// create a new StateDB and EVM object
-	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-	stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
-	evmCfg := p.evmKeeper.GetEVMConfig(ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS, /*from*/
-		&erc20Addr,             /*to*/
-		p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS), /*nonce*/
-		big.NewInt(0),               /*value*/
-		keeper.Erc20GasLimitExecute, /*gasLimit*/
-		big.NewInt(0),               /*gasPrice*/
-		big.NewInt(0),               /*gasTipCap*/
-		big.NewInt(0),               /*gasFeeCap*/
-		[]byte{},                    /*input*/
-		gethcore.AccessList{},       /*accessList*/
-		false,                       /*commit*/
-	)
-	evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-
 	// If funtoken is "IsMadeFromCoin", we own the ERC20 contract, so we can mint.
 	// If not, we do a transfer from EVM module to 'to' address using escrowed tokens.
 	if funtoken.IsMadeFromCoin {
