@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -66,7 +67,9 @@ type BackendSuite struct {
 }
 
 func TestBackendSuite(t *testing.T) {
-	suite.Run(t, new(BackendSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(BackendSuite))
+	}, 2)
 }
 
 func (s *BackendSuite) SetupSuite() {
