@@ -82,14 +82,9 @@ func (k *Keeper) deployERC20ForBankCoin(
 		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall, Erc20GasLimitDeploy,
 	)
 	if err != nil {
-		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
 	}
-	blockGasUsed, errBlockGasUsed := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if errBlockGasUsed != nil {
-		return gethcommon.Address{}, errors.Wrap(errBlockGasUsed, "error adding transient gas used")
-	}
-	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "deploy erc20 funtoken contract")
 
 	return erc20Addr, nil
 }

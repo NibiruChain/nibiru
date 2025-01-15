@@ -74,14 +74,6 @@ func (k *Keeper) RefundGas(
 	return nil
 }
 
-// ResetGasMeterAndConsumeGas reset first the gas meter consumed value to zero
-// and set it back to the new value 'gasUsed'.
-func (k *Keeper) ResetGasMeterAndConsumeGas(ctx sdk.Context, gasUsed uint64) {
-	// reset the gas count
-	ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset the gas count")
-	ctx.GasMeter().ConsumeGas(gasUsed, "apply evm transaction")
-}
-
 // GasToRefund calculates the amount of gas the state machine should refund to
 // the sender. It is capped by the refund quotient value. Note that passing a
 // jrefundQuotient of 0 will cause problems.
