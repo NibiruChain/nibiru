@@ -538,7 +538,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		&testContractAddr,
 		true,
 		contractInput,
-		evmtest.FunTokenGasLimitSendToEvm,
+		10_000_000,
 	)
 	s.Require().NoError(err)
 
@@ -599,7 +599,6 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		funToken.Erc20Addr.Address,
 	)
 	s.Require().NoError(err)
-
 	testContractAddr := deployResp.ContractAddr
 
 	s.T().Log("Convert bank coin to erc-20: give test contract 10 WNIBI (erc20)")
@@ -635,7 +634,13 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	charles := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
-	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack("selfCallTransferFunds", alice.EthAddr, evm.NativeToWei(big.NewInt(1e6)), charles.NibiruAddr.String(), big.NewInt(9e6))
+	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack(
+		"selfCallTransferFunds",
+		alice.EthAddr,
+		evm.NativeToWei(big.NewInt(1e6)),
+		charles.NibiruAddr.String(),
+		big.NewInt(9e6),
+	)
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,

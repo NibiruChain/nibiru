@@ -100,7 +100,7 @@ func (e erc20Calls) Transfer(
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
-	resp, err = e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	resp, err = e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -163,7 +163,7 @@ func (e erc20Calls) Burn(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
 func (e erc20Calls) LoadERC20Name(

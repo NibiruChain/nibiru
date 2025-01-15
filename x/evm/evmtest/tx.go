@@ -67,9 +67,6 @@ func DeployContract(
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
 	nonce := deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr)
-	contractAddr := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	fmt.Println("contractAddr", contractAddr)
-
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
