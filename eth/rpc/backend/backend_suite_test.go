@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -17,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
