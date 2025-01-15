@@ -419,7 +419,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		}
 		// pass false to not commit StateDB
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		stateDB := k.NewStateDB(tmpCtx, txConfig)
+		stateDB := statedb.New(ctx, &k, txConfig)
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 		if err != nil {

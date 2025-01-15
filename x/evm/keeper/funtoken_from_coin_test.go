@@ -9,7 +9,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -214,27 +213,26 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal(sdk.NewInt(90), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
-
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Zero(balance.Cmp(big.NewInt(10)))
 
-	s.T().Log("sad: Convert more bank coin to erc-20, insufficient funds")
-	_, err = deps.EvmKeeper.ConvertCoinToEvm(
-		sdk.WrapSDKContext(deps.Ctx),
-		&evm.MsgConvertCoinToEvm{
-			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100)),
-			ToEthAddr: eth.EIP55Addr{
-				Address: alice.EthAddr,
+	s.Run("sad: Convert more bank coin to erc-20, insufficient funds", func() {
+		_, err = deps.EvmKeeper.ConvertCoinToEvm(
+			sdk.WrapSDKContext(deps.Ctx),
+			&evm.MsgConvertCoinToEvm{
+				Sender:   deps.Sender.NibiruAddr.String(),
+				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100)),
+				ToEthAddr: eth.EIP55Addr{
+					Address: alice.EthAddr,
+				},
 			},
-		},
-	)
-	s.Require().ErrorContains(err, "insufficient funds")
-
-	deps.ResetGasMeter()
+		)
+		s.Require().ErrorContains(err, "insufficient funds")
+	})
 
 	s.T().Log("Convert erc-20 to back to bank coin")
+	deps.ResetGasMeter()
 	contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToBank",
 		funToken.Erc20Addr.Address,
@@ -347,13 +345,13 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		Account:      testContractAddr,
 		BalanceBank:  sendAmt,
 		BalanceERC20: sendAmt,
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      evm.EVM_MODULE_ADDRESS,
 		BalanceBank:  sendAmt,
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	// Alice hex and Alice bech32 is the same address in different representation,
 	// so funds are expected to be available in Alice's bank wallet
@@ -363,7 +361,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		Account:      alice.EthAddr,
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	s.T().Log("call test contract")
 	deps.ResetGasMeter()
@@ -397,21 +395,21 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		BalanceBank: new(big.Int).Mul(
 			newSendAmtSendToBank, big.NewInt(2)),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      testContractAddr,
 		BalanceBank:  big.NewInt(5),
 		BalanceERC20: big.NewInt(5),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      evm.EVM_MODULE_ADDRESS,
 		BalanceBank:  big.NewInt(5),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	deps.ResetGasMeter()
 	contractInput, err = embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI.Pack(
@@ -439,21 +437,21 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		BalanceBank: new(big.Int).Mul(
 			newSendAmtSendToBank, big.NewInt(3)),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      testContractAddr,
 		BalanceBank:  big.NewInt(5),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funtoken,
 		Account:      evm.EVM_MODULE_ADDRESS,
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 	s.Require().Greater(gasUsedFor2Ops, gasUsedFor1Op, "2 operations should consume more gas")
 }
 
@@ -474,6 +472,9 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 // - Module account: 1 NIBI escrowed (which Alice holds as 1 WNIBI)
 func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
 
 	s.T().Log("Deploy Test Contract")
@@ -483,7 +484,6 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		funToken.Erc20Addr.Address,
 	)
 	s.Require().NoError(err)
-
 	testContractAddr := deployResp.ContractAddr
 
 	s.T().Log("Convert bank coin to erc-20: give test contract 10 WNIBI (erc20)")
@@ -497,28 +497,40 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	)
 	s.Require().NoError(err)
 
+	// check balances
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funToken,
+		Account:      testContractAddr,
+		BalanceBank:  big.NewInt(0),
+		BalanceERC20: big.NewInt(10e6),
+	}.Assert(s.T(), deps, evmObj)
+
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funToken,
+		Account:      evm.EVM_MODULE_ADDRESS,
+		BalanceBank:  big.NewInt(10e6),
+		BalanceERC20: big.NewInt(0),
+	}.Assert(s.T(), deps, evmObj)
+
+	evmtest.FunTokenBalanceAssert{
+		FunToken:     funToken,
+		Account:      deps.Sender.EthAddr,
+		BalanceBank:  big.NewInt(0),
+		BalanceERC20: big.NewInt(0),
+	}.Assert(s.T(), deps, evmObj)
+
 	// Alice hex and Alice bech32 is the same address in different representation
 	alice := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
-	contractInput, err := embeds.SmartContract_TestERC20TransferThenPrecompileSend.ABI.Pack("erc20TransferThenPrecompileSend", alice.EthAddr, big.NewInt(1e6), alice.NibiruAddr.String(), big.NewInt(9e6))
-	s.Require().NoError(err)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&testContractAddr,
-		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
+	contractInput, err := embeds.SmartContract_TestERC20TransferThenPrecompileSend.ABI.Pack(
+		"erc20TransferThenPrecompileSend",
+		alice.EthAddr,             /*to*/
+		big.NewInt(1e6),           /*amount*/
+		alice.NibiruAddr.String(), /*to*/
+		big.NewInt(9e6),           /*amount*/
 	)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -536,7 +548,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		BalanceBank:  big.NewInt(9e6),
 		BalanceERC20: big.NewInt(1e6),
 		Description:  "Alice has 9 NIBI / 1 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -544,7 +556,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
 		Description:  "Test contract 0 NIBI / 0 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -552,7 +564,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		BalanceBank:  big.NewInt(1e6),
 		BalanceERC20: big.NewInt(0e6),
 		Description:  "Module account has 1 NIBI escrowed",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 }
 
 // TestPrecompileSelfCallRevert
@@ -574,6 +586,8 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 // - Module account: 10 NIBI escrowed (which Test contract holds as 10 WNIBI)
 func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -613,7 +627,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		BalanceBank:  big.NewInt(10e6),
 		BalanceERC20: big.NewInt(10e6),
 		Description:  "Initial contract state sanity check: 10 NIBI / 10 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	// Create Alice and Charles. Contract will try to send Alice native coins and
 	// send Charles tokens via sendToBank
@@ -623,22 +637,6 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	s.T().Log("call test contract")
 	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack("selfCallTransferFunds", alice.EthAddr, evm.NativeToWei(big.NewInt(1e6)), charles.NibiruAddr.String(), big.NewInt(9e6))
 	s.Require().NoError(err)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&testContractAddr,
-		deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
-	)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -656,7 +654,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
 		Description:  "Alice has 0 NIBI / 0 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -664,7 +662,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
 		Description:  "Charles has 0 NIBI / 0 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -672,7 +670,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		BalanceBank:  big.NewInt(10e6),
 		BalanceERC20: big.NewInt(10e6),
 		Description:  "Test contract has 10 NIBI / 10 WNIBI",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -680,7 +678,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		BalanceBank:  big.NewInt(10e6),
 		BalanceERC20: big.NewInt(0),
 		Description:  "Module account has 10 NIBI escrowed",
-	}.Assert(s.T(), deps)
+	}.Assert(s.T(), deps, evmObj)
 }
 
 // fundAndCreateFunToken creates initial setup for tests

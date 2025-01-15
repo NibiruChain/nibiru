@@ -14,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func AssertERC20BalanceEqualWithDescription(
@@ -34,8 +33,7 @@ func AssertERC20BalanceEqualWithDescription(
 	}
 	assert.NoError(t, err, errSuffix)
 	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
-		"expected %s, got %s", expectedBalance, actualBalance,
-		errSuffix,
+		"expected %s, got %s: %s", expectedBalance, actualBalance, errSuffix,
 	)
 }
 
@@ -56,7 +54,8 @@ func AssertBankBalanceEqualWithDescription(
 		errSuffix = ": " + description
 	}
 	assert.Equalf(t, expectedBalance.String(), actualBalance.String(),
-		"expected %s, got %s", expectedBalance, actualBalance, errSuffix)
+		"expected %s, got %s: %s", expectedBalance, actualBalance, errSuffix,
+	)
 }
 
 // CreateFunTokenForBankCoin: Uses the "TestDeps.Sender" account to create a
@@ -135,9 +134,7 @@ type FunTokenBalanceAssert struct {
 	Description  string
 }
 
-func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps) {
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps, evmObj *vm.EVM) {
 	AssertERC20BalanceEqualWithDescription(
 		t, deps, evmObj, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
 		bals.Description,

@@ -72,7 +72,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly)
+		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly, evm)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evm)
 	case FunTokenMethod_bankBalance:
@@ -138,6 +138,7 @@ func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
 	caller gethcommon.Address,
 	readOnly bool,
+	evmObj *vm.EVM,
 ) (bz []byte, err error) {
 	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
@@ -173,26 +174,15 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("\"to\" is not a valid address (%s): %w", to, err)
 	}
 
-	// Caller transfers ERC20 to the EVM account
-	transferTo := evm.EVM_MODULE_ADDRESS
-	txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
-	evmCfg := p.evmKeeper.GetEVMConfig(ctx)
-	evmMsg := gethcore.NewMessage(
-		caller,                               /*from*/
-		&transferTo,                          /*to*/
-		p.evmKeeper.GetAccNonce(ctx, caller), /*nonce*/
-		big.NewInt(0),                        /*value*/
-		keeper.Erc20GasLimitExecute,          /*gasLimit*/
-		big.NewInt(0),                        /*gasPrice*/
-		big.NewInt(0),                        /*gasFeeCap*/
-		big.NewInt(0),                        /*gasTipCap*/
-		[]byte{},                             /*data*/
-		gethcore.AccessList{},                /*accessList*/
-		false,                                /*isFake*/
+	// Caller transfers ERC20 to the EVM module account
+	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(
+		erc20,                  /*erc20*/
+		caller,                 /*from*/
+		evm.EVM_MODULE_ADDRESS, /*to*/
+		amount,                 /*value*/
+		ctx,
+		evmObj,
 	)
-	evmObj := p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(erc20, caller, transferTo, amount, ctx, evmObj)
 	if err != nil {
 		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
 	}
@@ -205,23 +195,6 @@ func (p precompileFunToken) sendToBank(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		txConfig := p.evmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := p.evmKeeper.NewStateDB(ctx, txConfig)
-		evmCfg := p.evmKeeper.GetEVMConfig(ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS, /*from*/
-			&erc20,                 /*to*/
-			p.evmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS), /*nonce*/
-			big.NewInt(0),               /*value*/
-			keeper.Erc20GasLimitExecute, /*gasLimit*/
-			big.NewInt(0),               /*gasPrice*/
-			big.NewInt(0),               /*gasFeeCap*/
-			big.NewInt(0),               /*gasTipCap*/
-			[]byte{},                    /*data*/
-			gethcore.AccessList{},       /*accessList*/
-			false,                       /*isFake*/
-		)
-		evmObj = p.evmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		burnResp, e := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
 		if e != nil {
 			err = fmt.Errorf("ERC20.Burn: %w", e)
@@ -233,7 +206,6 @@ func (p precompileFunToken) sendToBank(
 		// any operation that has the potential to use Bank send methods. This will
 		// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
 		// recorded if wei (NIBI) is transferred.
-		p.evmKeeper.Bank.StateDB = startResult.StateDB
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
@@ -248,7 +220,6 @@ func (p precompileFunToken) sendToBank(
 	// any operation that has the potential to use Bank send methods. This will
 	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
 	// recorded if wei (NIBI) is transferred.
-	p.evmKeeper.Bank.StateDB = startResult.StateDB
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,

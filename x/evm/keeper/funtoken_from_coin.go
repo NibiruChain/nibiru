@@ -94,7 +94,10 @@ func (k *Keeper) deployERC20ForBankCoin(
 	)
 	evmCfg := k.GetEVMConfig(ctx)
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := k.NewStateDB(ctx, txConfig)
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 
 	_, err = k.CallContractWithInput(

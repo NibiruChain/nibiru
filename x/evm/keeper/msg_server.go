@@ -56,7 +56,10 @@ func (k *Keeper) EthereumTx(
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	stateDB := k.NewStateDB(ctx, txConfig)
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	evmResp, err = k.ApplyEvmMsg(ctx, evmMsg, evmObj, nil /*tracer*/, true /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 	if err != nil {
@@ -549,7 +552,10 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		true,
 	)
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.NewStateDB(ctx, txConfig)
+	var stateDB *statedb.StateDB = k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContractWithInput(
 		ctx,
@@ -625,7 +631,10 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		gethcore.AccessList{},
 		true,
 	)
-	stateDB := k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	var stateDB *statedb.StateDB = k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	}
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	_, _, err = k.ERC20().Transfer(
 		erc20Addr,

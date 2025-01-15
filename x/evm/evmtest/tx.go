@@ -66,7 +66,10 @@ func DeployContract(
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
-	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr)
+	contractAddr := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
+	fmt.Println("contractAddr", contractAddr)
+
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
@@ -76,11 +79,12 @@ func DeployContract(
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
-	} else if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
+	}
+	if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
 		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute ethereum tx")
 	}
