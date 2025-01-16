@@ -6,11 +6,11 @@ IFunToken constant FUNTOKEN_PRECOMPILE = IFunToken(FUNTOKEN_PRECOMPILE_ADDRESS);
 
 import "./NibiruEvmUtils.sol";
 
-/// @dev Implements the functionality for sending ERC20 tokens and bank
+/// @notice Implements the functionality for sending ERC20 tokens and bank
 /// coins to various Nibiru accounts using either the Nibiru Bech32 address
 /// using the "FunToken" mapping between the ERC20 and bank.
 interface IFunToken is INibiruEvm {
-    /// @dev sendToBank sends ERC20 tokens as coins to a Nibiru base account
+    /// @notice sendToBank sends ERC20 tokens as coins to a Nibiru base account
     /// @param erc20 - the address of the ERC20 token contract
     /// @param amount - the amount of tokens to send
     /// @param to - the receiving Nibiru base account address as a string
@@ -32,11 +32,14 @@ interface IFunToken is INibiruEvm {
         string bankDenom;
     }
 
+    /// @notice Method "balance" returns the ERC20 balance and Bank Coin balance
+    /// of some fungible token held by the given account.
     function balance(
         address who,
         address funtoken
     )
         external
+        view
         returns (
             uint256 erc20Balance,
             uint256 bankBalance,
@@ -44,42 +47,50 @@ interface IFunToken is INibiruEvm {
             NibiruAccount memory whoAddrs
         );
 
+    /// @notice Method "bankBalance" returns the Bank Coin balance of some
+    /// fungible token held by the given account.
     function bankBalance(
         address who,
         string calldata bankDenom
-    ) external returns (uint256 bankBalance, NibiruAccount memory whoAddrs);
+    )
+        external
+        view
+        returns (uint256 bankBalance, NibiruAccount memory whoAddrs);
 
+    /// @notice Method "whoAmI" performs address resolution for the given address
+    /// string
+    /// @param who Ethereum hexadecimal (EVM) address or nibi-prefixed Bech32
+    /// (non-EVM) address
+    /// @return whoAddrs Addresses of "who" in EVM and non-EVM formats
     function whoAmI(
         string calldata who
-    ) external returns (NibiruAccount memory whoAddrs);
+    ) external view returns (NibiruAccount memory whoAddrs);
 
-    /**
-     * @dev sendToEvm transfers the caller's bank coin `denom` to its ERC-20 representation on the EVM side.
-     * The `to` argument must be either an Ethereum hex address (0x...) or a Bech32 address.
-     *
-     * The underlying logic mints (or un-escrows) the ERC-20 tokens to the `to` address if
-     * the funtoken mapping was originally minted from a coin.
-     *
-     * @param bankDenom The bank denom of the coin to send from the caller to the EVM side.
-     * @param amount The number of coins to send.
-     * @param to The Ethereum hex or bech32 address receiving the ERC-20.
-     * @return sentAmount The number of ERC-20 tokens minted or un-escrowed.
-     */
+    /// @notice sendToEvm transfers the caller's Bank Coins specified by `denom`
+    /// to the corresponding ERC-20 representation on the EVM side. The `to`
+    /// argument must be either an Ethereum hex address (0x...) or a Bech32
+    /// address.
+    ///
+    /// The underlying logic mints (or un-escrows) the ERC-20 tokens to the `to` address if
+    /// the funtoken mapping was originally minted from a coin.
+    ///
+    /// @param bankDenom The bank denom of the coin to send from the caller to the EVM side.
+    /// @param amount The number of coins to send.
+    /// @param to The Ethereum hex or bech32 address receiving the ERC-20.
+    /// @return sentAmount The number of ERC-20 tokens minted or un-escrowed.
     function sendToEvm(
         string calldata bankDenom,
         uint256 amount,
         string calldata to
     ) external returns (uint256 sentAmount);
 
-    /**
-     * @dev bankMsgSend performs a `cosmos.bank.v1beta1.MsgSend` from the caller
-     * into the Cosmos side, akin to running the standard `bank` module's send operation.
-     *
-     * @param to The recipient address (hex or bech32).
-     * @param bankDenom The bank coin denom to send.
-     * @param amount The number of coins to send.
-     * @return success True if the bank send succeeded, false otherwise.
-     */
+    /// @notice bankMsgSend performs a `cosmos.bank.v1beta1.MsgSend` transaction
+    /// message to transfer Bank Coin funds to the given address.
+    ///
+    /// @param to The recipient address (hex or bech32).
+    /// @param bankDenom The bank coin denom to send.
+    /// @param amount The number of coins to send.
+    /// @return success True if the bank send succeeded, false otherwise.
     function bankMsgSend(
         string calldata to,
         string calldata bankDenom,
