@@ -490,9 +490,9 @@ func (k Keeper) TraceTx(
 
 	evmCfg := k.GetEVMConfig(ctx)
 	// compute and use base fee of the height that is being traced
-	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
-	if baseFeeMicronibiPerGas != nil {
-		evmCfg.BaseFeeWei = baseFeeMicronibiPerGas
+	baseFeeWeiPerGas := k.BaseFeeWeiPerGas(ctx)
+	if baseFeeWeiPerGas != nil {
+		evmCfg.BaseFeeWei = baseFeeWeiPerGas
 	}
 
 	signer := gethcore.MakeSigner(evmCfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
