@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -21,25 +22,15 @@ import (
 )
 
 // TestSuite: Runs all the tests in the suite.
-func TestSuite(t *testing.T) {
-	suite.Run(t, new(UtilsSuite))
-	suite.Run(t, new(FuntokenSuite))
-	suite.Run(t, new(WasmSuite))
-}
-
 type FuntokenSuite struct {
 	suite.Suite
-
-	deps     evmtest.TestDeps
-	funtoken evm.FunToken
 }
 
-func (s *FuntokenSuite) SetupSuite() {
-	s.deps = evmtest.NewTestDeps()
-	s.funtoken = evmtest.CreateFunTokenForBankCoin(s.deps, "unibi", &s.Suite)
+func TestFuntokenSuite(t *testing.T) {
+	suite.Run(t, new(FuntokenSuite))
 }
 
-func (s *FuntokenSuite) TestFailToPackABI() {
+func TestFailToPackABI(t *testing.T) {
 	testcases := []struct {
 		name       string
 		methodName string
@@ -78,53 +69,51 @@ func (s *FuntokenSuite) TestFailToPackABI() {
 		},
 	}
 
-	abi := embeds.SmartContract_FunToken.ABI
-
 	for _, tc := range testcases {
-		s.Run(tc.name, func() {
-			input, err := abi.Pack(tc.methodName, tc.callArgs...)
-			s.ErrorContains(err, tc.wantError)
-			s.Nil(input)
+		t.Run(tc.name, func(t *testing.T) {
+			input, err := embeds.SmartContract_FunToken.ABI.Pack(tc.methodName, tc.callArgs...)
+			require.ErrorContains(t, err, tc.wantError)
+			require.Nil(t, input)
 		})
 	}
 }
 
-func (s *FuntokenSuite) TestWhoAmI() {
+func TestWhoAmI(t *testing.T) {
 	deps := evmtest.NewTestDeps()
+
+	callWhoAmI := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
+		fmt.Printf("arg: %s", arg)
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
+		require.NoError(t, err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		return deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+	}
 
 	for accIdx, acc := range []evmtest.EthPrivKeyAcc{
 		deps.Sender, evmtest.NewEthPrivAcc(),
 	} {
-		s.T().Logf("test account %d, use both address formats", accIdx)
-		callWhoAmIWithArg := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
-			fmt.Printf("arg: %s", arg)
-			contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
-			s.Require().NoError(err)
-			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-			return deps.EvmKeeper.CallContractWithInput(
-				deps.Ctx,
-				evmObj,
-				deps.Sender.EthAddr,
-				&precompile.PrecompileAddr_FunToken,
-				false,
-				contractInput,
-				evmtest.FunTokenGasLimitSendToEvm,
-			)
-		}
+		t.Logf("test account %d, use both address formats", accIdx)
+
 		for _, arg := range []string{acc.NibiruAddr.String(), acc.EthAddr.Hex()} {
-			evmResp, err := callWhoAmIWithArg(arg)
-			s.Require().NoError(err, evmResp)
+			evmResp, err := callWhoAmI(arg)
+			require.NoError(t, err)
 			gotAddrEth, gotAddrBech32, err := new(FunTokenWhoAmIReturn).ParseFromResp(evmResp)
-			s.NoError(err)
-			s.Equal(acc.EthAddr.Hex(), gotAddrEth.Hex())
-			s.Equal(acc.NibiruAddr.String(), gotAddrBech32)
+			require.NoError(t, err)
+			require.Equal(t, acc.EthAddr.Hex(), gotAddrEth.Hex())
+			require.Equal(t, acc.NibiruAddr.String(), gotAddrBech32)
 		}
 		// Sad path check
-		evmResp, err := callWhoAmIWithArg("not_an_address")
-		s.Require().ErrorContains(
-			err, "could not parse address as Nibiru Bech32 or Ethereum hexadecimal", evmResp,
-		)
+		_, err := callWhoAmI("not_an_address")
+		require.ErrorContains(t, err, "could not parse address as Nibiru Bech32 or Ethereum hexadecimal")
 	}
 }
 
@@ -180,7 +169,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Require().NoError(err)
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
-		s.deps.ResetGasMeter()
+		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
@@ -266,25 +255,23 @@ func (s *FuntokenSuite) TestHappyPath() {
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
-	deps := s.deps
+	deps := evmtest.NewTestDeps()
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+
 	randomAcc := testutil.AccAddress()
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
-		s.funtoken.Erc20Addr.Address,
+		funtoken.Erc20Addr.Address,
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-
-	s.T().Log("create evmObj")
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 
 	s.T().Log("Fund sender's wallet")
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
 	))
 
 	s.Run("Fund contract with erc20 coins", func() {
@@ -292,7 +279,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: contractAddr,
 				},
@@ -302,13 +289,15 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Happy: callBankSend with default gas", func() {
-		s.deps.ResetGasMeter()
+		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSend",
 			big.NewInt(1),
 			randomAcc.String(),
 		)
 		s.Require().NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -322,7 +311,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Happy: callBankSend with local gas - sufficient gas amount", func() {
-		s.deps.ResetGasMeter()
+		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSendLocalGas",
 			big.NewInt(1),
@@ -330,6 +319,8 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)),
 		)
 		s.Require().NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -343,7 +334,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Sad: callBankSend with local gas - insufficient gas amount", func() {
-		s.deps.ResetGasMeter()
+		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSendLocalGas",
 			big.NewInt(1),
@@ -351,6 +342,8 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(50_000), // customGas - too small
 		)
 		s.Require().NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,

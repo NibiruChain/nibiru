@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"testing"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -31,6 +32,10 @@ const (
 
 type WasmSuite struct {
 	suite.Suite
+}
+
+func TestWasmSuite(t *testing.T) {
+	suite.Run(t, new(WasmSuite))
 }
 
 func (s *WasmSuite) TestExecuteHappy() {
