@@ -1,7 +1,6 @@
 package backend_test
 
 import (
-	"fmt"
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -178,7 +177,6 @@ func (s *BackendSuite) TestGetBalance() {
 			)
 			s.Require().NoError(err)
 			s.Require().NotNil(balance)
-			fmt.Println("balance", balance.ToInt().Int64())
 			if tc.wantPositiveBalance {
 				s.Require().Greater(balance.ToInt().Int64(), int64(0))
 			} else {
