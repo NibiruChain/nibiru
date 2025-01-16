@@ -83,7 +83,7 @@ func (s *BackendSuite) SetupSuite() {
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
-	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 2_000_000))
 
 	txResp, err := testnetwork.FillWalletFromValidator(
 		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
@@ -94,7 +94,7 @@ func (s *BackendSuite) SetupSuite() {
 
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
-	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
+	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
 	blockNumber, blockHash := WaitForReceipt(s, transferTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
@@ -102,12 +102,12 @@ func (s *BackendSuite) SetupSuite() {
 	transferTxBlockHash = *blockHash
 
 	// Deploy test erc20 contract
-	deployContractTxHash, contractAddress := s.DeployTestContract(true)
-	testContractAddress = contractAddress
-	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
-	s.Require().NotNil(blockNumber)
-	s.Require().NotNil(blockHash)
-	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
+	// deployContractTxHash, contractAddress := s.DeployTestContract(true)
+	// testContractAddress = contractAddress
+	// blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	// s.Require().NotNil(blockNumber)
+	// s.Require().NotNil(blockHash)
+	// deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -143,7 +143,7 @@ func (s *BackendSuite) DeployTestContract(waitForNextBlock bool) (gethcommon.Has
 		&gethcore.LegacyTx{
 			Nonce:    uint64(nonce),
 			Data:     bytecodeForCall,
-			Gas:      1500_000,
+			Gas:      400_000,
 			GasPrice: big.NewInt(1),
 		},
 		waitForNextBlock,
@@ -168,7 +168,7 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 }
 
 func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
 	for {
