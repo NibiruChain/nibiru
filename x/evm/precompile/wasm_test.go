@@ -37,7 +37,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 	deps := evmtest.NewTestDeps()
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 
 	s.Run("create denom", func() {
@@ -116,22 +116,25 @@ func (s *WasmSuite) TestExecuteHappy() {
 
 func (s *WasmSuite) TestExecuteMultiHappy() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	// count = 0
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 	// count += 2
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 2, true)
+		&s.Suite, &deps, evmObj, wasmContract, 2, true)
 	// count = 2
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 2)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 2)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 2)
 	// count += 67
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 67, true)
+		&s.Suite, &deps, evmObj, wasmContract, 67, true)
 	// count = 69
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 69)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 69)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 69)
 }
 
@@ -389,6 +392,8 @@ type WasmExecuteMsg struct {
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -397,7 +402,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 		sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
 	))
 
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	invalidMsgArgsBz := []byte(`{"invalid": "json"}`) // Invalid message format
@@ -545,11 +550,14 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	// First verify initial state is 0
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 
 	// Create a batch where the second message will fail validation
 	executeMsgs := []WasmExecuteMsg{
@@ -570,23 +578,6 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		executeMsgs,
 	)
 	s.Require().NoError(err)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		WasmGasLimitExecute,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -602,5 +593,5 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	s.Require().Contains(err.Error(), "unknown variant")
 
 	// Verify that no state changes occurred
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 }

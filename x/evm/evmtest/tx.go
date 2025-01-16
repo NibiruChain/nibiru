@@ -203,7 +203,7 @@ func (tx TxTransferWei) Build() (evmTxMsg *evm.MsgEthereumTx, err error) {
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
-		deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, ethAcc.EthAddr),
 		&to,
 		amountWei,
 		gasLimit,

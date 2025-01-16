@@ -206,15 +206,15 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	bankDemon := resp.FuntokenMapping.BankDenom
 
 	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
-	input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&deployResp.ContractAddr,
-		false,
-		input,
+		deps.Sender.EthAddr,      /*from*/
+		&deployResp.ContractAddr, /*to*/
+		true,                     /*commit*/
+		contractInput,
 		keeper.Erc20GasLimitExecute,
 	)
 	s.Require().NoError(err)
@@ -223,15 +223,15 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 
 	s.T().Log("happy: send erc20 tokens to Bank")
 	deps.ResetGasMeter()
-	input, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
+	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&precompile.PrecompileAddr_FunToken,
-		true,
-		input,
+		deps.Sender.EthAddr,                 /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		true,                                /*commit*/
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
@@ -246,15 +246,15 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	deps.ResetGasMeter()
 
 	s.T().Log("sad: send too many erc20 tokens to Bank")
-	input, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
+	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 	s.Require().NoError(err)
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&precompile.PrecompileAddr_FunToken,
-		true,
-		input,
+		deps.Sender.EthAddr,                 /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		true,                                /*commit*/
+		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().Error(err, evmResp.String())
@@ -409,6 +409,8 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 // with a malicious recursive balanceOf() and transfer() functions.
 func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
@@ -445,44 +447,30 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	deps.ResetGasMeter()
 
 	s.T().Log("happy: call attackBalance()")
-	input, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
+	contractInput, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
 	s.Require().NoError(err)
-	evmMsg := gethcore.NewMessage(
-		deps.Sender.EthAddr,
-		&erc20Addr.Address,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		input,
-		gethcore.AccessList{},
-		false,
-	)
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0))))
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr.Address,
-		true,
-		input,
-		evmtest.FunTokenGasLimitSendToEvm,
+		deps.Sender.EthAddr, /*from*/
+		&erc20Addr.Address,  /*to*/
+		false,               /*commit*/
+		contractInput,
+		10_000_000,
 	)
 	s.Require().NoError(err)
 
-	s.T().Log("sad: call attackBalance()")
+	s.T().Log("sad: call attackTransfer()")
+	contractInput, err = embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackTransfer")
+	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr.Address,
-		true,
-		input,
-		evmtest.FunTokenGasLimitSendToEvm,
+		deps.Sender.EthAddr, /*from*/
+		&erc20Addr.Address,  /*to*/
+		true,                /*commit*/
+		contractInput,
+		10_000_000,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
 }
@@ -491,15 +479,14 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 // Test ensures that after sending ERC20 token to coin and back, all bank coins are burned.
 func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	deps := evmtest.NewTestDeps()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
-
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 	s.T().Log("Deploy ERC20")
 	metadata := keeper.ERC20Metadata{
@@ -539,9 +526,9 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&precompile.PrecompileAddr_FunToken,
-		true,
+		deps.Sender.EthAddr,                 /*from*/
+		&precompile.PrecompileAddr_FunToken, /*to*/
+		true,                                /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 	)

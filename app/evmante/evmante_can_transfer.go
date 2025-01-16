@@ -63,10 +63,13 @@ func (ctd CanTransferDecorator) AnteHandle(
 			)
 		}
 
-		stateDB := ctd.NewStateDB(
-			ctx,
-			statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
-		)
+		stateDB := ctd.EVMKeeper.Bank.StateDB
+		if stateDB == nil {
+			stateDB = ctd.NewStateDB(
+				ctx,
+				statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
+			)
+		}
 
 		evmCfg := statedb.EVMConfig{
 			ChainConfig: ethCfg,

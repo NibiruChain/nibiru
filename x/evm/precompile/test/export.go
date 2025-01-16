@@ -11,14 +11,11 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -33,7 +30,7 @@ const (
 
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
-func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
+func SetupWasmContracts(deps *evmtest.TestDeps, evmObj *vm.EVM, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
 	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
@@ -70,23 +67,6 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 			m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{},
 		)
 		s.NoError(err)
-		txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-		evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS,
-			&evm.EVM_MODULE_ADDRESS,
-			deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-			big.NewInt(0),
-			evmtest.FunTokenGasLimitSendToEvm,
-			big.NewInt(0),
-			big.NewInt(0),
-			big.NewInt(0),
-			contractInput,
-			gethcore.AccessList{},
-			false,
-		)
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 
 		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -183,6 +163,7 @@ func deployWasmBytecode(
 func AssertWasmCounterState(
 	s *suite.Suite,
 	deps evmtest.TestDeps,
+	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
@@ -198,23 +179,6 @@ func AssertWasmCounterState(
 		msgArgsBz,
 	)
 	s.Require().NoError(err)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -300,10 +264,11 @@ type QueryMsgCountResp struct {
 func IncrementWasmCounterWithExecuteMulti(
 	s *suite.Suite,
 	deps *evmtest.TestDeps,
+	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	times uint,
-	finalizeTx bool,
-) (evmObj *vm.EVM) {
+	commit bool,
+) {
 	msgArgsBz := []byte(`
 	{ 
 	  "increment": {}
@@ -345,42 +310,24 @@ func IncrementWasmCounterWithExecuteMulti(
 
 	deps.ResetGasMeter()
 
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		evmtest.FunTokenGasLimitSendToEvm,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		[]byte{},
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		finalizeTx,
+		commit,
 		input,
 		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
-	return evmObj
 }
 
 func IncrementWasmCounterWithExecuteMultiViaVMCall(
 	s *suite.Suite,
 	deps *evmtest.TestDeps,
 	wasmContract sdk.AccAddress,
-	times uint,
+	times int,
 	finalizeTx bool,
 	evmObj *vm.EVM,
 ) error {
@@ -402,31 +349,26 @@ func IncrementWasmCounterWithExecuteMultiViaVMCall(
 		ContractAddr string                    `json:"contractAddr"`
 		MsgArgs      []byte                    `json:"msgArgs"`
 		Funds        []precompile.WasmBankCoin `json:"funds"`
-	}{
-		{wasmContract.String(), msgArgsBz, funds},
+	}{}
+	for i := 0; i < times; i++ {
+		executeMsgs = append(executeMsgs, struct {
+			ContractAddr string                    `json:"contractAddr"`
+			MsgArgs      []byte                    `json:"msgArgs"`
+			Funds        []precompile.WasmBankCoin `json:"funds"`
+		}{wasmContract.String(), msgArgsBz, funds})
 	}
-	if times == 0 {
-		executeMsgs = executeMsgs[:0] // force empty
-	} else {
-		for i := uint(1); i < times; i++ {
-			executeMsgs = append(executeMsgs, executeMsgs[0])
-		}
-	}
-	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
 
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_executeMulti),
 		executeMsgs,
 	)
 	s.Require().NoError(err)
 
-	contract := precompile.PrecompileAddr_Wasm
-	leftoverGas := serverconfig.DefaultEthCallGasLimit
 	_, _, err = evmObj.Call(
 		vm.AccountRef(deps.Sender.EthAddr),
-		contract,
-		input,
-		leftoverGas,
+		precompile.PrecompileAddr_Wasm,
+		contractInput,
+		serverconfig.DefaultEthCallGasLimit,
 		big.NewInt(0),
 	)
 	return err
