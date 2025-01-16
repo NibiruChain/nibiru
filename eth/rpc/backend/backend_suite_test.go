@@ -83,7 +83,7 @@ func (s *BackendSuite) SetupSuite() {
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
-	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 2_000_000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 
 	txResp, err := testnetwork.FillWalletFromValidator(
 		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
@@ -102,12 +102,12 @@ func (s *BackendSuite) SetupSuite() {
 	transferTxBlockHash = *blockHash
 
 	// Deploy test erc20 contract
-	// deployContractTxHash, contractAddress := s.DeployTestContract(true)
-	// testContractAddress = contractAddress
-	// blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
-	// s.Require().NotNil(blockNumber)
-	// s.Require().NotNil(blockHash)
-	// deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
+	deployContractTxHash, contractAddress := s.DeployTestContract(true)
+	testContractAddress = contractAddress
+	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	s.Require().NotNil(blockNumber)
+	s.Require().NotNil(blockHash)
+	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -143,7 +143,7 @@ func (s *BackendSuite) DeployTestContract(waitForNextBlock bool) (gethcommon.Has
 		&gethcore.LegacyTx{
 			Nonce:    uint64(nonce),
 			Data:     bytecodeForCall,
-			Gas:      400_000,
+			Gas:      1_500_000,
 			GasPrice: big.NewInt(1),
 		},
 		waitForNextBlock,
