@@ -266,6 +266,8 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().NoError(err)
 	s.Require().Equal("0", balance.String())
 
+	deps.ResetGasMeter()
+
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
