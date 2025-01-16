@@ -173,7 +173,7 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 
 // WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
 func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	for {

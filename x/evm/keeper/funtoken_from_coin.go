@@ -99,7 +99,6 @@ func (k *Keeper) deployERC20ForBankCoin(
 		stateDB = k.NewStateDB(ctx, txConfig)
 	}
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-
 	evmResp, err := k.CallContractWithInput(
 		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy,
 	)
@@ -107,6 +106,14 @@ func (k *Keeper) deployERC20ForBankCoin(
 		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
 	}
+
+	err = stateDB.Commit()
+	if err != nil {
+		return gethcommon.Address{}, errors.Wrap(err, "failed to commit stateDB")
+	}
+	// Don't need the StateDB anymore because it's not usable after committing
+	k.Bank.StateDB = nil
+
 	blockGasUsed, errBlockGasUsed := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
 	if errBlockGasUsed != nil {
 		return gethcommon.Address{}, errors.Wrap(errBlockGasUsed, "error adding transient gas used")
