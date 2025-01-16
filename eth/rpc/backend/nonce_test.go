@@ -13,6 +13,10 @@ import (
 // TestNonceIncrementWithMultipleMsgsTx tests that the nonce is incremented correctly
 // when multiple messages are included in a single transaction.
 func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
+	// Test is broadcasting txs. Lock to avoid nonce conflicts.
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
 	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 
 	// Create series of 3 tx messages. Expecting nonce to be incremented by 3
@@ -38,7 +42,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 
 	// Assert all transactions included in block
 	for _, tx := range []gethcore.Transaction{creationTx, firstTransferTx, secondTransferTx} {
-		blockNum, blockHash := WaitForReceipt(s, tx.Hash())
+		blockNum, blockHash, _ := WaitForReceipt(s, tx.Hash())
 		s.Require().NotNil(blockNum)
 		s.Require().NotNil(blockHash)
 	}
