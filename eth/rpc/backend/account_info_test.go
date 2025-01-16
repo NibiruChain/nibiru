@@ -158,7 +158,7 @@ func (s *BackendSuite) TestGetBalance() {
 		{
 			name:                "happy: recipient balance after transfer",
 			address:             recipient,
-			blockNumber:         rpc.NewBlockNumber(big.NewInt(transferTxBlockNumber.Int64() + 1)),
+			blockNumber:         transferTxBlockNumber,
 			wantPositiveBalance: true,
 		},
 		{
