@@ -74,7 +74,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 					sdkerrors.ErrInsufficientFunds,
 					"failed to transfer %s wei ( balance=%s )from address %s using the EVM block context transfer function",
 					evmMsg.Value(),
-					evm.EVMBankDenom,
+					balanceWei,
 					evmMsg.From(),
 				)
 			}
