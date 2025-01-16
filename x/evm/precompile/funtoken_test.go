@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -101,23 +100,8 @@ func (s *FuntokenSuite) TestWhoAmI() {
 			fmt.Printf("arg: %s", arg)
 			contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
 			s.Require().NoError(err)
-			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-			evmMsg := gethcore.NewMessage(
-				evm.EVM_MODULE_ADDRESS,              /*from*/
-				&precompile.PrecompileAddr_FunToken, /*to*/
-				deps.App.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-				big.NewInt(0),                     /*value*/
-				evmtest.FunTokenGasLimitSendToEvm, /*gasLimit*/
-				big.NewInt(0),                     /*gasPrice*/
-				big.NewInt(0),                     /*gasFeeCap*/
-				big.NewInt(0),                     /*gasTipCap*/
-				contractInput,                     /*data*/
-				gethcore.AccessList{},             /*accessList*/
-				false,                             /*isFake*/
-			)
-			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 			return deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
 				evmObj,
@@ -159,14 +143,12 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(69_420))),
 	))
 
-	s.T().Log("set up evmObj")
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-
 	s.T().Log("Call IFunToken.bankBalance()")
 	s.Run("IFunToken.bankBalance()", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("bankBalance", deps.Sender.EthAddr, funtoken.BankDenom)
 		s.Require().NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -200,6 +182,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		s.deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -221,10 +205,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), erc20, big.NewInt(420), randomAcc.String())
 		s.NoError(err)
 
-		// err = testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
-		// 	sdkmath.NewInt(70_000),
-		// )
-		// s.NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 
 		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -246,7 +228,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance",
 		)
 		s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.Equal(sdk.NewInt(420)))
-		s.Require().NotNil(deps.EvmKeeper.Bank.StateDB)
 
 		s.T().Log("Parse the response contract addr and response bytes")
 		var sentAmt *big.Int
@@ -261,6 +242,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("IFuntoken.balance", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("balance", deps.Sender.EthAddr, erc20)
 		s.Require().NoError(err)
+		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,

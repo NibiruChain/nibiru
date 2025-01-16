@@ -189,9 +189,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	)
 	s.Require().NoError(err)
 
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-
 	s.T().Log("CreateFunToken for the ERC20")
 	resp, err := deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
@@ -208,6 +205,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
 	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -225,6 +224,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	deps.ResetGasMeter()
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -248,6 +249,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.T().Log("sad: send too many erc20 tokens to Bank")
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -274,6 +277,8 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_420), "expect nonzero balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect nonzero balance")
 	s.Require().True(
@@ -556,6 +561,8 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(981), "expect 981 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(19), "expect 19 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance")

@@ -351,6 +351,8 @@ func (k *Keeper) ApplyEvmMsg(
 		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
 			return nil, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
+		// after we commit, the StateDB is no longer usable so we discard it and let the Golang garbage collector dispose of it
+		k.Bank.StateDB = nil
 	}
 	// Rare case of uint64 gas overflow
 	if msg.Gas() < leftoverGas {
@@ -594,6 +596,12 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	coin sdk.Coin,
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
+	// needs to run first to populate the StateDB on the BankKeeperExtension
+	var stateDB *statedb.StateDB = k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	}
+
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
 	if err := k.Bank.SendCoinsFromAccountToModule(
@@ -603,6 +611,14 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		sdk.NewCoins(coin),
 	); err != nil {
 		return nil, errors.Wrap(err, "error sending Bank Coins to the EVM")
+	}
+
+	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
+	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
+	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
+	// in the BC → ERC20 conversion.
+	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin)); err != nil {
+		return nil, errors.Wrap(err, "failed to burn coins")
 	}
 
 	// 2 | EVM sends ERC20 tokens to the "to" account.
@@ -631,10 +647,6 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		gethcore.AccessList{},
 		true,
 	)
-	var stateDB *statedb.StateDB = k.Bank.StateDB
-	if stateDB == nil {
-		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
-	}
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	_, _, err = k.ERC20().Transfer(
 		erc20Addr,
@@ -648,14 +660,12 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
-	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
-	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
-	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
-	// in the BC → ERC20 conversion.
-	err = k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to burn coins")
+	// Commit the stateDB to the BankKeeperExtension because we don't go through
+	// ApplyEvmMsg at all in this tx.
+	if err := stateDB.Commit(); err != nil {
+		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
+	k.Bank.StateDB = nil
 
 	// Emit event with the actual amount received
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{

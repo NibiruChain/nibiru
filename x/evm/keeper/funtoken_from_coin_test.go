@@ -240,12 +240,14 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		alice.EthAddr,
-		&precompile.PrecompileAddr_FunToken,
-		true,
+		alice.EthAddr,                       // from
+		&precompile.PrecompileAddr_FunToken, // to
+		true,                                // commit
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
@@ -265,12 +267,14 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal("0", balance.String())
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		alice.EthAddr,
-		&precompile.PrecompileAddr_FunToken,
-		true,
+		alice.EthAddr,                       // from
+		&precompile.PrecompileAddr_FunToken, // to
+		true,                                // commit
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
@@ -376,6 +380,8 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -418,6 +424,8 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -531,14 +539,16 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		big.NewInt(9e6),           /*amount*/
 	)
 	s.Require().NoError(err)
+	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
-		deps.Sender.EthAddr,
-		&testContractAddr,
-		true,
+		deps.Sender.EthAddr, // from
+		&testContractAddr,   // to
+		true,                // commit
 		contractInput,
-		10_000_000,
+		10_000_000, // gas limit
 	)
 	s.Require().NoError(err)
 

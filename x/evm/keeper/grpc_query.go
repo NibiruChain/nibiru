@@ -540,7 +540,7 @@ func (k Keeper) TraceTx(
 		return nil, err
 	}
 
-	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
+	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -618,7 +618,7 @@ func (k Keeper) TraceCall(
 		txData.GetAccessList(),
 		false, // isFake
 	)
-	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, evmMsg, req.TraceConfig, false, tracerConfig)
+	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, evmMsg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -695,7 +695,7 @@ func (k Keeper) TraceBlock(
 			result.Error = err.Error()
 			continue
 		}
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, true, tracerConfig)
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, tracerConfig)
 		if err != nil {
 			result.Error = err.Error()
 		} else {
@@ -723,7 +723,6 @@ func (k *Keeper) TraceEthTxMsg(
 	txConfig statedb.TxConfig,
 	msg gethcore.Message,
 	traceConfig *evm.TraceConfig,
-	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
 ) (*any, uint, error) {
 	// Assemble the structured logger or the JavaScript tracer
@@ -791,7 +790,7 @@ func (k *Keeper) TraceEthTxMsg(
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, commitMessage, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
