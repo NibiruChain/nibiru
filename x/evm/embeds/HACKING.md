@@ -1,5 +1,11 @@
 # x/evm/embeds/HACKING.md
 
+- [Building Outputs](#building-outputs)
+- [Precompile Solidity Documentation](#precompile-solidity-documentation)
+  - [Comments](#comments)
+  - [NatSpec Fields](#natspec-fields)
+- [Solidity Conventions](#solidity-conventions)
+
 ## Building Outputs 
 
 Workhorse command
@@ -67,5 +73,40 @@ Best practice: Include at the top of each contract or interface file.
 States the author of the contract.
 Best practice: Optional, but can be useful in larger projects.
 
+## Solidity Conventions
 
-### 
+### State Mutability
+
+State mutability defines how a function interacts with the blockchain state. Always explicitly declare non-default state mutability keywords for clarity and correctness.
+
+1. `view` : For stateful queries
+   - Reads state, but cannot modify it.  
+   - Use for getters or queries.  
+
+   ```solidity
+   function getBalance(address account) external view returns (uint256);
+   ```
+
+2. `pure` : For stateless queries
+   - Neither reads nor modifies state.  
+   - Use for calculations or logic relying only on inputs.  
+
+   ```solidity
+   function add(uint256 a, uint256 b) external pure returns (uint256);
+   ```
+
+3. `nonpayable` : (Default) State mutating operation
+   - Modifies state but cannot receive Ether.  
+   - Default if no mutability is specified.  
+
+   ```solidity
+   function updateBalance(address account, uint256 amount) external;
+   ```
+
+4. `payable` : State mutating operation that can receive Ether (NIBI)
+   - Can receive Ether and may modify state.  
+   - Use for deposits or payments.  
+
+   ```solidity
+   function deposit() external payable;
+   ```
