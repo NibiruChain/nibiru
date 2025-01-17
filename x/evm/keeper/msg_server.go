@@ -581,6 +581,13 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
 	}
+
+	err = stateDB.Commit()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to commit stateDB")
+	}
+	k.Bank.StateDB = nil
+
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
 		Erc20ContractAddress: erc20Addr.String(),
