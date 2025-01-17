@@ -186,3 +186,49 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 		balanceBefore.Uint64()-balanceAfter.Uint64(),
 	)
 }
+
+// TestMultipleMsgsTxGasUsage tests that the gas is correctly consumed per message in a single transaction.
+func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
+	// Test is broadcasting txs. Lock to avoid nonce conflicts.
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
+	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
+
+	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
+
+	contractCreationGasLimit := uint64(1_500_000)
+	contractCallGasLimit := uint64(100_000)
+
+	// Create series of 3 tx messages. Expecting nonce to be incremented by 3
+	creationTx := s.buildContractCreationTx(nonce, contractCreationGasLimit)
+	firstTransferTx := s.buildContractCallTx(testContractAddress, nonce+1, contractCallGasLimit)
+	secondTransferTx := s.buildContractCallTx(testContractAddress, nonce+2, contractCallGasLimit)
+
+	// Create and broadcast SDK transaction
+	sdkTx := s.buildSDKTxWithEVMMessages(
+		creationTx,
+		firstTransferTx,
+		secondTransferTx,
+	)
+	s.broadcastSDKTx(sdkTx)
+
+	_, _, receiptContractCreation := WaitForReceipt(s, creationTx.Hash())
+	_, _, receiptFirstTransfer := WaitForReceipt(s, firstTransferTx.Hash())
+	_, _, receiptSecondTransfer := WaitForReceipt(s, secondTransferTx.Hash())
+
+	s.Require().Greater(receiptContractCreation.GasUsed, uint64(0))
+	s.Require().LessOrEqual(receiptContractCreation.GasUsed, contractCreationGasLimit)
+
+	s.Require().Greater(receiptFirstTransfer.GasUsed, uint64(0))
+	s.Require().LessOrEqual(receiptFirstTransfer.GasUsed, contractCallGasLimit)
+
+	s.Require().Greater(receiptSecondTransfer.GasUsed, uint64(0))
+	s.Require().LessOrEqual(receiptSecondTransfer.GasUsed, contractCallGasLimit)
+
+	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
+	s.Require().Equal(
+		receiptContractCreation.GasUsed+receiptFirstTransfer.GasUsed+receiptSecondTransfer.GasUsed,
+		balanceBefore.Uint64()-balanceAfter.Uint64(),
+	)
+}

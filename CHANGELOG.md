@@ -77,6 +77,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
 - [#2160](https://github.com/NibiruChain/nibiru/pull/2160) - fix(evm-precompile): use bank.MsgServer Send in precompile IFunToken.bankMsgSend
 - [#2162](https://github.com/NibiruChain/nibiru/pull/2162) - test(testutil): try retrying for 'panic: pebbledb: closed'
+- [#2167](https://github.com/NibiruChain/nibiru/pull/2167) - refactor(evm): removed blockGasUsed transient variable
 - [#2168](https://github.com/NibiruChain/nibiru/pull/2168) - chore(evm-solidity): Move unrelated docs, gen-embeds, and add Solidity docs
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
