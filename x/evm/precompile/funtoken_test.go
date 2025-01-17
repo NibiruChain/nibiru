@@ -168,8 +168,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
-	deps.ResetGasMeter()
-
 	s.Run("IFunToken.bankBalance", func() {
 		s.Require().NotEmpty(funtoken.BankDenom)
 		evmResp, err := deps.EvmKeeper.CallContract(
@@ -208,7 +206,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
-		s.deps.ResetGasMeter()
 		_, err = deps.EvmKeeper.CallContract(deps.Ctx, embeds.SmartContract_ERC20Minter.ABI, deps.Sender.EthAddr, &erc20, true, keeper.Erc20GasLimitExecute, "mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
@@ -221,7 +218,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), callArgs...)
 	s.NoError(err)
 
-	deps.ResetGasMeter()
 	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
@@ -253,8 +249,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	)
 	s.NoError(err)
 	s.Require().Equal("420", sentAmt.String())
-
-	deps.ResetGasMeter()
 
 	s.Run("IFuntoken.balance", func() {
 		evmResp, err := deps.EvmKeeper.CallContract(
@@ -380,7 +374,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Happy: callBankSend with default gas")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -395,7 +388,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Happy: callBankSend with local gas - sufficient gas amount")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -411,7 +403,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Sad: callBankSend with local gas - insufficient gas amount")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -462,7 +453,6 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	)
 	s.Require().NoError(err)
 
-	deps.ResetGasMeter()
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -515,7 +505,6 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	)
 	s.Require().NoError(err)
 
-	deps.ResetGasMeter()
 	_, ethTxResp2, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,

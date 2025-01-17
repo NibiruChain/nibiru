@@ -17,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -66,7 +68,9 @@ type BackendSuite struct {
 }
 
 func TestBackendSuite(t *testing.T) {
-	suite.Run(t, new(BackendSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(BackendSuite))
+	}, 2)
 }
 
 func (s *BackendSuite) SetupSuite() {
@@ -223,7 +227,7 @@ func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
 }
 
 // buildContractCreationTx builds a contract creation transaction
-func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transaction {
+func (s *BackendSuite) buildContractCreationTx(nonce uint64, gasLimit uint64) gethcore.Transaction {
 	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
 	s.Require().NoError(err)
 	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
@@ -231,7 +235,7 @@ func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transactio
 	creationTx := &gethcore.LegacyTx{
 		Nonce:    nonce,
 		Data:     bytecodeForCall,
-		Gas:      1_500_000,
+		Gas:      gasLimit,
 		GasPrice: big.NewInt(1),
 	}
 
@@ -243,7 +247,11 @@ func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transactio
 }
 
 // buildContractCallTx builds a contract call transaction
-func (s *BackendSuite) buildContractCallTx(nonce uint64, contractAddr gethcommon.Address) gethcore.Transaction {
+func (s *BackendSuite) buildContractCallTx(
+	contractAddr gethcommon.Address,
+	nonce uint64,
+	gasLimit uint64,
+) gethcore.Transaction {
 	// recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
 	transferAmount := big.NewInt(100)
 
@@ -257,7 +265,7 @@ func (s *BackendSuite) buildContractCallTx(nonce uint64, contractAddr gethcommon
 	transferTx := &gethcore.LegacyTx{
 		Nonce:    nonce,
 		Data:     packedArgs,
-		Gas:      100_000,
+		Gas:      gasLimit,
 		GasPrice: big.NewInt(1),
 		To:       &contractAddr,
 	}

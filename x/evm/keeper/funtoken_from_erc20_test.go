@@ -212,8 +212,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 
 	randomAcc := testutil.AccAddress()
 
-	deps.ResetGasMeter()
-
 	s.T().Log("send erc20 tokens to Bank")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -236,8 +234,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
 
-	deps.ResetGasMeter()
-
 	s.T().Log("sad: send too many erc20 tokens to Bank")
 	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -253,8 +249,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank() {
 	)
 	s.T().Log("check balances")
 	s.Require().Error(err, evmResp.String())
-
-	deps.ResetGasMeter()
 
 	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
@@ -368,8 +362,6 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	s.Require().NoError(err)
 	randomAcc := testutil.AccAddress()
 
-	deps.ResetGasMeter()
-
 	s.T().Log("send erc20 tokens to cosmos")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -423,8 +415,6 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 		},
 	)
 	s.Require().NoError(err)
-
-	deps.ResetGasMeter()
 
 	s.T().Log("happy: call attackBalance()")
 	res, err := deps.EvmKeeper.CallContract(
@@ -491,8 +481,6 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 
 	randomAcc := testutil.AccAddress()
 
-	deps.ResetGasMeter()
-
 	s.T().Log("send erc20 tokens to Bank")
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -513,8 +501,6 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(10))
 	evmtest.AssertERC20BalanceEqual(s.T(), deps, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(90))
 	s.Require().Equal(sdk.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
-
-	deps.ResetGasMeter()
 
 	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
