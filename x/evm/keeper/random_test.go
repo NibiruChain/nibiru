@@ -4,19 +4,14 @@ package keeper_test
 import (
 	"time"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // TestRandom tests the random value generation within the EVM.
 func (s *Suite) TestRandom() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
 	deployResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestRandom)
 	s.Require().NoError(err)
 	randomContractAddr := deployResp.ContractAddr
@@ -31,8 +26,7 @@ func (s *Suite) TestRandom() {
 
 	// Update block time to check that random changes
 	deps.Ctx = deps.Ctx.WithBlockTime(deps.Ctx.BlockTime().Add(1 * time.Second))
-	stateDB = deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj = deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj = deps.NewEVM()
 	random2, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
 		deps.Ctx, evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
 	)

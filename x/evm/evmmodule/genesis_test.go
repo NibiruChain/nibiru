@@ -8,7 +8,6 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -16,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 type Suite struct {
@@ -25,8 +23,7 @@ type Suite struct {
 
 // TestKeeperSuite: Runs all the tests in the suite.
 func TestKeeperSuite(t *testing.T) {
-	s := new(Suite)
-	suite.Run(t, s)
+	suite.Run(t, new(Suite))
 }
 
 // TestExportInitGenesis
@@ -51,23 +48,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 	erc20Addr := deployResp.ContractAddr
 
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		keeper.Erc20GasLimitExecute,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		[]byte{},
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	evmObj := deps.NewEVM()
 	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
 		deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
 	)

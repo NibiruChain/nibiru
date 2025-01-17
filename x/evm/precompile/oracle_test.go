@@ -8,8 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -69,23 +67,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			"unibi:uusd",
 		)
 		s.Require().NoError(err)
-		txConfig := deps.EvmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := deps.EvmKeeper.NewStateDB(ctx, txConfig)
-		evmCfg := deps.EvmKeeper.GetEVMConfig(ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS,
-			&evm.EVM_MODULE_ADDRESS,
-			deps.EvmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-			big.NewInt(0),
-			OracleGasLimitQuery,
-			big.NewInt(0),
-			big.NewInt(0),
-			big.NewInt(0),
-			contractInput,
-			gethcore.AccessList{},
-			false,
-		)
-		evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		evmObj := deps.NewEVM()
 		return deps.EvmKeeper.CallContractWithInput(
 			ctx,
 			evmObj,
@@ -150,23 +132,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			"unibi:uusd",
 		)
 		s.Require().NoError(err)
-		txConfig := deps.EvmKeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := deps.EvmKeeper.NewStateDB(ctx, txConfig)
-		evmCfg := deps.EvmKeeper.GetEVMConfig(ctx)
-		evmMsg := gethcore.NewMessage(
-			evm.EVM_MODULE_ADDRESS,
-			&evm.EVM_MODULE_ADDRESS,
-			deps.EvmKeeper.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-			big.NewInt(0),
-			OracleGasLimitQuery,
-			big.NewInt(0),
-			big.NewInt(0),
-			big.NewInt(0),
-			contractInput,
-			gethcore.AccessList{},
-			false,
-		)
-		evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		evmObj := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContractWithInput(
 			ctx,
 			evmObj,

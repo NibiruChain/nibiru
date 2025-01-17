@@ -8,7 +8,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
@@ -24,8 +23,7 @@ import (
 
 func (s *Suite) TestCommitRemovesDirties() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
 
 	deployResp, err := evmtest.DeployContract(
 		&deps,
@@ -49,12 +47,13 @@ func (s *Suite) TestCommitRemovesDirties() {
 		keeper.Erc20GasLimitExecute,
 	)
 	s.Require().NoError(err)
-	s.Require().EqualValues(0, stateDB.DebugDirtiesCount())
+	s.Require().EqualValues(0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount())
 }
 
 func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.NewEVM()
+	stateDB := evmObj.StateDB.(*statedb.StateDB)
 
 	randomAcc := evmtest.NewEthPrivAcc().EthAddr
 	balDelta := evm.NativeToWei(big.NewInt(4))
@@ -80,8 +79,9 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 
 func (s *Suite) TestContractCallsAnotherContract() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
+	stateDB := evmObj.StateDB.(*statedb.StateDB)
+
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
@@ -161,8 +161,8 @@ func (s *Suite) TestContractCallsAnotherContract() {
 
 func (s *Suite) TestJournalReversion() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
+	stateDB := evmObj.StateDB.(*statedb.StateDB)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,

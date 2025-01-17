@@ -4,8 +4,6 @@ package keeper_test
 import (
 	"math/big"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
@@ -16,19 +14,16 @@ func (s *Suite) TestERC20Calls() {
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
 	contract := funtoken.Erc20Addr.Address
 
-	s.T().Log("create evmObj")
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.Hash{}))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		_, err := deps.EvmKeeper.ERC20().Mint(
 			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
-			big.NewInt(69_420), deps.Ctx, evmObj,
+			big.NewInt(69_420), deps.Ctx, deps.NewEVM(),
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
 
 	s.Run("Mint tokens - Success", func() {
+		evmObj := deps.NewEVM()
 		_, err := deps.EvmKeeper.ERC20().Mint(
 			contract,               /*erc20Addr*/
 			evm.EVM_MODULE_ADDRESS, /*sender*/
@@ -44,6 +39,7 @@ func (s *Suite) TestERC20Calls() {
 	})
 
 	s.Run("Transfer - Not enough funds", func() {
+		evmObj := deps.NewEVM()
 		_, _, err := deps.EvmKeeper.ERC20().Transfer(
 			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
 			big.NewInt(9_420), deps.Ctx, evmObj,
@@ -55,6 +51,7 @@ func (s *Suite) TestERC20Calls() {
 	})
 
 	s.Run("Transfer - Success (sanity check)", func() {
+		evmObj := deps.NewEVM()
 		sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
 			contract,               /*erc20Addr*/
 			evm.EVM_MODULE_ADDRESS, /*sender*/
@@ -73,6 +70,7 @@ func (s *Suite) TestERC20Calls() {
 	})
 
 	s.Run("Burn tokens - Allowed as non-owner", func() {
+		evmObj := deps.NewEVM()
 		_, err := deps.EvmKeeper.ERC20().Burn(
 			contract,            /*erc20Addr*/
 			deps.Sender.EthAddr, /*sender*/
@@ -87,6 +85,7 @@ func (s *Suite) TestERC20Calls() {
 	})
 
 	s.Run("Burn tokens - Allowed as owner", func() {
+		evmObj := deps.NewEVM()
 		_, err := deps.EvmKeeper.ERC20().Burn(
 			contract,               /*erc20Addr*/
 			evm.EVM_MODULE_ADDRESS, /*sender*/

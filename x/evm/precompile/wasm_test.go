@@ -7,17 +7,13 @@ import (
 	"testing"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,8 +36,8 @@ func TestWasmSuite(t *testing.T) {
 
 func (s *WasmSuite) TestExecuteHappy() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
+
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 
@@ -121,9 +117,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 
 func (s *WasmSuite) TestExecuteMultiHappy() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-
+	evmObj := deps.NewEVM()
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -164,23 +158,7 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 		[]byte(`state`),
 	)
 	s.Require().NoError(err)
-	txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-	evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&evm.EVM_MODULE_ADDRESS,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		WasmGasLimitQuery,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	evmObj := deps.NewEVM()
 
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -356,23 +334,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 				tc.callArgs...,
 			)
 			s.Require().NoError(err)
-			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-			evmMsg := gethcore.NewMessage(
-				evm.EVM_MODULE_ADDRESS,
-				&evm.EVM_MODULE_ADDRESS,
-				deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-				big.NewInt(0),
-				WasmGasLimitExecute,
-				big.NewInt(0),
-				big.NewInt(0),
-				big.NewInt(0),
-				contractInput,
-				gethcore.AccessList{},
-				false,
-			)
-			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+			evmObj := deps.NewEVM()
 
 			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
@@ -397,8 +359,7 @@ type WasmExecuteMsg struct {
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -513,23 +474,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 				tc.executeMsgs,
 			)
 			s.Require().NoError(err)
-			txConfig := deps.EvmKeeper.TxConfig(deps.Ctx, gethcommon.BigToHash(big.NewInt(0)))
-			stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, txConfig)
-			evmCfg := deps.EvmKeeper.GetEVMConfig(deps.Ctx)
-			evmMsg := gethcore.NewMessage(
-				evm.EVM_MODULE_ADDRESS,
-				&evm.EVM_MODULE_ADDRESS,
-				deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS),
-				big.NewInt(0),
-				WasmGasLimitExecute,
-				big.NewInt(0),
-				big.NewInt(0),
-				big.NewInt(0),
-				contractInput,
-				gethcore.AccessList{},
-				false,
-			)
-			evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+			evmObj := deps.NewEVM()
 			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
 				evmObj,
@@ -555,8 +500,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm

@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // TestSuite: Runs all the tests in the suite.
@@ -85,8 +84,7 @@ func TestWhoAmI(t *testing.T) {
 		fmt.Printf("arg: %s", arg)
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
 		require.NoError(t, err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		evmObj := deps.NewEVM()
 		return deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -132,12 +130,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(69_420))),
 	))
 
-	s.T().Log("Call IFunToken.bankBalance()")
 	s.Run("IFunToken.bankBalance()", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("bankBalance", deps.Sender.EthAddr, funtoken.BankDenom)
 		s.Require().NoError(err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		evmObj := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -171,8 +167,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		evmObj := deps.NewEVM()
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -186,16 +181,14 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
 
-	randomAcc := testutil.AccAddress()
-
 	s.Run("IFunToken.sendToBank()", func() {
 		deps.ResetGasMeter()
+		randomAcc := testutil.AccAddress()
 
 		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), erc20, big.NewInt(420), randomAcc.String())
 		s.NoError(err)
 
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		evmObj := deps.NewEVM()
 
 		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -231,14 +224,13 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("IFuntoken.balance", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("balance", deps.Sender.EthAddr, erc20)
 		s.Require().NoError(err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+		evmObj := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
-			deps.Sender.EthAddr,
-			&precompile.PrecompileAddr_FunToken,
-			false,
+			deps.Sender.EthAddr,                 // from
+			&precompile.PrecompileAddr_FunToken, // to
+			false,                               // commit
 			contractInput,
 			keeper.Erc20GasLimitQuery,
 		)
@@ -257,8 +249,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
-
 	randomAcc := testutil.AccAddress()
+
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
 		funtoken.Erc20Addr.Address,
@@ -296,8 +288,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			randomAcc.String(),
 		)
 		s.Require().NoError(err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		evmObj := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -319,8 +310,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)),
 		)
 		s.Require().NoError(err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		evmObj := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -342,8 +332,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(50_000), // customGas - too small
 		)
 		s.Require().NoError(err)
-		stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-		evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+		evmObj := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -361,8 +350,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("create evmObj")
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), nil /*tracer*/, stateDB)
+	evmObj := deps.NewEVM()
 
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
@@ -379,6 +367,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	s.Require().NoError(err)
 
 	s.Run("Call sendToEvm(string bankDenom, uint256 amount, string to)", func() {
+		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 			"sendToEvm",
 			bankDenom,
@@ -387,7 +376,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		)
 		s.Require().NoError(err)
 
-		deps.ResetGasMeter()
 		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -423,10 +411,10 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	// 5) Now send some tokens *back* to the bank via `sendToBank`.
 	//-----------------------------------------------------------------------
 	// We'll pick a brand new random account to receive them.
-	recipient := testutil.AccAddress()
 
 	s.Run("Sending 400 tokens back from EVM to Cosmos bank => recipient:", func() {
 		deps.ResetGasMeter()
+		recipient := testutil.AccAddress()
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 			string(precompile.FunTokenMethod_sendToBank),
 			erc20Addr,
@@ -495,8 +483,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// 	- unescrow erc20 token
 
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, evmtest.MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.NewEVM()
 
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()

@@ -4,10 +4,9 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
-
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/codec"
@@ -34,14 +33,13 @@ func NewTestDeps() TestDeps {
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
-	ethAcc := NewEthPrivAcc()
 	return TestDeps{
 		App:       app,
 		Ctx:       ctx,
 		EncCfg:    encCfg,
 		EvmKeeper: app.EvmKeeper,
 		GenState:  evm.DefaultGenesisState(),
-		Sender:    ethAcc,
+		Sender:    NewEthPrivAcc(),
 	}
 }
 
@@ -52,6 +50,12 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash()),
 		),
 	)
+}
+
+func (deps TestDeps) NewEVM() *vm.EVM {
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	return evmObj
 }
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
