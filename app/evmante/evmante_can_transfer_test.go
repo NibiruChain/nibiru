@@ -14,9 +14,8 @@ import (
 func (s *TestSuite) TestCanTransferDecorator() {
 	testCases := []struct {
 		name          string
-		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
-		ctxSetup      func(deps *evmtest.TestDeps)
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
 		wantErr       string
 	}{
 		{
@@ -92,9 +91,6 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			anteDec := evmante.CanTransferDecorator{deps.App.AppKeepers.EvmKeeper}
 			tx := tc.txSetup(&deps)
 
-			if tc.ctxSetup != nil {
-				tc.ctxSetup(&deps)
-			}
 			if tc.beforeTxSetup != nil {
 				tc.beforeTxSetup(&deps, stateDB)
 				err := stateDB.Commit()

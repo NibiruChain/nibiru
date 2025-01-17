@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"fmt"
+	"math/big"
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -75,15 +77,42 @@ func (k *Keeper) deployERC20ForBankCoin(
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to pack ABI args")
 	}
-	bytecodeForCall := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
+	input := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
 
-	// nil address for contract creation
-	evmResp, _, err := k.CallContractWithInput(
-		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall, Erc20GasLimitDeploy,
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		nil, /*contract*/
+		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		big.NewInt(0), /*amount*/
+		Erc20GasLimitDeploy,
+		big.NewInt(0), /*gasFeeCap*/
+		big.NewInt(0), /*gasTipCap*/
+		big.NewInt(0), /*gasPrice*/
+		input,
+		gethcore.AccessList{},
+		false, /*isFake*/
+	)
+	evmCfg := k.GetEVMConfig(ctx)
+	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
+	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	evmResp, err := k.CallContractWithInput(
+		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy,
 	)
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
 	}
+
+	err = stateDB.Commit()
+	if err != nil {
+		return gethcommon.Address{}, errors.Wrap(err, "failed to commit stateDB")
+	}
+	// Don't need the StateDB anymore because it's not usable after committing
+	k.Bank.StateDB = nil
+
 	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "deploy erc20 funtoken contract")
 
 	return erc20Addr, nil
