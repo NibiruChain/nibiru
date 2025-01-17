@@ -135,8 +135,6 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
-	deps.ResetGasMeter()
-
 	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_Wasm.ABI,

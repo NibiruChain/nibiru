@@ -298,8 +298,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
-	deps.ResetGasMeter()
-
 	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		deps.Sender.EthAddr,

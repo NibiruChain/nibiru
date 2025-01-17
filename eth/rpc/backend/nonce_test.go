@@ -20,9 +20,9 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 
 	// Create series of 3 tx messages. Expecting nonce to be incremented by 3
-	creationTx := s.buildContractCreationTx(nonce)
-	firstTransferTx := s.buildContractCallTx(nonce+1, testContractAddress)
-	secondTransferTx := s.buildContractCallTx(nonce+2, testContractAddress)
+	creationTx := s.buildContractCreationTx(nonce, 1_500_000)
+	firstTransferTx := s.buildContractCallTx(testContractAddress, nonce+1, 100_000)
+	secondTransferTx := s.buildContractCallTx(testContractAddress, nonce+2, 100_000)
 
 	// Create and broadcast SDK transaction
 	sdkTx := s.buildSDKTxWithEVMMessages(
