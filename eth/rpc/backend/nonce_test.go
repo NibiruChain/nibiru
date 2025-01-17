@@ -13,12 +13,16 @@ import (
 // TestNonceIncrementWithMultipleMsgsTx tests that the nonce is incremented correctly
 // when multiple messages are included in a single transaction.
 func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
+	// Test is broadcasting txs. Lock to avoid nonce conflicts.
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
 	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 
 	// Create series of 3 tx messages. Expecting nonce to be incremented by 3
-	creationTx := s.buildContractCreationTx(nonce)
-	firstTransferTx := s.buildContractCallTx(nonce+1, testContractAddress)
-	secondTransferTx := s.buildContractCallTx(nonce+2, testContractAddress)
+	creationTx := s.buildContractCreationTx(nonce, 1_500_000)
+	firstTransferTx := s.buildContractCallTx(testContractAddress, nonce+1, 100_000)
+	secondTransferTx := s.buildContractCallTx(testContractAddress, nonce+2, 100_000)
 
 	// Create and broadcast SDK transaction
 	sdkTx := s.buildSDKTxWithEVMMessages(
@@ -38,7 +42,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 
 	// Assert all transactions included in block
 	for _, tx := range []gethcore.Transaction{creationTx, firstTransferTx, secondTransferTx} {
-		blockNum, blockHash := WaitForReceipt(s, tx.Hash())
+		blockNum, blockHash, _ := WaitForReceipt(s, tx.Hash())
 		s.Require().NotNil(blockNum)
 		s.Require().NotNil(blockHash)
 	}

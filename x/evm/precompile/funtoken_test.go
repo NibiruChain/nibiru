@@ -29,16 +29,11 @@ func TestSuite(t *testing.T) {
 
 type FuntokenSuite struct {
 	suite.Suite
-	deps     evmtest.TestDeps
-	funtoken evm.FunToken
+	deps evmtest.TestDeps
 }
 
 func (s *FuntokenSuite) SetupSuite() {
 	s.deps = evmtest.NewTestDeps()
-
-	s.T().Log("Create FunToken from coin")
-	bankDenom := "unibi"
-	s.funtoken = evmtest.CreateFunTokenForBankCoin(&s.deps, bankDenom, &s.Suite)
 }
 
 func (s *FuntokenSuite) TestFailToPackABI() {
@@ -157,7 +152,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	bankDenom := "unibi"
+	bankDenom := "anycoin"
 	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
 
 	erc20 := funtoken.Erc20Addr.Address
@@ -170,7 +165,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance", func() {
@@ -201,7 +196,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(69_420)),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
 			},
@@ -211,7 +206,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.T().Log("Mint tokens - Fail from non-owner")
 	{
-		s.deps.ResetGasMeter()
 		_, err = deps.EvmKeeper.CallContract(deps.Ctx, embeds.SmartContract_ERC20Minter.ABI, deps.Sender.EthAddr, &erc20, true, keeper.Erc20GasLimitExecute, "mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	}
@@ -224,11 +218,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), callArgs...)
 	s.NoError(err)
 
-	deps.ResetGasMeter()
-	err = testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
-		sdkmath.NewInt(70_000),
-	)
-	s.NoError(err)
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -248,7 +238,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Equal(sdk.NewInt(420).String(),
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, funtoken.BankDenom).Amount.String(),
 	)
-	s.deps.ResetGasMeter()
 	s.Require().NotNil(deps.EvmKeeper.Bank.StateDB)
 
 	s.T().Log("Parse the response contract addr and response bytes")
@@ -353,9 +342,12 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := s.deps
 	randomAcc := testutil.AccAddress()
+	bankDenom := "unibi"
+	funtoken := evmtest.CreateFunTokenForBankCoin(&s.deps, bankDenom, &s.Suite)
+
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
-		s.funtoken.Erc20Addr.Address,
+		funtoken.Erc20Addr.Address,
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
@@ -365,7 +357,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
 	))
 
 	s.T().Log("Fund contract with erc20 coins")
@@ -373,7 +365,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(s.funtoken.BankDenom, sdk.NewInt(1000)),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: contractAddr,
 			},
@@ -382,7 +374,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Happy: callBankSend with default gas")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -397,7 +388,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Happy: callBankSend with local gas - sufficient gas amount")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -413,7 +403,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 
 	s.T().Log("Sad: callBankSend with local gas - insufficient gas amount")
-	s.deps.ResetGasMeter()
 	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI,
@@ -431,6 +420,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 func (s *FuntokenSuite) TestSendToEvm() {
 	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
@@ -463,7 +453,6 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	)
 	s.Require().NoError(err)
 
-	deps.ResetGasMeter()
 	_, ethTxResp, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -516,7 +505,6 @@ func (s *FuntokenSuite) TestSendToEvm() {
 	)
 	s.Require().NoError(err)
 
-	deps.ResetGasMeter()
 	_, ethTxResp2, err := evmtest.CallContractTx(
 		&deps,
 		precompile.PrecompileAddr_FunToken,
@@ -575,6 +563,7 @@ func (s *FuntokenSuite) TestSendToEvm_NotMadeFromCoin() {
 	// 	- unescrow erc20 token
 
 	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx, sdkmath.NewInt(20)))
 
 	bob := evmtest.NewEthPrivAcc()
 	alice := evmtest.NewEthPrivAcc()

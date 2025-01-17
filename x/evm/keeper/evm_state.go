@@ -39,8 +39,6 @@ type EvmState struct {
 		[]byte,
 	]
 
-	// BlockGasUsed: Gas used by Ethereum txs in the block (transient).
-	BlockGasUsed collections.ItemTransient[uint64]
 	// BlockLogSize: EVM tx log size for the block (transient).
 	BlockLogSize collections.ItemTransient[uint64]
 	// BlockTxIndex: EVM tx index for the block (transient).
@@ -70,11 +68,6 @@ func NewEvmState(
 			storeKey, evm.KeyPrefixAccState,
 			collections.PairKeyEncoder(eth.KeyEncoderEthAddr, eth.KeyEncoderEthHash),
 			eth.ValueEncoderBytes,
-		),
-		BlockGasUsed: collections.NewItemTransient(
-			storeKeyTransient,
-			evm.NamespaceBlockGasUsed,
-			collections.Uint64ValueEncoder,
 		),
 		BlockLogSize: collections.NewItemTransient(
 			storeKeyTransient,
@@ -164,12 +157,6 @@ func (state EvmState) CalcBloomFromLogs(
 		bloom = gethcore.BytesToBloom(bloomInt.Bytes())
 	}
 	return bloom
-}
-
-// ResetTransientGasUsed resets gas to prepare for the next block of execution.
-// Called in an ante handler.
-func (k *Keeper) ResetTransientGasUsed(ctx sdk.Context) {
-	k.EvmState.BlockGasUsed.Set(ctx, 0)
 }
 
 // GetAccNonce returns the sequence number of an account, returns 0 if not exists.

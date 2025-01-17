@@ -18,9 +18,6 @@ func (s *TestSuite) TestEthSetupContextDecorator() {
 	s.Require().NoError(stateDB.Commit())
 	tx := evmtest.HappyCreateContractTx(&deps)
 
-	// Set block gas used to non 0 to check that handler resets it
-	deps.App.EvmKeeper.EvmState.BlockGasUsed.Set(deps.Ctx, 1000)
-
 	// Ante handler returns new context
 	newCtx, err := anteDec.AnteHandle(
 		deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
@@ -35,9 +32,4 @@ func (s *TestSuite) TestEthSetupContextDecorator() {
 	defaultGasConfig := storetypes.GasConfig{}
 	s.Require().Equal(defaultGasConfig, newCtx.KVGasConfig())
 	s.Require().Equal(defaultGasConfig, newCtx.TransientKVGasConfig())
-
-	// Check that block gas used is reset to 0
-	gas, err := deps.App.EvmKeeper.EvmState.BlockGasUsed.Get(newCtx)
-	s.Require().NoError(err)
-	s.Require().Equal(gas, uint64(0))
 }
