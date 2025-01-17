@@ -165,7 +165,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Require().NoError(err)
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
-		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
@@ -182,7 +181,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("IFunToken.sendToBank()", func() {
-		deps.ResetGasMeter()
 		randomAcc := testutil.AccAddress()
 
 		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), erc20, big.NewInt(420), randomAcc.String())
@@ -281,7 +279,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Happy: callBankSend with default gas", func() {
-		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSend",
 			big.NewInt(1),
@@ -302,7 +299,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Happy: callBankSend with local gas - sufficient gas amount", func() {
-		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSendLocalGas",
 			big.NewInt(1),
@@ -324,7 +320,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	})
 
 	s.Run("Sad: callBankSend with local gas - insufficient gas amount", func() {
-		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_TestFunTokenPrecompileLocalGas.ABI.Pack(
 			"callBankSendLocalGas",
 			big.NewInt(1),
@@ -367,7 +362,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	s.Require().NoError(err)
 
 	s.Run("Call sendToEvm(string bankDenom, uint256 amount, string to)", func() {
-		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 			"sendToEvm",
 			bankDenom,
@@ -413,7 +407,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	// We'll pick a brand new random account to receive them.
 
 	s.Run("Sending 400 tokens back from EVM to Cosmos bank => recipient:", func() {
-		deps.ResetGasMeter()
 		recipient := testutil.AccAddress()
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 			string(precompile.FunTokenMethod_sendToBank),

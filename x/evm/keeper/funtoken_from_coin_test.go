@@ -228,7 +228,6 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	})
 
 	s.T().Log("Convert erc-20 to back to bank coin")
-	deps.ResetGasMeter()
 	contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToBank",
 		funToken.Erc20Addr.Address,
@@ -260,8 +259,6 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
 	s.Require().NoError(err)
 	s.Require().Equal("0", balance.String())
-
-	deps.ResetGasMeter()
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	evmObj, _ = deps.NewEVM()
@@ -363,7 +360,6 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	}.Assert(s.T(), deps, evmObj)
 
 	s.T().Log("call test contract")
-	deps.ResetGasMeter()
 	newSendAmtSendToBank := new(big.Int).Quo(sendAmt, big.NewInt(2))
 	newSendAmtEvmTransfer := evm.NativeToWei(newSendAmtSendToBank)
 
@@ -411,7 +407,6 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		BalanceERC20: big.NewInt(0),
 	}.Assert(s.T(), deps, evmObj)
 
-	deps.ResetGasMeter()
 	contractInput, err = embeds.SmartContract_TestNativeSendThenPrecompileSendJson.ABI.Pack(
 		"justPrecompileSend",
 		alice.NibiruAddr.String(), /*to*/

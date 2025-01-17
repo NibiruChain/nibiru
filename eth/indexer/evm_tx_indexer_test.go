@@ -1,6 +1,7 @@
 package indexer_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -109,6 +110,7 @@ func TestEVMTxIndexer(t *testing.T) {
 								{Key: "gas_used", Value: `"21000"`},
 								{Key: "index", Value: `"0"`},
 								{Key: "hash", Value: `"14A84ED06282645EFBF080E0B7ED80D8D8D6A36337668A12B5F229F81CDD3F57"`},
+								{Key: "eth_hash", Value: fmt.Sprintf(`"%s"`, txHash.Hex())},
 							},
 						},
 					},

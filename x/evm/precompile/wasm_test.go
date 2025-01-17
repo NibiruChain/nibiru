@@ -150,8 +150,6 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
-	deps.ResetGasMeter()
-
 	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_queryRaw),
 		wasmContract.String(),

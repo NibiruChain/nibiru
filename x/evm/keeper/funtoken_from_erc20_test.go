@@ -216,7 +216,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	randomAcc := testutil.AccAddress()
 
 	s.T().Log("happy: send erc20 tokens to Bank")
-	deps.ResetGasMeter()
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
 	evmObj, _ = deps.NewEVM()
@@ -238,8 +237,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 	)
 
-	deps.ResetGasMeter()
-
 	s.T().Log("sad: send too many erc20 tokens to Bank")
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 	s.Require().NoError(err)
@@ -254,8 +251,6 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().Error(err, evmResp.String())
-
-	deps.ResetGasMeter()
 
 	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
@@ -369,8 +364,6 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	s.Require().NoError(err)
 	randomAcc := testutil.AccAddress()
 
-	deps.ResetGasMeter()
-
 	s.T().Log("send erc20 tokens to cosmos")
 	input, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
@@ -423,8 +416,6 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 		},
 	)
 	s.Require().NoError(err)
-
-	deps.ResetGasMeter()
 
 	s.T().Log("happy: call attackBalance()")
 	contractInput, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
@@ -495,7 +486,6 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	randomAcc := testutil.AccAddress()
 
 	s.T().Log("send erc20 tokens to Bank")
-	deps.ResetGasMeter()
 	contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToBank",
 		deployResp.ContractAddr, /*erc20Addr*/
@@ -521,8 +511,6 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(90), "expect 90 balance")
 
 	s.Require().Equal(sdk.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
-
-	deps.ResetGasMeter()
 
 	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
