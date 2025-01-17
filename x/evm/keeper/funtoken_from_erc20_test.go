@@ -547,8 +547,6 @@ func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 
 	s.T().Log("set name")
 
-	deps.ResetGasMeter()
-
 	byteSlice, err = hex.DecodeString("4d616b6572000000000000000000000000000000000000000000000000000000")
 	s.Require().NoError(err)
 	copy(byteArray[:], byteSlice)
