@@ -65,32 +65,22 @@ func (k *Keeper) EthereumTx(
 	var tracer vm.EVMLogger = nil
 	evmResp, _, err = k.ApplyEvmMsg(ctx, evmMsg, tracer, true, evmConfig, txConfig, refundLeftoverGas)
 	if err != nil {
-		// when a transaction contains multiple msg, as long as one of the msg fails
-		// all gas will be deducted. so is not msg.Gas()
-		k.ResetGasMeterAndConsumeGas(ctx, ctx.GasMeter().Limit())
 		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
-	blockGasUsed, err := k.AddToBlockGasUsed(ctx, evmResp.GasUsed)
-	if err != nil {
-		return nil, errors.Wrap(err, "error adding transient gas used to block")
-	}
-
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
 	refundGas := uint64(0)
-	if evmMsg.Gas() > blockGasUsed {
-		refundGas = evmMsg.Gas() - blockGasUsed
+	if evmMsg.Gas() > evmResp.GasUsed {
+		refundGas = evmMsg.Gas() - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmConfig.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
-
-	// reset the gas meter for current TxMsg (EthereumTx)
-	k.ResetGasMeterAndConsumeGas(ctx, blockGasUsed)
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
@@ -571,6 +561,8 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	if err != nil {
 		return nil, err
 	}
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "mint erc20 tokens")
+
 	if evmResp.Failed() {
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())

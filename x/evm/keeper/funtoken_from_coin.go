@@ -78,12 +78,13 @@ func (k *Keeper) deployERC20ForBankCoin(
 	bytecodeForCall := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
 
 	// nil address for contract creation
-	_, _, err = k.CallContractWithInput(
+	evmResp, _, err := k.CallContractWithInput(
 		ctx, evm.EVM_MODULE_ADDRESS, nil, true, bytecodeForCall, Erc20GasLimitDeploy,
 	)
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
 	}
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "deploy erc20 funtoken contract")
 
 	return erc20Addr, nil
 }

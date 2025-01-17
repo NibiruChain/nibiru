@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
@@ -32,6 +35,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
+
+// testMutex is used to synchronize the tests which are broadcasting transactions concurrently
+var testMutex sync.Mutex
 
 var (
 	recipient    = evmtest.NewEthPrivAcc().EthAddr
@@ -62,7 +68,9 @@ type BackendSuite struct {
 }
 
 func TestBackendSuite(t *testing.T) {
-	suite.Run(t, new(BackendSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(BackendSuite))
+	}, 2)
 }
 
 func (s *BackendSuite) SetupSuite() {
@@ -95,7 +103,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
 	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
-	blockNumber, blockHash := WaitForReceipt(s, transferTxHash)
+	blockNumber, blockHash, _ := WaitForReceipt(s, transferTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -104,7 +112,7 @@ func (s *BackendSuite) SetupSuite() {
 	// Deploy test erc20 contract
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
-	blockNumber, blockHash = WaitForReceipt(s, deployContractTxHash)
+	blockNumber, blockHash, _ = WaitForReceipt(s, deployContractTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
@@ -167,35 +175,41 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	return txHash
 }
 
-func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash) {
+// WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
+func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	for {
 		receipt, err := s.backend.GetTransactionReceipt(txHash)
 		if err != nil {
-			return nil, nil
+			return nil, nil, nil
 		}
 		if receipt != nil {
-			return receipt.BlockNumber, &receipt.BlockHash
+			return receipt.BlockNumber, &receipt.BlockHash, receipt
 		}
 		select {
 		case <-ctx.Done():
 			fmt.Println("Timeout reached, transaction not included in a block yet.")
-			return nil, nil
+			return nil, nil, nil
 		default:
 			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
+// getUnibiBalance returns the balance of an address in unibi
+func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
+	latestBlock := rpc.EthLatestBlockNumber
+	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
+	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
+	s.Require().NoError(err)
+	return evm.WeiToNative(balance.ToInt())
+}
+
 // getCurrentNonce returns the current nonce of the funded account
 func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
-	bn, err := s.backend.BlockNumber()
-	s.Require().NoError(err)
-	currentHeight := rpc.BlockNumber(bn)
-
-	nonce, err := s.backend.GetTransactionCount(address, currentHeight)
+	nonce, err := s.backend.GetTransactionCount(address, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 
 	return uint64(*nonce)
@@ -213,7 +227,7 @@ func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
 }
 
 // buildContractCreationTx builds a contract creation transaction
-func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transaction {
+func (s *BackendSuite) buildContractCreationTx(nonce uint64, gasLimit uint64) gethcore.Transaction {
 	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
 	s.Require().NoError(err)
 	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
@@ -221,7 +235,7 @@ func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transactio
 	creationTx := &gethcore.LegacyTx{
 		Nonce:    nonce,
 		Data:     bytecodeForCall,
-		Gas:      1_500_000,
+		Gas:      gasLimit,
 		GasPrice: big.NewInt(1),
 	}
 
@@ -233,7 +247,11 @@ func (s *BackendSuite) buildContractCreationTx(nonce uint64) gethcore.Transactio
 }
 
 // buildContractCallTx builds a contract call transaction
-func (s *BackendSuite) buildContractCallTx(nonce uint64, contractAddr gethcommon.Address) gethcore.Transaction {
+func (s *BackendSuite) buildContractCallTx(
+	contractAddr gethcommon.Address,
+	nonce uint64,
+	gasLimit uint64,
+) gethcore.Transaction {
 	// recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
 	transferAmount := big.NewInt(100)
 
@@ -247,7 +265,7 @@ func (s *BackendSuite) buildContractCallTx(nonce uint64, contractAddr gethcommon
 	transferTx := &gethcore.LegacyTx{
 		Nonce:    nonce,
 		Data:     packedArgs,
-		Gas:      100_000,
+		Gas:      gasLimit,
 		GasPrice: big.NewInt(1),
 		To:       &contractAddr,
 	}
