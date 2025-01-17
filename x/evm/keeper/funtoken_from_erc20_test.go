@@ -540,7 +540,7 @@ type MkrMetadata struct {
 	Symbol [32]byte
 }
 
-func (s *FunTokenFromErc20Suite) TestMuahaha() {
+func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy MKR")
