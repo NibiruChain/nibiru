@@ -7,9 +7,11 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
@@ -70,4 +72,27 @@ func (s *Suite) TestEvmFilter() {
 		},
 	)
 	s.Require().ErrorContains(err, "Wasm VM to EVM call pattern is not yet supported")
+
+	coins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 420)) // arbitrary constant
+	err = testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins)
+	s.NoError(err)
+	txMsg := &bank.MsgSend{
+		FromAddress: deps.Sender.NibiruAddr.String(),
+		ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		Amount:      []sdk.Coin{sdk.NewInt64Coin(evm.EVMBankDenom, 20)},
+	}
+	protoValueBz, err = deps.EncCfg.Codec.Marshal(txMsg)
+	s.NoError(err)
+	_, _, err = wasmMsgHandler.DispatchMsg(
+		deps.Ctx,
+		wasmContractAddr,
+		"ibcport-unused",
+		wasmvm.CosmosMsg{
+			Stargate: &wasmvm.StargateMsg{
+				TypeURL: sdk.MsgTypeURL(txMsg),
+				Value:   protoValueBz,
+			},
+		},
+	)
+	s.Require().NoError(err)
 }
