@@ -84,7 +84,7 @@ func TestWhoAmI(t *testing.T) {
 		fmt.Printf("arg: %s", arg)
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
 		require.NoError(t, err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		return deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -133,7 +133,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("IFunToken.bankBalance()", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("bankBalance", deps.Sender.EthAddr, funtoken.BankDenom)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -167,7 +167,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		deps.ResetGasMeter()
 		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -188,7 +188,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), erc20, big.NewInt(420), randomAcc.String())
 		s.NoError(err)
 
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 
 		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -224,7 +224,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("IFuntoken.balance", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("balance", deps.Sender.EthAddr, erc20)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -288,7 +288,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			randomAcc.String(),
 		)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -310,7 +310,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(int64(evmtest.FunTokenGasLimitSendToEvm)),
 		)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -332,7 +332,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			big.NewInt(50_000), // customGas - too small
 		)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
@@ -350,7 +350,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("create evmObj")
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	s.T().Log("1) Create a new FunToken from coin 'ulibi'")
 	bankDenom := "ulibi"
@@ -483,7 +483,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// 	- unescrow erc20 token
 
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()

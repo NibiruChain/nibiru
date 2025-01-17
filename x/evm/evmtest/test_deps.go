@@ -52,10 +52,10 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 	)
 }
 
-func (deps TestDeps) NewEVM() *vm.EVM {
+func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
-	return evmObj
+	return evmObj, stateDB
 }
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {

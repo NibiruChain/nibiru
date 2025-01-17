@@ -27,7 +27,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	// Compute contract address. FindERC20 should fail
 	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
 	contractAddress := crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	metadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, contractAddress)
 	s.Require().Error(err)
 	s.Require().Nil(metadata)
@@ -169,7 +169,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 
 func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	alice := evmtest.NewEthPrivAcc()
 
 	// Initial setup
@@ -236,7 +236,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -264,7 +264,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	deps.ResetGasMeter()
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -297,7 +297,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 // - Module account: 0 NIBI escrowed
 func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	bankDenom := evm.EVMBankDenom
 
 	// Initial setup
@@ -375,7 +375,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -418,7 +418,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -473,7 +473,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 // - Module account: 1 NIBI escrowed (which Alice holds as 1 WNIBI)
 func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
 
@@ -531,7 +531,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		big.NewInt(9e6),           /*amount*/
 	)
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -587,7 +587,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 // - Module account: 10 NIBI escrowed (which Test contract holds as 10 WNIBI)
 func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)

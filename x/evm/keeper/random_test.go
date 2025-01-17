@@ -11,7 +11,7 @@ import (
 // TestRandom tests the random value generation within the EVM.
 func (s *Suite) TestRandom() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	deployResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestRandom)
 	s.Require().NoError(err)
 	randomContractAddr := deployResp.ContractAddr
@@ -26,7 +26,7 @@ func (s *Suite) TestRandom() {
 
 	// Update block time to check that random changes
 	deps.Ctx = deps.Ctx.WithBlockTime(deps.Ctx.BlockTime().Add(1 * time.Second))
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	random2, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
 		deps.Ctx, evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
 	)

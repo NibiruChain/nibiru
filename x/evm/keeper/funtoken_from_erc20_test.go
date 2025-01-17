@@ -40,7 +40,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	s.Require().NoError(err)
 	s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
 
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	actualMetadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr)
 	s.Require().NoError(err)
@@ -201,7 +201,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.T().Logf("mint erc20 tokens to %s", deps.Sender.EthAddr.String())
 	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -219,7 +219,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	deps.ResetGasMeter()
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -243,7 +243,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.T().Log("sad: send too many erc20 tokens to Bank")
 	contractInput, err = embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -270,7 +270,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_420), "expect nonzero balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect nonzero balance")
 	s.Require().True(
@@ -374,7 +374,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	s.T().Log("send erc20 tokens to cosmos")
 	input, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -429,7 +429,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	s.T().Log("happy: call attackBalance()")
 	contractInput, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
 	s.Require().NoError(err)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -444,7 +444,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	s.T().Log("sad: call attackTransfer()")
 	contractInput, err = embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackTransfer")
 	s.Require().NoError(err)
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -503,7 +503,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 		randomAcc.String(),      /*to*/
 	)
 	s.Require().NoError(err)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
@@ -537,7 +537,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	s.Require().NoError(err)
 
 	s.T().Log("check balances")
-	evmObj = deps.NewEVM()
+	evmObj, _ = deps.NewEVM()
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(981), "expect 981 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(19), "expect 19 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance")

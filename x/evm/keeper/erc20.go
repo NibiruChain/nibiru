@@ -74,7 +74,7 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
 /*
@@ -163,7 +163,7 @@ func (e erc20Calls) Burn(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, true /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
 func (e erc20Calls) LoadERC20Name(

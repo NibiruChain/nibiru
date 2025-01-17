@@ -36,7 +36,7 @@ func TestWasmSuite(t *testing.T) {
 
 func (s *WasmSuite) TestExecuteHappy() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
@@ -117,7 +117,7 @@ func (s *WasmSuite) TestExecuteHappy() {
 
 func (s *WasmSuite) TestExecuteMultiHappy() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -158,7 +158,7 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 		[]byte(`state`),
 	)
 	s.Require().NoError(err)
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -334,7 +334,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 				tc.callArgs...,
 			)
 			s.Require().NoError(err)
-			evmObj := deps.NewEVM()
+			evmObj, _ := deps.NewEVM()
 
 			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
@@ -359,7 +359,7 @@ type WasmExecuteMsg struct {
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -474,7 +474,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 				tc.executeMsgs,
 			)
 			s.Require().NoError(err)
-			evmObj := deps.NewEVM()
+			evmObj, _ := deps.NewEVM()
 			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
 				evmObj,
@@ -500,7 +500,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	deps := evmtest.NewTestDeps()
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm

@@ -67,7 +67,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			"unibi:uusd",
 		)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		return deps.EvmKeeper.CallContractWithInput(
 			ctx,
 			evmObj,
@@ -132,7 +132,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			"unibi:uusd",
 		)
 		s.Require().NoError(err)
-		evmObj := deps.NewEVM()
+		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContractWithInput(
 			ctx,
 			evmObj,

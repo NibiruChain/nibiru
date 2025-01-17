@@ -48,7 +48,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.Require().NoError(err)
 	erc20Addr := deployResp.ContractAddr
 
-	evmObj := deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
 		deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
 	)
