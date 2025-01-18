@@ -86,11 +86,11 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 				GasUsed:    gasUsed,
 				Failed:     len(eventEthereumTx.EthTxFailed) > 0,
 			}
-			// replace pending tx with committed tx
-			if msgIndex >= 0 && len(parsedTxs.Txs) == msgIndex+1 {
-				parsedTxs.Txs[msgIndex] = committedTx
+			// find the pending tx to replace by tx hash
+			pendingMsgIndex, found := parsedTxs.TxHashes[committedTx.EthHash]
+			if found {
+				parsedTxs.Txs[pendingMsgIndex] = committedTx
 			} else {
-				// EventEthereumTx without EventPendingEthereumTx
 				return nil, errors.New("EventEthereumTx without pending_ethereum_tx event")
 			}
 		}

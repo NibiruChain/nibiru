@@ -20,7 +20,7 @@ var NextNoOpAnteHandler sdk.AnteHandler = func(
 
 func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
 	to := NewEthPrivAcc().EthAddr
-	ethContractCreationTxParams := &evm.EvmTxArgs{
+	evmTxArgs := &evm.EvmTxArgs{
 		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    nonce,
 		Amount:   big.NewInt(10),
@@ -28,7 +28,7 @@ func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
 		GasPrice: evm.NativeToWei(big.NewInt(1)),
 		To:       &to,
 	}
-	tx := evm.NewTx(ethContractCreationTxParams)
+	tx := evm.NewTx(evmTxArgs)
 	tx.From = deps.Sender.EthAddr.Hex()
 	return tx
 }
@@ -67,14 +67,15 @@ func BuildTx(
 }
 
 func HappyCreateContractTx(deps *TestDeps) *evm.MsgEthereumTx {
-	ethContractCreationTxParams := &evm.EvmTxArgs{
+	evmTxArgs := &evm.EvmTxArgs{
 		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
 		Nonce:    1,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),
 		GasPrice: evm.NativeToWei(big.NewInt(1)),
+		To:       nil,
 	}
-	tx := evm.NewTx(ethContractCreationTxParams)
+	tx := evm.NewTx(evmTxArgs)
 	tx.From = deps.Sender.EthAddr.Hex()
 	return tx
 }

@@ -66,7 +66,7 @@ func DeployContract(
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
-	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+	nonce := deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
@@ -76,11 +76,12 @@ func DeployContract(
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
-	} else if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
+	}
+	if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
 		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute ethereum tx")
 	}
@@ -140,34 +141,6 @@ func DeployAndExecuteERC20Transfer(
 	require.Empty(t, resp.VmError)
 
 	return erc20Transfer, predecessors, contractAddr
-}
-
-func CallContractTx(
-	deps *TestDeps,
-	contractAddr gethcommon.Address,
-	input []byte,
-	sender EthPrivKeyAcc,
-) (ethTxMsg *evm.MsgEthereumTx, resp *evm.MsgEthereumTxResponse, err error) {
-	nonce := deps.NewStateDB().GetNonce(sender.EthAddr)
-	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(evm.JsonTxArgs{
-		From:  &sender.EthAddr,
-		To:    &contractAddr,
-		Nonce: (*hexutil.Uint64)(&nonce),
-		Data:  (*hexutil.Bytes)(&input),
-	}, deps, sender)
-	if err != nil {
-		err = fmt.Errorf("CallContract error during tx generation: %w", err)
-		return
-	}
-
-	err = ethTxMsg.Sign(gethSigner, krSigner)
-	if err != nil {
-		err = fmt.Errorf("CallContract error during signature: %w", err)
-		return
-	}
-
-	resp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), ethTxMsg)
-	return ethTxMsg, resp, err
 }
 
 var DefaultEthCallGasLimit = srvconfig.DefaultEthCallGasLimit
@@ -230,7 +203,7 @@ func (tx TxTransferWei) Build() (evmTxMsg *evm.MsgEthereumTx, err error) {
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
-		deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+		deps.EvmKeeper.GetAccNonce(deps.Ctx, ethAcc.EthAddr),
 		&to,
 		amountWei,
 		gasLimit,
@@ -385,3 +358,17 @@ func NewEthTxMsgFromTxData(
 	ethTxMsg.From = deps.Sender.EthAddr.Hex()
 	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
 }
+
+var MOCK_GETH_MESSAGE = gethcore.NewMessage(
+	evm.EVM_MODULE_ADDRESS,
+	nil,
+	0,
+	big.NewInt(0),
+	0,
+	big.NewInt(0),
+	big.NewInt(0),
+	big.NewInt(0),
+	[]byte{},
+	gethcore.AccessList{},
+	false,
+)

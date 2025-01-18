@@ -62,15 +62,20 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		resp *evm.MsgEthereumTxResponse,
 		err error,
 	) {
-		return deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_queryExchangeRate),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		evmObj, _ := deps.NewEVM()
+		return deps.EvmKeeper.CallContractWithInput(
 			ctx,
-			embeds.SmartContract_Oracle.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
+			contractInput,
 			OracleGasLimitQuery,
-			"queryExchangeRate",
-			"unibi:uusd",
 		)
 	}
 
@@ -113,6 +118,47 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Equal(out[0].(*big.Int), big.NewInt(67_000_000_000_000_000))
 		s.Equal(fmt.Sprintf("%d", out[1].(uint64)), "69000")
 		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
+	}
+
+	s.T().Log("test IOracle.chainLinkLatestRoundData")
+	{
+		secondsLater := deps.Ctx.BlockTime().Add(100 * time.Second)
+		ctx := deps.Ctx.
+			WithBlockTime(secondsLater).
+			WithBlockHeight(deps.Ctx.BlockHeight() + 50)
+
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_chainLinkLatestRoundData),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		evmObj, _ := deps.NewEVM()
+		resp, err := deps.EvmKeeper.CallContractWithInput(
+			ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Oracle,
+			false,
+			contractInput,
+			OracleGasLimitQuery,
+		)
+		s.NoError(err)
+
+		// Check the response
+		out, err := embeds.SmartContract_Oracle.ABI.Unpack(
+			string(precompile.OracleMethod_chainLinkLatestRoundData), resp.Ret,
+		)
+		s.NoError(err)
+		// roundId : created at block height 69
+		s.Equal(out[0].(*big.Int), big.NewInt(69))
+		// answer : exchange rate with 18 decimals.
+		// In this case, 0.067 = 67 * 10^{15}.
+		s.Equal(out[1].(*big.Int), big.NewInt(67_000_000_000_000_000))
+		// startedAt, updatedAt : created at block timestamp
+		s.Equal(out[2].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
+		s.Equal(out[3].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
+		// answeredInRound
+		s.Equal(out[4].(*big.Int), big.NewInt(420))
 	}
 }
 

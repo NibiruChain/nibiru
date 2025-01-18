@@ -122,10 +122,12 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 			)
 		}
 
+		// Compute fees using effective fee to enforce 1unibi minimum gas price
+		effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(evm.BASE_FEE_WEI))
 		txFee = txFee.Add(
 			sdk.Coin{
 				Denom:  evm.EVMBankDenom,
-				Amount: sdkmath.NewIntFromBigInt(txData.Fee()),
+				Amount: sdkmath.NewIntFromBigInt(effectiveFeeMicronibi),
 			},
 		)
 	}

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -66,10 +67,14 @@ See [nibiru/x/evm/embeds].
 [nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/v2/tree/main/x/evm/embeds
 */
 func (e erc20Calls) Mint(
-	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	erc20Contract, sender, recipient gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "mint", to, amount)
+	contractInput, err := e.ABI.Pack("mint", recipient, amount)
+	if err != nil {
+		return nil, err
+	}
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
 /*
@@ -83,15 +88,19 @@ Transfer implements "ERC20.transfer"
 	```
 */
 func (e erc20Calls) Transfer(
-	contract, from, to gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	erc20Contract, sender, recipient gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (balanceIncrease *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
-	recipientBalanceBefore, err := e.BalanceOf(contract, to, ctx)
+	recipientBalanceBefore, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
 		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
-	resp, err = e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "transfer", to, amount)
+	contractInput, err := e.ABI.Pack("transfer", recipient, amount)
+	if err != nil {
+		return balanceIncrease, nil, err
+	}
+	resp, err = e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -108,7 +117,7 @@ func (e erc20Calls) Transfer(
 		return balanceIncrease, nil, fmt.Errorf("transfer executed but returned success=false")
 	}
 
-	recipientBalanceAfter, err := e.BalanceOf(contract, to, ctx)
+	recipientBalanceAfter, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
 		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
 	}
@@ -122,7 +131,7 @@ func (e erc20Calls) Transfer(
 	if balanceIncrease.Sign() <= 0 {
 		return balanceIncrease, nil, fmt.Errorf(
 			"amount of ERC20 tokens received MUST be positive: the balance of recipient %s would've changed by %v for token %s",
-			to.Hex(), balanceIncrease.String(), contract.Hex(),
+			recipient.Hex(), balanceIncrease.String(), erc20Contract.Hex(),
 		)
 	}
 
@@ -133,9 +142,9 @@ func (e erc20Calls) Transfer(
 // Implements "ERC20.balanceOf".
 func (e erc20Calls) BalanceOf(
 	contract, account gethcommon.Address,
-	ctx sdk.Context,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (out *big.Int, err error) {
-	return e.LoadERC20BigInt(ctx, e.ABI, contract, "balanceOf", account)
+	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "balanceOf", account)
 }
 
 /*
@@ -147,44 +156,53 @@ Burn implements "ERC20Burnable.burn"
 	```
 */
 func (e erc20Calls) Burn(
-	contract, from gethcommon.Address, amount *big.Int,
-	ctx sdk.Context,
+	erc20Contract, sender gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, evmObj *vm.EVM,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	return e.CallContract(ctx, e.ABI, from, &contract, true, getCallGasWithLimit(ctx, Erc20GasLimitExecute), "burn", amount)
+	contractInput, err := e.ABI.Pack("burn", amount)
+	if err != nil {
+		return nil, err
+	}
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
 }
 
-func (k Keeper) LoadERC20Name(
-	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
+func (e erc20Calls) LoadERC20Name(
+	ctx sdk.Context, evmObj *vm.EVM, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
-	return k.LoadERC20String(ctx, abi, erc20, "name")
+	return e.loadERC20String(ctx, evmObj, abi, erc20, "name")
 }
 
-func (k Keeper) LoadERC20Symbol(
-	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
+func (e erc20Calls) LoadERC20Symbol(
+	ctx sdk.Context, evmObj *vm.EVM, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out string, err error) {
-	return k.LoadERC20String(ctx, abi, erc20, "symbol")
+	return e.loadERC20String(ctx, evmObj, abi, erc20, "symbol")
 }
 
-func (k Keeper) LoadERC20Decimals(
-	ctx sdk.Context, abi *gethabi.ABI, erc20 gethcommon.Address,
+func (e erc20Calls) LoadERC20Decimals(
+	ctx sdk.Context, evmObj *vm.EVM, abi *gethabi.ABI, erc20 gethcommon.Address,
 ) (out uint8, err error) {
-	return k.loadERC20Uint8(ctx, abi, erc20, "decimals")
+	return e.loadERC20Uint8(ctx, evmObj, abi, erc20, "decimals")
 }
 
-func (k Keeper) LoadERC20String(
+func (e erc20Calls) loadERC20String(
 	ctx sdk.Context,
+	evmObj *vm.EVM,
 	erc20Abi *gethabi.ABI,
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out string, err error) {
-	res, err := k.CallContract(
+	input, err := erc20Abi.Pack(methodName)
+	if err != nil {
+		return out, err
+	}
+	res, err := e.Keeper.CallContractWithInput(
 		ctx,
-		erc20Abi,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
 	)
 	if err != nil {
 		return out, err
@@ -200,19 +218,25 @@ func (k Keeper) LoadERC20String(
 	return erc20Val.Value, err
 }
 
-func (k Keeper) loadERC20Uint8(
+func (e erc20Calls) loadERC20Uint8(
 	ctx sdk.Context,
+	evmObj *vm.EVM,
 	erc20Abi *gethabi.ABI,
 	erc20Contract gethcommon.Address,
 	methodName string,
 ) (out uint8, err error) {
-	res, err := k.CallContract(
-		ctx, erc20Abi,
+	input, err := erc20Abi.Pack(methodName)
+	if err != nil {
+		return out, err
+	}
+	res, err := e.Keeper.CallContractWithInput(
+		ctx,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
 	)
 	if err != nil {
 		return out, err
@@ -228,22 +252,26 @@ func (k Keeper) loadERC20Uint8(
 	return erc20Val.Value, err
 }
 
-func (k Keeper) LoadERC20BigInt(
+func (e erc20Calls) LoadERC20BigInt(
 	ctx sdk.Context,
+	evmObj *vm.EVM,
 	abi *gethabi.ABI,
 	contract gethcommon.Address,
 	methodName string,
 	args ...any,
 ) (out *big.Int, err error) {
-	res, err := k.CallContract(
+	input, err := abi.Pack(methodName, args...)
+	if err != nil {
+		return nil, err
+	}
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
-		abi,
+		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&contract,
 		false,
+		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
-		methodName,
-		args...,
 	)
 	if err != nil {
 		return nil, err
@@ -251,7 +279,7 @@ func (k Keeper) LoadERC20BigInt(
 
 	erc20BigInt := new(ERC20BigInt)
 	err = abi.UnpackIntoInterface(
-		erc20BigInt, methodName, res.Ret,
+		erc20BigInt, methodName, evmResp.Ret,
 	)
 	if err != nil {
 		return nil, err

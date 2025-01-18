@@ -73,25 +73,26 @@ func (s *TestSuite) ConnectGrpc() {
 	s.grpcConn = grpcConn
 }
 
-func (s *TestSuite) DoTestNewQueryClient() {
-	_, err := gosdk.NewQuerier(s.grpcConn)
-	s.NoError(err)
-}
-
 func (s *TestSuite) TestNewNibiruSdk() {
 	rpcEndpt := s.val.RPCAddress
 	nibiruSdk, err := gosdk.NewNibiruSdk(s.cfg.ChainID, s.grpcConn, rpcEndpt)
 	s.NoError(err)
 	s.nibiruSdk = &nibiruSdk
-
 	s.nibiruSdk.Keyring = s.val.ClientCtx.Keyring
 
-	s.Run("DoTestBroadcastMsgs", func() { s.DoTestBroadcastMsgs() })
+	s.Run("DoTestBroadcastMsgs", func() {
+		s.DoTestBroadcastMsgs()
+	})
 	s.Run("DoTestBroadcastMsgsGrpc", func() {
-		s.NoError(s.network.WaitForNextBlock())
+		for t := 0; t < 4; t++ {
+			s.NoError(s.network.WaitForNextBlock())
+		}
 		s.DoTestBroadcastMsgsGrpc()
 	})
-	s.Run("DoTestNewQueryClient", s.DoTestNewQueryClient)
+	s.Run("DoTestNewQueryClient", func() {
+		_, err := gosdk.NewQuerier(s.grpcConn)
+		s.NoError(err)
+	})
 }
 
 // FIXME: Q: What is the node home for a local validator?
