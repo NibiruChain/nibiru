@@ -79,6 +79,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2162](https://github.com/NibiruChain/nibiru/pull/2162) - test(testutil): try retrying for 'panic: pebbledb: closed'
 - [#2167](https://github.com/NibiruChain/nibiru/pull/2167) - refactor(evm): removed blockGasUsed transient variable
 - [#2168](https://github.com/NibiruChain/nibiru/pull/2168) - chore(evm-solidity): Move unrelated docs, gen-embeds, and add Solidity docs
+- [#2165](https://github.com/NibiruChain/nibiru/pull/2165) - fix(evm): use Singleton StateDB pattern for EVM txs
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
@@ -345,7 +346,6 @@ Nibiru v1.3.0 adds interchain accounts.
 ### Improvements
 
 - [#1859](https://github.com/NibiruChain/nibiru/pull/1859) - refactor(oracle): add oracle slashing events
-
 
 ---
 

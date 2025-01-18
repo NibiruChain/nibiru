@@ -30,10 +30,10 @@ const (
 
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
-func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
+func SetupWasmContracts(deps *evmtest.TestDeps, evmObj *vm.EVM, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
-	wasmCodes := DeployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
+	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
 
 	instantiateArgs := []struct {
 		InstantiateMsg []byte
@@ -51,11 +51,10 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 
 	for i, wasmCode := range wasmCodes {
 		s.T().Logf("Instantiate using Wasm precompile: %s", wasmCode.binPath)
-		codeId := wasmCode.codeId
 
 		m := wasm.MsgInstantiateContract{
 			Admin:  "",
-			CodeID: codeId,
+			CodeID: wasmCode.codeId,
 			Label:  instantiateArgs[i].Label,
 			Msg:    instantiateArgs[i].InstantiateMsg,
 		}
@@ -63,22 +62,30 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 		msgArgsBz, err := json.Marshal(m.Msg)
 		s.NoError(err)
 
-		ethTxResp, err := deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_instantiate),
+			m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{},
+		)
+		s.NoError(err)
+
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
-			embeds.SmartContract_Wasm.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
 			true,
+			contractInput,
 			WasmGasLimitInstantiate,
-			string(precompile.WasmMethod_instantiate),
-			[]any{m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{}}...,
 		)
 
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
 
 		s.T().Log("Parse the response contract addr and response bytes")
-		vals, err := embeds.SmartContract_Wasm.ABI.Unpack(string(precompile.WasmMethod_instantiate), ethTxResp.Ret)
+		vals, err := embeds.SmartContract_Wasm.ABI.Unpack(
+			string(precompile.WasmMethod_instantiate),
+			ethTxResp.Ret,
+		)
 		s.Require().NoError(err)
 
 		contractAddr, err := sdk.AccAddressFromBech32(vals[0].(string))
@@ -89,9 +96,9 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	return contracts
 }
 
-// DeployWasmBytecode is a setup function that stores all Wasm bytecode used in
+// deployWasmBytecode is a setup function that stores all Wasm bytecode used in
 // the test suite.
-func DeployWasmBytecode(
+func deployWasmBytecode(
 	s *suite.Suite,
 	ctx sdk.Context,
 	sender sdk.AccAddress,
@@ -156,6 +163,7 @@ func DeployWasmBytecode(
 func AssertWasmCounterState(
 	s *suite.Suite,
 	deps evmtest.TestDeps,
+	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
@@ -165,26 +173,28 @@ func AssertWasmCounterState(
 		}
 `)
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_query),
+		wasmContract.String(),
+		msgArgsBz,
+	)
+	s.Require().NoError(err)
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		true,
+		false,
+		contractInput,
 		WasmGasLimitQuery,
-		string(precompile.WasmMethod_query),
-		[]any{
-			// string memory contractAddr
-			wasmContract.String(),
-			// bytes memory req
-			msgArgsBz,
-		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 
 	s.T().Log("Parse the response contract addr and response bytes")
 	s.T().Logf("ethTxResp.Ret: %s", ethTxResp.Ret)
+
 	var queryResp []byte
 	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
 		// Since there's only one return value, don't unpack as a slice.
@@ -197,7 +207,6 @@ func AssertWasmCounterState(
 	s.Require().NoError(err)
 	s.T().Logf("queryResp: %s", queryResp)
 
-	s.T().Log("Response is a JSON-encoded struct from the Wasm contract")
 	var wasmMsg wasm.RawContractMessage
 	s.NoError(json.Unmarshal(queryResp, &wasmMsg))
 	s.NoError(wasmMsg.ValidateBasic())
@@ -255,10 +264,11 @@ type QueryMsgCountResp struct {
 func IncrementWasmCounterWithExecuteMulti(
 	s *suite.Suite,
 	deps *evmtest.TestDeps,
+	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	times uint,
-	finalizeTx bool,
-) (evmObj *vm.EVM) {
+	commit bool,
+) {
 	msgArgsBz := []byte(`
 	{ 
 	  "increment": {}
@@ -298,24 +308,24 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
-	ethTxResp, evmObj, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		finalizeTx,
+		commit,
 		input,
 		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
-	return evmObj
 }
 
 func IncrementWasmCounterWithExecuteMultiViaVMCall(
 	s *suite.Suite,
 	deps *evmtest.TestDeps,
 	wasmContract sdk.AccAddress,
-	times uint,
+	times int,
 	finalizeTx bool,
 	evmObj *vm.EVM,
 ) error {
@@ -337,34 +347,26 @@ func IncrementWasmCounterWithExecuteMultiViaVMCall(
 		ContractAddr string                    `json:"contractAddr"`
 		MsgArgs      []byte                    `json:"msgArgs"`
 		Funds        []precompile.WasmBankCoin `json:"funds"`
-	}{
-		{wasmContract.String(), msgArgsBz, funds},
+	}{}
+	for i := 0; i < times; i++ {
+		executeMsgs = append(executeMsgs, struct {
+			ContractAddr string                    `json:"contractAddr"`
+			MsgArgs      []byte                    `json:"msgArgs"`
+			Funds        []precompile.WasmBankCoin `json:"funds"`
+		}{wasmContract.String(), msgArgsBz, funds})
 	}
-	if times == 0 {
-		executeMsgs = executeMsgs[:0] // force empty
-	} else {
-		for i := uint(1); i < times; i++ {
-			executeMsgs = append(executeMsgs, executeMsgs[0])
-		}
-	}
-	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
 
-	callArgs := []any{
-		executeMsgs,
-	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_executeMulti),
-		callArgs...,
+		executeMsgs,
 	)
 	s.Require().NoError(err)
 
-	contract := precompile.PrecompileAddr_Wasm
-	leftoverGas := serverconfig.DefaultEthCallGasLimit
 	_, _, err = evmObj.Call(
 		vm.AccountRef(deps.Sender.EthAddr),
-		contract,
-		input,
-		leftoverGas,
+		precompile.PrecompileAddr_Wasm,
+		contractInput,
+		serverconfig.DefaultEthCallGasLimit,
 		big.NewInt(0),
 	)
 	return err
