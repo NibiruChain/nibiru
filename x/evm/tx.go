@@ -14,6 +14,7 @@ import (
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.
 // This includes LegacyTx, DynamicFeeTx and AccessListTx
+// TODO(k-yang): replace with JsonTxArgs.
 type EvmTxArgs struct {
 	Nonce     uint64
 	GasLimit  uint64

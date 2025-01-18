@@ -270,17 +270,13 @@ func (k *Keeper) EthCall(
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
-	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
-	}
+	evmCfg := k.GetEVMConfig(ctx)
 
 	// ApplyMessageWithConfig expect correct nonce set in msg
 	nonce := k.GetAccNonce(ctx, args.GetFrom())
 	args.Nonce = (*hexutil.Uint64)(&nonce)
 
-	msg, err := args.ToMessage(req.GasCap, cfg.BaseFeeWei)
+	msg, err := args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
@@ -288,7 +284,9 @@ func (k *Keeper) EthCall(
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
 	// pass false to not commit StateDB
-	res, _, err := k.ApplyEvmMsg(ctx, msg, nil, false, cfg, txConfig, false)
+	stateDB := statedb.New(ctx, k, txConfig)
+	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
+	res, err := k.ApplyEvmMsg(ctx, msg, evm, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -326,18 +324,14 @@ func (k Keeper) EstimateGasForEvmCallType(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
-	}
+	evmCfg := k.GetEVMConfig(ctx)
 
 	if req.GasCap < gethparams.TxGas {
 		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "gas cap cannot be lower than %d", gethparams.TxGas)
 	}
 
 	var args evm.JsonTxArgs
-	err = json.Unmarshal(req.Args, &args)
+	err := json.Unmarshal(req.Args, &args)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
@@ -375,7 +369,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	gasCap = hi
 
 	// convert the tx args to an ethereum message
-	msg, err := args.ToMessage(req.GasCap, cfg.BaseFeeWei)
+	evmMsg, err := args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -385,27 +379,27 @@ func (k Keeper) EstimateGasForEvmCallType(
 	// helper to check if a gas allowance results in an executable transaction.
 	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
 		// update the message with the new gas value
-		msg = gethcore.NewMessage(
-			msg.From(),
-			msg.To(),
-			msg.Nonce(),
-			msg.Value(),
+		evmMsg = gethcore.NewMessage(
+			evmMsg.From(),
+			evmMsg.To(),
+			evmMsg.Nonce(),
+			evmMsg.Value(),
 			gas,
-			msg.GasPrice(),
-			msg.GasFeeCap(),
-			msg.GasTipCap(),
-			msg.Data(),
-			msg.AccessList(),
-			msg.IsFake(),
+			evmMsg.GasPrice(),
+			evmMsg.GasFeeCap(),
+			evmMsg.GasTipCap(),
+			evmMsg.Data(),
+			evmMsg.AccessList(),
+			evmMsg.IsFake(),
 		)
 
 		tmpCtx := ctx
 		if fromType == evm.CallTypeRPC {
 			tmpCtx, _ = ctx.CacheContext()
 
-			acct := k.GetAccount(tmpCtx, msg.From())
+			acct := k.GetAccount(tmpCtx, evmMsg.From())
 
-			from := msg.From()
+			from := evmMsg.From()
 			if acct == nil {
 				acc := k.accountKeeper.NewAccountWithAddress(tmpCtx, from[:])
 				k.accountKeeper.SetAccount(tmpCtx, acc)
@@ -418,14 +412,16 @@ func (k Keeper) EstimateGasForEvmCallType(
 				return true, nil, err
 			}
 			// resetting the gasMeter after increasing the sequence to have an accurate gas estimation on EVM extensions transactions
-			gasMeter := eth.NewInfiniteGasMeterWithLimit(msg.Gas())
+			gasMeter := eth.NewInfiniteGasMeterWithLimit(evmMsg.Gas())
 			tmpCtx = tmpCtx.WithGasMeter(gasMeter).
 				WithKVGasConfig(storetypes.GasConfig{}).
 				WithTransientKVGasConfig(storetypes.GasConfig{})
 		}
 		// pass false to not commit StateDB
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		rsp, _, err = k.ApplyEvmMsg(tmpCtx, msg, nil, false, cfg, txConfig, false)
+		stateDB := statedb.New(ctx, &k, txConfig)
+		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -492,20 +488,14 @@ func (k Keeper) TraceTx(
 		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 	})
 
-	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
-	}
-
+	evmCfg := k.GetEVMConfig(ctx)
 	// compute and use base fee of the height that is being traced
-	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx)
-	if baseFeeMicronibiPerGas != nil {
-		cfg.BaseFeeWei = baseFeeMicronibiPerGas
+	baseFeeWeiPerGas := k.BaseFeeWeiPerGas(ctx)
+	if baseFeeWeiPerGas != nil {
+		evmCfg.BaseFeeWei = baseFeeWeiPerGas
 	}
 
-	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
-
+	signer := gethcore.MakeSigner(evmCfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
 	// gas used at this point corresponds to GetProposerAddress & CalculateBaseFee
@@ -514,7 +504,7 @@ func (k Keeper) TraceTx(
 
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
-		msg, err := ethTx.AsMessage(signer, cfg.BaseFeeWei)
+		msg, err := ethTx.AsMessage(signer, evmCfg.BaseFeeWei)
 		if err != nil {
 			continue
 		}
@@ -524,7 +514,9 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		rsp, _, err := k.ApplyEvmMsg(ctx, msg, evm.NewNoOpTracer(), true, cfg, txConfig, false)
+		stateDB := statedb.New(ctx, &k, txConfig)
+		evmObj := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
+		rsp, err := k.ApplyEvmMsg(ctx, msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 		if err != nil {
 			continue
 		}
@@ -543,12 +535,12 @@ func (k Keeper) TraceTx(
 		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
-	msg, err := tx.AsMessage(signer, cfg.BaseFeeWei)
+	msg, err := tx.AsMessage(signer, evmCfg.BaseFeeWei)
 	if err != nil {
 		return nil, err
 	}
 
-	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
+	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -591,16 +583,12 @@ func (k Keeper) TraceCall(
 		Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 	})
 
-	chainID := k.EthChainID(ctx)
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load evm config: %s", err.Error())
-	}
+	evmCfg := k.GetEVMConfig(ctx)
 
 	// compute and use base fee of the height that is being traced
 	baseFeeMicronibi := k.BaseFeeMicronibiPerGas(ctx)
 	if baseFeeMicronibi != nil {
-		cfg.BaseFeeWei = baseFeeMicronibi
+		evmCfg.BaseFeeWei = baseFeeMicronibi
 	}
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
@@ -617,7 +605,7 @@ func (k Keeper) TraceCall(
 	if err != nil {
 		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to unpack tx data: %s", err.Error())
 	}
-	msg := gethcore.NewMessage(
+	evmMsg := gethcore.NewMessage(
 		gethcommon.HexToAddress(msgEthTx.From),
 		txData.GetTo(),
 		txData.GetNonce(),
@@ -628,9 +616,9 @@ func (k Keeper) TraceCall(
 		txData.GetGasTipCapWei(),
 		txData.GetData(),
 		txData.GetAccessList(),
-		false,
+		false, // isFake
 	)
-	result, _, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, false, tracerConfig)
+	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, evmMsg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -678,17 +666,12 @@ func (k Keeper) TraceBlock(
 			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 		})
 
-	chainID := k.EthChainID(ctx)
-
-	cfg, err := k.GetEVMConfig(ctx, ParseProposerAddr(ctx, req.ProposerAddress), chainID)
-	if err != nil {
-		return nil, grpcstatus.Error(grpccodes.Internal, "failed to load evm config")
-	}
+	evmCfg := k.GetEVMConfig(ctx)
 
 	// compute and use base fee of height that is being traced
 	if baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(ctx); baseFeeMicronibiPerGas != nil {
 		baseFeeWeiPerGas := evm.NativeToWei(baseFeeMicronibiPerGas)
-		cfg.BaseFeeWei = baseFeeWeiPerGas
+		evmCfg.BaseFeeWei = baseFeeWeiPerGas
 	}
 	var tracerConfig json.RawMessage
 	if req.TraceConfig != nil && req.TraceConfig.TracerConfig != nil {
@@ -696,7 +679,7 @@ func (k Keeper) TraceBlock(
 		tracerConfig, _ = json.Marshal(req.TraceConfig.TracerConfig)
 	}
 
-	signer := gethcore.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
+	signer := gethcore.MakeSigner(evmCfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 	txsLength := len(req.Txs)
 	results := make([]*evm.TxTraceResult, 0, txsLength)
 
@@ -707,12 +690,12 @@ func (k Keeper) TraceBlock(
 		ethTx := tx.AsTransaction()
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
-		msg, err := ethTx.AsMessage(signer, cfg.BaseFeeWei)
+		msg, err := ethTx.AsMessage(signer, evmCfg.BaseFeeWei)
 		if err != nil {
 			result.Error = err.Error()
 			continue
 		}
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, cfg, txConfig, msg, req.TraceConfig, true, tracerConfig)
+		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, msg, req.TraceConfig, tracerConfig)
 		if err != nil {
 			result.Error = err.Error()
 		} else {
@@ -736,11 +719,10 @@ func (k Keeper) TraceBlock(
 // nextLogIndex, error).
 func (k *Keeper) TraceEthTxMsg(
 	ctx sdk.Context,
-	cfg *statedb.EVMConfig,
+	evmCfg statedb.EVMConfig,
 	txConfig statedb.TxConfig,
 	msg gethcore.Message,
 	traceConfig *evm.TraceConfig,
-	commitMessage bool,
 	tracerJSONConfig json.RawMessage,
 ) (*any, uint, error) {
 	// Assemble the structured logger or the JavaScript tracer
@@ -806,7 +788,9 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	res, _, err := k.ApplyEvmMsg(ctx, msg, tracer, commitMessage, cfg, txConfig, false)
+	stateDB := statedb.New(ctx, k, txConfig)
+	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer, stateDB)
+	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}

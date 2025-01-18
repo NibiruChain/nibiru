@@ -62,15 +62,20 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		resp *evm.MsgEthereumTxResponse,
 		err error,
 	) {
-		return deps.EvmKeeper.CallContract(
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_queryExchangeRate),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		evmObj, _ := deps.NewEVM()
+		return deps.EvmKeeper.CallContractWithInput(
 			ctx,
-			embeds.SmartContract_Oracle.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
+			contractInput,
 			OracleGasLimitQuery,
-			"queryExchangeRate",
-			"unibi:uusd",
 		)
 	}
 
@@ -121,15 +126,21 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		ctx := deps.Ctx.
 			WithBlockTime(secondsLater).
 			WithBlockHeight(deps.Ctx.BlockHeight() + 50)
-		resp, err := deps.EvmKeeper.CallContract(
+
+		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_chainLinkLatestRoundData),
+			"unibi:uusd",
+		)
+		s.Require().NoError(err)
+		evmObj, _ := deps.NewEVM()
+		resp, err := deps.EvmKeeper.CallContractWithInput(
 			ctx,
-			embeds.SmartContract_Oracle.ABI,
+			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
 			false,
+			contractInput,
 			OracleGasLimitQuery,
-			"chainLinkLatestRoundData",
-			"unibi:uusd",
 		)
 		s.NoError(err)
 
