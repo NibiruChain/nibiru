@@ -34,7 +34,6 @@ func (k Keeper) FindERC20Metadata(
 	contract gethcommon.Address,
 	abi *gethabi.ABI,
 ) (info *ERC20Metadata, err error) {
-
 	effectiveAbi := embeds.SmartContract_ERC20Minter.ABI
 
 	if abi != nil {

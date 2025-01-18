@@ -567,6 +567,7 @@ func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 		"setName",
 		byteArray,
 	)
+	s.Require().NoError(err)
 
 	evmObj, _ := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(

@@ -218,7 +218,6 @@ func (e erc20Calls) loadERC20String(
 
 	erc20Bytes32Val := new(ERC20Bytes32)
 	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, res.Ret); err == nil {
-
 		return bytes32ToString(erc20Bytes32Val.Value), nil
 	}
 
@@ -269,7 +268,6 @@ func (e erc20Calls) loadERC20Uint8(
 	}
 
 	return 0, fmt.Errorf("failed to decode response for method %s; unable to unpack as uint8 or uint256", methodName)
-
 }
 
 func (e erc20Calls) LoadERC20BigInt(
