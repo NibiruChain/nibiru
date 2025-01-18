@@ -11,60 +11,93 @@ import (
 func (s *Suite) TestERC20Calls() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "ibc/btc"
-	funtoken := evmtest.CreateFunTokenForBankCoin(&deps, bankDenom, &s.Suite)
-	contract := funtoken.Erc20Addr.Address
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
+	erc20 := funtoken.Erc20Addr.Address
 
-	s.T().Log("Mint tokens - Fail from non-owner")
-	{
+	s.Run("Mint tokens - Fail from non-owner", func() {
+		evmObj, _ := deps.NewEVM()
 		_, err := deps.EvmKeeper.ERC20().Mint(
-			contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
-			big.NewInt(69_420), deps.Ctx,
+			erc20, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+			big.NewInt(69_420), deps.Ctx, evmObj,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
-	}
+	})
 
-	s.T().Log("Mint tokens - Success")
-	{
-		_, err := deps.EvmKeeper.ERC20().Mint(contract, evm.EVM_MODULE_ADDRESS, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), deps.Ctx)
-		s.Require().NoError(err)
-
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420))
-	}
-
-	s.T().Log("Transfer - Not enough funds")
-	{
-		amt := big.NewInt(9_420)
-		_, _, err := deps.EvmKeeper.ERC20().Transfer(contract, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS, amt, deps.Ctx)
-		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
-		// balances unchanged
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(0))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420))
-	}
-
-	s.T().Log("Transfer - Success (sanity check)")
-	{
-		amt := big.NewInt(9_420)
-		sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
-			contract, evm.EVM_MODULE_ADDRESS, deps.Sender.EthAddr, amt, deps.Ctx,
+	s.Run("successfully mint 69420 tokens", func() {
+		evmObj, stateDB := deps.NewEVM()
+		_, err := deps.EvmKeeper.ERC20().Mint(
+			erc20,                  /*erc20Addr*/
+			evm.EVM_MODULE_ADDRESS, /*sender*/
+			evm.EVM_MODULE_ADDRESS, /*recipient*/
+			big.NewInt(69_420),     /*amount*/
+			deps.Ctx,
+			evmObj,
 		)
 		s.Require().NoError(err)
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(9_420))
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(60_000))
-		s.Require().Equal(sentAmt.String(), amt.String())
-	}
+		s.Require().NoError(stateDB.Commit())
 
-	s.T().Log("Burn tokens - Allowed as non-owner")
-	{
-		_, err := deps.EvmKeeper.ERC20().Burn(contract, deps.Sender.EthAddr, big.NewInt(420), deps.Ctx)
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect 69420 tokens")
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(0), "expect zero tokens")
+	})
+
+	s.Run("Transfer - Not enough funds", func() {
+		evmObj, _ := deps.NewEVM()
+		_, _, err := deps.EvmKeeper.ERC20().Transfer(
+			erc20, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
+			big.NewInt(9_420), deps.Ctx, evmObj,
+		)
+		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
+		// balances unchanged
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect nonzero balance")
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(0), "expect zero balance")
+	})
+
+	s.Run("Transfer - Success (sanity check)", func() {
+		evmObj, stateDB := deps.NewEVM()
+		sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
+			erc20,                  /*erc20Addr*/
+			evm.EVM_MODULE_ADDRESS, /*sender*/
+			deps.Sender.EthAddr,    /*recipient*/
+			big.NewInt(9_420),      /*amount*/
+			deps.Ctx,
+			evmObj,
+		)
 		s.Require().NoError(err)
+		s.Require().NoError(stateDB.Commit())
+		evmtest.AssertERC20BalanceEqualWithDescription(
+			s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(9_420), "expect nonzero balance")
+		evmtest.AssertERC20BalanceEqualWithDescription(
+			s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(60_000), "expect nonzero balance")
+		s.Require().EqualValues(big.NewInt(9_420), sentAmt)
+	})
 
-		_, err = deps.EvmKeeper.ERC20().Burn(contract, evm.EVM_MODULE_ADDRESS, big.NewInt(6_000), deps.Ctx)
+	s.Run("Burn tokens - Allowed as non-owner", func() {
+		evmObj, stateDB := deps.NewEVM()
+		_, err := deps.EvmKeeper.ERC20().Burn(
+			erc20,               /*erc20Addr*/
+			deps.Sender.EthAddr, /*sender*/
+			big.NewInt(6_000),   /*amount*/
+			deps.Ctx,
+			evmObj,
+		)
 		s.Require().NoError(err)
+		s.Require().NoError(stateDB.Commit())
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(3_420), "expect 3420 tokens")
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(60_000), "expect 60000 tokens")
+	})
 
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, deps.Sender.EthAddr, big.NewInt(9_000))
-		evmtest.AssertERC20BalanceEqual(s.T(), deps, contract, evm.EVM_MODULE_ADDRESS, big.NewInt(54_000))
-	}
+	s.Run("Burn tokens - Allowed as owner", func() {
+		evmObj, stateDB := deps.NewEVM()
+		_, err := deps.EvmKeeper.ERC20().Burn(
+			erc20,                  /*erc20Addr*/
+			evm.EVM_MODULE_ADDRESS, /*sender*/
+			big.NewInt(6_000),      /*amount*/
+			deps.Ctx,
+			evmObj,
+		)
+		s.Require().NoError(err)
+		s.Require().NoError(stateDB.Commit())
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(3_420), "expect 3420 tokens")
+		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(54_000), "expect 54000 tokens")
+	})
 }

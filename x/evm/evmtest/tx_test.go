@@ -5,65 +5,11 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
-
-func (s *Suite) TestCallContractTx() {
-	deps := evmtest.NewTestDeps()
-
-	s.T().Log("Deploy some ERC20")
-	deployArgs := []any{"name", "SYMBOL", uint8(18)}
-	deployResp, err := evmtest.DeployContract(
-		&deps,
-		embeds.SmartContract_ERC20Minter,
-		deployArgs...,
-	)
-	s.Require().NoError(err, deployResp)
-	contractAddr := crypto.CreateAddress(deps.Sender.EthAddr, deployResp.Nonce)
-	gotContractAddr := deployResp.ContractAddr
-	s.Require().Equal(contractAddr, gotContractAddr)
-
-	s.T().Log("expect zero balance")
-	{
-		wantBal := big.NewInt(0)
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contractAddr, deps.Sender.EthAddr, wantBal,
-		)
-	}
-
-	abi := deployResp.ContractData.ABI
-	s.T().Log("mint some tokens")
-	{
-		amount := big.NewInt(69_420)
-		to := deps.Sender.EthAddr
-		callArgs := []any{to, amount}
-		input, err := abi.Pack(
-			"mint", callArgs...,
-		)
-		s.Require().NoError(err)
-		_, resp, err := evmtest.CallContractTx(
-			&deps,
-			contractAddr,
-			input,
-			deps.Sender,
-		)
-		s.Require().NoError(err)
-		s.Require().Empty(resp.VmError)
-	}
-
-	s.T().Log("expect nonzero balance")
-	{
-		wantBal := big.NewInt(69_420)
-		evmtest.AssertERC20BalanceEqual(
-			s.T(), deps, contractAddr, deps.Sender.EthAddr, wantBal,
-		)
-	}
-}
 
 func (s *Suite) TestTransferWei() {
 	deps := evmtest.NewTestDeps()
@@ -85,8 +31,8 @@ func (s *Suite) TestTransferWei() {
 	s.Require().NoErrorf(err, "%#v", evmResp)
 	s.False(evmResp.Failed(), "%#v", evmResp)
 
-	evmtest.AssertBankBalanceEqual(
-		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000),
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000), "expect nonzero balance",
 	)
 
 	s.Run("DeployAndExecuteERC20Transfer", func() {

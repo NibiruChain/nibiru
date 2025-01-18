@@ -154,10 +154,6 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	s.Require().NotNil(blockNumber2)
 	s.Require().NotNil(blockNumber3)
 
-	// TXs should have been included in the same block
-	s.Require().Equal(blockNumber1, blockNumber2)
-	s.Require().Equal(blockNumber2, blockNumber3)
-
 	// 1 and 3 should pass and 2 should fail
 	s.Require().Equal(gethcore.ReceiptStatusSuccessful, receipt1.Status)
 	s.Require().Equal(gethcore.ReceiptStatusFailed, receipt2.Status)

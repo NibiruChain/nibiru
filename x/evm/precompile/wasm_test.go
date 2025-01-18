@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"testing"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -29,96 +30,110 @@ type WasmSuite struct {
 	suite.Suite
 }
 
+func TestWasmSuite(t *testing.T) {
+	suite.Run(t, new(WasmSuite))
+}
+
 func (s *WasmSuite) TestExecuteHappy() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	evmObj, _ := deps.NewEVM()
+
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 
-	s.T().Log("Execute: create denom")
-	msgArgsBz := []byte(`
-	{ "create_denom": { 
+	s.Run("create denom", func() {
+		msgArgsBz := []byte(`
+	{ 
+		"create_denom": { 
 	    "subdenom": "ETH" 
-	   }
+	  }
 	}
 	`)
 
-	var funds []precompile.WasmBankCoin
-	fundsJson, err := json.Marshal(funds)
-	s.NoErrorf(err, "fundsJson: %s", fundsJson)
-	err = json.Unmarshal(fundsJson, &funds)
-	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
+		var funds []precompile.WasmBankCoin
+		fundsJson, err := json.Marshal(funds)
+		s.NoErrorf(err, "fundsJson: %s", fundsJson)
+		err = json.Unmarshal(fundsJson, &funds)
+		s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
-		deps.Sender.EthAddr,
-		&precompile.PrecompileAddr_Wasm,
-		true,
-		WasmGasLimitExecute,
-		string(precompile.WasmMethod_execute),
-		[]any{
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_execute),
 			wasmContract.String(),
 			msgArgsBz,
 			funds,
-		}...,
-	)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
+		)
+		s.Require().NoError(err)
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			contractInput,
+			WasmGasLimitExecute,
+		)
+		s.Require().NoError(err)
+		s.Require().NotEmpty(ethTxResp.Ret)
+	})
 
 	s.T().Log("Execute: mint tokens")
-	coinDenom := tokenfactory.TFDenom{
-		Creator:  wasmContract.String(),
-		Subdenom: "ETH",
-	}.Denom().String()
-	msgArgsBz = []byte(fmt.Sprintf(`
-	{ 
-		"mint": { 
-			"coin": { "amount": "69420", "denom": "%s" }, 
-			"mint_to": "%s" 
-		} 
-	}
-	`, coinDenom, deps.Sender.NibiruAddr))
-
-	ethTxResp, err = deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
-		deps.Sender.EthAddr,
-		&precompile.PrecompileAddr_Wasm,
-		true,
-		WasmGasLimitExecute,
-		string(precompile.WasmMethod_execute),
-		[]any{
+	s.Run("mint tokens", func() {
+		coinDenom := tokenfactory.TFDenom{
+			Creator:  wasmContract.String(),
+			Subdenom: "ETH",
+		}.Denom().String()
+		msgArgsBz := []byte(fmt.Sprintf(`
+		{ 
+			"mint": { 
+				"coin": { "amount": "69420", "denom": "%s" }, 
+				"mint_to": "%s" 
+			} 
+		}
+		`, coinDenom, deps.Sender.NibiruAddr))
+		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+			string(precompile.WasmMethod_execute),
 			wasmContract.String(),
 			msgArgsBz,
-			funds,
-		}...,
-	)
+			[]precompile.WasmBankCoin{},
+		)
+		s.Require().NoError(err)
 
-	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
-	evmtest.AssertBankBalanceEqual(
-		s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420),
-	)
+		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Wasm,
+			true,
+			contractInput,
+			WasmGasLimitExecute,
+		)
+
+		s.Require().NoError(err)
+		s.Require().NotEmpty(ethTxResp.Ret)
+		evmtest.AssertBankBalanceEqualWithDescription(
+			s.T(), deps, coinDenom, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance")
+	})
 }
 
 func (s *WasmSuite) TestExecuteMultiHappy() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	evmObj, _ := deps.NewEVM()
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	// count = 0
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 	// count += 2
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 2, true)
+		&s.Suite, &deps, evmObj, wasmContract, 2, true)
 	// count = 2
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 2)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 2)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 2)
 	// count += 67
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 67, true)
+		&s.Suite, &deps, evmObj, wasmContract, 67, true)
 	// count = 69
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 69)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 69)
 	s.assertWasmCounterStateRaw(deps, wasmContract, 69)
 }
 
@@ -135,18 +150,22 @@ func (s *WasmSuite) assertWasmCounterStateRaw(
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_queryRaw),
+		wasmContract.String(),
+		[]byte(`state`),
+	)
+	s.Require().NoError(err)
+	evmObj, _ := deps.NewEVM()
+
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitQuery,
-		string(precompile.WasmMethod_queryRaw),
-		[]any{
-			wasmContract.String(),
-			[]byte(`state`),
-		}...,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
@@ -308,15 +327,21 @@ func (s *WasmSuite) TestSadArgsExecute() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 
-			ethTxResp, err := deps.EvmKeeper.CallContract(
+			contractInput, err := abi.Pack(
+				string(tc.methodName),
+				tc.callArgs...,
+			)
+			s.Require().NoError(err)
+			evmObj, _ := deps.NewEVM()
+
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
-				abi,
+				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
+				contractInput,
 				WasmGasLimitExecute,
-				string(tc.methodName),
-				tc.callArgs...,
 			)
 
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
@@ -332,6 +357,7 @@ type WasmExecuteMsg struct {
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
 	deps := evmtest.NewTestDeps()
+	evmObj, _ := deps.NewEVM()
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -340,7 +366,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 		sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
 	))
 
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	invalidMsgArgsBz := []byte(`{"invalid": "json"}`) // Invalid message format
@@ -441,15 +467,20 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			ethTxResp, err := deps.EvmKeeper.CallContract(
+			contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+				string(precompile.WasmMethod_executeMulti),
+				tc.executeMsgs,
+			)
+			s.Require().NoError(err)
+			evmObj, _ := deps.NewEVM()
+			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 				deps.Ctx,
-				embeds.SmartContract_Wasm.ABI,
+				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
 				true,
+				contractInput,
 				WasmGasLimitExecute,
-				string(precompile.WasmMethod_executeMulti),
-				[]any{tc.executeMsgs}...,
 			)
 
 			if tc.wantError != "" {
@@ -467,11 +498,13 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	deps := evmtest.NewTestDeps()
-	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	evmObj, _ := deps.NewEVM()
+
+	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
 	// First verify initial state is 0
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 
 	// Create a batch where the second message will fail validation
 	executeMsgs := []WasmExecuteMsg{
@@ -487,15 +520,19 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		},
 	}
 
-	ethTxResp, err := deps.EvmKeeper.CallContract(
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_executeMulti),
+		executeMsgs,
+	)
+	s.Require().NoError(err)
+	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
-		embeds.SmartContract_Wasm.ABI,
+		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		true,
+		contractInput,
 		WasmGasLimitExecute,
-		string(precompile.WasmMethod_executeMulti),
-		[]any{executeMsgs}...,
 	)
 
 	// Verify that the call failed
@@ -503,5 +540,5 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	s.Require().Contains(err.Error(), "unknown variant")
 
 	// Verify that no state changes occurred
-	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	test.AssertWasmCounterState(&s.Suite, deps, evmObj, wasmContract, 0)
 }

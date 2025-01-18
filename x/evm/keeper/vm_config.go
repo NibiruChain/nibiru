@@ -2,37 +2,22 @@
 package keeper
 
 import (
-	"math/big"
-
-	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-func (k *Keeper) GetEVMConfig(
-	ctx sdk.Context, proposerAddress sdk.ConsAddress, chainID *big.Int,
-) (*statedb.EVMConfig, error) {
-	params := k.GetParams(ctx)
-	ethCfg := evm.EthereumConfig(chainID)
-
-	// get the coinbase address from the block proposer
-	coinbase, err := k.GetCoinbaseAddress(ctx, proposerAddress)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to obtain coinbase address")
-	}
-
-	return &statedb.EVMConfig{
-		Params:        params,
-		ChainConfig:   ethCfg,
-		BlockCoinbase: coinbase,
+func (k *Keeper) GetEVMConfig(ctx sdk.Context) statedb.EVMConfig {
+	return statedb.EVMConfig{
+		Params:        k.GetParams(ctx),
+		ChainConfig:   evm.EthereumConfig(appconst.GetEthChainID(ctx.ChainID())),
+		BlockCoinbase: k.GetCoinbaseAddress(ctx),
 		BaseFeeWei:    k.BaseFeeWeiPerGas(ctx),
-	}, nil
+	}
 }
 
 // TxConfig loads `TxConfig` from current transient storage
@@ -51,7 +36,7 @@ func (k *Keeper) TxConfig(
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
 func (k Keeper) VMConfig(
-	ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
+	ctx sdk.Context, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
 ) vm.Config {
 	var debug bool
 	if _, ok := tracer.(evm.NoOpTracer); !ok {
@@ -71,18 +56,16 @@ func (k Keeper) VMConfig(
 // current block. It corresponds to the [COINBASE op code].
 //
 // [COINBASE op code]: https://ethereum.org/en/developers/docs/evm/opcodes/
-func (k Keeper) GetCoinbaseAddress(ctx sdk.Context, proposerAddress sdk.ConsAddress) (common.Address, error) {
-	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, ParseProposerAddr(ctx, proposerAddress))
+func (k Keeper) GetCoinbaseAddress(ctx sdk.Context) common.Address {
+	proposerAddress := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress)
+	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, proposerAddress)
 	if !found {
-		return common.Address{}, errors.Wrapf(
-			stakingtypes.ErrNoValidatorFound,
-			"failed to retrieve validator from block proposer address %s",
-			proposerAddress.String(),
-		)
+		// should never happen, but just in case, return an empty address
+		// we don't really care about the coinbase adresss since we're PoS and not PoW
+		return common.Address{}
 	}
 
-	coinbase := common.BytesToAddress(validator.GetOperator())
-	return coinbase, nil
+	return common.BytesToAddress(validator.GetOperator())
 }
 
 // ParseProposerAddr returns current block proposer's address when provided

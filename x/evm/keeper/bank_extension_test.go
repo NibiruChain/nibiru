@@ -328,18 +328,13 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 	type StateDBWithExplanation struct {
 		StateDB     *statedb.StateDB
 		Explanation string
-		ExpectEqual bool
 	}
 
 	var stateDBs []StateDBWithExplanation
 	stateDBs = append(stateDBs, StateDBWithExplanation{
 		StateDB:     deps.App.EvmKeeper.Bank.StateDB,
 		Explanation: "initial DB after some EthereumTx",
-		ExpectEqual: true,
 	})
-	resetBank := func(deps *evmtest.TestDeps) {
-		deps.App.EvmKeeper.Bank.StateDB = stateDBs[0].StateDB
-	}
 
 	s.T().Log("eth_call")
 	{
@@ -355,7 +350,6 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		stateDBs = append(stateDBs, StateDBWithExplanation{
 			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
 			Explanation: "DB after eth_call query",
-			ExpectEqual: true,
 		})
 	}
 
@@ -364,26 +358,19 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		balOfSender := deps.App.BankKeeper.GetBalance(
 			deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
 		tooManyTokensWei := evm.NativeToWei(balOfSender.Amount.AddRaw(420).BigInt())
-		evmResp, err := evmtest.TxTransferWei{
+		txTransferWei := evmtest.TxTransferWei{
 			Deps:      &deps,
 			To:        to.EthAddr,
 			AmountWei: tooManyTokensWei,
-		}.Run()
+		}
+		evmResp, err := txTransferWei.Run()
 		s.Require().NoErrorf(err, "%#v", evmResp)
 		s.Require().Contains(evmResp.VmError, "insufficient balance for transfer")
 		stateDBs = append(stateDBs, StateDBWithExplanation{
 			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
 			Explanation: "DB after EthereumTx with vmError",
-			ExpectEqual: false,
 		})
 	}
-
-	resetBank(&deps)
-	stateDBs = append(stateDBs, StateDBWithExplanation{
-		StateDB:     deps.App.EvmKeeper.Bank.StateDB,
-		Explanation: "sanity check with original ctx",
-		ExpectEqual: true,
-	})
 
 	s.T().Log(`EthereumTx success, err == nil, no vmError"`)
 	{
@@ -408,7 +395,6 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		stateDBs = append(stateDBs, StateDBWithExplanation{
 			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
 			Explanation: "DB after EthereumTx success",
-			ExpectEqual: false,
 		})
 
 		for _, err := range []error{
@@ -436,10 +422,6 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 			first = db.StateDB
 			continue
 		}
-		if db.ExpectEqual {
-			s.True(first == db.StateDB, db.Explanation)
-			continue
-		}
-		s.False(first == db.StateDB, db.Explanation)
+		s.True(first == db.StateDB, db.Explanation)
 	}
 }

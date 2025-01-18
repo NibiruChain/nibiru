@@ -261,7 +261,11 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	}
 
 	// If no live objects are available, load it from keeper
-	account := s.keeper.GetAccount(s.evmTxCtx, addr)
+	ctx := s.evmTxCtx
+	if s.writeToCommitCtxFromCacheCtx != nil {
+		ctx = s.cacheCtx
+	}
+	account := s.keeper.GetAccount(ctx, addr)
 	if account == nil {
 		return nil
 	}
@@ -322,7 +326,11 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 	if so == nil {
 		return nil
 	}
-	s.keeper.ForEachStorage(s.evmTxCtx, addr, func(key, value common.Hash) bool {
+	ctx := s.evmTxCtx
+	if s.writeToCommitCtxFromCacheCtx != nil {
+		ctx = s.cacheCtx
+	}
+	s.keeper.ForEachStorage(ctx, addr, func(key, value common.Hash) bool {
 		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}

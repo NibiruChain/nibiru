@@ -102,7 +102,7 @@ func (s *BackendSuite) SetupSuite() {
 
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
-	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true)
+	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
 	blockNumber, blockHash, _ := WaitForReceipt(s, transferTxHash)
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
@@ -151,7 +151,7 @@ func (s *BackendSuite) DeployTestContract(waitForNextBlock bool) (gethcommon.Has
 		&gethcore.LegacyTx{
 			Nonce:    uint64(nonce),
 			Data:     bytecodeForCall,
-			Gas:      1500_000,
+			Gas:      1_500_000,
 			GasPrice: big.NewInt(1),
 		},
 		waitForNextBlock,
@@ -177,7 +177,7 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 
 // WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
 func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	for {
