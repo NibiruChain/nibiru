@@ -96,7 +96,9 @@ type Account struct {
 }
 
 func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(TestSuite))
+	}, 2)
 }
 
 // ———————————————————————————————————————————————————————————————————

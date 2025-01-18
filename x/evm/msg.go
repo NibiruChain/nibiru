@@ -42,12 +42,6 @@ var (
 func NewTx(
 	tx *EvmTxArgs,
 ) *MsgEthereumTx {
-	return newMsgEthereumTx(tx)
-}
-
-func newMsgEthereumTx(
-	tx *EvmTxArgs,
-) *MsgEthereumTx {
 	var (
 		cid, amt, gp *sdkmath.Int
 		toAddr       string
@@ -345,7 +339,7 @@ func (msg *MsgEthereumTx) UnmarshalBinary(b []byte) error {
 	return msg.FromEthereumTx(tx)
 }
 
-// BuildTx builds the canonical cosmos tx from ethereum msg
+// BuildTx builds the Cosmos-SDK [signing.Tx] from ethereum tx ([MsgEthereumTx])
 func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.Tx, error) {
 	builder, ok := b.(authtx.ExtensionOptionsTxBuilder)
 	if !ok {
@@ -361,10 +355,13 @@ func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.
 	if err != nil {
 		return nil, err
 	}
+
+	// Compute fees using effective fee to enforce 1unibi minimum gas price
 	fees := make(sdk.Coins, 0)
-	feeAmt := sdkmath.NewIntFromBigInt(txData.Fee())
-	if feeAmt.Sign() > 0 {
-		fees = append(fees, sdk.NewCoin(evmDenom, feeAmt))
+	effectiveFeeMicronibi := WeiToNative(txData.EffectiveFeeWei(BASE_FEE_WEI))
+	feeAmtMicronibi := sdkmath.NewIntFromBigInt(effectiveFeeMicronibi)
+	if feeAmtMicronibi.Sign() > 0 {
+		fees = append(fees, sdk.NewCoin(evmDenom, feeAmtMicronibi))
 	}
 
 	builder.SetExtensionOptions(option)

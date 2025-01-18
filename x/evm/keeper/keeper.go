@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -97,24 +96,6 @@ func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 	return appconst.GetEthChainID(ctx.ChainID())
 }
 
-// AddToBlockGasUsed accumulate gas used by each eth msgs included in current
-// block tx.
-func (k *Keeper) AddToBlockGasUsed(
-	ctx sdk.Context, gasUsed uint64,
-) (blockGasUsed uint64, err error) {
-	// Either k.EvmState.BlockGasUsed.GetOr() or k.EvmState.BlockGasUsed.Set()
-	// also consume gas and could panic.
-	defer HandleOutOfGasPanic(&err, "")
-
-	blockGasUsed = k.EvmState.BlockGasUsed.GetOr(ctx, 0) + gasUsed
-	if blockGasUsed < gasUsed {
-		return 0, errors.Wrap(core.ErrGasUintOverflow, "transient gas used")
-	}
-	k.EvmState.BlockGasUsed.Set(ctx, blockGasUsed)
-
-	return blockGasUsed, nil
-}
-
 // BaseFeeMicronibiPerGas returns the gas base fee in units of the EVM denom. Note
 // that this function is currently constant/stateless.
 func (k Keeper) BaseFeeMicronibiPerGas(_ sdk.Context) *big.Int {
@@ -147,6 +128,7 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
 			case sdk.ErrorOutOfGas:
+
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)

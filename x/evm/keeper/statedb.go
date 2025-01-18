@@ -25,7 +25,7 @@ var _ statedb.Keeper = &Keeper{}
 // Implements the `statedb.Keeper` interface.
 // Returns nil if the account does not exist or has the wrong type.
 func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {
-	acct := k.GetAccountWithoutBalance(ctx, addr)
+	acct := k.getAccountWithoutBalance(ctx, addr)
 	if acct == nil {
 		return nil
 	}
@@ -184,11 +184,10 @@ func (k *Keeper) DeleteAccount(ctx sdk.Context, addr gethcommon.Address) error {
 	return nil
 }
 
-// GetAccountWithoutBalance load nonce and codehash without balance,
+// getAccountWithoutBalance load nonce and codehash without balance,
 // more efficient in cases where balance is not needed.
-func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {
-	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)
+func (k *Keeper) getAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Address) *statedb.Account {
+	acct := k.accountKeeper.GetAccount(ctx, eth.EthAddrToNibiruAddr(addr))
 	if acct == nil {
 		return nil
 	}
@@ -202,21 +201,5 @@ func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Addre
 	return &statedb.Account{
 		Nonce:    acct.GetSequence(),
 		CodeHash: codeHash,
-	}
-}
-
-// GetAccountOrEmpty returns empty account if not exist, returns error if it's not `EthAccount`
-func (k *Keeper) GetAccountOrEmpty(
-	ctx sdk.Context, addr gethcommon.Address,
-) statedb.Account {
-	acct := k.GetAccount(ctx, addr)
-	if acct != nil {
-		return *acct
-	}
-
-	// empty account
-	return statedb.Account{
-		BalanceNative: new(big.Int),
-		CodeHash:      evm.EmptyCodeHash,
 	}
 }

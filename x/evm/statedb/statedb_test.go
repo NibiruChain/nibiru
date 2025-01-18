@@ -8,7 +8,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	s "github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -30,11 +30,11 @@ var (
 
 // TestSuite runs the entire test suite.
 func TestSuite(t *testing.T) {
-	s.Run(t, new(Suite))
+	suite.Run(t, new(Suite))
 }
 
 type Suite struct {
-	s.Suite
+	suite.Suite
 }
 
 // CollectContractStorage is a helper function that collects all storage key-value pairs
