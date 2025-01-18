@@ -80,7 +80,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2167](https://github.com/NibiruChain/nibiru/pull/2167) - refactor(evm): removed blockGasUsed transient variable
 - [#2168](https://github.com/NibiruChain/nibiru/pull/2168) - chore(evm-solidity): Move unrelated docs, gen-embeds, and add Solidity docs
 - [#2165](https://github.com/NibiruChain/nibiru/pull/2165) - fix(evm): use Singleton StateDB pattern for EVM txs
-
+- [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
