@@ -16,7 +16,7 @@ func (s *TestSuite) TestSendTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(42))
-	txResp, err := s.network.BroadcastMsgs(fromAddr, &banktypes.MsgSend{
+	txResp, err := s.network.BroadcastMsgs(fromAddr, nil, &banktypes.MsgSend{
 		FromAddress: fromAddr.String(),
 		ToAddress:   toAddr.String(),
 		Amount:      sdk.NewCoins(sendCoin),
