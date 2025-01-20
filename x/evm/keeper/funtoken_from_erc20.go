@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -31,19 +32,25 @@ func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
 	evmObj *vm.EVM,
 	contract gethcommon.Address,
+	abi *gethabi.ABI,
 ) (info *ERC20Metadata, err error) {
+	effectiveAbi := embeds.SmartContract_ERC20Minter.ABI
+
+	if abi != nil {
+		effectiveAbi = abi
+	}
 	// Load name, symbol, decimals
-	name, err := k.ERC20().LoadERC20Name(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
+	name, err := k.ERC20().LoadERC20Name(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	symbol, err := k.ERC20().LoadERC20Symbol(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
+	symbol, err := k.ERC20().LoadERC20Symbol(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	decimals, err := k.ERC20().LoadERC20Decimals(ctx, evmObj, embeds.SmartContract_ERC20Minter.ABI, contract)
+	decimals, err := k.ERC20().LoadERC20Decimals(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +91,8 @@ type (
 	ERC20Uint8 struct{ Value uint8 }
 	ERC20Bool  struct{ Value bool }
 	// ERC20BigInt: Unpacking type for "uint256" from Solidity.
-	ERC20BigInt struct{ Value *big.Int }
+	ERC20BigInt  struct{ Value *big.Int }
+	ERC20Bytes32 struct{ Value [32]byte }
 )
 
 // createFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
@@ -138,7 +146,7 @@ func (k *Keeper) createFunTokenFromERC20(
 		false,
 	)
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), evm.NewNoOpTracer(), stateDB)
-	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20)
+	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20, nil)
 	if err != nil {
 		return nil, err
 	}
