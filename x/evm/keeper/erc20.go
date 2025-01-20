@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"math/big"
@@ -209,13 +210,22 @@ func (e erc20Calls) loadERC20String(
 	}
 
 	erc20Val := new(ERC20String)
-	err = erc20Abi.UnpackIntoInterface(
+	if err := erc20Abi.UnpackIntoInterface(
 		erc20Val, methodName, res.Ret,
-	)
-	if err != nil {
-		return out, err
+	); err == nil {
+		return erc20Val.Value, err
 	}
-	return erc20Val.Value, err
+
+	erc20Bytes32Val := new(ERC20Bytes32)
+	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, res.Ret); err == nil {
+		return bytes32ToString(erc20Bytes32Val.Value), nil
+	}
+
+	return "", fmt.Errorf("failed to decode response for method %s; unable to unpack as string or bytes32", methodName)
+}
+
+func bytes32ToString(b [32]byte) string {
+	return string(bytes.Trim(b[:], "\x00"))
 }
 
 func (e erc20Calls) loadERC20Uint8(
@@ -243,13 +253,21 @@ func (e erc20Calls) loadERC20Uint8(
 	}
 
 	erc20Val := new(ERC20Uint8)
-	err = erc20Abi.UnpackIntoInterface(
+	if err := erc20Abi.UnpackIntoInterface(
 		erc20Val, methodName, res.Ret,
-	)
-	if err != nil {
-		return out, err
+	); err == nil {
+		return erc20Val.Value, err
 	}
-	return erc20Val.Value, err
+
+	erc20Uint256Val := new(ERC20BigInt)
+	if err := erc20Abi.UnpackIntoInterface(
+		erc20Uint256Val, methodName, res.Ret,
+	); err == nil {
+		// We can safely cast to uint8 because it's nonsense for decimals to be larger than 255
+		return uint8(erc20Uint256Val.Value.Uint64()), err
+	}
+
+	return 0, fmt.Errorf("failed to decode response for method %s; unable to unpack as uint8 or uint256", methodName)
 }
 
 func (e erc20Calls) LoadERC20BigInt(
