@@ -6,10 +6,10 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/app/codec"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	module "github.com/NibiruChain/nibiru/x/tokenfactory"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/app/codec"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	module "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 type ModuleTestSuite struct{ suite.Suite }

@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 import "nibiru/oracle/v1/oracle.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Msg defines the oracle Msg service.
 service Msg {
@@ -137,7 +137,7 @@ message OracleParamsMsg {
   // Ex. '["unibi:uusd","ubtc:uusd"]'
   repeated string whitelist = 4 [
     (gogoproto.moretags) = "yaml:\"whitelist\"",
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = true
   ];
   // SlashFraction returns the proportion of an oracle's stake that gets

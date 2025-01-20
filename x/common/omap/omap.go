@@ -1,9 +1,8 @@
 // Package omap defines a generic-based type for creating ordered maps. It
-// exports a "Sorter" interface, allowing the creation of ordered maps with
+// exports a "Sorter" interface, allowing the creation of sorted maps with
 // custom key and value types.
 //
-// Specifically, omap supports ordered maps with keys of type string or
-// asset.Pair and values of any type. See impl.go for examples.
+// See impl.go for examples.
 //
 // ## Motivation
 //
@@ -19,14 +18,13 @@ import (
 	"sort"
 )
 
-// OrderedMap is a wrapper struct around the built-in map that has guarantees
+// SortedMap is a wrapper struct around the built-in map that has guarantees
 // about order because it sorts its keys with a custom sorter. It has a public
-// API that mirrors that functionality of `map`. OrderedMap is built with
+// API that mirrors that functionality of `map`. SortedMap is built with
 // generics, so it can hold various combinations of key-value types.
-type OrderedMap[K comparable, V any] struct {
-	Data        map[K]V
+type SortedMap[K comparable, V any] struct {
+	data        map[K]V
 	orderedKeys []K
-	keyIndexMap map[K]int // useful for delete operation
 	isOrdered   bool
 	sorter      Sorter[K]
 }
@@ -38,11 +36,39 @@ type Sorter[K any] interface {
 	Less(a K, b K) bool
 }
 
+// SorterLeq is true if a <= b implements "less than or equal" using "Less"
+func SorterLeq[K comparable](sorter Sorter[K], a, b K) bool {
+	return sorter.Less(a, b) || a == b
+}
+
+// Data returns a copy of the underlying map (unordered, unsorted)
+func (om *SortedMap[K, V]) Data() map[K]V {
+	dataCopy := make(map[K]V, len(om.data))
+	for k, v := range om.InternalData() {
+		dataCopy[k] = v
+	}
+	return dataCopy
+}
+
+// InternalData returns the SortedMap's private map.
+func (om *SortedMap[K, V]) InternalData() map[K]V {
+	return om.data
+}
+
+func (om *SortedMap[K, V]) Get(key K) (val V, exists bool) {
+	val, exists = om.data[key]
+	return val, exists
+}
+
 // ensureOrder is a method on the OrderedMap that sorts the keys in the map
 // and rebuilds the index map.
-func (om *OrderedMap[K, V]) ensureOrder() {
-	keys := make([]K, 0, len(om.Data))
-	for key := range om.Data {
+func (om *SortedMap[K, V]) ensureOrder() {
+	if om.isOrdered {
+		return
+	}
+
+	keys := make([]K, 0, len(om.data))
+	for key := range om.data {
 		keys = append(keys, key)
 	}
 
@@ -53,20 +79,16 @@ func (om *OrderedMap[K, V]) ensureOrder() {
 	sort.Slice(keys, lessFunc)
 
 	om.orderedKeys = keys
-	om.keyIndexMap = make(map[K]int)
-	for idx, key := range om.orderedKeys {
-		om.keyIndexMap[key] = idx
-	}
 	om.isOrdered = true
 }
 
 // BuildFrom is a method that builds an OrderedMap from a given map and a
 // sorter for the keys. This function is useful for creating new OrderedMap
 // types with typed keys.
-func (om OrderedMap[K, V]) BuildFrom(
+func (om *SortedMap[K, V]) BuildFrom(
 	data map[K]V, sorter Sorter[K],
-) OrderedMap[K, V] {
-	om.Data = data
+) *SortedMap[K, V] {
+	om.data = data
 	om.sorter = sorter
 	om.ensureOrder()
 	return om
@@ -76,7 +98,7 @@ func (om OrderedMap[K, V]) BuildFrom(
 // to iterate over the map in a deterministic order. Using a channel here
 // makes it so that the iteration is done lazily rather loading the entire
 // map (OrderedMap.data) into memory and then iterating.
-func (om OrderedMap[K, V]) Range() <-chan (K) {
+func (om *SortedMap[K, V]) Range() <-chan (K) {
 	iterChan := make(chan K)
 	go func() {
 		defer close(iterChan)
@@ -89,18 +111,18 @@ func (om OrderedMap[K, V]) Range() <-chan (K) {
 }
 
 // Has checks whether a key exists in the map.
-func (om OrderedMap[K, V]) Has(key K) bool {
-	_, exists := om.Data[key]
+func (om *SortedMap[K, V]) Has(key K) bool {
+	_, exists := om.data[key]
 	return exists
 }
 
 // Len returns the number of items in the map.
-func (om OrderedMap[K, V]) Len() int {
-	return len(om.Data)
+func (om *SortedMap[K, V]) Len() int {
+	return len(om.data)
 }
 
 // Keys returns a slice of the keys in their sorted order.
-func (om *OrderedMap[K, V]) Keys() []K {
+func (om *SortedMap[K, V]) Keys() []K {
 	if !om.isOrdered {
 		om.ensureOrder()
 	}
@@ -109,19 +131,59 @@ func (om *OrderedMap[K, V]) Keys() []K {
 
 // Set adds a key-value pair to the map, or updates the value if the key
 // already exists. It ensures the keys are ordered after the operation.
-func (om *OrderedMap[K, V]) Set(key K, val V) {
-	om.Data[key] = val
+func (om *SortedMap[K, V]) Set(key K, val V) {
+	_, exists := om.data[key]
+	om.data[key] = val
+
+	if !exists {
+		lenBefore := len(om.orderedKeys)
+
+		if lenBefore == 0 {
+			// If the map is empty, create it. There's no need to search.
+			om.orderedKeys = []K{key}
+			return
+		}
+
+		// If the key is new, insert it to the correctly sorted position
+		// Binary search works here and is in the standard library.
+		idx := sort.Search(lenBefore, func(i int) bool {
+			return om.sorter.Less(key, om.orderedKeys[i])
+		})
+
+		// Update om.orderedKeys
+		newSortedKeys := make([]K, lenBefore+1)
+		front, back := om.orderedKeys[:idx], om.orderedKeys[idx:]
+		copy(newSortedKeys[:idx], front)  // front
+		newSortedKeys[idx] = key          // middle
+		copy(newSortedKeys[idx+1:], back) // back
+		om.orderedKeys = newSortedKeys
+	}
+}
+
+// Union combines new key-value pairs into the ordered map.
+func (om *SortedMap[K, V]) Union(kvMap map[K]V) {
+	for key, val := range kvMap {
+		om.data[key] = val
+	}
+	om.isOrdered = false
 	om.ensureOrder() // TODO perf: make this more efficient with a clever insert.
 }
 
 // Delete removes a key-value pair from the map if the key exists.
-func (om *OrderedMap[K, V]) Delete(key K) {
-	idx, keyExists := om.keyIndexMap[key]
-	if keyExists {
-		delete(om.Data, key)
+func (om *SortedMap[K, V]) Delete(key K) {
+	if _, keyExists := om.data[key]; keyExists {
+		lenBeforeDelete := om.Len()
+		delete(om.data, key)
 
-		orderedKeys := om.orderedKeys
-		orderedKeys = append(orderedKeys[:idx], orderedKeys[idx+1:]...)
-		om.orderedKeys = orderedKeys
+		// Remove the key from orderedKeys while preserving the order
+		idx := sort.Search(lenBeforeDelete, func(i int) bool {
+			return SorterLeq(om.sorter, key, om.orderedKeys[i])
+		})
+
+		// Update om.orderedKeys, skipping the deleted key (om.orderedKeys[idx])
+		newSortedKeys := make([]K, lenBeforeDelete-1)
+		copy(newSortedKeys[:idx], om.orderedKeys[:idx])   // front
+		copy(newSortedKeys[idx:], om.orderedKeys[idx+1:]) // middle + back
+		om.orderedKeys = newSortedKeys
 	}
 }
