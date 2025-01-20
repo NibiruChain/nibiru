@@ -42,12 +42,6 @@ var (
 func NewTx(
 	tx *EvmTxArgs,
 ) *MsgEthereumTx {
-	return newMsgEthereumTx(tx)
-}
-
-func newMsgEthereumTx(
-	tx *EvmTxArgs,
-) *MsgEthereumTx {
 	var (
 		cid, amt, gp *sdkmath.Int
 		toAddr       string
