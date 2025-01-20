@@ -2,6 +2,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -42,7 +43,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 	evmObj, _ := deps.NewEVM()
 
-	actualMetadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr)
+	actualMetadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr, nil)
 	s.Require().NoError(err)
 	s.Require().Equal(metadata, *actualMetadata)
 
@@ -531,6 +532,65 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance")
 	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)))
 	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS_NIBI, bankDemon).Amount.Equal(sdk.NewInt(0)))
+}
+
+type MkrMetadata struct {
+	Symbol [32]byte
+}
+
+func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy MKR")
+
+	byteSlice, err := hex.DecodeString("4d4b520000000000000000000000000000000000000000000000000000000000")
+	s.Require().NoError(err)
+	var byteArray [32]byte
+	copy(byteArray[:], byteSlice)
+
+	metadata := MkrMetadata{
+		Symbol: byteArray,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestBytes32Metadata,
+		metadata.Symbol,
+	)
+	s.Require().NoError(err)
+
+	s.T().Log("set name")
+
+	byteSlice, err = hex.DecodeString("4d616b6572000000000000000000000000000000000000000000000000000000")
+	s.Require().NoError(err)
+	copy(byteArray[:], byteSlice)
+
+	contractInput, err := embeds.SmartContract_TestBytes32Metadata.ABI.Pack(
+		"setName",
+		byteArray,
+	)
+	s.Require().NoError(err)
+
+	evmObj, _ := deps.NewEVM()
+	_, err = deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx,
+		evmObj,
+		deps.Sender.EthAddr,
+		&deployResp.ContractAddr,
+		true,
+		contractInput,
+		evmtest.FunTokenGasLimitSendToEvm,
+	)
+
+	s.Require().NoError(err)
+
+	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr, embeds.SmartContract_TestBytes32Metadata.ABI)
+	s.Require().NoError(err)
+
+	actualMetadata := keeper.ERC20Metadata{
+		Name:     "Maker",
+		Symbol:   "MKR",
+		Decimals: 18,
+	}
+	s.Require().Equal(actualMetadata, *info)
 }
 
 type FunTokenFromErc20Suite struct {

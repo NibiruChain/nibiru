@@ -767,7 +767,7 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: simple nibi transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
+				txMsg, _ := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceTxRequest{
 					Msg: txMsg,
 				}
@@ -843,7 +843,7 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: simple nibi transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
+				txMsg, _ := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,

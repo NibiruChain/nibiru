@@ -76,10 +76,10 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	erc20Addr, err := eth.NewEIP55AddrFromStr(testContractAddress.String())
 	s.Require().NoError(err)
 
-	_, err = s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
-	s.Require().NoError(err)
+	nonce := s.getCurrentNonce(s.node.EthAddress)
+	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
 
-	txResp, err := s.network.BroadcastMsgs(s.node.Address, &evm.MsgCreateFunToken{
+	txResp, err := s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
 		Sender:    s.node.Address.String(),
 		FromErc20: &erc20Addr,
 	})
@@ -96,15 +96,11 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	)
 	s.Require().NoError(err)
 
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.EthPendingBlockNumber)
-	s.Require().NoError(err)
-
-	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
-
+	nonce = s.getCurrentNonce(s.fundedAccEthAddr)
 	txHash1 := SendTransaction(
 		s,
 		&gethcore.LegacyTx{
-			Nonce:    uint64(*nonce),
+			Nonce:    nonce,
 			To:       &precompile.PrecompileAddr_FunToken,
 			Data:     packedArgsPass,
 			Gas:      1_500_000,
@@ -123,7 +119,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	txHash2 := SendTransaction( // should fail due to invalid recipient address
 		s,
 		&gethcore.LegacyTx{
-			Nonce:    uint64(*nonce + 1),
+			Nonce:    nonce + 1,
 			To:       &precompile.PrecompileAddr_FunToken,
 			Data:     packedArgsFail,
 			Gas:      1_500_000,
@@ -134,7 +130,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	txHash3 := SendTransaction(
 		s,
 		&gethcore.LegacyTx{
-			Nonce:    uint64(*nonce + 2),
+			Nonce:    nonce + 2,
 			To:       &precompile.PrecompileAddr_FunToken,
 			Data:     packedArgsPass,
 			Gas:      1_500_000,

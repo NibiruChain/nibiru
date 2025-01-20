@@ -43,6 +43,8 @@ var (
 	testERC20TransferWithFee []byte
 	//go:embed artifacts/contracts/TestRandom.sol/TestRandom.json
 	testRandom []byte
+	//go:embed artifacts/contracts/MKR.sol/DSToken.json
+	testMetadataBytes32 []byte
 )
 
 var (
@@ -141,6 +143,11 @@ var (
 		Name:      "TestRandom.sol",
 		EmbedJSON: testRandom,
 	}
+	// SmartContract_TestBytes32Metadata is a test contract which tests contract that have bytes32 as metadata
+	SmartContract_TestBytes32Metadata = CompiledEvmContract{
+		Name:      "MKR.sol",
+		EmbedJSON: testMetadataBytes32,
+	}
 )
 
 func init() {
@@ -158,6 +165,7 @@ func init() {
 	SmartContract_TestInfiniteRecursionERC20.MustLoad()
 	SmartContract_TestERC20TransferWithFee.MustLoad()
 	SmartContract_TestRandom.MustLoad()
+	SmartContract_TestBytes32Metadata.MustLoad()
 }
 
 type CompiledEvmContract struct {

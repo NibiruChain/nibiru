@@ -126,7 +126,9 @@ func (network *Network) ExecTxCmd(
 }
 
 func (chain *Network) BroadcastMsgs(
-	from sdk.AccAddress, msgs ...sdk.Msg,
+	from sdk.AccAddress,
+	accountSequence *uint64,
+	msgs ...sdk.Msg,
 ) (*sdk.TxResponse, error) {
 	cfg := chain.Config
 	kb, info, err := chain.keyBaseAndInfoForAddr(from)
@@ -142,13 +144,18 @@ func (chain *Network) BroadcastMsgs(
 	}
 
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, math.NewInt(1000))))
-	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
+	txBuilder.SetGasLimit(uint64(10 * common.TO_MICRO))
 
 	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
 	if err != nil {
 		return nil, err
 	}
-
+	var sequence uint64
+	if accountSequence != nil {
+		sequence = *accountSequence
+	} else {
+		sequence = acc.GetSequence()
+	}
 	txFactory := tx.Factory{}
 	txFactory = txFactory.
 		WithChainID(cfg.ChainID).
@@ -156,7 +163,7 @@ func (chain *Network) BroadcastMsgs(
 		WithTxConfig(cfg.TxConfig).
 		WithAccountRetriever(cfg.AccountRetriever).
 		WithAccountNumber(acc.GetAccountNumber()).
-		WithSequence(acc.GetSequence())
+		WithSequence(sequence)
 
 	err = tx.Sign(txFactory, info.Name, txBuilder, true)
 	if err != nil {
