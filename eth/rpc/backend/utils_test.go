@@ -4,12 +4,16 @@ import (
 	"fmt"
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 )
 
 func (s *BackendSuite) TestGetLogsFromBlockResults() {
-	blockWithTx := transferTxBlockNumber.Int64()
+	blockWithTx := deployContractBlockNumber.Int64()
 	blockResults, err := s.backend.TendermintBlockResultByNumber(&blockWithTx)
 	s.Require().NoError(err)
 	s.Require().NotNil(blockResults)
@@ -18,8 +22,16 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 	s.Require().NoError(err)
 	s.Require().NotNil(logs)
 
-	// TODO: ON: the structured event eth.evm.v1.EventTxLog is not emitted properly, so the logs are not retrieved
-	// Add proper checks after implementing
+	s.assertTxLogsMatch([]*gethcore.Log{
+		{
+			Address: testContractAddress,
+			Topics: []gethcommon.Hash{
+				gethcrypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
+				gethcommon.Address{}.Hash(),
+				s.fundedAccEthAddr.Hash(),
+			},
+		},
+	}, logs[0], "deploy contract tx")
 }
 
 func (s *BackendSuite) TestGetHexProofs() {
