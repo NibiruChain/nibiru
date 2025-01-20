@@ -60,7 +60,7 @@ func (s *BackendSuite) TestLogs() {
 
 	s.T().Log("TX4: Create FunToken from unibi coin")
 	nonce++
-	erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS))
+	erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS)+1)
 
 	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
 		Sender:        s.node.Address.String(),

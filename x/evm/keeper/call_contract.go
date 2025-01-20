@@ -87,7 +87,7 @@ func (k Keeper) CallContractWithInput(
 
 		err = k.EmitLogEvents(ctx, evmResp)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "error emitting tx logs")
+			return nil, errors.Wrap(err, "error emitting tx logs")
 		}
 	}
 	return evmResp, nil
