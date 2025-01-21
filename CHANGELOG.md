@@ -83,6 +83,8 @@ needed to include double quotes around the hexadecimal string.
 - [#2165](https://github.com/NibiruChain/nibiru/pull/2165) - fix(evm): use Singleton StateDB pattern for EVM txs
 - [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
 - [#2171](https://github.com/NibiruChain/nibiru/pull/2171) - chore: add checktx for AnteDecVerifyEthAcc
+- [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
+
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
