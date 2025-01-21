@@ -3,6 +3,7 @@ package rpcapi
 
 import (
 	"context"
+	"fmt"
 
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
@@ -421,6 +422,12 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 	if err != nil {
 		e.logger.Debug("block result not found", "number", res.Height, "error", err.Error())
 		return nil, nil
+	}
+
+	// Add bounds checking
+	if int(res.TxIndex) >= len(resBlockResult.TxsResults) {
+		e.logger.Debug("tx index out of bounds", "tx_index", res.TxIndex, "length", len(resBlockResult.TxsResults))
+		return nil, fmt.Errorf("transaction index out of bounds")
 	}
 
 	// parse tx logs from events
