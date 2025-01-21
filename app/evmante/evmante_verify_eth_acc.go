@@ -43,7 +43,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	if !ctx.IsCheckTx() {
 		return next(ctx, tx, simulate)
 	}
-	
+
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
