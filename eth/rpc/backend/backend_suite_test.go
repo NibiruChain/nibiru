@@ -252,7 +252,7 @@ func (s *BackendSuite) buildContractCallTx(
 	nonce uint64,
 	gasLimit uint64,
 ) gethcore.Transaction {
-	// recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
+	//recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
 	transferAmount := big.NewInt(100)
 
 	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack(
