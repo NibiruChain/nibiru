@@ -60,6 +60,9 @@ func (k *Keeper) EthereumTx(
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, txConfig)
 	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	evmResp, err = k.ApplyEvmMsg(ctx, evmMsg, evmObj, nil /*tracer*/, true /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
 	if err != nil {
@@ -341,8 +344,6 @@ func (k *Keeper) ApplyEvmMsg(
 		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
 			return nil, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
-		// after we commit, the StateDB is no longer usable so we discard it and let the Golang garbage collector dispose of it
-		k.Bank.StateDB = nil
 	}
 	// Rare case of uint64 gas overflow
 	if msg.Gas() < leftoverGas {
@@ -544,10 +545,13 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		true,
 	)
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	var stateDB *statedb.StateDB = k.Bank.StateDB
+	stateDB := k.Bank.StateDB
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, txConfig)
 	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContractWithInput(
 		ctx,
@@ -572,7 +576,6 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
-	k.Bank.StateDB = nil
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               sender.String(),
@@ -596,10 +599,13 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	funTokenMapping evm.FunToken,
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	// needs to run first to populate the StateDB on the BankKeeperExtension
-	var stateDB *statedb.StateDB = k.Bank.StateDB
+	stateDB := k.Bank.StateDB
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
 	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
 
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
@@ -664,7 +670,6 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	if err := stateDB.Commit(); err != nil {
 		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
-	k.Bank.StateDB = nil
 
 	// Emit event with the actual amount received
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{

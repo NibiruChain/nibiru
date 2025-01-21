@@ -85,6 +85,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
 - [#2170](https://github.com/NibiruChain/nibiru/pull/2170) - chore: Remove redundant allowUnprotectedTxs
 - [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
+- [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
