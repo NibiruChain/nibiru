@@ -75,6 +75,7 @@ JSON encoding for the `EIP55Addr` struct was not following the Go conventions an
 needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
+- [#2159](https://github.com/NibiruChain/nibiru/pull/2159) - chore(evm): Augment the Wasm msg handler so that wasm contracts cannot send MsgEthereumTx
 - [#2160](https://github.com/NibiruChain/nibiru/pull/2160) - fix(evm-precompile): use bank.MsgServer Send in precompile IFunToken.bankMsgSend
 - [#2161](https://github.com/NibiruChain/nibiru/pull/2161) - fix(evm): added tx logs events to the funtoken related txs
 - [#2162](https://github.com/NibiruChain/nibiru/pull/2162) - test(testutil): try retrying for 'panic: pebbledb: closed'
@@ -84,7 +85,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
 - [#2170](https://github.com/NibiruChain/nibiru/pull/2170) - chore: Remove redundant allowUnprotectedTxs
 - [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
-- 
+
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena

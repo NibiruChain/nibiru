@@ -3,7 +3,6 @@ package wasmext_test
 import (
 	"fmt"
 	"strings"
-	"testing"
 
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +35,8 @@ Given only the `PB_MSG.PACKAGE` and the `PB_MSG.NAME` of either the query
 request or response, we should know the `QueryRequest::Stargate.path`
 deterministically.
 */
-func TestWasmAcceptedStargateQueries(t *testing.T) {
+func (s *Suite) TestWasmAcceptedStargateQueries() {
+	t := s.T()
 	t.Log("stargateQueryPaths: Add nibiru query paths from GRPC service descriptions")
 	queryServiceDescriptions := []grpc.ServiceDesc{
 		epochs.GrpcQueryServiceDesc(),
