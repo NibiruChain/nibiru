@@ -171,13 +171,13 @@ func (s *Suite) TestJournalReversion() {
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")
-	wasmContracts := test.SetupWasmContracts(&deps, evmObj, &s.Suite)
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	helloWorldCounterWasm := wasmContracts[1]
 	fmt.Printf("wasmContract: %s\n", helloWorldCounterWasm)
 
 	s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 7, true,
+		&s.Suite, &deps, helloWorldCounterWasm, 7, true,
 	)
 	if stateDB.DebugDirtiesCount() != 0 {
 		debugDirtiesCountMismatch(stateDB, s.T())
@@ -186,7 +186,7 @@ func (s *Suite) TestJournalReversion() {
 
 	s.T().Log("commitEvmTx=false, expect dirty journal entries")
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 5, false,
+		&s.Suite, &deps, helloWorldCounterWasm, 5, false,
 	)
 	s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
 	if stateDB.DebugDirtiesCount() != 1 {
@@ -196,23 +196,22 @@ func (s *Suite) TestJournalReversion() {
 
 	s.T().Log("Expect to see the pending changes included")
 	test.AssertWasmCounterState(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 12, // 12 = 7 + 5
+		&s.Suite, deps, helloWorldCounterWasm, 12, // 12 = 7 + 5
 	)
 
 	// NOTE: that the [StateDB.Commit] fn has not been called yet. We're still
 	// mid-transaction.
 
 	s.T().Log("EVM revert operation should bring about the old state")
-	err := test.IncrementWasmCounterWithExecuteMultiViaVMCall(
-		&s.Suite, &deps, helloWorldCounterWasm, 50, false, evmObj,
+	test.IncrementWasmCounterWithExecuteMulti(
+		&s.Suite, &deps, helloWorldCounterWasm, 50, false,
 	)
-	s.Require().NoError(err)
 	s.T().Log(heredoc.Doc(`At this point, 2 precompile calls have succeeded.
 One that increments the counter to 7 + 5, and another for +50. 
 The StateDB has not been committed. We expect to be able to revert to both
 snapshots and see the prior states.`))
 	test.AssertWasmCounterState(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5+50,
+		&s.Suite, deps, helloWorldCounterWasm, 7+5+50,
 	)
 
 	errFn := common.TryCatch(func() {
@@ -223,19 +222,18 @@ snapshots and see the prior states.`))
 
 	stateDB.RevertToSnapshot(5)
 	test.AssertWasmCounterState(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5,
+		&s.Suite, deps, helloWorldCounterWasm, 7+5,
 	)
 
 	stateDB.RevertToSnapshot(3)
 	test.AssertWasmCounterState(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7, // state before precompile called
+		&s.Suite, deps, helloWorldCounterWasm, 7, // state before precompile called
 	)
 
-	err = stateDB.Commit()
-	s.Require().NoError(err)
+	s.Require().NoError(stateDB.Commit())
 	s.Require().EqualValues(0, stateDB.DebugDirtiesCount())
 	test.AssertWasmCounterState(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7, // state before precompile called
+		&s.Suite, deps, helloWorldCounterWasm, 7, // state before precompile called
 	)
 }
 
