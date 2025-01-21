@@ -208,9 +208,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	}
 	`)
 
-	// Parse funds argument.
-	var funds []precompile.WasmBankCoin // blank funds
-
 	// The "times" arg determines the number of messages in the executeMsgs slice
 	executeMsgs := []struct {
 		ContractAddr string                    `json:"contractAddr"`
@@ -223,7 +220,7 @@ func IncrementWasmCounterWithExecuteMulti(
 			ContractAddr string                    `json:"contractAddr"`
 			MsgArgs      []byte                    `json:"msgArgs"`
 			Funds        []precompile.WasmBankCoin `json:"funds"`
-		}{wasmContract.String(), msgArgsBz, funds})
+		}{wasmContract.String(), msgArgsBz, []precompile.WasmBankCoin{}})
 	}
 
 	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
