@@ -113,7 +113,11 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.Option {
+func GetWasmOpts(
+	nibiru NibiruApp,
+	appOpts servertypes.AppOptions,
+	wasmMsgHandlerArgs wasmext.MsgHandlerArgs,
+) []wasmkeeper.Option {
 	var wasmOpts []wasmkeeper.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
@@ -122,6 +126,7 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	return append(wasmOpts, wasmext.NibiruWasmOptions(
 		nibiru.GRPCQueryRouter(),
 		nibiru.appCodec,
+		wasmMsgHandlerArgs,
 	)...)
 }
 

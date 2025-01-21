@@ -21,6 +21,7 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
@@ -66,6 +67,8 @@ type PublicKeepers struct {
 	EvmKeeper          *evmkeeper.Keeper
 
 	// WASM keepers
-	WasmKeeper       wasmkeeper.Keeper
+	WasmKeeper         wasmkeeper.Keeper
+	WasmMsgHandlerArgs wasmext.MsgHandlerArgs
+
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 }
