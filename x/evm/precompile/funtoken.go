@@ -59,7 +59,6 @@ func (p precompileFunToken) Run(
 	if err != nil {
 		return nil, err
 	}
-	p.evmKeeper.Bank.StateDB = startResult.StateDB
 
 	// Gracefully handles "out of gas"
 	defer HandleOutOfGasPanic(&err)()
