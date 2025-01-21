@@ -132,6 +132,9 @@ func (k *Keeper) createFunTokenFromERC20(
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash())))
 	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
 	evmMsg := gethcore.NewMessage(
 		evm.EVM_MODULE_ADDRESS,
 		&erc20,
@@ -184,8 +187,6 @@ func (k *Keeper) createFunTokenFromERC20(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
-	// Don't need the StateDB anymore because it's not usable after committing
-	k.Bank.StateDB = nil
 
 	return funtoken, k.FunTokens.SafeInsert(
 		ctx, erc20, bankDenom, false,
