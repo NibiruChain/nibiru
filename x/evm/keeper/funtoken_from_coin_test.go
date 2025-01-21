@@ -28,7 +28,8 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 		metadata, err := deps.EvmKeeper.FindERC20Metadata(
 			deps.Ctx,
 			evmObj,
-			crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS)),
+			crypto.CreateAddress(
+				evm.EVM_MODULE_ADDRESS, deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS)),
 			nil,
 		)
 		s.Require().Error(err)
