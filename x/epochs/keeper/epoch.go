@@ -66,6 +66,7 @@ func (k Keeper) IterateEpochInfo(
 	iterate := k.Epochs.Iterate(ctx, &collections.Range[string]{})
 	i := int64(0)
 
+	defer iterate.Close()
 	for ; iterate.Valid(); iterate.Next() {
 		epoch := iterate.Value()
 		stop := fn(i, epoch)
