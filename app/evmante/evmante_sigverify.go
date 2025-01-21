@@ -47,9 +47,8 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 			)
 		}
 
-		allowUnprotectedTxs := false
 		ethTx := msgEthTx.AsTransaction()
-		if !allowUnprotectedTxs && !ethTx.Protected() {
+		if !ethTx.Protected() {
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrNotSupported,
 				"rejected unprotected Ethereum transaction. "+
