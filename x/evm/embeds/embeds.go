@@ -45,6 +45,8 @@ var (
 	testRandom []byte
 	//go:embed artifacts/contracts/MKR.sol/DSToken.json
 	testMetadataBytes32 []byte
+	//go:embed artifacts/contracts/TestPrecompileSendToBankThenERC20Transfer.sol/TestPrecompileSendToBankThenERC20Transfer.json
+	testPrecompileSendToBankThenERC20Transfer []byte
 )
 
 var (
@@ -148,6 +150,12 @@ var (
 		Name:      "MKR.sol",
 		EmbedJSON: testMetadataBytes32,
 	}
+
+	// SmartContract_TestPrecompileSendToBankThenERC20Transfer is a test contract that sends to bank then calls ERC20 transfer
+	SmartContract_TestPrecompileSendToBankThenERC20Transfer = CompiledEvmContract{
+		Name:      "TestPrecompileSendToBankThenERC20Transfer.sol",
+		EmbedJSON: testPrecompileSendToBankThenERC20Transfer,
+	}
 )
 
 func init() {
@@ -166,6 +174,7 @@ func init() {
 	SmartContract_TestERC20TransferWithFee.MustLoad()
 	SmartContract_TestRandom.MustLoad()
 	SmartContract_TestBytes32Metadata.MustLoad()
+	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 }
 
 type CompiledEvmContract struct {

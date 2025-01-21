@@ -48,11 +48,6 @@ func (p precompileWasm) Run(
 
 	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
 
-	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
-	// any operation that has the potential to use Bank send methods. This will
-	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
-	// recorded if wei (NIBI) is transferred.
-	p.Bank.StateDB = startResult.StateDB
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
 		bz, err = p.execute(startResult, contract.CallerAddress, readonly)
