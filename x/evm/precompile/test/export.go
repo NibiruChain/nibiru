@@ -10,6 +10,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -152,6 +153,52 @@ func AssertWasmCounterState(
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
 }
 
+func AssertWasmCounterStateWithEvm(
+	s *suite.Suite,
+	deps evmtest.TestDeps,
+	evmObj *vm.EVM,
+	wasmContract sdk.AccAddress,
+	wantCount int64,
+) {
+	msgArgsBz := []byte(`
+		{ 
+		  "count": {}
+		}
+	`)
+
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_query),
+		wasmContract.String(),
+		msgArgsBz,
+	)
+	s.Require().NoError(err)
+
+	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+		deps.Ctx,
+		evmObj,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		false,
+		contractInput,
+		WasmGasLimitQuery,
+	)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(evmResp.Ret)
+
+	var queryResp []byte
+	s.NoError(embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
+		&queryResp,
+		string(precompile.WasmMethod_query),
+		evmResp.Ret,
+	))
+
+	var typedResp QueryMsgCountResp
+	s.NoError(json.Unmarshal(queryResp, &typedResp))
+
+	s.EqualValues(wantCount, typedResp.Count)
+	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
+}
+
 // Result of QueryMsg::Count from the [hello_world_counter] Wasm contract:
 //
 //	```rust
@@ -198,6 +245,7 @@ type QueryMsgCountResp struct {
 func IncrementWasmCounterWithExecuteMulti(
 	s *suite.Suite,
 	deps *evmtest.TestDeps,
+	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	times uint,
 	commit bool,
@@ -229,7 +277,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
-	evmObj, _ := deps.NewEVM()
 	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
