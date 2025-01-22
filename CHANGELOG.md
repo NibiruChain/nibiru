@@ -85,6 +85,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
 - [#2170](https://github.com/NibiruChain/nibiru/pull/2170) - chore: Remove redundant allowUnprotectedTxs
 - [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
+- [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
@@ -292,7 +293,7 @@ preparation for a second audit starting in November 2024.
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
-- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
+- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.33.0 ([#1849](https://github.com/NibiruChain/nibiru/pull/1849), [#2175](https://github.com/NibiruChain/nibiru/pull/2175))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 - Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
