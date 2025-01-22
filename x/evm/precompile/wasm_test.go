@@ -149,6 +149,7 @@ func (s *WasmSuite) TestExecute() {
 
 func (s *WasmSuite) TestExecuteMulti() {
 	deps := evmtest.NewTestDeps()
+	evmObj, _ := deps.NewEVM()
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -156,12 +157,12 @@ func (s *WasmSuite) TestExecuteMulti() {
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 	// count += 2
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 2, true)
+		&s.Suite, &deps, evmObj, wasmContract, 2, true)
 	// count = 2
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 2)
 	// count += 67
 	test.IncrementWasmCounterWithExecuteMulti(
-		&s.Suite, &deps, wasmContract, 67, true)
+		&s.Suite, &deps, evmObj, wasmContract, 67, true)
 	// count = 69
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 69)
 }
