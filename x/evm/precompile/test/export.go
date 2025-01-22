@@ -45,6 +45,10 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 			InstantiateMsg: []byte(`{"count": 0}`),
 			Label:          "https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter",
 		},
+		{
+			InstantiateMsg: []byte(`{}`),
+			Label:          "https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/",
+		},
 	}
 
 	for i, wasmCode := range wasmCodes {
@@ -92,7 +96,11 @@ func deployWasmBytecode(
 
 		// hello_world_counter.wasm is a compiled version of:
 		// https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter
-		"x/evm/precompile/hello_world_counter.wasm",
+		"x/evm/precompile/test/hello_world_counter.wasm",
+
+		// bank_transfer.wasm is a compiled version of:
+		// https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/
+		"x/evm/precompile/test/bank_transfer.wasm",
 
 		// Add other wasm bytecode here if needed...
 	} {

@@ -8,6 +8,7 @@ import (
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -594,4 +595,64 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 
 	// Verify that no state changes occurred
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+}
+
+func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
+	deps := evmtest.NewTestDeps()
+
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContract := wasmContracts[2] // bank_transfer.wasm
+
+	s.T().Log("Deploy Test Contract")
+	deployResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_TestDirtyStateAttack4,
+	)
+	s.Require().NoError(err)
+	testContractAddr := deployResp.ContractAddr
+
+	s.Run("Send 10 NIBI to test contract manually", func() {
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			eth.EthAddrToNibiruAddr(testContractAddr),
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+		))
+	})
+
+	alice := evmtest.NewEthPrivAcc()
+
+	s.Run("call test contract", func() {
+		msgArgsBz := []byte(fmt.Sprintf(`
+		{
+			"bank_transfer": {
+				"recipient": "%s"
+			}
+		}
+		`, alice.NibiruAddr))
+		contractInput, err := embeds.SmartContract_TestDirtyStateAttack4.ABI.Pack(
+			"attack",
+			wasmContract.String(),
+			msgArgsBz,
+		)
+		s.Require().NoError(err)
+
+		evmObj, _ := deps.NewEVM()
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&testContractAddr,
+			true,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+		s.Require().NoError(err)
+
+		balanceAlice := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, evm.EVMBankDenom)
+		s.Require().Equal(balanceAlice.Amount.BigInt(), big.NewInt(1e6))
+
+		balanceTestContract := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
+		s.Require().Equal(balanceTestContract.Amount.BigInt(), big.NewInt(9e6))
+	})
 }

@@ -53,6 +53,8 @@ var (
 	testDirtyStateAttack2 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack3.sol/TestDirtyStateAttack3.json
 	testDirtyStateAttack3 []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
+	testDirtyStateAttack4 []byte
 )
 
 var (
@@ -175,6 +177,11 @@ var (
 		Name:      "TestDirtyStateAttack3.sol",
 		EmbedJSON: testDirtyStateAttack3,
 	}
+	// SmartContract_TestDirtyStateAttack4 is a test contract that composes manual send and funtoken sendToBank with a reversion
+	SmartContract_TestDirtyStateAttack4 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack4.sol",
+		EmbedJSON: testDirtyStateAttack4,
+	}
 )
 
 func init() {
@@ -197,6 +204,7 @@ func init() {
 	SmartContract_TestDirtyStateAttack1.MustLoad()
 	SmartContract_TestDirtyStateAttack2.MustLoad()
 	SmartContract_TestDirtyStateAttack3.MustLoad()
+	SmartContract_TestDirtyStateAttack4.MustLoad()
 }
 
 type CompiledEvmContract struct {
