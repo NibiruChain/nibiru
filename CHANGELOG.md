@@ -305,6 +305,7 @@ preparation for a second audit starting in November 2024.
 - Bump `github.com/CosmWasm/wasmvm` from 1.5.0 to 1.5.5 ([#2047](https://github.com/NibiruChain/nibiru/pull/2047))
 - Bump `docker/build-push-action` from 5 to 6 ([#1924](https://github.com/NibiruChain/nibiru/pull/1924))
 - Bump `codecov/codecov-action` from 4 to 5 ([#2112](https://github.com/NibiruChain/nibiru/pull/2112))
+- Bump `undici` from 5.28.4 to 5.28.5 ([#2174](https://github.com/NibiruChain/nibiru/pull/2174))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 
