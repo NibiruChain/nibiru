@@ -597,6 +597,18 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 }
 
+// TestDirtyStateAttack4
+//  1. Deploy a simple wasm contract that bank transfers NIBI to a recipient (Alice)
+//  2. Calls the test contract
+//     a. call the wasm precompile which calls the wasm contract with a bank transfer
+//
+// INITIAL STATE:
+// - Test contract funds: 10 NIBI
+// CONTRACT CALL:
+// - Sends 1 NIBI to Alice via wasm precompile
+// EXPECTED:
+// - Test contract funds: 9 NIBI
+// - Alice: 1 NIBI
 func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 	deps := evmtest.NewTestDeps()
 
