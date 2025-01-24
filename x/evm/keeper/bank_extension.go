@@ -168,14 +168,9 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// Note that because the ctx gas meter uses private variables to track gas,
 	// we have to branch off with a new gas meter instance to avoid mutating the
 	// "true" gas meter (called GasMeterBefore here).
-	// We use a new gas meter here because gas is consumed in the deferred
-	// function and `gasMeterBefore` will panic if we consume too much gas during
-	// the "BaseOp".
-	gasCfgBefore, transientGasCfgBefore := ctx.KVGasConfig(), ctx.TransientKVGasConfig()
-	ctx = ctx.
-		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
-		WithKVGasConfig(gasCfgBefore).
-		WithTransientKVGasConfig(transientGasCfgBefore)
+	// We use an infinite gas meter because we consume gas in the deferred function
+	// and gasMeterBefore will panic if we consume too much gas.
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
