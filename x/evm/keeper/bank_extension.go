@@ -171,7 +171,11 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// We use a new gas meter here because gas is consumed in the deferred
 	// function and `gasMeterBefore` will panic if we consume too much gas during
 	// the "BaseOp".
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit()))
+	gasCfgBefore, transientGasCfgBefore := ctx.KVGasConfig(), ctx.TransientKVGasConfig()
+	ctx = ctx.
+		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
+		WithKVGasConfig(gasCfgBefore).
+		WithTransientKVGasConfig(transientGasCfgBefore)
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
