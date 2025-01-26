@@ -70,7 +70,8 @@ func (tc TestCase) Then(action ...Action) TestCase {
 
 func (tc TestCase) Run(t *testing.T) {
 	t.Run(tc.Name, func(t *testing.T) {
-		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
+		app, ctx := testapp.NewNibiruTestAppAndContext()
+		ctx = ctx.WithBlockTime(time.UnixMilli(0))
 		var err error
 		var isNotMandatory bool
 

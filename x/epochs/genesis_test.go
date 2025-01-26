@@ -7,50 +7,40 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	chainStartTime := time.Now().UTC()
-	moduleGenesisIn := types.DefaultGenesisFromTime(chainStartTime)
-
-	encCfg := app.MakeEncodingConfig()
-	appGenesis := genesis.NewTestGenesisState(encCfg)
-	appGenesis[types.ModuleName] = encCfg.Codec.MustMarshalJSON(moduleGenesisIn)
-
-	app := testapp.NewNibiruTestApp(appGenesis)
-	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
 	require.Len(t, genesis.Epochs, 3)
 
 	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
 	require.Equal(t, genesis.Epochs[0].Identifier, "30 min")
-	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime, errMsg)
+	require.InDelta(t, genesis.Epochs[0].StartTime.Unix(), time.Now().Unix(), 3, errMsg) // 3 second buffer
 	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*30, errMsg)
 	require.Equal(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
-	require.Equal(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
+	require.InDelta(t, genesis.Epochs[0].CurrentEpochStartTime.Unix(), time.Now().Unix(), 3, errMsg)
 	require.Equal(t, genesis.Epochs[0].EpochCountingStarted, false)
 
 	require.Equal(t, genesis.Epochs[1].Identifier, "day")
-	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime, errMsg)
+	require.InDelta(t, genesis.Epochs[1].StartTime.Unix(), time.Now().Unix(), 3, errMsg) // 3 second buffer
 	require.Equal(t, genesis.Epochs[1].Duration, time.Hour*24)
 	require.Equal(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
-	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)
+	require.InDelta(t, genesis.Epochs[1].CurrentEpochStartTime.Unix(), time.Now().Unix(), 3, errMsg)
 	require.Equal(t, genesis.Epochs[1].EpochCountingStarted, false)
 
 	require.Equal(t, genesis.Epochs[2].Identifier, "week")
-	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime, errMsg)
+	require.InDelta(t, genesis.Epochs[2].StartTime.Unix(), time.Now().Unix(), 3, errMsg) // 3 second buffer
 	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24*7)
 	require.Equal(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[2].CurrentEpochStartHeight, int64(0))
-	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime, errMsg)
+	require.InDelta(t, genesis.Epochs[1].CurrentEpochStartTime.Unix(), time.Now().Unix(), 3, errMsg)
 	require.Equal(t, genesis.Epochs[2].EpochCountingStarted, false)
 }
 

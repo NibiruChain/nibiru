@@ -26,15 +26,13 @@ import (
 )
 
 func init() {
+	// Prevent "invalid Bech32 prefix; expected nibi, got ...." error
 	EnsureNibiruPrefix()
 }
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	// Prevent "invalid Bech32 prefix; expected nibi, got ...." error
-	EnsureNibiruPrefix()
-
 	// Set up base app
 	encodingConfig := app.MakeEncodingConfig()
 	appGenesis := app.NewDefaultGenesisState(encodingConfig.Codec)
@@ -51,7 +49,7 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	appGenesis[sudotypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
-	ctx := NewContext(app)
+	ctx := newContext(app)
 
 	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
@@ -61,16 +59,16 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	return app, ctx
 }
 
-// NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
-func NewContext(nibiru *app.NibiruApp) sdk.Context {
+// newContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
+func newContext(app *app.NibiruApp) sdk.Context {
 	blockHeader := tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
 	}
-	ctx := nibiru.NewContext(false, blockHeader)
+	ctx := app.NewContext(false /*isCheckTx*/, blockHeader)
 
 	// Make sure there's a block proposer on the context.
-	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
+	blockHeader.ProposerAddress = FirstBlockProposer(app, ctx)
 	ctx = ctx.WithBlockHeader(blockHeader)
 
 	return ctx
@@ -105,14 +103,6 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 		sudoGen.Sudoers = DefaultSudoers()
 		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGen)
 	}
-}
-
-// NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
-// block time set to time zero.
-func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestAppAndContext()
-	ctx := NewContext(app).WithBlockTime(startTime)
-	return app, ctx
 }
 
 // NewNibiruTestApp initializes a chain with the given genesis state to
