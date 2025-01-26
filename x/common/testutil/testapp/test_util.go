@@ -42,7 +42,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 
 	balances = append(balances, banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, math.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, math.NewIntFromUint64(1e14))),
 	})
 
 	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
