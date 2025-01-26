@@ -15,13 +15,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
-// GenesisStateWithSingleValidator initializes GenesisState with a single validator and genesis accounts
+// genesisStateWithSingleValidator initializes GenesisState with a single validator and genesis accounts
 // that also act as delegators.
-func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.GenesisState) (nibiruapp.GenesisState, error) {
+func genesisStateWithSingleValidator(codec codec.Codec, genesisState app.GenesisState) (app.GenesisState, error) {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	if err != nil {
@@ -55,10 +55,11 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 
 func genesisStateWithValSet(
 	cdc codec.Codec,
-	genesisState nibiruapp.GenesisState,
-	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
+	genesisState app.GenesisState,
+	valSet *tmtypes.ValidatorSet,
+	genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
-) (nibiruapp.GenesisState, error) {
+) (app.GenesisState, error) {
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenesis)
@@ -91,7 +92,9 @@ func genesisStateWithValSet(
 			MinSelfDelegation: math.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
+
+		delegation := stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec())
+		delegations = append(delegations, delegation)
 	}
 	// set validators and delegations
 	stakingParams := stakingtypes.DefaultParams()

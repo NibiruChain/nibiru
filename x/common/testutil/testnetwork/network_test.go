@@ -31,15 +31,13 @@ type TestSuite struct {
 	suite.Suite
 
 	network *testnetwork.Network
-	cfg     *testnetwork.Config
 }
 
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	encConfig := app.MakeEncodingConfig()
-	cfg := new(testnetwork.Config)
-	*cfg = testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
+	cfg := testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
 	network, err := testnetwork.New(
 		s.T(),
 		s.T().TempDir(),
@@ -49,7 +47,6 @@ func (s *TestSuite) SetupSuite() {
 	s.network = network
 
 	cfg.AbsorbListenAddresses(network.Validators[0])
-	s.cfg = cfg
 
 	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)

@@ -139,7 +139,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		baseAppOptions...,
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encodingConfig.Codec, gen)
+	gen, err := genesisStateWithSingleValidator(encodingConfig.Codec, gen)
 	if err != nil {
 		panic(err)
 	}

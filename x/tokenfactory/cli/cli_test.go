@@ -25,7 +25,6 @@ var (
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testnetwork.Config
 	network *testnetwork.Network
 	val     *testnetwork.Validator
 }
@@ -50,10 +49,9 @@ func (s *TestSuite) SetupSuite() {
 	genState := genesis.NewTestGenesisState(encodingConfig)
 	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
-	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), *cfg)
 	s.NoError(err)
 
-	s.cfg = cfg
 	s.network = network
 	s.val = network.Validators[0]
 	s.NoError(s.network.WaitForNextBlock())

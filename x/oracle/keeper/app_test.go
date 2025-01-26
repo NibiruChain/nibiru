@@ -25,7 +25,6 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testnetwork.Config
 	network *testnetwork.Network
 }
 
@@ -38,9 +37,9 @@ func (s *TestSuite) SetupTest() {
 	homeDir := s.T().TempDir()
 
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
-	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
-	s.cfg.NumValidators = 4
-	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
+	cfg := testnetwork.BuildNetworkConfig(genesisState)
+	cfg.NumValidators = 4
+	cfg.GenesisState[types.ModuleName] = cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()
 		gs.Params.Whitelist = []asset.Pair{
 			"nibi:usdc",
@@ -53,7 +52,7 @@ func (s *TestSuite) SetupTest() {
 	network, err := testnetwork.New(
 		s.T(),
 		homeDir,
-		s.cfg,
+		*cfg,
 	)
 	s.Require().NoError(err)
 	s.network = network

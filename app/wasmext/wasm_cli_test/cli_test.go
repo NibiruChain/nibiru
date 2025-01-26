@@ -36,7 +36,6 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testnetwork.Config
 	network *testnetwork.Network
 }
 
@@ -46,8 +45,8 @@ func (s *TestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
-	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
-	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
+	cfg := testnetwork.BuildNetworkConfig(genesisState)
+	network, err := testnetwork.New(s.T(), s.T().TempDir(), *cfg)
 	s.Require().NoError(err)
 
 	s.network = network

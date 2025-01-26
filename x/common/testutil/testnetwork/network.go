@@ -93,11 +93,11 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 }
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
-func BuildNetworkConfig(appGenesis app.GenesisState) Config {
+func BuildNetworkConfig(appGenesis app.GenesisState) *Config {
 	encCfg := app.MakeEncodingConfig()
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
-	return Config{
+	return &Config{
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		AppConstructor:    NewAppConstructor(encCfg, chainID),

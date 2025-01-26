@@ -24,8 +24,7 @@ func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	EnsureNibiruPrefix()
 	encConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encConfig)
-	cliCfg := testnetwork.BuildNetworkConfig(genState)
-	cfg := &cliCfg
+	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
 
 	network, err := testnetwork.New(

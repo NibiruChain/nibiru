@@ -57,7 +57,7 @@ var (
 
 type BackendSuite struct {
 	suite.Suite
-	cfg                 testnetwork.Config
+
 	network             *testnetwork.Network
 	node                *testnetwork.Validator
 	fundedAccPrivateKey *ecdsa.PrivateKey
@@ -78,8 +78,8 @@ func (s *BackendSuite) SetupSuite() {
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	homeDir := s.T().TempDir()
-	s.cfg = testnetwork.BuildNetworkConfig(genState)
-	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
+	cfg := testnetwork.BuildNetworkConfig(genState)
+	network, err := testnetwork.New(s.T(), homeDir, *cfg)
 	s.Require().NoError(err)
 	s.network = network
 	s.node = network.Validators[0]

@@ -84,7 +84,7 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
-	cfg     testnetwork.Config
+
 	network *testnetwork.Network
 	root    Account
 }
@@ -117,8 +117,8 @@ func (s *TestSuite) SetupSuite() {
 		passphrase: "secure-password",
 	}
 	homeDir := s.T().TempDir()
-	s.cfg = testnetwork.BuildNetworkConfig(genState)
-	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
+	cfg := testnetwork.BuildNetworkConfig(genState)
+	network, err := testnetwork.New(s.T(), homeDir, *cfg)
 	s.Require().NoError(err)
 
 	s.network = network
