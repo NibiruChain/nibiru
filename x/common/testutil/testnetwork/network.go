@@ -12,42 +12,31 @@ import (
 	"sync"
 	"time"
 
-	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-
-	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
-
-// package-wide network lock to only allow one test network at a time
-var lock = new(sync.Mutex)
 
 // AppConstructor defines a function which accepts a network configuration and
 // creates an ABCI Application to provide to Tendermint.
@@ -92,40 +81,6 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 	}
 }
 
-// BuildNetworkConfig returns a configuration for a local in-testing network
-func BuildNetworkConfig(appGenesis app.GenesisState) *Config {
-	encCfg := app.MakeEncodingConfig()
-
-	chainID := "chain-" + tmrand.NewRand().Str(6)
-	return &Config{
-		AccountRetriever:  authtypes.AccountRetriever{},
-		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		AppConstructor:    NewAppConstructor(encCfg, chainID),
-		BondDenom:         denoms.NIBI,
-		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		ChainID:           chainID,
-		CleanupDir:        true,
-		Codec:             encCfg.Codec,
-		EnableTMLogging:   false, // super noisy
-		GenesisState:      appGenesis,
-		InterfaceRegistry: encCfg.InterfaceRegistry,
-		KeyringOptions:    []keyring.Option{},
-		LegacyAmino:       encCfg.Amino,
-		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
-		NumValidators:     1,
-		PruningStrategy:   types.PruningOptionNothing,
-		SigningAlgo:       string(hd.Secp256k1Type),
-		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-		),
-		TimeoutCommit: time.Second / 2,
-		TxConfig:      encCfg.TxConfig,
-	}
-}
-
 /*
 New creates a new Network for integration tests.
 
@@ -146,10 +101,6 @@ Example:
 	s.Require().NoError(err)
 */
 func New(logger Logger, baseDir string, cfg Config) (network *Network, err error) {
-	// only one caller/test can create and use a network at a time
-	logger.Log("acquiring test network lock")
-	lock.Lock()
-
 	// This is a `defer` pattern to add behavior that runs in the case that the error is
 	// non-nil, creating a concise way to add extra information.
 	defer func() {
@@ -585,11 +536,6 @@ func (n *Network) WaitForDuration(duration time.Duration) error {
 // test networks. This method must be called when a test is finished, typically
 // in a defer.
 func (n *Network) Cleanup() {
-	defer func() {
-		lock.Unlock()
-		n.Logger.Log("released test network lock")
-	}()
-
 	n.Logger.Log("cleaning up test network...")
 
 	// We use a wait group here to ensure that all services are stopped before

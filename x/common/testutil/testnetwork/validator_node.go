@@ -8,18 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stretchr/testify/suite"
-
-	appserver "github.com/NibiruChain/nibiru/v2/app/server"
-
-	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-	"github.com/NibiruChain/nibiru/v2/eth"
-	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
-
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"
 	cmtcore "github.com/cometbft/cometbft/rpc/core/types"
@@ -28,11 +16,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverapi "github.com/cosmos/cosmos-sdk/server/api"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	geth "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	geth "github.com/ethereum/go-ethereum"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
+	appserver "github.com/NibiruChain/nibiru/v2/app/server"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 )
 

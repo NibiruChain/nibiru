@@ -2,17 +2,24 @@ package testnetwork
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	tmconfig "github.com/cometbft/cometbft/config"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/NibiruChain/nibiru/v2/app"
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 )
 
 // Config: Defines the parameters needed to start a local test [Network].
@@ -61,4 +68,38 @@ func (cfg *Config) AbsorbTmConfig(tmCfg *tmconfig.Config) {
 func (cfg *Config) AbsorbListenAddresses(val *Validator) {
 	cfg.AbsorbServerConfig(val.AppConfig)
 	cfg.AbsorbTmConfig(val.Ctx.Config)
+}
+
+// BuildNetworkConfig returns a configuration for a local in-testing network
+func BuildNetworkConfig(appGenesis app.GenesisState) *Config {
+	encCfg := app.MakeEncodingConfig()
+
+	chainID := "chain-" + tmrand.NewRand().Str(6)
+	return &Config{
+		AccountRetriever:  authtypes.AccountRetriever{},
+		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		AppConstructor:    NewAppConstructor(encCfg, chainID),
+		BondDenom:         denoms.NIBI,
+		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		ChainID:           chainID,
+		CleanupDir:        true,
+		Codec:             encCfg.Codec,
+		EnableTMLogging:   false, // super noisy
+		GenesisState:      appGenesis,
+		InterfaceRegistry: encCfg.InterfaceRegistry,
+		KeyringOptions:    []keyring.Option{},
+		LegacyAmino:       encCfg.Amino,
+		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
+		NumValidators:     1,
+		PruningStrategy:   types.PruningOptionNothing,
+		SigningAlgo:       string(hd.Secp256k1Type),
+		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		StartingTokens: sdk.NewCoins(
+			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+		),
+		TimeoutCommit: time.Second / 2,
+		TxConfig:      encCfg.TxConfig,
+	}
 }
