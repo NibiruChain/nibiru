@@ -37,7 +37,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/codec"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -66,7 +65,7 @@ type StoreKeysPrefixes struct {
 // registers interfaces and types that are expected by default in the Cosmos-SDK
 // even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
 // module.
-func makeEncodingConfig() codec.EncodingConfig {
+func makeEncodingConfig() app.EncodingConfig {
 	encCfg := app.MakeEncodingConfig()
 	vesting.RegisterInterfaces(encCfg.InterfaceRegistry)
 	return encCfg

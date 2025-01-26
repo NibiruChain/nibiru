@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/codec"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -20,7 +19,7 @@ import (
 type TestDeps struct {
 	App       *app.NibiruApp
 	Ctx       sdk.Context
-	EncCfg    codec.EncodingConfig
+	EncCfg    app.EncodingConfig
 	EvmKeeper *keeper.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 )
@@ -106,7 +106,7 @@ func TestInverse(t *testing.T) {
 }
 
 func TestMarshalJSON(t *testing.T) {
-	cdc := codec.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfig()
 
 	testCases := []struct {
 		name      string
@@ -122,7 +122,7 @@ func TestMarshalJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// MarshalJSON with codec.LegacyAmino
-			jsonBz, err := cdc.Amino.MarshalJSON(tc.input)
+			jsonBz, err := encodingConfig.Amino.MarshalJSON(tc.input)
 			require.NoError(t, err)
 			require.Equal(t, tc.strOutput, string(jsonBz))
 
@@ -133,7 +133,7 @@ func TestMarshalJSON(t *testing.T) {
 
 			// UnmarshalJSON with codec.LegacyAmino
 			newPair := new(asset.Pair)
-			require.NoError(t, cdc.Amino.UnmarshalJSON(jsonBz, newPair))
+			require.NoError(t, encodingConfig.Amino.UnmarshalJSON(jsonBz, newPair))
 			require.Equal(t, tc.input, *newPair)
 
 			// UnmarshalJSON on custom type
