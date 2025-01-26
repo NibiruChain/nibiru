@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -126,8 +125,8 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	encoding := app.MakeEncodingConfig()
-	cryptocodec.RegisterInterfaces(encoding.InterfaceRegistry)
+	encodingConfig := app.MakeEncodingConfig()
+	cryptocodec.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
@@ -135,12 +134,12 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		db,
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
-		encoding,
+		encodingConfig,
 		/*appOpts=*/ sims.EmptyAppOptions{},
 		baseAppOptions...,
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
+	gen, err := GenesisStateWithSingleValidator(encodingConfig.Codec, gen)
 	if err != nil {
 		panic(err)
 	}
@@ -186,26 +185,11 @@ func FundModuleAccount(
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
 }
 
-// FundFeeCollector funds the module account that collects gas fees with some
-// amount of "unibi", the gas token.
-func FundFeeCollector(
-	bk bankkeeper.Keeper, ctx sdk.Context, amount math.Int,
-) error {
-	return FundModuleAccount(
-		bk,
-		ctx,
-		auth.FeeCollectorName,
-		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, amount)),
-	)
-}
-
 // EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
 // the default from the Cosmos-SDK, guaranteeing that tests will work with nibi
 // addresses rather than cosmos ones (for Gaia).
 func EnsureNibiruPrefix() {
-	csdkConfig := sdk.GetConfig()
-	nibiruPrefix := appconst.AccountAddressPrefix
-	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
-		app.SetPrefixes(nibiruPrefix)
+	if sdk.GetConfig().GetBech32AccountAddrPrefix() != appconst.AccountAddressPrefix {
+		app.SetPrefixes(appconst.AccountAddressPrefix)
 	}
 }
