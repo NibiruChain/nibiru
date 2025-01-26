@@ -64,7 +64,15 @@ func (k *Keeper) EthereumTx(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err = k.ApplyEvmMsg(ctx, evmMsg, evmObj, nil /*tracer*/, true /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+	evmResp, err = k.ApplyEvmMsg(
+		ctx,
+		evmMsg,
+		evmObj,
+		nil,  /*tracer*/
+		true, /*commit*/
+		txConfig.TxHash,
+		false, /*fullRefundLeftoverGas*/
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
