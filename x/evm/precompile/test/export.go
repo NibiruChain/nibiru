@@ -49,6 +49,10 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 			InstantiateMsg: []byte(`{}`),
 			Label:          "https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/",
 		},
+		{
+			InstantiateMsg: []byte(`{}`),
+			Label:          "https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/staking/",
+		},
 	}
 
 	for i, wasmCode := range wasmCodes {
@@ -101,6 +105,10 @@ func deployWasmBytecode(
 		// bank_transfer.wasm is a compiled version of:
 		// https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/
 		"x/evm/precompile/test/bank_transfer.wasm",
+
+		// staking.wasm is a compiled version of:
+		// https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/staking/
+		"x/evm/precompile/test/staking.wasm",
 
 		// Add other wasm bytecode here if needed...
 	} {

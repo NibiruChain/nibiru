@@ -55,6 +55,8 @@ var (
 	testDirtyStateAttack3 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
 	testDirtyStateAttack4 []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
+	testDirtyStateAttack5 []byte
 )
 
 var (
@@ -182,6 +184,11 @@ var (
 		Name:      "TestDirtyStateAttack4.sol",
 		EmbedJSON: testDirtyStateAttack4,
 	}
+	// SmartContract_TestDirtyStateAttack5 is a test contract that calls a wasm contract with 5 NIBI
+	SmartContract_TestDirtyStateAttack5 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack5.sol",
+		EmbedJSON: testDirtyStateAttack5,
+	}
 )
 
 func init() {
@@ -205,6 +212,7 @@ func init() {
 	SmartContract_TestDirtyStateAttack2.MustLoad()
 	SmartContract_TestDirtyStateAttack3.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
+	SmartContract_TestDirtyStateAttack5.MustLoad()
 }
 
 type CompiledEvmContract struct {

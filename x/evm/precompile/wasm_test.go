@@ -6,7 +6,12 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/math"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -17,9 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 // rough gas limits for wasm execution - used in tests only
@@ -666,5 +668,105 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 
 		balanceTestContract := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
 		s.Require().Equal(balanceTestContract.Amount.BigInt(), big.NewInt(9e6))
+	})
+}
+
+// TestDirtyStateAttack5
+//  1. Deploy a simple wasm contract that stakes NIBI
+//  2. Calls the test contract
+//     a. call the wasm precompile which calls the wasm contract that stakes 5 NIBI
+//
+// INITIAL STATE:
+// - Test contract funds: 10 NIBI
+// CONTRACT CALL:
+// - Sends 5 NIBI to the wasm contract
+// - The wasm contract stakes 5 NIBI
+// EXPECTED:
+// - Test contract funds: 5 NIBI
+// - Staked NIBI from wasm contract: 5 NIBI
+// - Wasm contract: 0 NIBI
+func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
+	deps := evmtest.NewTestDeps()
+
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContract := wasmContracts[3] // staking.wasm
+
+	s.T().Log("Deploy Test Contract")
+	deployResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_TestDirtyStateAttack5,
+	)
+	s.Require().NoError(err)
+	testContractAddr := deployResp.ContractAddr
+
+	s.Run("Mint 10 NIBI to test contract", func() {
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			eth.EthAddrToNibiruAddr(testContractAddr),
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+		))
+	})
+
+	validator := evmtest.NewEthPrivAcc()
+	s.Run("create validator", func() {
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			validator.NibiruAddr,
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+		))
+
+		createValMsg, err := stakingtypes.NewMsgCreateValidator(
+			sdk.ValAddress(validator.NibiruAddr),
+			validator.PrivKey.PubKey(),
+			sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			stakingtypes.NewDescription("validator0", "", "", "", ""),
+			stakingtypes.NewCommissionRates(sdk.NewDec(1), sdk.NewDec(1), sdk.NewDec(1)),
+			math.OneInt(),
+		)
+		s.Require().NoError(err)
+
+		stakingMsgServer := stakingkeeper.NewMsgServerImpl(deps.App.StakingKeeper)
+		resp, err := stakingMsgServer.CreateValidator(deps.Ctx, createValMsg)
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+	})
+
+	s.Run("call test contract", func() {
+		msgArgsBz := []byte(fmt.Sprintf(`{"run": {"validator": "%s"}}`, sdk.ValAddress(validator.NibiruAddr).String()))
+		contractInput, err := embeds.SmartContract_TestDirtyStateAttack5.ABI.Pack(
+			"attack",
+			wasmContract.String(),
+			msgArgsBz,
+		)
+		s.Require().NoError(err)
+
+		evmObj, _ := deps.NewEVM()
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&testContractAddr,
+			true,
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+		s.Require().NoError(err)
+
+		testContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
+		s.Require().Equal(testContractBalance.Amount.BigInt(), big.NewInt(5e6))
+
+		wasmContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, wasmContract, evm.EVMBankDenom)
+		s.Require().Equal(wasmContractBalance.Amount.BigInt(), big.NewInt(0))
+
+		delegations := deps.App.StakingKeeper.GetAllDelegatorDelegations(deps.Ctx, wasmContract)
+		s.Require().Equal(len(delegations), 1)
+		s.Require().Equal(sdk.ValAddress(validator.NibiruAddr).String(), delegations[0].ValidatorAddress)
+
+		// after converting the wasm contract address to an eth address, check the balances
+		wasmContractEthAddr := eth.NibiruAddrToEthAddr(wasmContract)
+		balance := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(wasmContractEthAddr), evm.EVMBankDenom)
+		s.Require().Equal(big.NewInt(0), balance.Amount.BigInt())
 	})
 }

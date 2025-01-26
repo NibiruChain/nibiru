@@ -89,6 +89,38 @@ func (bk NibiruBankKeeper) UndelegateCoins(
 	)
 }
 
+func (bk NibiruBankKeeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(amt) {
+				bk.SyncStateDBWithAccount(ctx, senderAddr)
+				moduleBech32Addr := auth.NewModuleAddress(recipientModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+			}
+		},
+	)
+}
+
+func (bk NibiruBankKeeper) UndelegateCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.UndelegateCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, amt)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(amt) {
+				moduleBech32Addr := auth.NewModuleAddress(senderModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+				bk.SyncStateDBWithAccount(ctx, recipientAddr)
+			}
+		},
+	)
+}
+
 func (bk NibiruBankKeeper) MintCoins(
 	ctx sdk.Context,
 	moduleName string,
