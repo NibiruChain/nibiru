@@ -36,19 +36,19 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	EnsureNibiruPrefix()
 
 	// Set up base app
-	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Codec)
-	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+	encodingConfig := app.MakeEncodingConfig()
+	appGenesis := app.NewDefaultGenesisState(encodingConfig.Codec)
 
 	// Set happy genesis: epochs
-	appGenesis[epochstypes.ModuleName] = encoding.Codec.MustMarshalJSON(
-		genModEpochs,
+	epochGenesis := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+	appGenesis[epochstypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(
+		epochGenesis,
 	)
 
 	// Set happy genesis: sudo
 	sudoGenesis := new(sudotypes.GenesisState)
 	sudoGenesis.Sudoers = DefaultSudoers()
-	appGenesis[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
+	appGenesis[sudotypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
@@ -78,10 +78,9 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 
 // DefaultSudoers: State for the x/sudo module for the default test app.
 func DefaultSudoers() sudotypes.Sudoers {
-	addr := DefaultSudoRoot().String()
 	return sudotypes.Sudoers{
-		Root:      addr,
-		Contracts: []string{addr},
+		Root:      testutil.ADDR_SUDO_ROOT,
+		Contracts: []string{testutil.ADDR_SUDO_ROOT},
 	}
 }
 
@@ -92,10 +91,8 @@ func DefaultSudoRoot() sdk.AccAddress {
 func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
-	maxQueryCount := uint32(10)
-	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
-	valAddrBz := valopers[0].GetOperator().Bytes()
-	return sdk.ConsAddress(valAddrBz)
+	validators := chain.StakingKeeper.GetValidators(ctx, 1)
+	return sdk.ConsAddress(validators[0].GetOperator().Bytes())
 }
 
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
