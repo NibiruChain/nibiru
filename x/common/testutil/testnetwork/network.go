@@ -38,6 +38,9 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
+// package-wide network lock to only allow one test network at a time
+var lock = new(sync.Mutex)
+
 // AppConstructor defines a function which accepts a network configuration and
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
@@ -101,6 +104,10 @@ Example:
 	s.Require().NoError(err)
 */
 func New(logger Logger, baseDir string, cfg Config) (network *Network, err error) {
+	// only one caller/test can create and use a network at a time
+	logger.Log("acquiring test network lock")
+	lock.Lock()
+
 	// This is a `defer` pattern to add behavior that runs in the case that the error is
 	// non-nil, creating a concise way to add extra information.
 	defer func() {
@@ -537,6 +544,10 @@ func (n *Network) WaitForDuration(duration time.Duration) error {
 // in a defer.
 func (n *Network) Cleanup() {
 	n.Logger.Log("cleaning up test network...")
+	defer func() {
+		lock.Unlock()
+		n.Logger.Log("released test network lock")
+	}()
 
 	// We use a wait group here to ensure that all services are stopped before
 	// cleaning up.
