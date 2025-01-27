@@ -75,11 +75,18 @@ JSON encoding for the `EIP55Addr` struct was not following the Go conventions an
 needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
+- [#2159](https://github.com/NibiruChain/nibiru/pull/2159) - chore(evm): Augment the Wasm msg handler so that wasm contracts cannot send MsgEthereumTx
 - [#2160](https://github.com/NibiruChain/nibiru/pull/2160) - fix(evm-precompile): use bank.MsgServer Send in precompile IFunToken.bankMsgSend
+- [#2161](https://github.com/NibiruChain/nibiru/pull/2161) - fix(evm): added tx logs events to the funtoken related txs
 - [#2162](https://github.com/NibiruChain/nibiru/pull/2162) - test(testutil): try retrying for 'panic: pebbledb: closed'
 - [#2167](https://github.com/NibiruChain/nibiru/pull/2167) - refactor(evm): removed blockGasUsed transient variable
 - [#2168](https://github.com/NibiruChain/nibiru/pull/2168) - chore(evm-solidity): Move unrelated docs, gen-embeds, and add Solidity docs
 - [#2165](https://github.com/NibiruChain/nibiru/pull/2165) - fix(evm): use Singleton StateDB pattern for EVM txs
+- [#2169](https://github.com/NibiruChain/nibiru/pull/2169) - fix(evm): Better handling erc20 metadata
+- [#2170](https://github.com/NibiruChain/nibiru/pull/2170) - chore: Remove redundant allowUnprotectedTxs
+- [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
+- [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
+- [#2177](https://github.com/NibiruChain/nibiru/pull/2177) - fix(cmd): Continue from #2127 and unwire vesting flags and logic from genaccounts.go
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
@@ -288,7 +295,7 @@ preparation for a second audit starting in November 2024.
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
-- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
+- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.33.0 ([#1849](https://github.com/NibiruChain/nibiru/pull/1849), [#2175](https://github.com/NibiruChain/nibiru/pull/2175))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 - Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
@@ -300,6 +307,7 @@ preparation for a second audit starting in November 2024.
 - Bump `github.com/CosmWasm/wasmvm` from 1.5.0 to 1.5.5 ([#2047](https://github.com/NibiruChain/nibiru/pull/2047))
 - Bump `docker/build-push-action` from 5 to 6 ([#1924](https://github.com/NibiruChain/nibiru/pull/1924))
 - Bump `codecov/codecov-action` from 4 to 5 ([#2112](https://github.com/NibiruChain/nibiru/pull/2112))
+- Bump `undici` from 5.28.4 to 5.28.5 ([#2174](https://github.com/NibiruChain/nibiru/pull/2174))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 

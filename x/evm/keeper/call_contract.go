@@ -84,14 +84,11 @@ func (k Keeper) CallContractWithInput(
 	// Success, update block gas used and bloom filter
 	if commit {
 		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-		// TODO: remove after migrating logs
-		//err = k.EmitLogEvents(ctx, evmResp)
-		//if err != nil {
-		//	return nil, nil, errors.Wrap(err, "error emitting tx logs")
-		//}
 
-		// blockTxIdx := uint64(txConfig.TxIndex) + 1
-		// k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+		err = k.EmitLogEvents(ctx, evmResp)
+		if err != nil {
+			return nil, errors.Wrap(err, "error emitting tx logs")
+		}
 	}
 	return evmResp, nil
 }
