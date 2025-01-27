@@ -73,6 +73,7 @@ func (k *Keeper) EthereumTx(
 		txConfig.TxHash,
 		false, /*fullRefundLeftoverGas*/
 	)
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
 	if err != nil {
 		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
@@ -89,7 +90,6 @@ func (k *Keeper) EthereumTx(
 	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
 		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
 	}
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
 	if err != nil {
@@ -573,7 +573,6 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	if err != nil {
 		return nil, err
 	}
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "mint erc20 tokens")
 
 	if evmResp.Failed() {
 		return nil,

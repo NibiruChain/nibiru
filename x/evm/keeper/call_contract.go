@@ -63,9 +63,9 @@ func (k Keeper) CallContractWithInput(
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash, true,
 	)
+	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
 	if err != nil {
-		err = errors.Wrap(err, "failed to apply ethereum core message")
-		return
+		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
 
 	if evmResp.Failed() {
