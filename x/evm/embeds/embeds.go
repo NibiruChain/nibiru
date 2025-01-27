@@ -47,12 +47,6 @@ var (
 	testMetadataBytes32 []byte
 	//go:embed artifacts/contracts/TestPrecompileSendToBankThenERC20Transfer.sol/TestPrecompileSendToBankThenERC20Transfer.json
 	testPrecompileSendToBankThenERC20Transfer []byte
-	//go:embed artifacts/contracts/TestDirtyStateAttack1.sol/TestDirtyStateAttack1.json
-	testDirtyStateAttack1 []byte
-	//go:embed artifacts/contracts/TestDirtyStateAttack2.sol/TestDirtyStateAttack2.json
-	testDirtyStateAttack2 []byte
-	//go:embed artifacts/contracts/TestDirtyStateAttack3.sol/TestDirtyStateAttack3.json
-	testDirtyStateAttack3 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
 	testDirtyStateAttack4 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
@@ -164,21 +158,6 @@ var (
 		Name:      "TestPrecompileSendToBankThenERC20Transfer.sol",
 		EmbedJSON: testPrecompileSendToBankThenERC20Transfer,
 	}
-	// SmartContract_TestDirtyStateAttack1 is a test contract that composes manual send and funtoken sendToBank
-	SmartContract_TestDirtyStateAttack1 = CompiledEvmContract{
-		Name:      "TestDirtyStateAttack1.sol",
-		EmbedJSON: testDirtyStateAttack1,
-	}
-	// SmartContract_TestDirtyStateAttack2 is a test contract that composes erc20 transfer and funtoken sendToBank
-	SmartContract_TestDirtyStateAttack2 = CompiledEvmContract{
-		Name:      "TestDirtyStateAttack2.sol",
-		EmbedJSON: testDirtyStateAttack2,
-	}
-	// SmartContract_TestDirtyStateAttack3 is a test contract that composes manual send and funtoken sendToBank with a reversion
-	SmartContract_TestDirtyStateAttack3 = CompiledEvmContract{
-		Name:      "TestDirtyStateAttack3.sol",
-		EmbedJSON: testDirtyStateAttack3,
-	}
 	// SmartContract_TestDirtyStateAttack4 is a test contract that composes manual send and funtoken sendToBank with a reversion
 	SmartContract_TestDirtyStateAttack4 = CompiledEvmContract{
 		Name:      "TestDirtyStateAttack4.sol",
@@ -208,9 +187,6 @@ func init() {
 	SmartContract_TestRandom.MustLoad()
 	SmartContract_TestBytes32Metadata.MustLoad()
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
-	SmartContract_TestDirtyStateAttack1.MustLoad()
-	SmartContract_TestDirtyStateAttack2.MustLoad()
-	SmartContract_TestDirtyStateAttack3.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
 }
