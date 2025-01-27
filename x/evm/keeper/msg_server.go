@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,7 +72,9 @@ func (k *Keeper) EthereumTx(
 		txConfig.TxHash,
 		false, /*fullRefundLeftoverGas*/
 	)
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
+	if evmResp != nil {
+		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error applying ethereum core message")
 	}
@@ -261,21 +262,20 @@ func (k *Keeper) ApplyEvmMsg(
 	txHash gethcommon.Hash,
 	fullRefundLeftoverGas bool,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
-	leftoverGas := msg.Gas()
+	gasRemaining := msg.Gas()
 
 	// Allow the tracer captures the tx level events, mainly the gas consumption.
 	vmCfg := evmObj.Config
 	if vmCfg.Debug {
-		vmCfg.Tracer.CaptureTxStart(leftoverGas)
+		vmCfg.Tracer.CaptureTxStart(gasRemaining)
 		defer func() {
-			vmCfg.Tracer.CaptureTxEnd(leftoverGas)
+			vmCfg.Tracer.CaptureTxEnd(gasRemaining)
 		}()
 	}
 
-	sender := vm.AccountRef(msg.From())
 	contractCreation := msg.To() == nil
 
-	intrinsicGas, err := core.IntrinsicGas(
+	intrinsicGasCost, err := core.IntrinsicGas(
 		msg.Data(), msg.AccessList(),
 		contractCreation, true, true,
 	)
@@ -290,15 +290,15 @@ func (k *Keeper) ApplyEvmMsg(
 	//
 	// Should check again even if it is checked on Ante Handler, because eth_call
 	// don't go through Ante Handler.
-	if leftoverGas < intrinsicGas {
+	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
 		return nil, errors.Wrapf(
 			core.ErrIntrinsicGas,
 			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
-			leftoverGas, intrinsicGas,
+			gasRemaining, intrinsicGasCost,
 		)
 	}
-	leftoverGas = leftoverGas - intrinsicGas
+	gasRemaining -= intrinsicGasCost
 
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
@@ -318,28 +318,28 @@ func (k *Keeper) ApplyEvmMsg(
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.
 	// - increase sender's nonce by one no matter the result.
-	evmObj.StateDB.SetNonce(sender.Address(), msg.Nonce())
+	evmObj.StateDB.SetNonce(msg.From(), msg.Nonce())
 
-	var ret []byte
+	var returnBz []byte
 	var vmErr error
 	if contractCreation {
-		ret, _, leftoverGas, vmErr = evmObj.Create(
-			sender,
+		returnBz, _, gasRemaining, vmErr = evmObj.Create(
+			vm.AccountRef(msg.From()),
 			msg.Data(),
-			leftoverGas,
+			gasRemaining,
 			msgWei,
 		)
 	} else {
-		ret, leftoverGas, vmErr = evmObj.Call(
-			sender,
+		returnBz, gasRemaining, vmErr = evmObj.Call(
+			vm.AccountRef(msg.From()),
 			*msg.To(),
 			msg.Data(),
-			leftoverGas,
+			gasRemaining,
 			msgWei,
 		)
 	}
 	// Increment nonce after processing the message
-	evmObj.StateDB.SetNonce(sender.Address(), msg.Nonce()+1)
+	evmObj.StateDB.SetNonce(msg.From(), msg.Nonce()+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
@@ -352,10 +352,6 @@ func (k *Keeper) ApplyEvmMsg(
 		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
 			return nil, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
-	}
-	// Rare case of uint64 gas overflow
-	if msg.Gas() < leftoverGas {
-		return nil, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
 	}
 
 	// TODO: UD-DEBUG: Clarify text below.
@@ -373,31 +369,25 @@ func (k *Keeper) ApplyEvmMsg(
 	if fullRefundLeftoverGas {
 		refundQuotient = 1 // 100% refund
 	}
-	temporaryGasUsed := msg.Gas() - leftoverGas
-	refund := GasToRefund(evmObj.StateDB.GetRefund(), temporaryGasUsed, refundQuotient)
 
-	// update leftoverGas and temporaryGasUsed with refund amount
-	leftoverGas += refund
-	temporaryGasUsed -= refund
-	if msg.Gas() < leftoverGas {
-		return nil, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), leftoverGas)
-	}
+	gasUsed := msg.Gas() - gasRemaining
+	refund := GasToRefund(evmObj.StateDB.GetRefund(), gasUsed, refundQuotient)
 
-	// Min gas used is a % of gasLimit
-	gasUsed := math.LegacyNewDec(int64(temporaryGasUsed)).TruncateInt().Uint64()
+	gasRemaining += refund
+	gasUsed -= refund
 
-	// This resulting "leftoverGas" is used by the tracer. This happens as a
-	// result of the defer statement near the beginning of the function with
-	// "vm.Tracer".
-	leftoverGas = msg.Gas() - gasUsed
-
-	return &evm.MsgEthereumTxResponse{
+	evmResp := &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
 		VmError: vmError,
-		Ret:     ret,
+		Ret:     returnBz,
 		Logs:    evm.NewLogsFromEth(evmObj.StateDB.(*statedb.StateDB).Logs()),
 		Hash:    txHash.Hex(),
-	}, nil
+	}
+
+	if gasRemaining > msg.Gas() {
+		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), gasRemaining)
+	}
+	return evmResp, nil
 }
 
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {

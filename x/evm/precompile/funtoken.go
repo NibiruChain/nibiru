@@ -143,8 +143,7 @@ func (p precompileFunToken) sendToBank(
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
-		err = ErrInvalidArgs(err)
-		return
+		return nil, ErrInvalidArgs(err)
 	}
 
 	var evmResponses []*evm.MsgEthereumTxResponse

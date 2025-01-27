@@ -39,7 +39,7 @@ func (k Keeper) CallContractWithInput(
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
-	defer HandleOutOfGasPanic(&err, "CallContractError")
+	defer HandleOutOfGasPanic(&err, "CallContractError")()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
@@ -63,7 +63,9 @@ func (k Keeper) CallContractWithInput(
 	evmResp, err = k.ApplyEvmMsg(
 		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash, true,
 	)
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
+	if evmResp != nil {
+		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to apply ethereum core message")
 	}
