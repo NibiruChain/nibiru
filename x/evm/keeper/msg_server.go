@@ -347,13 +347,6 @@ func (k *Keeper) ApplyEvmMsg(
 		vmError = vmErr.Error()
 	}
 
-	// The dirty states in `StateDB` is either committed or discarded after return
-	if commit {
-		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
-			return nil, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
-		}
-	}
-
 	// TODO: UD-DEBUG: Clarify text below.
 	// GAS REFUND
 	// If msg.Gas() > gasUsed, we need to refund extra gas.
@@ -387,6 +380,14 @@ func (k *Keeper) ApplyEvmMsg(
 	if gasRemaining > msg.Gas() {
 		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), gasRemaining)
 	}
+
+	// The dirty states in `StateDB` is either committed or discarded after return
+	if commit {
+		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
+			return evmResp, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+		}
+	}
+
 	return evmResp, nil
 }
 
