@@ -347,27 +347,11 @@ func (k *Keeper) ApplyEvmMsg(
 		vmError = vmErr.Error()
 	}
 
-	// TODO: UD-DEBUG: Clarify text below.
-	// GAS REFUND
-	// If msg.Gas() > gasUsed, we need to refund extra gas.
-	// leftoverGas = amount of extra (not used) gas.
-	// If the msg comes from user, we apply refundQuotient capping the refund to 20% of used gas
-	// If msg is internal (funtoken), we refund 100%
-	//
-	// EIP-3529: refunds are capped to gasUsed / 5
-	// We evaluate "fullRefundLeftoverGas" and use only the gas consumed (not the
-	// gas limit) if the `ApplyEvmMsg` call originated from a state transition
-	// where the chain set the gas limit and not an end-user.
-	refundQuotient := params.RefundQuotientEIP3529
-	if fullRefundLeftoverGas {
-		refundQuotient = 1 // 100% refund
-	}
-
+	// process gas refunds (we refund a portion of the unused gas)
 	gasUsed := msg.Gas() - gasRemaining
-	refund := GasToRefund(evmObj.StateDB.GetRefund(), gasUsed, refundQuotient)
-
-	gasRemaining += refund
-	gasUsed -= refund
+	refundAmount := GasToRefund(evmObj.StateDB.GetRefund(), gasUsed, fullRefundLeftoverGas)
+	gasRemaining += refundAmount
+	gasUsed -= refundAmount
 
 	evmResp := &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
@@ -378,6 +362,7 @@ func (k *Keeper) ApplyEvmMsg(
 	}
 
 	if gasRemaining > msg.Gas() {
+		evmResp.GasUsed = msg.Gas() // cap the gas used to the original gas limit
 		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), gasRemaining)
 	}
 

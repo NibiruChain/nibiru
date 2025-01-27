@@ -75,15 +75,29 @@ func (k *Keeper) RefundGas(
 }
 
 // GasToRefund calculates the amount of gas the state machine should refund to
-// the sender. It is capped by the refund quotient value. Note that passing a
-// jrefundQuotient of 0 will cause problems.
-func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
-	// Apply refund counter
-	refund := gasConsumed / refundQuotient
-	if refund > availableRefund {
-		return availableRefund
+// the sender.
+//
+// GAS REFUND
+// If msg.Gas() > gasUsed, we need to refund extra gas.
+// leftoverGas = amount of extra (not used) gas.
+// If the msg comes from user, we apply refundQuotient capping the refund to 20% of used gas
+// If msg is internal (funtoken), we refund 100%
+//
+// EIP-3529: refunds are capped to gasUsed / 5
+// We evaluate "fullRefundLeftoverGas" and use only the gas consumed (not the
+// gas limit) if the `ApplyEvmMsg` call originated from a state transition
+// where the chain set the gas limit and not an end-user.
+func GasToRefund(availableRefundAmount, gasUsed uint64, fullRefundLeftoverGas bool) uint64 {
+	refundQuotient := params.RefundQuotientEIP3529
+	if fullRefundLeftoverGas {
+		refundQuotient = 1 // 100% refund
 	}
-	return refund
+	// Apply refundAmount counter
+	refundAmount := gasUsed / refundQuotient
+	if refundAmount > availableRefundAmount {
+		return availableRefundAmount
+	}
+	return refundAmount
 }
 
 // CheckSenderBalance validates that the tx cost value is positive and that the
