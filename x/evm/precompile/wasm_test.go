@@ -183,7 +183,7 @@ func (s *WasmSuite) TestQueryRaw() {
 	s.Require().NoError(err)
 
 	evmObj, _ := deps.NewEVM()
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	queryResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
@@ -194,18 +194,18 @@ func (s *WasmSuite) TestQueryRaw() {
 	)
 
 	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
+	s.Require().NotEmpty(queryResp.Ret)
 
-	var queryResp []byte
+	var respBz []byte
 	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
-		&queryResp,
+		&respBz,
 		string(precompile.WasmMethod_queryRaw),
-		ethTxResp.Ret,
+		queryResp.Ret,
 	)
-	s.Require().NoError(err, "ethTxResp: %s", ethTxResp)
+	s.Require().NoError(err, "ethTxResp: %s", queryResp)
 
 	var typedResp test.QueryMsgCountResp
-	s.NoError(json.Unmarshal(queryResp, &typedResp))
+	s.NoError(json.Unmarshal(respBz, &typedResp))
 	s.EqualValues(0, typedResp.Count)
 	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
 }
@@ -223,7 +223,7 @@ func (s *WasmSuite) TestQuerySmart() {
 	s.Require().NoError(err)
 
 	evmObj, _ := deps.NewEVM()
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	queryResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
@@ -234,18 +234,18 @@ func (s *WasmSuite) TestQuerySmart() {
 	)
 
 	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
+	s.Require().NotEmpty(queryResp.Ret)
 
-	var queryResp []byte
+	var respBz []byte
 	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
-		&queryResp,
+		&respBz,
 		string(precompile.WasmMethod_query),
-		ethTxResp.Ret,
+		queryResp.Ret,
 	)
-	s.Require().NoError(err, "ethTxResp: %s", ethTxResp)
+	s.Require().NoError(err, "ethTxResp: %s", queryResp)
 
 	var typedResp test.QueryMsgCountResp
-	s.Require().NoError(json.Unmarshal(queryResp, &typedResp))
+	s.Require().NoError(json.Unmarshal(respBz, &typedResp))
 	s.Require().EqualValues(0, typedResp.Count)
 	s.Require().EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
 }
