@@ -194,7 +194,10 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseOpGasConsumed, "NibiruBankKeeper invariant")
 	}()
 
-	// We keep the same gas meter type but reset the gas used before measuring the base op
+	// We keep the same gas meter type but reset the gas consumed prior to measuring the base op
+	// We need the same gas meter type because we use a custom FixedGasMeter for oracle votes in the AnteHandler
+	// In the defer function, we reset the gas meter again and then add the gasConsumedBefore to baseOpGasConsumed,
+	// so any modifications to the gasMeterBefore after this point will be inconsequential.
 	ctx.GasMeter().RefundGas(gasConsumedBefore, "reset gas meter before measuring base op")
 
 	err := BaseOp(ctx)
