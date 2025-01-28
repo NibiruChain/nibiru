@@ -102,7 +102,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
+	_, err = k.CallContractWithInput(
 		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy,
 	)
 	if err != nil {
@@ -113,8 +113,6 @@ func (k *Keeper) deployERC20ForBankCoin(
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to commit stateDB")
 	}
-
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "deploy erc20 funtoken contract")
 
 	return erc20Addr, nil
 }

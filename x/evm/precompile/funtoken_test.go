@@ -267,13 +267,14 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
 
-	s.T().Log("Fund sender's wallet")
-	s.Require().NoError(testapp.FundAccount(
-		deps.App.BankKeeper,
-		deps.Ctx,
-		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
-	))
+	s.Run("Fund sender's wallet", func() {
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
+		))
+	})
 
 	s.Run("Fund contract with erc20 coins", func() {
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
@@ -297,7 +298,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
@@ -307,6 +308,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmtest.FunTokenGasLimitSendToEvm,
 		)
 		s.Require().NoError(err)
+		s.Require().NotZero(resp.GasUsed)
 	})
 
 	s.Run("Happy: callBankSend with local gas - sufficient gas amount", func() {
@@ -318,7 +320,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
@@ -328,6 +330,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 		)
 		s.Require().NoError(err)
+		s.Require().NotZero(resp.GasUsed)
 	})
 
 	s.Run("Sad: callBankSend with local gas - insufficient gas amount", func() {
@@ -339,7 +342,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
@@ -349,6 +352,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 		)
 		s.Require().ErrorContains(err, "execution reverted")
+		s.Require().NotZero(resp.GasUsed)
 	})
 }
 
