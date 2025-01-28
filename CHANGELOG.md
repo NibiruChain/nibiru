@@ -88,6 +88,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
 - [#2177](https://github.com/NibiruChain/nibiru/pull/2177) - fix(cmd): Continue from #2127 and unwire vesting flags and logic from genaccounts.go
 - [#2176](https://github.com/NibiruChain/nibiru/pull/2176) - tests(evm): add dirty state tests from code4rena audit
+- [#2180](https://github.com/NibiruChain/nibiru/pull/2180) - fix(evm): apply gas consumption across the entire EVM codebase at `CallContractWithInput`
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
