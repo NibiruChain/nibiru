@@ -47,6 +47,10 @@ var (
 	testMetadataBytes32 []byte
 	//go:embed artifacts/contracts/TestPrecompileSendToBankThenERC20Transfer.sol/TestPrecompileSendToBankThenERC20Transfer.json
 	testPrecompileSendToBankThenERC20Transfer []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
+	testDirtyStateAttack4 []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
+	testDirtyStateAttack5 []byte
 )
 
 var (
@@ -118,7 +122,6 @@ var (
 		Name:      "TestERC20TransferThenPrecompileSend.sol",
 		EmbedJSON: testERC20TransferThenPrecompileSendJson,
 	}
-
 	// SmartContract_TestPrecompileSelfCallRevert is a test contract
 	// that creates another instance of itself, calls the precompile method and then force reverts.
 	// It tests a race condition where the state DB commit
@@ -150,11 +153,20 @@ var (
 		Name:      "MKR.sol",
 		EmbedJSON: testMetadataBytes32,
 	}
-
 	// SmartContract_TestPrecompileSendToBankThenERC20Transfer is a test contract that sends to bank then calls ERC20 transfer
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer = CompiledEvmContract{
 		Name:      "TestPrecompileSendToBankThenERC20Transfer.sol",
 		EmbedJSON: testPrecompileSendToBankThenERC20Transfer,
+	}
+	// SmartContract_TestDirtyStateAttack4 is a test contract that composes manual send and funtoken sendToBank with a reversion
+	SmartContract_TestDirtyStateAttack4 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack4.sol",
+		EmbedJSON: testDirtyStateAttack4,
+	}
+	// SmartContract_TestDirtyStateAttack5 is a test contract that calls a wasm contract with 5 NIBI
+	SmartContract_TestDirtyStateAttack5 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack5.sol",
+		EmbedJSON: testDirtyStateAttack5,
 	}
 )
 
@@ -175,6 +187,8 @@ func init() {
 	SmartContract_TestRandom.MustLoad()
 	SmartContract_TestBytes32Metadata.MustLoad()
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
+	SmartContract_TestDirtyStateAttack4.MustLoad()
+	SmartContract_TestDirtyStateAttack5.MustLoad()
 }
 
 type CompiledEvmContract struct {
