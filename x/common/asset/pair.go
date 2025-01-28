@@ -17,7 +17,7 @@ type Pair string
 
 func NewPair(base string, quote string) Pair {
 	// validate as denom
-	ap := fmt.Sprintf("%s%s%s", base, ":", quote)
+	ap := fmt.Sprintf("%s%s%s", base, "@", quote)
 	return Pair(ap)
 }
 
@@ -25,7 +25,7 @@ func NewPair(base string, quote string) Pair {
 // The form, "token0:token1", is expected for 'pair'.
 // Use this function to return an error instead of panicking.
 func TryNewPair(pair string) (Pair, error) {
-	split := strings.Split(pair, ":")
+	split := strings.Split(pair, "@")
 	splitLen := len(split)
 	if splitLen != 2 {
 		if splitLen == 1 {
@@ -72,12 +72,12 @@ func (pair Pair) Inverse() Pair {
 }
 
 func (pair Pair) BaseDenom() string {
-	split := strings.Split(pair.String(), ":")
+	split := strings.Split(pair.String(), "@")
 	return split[0]
 }
 
 func (pair Pair) QuoteDenom() string {
-	split := strings.Split(pair.String(), ":")
+	split := strings.Split(pair.String(), "@")
 	return split[1]
 }
 
@@ -87,7 +87,7 @@ func (pair Pair) Validate() error {
 		return ErrInvalidTokenPair.Wrap("pair is empty")
 	}
 
-	split := strings.Split(pair.String(), ":")
+	split := strings.Split(pair.String(), "@")
 	if len(split) != 2 {
 		return ErrInvalidTokenPair.Wrap(pair.String())
 	}

@@ -128,7 +128,7 @@ type DummyValue struct{}
 // TestPair tests an SortedMap where the key is an asset.Pair.
 func (s *Suite) TestPair() {
 	pairStrs := []string{
-		"abc:xyz", "abc:abc", "aaa:bbb", "xyz:xyz", "bbb:ccc", "xyz:abc",
+		"abc@xyz", "abc@abc", "aaa@bbb", "xyz@xyz", "bbb@ccc", "xyz@abc",
 	}
 	sortedKeyStrs := []string{}
 	sortedKeyStrs = append(sortedKeyStrs, pairStrs...)
