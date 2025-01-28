@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // FindERC20Metadata retrieves the metadata of an ERC20 token.
@@ -25,20 +30,27 @@ import (
 //   - err: An error if metadata retrieval fails.
 func (k Keeper) FindERC20Metadata(
 	ctx sdk.Context,
+	evmObj *vm.EVM,
 	contract gethcommon.Address,
+	abi *gethabi.ABI,
 ) (info *ERC20Metadata, err error) {
+	effectiveAbi := embeds.SmartContract_ERC20Minter.ABI
+
+	if abi != nil {
+		effectiveAbi = abi
+	}
 	// Load name, symbol, decimals
-	name, err := k.LoadERC20Name(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	name, err := k.ERC20().LoadERC20Name(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	symbol, err := k.LoadERC20Symbol(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	symbol, err := k.ERC20().LoadERC20Symbol(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
 
-	decimals, err := k.LoadERC20Decimals(ctx, embeds.SmartContract_ERC20Minter.ABI, contract)
+	decimals, err := k.ERC20().LoadERC20Decimals(ctx, evmObj, effectiveAbi, contract)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +91,8 @@ type (
 	ERC20Uint8 struct{ Value uint8 }
 	ERC20Bool  struct{ Value bool }
 	// ERC20BigInt: Unpacking type for "uint256" from Solidity.
-	ERC20BigInt struct{ Value *big.Int }
+	ERC20BigInt  struct{ Value *big.Int }
+	ERC20Bytes32 struct{ Value [32]byte }
 )
 
 // createFunTokenFromERC20 creates a new FunToken mapping from an existing ERC20 token.
@@ -110,13 +123,35 @@ func (k *Keeper) createFunTokenFromERC20(
 ) (funtoken *evm.FunToken, err error) {
 	// 1 | ERC20 already registered with FunToken?
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20)); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20)
+		return nil, fmt.Errorf("funtoken mapping already created for ERC20 \"%s\"", erc20)
 	}
 
 	// 2 | Get existing ERC20 metadata
-	erc20Info, err := k.FindERC20Metadata(ctx, erc20)
+	// We use dummy values for the tx config and evm config because we aren't in an actual end user transaction, it's just a state query.
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash())))
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
+	evmMsg := gethcore.NewMessage(
+		evm.EVM_MODULE_ADDRESS,
+		&erc20,
+		0,
+		big.NewInt(0),
+		0,
+		big.NewInt(0),
+		big.NewInt(0),
+		big.NewInt(0),
+		[]byte{},
+		gethcore.AccessList{},
+		false,
+	)
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), evm.NewNoOpTracer(), stateDB)
+	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20, nil)
 	if err != nil {
-		return funtoken, err
+		return nil, err
 	}
 
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
@@ -124,10 +159,10 @@ func (k *Keeper) createFunTokenFromERC20(
 	// 3 | Coin already registered with FunToken?
 	_, isFound := k.Bank.GetDenomMetaData(ctx, bankDenom)
 	if isFound {
-		return funtoken, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
+		return nil, fmt.Errorf("bank coin denom already registered with denom \"%s\"", bankDenom)
 	}
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
-		return funtoken, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
+		return nil, fmt.Errorf("funtoken mapping already created for bank denom \"%s\"", bankDenom)
 	}
 
 	// 4 | Set bank coin denom metadata in state
@@ -135,7 +170,7 @@ func (k *Keeper) createFunTokenFromERC20(
 
 	err = bankMetadata.Validate()
 	if err != nil {
-		return funtoken, fmt.Errorf("failed to validate bank metadata: %w", err)
+		return nil, fmt.Errorf("failed to validate bank metadata: %w", err)
 	}
 	k.Bank.SetDenomMetaData(ctx, bankMetadata)
 
@@ -146,6 +181,11 @@ func (k *Keeper) createFunTokenFromERC20(
 		},
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: false,
+	}
+
+	err = stateDB.Commit()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(

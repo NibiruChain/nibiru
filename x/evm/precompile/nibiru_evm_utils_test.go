@@ -3,6 +3,7 @@ package precompile_test
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +23,10 @@ import (
 
 type UtilsSuite struct {
 	suite.Suite
+}
+
+func TestUtilsSuite(t *testing.T) {
+	suite.Run(t, new(UtilsSuite))
 }
 
 func (s *UtilsSuite) TestAttrsToJSON() {

@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "DSMath",
+  "sourceName": "contracts/MKR.sol",
+  "abi": [],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820d191478102eb59e59dbf8bd1168a079984302f4f957092ac877d210db1a13e420029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820d191478102eb59e59dbf8bd1168a079984302f4f957092ac877d210db1a13e420029",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

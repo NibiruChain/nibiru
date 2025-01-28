@@ -32,8 +32,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -110,6 +108,7 @@ import (
 	// Nibiru Custom Modules
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
@@ -467,6 +466,16 @@ func (app *NibiruApp) InitKeepers(
 		panic(err)
 	}
 
+	wmha := wasmext.MsgHandlerArgs{
+		Router:           app.MsgServiceRouter(),
+		Ics4Wrapper:      app.ibcFeeKeeper,
+		ChannelKeeper:    app.ibcKeeper.ChannelKeeper,
+		CapabilityKeeper: app.ScopedWasmKeeper,
+		BankKeeper:       app.BankKeeper,
+		Unpacker:         appCodec,
+		PortSource:       app.ibcTransferKeeper,
+	}
+	app.WasmMsgHandlerArgs = wmha
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		keys[wasmtypes.StoreKey],
@@ -474,18 +483,18 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.ibcFeeKeeper, // ISC4 Wrapper: fee IBC middleware
-		app.ibcKeeper.ChannelKeeper,
+		wmha.Ics4Wrapper, // ISC4 Wrapper: fee IBC middleware
+		wmha.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
-		app.ScopedWasmKeeper,
-		app.ibcTransferKeeper,
-		app.MsgServiceRouter(),
+		wmha.CapabilityKeeper,
+		wmha.PortSource,
+		wmha.Router,
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
 		govModuleAddr,
-		append(GetWasmOpts(*app, appOpts), wasmkeeper.WithWasmEngine(wasmVM))...,
+		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)
 
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
@@ -633,7 +642,6 @@ func (app *NibiruApp) initAppModules(
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -715,7 +723,6 @@ func orderedModuleNames() []string {
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		vestingtypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// Native x/ Modules
@@ -831,7 +838,6 @@ func ModuleBasicManager() module.BasicManager {
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		groupmodule.AppModuleBasic{},
-		vesting.AppModuleBasic{},
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},

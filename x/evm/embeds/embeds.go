@@ -39,6 +39,18 @@ var (
 	testPrecompileSelfCallRevertJson []byte
 	//go:embed artifacts/contracts/TestInfiniteRecursionERC20.sol/TestInfiniteRecursionERC20.json
 	testInfiniteRecursionERC20Json []byte
+	//go:embed artifacts/contracts/TestERC20TransferWithFee.sol/TestERC20TransferWithFee.json
+	testERC20TransferWithFee []byte
+	//go:embed artifacts/contracts/TestRandom.sol/TestRandom.json
+	testRandom []byte
+	//go:embed artifacts/contracts/MKR.sol/DSToken.json
+	testMetadataBytes32 []byte
+	//go:embed artifacts/contracts/TestPrecompileSendToBankThenERC20Transfer.sol/TestPrecompileSendToBankThenERC20Transfer.json
+	testPrecompileSendToBankThenERC20Transfer []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
+	testDirtyStateAttack4 []byte
+	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
+	testDirtyStateAttack5 []byte
 )
 
 var (
@@ -110,7 +122,6 @@ var (
 		Name:      "TestERC20TransferThenPrecompileSend.sol",
 		EmbedJSON: testERC20TransferThenPrecompileSendJson,
 	}
-
 	// SmartContract_TestPrecompileSelfCallRevert is a test contract
 	// that creates another instance of itself, calls the precompile method and then force reverts.
 	// It tests a race condition where the state DB commit
@@ -125,6 +136,37 @@ var (
 	SmartContract_TestInfiniteRecursionERC20 = CompiledEvmContract{
 		Name:      "TestInfiniteRecursionERC20.sol",
 		EmbedJSON: testInfiniteRecursionERC20Json,
+	}
+	// SmartContract_TestERC20TransferWithFee is a test contract
+	// which simulates malicious ERC20 behavior by adding fee to the transfer() function
+	SmartContract_TestERC20TransferWithFee = CompiledEvmContract{
+		Name:      "TestERC20TransferWithFee.sol",
+		EmbedJSON: testERC20TransferWithFee,
+	}
+	// SmartContract_TestRandom is a test contract which tests random function
+	SmartContract_TestRandom = CompiledEvmContract{
+		Name:      "TestRandom.sol",
+		EmbedJSON: testRandom,
+	}
+	// SmartContract_TestBytes32Metadata is a test contract which tests contract that have bytes32 as metadata
+	SmartContract_TestBytes32Metadata = CompiledEvmContract{
+		Name:      "MKR.sol",
+		EmbedJSON: testMetadataBytes32,
+	}
+	// SmartContract_TestPrecompileSendToBankThenERC20Transfer is a test contract that sends to bank then calls ERC20 transfer
+	SmartContract_TestPrecompileSendToBankThenERC20Transfer = CompiledEvmContract{
+		Name:      "TestPrecompileSendToBankThenERC20Transfer.sol",
+		EmbedJSON: testPrecompileSendToBankThenERC20Transfer,
+	}
+	// SmartContract_TestDirtyStateAttack4 is a test contract that composes manual send and funtoken sendToBank with a reversion
+	SmartContract_TestDirtyStateAttack4 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack4.sol",
+		EmbedJSON: testDirtyStateAttack4,
+	}
+	// SmartContract_TestDirtyStateAttack5 is a test contract that calls a wasm contract with 5 NIBI
+	SmartContract_TestDirtyStateAttack5 = CompiledEvmContract{
+		Name:      "TestDirtyStateAttack5.sol",
+		EmbedJSON: testDirtyStateAttack5,
 	}
 )
 
@@ -141,6 +183,12 @@ func init() {
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
 	SmartContract_TestPrecompileSelfCallRevert.MustLoad()
 	SmartContract_TestInfiniteRecursionERC20.MustLoad()
+	SmartContract_TestERC20TransferWithFee.MustLoad()
+	SmartContract_TestRandom.MustLoad()
+	SmartContract_TestBytes32Metadata.MustLoad()
+	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
+	SmartContract_TestDirtyStateAttack4.MustLoad()
+	SmartContract_TestDirtyStateAttack5.MustLoad()
 }
 
 type CompiledEvmContract struct {

@@ -1,20 +1,17 @@
 package keeper
 
 import (
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-var (
-	_ bankkeeper.Keeper     = &NibiruBankKeeper{}
-	_ bankkeeper.SendKeeper = &NibiruBankKeeper{}
-)
+var _ bankkeeper.Keeper = &NibiruBankKeeper{}
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
@@ -27,6 +24,101 @@ func (evmKeeper *Keeper) NewStateDB(
 	stateDB := statedb.New(ctx, evmKeeper, txConfig)
 	evmKeeper.Bank.StateDB = stateDB
 	return stateDB
+}
+
+func (bk NibiruBankKeeper) InputOutputCoins(
+	ctx sdk.Context,
+	input []banktypes.Input,
+	output []banktypes.Output,
+) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.InputOutputCoins(ctx, input, output)
+		},
+		func(ctx sdk.Context) {
+			for _, input := range input {
+				if findEtherBalanceChangeFromCoins(input.Coins) {
+					bk.SyncStateDBWithAccount(ctx, sdk.MustAccAddressFromBech32(input.Address))
+				}
+			}
+			for _, output := range output {
+				if findEtherBalanceChangeFromCoins(output.Coins) {
+					bk.SyncStateDBWithAccount(ctx, sdk.MustAccAddressFromBech32(output.Address))
+				}
+			}
+		},
+	)
+}
+
+func (bk NibiruBankKeeper) DelegateCoins(
+	ctx sdk.Context,
+	delegatorAddr sdk.AccAddress,
+	moduleBech32Addr sdk.AccAddress,
+	coins sdk.Coins,
+) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.DelegateCoins(ctx, delegatorAddr, moduleBech32Addr, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				bk.SyncStateDBWithAccount(ctx, delegatorAddr)
+			}
+		},
+	)
+}
+
+func (bk NibiruBankKeeper) UndelegateCoins(
+	ctx sdk.Context,
+	delegatorAddr sdk.AccAddress,
+	moduleBech32Addr sdk.AccAddress,
+	coins sdk.Coins,
+) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.UndelegateCoins(ctx, delegatorAddr, moduleBech32Addr, coins)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(coins) {
+				bk.SyncStateDBWithAccount(ctx, delegatorAddr)
+			}
+		},
+	)
+}
+
+func (bk NibiruBankKeeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.DelegateCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(amt) {
+				bk.SyncStateDBWithAccount(ctx, senderAddr)
+				moduleBech32Addr := auth.NewModuleAddress(recipientModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+			}
+		},
+	)
+}
+
+func (bk NibiruBankKeeper) UndelegateCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	return bk.ForceGasInvariant(
+		ctx,
+		func(ctx sdk.Context) error {
+			return bk.BaseKeeper.UndelegateCoinsFromModuleToAccount(ctx, senderModule, recipientAddr, amt)
+		},
+		func(ctx sdk.Context) {
+			if findEtherBalanceChangeFromCoins(amt) {
+				moduleBech32Addr := auth.NewModuleAddress(senderModule)
+				bk.SyncStateDBWithAccount(ctx, moduleBech32Addr)
+				bk.SyncStateDBWithAccount(ctx, recipientAddr)
+			}
+		},
+	)
 }
 
 func (bk NibiruBankKeeper) MintCoins(
@@ -108,10 +200,9 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// Note that because the ctx gas meter uses private variables to track gas,
 	// we have to branch off with a new gas meter instance to avoid mutating the
 	// "true" gas meter (called GasMeterBefore here).
-	ctx = ctx.
-		WithGasMeter(sdk.NewGasMeter(gasMeterBefore.Limit())).
-		WithKVGasConfig(zeroCostGasConfig).
-		WithTransientKVGasConfig(zeroCostGasConfig)
+	// We use an infinite gas meter because we consume gas in the deferred function
+	// and gasMeterBefore will panic if we consume too much gas.
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
@@ -121,16 +212,6 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 
 	AfterOp(ctx)
 	return nil
-}
-
-var zeroCostGasConfig store.GasConfig = store.GasConfig{
-	HasCost:          0,
-	DeleteCost:       0,
-	ReadCostFlat:     0,
-	ReadCostPerByte:  0,
-	WriteCostFlat:    0,
-	WriteCostPerByte: 0,
-	IterNextCostFlat: 0,
 }
 
 func (bk NibiruBankKeeper) SendCoins(

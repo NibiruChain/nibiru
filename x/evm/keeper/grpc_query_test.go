@@ -144,17 +144,10 @@ func (s *Suite) TestQueryEvmAccount() {
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
-				wantResp = &evm.QueryEthAccountResponse{
-					Balance:       "0",
-					BalanceWei:    "0",
-					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
-					Nonce:         0,
-					EthAddress:    ethAcc.EthAddr.String(),
-					Bech32Address: ethAcc.NibiruAddr.String(),
-				}
+				wantResp = nil
 				return req, wantResp
 			},
-			wantErr: "",
+			wantErr: "account not found for",
 		},
 		{
 			name: "happy: nonexistent account (bech32 input)",
@@ -163,17 +156,10 @@ func (s *Suite) TestQueryEvmAccount() {
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.NibiruAddr.String(),
 				}
-				wantResp = &evm.QueryEthAccountResponse{
-					Balance:       "0",
-					BalanceWei:    "0",
-					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
-					Nonce:         0,
-					EthAddress:    ethAcc.EthAddr.String(),
-					Bech32Address: ethAcc.NibiruAddr.String(),
-				}
+				wantResp = nil
 				return req, wantResp
 			},
-			wantErr: "",
+			wantErr: "account not found for",
 		},
 	}
 
@@ -781,7 +767,7 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: simple nibi transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
+				txMsg, _ := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceTxRequest{
 					Msg: txMsg,
 				}
@@ -857,7 +843,7 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: simple nibi transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg := evmtest.ExecuteNibiTransfer(deps, s.T())
+				txMsg, _ := evmtest.ExecuteNibiTransfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
