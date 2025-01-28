@@ -128,13 +128,12 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
 			case sdk.ErrorOutOfGas:
-
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)
 			}
 		}
-		if err != nil && format != "" {
+		if err != nil && *err != nil && format != "" {
 			*err = fmt.Errorf("%s: %w", format, *err)
 		}
 	}
