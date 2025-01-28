@@ -751,7 +751,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		Account:      bob.EthAddr,
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(0),
-		Description:  "Charles has 0 NIBI / 0 WNIBI",
+		Description:  "Bob has 0 NIBI / 0 WNIBI",
 	}.Assert(s.T(), deps, evmObj)
 
 	evmtest.FunTokenBalanceAssert{

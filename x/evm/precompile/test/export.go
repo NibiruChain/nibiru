@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"math/big"
 	"os"
 	"os/exec"
 	"path"
@@ -15,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -30,7 +28,7 @@ const (
 
 // SetupWasmContracts stores all Wasm bytecode and has the "deps.Sender"
 // instantiate each Wasm contract using the precompile.
-func SetupWasmContracts(deps *evmtest.TestDeps, evmObj *vm.EVM, s *suite.Suite) (
+func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
 	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
@@ -47,48 +45,29 @@ func SetupWasmContracts(deps *evmtest.TestDeps, evmObj *vm.EVM, s *suite.Suite) 
 			InstantiateMsg: []byte(`{"count": 0}`),
 			Label:          "https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter",
 		},
+		{
+			InstantiateMsg: []byte(`{}`),
+			Label:          "https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/",
+		},
+		{
+			InstantiateMsg: []byte(`{}`),
+			Label:          "https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/staking/",
+		},
 	}
 
 	for i, wasmCode := range wasmCodes {
-		s.T().Logf("Instantiate using Wasm precompile: %s", wasmCode.binPath)
+		s.T().Logf("Instantiate %s", wasmCode.binPath)
 
-		m := wasm.MsgInstantiateContract{
-			Admin:  "",
-			CodeID: wasmCode.codeId,
-			Label:  instantiateArgs[i].Label,
-			Msg:    instantiateArgs[i].InstantiateMsg,
-		}
-
-		msgArgsBz, err := json.Marshal(m.Msg)
-		s.NoError(err)
-
-		contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
-			string(precompile.WasmMethod_instantiate),
-			m.Admin, m.CodeID, msgArgsBz, m.Label, []precompile.WasmBankCoin{},
-		)
-		s.NoError(err)
-
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(deps.App.WasmKeeper)
+		contractAddr, _, err := wasmPermissionedKeeper.Instantiate(
 			deps.Ctx,
-			evmObj,
-			deps.Sender.EthAddr,
-			&precompile.PrecompileAddr_Wasm,
-			true,
-			contractInput,
-			WasmGasLimitInstantiate,
+			wasmCode.codeId,
+			deps.Sender.NibiruAddr,
+			deps.Sender.NibiruAddr,
+			instantiateArgs[i].InstantiateMsg,
+			instantiateArgs[i].Label,
+			sdk.Coins{},
 		)
-
-		s.Require().NoError(err)
-		s.Require().NotEmpty(ethTxResp.Ret)
-
-		s.T().Log("Parse the response contract addr and response bytes")
-		vals, err := embeds.SmartContract_Wasm.ABI.Unpack(
-			string(precompile.WasmMethod_instantiate),
-			ethTxResp.Ret,
-		)
-		s.Require().NoError(err)
-
-		contractAddr, err := sdk.AccAddressFromBech32(vals[0].(string))
 		s.NoError(err)
 		contracts = append(contracts, contractAddr)
 	}
@@ -102,7 +81,7 @@ func deployWasmBytecode(
 	s *suite.Suite,
 	ctx sdk.Context,
 	sender sdk.AccAddress,
-	nibiru *app.NibiruApp,
+	app *app.NibiruApp,
 ) (codeIds []struct {
 	codeId  uint64
 	binPath string
@@ -121,7 +100,15 @@ func deployWasmBytecode(
 
 		// hello_world_counter.wasm is a compiled version of:
 		// https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter
-		"x/evm/precompile/hello_world_counter.wasm",
+		"x/evm/precompile/test/hello_world_counter.wasm",
+
+		// bank_transfer.wasm is a compiled version of:
+		// https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/bank-transfer/
+		"x/evm/precompile/test/bank_transfer.wasm",
+
+		// staking.wasm is a compiled version of:
+		// https://github.com/k-yang/nibiru-wasm-plus/tree/main/contracts/staking/
+		"x/evm/precompile/test/staking.wasm",
 
 		// Add other wasm bytecode here if needed...
 	} {
@@ -135,12 +122,11 @@ func deployWasmBytecode(
 		// The "Create" fn is private on the nibiru.WasmKeeper. By placing it as the
 		// decorated keeper in PermissionedKeeper type, we can access "Create" as a
 		// public fn.
-		wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper)
-		instantiateAccess := &wasm.AccessConfig{
-			Permission: wasm.AccessTypeEverybody,
-		}
+		wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
 		codeId, _, err := wasmPermissionedKeeper.Create(
-			ctx, sender, wasmBytecode, instantiateAccess,
+			ctx, sender, wasmBytecode, &wasm.AccessConfig{
+				Permission: wasm.AccessTypeEverybody,
+			},
 		)
 		s.Require().NoError(err)
 		codeIds = append(codeIds, struct {
@@ -163,7 +149,6 @@ func deployWasmBytecode(
 func AssertWasmCounterState(
 	s *suite.Suite,
 	deps evmtest.TestDeps,
-	evmObj *vm.EVM,
 	wasmContract sdk.AccAddress,
 	wantCount int64,
 ) {
@@ -173,6 +158,30 @@ func AssertWasmCounterState(
 		}
 `)
 
+	resp, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx, wasmContract, msgArgsBz)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(resp)
+
+	var typedResp QueryMsgCountResp
+	s.NoError(json.Unmarshal(resp, &typedResp))
+
+	s.EqualValues(wantCount, typedResp.Count)
+	s.EqualValues(deps.Sender.NibiruAddr.String(), typedResp.Owner)
+}
+
+func AssertWasmCounterStateWithEvm(
+	s *suite.Suite,
+	deps evmtest.TestDeps,
+	evmObj *vm.EVM,
+	wasmContract sdk.AccAddress,
+	wantCount int64,
+) {
+	msgArgsBz := []byte(`
+		{ 
+		  "count": {}
+		}
+	`)
+
 	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_query),
 		wasmContract.String(),
@@ -180,7 +189,7 @@ func AssertWasmCounterState(
 	)
 	s.Require().NoError(err)
 
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
@@ -190,26 +199,14 @@ func AssertWasmCounterState(
 		WasmGasLimitQuery,
 	)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(ethTxResp.Ret)
-
-	s.T().Log("Parse the response contract addr and response bytes")
-	s.T().Logf("ethTxResp.Ret: %s", ethTxResp.Ret)
+	s.Require().NotEmpty(evmResp.Ret)
 
 	var queryResp []byte
-	err = embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
-		// Since there's only one return value, don't unpack as a slice.
-		// If there were two or more return values, we'd use
-		// &[]any{...}
+	s.NoError(embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
 		&queryResp,
 		string(precompile.WasmMethod_query),
-		ethTxResp.Ret,
-	)
-	s.Require().NoError(err)
-	s.T().Logf("queryResp: %s", queryResp)
-
-	var wasmMsg wasm.RawContractMessage
-	s.NoError(json.Unmarshal(queryResp, &wasmMsg))
-	s.NoError(wasmMsg.ValidateBasic())
+		evmResp.Ret,
+	))
 
 	var typedResp QueryMsgCountResp
 	s.NoError(json.Unmarshal(queryResp, &typedResp))
@@ -275,36 +272,24 @@ func IncrementWasmCounterWithExecuteMulti(
 	}
 	`)
 
-	// Parse funds argument.
-	var funds []precompile.WasmBankCoin // blank funds
-	fundsJson, err := json.Marshal(funds)
-	s.NoErrorf(err, "fundsJson: %s", fundsJson)
-	err = json.Unmarshal(fundsJson, &funds)
-	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
-
 	// The "times" arg determines the number of messages in the executeMsgs slice
 	executeMsgs := []struct {
 		ContractAddr string                    `json:"contractAddr"`
 		MsgArgs      []byte                    `json:"msgArgs"`
 		Funds        []precompile.WasmBankCoin `json:"funds"`
-	}{
-		{wasmContract.String(), msgArgsBz, funds},
-	}
-	if times == 0 {
-		executeMsgs = executeMsgs[:0] // force empty
-	} else {
-		for i := uint(1); i < times; i++ {
-			executeMsgs = append(executeMsgs, executeMsgs[0])
-		}
-	}
-	s.Require().Len(executeMsgs, int(times)) // sanity check assertion
+	}{}
 
-	callArgs := []any{
-		executeMsgs,
+	for i := uint(0); i < times; i++ {
+		executeMsgs = append(executeMsgs, struct {
+			ContractAddr string                    `json:"contractAddr"`
+			MsgArgs      []byte                    `json:"msgArgs"`
+			Funds        []precompile.WasmBankCoin `json:"funds"`
+		}{wasmContract.String(), msgArgsBz, []precompile.WasmBankCoin{}})
 	}
-	input, err := embeds.SmartContract_Wasm.ABI.Pack(
+
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
 		string(precompile.WasmMethod_executeMulti),
-		callArgs...,
+		executeMsgs,
 	)
 	s.Require().NoError(err)
 
@@ -314,60 +299,9 @@ func IncrementWasmCounterWithExecuteMulti(
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		commit,
-		input,
+		contractInput,
 		WasmGasLimitExecute,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
-}
-
-func IncrementWasmCounterWithExecuteMultiViaVMCall(
-	s *suite.Suite,
-	deps *evmtest.TestDeps,
-	wasmContract sdk.AccAddress,
-	times int,
-	finalizeTx bool,
-	evmObj *vm.EVM,
-) error {
-	msgArgsBz := []byte(`
-	{ 
-	  "increment": {}
-	}
-	`)
-
-	// Parse funds argument.
-	var funds []precompile.WasmBankCoin // blank funds
-	fundsJson, err := json.Marshal(funds)
-	s.NoErrorf(err, "fundsJson: %s", fundsJson)
-	err = json.Unmarshal(fundsJson, &funds)
-	s.Require().NoError(err, "fundsJson %s, funds %s", fundsJson, funds)
-
-	// The "times" arg determines the number of messages in the executeMsgs slice
-	executeMsgs := []struct {
-		ContractAddr string                    `json:"contractAddr"`
-		MsgArgs      []byte                    `json:"msgArgs"`
-		Funds        []precompile.WasmBankCoin `json:"funds"`
-	}{}
-	for i := 0; i < times; i++ {
-		executeMsgs = append(executeMsgs, struct {
-			ContractAddr string                    `json:"contractAddr"`
-			MsgArgs      []byte                    `json:"msgArgs"`
-			Funds        []precompile.WasmBankCoin `json:"funds"`
-		}{wasmContract.String(), msgArgsBz, funds})
-	}
-
-	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
-		string(precompile.WasmMethod_executeMulti),
-		executeMsgs,
-	)
-	s.Require().NoError(err)
-
-	_, _, err = evmObj.Call(
-		vm.AccountRef(deps.Sender.EthAddr),
-		precompile.PrecompileAddr_Wasm,
-		contractInput,
-		serverconfig.DefaultEthCallGasLimit,
-		big.NewInt(0),
-	)
-	return err
 }

@@ -137,7 +137,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 	}{
 		{
 			"no epochs per period",
-			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
+			sdk.TokensFromConsensusPower(400_000_000-100_000_001, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				nibiruApp.InflationKeeper.Params.Set(ctx, types.Params{
 					EpochsPerPeriod:       0,
@@ -150,7 +150,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 		},
 		{
 			"high supply",
-			sdk.TokensFromConsensusPower(800_000_000, sdk.DefaultPowerReduction),
+			sdk.TokensFromConsensusPower(800_000_000-100_000_001, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				params := nibiruApp.InflationKeeper.GetParams(ctx)
 				params.InflationEnabled = true
@@ -160,7 +160,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 		},
 		{
 			"low supply",
-			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
+			sdk.TokensFromConsensusPower(400_000_000-100_000_001, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				params := nibiruApp.InflationKeeper.GetParams(ctx)
 				params.InflationEnabled = true
@@ -184,7 +184,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			require.NoError(t, err)
 
 			circulatingSupply := nibiruApp.InflationKeeper.GetCirculatingSupply(ctx, denoms.NIBI)
-			require.EqualValues(t, tc.supply, circulatingSupply)
+			require.EqualValues(t, tc.supply.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), circulatingSupply)
 
 			inflationRate := nibiruApp.InflationKeeper.GetInflationRate(ctx, denoms.NIBI)
 			require.Equal(t, tc.expInflationRate, inflationRate)
