@@ -662,7 +662,7 @@ func (s *TestSuite) TestBurnNative() {
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					math.NewInt(0), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(
@@ -696,7 +696,7 @@ func (s *TestSuite) TestBurnNative() {
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					math.NewInt(123), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					math.NewInt(123).Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(

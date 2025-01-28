@@ -74,16 +74,16 @@ func (k *Keeper) RefundGas(
 	return nil
 }
 
-// GasToRefund calculates the amount of gas the state machine should refund to
-// the sender. It is capped by the refund quotient value. Note that passing a
-// jrefundQuotient of 0 will cause problems.
-func GasToRefund(availableRefund, gasConsumed, refundQuotient uint64) uint64 {
-	// Apply refund counter
-	refund := gasConsumed / refundQuotient
-	if refund > availableRefund {
-		return availableRefund
+// gasToRefund calculates the amount of gas the state machine should refund to
+// the sender.
+// EIP-3529: refunds are capped to gasUsed / 5
+func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
+	refundAmount := gasUsed / params.RefundQuotientEIP3529
+	if refundAmount > availableRefundAmount {
+		// Apply refundAmount counter
+		return availableRefundAmount
 	}
-	return refund
+	return refundAmount
 }
 
 // CheckSenderBalance validates that the tx cost value is positive and that the

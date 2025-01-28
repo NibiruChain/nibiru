@@ -22,12 +22,6 @@ func (s *StateDB) DebugDirties() map[common.Address]int {
 	return s.Journal.dirties
 }
 
-// DebugEntries is a test helper that returns the sequence of [JournalChange]
-// objects added during execution.
-func (s *StateDB) DebugEntries() []JournalChange {
-	return s.Journal.entries
-}
-
 // DebugStateObjects is a test helper that returns returns a copy of the
 // [StateDB.stateObjects] map.
 func (s *StateDB) DebugStateObjects() map[common.Address]*stateObject {

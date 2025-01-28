@@ -143,8 +143,7 @@ func (p precompileFunToken) sendToBank(
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
-		err = ErrInvalidArgs(err)
-		return
+		return nil, ErrInvalidArgs(err)
 	}
 
 	var evmResponses []*evm.MsgEthereumTxResponse
@@ -191,10 +190,9 @@ func (p precompileFunToken) sendToBank(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		burnResp, e := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
-		if e != nil {
-			err = fmt.Errorf("ERC20.Burn: %w", e)
-			return
+		burnResp, err := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
+		if err != nil {
+			return nil, fmt.Errorf("ERC20.Burn: %w", err)
 		}
 		evmResponses = append(evmResponses, burnResp)
 	} else {

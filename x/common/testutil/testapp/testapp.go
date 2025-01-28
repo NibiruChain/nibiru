@@ -17,6 +17,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -126,6 +127,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
+	cryptocodec.RegisterInterfaces(encoding.InterfaceRegistry)
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(

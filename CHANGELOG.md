@@ -86,7 +86,11 @@ needed to include double quotes around the hexadecimal string.
 - [#2170](https://github.com/NibiruChain/nibiru/pull/2170) - chore: Remove redundant allowUnprotectedTxs
 - [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
 - [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
-
+- [#2177](https://github.com/NibiruChain/nibiru/pull/2177) - fix(cmd): Continue from #2127 and unwire vesting flags and logic from genaccounts.go
+- [#2176](https://github.com/NibiruChain/nibiru/pull/2176) - tests(evm): add dirty state tests from code4rena audit
+- [#2180](https://github.com/NibiruChain/nibiru/pull/2180) - fix(evm): apply gas consumption across the entire EVM codebase at `CallContractWithInput`
+- [#2183](https://github.com/NibiruChain/nibiru/pull/2183) - fix(evm): bank keeper extension gas meter type
+- 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
 The codebase went through a third-party [Code4rena
@@ -298,7 +302,7 @@ about the expected resulting balance for the transfer recipient.
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
-- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.23.0 in /geth ([#1849](https://github.com/NibiruChain/nibiru/pull/1849))
+- Bump `golang.org/x/net` from 0.0.0-20220607020251-c690dde0001d to 0.33.0 ([#1849](https://github.com/NibiruChain/nibiru/pull/1849), [#2175](https://github.com/NibiruChain/nibiru/pull/2175))
 - Bump `golang.org/x/net` from 0.20.0 to 0.23.0 ([#1850](https://github.com/NibiruChain/nibiru/pull/1850))
 - Bump `github.com/supranational/blst` from 0.3.8-0.20220526154634-513d2456b344 to 0.3.11 ([#1851](https://github.com/NibiruChain/nibiru/pull/1851))
 - Bump `golangci/golangci-lint-action` from 4 to 6 ([#1854](https://github.com/NibiruChain/nibiru/pull/1854), [#1867](https://github.com/NibiruChain/nibiru/pull/1867))
@@ -310,6 +314,7 @@ about the expected resulting balance for the transfer recipient.
 - Bump `github.com/CosmWasm/wasmvm` from 1.5.0 to 1.5.5 ([#2047](https://github.com/NibiruChain/nibiru/pull/2047))
 - Bump `docker/build-push-action` from 5 to 6 ([#1924](https://github.com/NibiruChain/nibiru/pull/1924))
 - Bump `codecov/codecov-action` from 4 to 5 ([#2112](https://github.com/NibiruChain/nibiru/pull/2112))
+- Bump `undici` from 5.28.4 to 5.28.5 ([#2174](https://github.com/NibiruChain/nibiru/pull/2174))
 
 ## [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0) - 2024-06-21
 

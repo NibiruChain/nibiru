@@ -55,17 +55,17 @@ func TestBurn(t *testing.T) {
 			)
 
 			supply := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
-			require.Equal(t, tc.mintCoin.Amount, supply.Amount)
+			require.Equal(t, tc.mintCoin.Amount.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), supply.Amount)
 
 			// Burn coins
 			err := nibiruApp.InflationKeeper.Burn(ctx, sdk.NewCoins(tc.burnCoin), tc.sender)
 			supply = nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())
-				require.Equal(t, tc.mintCoin.Amount, supply.Amount)
+				require.Equal(t, tc.mintCoin.Amount.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), supply.Amount)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, math.ZeroInt(), supply.Amount)
+				require.Equal(t, sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction), supply.Amount)
 			}
 		})
 	}

@@ -196,7 +196,7 @@ func (e erc20Calls) loadERC20String(
 	if err != nil {
 		return out, err
 	}
-	res, err := e.Keeper.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -211,13 +211,13 @@ func (e erc20Calls) loadERC20String(
 
 	erc20Val := new(ERC20String)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Val, methodName, res.Ret,
+		erc20Val, methodName, evmResp.Ret,
 	); err == nil {
 		return erc20Val.Value, err
 	}
 
 	erc20Bytes32Val := new(ERC20Bytes32)
-	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, res.Ret); err == nil {
+	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, evmResp.Ret); err == nil {
 		return bytes32ToString(erc20Bytes32Val.Value), nil
 	}
 
@@ -239,7 +239,7 @@ func (e erc20Calls) loadERC20Uint8(
 	if err != nil {
 		return out, err
 	}
-	res, err := e.Keeper.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -254,14 +254,14 @@ func (e erc20Calls) loadERC20Uint8(
 
 	erc20Val := new(ERC20Uint8)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Val, methodName, res.Ret,
+		erc20Val, methodName, evmResp.Ret,
 	); err == nil {
 		return erc20Val.Value, err
 	}
 
 	erc20Uint256Val := new(ERC20BigInt)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Uint256Val, methodName, res.Ret,
+		erc20Uint256Val, methodName, evmResp.Ret,
 	); err == nil {
 		// We can safely cast to uint8 because it's nonsense for decimals to be larger than 255
 		return uint8(erc20Uint256Val.Value.Uint64()), err
