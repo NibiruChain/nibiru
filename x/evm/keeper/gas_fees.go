@@ -76,13 +76,6 @@ func (k *Keeper) RefundGas(
 
 // gasToRefund calculates the amount of gas the state machine should refund to
 // the sender.
-//
-// GAS REFUND
-// If msg.Gas() > gasUsed, we need to refund extra gas.
-// leftoverGas = amount of extra (not used) gas.
-// If the msg comes from user, we apply refundQuotient capping the refund to 20% of used gas
-// If msg is internal (funtoken), we refund 100%
-//
 // EIP-3529: refunds are capped to gasUsed / 5
 func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
 	refundAmount := gasUsed / params.RefundQuotientEIP3529
