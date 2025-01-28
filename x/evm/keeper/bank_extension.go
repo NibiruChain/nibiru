@@ -185,24 +185,20 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	// Assign vars for the tx gas meter
 	gasMeterBefore := ctx.GasMeter() // Tx gas meter MUST be defined
 	gasConsumedBefore := gasMeterBefore.GasConsumed()
-	// Don't modify the "ctx.BlockGasMeter()" directly because this is
-	// handled in "BaseApp.runTx"
-
-	// Start baseGasConsumed at 0 in case we panic before BaseOp completes and
-	// baseGasConsumed gets a value assignment
 	baseOpGasConsumed := uint64(0)
 
 	defer func() {
+		// NOTE: we have to refund the entire gasMeterBefore because it's modified by AfterOp
+		// stateDB.getStateObject() reads from state using the local root ctx which affects the gas meter
 		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
 		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseOpGasConsumed, "NibiruBankKeeper invariant")
 	}()
 
-	// Note that because the ctx gas meter uses private variables to track gas,
-	// we have to branch off with a new gas meter instance to avoid mutating the
-	// "true" gas meter (called GasMeterBefore here).
-	// We use an infinite gas meter because we consume gas in the deferred function
-	// and gasMeterBefore will panic if we consume too much gas.
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	// We keep the same gas meter type but reset the gas consumed prior to measuring the base op
+	// We need the same gas meter type because we use a custom FixedGasMeter for oracle votes in the AnteHandler
+	// In the defer function, we reset the gas meter again and then add the gasConsumedBefore to baseOpGasConsumed,
+	// so any modifications to the gasMeterBefore after this point will be inconsequential.
+	ctx.GasMeter().RefundGas(gasConsumedBefore, "reset gas meter before measuring base op")
 
 	err := BaseOp(ctx)
 	baseOpGasConsumed = ctx.GasMeter().GasConsumed()
