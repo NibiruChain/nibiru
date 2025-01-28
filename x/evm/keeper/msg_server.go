@@ -70,7 +70,6 @@ func (k *Keeper) EthereumTx(
 		nil,  /*tracer*/
 		true, /*commit*/
 		txConfig.TxHash,
-		false, /*fullRefundLeftoverGas*/
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
@@ -260,7 +259,6 @@ func (k *Keeper) ApplyEvmMsg(
 	tracer vm.EVMLogger,
 	commit bool,
 	txHash gethcommon.Hash,
-	fullRefundLeftoverGas bool,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
 	gasRemaining := msg.Gas()
 
@@ -349,7 +347,8 @@ func (k *Keeper) ApplyEvmMsg(
 
 	// process gas refunds (we refund a portion of the unused gas)
 	gasUsed := msg.Gas() - gasRemaining
-	refundAmount := GasToRefund(evmObj.StateDB.GetRefund(), gasUsed, fullRefundLeftoverGas)
+	// please see https://eips.ethereum.org/EIPS/eip-3529 for why we do refunds
+	refundAmount := gasToRefund(evmObj.StateDB.GetRefund(), gasUsed)
 	gasRemaining += refundAmount
 	gasUsed -= refundAmount
 
@@ -361,7 +360,7 @@ func (k *Keeper) ApplyEvmMsg(
 		Hash:    txHash.Hex(),
 	}
 
-	if gasRemaining > msg.Gas() {
+	if gasRemaining > msg.Gas() { // rare case of overflow
 		evmResp.GasUsed = msg.Gas() // cap the gas used to the original gas limit
 		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), gasRemaining)
 	}
@@ -536,6 +535,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	defer func() {
 		k.Bank.StateDB = nil
 	}()
+
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContractWithInput(
 		ctx,
@@ -555,8 +555,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
 	}
 
-	err = stateDB.Commit()
-	if err != nil {
+	if err = stateDB.Commit(); err != nil {
 		return nil, errors.Wrap(err, "failed to commit stateDB")
 	}
 

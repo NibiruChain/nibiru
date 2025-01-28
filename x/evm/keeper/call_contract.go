@@ -61,7 +61,7 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash, true,
+		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")

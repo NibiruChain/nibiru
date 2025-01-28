@@ -74,7 +74,7 @@ func (k *Keeper) RefundGas(
 	return nil
 }
 
-// GasToRefund calculates the amount of gas the state machine should refund to
+// gasToRefund calculates the amount of gas the state machine should refund to
 // the sender.
 //
 // GAS REFUND
@@ -84,17 +84,10 @@ func (k *Keeper) RefundGas(
 // If msg is internal (funtoken), we refund 100%
 //
 // EIP-3529: refunds are capped to gasUsed / 5
-// We evaluate "fullRefundLeftoverGas" and use only the gas consumed (not the
-// gas limit) if the `ApplyEvmMsg` call originated from a state transition
-// where the chain set the gas limit and not an end-user.
-func GasToRefund(availableRefundAmount, gasUsed uint64, fullRefundLeftoverGas bool) uint64 {
-	refundQuotient := params.RefundQuotientEIP3529
-	if fullRefundLeftoverGas {
-		refundQuotient = 1 // 100% refund
-	}
-	// Apply refundAmount counter
-	refundAmount := gasUsed / refundQuotient
+func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
+	refundAmount := gasUsed / params.RefundQuotientEIP3529
 	if refundAmount > availableRefundAmount {
+		// Apply refundAmount counter
 		return availableRefundAmount
 	}
 	return refundAmount
