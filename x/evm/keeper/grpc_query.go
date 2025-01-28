@@ -286,7 +286,7 @@ func (k *Keeper) EthCall(
 	// pass false to not commit StateDB
 	stateDB := statedb.New(ctx, k, txConfig)
 	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evm, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+	res, err := k.ApplyEvmMsg(ctx, msg, evm, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -421,7 +421,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 		stateDB := statedb.New(ctx, &k, txConfig)
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -516,7 +516,7 @@ func (k Keeper) TraceTx(
 			WithTransientKVGasConfig(storetypes.GasConfig{})
 		stateDB := statedb.New(ctx, &k, txConfig)
 		evmObj := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
-		rsp, err := k.ApplyEvmMsg(ctx, msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+		rsp, err := k.ApplyEvmMsg(ctx, msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 		if err != nil {
 			continue
 		}
@@ -790,7 +790,7 @@ func (k *Keeper) TraceEthTxMsg(
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	stateDB := statedb.New(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash, false /*fullRefundLeftoverGas*/)
+	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
