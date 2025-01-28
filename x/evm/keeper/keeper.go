@@ -133,7 +133,7 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 				panic(r)
 			}
 		}
-		if *err != nil && format != "" {
+		if err != nil && *err != nil && format != "" {
 			*err = fmt.Errorf("%s: %w", format, *err)
 		}
 	}
