@@ -99,8 +99,8 @@ func (s *TestSuite) TestSuccessfulVoting() {
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
 		map[asset.Pair]sdk.Dec{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
 		gotPrices,
 	)
