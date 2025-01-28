@@ -77,22 +77,22 @@ func TestMsgAggregateExchangeRateVote(t *testing.T) {
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         "FOO:USD",
+			Pair:         "FOO@USD",
 			ExchangeRate: math.LegacyMustNewDecFromStr("1.0"),
 		},
 		{
-			Pair:         "BAR:USD",
+			Pair:         "BAR@USD",
 			ExchangeRate: math.LegacyMustNewDecFromStr("1232.132"),
 		},
 	}
 
 	abstainExchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         "FOO:USD",
+			Pair:         "FOO@USD",
 			ExchangeRate: math.LegacyZeroDec(),
 		},
 		{
-			Pair:         "BAR:USD",
+			Pair:         "BAR@USD",
 			ExchangeRate: math.LegacyMustNewDecFromStr("1232.132"),
 		},
 	}

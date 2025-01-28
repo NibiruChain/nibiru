@@ -64,7 +64,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 	) {
 		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
 			string(precompile.OracleMethod_queryExchangeRate),
-			"unibi:uusd",
+			"unibi@uusd",
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
@@ -84,7 +84,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		// 69 seconds + 420 nanoseconds === 69000 milliseconds for the
 		// return value from the UnixMilli() function
 		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
-		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
+		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi@uusd", sdk.MustNewDecFromStr("0.067"))
 
 		resp, err := runQuery(deps.Ctx)
 		s.NoError(err)
@@ -129,7 +129,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 
 		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
 			string(precompile.OracleMethod_chainLinkLatestRoundData),
-			"unibi:uusd",
+			"unibi@uusd",
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()

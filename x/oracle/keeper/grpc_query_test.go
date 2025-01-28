@@ -511,7 +511,7 @@ func TestQueryVoteTargets(t *testing.T) {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	voteTargets := []asset.Pair{"denom1:denom2", "denom3:denom4", "denom5:denom6"}
+	voteTargets := []asset.Pair{"denom1@denom2", "denom3@denom4", "denom5@denom6"}
 	for _, target := range voteTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}

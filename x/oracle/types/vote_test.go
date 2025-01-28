@@ -13,12 +13,12 @@ func TestExchangeRateTuples_ToString(t *testing.T) {
 	t.Run("inverse", func(t *testing.T) {
 		tuples := types.ExchangeRateTuples{
 			{
-				Pair:         "BTC:USD",
+				Pair:         "BTC@USD",
 				ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 			},
 
 			{
-				Pair:         "ETH:USD",
+				Pair:         "ETH@USD",
 				ExchangeRate: math.LegacyMustNewDecFromStr("4000.00"),
 			},
 		}
@@ -35,12 +35,12 @@ func TestExchangeRateTuples_ToString(t *testing.T) {
 	t.Run("check duplicates", func(t *testing.T) {
 		tuples := types.ExchangeRateTuples{
 			{
-				Pair:         "BTC:USD",
+				Pair:         "BTC@USD",
 				ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 			},
 
 			{
-				Pair:         "BTC:USD",
+				Pair:         "BTC@USD",
 				ExchangeRate: math.LegacyMustNewDecFromStr("4000.00"),
 			},
 		}
@@ -56,7 +56,7 @@ func TestExchangeRateTuples_ToString(t *testing.T) {
 func TestExchangeRateTuple(t *testing.T) {
 	t.Run("inverse", func(t *testing.T) {
 		exchangeRate := types.ExchangeRateTuple{
-			Pair:         "BTC:USD",
+			Pair:         "BTC@USD",
 			ExchangeRate: math.LegacyMustNewDecFromStr("40000.00"),
 		}
 		exchangeRateStr, err := exchangeRate.ToString()
