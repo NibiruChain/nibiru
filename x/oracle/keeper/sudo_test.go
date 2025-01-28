@@ -32,7 +32,7 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	votePeriod := math.NewInt(1_234)
 	voteThreshold := math.LegacyMustNewDecFromStr("0.4")
 	rewardBand := math.LegacyMustNewDecFromStr("0.5")
-	whitelist := []string{"aave:usdc", "sol:usdc"}
+	whitelist := []string{"aave@usdc", "sol@usdc"}
 	slashFraction := math.LegacyMustNewDecFromStr("0.5")
 	slashWindow := math.NewInt(2_000)
 	minValidPerWindow := math.LegacyMustNewDecFromStr("0.5")
