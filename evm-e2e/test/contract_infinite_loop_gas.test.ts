@@ -18,5 +18,5 @@ describe('Infinite loop gas contract', () => {
     }
 
     await expect(contract.counter()).resolves.toBe(toBigInt(0));
-  }, TEST_TIMEOUT * 2);
+  }, TEST_TIMEOUT);
 });
