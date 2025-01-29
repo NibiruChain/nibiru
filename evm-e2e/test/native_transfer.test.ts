@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { parseEther, toBigInt } from 'ethers';
-import { account, provider } from './setup';
+import {account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT} from './setup';
 import { alice } from './utils';
 
 describe('native transfer', () => {
@@ -18,7 +18,7 @@ describe('native transfer', () => {
       value: amountToSend,
     };
     const txResponse = await account.sendTransaction(transaction);
-    await txResponse.wait(1, 10e3);
+    await txResponse.wait(1, TX_WAIT_TIMEOUT);
     expect(txResponse).toHaveProperty('blockHash');
 
     const senderBalanceAfter = await provider.getBalance(account);
@@ -41,5 +41,5 @@ describe('native transfer', () => {
     const delta = senderBalanceAfter - expectedSenderWei;
     const deltaFromExpectation = delta >= 0 ? delta : -delta;
     expect(deltaFromExpectation).toBeLessThan(parseEther('0.1'));
-  }, 20e3);
+  }, TEST_TIMEOUT);
 });

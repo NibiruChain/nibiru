@@ -1,12 +1,13 @@
 import { describe, expect, it } from '@jest/globals';
 import { toBigInt } from 'ethers';
 import { deployContractInfiniteLoopGas } from './utils';
+import { TEST_TIMEOUT } from './setup';
 
 describe('Infinite loop gas contract', () => {
   it('should fail due to out of gas error', async () => {
     const contract = await deployContractInfiniteLoopGas();
 
-    expect(contract.counter()).resolves.toBe(toBigInt(0));
+    await expect(contract.counter()).resolves.toBe(toBigInt(0));
 
     try {
       const tx = await contract.forever({ gasLimit: 1e6 });
@@ -16,6 +17,6 @@ describe('Infinite loop gas contract', () => {
       expect(error.message).toContain('transaction execution reverted');
     }
 
-    expect(contract.counter()).resolves.toBe(toBigInt(0));
-  }, 20e3);
+    await expect(contract.counter()).resolves.toBe(toBigInt(0));
+  }, TEST_TIMEOUT * 2);
 });

@@ -1,6 +1,7 @@
 import { expect, test } from '@jest/globals';
 import { toBigInt } from 'ethers';
 import { deployContractNibiruOracleChainLinkLike } from './utils';
+import {TEST_TIMEOUT} from "./setup";
 
 test('NibiruOracleChainLinkLike implements ChainLink AggregatorV3Interface', async () => {
   const { oraclePair, contract } = await deployContractNibiruOracleChainLinkLike();
@@ -37,4 +38,4 @@ test('NibiruOracleChainLinkLike implements ChainLink AggregatorV3Interface', asy
     expect(answeredInRound).toEqual(420n);
     expect(answer).toEqual(genesisEthUsdPrice * toBigInt(1e8));
   }
-});
+}, TEST_TIMEOUT);

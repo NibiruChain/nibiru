@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { parseUnits, toBigInt, Wallet } from 'ethers';
-import { account } from './setup';
+import {account, TEST_TIMEOUT} from './setup';
 import { deployContractTestERC20 } from './utils';
 
 describe('ERC-20 contract tests', () => {
@@ -21,5 +21,5 @@ describe('ERC-20 contract tests', () => {
 
     expect(contract.balanceOf(account)).resolves.toEqual(ownerInitialBalance - amountToSend);
     expect(contract.balanceOf(alice)).resolves.toEqual(amountToSend);
-  }, 20e3);
+  }, TEST_TIMEOUT);
 });
