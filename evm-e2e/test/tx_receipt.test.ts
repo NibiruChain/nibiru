@@ -1,11 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { ethers, TransactionReceipt, Log } from 'ethers';
-import { account } from './setup';
-import { deployContractEventsEmitter, deployContractTransactionReverter, TENPOW12 } from './utils';
+import { account, TEST_TIMEOUT } from './setup';
+import { deployContractEventsEmitter } from './utils';
 import { TestERC20__factory } from '../types';
 
 describe('Transaction Receipt Tests', () => {
-  jest.setTimeout(15e3);
+  jest.setTimeout(TEST_TIMEOUT);
 
   let recipient = ethers.Wallet.createRandom().address;
 
@@ -24,7 +24,7 @@ describe('Transaction Receipt Tests', () => {
 
   it('contract deployment receipt', async () => {
     const factory = new TestERC20__factory(account);
-    const deployTx = await factory.deploy({ maxFeePerGas: TENPOW12 });
+    const deployTx = await factory.deploy();
     const receipt = await deployTx.deploymentTransaction().wait();
 
     assertBaseReceiptFields(receipt);
