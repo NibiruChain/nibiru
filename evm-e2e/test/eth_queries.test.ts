@@ -1,13 +1,14 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import {parseEther, keccak256, AbiCoder, ethers} from 'ethers';
-import {account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT} from './setup';
+import { parseEther, keccak256, AbiCoder, ethers } from 'ethers';
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from './setup';
 import {
   INTRINSIC_TX_GAS,
   alice,
   deployContractTestERC20,
   deployContractSendNibi,
   hexify,
-  sendTestNibi, numberToHex,
+  sendTestNibi,
+  numberToHex,
 } from './utils';
 
 describe('eth queries', () => {
@@ -15,7 +16,7 @@ describe('eth queries', () => {
 
   it('eth_accounts', async () => {
     const accounts = await provider.listAccounts();
-    expect(accounts).not.toBeNull()
+    expect(accounts).not.toBeNull();
   });
 
   it('eth_estimateGas', async () => {
@@ -54,7 +55,7 @@ describe('eth queries', () => {
   });
 
   it('eth_getBlockByNumber, eth_getBlockByHash', async () => {
-    const blockNumber = "latest";
+    const blockNumber = 'latest';
     const blockByNumber = await provider.send('eth_getBlockByNumber', [blockNumber, false]);
     expect(blockByNumber).toBeDefined();
     expect(blockByNumber).toHaveProperty('hash');
@@ -66,14 +67,14 @@ describe('eth queries', () => {
   });
 
   it('eth_getBlockTransactionCountByHash', async () => {
-    const blockNumber = "latest";
+    const blockNumber = 'latest';
     const block = await provider.send('eth_getBlockByNumber', [blockNumber, false]);
     const txCount = await provider.send('eth_getBlockTransactionCountByHash', [block.hash]);
     expect(parseInt(txCount)).toBeGreaterThanOrEqual(0);
   });
 
   it('eth_getBlockTransactionCountByNumber', async () => {
-    const blockNumber = "latest";
+    const blockNumber = 'latest';
     const txCount = await provider.send('eth_getBlockTransactionCountByNumber', [blockNumber]);
     expect(parseInt(txCount)).toBeGreaterThanOrEqual(0);
   });
@@ -86,7 +87,7 @@ describe('eth queries', () => {
   });
 
   it('eth_getFilterChanges', async () => {
-    const currentBlock = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlockNumber();
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20();
     const contractAddr = await contract.getAddress();
@@ -115,7 +116,7 @@ describe('eth queries', () => {
   });
 
   it('eth_getFilterLogs', async () => {
-    const currentBlock = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlockNumber();
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20();
     const contractAddr = await contract.getAddress();
@@ -141,7 +142,7 @@ describe('eth queries', () => {
   });
 
   it('eth_getLogs', async () => {
-    const currentBlock = await provider.getBlockNumber()
+    const currentBlock = await provider.getBlockNumber();
     // Deploy ERC-20 contract
     const contract = await deployContractTestERC20();
     const contractAddr = await contract.getAddress();

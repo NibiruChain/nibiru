@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { ethers, TransactionReceipt, Log } from 'ethers';
-import {account, TEST_TIMEOUT} from './setup';
+import { account, TEST_TIMEOUT } from './setup';
 import { deployContractEventsEmitter } from './utils';
 import { TestERC20__factory } from '../types';
 

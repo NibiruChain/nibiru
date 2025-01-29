@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from '@jest/globals';
 import { TransactionReceipt, parseEther } from 'ethers';
-import {provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT} from './setup';
+import { provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from './setup';
 import { alice, deployContractTestERC20, hexify } from './utils';
 import { TestERC20__factory } from '../types';
 
