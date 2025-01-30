@@ -175,6 +175,7 @@ func (k Keeper) checkErc20ImplementsAllRequired(
 		"transferFrom",
 		"increaseAllowance",
 		"decreaseAllowance",
+		"mint",
 	}
 
 	for _, methodName := range methodNames {

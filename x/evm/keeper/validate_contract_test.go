@@ -51,8 +51,8 @@ func TestHasMethodInContract_RealKeeper(t *testing.T) {
 	require.False(t, hasMethod, "expected the contract to NOT have 'someFakeMethod'")
 }
 
-// TestCheckAllMethods_RealKeeper uses your keeper’s checkAllethods (assuming
-// you renamed it from “checkAllMethods” to a public name).
+// TestCheckAllMethods_RealKeeper uses your keeper's CheckAllMethods (assuming
+// you renamed it from "checkAllMethods" to a public name).
 func TestCheckAllMethods_RealKeeper(t *testing.T) {
 	// Build test dependencies and context
 	deps := evmtest.NewTestDeps()
@@ -86,12 +86,12 @@ func TestCheckAllMethods_RealKeeper(t *testing.T) {
 
 	// Scenario 1: "balanceOf" + "transfer" => no error
 	allMethods := []abi.Method{balanceOfMethod, transferMethod}
-	err = k.CheckAllethods(ctx, deployResp.ContractAddr, allMethods)
+	err = k.CheckAllMethods(ctx, deployResp.ContractAddr, allMethods)
 	require.NoError(t, err, "both balanceOf and transfer exist in standard ERC20")
 
 	// Scenario 2: "balanceOf" + "fakeMethod" => we expect an error on second
 	calls := []abi.Method{balanceOfMethod, fakeMethod}
-	err = k.CheckAllethods(ctx, deployResp.ContractAddr, calls)
+	err = k.CheckAllMethods(ctx, deployResp.ContractAddr, calls)
 	require.Error(t, err, "contract does not have 'fakeMethod'")
 	require.Contains(t, err.Error(), "not found in contract")
 

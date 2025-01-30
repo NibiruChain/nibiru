@@ -29,7 +29,7 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
-	//go:embed artifacts/contracts/TestERC20MinterMissingFunction.sol/TestERC20MinterMissingFunction.json
+	//go:embed artifacts/contracts/TestERC20MinterMissingFunction.sol/ERC20Minter.json
 	testErc20MissingFunctionJson []byte
 	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
 	testFunTokenPrecompileLocalGasJson []byte
@@ -160,6 +160,7 @@ func init() {
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestERC20MissingFunction.MustLoad()
 	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()

@@ -94,7 +94,7 @@ func (k Keeper) HasMethodInContract(
 }
 
 // checkAllMethods ensure the contract at `contractAddr` has all the methods in `abiMethods`.
-func (k Keeper) CheckAllethods(
+func (k Keeper) CheckAllMethods(
 	ctx context.Context,
 	contractAddr common.Address,
 	abiMethods []abi.Method,

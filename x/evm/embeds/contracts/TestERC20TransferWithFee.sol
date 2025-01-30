@@ -6,12 +6,14 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract TestERC20TransferWithFee is ERC20 {
     uint256 constant FEE_PERCENTAGE = 10;
 
-    constructor(string memory name, string memory symbol)
-    ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
         _mint(msg.sender, 1000);
     }
 
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public virtual override returns (bool) {
         address owner = _msgSender();
         require(amount > 0, "Transfer amount must be greater than zero");
 
@@ -22,5 +24,9 @@ contract TestERC20TransferWithFee is ERC20 {
         _transfer(owner, to, recipientAmount);
 
         return true;
+    }
+
+    function mint(address to, uint256 amount) public virtual {
+        _mint(to, amount);
     }
 }
