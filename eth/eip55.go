@@ -71,9 +71,7 @@ func (h *EIP55Addr) Unmarshal(data []byte) error {
 func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
 	var addrStr string
 	if err := json.Unmarshal(bz, &addrStr); err != nil {
-		return fmt.Errorf(
-			"EIP55AddrError: UnmarhsalJSON had invalid input %s: %w", bz, err,
-		)
+		addrStr = string(bz)
 	}
 	addr, err := NewEIP55AddrFromStr(addrStr)
 	if err != nil {
