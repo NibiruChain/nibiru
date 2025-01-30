@@ -29,6 +29,8 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestERC20MinterMissingFunction.sol/TestERC20MinterMissingFunction.json
+	testErc20MissingFunctionJson []byte
 	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
 	testFunTokenPrecompileLocalGasJson []byte
 	//go:embed artifacts/contracts/TestERC20TransferThenPrecompileSend.sol/TestERC20TransferThenPrecompileSend.json
@@ -89,6 +91,13 @@ var (
 	SmartContract_TestERC20MaliciousTransfer = CompiledEvmContract{
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
+	}
+	// SmartContract_TestERC20MissingFunction is a test contract
+	// which simulates malicious ERC20 behavior by adding gas intensive operation
+	// for function transfer() intended to attack funtoken conversion from erc20 to bank coin
+	SmartContract_TestERC20MissingFunction = CompiledEvmContract{
+		Name:      "TestERC20MissingFunction.sol",
+		EmbedJSON: testErc20MissingFunctionJson,
 	}
 	// SmartContract_TestFunTokenPrecompileLocalGas is a test contract
 	// which allows precompile execution with custom local gas set (calling precompile within contract)

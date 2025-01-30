@@ -73,8 +73,10 @@ func (k Keeper) HasMethodInContract(
 	}
 
 	ethCallRequest := evm.EthCallRequest{
-		Args:            jsonTxArgs,
-		GasCap:          2100000,
+		Args: jsonTxArgs,
+		// This gas cap is big enough, if out of gas, something is suspicious
+		// in the transfer function.
+		GasCap:          690000000000000000,
 		ProposerAddress: sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
 		ChainId:         k.EthChainID(ctx).Int64(),
 	}
@@ -85,11 +87,10 @@ func (k Keeper) HasMethodInContract(
 		return true, nil
 	}
 
-	if strings.Contains(err.Error(), "caller is not the owner") {
-		return true, nil
+	if strings.Contains(err.Error(), "Estimate gas VMError: execution reverted, but unable to parse reason") {
+		return false, nil
 	}
-
-	return false, nil
+	return true, nil
 }
 
 // checkAllMethods ensure the contract at `contractAddr` has all the methods in `abiMethods`.

@@ -421,35 +421,9 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.Require().NoError(err)
-
-	deps.ResetGasMeter()
-
-	s.T().Log("happy: call attackBalance()")
-	res, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		embeds.SmartContract_TestInfiniteRecursionERC20.ABI,
-		deps.Sender.EthAddr,
-		&erc20Addr.Address,
-		false,
-		10_000_000,
-		"attackBalance",
-	)
-	s.Require().NoError(err)
-	s.Require().NotNil(res)
-	s.Require().Empty(res.VmError)
-
-	s.T().Log("sad: call attackBalance()")
-	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		embeds.SmartContract_TestInfiniteRecursionERC20.ABI,
-		deps.Sender.EthAddr,
-		&erc20Addr.Address,
-		true,
-		10_000_000,
-		"attackTransfer",
-	)
-	s.Require().ErrorContains(err, "execution reverted")
+	// Can't create since the gas cap will be reached for transfer function
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "method 'transfer' not found in contract")
 }
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.

@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -123,7 +124,8 @@ func (k *Keeper) createFunTokenFromERC20(
 	bankDenom := fmt.Sprintf("erc20/%s", erc20.String())
 
 	// 3 | Verify that the ERC20 token include expected functions
-	if err := k.checkErc20ImplementsAllRequired(ctx, erc20); err != nil {
+	abi := embeds.SmartContract_ERC20Minter.ABI
+	if err := k.checkErc20ImplementsAllRequired(ctx, erc20, abi); err != nil {
 		return funtoken, err
 	}
 
@@ -159,11 +161,35 @@ func (k *Keeper) createFunTokenFromERC20(
 	)
 }
 
-func (k *Keeper) checkErc20ImplementsAllRequired(
-	ctx sdk.Context, erc20 gethcommon.Address,
+func (k Keeper) checkErc20ImplementsAllRequired(
+	ctx sdk.Context, erc20Addr gethcommon.Address, abi *gethabi.ABI,
 ) error {
-	// Check if the ERC20 token implements the required functions
-	// This is a placeholder for actual implementation
+	methodNames := []string{"name",
+		"symbol",
+		"decimals",
+		"totalSupply",
+		"balanceOf",
+		"transfer",
+		"allowance",
+		"approve",
+		"transferFrom",
+		"increaseAllowance",
+		"decreaseAllowance",
+	}
+
+	for _, methodName := range methodNames {
+		method, ok := abi.Methods[methodName]
+		if !ok {
+			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
+		}
+		hasMethod, err := k.HasMethodInContract(ctx, erc20Addr, method)
+		if err != nil {
+			return err
+		}
+		if !hasMethod {
+			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
+		}
+	}
 	return nil
 }
 
