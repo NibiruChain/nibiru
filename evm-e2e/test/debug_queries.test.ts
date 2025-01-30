@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from '@jest/globals';
 import { TransactionReceipt, parseEther } from 'ethers';
-import { provider } from './setup';
+import { provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from './setup';
 import { alice, deployContractTestERC20, hexify } from './utils';
 import { TestERC20__factory } from '../types';
 
@@ -18,14 +18,14 @@ describe('debug queries', () => {
 
     // Execute some contract TX
     const txResponse = await contract.transfer(alice, parseEther('0.01'));
-    await txResponse.wait(1, 5e3);
+    await txResponse.wait(1, TX_WAIT_TIMEOUT);
 
     const receipt: TransactionReceipt = await provider.getTransactionReceipt(txResponse.hash);
     txHash = txResponse.hash;
     txIndex = txResponse.index;
     blockNumber = receipt.blockNumber;
     blockHash = receipt.blockHash;
-  }, 20e3);
+  }, TEST_TIMEOUT);
 
   it('debug_traceBlockByNumber', async () => {
     const traceResult = await provider.send('debug_traceBlockByNumber', [

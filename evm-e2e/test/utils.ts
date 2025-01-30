@@ -1,4 +1,4 @@
-import { account } from './setup';
+import { account, provider, TX_WAIT_TIMEOUT } from './setup';
 import { ContractTransactionResponse, parseEther, toBigInt, TransactionRequest, Wallet } from 'ethers';
 import {
   InifiniteLoopGas__factory,
@@ -16,28 +16,25 @@ export const hexify = (x: number): string => {
   return '0x' + x.toString(16);
 };
 
-/** 10 to the power of 12 */
-export const TENPOW12 = toBigInt(1e12);
-
 export const INTRINSIC_TX_GAS: bigint = 21000n;
 
 export const deployContractTestERC20 = async () => {
   const factory = new TestERC20__factory(account);
-  const contract = await factory.deploy({ maxFeePerGas: TENPOW12 });
+  const contract = await factory.deploy();
   await contract.waitForDeployment();
   return contract;
 };
 
 export const deployContractSendNibi = async () => {
   const factory = new SendNibi__factory(account);
-  const contract = await factory.deploy({ maxFeePerGas: TENPOW12 });
+  const contract = await factory.deploy();
   await contract.waitForDeployment();
   return contract;
 };
 
 export const deployContractInfiniteLoopGas = async () => {
   const factory = new InifiniteLoopGas__factory(account);
-  const contract = await factory.deploy({ maxFeePerGas: TENPOW12 });
+  const contract = await factory.deploy();
   await contract.waitForDeployment();
   return contract;
 };
@@ -61,10 +58,9 @@ export const sendTestNibi = async () => {
     gasLimit: toBigInt(100e3),
     to: alice,
     value: parseEther('0.01'),
-    maxFeePerGas: TENPOW12,
   };
   const txResponse = await account.sendTransaction(transaction);
-  await txResponse.wait(1, 10e3);
+  await txResponse.wait(1, TX_WAIT_TIMEOUT);
   console.log(txResponse);
   return txResponse;
 };
@@ -80,4 +76,8 @@ export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
   const contract = await factory.deploy(oraclePair, toBigInt(8));
   await contract.waitForDeployment();
   return { oraclePair, contract };
+};
+
+export const numberToHex = (num: Number) => {
+  return '0x' + num.toString(16);
 };

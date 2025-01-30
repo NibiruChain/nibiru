@@ -23,5 +23,6 @@ func TestLoadContracts(t *testing.T) {
 		embeds.SmartContract_TestInfiniteRecursionERC20.MustLoad()
 		embeds.SmartContract_TestERC20TransferWithFee.MustLoad()
 		embeds.SmartContract_TestRandom.MustLoad()
+		embeds.SmartContract_TestBytes32Metadata.MustLoad()
 	})
 }
