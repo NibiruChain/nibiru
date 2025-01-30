@@ -81,5 +81,5 @@ func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
 // Size implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Size() int {
-	return len([]byte(h.Address.Hex()))
+	return len(h.Bytes())
 }
