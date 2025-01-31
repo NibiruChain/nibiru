@@ -10,7 +10,6 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -209,28 +208,10 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	return nil
 }
 
-// AllTxLogsFromEvents parses all ethereum logs from cosmos events
-func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
-	allLogs := make([][]*gethcore.Log, len(events))
-	for i, event := range events {
-		if event.Type != evm.TypeUrlEventTxLog {
-			continue
-		}
-
-		logs, err := ParseTxLogsFromEvent(event)
-		if err != nil {
-			return nil, err
-		}
-
-		allLogs[i] = logs
-	}
-	return allLogs, nil
-}
-
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
 func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error) {
 	for _, event := range events {
-		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
+		if event.Type != evm.TypeUrlEventTxLog {
 			continue
 		}
 
@@ -240,18 +221,13 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 			continue
 		}
 
-		return ParseTxLogsFromEvent(event)
+		eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse event tx log")
+		}
+		return evm.LogsToEthereum(eventTxLog.Logs), nil
 	}
 	return nil, fmt.Errorf("eth tx logs not found for message index %d", msgIndex)
-}
-
-// ParseTxLogsFromEvent parse tx logs from one event
-func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
-	eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse event tx log")
-	}
-	return evm.LogsToEthereum(eventTxLog.Logs), nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
@@ -263,16 +239,27 @@ func ShouldIgnoreGasUsed(res *abci.ResponseDeliverTx) bool {
 // GetLogsFromBlockResults returns the list of event logs from the tendermint block result response
 func GetLogsFromBlockResults(
 	blockRes *tmrpctypes.ResultBlockResults,
-) ([][]*gethcore.Log, error) {
-	blockLogs := [][]*gethcore.Log{}
+) (blockLogs [][]*gethcore.Log, err error) {
+	blockLogs = [][]*gethcore.Log{}
 	for _, txResult := range blockRes.TxsResults {
-		logs, err := AllTxLogsFromEvents(txResult.Events)
-		if err != nil {
-			return nil, err
+		txLogs := []*gethcore.Log{}
+
+		for _, event := range txResult.Events {
+			if event.Type != evm.TypeUrlEventTxLog {
+				continue
+			}
+
+			eventTxLogs, err := evm.EventTxLogFromABCIEvent(event)
+			if err != nil {
+				return nil, err
+			}
+
+			txLogs = append(txLogs, evm.LogsToEthereum(eventTxLogs.Logs)...)
 		}
 
-		blockLogs = append(blockLogs, logs...)
+		blockLogs = append(blockLogs, txLogs)
 	}
+
 	return blockLogs, nil
 }
 

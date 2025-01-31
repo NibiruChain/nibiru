@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -241,8 +240,10 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 	foundEthTx := false
 	for _, event := range events {
 		if event.Type == evm.TypeUrlEventTxLog {
-			logs, err := backend.ParseTxLogsFromEvent(event)
+			eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
 			s.Require().NoError(err)
+
+			logs := evm.LogsToEthereum(eventTxLog.Logs)
 			if len(expectedTxLogs) > 0 {
 				s.Require().GreaterOrEqual(len(logs), len(expectedTxLogs))
 				s.assertTxLogsMatch(expectedTxLogs, logs, txInfo)
