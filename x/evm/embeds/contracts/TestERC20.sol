@@ -12,8 +12,4 @@ contract TestERC20 is ERC20 {
     constructor() ERC20("TestERC20", "FOO") {
         _mint(msg.sender, initialSupply);
     }
-
-    function mint(address to, uint256 amount) public {
-        _mint(to, amount);
-    }
 }

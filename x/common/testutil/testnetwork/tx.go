@@ -143,8 +143,8 @@ func (chain *Network) BroadcastMsgs(
 		return nil, err
 	}
 
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, math.NewInt(1000))))
-	txBuilder.SetGasLimit(uint64(10 * common.TO_MICRO))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, math.NewInt(100_000))))
+	txBuilder.SetGasLimit(uint64(1_000 * common.TO_MICRO))
 
 	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
 	if err != nil {

@@ -84,7 +84,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 		FromErc20: &erc20Addr,
 	})
 	s.Require().NoError(err)
-	s.Require().NotNil(txResp)
+	s.Require().NotNil(txResp) // This is no guarantee that tx was included in the block
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	randomNibiAddress := testutil.AccAddress()
