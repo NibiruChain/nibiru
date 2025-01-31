@@ -203,39 +203,37 @@ func (k *Keeper) createFunTokenFromERC20(
 func (k Keeper) checkErc20ImplementsAllRequired(
 	ctx sdk.Context, erc20Addr gethcommon.Address, abi *gethabi.ABI,
 ) error {
-	methodNames := []string{"name",
-		"symbol",
-		"decimals",
-		"totalSupply",
+	methodNames := []string{
 		"balanceOf",
 		"transfer",
-		"allowance",
-		"approve",
-		"transferFrom",
-		"increaseAllowance",
-		"decreaseAllowance",
-		"mint",
+		"symbol",
+		"decimals",
+		"name",
+		"totalSupply",
 	}
 
 	for _, methodName := range methodNames {
+		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@ Checking method: ", methodName)
 		method, ok := abi.Methods[methodName]
 		if !ok {
-			fmt.Printf(
-				"method '%s' not found in contract at %s",
+			fmt.Println(
+				"method not found in contract at ",
 				methodName,
 				erc20Addr.Hex(),
 			)
 			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
 		}
+		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@ asking: ", methodName)
 		hasMethod, err := k.HasMethodInContract(ctx, erc20Addr, method)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("method  not found in contract at \n", methodName, erc20Addr.Hex())
 			return err
 		}
 		if !hasMethod {
-			fmt.Printf("method '%s' not found in contract at %s\n", methodName, erc20Addr.Hex())
+			fmt.Println("method not found in contract at \n", methodName, erc20Addr.Hex())
 			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
 		}
+		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Method found: ", methodName)
 	}
 	return nil
 }

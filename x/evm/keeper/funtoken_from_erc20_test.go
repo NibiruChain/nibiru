@@ -447,12 +447,12 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 	s.Require().ErrorContains(err, "method 'transfer' not found in contract")
 }
 
-// TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
-// with a malicious recursive balanceOf() and transfer() functions.
-func (s *FunTokenFromErc20Suite) TestFunTokenMissingMintFunction() {
+// TestFunTokenMissingBalanceOfFunction creates a funtoken with a contract
+// missing the `balanceOf` function
+func (s *FunTokenFromErc20Suite) TestFunTokenMissingBalanceOfFunction() {
 	deps := evmtest.NewTestDeps()
 
-	s.T().Log("Deploy InfiniteRecursionERC20")
+	s.T().Log("Deploy Missing Function ERC20")
 	metadata := keeper.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
@@ -483,9 +483,50 @@ func (s *FunTokenFromErc20Suite) TestFunTokenMissingMintFunction() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	// Can't create since the gas cap will be reached for transfer function
+	// Can't create since the balanceOf functions are missing
 	s.Require().Error(err)
-	s.Require().ErrorContains(err, "method 'mint' not found in contract")
+	s.Require().ErrorContains(err, "method 'balanceOf' not found in contract")
+}
+
+// TestFunTokenInvalidFunction creates a funtoken with a contract
+// having the `transfer` function with no amount parameter
+func (s *FunTokenFromErc20Suite) TestFunTokenInvalidFunction() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy Invalid Function ERC20")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20InvalidFunction,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	// Can't create since the transfer are invalid
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "method 'transfer' not found in contract")
 }
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.

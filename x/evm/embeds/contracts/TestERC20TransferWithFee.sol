@@ -25,8 +25,4 @@ contract TestERC20TransferWithFee is ERC20 {
 
         return true;
     }
-
-    function mint(address to, uint256 amount) public virtual {
-        _mint(to, amount);
-    }
 }

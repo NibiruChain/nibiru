@@ -32,8 +32,4 @@ contract TestERC20MaliciousTransfer is ERC20 {
         // The result is not used, ensuring the compiler doesn't optimize this away
         assert(result != 0);
     }
-
-    function mint(address to, uint256 amount) public virtual {
-        _mint(to, amount);
-    }
 }
