@@ -1,9 +1,9 @@
 package eth_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"testing"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -12,9 +12,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
-// MustNewEIP55AddrFromStr is the same as [NewEIP55AddrFromStr], except it panics
+// mustNewEIP55AddrFromStr is the same as [NewEIP55AddrFromStr], except it panics
 // when there's an error.
-func MustNewEIP55AddrFromStr(input string) eth.EIP55Addr {
+func mustNewEIP55AddrFromStr(input string) eth.EIP55Addr {
 	addr, err := eth.NewEIP55AddrFromStr(input)
 	if err != nil {
 		panic(err)
@@ -22,15 +22,9 @@ func MustNewEIP55AddrFromStr(input string) eth.EIP55Addr {
 	return addr
 }
 
-var threeValidAddrs []eth.EIP55Addr = []eth.EIP55Addr{
-	MustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
-	MustNewEIP55AddrFromStr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
-	MustNewEIP55AddrFromStr("0x1111111111111111111112222222222223333323"),
-}
-
 func (s *EIP55AddrSuite) TestEquivalence() {
 	expectedGethAddr := gethcommon.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
-	expectedEIP55Addr := MustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
+	expectedEIP55Addr := mustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
 
 	equivalentAddrs := []string{
 		"0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
@@ -110,54 +104,95 @@ func (s *EIP55AddrSuite) TestNewEIP55Addr() {
 	}
 }
 
-func (s *EIP55AddrSuite) TestProtobufEncoding() {
+func (s *EIP55AddrSuite) TestJsonEncoding() {
 	for tcIdx, tc := range []struct {
 		input        eth.EIP55Addr
-		expectedJson string
+		expectedJson json.RawMessage
 		wantErr      string
 	}{
 		{
-			input:        threeValidAddrs[0],
-			expectedJson: `"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"`,
+			input:        mustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
+			expectedJson: []byte("\"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\""),
 		},
 		{
-			input:        threeValidAddrs[1],
-			expectedJson: `"0xAe967917c465db8578ca9024c205720b1a3651A9"`,
+			input:        mustNewEIP55AddrFromStr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
+			expectedJson: []byte("\"0xAe967917c465db8578ca9024c205720b1a3651A9\""),
 		},
 		{
-			input:        threeValidAddrs[2],
-			expectedJson: `"0x1111111111111111111112222222222223333323"`,
+			input:        mustNewEIP55AddrFromStr("0x1111111111111111111112222222222223333323"),
+			expectedJson: []byte("\"0x1111111111111111111112222222222223333323\""),
 		},
 	} {
 		s.Run(strconv.Itoa(tcIdx), func() {
-			givenMut := tc.input
-			jsonBz, err := givenMut.MarshalJSON()
-			s.NoError(err)
-			s.Equal(tc.expectedJson, string(jsonBz))
+			jsonBz, err := tc.input.MarshalJSON()
+			s.Require().NoError(err)
+			s.Require().EqualValues(tc.expectedJson, jsonBz)
 
 			eip55Addr := new(eth.EIP55Addr)
-			s.NoError(eip55Addr.UnmarshalJSON(jsonBz))
-			s.Equal(givenMut, tc.input,
-				"Given -> MarshalJSON -> UnmarshalJSON returns a different value than the given when it should be an identity operation (no-op). test case #%d", tcIdx)
+			s.Require().NoError(eip55Addr.UnmarshalJSON(jsonBz))
+			s.Require().EqualValues(tc.input, *eip55Addr)
+		})
+	}
+}
 
+func (s *EIP55AddrSuite) TestProtobufEncoding() {
+	for tcIdx, tc := range []struct {
+		input           eth.EIP55Addr
+		expectedProtoBz []byte
+		wantErr         string
+	}{
+		{
+			input:           mustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
+			expectedProtoBz: []byte{90, 174, 182, 5, 63, 62, 148, 201, 185, 160, 159, 51, 102, 148, 53, 231, 239, 27, 234, 237},
+		},
+		{
+			input:           mustNewEIP55AddrFromStr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
+			expectedProtoBz: []byte{174, 150, 121, 23, 196, 101, 219, 133, 120, 202, 144, 36, 194, 5, 114, 11, 26, 54, 81, 169},
+		},
+		{
+			input:           mustNewEIP55AddrFromStr("0x1111111111111111111112222222222223333323"),
+			expectedProtoBz: []byte{17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 18, 34, 34, 34, 34, 34, 35, 51, 51, 35},
+		},
+	} {
+		s.Run(strconv.Itoa(tcIdx), func() {
 			bz, err := tc.input.Marshal()
-			s.NoError(err)
-			s.Equal(strings.Trim(tc.expectedJson, `"`), string(bz),
-				"Marshaling to bytes gives different value than the test case specifies. test case #%d", tcIdx)
+			s.Require().NoError(err)
+			s.Require().EqualValues(tc.expectedProtoBz, bz)
 
-			err = eip55Addr.Unmarshal(bz)
-			s.NoError(err)
-			s.Equal(tc.input.Address, eip55Addr.Address,
-				"Given -> Marshal -> Unmarshal returns a different value than the given when it should be an identity operation (no-op). test case #%d", tcIdx)
+			eip55Addr := new(eth.EIP55Addr)
+			s.Require().NoError(eip55Addr.Unmarshal(bz))
+			s.Require().Equal(tc.input.Address, eip55Addr.Address)
+		})
+	}
+}
 
-			s.Equal(len([]byte(tc.input.Hex())), tc.input.Size())
-			s.Equal(len(tc.input.Hex()), tc.input.Size())
+func (s *EIP55AddrSuite) TestSize() {
+	for idx, tc := range []struct {
+		input        eth.EIP55Addr
+		expectedSize int
+		wantErr      string
+	}{
+		{
+			input:        mustNewEIP55AddrFromStr("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
+			expectedSize: 20,
+		},
+		{
+			input:        mustNewEIP55AddrFromStr("0xAe967917c465db8578ca9024c205720b1a3651A9"),
+			expectedSize: 20,
+		},
+		{
+			input:        mustNewEIP55AddrFromStr("0x1111111111111111111112222222222223333323"),
+			expectedSize: 20,
+		},
+	} {
+		s.Run(strconv.Itoa(idx), func() {
+			s.Require().EqualValues(tc.expectedSize, tc.input.Size())
 		})
 	}
 }
 
 // showcases how geth checks for valid hex addresses and treats invalid inputs
-func (s *EIP55AddrSuite) TestIsEIP55Address() {
+func (s *EIP55AddrSuite) TestHexAddress() {
 	s.True(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"))
 	s.True(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAED"))
 	s.False(gethcommon.IsHexAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed1234"))
@@ -179,21 +214,20 @@ func TestEIP55AddrSuite(t *testing.T) {
 
 func (s *EIP55AddrSuite) TestStringEncoding() {
 	addrHex := "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
-	addr := new(eth.EIP55Addr)
-	err := addr.Unmarshal([]byte(addrHex))
-	s.NoError(err)
-	s.Equal(addrHex, addr.Address.Hex())
+	addr, err := eth.NewEIP55AddrFromStr(addrHex)
+	s.Require().NoError(err)
+	s.Require().Equal(addrHex, addr.Address.Hex())
 
-	addrBytes, err := addr.Marshal()
-	s.NoError(err)
-	s.Equal(addrHex, string(addrBytes))
+	addrBz, err := addr.Marshal()
+	s.Require().NoError(err)
+	s.Require().EqualValues(addr.Bytes(), addrBz)
 
 	bz, err := addr.MarshalJSON()
-	s.NoError(err)
-	s.Equal(fmt.Sprintf(`"%s"`, addrHex), string(bz))
+	s.Require().NoError(err)
+	s.Require().Equal(fmt.Sprintf(`"%s"`, addrHex), string(bz))
 
-	addrb := new(eth.EIP55Addr)
-	err = addrb.UnmarshalJSON([]byte(fmt.Sprintf(`"%s"`, addrHex)))
-	s.NoError(err)
-	s.EqualValues(addrb, addr)
+	newAddr := new(eth.EIP55Addr)
+	err = newAddr.UnmarshalJSON(bz)
+	s.Require().NoError(err)
+	s.Require().EqualValues(addrHex, newAddr.Hex())
 }
