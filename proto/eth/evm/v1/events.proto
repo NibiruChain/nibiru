@@ -4,6 +4,7 @@ package eth.evm.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
+import "eth/evm/v1/evm.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
@@ -28,7 +29,7 @@ message EventEthereumTx {
 // EventTxLog defines the event for an Ethereum transaction log
 message EventTxLog {
   // tx_logs is an array of transaction logs
-  repeated string tx_logs = 1;
+  repeated Log logs = 1 [ (gogoproto.nullable) = false ];
 }
 
 // EventBlockBloom defines an Ethereum block bloom filter event

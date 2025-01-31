@@ -40,7 +40,7 @@ type ParsedTxs struct {
 // ParseTxResult parses eth tx info from the ABCI events of Eth tx msgs
 func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error) {
 	eventTypePendingEthereumTx := evm.PendingEthereumTxEvent
-	eventTypeEthereumTx := proto.MessageName((*evm.EventEthereumTx)(nil))
+	eventTypeEthereumTx := proto.MessageName(new(evm.EventEthereumTx))
 
 	// Parsed txs is the structure being populated from the events
 	// So far (until we allow ethereum_txs as cosmos tx messages) it'll have single tx

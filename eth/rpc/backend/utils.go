@@ -2,7 +2,6 @@
 package backend
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"sort"
@@ -212,9 +211,9 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 
 // AllTxLogsFromEvents parses all ethereum logs from cosmos events
 func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
-	allLogs := make([][]*gethcore.Log, 0, 4)
-	for _, event := range events {
-		if event.Type != proto.MessageName(new(evm.EventTxLog)) {
+	allLogs := make([][]*gethcore.Log, len(events))
+	for i, event := range events {
+		if event.Type != evm.TypeUrlEventTxLog {
 			continue
 		}
 
@@ -223,7 +222,7 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*gethcore.Log, error) {
 			return nil, err
 		}
 
-		allLogs = append(allLogs, logs)
+		allLogs[i] = logs
 	}
 	return allLogs, nil
 }
@@ -252,15 +251,7 @@ func ParseTxLogsFromEvent(event abci.Event) ([]*gethcore.Log, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse event tx log")
 	}
-	var evmLogs []*evm.Log
-	for _, logString := range eventTxLog.TxLogs {
-		var evmLog evm.Log
-		if err = json.Unmarshal([]byte(logString), &evmLog); err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal event tx log")
-		}
-		evmLogs = append(evmLogs, &evmLog)
-	}
-	return evm.LogsToEthereum(evmLogs), nil
+	return evm.LogsToEthereum(eventTxLog.Logs), nil
 }
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
