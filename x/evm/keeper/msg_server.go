@@ -684,7 +684,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 		eventEthereumTx.Recipient = recipient.Hex()
 	}
 	if evmResp.Failed() {
-		eventEthereumTx.EthTxFailed = evmResp.VmError
+		eventEthereumTx.VmError = evmResp.VmError
 	}
 	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
 	if err != nil {

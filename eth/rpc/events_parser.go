@@ -80,7 +80,7 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 				EthTxIndex: int32(ethTxIndexFromEvent),
 				EthHash:    gethcommon.HexToHash(eventEthereumTx.EthHash),
 				GasUsed:    gasUsed,
-				Failed:     len(eventEthereumTx.EthTxFailed) > 0,
+				Failed:     len(eventEthereumTx.VmError) > 0,
 			}
 			// find the pending tx to replace by tx hash
 			pendingMsgIndex, found := parsedTxs.TxHashes[committedTx.EthHash]

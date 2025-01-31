@@ -22,8 +22,9 @@ message EventEthereumTx {
   string hash = 5;
   // recipient of the transaction
   string recipient = 6;
-  // eth_tx_failed contains a VM error should it occur
-  string eth_tx_failed = 7;
+  reserved 7; // eth_tx_failed
+  // vm_error contains a VM error should it occur
+  string vm_error = 8;
 }
 
 // EventTxLog defines the event for an Ethereum transaction log
