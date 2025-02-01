@@ -509,7 +509,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInvalidFunction() {
 		Address: deployResp.ContractAddr,
 	}
 
-	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
+	s.T().Log("happy: CreateFunToken for ERC20 with invalid function")
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,

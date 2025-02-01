@@ -213,27 +213,17 @@ func (k Keeper) checkErc20ImplementsAllRequired(
 	}
 
 	for _, methodName := range methodNames {
-		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@ Checking method: ", methodName)
 		method, ok := abi.Methods[methodName]
 		if !ok {
-			fmt.Println(
-				"method not found in contract at ",
-				methodName,
-				erc20Addr.Hex(),
-			)
 			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
 		}
-		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@ asking: ", methodName)
 		hasMethod, err := k.HasMethodInContract(ctx, erc20Addr, method)
 		if err != nil {
-			fmt.Println("method  not found in contract at \n", methodName, erc20Addr.Hex())
 			return err
 		}
 		if !hasMethod {
-			fmt.Println("method not found in contract at \n", methodName, erc20Addr.Hex())
 			return fmt.Errorf("method '%s' not found in contract at %s", methodName, erc20Addr.Hex())
 		}
-		fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Method found: ", methodName)
 	}
 	return nil
 }

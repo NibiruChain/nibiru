@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -10,34 +9,38 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// HasMethodInContract does a staticcall with the given `method`'s selector + dummy args.
-// If the call reverts with something like "function selector not recognized", returns false.
+// Helper to check if the error indicates that execution was reverted
+func isRevertedError(err error) bool {
+	return strings.Contains(err.Error(), "execution reverted") &&
+		strings.Contains(err.Error(), "unable to parse reason")
+}
+
+// HasMethodInContract checks if the contract at contractAddr
+// implements the given ABI method. It constructs dummy arguments
+// for the method, packs the call data (selector + arguments) and then
+// calls the contract via CallContractWithInput (with commit=false).
 //
-// In your real code, this likely needs to invoke `k.evmKeeper.CallEVM` or similar.
+// If the call fails with an error (or returns a VM error) that indicates
+// the function selector was not recognized, it returns false; otherwise true.
 func (k Keeper) HasMethodInContract(
 	goCtx context.Context,
-	contractAddr common.Address,
+	contractAddr gethcommon.Address,
 	method abi.Method,
 ) (bool, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// 1. Build input (4-byte selector + encoded args).
-	//    We choose dummy arguments based on the method signature.
-	//    For example, if method = "balanceOf(address)", we pass a zero address or some known address.
-	//    For method = "transfer(address,uint256)", pass a dummy address and zero uint256, etc.
-	//
-	// To illustrate, let's say we pass "0x000000000000000000000000000000000000dEaD" for addresses,
-	// and 0 for all numeric arguments. This is *just* for signature detection.
 	dummyArgs := make([]interface{}, len(method.Inputs))
-	for i, inputDef := range method.Inputs {
-		switch inputDef.Type.T {
+	for i, input := range method.Inputs {
+		switch input.Type.T {
 		case abi.AddressTy:
-			dummyArgs[i] = common.HexToAddress("0x000000000000000000000000000000000000dEaD")
+			// Use a zero address.
+			dummyArgs[i] = gethcommon.Address{}
 		case abi.UintTy, abi.IntTy:
 			dummyArgs[i] = big.NewInt(0)
 		case abi.BoolTy:
@@ -45,50 +48,50 @@ func (k Keeper) HasMethodInContract(
 		case abi.StringTy:
 			dummyArgs[i] = ""
 		default:
-			// For any types you don't specifically handle, either supply some default
-			// or handle them according to what your use case needs.
+			// For any other type, pass nil.
+			// This function has been tested mainly on ERC20 main functions,
+			// so it may not work for all types.
 			dummyArgs[i] = nil
 		}
 	}
 
-	input, err := method.Inputs.Pack(dummyArgs...)
+	inputData, err := method.Inputs.Pack(dummyArgs...)
 	if err != nil {
-		return false, fmt.Errorf("packing dummy args: %w", err)
+		return false, err
 	}
+	callData := append(method.ID, inputData...)
+	const fixedGasLimit uint64 = 100000
+	fromAcc := evm.EVM_MODULE_ADDRESS
+	nonce := k.GetAccNonce(ctx, fromAcc)
 
-	// Prepend the 4-byte method selector
-	sig := method.ID
-	callData := append(sig, input...)
+	dummyMsg := gethcore.NewMessage(
+		fromAcc,
+		&contractAddr,
+		nonce,
+		big.NewInt(0), // value = 0
+		fixedGasLimit, // use the fixed gas limit
+		big.NewInt(0), // gasPrice = 0
+		big.NewInt(0), // gasFeeCap = 0
+		big.NewInt(0), // gasTipCap = 0
+		callData,
+		gethcore.AccessList{},
+		false, // isFake = false
+	)
 
-	// 2. Make a call message
-	callMsg := evm.JsonTxArgs{
-		From:  &contractAddr,
-		To:    &contractAddr,
-		Input: (*hexutil.Bytes)(&callData),
+	evmCfg := k.GetEVMConfig(ctx)
+	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
 	}
+	evmObj := k.NewEVM(ctx, dummyMsg, evmCfg, nil, stateDB)
 
-	jsonTxArgs, err := json.Marshal(&callMsg)
+	_, err = k.CallContractWithInput(ctx, evmObj, fromAcc, &contractAddr, false, callData, fixedGasLimit)
 	if err != nil {
-		return false, fmt.Errorf("marshaling call message: %w", err)
-	}
-
-	ethCallRequest := evm.EthCallRequest{
-		Args: jsonTxArgs,
-		// This gas cap is big enough, if out of gas, something is suspicious
-		// in the transfer function.
-		GasCap:          690000000000000000,
-		ProposerAddress: sdk.ConsAddress(ctx.BlockHeader().ProposerAddress),
-		ChainId:         k.EthChainID(ctx).Int64(),
-	}
-
-	_, err = k.EstimateGasForEvmCallType(goCtx, &ethCallRequest, evm.CallTypeRPC)
-
-	if err == nil {
+		if isRevertedError(err) {
+			return false, nil
+		}
 		return true, nil
-	}
-
-	if strings.Contains(err.Error(), "Estimate gas VMError: execution reverted, but unable to parse reason") {
-		return false, nil
 	}
 	return true, nil
 }
