@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from '@jest/globals';
 import { parseEther, toBigInt, Wallet } from 'ethers';
-import { account, provider } from './setup';
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from './setup';
 import { deployContractSendNibi } from './utils';
 
 async function testSendNibi(method: 'sendViaTransfer' | 'sendViaSend' | 'sendViaCall', weiToSend: bigint) {
@@ -23,7 +23,7 @@ async function testSendNibi(method: 'sendViaTransfer' | 'sendViaSend' | 'sendVia
   expect(recipientBalanceBefore).toEqual(BigInt(0));
 
   const tx = await contract[method](recipient, { value: weiToSend });
-  const receipt = await tx.wait(1, 5e3);
+  const receipt = await tx.wait(1, TX_WAIT_TIMEOUT);
 
   const tenPow12 = toBigInt(1e12);
   const txCostMicronibi = weiToSend / tenPow12 + receipt.gasUsed;
@@ -52,14 +52,13 @@ async function testSendNibi(method: 'sendViaTransfer' | 'sendViaSend' | 'sendVia
 }
 
 describe('Send NIBI via smart contract', () => {
-  const TIMEOUT_MS = 20e3;
   it(
     'method sendViaTransfer',
     async () => {
       const weiToSend: bigint = toBigInt(5e12) * toBigInt(1e6);
       await testSendNibi('sendViaTransfer', weiToSend);
     },
-    TIMEOUT_MS,
+    TEST_TIMEOUT,
   );
 
   it(
@@ -68,7 +67,7 @@ describe('Send NIBI via smart contract', () => {
       const weiToSend: bigint = toBigInt(100e12) * toBigInt(1e6);
       await testSendNibi('sendViaSend', weiToSend);
     },
-    TIMEOUT_MS,
+    TEST_TIMEOUT,
   );
 
   it(
@@ -77,6 +76,6 @@ describe('Send NIBI via smart contract', () => {
       const weiToSend: bigint = toBigInt(100e12) * toBigInt(1e6);
       await testSendNibi('sendViaCall', weiToSend);
     },
-    TIMEOUT_MS,
+    TEST_TIMEOUT,
   );
 });
