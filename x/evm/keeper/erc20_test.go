@@ -5,7 +5,9 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (s *Suite) TestERC20Calls() {
@@ -100,4 +102,41 @@ func (s *Suite) TestERC20Calls() {
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(3_420), "expect 3420 tokens")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(54_000), "expect 54000 tokens")
 	})
+}
+
+func (s *FunTokenFromErc20Suite) TestEmptyTransferResp() {
+	deps := evmtest.NewTestDeps()
+
+	// assert that the ERC20 contract is not deployed
+	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.NewStateDB().GetNonce(deps.Sender.EthAddr))
+	s.T().Log("Deploy tether")
+
+	name := "tether"
+	symbol := "usdt"
+	totalSupply := big.NewInt(1_000_000_000)
+	decimal := big.NewInt(6)
+
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestTransferEmptyResp,
+		totalSupply, name, symbol, decimal,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
+	s.T().Log("transfer with empty response success")
+
+	evmObj, stateDB := deps.NewEVM()
+	sentAmt, _, err := deps.EvmKeeper.ERC20().Transfer(
+		deployResp.ContractAddr, /*erc20Addr*/
+		deps.Sender.EthAddr,
+		evm.EVM_MODULE_ADDRESS,
+		big.NewInt(60_000), /*amount*/
+		deps.Ctx,
+		evmObj,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(stateDB.Commit())
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	evmtest.AssertERC20BalanceEqualWithDescription(
+		s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(60_000), "expect nonzero balance")
+	s.Require().EqualValues(big.NewInt(60_000), sentAmt)
 }

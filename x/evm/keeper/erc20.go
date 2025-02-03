@@ -106,17 +106,19 @@ func (e erc20Calls) Transfer(
 		return balanceIncrease, nil, err
 	}
 
-	var erc20Bool ERC20Bool
-	err = e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret)
-	if err != nil {
-		return balanceIncrease, nil, err
-	}
+	// If there's return data, try to unpack it
+	if len(resp.Ret) > 0 {
+		var erc20Bool ERC20Bool
+		if err := e.ABI.UnpackIntoInterface(&erc20Bool, "transfer", resp.Ret); err != nil {
+			return balanceIncrease, nil, err
+		}
 
-	// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
-	success := erc20Bool.Value
-	if !success {
-		return balanceIncrease, nil, fmt.Errorf("transfer executed but returned success=false")
+		// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
+		if !erc20Bool.Value {
+			return balanceIncrease, nil, fmt.Errorf("transfer executed but returned success=false")
+		}
 	}
+	// No return data = transfer didn't revert, consider it successful
 
 	recipientBalanceAfter, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
