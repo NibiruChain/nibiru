@@ -45,6 +45,8 @@ var (
 	testRandom []byte
 	//go:embed artifacts/contracts/MKR.sol/DSToken.json
 	testMetadataBytes32 []byte
+	//go:embed artifacts/contracts/usdt.sol/TetherToken.json
+	testTransferEmptyResp []byte
 	//go:embed artifacts/contracts/TestPrecompileSendToBankThenERC20Transfer.sol/TestPrecompileSendToBankThenERC20Transfer.json
 	testPrecompileSendToBankThenERC20Transfer []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack4.sol/TestDirtyStateAttack4.json
@@ -153,6 +155,11 @@ var (
 		Name:      "MKR.sol",
 		EmbedJSON: testMetadataBytes32,
 	}
+	// SmartContract_TestTransferEmptyResp is a test contract which tests contract that have empty transfer response
+	SmartContract_TestTransferEmptyResp = CompiledEvmContract{
+		Name:      "usdt.sol",
+		EmbedJSON: testTransferEmptyResp,
+	}
 	// SmartContract_TestPrecompileSendToBankThenERC20Transfer is a test contract that sends to bank then calls ERC20 transfer
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer = CompiledEvmContract{
 		Name:      "TestPrecompileSendToBankThenERC20Transfer.sol",
@@ -186,6 +193,7 @@ func init() {
 	SmartContract_TestERC20TransferWithFee.MustLoad()
 	SmartContract_TestRandom.MustLoad()
 	SmartContract_TestBytes32Metadata.MustLoad()
+	SmartContract_TestTransferEmptyResp.MustLoad()
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
