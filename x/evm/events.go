@@ -2,6 +2,7 @@
 package evm
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -35,6 +36,7 @@ const (
 
 func EventTxLogFromABCIEvent(event abci.Event) (*EventTxLog, error) {
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
+
 	if err != nil {
 		return nil, errors.Wrapf(
 			err, "failed to parse event of type %s", TypeUrlEventTxLog)
@@ -44,7 +46,36 @@ func EventTxLogFromABCIEvent(event abci.Event) (*EventTxLog, error) {
 		return nil, errors.Wrapf(
 			err, "failed to parse event of type %s", TypeUrlEventTxLog)
 	}
+	if typedEvent.Logs == nil {
+		legacyLogs := TryParseLegacyTxLogsFromABCIEvent(event)
+		if legacyLogs != nil {
+			typedEvent.Logs = legacyLogs
+		}
+	}
 	return typedEvent, nil
+}
+
+// TryParseLegacyTxLogsFromABCIEvent is a fallback for parsing logs in the legacy format.
+// See: https://github.com/NibiruChain/nibiru/pull/2188
+func TryParseLegacyTxLogsFromABCIEvent(event abci.Event) []Log {
+	var legacyLogs []Log
+	for _, attr := range event.Attributes {
+		if attr.Key != "tx_logs" {
+			continue
+		}
+		var strLogs []string
+		if err := json.Unmarshal([]byte(attr.Value), &strLogs); err != nil {
+			return nil
+		}
+		for _, strLog := range strLogs {
+			var log Log
+			if err := json.Unmarshal([]byte(strLog), &log); err != nil {
+				return nil
+			}
+			legacyLogs = append(legacyLogs, log)
+		}
+	}
+	return legacyLogs
 }
 
 func EventBlockBloomFromABCIEvent(event abci.Event) (*EventBlockBloom, error) {
