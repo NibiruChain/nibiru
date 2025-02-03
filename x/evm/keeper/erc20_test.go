@@ -4,10 +4,11 @@ package keeper_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func (s *Suite) TestERC20Calls() {
