@@ -421,23 +421,6 @@ func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) 
 	return nil, fmt.Errorf("eth tx not found: %s", ethHash)
 }
 
-// EncodeTransactionLogs encodes TransactionLogs slice into a protobuf-encoded
-// byte slice.
-func EncodeTransactionLogs(res *TransactionLogs) ([]byte, error) {
-	return proto.Marshal(res)
-}
-
-// DecodeTransactionLogs decodes a protobuf-encoded byte slice into
-// TransactionLogs
-func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
-	var logs TransactionLogs
-	err := proto.Unmarshal(data, &logs)
-	if err != nil {
-		return TransactionLogs{}, err
-	}
-	return logs, nil
-}
-
 // DecodeTxResponse decodes an protobuf-encoded byte slice into TxResponse
 func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 	var txMsgData sdk.TxMsgData
