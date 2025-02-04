@@ -40,9 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
-
-### Nibiru EVM
+### Nibiru EVM - 2025-02-10
 
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
   that gas consumed during any send operation of the "NibiruBankKeeper" depends
@@ -96,6 +94,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2187](https://github.com/NibiruChain/nibiru/pull/2187) - fix(evm): fix eip55 address encoding
 - [#2188](https://github.com/NibiruChain/nibiru/pull/2188) - refactor(evm): update logs emission
 - [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
+- [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
