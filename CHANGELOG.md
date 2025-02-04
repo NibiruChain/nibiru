@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+- [#2197](https://github.com/NibiruChain/nibiru/pull/2197) - refactor: Move simapp -> app/simapp
 
 ### Nibiru EVM
 
