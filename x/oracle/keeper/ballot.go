@@ -159,6 +159,7 @@ func Tally(
 		rewardSpread = standardDeviation
 	}
 
+	missedValidators := make(map[string]bool)
 	for _, v := range votes {
 		// Filter votes winners & abstain voters
 		isInsideSpread := v.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
@@ -173,7 +174,11 @@ func Tally(
 			validatorPerformance.RewardWeight += v.Power
 			validatorPerformance.WinCount++
 		case isMiss:
-			validatorPerformance.MissCount++
+			// Only count a miss once per validator
+			if !missedValidators[v.Voter.String()] {
+				validatorPerformance.MissCount++
+				missedValidators[v.Voter.String()] = true
+			}
 		case isAbstainVote:
 			validatorPerformance.AbstainCount++
 		}
