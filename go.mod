@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
-	github.com/CosmWasm/wasmvm v1.5.5
+	github.com/CosmWasm/wasmvm v1.5.8
 	github.com/NibiruChain/collections v0.5.0
 
 	// Consenus Engine
