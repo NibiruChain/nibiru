@@ -41,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
-- [#2197](https://github.com/NibiruChain/nibiru/pull/2197) - refactor: Move simapp -> app/simapp
 
 ### Nibiru EVM
 
@@ -95,6 +94,9 @@ needed to include double quotes around the hexadecimal string.
 - [#2183](https://github.com/NibiruChain/nibiru/pull/2183) - fix(evm): bank keeper extension gas meter type
 - [#2184](https://github.com/NibiruChain/nibiru/pull/2184) - test(evm): e2e tests configuration enhancements
 - [#2187](https://github.com/NibiruChain/nibiru/pull/2187) - fix(evm): fix eip55 address encoding
+- [#2188](https://github.com/NibiruChain/nibiru/pull/2188) - refactor(evm): update logs emission
+- [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
+- [#2197](https://github.com/NibiruChain/nibiru/pull/2197) - evm: Create ethers v6 adapters for Nibiru
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
