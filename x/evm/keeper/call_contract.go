@@ -87,7 +87,7 @@ func (k Keeper) CallContractWithInput(
 	if commit {
 		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
 
-		err = k.EmitLogEvents(ctx, evmResp)
+		err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 		if err != nil {
 			return nil, errors.Wrap(err, "error emitting tx logs")
 		}
