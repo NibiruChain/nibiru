@@ -4,7 +4,6 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -95,13 +94,13 @@ func (k *Keeper) EthereumTx(
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
-	err = k.EmitLogEvents(ctx, evmResp)
+
+	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err != nil {
-		return nil, errors.Wrap(err, "error emitting tx logs")
+		return nil, errors.Wrap(err, "error emitting tx log event")
 	}
 
-	blockTxIdx := uint64(txConfig.TxIndex) + 1
-	k.EvmState.BlockTxIndex.Set(ctx, blockTxIdx)
+	k.EvmState.BlockTxIndex.Set(ctx, uint64(txConfig.TxIndex)+1)
 
 	return evmResp, nil
 }
@@ -685,7 +684,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 		eventEthereumTx.Recipient = recipient.Hex()
 	}
 	if evmResp.Failed() {
-		eventEthereumTx.EthTxFailed = evmResp.VmError
+		eventEthereumTx.VmError = evmResp.VmError
 	}
 	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
 	if err != nil {
@@ -727,35 +726,15 @@ func (k *Keeper) EmitEthereumTxEvents(
 	return nil
 }
 
-// EmitLogEvents emits all types of EVM events applicable to a particular execution case
-func (k *Keeper) EmitLogEvents(
-	ctx sdk.Context,
-	evmResp *evm.MsgEthereumTxResponse,
-) error {
-	// Typed event: eth.evm.v1.EventTxLog
-	txLogs := make([]string, len(evmResp.Logs))
-	for i, log := range evmResp.Logs {
-		value, err := json.Marshal(log)
-		if err != nil {
-			return errors.Wrap(err, "failed to encode log")
-		}
-		txLogs[i] = string(value)
-	}
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{TxLogs: txLogs})
-
-	return nil
-}
-
 // updateBlockBloom updates transient block bloom filter
 func (k *Keeper) updateBlockBloom(
 	ctx sdk.Context,
 	evmResp *evm.MsgEthereumTxResponse,
 	logIndex uint64,
 ) {
-	logs := evm.LogsToEthereum(evmResp.Logs)
-	if len(logs) > 0 {
+	if len(evmResp.Logs) > 0 {
+		logs := evm.LogsToEthereum(evmResp.Logs)
 		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())
-		blockLogSize := logIndex + uint64(len(logs))
-		k.EvmState.BlockLogSize.Set(ctx, blockLogSize)
+		k.EvmState.BlockLogSize.Set(ctx, logIndex+uint64(len(logs)))
 	}
 }

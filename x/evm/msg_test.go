@@ -955,34 +955,6 @@ func (s *MsgsSuite) TestUnwrapEthererumMsg() {
 	s.Equal(unwrappedMsg, msg)
 }
 
-func (s *MsgsSuite) TestTransactionLogsEncodeDecode() {
-	addr := evmtest.NewEthPrivAcc().EthAddr.String()
-
-	txLogs := evm.TransactionLogs{
-		Hash: common.BytesToHash([]byte("tx_hash")).String(),
-		Logs: []*evm.Log{
-			{
-				Address:     addr,
-				Topics:      []string{common.BytesToHash([]byte("topic")).String()},
-				Data:        []byte("data"),
-				BlockNumber: 1,
-				TxHash:      common.BytesToHash([]byte("tx_hash")).String(),
-				TxIndex:     1,
-				BlockHash:   common.BytesToHash([]byte("block_hash")).String(),
-				Index:       1,
-				Removed:     false,
-			},
-		},
-	}
-
-	txLogsEncoded, encodeErr := evm.EncodeTransactionLogs(&txLogs)
-	s.Nil(encodeErr)
-
-	txLogsEncodedDecoded, decodeErr := evm.DecodeTransactionLogs(txLogsEncoded)
-	s.Nil(decodeErr)
-	s.Equal(txLogs, txLogsEncodedDecoded)
-}
-
 func (s *MsgsSuite) TestMarshalJSON() {
 	addrHex := "0x1111111111111111122222222222222222222222"
 	{

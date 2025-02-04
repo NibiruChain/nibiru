@@ -182,16 +182,16 @@ func pendingEthereumTxEvent(txHash string, txIndex int) abci.Event {
 }
 
 func ethereumTxEvent(txHash string, txIndex int, gasUsed int, failed bool) abci.Event {
-	failure := ""
+	var vmError string
 	if failed {
-		failure = "failed"
+		vmError = "failed"
 	}
 	event, err := sdk.TypedEventToEvent(
 		&evm.EventEthereumTx{
-			EthHash:     txHash,
-			Index:       strconv.Itoa(txIndex),
-			GasUsed:     strconv.Itoa(gasUsed),
-			EthTxFailed: failure,
+			EthHash: txHash,
+			Index:   strconv.Itoa(txIndex),
+			GasUsed: strconv.Itoa(gasUsed),
+			VmError: vmError,
 		},
 	)
 	if err != nil {

@@ -24,13 +24,15 @@ service Msg {
 
   // CreateFunToken: Create a "FunToken" mapping. Either the ERC20 contract
   // address can be given to create the mapping to a Bank Coin, or the
-  // denomination for a Bank Coin can be given to create the mapping to an ERC20.
+  // denomination for a Bank Coin can be given to create the mapping to an
+  // ERC20.
   rpc CreateFunToken(MsgCreateFunToken) returns (MsgCreateFunTokenResponse);
 
   // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc ConvertCoinToEvm(MsgConvertCoinToEvm) returns (MsgConvertCoinToEvmResponse);
+  rpc ConvertCoinToEvm(MsgConvertCoinToEvm)
+      returns (MsgConvertCoinToEvmResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -41,11 +43,11 @@ message MsgEthereumTx {
   google.protobuf.Any data = 1;
 
   // size is the encoded storage size of the transaction (DEPRECATED)
-  double size = 2 [(gogoproto.jsontag) = "-"];
+  double size = 2 [ (gogoproto.jsontag) = "-" ];
   // hash of the transaction in hex format
-  string hash = 3 [(gogoproto.moretags) = "rlp:\"-\""];
-  // from is the ethereum signer address in hex format. This address value is checked
-  // against the address derived from the signature (V, R, S) using the
+  string hash = 3 [ (gogoproto.moretags) = "rlp:\"-\"" ];
+  // from is the ethereum signer address in hex format. This address value is
+  // checked against the address derived from the signature (V, R, S) using the
   // secp256k1 elliptic curve
   string from = 4;
 }
@@ -64,31 +66,34 @@ message LegacyTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 1;
   // gas_price defines the value for each gas unit
-  string gas_price = 2 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_price = 2 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 3 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 3 [ (gogoproto.customname) = "GasLimit" ];
   // to is the hex formatted address of the recipient
   string to = 4;
   // value defines the unsigned integer value of the transaction amount.
-  string value = 5 [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.customname) = "Amount"];
+  string value = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.customname) = "Amount"
+  ];
   // data is the data payload bytes of the transaction.
   bytes data = 6;
 
-  // v defines the recovery id as the "v" signature value from the elliptic curve
-  // digital signatute algorithm (ECDSA). It indicates which of two possible
-  // solutions should be used to reconstruct the public key from the signature.
-  // In Ethereum, "v" takes the value 27 or 28 for transactions that are not
-  // relay-protected.
+  // v defines the recovery id as the "v" signature value from the elliptic
+  // curve digital signatute algorithm (ECDSA). It indicates which of two
+  // possible solutions should be used to reconstruct the public key from the
+  // signature. In Ethereum, "v" takes the value 27 or 28 for transactions that
+  // are not relay-protected.
   bytes v = 7;
 
-  // r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
-  // digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
-  // the signature.
+  // r defines the x-coordinate of a point on the elliptic curve in the elliptic
+  // curve digital signatute algorithm (ECDSA). It's crucial in ensuring
+  // uniqueness of the signature.
   bytes r = 8;
 
-  // s define the signature value derived from the private key, message hash, and
-  // the value of "r". It ensures that the signature is tied to both the message
-  // and the private key of the sender.
+  // s define the signature value derived from the private key, message hash,
+  // and the value of "r". It ensures that the signature is tied to both the
+  // message and the private key of the sender.
   bytes s = 9;
 }
 
@@ -108,18 +113,24 @@ message AccessListTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
   // gas_price defines the value for each gas unit
-  string gas_price = 3 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_price = 3 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 4 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 4 [ (gogoproto.customname) = "GasLimit" ];
   // to is the recipient address in hex format
   string to = 5;
   // value defines the unsigned integer value of the transaction amount.
-  string value = 6 [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.customname) = "Amount"];
+  string value = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.customname) = "Amount"
+  ];
   // data is the data payload bytes of the transaction.
   bytes data = 7;
   // accesses is an array of access tuples
-  repeated AccessTuple accesses = 8
-      [(gogoproto.castrepeated) = "AccessList", (gogoproto.jsontag) = "accessList", (gogoproto.nullable) = false];
+  repeated AccessTuple accesses = 8 [
+    (gogoproto.castrepeated) = "AccessList",
+    (gogoproto.jsontag) = "accessList",
+    (gogoproto.nullable) = false
+  ];
 
   // v defines the recovery id and "v" signature value from the elliptic curve
   // digital signatute algorithm (ECDSA). It indicates which of two possible
@@ -128,14 +139,14 @@ message AccessListTx {
   // relay-protected.
   bytes v = 9;
 
-  // r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
-  // digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
-  // the signature.
+  // r defines the x-coordinate of a point on the elliptic curve in the elliptic
+  // curve digital signatute algorithm (ECDSA). It's crucial in ensuring
+  // uniqueness of the signature.
   bytes r = 10;
 
-  // s define the signature value derived from the private key, message hash, and
-  // the value of "r". It ensures that the signature is tied to both the message
-  // and the private key of the sender.
+  // s define the signature value derived from the private key, message hash,
+  // and the value of "r". It ensures that the signature is tied to both the
+  // message and the private key of the sender.
   bytes s = 11;
 }
 
@@ -155,20 +166,26 @@ message DynamicFeeTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
   // gas_tip_cap defines the max value for the gas tip
-  string gas_tip_cap = 3 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_tip_cap = 3 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas_fee_cap defines the max value for the gas fee
-  string gas_fee_cap = 4 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_fee_cap = 4 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 5 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 5 [ (gogoproto.customname) = "GasLimit" ];
   // to is the hex formatted address of the recipient
   string to = 6;
   // value defines the the transaction amount.
-  string value = 7 [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.customname) = "Amount"];
+  string value = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.customname) = "Amount"
+  ];
   // data is the data payload bytes of the transaction.
   bytes data = 8;
   // accesses is an array of access tuples
-  repeated AccessTuple accesses = 9
-      [(gogoproto.castrepeated) = "AccessList", (gogoproto.jsontag) = "accessList", (gogoproto.nullable) = false];
+  repeated AccessTuple accesses = 9 [
+    (gogoproto.castrepeated) = "AccessList",
+    (gogoproto.jsontag) = "accessList",
+    (gogoproto.nullable) = false
+  ];
   // v defines the recovery id and "v" signature value from the elliptic curve
   // digital signatute algorithm (ECDSA). It indicates which of two possible
   // solutions should be used to reconstruct the public key from the signature.
@@ -176,14 +193,14 @@ message DynamicFeeTx {
   // relay-protected.
   bytes v = 10;
 
-  // r defines the x-coordinate of a point on the elliptic curve in the elliptic curve
-  // digital signatute algorithm (ECDSA). It's crucial in ensuring uniqueness of
-  // the signature.
+  // r defines the x-coordinate of a point on the elliptic curve in the elliptic
+  // curve digital signatute algorithm (ECDSA). It's crucial in ensuring
+  // uniqueness of the signature.
   bytes r = 11;
 
-  // s define the signature value derived from the private key, message hash, and
-  // the value of "r". It ensures that the signature is tied to both the message
-  // and the private key of the sender.
+  // s define the signature value derived from the private key, message hash,
+  // and the value of "r". It ensures that the signature is tied to both the
+  // message and the private key of the sender.
   bytes s = 12;
 }
 
@@ -202,9 +219,9 @@ message MsgEthereumTxResponse {
   string hash = 1;
   // logs contains the transaction hash and the proto-compatible ethereum
   // logs.
-  repeated Log logs = 2;
-  // ret is the returned data from evm function (result or data supplied with revert
-  // opcode)
+  repeated Log logs = 2 [ (gogoproto.nullable) = false ];
+  // ret is the returned data from evm function (result or data supplied with
+  // revert opcode)
   bytes ret = 3;
   // vm_error is the error returned by vm execution
   string vm_error = 4;
@@ -217,11 +234,11 @@ message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
 
   // authority is the address of the governance account.
-  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // params defines the x/evm parameters to update.
   // NOTE: All parameters must be supplied.
-  eth.evm.v1.Params params = 2 [(gogoproto.nullable) = false];
+  eth.evm.v1.Params params = 2 [ (gogoproto.nullable) = false ];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
@@ -235,7 +252,7 @@ message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable)   = true
+    (gogoproto.nullable) = true
   ];
 
   // Coin denomination in the Bank Module.
@@ -247,7 +264,7 @@ message MsgCreateFunToken {
 
 message MsgCreateFunTokenResponse {
   // Fungible token mapping corresponding to ERC20 tokens.
-  eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
+  eth.evm.v1.FunToken funtoken_mapping = 1 [ (gogoproto.nullable) = false ];
 }
 
 // MsgConvertCoinToEvm: Arguments to send a Bank Coin to ERC-20 representation
@@ -255,7 +272,7 @@ message MsgConvertCoinToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
 
   // Sender: Address for the signer of the transaction.
