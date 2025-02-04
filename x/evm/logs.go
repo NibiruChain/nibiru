@@ -11,39 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
-// NewTransactionLogsFromEth creates a new NewTransactionLogs instance using []*ethtypes.Log.
-func NewTransactionLogsFromEth(hash gethcommon.Hash, ethlogs []*gethcore.Log) TransactionLogs {
-	return TransactionLogs{
-		Hash: hash.String(),
-		Logs: NewLogsFromEth(ethlogs),
-	}
-}
-
-// Validate performs a basic validation of a GenesisAccount fields.
-func (tx TransactionLogs) Validate() error {
-	if eth.IsEmptyHash(tx.Hash) {
-		return fmt.Errorf("hash cannot be the empty %s", tx.Hash)
-	}
-
-	for i, log := range tx.Logs {
-		if log == nil {
-			return fmt.Errorf("log %d cannot be nil", i)
-		}
-		if err := log.Validate(); err != nil {
-			return fmt.Errorf("invalid log %d: %w", i, err)
-		}
-		if log.TxHash != tx.Hash {
-			return fmt.Errorf("log tx hash mismatch (%s ≠ %s)", log.TxHash, tx.Hash)
-		}
-	}
-	return nil
-}
-
-// EthLogs returns the Ethereum type Logs from the Transaction Logs.
-func (tx TransactionLogs) EthLogs() []*gethcore.Log {
-	return LogsToEthereum(tx.Logs)
-}
-
 // Validate performs a basic validation of an ethereum Log fields.
 func (log *Log) Validate() error {
 	if err := eth.ValidateAddress(log.Address); err != nil {
@@ -81,8 +48,8 @@ func (log *Log) ToEthereum() *gethcore.Log {
 	}
 }
 
-func NewLogsFromEth(ethlogs []*gethcore.Log) []*Log {
-	var logs []*Log //nolint: prealloc
+func NewLogsFromEth(ethlogs []*gethcore.Log) []Log {
+	var logs []Log //nolint: prealloc
 	for _, ethlog := range ethlogs {
 		logs = append(logs, NewLogFromEth(ethlog))
 	}
@@ -91,7 +58,7 @@ func NewLogsFromEth(ethlogs []*gethcore.Log) []*Log {
 }
 
 // LogsToEthereum casts the Proto Logs to a slice of Ethereum Logs.
-func LogsToEthereum(logs []*Log) []*gethcore.Log {
+func LogsToEthereum(logs []Log) []*gethcore.Log {
 	var ethLogs []*gethcore.Log //nolint: prealloc
 	for i := range logs {
 		ethLogs = append(ethLogs, logs[i].ToEthereum())
@@ -100,13 +67,13 @@ func LogsToEthereum(logs []*Log) []*gethcore.Log {
 }
 
 // NewLogFromEth creates a new Log instance from an Ethereum type Log.
-func NewLogFromEth(log *gethcore.Log) *Log {
+func NewLogFromEth(log *gethcore.Log) Log {
 	topics := make([]string, len(log.Topics))
 	for i, topic := range log.Topics {
 		topics[i] = topic.String()
 	}
 
-	return &Log{
+	return Log{
 		Address:     log.Address.String(),
 		Topics:      topics,
 		Data:        log.Data,

@@ -202,6 +202,43 @@ func TestFuzzTally(t *testing.T) {
 	})
 }
 
+func TestTallyMissCount(t *testing.T) {
+	fixture := CreateTestFixture(t)
+
+	power := int64(100)
+	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
+	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
+
+	// Validator created
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
+	require.NoError(t, err)
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
+	require.NoError(t, err)
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
+	require.NoError(t, err)
+	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+
+	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
+	// Having validator2 to have 2 votes outside the spread
+	btcVotes := types.ExchangeRateVotes{
+		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
+		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
+		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(20000), Voter: ValAddrs[2], Power: power},
+	}
+	ethVotes := types.ExchangeRateVotes{
+		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_000), Voter: ValAddrs[0], Power: power},
+		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_300), Voter: ValAddrs[1], Power: power},
+		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1), Voter: ValAddrs[2], Power: power},
+	}
+
+	allVotes := append(btcVotes, ethVotes...)
+
+	claimMap := types.ValidatorPerformances{}
+	Tally(allVotes, math.LegacyNewDec(10), claimMap)
+	assert.Equal(t, int64(1), claimMap[ValAddrs[2].String()].MissCount)
+}
+
 type VoteMap = map[asset.Pair]types.ExchangeRateVotes
 
 func TestRemoveInvalidBallots(t *testing.T) {
