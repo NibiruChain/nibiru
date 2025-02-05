@@ -89,6 +89,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2172](https://github.com/NibiruChain/nibiru/pull/2172) - chore: close iterator in IterateEpochInfo
 - [#2173](https://github.com/NibiruChain/nibiru/pull/2173) - fix(evm): clear `StateDB` between calls
 - [#2177](https://github.com/NibiruChain/nibiru/pull/2177) - fix(cmd): Continue from #2127 and unwire vesting flags and logic from genaccounts.go
+- [#2181](https://github.com/NibiruChain/nibiru/pull/2181) - fix: change pair delimiter
 - [#2176](https://github.com/NibiruChain/nibiru/pull/2176) - tests(evm): add dirty state tests from code4rena audit
 - [#2180](https://github.com/NibiruChain/nibiru/pull/2180) - fix(evm): apply gas consumption across the entire EVM codebase at `CallContractWithInput`
 - [#2183](https://github.com/NibiruChain/nibiru/pull/2183) - fix(evm): bank keeper extension gas meter type

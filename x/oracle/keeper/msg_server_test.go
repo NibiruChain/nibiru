@@ -125,7 +125,7 @@ func TestAggregatePrevoteVote(t *testing.T) {
 			ExchangeRate: math.LegacyMustNewDecFromStr("0.29"),
 		},
 		{
-			Pair:         "BTC:CNY",
+			Pair:         "BTC@CNY",
 			ExchangeRate: math.LegacyMustNewDecFromStr("0.27"),
 		},
 	}

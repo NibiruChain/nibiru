@@ -24,10 +24,10 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 	panicCases := []TestCase{
 		{name: "blank pair", in: []asset.Pair{""}, panic: true},
 		{name: "blank pair and others", in: []asset.Pair{"", "x", "abc", "defafask"}, panic: true},
-		{name: "denom len too short", in: []asset.Pair{"x:y", "xx:yy"}, panic: true},
+		{name: "denom len too short", in: []asset.Pair{"x@y", "xx@yy"}, panic: true},
 	}
 	happyCases := []TestCase{
-		{name: "happy", in: []asset.Pair{"foo:bar", "whoo:whoo"}},
+		{name: "happy", in: []asset.Pair{"foo@bar", "whoo@whoo"}},
 	}
 
 	for _, testCase := range append(panicCases, happyCases...) {
@@ -64,7 +64,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	expectedTargets := []asset.Pair{"foo:bar", "whoo:whoo"}
+	expectedTargets := []asset.Pair{"foo@bar", "whoo@whoo"}
 	for _, target := range expectedTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}

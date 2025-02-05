@@ -43,8 +43,8 @@ func (s *TestSuite) SetupTest() {
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()
 		gs.Params.Whitelist = []asset.Pair{
-			"nibi:usdc",
-			"btc:usdc",
+			"nibi@usdc",
+			"btc@usdc",
 		}
 
 		return gs
@@ -72,20 +72,20 @@ func (s *TestSuite) TestSuccessfulVoting() {
 	// then the number picked is the one in the middle always.
 	prices := []map[asset.Pair]sdk.Dec{
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100203.0"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100203.0"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100150.5"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100150.5"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100300.9"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100300.9"),
 		},
 	}
 	votes := s.sendPrevotes(prices)
@@ -99,8 +99,8 @@ func (s *TestSuite) TestSuccessfulVoting() {
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
 		map[asset.Pair]sdk.Dec{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
+			"nibi@usdc": math.LegacyOneDec(),
+			"btc@usdc":  math.LegacyMustNewDecFromStr("100200.9"),
 		},
 		gotPrices,
 	)

@@ -27,7 +27,7 @@ func TestTryNewPair(t *testing.T) {
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s:%s:%s", denoms.NIBI, denoms.NUSD, denoms.USDC),
+			fmt.Sprintf("%s@%s@%s", denoms.NIBI, denoms.NUSD, denoms.USDC),
 			asset.ErrInvalidTokenPair,
 		},
 		{
@@ -37,22 +37,27 @@ func TestTryNewPair(t *testing.T) {
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s:%s", denoms.NIBI, denoms.NUSD),
+			fmt.Sprintf("%s@%s", denoms.NIBI, denoms.NUSD),
+			nil,
+		},
+		{
+			"correct pair 2",
+			fmt.Sprintf("%s:@%s", denoms.NIBI, denoms.NUSD),
 			nil,
 		},
 		{
 			"empty token identifier",
-			fmt.Sprintf(":%s", denoms.ETH),
+			fmt.Sprintf("@%s", denoms.ETH),
 			fmt.Errorf("empty token identifiers are not allowed"),
 		},
 		{
 			"invalid denom 1",
-			"-invalid1:valid",
+			"-invalid1@valid",
 			fmt.Errorf("invalid denom"),
 		},
 		{
 			"invalid denom 2",
-			"valid:-invalid2",
+			"valid@-invalid2",
 			fmt.Errorf("invalid denom"),
 		},
 	}
@@ -71,17 +76,17 @@ func TestTryNewPair(t *testing.T) {
 }
 
 func TestGetDenoms(t *testing.T) {
-	pair := asset.MustNewPair("uatom:unibi")
+	pair := asset.MustNewPair("uatom@unibi")
 
 	require.Equal(t, "uatom", pair.BaseDenom())
 	require.Equal(t, "unibi", pair.QuoteDenom())
 }
 
 func TestEquals(t *testing.T) {
-	pair := asset.MustNewPair("abc:xyz")
-	matchingOther := asset.MustNewPair("abc:xyz")
-	mismatchToken1 := asset.MustNewPair("abc:abc")
-	inversePair := asset.MustNewPair("xyz:abc")
+	pair := asset.MustNewPair("abc@xyz")
+	matchingOther := asset.MustNewPair("abc@xyz")
+	mismatchToken1 := asset.MustNewPair("abc@abc")
+	inversePair := asset.MustNewPair("xyz@abc")
 
 	require.True(t, pair.Equal(matchingOther))
 	require.False(t, pair.Equal(inversePair))
@@ -90,16 +95,20 @@ func TestEquals(t *testing.T) {
 
 func TestMustNewAssetPair(t *testing.T) {
 	require.Panics(t, func() {
-		asset.MustNewPair("aaa:bbb:ccc")
+		asset.MustNewPair("aaa@bbb@ccc")
+	})
+
+	require.Panics(t, func() {
+		asset.MustNewPair("aaa:bbb")
 	})
 
 	require.NotPanics(t, func() {
-		asset.MustNewPair("aaa:bbb")
+		asset.MustNewPair("aaa@bbb")
 	})
 }
 
 func TestInverse(t *testing.T) {
-	pair := asset.MustNewPair("abc:xyz")
+	pair := asset.MustNewPair("abc@xyz")
 	inverse := pair.Inverse()
 	require.Equal(t, "xyz", inverse.BaseDenom())
 	require.Equal(t, "abc", inverse.QuoteDenom())
@@ -113,8 +122,8 @@ func TestMarshalJSON(t *testing.T) {
 		input     asset.Pair
 		strOutput string
 	}{
-		{name: "happy-0", input: asset.Pair("abc:xyz"), strOutput: "\"abc:xyz\""},
-		{name: "happy-1", input: asset.Pair("abc:xyz:foo"), strOutput: "\"abc:xyz:foo\""},
+		{name: "happy-0", input: asset.Pair("abc@xyz"), strOutput: "\"abc@xyz\""},
+		{name: "happy-1", input: asset.Pair("abc@xyz@foo"), strOutput: "\"abc@xyz@foo\""},
 		{name: "happy-2", input: asset.Pair("abc"), strOutput: "\"abc\""},
 		{name: "empty", input: asset.Pair(""), strOutput: "\"\""},
 	}
@@ -156,9 +165,9 @@ func TestPairsUtils(t *testing.T) {
 		pairStrs    []string
 		expectPanic bool
 	}{
-		{pairStrs: []string{"eth:usd", "btc:usd", "atom:usd"}, expectPanic: false},
-		{pairStrs: []string{"eth:usd", "", "abc"}, expectPanic: true},
-		{pairStrs: []string{"eth:usd:ftt", "btc:usd"}, expectPanic: true},
+		{pairStrs: []string{"eth@usd", "btc@usd", "atom@usd"}, expectPanic: false},
+		{pairStrs: []string{"eth@usd", "", "abc"}, expectPanic: true},
+		{pairStrs: []string{"eth@usd@ftt", "btc@usd"}, expectPanic: true},
 	}
 
 	var panicTestFn func(t require.TestingT, f assert.PanicTestFunc, msgAndArgs ...interface{})
