@@ -9,6 +9,8 @@ import (
 
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
+	oracleante "github.com/NibiruChain/nibiru/v2/x/oracle/ante"
+
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
@@ -71,6 +73,7 @@ func NewAnteHandlerNonEVM(
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1915
 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
+		oracleante.NewVoteFeeDiscountDecorator(opts.OracleKeeper, opts.StakingKeeper),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
 		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
