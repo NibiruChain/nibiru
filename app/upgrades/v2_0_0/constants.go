@@ -1,4 +1,4 @@
-package v1_1_0
+package v2_0_0
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/types"
@@ -7,10 +7,10 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-const UpgradeName = "v1.1.0"
+const UpgradeName = "v2.0.0"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
@@ -20,6 +20,6 @@ var Upgrade = upgrades.Upgrade{
 		}
 	},
 	StoreUpgrades: types.StoreUpgrades{
-		Added: []string{inflationtypes.ModuleName},
+		Added: []string{evmtypes.ModuleName},
 	},
 }
