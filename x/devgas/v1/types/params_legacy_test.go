@@ -6,11 +6,11 @@ import (
 	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	params "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 func TestLegacyParamKeyTable(t *testing.T) {
-	require.IsType(t, paramtypes.KeyTable{}, ParamKeyTable())
+	require.IsType(t, params.KeyTable{}, ParamKeyTable())
 	require.NotEmpty(t, ParamKeyTable())
 }
 

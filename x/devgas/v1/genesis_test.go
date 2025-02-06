@@ -12,8 +12,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgasv1 "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type GenesisTestSuite struct {
@@ -22,7 +22,7 @@ type GenesisTestSuite struct {
 	app *app.NibiruApp
 	ctx sdk.Context
 
-	genesis devgastypes.GenesisState
+	genesis devgas.GenesisState
 }
 
 func TestGenesisTestSuite(t *testing.T) {
@@ -35,14 +35,14 @@ func (s *GenesisTestSuite) SetupTest() {
 	s.app = app
 	s.ctx = ctx
 
-	s.genesis = *devgastypes.DefaultGenesisState()
+	s.genesis = *devgas.DefaultGenesisState()
 }
 
 func (s *GenesisTestSuite) TestGenesis() {
 	randomAddr := testutil.AccAddress().String()
 	testCases := []struct {
 		name     string
-		genesis  devgastypes.GenesisState
+		genesis  devgas.GenesisState
 		expPanic bool
 	}{
 		{
@@ -52,10 +52,10 @@ func (s *GenesisTestSuite) TestGenesis() {
 		},
 		{
 			name: "custom genesis - feeshare disabled",
-			genesis: devgastypes.GenesisState{
-				Params: devgastypes.ModuleParams{
+			genesis: devgas.GenesisState{
+				Params: devgas.ModuleParams{
 					EnableFeeShare:  false,
-					DeveloperShares: devgastypes.DefaultDeveloperShares,
+					DeveloperShares: devgas.DefaultDeveloperShares,
 					AllowedDenoms:   []string{"unibi"},
 				},
 			},
@@ -63,8 +63,8 @@ func (s *GenesisTestSuite) TestGenesis() {
 		},
 		{
 			name: "custom genesis - feeshare enabled, 0% developer shares",
-			genesis: devgastypes.GenesisState{
-				Params: devgastypes.ModuleParams{
+			genesis: devgas.GenesisState{
+				Params: devgas.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: math.LegacyNewDecWithPrec(0, 2),
 					AllowedDenoms:   []string{"unibi"},
@@ -74,8 +74,8 @@ func (s *GenesisTestSuite) TestGenesis() {
 		},
 		{
 			name: "custom genesis - feeshare enabled, 100% developer shares",
-			genesis: devgastypes.GenesisState{
-				Params: devgastypes.ModuleParams{
+			genesis: devgas.GenesisState{
+				Params: devgas.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: math.LegacyNewDecWithPrec(100, 2),
 					AllowedDenoms:   []string{"unibi"},
@@ -85,13 +85,13 @@ func (s *GenesisTestSuite) TestGenesis() {
 		},
 		{
 			name: "custom genesis - feeshare enabled, all denoms allowed",
-			genesis: devgastypes.GenesisState{
-				Params: devgastypes.ModuleParams{
+			genesis: devgas.GenesisState{
+				Params: devgas.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: math.LegacyNewDecWithPrec(10, 2),
 					AllowedDenoms:   []string{},
 				},
-				FeeShare: []devgastypes.FeeShare{
+				FeeShare: []devgas.FeeShare{
 					{
 						ContractAddress:   randomAddr,
 						DeployerAddress:   randomAddr,
@@ -103,7 +103,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 		},
 		{
 			name:     "empty genesis",
-			genesis:  devgastypes.GenesisState{},
+			genesis:  devgas.GenesisState{},
 			expPanic: true,
 		},
 	}
@@ -114,17 +114,17 @@ func (s *GenesisTestSuite) TestGenesis() {
 
 			if tc.expPanic {
 				s.Require().Panics(func() {
-					devgas.InitGenesis(s.ctx, s.app.DevGasKeeper, tc.genesis)
+					devgasv1.InitGenesis(s.ctx, s.app.DevGasKeeper, tc.genesis)
 				})
 			} else {
 				s.Require().NotPanics(func() {
-					devgas.InitGenesis(s.ctx, s.app.DevGasKeeper, tc.genesis)
+					devgasv1.InitGenesis(s.ctx, s.app.DevGasKeeper, tc.genesis)
 				})
 
 				params := s.app.DevGasKeeper.GetParams(s.ctx)
 				s.Require().EqualValues(tc.genesis.Params, params)
 
-				gen := devgas.ExportGenesis(s.ctx, s.app.DevGasKeeper)
+				gen := devgasv1.ExportGenesis(s.ctx, s.app.DevGasKeeper)
 				s.NoError(gen.Validate())
 			}
 		})

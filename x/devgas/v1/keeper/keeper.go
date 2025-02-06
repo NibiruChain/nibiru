@@ -8,23 +8,23 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
 
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts
 // registered to receive Nibiru Chain gas fees.
 type Keeper struct {
-	storeKey storetypes.StoreKey
+	storeKey store.StoreKey
 	cdc      codec.BinaryCodec
 
-	bankKeeper    devgastypes.BankKeeper
+	bankKeeper    devgas.BankKeeper
 	wasmKeeper    wasmkeeper.Keeper
-	accountKeeper devgastypes.AccountKeeper
+	accountKeeper devgas.AccountKeeper
 
 	// feeCollectorName is the name of x/auth module's fee collector module
 	// account, "fee_collector", which collects transaction fees for distribution
@@ -39,9 +39,9 @@ type Keeper struct {
 	//  because there's exactly one deployer and withdrawer.
 	//  - value (V): FeeShare value saved into state.
 	//  - indexers (I):  Indexed by deployer and withdrawer
-	DevGasStore collections.IndexedMap[string, devgastypes.FeeShare, DevGasIndexes]
+	DevGasStore collections.IndexedMap[string, devgas.FeeShare, DevGasIndexes]
 
-	ModuleParams collections.Item[devgastypes.ModuleParams]
+	ModuleParams collections.Item[devgas.ModuleParams]
 
 	// the address capable of executing a MsgUpdateParams message. Typically,
 	// this should be the x/gov module account.
@@ -50,11 +50,11 @@ type Keeper struct {
 
 // NewKeeper creates new instances of the fees Keeper
 func NewKeeper(
-	storeKey storetypes.StoreKey,
+	storeKey store.StoreKey,
 	cdc codec.BinaryCodec,
-	bk devgastypes.BankKeeper,
+	bk devgas.BankKeeper,
 	wk wasmkeeper.Keeper,
-	ak devgastypes.AccountKeeper,
+	ak devgas.AccountKeeper,
 	feeCollector string,
 	authority string,
 ) Keeper {
@@ -68,8 +68,8 @@ func NewKeeper(
 		authority:        authority,
 		DevGasStore:      NewDevGasStore(storeKey, cdc),
 		ModuleParams: collections.NewItem(
-			storeKey, devgastypes.KeyPrefixParams,
-			collections.ProtoValueEncoder[devgastypes.ModuleParams](cdc),
+			storeKey, devgas.KeyPrefixParams,
+			collections.ProtoValueEncoder[devgas.ModuleParams](cdc),
 		),
 	}
 }
@@ -81,5 +81,5 @@ func (k Keeper) GetAuthority() string {
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", devgastypes.ModuleName))
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", devgas.ModuleName))
 }
