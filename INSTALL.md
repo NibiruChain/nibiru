@@ -1,14 +1,18 @@
-# Install `nibid` binaries          <!-- omit in toc -->
+# Install `nibid` binaries <!-- omit in toc -->
 
 This guide will explain how to install the Nibiru Chain binary, `nibid`, onto your system.
 
 #### Table of Contents
+
 - [1. Update the system](#1-update-the-system)
 - [2. Install Golang](#2-install-golang)
 - [3. Install build requirements](#3-install-build-requirements)
 - [4. Clone the Nibiru Repository](#4-clone-the-nibiru-repository)
 - [Upgrade](#upgrade)
-
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Troubleshooting](#troubleshooting-1)
+  - [Error when running `make install` on MacOS](#error-when-running-make-install-on-macos)
 
 ## 1. Update the system
 
@@ -19,7 +23,7 @@ sudo apt update
 sudo apt upgrade --yes
 ```
 
-## 2. Install Golang 
+## 2. Install Golang
 
 Steps described here: https://go.dev/doc/install
 
@@ -34,7 +38,6 @@ wget -q -O - https://git.io/vQhTU | bash -s -- --version 1.16
 
 After installed, open new terminal to properly load go
 
-
 ## 4. Clone the Nibiru Repository
 
 ```sh
@@ -43,19 +46,21 @@ git clone https://github.com/NibiruChain/nibiru
 cd nibiru
 ```
 
-On this fresh clone of the repo, simply run 
+On this fresh clone of the repo, simply run
+
 ```sh
-make build 
+make build
 make install
 make localnet
 ```
-and open another terminal.  
+
+and open another terminal.
 
 ---
 
 ## Upgrade
 
-The scheduled mainnet upgrade to `nibiru-2` is planned for 
+The scheduled mainnet upgrade to `nibiru-2` is planned for
 
 ```
 cd nibiru
@@ -63,12 +68,11 @@ git fetch tags
 git checkout v0.0.1
 ```
 
-
- Testnet
+Testnet
 
 One the Nibiru binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/NibiruChain/Networks/tree/main/Testnet).
 
- Mainnet
+Mainnet
 
 One the Nibiru binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/NibiruChain/Networks/tree/main/Mainnet).
 
@@ -84,9 +88,9 @@ B. New commands you've made on the `nibid` don't show up. Your `nibid` probably 
 
 ## Contributing
 
-The code for `nibid` is located in the `/cmd/nibid` folder. 
+The code for `nibid` is located in the `/cmd/nibid` folder.
 
-In addition to the commands available within that folder, `nibid` pulls in cli subcommands from the modules e.g. `/x/perps/cli`
+In addition to the commands available within that folder, `nibid` pulls in cli subcommands from the modules e.g. `/x/oracle/cli`
 
 After updating the code run
 
@@ -98,15 +102,15 @@ make install
 To see all the commands available just add `--help` to the end.
 
 Example:
+
 ```bash
 nibid --help
 nibid query --help
 nibid tx --help
-nibid query perp --help
+nibid query oracle --help
 ```
 
-
-## Troubleshotting
+## Troubleshooting
 
 ### Error when running `make install` on MacOS
 

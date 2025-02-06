@@ -19,9 +19,9 @@ var (
 // oracle message types
 const (
 	TypeMsgDelegateFeedConsent          = "delegate_feeder"
-	TypeMsgEditOracleParams             = "edit_oracle_params"
 	TypeMsgAggregateExchangeRatePrevote = "aggregate_exchange_rate_prevote"
 	TypeMsgAggregateExchangeRateVote    = "aggregate_exchange_rate_vote"
+	TypeMsgEditOracleParams             = "edit_oracle_params"
 )
 
 //-------------------------------------------------
@@ -151,6 +151,8 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 	return nil
 }
 
+// ------------------------ MsgDelegateFeedConsent ------------------------
+
 // NewMsgDelegateFeedConsent creates a MsgDelegateFeedConsent instance
 func NewMsgDelegateFeedConsent(operatorAddress sdk.ValAddress, feederAddress sdk.AccAddress) *MsgDelegateFeedConsent {
 	return &MsgDelegateFeedConsent{
@@ -195,35 +197,26 @@ func (msg MsgDelegateFeedConsent) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgEditOracleParams) Route() string { return RouterKey }
+// ------------------------ MsgEditOracleParams ------------------------
 
-func (msg MsgEditOracleParams) Type() string { return TypeMsgEditOracleParams }
+func (m MsgEditOracleParams) Route() string { return RouterKey }
+func (m MsgEditOracleParams) Type() string  { return TypeMsgEditOracleParams }
 
-// GetSignBytes implements sdk.Msg
-func (msg MsgEditOracleParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+func (m MsgEditOracleParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+	return nil
 }
 
-// GetSigners implements sdk.Msg
-func (msg MsgEditOracleParams) GetSigners() []sdk.AccAddress {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+func (m MsgEditOracleParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgEditOracleParams) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
 	}
-
-	return []sdk.AccAddress{sdk.AccAddress(sender)}
-}
-
-// ValidateBasic implements sdk.Msg
-func (msg MsgEditOracleParams) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "Invalid sender address (%s)", err)
-	}
-
-	if msg.Params == nil {
-		return sdkerrors.Wrap(errors.ErrInvalidRequest, "params cannot be nil")
-	}
-
-	return nil
+	return []sdk.AccAddress{signer}
 }

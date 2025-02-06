@@ -186,7 +186,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2020 Nibiru Labs, Inc.
+   Copyright 2024 MTRX Services Ltd.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -199,9 +199,3 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-$10-worth New Year Gift for You
-Make your 2022 productive
-with LINER Premium
-
-Dismiss
-Open the gift

@@ -1,0 +1,48 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "DSNote",
+  "sourceName": "contracts/MKR.sol",
+  "abi": [
+    {
+      "anonymous": true,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "sig",
+          "type": "bytes4"
+        },
+        {
+          "indexed": true,
+          "name": "guy",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "foo",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "name": "bar",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "wad",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "fax",
+          "type": "bytes"
+        }
+      ],
+      "name": "LogNote",
+      "type": "event"
+    }
+  ],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820867630c0f37bb81d4b5f15a3e77b04ada6667969a96ddaeea40a5d9bbff0f0b10029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820867630c0f37bb81d4b5f15a3e77b04ada6667969a96ddaeea40a5d9bbff0f0b10029",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

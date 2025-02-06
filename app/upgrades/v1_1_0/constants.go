@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/NibiruChain/nibiru/app/upgrades"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 const UpgradeName = "v1.1.0"

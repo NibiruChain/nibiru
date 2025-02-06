@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -25,12 +25,12 @@ func Test_TestnetCmd(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)
 
-	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Marshaler)
+	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Codec)
 	require.NoError(t, err)
 
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
 	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithHomeDir(home).
 		WithTxConfig(encodingConfig.TxConfig)
 
@@ -49,6 +49,6 @@ func Test_TestnetCmd(t *testing.T) {
 	appState, _, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	require.NoError(t, err)
 
-	bankGenState := banktypes.GetGenesisStateFromAppState(encodingConfig.Marshaler, appState)
+	bankGenState := banktypes.GetGenesisStateFromAppState(encodingConfig.Codec, appState)
 	require.NotEmpty(t, bankGenState.Supply.String())
 }

@@ -5,15 +5,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	grpccodes "google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilMsg error = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
+var errNilMsg error = common.ErrNilGrpcMsg
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,
@@ -22,7 +22,7 @@ func (k Keeper) CreateDenom(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -36,7 +36,7 @@ func (k Keeper) CreateDenom(
 	}
 
 	return &types.MsgCreateDenomResponse{
-		NewTokenDenom: denom.String(),
+		NewTokenDenom: denom.Denom().String(),
 	}, err
 }
 
@@ -47,7 +47,7 @@ func (k Keeper) ChangeAdmin(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -81,7 +81,7 @@ func (k Keeper) UpdateModuleParams(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	if k.authority != txMsg.Authority {
@@ -105,7 +105,7 @@ func (k Keeper) Mint(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -178,7 +178,7 @@ func (k Keeper) Burn(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -248,7 +248,7 @@ func (k Keeper) SetDenomMetadata(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

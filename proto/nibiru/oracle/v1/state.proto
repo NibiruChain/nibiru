@@ -6,14 +6,14 @@ import "google/api/annotations.proto";
 import "nibiru/oracle/v1/oracle.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // a snapshot of the prices at a given point in time
 message PriceSnapshot {
   string pair = 1 [
     (gogoproto.moretags) = "yaml:\"pair\"",
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
