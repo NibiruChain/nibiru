@@ -71,7 +71,7 @@ export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
     deploymentTransaction(): ContractTransactionResponse;
   };
 }> => {
-  const oraclePair = 'ueth:uuusd';
+  const oraclePair = 'ueth:uusd';
   const factory = new NibiruOracleChainLinkLike__factory(account);
   const contract = await factory.deploy(oraclePair, toBigInt(8));
   await contract.waitForDeployment();
