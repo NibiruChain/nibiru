@@ -96,6 +96,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2187](https://github.com/NibiruChain/nibiru/pull/2187) - fix(evm): fix eip55 address encoding
 - [#2188](https://github.com/NibiruChain/nibiru/pull/2188) - refactor(evm): update logs emission
 - [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
+- [#2200](https://github.com/NibiruChain/nibiru/pull/2200) - fix(test): evm e2e oracle test fixed pair name
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 
