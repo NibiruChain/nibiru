@@ -1,0 +1,41 @@
+# Use this justfile by 
+# (1) installing with "cargo install just" 
+# (2) running the "just" command.
+
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Install all dependencies
+install:
+  bun i --no-cache
+
+# Build and compile the package to JS code
+build:
+  #!/usr/bin/env bash
+  set -x
+  rm -rf dist
+  bun run tsc --project tsconfig.json --outDir dist
+  set +x
+  echo "Build complete. Files generated in dist/"
+
+# Generate TypeScript from @nibiruchain/solidity
+gen-ethers:
+  #!/usr/bin/env bash
+  out_dir="src/ethers/typechain"
+  bun run typechain \
+    --target=ethers-v6 \
+    --out-dir="$out_dir" \
+    "$(pwd)/node_modules/@nibiruchain/solidity/abi/*.json" 
+  echo "Ethers types generated at path $out_dir"
+
+# Format with prettier
+fmt:
+  bun run prettier --write src dist
+
+# Publish the package on npm based on "dist" and "package.json"
+publish: 
+  just build
+  just fmt
+  npm publish --access public

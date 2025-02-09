@@ -6,7 +6,6 @@ Nibiru EVM solidity contracts and ABIs for Nibiru-specific precompiles and core 
 
 ```bash
 yarn add @nibiruchain/solidity
-
 # OR npm install OR bun install
 ```
 
