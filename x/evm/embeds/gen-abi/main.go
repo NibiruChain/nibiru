@@ -25,6 +25,23 @@ func findRootPath() (string, error) {
 	return rootPath, nil
 }
 
+var skipList = map[string]uint{
+	"DSAuth.json":       0,
+	"DSAuthEvents.json": 0,
+	"DSAuthority.json":  0,
+	"DSMath.json":       0,
+	"DSNote.json":       0,
+	"DSStop.json":       0,
+	"DSThing.json":      0,
+	"DSToken.json":      0,
+	"DSTokenBase.json":  0,
+}
+
+func inSkipList(fname string) bool {
+	_, contained := skipList[fname]
+	return contained
+}
+
 func main() {
 	// Define the input and output directories
 	rootPath, err := findRootPath()
@@ -50,7 +67,8 @@ func main() {
 		if !info.IsDir() &&
 			filepath.Ext(path) == ".json" && // .json files that
 			!strings.Contains(path, ".dbg") && // are NOT "dbg" files
-			!strings.HasPrefix(info.Name(), "Test") { // are NOT for tests
+			!strings.HasPrefix(info.Name(), "Test") && // are NOT for tests
+			!inSkipList(info.Name()) { // are NOT skipped
 			// Read the JSON file
 			data, err := os.ReadFile(path)
 			if err != nil {

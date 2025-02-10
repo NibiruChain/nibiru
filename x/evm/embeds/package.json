@@ -1,7 +1,7 @@
 {
   "name": "@nibiruchain/solidity",
   "description": "Nibiru EVM solidity contracts and ABIs for Nibiru-specific precompiles and core protocol functionality",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "files": [
     "/contracts/**/*.sol",

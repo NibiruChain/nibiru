@@ -1,0 +1,35 @@
+{
+  "name": "@nibiruchain/evm-core",
+  "description": "Lightweight Nibiru EVM TypeScript library for type-safe interactions with precompiled contracts, essential constants, and other core utilites.",
+  "version": "0.0.1",
+  "private": false,
+  "include": ["src"],
+  "scripts": {
+    "build": "rm -rf dist && bun run tsc --project tsconfig.json --outDir dist"
+  },
+  "files": [
+    "dist/"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@nibiruchain/solidity": "^0.0.2",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@types/bun": "latest",
+    "ethers": "^6",
+    "prettier": "^3.4.2",
+    "typechain": "^8.3.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "exports": {
+    "./ethers": {
+      "import": "./dist/src/ethers/index.js",
+      "types": "./dist/src/ethers/index.d.ts"
+    },
+    ".": {
+      "import": "./dist/src/src.js",
+      "types": "./dist/src/src.d.ts"
+    }
+  }
+}

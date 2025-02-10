@@ -1,0 +1,36 @@
+# evm-core-ts gitignore
+# Tools & Languages: Soldiity, TypeScript, bun, npm
+
+# directories
+cache
+coverage
+node_modules
+out
+lib
+types
+artifacts
+
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+lcov.info
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+
+# Hardhat files
+/cache
+artifacts/@openzeppelin
+artifacts/build-info
+*.dbg.json
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition
+ignition/deployments/chain-31337
