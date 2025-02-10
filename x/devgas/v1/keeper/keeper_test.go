@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -30,9 +30,9 @@ type KeeperTestSuite struct {
 
 	ctx             sdk.Context
 	app             *app.NibiruApp
-	queryClient     devgastypes.QueryClient
-	devgasMsgServer devgastypes.MsgServer
-	wasmMsgServer   wasmtypes.MsgServer
+	queryClient     devgas.QueryClient
+	devgasMsgServer devgas.MsgServer
+	wasmMsgServer   wasm.MsgServer
 }
 
 func (s *KeeperTestSuite) SetupTest() {
@@ -43,11 +43,11 @@ func (s *KeeperTestSuite) SetupTest() {
 	queryHelper := baseapp.NewQueryServerTestHelper(
 		s.ctx, s.app.InterfaceRegistry(),
 	)
-	devgastypes.RegisterQueryServer(
+	devgas.RegisterQueryServer(
 		queryHelper, devgaskeeper.NewQuerier(s.app.DevGasKeeper),
 	)
 
-	s.queryClient = devgastypes.NewQueryClient(queryHelper)
+	s.queryClient = devgas.NewQueryClient(queryHelper)
 	s.devgasMsgServer = s.app.DevGasKeeper
 	s.wasmMsgServer = wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
 }

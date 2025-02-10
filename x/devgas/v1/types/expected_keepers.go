@@ -1,20 +1,20 @@
 package types
 
 import (
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	// "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	acctypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // AccountKeeper defines the expected interface needed to retrieve account info.
 type AccountKeeper interface {
 	GetModuleAddress(moduleName string) sdk.AccAddress
-	GetModuleAccount(ctx sdk.Context, name string) acctypes.ModuleAccountI
+	GetModuleAccount(ctx sdk.Context, name string) auth.ModuleAccountI
 
 	HasAccount(ctx sdk.Context, addr sdk.AccAddress) bool
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) (account acctypes.AccountI)
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) (account auth.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -28,5 +28,5 @@ type BankKeeper interface {
 
 // WasmKeeper defines the expected interface needed to retrieve cosmwasm contracts.
 type WasmKeeper interface {
-	GetContractInfo(ctx sdk.Context, contractAddr sdk.AccAddress) (wasmtypes.ContractInfo, error)
+	GetContractInfo(ctx sdk.Context, contractAddr sdk.AccAddress) (wasm.ContractInfo, error)
 }

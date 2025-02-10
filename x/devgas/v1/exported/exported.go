@@ -2,11 +2,11 @@ package exported
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	params "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (
-	ParamSet = paramtypes.ParamSet
+	ParamSet = params.ParamSet
 
 	// Subspace defines an interface that implements the legacy x/params
 	// Subspace type.

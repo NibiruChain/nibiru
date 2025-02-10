@@ -4,16 +4,16 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/codec"
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgasv1 "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 func (s *GenesisTestSuite) TestAppModule() {
 	s.SetupTest()
-	appModule := devgas.NewAppModule(
+	appModule := devgasv1.NewAppModule(
 		s.app.DevGasKeeper,
 		s.app.AccountKeeper,
-		s.app.GetSubspace(devgastypes.ModuleName),
+		s.app.GetSubspace(devgas.ModuleName),
 	)
 
 	s.NotPanics(func() {
@@ -25,7 +25,7 @@ func (s *GenesisTestSuite) TestAppModule() {
 		cdc := s.app.AppCodec()
 		jsonBz := appModule.ExportGenesis(s.ctx, cdc)
 
-		genState := new(devgastypes.GenesisState)
+		genState := new(devgas.GenesisState)
 		err := cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
 		s.EqualValues(s.genesis, *genState)

@@ -3,13 +3,13 @@ package ante
 import (
 	"encoding/json"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 var _ sdk.AnteDecorator = (*DevGasPayoutDecorator)(nil)
@@ -77,11 +77,11 @@ func (a DevGasPayoutDecorator) devGasPayout(
 
 	bz, err := json.Marshal(feesPaidOutput)
 	if err != nil {
-		return devgastypes.ErrFeeSharePayment.Wrapf("failed to marshal feesPaidOutput: %s", err.Error())
+		return devgas.ErrFeeSharePayment.Wrapf("failed to marshal feesPaidOutput: %s", err.Error())
 	}
 
 	return ctx.EventManager().EmitTypedEvent(
-		&devgastypes.EventPayoutDevGas{Payouts: string(bz)},
+		&devgas.EventPayoutDevGas{Payouts: string(bz)},
 	)
 }
 
@@ -92,7 +92,7 @@ type FeeSharePayoutEventOutput struct {
 
 // settleFeePayments sends the funds to the contract developers
 func (a DevGasPayoutDecorator) settleFeePayments(
-	ctx sdk.Context, toPay []sdk.AccAddress, params devgastypes.ModuleParams, totalFees sdk.Coins,
+	ctx sdk.Context, toPay []sdk.AccAddress, params devgas.ModuleParams, totalFees sdk.Coins,
 ) ([]FeeSharePayoutEventOutput, error) {
 	allowedFees := getAllowedFees(params, totalFees)
 
@@ -104,14 +104,14 @@ func (a DevGasPayoutDecorator) settleFeePayments(
 
 		// pay fees evenly between all withdraw addresses
 		for i, withdrawAddr := range toPay {
-			err := a.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, withdrawAddr, splitFees)
+			err := a.bankKeeper.SendCoinsFromModuleToAccount(ctx, auth.FeeCollectorName, withdrawAddr, splitFees)
 			feesPaidOutput[i] = FeeSharePayoutEventOutput{
 				WithdrawAddress: withdrawAddr,
 				FeesPaid:        splitFees,
 			}
 
 			if err != nil {
-				return nil, devgastypes.ErrFeeSharePayment.Wrapf("failed to pay allowedFees to contract developer: %s", err.Error())
+				return nil, devgas.ErrFeeSharePayment.Wrapf("failed to pay allowedFees to contract developer: %s", err.Error())
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func (a DevGasPayoutDecorator) settleFeePayments(
 
 // getAllowedFees gets the allowed fees to be paid based on the module
 // parameters of x/devgas
-func getAllowedFees(params devgastypes.ModuleParams, totalFees sdk.Coins) sdk.Coins {
+func getAllowedFees(params devgas.ModuleParams, totalFees sdk.Coins) sdk.Coins {
 	// Get only allowed governance fees to be paid (helps for taxes)
 	var allowedFees sdk.Coins
 	if len(params.AllowedDenoms) == 0 {
@@ -145,9 +145,9 @@ func getAllowedFees(params devgastypes.ModuleParams, totalFees sdk.Coins) sdk.Co
 func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(ctx sdk.Context, msgs []sdk.Msg) ([]sdk.AccAddress, error) {
 	toPay := make([]sdk.AccAddress, 0)
 	for _, msg := range msgs {
-		if _, ok := msg.(*wasmtypes.MsgExecuteContract); ok {
+		if _, ok := msg.(*wasm.MsgExecuteContract); ok {
 			contractAddr, err := sdk.AccAddressFromBech32(
-				msg.(*wasmtypes.MsgExecuteContract).Contract,
+				msg.(*wasm.MsgExecuteContract).Contract,
 			)
 			if err != nil {
 				return nil, err

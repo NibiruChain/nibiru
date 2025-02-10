@@ -3,11 +3,11 @@ package keeper
 import (
 	"context"
 
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
@@ -20,9 +20,9 @@ var _ types.MsgServer = &Keeper{}
 // (2) the info.Creator is another smart contract
 // (3) the info.Admin is another contract
 func (k Keeper) isContractCreatedFromFactory(
-	ctx sdk.Context, info *wasmTypes.ContractInfo, msgSender sdk.AccAddress,
+	ctx sdk.Context, info *wasm.ContractInfo, msgSender sdk.AccAddress,
 ) bool {
-	govMod := k.accountKeeper.GetModuleAddress(govtypes.ModuleName).String()
+	govMod := k.accountKeeper.GetModuleAddress(gov.ModuleName).String()
 	switch {
 	case info.Admin == govMod:
 		// case 1: True if info.Admin is the gov module
@@ -298,7 +298,7 @@ func (k Keeper) UpdateParams(
 	goCtx context.Context, req *types.MsgUpdateParams,
 ) (resp *types.MsgUpdateParamsResponse, err error) {
 	if k.authority != req.Authority {
-		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, req.Authority)
+		return nil, gov.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

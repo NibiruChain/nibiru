@@ -6,19 +6,19 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type AnteTestSuite struct {
@@ -136,7 +136,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 	contracts := addrs[:5]
 	withdrawAddrs := addrs[5:10]
 	deployerAddr := addrs[10]
-	wasmExecMsgs := []*wasmtypes.MsgExecuteContract{
+	wasmExecMsgs := []*wasm.MsgExecuteContract{
 		{Contract: contracts[0].String()},
 		{Contract: contracts[1].String()},
 		{Contract: contracts[2].String()},
@@ -145,8 +145,8 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 	}
 	devGasForWithdrawer := func(
 		contractIdx int, withdrawerIdx int,
-	) devgastypes.FeeShare {
-		return devgastypes.FeeShare{
+	) devgas.FeeShare {
+		return devgas.FeeShare{
 			ContractAddress:   contracts[contractIdx].String(),
 			DeployerAddress:   deployerAddr.String(),
 			WithdrawerAddress: withdrawAddrs[withdrawerIdx].String(),
@@ -155,14 +155,14 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 
 	testCases := []struct {
 		name                    string
-		devGasState             []devgastypes.FeeShare
+		devGasState             []devgas.FeeShare
 		wantWithdrawerRoyalties sdk.Coins
 		wantErr                 bool
 		setup                   func() (*app.NibiruApp, sdk.Context)
 	}{
 		{
 			name: "1 contract, 1 exec, 1 withdrawer",
-			devGasState: []devgastypes.FeeShare{
+			devGasState: []devgas.FeeShare{
 				devGasForWithdrawer(0, 0),
 			},
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
@@ -173,14 +173,14 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()
 				err := testapp.FundModuleAccount(
-					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
+					bapp.BankKeeper, ctx, auth.FeeCollectorName, txGasCoins)
 				suite.NoError(err)
 				return bapp, ctx
 			},
 		},
 		{
 			name: "1 contract, 4 exec, 2 withdrawer",
-			devGasState: []devgastypes.FeeShare{
+			devGasState: []devgas.FeeShare{
 				devGasForWithdrawer(0, 0),
 				devGasForWithdrawer(1, 0),
 				devGasForWithdrawer(2, 1),
@@ -194,14 +194,14 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()
 				err := testapp.FundModuleAccount(
-					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
+					bapp.BankKeeper, ctx, auth.FeeCollectorName, txGasCoins)
 				suite.NoError(err)
 				return bapp, ctx
 			},
 		},
 		{
 			name: "err: empty fee collector module account",
-			devGasState: []devgastypes.FeeShare{
+			devGasState: []devgas.FeeShare{
 				devGasForWithdrawer(0, 0),
 			},
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
@@ -216,7 +216,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 		},
 		{
 			name:        "happy: no registered dev gas contracts",
-			devGasState: []devgastypes.FeeShare{},
+			devGasState: []devgas.FeeShare{},
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
 			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
 			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2

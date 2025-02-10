@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 func (s *KeeperTestSuite) TestQueryFeeShares() {
@@ -29,16 +29,16 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 	}
 
 	// Register FeeShares
-	var feeShares []devgastypes.FeeShare
+	var feeShares []devgas.FeeShare
 	for _, contractAddress := range contractAddressList {
 		goCtx := sdk.WrapSDKContext(s.ctx)
-		msg := &devgastypes.MsgRegisterFeeShare{
+		msg := &devgas.MsgRegisterFeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
 			WithdrawerAddress: withdrawer.String(),
 		}
 
-		feeShare := devgastypes.FeeShare{
+		feeShare := devgas.FeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
 			WithdrawerAddress: withdrawer.String(),
@@ -52,7 +52,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 
 	s.Run("from deployer", func() {
 		deployer := sender.String()
-		req := &devgastypes.QueryFeeSharesRequest{
+		req := &devgas.QueryFeeSharesRequest{
 			Deployer: deployer,
 		}
 		goCtx := sdk.WrapSDKContext(s.ctx)
@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 	})
 	s.Run("from random", func() {
 		deployer := testutil.AccAddress().String()
-		req := &devgastypes.QueryFeeSharesRequest{
+		req := &devgas.QueryFeeSharesRequest{
 			Deployer: deployer,
 		}
 		goCtx := sdk.WrapSDKContext(s.ctx)
@@ -81,13 +81,13 @@ func (s *KeeperTestSuite) TestFeeShare() {
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
 	goCtx := sdk.WrapSDKContext(s.ctx)
-	msg := &devgastypes.MsgRegisterFeeShare{
+	msg := &devgas.MsgRegisterFeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
 
-	feeShare := devgastypes.FeeShare{
+	feeShare := devgas.FeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
@@ -95,7 +95,7 @@ func (s *KeeperTestSuite) TestFeeShare() {
 	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 	s.Require().NoError(err)
 
-	req := &devgastypes.QueryFeeShareRequest{
+	req := &devgas.QueryFeeShareRequest{
 		ContractAddress: contractAddress,
 	}
 	goCtx = sdk.WrapSDKContext(s.ctx)
@@ -122,7 +122,7 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 	// RegsisFeeShare
 	for _, contractAddress := range contractAddressList {
 		goCtx := sdk.WrapSDKContext(s.ctx)
-		msg := &devgastypes.MsgRegisterFeeShare{
+		msg := &devgas.MsgRegisterFeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
 			WithdrawerAddress: withdrawer.String(),
@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 	s.Run("Total", func() {
 		goCtx := sdk.WrapSDKContext(s.ctx)
 		resp, err := s.queryClient.FeeSharesByWithdrawer(goCtx,
-			&devgastypes.QueryFeeSharesByWithdrawerRequest{
+			&devgas.QueryFeeSharesByWithdrawerRequest{
 				WithdrawerAddress: withdrawer.String(),
 			})
 		s.Require().NoError(err)

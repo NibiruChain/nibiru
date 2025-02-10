@@ -5,7 +5,7 @@ package ante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 type BankKeeper interface {
@@ -20,6 +20,6 @@ type BankKeeper interface {
 }
 
 type IDevGasKeeper interface {
-	GetParams(ctx sdk.Context) devgastypes.ModuleParams
-	GetFeeShare(ctx sdk.Context, contract sdk.Address) (devgastypes.FeeShare, bool)
+	GetParams(ctx sdk.Context) devgas.ModuleParams
+	GetFeeShare(ctx sdk.Context, contract sdk.Address) (devgas.FeeShare, bool)
 }

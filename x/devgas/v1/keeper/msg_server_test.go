@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	_ "embed"
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
@@ -23,13 +23,13 @@ var wasmContract []byte
 
 func (s *KeeperTestSuite) StoreCode() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	msg := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
+	msg := wasm.MsgStoreCodeFixture(func(m *wasm.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender.String()
 	})
 	rsp, err := s.app.MsgServiceRouter().Handler(msg)(s.ctx, msg)
 	s.Require().NoError(err)
-	var result wasmtypes.MsgStoreCodeResponse
+	var result wasm.MsgStoreCodeResponse
 	s.Require().NoError(s.app.AppCodec().Unmarshal(rsp.Data, &result))
 	s.Require().Equal(uint64(1), result.CodeID)
 	expHash := sha256.Sum256(wasmContract)
@@ -39,25 +39,25 @@ func (s *KeeperTestSuite) StoreCode() {
 	s.Require().NotNil(info)
 	s.Require().Equal(expHash[:], info.CodeHash)
 	s.Require().Equal(sender.String(), info.Creator)
-	s.Require().Equal(wasmtypes.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
+	s.Require().Equal(wasm.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
 
 func (s *KeeperTestSuite) InstantiateContract(sender string, admin string) string {
-	msgStoreCode := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
+	msgStoreCode := wasm.MsgStoreCodeFixture(func(m *wasm.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender
 	})
 	_, err := s.app.MsgServiceRouter().Handler(msgStoreCode)(s.ctx, msgStoreCode)
 	s.Require().NoError(err)
 
-	msgInstantiate := wasmtypes.MsgInstantiateContractFixture(func(m *wasmtypes.MsgInstantiateContract) {
+	msgInstantiate := wasm.MsgInstantiateContractFixture(func(m *wasm.MsgInstantiateContract) {
 		m.Sender = sender
 		m.Admin = admin
 		m.Msg = []byte(`{}`)
 	})
 	resp, err := s.app.MsgServiceRouter().Handler(msgInstantiate)(s.ctx, msgInstantiate)
 	s.Require().NoError(err)
-	var result wasmtypes.MsgInstantiateContractResponse
+	var result wasm.MsgInstantiateContractResponse
 	s.Require().NoError(s.app.AppCodec().Unmarshal(resp.Data, &result))
 	contractInfo := s.app.WasmKeeper.GetContractInfo(s.ctx, sdk.MustAccAddressFromBech32(result.Address))
 	s.Require().Equal(contractInfo.CodeID, uint64(1))
@@ -122,7 +122,7 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
-	gov := s.app.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
+	gov := s.app.AccountKeeper.GetModuleAddress(gov.ModuleName).String()
 	govContract := s.InstantiateContract(sender.String(), gov)
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
@@ -411,7 +411,7 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 }
 
 func (s *KeeperTestSuite) TestUpdateParams() {
-	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	govModuleAddr := auth.NewModuleAddress(gov.ModuleName).String()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 
 	for _, tc := range []struct {
