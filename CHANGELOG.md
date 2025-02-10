@@ -94,7 +94,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2183](https://github.com/NibiruChain/nibiru/pull/2183) - fix(evm): bank keeper extension gas meter type
 - [#2184](https://github.com/NibiruChain/nibiru/pull/2184) - test(evm): e2e tests configuration enhancements
 - [#2150](https://github.com/NibiruChain/nibiru/pull/2150) - feat(evm): prevent funtoken from erc20 contract to be created with non-complete contracts
--
+- [#2187](https://github.com/NibiruChain/nibiru/pull/2187) - fix(evm): fix eip55 address encoding
+- [#2188](https://github.com/NibiruChain/nibiru/pull/2188) - refactor(evm): update logs emission
+- [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
+- [#2200](https://github.com/NibiruChain/nibiru/pull/2200) - fix(test): evm e2e oracle test fixed pair name
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 

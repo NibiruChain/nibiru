@@ -36,7 +36,7 @@ func NewEIP55AddrFromStr(input string) (EIP55Addr, error) {
 // Marshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Marshal() ([]byte, error) {
-	return []byte(h.Address.Hex()), nil
+	return h.Bytes(), nil
 }
 
 // MarshalJSON returns the [EIP55Addr] as JSON bytes.
@@ -51,18 +51,15 @@ func (h EIP55Addr) MarshalJSON() ([]byte, error) {
 // Implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) MarshalTo(data []byte) (n int, err error) {
-	copy(data, []byte(h.Address.Hex()))
+	copy(data, h.Bytes())
 	return h.Size(), nil
 }
 
 // Unmarshal implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h *EIP55Addr) Unmarshal(data []byte) error {
-	addr, err := NewEIP55AddrFromStr(string(data))
-	if err != nil {
-		return err
-	}
-	*h = addr
+	addr := gethcommon.BytesToAddress(data)
+	*h = EIP55Addr{Address: addr}
 	return nil
 }
 
@@ -71,9 +68,7 @@ func (h *EIP55Addr) Unmarshal(data []byte) error {
 func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
 	var addrStr string
 	if err := json.Unmarshal(bz, &addrStr); err != nil {
-		return fmt.Errorf(
-			"EIP55AddrError: UnmarhsalJSON had invalid input %s: %w", bz, err,
-		)
+		return err
 	}
 	addr, err := NewEIP55AddrFromStr(addrStr)
 	if err != nil {
@@ -86,5 +81,5 @@ func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
 // Size implements the gogo proto custom type interface.
 // Ref: https://github.com/cosmos/gogoproto/blob/v1.5.0/custom_types.md
 func (h EIP55Addr) Size() int {
-	return len([]byte(h.Address.Hex()))
+	return len(h.Bytes())
 }
