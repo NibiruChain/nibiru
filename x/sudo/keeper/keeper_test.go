@@ -25,7 +25,7 @@ func TestCheckPermissions(t *testing.T) {
 		Contracts: mockContractAddrStrs,
 	})
 
-	err := nibiru.SudoKeeper.CheckPermissions(sdk.AccAddress([]byte("addrbbb")), ctx)
+	err := nibiru.SudoKeeper.CheckPermissions(sdk.AccAddress("addrbbb"), ctx)
 	require.Error(t, err)
 	for _, mockAddr := range mockContractAddrs {
 		err := nibiru.SudoKeeper.CheckPermissions(mockAddr, ctx)
