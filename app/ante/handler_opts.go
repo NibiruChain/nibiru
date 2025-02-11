@@ -10,8 +10,8 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
-	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/ante"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
