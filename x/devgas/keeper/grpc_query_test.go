@@ -7,8 +7,8 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 )
 
 func (s *KeeperTestSuite) TestQueryFeeShares() {
