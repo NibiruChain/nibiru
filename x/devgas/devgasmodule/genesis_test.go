@@ -1,4 +1,4 @@
-package devgas_test
+package devgasmodule_test
 
 import (
 	"fmt"

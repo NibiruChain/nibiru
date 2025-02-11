@@ -111,9 +111,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/devgas"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/devgasmodule"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -675,7 +675,7 @@ func (app *NibiruApp) initAppModules(
 			appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper,
 			app.BankKeeper, app.MsgServiceRouter(),
 			app.GetSubspace(wasmtypes.ModuleName)),
-		devgas.NewAppModule(
+		devgasmodule.NewAppModule(
 			app.DevGasKeeper, app.AccountKeeper,
 			app.GetSubspace(devgas.ModuleName)),
 		tokenfactory.NewAppModule(
@@ -851,7 +851,7 @@ func ModuleBasicManager() module.BasicManager {
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		devgas.AppModuleBasic{},
+		devgasmodule.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},

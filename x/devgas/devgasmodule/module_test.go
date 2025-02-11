@@ -1,11 +1,11 @@
-package devgas_test
+package devgasmodule_test
 
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/codec"
-	devgasmodule "github.com/NibiruChain/nibiru/v2/x/devgas/devgasmodule"
 	"github.com/NibiruChain/nibiru/v2/x/devgas"
+	devgasmodule "github.com/NibiruChain/nibiru/v2/x/devgas/devgasmodule"
 )
 
 func (s *GenesisTestSuite) TestAppModule() {
@@ -13,7 +13,7 @@ func (s *GenesisTestSuite) TestAppModule() {
 	appModule := devgasmodule.NewAppModule(
 		s.app.DevGasKeeper,
 		s.app.AccountKeeper,
-		s.app.GetSubspace(devgastypes.ModuleName),
+		s.app.GetSubspace(devgas.ModuleName),
 	)
 
 	s.NotPanics(func() {

@@ -23,13 +23,13 @@ var wasmContract []byte
 
 func (s *KeeperTestSuite) StoreCode() {
 	_, _, sender := testdata.KeyTestPubAddr()
-	msg := wasmdevgas.MsgStoreCodeFixture(func(m *wasmdevgas.MsgStoreCode) {
+	msg := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender.String()
 	})
 	rsp, err := s.app.MsgServiceRouter().Handler(msg)(s.ctx, msg)
 	s.Require().NoError(err)
-	var result wasmdevgas.MsgStoreCodeResponse
+	var result wasmtypes.MsgStoreCodeResponse
 	s.Require().NoError(s.app.AppCodec().Unmarshal(rsp.Data, &result))
 	s.Require().Equal(uint64(1), result.CodeID)
 	expHash := sha256.Sum256(wasmContract)
@@ -39,25 +39,25 @@ func (s *KeeperTestSuite) StoreCode() {
 	s.Require().NotNil(info)
 	s.Require().Equal(expHash[:], info.CodeHash)
 	s.Require().Equal(sender.String(), info.Creator)
-	s.Require().Equal(wasmdevgas.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
+	s.Require().Equal(wasmtypes.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
 
 func (s *KeeperTestSuite) InstantiateContract(sender string, admin string) string {
-	msgStoreCode := wasmdevgas.MsgStoreCodeFixture(func(m *wasmdevgas.MsgStoreCode) {
+	msgStoreCode := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender
 	})
 	_, err := s.app.MsgServiceRouter().Handler(msgStoreCode)(s.ctx, msgStoreCode)
 	s.Require().NoError(err)
 
-	msgInstantiate := wasmdevgas.MsgInstantiateContractFixture(func(m *wasmdevgas.MsgInstantiateContract) {
+	msgInstantiate := wasmtypes.MsgInstantiateContractFixture(func(m *wasmtypes.MsgInstantiateContract) {
 		m.Sender = sender
 		m.Admin = admin
 		m.Msg = []byte(`{}`)
 	})
 	resp, err := s.app.MsgServiceRouter().Handler(msgInstantiate)(s.ctx, msgInstantiate)
 	s.Require().NoError(err)
-	var result wasmdevgas.MsgInstantiateContractResponse
+	var result wasmtypes.MsgInstantiateContractResponse
 	s.Require().NoError(s.app.AppCodec().Unmarshal(resp.Data, &result))
 	contractInfo := s.app.WasmKeeper.GetContractInfo(s.ctx, sdk.MustAccAddressFromBech32(result.Address))
 	s.Require().Equal(contractInfo.CodeID, uint64(1))
@@ -122,7 +122,7 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
 
-	gov := s.app.AccountKeeper.GetModuleAddress(govdevgas.ModuleName).String()
+	gov := s.app.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	govContract := s.InstantiateContract(sender.String(), gov)
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
@@ -411,7 +411,7 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 }
 
 func (s *KeeperTestSuite) TestUpdateParams() {
-	govModuleAddr := authdevgas.NewModuleAddress(govdevgas.ModuleName).String()
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 
 	for _, tc := range []struct {

@@ -1,4 +1,4 @@
-package devgas
+package devgasmodule
 
 import (
 	"context"
@@ -16,11 +16,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/v2/x/devgas"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/exported"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/simulation"
-	"github.com/NibiruChain/nibiru/v2/x/devgas"
 )
 
 // type check to ensure the interface is properly implemented

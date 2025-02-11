@@ -1,4 +1,4 @@
-package devgas
+package devgasmodule
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
