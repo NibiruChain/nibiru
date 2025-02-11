@@ -19,7 +19,9 @@ import {
   type IOracle,
   type IFunToken,
   type NibiruOracleChainLinkLike,
+  type ERC20Minter,
   NibiruOracleChainLinkLike__factory,
+  ERC20Minter__factory,
 } from "./typechain"
 
 export const wasmPrecompile = (runner: ContractRunner): IWasm =>
@@ -54,3 +56,11 @@ export const chainlinkLike = (
   addr: string,
 ): NibiruOracleChainLinkLike =>
   NibiruOracleChainLinkLike__factory.connect(addr, runner)
+
+/**
+ * Returns a typed contract instance for a standard ERC20 contract.
+ * */
+export const erc20Caller = (
+  runner: ContractRunner,
+  addr: string,
+): ERC20Minter => ERC20Minter__factory.connect(addr, runner)
