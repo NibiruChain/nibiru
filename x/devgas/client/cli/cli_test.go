@@ -21,8 +21,8 @@ import (
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/devgasmodule"
 )
 
 // CLITestSuite: Tests all tx commands for the module.
@@ -43,7 +43,7 @@ func TestCLITestSuite(t *testing.T) {
 
 // Runs once before the entire test suite.
 func (s *CLITestSuite) SetupSuite() {
-	s.encCfg = testutilmod.MakeTestEncodingConfig(devgas.AppModuleBasic{})
+	s.encCfg = testutilmod.MakeTestEncodingConfig(devgasmodule.AppModuleBasic{})
 	s.keyring = keyring.NewInMemory(s.encCfg.Codec)
 	s.baseCtx = sdkclient.Context{}.
 		WithKeyring(s.keyring).
