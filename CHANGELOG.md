@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+- [#2202](https://github.com/NibiruChain/nibiru/pull/2202) - chore(build): add build tags and missing flags/variables
 
 ### Nibiru EVM
 
