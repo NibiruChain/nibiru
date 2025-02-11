@@ -28,6 +28,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -44,14 +45,17 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
-	wasmbinding "github.com/NibiruChain/nibiru/wasmbinding"
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+
+	// force call init() of the geth tracers
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 const (
-	AccountAddressPrefix = "nibi"
-	appName              = "Nibiru"
-	BondDenom            = "unibi"
-	DisplayDenom         = "NIBI"
+	appName      = "Nibiru"
+	DisplayDenom = "NIBI"
 )
 
 var (
@@ -90,7 +94,7 @@ type NibiruApp struct {
 	AppKeepers // embed all module keepers
 
 	// the module manager
-	mm *module.Manager
+	ModuleManager *module.Manager
 
 	// simulation manager
 	sm *module.SimulationManager
@@ -109,21 +113,24 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.Option {
+func GetWasmOpts(
+	nibiru NibiruApp,
+	appOpts servertypes.AppOptions,
+	wasmMsgHandlerArgs wasmext.MsgHandlerArgs,
+) []wasmkeeper.Option {
 	var wasmOpts []wasmkeeper.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
-	// Add the bindings to the app's set of []wasmkeeper.Option.
-	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
+	return append(wasmOpts, wasmext.NibiruWasmOptions(
 		nibiru.GRPCQueryRouter(),
 		nibiru.appCodec,
-		nibiru.SudoKeeper,
+		wasmMsgHandlerArgs,
 	)...)
-
-	return wasmOpts
 }
+
+const DefaultMaxTxGasWanted uint64 = 0
 
 // overrideWasmVariables overrides the wasm variables to:
 //   - allow for larger wasm files
@@ -144,10 +151,17 @@ func NewNibiruApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	overrideWasmVariables()
-	appCodec := encodingConfig.Marshaler
+	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
+	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
+		mp := mempool.NoOpMempool{}
+		app.SetMempool(mp)
+		handler := baseapp.NewDefaultProposalHandler(mp, app)
+		app.SetPrepareProposal(handler.PrepareProposalHandler())
+		app.SetProcessProposal(handler.ProcessProposalHandler())
+	})
 
 	bApp := baseapp.NewBaseApp(
 		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
@@ -176,6 +190,8 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
+
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	app.setupUpgrades()
@@ -185,7 +201,7 @@ func NewNibiruApp(
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
-	app.InitSimulationManager(app.appCodec)
+	app.initSimulationManager(app.appCodec)
 
 	// initialize stores
 	app.MountKVStores(keys)
@@ -195,29 +211,31 @@ func NewNibiruApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler, err := NewAnteHandler(AnteHandlerOptions{
+	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+			AccountKeeper:          app.AccountKeeper,
+			BankKeeper:             app.BankKeeper,
+			FeegrantKeeper:         app.FeeGrantKeeper,
+			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
+			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
+		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
+		MaxTxGasWanted: DefaultMaxTxGasWanted,
+		EvmKeeper:      app.EvmKeeper,
+		AccountKeeper:  app.AccountKeeper,
 	})
-	if err != nil {
-		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
-	}
 
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
-		if err = snapshotManager.RegisterExtensions(
+		if err := snapshotManager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(
 				app.CommitMultiStore(),
 				&app.WasmKeeper,
@@ -257,12 +275,12 @@ func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.mm.BeginBlock(ctx, req)
+	return app.ModuleManager.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
 func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.mm.EndBlock(ctx, req)
+	return app.ModuleManager.EndBlock(ctx, req)
 }
 
 // InitChainer application update at chain initialization
@@ -271,8 +289,8 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.upgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
-	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	app.upgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
 // LoadHeight loads a particular height
@@ -400,7 +418,7 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 }
 
 func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
-	return app.stakingKeeper
+	return app.StakingKeeper
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {

@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/NibiruChain/nibiru/app/upgrades"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
 
 const UpgradeName = "v1.5.0"

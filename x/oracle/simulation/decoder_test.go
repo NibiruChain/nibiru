@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	sim "github.com/NibiruChain/nibiru/x/oracle/simulation"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	sim "github.com/NibiruChain/nibiru/v2/x/oracle/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 var (
@@ -27,13 +28,13 @@ func TestDecodeDistributionStore(t *testing.T) {
 	cdc := keeper.MakeTestCodec(t)
 	dec := sim.NewDecodeStore(cdc)
 
-	exchangeRate := sdk.NewDecWithPrec(1234, 1)
+	exchangeRate := math.LegacyNewDecWithPrec(1234, 1)
 	missCounter := uint64(23)
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: math.LegacyNewDecWithPrec(1234, 1)},
+		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: math.LegacyNewDecWithPrec(4321, 1)},
 	}, valAddr)
 
 	pair := "btc:usd"

@@ -5,10 +5,9 @@ package nibiru.sudo.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/sudo/types";
 
 message Sudoers {
-  option (gogoproto.goproto_stringer) = false;
 
   // Root: The "root" user.
   string root = 1;
@@ -17,5 +16,5 @@ message Sudoers {
   repeated string contracts = 2;
 }
 
-// GenesisState defines the module's genesis state.
+// GenesisState: State for migrations and genesis for the x/sudo module.
 message GenesisState { Sudoers sudoers = 1 [ (gogoproto.nullable) = false ]; }

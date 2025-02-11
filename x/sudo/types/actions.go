@@ -1,6 +1,6 @@
 package types
 
-import "github.com/NibiruChain/nibiru/x/common/set"
+import "github.com/NibiruChain/nibiru/v2/x/common/set"
 
 type RootAction string
 

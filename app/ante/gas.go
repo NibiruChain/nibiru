@@ -35,8 +35,11 @@ func (g *fixedGasMeter) GasRemaining() storetypes.Gas {
 	return g.consumed
 }
 
+// ConsumeGas is a no-op because the fixed gas meter stays fixed.
 func (g *fixedGasMeter) ConsumeGas(types.Gas, string) {}
-func (g *fixedGasMeter) RefundGas(types.Gas, string)  {}
+
+// RefundGas is a no-op because the fixed gas meter stays fixed.
+func (g *fixedGasMeter) RefundGas(types.Gas, string) {}
 
 func (g *fixedGasMeter) IsPastLimit() bool {
 	return false
