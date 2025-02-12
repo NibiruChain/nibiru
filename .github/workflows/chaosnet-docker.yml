@@ -31,22 +31,34 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push tagged chaosnet image
+      - name: Cache for Docker Build
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            go-build
+            go-pkg
+            nibiru-temp
+          key: ${{ runner.os }}-build-cache-${{ hashFiles('go.sum') }}
+
+      - name: Inject cache
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "go-build": "/root/.cache/go-build",
+              "go-pkg": "/go/pkg",
+              "nibiru-temp": "/nibiru/temp"
+            }
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+
+      - name: Build and push chaosnet image
         uses: docker/build-push-action@v6
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           file: contrib/docker/chaosnet.Dockerfile
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/chaosnet:${{ steps.get_version.outputs.version }}
-      
-      - name: Build and push latest chaosnet image
-        uses: docker/build-push-action@v6
-        if: startsWith(github.ref, 'refs/heads/main')
-        with:
-          file: contrib/docker/chaosnet.Dockerfile
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/chaosnet:latest
+          tags: ghcr.io/nibiruchain/chaosnet:${{ startsWith(github.ref, 'refs/tags/v') && steps.get_version.outputs.version || 'latest' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
