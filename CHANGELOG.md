@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+- [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
 
 ### Nibiru EVM
 
