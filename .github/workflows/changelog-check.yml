@@ -31,8 +31,18 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            changelog: ["**/CHANGELOG.md"]
-            nibiru-go: ["**.go", "**.proto", "go.mod", "go.sum", "**go.mod", "**go.sum", "contrib/docker/*"]
+            changelog: 
+              - "**/CHANGELOG.md"
+            nibiru-go:
+              - "app/**.go"
+              - "cmd/**.go"
+              - "eth/**.go"
+              - "gosdk/**.go"
+              - "x/**.go"
+              - "**.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker/*"
       - uses: dangoslen/changelog-enforcer@v3
         if: steps.check_changelog.outputs.nibiru-go == 'true' || steps.check_changelog.outputs.changelog == 'false'
         with:
