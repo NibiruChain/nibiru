@@ -40,8 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- [#2104](https://github.com/NibiruChain/nibiru/pull/2074) - chore: update chain IDs
+- [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs
 - [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
+- [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):
+Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
 
 ### Nibiru EVM
 
