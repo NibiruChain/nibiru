@@ -3,15 +3,12 @@ FROM golang:1.21 AS builder
 WORKDIR /nibiru
 
 # install OS dependencies
-COPY Makefile ./
-COPY contrib/ ./contrib
-RUN make packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
 
 # install Go dependencies
-COPY go.sum go.mod ./  
-RUN --mount=type=cache,target=/root/.cache/go-build \
-  --mount=type=cache,target=/go/pkg \
-  go mod download
+COPY go.sum go.mod ./
+RUN go mod download
 
 # build nibid
 COPY . .

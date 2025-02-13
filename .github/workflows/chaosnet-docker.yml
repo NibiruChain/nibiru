@@ -39,7 +39,7 @@ jobs:
             go-build
             go-pkg
             nibiru-temp
-          key: ${{ runner.os }}-build-cache-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-chaosnet-build-cache-${{ hashFiles('go.sum') }}
 
       - name: Inject cache
         uses: reproducible-containers/buildkit-cache-dance@v3.1.0
