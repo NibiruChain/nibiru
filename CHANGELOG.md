@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs
+- [#2202](https://github.com/NibiruChain/nibiru/pull/2202) - chore(build): add build tags and missing flags/variables
 - [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
 - [#2207](https://github.com/NibiruChain/nibiru/pull/2207) - chore(ci): add cache for chaosnet builds
 - [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):

@@ -25,14 +25,9 @@ else
 endif
 SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
 
-# SDK_PACK: Cosmos-SDK version
-SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
-# TM_VERSION: Tendermint Core version (CometBFT)
-# grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
-TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::') 
+CMT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 ROCKSDB_VERSION := 8.9.1
 WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
-DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
 
@@ -45,7 +40,6 @@ ifeq ($(OS_NAME),darwin)
 else
 	build_tags += muslc
 endif
-build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
 whitespace :=
@@ -59,12 +53,11 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
-		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
+		  -X github.com/cometbft/cometbft/version.CMTSemVer=$(CMT_VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb \
 		  -linkmode=external \
 		  -w -s
 
-ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
@@ -132,7 +125,7 @@ packages:
 # command for make build and make install
 build: BUILDARGS=-o $(BUILDDIR)/
 build install: go.sum $(BUILDDIR)/ rocksdblib wasmvmlib packages
-	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
+	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly -trimpath $(BUILD_FLAGS) $(BUILDARGS) ./...
 
 # ensure build directory exists
 $(BUILDDIR)/:
