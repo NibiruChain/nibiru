@@ -4,15 +4,15 @@
 
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
 GOLANG_CROSS_VERSION  ?= v1.21.5
-CMT_VERSION 		  := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
+CMT_VERSION 		  = $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 
 DOCKER_YQ = docker run --rm -v $(PWD):/work -w /work mikefarah/yq:4
 
-DARWIN_TAGS := $(shell $(DOCKER_YQ) e \
+DARWIN_TAGS = $(shell $(DOCKER_YQ) e \
     '.builds | map(select(.id == "darwin")) | .[0].tags | join(",")' \
     .goreleaser.yml)
 
-LINUX_TAGS := $(shell $(DOCKER_YQ) e \
+LINUX_TAGS = $(shell $(DOCKER_YQ) e \
     '.builds | map(select(.id == "linux")) | .[0].tags | join(",")' \
     .goreleaser.yml)
 
