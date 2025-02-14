@@ -565,6 +565,12 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		BankCoin:             coin,
 	})
 
+	// Emit tx logs of Mint event
+	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	if err == nil {
+		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
+	}
+
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
 
@@ -634,7 +640,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		true,
 	)
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	_, _, err = k.ERC20().Transfer(
+	_, evmResp, err := k.ERC20().Transfer(
 		erc20Addr,
 		evm.EVM_MODULE_ADDRESS,
 		recipient,
@@ -659,6 +665,12 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		ToEthAddr:            recipient.String(),
 		BankCoin:             coin,
 	})
+
+	// Emit tx logs of Transfer event
+	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	if err == nil {
+		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
+	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }

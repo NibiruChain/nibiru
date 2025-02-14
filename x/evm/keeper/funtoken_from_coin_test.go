@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -139,6 +140,36 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 				IsMadeFromCoin:       true,
 			},
 		)
+
+		// Event "EventTxLog" must present with OwnershipTransferred event
+		emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+		signature := crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)")).Hex()
+		ownershipFrom := emptyHash
+		ownershipTo := gethcommon.BytesToHash(evm.EVM_MODULE_ADDRESS.Bytes()).Hex()
+
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventTxLog{
+				Logs: []evm.Log{
+					{
+						Address: actualErc20Addr.Address.Hex(),
+						Topics: []string{
+							signature,
+							ownershipFrom,
+							ownershipTo,
+						},
+						Data:        nil,
+						BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
+						TxHash:      emptyHash,
+						TxIndex:     0,
+						BlockHash:   emptyHash,
+						Index:       0,
+						Removed:     false,
+					},
+				},
+			},
+		)
 	})
 
 	s.Run("sad: CreateFunToken for the bank coin: already registered", func() {
@@ -169,7 +200,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	funToken := s.fundAndCreateFunToken(deps, 100)
 
 	s.T().Log("Convert bank coin to erc-20")
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
@@ -183,7 +214,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().NoError(err)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 
-	s.T().Log("Check typed event")
+	s.T().Log("Check typed event ConvertCoinToEvm")
 	testutil.RequireContainsTypedEvent(
 		s.T(),
 		deps.Ctx,
@@ -192,6 +223,37 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			Erc20ContractAddress: funToken.Erc20Addr.String(),
 			ToEthAddr:            alice.EthAddr.String(),
 			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+		},
+	)
+
+	s.T().Log("Check typed event EventTxLog with Transfer event")
+	emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+	signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
+	fromAddress := emptyHash // Mint
+	toAddress := gethcommon.BytesToHash(alice.EthAddr.Bytes()).Hex()
+	amountBase64 := gethcommon.LeftPadBytes(big.NewInt(10).Bytes(), 32)
+
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventTxLog{
+			Logs: []evm.Log{
+				{
+					Address: funToken.Erc20Addr.Hex(),
+					Topics: []string{
+						signature,
+						fromAddress,
+						toAddress,
+					},
+					Data:        amountBase64,
+					BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
+					TxHash:      emptyHash,
+					TxIndex:     0,
+					BlockHash:   emptyHash,
+					Index:       1,
+					Removed:     false,
+				},
+			},
 		},
 	)
 
