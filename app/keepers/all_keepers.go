@@ -23,7 +23,7 @@ import (
 	// Nibiru Custom Modules
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"

@@ -6,7 +6,7 @@ import (
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"google.golang.org/grpc"
 
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"

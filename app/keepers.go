@@ -111,9 +111,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
-	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/devgas"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/devgasmodule"
+	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -205,7 +205,7 @@ func initStoreKeys() (
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
 		wasmtypes.StoreKey,
-		devgastypes.StoreKey,
+		devgas.StoreKey,
 		tokenfactorytypes.StoreKey,
 
 		evm.StoreKey,
@@ -508,7 +508,7 @@ func (app *NibiruApp) InitKeepers(
 
 	// DevGas uses WasmKeeper
 	app.DevGasKeeper = devgaskeeper.NewKeeper(
-		keys[devgastypes.StoreKey],
+		keys[devgas.StoreKey],
 		appCodec,
 		app.BankKeeper,
 		app.WasmKeeper,
@@ -675,9 +675,9 @@ func (app *NibiruApp) initAppModules(
 			appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper,
 			app.BankKeeper, app.MsgServiceRouter(),
 			app.GetSubspace(wasmtypes.ModuleName)),
-		devgas.NewAppModule(
+		devgasmodule.NewAppModule(
 			app.DevGasKeeper, app.AccountKeeper,
-			app.GetSubspace(devgastypes.ModuleName)),
+			app.GetSubspace(devgas.ModuleName)),
 		tokenfactory.NewAppModule(
 			app.TokenFactoryKeeper, app.AccountKeeper,
 		),
@@ -745,7 +745,7 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasmtypes.ModuleName,
-		devgastypes.ModuleName,
+		devgas.ModuleName,
 		tokenfactorytypes.ModuleName,
 
 		// Everything else should be before genmsg
@@ -851,7 +851,7 @@ func ModuleBasicManager() module.BasicManager {
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		devgas.AppModuleBasic{},
+		devgasmodule.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},
@@ -904,7 +904,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(devgastypes.ModuleName)
+	paramsKeeper.Subspace(devgas.ModuleName)
 
 	return paramsKeeper
 }

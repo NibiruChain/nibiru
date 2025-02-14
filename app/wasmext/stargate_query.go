@@ -3,7 +3,7 @@ package wasmext
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	devgas "github.com/NibiruChain/nibiru/v2/x/devgas"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
