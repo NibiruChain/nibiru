@@ -17,8 +17,8 @@ import (
 	"bytes"
 	"fmt"
 
+	store "cosmossdk.io/store/types"
 	"github.com/NibiruChain/collections"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"

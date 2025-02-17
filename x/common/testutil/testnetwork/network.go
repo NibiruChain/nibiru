@@ -19,7 +19,7 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"cosmossdk.io/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"cosmossdk.io/math"
