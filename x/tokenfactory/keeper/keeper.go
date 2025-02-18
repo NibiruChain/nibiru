@@ -1,15 +1,17 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 
+	corestoretypes "cosmossdk.io/core/store"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -17,8 +19,9 @@ import (
 // Keeper of this module maintains collections of feeshares for contracts
 // registered to receive Nibiru Chain gas fees.
 type Keeper struct {
-	storeKey storetypes.StoreKey
-	cdc      codec.BinaryCodec
+	storeService corestoretypes.KVStoreService
+	storeKey     storetypes.StoreKey
+	cdc          codec.BinaryCodec
 
 	Store StoreAPI
 
@@ -34,29 +37,34 @@ type Keeper struct {
 
 // NewKeeper: creates a Keeper instance for the module.
 func NewKeeper(
-	storeKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 	cdc codec.BinaryCodec,
 	bk tftypes.BankKeeper,
 	ak tftypes.AccountKeeper,
 	communityPoolKeeper tftypes.CommunityPoolKeeper,
 	authority string,
 ) Keeper {
-	return Keeper{
-		storeKey: storeKey,
+	if addr := ak.GetModuleAddress(tftypes.ModuleName); addr == nil {
+		panic(fmt.Sprintf("%s module account has not been set", tftypes.ModuleName))
+	}
+
+	sb := collections.NewSchemaBuilder(storeService)
+	k := Keeper{
+		storeService: storeService,
 		Store: StoreAPI{
-			Denoms: NewTFDenomStore(storeKey, cdc),
+			Denoms: NewTFDenomStore(sb, cdc),
 			ModuleParams: collections.NewItem(
-				storeKey, tftypes.KeyPrefixModuleParams,
-				collections.ProtoValueEncoder[tftypes.ModuleParams](cdc),
+				sb, tftypes.KeyPrefixModuleParams.Prefix(), "params",
+				codec.CollValue[tftypes.ModuleParams](cdc),
 			),
-			creator: collections.NewKeySet[string](
-				storeKey, tftypes.KeyPrefixCreator,
-				collections.StringKeyEncoder,
+			creator: collections.NewKeySet(
+				sb, tftypes.KeyPrefixCreator.Prefix(), "creator",
+				collections.StringKey,
 			),
 			denomAdmins: collections.NewMap[storePKType, tftypes.DenomAuthorityMetadata](
-				storeKey, tftypes.KeyPrefixDenomAdmin,
-				collections.StringKeyEncoder,
-				collections.ProtoValueEncoder[tftypes.DenomAuthorityMetadata](cdc),
+				sb, tftypes.KeyPrefixDenomAdmin.Prefix(), "denom_admins",
+				collections.StringKey,
+				codec.CollValue[tftypes.DenomAuthorityMetadata](cdc),
 			),
 			bankKeeper: bk,
 		},
@@ -66,6 +74,7 @@ func NewKeeper(
 		communityPoolKeeper: communityPoolKeeper,
 		authority:           authority,
 	}
+	return k
 }
 
 // GetAuthority returns the x/feeshare module's authority.
@@ -74,6 +83,7 @@ func (k Keeper) GetAuthority() string {
 }
 
 // Logger returns a module-specific logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", tftypes.ModuleName))
+func (k Keeper) Logger(ctx context.Context) log.Logger {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	return sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", tftypes.ModuleName))
 }

@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	storetypes "cosmossdk.io/store/types"
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
+	"cosmossdk.io/collections/indexes"
+
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -44,7 +45,7 @@ func (api StoreAPI) InsertDenom(
 	api.unsafeInsertDenom(ctx, denom, admin)
 
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, key.String(), tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Set(ctx, key.String(), tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	return nil
@@ -56,10 +57,10 @@ func (api StoreAPI) unsafeInsertDenom(
 	ctx sdk.Context, denom tftypes.TFDenom, admin string,
 ) {
 	denomStr := denom.Denom()
-	api.Denoms.Insert(ctx, denomStr.String(), denom)
-	api.creator.Insert(ctx, denom.Creator)
+	api.Denoms.Set(ctx, denomStr.String(), denom)
+	api.creator.Set(ctx, denom.Creator)
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
-	api.denomAdmins.Insert(ctx, denomStr.String(), tftypes.DenomAuthorityMetadata{
+	api.denomAdmins.Set(ctx, denomStr.String(), tftypes.DenomAuthorityMetadata{
 		Admin: admin,
 	})
 	_ = ctx.EventManager().EmitTypedEvent(&tftypes.EventCreateDenom{
@@ -88,7 +89,7 @@ func (api StoreAPI) HasDenom(
 	return found
 }
 
-func (api StoreAPI) HasCreator(ctx sdk.Context, creator string) bool {
+func (api StoreAPI) HasCreator(ctx sdk.Context, creator string) (bool, error) {
 	return api.creator.Has(ctx, creator)
 }
 
@@ -126,22 +127,19 @@ type (
 // NewTFDenomStore: Creates an indexed map over token facotry denoms indexed
 // by creator address.
 func NewTFDenomStore(
-	storeKey storetypes.StoreKey, cdc sdkcodec.BinaryCodec,
+	sb *collections.SchemaBuilder, cdc sdkcodec.BinaryCodec,
 ) collections.IndexedMap[storePKType, storeVType, IndexesTokenFactory] {
-	primaryKeyEncoder := collections.StringKeyEncoder
-	valueEncoder := collections.ProtoValueEncoder[tftypes.TFDenom](cdc)
+	primaryKeyEncoder := collections.StringKey
+	valueEncoder := sdkcodec.CollValue[tftypes.TFDenom](cdc)
 
-	var namespace collections.Namespace = tftypes.KeyPrefixDenom
-	var namespaceCreatorIdx collections.Namespace = tftypes.KeyPrefixCreatorIndexer
-
-	return collections.NewIndexedMap[storePKType, storeVType](
-		storeKey, namespace, primaryKeyEncoder, valueEncoder,
+	return *collections.NewIndexedMap[storePKType, storeVType, IndexesTokenFactory](
+		sb, tftypes.KeyPrefixDenom.Prefix(), "denoms", primaryKeyEncoder, valueEncoder,
 		IndexesTokenFactory{
-			Creator: collections.NewMultiIndex[string, storePKType, storeVType](
-				storeKey, namespaceCreatorIdx,
-				collections.StringKeyEncoder, // index key (IK)
-				collections.StringKeyEncoder, // primary key (PK)
-				func(v tftypes.TFDenom) string { return v.Creator },
+			Creator: *indexes.NewMulti[string, storePKType, storeVType](
+				sb, tftypes.KeyPrefixCreatorIndexer.Prefix(), "creator",
+				collections.StringKey, // index key (IK)
+				collections.StringKey, // primary key (PK)
+				func(pk storePKType, value storeVType) (string, error) { return value.Creator, nil },
 			),
 		},
 	)
@@ -153,11 +151,11 @@ type IndexesTokenFactory struct {
 	//  - indexing key (IK): bech32 address of the creator of TF denom.
 	//  - primary key (PK): full TF denom of the form 'factory/{creator}/{subdenom}'
 	//  - value (V): struct version of TF denom with validate function
-	Creator collections.MultiIndex[string, string, storeVType]
+	Creator indexes.Multi[string, string, storeVType]
 }
 
-func (idxs IndexesTokenFactory) IndexerList() []collections.Indexer[string, storeVType] {
-	return []collections.Indexer[string, storeVType]{
-		idxs.Creator,
+func (idxs IndexesTokenFactory) IndexesList() []collections.Index[string, storeVType] {
+	return []collections.Index[string, storeVType]{
+		&idxs.Creator,
 	}
 }

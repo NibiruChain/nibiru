@@ -38,6 +38,7 @@ type BankKeeper interface {
 type AccountKeeper interface {
 	SetModuleAccount(ctx sdk.Context, macc authtypes.ModuleAccountI)
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	GetModuleAddress(name string) sdk.AccAddress
 }
 
 // CommunityPoolKeeper defines the contract needed to be fulfilled for community pool interactions.

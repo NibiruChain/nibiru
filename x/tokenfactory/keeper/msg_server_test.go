@@ -29,13 +29,19 @@ func (s *TestSuite) TestCreateDenom() {
 			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
 			wantErr: "",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
-					Iterate(ctx, collections.Range[string]{}).Values()
+				allDenomsIterator, err := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, nil)
+				s.NoError(err)
+				allDenoms, err := allDenomsIterator.Values()
+				s.NoError(err)
 				s.Len(allDenoms, 0)
 			},
 			postHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
-					Iterate(ctx, collections.Range[string]{}).Values()
+				allDenomsIterator, err := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, nil)
+				s.NoError(err)
+				allDenoms, err := allDenomsIterator.Values()
+				s.NoError(err)
 				s.Len(allDenoms, 1)
 				s.Equal(allDenoms[0].Subdenom, "nusd")
 			},
@@ -45,10 +51,13 @@ func (s *TestSuite) TestCreateDenom() {
 			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
 			wantErr: "attempting to create denom that is already registered",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
-					Iterate(ctx, collections.Range[string]{}).Values()
+				allDenomsIterator, err := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, nil)
+				s.NoError(err)
+				allDenoms, err := allDenomsIterator.Values()
+				s.NoError(err)
 				s.Len(allDenoms, 0)
-				_, err := bapp.TokenFactoryKeeper.CreateDenom(
+				_, err = bapp.TokenFactoryKeeper.CreateDenom(
 					sdk.WrapSDKContext(s.ctx), &types.MsgCreateDenom{
 						Sender:   addrs[0].String(),
 						Subdenom: "nusd",
@@ -372,14 +381,19 @@ func (s *TestSuite) TestMintBurn() {
 				},
 			},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
-					Iterate(ctx, collections.Range[string]{}).Values()
+				allDenomsIterator, err := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, nil)
+				s.NoError(err)
+				allDenoms, err := allDenomsIterator.Values()
+				s.NoError(err)
 				s.Len(allDenoms, 1)
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
-					Iterate(ctx, collections.Range[string]{}).Values()
-
+				allDenomsIterator, err := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, nil)
+				s.NoError(err)
+				allDenoms, err := allDenomsIterator.Values()
+				s.NoError(err)
 				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
