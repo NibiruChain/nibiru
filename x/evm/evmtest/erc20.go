@@ -120,12 +120,6 @@ func CreateFunTokenForBankCoin(
 	return funtoken
 }
 
-// BigPow multiplies "amount" by 10 to the "pow10Exp".
-func BigPow(amount *big.Int, pow10Exp uint8) (powAmount *big.Int) {
-	pow10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(pow10Exp)), nil)
-	return new(big.Int).Mul(amount, pow10)
-}
-
 type FunTokenBalanceAssert struct {
 	FunToken     evm.FunToken
 	Account      gethcommon.Address
