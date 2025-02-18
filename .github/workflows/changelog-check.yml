@@ -8,9 +8,42 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 jobs:
+  # This implementation handles CHANGELOG.md checks for a monorepo, ensuring
+  # that changelogs throughout the repo are edited. The advantage of this
+  # implemenation is that packages or projecs with independent changelogs will
+  # can still have automation without requiring edits to the root changelog.
+  #
+  # IF a Go-related file (filter "nibiru-go") is changed, the
+  #   "dangoslen/changelog-enforcer" action runs, enforcing changes to the
+  #   CHANGELOG.md file at the root of the repo.
+  #
+  # ELSE IF no changelog was modified anywhere else, then
+  #   "dangoslen/changelog-enforcer" runs.
+  #
+  # ELSE, some changelog file must have been modified that was not the root
+  #   one, so the workflow can skip  "dangoslen/changelog-enforcer".
   changelog:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: "Check for changelog and Go edits"
+        id: check_changelog
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            changelog: 
+              - "**/CHANGELOG.md"
+            nibiru-go:
+              - "app/**.go"
+              - "cmd/**.go"
+              - "eth/**.go"
+              - "gosdk/**.go"
+              - "x/**.go"
+              - "**.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker/*"
       - uses: dangoslen/changelog-enforcer@v3
+        if: steps.check_changelog.outputs.nibiru-go == 'true' || steps.check_changelog.outputs.changelog == 'false'
         with:
           skipLabels: "skip-changelog"
