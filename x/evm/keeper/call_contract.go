@@ -82,15 +82,5 @@ func (k Keeper) CallContractWithInput(
 		err = fmt.Errorf("VMError: %s", evmResp.VmError)
 		return
 	}
-
-	// Success, update block gas used and bloom filter
-	if commit {
-		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-
-		err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-		if err != nil {
-			return nil, errors.Wrap(err, "error emitting tx logs")
-		}
-	}
 	return evmResp, nil
 }

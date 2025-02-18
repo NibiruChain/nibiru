@@ -9,6 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -271,7 +272,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	})
 
 	s.Run("happy: send Bank tokens back to erc20", func() {
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				ToEthAddr: eth.EIP55Addr{
@@ -283,6 +284,52 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+
+		// Event "EventConvertCoinToEvm" must present
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventConvertCoinToEvm{
+				Sender:               randomAcc.String(),
+				Erc20ContractAddress: deployResp.ContractAddr.Hex(),
+				ToEthAddr:            deps.Sender.EthAddr.String(),
+				BankCoin: sdk.Coin{
+					Denom:  bankDemon,
+					Amount: sdk.NewInt(1),
+				},
+			},
+		)
+
+		// Event "EventTxLog" must present with OwnershipTransferred event
+		emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+		signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
+		fromAddress := gethcommon.BytesToHash(evm.EVM_MODULE_ADDRESS.Bytes()).Hex()
+		toAddress := gethcommon.BytesToHash(deps.Sender.EthAddr.Bytes()).Hex()
+		amountBase64 := gethcommon.LeftPadBytes(big.NewInt(1).Bytes(), 32)
+
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventTxLog{
+				Logs: []evm.Log{
+					{
+						Address: deployResp.ContractAddr.Hex(),
+						Topics: []string{
+							signature,
+							fromAddress,
+							toAddress,
+						},
+						Data:        amountBase64,
+						BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
+						TxHash:      emptyHash,
+						TxIndex:     0,
+						BlockHash:   emptyHash,
+						Index:       0,
+						Removed:     false,
+					},
+				},
+			},
+		)
 	})
 
 	s.T().Log("check balances")
