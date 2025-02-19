@@ -40,7 +40,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Nibiru EVM - 2025-02-10
+- [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs
+- [#2202](https://github.com/NibiruChain/nibiru/pull/2202) - chore(build): add build tags and missing flags/variables
+- [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
+- [#2207](https://github.com/NibiruChain/nibiru/pull/2207) - chore(ci): add cache for chaosnet builds
+- [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):
+Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
+- [#2211](https://github.com/NibiruChain/nibiru/pull/2211) - ci(chaosnet): avoid building on cache injected directories
+- [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
+- [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
+
+## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
+
+* fbcca386 fix: revert wasmvm to v1.5.0
+* 533490d0 fix: revert testnet-1 chain id to 7210
+* d8a10921 chore: update changelog for v2 EVM release
+
+## [v2.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0) - 2025-02-10
 
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
   that gas consumed during any send operation of the "NibiruBankKeeper" depends

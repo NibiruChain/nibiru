@@ -146,8 +146,6 @@ func (p precompileFunToken) sendToBank(
 		return nil, ErrInvalidArgs(err)
 	}
 
-	var evmResponses []*evm.MsgEthereumTxResponse
-
 	// ERC20 must have FunToken mapping
 	funtokens := p.evmKeeper.FunTokens.Collect(
 		ctx, p.evmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
@@ -170,7 +168,7 @@ func (p precompileFunToken) sendToBank(
 	}
 
 	// Caller transfers ERC20 to the EVM module account
-	gotAmount, transferResp, err := p.evmKeeper.ERC20().Transfer(
+	gotAmount, _, err := p.evmKeeper.ERC20().Transfer(
 		erc20,                  /*erc20*/
 		caller,                 /*from*/
 		evm.EVM_MODULE_ADDRESS, /*to*/
@@ -181,7 +179,6 @@ func (p precompileFunToken) sendToBank(
 	if err != nil {
 		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
 	}
-	evmResponses = append(evmResponses, transferResp)
 
 	// EVM account mints FunToken.BankDenom to module account
 	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(gotAmount))
@@ -190,11 +187,10 @@ func (p precompileFunToken) sendToBank(
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
 		// Since we're sending them away and want accurate total supply tracking, the
 		// tokens need to be burned.
-		burnResp, err := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
+		_, err := p.evmKeeper.ERC20().Burn(erc20, evm.EVM_MODULE_ADDRESS, gotAmount, ctx, evmObj)
 		if err != nil {
 			return nil, fmt.Errorf("ERC20.Burn: %w", err)
 		}
-		evmResponses = append(evmResponses, burnResp)
 	} else {
 		// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
 		// any operation that has the potential to use Bank send methods. This will
@@ -224,11 +220,6 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
-	}
-	for _, resp := range evmResponses {
-		for _, log := range resp.Logs {
-			startResult.StateDB.AddLog(log.ToEthereum())
-		}
 	}
 
 	// TODO: UD-DEBUG: feat: Emit EVM events
