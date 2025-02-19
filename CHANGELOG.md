@@ -49,12 +49,13 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2211](https://github.com/NibiruChain/nibiru/pull/2211) - ci(chaosnet): avoid building on cache injected directories
 - [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
 - [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
+- [#2214](https://github.com/NibiruChain/nibiru/pull/2214) - chore(wasm): bump wasmvm to `v1.5.8`
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
-* fbcca386 fix: revert wasmvm to v1.5.0
-* 533490d0 fix: revert testnet-1 chain id to 7210
-* d8a10921 chore: update changelog for v2 EVM release
+- fbcca386 fix: revert wasmvm to v1.5.0
+- 533490d0 fix: revert testnet-1 chain id to 7210
+- d8a10921 chore: update changelog for v2 EVM release
 
 ### Nibiru EVM
 
