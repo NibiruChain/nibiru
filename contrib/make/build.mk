@@ -61,8 +61,8 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
-CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/
+CGO_CFLAGS  := -I$(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/include
+CGO_LDFLAGS := -L$(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/ -L$(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lrocksdb -lstdc++ -lz -lbz2
 else
@@ -78,30 +78,30 @@ $(TEMPDIR)/:
 
 # download required libs
 rocksdblib: $(TEMPDIR)/
-	@mkdir -p $(TEMPDIR)/include
-	@mkdir -p $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/
-	@if [ ! -d $(TEMPDIR)/include/rocksdb ] ; \
+	@mkdir -p $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/include
+	@mkdir -p $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/
+	@if [ ! -d $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/include/rocksdb ] ; \
 	then \
-	  wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/; \
+	  wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/include/; \
 	fi
-	@if [ ! -f $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/librocksdb.a ] ; \
+	@if [ ! -f $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/librocksdb.a ] ; \
 	then \
-	  wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/; \
+	  wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/rocksdb/$(ROCKSDB_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/; \
 	fi
 
 wasmvmlib: $(TEMPDIR)/
-	@mkdir -p $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/
-	@if [ ! -f $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm*.a ] ; \
+	@mkdir -p $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/
+	@if [ ! -f $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm*.a ] ; \
 	then \
 	  if [ "$(OS_NAME)" = "darwin" ] ; \
 	  then \
-	    wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvmstatic_darwin.a; \
+	    wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvmstatic_darwin.a; \
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		else \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		fi; \
 	  fi; \
 	fi
