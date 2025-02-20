@@ -36,7 +36,7 @@ func (k Keeper) rewardWinners(
 	if totalRewardWeight == 0 {
 		return
 	}
-
+	
 	var totalRewards math.LegacyDecCoins
 	rewards := k.GatherRewardsForVotePeriod(ctx)
 	totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(rewards...)...)

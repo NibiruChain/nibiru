@@ -112,9 +112,13 @@ func (k Keeper) removeInvalidVotes(
 	ctx sdk.Context,
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	whitelistedPairs set.Set[asset.Pair],
-) {
+) error {
+	totalBondedTokens, err := k.StakingKeeper.TotalBondedTokens(ctx)
+	if err != nil {
+		return err
+	}
 	totalBondedPower := sdk.TokensToConsensusPower(
-		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
+		totalBondedTokens, k.StakingKeeper.PowerReduction(ctx),
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
@@ -138,6 +142,7 @@ func (k Keeper) removeInvalidVotes(
 			continue
 		}
 	}
+	return nil
 }
 
 // Tally calculates the median and returns it. Sets the set of voters to be

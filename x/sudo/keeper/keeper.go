@@ -28,7 +28,8 @@ func NewKeeper(
 
 // Returns the root address of the sudo module.
 func (k Keeper) GetRootAddr(ctx context.Context) (sdk.AccAddress, error) {
-	sudoers, err := k.Sudoers.Get(ctx)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sudoers, err := k.Sudoers.Get(sdkCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +133,8 @@ func (k Keeper) RemoveContracts(
 func (k Keeper) CheckPermissions(
 	contract sdk.AccAddress, ctx context.Context,
 ) error {
-	state, err := k.Sudoers.Get(ctx)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	state, err := k.Sudoers.Get(sdkCtx)
 	if err != nil {
 		return err
 	}
