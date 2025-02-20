@@ -24,7 +24,7 @@ func GenDenomCreationGasConsume(r *rand.Rand) uint64 {
 func RandomizedGenState(simState *module.SimulationState) {
 	var denomCreationGasConsume uint64
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, DenomCreationGasConsume, &denomCreationGasConsume, simState.Rand,
+		DenomCreationGasConsume, &denomCreationGasConsume, simState.Rand,
 		func(r *rand.Rand) { denomCreationGasConsume = GenDenomCreationGasConsume(r) },
 	)
 

@@ -7,7 +7,6 @@ import (
 
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,7 +49,7 @@ func TestParamsValidate(t *testing.T) {
 		{
 			"invalid - polynomial calculation - no coefficient",
 			inflationtypes.Params{
-				PolynomialFactors:     []sdk.Dec{},
+				PolynomialFactors:     []math.LegacyDec{},
 				InflationDistribution: inflationtypes.DefaultInflationDistribution,
 				InflationEnabled:      true,
 				HasInflationStarted:   true,

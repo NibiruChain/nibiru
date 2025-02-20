@@ -36,12 +36,13 @@ import (
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
 
-	"cosmossdk.io/tools/rosetta"
-	crgserver "cosmossdk.io/tools/rosetta/lib/server"
+	"github.com/cosmos/rosetta"
+	crgserver "github.com/cosmos/rosetta/lib/server"
 
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
 	errorsmod "cosmossdk.io/errors"
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -49,7 +50,6 @@ import (
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -535,8 +535,9 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 	}
 
 	var rosettaSrv crgserver.Server
+
 	if conf.Rosetta.Enable {
-		offlineMode := conf.Rosetta.Offline
+		offlineMode := conf.Rosetta.Config.Offline
 
 		// If GRPC is not enabled rosetta cannot work in online mode, so it works in
 		// offline mode.
@@ -551,15 +552,15 @@ func startInProcess(ctx *server.Context, clientCtx client.Context, opts StartOpt
 		}
 
 		conf := &rosetta.Config{
-			Blockchain:          conf.Rosetta.Blockchain,
-			Network:             conf.Rosetta.Network,
+			Blockchain:          conf.Rosetta.Config.Blockchain,
+			Network:             conf.Rosetta.Config.Network,
 			TendermintRPC:       ctx.Config.RPC.ListenAddress,
 			GRPCEndpoint:        conf.GRPC.Address,
-			Addr:                conf.Rosetta.Address,
-			Retries:             conf.Rosetta.Retries,
+			Addr:                conf.Rosetta.Config.Addr,
+			Retries:             conf.Rosetta.Config.Retries,
 			Offline:             offlineMode,
-			GasToSuggest:        conf.Rosetta.GasToSuggest,
-			EnableFeeSuggestion: conf.Rosetta.EnableFeeSuggestion,
+			GasToSuggest:        conf.Rosetta.Config.GasToSuggest,
+			EnableFeeSuggestion: conf.Rosetta.Config.EnableFeeSuggestion,
 			GasPrices:           minGasPrices.Sort(),
 			Codec:               clientCtx.Codec.(*codec.ProtoCodec),
 			InterfaceRegistry:   clientCtx.InterfaceRegistry,

@@ -14,14 +14,14 @@ import (
 	"sync"
 	"time"
 
+	"cosmossdk.io/store/pruning/types"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	serverconfig "github.com/NibiruChain/nibiru/app/server/config"
 
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"cosmossdk.io/math"

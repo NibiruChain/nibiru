@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/x/inflation/types"
@@ -18,7 +17,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	inflationGenesis := types.GenesisState{
 		Params: types.Params{
 			InflationEnabled: true,
-			PolynomialFactors: []sdk.Dec{
+			PolynomialFactors: []math.LegacyDec{
 				math.LegacyMustNewDecFromStr("-0.00014851"),
 				math.LegacyMustNewDecFromStr("0.07501029"),
 				math.LegacyMustNewDecFromStr("-19.04983993"),

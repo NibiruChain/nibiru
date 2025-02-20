@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"context"
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
@@ -11,7 +12,8 @@ import (
 )
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+func EndBlocker(c context.Context, k keeper.Keeper) {
+	ctx := sdk.UnwrapSDKContext(c)
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	params, err := k.Params.Get(ctx)

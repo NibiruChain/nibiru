@@ -7,6 +7,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +27,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 	tests := []struct {
 		name        string
 		messages    []sdk.Msg
-		expectedGas sdk.Gas
+		expectedGas storetypes.Gas
 		expectedErr error
 	}{
 		{
@@ -218,7 +219,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			suite.NoError(suite.txBuilder.SetMsgs(tc.messages...))
 
 			privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{11}, []uint64{0}
-			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+			tx, err := suite.CreateTestTx(suite.ctx, privs, accNums, accSeqs, suite.ctx.ChainID())
 			suite.NoErrorf(err, "tx: %v", tx)
 			suite.NoError(tx.ValidateBasic())
 			suite.ValidateTx(tx, suite.T())
