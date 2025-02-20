@@ -63,7 +63,6 @@ require (
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20240522060652-a1ae4c3e0337
-	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cometbft/cometbft/api v1.0.0-alpha.2.0.20240429102542-490e9bc3de65
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
 	github.com/cosmos/rosetta v0.50.6
@@ -133,6 +132,7 @@ require (
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gin-gonic/gin v1.9.1 // indirect
@@ -174,9 +174,11 @@ require (
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/huandu/skiplist v1.2.0 // indirect
+	github.com/huin/goupnp v1.0.3 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
@@ -217,6 +219,7 @@ require (
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
+	github.com/status-im/keycard-go v0.0.0-20190316090335-8537d3370df4 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
@@ -263,12 +266,15 @@ replace (
 
 	// github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => ./geth
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.27-nibiru
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.12
 
 	// pin version! 126854af5e6d has issues with the store so that queries fail
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+
+	// stick with compatible version or x/exp in v0.47.x line
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
 )
 
 // replace github.com/cometbft/cometbft/libs/os => github.com/cometbft/cometbft/libs/os v1.0.0-alpha.2.0.20240429102542-490e9bc3de65

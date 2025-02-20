@@ -9,17 +9,14 @@ import (
 
 const OracleMessageGas = 500
 
-var _ sdk.AnteDecorator = EnsureSinglePostPriceMessageDecorator{}
+var _ sdk.AnteDecorator = AnteDecoratorEnsureSinglePostPriceMessage{}
 
-// EnsureSinglePostPriceMessageDecorator ensures that there is only one oracle vote message in the transaction
-// and sets the gas meter to a fixed value.
-type EnsureSinglePostPriceMessageDecorator struct{}
+// AnteDecoratorEnsureSinglePostPriceMessage ensures that there is only one
+// oracle vote message in the transaction and sets the gas meter to a fixed
+// value.
+type AnteDecoratorEnsureSinglePostPriceMessage struct{}
 
-func NewPostPriceFixedPriceDecorator() EnsureSinglePostPriceMessageDecorator {
-	return EnsureSinglePostPriceMessageDecorator{}
-}
-
-func (gd EnsureSinglePostPriceMessageDecorator) AnteHandle(
+func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,

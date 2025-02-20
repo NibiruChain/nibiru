@@ -11,6 +11,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
 	storetypes "cosmossdk.io/store/types"
@@ -18,6 +19,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
@@ -30,6 +32,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -119,6 +122,16 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	)...)
 }
 
+const DefaultMaxTxGasWanted uint64 = 0
+
+// overrideWasmVariables overrides the wasm variables to:
+//   - allow for larger wasm files
+func overrideWasmVariables() {
+	// Override Wasm size limitation from WASMD.
+	wasmtypes.MaxWasmSize = 3 * 1024 * 1024 // 3MB
+	wasmtypes.MaxProposalWasmSize = wasmtypes.MaxWasmSize
+}
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
 	logger log.Logger,
@@ -129,10 +142,18 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
+	overrideWasmVariables()
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
+	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
+		mp := mempool.NoOpMempool{}
+		app.SetMempool(mp)
+		handler := baseapp.NewDefaultProposalHandler(mp, app)
+		app.SetPrepareProposal(handler.PrepareProposalHandler())
+		app.SetProcessProposal(handler.ProcessProposalHandler())
+	})
 
 	bApp := baseapp.NewBaseApp(
 		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
@@ -181,29 +202,29 @@ func NewNibiruApp(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler, err := NewAnteHandler(AnteHandlerOptions{
+	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+			AccountKeeper:          app.AccountKeeper,
+			BankKeeper:             app.BankKeeper,
+			FeegrantKeeper:         app.FeeGrantKeeper,
+			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
+			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
+		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
+		MaxTxGasWanted: DefaultMaxTxGasWanted,
 	})
-	if err != nil {
-		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
-	}
 
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
-		if err = snapshotManager.RegisterExtensions(
+		if err := snapshotManager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(
 				app.CommitMultiStore(),
 				&app.WasmKeeper,
@@ -386,7 +407,7 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 }
 
 func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
-	return app.stakingKeeper
+	return app.StakingKeeper
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {

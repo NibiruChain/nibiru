@@ -53,7 +53,7 @@ func customTendermintConfig() *tmcfg.Config {
 	cfg.Consensus.TimeoutPrecommitDelta = ms(500)
 	cfg.Consensus.TimeoutCommit = ms(1_000)
 
-	cfg.DBBackend = string(db.RocksDBBackend)
+	cfg.DBBackend = string(db.PebbleDBBackend)
 	return cfg
 }
 

@@ -21,14 +21,24 @@ func TestParseChainID_Happy(t *testing.T) {
 			expInt:  big.NewInt(1),
 		},
 		{
-			chainID: "aragonchain_256-1",
+			chainID: "cataclysm_256-1",
 			name:    "valid chain-id, multiple digits",
 			expInt:  big.NewInt(256),
+		},
+		{
+			chainID: "cataclysm-4-20",
+			name:    "valid chain-id, dashed, multiple digits",
+			expInt:  big.NewInt(4),
+		},
+		{
+			chainID: "chain-1-1",
+			name:    "valid chain-id, double dash",
+			expInt:  big.NewInt(1),
 		},
 	}
 
 	for _, tc := range testCases {
-		chainIDEpoch, err := ParseChainID(tc.chainID)
+		chainIDEpoch, err := ParseEthChainIDStrict(tc.chainID)
 		require.NoError(t, err, tc.name)
 		var errMsg string = ""
 		if err != nil {
@@ -46,11 +56,7 @@ func TestParseChainID_Sad(t *testing.T) {
 		chainID string
 	}{
 		{
-			chainID: "aragonchain-1-1",
-			name:    "invalid chain-id, double dash",
-		},
-		{
-			chainID: "aragonchain_1_1",
+			chainID: "chain_1_1",
 			name:    "invalid chain-id, double underscore",
 		},
 		{
@@ -116,7 +122,7 @@ func TestParseChainID_Sad(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		chainIDEpoch, err := ParseChainID(tc.chainID)
+		chainIDEpoch, err := ParseEthChainIDStrict(tc.chainID)
 		require.Error(t, err, tc.name)
 		require.Nil(t, chainIDEpoch)
 		require.False(t, IsValidChainID(tc.chainID), tc.name)

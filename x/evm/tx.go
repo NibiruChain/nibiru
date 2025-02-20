@@ -46,10 +46,6 @@ var DefaultPriorityReduction = sdk.DefaultPowerReduction
 func GetTxPriority(txData TxData, baseFee *big.Int) (priority int64) {
 	// calculate priority based on effective gas price
 	tipPrice := txData.EffectiveGasPrice(baseFee)
-	// if london hardfork is not enabled, tipPrice is the gasPrice
-	if baseFee != nil {
-		tipPrice = new(big.Int).Sub(tipPrice, baseFee)
-	}
 
 	priority = math.MaxInt64
 	priorityBig := new(big.Int).Quo(tipPrice, DefaultPriorityReduction.BigInt())

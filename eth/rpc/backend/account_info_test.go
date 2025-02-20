@@ -33,7 +33,7 @@ func (s *BackendSuite) TestGetCode() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil ",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{},
 			func(addr common.Address) {},
 			false,
@@ -41,7 +41,7 @@ func (s *BackendSuite) TestGetCode() {
 		},
 		{
 			"fail - query client errors on getting Code",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address) {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
@@ -52,7 +52,7 @@ func (s *BackendSuite) TestGetCode() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address) {
 				queryClient := s.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
@@ -81,7 +81,7 @@ func (s *BackendSuite) TestGetCode() {
 func (s *BackendSuite) TestGetProof() {
 	blockNrInvalid := rpc.NewBlockNumber(big.NewInt(1))
 	blockNr := rpc.NewBlockNumber(big.NewInt(4))
-	address1 := evmtest.NewEthAddr()
+	address1 := evmtest.NewEthAccInfo().EthAddr
 
 	testCases := []struct {
 		name          string
@@ -199,7 +199,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{},
 			func(addr common.Address, key string, storage string) {},
@@ -208,7 +208,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 		},
 		{
 			"fail - query client errors on getting Storage",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address, key string, storage string) {
@@ -220,7 +220,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			"0x0",
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(addr common.Address, key string, storage string) {
@@ -260,7 +260,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 	}{
 		{
 			"fail - BlockHash and BlockNumber are both nil",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{},
 			func(bn rpc.BlockNumber, addr common.Address) {
 			},
@@ -269,7 +269,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - tendermint client failed to get block",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -280,7 +280,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - query client failed to get balance",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -294,7 +294,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - invalid balance",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -308,7 +308,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"fail - pruned node state",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -322,7 +322,7 @@ func (s *BackendSuite) TestGetEvmGasBalance() {
 		},
 		{
 			"pass",
-			evmtest.NewEthAddr(),
+			evmtest.NewEthAccInfo().EthAddr,
 			rpc.BlockNumberOrHash{BlockNumber: &blockNr},
 			func(bn rpc.BlockNumber, addr common.Address) {
 				client := s.backend.clientCtx.Client.(*mocks.Client)
@@ -393,7 +393,7 @@ func (s *BackendSuite) TestGetTransactionCount() {
 		s.Run(fmt.Sprintf("Case %s", tc.name), func() {
 			s.SetupTest()
 
-			addr := evmtest.NewEthAddr()
+			addr := evmtest.NewEthAccInfo().EthAddr
 			if tc.accExists {
 				addr = common.BytesToAddress(s.acc.Bytes())
 			}

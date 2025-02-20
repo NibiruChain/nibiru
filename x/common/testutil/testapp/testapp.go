@@ -62,10 +62,17 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 
 // NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
 func NewContext(nibiru *app.NibiruApp) sdk.Context {
-	return nibiru.NewContext(false, tmproto.Header{
+	blockHeader := tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
-	})
+	}
+	ctx := nibiru.NewContext(false, blockHeader)
+
+	// Make sure there's a block proposer on the context.
+	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
+	ctx = ctx.WithBlockHeader(blockHeader)
+
+	return ctx
 }
 
 // DefaultSudoers: State for the x/sudo module for the default test app.
@@ -79,6 +86,15 @@ func DefaultSudoers() sudotypes.Sudoers {
 
 func DefaultSudoRoot() sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+}
+
+func FirstBlockProposer(
+	chain *app.NibiruApp, ctx sdk.Context,
+) (proposerAddr sdk.ConsAddress) {
+	maxQueryCount := uint32(10)
+	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
+	valAddrBz := valopers[0].GetOperator().Bytes()
+	return sdk.ConsAddress(valAddrBz)
 }
 
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid

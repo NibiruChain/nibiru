@@ -34,15 +34,15 @@ func assertBijectiveValue[T any](t *testing.T, encoder collections.ValueEncoder[
 	require.NotEmpty(t, encoder.Name())
 }
 
-type SuiteEncoders struct {
+type Suite struct {
 	suite.Suite
 }
 
-func TestSuiteEncoders_RunAll(t *testing.T) {
-	suite.Run(t, new(SuiteEncoders))
+func TestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *SuiteEncoders) TestEncoderBytes() {
+func (s *Suite) TestEncoderBytes() {
 	testCases := []struct {
 		name  string
 		value string
@@ -61,7 +61,7 @@ func (s *SuiteEncoders) TestEncoderBytes() {
 	}
 }
 
-func (s *SuiteEncoders) TestEncoderEthAddr() {
+func (s *Suite) TestEncoderEthAddr() {
 	testCases := []struct {
 		name      string
 		given     eth.EthAddr

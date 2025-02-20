@@ -15,7 +15,8 @@ import (
 )
 
 func TestTxEncoding(t *testing.T) {
-	addr, key := evmtest.PrivKeyEth()
+	ethAcc := evmtest.NewEthAccInfo()
+	addr, key := ethAcc.EthAddr, ethAcc.PrivKey
 	signer := evmtest.NewSigner(key)
 
 	ethTxParams := evm.EvmTxArgs{

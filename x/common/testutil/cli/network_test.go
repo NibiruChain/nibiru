@@ -16,31 +16,27 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 )
 
 func TestIntegrationTestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TestSuite))
 }
 
-type IntegrationTestSuite struct {
+// Assert network cleanup
+var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+
+type TestSuite struct {
 	suite.Suite
 
 	network *cli.Network
 	cfg     *cli.Config
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
-	/* 	Make test skip if -short is not used:
-	All tests: `go test ./...`
-	Unit tests only: `go test ./... -short`
-	Integration tests only: `go test ./... -run Integration`
-	https://stackoverflow.com/a/41407042/13305627 */
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
-	s.T().Log("setting up integration test suite")
+func (s *TestSuite) SetupSuite() {
+	testutil.BeforeIntegrationSuite(s.T())
 
 	encConfig := app.MakeEncodingConfig()
 	cfg := new(cli.Config)
@@ -60,12 +56,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestNetwork_Liveness() {
+func (s *TestSuite) TestNetwork_Liveness() {
 	height, err := s.network.WaitForHeightWithTimeout(4, time.Minute)
 	s.Require().NoError(err, "expected to reach 4 blocks; got %d", height)
 
@@ -73,7 +69,7 @@ func (s *IntegrationTestSuite) TestNetwork_Liveness() {
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
+func (s *TestSuite) TestNetwork_LatestHeight() {
 	height, err := s.network.LatestHeight()
 	s.NoError(err)
 	s.Positive(height)
@@ -83,7 +79,7 @@ func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
 	s.Error(err)
 }
 
-func (s *IntegrationTestSuite) TestLogMnemonic() {
+func (s *TestSuite) TestLogMnemonic() {
 	kring, algo, nodeDirName := cli.NewKeyring(s.T())
 
 	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
@@ -101,7 +97,7 @@ func (s *IntegrationTestSuite) TestLogMnemonic() {
 	}, secret)
 }
 
-func (s *IntegrationTestSuite) TestValidatorGetSecret() {
+func (s *TestSuite) TestValidatorGetSecret() {
 	val := s.network.Validators[0]
 	secret := val.SecretMnemonic()
 	secretSlice := val.SecretMnemonicSlice()
@@ -132,7 +128,7 @@ func (ml *mockLogger) Logf(format string, args ...interface{}) {
 	ml.Logs = append(ml.Logs, fmt.Sprintf(format, args...))
 }
 
-func (s *IntegrationTestSuite) TestNewAccount() {
+func (s *TestSuite) TestNewAccount() {
 	s.NotPanics(func() {
 		addr := cli.NewAccount(s.network, "newacc")
 		s.NoError(sdk.VerifyAddressFormat(addr))

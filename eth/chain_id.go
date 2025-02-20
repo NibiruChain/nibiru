@@ -6,15 +6,21 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/app/appconst"
 )
 
 var (
-	regexChainID         = `[a-z]{1,}`
-	regexEIP155Separator = `_{1}`
-	regexEIP155          = `[1-9][0-9]*`
-	regexEpochSeparator  = `-{1}`
-	regexEpoch           = `[1-9][0-9]*`
-	nibiruEvmChainId     = regexp.MustCompile(fmt.Sprintf(`^(%s)%s(%s)%s(%s)$`,
+	// one of any lower case letter from "a"-"z"
+	regexChainID = `[a-z]{1,}`
+	// one of either "_" or "-"
+	regexEIP155Separator = `[_-]{1}`
+	// one of "_"
+	// regexEIP155Separator = `_{1}`
+	regexEIP155         = `[1-9][0-9]*`
+	regexEpochSeparator = `-{1}`
+	regexEpoch          = `[1-9][0-9]*`
+	nibiruEvmChainId    = regexp.MustCompile(fmt.Sprintf(`^(%s)%s(%s)%s(%s)$`,
 		regexChainID,
 		regexEIP155Separator,
 		regexEIP155,
@@ -32,10 +38,20 @@ func IsValidChainID(chainID string) bool {
 	return nibiruEvmChainId.MatchString(chainID)
 }
 
-// ParseChainID parses a string chain identifier's epoch to an
+// ParseEthChainID parses a string chain identifier's epoch to an
+// Ethereum-compatible chain-id in *big.Int format.
+//
+// This function uses Nibiru's map of chain IDs defined in Nibiru/app/appconst
+// rather than the regex of EIP155, which is implemented by
+// ParseEthChainIDStrict.
+func ParseEthChainID(chainID string) (*big.Int, error) {
+	return appconst.GetEthChainID(chainID), nil
+}
+
+// ParseEthChainIDStrict parses a string chain identifier's epoch to an
 // Ethereum-compatible chain-id in *big.Int format. The function returns an error
 // if the chain-id has an invalid format
-func ParseChainID(chainID string) (*big.Int, error) {
+func ParseEthChainIDStrict(chainID string) (*big.Int, error) {
 	chainID = strings.TrimSpace(chainID)
 	if len(chainID) > 48 {
 		return nil, ErrInvalidChainID.Wrapf(
