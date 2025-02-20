@@ -50,6 +50,7 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
 - [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
 - [#2214](https://github.com/NibiruChain/nibiru/pull/2214) - chore(wasm): bump wasmvm to `v1.5.8`
+- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
@@ -167,15 +168,8 @@ preparation for a second audit starting in November 2024.
   Bank module. This code change uses the `NibiruBankKeeper` on all modules that
   depend on x/bank, such as the EVM and Wasm modules.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
-- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
-  tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
-- [#2090](https://github.com/NibiruChain/nibiru/pull/2090) - fix(evm): Account
-for (1) ERC20 transfers with tokens that return false success values instead of
-throwing an error and (2) ERC20 transfers with other operations that don't bring
-about the expected resulting balance for the transfer recipient.
-- [#2092](https://github.com/NibiruChain/nibiru/pull/2092) - feat(evm): add validation for wasm multi message execution
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint

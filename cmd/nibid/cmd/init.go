@@ -8,16 +8,9 @@ import (
 	"path/filepath"
 
 	tmcfg "github.com/cometbft/cometbft/config"
-
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
-
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -25,6 +18,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/go-bip39"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/types"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (
@@ -133,6 +134,11 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			if err != nil {
 				return errors.Wrap(err, "Failed to marshal default genesis state")
 			}
+
+			// add 08-wasm to AllowedClients
+			ibcState := ibctypes.DefaultGenesisState()
+			ibcState.ClientGenesis.Params.AllowedClients = append(ibcState.ClientGenesis.Params.AllowedClients, ibcwasmtypes.Wasm)
+			appGenState[ibcexported.ModuleName] = cdc.MustMarshalJSON(ibcState)
 
 			genDoc := &tmtypes.GenesisDoc{}
 			if _, err := os.Stat(genFile); err != nil {
