@@ -130,15 +130,15 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 			appGenState := mbm.DefaultGenesis(cdc)
 
-			appState, err := json.MarshalIndent(appGenState, "", " ")
-			if err != nil {
-				return errors.Wrap(err, "Failed to marshal default genesis state")
-			}
-
 			// add 08-wasm to AllowedClients
 			ibcState := ibctypes.DefaultGenesisState()
 			ibcState.ClientGenesis.Params.AllowedClients = append(ibcState.ClientGenesis.Params.AllowedClients, ibcwasmtypes.Wasm)
 			appGenState[ibcexported.ModuleName] = cdc.MustMarshalJSON(ibcState)
+
+			appState, err := json.MarshalIndent(appGenState, "", " ")
+			if err != nil {
+				return errors.Wrap(err, "Failed to marshal default genesis state")
+			}
 
 			genDoc := &tmtypes.GenesisDoc{}
 			if _, err := os.Stat(genFile); err != nil {
