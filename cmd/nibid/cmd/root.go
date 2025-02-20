@@ -11,9 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/app/appconst"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 
+	"cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"

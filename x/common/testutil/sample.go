@@ -11,8 +11,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"cosmossdk.io/log"
 	tmdb "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

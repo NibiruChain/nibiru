@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
@@ -16,7 +17,6 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

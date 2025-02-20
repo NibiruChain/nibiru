@@ -3,7 +3,6 @@ package tokenfactory_test
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app/codec"
@@ -27,8 +26,8 @@ func (s *ModuleTestSuite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(ctx, abci.RequestBeginBlock{})
-		appModule.EndBlock(ctx, abci.RequestEndBlock{})
+		appModule.BeginBlock(ctx)
+		appModule.EndBlock(ctx)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := bapp.AppCodec()
