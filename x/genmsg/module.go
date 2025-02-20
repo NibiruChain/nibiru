@@ -14,7 +14,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
+	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
 const (

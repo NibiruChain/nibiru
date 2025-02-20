@@ -7,6 +7,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,8 +15,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // Keeper of the oracle store
@@ -28,30 +29,38 @@ type Keeper struct {
 	distrKeeper    types.DistributionKeeper
 	StakingKeeper  types.StakingKeeper
 	slashingKeeper types.SlashingKeeper
+	sudoKeeper     types.SudoKeeper
 
 	distrModuleName string
 
+	// Module parameters
 	Params            collections.Item[types.Params]
-	ExchangeRates     collections.Map[asset.Pair, types.DatedPrice]
+	ExchangeRates     collections.Map[asset.Pair, types.ExchangeRateAtBlock]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 
 	// PriceSnapshots maps types.PriceSnapshot to the asset.Pair of the snapshot and the creation timestamp as keys.Uint64Key.
-	PriceSnapshots   collections.Map[collections.Pair[asset.Pair, time.Time], types.PriceSnapshot]
+	PriceSnapshots collections.Map[
+		collections.Pair[asset.Pair, time.Time],
+		types.PriceSnapshot]
 	WhitelistedPairs collections.KeySet[asset.Pair]
 	Rewards          collections.Map[uint64, types.Rewards]
 	RewardsID        collections.Sequence
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper,
 	slashingKeeper types.SlashingKeeper,
+	sudoKeeper types.SudoKeeper,
 
 	distrName string,
 ) Keeper {
@@ -60,7 +69,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	return Keeper{
+	k := Keeper{
 		cdc:               cdc,
 		storeKey:          storeKey,
 		AccountKeeper:     accountKeeper,
@@ -68,9 +77,10 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
 		slashingKeeper:    slashingKeeper,
+		sudoKeeper:        sudoKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
-		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.DatedPrice](cdc)),
+		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.ExchangeRateAtBlock](cdc)),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
@@ -82,6 +92,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
 		RewardsID: collections.NewSequence(storeKey, 9),
 	}
+	return k
 }
 
 // Logger returns a module-specific logger.
@@ -119,7 +130,7 @@ func (k Keeper) ValidateFeeder(
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return sdk.OneDec().Neg(), err
+		return math.LegacyOneDec().Neg(), err
 	}
 
 	snapshots := k.PriceSnapshots.Iterate(
@@ -134,7 +145,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
+		return math.LegacyOneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
 	}
 
 	if len(snapshots) == 1 {
@@ -144,7 +155,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	firstTimestampMs := snapshots[0].TimestampMs
 	if firstTimestampMs > ctx.BlockTime().UnixMilli() {
 		// should never happen, or else we have corrupted state
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
+		return math.LegacyOneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
 			"Possible corrupted state. First timestamp %d is after current blocktime %d", firstTimestampMs, ctx.BlockTime().UnixMilli())
 	}
 
@@ -153,11 +164,12 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 		return snapshots[0].Price, nil
 	}
 
-	cumulativePrice := sdk.ZeroDec()
+	cumulativePrice := math.LegacyZeroDec()
 	for i, s := range snapshots {
 		var nextTimestampMs int64
 		if i == len(snapshots)-1 {
-			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			// if we're at the last snapshot, then consider that price as ongoing
+			// until the current blocktime
 			nextTimestampMs = ctx.BlockTime().UnixMilli()
 		} else {
 			nextTimestampMs = snapshots[i+1].TimestampMs
@@ -170,27 +182,26 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimestampMs), nil
 }
 
-func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
-	exchangeRate, err := k.ExchangeRates.Get(ctx, pair)
-	price = exchangeRate.ExchangeRate
-	return
-}
-
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
-	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, CreatedBlock: uint64(ctx.BlockHeight())})
+	blockTimestampMs := ctx.BlockTime().UnixMilli()
+	k.ExchangeRates.Insert(ctx, pair,
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     price,
+			CreatedBlock:     uint64(ctx.BlockHeight()),
+			BlockTimestampMs: blockTimestampMs,
+		})
 
 	key := collections.Join(pair, ctx.BlockTime())
-	timestampMs := ctx.BlockTime().UnixMilli()
 	k.PriceSnapshots.Insert(ctx, key, types.PriceSnapshot{
 		Pair:        pair,
 		Price:       price,
-		TimestampMs: timestampMs,
+		TimestampMs: blockTimestampMs,
 	})
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
 		Pair:        pair.String(),
 		Price:       price,
-		TimestampMs: timestampMs,
+		TimestampMs: blockTimestampMs,
 	}); err != nil {
 		ctx.Logger().Error("failed to emit OraclePriceUpdate", "pair", pair, "error", err)
 	}

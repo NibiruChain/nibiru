@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"strings"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -41,8 +42,8 @@ var (
 //     is available in the SqrtDec method.
 func MustSqrtDec(dec sdk.Dec) sdk.Dec {
 	sqrtBigInt := MustSqrtBigInt(dec.BigInt())
-	precision := sdk.NewDecFromBigInt(PRECISION_MULT)
-	return sdk.NewDecFromBigInt(sqrtBigInt).Quo(precision)
+	precision := math.LegacyNewDecFromBigInt(PRECISION_MULT)
+	return math.LegacyNewDecFromBigInt(sqrtBigInt).Quo(precision)
 }
 
 // SqrtDec computes the square root of the input decimal using its

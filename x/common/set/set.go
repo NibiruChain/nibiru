@@ -34,3 +34,9 @@ func New[T comparable](strs ...T) Set[T] {
 	}
 	return set
 }
+
+func (set Set[T]) AddMulti(sMulti ...T) {
+	for _, s := range sMulti {
+		set[s] = struct{}{}
+	}
+}

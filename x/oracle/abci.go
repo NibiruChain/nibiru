@@ -3,8 +3,8 @@ package oracle
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type Keeper struct {
@@ -138,11 +138,11 @@ func (k Keeper) CheckPermissions(
 	}
 	contracts := state.Contracts
 
-	hasPermission := set.New(contracts...).Has(contract.String())
+	hasPermission := set.New(contracts...).Has(contract.String()) || contract.String() == state.Root
 	if !hasPermission {
 		return fmt.Errorf(
-			"insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			contract, contracts,
+			"%w: insufficient permissions on smart contract: %s. The sudo contracts are: %s",
+			sudotypes.ErrUnauthorized, contract, contracts,
 		)
 	}
 	return nil

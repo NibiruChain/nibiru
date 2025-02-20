@@ -1,0 +1,28 @@
+# Use this justfile by 
+# (1) installing with "cargo install just" 
+# (2) running the "just" command.
+
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Install all dependencies
+install:
+  npm install
+  npx hardhat typechain
+
+# Runs the E2E tests
+test:
+  npm test
+
+# Runs tx receipt tests. Used for testnet quick check.
+test-basic:
+  npm test -- tx_receipt.test.ts
+
+# Format
+fmt: 
+  npm run format
+
+gen-types:
+  npx hardhat typechain

@@ -6,11 +6,12 @@ import (
 	"math/rand"
 	"strings"
 
+	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 
@@ -20,8 +21,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // Simulation operation weights constants
@@ -102,7 +103,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		exchangeRatesStr := ""
 		for _, pair := range whitelist {
-			price := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
+			price := math.LegacyNewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
 			exchangeRatesStr += price.String() + pair.String() + ","
 		}
 

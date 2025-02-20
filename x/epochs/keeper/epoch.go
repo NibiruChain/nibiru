@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 // GetEpochInfo returns epoch info by identifier.
@@ -66,6 +66,7 @@ func (k Keeper) IterateEpochInfo(
 	iterate := k.Epochs.Iterate(ctx, &collections.Range[string]{})
 	i := int64(0)
 
+	defer iterate.Close()
 	for ; iterate.Valid(); iterate.Next() {
 		epoch := iterate.Value()
 		stop := fn(i, epoch)

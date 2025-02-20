@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +21,7 @@ func TestSimpleEWMA(t *testing.T) {
 	_, err = reader.Read()
 	require.NoError(t, err)
 
-	ewma := NewMovingAverage(sdk.MustNewDecFromStr("240"))
+	ewma := NewMovingAverage(math.LegacyMustNewDecFromStr("240"))
 
 	for {
 		record, err := reader.Read()
@@ -30,12 +30,12 @@ func TestSimpleEWMA(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		ewma.Add(sdk.MustNewDecFromStr(record[1]))
+		ewma.Add(math.LegacyMustNewDecFromStr(record[1]))
 		require.Equal(
 			t,
-			sdk.MustNewDecFromStr(record[2]).Mul(sdk.MustNewDecFromStr("100000")).TruncateInt(),
-			ewma.Value().Mul(sdk.MustNewDecFromStr("100000")).TruncateInt(),
-			fmt.Sprintf("value in position %s: %s should be equal to %s", record[0], ewma.Value().Mul(sdk.MustNewDecFromStr("1000000")).TruncateInt().String(), record[2]),
+			math.LegacyMustNewDecFromStr(record[2]).Mul(math.LegacyMustNewDecFromStr("100000")).TruncateInt(),
+			ewma.Value().Mul(math.LegacyMustNewDecFromStr("100000")).TruncateInt(),
+			fmt.Sprintf("value in position %s: %s should be equal to %s", record[0], ewma.Value().Mul(math.LegacyMustNewDecFromStr("1000000")).TruncateInt().String(), record[2]),
 		)
 	}
 }

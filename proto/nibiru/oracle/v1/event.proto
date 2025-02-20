@@ -6,7 +6,7 @@ import "nibiru/oracle/v1/oracle.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Emitted when a price is posted
 message EventPriceUpdate {
@@ -52,4 +52,26 @@ message EventAggregatePrevote {
   // Feeder is the delegate or representative that will send vote and prevote
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
+}
+
+
+message EventValidatorPerformance{
+  // Validator is the Bech32 address to which the vote will be credited.
+  string validator = 1;
+
+  // Tendermint consensus voting power
+  int64 voting_power = 2;
+
+  // RewardWeight: Weight of rewards the validator should receive in units of
+  // consensus power.
+  int64 reward_weight = 3;
+
+  // Number of valid votes for which the validator will be rewarded
+  int64 win_count     = 4;
+
+  // Number of abstained votes for which there will be no reward or punishment
+  int64 abstain_count = 5;
+
+  // Number of invalid/punishable votes
+  int64 miss_count    = 6;
 }

@@ -2,10 +2,16 @@ FROM golang:1.21 AS builder
 
 WORKDIR /nibiru
 
+# install OS dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
+
+# install Go dependencies
 COPY go.sum go.mod ./
 RUN go mod download
-COPY . .
 
+# build nibid
+COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg \
   --mount=type=cache,target=/nibiru/temp \

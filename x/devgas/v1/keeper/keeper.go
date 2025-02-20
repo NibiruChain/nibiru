@@ -13,7 +13,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts
@@ -26,7 +26,7 @@ type Keeper struct {
 	wasmKeeper    wasmkeeper.Keeper
 	accountKeeper devgastypes.AccountKeeper
 
-	// feeCollectorName is the name of of x/auth module's fee collector module
+	// feeCollectorName is the name of x/auth module's fee collector module
 	// account, "fee_collector", which collects transaction fees for distribution
 	// to all stakers.
 	//

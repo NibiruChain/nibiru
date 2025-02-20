@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -21,9 +19,4 @@ func (sudo Sudoers) Validate() error {
 type SudoersJson struct {
 	Root      string   `json:"root"`
 	Contracts []string `json:"contracts"`
-}
-
-func (sudo Sudoers) String() string {
-	jsonBz, _ := json.Marshal(SudoersJson(sudo))
-	return string(jsonBz)
 }

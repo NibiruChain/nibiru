@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -27,7 +28,7 @@ func DefaultParams() ModuleParams {
 	}
 }
 
-func validateBool(i interface{}) error {
+func validateBool(i any) error {
 	_, ok := i.(bool)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -36,7 +37,7 @@ func validateBool(i interface{}) error {
 	return nil
 }
 
-func validateShares(i interface{}) error {
+func validateShares(i any) error {
 	v, ok := i.(sdk.Dec)
 
 	if !ok {
@@ -51,14 +52,14 @@ func validateShares(i interface{}) error {
 		return fmt.Errorf("value cannot be negative: %T", i)
 	}
 
-	if v.GT(sdk.OneDec()) {
+	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("value cannot be greater than 1: %T", i)
 	}
 
 	return nil
 }
 
-func validateArray(i interface{}) error {
+func validateArray(i any) error {
 	_, ok := i.([]string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

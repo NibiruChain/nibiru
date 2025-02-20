@@ -7,10 +7,12 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/omap"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"cosmossdk.io/math"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/common/omap"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // groupVotesByPair takes a collection of votes and groups them by their
@@ -83,7 +85,7 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 func isPassingVoteThreshold(
 	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
-	totalPower := sdk.NewInt(votes.Power())
+	totalPower := math.NewInt(votes.Power())
 	if totalPower.IsZero() {
 		return false
 	}
@@ -116,7 +118,7 @@ func (k Keeper) removeInvalidVotes(
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	orderedPairVotes := omap.SortedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
 		// If pair is not whitelisted, or the votes for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
@@ -157,6 +159,7 @@ func Tally(
 		rewardSpread = standardDeviation
 	}
 
+	missedValidators := make(map[string]bool)
 	for _, v := range votes {
 		// Filter votes winners & abstain voters
 		isInsideSpread := v.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
@@ -171,7 +174,11 @@ func Tally(
 			validatorPerformance.RewardWeight += v.Power
 			validatorPerformance.WinCount++
 		case isMiss:
-			validatorPerformance.MissCount++
+			// Only count a miss once per validator
+			if !missedValidators[v.Voter.String()] {
+				validatorPerformance.MissCount++
+				missedValidators[v.Voter.String()] = true
+			}
 		case isAbstainVote:
 			validatorPerformance.AbstainCount++
 		}

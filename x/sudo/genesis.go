@@ -3,8 +3,8 @@ package sudo
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state JSON.

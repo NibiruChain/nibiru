@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *TestSuite) TestStoreWrite() {
@@ -31,7 +31,7 @@ func (s *TestSuite) TestStoreWrite() {
 			s.NoError(tfdenom.Validate(), tfdenom)
 
 			// query by denom should fail for all denoms
-			_, err := api.Denoms.Get(s.ctx, tfdenom.String())
+			_, err := api.Denoms.Get(s.ctx, tfdenom.Denom().String())
 			s.Error(err)
 
 			// query by creator should fail for all addrs

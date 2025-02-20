@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -20,10 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/NibiruChain/nibiru/x/oracle/client/cli"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/x/oracle/simulation"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 var (

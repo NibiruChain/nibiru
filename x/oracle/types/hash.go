@@ -99,7 +99,7 @@ func (h AggregateVoteHash) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML marshals to YAML using Bech32.
-func (h AggregateVoteHash) MarshalYAML() (interface{}, error) {
+func (h AggregateVoteHash) MarshalYAML() (any, error) {
 	return h.String(), nil
 }
 

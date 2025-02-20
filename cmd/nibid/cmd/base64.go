@@ -33,7 +33,7 @@ func GetBuildWasmMsg() *cobra.Command {
 				Value   string `json:"value,omitempty"`
 			}
 
-			js, err := json.Marshal(map[string]interface{}{
+			js, err := json.Marshal(map[string]any{
 				"stargate": stargateMessage{
 					TypeURL: anyMsg.TypeUrl,
 					Value:   base64.StdEncoding.EncodeToString(anyMsg.Value),

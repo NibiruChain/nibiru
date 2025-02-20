@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/cosmos/cosmos-sdk/std"
 
-	"github.com/NibiruChain/nibiru/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app/codec"
 )
 
 // EncodingConfig specifies the concrete encoding types to use for a given app.

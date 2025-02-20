@@ -6,18 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
-	db "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
-
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -25,6 +18,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/go-bip39"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/types"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (
@@ -37,25 +38,6 @@ const (
 	// FlagDefaultBondDenom defines the default denom to use in the genesis file.
 	FlagDefaultBondDenom = "default-denom"
 )
-
-func customTendermintConfig() *tmcfg.Config {
-	cfg := tmcfg.DefaultConfig()
-
-	// Overwrite consensus config
-	ms := func(n time.Duration) time.Duration {
-		return n * time.Millisecond
-	}
-	cfg.Consensus.TimeoutPropose = ms(3_000)
-	cfg.Consensus.TimeoutProposeDelta = ms(500)
-	cfg.Consensus.TimeoutPrevote = ms(1_000)
-	cfg.Consensus.TimeoutPrevoteDelta = ms(500)
-	cfg.Consensus.TimeoutPrecommit = ms(1_000)
-	cfg.Consensus.TimeoutPrecommitDelta = ms(500)
-	cfg.Consensus.TimeoutCommit = ms(1_000)
-
-	cfg.DBBackend = string(db.PebbleDBBackend)
-	return cfg
-}
 
 /*
 InitCmd is a stand-in replacement for genutilcli.InitCmd that overwrites the
@@ -148,6 +130,11 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 			appGenState := mbm.DefaultGenesis(cdc)
 
+			// add 08-wasm to AllowedClients
+			ibcState := ibctypes.DefaultGenesisState()
+			ibcState.ClientGenesis.Params.AllowedClients = append(ibcState.ClientGenesis.Params.AllowedClients, ibcwasmtypes.Wasm)
+			appGenState[ibcexported.ModuleName] = cdc.MustMarshalJSON(ibcState)
+
 			appState, err := json.MarshalIndent(appGenState, "", " ")
 			if err != nil {
 				return errors.Wrap(err, "Failed to marshal default genesis state")
@@ -176,7 +163,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", appState)
 
-			customCfg := customTendermintConfig()
+			customCfg := appconst.NewDefaultTendermintConfig()
 			config.Consensus = customCfg.Consensus
 			config.DBBackend = customCfg.DBBackend
 			tmcfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)

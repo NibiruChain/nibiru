@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestGenesisValidation(t *testing.T) {
@@ -19,7 +19,7 @@ func TestGenesisValidation(t *testing.T) {
 }
 
 func TestGetGenesisStateFromAppState(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Marshaler
+	cdc := app.MakeEncodingConfig().Codec
 	appState := make(map[string]json.RawMessage)
 
 	defaultGenesisState := types.DefaultGenesisState()

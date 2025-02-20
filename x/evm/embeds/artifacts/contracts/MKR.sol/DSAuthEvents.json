@@ -1,0 +1,35 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "DSAuthEvents",
+  "sourceName": "contracts/MKR.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "authority",
+          "type": "address"
+        }
+      ],
+      "name": "LogSetAuthority",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "LogSetOwner",
+      "type": "event"
+    }
+  ],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820bd4c46e08f63fffc8b1309ef931101dfa59c8f5de95731d504964c369373aa010029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820bd4c46e08f63fffc8b1309ef931101dfa59c8f5de95731d504964c369373aa010029",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

@@ -3,13 +3,14 @@ package cli
 import (
 	"strings"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -99,19 +100,19 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 
 			var stakingProportionDec sdk.Dec
 			if stakingProportion, _ := cmd.Flags().GetString("staking-proportion"); stakingProportion != "" {
-				stakingProportionDec = sdk.MustNewDecFromStr(stakingProportion)
+				stakingProportionDec = math.LegacyMustNewDecFromStr(stakingProportion)
 				msg.InflationDistribution.StakingRewards = stakingProportionDec
 			}
 
 			var communityPoolProportionDec sdk.Dec
 			if communityPoolProportion, _ := cmd.Flags().GetString("community-pool-proportion"); communityPoolProportion != "" {
-				communityPoolProportionDec = sdk.MustNewDecFromStr(communityPoolProportion)
+				communityPoolProportionDec = math.LegacyMustNewDecFromStr(communityPoolProportion)
 				msg.InflationDistribution.CommunityPool = communityPoolProportionDec
 			}
 
 			var strategicReservesProportionDec sdk.Dec
 			if strategicReservesProportion, _ := cmd.Flags().GetString("strategic-reserves-proportion"); strategicReservesProportion != "" {
-				strategicReservesProportionDec = sdk.MustNewDecFromStr(strategicReservesProportion)
+				strategicReservesProportionDec = math.LegacyMustNewDecFromStr(strategicReservesProportion)
 				msg.InflationDistribution.StrategicReserves = strategicReservesProportionDec
 			}
 
@@ -127,7 +128,7 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 				polynomialFactorsArr := strings.Split(polynomialFactors, ",")
 				realPolynomialFactors := make([]sdk.Dec, len(polynomialFactorsArr))
 				for i, factor := range polynomialFactorsArr {
-					factorDec := sdk.MustNewDecFromStr(factor)
+					factorDec := math.LegacyMustNewDecFromStr(factor)
 					realPolynomialFactors[i] = factorDec
 				}
 				msg.PolynomialFactors = realPolynomialFactors

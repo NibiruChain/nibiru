@@ -2,6 +2,8 @@ project_name: nibid
 
 env:
   - CGO_ENABLED=1
+  - GO111MODULE=on
+  - DEFAULT_DB_BACKEND=pebbledb
 
 builds:
   - id: darwin
@@ -31,9 +33,11 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags={{ .Env.DARWIN_TAGS }}
+      - -X github.com/cometbft/cometbft/version.CMTSemVer={{ .Env.CMT_VERSION }}
+      - -X github.com/cosmos/cosmos-sdk/types.DBBackend={{ .Env.DEFAULT_DB_BACKEND }}
       - -linkmode=external
-      - -extldflags '-lrocksdb -lstdc++ -ldl -lz -lbz2'
+      - -extldflags '-lrocksdb -lstdc++ -lz -lbz2'
     tags:
       - netgo
       - osusergo
@@ -71,7 +75,9 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags={{ .Env.LINUX_TAGS }}
+      - -X github.com/cometbft/cometbft/version.CMTSemVer={{ .Env.CMT_VERSION }}
+      - -X github.com/cosmos/cosmos-sdk/types.DBBackend={{ .Env.DEFAULT_DB_BACKEND }}
       - -linkmode=external
       - -extldflags '-static -lm -lbz2'
     tags:
