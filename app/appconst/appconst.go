@@ -55,7 +55,7 @@ func RuntimeVersion() string {
 const (
 	ETH_CHAIN_ID_MAINNET int64 = 6900
 
-	ETH_CHAIN_ID_TESTNET_1 int64 = 6910
+	ETH_CHAIN_ID_TESTNET_1 int64 = 7210
 	ETH_CHAIN_ID_TESTNET_2 int64 = 6911
 	ETH_CHAIN_ID_TESTNET_3 int64 = 6912
 
@@ -74,7 +74,7 @@ const (
 var knownEthChainIDMap = map[string]int64{
 	"cataclysm-1": 6900,
 
-	"nibiru-testnet-1": 6910,
+	"nibiru-testnet-1": 7210,
 	"nibiru-testnet-2": 6911,
 	"nibiru-testnet-3": 6912,
 
