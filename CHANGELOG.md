@@ -113,6 +113,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
 - [#2197](https://github.com/NibiruChain/nibiru/pull/2197) - chore(evm): Create ethers v6 adapters for Nibiru. Publish as a library on npm (`@nibiruchain/evm-core`)
 - [#2200](https://github.com/NibiruChain/nibiru/pull/2200) - fix(test): evm e2e oracle test fixed pair name
+- [#2199](https://github.com/NibiruChain/nibiru/pull/2199) - refactor(devgas): For #1866
 
 #### Nibiru EVM | Before Audit 2 - 2024-12-06
 

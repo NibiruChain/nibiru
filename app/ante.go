@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
-	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/ante"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
