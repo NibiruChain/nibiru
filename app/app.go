@@ -15,9 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/app/wasmext"
 
 	storetypes "cosmossdk.io/store/types"
-	dbm "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -173,7 +173,7 @@ func NewNibiruApp(
 		memKeys:           memKeys,
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	wasmConfig := app.InitKeepers(logger, appOpts)
 
 	// -------------------------- Module Options --------------------------
 

@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -77,10 +78,10 @@ func (empd EthMinGasPriceDecorator) AnteHandle(
 			feeAmt = ethMsg.GetEffectiveFee(baseFee)
 		}
 
-		gasLimit := sdk.NewDecFromBigInt(new(big.Int).SetUint64(ethMsg.GetGas()))
+		gasLimit := math.LegacyNewDecFromBigInt(new(big.Int).SetUint64(ethMsg.GetGas()))
 
 		requiredFee := minGasPrice.Mul(gasLimit)
-		fee := sdk.NewDecFromBigInt(feeAmt)
+		fee := math.LegacyNewDecFromBigInt(feeAmt)
 
 		if fee.LT(requiredFee) {
 			return ctx, errors.Wrapf(

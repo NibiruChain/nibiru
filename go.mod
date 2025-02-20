@@ -7,9 +7,9 @@ toolchain go1.22.3
 require (
 	cosmossdk.io/api v0.7.5 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
-	cosmossdk.io/core v0.12.1-0.20231114100755-569e3ff6a0d7 // indirect
+	cosmossdk.io/core v0.12.1-0.20231114100755-569e3ff6a0d7
 	cosmossdk.io/errors v1.0.1
-	cosmossdk.io/log v1.3.1 // indirect
+	cosmossdk.io/log v1.3.1
 	cosmossdk.io/store v1.1.1-0.20240418092142-896cdf1971bc
 	cosmossdk.io/x/circuit v0.1.0 // indirect
 	cosmossdk.io/x/evidence v0.1.0
@@ -32,7 +32,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.51.0
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.4.12
-	github.com/cosmos/ibc-go/v8 v8.0.0
+	github.com/cosmos/ibc-go/v8 v8.3.1
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
@@ -64,6 +64,7 @@ require (
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20240522060652-a1ae4c3e0337
 	github.com/cometbft/cometbft/api v1.0.0-alpha.2.0.20240429102542-490e9bc3de65
+	github.com/cosmos/cosmos-db v1.0.2
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
 	github.com/cosmos/rosetta v0.50.6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -112,7 +113,6 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-db v1.0.2 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.1.4 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
