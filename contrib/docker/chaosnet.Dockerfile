@@ -30,6 +30,7 @@ RUN apk --no-cache add \
 COPY --from=builder /nibiru/build/nibid /usr/local/bin/nibid
 
 COPY ./contrib/scripts/chaosnet.sh ./
+
 RUN chmod +x ./chaosnet.sh
 ARG MNEMONIC
 ARG CHAIN_ID
