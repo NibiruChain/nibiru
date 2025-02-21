@@ -181,7 +181,7 @@ For this script to work, you need to have a `MNEMONIC` environment variable set 
 [BIP39 mnemonic](https://iancoleman.io/bip39/).
 
 For instructions on how to deploy to a testnet or mainnet, check out the
-[Solidity Scripting](https://book.getfoundry.sh/tutorials/solidity-scripting.html) tutorial.
+[Solidity Scripting](https://book.getfoundry.sh/guides/scripting-with-solidity) tutorial.
 
 ### Format
 
