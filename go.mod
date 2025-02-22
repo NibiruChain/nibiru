@@ -6,7 +6,7 @@ toolchain go1.23.3
 
 require (
 	github.com/CosmWasm/wasmd v0.54.0
-	github.com/CosmWasm/wasmvm/v2 v2.2.1 // indirect
+	github.com/CosmWasm/wasmvm/v2 v2.2.1
 	github.com/NibiruChain/collections v0.50.0
 
 	// Consenus Engine
@@ -58,6 +58,7 @@ require (
 
 require (
 	cosmossdk.io/collections v0.4.0
+	cosmossdk.io/core v0.11.1
 	cosmossdk.io/log v1.5.0
 	cosmossdk.io/store v1.1.1
 	cosmossdk.io/tools/rosetta v0.2.1
@@ -86,7 +87,6 @@ require (
 	cloud.google.com/go/iam v1.1.9 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.3 // indirect
-	cosmossdk.io/core v0.11.1 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
 	cosmossdk.io/x/circuit v0.1.1 // indirect
 	cosmossdk.io/x/nft v0.1.1 // indirect
