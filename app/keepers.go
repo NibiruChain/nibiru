@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cosmossdk.io/log"
+
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
@@ -14,6 +16,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
+	"cosmossdk.io/store/types"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -28,11 +31,13 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -42,9 +47,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -61,6 +63,9 @@ import (
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	"github.com/cosmos/ibc-go/modules/capability"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -92,8 +97,6 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v8/modules/core/02-client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
@@ -172,7 +175,7 @@ func initStoreKeys() (
 	tkeys map[string]*types.TransientStoreKey,
 	memKeys map[string]*types.MemoryStoreKey,
 ) {
-	keys = sdk.NewKVStoreKeys(
+	keys = storetypes.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
 		stakingtypes.StoreKey,
@@ -207,12 +210,13 @@ func initStoreKeys() (
 
 		evm.StoreKey,
 	)
-	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
-	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
+	memKeys = storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
 
 func (app *NibiruApp) InitKeepers(
+	logger log.Logger,
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	appCodec := app.appCodec
@@ -230,8 +234,8 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], govModuleAddr)
-	bApp.SetParamStore(&app.ConsensusParamsKeeper)
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), govModuleAddr, runtime.EventService{})
+	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
 	   This allows authentication of object-capability permissions for each of
@@ -259,9 +263,10 @@ func (app *NibiruApp) InitKeepers(
 	// to ProtoBaseAccount replacement.
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
-		keys[authtypes.StoreKey],
+		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		eth.ProtoBaseAccount,
 		maccPerms,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		govModuleAddr,
 	)
@@ -269,24 +274,27 @@ func (app *NibiruApp) InitKeepers(
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
 			appCodec,
-			keys[banktypes.StoreKey],
+			runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 			app.AccountKeeper,
 			BlockedAddresses(),
 			govModuleAddr,
+			logger,
 		),
 		StateDB: nil,
 	}
 	app.BankKeeper = nibiruBankKeeper
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
-		keys[stakingtypes.StoreKey],
+		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		govModuleAddr,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
-		keys[distrtypes.StoreKey],
+		runtime.NewKVStoreService(keys[distrtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -297,14 +305,15 @@ func (app *NibiruApp) InitKeepers(
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
 	app.crisisKeeper = *crisiskeeper.NewKeeper(
 		appCodec,
-		keys[crisistypes.StoreKey],
+		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
 		invCheckPeriod,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
 		govModuleAddr,
+		app.AccountKeeper.AddressCodec(),
 	)
 
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[feegrant.StoreKey]), app.AccountKeeper)
 
 	// get skipUpgradeHeights from the app options
 	skipUpgradeHeights := map[int64]bool{}
@@ -316,7 +325,7 @@ func (app *NibiruApp) InitKeepers(
 	/*upgradeKeeper must be created before ibcKeeper. */
 	app.upgradeKeeper = *upgradekeeper.NewKeeper(
 		skipUpgradeHeights,
-		keys[upgradetypes.StoreKey],
+		runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
 		appCodec,
 		homePath,
 		app.BaseApp,
@@ -328,7 +337,7 @@ func (app *NibiruApp) InitKeepers(
 	app.slashingKeeper = slashingkeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
-		keys[slashingtypes.StoreKey],
+		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
 		app.StakingKeeper,
 		govModuleAddr,
 	)
@@ -338,7 +347,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.authzKeeper = authzkeeper.NewKeeper(
-		keys[authzkeeper.StoreKey],
+		runtime.NewKVStoreService(keys[authzkeeper.StoreKey]),
 		appCodec,
 		app.BaseApp.MsgServiceRouter(),
 		app.AccountKeeper,
@@ -393,6 +402,7 @@ func (app *NibiruApp) InitKeepers(
 		app.StakingKeeper,
 		app.upgradeKeeper,
 		app.ScopedIBCKeeper,
+		govModuleAddr,
 	)
 
 	// IBC Fee Module keeper
@@ -400,7 +410,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[ibcfeetypes.StoreKey],
 		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 	)
@@ -411,10 +421,11 @@ func (app *NibiruApp) InitKeepers(
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		/* ibctransfertypes.PortKeeper */ app.ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ScopedTransferKeeper,
+		govModuleAddr,
 	)
 
 	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
@@ -422,9 +433,10 @@ func (app *NibiruApp) InitKeepers(
 		app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		app.ScopedICAControllerKeeper,
 		app.MsgServiceRouter(),
+		govModuleAddr,
 	)
 
 	app.icaHostKeeper = icahostkeeper.NewKeeper(
@@ -433,10 +445,11 @@ func (app *NibiruApp) InitKeepers(
 		app.GetSubspace(icahosttypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
+		govModuleAddr,
 	)
 
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
@@ -496,7 +509,7 @@ func (app *NibiruApp) InitKeepers(
 
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
 		appCodec,
-		keys[ibcwasmtypes.StoreKey],
+		runtime.NewKVStoreService(keys[ibcwasmtypes.StoreKey]),
 		app.ibcKeeper.ClientKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmVM,
@@ -515,7 +528,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		keys[tokenfactorytypes.StoreKey],
+		runtime.NewKVStoreService(keys[tokenfactorytypes.StoreKey]),
 		appCodec,
 		app.BankKeeper,
 		app.AccountKeeper,
@@ -528,8 +541,8 @@ func (app *NibiruApp) InitKeepers(
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
 	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], app.StakingKeeper,
-		app.slashingKeeper,
+		appCodec, runtime.NewKVStoreService(keys[evidencetypes.StoreKey]), app.StakingKeeper,
+		app.slashingKeeper, app.AccountKeeper.AddressCodec(), runtime.ProvideCometInfoService(),
 	)
 
 	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
@@ -602,17 +615,16 @@ func (app *NibiruApp) InitKeepers(
 	govRouter := govv1beta1types.NewRouter()
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper))
 
 	govConfig := govtypes.DefaultConfig()
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
-		keys[govtypes.StoreKey],
+		runtime.NewKVStoreService(keys[govtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
+		app.DistrKeeper,
 		app.MsgServiceRouter(),
 		govConfig,
 		govModuleAddr,
@@ -635,7 +647,7 @@ func (app *NibiruApp) initAppModules(
 	return []module.AppModule{
 		// core modules
 		genutil.NewAppModule(
-			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
+			app.AccountKeeper, app.StakingKeeper, app,
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
@@ -646,7 +658,7 @@ func (app *NibiruApp) initAppModules(
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
-		upgrade.NewAppModule(&app.upgradeKeeper),
+		upgrade.NewAppModule(&app.upgradeKeeper, app.AccountKeeper.AddressCodec()),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 

@@ -19,16 +19,16 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	"cosmossdk.io/log"
-	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmos "github.com/cometbft/cometbft/libs/os"
+	dbm "github.com/cosmos/cosmos-db"
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+
 	// _ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -43,9 +43,9 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
