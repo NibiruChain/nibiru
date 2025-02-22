@@ -1,6 +1,8 @@
 package v2_1_0
 
 import (
+	"context"
+
 	"cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +18,8 @@ const UpgradeName = "v2.1.0"
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
 	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator, clientKeeper clientkeeper.Keeper) upgradetypes.UpgradeHandler {
-		return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		return func(c context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			ctx := sdk.UnwrapSDKContext(c)
 			// explicitly update the IBC 02-client params, adding the wasm client type if it is not there
 			params := clientKeeper.GetParams(ctx)
 

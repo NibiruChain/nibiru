@@ -13,5 +13,5 @@ type Upgrade struct {
 
 	CreateUpgradeHandler func(*module.Manager, module.Configurator, clientkeeper.Keeper) types.UpgradeHandler
 
-	StoreUpgrades store.StoreUpgrades
+	StoreUpgrades storetypes.StoreUpgrades
 }
