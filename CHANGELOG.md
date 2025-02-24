@@ -51,6 +51,7 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
 - [#2214](https://github.com/NibiruChain/nibiru/pull/2214) - chore(wasm): bump wasmvm to `v1.5.8`
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
+- [#2217](https://github.com/NibiruChain/nibiru/pull/2217) - fix: app-db-backend not recognized on prune command
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
