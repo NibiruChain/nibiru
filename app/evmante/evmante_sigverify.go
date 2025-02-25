@@ -48,13 +48,13 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		}
 
 		ethTx := msgEthTx.AsTransaction()
-		if !ethTx.Protected() {
-			return ctx, errors.Wrapf(
-				sdkerrors.ErrNotSupported,
-				"rejected unprotected Ethereum transaction. "+
-					"Please EIP155 sign your transaction to protect it against replay-attacks",
-			)
-		}
+		// if !ethTx.Protected() {
+		// 	return ctx, errors.Wrapf(
+		// 		sdkerrors.ErrNotSupported,
+		// 		"rejected unprotected Ethereum transaction. "+
+		// 			"Please EIP155 sign your transaction to protect it against replay-attacks",
+		// 	)
+		// }
 
 		sender, err := signer.Sender(ethTx)
 		if err != nil {
