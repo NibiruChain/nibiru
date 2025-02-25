@@ -49,7 +49,8 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 		fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 		for valIndex := 0; valIndex < validators; valIndex++ {
-			distributionRewards := fixture.DistrKeeper.GetValidatorOutstandingRewards(fixture.Ctx, ValAddrs[0])
+			distributionRewards, err := fixture.DistrKeeper.GetValidatorOutstandingRewards(fixture.Ctx, ValAddrs[0])
+			require.NoError(t, err)
 			truncatedGot, _ := distributionRewards.Rewards.
 				QuoDec(math.LegacyNewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
 				TruncateDecimal()                    // NOTE: not applying this on truncatedExpected because of rounding the test fails

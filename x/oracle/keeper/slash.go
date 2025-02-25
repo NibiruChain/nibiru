@@ -32,18 +32,22 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 
 		// Penalize the validator whose the valid vote rate is smaller than min threshold
 		if validVoteRate.LT(minValidPerWindow) {
-			validator := k.StakingKeeper.Validator(ctx, operator)
+			validator, err := k.StakingKeeper.Validator(ctx, operator)
+			if err != nil {
+				// TODO: Handle error
+				return
+			}
 			if validator.IsBonded() && !validator.IsJailed() {
 				consAddr, err := validator.GetConsAddr()
 				if err != nil {
-					k.Logger(ctx).Error("fail to get consensus address", "validator", validator.GetOperator().String())
+					k.Logger(ctx).Error("fail to get consensus address", "validator", validator.GetOperator())
 					continue
 				}
 
 				k.slashingKeeper.Slash(
 					ctx, consAddr, slashFraction, validator.GetConsensusPower(powerReduction), distributionHeight,
 				)
-				k.Logger(ctx).Info("oracle slash", "validator", consAddr.String(), "fraction", slashFraction.String())
+				k.Logger(ctx).Info("oracle slash", "validator", consAddr, "fraction", slashFraction.String())
 				k.slashingKeeper.Jail(ctx, consAddr)
 			}
 		}

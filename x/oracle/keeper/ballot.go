@@ -113,8 +113,14 @@ func (k Keeper) removeInvalidVotes(
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	whitelistedPairs set.Set[asset.Pair],
 ) {
+
+	totalTokenBonded, err := k.StakingKeeper.TotalBondedTokens(ctx)
+	if err != nil {
+		// TODO: Handle error
+		return 
+	}
 	totalBondedPower := sdk.TokensToConsensusPower(
-		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
+		totalTokenBonded, k.StakingKeeper.PowerReduction(ctx),
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
@@ -148,9 +154,9 @@ func (k Keeper) removeInvalidVotes(
 // made by the validators.
 func Tally(
 	votes types.ExchangeRateVotes,
-	rewardBand sdk.Dec,
+	rewardBand math.LegacyDec,
 	validatorPerformances types.ValidatorPerformances,
-) sdk.Dec {
+) math.LegacyDec {
 	weightedMedian := votes.WeightedMedianWithAssertion()
 	standardDeviation := votes.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))

@@ -130,23 +130,35 @@ func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]typ
 func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerformances {
 	validatorPerformances := make(map[string]types.ValidatorPerformance)
 
-	maxValidators := k.StakingKeeper.MaxValidators(ctx)
+	maxValidators, err := k.StakingKeeper.MaxValidators(ctx)
+	if err != nil {
+		// TODO: Handle error
+		return nil
+	}
 	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
-	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	iterator, err := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	if err != nil {
+		// TODO: Handle error
+		return nil
+	}
 	defer iterator.Close()
 
 	for i := 0; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
+		validator,err := k.StakingKeeper.Validator(ctx, iterator.Value())
 
+		if err != nil {
+			// TODO: Handle error
+			return nil
+		}
 		// exclude not bonded
 		if !validator.IsBonded() {
 			continue
 		}
 
 		valAddr := validator.GetOperator()
-		validatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
-			validator.GetConsensusPower(powerReduction), valAddr,
+		validatorPerformances[valAddr] = types.NewValidatorPerformance(
+			validator.GetConsensusPower(powerReduction), sdk.ValAddress(valAddr),
 		)
 		i++
 	}
