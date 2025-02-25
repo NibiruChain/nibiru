@@ -49,7 +49,7 @@ func (s *CLITestSuite) SetupSuite() {
 		WithKeyring(s.keyring).
 		WithTxConfig(s.encCfg.TxConfig).
 		WithCodec(s.encCfg.Codec).
-		WithClient(sdktestutilcli.MockTendermintRPC{Client: rpcclientmock.Client{}}).
+		WithClient(sdktestutilcli.MockCometRPC{Client: rpcclientmock.Client{}}).
 		WithAccountRetriever(sdkclient.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")
@@ -57,7 +57,7 @@ func (s *CLITestSuite) SetupSuite() {
 	var outBuf bytes.Buffer
 	ctxGen := func() sdkclient.Context {
 		bz, _ := s.encCfg.Codec.Marshal(&sdk.TxResponse{})
-		c := sdktestutilcli.NewMockTendermintRPC(abci.ResponseQuery{
+		c := sdktestutilcli.NewMockCometRPC(abci.ResponseQuery{
 			Value: bz,
 		})
 		return s.baseCtx.WithClient(c)
