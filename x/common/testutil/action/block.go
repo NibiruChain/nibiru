@@ -15,7 +15,7 @@ type increaseBlockNumberBy struct {
 }
 
 func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx, types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.EndBlocker(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + i.numBlocks)
 

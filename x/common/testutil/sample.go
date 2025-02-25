@@ -3,16 +3,18 @@ package testutil
 import (
 	"math/rand"
 
-	"cosmossdk.io/store/types"
+	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+	"cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	tmdb "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+	storetypes "cosmossdk.io/store/types"
+	dbm "github.com/cosmos/cosmos-db"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -53,9 +55,9 @@ func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddr
 }
 
 func BlankContext(storeKeyName string) sdk.Context {
-	storeKey := sdk.NewKVStoreKey(storeKeyName)
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
+	storeKey := storetypes.NewKVStoreKey(storeKeyName)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, nil, nil)
 	stateStore.MountStoreWithDB(storeKey, types.StoreTypeIAVL, db)
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 	return ctx
