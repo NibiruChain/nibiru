@@ -104,7 +104,7 @@ message QueryInflationRateRequest {}
 message QueryInflationRateResponse {
   // inflation_rate by which the total supply increases within one period
   string inflation_rate = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
