@@ -53,6 +53,7 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2217](https://github.com/NibiruChain/nibiru/pull/2217) - fix: app-db-backend not recognized on prune command
 - [#2219](https://github.com/NibiruChain/nibiru/pull/2219) - fix(evm): disable unprotected tx check in EVM ante handler
+- [#2220](https://github.com/NibiruChain/nibiru/pull/2220) - fix(evm): improved marshaling of the eth tx receipt
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
