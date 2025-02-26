@@ -221,8 +221,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v1.1.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRrLeDnvGIM=
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
-github.com/CosmWasm/wasmvm v1.5.5 h1:XlZI3xO5iUhiBqMiyzsrWEfUtk5gcBMNYIdHnsTB+NI=
-github.com/CosmWasm/wasmvm v1.5.5/go.mod h1:Q0bSEtlktzh7W2hhEaifrFp1Erx11ckQZmjq8FLCyys=
+github.com/CosmWasm/wasmvm v1.5.8 h1:vrmAvDuXcNqw7XqDiVDIyopo9gNdkcvRLFTC8+wBb/A=
+github.com/CosmWasm/wasmvm v1.5.8/go.mod h1:2qaMB5ISmYXtpkJR2jy8xxx5Ti8sntOEf1cUgolb4QI=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.5.0/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
@@ -235,8 +235,8 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL9G/z3X7k=
 github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
-github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.2 h1:HtLNrkp0HhgxtbpdNwsasOod4uUNFpuwYpyceFtbj3E=
-github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.2/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3 h1:MI3c8dJjWDYvhGlgKYexu8Gg9vuaYXFG40ulirlYbx0=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru h1:o6lRFt57izoYwzN5cG8tnnBtJcaO3X7MjjN7PGGNCFg=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru/go.mod h1:kvvL3nDceUcB+1qGUBAsVf5dW23RBR77fqxgx2PGNrQ=
 github.com/NibiruChain/wasmd v0.44.0-nibiru h1:b+stNdbMFsl0+o4KedXyF83qRnEpB/jCiTGZZgv2h2U=

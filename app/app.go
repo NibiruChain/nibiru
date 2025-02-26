@@ -10,19 +10,12 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-
-	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	tmos "github.com/cometbft/cometbft/libs/os"
-
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -46,15 +39,18 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/types"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -202,7 +198,6 @@ func NewNibiruApp(
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	app.setupUpgrades()
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 

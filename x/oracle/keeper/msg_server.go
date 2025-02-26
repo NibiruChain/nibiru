@@ -2,24 +2,27 @@ package keeper
 
 import (
 	"context"
-
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type msgServer struct {
 	Keeper
+	SudoKeeper sudokeeper.Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the oracle MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+func NewMsgServerImpl(keeper Keeper, sudoKeeper sudokeeper.Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper, SudoKeeper: sudoKeeper}
 }
 
 func (ms msgServer) AggregateExchangeRatePrevote(
@@ -170,18 +173,27 @@ func (ms msgServer) DelegateFeedConsent(
 
 // EditOracleParams: gRPC tx msg for editing the oracle module params.
 // [SUDO] Only callable by sudoers.
-func (ms msgServer) EditOracleParams(
-	goCtx context.Context, msg *types.MsgEditOracleParams,
-) (resp *types.MsgEditOracleParamsResponse, err error) {
+func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// Stateless field validation is already performed in msg.ValidateBasic()
-	// before the current scope is reached.
-	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	newParams, err := ms.Sudo().EditOracleParams(
-		ctx, *msg, sender,
-	)
-	resp = &types.MsgEditOracleParamsResponse{
-		NewParams: &newParams,
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address")
 	}
-	return resp, err
+
+	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
+	if err != nil {
+		return nil, sudotypes.ErrUnauthorized
+	}
+
+	params, err := ms.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
+	}
+
+	mergedParams := mergeOracleParams(msg, params)
+
+	ms.Keeper.UpdateParams(ctx, mergedParams)
+
+	return &types.MsgEditOracleParamsResponse{}, nil
 }
