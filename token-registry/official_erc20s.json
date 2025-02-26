@@ -1,0 +1,24 @@
+[
+  {
+    "contractAddr": "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6",
+    "displayName": "Wrapped Nibiru",
+    "symbol": "WNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru-evm.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "NIBIUSDT"
+    }
+  },
+  {
+    "contractAddr": "0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b",
+    "displayName": "Liquid Staked Nibiru (Wrapped)",
+    "symbol": "stNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/001_stnibi-evm.png"
+  },
+  {
+    "contractAddr": "0x7168634Dd1ee48b1C5cC32b27fD8Fc84E12D00E6",
+    "displayName": "Astrovault (Wrapped)",
+    "symbol": "AXV",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/003_astrovault-axv.png"
+  }
+]
