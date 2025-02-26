@@ -190,11 +190,11 @@ func TOKENS() []Token {
 			Display: "xNIBI",
 			Symbol:  "xNIBI",
 			LogoURIs: &LogoURIs{
-				Svg: some("./img/0004_astrovault-xnibi.svg"),
+				Svg: some("./img/004_astrovault-xnibi.svg"),
 			},
 			Images: []AssetImage{
 				{
-					Svg: some("./img/0004_astrovault-xnibi.svg"),
+					Svg: some("./img/004_astrovault-xnibi.svg"),
 				},
 			},
 		},
