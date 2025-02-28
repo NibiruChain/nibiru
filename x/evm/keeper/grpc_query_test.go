@@ -216,9 +216,10 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: default values",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
-				valAddrBz := valopers[0].GetOperator().Bytes()
-				_, err := sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
+				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				s.Require().NoError(err)
+				valAddrBz := valopers[0].GetOperator()
+				_, err = sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
 				consAddr := sdk.ConsAddress(valAddrBz)
 
@@ -238,8 +239,9 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: with nonce",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
-				valAddrBz := valopers[0].GetOperator().Bytes()
+				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				s.Require().NoError(err)
+				valAddrBz := valopers[0].GetOperator()
 				consAddr := sdk.ConsAddress(valAddrBz)
 
 				s.T().Log(

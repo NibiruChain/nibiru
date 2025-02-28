@@ -186,8 +186,8 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			// the hash from the store for the current chain epoch. This only
 			// applies if the current height is greater than the requested
 			// height.
-			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
-			if !found {
+			histInfo, err := k.stakingKeeper.GetHistoricalInfo(ctx, h)
+			if err != nil {
 				k.Logger(ctx).Debug("historical info not found", "height", h)
 				return gethcommon.Hash{}
 			}

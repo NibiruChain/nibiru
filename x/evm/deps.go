@@ -4,6 +4,7 @@ package evm
 import (
 	context "context"
 
+	"cosmossdk.io/core/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -31,6 +32,7 @@ type AccountKeeper interface {
 	RemoveAccount(ctx context.Context, account sdk.AccountI)
 	GetParams(ctx context.Context) (params authtypes.Params)
 	SetModuleAccount(ctx context.Context, macc sdk.ModuleAccountI)
+	AddressCodec() address.Codec
 }
 
 // StakingKeeper returns the historical headers kept in store.

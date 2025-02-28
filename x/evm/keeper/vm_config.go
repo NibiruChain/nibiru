@@ -58,14 +58,19 @@ func (k Keeper) VMConfig(
 // [COINBASE op code]: https://ethereum.org/en/developers/docs/evm/opcodes/
 func (k Keeper) GetCoinbaseAddress(ctx sdk.Context) common.Address {
 	proposerAddress := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress)
-	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, proposerAddress)
-	if !found {
+	validator, err := k.stakingKeeper.GetValidatorByConsAddr(ctx, proposerAddress)
+	if err != nil {
 		// should never happen, but just in case, return an empty address
 		// we don't really care about the coinbase adresss since we're PoS and not PoW
 		return common.Address{}
 	}
 
-	return common.BytesToAddress(validator.GetOperator())
+	addr, err := sdk.ValAddressFromBech32(validator.GetOperator())
+	// TODO: handle error
+	if err != nil {
+		return common.Address{}
+	}
+	return common.BytesToAddress(addr)
 }
 
 // ParseProposerAddr returns current block proposer's address when provided

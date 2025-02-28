@@ -203,7 +203,7 @@ func OnRunStart(
 	}
 
 	// Switching to a local gas meter to enforce gas limit check for a precompile
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+	cacheCtx = cacheCtx.WithGasMeter(store.NewGasMeter(gasLimit)).
 		WithKVGasConfig(store.KVGasConfig()).
 		WithTransientKVGasConfig(store.TransientGasConfig())
 
@@ -237,7 +237,7 @@ func HandleOutOfGasPanic(err *error) func() {
 	return func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
-			case sdk.ErrorOutOfGas:
+			case store.ErrorOutOfGas:
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)

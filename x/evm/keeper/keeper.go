@@ -9,8 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/cometbft/cometbft/libs/log"
-
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -127,7 +126,7 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 	return func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
-			case sdk.ErrorOutOfGas:
+			case storetypes.ErrorOutOfGas:
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)
