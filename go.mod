@@ -5,8 +5,8 @@ go 1.23.1
 toolchain go1.23.3
 
 require (
-	github.com/CosmWasm/wasmd v0.54.0
-	github.com/CosmWasm/wasmvm/v2 v2.2.1
+	github.com/CosmWasm/wasmd v0.50.0
+	github.com/CosmWasm/wasmvm v1.5.8
 	github.com/NibiruChain/collections v0.50.0
 
 	// Consenus Engine
@@ -16,7 +16,7 @@ require (
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.50.11
-	github.com/cosmos/ibc-go/v8 v8.5.3
+	github.com/cosmos/ibc-go/v8 v8.4.0
 	github.com/ethereum/go-ethereum v1.10.17
 )
 
@@ -64,7 +64,7 @@ require (
 	cosmossdk.io/x/evidence v0.1.1
 	cosmossdk.io/x/feegrant v0.1.1
 	cosmossdk.io/x/upgrade v0.1.4
-	github.com/CosmWasm/wasmvm v1.5.8
+	github.com/CosmWasm/wasmvm/v2 v2.2.1
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72

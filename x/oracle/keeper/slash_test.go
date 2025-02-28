@@ -173,7 +173,7 @@ func TestWhitelistSlashing(t *testing.T) {
 	minValidVotePeriodsPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
 	pair := asset.Registry.Pair(denoms.ATOM, denoms.USD)
-	priceVoteFromVal := func(valIdx int, block int64, erate sdk.Dec) {
+	priceVoteFromVal := func(valIdx int, block int64, erate math.LegacyDec) {
 		MakeAggregatePrevoteAndVote(t, input, msgServer, block,
 			types.ExchangeRateTuples{{Pair: pair, ExchangeRate: erate}},
 			valIdx)

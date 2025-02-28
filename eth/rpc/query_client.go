@@ -4,12 +4,10 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/tx"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/types/tx"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -86,7 +87,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(69_420))),
 	))
 
 	deployResp, err := evmtest.DeployContract(

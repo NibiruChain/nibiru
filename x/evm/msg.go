@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/cosmos/gogoproto/proto"
-
-	sdkmath "cosmossdk.io/math"
-
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -19,13 +16,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-
-	"github.com/NibiruChain/nibiru/v2/eth"
-
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	protov2 "google.golang.org/protobuf/proto"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 var (
@@ -184,6 +182,10 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 // GetMsgs returns a single MsgEthereumTx as sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
+}
+
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	return nil, errors.New("not implemented")
 }
 
 // GetSigners returns the expected signers for an Ethereum transaction message.

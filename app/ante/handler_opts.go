@@ -23,7 +23,7 @@ type AnteHandlerOptions struct {
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
-	TxCounterStoreKey types.StoreKey
+	TxCounterStoreKey storetypes.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig
 	MaxTxGasWanted    uint64
 }

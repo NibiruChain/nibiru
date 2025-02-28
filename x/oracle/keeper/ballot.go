@@ -113,11 +113,10 @@ func (k Keeper) removeInvalidVotes(
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	whitelistedPairs set.Set[asset.Pair],
 ) {
-
 	totalTokenBonded, err := k.StakingKeeper.TotalBondedTokens(ctx)
 	if err != nil {
 		// TODO: Handle error
-		return 
+		return
 	}
 	totalBondedPower := sdk.TokensToConsensusPower(
 		totalTokenBonded, k.StakingKeeper.PowerReduction(ctx),

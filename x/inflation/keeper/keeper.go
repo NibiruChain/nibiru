@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/NibiruChain/collections"
-	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"

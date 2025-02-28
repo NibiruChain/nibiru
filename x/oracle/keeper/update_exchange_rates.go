@@ -145,7 +145,7 @@ func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerform
 	defer iterator.Close()
 
 	for i := 0; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator,err := k.StakingKeeper.Validator(ctx, iterator.Value())
+		validator, err := k.StakingKeeper.Validator(ctx, iterator.Value())
 
 		if err != nil {
 			// TODO: Handle error
