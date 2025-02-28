@@ -101,6 +101,11 @@ func isPassingVoteThreshold(
 	return true
 }
 
+func (k Keeper) HasVotedInCurrentPeriod(ctx sdk.Context, valAddr sdk.ValAddress) bool {
+	_, err := k.Votes.Get(ctx, valAddr)
+	return err == nil
+}
+
 // removeInvalidVotes removes the votes which have not reached the vote
 // threshold or which are not part of the whitelisted pairs anymore: example
 // when params change during a vote period but some votes were already made.
