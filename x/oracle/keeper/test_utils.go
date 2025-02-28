@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
@@ -13,20 +14,21 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"cosmossdk.io/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -182,18 +184,20 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
-		keyAcc,
+		runtime.NewKVStoreService(keyAcc),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
-		keyBank,
+		runtime.NewKVStoreService(keyBank),
 		accountKeeper,
 		blackListAddrs,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		log.NewNopLogger(),
 	)
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
@@ -201,20 +205,22 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
-		keyStaking,
+		runtime.NewKVStoreService(keyStaking),
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 	stakingParams := stakingtypes.DefaultParams()
 	stakingParams.BondDenom = denoms.NIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
 
-	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, keySlashing, stakingKeeper, govModuleAddr)
+	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, runtime.NewKVStoreService(keySlashing), stakingKeeper, govModuleAddr)
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
-		keyDistr,
+		runtime.NewKVStoreService(keyDistr),
 		accountKeeper, bankKeeper, stakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -223,7 +229,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	distrKeeper.FeePool.Set(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
 	distrParams.CommunityTax = sdkmath.LegacyNewDecWithPrec(2, 2)
-	distrKeeper.FeePool.Set(ctx, distrParams)
+	distrKeeper.Params.Set(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
 
 	feeCollectorAcc := authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
@@ -338,7 +344,8 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], testStakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	_, err = fixture.StakingKeeper.EndBlocker(fixture.Ctx)
+	require.NoError(t, err)
 
 	return fixture, h
 }
