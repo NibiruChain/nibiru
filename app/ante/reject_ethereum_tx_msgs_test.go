@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
+func (s *AnteTestSuite) TestAnteDecoratorPreventEthereumTxMsgs() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps) sdk.Tx
@@ -30,7 +30,7 @@ func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := ante.AnteDecoratorPreventEtheruemTxMsgs{}
+			anteDec := ante.AnteDecoratorPreventEthereumTxMsgs{}
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
