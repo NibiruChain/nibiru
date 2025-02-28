@@ -14,6 +14,7 @@ import (
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	// ---------------------------------------------------------------
 	// IBC imports
@@ -29,9 +30,7 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
-
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 )
 
@@ -63,7 +62,7 @@ type PublicKeepers struct {
 	EpochsKeeper       epochskeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
-	SudoKeeper         keeper.Keeper
+	SudoKeeper         sudokeeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmkeeper.Keeper

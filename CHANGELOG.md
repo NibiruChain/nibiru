@@ -38,7 +38,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0) - 2025-02-25
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs
 - [#2202](https://github.com/NibiruChain/nibiru/pull/2202) - chore(build): add build tags and missing flags/variables
@@ -47,14 +47,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):
 Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
 - [#2211](https://github.com/NibiruChain/nibiru/pull/2211) - ci(chaosnet): avoid building on cache injected directories
+- [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
+- [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
+- [#2214](https://github.com/NibiruChain/nibiru/pull/2214) - chore(wasm): bump wasmvm to `v1.5.8`
+- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
+- [#2217](https://github.com/NibiruChain/nibiru/pull/2217) - fix: app-db-backend not recognized on prune command
+- [#2219](https://github.com/NibiruChain/nibiru/pull/2219) - fix(evm): disable unprotected tx check in EVM ante handler
+- [#2220](https://github.com/NibiruChain/nibiru/pull/2220) - fix(evm): improved marshaling of the eth tx receipt
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
-* fbcca386 fix: revert wasmvm to v1.5.0
-* 533490d0 fix: revert testnet-1 chain id to 7210
-* d8a10921 chore: update changelog for v2 EVM release
+- fbcca386 fix: revert wasmvm to v1.5.0
+- 533490d0 fix: revert testnet-1 chain id to 7210
+- d8a10921 chore: update changelog for v2 EVM release
 
-### Nibiru EVM
+## [v2.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0) - 2025-02-10
 
 - [#2119](https://github.com/NibiruChain/nibiru/pull/2119) - fix(evm): Guarantee
   that gas consumed during any send operation of the "NibiruBankKeeper" depends
@@ -119,7 +126,6 @@ Zenith](https://code4rena.com/zenith) Audit, running from 2024-10-07 until
 period. This section describes code changes that occurred after that audit in
 preparation for a second audit starting in November 2024.
 
-- [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2074](https://github.com/NibiruChain/nibiru/pull/2074) - fix(evm-keeper): better utilize ERC20 metadata during FunToken creation. The bank metadata for a new FunToken mapping ties a connection between the Bank Coin's `DenomUnit` and the ERC20 contract metadata like the name, decimals, and symbol. This change brings parity between EVM wallets, such as MetaMask, and Interchain wallets like Keplr and Leap.
 - [#2076](https://github.com/NibiruChain/nibiru/pull/2076) - fix(evm-gas-fees):
   Use effective gas price in RefundGas and make sure that units are properly
@@ -164,9 +170,8 @@ preparation for a second audit starting in November 2024.
   Bank module. This code change uses the `NibiruBankKeeper` on all modules that
   depend on x/bank, such as the EVM and Wasm modules.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
-- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb
-  tests for race conditions within funtoken precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
+- [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
 - [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint

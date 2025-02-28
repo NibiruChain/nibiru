@@ -115,7 +115,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		config.Cmd(),
-		pruning.PruningCmd(a.newApp),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
 	)
 
 	server.AddCommands(

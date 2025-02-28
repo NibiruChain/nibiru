@@ -40,14 +40,14 @@ func TOKENS() []Token {
 			Display: "nibi",
 			Symbol:  "NIBI",
 			LogoURIs: &LogoURIs{
-				Png: some("./img/0000_nibiru.png"),
-				Svg: some("./img/0000_nibiru.svg"),
+				Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/nibiru.png"),
+				Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/nibiru.svg"),
 			},
 			CoingeckoID: some("nibiru"),
 			Images: []AssetImage{
 				{
-					Png: some("./img/0000_nibiru.png"),
-					Svg: some("./img/0000_nibiru.svg"),
+					Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/nibiru.png"),
+					Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/nibiru.svg"),
 					Theme: &ImageTheme{
 						PrimaryColorHex: some("#14c0ce"),
 					},
@@ -71,13 +71,13 @@ func TOKENS() []Token {
 			Display: "stNIBI",
 			Symbol:  "stNIBI",
 			LogoURIs: &LogoURIs{
-				Png: some("./img/0001_stnibi-500x500.png"),
-				Svg: some("./img/0001_stnibi-500x500.svg"),
+				Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/stnibi-logo-circle-500x500.png"),
+				Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/stnibi-logo-circle-500x500.svg"),
 			},
 			Images: []AssetImage{
 				{
-					Png: some("./img/0001_stnibi-500x500.png"),
-					Svg: some("./img/0001_stnibi-500x500.svg"),
+					Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/stnibi-logo-circle-500x500.png"),
+					Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/nibiru/images/stnibi-logo-circle-500x500.svg"),
 					Theme: &ImageTheme{
 						PrimaryColorHex: some("#14c0ce"),
 					},
@@ -125,8 +125,8 @@ func TOKENS() []Token {
 						ChainName: "noble",
 						BaseDenom: "uusdc",
 					},
-					Png: some("./img/0002_usdc.png"),
-					Svg: some("./img/0002_usdc.svg"),
+					Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png"),
+					Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"),
 					Theme: &ImageTheme{
 						Circle:          some(true),
 						PrimaryColorHex: some("#2775CA"),
@@ -134,8 +134,8 @@ func TOKENS() []Token {
 				},
 			},
 			LogoURIs: &LogoURIs{
-				Png: some("./img/0002_usdc.png"),
-				Svg: some("./img/0002_usdc.svg"),
+				Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.png"),
+				Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg"),
 			},
 			TypeAsset: TypeAsset_ICS20,
 		},
@@ -156,8 +156,8 @@ func TOKENS() []Token {
 			Display: "AXV",
 			Symbol:  "AXV",
 			LogoURIs: &LogoURIs{
-				Png: some("./img/0003_astrovault-axv.png"),
-				Svg: some("./img/0003_astrovault-axv.svg"),
+				Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/axv.png"),
+				Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/axv.svg"),
 			},
 			Images: []AssetImage{
 				{
@@ -165,8 +165,8 @@ func TOKENS() []Token {
 						ChainName: "neutron",
 						BaseDenom: "cw20:neutron10dxyft3nv4vpxh5vrpn0xw8geej8dw3g39g7nqp8mrm307ypssksau29af",
 					},
-					Png: some("./img/0003_astrovault-axv.png"),
-					Svg: some("./img/0003_astrovault-axv.svg"),
+					Png: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/axv.png"),
+					Svg: some("https://raw.githubusercontent.com/cosmos/chain-registry/master/neutron/images/axv.svg"),
 				},
 			},
 			TypeAsset: TypeAsset_SDKCoin,
@@ -190,11 +190,11 @@ func TOKENS() []Token {
 			Display: "xNIBI",
 			Symbol:  "xNIBI",
 			LogoURIs: &LogoURIs{
-				Svg: some("./img/0004_astrovault-xnibi.svg"),
+				Svg: some("./img/004_astrovault-xnibi.svg"),
 			},
 			Images: []AssetImage{
 				{
-					Svg: some("./img/0004_astrovault-xnibi.svg"),
+					Svg: some("./img/004_astrovault-xnibi.svg"),
 				},
 			},
 		},
