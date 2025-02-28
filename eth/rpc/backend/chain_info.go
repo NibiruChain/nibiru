@@ -40,7 +40,7 @@ func (b *Backend) BaseFeeWei(
 ) (baseFeeWei *big.Int, err error) {
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
-		return nil, nil
+		return nil, errors.Wrap(err, "failed to query base fee")
 	}
 	return res.BaseFee.BigInt(), nil
 }

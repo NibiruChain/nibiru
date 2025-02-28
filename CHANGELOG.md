@@ -38,6 +38,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- [#2222](https://github.com/NibiruChain/nibiru/pull/2222) - fix(evm): evm indexer proper stopping of the indexer service
+
 ## [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0) - 2025-02-25
 
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs

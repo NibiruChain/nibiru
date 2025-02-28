@@ -107,7 +107,15 @@ func (service *EVMTxIndexerService) OnStart() error {
 			}
 			continue
 		}
-		for i := lastIndexedHeight + 1; i <= chainHeight; i++ {
+		chainStatus, err := service.rpcClient.Status(ctx)
+		if err != nil {
+			service.Logger.Error("failed to fetch status", "err", err)
+			continue
+		}
+		// Pruned node may not already have lastIndexedHeight + 1 block
+		fromBlock := max(lastIndexedHeight+1, chainStatus.SyncInfo.EarliestBlockHeight)
+
+		for i := fromBlock; i <= chainHeight; i++ {
 			block, err := service.rpcClient.Block(ctx, &i)
 			if err != nil {
 				service.Logger.Error("failed to fetch block", "height", i, "err", err)
