@@ -3,6 +3,7 @@ package precompile
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
@@ -316,7 +317,7 @@ func (p precompileWasm) executeMulti(
 		for _, fund := range m.Funds {
 			funds = append(funds, sdk.Coin{
 				Denom:  fund.Denom,
-				Amount: sdk.NewIntFromBigInt(fund.Amount),
+				Amount: math.NewIntFromBigInt(fund.Amount),
 			})
 		}
 		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)

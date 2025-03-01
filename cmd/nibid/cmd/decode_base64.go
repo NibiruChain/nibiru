@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 
-	wasmvm "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2/types"
 )
 
 // YieldStargateMsgs takes a byte slice of JSON data and converts it into a slice

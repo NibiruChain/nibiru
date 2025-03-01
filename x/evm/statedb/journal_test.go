@@ -166,7 +166,7 @@ func (s *Suite) TestJournalReversion() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(69_420))),
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")

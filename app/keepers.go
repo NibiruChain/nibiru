@@ -2,7 +2,6 @@ package app
 
 import (
 	"path/filepath"
-	"strings"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/types"
@@ -16,11 +15,10 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -440,23 +438,19 @@ func (app *NibiruApp) InitKeepers(
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
-	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic("error while reading wasm config: " + err.Error())
 	}
 
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	//
-	// NOTE: This keeper depends on all of pointers to the the Keepers to which
-	// it binds. Thus, it must be instantiated after those keepers have been
-	// assigned.
-	// For example, if there are bindings for the x/inflation module, then the app
-	// passed to GetWasmOpts must already have a non-nil InflationKeeper.
-	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
-
 	// Create wasm VM outside keeper so it can be re-used in client keeper
-	wasmVM, err := wasmvm.NewVM(filepath.Join(wasmDir, "wasm"), supportedFeatures, wasmVmContractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	wasmVM, err := wasmvm.NewVM(
+		filepath.Join(wasmDir, "wasm"),
+		wasmkeeper.BuiltInCapabilities(),
+		wasmVmContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.MemoryCacheSize,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -471,23 +465,33 @@ func (app *NibiruApp) InitKeepers(
 		PortSource:       app.ibcTransferKeeper,
 	}
 	app.WasmMsgHandlerArgs = wmha
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	//
+	// NOTE: This keeper depends on all of pointers to the the Keepers to which
+	// it binds. Thus, it must be instantiated after those keepers have been
+	// assigned.
+	// For example, if there are bindings for the x/inflation module, then the app
+	// passed to GetWasmOpts must already have a non-nil InflationKeeper.
+
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasmtypes.StoreKey],
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		wmha.Ics4Wrapper, // ISC4 Wrapper: fee IBC middleware
 		wmha.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.ibcKeeper.PortKeeper,
 		wmha.CapabilityKeeper,
 		wmha.PortSource,
 		wmha.Router,
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		supportedFeatures,
+		wasmkeeper.BuiltInCapabilities(),
 		govModuleAddr,
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)
@@ -640,7 +644,7 @@ func (app *NibiruApp) initAppModules(
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(&app.upgradeKeeper, app.AccountKeeper.AddressCodec()),

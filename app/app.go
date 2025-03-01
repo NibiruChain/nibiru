@@ -185,7 +185,7 @@ func NewNibiruApp(
 		memKeys:           memKeys,
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	wasmConfig := app.InitKeepers(logger, appOpts)
 
 	// -------------------------- Module Options --------------------------
 
@@ -224,11 +224,11 @@ func NewNibiruApp(
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
-		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
-		WasmConfig:        &wasmConfig,
-		DevGasKeeper:      &app.DevGasKeeper,
-		DevGasBankKeeper:  app.BankKeeper,
+		IBCKeeper:             app.ibcKeeper,
+		TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		WasmConfig:            &wasmConfig,
+		DevGasKeeper:          &app.DevGasKeeper,
+		DevGasBankKeeper:      app.BankKeeper,
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
@@ -392,7 +392,9 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
-	cmt.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	cmtservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
+	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register legacy and grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)

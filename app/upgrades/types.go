@@ -5,7 +5,6 @@ import (
 	"cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"cosmossdk.io/x/upgrade/types"
 	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 )
 

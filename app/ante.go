@@ -65,7 +65,7 @@ func NewAnteHandlerNonEVM(
 		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
-		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
+		wasmkeeper.NewCountTXDecorator(opts.TXCounterStoreService),
 		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
 		// things safer.
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1915

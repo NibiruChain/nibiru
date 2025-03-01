@@ -26,7 +26,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		{
 			name: "happy: tx without gas, block gas limit 1000",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
 				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
@@ -43,7 +43,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		{
 			name: "happy: tx with gas wanted 500, block gas limit 1000",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
 				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
@@ -61,7 +61,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		{
 			name: "sad: tx with gas wanted 1000, block gas limit 500",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
 						MaxGas: 500,
 					},
