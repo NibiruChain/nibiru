@@ -389,12 +389,17 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 			logger.Error("failed to open evm indexer DB", "error", err.Error())
 			return err
 		}
-		evmTxIndexer, _, err := OpenEVMIndexer(ctx, idxDB, clientCtx)
+		evmTxIndexer, evmIndexerService, err := OpenEVMIndexer(ctx, idxDB, clientCtx)
 		if err != nil {
 			logger.Error("failed starting evm indexer service", "error", err.Error())
 			return err
 		}
 		evmIdxer = evmTxIndexer
+		defer func() {
+			if err := evmIndexerService.Stop(); err != nil {
+				ctx.Logger.Error("failed to stop evm indexer service", "error", err.Error())
+			}
+		}()
 	}
 
 	if conf.API.Enable || conf.JSONRPC.Enable {
