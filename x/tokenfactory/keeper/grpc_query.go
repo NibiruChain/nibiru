@@ -32,8 +32,11 @@ func (q Querier) Params(
 }
 
 // QueryDenoms: Returns all registered denoms for a given creator.
-func (k Keeper) QueryDenoms(ctx sdk.Context, creator string) []string {
-	iter := k.Store.Denoms.Indexes.Creator.ExactMatch(ctx, creator)
+func (k Keeper) QueryDenoms(ctx sdk.Context, creator string) ([]string, error) {
+	iter, err := k.Store.Denoms.Indexes.Creator.MatchExact(ctx, creator)
+	if err != nil {
+		return nil, err
+	}
 	return iter.PrimaryKeys()
 }
 
@@ -50,8 +53,12 @@ func (q Querier) Denoms(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	denoms, err := q.Keeper.QueryDenoms(ctx, req.Creator)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryDenomsResponse{
-		Denoms: q.Keeper.QueryDenoms(ctx, req.Creator),
+		Denoms: denoms,
 	}, err
 }
 

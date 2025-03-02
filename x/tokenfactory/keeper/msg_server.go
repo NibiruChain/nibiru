@@ -63,7 +63,7 @@ func (k Keeper) ChangeAdmin(
 	}
 
 	authData.Admin = txMsg.NewAdmin
-	k.Store.denomAdmins.Insert(ctx, txMsg.Denom, authData)
+	k.Store.denomAdmins.Set(ctx, txMsg.Denom, authData)
 
 	return &types.MsgChangeAdminResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventChangeAdmin{

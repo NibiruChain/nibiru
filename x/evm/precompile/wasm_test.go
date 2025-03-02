@@ -419,7 +419,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(100))),
 	))
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
@@ -630,7 +630,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			eth.EthAddrToNibiruAddr(testContractAddr),
-			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6))),
 		))
 	})
 
@@ -704,7 +704,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			eth.EthAddrToNibiruAddr(testContractAddr),
-			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6))),
 		))
 	})
 
@@ -714,15 +714,15 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			validator.NibiruAddr,
-			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6))),
 		))
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(validator.NibiruAddr),
+			sdk.ValAddress(validator.NibiruAddr).String(),
 			validator.PrivKey.PubKey(),
-			sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6)),
 			stakingtypes.NewDescription("validator0", "", "", "", ""),
-			stakingtypes.NewCommissionRates(sdk.NewDec(1), sdk.NewDec(1), sdk.NewDec(1)),
+			stakingtypes.NewCommissionRates(math.LegacyNewDec(1), math.LegacyNewDec(1), math.LegacyNewDec(1)),
 			math.OneInt(),
 		)
 		s.Require().NoError(err)

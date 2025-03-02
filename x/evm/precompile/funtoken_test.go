@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -126,7 +127,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -156,7 +157,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(evm.EVMBankDenom, math.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -272,7 +273,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
+			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, math.NewInt(1000))),
 		))
 	})
 
@@ -281,7 +282,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, math.NewInt(1000)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: contractAddr,
 				},
@@ -372,7 +373,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
+		sdk.NewCoins(sdk.NewCoin(bankDenom, math.NewInt(1234))),
 	)
 	s.Require().NoError(err)
 

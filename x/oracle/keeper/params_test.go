@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -60,11 +59,11 @@ func TestMergeOracleParams(t *testing.T) {
 	// baseParams
 	votePeriod := uint64(10)
 
-	voteThreshold := sdk.NewDecWithPrec(33, 2)
-	changedVoteThreshold := sdk.NewDecWithPrec(50, 2)
+	voteThreshold := math.LegacyNewDecWithPrec(33, 2)
+	changedVoteThreshold := math.LegacyNewDecWithPrec(50, 2)
 
-	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	changedRewardBand := sdk.NewDecWithPrec(2, 2)
+	oracleRewardBand := math.LegacyNewDecWithPrec(1, 2)
+	changedRewardBand := math.LegacyNewDecWithPrec(2, 2)
 
 	whitelist := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -75,14 +74,14 @@ func TestMergeOracleParams(t *testing.T) {
 		asset.Registry.Pair(denoms.ADA, denoms.NUSD),
 	}
 
-	slashFraction := sdk.NewDecWithPrec(1, 2)
-	changedSlashFraction := sdk.NewDecWithPrec(2, 2)
+	slashFraction := math.LegacyNewDecWithPrec(1, 2)
+	changedSlashFraction := math.LegacyNewDecWithPrec(2, 2)
 
 	slashWindow := uint64(1000)
 	changedSlashWindow := uint64(2000)
 
-	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	changedMinValidPerWindow := sdk.NewDecWithPrec(2, 4)
+	minValidPerWindow := math.LegacyNewDecWithPrec(1, 4)
+	changedMinValidPerWindow := math.LegacyNewDecWithPrec(2, 4)
 
 	twapLoopbackWindow := time.Duration(1000)
 	changedTwapLoopbackWindow := time.Duration(2000)
@@ -90,8 +89,8 @@ func TestMergeOracleParams(t *testing.T) {
 	minVoters := uint64(4)
 	chagedMinVoters := uint64(5)
 
-	minFeeRatio := sdk.NewDecWithPrec(1, 2)
-	changedMinFeeRatio := sdk.NewDecWithPrec(2, 2)
+	minFeeRatio := math.LegacyNewDecWithPrec(1, 2)
+	changedMinFeeRatio := math.LegacyNewDecWithPrec(2, 2)
 
 	expirationBlocks := uint64(100)
 	changedExpirationBlocks := uint64(200)
@@ -163,7 +162,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty voteThreshold not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					VoteThreshold: &sdk.Dec{},
+					VoteThreshold: &math.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -196,7 +195,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty rewardBand not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					RewardBand: &sdk.Dec{},
+					RewardBand: &math.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -262,7 +261,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty slashFraction not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					SlashFraction: &sdk.Dec{},
+					SlashFraction: &math.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -317,7 +316,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty minValidPerWindow not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					MinValidPerWindow: &sdk.Dec{},
+					MinValidPerWindow: &math.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -394,7 +393,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty validatorFeeRatio not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					ValidatorFeeRatio: &sdk.Dec{},
+					ValidatorFeeRatio: &math.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {

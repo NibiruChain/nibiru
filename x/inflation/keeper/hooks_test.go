@@ -28,9 +28,11 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	params.InflationEnabled = true
 	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
-	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
+	feePoolOld, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+	require.NoError(t, err)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
-	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
+	feePoolNew, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+	require.NoError(t, err)
 
 	require.Greater(t, feePoolNew.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64(),
 		feePoolOld.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64())
@@ -225,7 +227,7 @@ func TestManual(t *testing.T) {
 	params.EpochsPerPeriod = 30
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
-	params.PolynomialFactors = []sdk.Dec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
+	params.PolynomialFactors = []math.LegacyDec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
 		CommunityPool:     math.LegacyZeroDec(),
 		StakingRewards:    math.LegacyOneDec(),
