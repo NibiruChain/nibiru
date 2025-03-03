@@ -1,8 +1,8 @@
 package ante_test
 
 import (
+	"context"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -15,8 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
@@ -41,11 +39,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	encodingConfig := app.MakeEncodingConfig()
 	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
-	ctx := suite.app.NewContext(true, tmproto.Header{
-		Height:  1,
-		ChainID: chainId,
-		Time:    time.Now().UTC(),
-	})
+	ctx := suite.app.NewContext(true)
 	suite.ctx = ctx
 
 	// Set up TxConfig
@@ -54,7 +48,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithChainID(chainId).
 		WithLegacyAmino(encodingConfig.Amino)
 
-	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	err := suite.app.AccountKeeper.Params.Set(ctx, authtypes.DefaultParams())
 	suite.Require().NoError(err)
 	params := suite.app.AccountKeeper.GetParams(ctx)
 	suite.Require().NoError(params.Validate())
@@ -85,6 +79,8 @@ func (suite *AnteTestSuite) SetupTest() {
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
 func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []uint64, accSeqs []uint64, chainID string) (xauthsigning.Tx, error) {
+	defaultSignMode, err := xauthsigning.APISignModeToInternal(suite.clientCtx.TxConfig.SignModeHandler().DefaultMode())
+	suite.Require().NoError(err)
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
 	var sigsV2 []signing.SignatureV2
@@ -92,7 +88,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 		sigV2 := signing.SignatureV2{
 			PubKey: priv.PubKey(),
 			Data: &signing.SingleSignatureData{
-				SignMode:  suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(),
+				SignMode:  defaultSignMode,
 				Signature: nil,
 			},
 			Sequence: accSeqs[i],
@@ -103,7 +99,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 		err := acc.SetAccountNumber(uint64(i) + 100)
 		suite.Require().NoError(err)
 	}
-	err := suite.txBuilder.SetSignatures(sigsV2...)
+	err = suite.txBuilder.SetSignatures(sigsV2...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +113,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 			Sequence:      accSeqs[i],
 		}
 		sigV2, err := tx.SignWithPrivKey(
-			suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(), signerData,
+			context.TODO(), defaultSignMode, signerData,
 			suite.txBuilder, priv, suite.clientCtx.TxConfig, accSeqs[i])
 		if err != nil {
 			return nil, err

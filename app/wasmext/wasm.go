@@ -38,13 +38,19 @@ func NibiruWasmOptions(
 }
 
 func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) (*sdk.Result, error) {
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, err
+	if m, ok := msg.(sdk.HasValidateBasic); ok {
+		if err := m.ValidateBasic(); err != nil {
+			return nil, err
+		}
 	}
 
 	// make sure this account can send it
-	for _, acct := range msg.GetSigners() {
-		if !acct.Equals(contractAddr) {
+	signers, _, err := h.cdc.GetMsgV1Signers(msg)
+	if err != nil {
+		return nil, err
+	}
+	for _, acct := range signers {
+		if !sdk.AccAddress(acct).Equals(contractAddr) {
 			return nil, errors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
@@ -76,12 +82,14 @@ type MsgHandlerArgs struct {
 	BankKeeper       wasm.Burner
 	Unpacker         sdkcodec.AnyUnpacker
 	PortSource       wasm.ICS20TransferPortSource
+	Cdc              codec.Codec
 }
 
 // SDKMessageHandler can handles messages that can be encoded into sdk.Message types and routed.
 type SDKMessageHandler struct {
 	router   MessageRouter
 	encoders msgEncoder
+	cdc      codec.Codec
 }
 
 // MessageRouter ADR 031 request type routing
@@ -102,14 +110,15 @@ func WasmMessageHandler(
 ) wasmkeeper.Messenger {
 	encoders := wasmkeeper.DefaultEncoders(args.Unpacker, args.PortSource)
 	return wasmkeeper.NewMessageHandlerChain(
-		NewSDKMessageHandler(args.Router, encoders),
+		NewSDKMessageHandler(args.Cdc, args.Router, encoders),
 		wasmkeeper.NewIBCRawPacketHandler(args.Ics4Wrapper, args.ChannelKeeper, args.CapabilityKeeper),
 		wasmkeeper.NewBurnCoinMessageHandler(args.BankKeeper),
 	)
 }
 
-func NewSDKMessageHandler(router MessageRouter, encoders msgEncoder) SDKMessageHandler {
+func NewSDKMessageHandler(cdc codec.Codec, router MessageRouter, encoders msgEncoder) SDKMessageHandler {
 	return SDKMessageHandler{
+		cdc:      cdc,
 		router:   router,
 		encoders: encoders,
 	}

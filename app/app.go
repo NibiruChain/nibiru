@@ -28,10 +28,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 
 	// _ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -188,7 +191,7 @@ func NewNibiruApp(
 		memKeys:           memKeys,
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	wasmConfig := app.InitKeepers(logger, appOpts)
 
 	// -------------------------- Module Options --------------------------
 
@@ -229,7 +232,7 @@ func NewNibiruApp(
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
+		TxCounterStoreKey: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
@@ -265,7 +268,7 @@ func NewNibiruApp(
 		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+		if err := ibcwasmkeeper.InitializePinnedCodes(ctx); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 
@@ -293,17 +296,17 @@ func NewNibiruApp(
 func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.ModuleManager.BeginBlock(ctx, req)
+func (app *NibiruApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	return app.ModuleManager.BeginBlock(ctx)
 }
 
 // EndBlocker application updates every end block
-func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.ModuleManager.EndBlock(ctx, req)
+func (app *NibiruApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	return app.ModuleManager.EndBlock(ctx)
 }
 
 // InitChainer application update at chain initialization
-func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *NibiruApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
 	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -317,8 +320,9 @@ func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-func (app *NibiruApp) RegisterNodeService(clientCtx client.Context) {
-	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
+func (app *NibiruApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
+
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
@@ -396,7 +400,10 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
-	cmt.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	cmtservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
+	// Register node gRPC service for grpc-gateway.
+	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register legacy and grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
@@ -416,11 +423,12 @@ func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(
+	cmtApp := server.NewCometABCIWrapper(app)
+	cmtservice.RegisterTendermintService(
 		clientCtx,
 		app.BaseApp.GRPCQueryRouter(),
 		app.interfaceRegistry,
-		app.Query,
+		cmtApp.Query,
 	)
 }
 

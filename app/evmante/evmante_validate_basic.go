@@ -2,8 +2,6 @@
 package evmante
 
 import (
-	"errors"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,12 +28,6 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	// no need to validate basic on recheck tx, call next antehandler
 	if ctx.IsReCheckTx() {
 		return next(ctx, tx, simulate)
-	}
-
-	err := tx.ValidateBasic()
-	// ErrNoSignatures is fine with eth tx
-	if err != nil && !errors.Is(err, sdkerrors.ErrNoSignatures) {
-		return ctx, errorsmod.Wrap(err, "tx basic validation failed")
 	}
 
 	// For eth type cosmos tx, some fields should be verified as zero values,
@@ -132,7 +124,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		)
 	}
 
-	if !authInfo.Fee.Amount.IsEqual(txFee) {
+	if !authInfo.Fee.Amount.Equal(txFee) {
 		return ctx, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest,
 			"invalid AuthInfo Fee Amount (%s != %s)",

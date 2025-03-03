@@ -3,7 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -37,8 +37,8 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
 				maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{
+				cp := &cmtproto.ConsensusParams{
+					Block: &cmtproto.BlockParams{
 						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
 					},
 				}
@@ -47,7 +47,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
 					WithIsCheckTx(true).
-					WithConsensusParams(cp)
+					WithConsensusParams(*cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)

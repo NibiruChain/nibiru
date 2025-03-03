@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"runtime"
 
-	db "github.com/cometbft/cometbft-db"
+	db "github.com/cosmos/cosmos-db"
 )
 
 const (

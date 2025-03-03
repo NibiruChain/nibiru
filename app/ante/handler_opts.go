@@ -1,8 +1,8 @@
 package ante
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -23,7 +23,7 @@ type AnteHandlerOptions struct {
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
-	TxCounterStoreKey types.StoreKey
+	TxCounterStoreKey corestoretypes.KVStoreService
 	WasmConfig        *wasmtypes.WasmConfig
 	MaxTxGasWanted    uint64
 }

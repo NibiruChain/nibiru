@@ -27,15 +27,17 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	dbm "github.com/cometbft/cometbft-db"
 	abciserver "github.com/cometbft/cometbft/abci/server"
 	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
+	dbm "github.com/cosmos/cosmos-db"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 
 	"cosmossdk.io/tools/rosetta"
 	crgserver "cosmossdk.io/tools/rosetta/lib/server"
@@ -43,14 +45,15 @@ import (
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
 	errorsmod "cosmossdk.io/errors"
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	pruningtypes "cosmossdk.io/store/pruning/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -333,15 +336,16 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 	} else {
 		logger.Info("starting node with ABCI Tendermint in-process")
 
+		cmtApp := server.NewCometABCIWrapper(app)
 		tmNode, err = node.NewNode(
 			cfg,
 			pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
 			nodeKey,
-			proxy.NewLocalClientCreator(app),
+			proxy.NewLocalClientCreator(cmtApp),
 			genDocProvider,
-			node.DefaultDBProvider,
+			cmtcfg.DefaultDBProvider,
 			node.DefaultMetricsProvider(cfg.Instrumentation),
-			ctx.Logger.With("server", "node"),
+			servercmtlog.CometLoggerWrapper{Logger: ctx.Logger.With("server", "node")},
 		)
 		if err != nil {
 			logger.Error("failed init node", "error", err.Error())
