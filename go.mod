@@ -5,13 +5,13 @@ go 1.23.1
 toolchain go1.23.3
 
 require (
-	github.com/CosmWasm/wasmd v0.54.0
+	github.com/CosmWasm/wasmd v0.50.0
 	github.com/CosmWasm/wasmvm/v2 v2.2.1
 	github.com/NibiruChain/collections v0.50.0
 
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.38.15
-	github.com/cometbft/cometbft-db v0.14.1
+	github.com/cometbft/cometbft-db v0.14.1 // indirect
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
@@ -26,7 +26,6 @@ require (
 	cosmossdk.io/math v1.5.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/armon/go-metrics v0.4.1
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/cosmos/go-bip39 v1.0.0
@@ -66,10 +65,12 @@ require (
 	cosmossdk.io/x/feegrant v0.1.1
 	cosmossdk.io/x/upgrade v0.1.4
 	github.com/CosmWasm/wasmvm v1.5.8
+	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.1-0.20231213092650-57fcdb9a9a9d
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/gorilla/websocket v1.5.3
+	github.com/hashicorp/go-metrics v0.5.3
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.33.0
 	github.com/status-im/keycard-go v0.0.0-20190316090335-8537d3370df4
@@ -122,10 +123,8 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-db v1.1.1 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.2.4 // indirect
-	github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
@@ -174,7 +173,6 @@ require (
 	github.com/hashicorp/go-getter v1.7.5 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-metrics v0.5.3 // indirect
 	github.com/hashicorp/go-plugin v1.5.2 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -273,7 +271,6 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
-	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.53.1-0.20250217040551-ce306b3843d9
 	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.10.27-nibiru

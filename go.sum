@@ -235,6 +235,8 @@ github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v1.1.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/CosmWasm/wasmd v0.50.0 h1:NVaGqCSTRfb9UTDHJwT6nQIWcb6VjlQl88iI+u1+qjE=
+github.com/CosmWasm/wasmd v0.50.0/go.mod h1:UjmShW4l9YxaMytwJZ7IB7MWzHiynSZP3DdWrG0FRtk=
 github.com/CosmWasm/wasmvm v1.5.8 h1:vrmAvDuXcNqw7XqDiVDIyopo9gNdkcvRLFTC8+wBb/A=
 github.com/CosmWasm/wasmvm v1.5.8/go.mod h1:2qaMB5ISmYXtpkJR2jy8xxx5Ti8sntOEf1cUgolb4QI=
 github.com/CosmWasm/wasmvm/v2 v2.2.1 h1:cmOnM+TDfUl2VRugeo1eJBw4U/Lw0WLviuQHKSo9DVQ=
@@ -256,8 +258,6 @@ github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac h1:n95n
 github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac/go.mod h1:gt14Meok2IDCjbDtjwkbUcgVNEpUBDN/4hg9cCUtLgw=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru h1:o6lRFt57izoYwzN5cG8tnnBtJcaO3X7MjjN7PGGNCFg=
 github.com/NibiruChain/go-ethereum v1.10.27-nibiru/go.mod h1:kvvL3nDceUcB+1qGUBAsVf5dW23RBR77fqxgx2PGNrQ=
-github.com/NibiruChain/wasmd v0.53.1-0.20250217040551-ce306b3843d9 h1:DbvMuDNMZCETjqgx0WfA1fzyiXKJcF3TEnv6ToYTc4E=
-github.com/NibiruChain/wasmd v0.53.1-0.20250217040551-ce306b3843d9/go.mod h1:jpQ+Tp0QB0+XnB1FZHdu7V91K7D+aNKjv7koWgXPNDQ=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
@@ -290,8 +290,6 @@ github.com/apache/thrift v0.13.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
-github.com/armon/go-metrics v0.4.1 h1:hR91U9KYmb6bLBYLQjyM+3j+rcd/UhE+G78SFnF8gJA=
-github.com/armon/go-metrics v0.4.1/go.mod h1:E6amYzXo6aW1tqzoZGT755KkbgrJsSdpwZ+3JqfkOG4=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6lCRdSC2Tm3DSWRPvIPr6xNKyeHdqDQSQT+A=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
@@ -461,12 +459,10 @@ github.com/cosmos/gogoproto v1.7.0 h1:79USr0oyXAbxg3rspGh/m4SWNyoz/GLaAh0QlCe2fr
 github.com/cosmos/gogoproto v1.7.0/go.mod h1:yWChEv5IUEYURQasfyBW5ffkMHR/90hiHgbNgrtp4j0=
 github.com/cosmos/iavl v1.2.4 h1:IHUrG8dkyueKEY72y92jajrizbkZKPZbMmG14QzsEkw=
 github.com/cosmos/iavl v1.2.4/go.mod h1:GiM43q0pB+uG53mLxLDzimxM9l/5N9UuSY3/D0huuVw=
-github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd h1:Lx+/5dZ/nN6qPXP2Ofog6u1fmlkCFA1ElcOconnofEM=
-github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd/go.mod h1:JWfpWVKJKiKtd53/KbRoKfxWl8FsT2GPcNezTOk0o5Q=
 github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9svjthrX2+oXdZvzgGI=
 github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
-github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72 h1:QjCi4bJoy9AXLL1e4jqi+4rHYN0gGZAQxf937cdWhw4=
-github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72/go.mod h1:yiulzyQAZ+Ci802z/kVQqTA3lGiSJOmDpTq7kZxOUNE=
+github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.1-0.20231213092650-57fcdb9a9a9d h1:F4mhR61RZU4KJ38n5CeZrnNINU/KxMfP1sKfk5fTlHA=
+github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.1-0.20231213092650-57fcdb9a9a9d/go.mod h1:u2FXNcSxzzn5IwjWBA51HKMwiYMRK6/G35VmSJULhP0=
 github.com/cosmos/ibc-go/v8 v8.5.3 h1:VF1Vq3/zZB40eeFvx4wI4WmlJGGF74o+/MxcPxQ2mWY=
 github.com/cosmos/ibc-go/v8 v8.5.3/go.mod h1:P5hkAvq0Qbg0h18uLxDVA9q1kOJ0l36htMsskiNwXbo=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=

@@ -18,14 +18,15 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"cosmossdk.io/store/pruning/types"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"cosmossdk.io/math"
-	dbm "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	networkutil "github.com/cosmos/cosmos-sdk/testutil/network"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -209,7 +210,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 				apiListenAddr = cfg.APIAddress
 			} else {
 				var err error
-				apiListenAddr, _, err = server.FreeTCPAddr()
+				apiListenAddr, _, _, err = networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, fmt.Errorf("failed to get free TCP address for API: %w", err)
 				}
@@ -225,7 +226,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			if cfg.RPCAddress != "" {
 				tmCfg.RPC.ListenAddress = cfg.RPCAddress
 			} else {
-				rpcAddr, _, err := server.FreeTCPAddr()
+				rpcAddr, _, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -235,7 +236,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			if cfg.GRPCAddress != "" {
 				appCfg.GRPC.Address = cfg.GRPCAddress
 			} else {
-				_, grpcPort, err := server.FreeTCPAddr()
+				_, grpcPort, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -243,7 +244,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			}
 			appCfg.GRPC.Enable = true
 
-			_, grpcWebPort, err := server.FreeTCPAddr()
+			_, grpcWebPort, _, err := networkutil.FreeTCPAddr()
 			if err != nil {
 				return nil, err
 			}
@@ -253,7 +254,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			if cfg.JSONRPCAddress != "" {
 				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
 			} else {
-				_, jsonRPCPort, err := server.FreeTCPAddr()
+				_, jsonRPCPort, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -288,13 +289,13 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		tmCfg.Moniker = nodeDirName
 		monikers[valIdx] = nodeDirName
 
-		proxyAddr, _, err := server.FreeTCPAddr()
+		proxyAddr, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
 		tmCfg.ProxyApp = proxyAddr
 
-		p2pAddr, _, err := server.FreeTCPAddr()
+		p2pAddr, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}

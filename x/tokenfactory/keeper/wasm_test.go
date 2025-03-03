@@ -14,7 +14,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -283,7 +283,7 @@ func (s *TestSuite) TestStargateSerde() {
 			mockContractAddr := testutil.AccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
 				wasmvmtypes.CosmosMsg{
-					Any: &wasmvmtypes.AnyMsg{
+					Stargate: &wasmvmtypes.StargateMsg{
 						TypeURL: tc.typeUrl,
 						Value:   sgMsgValue,
 					},

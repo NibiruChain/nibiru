@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/errors"
-	db "github.com/cometbft/cometbft-db"
+	db "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
@@ -18,7 +18,8 @@ import (
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
@@ -50,7 +51,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		nodeKey,
 		proxy.NewLocalClientCreator(app),
 		genDocProvider,
-		node.DefaultDBProvider,
+		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
 		logger.With("module", val.Moniker),
 	)
