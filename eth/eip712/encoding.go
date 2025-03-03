@@ -171,7 +171,7 @@ func decodeProtobufSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 		Gas:    authInfo.Fee.GasLimit,
 	}
 
-	tip := authInfo.Tip
+	// tip := authInfo.Tip
 
 	// WrapTxToTypedData expects the payload as an Amino Sign Doc
 	signBytes := legacytx.StdSignBytes(
@@ -182,7 +182,7 @@ func decodeProtobufSignDoc(signDocBytes []byte) (apitypes.TypedData, error) {
 		*stdFee,
 		msgs,
 		body.Memo,
-		tip,
+		// tip,
 	)
 
 	typedData, err := WrapTxToTypedData(

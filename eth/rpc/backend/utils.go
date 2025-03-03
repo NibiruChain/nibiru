@@ -18,8 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
+	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -232,7 +232,7 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 
 // ShouldIgnoreGasUsed returns true if the gasUsed in result should be ignored
 // workaround for issue: https://github.com/cosmos/cosmos-sdk/issues/10832
-func ShouldIgnoreGasUsed(res *abci.ResponseDeliverTx) bool {
+func ShouldIgnoreGasUsed(res *abci.ExecTxResult) bool {
 	return res.GetCode() == 11 && strings.Contains(res.GetLog(), "no block gas left to run tx: out of gas")
 }
 

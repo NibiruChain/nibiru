@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"testing"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmtypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -64,7 +64,7 @@ func TestEVMTxIndexer(t *testing.T) {
 	testCases := []struct {
 		name        string
 		block       *tmtypes.Block
-		blockResult []*abci.ResponseDeliverTx
+		blockResult []*abci.ExecTxResult
 		expSuccess  bool
 	}{
 		{
@@ -73,7 +73,7 @@ func TestEVMTxIndexer(t *testing.T) {
 				Header: tmtypes.Header{Height: 1},
 				Data:   tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}},
 			},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -92,7 +92,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		{
 			"happy: code 0, pending_ethereum_tx and typed EventEthereumTx present",
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code: 0,
 					Events: []abci.Event{
@@ -121,7 +121,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		{
 			"happy: code 11, exceed block gas limit",
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code:   11,
 					Log:    "out of gas in location: block gas meter; gasWanted: 21000",
@@ -133,7 +133,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		{
 			"sad: failed eth tx",
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code:   15,
 					Log:    "nonce mismatch",
@@ -145,7 +145,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		{
 			"sad: invalid events",
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code:   0,
 					Events: []abci.Event{},
@@ -156,7 +156,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		{
 			"sad: not eth tx",
 			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{invalidTxBz}}},
-			[]*abci.ResponseDeliverTx{
+			[]*abci.ExecTxResult{
 				{
 					Code:   0,
 					Events: []abci.Event{},
@@ -169,7 +169,7 @@ func TestEVMTxIndexer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db := dbm.NewMemDB()
-			idxer := indexer.NewEVMTxIndexer(db, tmlog.NewNopLogger(), clientCtx)
+			idxer := indexer.NewEVMTxIndexer(db, log.NewNopLogger(), clientCtx)
 
 			err = idxer.IndexBlock(tc.block, tc.blockResult)
 			require.NoError(t, err)

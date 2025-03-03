@@ -254,18 +254,18 @@ func CheckTxFee(gasPrice *big.Int, gas uint64, cap float64) error {
 }
 
 // TxExceedBlockGasLimit returns true if the tx exceeds block gas limit.
-func TxExceedBlockGasLimit(res *abci.ResponseDeliverTx) bool {
+func TxExceedBlockGasLimit(res *abci.ExecTxResult) bool {
 	return strings.Contains(res.Log, ErrExceedBlockGasLimit)
 }
 
 // TxStateDBCommitError returns true if the evm tx commit error.
-func TxStateDBCommitError(res *abci.ResponseDeliverTx) bool {
+func TxStateDBCommitError(res *abci.ExecTxResult) bool {
 	return strings.Contains(res.Log, ErrStateDBCommit)
 }
 
 // TxIsValidEnough returns true if the transaction was successful
 // or if it failed with an ExceedBlockGasLimit error or TxStateDBCommitError error
-func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string) {
+func TxIsValidEnough(res *abci.ExecTxResult) (condition bool, reason string) {
 	if res.Code == 0 {
 		return true, "tx succeeded"
 	} else if TxExceedBlockGasLimit(res) {

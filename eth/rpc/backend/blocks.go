@@ -329,7 +329,7 @@ func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, er
 // BlockBloom query block bloom filter from block results
 func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.Bloom, error) {
 	msgType := proto.MessageName((*evm.EventBlockBloom)(nil))
-	for _, event := range blockRes.EndBlockEvents {
+	for _, event := range blockRes.FinalizeBlockEvents {
 		if event.Type != msgType {
 			continue
 		}

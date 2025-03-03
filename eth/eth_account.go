@@ -85,7 +85,7 @@ var emptyCodeHash = crypto.Keccak256(nil)
 // drop-in replacement for the `auth.ProtoBaseAccount` from
 // "cosmos-sdk/auth/types" extended to fit the the `EthAccountI` interface for
 // Ethereum accounts.
-func ProtoBaseAccount() authtypes.AccountI {
+func ProtoBaseAccount() sdk.AccountI {
 	return &EthAccount{
 		BaseAccount: &authtypes.BaseAccount{},
 		CodeHash:    gethcommon.BytesToHash(emptyCodeHash).String(),

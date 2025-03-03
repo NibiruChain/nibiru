@@ -19,7 +19,7 @@ func TestParseTxResult(t *testing.T) {
 
 	type TestCase struct {
 		name       string
-		txResp     abci.ResponseDeliverTx
+		txResp     abci.ExecTxResult
 		wantEthTxs []*ParsedTx
 		wantErr    bool
 	}
@@ -27,7 +27,7 @@ func TestParseTxResult(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name: "happy: valid single pending_ethereum_tx event",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					pendingEthereumTxEvent(txHashOne.Hex(), 0),
 				},
@@ -44,7 +44,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "happy: two valid pending_ethereum_tx events",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					pendingEthereumTxEvent(txHashOne.Hex(), 0),
 					pendingEthereumTxEvent(txHashTwo.Hex(), 1),
@@ -68,7 +68,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "happy: one pending_ethereum_tx and one EventEthereumTx",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					pendingEthereumTxEvent(txHashOne.Hex(), 0),
 					ethereumTxEvent(txHashOne.Hex(), 0, 21000, false),
@@ -86,7 +86,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "happy: two pending_ethereum_tx and one EventEthereumTx",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					pendingEthereumTxEvent(txHashOne.Hex(), 0),
 					pendingEthereumTxEvent(txHashTwo.Hex(), 1),
@@ -112,7 +112,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "happy: one pending_ethereum_tx and one EventEthereumTx failed",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					pendingEthereumTxEvent(txHashOne.Hex(), 0),
 					ethereumTxEvent(txHashOne.Hex(), 0, 21000, true),
@@ -130,7 +130,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "sad: EventEthereumTx without pending_ethereum_tx",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{
 					ethereumTxEvent(txHashOne.Hex(), 0, 21000, false),
 				},
@@ -140,7 +140,7 @@ func TestParseTxResult(t *testing.T) {
 		},
 		{
 			name: "sad: no events",
-			txResp: abci.ResponseDeliverTx{
+			txResp: abci.ExecTxResult{
 				Events: []abci.Event{},
 			},
 			wantEthTxs: []*ParsedTx{},

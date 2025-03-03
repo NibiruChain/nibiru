@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	rpcbackend "github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/pkg/errors"
 

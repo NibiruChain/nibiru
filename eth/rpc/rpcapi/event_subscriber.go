@@ -29,7 +29,7 @@ import (
 
 var (
 	txEventsQuery  = tmtypes.QueryForEvent(tmtypes.EventTx).String()
-	evmEventsQuery = tmquery.MustParse(fmt.Sprintf("%s='%s' AND %s.%s='%s'",
+	evmEventsQuery = tmquery.MustCompile(fmt.Sprintf("%s='%s' AND %s.%s='%s'",
 		tmtypes.EventTypeKey,
 		tmtypes.EventTx,
 		sdk.EventTypeMessage,
