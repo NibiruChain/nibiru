@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"github.com/cosmos/gogoproto/proto"
+	protov2 "google.golang.org/protobuf/proto"
+	"github.com/cosmos/cosmos-proto/anyutil"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -184,6 +186,24 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 // GetMsgs returns a single MsgEthereumTx as sdk.Msg.
 func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
+}
+
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	a, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+	msgv2, err := anyutil.Unpack(&anypb.Any{
+		TypeUrl: a.TypeUrl,
+		Value:   a.Value,
+	}, pc.interfaceRegistry, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signers, err := pc.interfaceRegistry.SigningContext().GetSigners(msgv2)
+	return signers, msgv2, err
+	return []protov2.Message{msg}, nil
 }
 
 // GetSigners returns the expected signers for an Ethereum transaction message.
