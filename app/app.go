@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/depinject"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
@@ -27,17 +29,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
@@ -48,9 +48,7 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
-	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -84,9 +82,10 @@ var (
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type NibiruApp struct {
-	*baseapp.BaseApp
+	*runtime.App
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
+	txConfig          client.TxConfig
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
@@ -153,11 +152,8 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
+	keys, _, _ := initStoreKeys()
 	overrideWasmVariables()
-	appCodec := encodingConfig.Codec
-	legacyAmino := encodingConfig.Amino
-	interfaceRegistry := encodingConfig.InterfaceRegistry
-	txConfig := encodingConfig.TxConfig
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
 		mp := mempool.NoOpMempool{}
 		app.SetMempool(mp)
@@ -166,76 +162,79 @@ func NewNibiruApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	bApp := baseapp.NewBaseApp(
-		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetVersion(version.Version)
-	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetTxEncoder(txConfig.TxEncoder())
+	var (
+		app        = &NibiruApp{}
+		appBuilder *runtime.AppBuilder
+		appConfig  = depinject.Configs(
+			AppConfig,
+			depinject.Supply(
+				// supply the application options
+				appOpts,
 
-	keys, tkeys, memKeys := initStoreKeys()
-	app := &NibiruApp{
-		BaseApp:           bApp,
-		legacyAmino:       legacyAmino,
-		appCodec:          appCodec,
-		interfaceRegistry: interfaceRegistry,
-		keys:              keys,
-		tkeys:             tkeys,
-		memKeys:           memKeys,
+				// ADVANCED CONFIGURATION
+
+				//
+				// AUTH
+				//
+				// For providing a custom function required in auth to generate custom account types
+				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+				//
+				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+				// For providing a custom a base account type add it below.
+				// By default the auth module uses authtypes.ProtoBaseAccount().
+				//
+				// func() authtypes.AccountI { return authtypes.ProtoBaseAccount() },
+
+				//
+				// MINT
+				//
+
+				// For providing a custom inflation function for x/mint add here your
+				// custom function that implements the minttypes.InflationCalculationFn
+				// interface.
+			),
+		)
+	)
+
+	if err := depinject.Inject(appConfig,
+		&appBuilder,
+		&app.appCodec,
+		&app.legacyAmino,
+		&app.txConfig,
+		&app.interfaceRegistry,
+		&app.AccountKeeper,
+		&app.BankKeeper,
+		&app.capabilityKeeper,
+		&app.StakingKeeper,
+		&app.slashingKeeper,
+		// &app.MintKeeper,
+		&app.DistrKeeper,
+		&app.GovKeeper,
+		&app.crisisKeeper,
+		&app.upgradeKeeper,
+		&app.paramsKeeper,
+		&app.authzKeeper,
+		&app.evidenceKeeper,
+		&app.FeeGrantKeeper,
+		&app.ConsensusParamsKeeper,
+	); err != nil {
+		panic(err)
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
-	// -------------------------- Module Options --------------------------
+	// load state streaming if enabled
+	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, keys); err != nil {
+		logger.Error("failed to load state streaming", "err", err)
+		os.Exit(1)
+	}
 
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(
-		appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 
-	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
-
-	app.initModuleManager(encodingConfig, skipGenesisInvariants)
-
+	// RegisterUpgradeHandlers is used for registering any on-chain upgrades.
 	app.setupUpgrades()
-	// NOTE: Any module instantiated in the module manager that is later modified
-	// must be passed by reference here.
-
-	// add test gRPC service for testing gRPC queries in isolation
-	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
-
-	app.initSimulationManager(app.appCodec)
-
-	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
-
-	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
-		HandlerOptions: authante.HandlerOptions{
-			AccountKeeper:          app.AccountKeeper,
-			BankKeeper:             app.BankKeeper,
-			FeegrantKeeper:         app.FeeGrantKeeper,
-			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
-			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
-			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
-		},
-		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
-		WasmConfig:        &wasmConfig,
-		DevGasKeeper:      &app.DevGasKeeper,
-		DevGasBankKeeper:  app.BankKeeper,
-		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
-		MaxTxGasWanted: DefaultMaxTxGasWanted,
-		EvmKeeper:      app.EvmKeeper,
-		AccountKeeper:  app.AccountKeeper,
-	})
-
-	app.SetAnteHandler(anteHandler)
-	app.SetEndBlocker(app.EndBlocker)
+	app.sm.RegisterStoreDecoders()
 
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
 		if err := snapshotManager.RegisterExtensions(
@@ -251,7 +250,6 @@ func NewNibiruApp(
 			panic("failed to add wasm snapshot extension.")
 		}
 	}
-
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -282,6 +280,133 @@ func NewNibiruApp(
 	}
 
 	return app
+
+	// appCodec := encodingConfig.Codec
+	// legacyAmino := encodingConfig.Amino
+	// interfaceRegistry := encodingConfig.InterfaceRegistry
+	// txConfig := encodingConfig.TxConfig
+	// baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
+	// 	mp := mempool.NoOpMempool{}
+	// 	app.SetMempool(mp)
+	// 	handler := baseapp.NewDefaultProposalHandler(mp, app)
+	// 	app.SetPrepareProposal(handler.PrepareProposalHandler())
+	// 	app.SetProcessProposal(handler.ProcessProposalHandler())
+	// })
+
+	// bApp := baseapp.NewBaseApp(
+	// 	appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+	// bApp.SetCommitMultiStoreTracer(traceStore)
+	// bApp.SetVersion(version.Version)
+	// bApp.SetInterfaceRegistry(interfaceRegistry)
+	// bApp.SetTxEncoder(txConfig.TxEncoder())
+
+	// app := &NibiruApp{
+	// 	BaseApp:           bApp,
+	// 	legacyAmino:       legacyAmino,
+	// 	appCodec:          appCodec,
+	// 	interfaceRegistry: interfaceRegistry,
+	// 	keys:              keys,
+	// 	tkeys:             tkeys,
+	// 	memKeys:           memKeys,
+	// }
+
+	// wasmConfig := app.InitKeepers(appOpts)
+
+	// // -------------------------- Module Options --------------------------
+
+	// // NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
+	// // we prefer to be more strict in what arguments the modules expect.
+	// skipGenesisInvariants := cast.ToBool(
+	// 	appOpts.Get(crisis.FlagSkipGenesisInvariants))
+
+	// app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
+
+	// app.initModuleManager(encodingConfig, skipGenesisInvariants)
+
+	// app.setupUpgrades()
+	// // NOTE: Any module instantiated in the module manager that is later modified
+	// // must be passed by reference here.
+
+	// // add test gRPC service for testing gRPC queries in isolation
+	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
+
+	// app.initSimulationManager(app.appCodec)
+
+	// // initialize stores
+	// app.MountKVStores(keys)
+	// app.MountTransientStores(tkeys)
+	// app.MountMemoryStores(memKeys)
+
+	// // initialize BaseApp
+	// app.SetInitChainer(app.InitChainer)
+	// app.SetBeginBlocker(app.BeginBlocker)
+	// anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
+	// 	HandlerOptions: authante.HandlerOptions{
+	// 		AccountKeeper:          app.AccountKeeper,
+	// 		BankKeeper:             app.BankKeeper,
+	// 		FeegrantKeeper:         app.FeeGrantKeeper,
+	// 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+	// 		SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
+	// 		ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
+	// 	},
+	// 	IBCKeeper:         app.ibcKeeper,
+	// 	TxCounterStoreKey: keys[wasmtypes.StoreKey],
+	// 	WasmConfig:        &wasmConfig,
+	// 	DevGasKeeper:      &app.DevGasKeeper,
+	// 	DevGasBankKeeper:  app.BankKeeper,
+	// 	// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
+	// 	MaxTxGasWanted: DefaultMaxTxGasWanted,
+	// 	EvmKeeper:      app.EvmKeeper,
+	// 	AccountKeeper:  app.AccountKeeper,
+	// })
+
+	// app.SetAnteHandler(anteHandler)
+	// app.SetEndBlocker(app.EndBlocker)
+
+	// if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
+	// 	if err := snapshotManager.RegisterExtensions(
+	// 		wasmkeeper.NewWasmSnapshotter(
+	// 			app.CommitMultiStore(),
+	// 			&app.WasmKeeper,
+	// 		),
+	// 		ibcwasmkeeper.NewWasmSnapshotter(
+	// 			app.CommitMultiStore(),
+	// 			&app.WasmClientKeeper,
+	// 		),
+	// 	); err != nil {
+	// 		panic("failed to add wasm snapshot extension.")
+	// 	}
+	// }
+
+	// if loadLatest {
+	// 	if err := app.LoadLatestVersion(); err != nil {
+	// 		tmos.Exit(err.Error())
+	// 	}
+
+	// 	ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
+
+	// 	// Initialize pinned codes in wasmvm as they are not persisted there
+	// 	if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+	// 		cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
+	// 	}
+
+	// 	/* Applications that wish to enforce statically created ScopedKeepers should
+	// 	call `Seal` after creating their scoped modules in `NewApp` with
+	// 	`capabilityKeeper.ScopeToModule`.
+
+	// 	Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
+	// 	keeper such that all persistent capabilities are loaded in-memory and prevent
+	// 	any further modules from creating scoped sub-keepers.
+
+	// 	NOTE: This must be done during creation of baseapp rather than in InitChain so
+	// 	that in-memory capabilities get regenerated on app restart.
+	// 	Note that since this reads from the store, we can only perform the seal
+	// 	when `loadLatest` is set to true.
+	// 	*/
+	// 	app.capabilityKeeper.Seal()
+	// }
+
+	// return app
 }
 
 // Name returns the name of the App
