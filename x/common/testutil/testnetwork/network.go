@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -19,9 +21,9 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
 	"cosmossdk.io/store/pruning/types"
-	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -244,11 +246,6 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			}
 			appCfg.GRPC.Enable = true
 
-			_, grpcWebPort, _, err := networkutil.FreeTCPAddr()
-			if err != nil {
-				return nil, err
-			}
-			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
 
 			if cfg.JSONRPCAddress != "" {
@@ -266,7 +263,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		serverCtxLogger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			serverCtxLogger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			serverCtxLogger = log.NewLogger(os.Stdout)
 		}
 		ctx.Logger = serverCtxLogger
 
@@ -289,13 +286,13 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		tmCfg.Moniker = nodeDirName
 		monikers[valIdx] = nodeDirName
 
-		proxyAddr, _, err := networkutil.FreeTCPAddr()
+		proxyAddr, _, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
 		tmCfg.ProxyApp = proxyAddr
 
-		p2pAddr, _, err := networkutil.FreeTCPAddr()
+		p2pAddr, _, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
@@ -364,7 +361,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		}
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
+			sdk.ValAddress(addr).String(),
 			valPubKeys[valIdx],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
@@ -398,7 +395,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			WithKeybase(kb).
 			WithTxConfig(cfg.TxConfig)
 
-		err = tx.Sign(txFactory, nodeDirName, txBuilder, true)
+		err = tx.Sign(context.TODO(), txFactory, nodeDirName, txBuilder, true)
 		if err != nil {
 			return nil, err
 		}
@@ -455,7 +452,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 	logger.Log("starting test network...")
 	for idx, v := range network.Validators {
-		err := startNodeAndServers(cfg, v)
+		err := startNodeAndServers(clientCtx, cfg, v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start node: %w", err)
 		}
@@ -471,9 +468,33 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
 	// any defer in a test would not be called.
-	server.TrapSignal(network.Cleanup)
+	trapSignal(network.Cleanup)
 
 	return network, err
+}
+
+// trapSignal traps SIGINT and SIGTERM and calls os.Exit once a signal is received.
+func trapSignal(cleanupFunc func()) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+
+		if cleanupFunc != nil {
+			cleanupFunc()
+		}
+		exitCode := 128
+
+		switch sig {
+		case syscall.SIGINT:
+			exitCode += int(syscall.SIGINT)
+		case syscall.SIGTERM:
+			exitCode += int(syscall.SIGTERM)
+		}
+
+		os.Exit(exitCode)
+	}()
 }
 
 // LatestHeight returns the latest height of the network or an error if the

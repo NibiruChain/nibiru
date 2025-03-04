@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/math"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -31,7 +32,7 @@ func (s *TestSuite) TestExecTx() {
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
-	txResp, err := s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args)
+	txResp, err := s.network.ExecTxCmd(bankcli.NewSendTxCmd(addresscodec.NewBech32Codec("nibi")), fromAddr, args)
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
 
@@ -45,7 +46,7 @@ func (s *TestSuite) TestExecTx() {
 			KeyringBackend:   &defaultOpts.KeyringBackend,
 			SkipConfirmation: &defaultOpts.SkipConfirmation,
 		})
-		txResp, err = s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args, opts)
+		txResp, err = s.network.ExecTxCmd(bankcli.NewSendTxCmd(addresscodec.NewBech32Codec("nibi")), fromAddr, args, opts)
 		s.NoError(err)
 		s.EqualValues(0, txResp.Code)
 	})
@@ -54,7 +55,7 @@ func (s *TestSuite) TestExecTx() {
 		networkNoVals := new(testnetwork.Network)
 		*networkNoVals = *s.network
 		networkNoVals.Validators = []*testnetwork.Validator{}
-		_, err := networkNoVals.ExecTxCmd(bankcli.NewTxCmd(), fromAddr, args)
+		_, err := networkNoVals.ExecTxCmd(bankcli.NewTxCmd(addresscodec.NewBech32Codec("nibi")), fromAddr, args)
 		s.Error(err)
 		s.Contains(err.Error(), "")
 	})

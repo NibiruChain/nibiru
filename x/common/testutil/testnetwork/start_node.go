@@ -1,11 +1,13 @@
 package testnetwork
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
 
 	"cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	db "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -14,12 +16,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
+	cosmosserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 
-	"cosmossdk.io/log"
 	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
@@ -27,9 +31,9 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 )
 
-func startNodeAndServers(cfg Config, val *Validator) error {
+func startNodeAndServers(context context.Context, cfg Config, val *Validator) error {
 	logger := val.Ctx.Logger
-	evmServerCtxLogger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	evmServerCtxLogger := log.NewLogger(os.Stdout)
 	tmCfg := val.Ctx.Config
 	tmCfg.Instrumentation.Prometheus = false
 
@@ -45,15 +49,16 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	app := cfg.AppConstructor(*val)
 
 	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
+	cmtApp := cosmosserver.NewCometABCIWrapper(app)
 	tmNode, err := node.NewNode(
 		tmCfg,
 		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		proxy.NewLocalClientCreator(cmtApp),
 		genDocProvider,
 		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
-		logger.With("module", val.Moniker),
+		servercmtlog.CometLoggerWrapper{Logger: logger.With("module", val.Moniker)},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to construct Node: %w", err)
@@ -64,7 +69,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	val.tmNode = tmNode
-	val.tmNode.Logger = logger
+	val.tmNode.Logger = servercmtlog.CometLoggerWrapper{Logger: logger}
 
 	if val.RPCAddress != "" {
 		val.RPCClient = local.New(tmNode)
@@ -106,7 +111,12 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
+		grpcSrv, err := servergrpc.NewGRPCServer(val.ClientCtx, app, config)
+		if err != nil {
+			return nil, clientCtx, err
+		}
+
+		err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
 		if err != nil {
 			return err
 		}

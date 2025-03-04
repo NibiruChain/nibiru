@@ -55,7 +55,8 @@ func BroadcastMsgsWithSeq(
 		WithSequence(seq)
 
 	overwriteSig := true
-	err = sdkclienttx.Sign(txFactory, info.Name, txBuilder, overwriteSig)
+	// TODO: should we use context.TODO() ?
+	err = sdkclienttx.Sign(context.TODO(), txFactory, info.Name, txBuilder, overwriteSig)
 	if err != nil {
 		return nil, err
 	}

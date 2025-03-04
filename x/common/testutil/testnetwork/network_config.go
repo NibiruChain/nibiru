@@ -18,6 +18,7 @@ import (
 // Config: Defines the parameters needed to start a local test [Network].
 type Config struct {
 	Codec             codec.Codec
+	JsonCodec         codec.JSONCodec
 	LegacyAmino       *codec.LegacyAmino // TODO: Remove!
 	InterfaceRegistry codectypes.InterfaceRegistry
 

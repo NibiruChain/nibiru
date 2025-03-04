@@ -165,7 +165,7 @@ func (chain *Network) BroadcastMsgs(
 		WithAccountNumber(acc.GetAccountNumber()).
 		WithSequence(sequence)
 
-	err = tx.Sign(txFactory, info.Name, txBuilder, true)
+	err = tx.Sign(context.TODO(), txFactory, info.Name, txBuilder, true)
 	if err != nil {
 		return nil, err
 	}
