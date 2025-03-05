@@ -47,7 +47,7 @@ export const funtokenPrecompile = (runner: ContractRunner): IFunToken =>
 
 /**
  * Returns a typed contract instance for one of the NibiruOracleChainLinkLike.sol
- * contracts. These implement ChainLink's inteface, AggregatorV3Interface.sol, but source
+ * contracts. These implement ChainLink's interface, AggregatorV3Interface.sol, but source
  * data from the Nibiru Oracle mechanism, which publishes data much faster than
  * ChainLink.
  * */
