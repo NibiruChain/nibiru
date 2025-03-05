@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -53,6 +54,11 @@ var (
 var (
 	testContractAddress       gethcommon.Address
 	deployContractBlockNumber rpc.BlockNumber
+)
+
+var (
+	funTokenContractAddress   gethcommon.Address
+	createFunTokenBlockNumber rpc.BlockNumber
 )
 
 type BackendSuite struct {
@@ -116,6 +122,9 @@ func (s *BackendSuite) SetupSuite() {
 	s.Require().NotNil(blockNumber)
 	s.Require().NotNil(blockHash)
 	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
+
+	// Create funtoken for unibi
+	s.CreateNibiFunToken()
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -192,6 +201,30 @@ func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcom
 		case <-ctx.Done():
 			fmt.Println("Timeout reached, transaction not included in a block yet.")
 			return nil, nil, nil
+		default:
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+// WaitForSDKTx waits for a transaction to be included in a block, returns the transaction response
+func WaitForSDKTx(s *BackendSuite, txHash string) (*sdk.TxResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	for {
+		txResp, err := testnetwork.QueryTx(s.node.ClientCtx, txHash)
+		if err == nil {
+			return txResp, nil
+		} else {
+			if !strings.Contains(err.Error(), "not found") {
+				return nil, err
+			}
+		}
+		select {
+		case <-ctx.Done():
+			fmt.Println("Timeout reached, transaction not included in a block yet.")
+			return nil, nil
 		default:
 			time.Sleep(1 * time.Second)
 		}
@@ -275,4 +308,28 @@ func (s *BackendSuite) buildContractCallTx(
 	s.Require().NoError(err)
 
 	return *signedTx
+}
+
+// DeployTestContract deploys test erc20 contract
+func (s *BackendSuite) CreateNibiFunToken() {
+	nonce := s.getCurrentNonce(eth.NibiruAddrToEthAddr(s.node.Address))
+	txResp, err := s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
+		Sender:        s.node.Address.String(),
+		FromBankDenom: evm.EVMBankDenom,
+	})
+	s.Require().NoError(err)
+	s.Require().NotNil(txResp)
+	resp, err := WaitForSDKTx(s, txResp.TxHash)
+	s.Require().NoError(err)
+	s.Require().NotNil(resp)
+	createFunTokenBlockNumber = rpc.NewBlockNumber(big.NewInt(resp.Height))
+	for _, event := range resp.Events {
+		if event.Type == evm.TypeUrlEventFunTokenCreated {
+			typedEvent, err := evm.EventFunTokenCreatedFromABCIEvent(event)
+			s.Require().NoError(err)
+			funTokenContractAddress = gethcommon.HexToAddress(typedEvent.Erc20ContractAddress)
+			break
+		}
+	}
+	s.Require().NotEmpty(funTokenContractAddress, "failed extracting erc20 address from EventFunTokenCreated")
 }

@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
-
-	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // TraceTransaction returns the structured logs created during the execution of EVM
@@ -151,6 +153,8 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	txDecoder := b.clientCtx.TxConfig.TxDecoder()
 
 	var txsMessages []*evm.MsgEthereumTx
+	var funTokenCreationTxIndexes []int
+
 	for i, tx := range txs {
 		decodedTx, err := txDecoder(tx)
 		if err != nil {
@@ -161,7 +165,12 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 		for _, msg := range decodedTx.GetMsgs() {
 			ethMessage, ok := msg.(*evm.MsgEthereumTx)
 			if !ok {
-				// Just considers Ethereum transactions
+				// Special case: manually add traces for MsgCreateFunToken
+				if funTokenCreationMsg, ok := msg.(*evm.MsgCreateFunToken); ok {
+					if funTokenCreationMsg.FromBankDenom != "" {
+						funTokenCreationTxIndexes = append(funTokenCreationTxIndexes, i)
+					}
+				}
 				continue
 			}
 			txsMessages = append(txsMessages, ethMessage)
@@ -205,6 +214,15 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	decodedResults := make([]*evm.TxTraceResult, txsLength)
 	if err := json.Unmarshal(res.Data, &decodedResults); err != nil {
 		return nil, err
+	}
+
+	// Manually adding tx traces for fun token creations.
+	// Results could be used by indexers like nibiscan to show the erc20 contract creation.
+	if len(funTokenCreationTxIndexes) > 0 && config.Tracer == "callTracer" {
+		decodedResults = append(
+			decodedResults,
+			b.generateFunTokenCreationTraces(height, funTokenCreationTxIndexes)...,
+		)
 	}
 
 	return decodedResults, nil
@@ -259,4 +277,110 @@ func (b *Backend) TraceCall(
 		return nil, err
 	}
 	return decodedResult, nil
+}
+
+// generateFunTokenCreationTraces generates traces for funtoken creation from coin
+func (b *Backend) generateFunTokenCreationTraces(height rpc.BlockNumber, funTokenCreationIndexes []int) []*evm.TxTraceResult {
+	blockResults, err := b.TendermintBlockResultByNumber((*int64)(&height))
+	if err != nil {
+		b.logger.Error("failed to fetch block results", "height", height, "error", err.Error())
+		return nil
+	}
+	// get tx results by funTokenCreationIndexes if they exists
+	var txResults []*evm.TxTraceResult
+	for _, index := range funTokenCreationIndexes {
+		if len(blockResults.TxsResults) <= index {
+			b.logger.Error("tx result not found", "index", index, "height", height)
+			continue
+		}
+		txResult := blockResults.TxsResults[index]
+		var eventFunTokenCreated *evm.EventFunTokenCreated
+		for _, event := range txResult.Events {
+			if event.Type == evm.TypeUrlEventFunTokenCreated {
+				eventFunTokenCreated, err = evm.EventFunTokenCreatedFromABCIEvent(event)
+				if err != nil {
+					b.logger.Error("failed to parse FunTokenCreated event", "error", err.Error())
+					continue
+				}
+			}
+		}
+		if eventFunTokenCreated == nil {
+			b.logger.Error("event FunTokenCreated not found", "height", height, "index", index)
+			continue
+		}
+		contractAddress := gethcommon.HexToAddress(eventFunTokenCreated.Erc20ContractAddress)
+		name, symbol, decimals, err := b.getErc20ContractMetadata(contractAddress, height)
+		if err != nil {
+			b.logger.Error("failed to get ERC20 contract metadata", "error", err.Error())
+			continue
+		}
+		packedArgs, err := embeds.SmartContract_ERC20Minter.ABI.Pack("", name, symbol, decimals)
+		if err != nil {
+			b.logger.Error("failed to pack ERC20 contract metadata", "error", err.Error())
+			continue
+		}
+		input := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
+		code, err := b.GetCode(contractAddress, rpc.BlockNumberOrHash{BlockNumber: &height})
+		if err != nil {
+			b.logger.Error("failed to get contract bytecode", "error", err.Error())
+			continue
+		}
+
+		txResults = append(txResults, &evm.TxTraceResult{
+			Result: map[string]interface{}{
+				"from":    strings.ToLower(evm.EVM_MODULE_ADDRESS.String()),
+				"to":      strings.ToLower(contractAddress.Hex()),
+				"gas":     hexutil.EncodeUint64(uint64(txResult.GasWanted)),
+				"gasUsed": hexutil.EncodeUint64(uint64(txResult.GasUsed)),
+				"input":   hexutil.Encode(input),
+				"output":  code.String(),
+				"type":    "CREATE",
+				"value":   "0x0",
+			},
+			Error: "",
+		})
+	}
+	return txResults
+}
+
+// getErc20ContractMetadata returns the name, symbol and decimals of the ERC20 contract
+func (b *Backend) getErc20ContractMetadata(
+	contractAddr gethcommon.Address, height rpc.BlockNumber,
+) (name, symbol string, decimals uint8, err error) {
+	name = ""
+	symbol = ""
+	decimals = 0
+
+	nameInput, _ := embeds.SmartContract_ERC20Minter.ABI.Pack("name")
+	symbolInput, _ := embeds.SmartContract_ERC20Minter.ABI.Pack("symbol")
+	decimalInput, _ := embeds.SmartContract_ERC20Minter.ABI.Pack("decimals")
+
+	resp, err := b.DoCall(evm.JsonTxArgs{To: &contractAddr, Data: (*hexutil.Bytes)(&nameInput)}, height)
+	if err != nil {
+		return
+	}
+	nameRaw, err := embeds.SmartContract_ERC20Minter.ABI.Unpack("name", resp.Ret)
+	if err != nil {
+		return
+	}
+	name = nameRaw[0].(string)
+	resp, err = b.DoCall(evm.JsonTxArgs{To: &contractAddr, Data: (*hexutil.Bytes)(&symbolInput)}, height)
+	if err != nil {
+		return
+	}
+	symbolRaw, err := embeds.SmartContract_ERC20Minter.ABI.Unpack("symbol", resp.Ret)
+	if err != nil {
+		return
+	}
+	symbol = symbolRaw[0].(string)
+	resp, err = b.DoCall(evm.JsonTxArgs{To: &contractAddr, Data: (*hexutil.Bytes)(&decimalInput)}, height)
+	if err != nil {
+		return
+	}
+	decimalsRaw, err := embeds.SmartContract_ERC20Minter.ABI.Unpack("decimals", resp.Ret)
+	if err != nil {
+		return
+	}
+	decimals = decimalsRaw[0].(uint8)
+	return
 }
