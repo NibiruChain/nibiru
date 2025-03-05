@@ -99,6 +99,17 @@ func (s *BackendSuite) TestTraceBlock() {
 	}
 }
 
+func (s *BackendSuite) TestTraceBlockFunTokenCreated() {
+	tmBlockWithFunTokenTx, err := s.backend.TendermintBlockByNumber(createFunTokenBlockNumber)
+	s.Require().NoError(err)
+
+	res, err := s.backend.TraceBlock(createFunTokenBlockNumber, traceConfig, tmBlockWithFunTokenTx)
+	s.Require().NoError(err)
+
+	s.Require().Equal(1, len(res))
+	AssertTraceFunTokenCreated(s, res[0].Result.(map[string]interface{}))
+}
+
 func (s *BackendSuite) TestTraceCall() {
 	block, err := s.backend.BlockNumber()
 	s.Require().NoError(err)
@@ -131,4 +142,13 @@ func AssertTraceCall(s *BackendSuite, trace map[string]interface{}) {
 	s.Require().Equal(strings.ToLower(s.fundedAccEthAddr.Hex()), trace["from"])
 	s.Require().Equal(strings.ToLower(recipient.Hex()), trace["to"])
 	s.Require().Equal("0x"+gethcommon.Bytes2Hex(amountToSend.Bytes()), trace["value"])
+}
+
+func AssertTraceFunTokenCreated(s *BackendSuite, trace map[string]interface{}) {
+	s.Require().Equal("CREATE", trace["type"])
+	s.Require().Equal(strings.ToLower(evm.EVM_MODULE_ADDRESS.Hex()), trace["from"])
+	s.Require().Equal(strings.ToLower(funTokenContractAddress.Hex()), trace["to"])
+	s.Require().Equal("0x0", trace["value"])
+	s.Require().NotEmpty(trace["input"])
+	s.Require().NotEmpty(trace["output"])
 }

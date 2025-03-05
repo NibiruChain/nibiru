@@ -22,6 +22,9 @@ const (
 	// proto.MessageName(new(evm.TypeUrlEventEthereumTx))
 	TypeUrlEventEthereumTx = "eth.evm.v1.EventEthereumTx"
 
+	// proto.MessageName(new(evm.EventFunTokenCreated))
+	TypeUrlEventFunTokenCreated = "eth.evm.v1.EventFunTokenCreated"
+
 	// Untyped events and attribuges
 
 	// Used in non-typed event "message"
@@ -100,4 +103,18 @@ func GetEthHashAndIndexFromPendingEthereumTxEvent(event abci.Event) (gethcommon.
 		return ethHash, -1, fmt.Errorf("eth hash not found in pending_ethereum_tx")
 	}
 	return ethHash, txIndex, nil
+}
+
+func EventFunTokenCreatedFromABCIEvent(event abci.Event) (*EventFunTokenCreated, error) {
+	typedProtoEvent, err := sdk.ParseTypedEvent(event)
+	if err != nil {
+		return nil, errors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventFunTokenCreated)
+	}
+	typedEvent, ok := (typedProtoEvent).(*EventFunTokenCreated)
+	if !ok {
+		return nil, errors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventFunTokenCreated)
+	}
+	return typedEvent, nil
 }
