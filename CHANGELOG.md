@@ -90,14 +90,14 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
 - [#2149](https://github.com/NibiruChain/nibiru/pull/2149) - feat(evm-oracle):
-add Solidity contract that we can use to expose the Nibiru Oracle in the
-ChainLink interface. Publish all precompiled contracts and ABIs on npm under
-the `@nibiruchain/solidity` package.
+  add Solidity contract that we can use to expose the Nibiru Oracle in the
+  ChainLink interface. Publish all precompiled contracts and ABIs on npm under
+  the `@nibiruchain/solidity` package.
 - [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
 - [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
 - [#2154](https://github.com/NibiruChain/nibiru/pull/2154) - fix(evm):
-JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
-needed to include double quotes around the hexadecimal string.
+  JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
+  needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
 - [#2159](https://github.com/NibiruChain/nibiru/pull/2159) - chore(evm): Augment the Wasm msg handler so that wasm contracts cannot send MsgEthereumTx
@@ -116,6 +116,7 @@ needed to include double quotes around the hexadecimal string.
 - [#2180](https://github.com/NibiruChain/nibiru/pull/2180) - fix(evm): apply gas consumption across the entire EVM codebase at `CallContractWithInput`
 - [#2183](https://github.com/NibiruChain/nibiru/pull/2183) - fix(evm): bank keeper extension gas meter type
 - [#2184](https://github.com/NibiruChain/nibiru/pull/2184) - test(evm): e2e tests configuration enhancements
+- [#2150](https://github.com/NibiruChain/nibiru/pull/2150) - feat(evm): prevent funtoken from erc20 contract to be created with non-complete contracts
 - [#2187](https://github.com/NibiruChain/nibiru/pull/2187) - fix(evm): fix eip55 address encoding
 - [#2188](https://github.com/NibiruChain/nibiru/pull/2188) - refactor(evm): update logs emission
 - [#2192](https://github.com/NibiruChain/nibiru/pull/2192) - fix(oracle): correctly handle misscount
