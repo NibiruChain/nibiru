@@ -343,6 +343,7 @@ func (b *Backend) generateFunTokenCreationTraces(height rpc.BlockNumber, funToke
 	return txResults
 }
 
+// getErc20ContractMetadata returns the name, symbol and decimals of the ERC20 contract
 func (b *Backend) getErc20ContractMetadata(
 	contractAddr gethcommon.Address, height rpc.BlockNumber,
 ) (name, symbol string, decimals uint8, err error) {
@@ -367,7 +368,7 @@ func (b *Backend) getErc20ContractMetadata(
 	if err != nil {
 		return
 	}
-	symbolRaw, err := embeds.SmartContract_ERC20Minter.ABI.Unpack("name", resp.Ret)
+	symbolRaw, err := embeds.SmartContract_ERC20Minter.ABI.Unpack("symbol", resp.Ret)
 	if err != nil {
 		return
 	}
