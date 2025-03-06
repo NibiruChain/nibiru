@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -33,4 +35,6 @@ func NewHooks(k Keeper, accountKeeper keeper.AccountKeeper, bankKeeper bankkeepe
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
 }
 
-func (h Hooks) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {}
+func (h Hooks) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
+	fmt.Println(" and go here ?")
+}
