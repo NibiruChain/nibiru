@@ -1,6 +1,7 @@
 package epochs
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -11,7 +12,7 @@ import (
 )
 
 // BeginBlocker of epochs module.
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+func BeginBlocker(ctx sdk.Context, k *keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
 		if ctx.BlockTime().Before(epochInfo.StartTime) {
@@ -41,6 +42,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 		})
 
 		k.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
+		fmt.Println("heeee")
+		fmt.Println("epochInfo.Identifier :", epochInfo.Identifier)
+		fmt.Println("epochInfo.CurrentEpoch :", epochInfo.CurrentEpoch)
+		fmt.Println(" hooks get :", k.GetHooks())
 		k.BeforeEpochStart(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 
 		return false

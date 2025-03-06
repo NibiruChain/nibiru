@@ -4,21 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/maps"
 
 	"github.com/NibiruChain/nibiru/v2/x/epochs/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 )
 
 var (
@@ -89,10 +96,10 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper *keeper.Keeper
 }
 
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, keeper *keeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
@@ -104,10 +111,16 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(*am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -120,14 +133,14 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	_ = InitGenesis(ctx, am.keeper, genState)
+	_ = InitGenesis(ctx, *am.keeper, genState)
 
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	genState := ExportGenesis(ctx, am.keeper)
+	genState := ExportGenesis(ctx, *am.keeper)
 	return cdc.MustMarshalJSON(genState)
 }
 
@@ -167,3 +180,81 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+		appmodule.Invoke(InvokeSetEpochsHooks),
+	)
+}
+
+type EpochsInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+}
+
+type EpochsOutputs struct {
+	depinject.Out
+
+	Keeper *keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in EpochsInputs) EpochsOutputs {
+
+	k := keeper.NewKeeper(in.Cdc, in.Key)
+
+	m := NewAppModule(in.Cdc, k)
+
+	return EpochsOutputs{
+		Keeper: k,
+		Module: m,
+	}
+}
+
+func InvokeSetEpochsHooks(
+	config *modulev1.Module,
+	keeper *keeper.Keeper,
+	epochsHooks map[string]types.EpochHooksWrapper,
+) error {
+	// all arguments to invokers are optional
+	if keeper == nil || config == nil {
+		return nil
+	}
+
+	modNames := maps.Keys(epochsHooks)
+	order := config.HooksOrder
+	if len(order) == 0 {
+		order = modNames
+		sort.Strings(order)
+	}
+
+	if len(order) != len(modNames) {
+		return fmt.Errorf("len(hooks_order: %v) != len(hooks modules: %v)", order, modNames)
+	}
+
+	if len(modNames) == 0 {
+		return nil
+	}
+
+	var multiHooks types.MultiEpochHooks
+	for _, modName := range order {
+		hook, ok := epochsHooks[modName]
+		if !ok {
+			return fmt.Errorf("can't find staking hooks for module %s", modName)
+		}
+
+		multiHooks = append(multiHooks, hook.EpochHooks)
+	}
+
+	keeper.SetHooks(multiHooks)
+	return nil
+}

@@ -185,7 +185,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 	initialBlockHeight := int64(1)
 	ctx = ctx.WithBlockHeight(initialBlockHeight).WithBlockTime(now)
 
-	err := epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
+	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
 		Epochs: []types.EpochInfo{
 			{
 				Identifier:              "daily",
@@ -276,7 +276,7 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
 
 	// check init genesis
-	err := epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
+	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
 		Epochs: []types.EpochInfo{legacyEpochInfo},
 	})
 	require.NoError(t, err)

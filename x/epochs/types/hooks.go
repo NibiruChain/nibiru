@@ -14,6 +14,12 @@ type EpochHooks interface {
 	BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64)
 }
 
+type EpochHooksWrapper struct {
+	EpochHooks
+}
+
+func (EpochHooksWrapper) IsOnePerModuleType() {}
+
 var _ EpochHooks = MultiEpochHooks{}
 
 // MultiEpochHooks combines multiple [EpochHooks]. All hook functions are
