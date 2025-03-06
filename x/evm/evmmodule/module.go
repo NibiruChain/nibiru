@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -15,14 +18,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/exported"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 )
 
 // consensusVersion: EVM module consensus version for upgrades.
@@ -119,6 +129,12 @@ func (AppModule) Name() string {
 	return evm.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants interface for registering invariants. Performs a no-op
 // as the evm module doesn't expose invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {
@@ -169,4 +185,57 @@ func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
 // WeightedOperations returns the all the evm module operations with their respective weights.
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type EvmInputs struct {
+	depinject.In
+
+	Config       *modulev1.Module
+	Key          *store.KVStoreKey
+	TransientKey *store.KVStoreKey
+	Cdc          codec.Codec
+	AppOpts      servertypes.AppOptions `optional:"true"`
+
+	AccountKeeper evm.AccountKeeper
+	BankKeeper    keeper.NibiruBankKeeper
+	StakingKeeper evm.StakingKeeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+type EvmOutputs struct {
+	depinject.Out
+
+	Keeper *keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in EvmInputs) EvmOutputs {
+
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, &in.BankKeeper, in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+
+	m := NewAppModule(&k, in.AccountKeeper)
+
+	return EvmOutputs{
+		Keeper: &k,
+		Module: m,
+	}
 }
