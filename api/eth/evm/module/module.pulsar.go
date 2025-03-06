@@ -13,62 +13,14 @@ import (
 	sync "sync"
 )
 
-var _ protoreflect.List = (*_Module_1_list)(nil)
-
-type _Module_1_list struct {
-	list *[]string
-}
-
-func (x *_Module_1_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_Module_1_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfString((*x.list)[i])
-}
-
-func (x *_Module_1_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.String()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_Module_1_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.String()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_Module_1_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message Module at list field HooksOrder as it is not of Message kind"))
-}
-
-func (x *_Module_1_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_Module_1_list) NewElement() protoreflect.Value {
-	v := ""
-	return protoreflect.ValueOfString(v)
-}
-
-func (x *_Module_1_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
-	md_Module             protoreflect.MessageDescriptor
-	fd_Module_hooks_order protoreflect.FieldDescriptor
-	fd_Module_authority   protoreflect.FieldDescriptor
+	md_Module           protoreflect.MessageDescriptor
+	fd_Module_authority protoreflect.FieldDescriptor
 )
 
 func init() {
-	file_nibiru_epochs_module_module_proto_init()
-	md_Module = File_nibiru_epochs_module_module_proto.Messages().ByName("Module")
-	fd_Module_hooks_order = md_Module.Fields().ByName("hooks_order")
+	file_eth_evm_module_module_proto_init()
+	md_Module = File_eth_evm_module_module_proto.Messages().ByName("Module")
 	fd_Module_authority = md_Module.Fields().ByName("authority")
 }
 
@@ -81,7 +33,7 @@ func (x *Module) ProtoReflect() protoreflect.Message {
 }
 
 func (x *Module) slowProtoReflect() protoreflect.Message {
-	mi := &file_nibiru_epochs_module_module_proto_msgTypes[0]
+	mi := &file_eth_evm_module_module_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -137,12 +89,6 @@ func (x *fastReflection_Module) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_Module) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.HooksOrder) != 0 {
-		value := protoreflect.ValueOfList(&_Module_1_list{list: &x.HooksOrder})
-		if !f(fd_Module_hooks_order, value) {
-			return
-		}
-	}
 	if x.Authority != "" {
 		value := protoreflect.ValueOfString(x.Authority)
 		if !f(fd_Module_authority, value) {
@@ -164,15 +110,13 @@ func (x *fastReflection_Module) Range(f func(protoreflect.FieldDescriptor, proto
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_Module) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		return len(x.HooksOrder) != 0
-	case "nibiru.epochs.module.v1.Module.authority":
+	case "nibiru.evm.module.v1.Module.authority":
 		return x.Authority != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -184,15 +128,13 @@ func (x *fastReflection_Module) Has(fd protoreflect.FieldDescriptor) bool {
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		x.HooksOrder = nil
-	case "nibiru.epochs.module.v1.Module.authority":
+	case "nibiru.evm.module.v1.Module.authority":
 		x.Authority = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -204,20 +146,14 @@ func (x *fastReflection_Module) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_Module) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		if len(x.HooksOrder) == 0 {
-			return protoreflect.ValueOfList(&_Module_1_list{})
-		}
-		listValue := &_Module_1_list{list: &x.HooksOrder}
-		return protoreflect.ValueOfList(listValue)
-	case "nibiru.epochs.module.v1.Module.authority":
+	case "nibiru.evm.module.v1.Module.authority":
 		value := x.Authority
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -233,17 +169,13 @@ func (x *fastReflection_Module) Get(descriptor protoreflect.FieldDescriptor) pro
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		lv := value.List()
-		clv := lv.(*_Module_1_list)
-		x.HooksOrder = *clv.list
-	case "nibiru.epochs.module.v1.Module.authority":
+	case "nibiru.evm.module.v1.Module.authority":
 		x.Authority = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -259,19 +191,13 @@ func (x *fastReflection_Module) Set(fd protoreflect.FieldDescriptor, value proto
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		if x.HooksOrder == nil {
-			x.HooksOrder = []string{}
-		}
-		value := &_Module_1_list{list: &x.HooksOrder}
-		return protoreflect.ValueOfList(value)
-	case "nibiru.epochs.module.v1.Module.authority":
-		panic(fmt.Errorf("field authority of message nibiru.epochs.module.v1.Module is not mutable"))
+	case "nibiru.evm.module.v1.Module.authority":
+		panic(fmt.Errorf("field authority of message nibiru.evm.module.v1.Module is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -280,16 +206,13 @@ func (x *fastReflection_Module) Mutable(fd protoreflect.FieldDescriptor) protore
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_Module) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.Module.hooks_order":
-		list := []string{}
-		return protoreflect.ValueOfList(&_Module_1_list{list: &list})
-	case "nibiru.epochs.module.v1.Module.authority":
+	case "nibiru.evm.module.v1.Module.authority":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -299,7 +222,7 @@ func (x *fastReflection_Module) NewField(fd protoreflect.FieldDescriptor) protor
 func (x *fastReflection_Module) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in nibiru.epochs.module.v1.Module", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in nibiru.evm.module.v1.Module", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -354,12 +277,6 @@ func (x *fastReflection_Module) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		if len(x.HooksOrder) > 0 {
-			for _, s := range x.HooksOrder {
-				l = len(s)
-				n += 1 + l + runtime.Sov(uint64(l))
-			}
-		}
 		l = len(x.Authority)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
@@ -398,16 +315,7 @@ func (x *fastReflection_Module) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], x.Authority)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
 			i--
-			dAtA[i] = 0x12
-		}
-		if len(x.HooksOrder) > 0 {
-			for iNdEx := len(x.HooksOrder) - 1; iNdEx >= 0; iNdEx-- {
-				i -= len(x.HooksOrder[iNdEx])
-				copy(dAtA[i:], x.HooksOrder[iNdEx])
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.HooksOrder[iNdEx])))
-				i--
-				dAtA[i] = 0xa
-			}
+			dAtA[i] = 0xa
 		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
@@ -459,38 +367,6 @@ func (x *fastReflection_Module) ProtoMethods() *protoiface.Methods {
 			}
 			switch fieldNum {
 			case 1:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field HooksOrder", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.HooksOrder = append(x.HooksOrder, string(dAtA[iNdEx:postIndex]))
-				iNdEx = postIndex
-			case 2:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
 				}
@@ -610,8 +486,8 @@ var (
 )
 
 func init() {
-	file_nibiru_epochs_module_module_proto_init()
-	md_ModuleAccountPermission = File_nibiru_epochs_module_module_proto.Messages().ByName("ModuleAccountPermission")
+	file_eth_evm_module_module_proto_init()
+	md_ModuleAccountPermission = File_eth_evm_module_module_proto.Messages().ByName("ModuleAccountPermission")
 	fd_ModuleAccountPermission_account = md_ModuleAccountPermission.Fields().ByName("account")
 	fd_ModuleAccountPermission_permissions = md_ModuleAccountPermission.Fields().ByName("permissions")
 }
@@ -625,7 +501,7 @@ func (x *ModuleAccountPermission) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ModuleAccountPermission) slowProtoReflect() protoreflect.Message {
-	mi := &file_nibiru_epochs_module_module_proto_msgTypes[1]
+	mi := &file_eth_evm_module_module_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -708,15 +584,15 @@ func (x *fastReflection_ModuleAccountPermission) Range(f func(protoreflect.Field
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_ModuleAccountPermission) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
 		return x.Account != ""
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		return len(x.Permissions) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -728,15 +604,15 @@ func (x *fastReflection_ModuleAccountPermission) Has(fd protoreflect.FieldDescri
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_ModuleAccountPermission) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
 		x.Account = ""
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		x.Permissions = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -748,10 +624,10 @@ func (x *fastReflection_ModuleAccountPermission) Clear(fd protoreflect.FieldDesc
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_ModuleAccountPermission) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
 		value := x.Account
 		return protoreflect.ValueOfString(value)
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		if len(x.Permissions) == 0 {
 			return protoreflect.ValueOfList(&_ModuleAccountPermission_2_list{})
 		}
@@ -759,9 +635,9 @@ func (x *fastReflection_ModuleAccountPermission) Get(descriptor protoreflect.Fie
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -777,17 +653,17 @@ func (x *fastReflection_ModuleAccountPermission) Get(descriptor protoreflect.Fie
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_ModuleAccountPermission) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
 		x.Account = value.Interface().(string)
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		lv := value.List()
 		clv := lv.(*_ModuleAccountPermission_2_list)
 		x.Permissions = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -803,19 +679,19 @@ func (x *fastReflection_ModuleAccountPermission) Set(fd protoreflect.FieldDescri
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_ModuleAccountPermission) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		if x.Permissions == nil {
 			x.Permissions = []string{}
 		}
 		value := &_ModuleAccountPermission_2_list{list: &x.Permissions}
 		return protoreflect.ValueOfList(value)
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
-		panic(fmt.Errorf("field account of message nibiru.epochs.module.v1.ModuleAccountPermission is not mutable"))
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
+		panic(fmt.Errorf("field account of message nibiru.evm.module.v1.ModuleAccountPermission is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -824,16 +700,16 @@ func (x *fastReflection_ModuleAccountPermission) Mutable(fd protoreflect.FieldDe
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_ModuleAccountPermission) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.account":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.account":
 		return protoreflect.ValueOfString("")
-	case "nibiru.epochs.module.v1.ModuleAccountPermission.permissions":
+	case "nibiru.evm.module.v1.ModuleAccountPermission.permissions":
 		list := []string{}
 		return protoreflect.ValueOfList(&_ModuleAccountPermission_2_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.epochs.module.v1.ModuleAccountPermission"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.evm.module.v1.ModuleAccountPermission"))
 		}
-		panic(fmt.Errorf("message nibiru.epochs.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.evm.module.v1.ModuleAccountPermission does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -843,7 +719,7 @@ func (x *fastReflection_ModuleAccountPermission) NewField(fd protoreflect.FieldD
 func (x *fastReflection_ModuleAccountPermission) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in nibiru.epochs.module.v1.ModuleAccountPermission", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in nibiru.evm.module.v1.ModuleAccountPermission", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1105,7 +981,7 @@ func (x *fastReflection_ModuleAccountPermission) ProtoMethods() *protoiface.Meth
 // versions:
 // 	protoc-gen-go v1.27.0
 // 	protoc        (unknown)
-// source: nibiru/epochs/module/module.proto
+// source: eth/evm/module/module.proto
 
 const (
 	// Verify that this generated code is sufficiently up-to-date.
@@ -1114,24 +990,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Module is the config object for the epochs module.
+// Module is the config object for the devgas module.
 type Module struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// hooks_order specifies the order of staking hooks and should be a list
-	// of module names which provide a staking hooks instance. If no order is
-	// provided, then hooks will be applied in alphabetical order of module names.
-	HooksOrder []string `protobuf:"bytes,1,rep,name=hooks_order,json=hooksOrder,proto3" json:"hooks_order,omitempty"`
 	// authority defines the custom module authority. If not set, defaults to the governance module.
-	Authority string `protobuf:"bytes,2,opt,name=authority,proto3" json:"authority,omitempty"`
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 }
 
 func (x *Module) Reset() {
 	*x = Module{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_nibiru_epochs_module_module_proto_msgTypes[0]
+		mi := &file_eth_evm_module_module_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1145,14 +1017,7 @@ func (*Module) ProtoMessage() {}
 
 // Deprecated: Use Module.ProtoReflect.Descriptor instead.
 func (*Module) Descriptor() ([]byte, []int) {
-	return file_nibiru_epochs_module_module_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Module) GetHooksOrder() []string {
-	if x != nil {
-		return x.HooksOrder
-	}
-	return nil
+	return file_eth_evm_module_module_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Module) GetAuthority() string {
@@ -1178,7 +1043,7 @@ type ModuleAccountPermission struct {
 func (x *ModuleAccountPermission) Reset() {
 	*x = ModuleAccountPermission{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_nibiru_epochs_module_module_proto_msgTypes[1]
+		mi := &file_eth_evm_module_module_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1192,7 +1057,7 @@ func (*ModuleAccountPermission) ProtoMessage() {}
 
 // Deprecated: Use ModuleAccountPermission.ProtoReflect.Descriptor instead.
 func (*ModuleAccountPermission) Descriptor() ([]byte, []int) {
-	return file_nibiru_epochs_module_module_proto_rawDescGZIP(), []int{1}
+	return file_eth_evm_module_module_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ModuleAccountPermission) GetAccount() string {
@@ -1209,63 +1074,58 @@ func (x *ModuleAccountPermission) GetPermissions() []string {
 	return nil
 }
 
-var File_nibiru_epochs_module_module_proto protoreflect.FileDescriptor
+var File_eth_evm_module_module_proto protoreflect.FileDescriptor
 
-var file_nibiru_epochs_module_module_proto_rawDesc = []byte{
-	0x0a, 0x21, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x2f,
-	0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x12, 0x17, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x65, 0x70, 0x6f, 0x63,
-	0x68, 0x73, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x20, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x70, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
-	0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x77,
-	0x0a, 0x06, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x68, 0x6f, 0x6f, 0x6b,
-	0x73, 0x5f, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0a, 0x68,
-	0x6f, 0x6f, 0x6b, 0x73, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x61, 0x75, 0x74,
-	0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x61, 0x75,
-	0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x3a, 0x2e, 0xba, 0xc0, 0x96, 0xda, 0x01, 0x28, 0x0a,
-	0x26, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4e, 0x69, 0x62, 0x69,
-	0x72, 0x75, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x78,
-	0x2f, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x22, 0x55, 0x0a, 0x17, 0x4d, 0x6f, 0x64, 0x75, 0x6c,
-	0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
-	0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x20, 0x0a, 0x0b,
-	0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
-	0x09, 0x52, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0xd9,
-	0x01, 0x0a, 0x1b, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x65, 0x70,
-	0x6f, 0x63, 0x68, 0x73, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b,
-	0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2e, 0x63,
+var file_eth_evm_module_module_proto_rawDesc = []byte{
+	0x0a, 0x1b, 0x65, 0x74, 0x68, 0x2f, 0x65, 0x76, 0x6d, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65,
+	0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x14, 0x6e,
+	0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x65, 0x76, 0x6d, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65,
+	0x2e, 0x76, 0x31, 0x1a, 0x20, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x70, 0x2f,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x53, 0x0a, 0x06, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12,
+	0x1c, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x3a, 0x2b, 0xba,
+	0xc0, 0x96, 0xda, 0x01, 0x25, 0x0a, 0x23, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x2f, 0x6e, 0x69,
+	0x62, 0x69, 0x72, 0x75, 0x2f, 0x78, 0x2f, 0x65, 0x76, 0x6d, 0x22, 0x55, 0x0a, 0x17, 0x4d, 0x6f,
+	0x64, 0x75, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x50, 0x65, 0x72, 0x6d, 0x69,
+	0x73, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12,
+	0x20, 0x0a, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x73, 0x42, 0xc4, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75,
+	0x2e, 0x65, 0x76, 0x6d, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b,
+	0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x28, 0x63,
 	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f,
-	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x2f, 0x6d, 0x6f,
-	0x64, 0x75, 0x6c, 0x65, 0x3b, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03,
-	0x4e, 0x45, 0x4d, 0xaa, 0x02, 0x17, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x45, 0x70, 0x6f,
-	0x63, 0x68, 0x73, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x17,
-	0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x5c, 0x4d, 0x6f,
-	0x64, 0x75, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x23, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75,
-	0x5c, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c, 0x56,
-	0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x1a,
-	0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x3a, 0x3a,
-	0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x65, 0x74, 0x68, 0x2f, 0x65, 0x76, 0x6d, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x3b, 0x6d,
+	0x6f, 0x64, 0x75, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x45, 0x4d, 0xaa, 0x02, 0x14,
+	0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x45, 0x76, 0x6d, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c,
+	0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x45, 0x76,
+	0x6d, 0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x20, 0x4e, 0x69,
+	0x62, 0x69, 0x72, 0x75, 0x5c, 0x45, 0x76, 0x6d, 0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c,
+	0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02,
+	0x17, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a, 0x45, 0x76, 0x6d, 0x3a, 0x3a, 0x4d, 0x6f,
+	0x64, 0x75, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_nibiru_epochs_module_module_proto_rawDescOnce sync.Once
-	file_nibiru_epochs_module_module_proto_rawDescData = file_nibiru_epochs_module_module_proto_rawDesc
+	file_eth_evm_module_module_proto_rawDescOnce sync.Once
+	file_eth_evm_module_module_proto_rawDescData = file_eth_evm_module_module_proto_rawDesc
 )
 
-func file_nibiru_epochs_module_module_proto_rawDescGZIP() []byte {
-	file_nibiru_epochs_module_module_proto_rawDescOnce.Do(func() {
-		file_nibiru_epochs_module_module_proto_rawDescData = protoimpl.X.CompressGZIP(file_nibiru_epochs_module_module_proto_rawDescData)
+func file_eth_evm_module_module_proto_rawDescGZIP() []byte {
+	file_eth_evm_module_module_proto_rawDescOnce.Do(func() {
+		file_eth_evm_module_module_proto_rawDescData = protoimpl.X.CompressGZIP(file_eth_evm_module_module_proto_rawDescData)
 	})
-	return file_nibiru_epochs_module_module_proto_rawDescData
+	return file_eth_evm_module_module_proto_rawDescData
 }
 
-var file_nibiru_epochs_module_module_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_nibiru_epochs_module_module_proto_goTypes = []interface{}{
-	(*Module)(nil),                  // 0: nibiru.epochs.module.v1.Module
-	(*ModuleAccountPermission)(nil), // 1: nibiru.epochs.module.v1.ModuleAccountPermission
+var file_eth_evm_module_module_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_eth_evm_module_module_proto_goTypes = []interface{}{
+	(*Module)(nil),                  // 0: nibiru.evm.module.v1.Module
+	(*ModuleAccountPermission)(nil), // 1: nibiru.evm.module.v1.ModuleAccountPermission
 }
-var file_nibiru_epochs_module_module_proto_depIdxs = []int32{
+var file_eth_evm_module_module_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -1273,13 +1133,13 @@ var file_nibiru_epochs_module_module_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_nibiru_epochs_module_module_proto_init() }
-func file_nibiru_epochs_module_module_proto_init() {
-	if File_nibiru_epochs_module_module_proto != nil {
+func init() { file_eth_evm_module_module_proto_init() }
+func file_eth_evm_module_module_proto_init() {
+	if File_eth_evm_module_module_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_nibiru_epochs_module_module_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_eth_evm_module_module_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Module); i {
 			case 0:
 				return &v.state
@@ -1291,7 +1151,7 @@ func file_nibiru_epochs_module_module_proto_init() {
 				return nil
 			}
 		}
-		file_nibiru_epochs_module_module_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_eth_evm_module_module_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ModuleAccountPermission); i {
 			case 0:
 				return &v.state
@@ -1308,18 +1168,18 @@ func file_nibiru_epochs_module_module_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_nibiru_epochs_module_module_proto_rawDesc,
+			RawDescriptor: file_eth_evm_module_module_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_nibiru_epochs_module_module_proto_goTypes,
-		DependencyIndexes: file_nibiru_epochs_module_module_proto_depIdxs,
-		MessageInfos:      file_nibiru_epochs_module_module_proto_msgTypes,
+		GoTypes:           file_eth_evm_module_module_proto_goTypes,
+		DependencyIndexes: file_eth_evm_module_module_proto_depIdxs,
+		MessageInfos:      file_eth_evm_module_module_proto_msgTypes,
 	}.Build()
-	File_nibiru_epochs_module_module_proto = out.File
-	file_nibiru_epochs_module_module_proto_rawDesc = nil
-	file_nibiru_epochs_module_module_proto_goTypes = nil
-	file_nibiru_epochs_module_module_proto_depIdxs = nil
+	File_eth_evm_module_module_proto = out.File
+	file_eth_evm_module_module_proto_rawDesc = nil
+	file_eth_evm_module_module_proto_goTypes = nil
+	file_eth_evm_module_module_proto_depIdxs = nil
 }
