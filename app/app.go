@@ -1,26 +1,26 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"cosmossdk.io/depinject"
 
+	wasmdapp "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -31,17 +31,33 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,6 +65,8 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -96,7 +114,7 @@ type NibiruApp struct {
 	AppKeepers // embed all module keepers
 
 	// the module manager
-	ModuleManager *module.Manager
+	// ModuleManager *module.Manager
 
 	// simulation manager
 	sm *module.SimulationManager
@@ -154,13 +172,13 @@ func NewNibiruApp(
 ) *NibiruApp {
 	keys, _, _ := initStoreKeys()
 	overrideWasmVariables()
-	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-		mp := mempool.NoOpMempool{}
-		app.SetMempool(mp)
-		handler := baseapp.NewDefaultProposalHandler(mp, app)
-		app.SetPrepareProposal(handler.PrepareProposalHandler())
-		app.SetProcessProposal(handler.ProcessProposalHandler())
-	})
+	// baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
+	// 	mp := mempool.NoOpMempool{}
+	// 	app.SetMempool(mp)
+	// 	handler := baseapp.NewDefaultProposalHandler(mp, app)
+	// 	app.SetPrepareProposal(handler.PrepareProposalHandler())
+	// 	app.SetProcessProposal(handler.ProcessProposalHandler())
+	// })
 
 	var (
 		app        = &NibiruApp{}
@@ -184,7 +202,7 @@ func NewNibiruApp(
 				// For providing a custom a base account type add it below.
 				// By default the auth module uses authtypes.ProtoBaseAccount().
 				//
-				// func() authtypes.AccountI { return authtypes.ProtoBaseAccount() },
+				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
 
 				//
 				// MINT
@@ -208,7 +226,6 @@ func NewNibiruApp(
 		&app.capabilityKeeper,
 		&app.StakingKeeper,
 		&app.slashingKeeper,
-		// &app.MintKeeper,
 		&app.DistrKeeper,
 		&app.GovKeeper,
 		&app.crisisKeeper,
@@ -218,11 +235,134 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
+		// &app.DevGasKeeper,
+		&app.TokenFactoryKeeper,
+		&app.SudoKeeper,
+		&app.OracleKeeper,
+		&app.EpochsKeeper,
+		&app.InflationKeeper,
+		&app.EvmKeeper,
 	); err != nil {
 		panic(err)
 	}
 
+	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+		BaseKeeper: app.BankKeeper.(bankkeeper.BaseKeeper),
+		StateDB:    nil,
+	}
+	app.BankKeeper = nibiruBankKeeper
+
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+
+	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
+	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	app.ScopedICAHostKeeper = app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	// scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
+	app.ScopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	_ = app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
+
+	// ibc params keepers
+	app.paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	app.paramsKeeper.Subspace(ibcexported.ModuleName)
+	app.paramsKeeper.Subspace(ibcfeetypes.ModuleName)
+	app.paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	app.paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	// wasm params keepers
+	app.paramsKeeper.Subspace(wasmtypes.ModuleName)
+
+	// IBC keepers
+	app.RegisterStores(keys[ibcexported.StoreKey])
+	app.ibcKeeper = ibckeeper.NewKeeper(
+		app.appCodec,
+		keys[ibcexported.StoreKey],
+		app.GetSubspace(ibcexported.ModuleName),
+		app.StakingKeeper,
+		app.upgradeKeeper,
+		app.ScopedIBCKeeper,
+	)
+	ibcModule := ibc.NewAppModule(app.ibcKeeper)
+
+	// IBC Fee Module keeper
+	app.RegisterStores(keys[ibcfeetypes.StoreKey])
+	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
+		app.appCodec, keys[ibcfeetypes.StoreKey],
+		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
+	ibcFeeModule := ibcfee.NewAppModule(app.ibcFeeKeeper)
+
+	app.RegisterStores(keys[ibctransfertypes.StoreKey])
+	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
+		app.appCodec,
+		keys[ibctransfertypes.StoreKey],
+		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
+		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ScopedTransferKeeper,
+	)
+	ibcTransferModule := ibctransfer.NewAppModule(app.ibcTransferKeeper)
+
+	app.RegisterStores(keys[icacontrollertypes.StoreKey])
+	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
+		app.appCodec, keys[icacontrollertypes.StoreKey],
+		app.GetSubspace(icacontrollertypes.SubModuleName),
+		app.ibcFeeKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.ScopedICAControllerKeeper,
+		app.MsgServiceRouter(),
+	)
+	icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
+
+	app.RegisterStores(keys[icahosttypes.StoreKey])
+	app.icaHostKeeper = icahostkeeper.NewKeeper(
+		app.appCodec,
+		keys[icahosttypes.StoreKey],
+		app.GetSubspace(icahosttypes.SubModuleName),
+		app.ibcFeeKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.ScopedICAHostKeeper,
+		app.MsgServiceRouter(),
+	)
+
+	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
+
+	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+	// Create wasm VM outside keeper so it can be re-used in client keeper
+	wasmVM, err := wasmvm.NewVM(filepath.Join(wasmDir, "wasm"), supportedFeatures, wasmVmContractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	if err != nil {
+		panic(err)
+	}
+	app.RegisterStores(keys[ibcwasmtypes.StoreKey])
+	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
+		app.appCodec,
+		keys[ibcwasmtypes.StoreKey],
+		app.ibcKeeper.ClientKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmVM,
+		app.GRPCQueryRouter(),
+	)
+	ibcWasmModule := ibcwasm.NewAppModule(app.WasmClientKeeper)
+
+	if err := app.RegisterModules(ibcModule, ibcFeeModule, ibcTransferModule, icaModule, ibcWasmModule); err != nil {
+		panic(err)
+	}
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, keys); err != nil {
@@ -230,8 +370,7 @@ func NewNibiruApp(
 		os.Exit(1)
 	}
 
-	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
-
+	app.ModuleManager.RegisterInvariants(app.crisisKeeper)
 	// RegisterUpgradeHandlers is used for registering any on-chain upgrades.
 	app.setupUpgrades()
 	app.sm.RegisterStoreDecoders()
@@ -250,192 +389,16 @@ func NewNibiruApp(
 			panic("failed to add wasm snapshot extension.")
 		}
 	}
-	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(err.Error())
-		}
 
-		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
-
-		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
-			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
-		}
-
-		/* Applications that wish to enforce statically created ScopedKeepers should
-		call `Seal` after creating their scoped modules in `NewApp` with
-		`capabilityKeeper.ScopeToModule`.
-
-
-		Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
-		keeper such that all persistent capabilities are loaded in-memory and prevent
-		any further modules from creating scoped sub-keepers.
-
-		NOTE: This must be done during creation of baseapp rather than in InitChain so
-		that in-memory capabilities get regenerated on app restart.
-		Note that since this reads from the store, we can only perform the seal
-		when `loadLatest` is set to true.
-		*/
-		app.capabilityKeeper.Seal()
+	if err := app.Load(loadLatest); err != nil {
+		panic(err)
 	}
 
 	return app
-
-	// appCodec := encodingConfig.Codec
-	// legacyAmino := encodingConfig.Amino
-	// interfaceRegistry := encodingConfig.InterfaceRegistry
-	// txConfig := encodingConfig.TxConfig
-	// baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-	// 	mp := mempool.NoOpMempool{}
-	// 	app.SetMempool(mp)
-	// 	handler := baseapp.NewDefaultProposalHandler(mp, app)
-	// 	app.SetPrepareProposal(handler.PrepareProposalHandler())
-	// 	app.SetProcessProposal(handler.ProcessProposalHandler())
-	// })
-
-	// bApp := baseapp.NewBaseApp(
-	// 	appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
-	// bApp.SetCommitMultiStoreTracer(traceStore)
-	// bApp.SetVersion(version.Version)
-	// bApp.SetInterfaceRegistry(interfaceRegistry)
-	// bApp.SetTxEncoder(txConfig.TxEncoder())
-
-	// app := &NibiruApp{
-	// 	BaseApp:           bApp,
-	// 	legacyAmino:       legacyAmino,
-	// 	appCodec:          appCodec,
-	// 	interfaceRegistry: interfaceRegistry,
-	// 	keys:              keys,
-	// 	tkeys:             tkeys,
-	// 	memKeys:           memKeys,
-	// }
-
-	// wasmConfig := app.InitKeepers(appOpts)
-
-	// // -------------------------- Module Options --------------------------
-
-	// // NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// // we prefer to be more strict in what arguments the modules expect.
-	// skipGenesisInvariants := cast.ToBool(
-	// 	appOpts.Get(crisis.FlagSkipGenesisInvariants))
-
-	// app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
-
-	// app.initModuleManager(encodingConfig, skipGenesisInvariants)
-
-	// app.setupUpgrades()
-	// // NOTE: Any module instantiated in the module manager that is later modified
-	// // must be passed by reference here.
-
-	// // add test gRPC service for testing gRPC queries in isolation
-	// testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
-
-	// app.initSimulationManager(app.appCodec)
-
-	// // initialize stores
-	// app.MountKVStores(keys)
-	// app.MountTransientStores(tkeys)
-	// app.MountMemoryStores(memKeys)
-
-	// // initialize BaseApp
-	// app.SetInitChainer(app.InitChainer)
-	// app.SetBeginBlocker(app.BeginBlocker)
-	// anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
-	// 	HandlerOptions: authante.HandlerOptions{
-	// 		AccountKeeper:          app.AccountKeeper,
-	// 		BankKeeper:             app.BankKeeper,
-	// 		FeegrantKeeper:         app.FeeGrantKeeper,
-	// 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
-	// 		SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
-	// 		ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
-	// 	},
-	// 	IBCKeeper:         app.ibcKeeper,
-	// 	TxCounterStoreKey: keys[wasmtypes.StoreKey],
-	// 	WasmConfig:        &wasmConfig,
-	// 	DevGasKeeper:      &app.DevGasKeeper,
-	// 	DevGasBankKeeper:  app.BankKeeper,
-	// 	// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
-	// 	MaxTxGasWanted: DefaultMaxTxGasWanted,
-	// 	EvmKeeper:      app.EvmKeeper,
-	// 	AccountKeeper:  app.AccountKeeper,
-	// })
-
-	// app.SetAnteHandler(anteHandler)
-	// app.SetEndBlocker(app.EndBlocker)
-
-	// if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
-	// 	if err := snapshotManager.RegisterExtensions(
-	// 		wasmkeeper.NewWasmSnapshotter(
-	// 			app.CommitMultiStore(),
-	// 			&app.WasmKeeper,
-	// 		),
-	// 		ibcwasmkeeper.NewWasmSnapshotter(
-	// 			app.CommitMultiStore(),
-	// 			&app.WasmClientKeeper,
-	// 		),
-	// 	); err != nil {
-	// 		panic("failed to add wasm snapshot extension.")
-	// 	}
-	// }
-
-	// if loadLatest {
-	// 	if err := app.LoadLatestVersion(); err != nil {
-	// 		tmos.Exit(err.Error())
-	// 	}
-
-	// 	ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
-
-	// 	// Initialize pinned codes in wasmvm as they are not persisted there
-	// 	if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
-	// 		cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
-	// 	}
-
-	// 	/* Applications that wish to enforce statically created ScopedKeepers should
-	// 	call `Seal` after creating their scoped modules in `NewApp` with
-	// 	`capabilityKeeper.ScopeToModule`.
-
-	// 	Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
-	// 	keeper such that all persistent capabilities are loaded in-memory and prevent
-	// 	any further modules from creating scoped sub-keepers.
-
-	// 	NOTE: This must be done during creation of baseapp rather than in InitChain so
-	// 	that in-memory capabilities get regenerated on app restart.
-	// 	Note that since this reads from the store, we can only perform the seal
-	// 	when `loadLatest` is set to true.
-	// 	*/
-	// 	app.capabilityKeeper.Seal()
-	// }
-
-	// return app
 }
 
 // Name returns the name of the App
 func (app *NibiruApp) Name() string { return app.BaseApp.Name() }
-
-// BeginBlocker application updates every begin block
-func (app *NibiruApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.ModuleManager.BeginBlock(ctx, req)
-}
-
-// EndBlocker application updates every end block
-func (app *NibiruApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.ModuleManager.EndBlock(ctx, req)
-}
-
-// InitChainer application update at chain initialization
-func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	var genesisState GenesisState
-	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
-		panic(err)
-	}
-	app.upgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
-}
-
-// LoadHeight loads a particular height
-func (app *NibiruApp) LoadHeight(height int64) error {
-	return app.LoadVersion(height)
-}
 
 func (app *NibiruApp) RegisterNodeService(clientCtx client.Context) {
 	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())

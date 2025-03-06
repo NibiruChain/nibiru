@@ -25,6 +25,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
@@ -44,9 +45,18 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
+	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
+	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
+	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
+	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
+	tokenfactorymodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 )
 
 var (
@@ -57,6 +67,18 @@ var (
 		}
 		return k
 	}(BlockedAddresses())
+
+	genesisModuleOrder = []string{
+		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName,
+		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
+		crisistypes.ModuleName, genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
+		feegrant.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
+		consensustypes.ModuleName, ibctransfertypes.ModuleName, ibcexported.ModuleName,
+		ibcfeetypes.ModuleName, icatypes.ModuleName, ibcwasmtypes.ModuleName,
+		// devgastypes.ModuleName,
+		tokenfactorytypes.ModuleName, epochstypes.ModuleName, oracletypes.ModuleName,
+		inflationtypes.ModuleName, sudotypes.ModuleName, evmtypes.ModuleName,
+	}
 
 	// module account permissions
 	moduleAccPerms = []*authmodulev1.ModuleAccountPermission{
@@ -85,16 +107,67 @@ var (
 			{
 				Name: "runtime",
 				Config: appconfig.WrapAny(&runtimev1alpha1.Module{
-					AppName:       "Nibiru",
-					BeginBlockers: orderedModuleNames(),
-					EndBlockers:   orderedModuleNames(),
+					AppName: "Nibiru",
+					BeginBlockers: []string{
+						upgradetypes.ModuleName,
+						capabilitytypes.ModuleName,
+						distrtypes.ModuleName,
+						slashingtypes.ModuleName,
+						evidencetypes.ModuleName,
+						stakingtypes.ModuleName,
+						authtypes.ModuleName,
+						banktypes.ModuleName,
+						govtypes.ModuleName,
+						crisistypes.ModuleName,
+						genutiltypes.ModuleName,
+						authz.ModuleName,
+						feegrant.ModuleName,
+
+						paramstypes.ModuleName,
+						epochstypes.ModuleName,
+						oracletypes.ModuleName,
+						inflationtypes.ModuleName,
+						consensustypes.ModuleName,
+						sudotypes.ModuleName,
+						ibctransfertypes.ModuleName, ibcexported.ModuleName,
+						ibcfeetypes.ModuleName, icatypes.ModuleName, ibcwasmtypes.ModuleName,
+						// devgastypes.ModuleName,
+						tokenfactorytypes.ModuleName,
+						evmtypes.ModuleName,
+					},
+					EndBlockers: []string{
+						crisistypes.ModuleName,
+						govtypes.ModuleName,
+						stakingtypes.ModuleName,
+						capabilitytypes.ModuleName,
+						authtypes.ModuleName,
+						banktypes.ModuleName,
+						distrtypes.ModuleName,
+						slashingtypes.ModuleName,
+						genutiltypes.ModuleName,
+						evidencetypes.ModuleName,
+						authz.ModuleName,
+						feegrant.ModuleName,
+						paramstypes.ModuleName,
+						consensustypes.ModuleName,
+						upgradetypes.ModuleName,
+						ibctransfertypes.ModuleName, ibcexported.ModuleName,
+						ibcfeetypes.ModuleName, icatypes.ModuleName, ibcwasmtypes.ModuleName,
+						// devgastypes.ModuleName,
+						epochstypes.ModuleName,
+						oracletypes.ModuleName,
+						inflationtypes.ModuleName,
+						sudotypes.ModuleName,
+						tokenfactorytypes.ModuleName,
+						evmtypes.ModuleName,
+					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
 						{
 							ModuleName: authtypes.ModuleName,
 							KvStoreKey: "acc",
 						},
 					},
-					InitGenesis: orderedModuleNames(),
+					InitGenesis: genesisModuleOrder,
 					// When ExportGenesis is not specified, the export genesis module order
 					// is equal to the init genesis order
 					// ExportGenesis: genesisModuleOrder,
@@ -105,17 +178,21 @@ var (
 				Config: appconfig.WrapAny(&authmodulev1.Module{
 					Bech32Prefix:             "nibi",
 					ModuleAccountPermissions: moduleAccPerms,
+					Authority:                authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				}),
 			},
 			{
 				Name: banktypes.ModuleName,
 				Config: appconfig.WrapAny(&bankmodulev1.Module{
 					BlockedModuleAccountsOverride: blockAccAddrs,
+					Authority:                     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				}),
 			},
 			{
-				Name:   stakingtypes.ModuleName,
-				Config: appconfig.WrapAny(&stakingmodulev1.Module{}),
+				Name: stakingtypes.ModuleName,
+				Config: appconfig.WrapAny(&stakingmodulev1.Module{
+					Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				}),
 			},
 			{
 				Name:   slashingtypes.ModuleName,
@@ -142,8 +219,11 @@ var (
 				Config: appconfig.WrapAny(&upgrademodulev1.Module{}),
 			},
 			{
-				Name:   distrtypes.ModuleName,
-				Config: appconfig.WrapAny(&distrmodulev1.Module{}),
+				Name: distrtypes.ModuleName,
+				Config: appconfig.WrapAny(&distrmodulev1.Module{
+					FeeCollectorName: authtypes.FeeCollectorName,
+					Authority:        authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				}),
 			},
 			{
 				Name: capabilitytypes.ModuleName,
@@ -160,8 +240,10 @@ var (
 				Config: appconfig.WrapAny(&feegrantmodulev1.Module{}),
 			},
 			{
-				Name:   govtypes.ModuleName,
-				Config: appconfig.WrapAny(&govmodulev1.Module{}),
+				Name: govtypes.ModuleName,
+				Config: appconfig.WrapAny(&govmodulev1.Module{
+					Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				}),
 			},
 			{
 				Name:   crisistypes.ModuleName,
@@ -170,6 +252,34 @@ var (
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
+			},
+			// {
+			// 	Name:   devgastypes.ModuleName,
+			// 	Config: appconfig.WrapAny(&devgassmodulev1.Module{}),
+			// },
+			{
+				Name:   tokenfactorytypes.ModuleName,
+				Config: appconfig.WrapAny(&tokenfactorymodulev1.Module{}),
+			},
+			{
+				Name:   sudotypes.ModuleName,
+				Config: appconfig.WrapAny(&sudomodulev1.Module{}),
+			},
+			{
+				Name:   oracletypes.ModuleName,
+				Config: appconfig.WrapAny(&oraclemodulev1.Module{}),
+			},
+			{
+				Name:   epochstypes.ModuleName,
+				Config: appconfig.WrapAny(&epochsmodulev1.Module{}),
+			},
+			{
+				Name:   inflationtypes.ModuleName,
+				Config: appconfig.WrapAny(&inflationmodulev1.Module{}),
+			},
+			{
+				Name:   evmtypes.ModuleName,
+				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
 			},
 		},
 	})
