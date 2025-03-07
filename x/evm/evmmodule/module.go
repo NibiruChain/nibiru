@@ -24,12 +24,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/exported"
 
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
@@ -207,7 +209,7 @@ type EvmInputs struct {
 	AppOpts      servertypes.AppOptions `optional:"true"`
 
 	AccountKeeper evm.AccountKeeper
-	BankKeeper    keeper.NibiruBankKeeper
+	BankKeeper    bankkeeper.BaseKeeper
 	StakingKeeper evm.StakingKeeper
 
 	// LegacySubspace is used solely for migration of x/params managed parameters
@@ -230,7 +232,12 @@ func ProvideModule(in EvmInputs) EvmOutputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
-	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, &in.BankKeeper, in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+		BaseKeeper: in.BankKeeper,
+		StateDB:    nil,
+	}
+
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, nibiruBankKeeper, in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
 
 	m := NewAppModule(&k, in.AccountKeeper)
 

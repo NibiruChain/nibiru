@@ -35,7 +35,6 @@ import (
 
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -66,7 +65,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -246,12 +244,7 @@ func NewNibiruApp(
 		panic(err)
 	}
 
-	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: app.BankKeeper.(bankkeeper.BaseKeeper),
-		StateDB:    nil,
-	}
-	app.BankKeeper = nibiruBankKeeper
-
+	app.BankKeeper = app.EvmKeeper.Bank
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
@@ -373,7 +366,7 @@ func NewNibiruApp(
 	app.ModuleManager.RegisterInvariants(app.crisisKeeper)
 	// RegisterUpgradeHandlers is used for registering any on-chain upgrades.
 	app.setupUpgrades()
-	app.sm.RegisterStoreDecoders()
+	// app.sm.RegisterStoreDecoders()
 
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
 		if err := snapshotManager.RegisterExtensions(
