@@ -5,22 +5,33 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/exported"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/devgas/module"
 )
 
 // type check to ensure the interface is properly implemented
@@ -129,6 +140,12 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants registers the fees module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
@@ -188,4 +205,54 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 // WeightedOperations implements module.AppModuleSimulation.
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type DevsgasInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    types.BankKeeper
+	WasmKeeper    wasmkeeper.Keeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+type DevgasOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in DevsgasInputs) DevgasOutputs {
+
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(in.Key, in.Cdc, in.BankKeeper, in.WasmKeeper, in.AccountKeeper, authtypes.FeeCollectorName, authority.String())
+
+	m := NewAppModule(k, in.AccountKeeper, in.LegacySubspace)
+
+	return DevgasOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

@@ -5,22 +5,30 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/exported"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
 )
 
 // type check to ensure the interface is properly implemented
@@ -113,6 +121,12 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants registers the inflation module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
@@ -171,4 +185,55 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
 // WeightedOperations doesn't return any inflation module operation.
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type InflationInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    types.BankKeeper
+	DistrKeeper   types.DistrKeeper
+	StakingKeeper *stakingkeeper.Keeper
+	SudoKeeper    types.SudoKeeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+type InflationOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+
+	Hooks epochstypes.EpochHooksWrapper
+}
+
+func ProvideModule(in InflationInputs) InflationOutputs {
+
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.LegacySubspace, in.AccountKeeper, in.BankKeeper,
+		in.DistrKeeper, in.StakingKeeper, in.SudoKeeper, authtypes.FeeCollectorName)
+
+	m := NewAppModule(k, in.AccountKeeper, *in.StakingKeeper)
+
+	return InflationOutputs{
+		Keeper: k,
+		Module: m,
+		Hooks:  epochstypes.EpochHooksWrapper{EpochHooks: k.Hooks()},
+	}
 }
