@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -139,7 +140,7 @@ func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 
 	for _, exchangeRate := range exchangeRates {
 		// Check overflow bit length
-		if exchangeRate.ExchangeRate.BigInt().BitLen() > 255+sdk.DecimalPrecisionBits {
+		if exchangeRate.ExchangeRate.BigInt().BitLen() > 255+math.LegacyDecimalPrecisionBits {
 			return sdkerrors.Wrap(ErrInvalidExchangeRate, "overflow")
 		}
 	}

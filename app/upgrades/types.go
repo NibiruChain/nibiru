@@ -1,10 +1,11 @@
 package upgrades
 
 import (
-	store "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+
+	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 )
 
 type Upgrade struct {
@@ -12,5 +13,5 @@ type Upgrade struct {
 
 	CreateUpgradeHandler func(*module.Manager, module.Configurator, clientkeeper.Keeper) types.UpgradeHandler
 
-	StoreUpgrades store.StoreUpgrades
+	StoreUpgrades storetypes.StoreUpgrades
 }

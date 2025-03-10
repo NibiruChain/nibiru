@@ -26,7 +26,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 	tests := []struct {
 		name        string
 		messages    []sdk.Msg
-		expectedGas sdk.Gas
+		expectedGas uint64
 		expectedErr error
 	}{
 		{

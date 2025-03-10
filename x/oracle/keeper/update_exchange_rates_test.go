@@ -171,8 +171,10 @@ func TestOracleTally(t *testing.T) {
 
 	validatorPerformances := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
+		val, err := stakingKeeper.Validator(fixture.Ctx, valAddr)
+		assert.NoError(t, err)
 		validatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
-			stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			val.GetConsensusPower(sdk.DefaultPowerReduction),
 			valAddr,
 		)
 	}
@@ -187,8 +189,10 @@ func TestOracleTally(t *testing.T) {
 
 	expectedValidatorPerformances := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
+		val, err := stakingKeeper.Validator(fixture.Ctx, valAddr)
+		assert.NoError(t, err)
 		expectedValidatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
-			stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			val.GetConsensusPower(sdk.DefaultPowerReduction),
 			valAddr,
 		)
 	}
@@ -373,13 +377,17 @@ func TestOracleExchangeRate(t *testing.T) {
 	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethUsdRewards, atomUsdRewards).
 		QuoDec(sdkmath.LegacyNewDec(8)). // total votes
 		MulDec(sdkmath.LegacyNewDec(2))  // votes won by val1 and val2
-	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
+	rewards, err := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
+	assert.NoError(t, err)
 	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
-	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[1])
+	rewards, err = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[1])
+	assert.NoError(t, err)
 	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
-	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[2])
+	rewards, err = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[2])
+	assert.NoError(t, err)
 	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
-	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[3])
+	rewards, err = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[3])
+	assert.NoError(t, err)
 	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 }
 

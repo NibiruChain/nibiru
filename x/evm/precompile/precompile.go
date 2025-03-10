@@ -17,8 +17,9 @@ import (
 	"bytes"
 	"fmt"
 
+	"cosmossdk.io/store/types"
+	store "cosmossdk.io/store/types"
 	"github.com/NibiruChain/collections"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -203,7 +204,7 @@ func OnRunStart(
 	}
 
 	// Switching to a local gas meter to enforce gas limit check for a precompile
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+	cacheCtx = cacheCtx.WithGasMeter(types.NewGasMeter(gasLimit)).
 		WithKVGasConfig(store.KVGasConfig()).
 		WithTransientKVGasConfig(store.TransientGasConfig())
 
@@ -237,7 +238,7 @@ func HandleOutOfGasPanic(err *error) func() {
 	return func() {
 		if r := recover(); r != nil {
 			switch r.(type) {
-			case sdk.ErrorOutOfGas:
+			case types.ErrorOutOfGas:
 				*err = vm.ErrOutOfGas
 			default:
 				panic(r)
