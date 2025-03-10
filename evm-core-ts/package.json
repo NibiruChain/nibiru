@@ -31,16 +31,16 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js",
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "default": "./dist/index.js"
     },
     "./ethers": {
+      "types": "./dist/ethers/index.d.ts",
       "import": "./dist/ethers/index.js",
       "require": "./dist/ethers/index.js",
-      "default": "./dist/ethers/index.js",
-      "types": "./dist/ethers/index.d.ts"
+      "default": "./dist/ethers/index.js"
     }
   }
 }
