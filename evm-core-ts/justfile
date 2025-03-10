@@ -20,6 +20,11 @@ build:
   set +x
   echo "Build complete. Files generated in dist/"
 
+# Check npm pacakge compatibility with linter
+lint: 
+  #!/usr/bin/env bash
+  npx publint # https://publint.dev/docs/
+
 # Generate TypeScript from @nibiruchain/solidity
 gen-ethers:
   #!/usr/bin/env bash
@@ -36,6 +41,7 @@ fmt:
 
 # Publish the package on npm based on "dist" and "package.json"
 publish: 
+  just lint
   just build
   just fmt
   npm publish --access public
