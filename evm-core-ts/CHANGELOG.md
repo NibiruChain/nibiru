@@ -5,6 +5,7 @@ the `@nibiruchain/evm-core` package on `npm`.
 
 ## [0.0.x]
 
+- v0.0.4: [#2229](https://github.com/NibiruChain/nibiru/pull/2229) - Improve compatibility with older "moduleResolution" settings. It is recommended to use "bundler".
 - v0.0.2: [#2204](https://github.com/NibiruChain/nibiru/pull/2204) - Add ERC20
 caller to the "ethers" export.
 - v0.0.1: [#2197](https://github.com/NibiruChain/nibiru/pull/2197) - Export
