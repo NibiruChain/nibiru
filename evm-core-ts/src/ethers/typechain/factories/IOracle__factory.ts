@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers"
+
 import type { IOracle, IOracleInterface } from "../IOracle"
 
 const _abi = [

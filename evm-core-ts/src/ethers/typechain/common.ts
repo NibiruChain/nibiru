@@ -2,15 +2,15 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
-  FunctionFragment,
-  Typed,
-  EventFragment,
   ContractTransaction,
   ContractTransactionResponse,
   DeferredTopicFilter,
+  EventFragment,
   EventLog,
-  TransactionRequest,
+  FunctionFragment,
   LogDescription,
+  TransactionRequest,
+  Typed,
 } from "ethers"
 
 export interface TypedDeferredTopicFilter<_TCEvent extends TypedContractEvent>

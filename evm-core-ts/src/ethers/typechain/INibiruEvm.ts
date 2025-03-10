@@ -3,19 +3,20 @@
 /* eslint-disable */
 import type {
   BaseContract,
+  ContractMethod,
+  ContractRunner,
+  EventFragment,
   FunctionFragment,
   Interface,
-  EventFragment,
-  ContractRunner,
-  ContractMethod,
   Listener,
 } from "ethers"
+
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
-  TypedLogDescription,
   TypedListener,
+  TypedLogDescription,
 } from "./common"
 
 export interface INibiruEvmInterface extends Interface {

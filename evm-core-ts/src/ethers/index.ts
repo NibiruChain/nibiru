@@ -1,28 +1,28 @@
-import { type ContractRunner, Contract, type InterfaceAbi } from "ethers"
+import { Contract, type ContractRunner, type InterfaceAbi } from "ethers"
+
 import {
-  ADDR_WASM_PRECOMPILE,
-  ADDR_ORACLE_PRECOMPILE,
-  ADDR_FUNTOKEN_PRECOMPILE,
-  ABI_WASM_PRECOMPILE,
-  ABI_ORACLE_PRECOMPILE,
   ABI_FUNTOKEN_PRECOMPILE,
+  ABI_ORACLE_PRECOMPILE,
+  ABI_WASM_PRECOMPILE,
+  ADDR_FUNTOKEN_PRECOMPILE,
+  ADDR_ORACLE_PRECOMPILE,
+  ADDR_WASM_PRECOMPILE,
 } from "../precompile"
+import {
+  ERC20Minter__factory,
+  NibiruOracleChainLinkLike__factory,
+  type ERC20Minter,
+  type IFunToken,
+  type IOracle,
+  type IWasm,
+  type NibiruOracleChainLinkLike,
+} from "./typechain"
 
 export const ETHERS_ABI = {
   WASM: ABI_WASM_PRECOMPILE as InterfaceAbi,
   ORACLE: ABI_ORACLE_PRECOMPILE as InterfaceAbi,
   FUNTOKEN: ABI_FUNTOKEN_PRECOMPILE as InterfaceAbi,
 }
-
-import {
-  type IWasm,
-  type IOracle,
-  type IFunToken,
-  type NibiruOracleChainLinkLike,
-  type ERC20Minter,
-  NibiruOracleChainLinkLike__factory,
-  ERC20Minter__factory,
-} from "./typechain"
 
 export const wasmPrecompile = (runner: ContractRunner): IWasm =>
   new Contract(
