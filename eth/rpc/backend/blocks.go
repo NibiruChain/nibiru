@@ -339,7 +339,9 @@ func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (gethcore.
 		}
 		return gethcore.BytesToBloom(hexutils.HexToBytes(blockBloomEvent.Bloom)), nil
 	}
-	return gethcore.Bloom{}, errors.New(msgType + " not found in end block results")
+
+	// Suppressing error as it is expected to be missing for pruned node or for blocks before evm
+	return gethcore.Bloom{}, nil
 }
 
 // RPCBlockFromTendermintBlock returns a JSON-RPC compatible Ethereum block from a
