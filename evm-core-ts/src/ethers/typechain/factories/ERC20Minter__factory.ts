@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers"
+
 import type { ERC20Minter, ERC20MinterInterface } from "../ERC20Minter"
 
 const _abi = [
