@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers"
+
 import type {
   ChainLinkAggregatorV3Interface,
   ChainLinkAggregatorV3InterfaceInterface,

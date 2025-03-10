@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers"
+
 import type { IFunToken, IFunTokenInterface } from "../IFunToken"
 
 const _abi = [
