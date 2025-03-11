@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package nibiru.sudo.module.v1;
+
+import "cosmos/app/v1alpha1/module.proto";
+
+// Module is the config object for the sudo module.
+message Module {
+  option (cosmos.app.v1alpha1.module) = {
+    go_import: "github.com/NibiruChain/nibiru/x/sudo"
+  };
+
+  // authority defines the custom module authority. If not set, defaults to the governance module.
+  string authority = 1;
+}
+
+// ModuleAccountPermission represents permissions for a module account.
+message ModuleAccountPermission {
+  // account is the name of the module.
+  string account = 1;
+
+  // permissions are the permissions this module has. Currently recognized
+  // values are minter, burner and staking.
+  repeated string permissions = 2;
+}

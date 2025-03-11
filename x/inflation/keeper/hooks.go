@@ -30,6 +30,7 @@ func (k Keeper) Hooks() Hooks {
 
 // BeforeEpochStart is a hook that runs just prior to the start of a new epoch.
 func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
+	fmt.Println("go here ?")
 	// Perform no operations; we don't need to do anything here
 	_, _, _ = ctx, epochIdentifier, epochNumber
 }
