@@ -219,9 +219,12 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
+		&app.EvmKeeper,
 	); err != nil {
 		panic(err)
 	}
+
+	app.BankKeeper = app.EvmKeeper.Bank
 
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 

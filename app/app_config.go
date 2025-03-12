@@ -48,6 +48,8 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+
+	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 )
 
 var (
@@ -78,8 +80,6 @@ var (
 )
 
 func init() {
-
-	// fmt.Println("etst :: ", authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	// application configuration (used by depinject)
 	AppConfig = appconfig.Compose(&appv1alpha1.Config{
 		Modules: []*appv1alpha1.ModuleConfig{
@@ -180,6 +180,10 @@ func init() {
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
+			},
+			{
+				Name:   evm.ModuleName,
+				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
 			},
 		},
 	})

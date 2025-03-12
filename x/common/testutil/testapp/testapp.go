@@ -127,7 +127,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
-	cryptocodec.RegisterInterfaces(encoding.InterfaceRegistry)
+
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
@@ -139,7 +139,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		/*appOpts=*/ sims.EmptyAppOptions{},
 		baseAppOptions...,
 	)
-
+	cryptocodec.RegisterInterfaces(app.InterfaceRegistry())
 	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
 	if err != nil {
 		panic(err)

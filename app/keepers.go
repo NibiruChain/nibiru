@@ -21,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
@@ -94,7 +93,6 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
@@ -170,12 +168,6 @@ func (app *NibiruApp) InitKeepers(
 	// seal capability keeper after scoping modules
 	// app.capabilityKeeper.Seal()
 
-	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: app.BankKeeper.(bankkeeper.BaseKeeper),
-		StateDB:    nil,
-	}
-	app.BankKeeper = nibiruBankKeeper
-
 	// get skipUpgradeHeights from the app options
 	// skipUpgradeHeights := map[int64]bool{}
 	// for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
@@ -214,21 +206,6 @@ func (app *NibiruApp) InitKeepers(
 			app.OracleKeeper.Hooks(),
 		),
 	)
-
-	app.RegisterStores(storetypes.NewKVStoreKey(evm.StoreKey))
-	evmTSKKey := storetypes.NewTransientStoreKey(evm.TransientKey)
-	app.RegisterStores(evmTSKKey)
-	evmKeeper := evmkeeper.NewKeeper(
-		appCodec,
-		app.GetKey(evm.StoreKey),
-		evmTSKKey,
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper,
-		nibiruBankKeeper,
-		app.StakingKeeper,
-		cast.ToString(appOpts.Get("evm.tracer")),
-	)
-	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
@@ -478,9 +455,6 @@ func (app *NibiruApp) InitKeepers(
 	icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
 	ibcWasmModule := ibcwasm.NewAppModule(app.WasmClientKeeper)
 
-	// evm
-	evmModule := evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper)
-
 	// wasm
 	wasmModule := wasm.NewAppModule(
 		appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper,
@@ -494,11 +468,15 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	if err := app.RegisterModules(&oracleMdodule, epochsModule, inflationModule, sudoModule, genMsgModule,
-		ibcModule, ibcTransferModule, ibcFeeModule, icaModule, ibcWasmModule, evmModule, wasmModule, devgasModule, tokenfactoryModule,
+		ibcModule, ibcTransferModule, ibcFeeModule, icaModule, ibcWasmModule, wasmModule, devgasModule, tokenfactoryModule,
 	); err != nil {
 		panic(err)
 	}
-	// crisis.NewAppModule(app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
+
+	ibctmAppModuleBasic := ibctm.AppModuleBasic{}
+	ibctmAppModuleBasic.RegisterInterfaces(app.interfaceRegistry)
+	ibctmAppModuleBasic.RegisterLegacyAminoCodec(app.legacyAmino)
+
 	return wasmConfig
 }
 
