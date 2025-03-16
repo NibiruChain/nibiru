@@ -34,7 +34,7 @@ func FilterNewEvents(beforeEvents, afterEvents sdk.Events) sdk.Events {
 	return newEvents
 }
 
-// AssertEventsPresent: Errors if the given event type is not present in events
+// AssertEventPresent: Errors if the given event type is not present in events
 func AssertEventPresent(events sdk.Events, eventType string) error {
 	foundTypes := set.New[string]()
 	for _, event := range events {
