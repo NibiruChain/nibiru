@@ -1,8 +1,18 @@
 [
   {
-    "contractAddr": "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6",
+    "contractAddr": "0x85e74f64c3539932b93dC0bcA958A4d0CC45945a",
     "displayName": "Wrapped Nibiru",
     "symbol": "WNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru-evm.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "NIBIUSDT"
+    }
+  },
+  {
+    "contractAddr": "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6",
+    "displayName": "(DEPRECATED) FunToken Nibiru",
+    "symbol": "WNIBI (d)",
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru-evm.png",
     "priceInfo": {
       "source": "bybit",
