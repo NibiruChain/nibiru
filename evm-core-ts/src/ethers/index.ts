@@ -11,11 +11,13 @@ import {
 import {
   ERC20Minter__factory,
   NibiruOracleChainLinkLike__factory,
+  WNIBI__factory,
   type ERC20Minter,
   type IFunToken,
   type IOracle,
   type IWasm,
   type NibiruOracleChainLinkLike,
+  type WNIBI,
 } from "./typechain"
 
 export const ETHERS_ABI = {
@@ -64,3 +66,6 @@ export const erc20Caller = (
   runner: ContractRunner,
   addr: string,
 ): ERC20Minter => ERC20Minter__factory.connect(addr, runner)
+
+export const wnibiCaller = (runner: ContractRunner, addr: string): WNIBI =>
+  WNIBI__factory.connect(addr, runner)
