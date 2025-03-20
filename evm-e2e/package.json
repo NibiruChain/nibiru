@@ -1,7 +1,6 @@
 {
   "name": "nibiru-evm-test",
   "version": "0.0.1",
-  "type": "module",
   "description": "Nibiru EVM tests",
   "keywords": [],
   "author": "Nibiru Team",
