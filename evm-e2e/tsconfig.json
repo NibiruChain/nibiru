@@ -7,6 +7,7 @@
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": false,
+    "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowJs": true,
