@@ -1,5 +1,6 @@
 import { Contract, type ContractRunner, type InterfaceAbi } from "ethers"
 
+import { ADDR_WNIBI } from "../const"
 import {
   ABI_FUNTOKEN_PRECOMPILE,
   ABI_ORACLE_PRECOMPILE,
@@ -67,5 +68,14 @@ export const erc20Caller = (
   addr: string,
 ): ERC20Minter => ERC20Minter__factory.connect(addr, runner)
 
-export const wnibiCaller = (runner: ContractRunner, addr: string): WNIBI =>
-  WNIBI__factory.connect(addr, runner)
+/**
+ * Wrapped Nibiru smart contract for using NIBI as an ERC20.
+ *
+ * @param runner
+ * @param addr - Defaults to the WNIBI address on mainnet. If you're using a
+ *   different network, you can pass a different value for the address.
+ * */
+export const wnibiCaller = (
+  runner: ContractRunner,
+  addr: string = ADDR_WNIBI,
+): WNIBI => WNIBI__factory.connect(addr, runner)
