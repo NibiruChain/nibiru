@@ -1,5 +1,5 @@
-require("@nomicfoundation/hardhat-toolbox");
-require('@typechain/hardhat');
+require("@nomicfoundation/hardhat-toolbox")
+require("@typechain/hardhat")
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -10,4 +10,4 @@ module.exports = {
     alwaysGenerateOverloads: false,
     dontOverrideCompile: false,
   },
-};
+}

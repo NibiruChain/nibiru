@@ -157,7 +157,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
 
   bankBalance: TypedContractMethod<
@@ -168,7 +168,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
 
   bankMsgSend: TypedContractMethod<
@@ -192,7 +192,7 @@ export interface IFunToken extends BaseContract {
   whoAmI: TypedContractMethod<
     [who: string],
     [IFunToken.NibiruAccountStructOutput],
-    "nonpayable"
+    "view"
   >
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -214,7 +214,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
   getFunction(nameOrSignature: "bankBalance"): TypedContractMethod<
     [who: AddressLike, bankDenom: string],
@@ -224,7 +224,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
   getFunction(
     nameOrSignature: "bankMsgSend",
@@ -252,7 +252,7 @@ export interface IFunToken extends BaseContract {
   ): TypedContractMethod<
     [who: string],
     [IFunToken.NibiruAccountStructOutput],
-    "nonpayable"
+    "view"
   >
 
   getEvent(

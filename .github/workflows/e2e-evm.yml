@@ -65,7 +65,8 @@ jobs:
       - name: Setup NodeJS with npm caching
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: "lts/jod"
+          cache-dependency-path: "evm-e2e/package-lock.json"
 
       - name: "just install"
         run: just install
@@ -77,7 +78,9 @@ jobs:
           sleep 10
 
       - name: "Run tests (just test)"
-        run: just test
+        run: |
+          just install
+          just test
         working-directory: "evm-e2e"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
