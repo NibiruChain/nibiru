@@ -23,11 +23,11 @@ test-basic:
 
 # Format
 fmt: 
-  npx prettier --write "test/**/*.ts"
+  npx prettier --write . --config prettier.config.js
 
 # Format (check only)
 fmt-check:
-  npx prettier --check "test/**/*.ts"
+  npx prettier --check . --config prettier.config.js
 
 gen-types:
   npx hardhat typechain
