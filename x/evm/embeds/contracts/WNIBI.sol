@@ -13,7 +13,7 @@ pragma solidity ^0.8.0;
 contract WNIBI {
     string public name = "Wrapped Nibiru";
     string public symbol = "WNIBI";
-    uint8 public decimals = 6;
+    uint8 public decimals = 18;
 
     event Approval(address indexed src, address indexed guy, uint wad);
     event Transfer(address indexed src, address indexed dst, uint wad);
