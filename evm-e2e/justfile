@@ -15,7 +15,7 @@ install:
 
 # Runs the E2E tests
 test *args:
-  npm test {{args}}
+  npx bun test {{args}}
 
 # Runs tx receipt tests. Used for testnet quick check.
 test-basic:
