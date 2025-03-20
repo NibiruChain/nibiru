@@ -19,6 +19,7 @@
     "@typechain/hardhat": "^9.1.0",
     "@types/bun": "^1.2.5",
     "@types/jest": "^29.5.14",
+    "bun": "^1.2.5",
     "dotenv": "^16.4.5",
     "eslint": "^8.0.0",
     "eslint-config-airbnb": "^19.0.4",
@@ -33,8 +34,5 @@
     "ts-jest": "^29.2.4",
     "typechain": "^8.3.2",
     "typescript": "^5.8.2"
-  },
-  "scripts": {
-    "test": "jest"
   }
 }

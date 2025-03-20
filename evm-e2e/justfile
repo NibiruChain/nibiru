@@ -19,7 +19,7 @@ test *args:
 
 # Runs tx receipt tests. Used for testnet quick check.
 test-basic:
-  npm test -- tx_receipt.test.ts
+  npx bun test -- tx_receipt.test.ts
 
 # Format
 fmt: 
