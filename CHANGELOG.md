@@ -43,8 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2222](https://github.com/NibiruChain/nibiru/pull/2222) - fix(evm): evm indexer proper stopping of the indexer service
 - [#2224](https://github.com/NibiruChain/nibiru/pull/2224) - fix(evm): suppressing error on missing block bloom event
 - [#2238](https://github.com/NibiruChain/nibiru/pull/2238) - feat(evm-embeds): Add WNIBI.sol implementatino to contracts and related TypeScript and Solidity package updates for npm.
+- [#2239](https://github.com/NibiruChain/nibiru/pull/2239) - feat(funtoken): update `FunToken.sendToBank` to accept EVM and nibi addresses.
 
 ### Dependencies
+
 - Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
 
 ## [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0) - 2025-02-25
