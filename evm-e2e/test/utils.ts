@@ -1,5 +1,14 @@
 import { account, provider, TX_WAIT_TIMEOUT } from './setup';
-import { ContractTransactionResponse, parseEther, toBigInt, TransactionRequest, Wallet } from 'ethers';
+import {
+  ContractFactory,
+  ContractTransactionResponse,
+  parseEther,
+  toBigInt,
+  type TransactionRequest,
+  Wallet,
+} from 'ethers';
+import { wnibiCaller } from '@nibiruchain/evm-core';
+import WNIBI_JSON from '../../x/evm/embeds/artifacts/contracts/WNIBI.sol/WNIBI.json';
 import {
   InifiniteLoopGas__factory,
   SendNibi__factory,
@@ -7,7 +16,7 @@ import {
   EventsEmitter__factory,
   TransactionReverter__factory,
   NibiruOracleChainLinkLike__factory,
-  NibiruOracleChainLinkLike,
+  type NibiruOracleChainLinkLike,
 } from '../types';
 
 export const alice = Wallet.createRandom();
@@ -76,6 +85,20 @@ export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
   const contract = await factory.deploy(oraclePair, toBigInt(8));
   await contract.waitForDeployment();
   return { oraclePair, contract };
+};
+
+export type WNIBI = ReturnType<typeof wnibiCaller>;
+export type DeploymentTx = {
+  deploymentTransaction(): ContractTransactionResponse;
+};
+export const deployContractWNIBI = async (): Promise<{
+  contract: WNIBI & DeploymentTx;
+}> => {
+  const { abi, bytecode } = WNIBI_JSON;
+  const factory = new ContractFactory(abi, bytecode, account);
+  const contract = await factory.deploy();
+  await contract.waitForDeployment();
+  return { contract: contract as unknown as WNIBI & DeploymentTx };
 };
 
 export const numberToHex = (num: Number) => {

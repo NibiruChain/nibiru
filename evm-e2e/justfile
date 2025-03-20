@@ -9,12 +9,13 @@ setup:
 
 # Install all dependencies
 install:
+  #!/usr/bin/env bash
   npm install
   npx hardhat typechain
 
 # Runs the E2E tests
-test:
-  npm test
+test *args:
+  npm test {{args}}
 
 # Runs tx receipt tests. Used for testnet quick check.
 test-basic:
@@ -22,7 +23,11 @@ test-basic:
 
 # Format
 fmt: 
-  npm run format
+  npx prettier --write "test/**/*.ts"
+
+# Format (check only)
+fmt-check:
+  npx prettier --check "test/**/*.ts"
 
 gen-types:
   npx hardhat typechain

@@ -1,7 +1,19 @@
 {
   "compilerOptions": {
-    "types": ["bun-types"],
-    "target": "es2020",
-    "moduleResolution": "node"
+    "types": [
+      "bun-types"
+    ],
+    "lib": [
+      "ESNext"
+    ],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true
   }
 }

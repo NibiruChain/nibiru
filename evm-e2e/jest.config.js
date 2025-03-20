@@ -5,5 +5,5 @@ module.exports = {
     },
     testMatch: ['**/test/**/*.test.ts'],
     verbose: true,
-    "maxWorkers": 1
+    maxWorkers: 1,
 };
