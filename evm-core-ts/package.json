@@ -1,7 +1,7 @@
 {
   "name": "@nibiruchain/evm-core",
   "description": "Lightweight Nibiru EVM TypeScript library for type-safe interactions with precompiled contracts, essential constants, and other core utilites.",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -19,7 +19,7 @@
   "dependencies": {},
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
-    "@nibiruchain/solidity": "^0.0.2",
+    "@nibiruchain/solidity": "../x/evm/embeds",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/bun": "latest",
     "ethers": "^6",

@@ -161,10 +161,10 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("transfer amount must be positive")
 	}
 
-	// The "to" argument must be a valid Nibiru address
-	toAddr, err := sdk.AccAddressFromBech32(to)
+	// The "to" argument must be a valid nibi or EVM address
+	toAddr, err := parseToAddr(to)
 	if err != nil {
-		return nil, fmt.Errorf("\"to\" is not a valid address (%s): %w", to, err)
+		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
 	}
 
 	// Caller transfers ERC20 to the EVM module account
@@ -213,7 +213,7 @@ func (p precompileFunToken) sendToBank(
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,
-		toAddr,
+		eth.EthAddrToNibiruAddr(toAddr),
 		sdk.NewCoins(coinToSend),
 	)
 	if err != nil {
