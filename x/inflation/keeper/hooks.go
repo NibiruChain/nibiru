@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/hashicorp/go-metrics"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"

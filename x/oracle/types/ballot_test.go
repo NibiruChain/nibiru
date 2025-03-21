@@ -68,9 +68,9 @@ func TestExchangeRateVotesToMap(t *testing.T) {
 
 func TestToCrossRate(t *testing.T) {
 	data := []struct {
-		base     sdk.Dec
-		quote    sdk.Dec
-		expected sdk.Dec
+		base     math.LegacyDec
+		quote    math.LegacyDec
+		expected math.LegacyDec
 	}{
 		{
 			base:     math.LegacyNewDec(1600),
@@ -132,7 +132,9 @@ func TestPBPower(t *testing.T) {
 	totalPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
-		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
+		validator, err := sk.Validator(ctx, valAccAddrs[i])
+		require.NoError(t, err)
+		power := validator.GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewExchangeRateVote(
 			math.LegacyZeroDec(),
 			asset.Registry.Pair(denoms.ETH, denoms.NUSD),
@@ -168,7 +170,7 @@ func TestPBWeightedMedian(t *testing.T) {
 		inputs      []int64
 		weights     []int64
 		isValidator []bool
-		median      sdk.Dec
+		median      math.LegacyDec
 	}{
 		{
 			// Supermajority one number
@@ -237,7 +239,7 @@ func TestPBStandardDeviation(t *testing.T) {
 		inputs            []float64
 		weights           []int64
 		isValidator       []bool
-		standardDeviation sdk.Dec
+		standardDeviation math.LegacyDec
 	}{
 		{
 			// Supermajority one number

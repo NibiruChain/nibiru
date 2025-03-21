@@ -113,6 +113,12 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (AppModule) IsAppModule() {}
+
 // RegisterInvariants registers the inflation module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
@@ -124,13 +130,14 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // BeginBlock returns the begin blocker for the inflation module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {
+func (am AppModule) BeginBlock(_ sdk.Context) error {
+	return nil
 }
 
 // EndBlock returns the end blocker for the inflation module. It returns no validator
 // updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+func (am AppModule) EndBlock(_ sdk.Context) error {
+	return nil
 }
 
 // InitGenesis performs genesis initialization for the inflation module. It returns
@@ -165,7 +172,7 @@ func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.Weight
 }
 
 // RegisterStoreDecoder registers a decoder for inflation module's types.
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {
 }
 
 // WeightedOperations doesn't return any inflation module operation.

@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -205,7 +206,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+			BankCoin: sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: alice.EthAddr,
 			},
@@ -222,7 +223,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			Sender:               deps.Sender.NibiruAddr.String(),
 			Erc20ContractAddress: funToken.Erc20Addr.String(),
 			ToEthAddr:            alice.EthAddr.String(),
-			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10)),
 		},
 	)
 
@@ -259,11 +260,11 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 
 	// Check 1: module balance
 	moduleBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(10), moduleBalance.Amount)
+	s.Require().Equal(math.NewInt(10), moduleBalance.Amount)
 
 	// Check 2: Sender balance
 	senderBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(90), senderBalance.Amount)
+	s.Require().Equal(math.NewInt(90), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
@@ -275,7 +276,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100)),
+				BankCoin: sdk.NewCoin(evm.EVMBankDenom, math.NewInt(100)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: alice.EthAddr,
 				},
@@ -312,7 +313,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 
 	// Check 2: Sender balance
 	senderBalance = deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(100), senderBalance.Amount)
+	s.Require().Equal(math.NewInt(100), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
 	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
@@ -555,7 +556,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -673,7 +674,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -684,7 +685,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		eth.EthAddrToNibiruAddr(testContractAddr),
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6))),
 	))
 
 	evmObj, _ := deps.NewEVM()
@@ -796,7 +797,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, math.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -888,7 +889,7 @@ func (s *FunTokenFromCoinSuite) fundAndCreateFunToken(deps evmtest.TestDeps, uni
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewCoin(bankDenom, sdk.NewInt(unibiAmount))),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewCoin(bankDenom, math.NewInt(unibiAmount))),
 	))
 
 	s.T().Log("Create FunToken from coin")

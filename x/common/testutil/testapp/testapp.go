@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	tmdb "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
+
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -68,7 +69,7 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 		Height: 1,
 		Time:   time.Now().UTC(),
 	}
-	ctx := nibiru.NewContext(false, blockHeader)
+	ctx := nibiru.NewContext(false)
 
 	// Make sure there's a block proposer on the context.
 	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
@@ -94,8 +95,9 @@ func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
 	maxQueryCount := uint32(10)
-	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
-	valAddrBz := valopers[0].GetOperator().Bytes()
+	// TODO: Handle error
+	valopers, _ := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
+	valAddrBz := valopers[0].GetOperator()
 	return sdk.ConsAddress(valAddrBz)
 }
 
@@ -123,7 +125,7 @@ func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
-	db := tmdb.NewMemDB()
+	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
@@ -150,7 +152,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		panic(err)
 	}
 
-	app.InitChain(abci.RequestInitChain{
+	app.InitChain(&abci.RequestInitChain{
 		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})

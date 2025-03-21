@@ -5,7 +5,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
 
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
@@ -65,7 +65,7 @@ func NewAnteHandlerNonEVM(
 		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
-		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
+		wasmkeeper.NewCountTXDecorator(opts.TXCounterStoreService),
 		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
 		// things safer.
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1915

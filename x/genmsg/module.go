@@ -38,6 +38,12 @@ type AppModule struct {
 
 func (a AppModule) Name() string { return ModuleName }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (a AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (a AppModule) IsAppModule() {}
+
 func (AppModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(new(v1.GenesisState))
 }
