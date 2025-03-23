@@ -8,13 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/depinject"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	tmos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -32,7 +32,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -50,6 +49,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 
 	// force call init() of the geth tracers
@@ -84,10 +84,11 @@ var (
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type NibiruApp struct {
-	*baseapp.BaseApp
+	*runtime.App
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
+	txConfig          client.TxConfig
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -96,14 +97,8 @@ type NibiruApp struct {
 
 	AppKeepers // embed all module keepers
 
-	// the module manager
-	ModuleManager *module.Manager
-
 	// simulation manager
 	sm *module.SimulationManager
-
-	// module configurator
-	configurator module.Configurator
 }
 
 func init() {
@@ -112,6 +107,7 @@ func init() {
 		panic(err)
 	}
 
+	SetPrefixes("nibi")
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
@@ -154,10 +150,6 @@ func NewNibiruApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	overrideWasmVariables()
-	appCodec := encodingConfig.Codec
-	legacyAmino := encodingConfig.Amino
-	interfaceRegistry := encodingConfig.InterfaceRegistry
-	txConfig := encodingConfig.TxConfig
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
 		mp := mempool.NoOpMempool{}
 		app.SetMempool(mp)
@@ -166,24 +158,55 @@ func NewNibiruApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	bApp := baseapp.NewBaseApp(
-		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetVersion(version.Version)
-	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetTxEncoder(txConfig.TxEncoder())
+	var (
+		app        = &NibiruApp{}
+		appBuilder *runtime.AppBuilder
+		appConfig  = depinject.Configs(
+			AppConfig,
+			depinject.Supply(
+				// supply the application options
+				appOpts,
 
-	keys, tkeys, memKeys := initStoreKeys()
-	app := &NibiruApp{
-		BaseApp:           bApp,
-		legacyAmino:       legacyAmino,
-		appCodec:          appCodec,
-		interfaceRegistry: interfaceRegistry,
-		keys:              keys,
-		tkeys:             tkeys,
-		memKeys:           memKeys,
+				// ADVANCED CONFIGURATION
+
+				//
+				// AUTH
+				//
+				// For providing a custom function required in auth to generate custom account types
+				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+				//
+				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+				// For providing a custom a base account type add it below.
+				// By default the auth module uses authtypes.ProtoBaseAccount().
+				//
+				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+
+				//
+				// MINT
+				//
+
+				// For providing a custom inflation function for x/mint add here your
+				// custom function that implements the minttypes.InflationCalculationFn
+				// interface.
+			),
+		)
+	)
+
+	if err := depinject.Inject(appConfig,
+		&appBuilder,
+		&app.appCodec,
+		&app.legacyAmino,
+		&app.interfaceRegistry,
+		&app.AccountKeeper,
+	); err != nil {
+		panic(err)
 	}
 
+	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+
+	app.App.SetTxDecoder(encodingConfig.TxConfig.TxDecoder())
+	// keys, tkeys, memKeys := initStoreKeys()
 	wasmConfig := app.InitKeepers(appOpts)
 
 	// -------------------------- Module Options --------------------------
@@ -207,12 +230,11 @@ func NewNibiruApp(
 	app.initSimulationManager(app.appCodec)
 
 	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
+	// app.MountKVStores(keys)
+	// app.MountTransientStores(tkeys)
+	// app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
@@ -224,7 +246,7 @@ func NewNibiruApp(
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
+		TxCounterStoreKey: app.GetKey(wasmtypes.StoreKey),
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
@@ -253,8 +275,8 @@ func NewNibiruApp(
 	}
 
 	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(err.Error())
+		if err := app.Load(loadLatest); err != nil {
+			panic(err)
 		}
 
 		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
@@ -351,21 +373,30 @@ func (app *NibiruApp) InterfaceRegistry() codectypes.InterfaceRegistry {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetKey(storeKey string) *storetypes.KVStoreKey {
-	return app.keys[storeKey]
+	sk := app.UnsafeFindStoreKey(storeKey)
+	kvStoreKey, ok := sk.(*storetypes.KVStoreKey)
+	if !ok {
+		return nil
+	}
+	return kvStoreKey
 }
 
-// GetTKey returns the TransientStoreKey for the provided store key.
-//
-// NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
-	return app.tkeys[storeKey]
+	sk := app.UnsafeFindStoreKey(storeKey)
+	tStoreKey, ok := sk.(*storetypes.TransientStoreKey)
+	if !ok {
+		return nil
+	}
+	return tStoreKey
 }
 
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
 func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
-	return app.memKeys[storeKey]
+	sk := app.UnsafeFindStoreKey(storeKey)
+	memoryStoreKey, ok := sk.(*storetypes.MemoryStoreKey)
+	if !ok {
+		return nil
+	}
+	return memoryStoreKey
 }
 
 // GetSubspace returns a param subspace for a given module name.

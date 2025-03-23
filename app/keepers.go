@@ -19,7 +19,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -33,6 +32,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -98,7 +98,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
@@ -134,7 +133,7 @@ type AppKeepers struct {
 type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
-	crisisKeeper     crisiskeeper.Keeper
+	crisisKeeper     *crisiskeeper.Keeper
 	upgradeKeeper    upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
 	authzKeeper      authzkeeper.Keeper
@@ -163,7 +162,6 @@ func initStoreKeys() (
 	memKeys map[string]*types.MemoryStoreKey,
 ) {
 	keys = sdk.NewKVStoreKeys(
-		authtypes.StoreKey,
 		banktypes.StoreKey,
 		stakingtypes.StoreKey,
 		distrtypes.StoreKey,
@@ -209,28 +207,35 @@ func (app *NibiruApp) InitKeepers(
 	legacyAmino := app.legacyAmino
 	bApp := app.BaseApp
 
-	keys := app.keys
-	tkeys := app.tkeys
-	memKeys := app.memKeys
-
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	app.RegisterStores(storetypes.NewKVStoreKey(paramstypes.StoreKey))
+	app.RegisterStores(storetypes.NewTransientStoreKey(paramstypes.TStoreKey))
 	app.paramsKeeper = initParamsKeeper(
-		appCodec, legacyAmino, keys[paramstypes.StoreKey],
-		tkeys[paramstypes.TStoreKey],
+		appCodec, legacyAmino, app.GetKey(paramstypes.StoreKey),
+		app.GetTKey(paramstypes.TStoreKey),
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], govModuleAddr)
+	app.RegisterStores(storetypes.NewKVStoreKey(consensusparamtypes.StoreKey))
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, app.GetKey(consensusparamtypes.StoreKey), govModuleAddr)
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
 	   This allows authentication of object-capability permissions for each of
 	   the IBC channels.
 	*/
+	err := app.RegisterStores(storetypes.NewKVStoreKey(capabilitytypes.StoreKey))
+	if err != nil {
+		panic(err)
+	}
+	err = app.RegisterStores(storetypes.NewMemoryStoreKey(capabilitytypes.MemStoreKey))
+	if err != nil {
+		panic(err)
+	}
 	app.capabilityKeeper = capabilitykeeper.NewKeeper(
 		appCodec,
-		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.MemStoreKey],
+		app.GetKey(capabilitytypes.StoreKey),
+		app.GetMemKey(capabilitytypes.MemStoreKey),
 	)
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
@@ -244,22 +249,11 @@ func (app *NibiruApp) InitKeepers(
 
 	// seal capability keeper after scoping modules
 	// app.capabilityKeeper.Seal()
-
-	// TODO: chore(upgrade): Potential breaking change on AccountKeeper due
-	// to ProtoBaseAccount replacement.
-	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec,
-		keys[authtypes.StoreKey],
-		eth.ProtoBaseAccount,
-		maccPerms,
-		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		govModuleAddr,
-	)
-
+	app.RegisterStores(storetypes.NewKVStoreKey(banktypes.ModuleName))
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
 			appCodec,
-			keys[banktypes.StoreKey],
+			app.GetKey(banktypes.StoreKey),
 			app.AccountKeeper,
 			BlockedAddresses(),
 			govModuleAddr,
@@ -267,16 +261,18 @@ func (app *NibiruApp) InitKeepers(
 		StateDB: nil,
 	}
 	app.BankKeeper = nibiruBankKeeper
+	app.RegisterStores(storetypes.NewKVStoreKey(stakingtypes.ModuleName))
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
-		keys[stakingtypes.StoreKey],
+		app.GetKey(stakingtypes.StoreKey),
 		app.AccountKeeper,
 		app.BankKeeper,
 		govModuleAddr,
 	)
+	app.RegisterStores(storetypes.NewKVStoreKey(distrtypes.ModuleName))
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
-		keys[distrtypes.StoreKey],
+		app.GetKey(distrtypes.StoreKey),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -284,17 +280,19 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(crisistypes.ModuleName))
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
-	app.crisisKeeper = *crisiskeeper.NewKeeper(
+	app.crisisKeeper = crisiskeeper.NewKeeper(
 		appCodec,
-		keys[crisistypes.StoreKey],
+		app.GetKey(crisistypes.StoreKey),
 		invCheckPeriod,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
 		govModuleAddr,
 	)
 
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+	app.RegisterStores(storetypes.NewKVStoreKey(feegrant.ModuleName))
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, app.GetKey(feegrant.StoreKey), app.AccountKeeper)
 
 	// get skipUpgradeHeights from the app options
 	skipUpgradeHeights := map[int64]bool{}
@@ -303,22 +301,24 @@ func (app *NibiruApp) InitKeepers(
 	}
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
+	app.RegisterStores(storetypes.NewKVStoreKey(upgradetypes.ModuleName))
 	/*upgradeKeeper must be created before ibcKeeper. */
 	app.upgradeKeeper = *upgradekeeper.NewKeeper(
 		skipUpgradeHeights,
-		keys[upgradetypes.StoreKey],
+		app.GetKey(upgradetypes.StoreKey),
 		appCodec,
 		homePath,
 		app.BaseApp,
 		govModuleAddr,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(slashingtypes.ModuleName))
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.slashingKeeper = slashingkeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
-		keys[slashingtypes.StoreKey],
+		app.GetKey(slashingtypes.StoreKey),
 		app.StakingKeeper,
 		govModuleAddr,
 	)
@@ -327,8 +327,9 @@ func (app *NibiruApp) InitKeepers(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(authzkeeper.StoreKey))
 	app.authzKeeper = authzkeeper.NewKeeper(
-		keys[authzkeeper.StoreKey],
+		app.GetKey(authzkeeper.StoreKey),
 		appCodec,
 		app.BaseApp.MsgServiceRouter(),
 		app.AccountKeeper,
@@ -336,22 +337,26 @@ func (app *NibiruApp) InitKeepers(
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 
+	app.RegisterStores(storetypes.NewKVStoreKey(sudotypes.StoreKey))
 	app.SudoKeeper = keeper.NewKeeper(
-		appCodec, keys[sudotypes.StoreKey],
+		appCodec, app.GetKey(sudotypes.StoreKey),
 	)
 
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
+	app.RegisterStores(storetypes.NewKVStoreKey(oracletypes.StoreKey))
+	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, app.GetKey(oracletypes.StoreKey),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.slashingKeeper,
 		app.SudoKeeper,
 		distrtypes.ModuleName,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(epochstypes.StoreKey))
 	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstypes.StoreKey],
+		appCodec, app.GetKey(epochstypes.StoreKey),
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(inflationtypes.StoreKey))
 	app.InflationKeeper = inflationkeeper.NewKeeper(
-		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		appCodec, app.GetKey(inflationtypes.StoreKey), app.GetSubspace(inflationtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
 	)
 
@@ -362,10 +367,12 @@ func (app *NibiruApp) InitKeepers(
 		),
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(evm.StoreKey))
+	app.RegisterStores(storetypes.NewTransientStoreKey(evm.TransientKey))
 	evmKeeper := evmkeeper.NewKeeper(
 		appCodec,
-		keys[evm.StoreKey],
-		tkeys[evm.TransientKey],
+		app.GetKey(evm.StoreKey),
+		app.GetTKey(evm.TransientKey),
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
 		nibiruBankKeeper,
@@ -376,18 +383,20 @@ func (app *NibiruApp) InitKeepers(
 
 	// ---------------------------------- IBC keepers
 
+	app.RegisterStores(storetypes.NewKVStoreKey(ibcexported.StoreKey))
 	app.ibcKeeper = ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibcexported.StoreKey],
+		app.GetKey(ibcexported.StoreKey),
 		app.GetSubspace(ibcexported.ModuleName),
 		app.StakingKeeper,
 		app.upgradeKeeper,
 		app.ScopedIBCKeeper,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(ibcfeetypes.StoreKey))
 	// IBC Fee Module keeper
 	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey],
+		appCodec, app.GetKey(ibcfeetypes.StoreKey),
 		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
@@ -395,9 +404,10 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(ibctransfertypes.StoreKey))
 	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
-		keys[ibctransfertypes.StoreKey],
+		app.GetKey(ibctransfertypes.StoreKey),
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
@@ -407,8 +417,9 @@ func (app *NibiruApp) InitKeepers(
 		app.ScopedTransferKeeper,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(icacontrollertypes.StoreKey))
 	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
-		appCodec, keys[icacontrollertypes.StoreKey],
+		appCodec, app.GetKey(icacontrollertypes.StoreKey),
 		app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
@@ -417,9 +428,10 @@ func (app *NibiruApp) InitKeepers(
 		app.MsgServiceRouter(),
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(icahosttypes.StoreKey))
 	app.icaHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
-		keys[icahosttypes.StoreKey],
+		app.GetKey(icahosttypes.StoreKey),
 		app.GetSubspace(icahosttypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
@@ -432,7 +444,7 @@ func (app *NibiruApp) InitKeepers(
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err = wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic("error while reading wasm config: " + err.Error())
 	}
@@ -463,9 +475,10 @@ func (app *NibiruApp) InitKeepers(
 		PortSource:       app.ibcTransferKeeper,
 	}
 	app.WasmMsgHandlerArgs = wmha
+	app.RegisterStores(storetypes.NewKVStoreKey(wasmtypes.StoreKey))
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasmtypes.StoreKey],
+		app.GetKey(wasmtypes.StoreKey),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -484,18 +497,20 @@ func (app *NibiruApp) InitKeepers(
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(ibcwasmtypes.StoreKey))
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
 		appCodec,
-		keys[ibcwasmtypes.StoreKey],
+		app.GetKey(ibcwasmtypes.StoreKey),
 		app.ibcKeeper.ClientKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmVM,
 		app.GRPCQueryRouter(),
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(devgastypes.StoreKey))
 	// DevGas uses WasmKeeper
 	app.DevGasKeeper = devgaskeeper.NewKeeper(
-		keys[devgastypes.StoreKey],
+		app.GetKey(devgastypes.StoreKey),
 		appCodec,
 		app.BankKeeper,
 		app.WasmKeeper,
@@ -504,8 +519,9 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
+	app.RegisterStores(storetypes.NewKVStoreKey(tokenfactorytypes.StoreKey))
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		keys[tokenfactorytypes.StoreKey],
+		app.GetKey(tokenfactorytypes.StoreKey),
 		appCodec,
 		app.BankKeeper,
 		app.AccountKeeper,
@@ -515,10 +531,11 @@ func (app *NibiruApp) InitKeepers(
 
 	// register the proposal types
 
+	app.RegisterStores(storetypes.NewKVStoreKey(evidencetypes.StoreKey))
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
 	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], app.StakingKeeper,
+		appCodec, app.GetKey(evidencetypes.StoreKey), app.StakingKeeper,
 		app.slashingKeeper,
 	)
 
@@ -597,9 +614,10 @@ func (app *NibiruApp) InitKeepers(
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
 	govConfig := govtypes.DefaultConfig()
+	app.RegisterStores(storetypes.NewKVStoreKey(govtypes.StoreKey))
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
-		keys[govtypes.StoreKey],
+		app.GetKey(govtypes.StoreKey),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -628,7 +646,6 @@ func (app *NibiruApp) initAppModules(
 			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -670,7 +687,7 @@ func (app *NibiruApp) initAppModules(
 			app.TokenFactoryKeeper, app.AccountKeeper,
 		),
 
-		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+		crisis.NewAppModule(app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	}
 }
 
@@ -736,6 +753,8 @@ func orderedModuleNames() []string {
 		devgastypes.ModuleName,
 		tokenfactorytypes.ModuleName,
 
+		consensustypes.ModuleName,
+
 		// Everything else should be before genmsg
 		genmsg.ModuleName,
 	}
@@ -761,23 +780,14 @@ func (app *NibiruApp) initModuleManager(
 	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
-	app.ModuleManager = module.NewManager(
-		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
-	)
+	modules := app.initAppModules(encodingConfig, skipGenesisInvariants)
 
-	orderedModules := orderedModuleNames()
-	app.ModuleManager.SetOrderBeginBlockers(orderedModules...)
-	app.ModuleManager.SetOrderEndBlockers(orderedModules...)
-	app.ModuleManager.SetOrderInitGenesis(orderedModules...)
-	app.ModuleManager.SetOrderExportGenesis(orderedModules...)
+	app.RegisterModules(modules...)
 
 	// Uncomment if you want to set a custom migration order here.
 	// app.mm.SetOrderMigrations(custom order)
 
-	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
-	app.configurator = module.NewConfigurator(
-		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.ModuleManager.RegisterServices(app.configurator)
+	app.ModuleManager.RegisterInvariants(app.crisisKeeper)
 
 	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57
 	for _, subspace := range app.paramsKeeper.GetSubspaces() {
@@ -872,6 +882,7 @@ func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey,
 ) paramskeeper.Keeper {
+
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)

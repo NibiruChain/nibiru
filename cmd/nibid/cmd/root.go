@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/NibiruChain/nibiru/v2/app/codec"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
@@ -29,6 +30,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
@@ -38,7 +41,15 @@ import (
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
-	app.SetPrefixes(appconst.AccountAddressPrefix)
+	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
+	tempApp := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, encodingConfig, simtestutil.NewAppOptionsWithFlagHome(app.DefaultNodeHome))
+	// encodingConfig := app.MakeEncodingConfig()
+	encodingConfig = codec.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.GetTxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
