@@ -150,8 +150,22 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	// not replicate if you do not need to test core IBC or light clients.
 	_ = app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
 
-	// seal capability keeper after scoping modules
-	// app.capabilityKeeper.Seal()
+	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+
+	/* Applications that wish to enforce statically created ScopedKeepers should
+	call `Seal` after creating their scoped modules in `NewApp` with
+	`capabilityKeeper.ScopeToModule`.
+
+	Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
+	keeper such that all persistent capabilities are loaded in-memory and prevent
+	any further modules from creating scoped sub-keepers.
+
+	NOTE: This must be done during creation of baseapp rather than in InitChain so
+	that in-memory capabilities get regenerated on app restart.
+	Note that since this reads from the store, we can only perform the seal
+	when `loadLatest` is set to true.
+	*/
+	app.capabilityKeeper.Seal()
 
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
@@ -325,8 +339,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
 	)
-
-	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)

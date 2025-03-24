@@ -16,7 +16,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	tmos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -210,6 +210,7 @@ type NibiruApp struct {
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
+	// TODO(k-yang): remove once depinject is fully integrated
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
@@ -373,10 +374,7 @@ func NewNibiruApp(
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 
-	// -------------------------- Module Options --------------------------
-
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
+	// register non-depinject modules
 	app.RegisterModules(
 		// core modules
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
@@ -418,25 +416,49 @@ func NewNibiruApp(
 		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
+	// load state streaming if enabled
+	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
+		logger.Error("failed to load state streaming", "err", err)
+		os.Exit(1)
+	}
+
+	/****  Module Options ****/
+
 	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 
 	app.setupUpgrades()
-	// NOTE: Any module instantiated in the module manager that is later modified
-	// must be passed by reference here.
 
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
 	overrideModules := map[string]module.AppModuleSimulation{
 		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 	}
 	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
+
 	app.sm.RegisterStoreDecoders()
 
-	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
+	// A custom InitChainer can be set if extra pre-init-genesis logic is required.
+	// By default, when using app wiring enabled module, this is not required.
+	// For instance, the upgrade module will set automatically the module version map in its init genesis thanks to app wiring.
+	// However, when registering a module manually (i.e. that does not support app wiring), the module version map
+	// must be set manually as follow. The upgrade module will de-duplicate the module version map.
+	//
+	// app.SetInitChainer(func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	// 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	// 	return app.App.InitChainer(ctx, req)
+	// })
+
+	if err := app.Load(loadLatest); err != nil {
+		panic(err)
+	}
+
+	// initialize custom antehandler
+	app.SetAnteHandler(NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
 			AccountKeeper:          app.AccountKeeper,
 			BankKeeper:             app.BankKeeper,
@@ -454,11 +476,9 @@ func NewNibiruApp(
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
-	})
+	}))
 
-	app.SetAnteHandler(anteHandler)
-	app.SetEndBlocker(app.EndBlocker)
-
+	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
 		if err := snapshotManager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(
@@ -475,32 +495,10 @@ func NewNibiruApp(
 	}
 
 	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(err.Error())
-		}
-
-		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
-
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+		if err := ibcwasmkeeper.InitializePinnedCodes(app.BaseApp.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
-
-		/* Applications that wish to enforce statically created ScopedKeepers should
-		call `Seal` after creating their scoped modules in `NewApp` with
-		`capabilityKeeper.ScopeToModule`.
-
-
-		Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
-		keeper such that all persistent capabilities are loaded in-memory and prevent
-		any further modules from creating scoped sub-keepers.
-
-		NOTE: This must be done during creation of baseapp rather than in InitChain so
-		that in-memory capabilities get regenerated on app restart.
-		Note that since this reads from the store, we can only perform the seal
-		when `loadLatest` is set to true.
-		*/
-		app.capabilityKeeper.Seal()
 	}
 
 	return app
@@ -588,6 +586,17 @@ func (app *NibiruApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 // NOTE: This is solely used for testing purposes.
 func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
+}
+
+func (app *NibiruApp) kvStoreKeys() map[string]*storetypes.KVStoreKey {
+	keys := make(map[string]*storetypes.KVStoreKey)
+	for _, k := range app.GetStoreKeys() {
+		if kv, ok := k.(*storetypes.KVStoreKey); ok {
+			keys[kv.Name()] = kv
+		}
+	}
+
+	return keys
 }
 
 // GetSubspace returns a param subspace for a given module name.
