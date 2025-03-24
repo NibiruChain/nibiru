@@ -159,6 +159,7 @@ func NewNibiruApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
+
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
 		mp := mempool.NoOpMempool{}
 		app.SetMempool(mp)
@@ -166,7 +167,6 @@ func NewNibiruApp(
 		app.SetPrepareProposal(handler.PrepareProposalHandler())
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
-
 	bApp := baseapp.NewBaseApp(
 		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -185,7 +185,7 @@ func NewNibiruApp(
 		memKeys:           memKeys,
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	wasmConfig := app.initKeepers(appOpts)
 
 	// -------------------------- Module Options --------------------------
 

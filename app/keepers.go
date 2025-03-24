@@ -202,7 +202,7 @@ func initStoreKeys() (
 	return keys, tkeys, memKeys
 }
 
-func (app *NibiruApp) InitKeepers(
+func (app *NibiruApp) initKeepers(
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	appCodec := app.appCodec
