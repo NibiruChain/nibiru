@@ -105,7 +105,8 @@ Args:
 	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
-	a := appCreator{encodingConfig}
+	a := appCreator{}
+
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
@@ -214,9 +215,7 @@ func txCommand() *cobra.Command {
 	return cmd
 }
 
-type appCreator struct {
-	encCfg app.EncodingConfig
-}
+type appCreator struct{}
 
 // newApp is an appCreator
 func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
@@ -224,7 +223,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	return app.NewNibiruApp(
 		logger, db, traceStore, true,
-		a.encCfg,
 		appOpts,
 		baseappOptions...,
 	)
@@ -249,7 +247,6 @@ func (a appCreator) appExport(
 		db,
 		traceStore,
 		loadLatestHeight,
-		a.encCfg,
 		appOpts,
 	)
 	if height != -1 {

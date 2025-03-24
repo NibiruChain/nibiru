@@ -268,7 +268,6 @@ func NewNibiruApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	loadLatest bool,
-	encodingConfig EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
@@ -418,6 +417,10 @@ func NewNibiruApp(
 	); err != nil {
 		panic(err)
 	}
+
+	// make sure to get the ibc tendermint client interface types
+	ibctm.AppModuleBasic{}.RegisterInterfaces(app.interfaceRegistry)
+	ibctm.AppModuleBasic{}.RegisterLegacyAminoCodec(app.legacyAmino)
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
