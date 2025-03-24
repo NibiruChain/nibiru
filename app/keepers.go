@@ -16,7 +16,6 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -32,7 +31,6 @@ import (
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -55,7 +53,6 @@ import (
 	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
 	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
@@ -79,7 +76,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
@@ -516,73 +512,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
 
 	return wasmConfig
-}
-
-// orderedModuleNames: Module names ordered for the begin and end block hooks
-func orderedModuleNames() []string {
-	return []string{
-		// --------------------------------------------------------------------
-		// Cosmos-SDK modules
-		//
-		// NOTE: (BeginBlocker requirement): upgrade module must occur first
-		upgradetypes.ModuleName,
-
-		// NOTE (InitGenesis requirement): Capability module must occur
-		//   first so that it can initialize any capabilities, allowing other
-		//   modules that want to create or claim capabilities afterwards in
-		//   "InitChain" safely.
-		// NOTE (BeginBlocker requirement): Capability module's beginblocker
-		//   must come before any modules using capabilities (e.g. IBC)
-		capabilitytypes.ModuleName,
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		// NOTE (BeginBlocker requirement): During begin block, x/slashing must
-		//   come after x/distribution so that there won't be anything left over
-		//   in the validator pool. This makes sure that "CanWithdrawInvariant"
-		//   remains invariant.
-		distrtypes.ModuleName,
-		// NOTE (BeginBlocker requirement): staking module is required if
-		//   HistoricalEntries param > 0
-		stakingtypes.ModuleName,
-		slashingtypes.ModuleName,
-		crisistypes.ModuleName,
-		govtypes.ModuleName,
-		genutiltypes.ModuleName,
-		// NOTE (SetOrderInitGenesis requirement): genutils must occur after
-		//   staking so that pools will be properly initialized with tokens from
-		//   genesis accounts.
-		evidencetypes.ModuleName,
-		authz.ModuleName,
-		feegrant.ModuleName,
-		paramstypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		// Native x/ Modules
-		epochstypes.ModuleName,
-		oracletypes.ModuleName,
-		inflationtypes.ModuleName,
-		sudotypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		// IBC modules
-		ibctransfertypes.ModuleName,
-		ibcexported.ModuleName,
-		ibcfeetypes.ModuleName,
-		icatypes.ModuleName,
-		ibcwasmtypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		evm.ModuleName,
-
-		// --------------------------------------------------------------------
-		// CosmWasm
-		wasmtypes.ModuleName,
-		devgastypes.ModuleName,
-		tokenfactorytypes.ModuleName,
-
-		// Everything else should be before genmsg
-		genmsg.ModuleName,
-	}
 }
 
 // BlockedAddresses returns all the app's blocked account addresses.
