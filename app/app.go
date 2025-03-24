@@ -41,6 +41,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
@@ -56,6 +57,7 @@ import (
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -63,6 +65,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
@@ -374,8 +377,48 @@ func NewNibiruApp(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
-	app.registerNonDepinjectModules(app.txConfig, skipGenesisInvariants)
+	app.RegisterModules(
+		// core modules
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
+		auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
+		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
+		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
+		staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		upgrade.NewAppModule(&app.upgradeKeeper),
+		params.NewAppModule(app.paramsKeeper),
+		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+
+		// Nibiru modules
+		oracle.NewAppModule(app.appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
+		epochs.NewAppModule(app.appCodec, app.EpochsKeeper),
+		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
+		sudo.NewAppModule(app.appCodec, app.SudoKeeper),
+		genmsg.NewAppModule(app.MsgServiceRouter()),
+
+		// ibc
+		evidence.NewAppModule(app.evidenceKeeper),
+		ibc.NewAppModule(app.ibcKeeper),
+		ibctransfer.NewAppModule(app.ibcTransferKeeper),
+		ibcfee.NewAppModule(app.ibcFeeKeeper),
+		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
+		ibcwasm.NewAppModule(app.WasmClientKeeper),
+
+		// evm
+		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
+
+		// wasm
+		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper, app.GetSubspace(devgastypes.ModuleName)),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
+
+		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+	)
+
+	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 
 	app.setupUpgrades()
 	// NOTE: Any module instantiated in the module manager that is later modified

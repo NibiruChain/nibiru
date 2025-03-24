@@ -9,42 +9,30 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
-	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -52,19 +40,15 @@ import (
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
@@ -78,7 +62,6 @@ import (
 	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
@@ -89,27 +72,20 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
-	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -620,57 +596,6 @@ func BlockedAddresses() map[string]bool {
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 
 	return modAccAddrs
-}
-
-// registerNonDepinjectModules Load all the modules and stores them in the module manager
-// NOTE: Any module instantiated in the module manager that is later modified
-// must be passed by reference here.
-func (app *NibiruApp) registerNonDepinjectModules(
-	txConfig client.TxConfig,
-	skipGenesisInvariants bool,
-) {
-	app.RegisterModules(
-		// core modules
-		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, txConfig),
-		auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
-		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
-		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
-		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
-		staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
-		upgrade.NewAppModule(&app.upgradeKeeper),
-		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-
-		// Nibiru modules
-		oracle.NewAppModule(app.appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
-		epochs.NewAppModule(app.appCodec, app.EpochsKeeper),
-		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
-		sudo.NewAppModule(app.appCodec, app.SudoKeeper),
-		genmsg.NewAppModule(app.MsgServiceRouter()),
-
-		// ibc
-		evidence.NewAppModule(app.evidenceKeeper),
-		ibc.NewAppModule(app.ibcKeeper),
-		ibctransfer.NewAppModule(app.ibcTransferKeeper),
-		ibcfee.NewAppModule(app.ibcFeeKeeper),
-		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
-		ibcwasm.NewAppModule(app.WasmClientKeeper),
-
-		// evm
-		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
-
-		// wasm
-		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
-		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper, app.GetSubspace(devgastypes.ModuleName)),
-		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
-
-		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
-	)
-
-	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 }
 
 func initParamsKeeper(
