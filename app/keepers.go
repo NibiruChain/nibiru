@@ -90,7 +90,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -149,7 +148,7 @@ type privateKeepers struct {
 	icaHostKeeper       icahostkeeper.Keeper
 }
 
-func (app *NibiruApp) initNonDepinjectKeepers(
+func (app *NibiruApp) initKeepers(
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
@@ -673,28 +672,6 @@ func (app *NibiruApp) registerNonDepinjectModules(
 	)
 
 	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
-}
-
-func ModuleAccPerms() map[string][]string {
-	return map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		oracletypes.ModuleName:         {},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         {},
-		icatypes.ModuleName:            {},
-
-		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
-		epochstypes.ModuleName:           {},
-		sudotypes.ModuleName:             {},
-		common.TreasuryPoolModuleAccount: {},
-		wasmtypes.ModuleName:             {authtypes.Burner},
-		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-	}
 }
 
 func initParamsKeeper(
