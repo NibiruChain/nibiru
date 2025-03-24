@@ -202,8 +202,7 @@ func FundFeeCollector(
 // addresses rather than cosmos ones (for Gaia).
 func EnsureNibiruPrefix() {
 	csdkConfig := sdk.GetConfig()
-	nibiruPrefix := appconst.AccountAddressPrefix
-	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
-		app.SetPrefixes(nibiruPrefix)
+	if csdkConfig.GetBech32AccountAddrPrefix() != appconst.AccountAddressPrefix {
+		app.SetPrefixes(appconst.AccountAddressPrefix)
 	}
 }

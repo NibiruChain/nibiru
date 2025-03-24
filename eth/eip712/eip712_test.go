@@ -82,7 +82,6 @@ func (suite *EIP712TestSuite) SetupTest() {
 	suite.clientCtx = client.Context{}.WithTxConfig(suite.config.TxConfig)
 	suite.denom = evm.EVMBankDenom
 
-	sdk.GetConfig().SetBech32PrefixForAccount(appconst.AccountAddressPrefix, "")
 	eip712.SetEncodingConfig(suite.config)
 }
 

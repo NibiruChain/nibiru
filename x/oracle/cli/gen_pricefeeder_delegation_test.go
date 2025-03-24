@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 
@@ -14,8 +12,6 @@ import (
 )
 
 func TestAddGenesisPricefeederDelegation(t *testing.T) {
-	app.SetPrefixes(appconst.AccountAddressPrefix)
-
 	tests := []struct {
 		name        string
 		validator   string
