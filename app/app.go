@@ -113,6 +113,8 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
+
+	overrideWasmVariables()
 }
 
 // GetWasmOpts build wasm options
@@ -153,7 +155,6 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
-	overrideWasmVariables()
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
