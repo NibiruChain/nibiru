@@ -15,7 +15,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
-	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding/codec"
+	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding"
 )
 
 var TestCodec amino.Codec
