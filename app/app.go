@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/depinject"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
@@ -32,15 +34,53 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
+	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
@@ -50,6 +90,22 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/genmsg"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -67,7 +123,46 @@ var (
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
-	ModuleBasics = ModuleBasicManager()
+	ModuleBasics = module.NewBasicManager(
+		auth.AppModuleBasic{},
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		BankModule{},
+		capability.AppModuleBasic{},
+		StakingModule{},
+		distr.AppModuleBasic{},
+		NewGovModuleBasic(
+			paramsclient.ProposalHandler,
+			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
+		),
+		params.AppModuleBasic{},
+		CrisisModule{},
+		slashing.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		groupmodule.AppModuleBasic{},
+		// ibc 'AppModuleBasic's
+		ibc.AppModuleBasic{},
+		ibctransfer.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+		ica.AppModuleBasic{},
+		ibcwasm.AppModuleBasic{},
+		// native x/
+		evmmodule.AppModuleBasic{},
+		oracle.AppModuleBasic{},
+		epochs.AppModuleBasic{},
+		inflation.AppModuleBasic{},
+		sudo.AppModuleBasic{},
+		wasm.AppModuleBasic{},
+		devgas.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		genmsg.AppModule{},
+	)
 
 	// module account permissions
 	maccPerms = ModuleAccPerms()
@@ -83,9 +178,11 @@ var (
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type NibiruApp struct {
-	*baseapp.BaseApp
+	*runtime.App
+
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
+	txConfig          client.TxConfig
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
@@ -95,14 +192,8 @@ type NibiruApp struct {
 
 	AppKeepers // embed all module keepers
 
-	// the module manager
-	ModuleManager *module.Manager
-
 	// simulation manager
 	sm *module.SimulationManager
-
-	// module configurator
-	configurator module.Configurator
 }
 
 func init() {
@@ -154,11 +245,6 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
-	appCodec := encodingConfig.Codec
-	legacyAmino := encodingConfig.Amino
-	interfaceRegistry := encodingConfig.InterfaceRegistry
-	txConfig := encodingConfig.TxConfig
-
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
 		mp := mempool.NoOpMempool{}
 		app.SetMempool(mp)
@@ -166,31 +252,109 @@ func NewNibiruApp(
 		app.SetPrepareProposal(handler.PrepareProposalHandler())
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
-	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetVersion(version.Version)
-	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetTxEncoder(txConfig.TxEncoder())
 
-	keys, tkeys, memKeys := initStoreKeys()
-	app := &NibiruApp{
-		BaseApp:           bApp,
-		legacyAmino:       legacyAmino,
-		appCodec:          appCodec,
-		interfaceRegistry: interfaceRegistry,
-		keys:              keys,
-		tkeys:             tkeys,
-		memKeys:           memKeys,
+	var (
+		app        = &NibiruApp{}
+		appBuilder *runtime.AppBuilder
+		appConfig  = depinject.Configs(
+			AppConfig,
+			depinject.Supply(
+				// supply the application options
+				appOpts,
+
+				// ADVANCED CONFIGURATION
+
+				//
+				// AUTH
+				//
+				// For providing a custom function required in auth to generate custom account types
+				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+				//
+				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+				// For providing a custom a base account type add it below.
+				// By default the auth module uses authtypes.ProtoBaseAccount().
+				//
+				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+
+				//
+				// MINT
+				//
+
+				// For providing a custom inflation function for x/mint add here your
+				// custom function that implements the minttypes.InflationCalculationFn
+				// interface.
+			),
+		)
+	)
+
+	if err := depinject.Inject(appConfig,
+		&appBuilder,
+		&app.appCodec,
+		&app.legacyAmino,
+		&app.txConfig,
+		&app.interfaceRegistry,
+		&app.AccountKeeper,
+	); err != nil {
+		panic(err)
+	}
+	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+
+	// init non-depinject keys
+	app.keys = sdk.NewKVStoreKeys(
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		distrtypes.StoreKey,
+		slashingtypes.StoreKey,
+		govtypes.StoreKey,
+		paramstypes.StoreKey,
+		consensusparamtypes.StoreKey,
+		upgradetypes.StoreKey,
+		feegrant.StoreKey,
+		evidencetypes.StoreKey,
+		capabilitytypes.StoreKey,
+		authzkeeper.StoreKey,
+		crisistypes.StoreKey,
+
+		// ibc keys
+		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
+		ibcexported.StoreKey,
+		icahosttypes.StoreKey,
+		icacontrollertypes.StoreKey,
+		ibcwasmtypes.StoreKey,
+
+		// nibiru x/ keys
+		oracletypes.StoreKey,
+		epochstypes.StoreKey,
+		inflationtypes.StoreKey,
+		sudotypes.StoreKey,
+		wasmtypes.StoreKey,
+		devgastypes.StoreKey,
+		tokenfactorytypes.StoreKey,
+
+		evm.StoreKey,
+	)
+	app.tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
+	app.memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	for _, k := range app.keys {
+		app.RegisterStores(k)
+	}
+	for _, k := range app.tkeys {
+		app.RegisterStores(k)
+	}
+	for _, k := range app.memKeys {
+		app.RegisterStores(k)
 	}
 
-	wasmConfig := app.initKeepers(appOpts)
+	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 
 	// -------------------------- Module Options --------------------------
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
-	app.initModuleManager(txConfig, skipGenesisInvariants)
+	app.registerNonDepinjectModules(app.txConfig, skipGenesisInvariants)
 
 	app.setupUpgrades()
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -201,11 +365,6 @@ func NewNibiruApp(
 
 	app.initSimulationManager(app.appCodec)
 
-	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
-
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -214,12 +373,12 @@ func NewNibiruApp(
 			AccountKeeper:          app.AccountKeeper,
 			BankKeeper:             app.BankKeeper,
 			FeegrantKeeper:         app.FeeGrantKeeper,
-			SignModeHandler:        txConfig.SignModeHandler(),
+			SignModeHandler:        app.txConfig.SignModeHandler(),
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
+		TxCounterStoreKey: app.keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
