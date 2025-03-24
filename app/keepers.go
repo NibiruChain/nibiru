@@ -51,7 +51,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -758,29 +757,8 @@ func (app *NibiruApp) initModuleManager(
 	// app.mm.SetOrderMigrations(custom order)
 
 	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
-	app.configurator = module.NewConfigurator(
-		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.configurator = module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.ModuleManager.RegisterServices(app.configurator)
-
-	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57
-	for _, subspace := range app.paramsKeeper.GetSubspaces() {
-		switch subspace.Name() {
-		case authtypes.ModuleName:
-			subspace.WithKeyTable(authtypes.ParamKeyTable()) //nolint:staticcheck
-		case banktypes.ModuleName:
-			subspace.WithKeyTable(banktypes.ParamKeyTable()) //nolint:staticcheck
-		case stakingtypes.ModuleName:
-			subspace.WithKeyTable(stakingtypes.ParamKeyTable()) //nolint:staticcheck
-		case distrtypes.ModuleName:
-			subspace.WithKeyTable(distrtypes.ParamKeyTable()) //nolint:staticcheck
-		case slashingtypes.ModuleName:
-			subspace.WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
-		case govtypes.ModuleName:
-			subspace.WithKeyTable(govv1types.ParamKeyTable()) //nolint:staticcheck
-		case crisistypes.ModuleName:
-			subspace.WithKeyTable(crisistypes.ParamKeyTable()) //nolint:staticcheck
-		}
-	}
 }
 
 // ModuleBasicManager The app's collection of module.AppModuleBasic
