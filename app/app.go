@@ -36,6 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -383,7 +384,11 @@ func NewNibiruApp(
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
-	app.initSimulationManager(app.appCodec)
+	overrideModules := map[string]module.AppModuleSimulation{
+		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+	}
+	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
+	app.sm.RegisterStoreDecoders()
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)

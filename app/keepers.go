@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -148,7 +147,7 @@ type privateKeepers struct {
 	icaHostKeeper       icahostkeeper.Keeper
 }
 
-func (app *NibiruApp) initKeepers(
+func (app *NibiruApp) initNonDepinjectKeepers(
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
@@ -701,15 +700,4 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
-}
-
-func (app *NibiruApp) initSimulationManager(
-	appCodec codec.Codec,
-) {
-	overrideModules := map[string]module.AppModuleSimulation{
-		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
-	}
-	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
-
-	app.sm.RegisterStoreDecoders()
 }
