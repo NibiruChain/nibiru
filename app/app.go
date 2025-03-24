@@ -492,15 +492,15 @@ func NewNibiruApp(
 		}
 	}
 
+	if err := app.Load(loadLatest); err != nil {
+		panic(err)
+	}
+
 	if loadLatest {
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := ibcwasmkeeper.InitializePinnedCodes(app.BaseApp.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
-	}
-
-	if err := app.Load(loadLatest); err != nil {
-		panic(err)
 	}
 
 	return app
