@@ -222,6 +222,8 @@ type NibiruApp struct {
 }
 
 func init() {
+	SetPrefixes("nibi")
+
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -453,10 +455,6 @@ func NewNibiruApp(
 	// 	return app.App.InitChainer(ctx, req)
 	// })
 
-	if err := app.Load(loadLatest); err != nil {
-		panic(err)
-	}
-
 	// initialize custom antehandler
 	app.SetAnteHandler(NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
@@ -499,6 +497,10 @@ func NewNibiruApp(
 		if err := ibcwasmkeeper.InitializePinnedCodes(app.BaseApp.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
+	}
+
+	if err := app.Load(loadLatest); err != nil {
+		panic(err)
 	}
 
 	return app
