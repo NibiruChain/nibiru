@@ -377,10 +377,9 @@ func NewNibiruApp(
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 
 	// register non-depinject modules
-	app.RegisterModules(
+	if err := app.RegisterModules(
 		// core modules
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
-		auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -416,7 +415,9 @@ func NewNibiruApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 
 		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
-	)
+	); err != nil {
+		panic(err)
+	}
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
