@@ -190,12 +190,10 @@ func NewNibiruApp(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(
-		appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
-
-	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	app.setupUpgrades()
 	// NOTE: Any module instantiated in the module manager that is later modified
