@@ -26,7 +26,6 @@ type AnteTestSuite struct {
 }
 
 func TestAnteSuite(t *testing.T) {
-	testapp.EnsureNibiruPrefix()
 	suite.Run(t, new(AnteTestSuite))
 }
 

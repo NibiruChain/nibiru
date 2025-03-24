@@ -19,10 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-func init() {
-	testapp.EnsureNibiruPrefix()
-}
-
 func setup() (*app.NibiruApp, sdk.Context) {
 	return testapp.NewNibiruTestAppAndContextAtTime(time.Now().UTC())
 }

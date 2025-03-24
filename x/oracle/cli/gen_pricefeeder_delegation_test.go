@@ -4,14 +4,19 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAddGenesisPricefeederDelegation(t *testing.T) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("nibi", "nibipub")
+	config.SetBech32PrefixForValidator("nibivaloper", "nibivaloperpub")
+	config.SetBech32PrefixForConsensusNode("nivivalcons", "nibivalconspub")
 	tests := []struct {
 		name        string
 		validator   string

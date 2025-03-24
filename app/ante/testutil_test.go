@@ -36,8 +36,6 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	// Set up base app and ctx
-	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
 	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"

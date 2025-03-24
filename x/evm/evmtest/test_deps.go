@@ -27,7 +27,6 @@ type TestDeps struct {
 }
 
 func NewTestDeps() TestDeps {
-	testapp.EnsureNibiruPrefix()
 	encCfg := app.MakeEncodingConfig()
 	evm.RegisterInterfaces(encCfg.InterfaceRegistry)
 	eth.RegisterInterfaces(encCfg.InterfaceRegistry)

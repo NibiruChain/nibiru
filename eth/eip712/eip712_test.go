@@ -27,8 +27,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 
-	"github.com/NibiruChain/nibiru/v2/app"
-
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -78,7 +76,7 @@ func TestEIP712TestSuite(t *testing.T) {
 }
 
 func (suite *EIP712TestSuite) SetupTest() {
-	suite.encCfg = encoding.MakeConfig(app.ModuleBasics)
+	suite.encCfg = encoding.MakeConfig()
 	suite.clientCtx = client.Context{}.WithTxConfig(suite.encCfg.TxConfig)
 	suite.denom = evm.EVMBankDenom
 

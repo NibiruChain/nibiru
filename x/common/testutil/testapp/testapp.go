@@ -25,16 +25,9 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
-func init() {
-	EnsureNibiruPrefix()
-}
-
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	// Prevent "invalid Bech32 prefix; expected nibi, got ...." error
-	EnsureNibiruPrefix()
-
 	// Set up base app
 	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Codec)
@@ -125,8 +118,6 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	// encoding := app.MakeEncodingConfig()
-	// cryptocodec.RegisterInterfaces(encoding.InterfaceRegistry)
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
@@ -195,14 +186,4 @@ func FundFeeCollector(
 		auth.FeeCollectorName,
 		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, amount)),
 	)
-}
-
-// EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
-// the default from the Cosmos-SDK, guaranteeing that tests will work with nibi
-// addresses rather than cosmos ones (for Gaia).
-func EnsureNibiruPrefix() {
-	csdkConfig := sdk.GetConfig()
-	if csdkConfig.GetBech32AccountAddrPrefix() != appconst.AccountAddressPrefix {
-		app.SetPrefixes(appconst.AccountAddressPrefix)
-	}
 }

@@ -96,6 +96,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -157,6 +158,7 @@ var (
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -166,7 +168,6 @@ var (
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
 
@@ -421,6 +422,10 @@ func NewNibiruApp(
 	// make sure to get the ibc tendermint client interface types
 	ibctm.AppModuleBasic{}.RegisterInterfaces(app.interfaceRegistry)
 	ibctm.AppModuleBasic{}.RegisterLegacyAminoCodec(app.legacyAmino)
+
+	// make sure to register the eth crypto codec types
+	cryptocodec.RegisterInterfaces(app.interfaceRegistry)
+	cryptocodec.RegisterCrypto(app.legacyAmino)
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {

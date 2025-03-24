@@ -15,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -34,7 +33,6 @@ func (s *TestSuite) SetupSuite() {
 }
 
 func (s *TestSuite) SetupTest() {
-	testapp.EnsureNibiruPrefix()
 	homeDir := s.T().TempDir()
 
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())

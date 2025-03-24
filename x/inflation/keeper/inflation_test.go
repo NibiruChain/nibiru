@@ -20,10 +20,6 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
-func init() {
-	testapp.EnsureNibiruPrefix()
-}
-
 func TestMintAndAllocateInflation(t *testing.T) {
 	testCases := []struct {
 		name                             string
