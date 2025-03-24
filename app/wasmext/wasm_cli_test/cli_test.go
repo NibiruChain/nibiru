@@ -43,7 +43,7 @@ func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	encodingConfig := app.MakeEncodingConfig()
-	genesisState := genesis.NewTestGenesisState(encodingConfig)
+	genesisState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)

@@ -68,7 +68,7 @@ func TestSuite_RunAll(t *testing.T) {
 func (s *NodeSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	homeDir := s.T().TempDir()
 	s.cfg = testnetwork.BuildNetworkConfig(genState)
 	network, err := testnetwork.New(s.T(), homeDir, s.cfg)

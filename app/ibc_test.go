@@ -32,7 +32,7 @@ func SetupNibiruTestingApp() (
 	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
 
 	// Create genesis state
-	genesisState := app.NewDefaultGenesisState(nibiruApp.AppCodec())
+	genesisState := app.ModuleBasics.DefaultGenesis(nibiruApp.AppCodec())
 	testapp.SetDefaultSudoGenesis(genesisState)
 
 	return nibiruApp, genesisState

@@ -107,7 +107,7 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)
 	s.root = Account{
 		privKey:    rootPrivKey,

@@ -45,7 +45,7 @@ func (s *TestSuite) TestTokenFactory() {
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 	encodingConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState(encodingConfig)
+	genState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)

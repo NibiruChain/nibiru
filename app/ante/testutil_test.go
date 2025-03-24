@@ -37,7 +37,7 @@ type AnteTestSuite struct {
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
 	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
+	suite.app = testapp.NewNibiruTestApp(app.ModuleBasics.DefaultGenesis(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,

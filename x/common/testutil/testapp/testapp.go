@@ -30,7 +30,7 @@ import (
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set up base app
 	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Codec)
+	var appGenesis app.GenesisState = app.ModuleBasics.DefaultGenesis(encoding.Codec)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
 
 	// Set happy genesis: epochs

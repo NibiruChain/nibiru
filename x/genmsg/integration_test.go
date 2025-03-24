@@ -20,7 +20,7 @@ func TestIntegration(t *testing.T) {
 	recvAddr := sdk.AccAddress("recv")
 
 	encoding := app.MakeEncodingConfig()
-	appGenesis := app.NewDefaultGenesisState(encoding.Codec)
+	appGenesis := app.ModuleBasics.DefaultGenesis(encoding.Codec)
 
 	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(&banktypes.GenesisState{
 		Balances: []banktypes.Balance{

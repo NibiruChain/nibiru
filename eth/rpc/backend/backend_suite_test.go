@@ -73,7 +73,7 @@ func TestBackendSuite(t *testing.T) {
 }
 
 func (s *BackendSuite) SetupSuite() {
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	homeDir := s.T().TempDir()
 	s.cfg = testnetwork.BuildNetworkConfig(genState)
 	network, err := testnetwork.New(s.T(), homeDir, s.cfg)

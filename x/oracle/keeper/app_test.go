@@ -35,7 +35,7 @@ func (s *TestSuite) SetupSuite() {
 func (s *TestSuite) SetupTest() {
 	homeDir := s.T().TempDir()
 
-	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
