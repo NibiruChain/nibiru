@@ -28,7 +28,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/app/codec"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
@@ -40,7 +39,7 @@ import (
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	tempApp := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(simapp.DefaultNodeHome))
-	encodingConfig := codec.EncodingConfig{
+	encodingConfig := app.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Codec:             tempApp.AppCodec(),
 		TxConfig:          tempApp.GetTxConfig(),

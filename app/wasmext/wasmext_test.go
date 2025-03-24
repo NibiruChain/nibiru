@@ -43,10 +43,10 @@ func (s *Suite) TestEvmFilter() {
 
 	s.T().Log("Validate Eth tx msg proto encoding as wasmvm.StargateMsg")
 	wasmContractAddr := deps.Sender.NibiruAddr
-	protoValueBz, err := deps.EncCfg.Codec.Marshal(ethTxMsg)
+	protoValueBz, err := deps.App.AppCodec().Marshal(ethTxMsg)
 	s.Require().NoError(err, "expect ethTxMsg to proto marshal", protoValueBz)
 
-	_, ok := deps.EncCfg.Codec.(sdkcodec.AnyUnpacker)
+	_, ok := deps.App.AppCodec().(sdkcodec.AnyUnpacker)
 	s.Require().True(ok, "codec must be an AnyUnpacker")
 
 	pbAny, err := sdkcodec.NewAnyWithValue(ethTxMsg)
@@ -55,7 +55,7 @@ func (s *Suite) TestEvmFilter() {
 	s.NoError(err, pbAnyBz)
 
 	var sdkMsg sdk.Msg
-	err = deps.EncCfg.Codec.UnpackAny(pbAny, &sdkMsg)
+	err = deps.App.AppCodec().UnpackAny(pbAny, &sdkMsg)
 	s.Require().NoError(err)
 	s.Equal("/eth.evm.v1.MsgEthereumTx", sdk.MsgTypeURL(sdkMsg))
 
@@ -81,7 +81,7 @@ func (s *Suite) TestEvmFilter() {
 		ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 		Amount:      []sdk.Coin{sdk.NewInt64Coin(evm.EVMBankDenom, 20)},
 	}
-	protoValueBz, err = deps.EncCfg.Codec.Marshal(txMsg)
+	protoValueBz, err = deps.App.AppCodec().Marshal(txMsg)
 	s.NoError(err)
 	_, _, err = wasmMsgHandler.DispatchMsg(
 		deps.Ctx,

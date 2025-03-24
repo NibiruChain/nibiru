@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 )
@@ -106,7 +106,7 @@ func TestInverse(t *testing.T) {
 }
 
 func TestMarshalJSON(t *testing.T) {
-	cdc := codec.MakeEncodingConfig()
+	cdc := app.MakeEncodingConfig()
 
 	testCases := []struct {
 		name      string
