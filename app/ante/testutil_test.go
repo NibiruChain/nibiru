@@ -8,6 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -15,8 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
