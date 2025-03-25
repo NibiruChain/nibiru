@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 
@@ -20,7 +19,7 @@ import (
 )
 
 func setup() (*app.NibiruApp, sdk.Context) {
-	return testapp.NewNibiruTestAppAndContextAtTime(time.Now().UTC())
+	return testapp.NewNibiruTestAppAndContext()
 }
 
 func TestGenesis(t *testing.T) {

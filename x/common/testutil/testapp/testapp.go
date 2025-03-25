@@ -100,14 +100,6 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 	}
 }
 
-// NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
-// block time set to time zero.
-func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestAppAndContext()
-	ctx := NewContext(app).WithBlockTime(startTime)
-	return app, ctx
-}
-
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
