@@ -52,10 +52,6 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", math.LegacyNewDec(20000))
-	app.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
-		Root:      testutil.ADDR_SUDO_ROOT,
-		Contracts: []string{testutil.ADDR_SUDO_ROOT},
-	})
 
 	return app, ctx
 }
