@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 )
 
@@ -30,12 +31,9 @@ func SetupNibiruTestingApp() (
 ) {
 	// create testing app
 	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
+	genState := genesis.NewTestGenesisState(nibiruApp.AppCodec())
 
-	// Create genesis state
-	genesisState := app.ModuleBasics.DefaultGenesis(nibiruApp.AppCodec())
-	testapp.SetDefaultSudoGenesis(genesisState)
-
-	return nibiruApp, genesisState
+	return nibiruApp, genState
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.

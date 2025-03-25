@@ -40,7 +40,10 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 
 	// Set happy genesis: sudo
 	sudoGenesis := new(sudotypes.GenesisState)
-	sudoGenesis.Sudoers = DefaultSudoers()
+	sudoGenesis.Sudoers = sudotypes.Sudoers{
+		Root:      testutil.ADDR_SUDO_ROOT,
+		Contracts: []string{testutil.ADDR_SUDO_ROOT},
+	}
 	appGenesis[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
@@ -49,7 +52,6 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", math.LegacyNewDec(20000))
-	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx
 }
@@ -69,19 +71,6 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	return ctx
 }
 
-// DefaultSudoers: State for the x/sudo module for the default test app.
-func DefaultSudoers() sudotypes.Sudoers {
-	addr := DefaultSudoRoot().String()
-	return sudotypes.Sudoers{
-		Root:      addr,
-		Contracts: []string{addr},
-	}
-}
-
-func DefaultSudoRoot() sdk.AccAddress {
-	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
-}
-
 func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
@@ -94,12 +83,16 @@ func FirstBlockProposer(
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
 // default. See "DefaultSudoers".
 func SetDefaultSudoGenesis(gen app.GenesisState) {
-	sudoGen := new(sudotypes.GenesisState)
 	encoding := app.MakeEncodingConfig()
-	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+
+	var sudoGen sudotypes.GenesisState
+	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], &sudoGen)
 	if err := sudoGen.Validate(); err != nil {
-		sudoGen.Sudoers = DefaultSudoers()
-		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGen)
+		sudoGen.Sudoers = sudotypes.Sudoers{
+			Root:      testutil.ADDR_SUDO_ROOT,
+			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+		}
+		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
 	}
 }
 
@@ -117,8 +110,6 @@ func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.
 func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
-
-	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
 		logger,

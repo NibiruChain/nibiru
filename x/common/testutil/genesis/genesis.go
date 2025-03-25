@@ -25,8 +25,8 @@ func NewTestGenesisState(appCodec codec.Codec) app.GenesisState {
 	// Set short voting period to allow fast gov proposals in tests
 	var govGenState govtypes.GenesisState
 	appCodec.MustUnmarshalJSON(genState[gov.ModuleName], &govGenState)
-	*govGenState.Params.VotingPeriod = time.Second * 20
-	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
+	*govGenState.Params.VotingPeriod = 20 * time.Second
+	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e6)) // min deposit of 1 NIBI
 	genState[gov.ModuleName] = appCodec.MustMarshalJSON(&govGenState)
 
 	testapp.SetDefaultSudoGenesis(genState)
