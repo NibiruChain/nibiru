@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2224](https://github.com/NibiruChain/nibiru/pull/2224) - fix(evm): suppressing error on missing block bloom event
 - [#2238](https://github.com/NibiruChain/nibiru/pull/2238) - feat(evm-embeds): Add WNIBI.sol implementatino to contracts and related TypeScript and Solidity package updates for npm.
 - [#2239](https://github.com/NibiruChain/nibiru/pull/2239) - feat(funtoken): update `FunToken.sendToBank` to accept EVM and nibi addresses.
+- [#2241](https://github.com/NibiruChain/nibiru/pull/2241) - fix(evm): evm-tx-index cli fix to exclude most latest block
 
 ### Dependencies
 
