@@ -112,14 +112,11 @@ func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
-	db := tmdb.NewMemDB()
-	logger := log.NewNopLogger()
-
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
-		logger,
-		db,
+		log.NewNopLogger(),
+		tmdb.NewMemDB(),
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*appOpts=*/ sims.EmptyAppOptions{},
