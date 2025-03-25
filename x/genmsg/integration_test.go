@@ -15,7 +15,7 @@ import (
 	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
-func TestIntegration(t *testing.T) {
+func TestGenmsgInGenesis(t *testing.T) {
 	senderAddr := sdk.AccAddress("sender")
 	recvAddr := sdk.AccAddress("recv")
 
