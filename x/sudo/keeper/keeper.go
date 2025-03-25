@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/store/types"
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -27,7 +27,8 @@ func NewKeeper(
 }
 
 // Returns the root address of the sudo module.
-func (k Keeper) GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error) {
+func (k Keeper) GetRootAddr(c context.Context) (sdk.AccAddress, error) {
+	ctx := sdk.UnwrapSDKContext(c)
 	sudoers, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -130,8 +131,9 @@ func (k Keeper) RemoveContracts(
 // contracts defined in the x/sudo module. These smart contracts are able to
 // execute certain permissioned functions.
 func (k Keeper) CheckPermissions(
-	contract sdk.AccAddress, ctx sdk.Context,
+	contract sdk.AccAddress, c context.Context,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	state, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return err

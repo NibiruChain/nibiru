@@ -13,8 +13,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	codec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -158,9 +157,10 @@ func (s *TestSuite) TestStargate() {
 		s.NoError(err)
 
 		// NOTE that the smart contract is the sender.
-		denoms := s.app.TokenFactoryKeeper.QueryDenoms(s.ctx,
+		denoms, err := s.app.TokenFactoryKeeper.QueryDenoms(s.ctx,
 			contract.Addr.String(),
 		)
+		s.NoError(err)
 		s.ElementsMatch(denoms, []string{tfdenom.Denom().String()})
 	})
 
@@ -269,10 +269,7 @@ func (s *TestSuite) TestStargateSerde() {
 		s.Run(tc.typeUrl, func() {
 			pbMsg, _ := (tc.sdkMsg).(codec.ProtoMarshaler)
 			sgMsgValue := s.encConfig.Codec.MustMarshal(pbMsg)
-			sgMsg := wasmvmtypes.StargateMsg{
-				TypeURL: tc.typeUrl,
-				Value:   sgMsgValue,
-			}
+
 			if tc.wantBz != "" {
 				bz, _ := parseByteList(tc.wantBz)
 				s.Equal(bz, sgMsgValue)
@@ -285,7 +282,10 @@ func (s *TestSuite) TestStargateSerde() {
 			mockContractAddr := testutil.AccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
 				wasmvmtypes.CosmosMsg{
-					Stargate: &sgMsg,
+					Any: &wasmvmtypes.AnyMsg{
+						TypeURL: tc.typeUrl,
+						Value:   sgMsgValue,
+					},
 				},
 			)
 

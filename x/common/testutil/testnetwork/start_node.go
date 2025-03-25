@@ -7,23 +7,21 @@ import (
 
 	"cosmossdk.io/errors"
 	db "github.com/cometbft/cometbft-db"
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	"github.com/NibiruChain/nibiru/v2/app/server"
-	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
-
-	"github.com/cosmos/cosmos-sdk/server/api"
-	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
-	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
-
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
+	"github.com/cosmos/cosmos-sdk/server/api"
+	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
+	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/NibiruChain/nibiru/v2/app/server"
+	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 )
 
 func startNodeAndServers(cfg Config, val *Validator) error {

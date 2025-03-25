@@ -1,14 +1,14 @@
 package ante
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	sdkerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
@@ -23,9 +23,9 @@ type AnteHandlerOptions struct {
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
-	TxCounterStoreKey types.StoreKey
-	WasmConfig        *wasmtypes.WasmConfig
-	MaxTxGasWanted    uint64
+	TXCounterStoreService corestoretypes.KVStoreService
+	WasmConfig            *wasmtypes.WasmConfig
+	MaxTxGasWanted        uint64
 }
 
 func (opts *AnteHandlerOptions) ValidateAndClean() error {

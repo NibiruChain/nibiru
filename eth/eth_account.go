@@ -5,9 +5,8 @@ import (
 	"bytes"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -85,7 +84,7 @@ var emptyCodeHash = crypto.Keccak256(nil)
 // drop-in replacement for the `auth.ProtoBaseAccount` from
 // "cosmos-sdk/auth/types" extended to fit the the `EthAccountI` interface for
 // Ethereum accounts.
-func ProtoBaseAccount() authtypes.AccountI {
+func ProtoBaseAccount() sdk.AccountI {
 	return &EthAccount{
 		BaseAccount: &authtypes.BaseAccount{},
 		CodeHash:    gethcommon.BytesToHash(emptyCodeHash).String(),

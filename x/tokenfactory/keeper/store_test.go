@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -45,8 +43,11 @@ func (s *TestSuite) TestStoreWrite() {
 			s.Require().NoError(api.InsertDenom(s.ctx, tfdenom))
 		}
 
-		allDenoms := api.Denoms.Iterate(
-			s.ctx, collections.Range[string]{}).Values()
+		allDenomsIterator, err := api.Denoms.Iterate(
+			s.ctx, nil)
+		s.Error(err)
+		allDenoms, err := allDenomsIterator.Values()
+		s.Error(err)
 		s.Len(allDenoms, numCreators*len(subdenoms))
 
 		for _, tfdenom := range tfdenoms {

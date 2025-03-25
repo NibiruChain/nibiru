@@ -3,6 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
+	"cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -43,7 +44,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			},
 			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
 				return evm.Params{
-					CreateFuntokenFee: sdk.NewInt(-1),
+					CreateFuntokenFee: math.NewInt(-1),
 				}
 			},
 			wantErr: "createFuntokenFee cannot be negative: -1",

@@ -112,7 +112,9 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				denoms.NIBI,
 			)
 
-			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
+			communityPool, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+			require.NoError(t, err)
+			balanceCommunityPool := communityPool.CommunityPool
 
 			require.NoError(t, err, tc.name)
 			assert.Equal(t,
@@ -133,7 +135,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 		name             string
 		supply           sdkmath.Int
 		malleate         func(nibiruApp *app.NibiruApp, ctx sdk.Context)
-		expInflationRate sdk.Dec
+		expInflationRate math.LegacyDec
 	}{
 		{
 			"no epochs per period",
