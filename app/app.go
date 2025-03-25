@@ -365,13 +365,19 @@ func NewNibiruApp(
 	app.tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
 	app.memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	for _, k := range app.keys {
-		app.RegisterStores(k)
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
 	}
 	for _, k := range app.tkeys {
-		app.RegisterStores(k)
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
 	}
 	for _, k := range app.memKeys {
-		app.RegisterStores(k)
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
 	}
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
