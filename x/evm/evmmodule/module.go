@@ -24,7 +24,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/bank/exported"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -32,7 +35,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
+	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 )
 
@@ -196,19 +201,23 @@ func init() {
 	appmodule.Register(&modulev1.Module{},
 		appmodule.Provide(ProvideModule),
 	)
+	appmodule.Register(&bankmodulev1.Module{},
+		appmodule.Provide(ProvideNibiruBankModule),
+	)
 }
 
 type EvmInputs struct {
 	depinject.In
 
 	Config       *modulev1.Module
+	BankConfig   *bankmodulev1.Module
 	Key          *store.KVStoreKey
 	TransientKey *store.KVStoreKey
 	Cdc          codec.Codec
 	AppOpts      servertypes.AppOptions `optional:"true"`
 
-	AccountKeeper evm.AccountKeeper
-	BankKeeper    bankkeeper.BaseKeeper
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
 	StakingKeeper evm.StakingKeeper
 }
 
@@ -216,11 +225,71 @@ type EvmOutputs struct {
 	depinject.Out
 
 	Keeper *keeper.Keeper
-
 	Module appmodule.AppModule
 }
 
 func ProvideModule(in EvmInputs) EvmOutputs {
+	// Configure blocked module accounts.
+	//
+	// Default behavior for blockedAddresses is to regard any module mentioned in
+	// AccountKeeper's module account permissions as blocked.
+	blockedAddresses := make(map[string]bool)
+	// override later
+	for _, permission := range in.AccountKeeper.GetModulePermissions() {
+		blockedAddresses[permission.GetAddress().String()] = true
+	}
+
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, in.BankKeeper.(*evmkeeper.NibiruBankKeeper), in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+
+	m := NewAppModule(&k, in.AccountKeeper)
+
+	return EvmOutputs{
+		Keeper: &k,
+		Module: m,
+	}
+}
+
+type NibiruBankInputs struct {
+	depinject.In
+
+	Config *bankmodulev1.Module
+	Cdc    codec.Codec
+	Key    *store.KVStoreKey
+
+	AccountKeeper banktypes.AccountKeeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+type NibiruBankOutputs struct {
+	depinject.Out
+
+	BankKeeper *evmkeeper.NibiruBankKeeper
+	Module     appmodule.AppModule
+}
+
+func ProvideNibiruBankModule(in NibiruBankInputs) NibiruBankOutputs {
+	// Configure blocked module accounts.
+	//
+	// Default behavior for blockedAddresses is to regard any module mentioned in
+	// AccountKeeper's module account permissions as blocked.
+	blockedAddresses := make(map[string]bool)
+	if len(in.Config.BlockedModuleAccountsOverride) > 0 {
+		for _, moduleName := range in.Config.BlockedModuleAccountsOverride {
+			blockedAddresses[authtypes.NewModuleAddress(moduleName).String()] = true
+		}
+	} else {
+		for _, permission := range in.AccountKeeper.GetModulePermissions() {
+			blockedAddresses[permission.GetAddress().String()] = true
+		}
+	}
 
 	// default to governance authority if not provided
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
@@ -229,16 +298,16 @@ func ProvideModule(in EvmInputs) EvmOutputs {
 	}
 
 	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: in.BankKeeper,
-		StateDB:    nil,
+		BaseKeeper: bankkeeper.NewBaseKeeper(
+			in.Cdc,
+			in.Key,
+			in.AccountKeeper,
+			blockedAddresses,
+			authority.String(),
+		),
+		StateDB: nil,
 	}
+	m := bank.NewAppModule(in.Cdc, nibiruBankKeeper, in.AccountKeeper, in.LegacySubspace)
 
-	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, nibiruBankKeeper, in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
-
-	m := NewAppModule(&k, in.AccountKeeper)
-
-	return EvmOutputs{
-		Keeper: &k,
-		Module: m,
-	}
+	return NibiruBankOutputs{BankKeeper: nibiruBankKeeper, Module: m}
 }
