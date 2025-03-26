@@ -105,7 +105,7 @@ func (s *BackendSuite) TestLogs() {
 			Nonce:    s.getCurrentNonce(s.fundedAccEthAddr),
 			To:       &precompile.PrecompileAddr_FunToken,
 			Data:     packedArgsPass,
-			Gas:      1_500_000,
+			Gas:      2_500_000,
 			GasPrice: big.NewInt(1),
 		},
 		false,
