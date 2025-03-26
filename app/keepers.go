@@ -506,10 +506,12 @@ func (app *NibiruApp) InitKeepers(
 
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		keys[tokenfactorytypes.StoreKey],
+		keys[banktypes.StoreKey],
 		appCodec,
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.DistrKeeper,
+		app.SudoKeeper,
 		govModuleAddr,
 	)
 

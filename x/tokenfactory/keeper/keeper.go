@@ -11,14 +11,16 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts
 // registered to receive Nibiru Chain gas fees.
 type Keeper struct {
-	storeKey storetypes.StoreKey
-	cdc      codec.BinaryCodec
+	storeKey     storetypes.StoreKey
+	bankStoreKey storetypes.StoreKey
+	cdc          codec.BinaryCodec
 
 	Store StoreAPI
 
@@ -26,6 +28,7 @@ type Keeper struct {
 	bankKeeper          tftypes.BankKeeper
 	accountKeeper       tftypes.AccountKeeper
 	communityPoolKeeper tftypes.CommunityPoolKeeper
+	sudoKeeper          sudokeeper.Keeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically,
 	// this should be the x/gov module account.
@@ -35,14 +38,17 @@ type Keeper struct {
 // NewKeeper: creates a Keeper instance for the module.
 func NewKeeper(
 	storeKey storetypes.StoreKey,
+	bankStoreKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
 	bk tftypes.BankKeeper,
 	ak tftypes.AccountKeeper,
 	communityPoolKeeper tftypes.CommunityPoolKeeper,
+	sk sudokeeper.Keeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		storeKey: storeKey,
+		storeKey:     storeKey,
+		bankStoreKey: bankStoreKey,
 		Store: StoreAPI{
 			Denoms: NewTFDenomStore(storeKey, cdc),
 			ModuleParams: collections.NewItem(
@@ -64,6 +70,7 @@ func NewKeeper(
 		bankKeeper:          bk,
 		accountKeeper:       ak,
 		communityPoolKeeper: communityPoolKeeper,
+		sudoKeeper:          sk,
 		authority:           authority,
 	}
 }
