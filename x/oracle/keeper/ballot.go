@@ -2,12 +2,8 @@ package keeper
 
 import (
 	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/collections"
-
-	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/omap"
@@ -85,7 +81,7 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 func isPassingVoteThreshold(
 	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
-	totalPower := math.NewInt(votes.Power())
+	totalPower := sdkmath.NewInt(votes.Power())
 	if totalPower.IsZero() {
 		return false
 	}

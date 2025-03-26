@@ -11,7 +11,7 @@ import (
 var _ sdk.CustomProtobufType = (*EIP55Addr)(nil)
 
 // EIP55Addr is a wrapper around gethcommon.Address that provides JSON marshaling
-// and unmarshalling as well as Protobuf serialization and deserialization.
+// and unmarshaling as well as Protobuf serialization and deserialization.
 // The constructors ensure that the input string is a valid 20 byte hex address.
 type EIP55Addr struct {
 	gethcommon.Address

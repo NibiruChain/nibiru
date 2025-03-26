@@ -55,7 +55,7 @@ func MustSqrtDec(dec sdk.Dec) sdk.Dec {
 // large as 10**99.
 func SqrtDec(dec sdk.Dec) (sdk.Dec, error) {
 	var sqrtDec sdk.Dec
-	var panicErr error = TryCatch(func() {
+	panicErr := TryCatch(func() {
 		sqrtDec = MustSqrtDec(dec)
 	})()
 	return sqrtDec, panicErr
@@ -72,7 +72,7 @@ func MustSqrtBigInt(i *big.Int) *big.Int {
 // SqrtInt is the panic-safe version of MustSqrtBigInt
 func SqrtBigInt(i *big.Int) (*big.Int, error) {
 	sqrtInt := new(big.Int)
-	var panicErr error = TryCatch(func() {
+	panicErr := TryCatch(func() {
 		*sqrtInt = *MustSqrtBigInt(i)
 	})()
 	return sqrtInt, panicErr

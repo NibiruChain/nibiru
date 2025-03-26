@@ -60,7 +60,7 @@ func (s *Suite) TestGasConsumedInvariantSend() {
 	var first uint64
 	for idx, tc := range testCases {
 		s.Run(tc.name, func() {
-			gasConsumed := tc.GasConsumedInvariantScenario.Run(s, to)
+			gasConsumed := tc.Run(s, to)
 			s.T().Logf("gasConsumed: %d", gasConsumed)
 			s.Require().NotZerof(gasConsumed, "gasConsumed should not be zero")
 			if idx == 0 {
@@ -160,7 +160,7 @@ func (s *Suite) TestGasConsumedInvariantSendNotNibi() {
 	var first uint64
 	for idx, tc := range testCases {
 		s.Run(tc.name, func() {
-			gasConsumed := tc.GasConsumedInvariantScenario.Run(s, to)
+			gasConsumed := tc.Run(s, to)
 			if idx == 0 {
 				first = gasConsumed
 				return

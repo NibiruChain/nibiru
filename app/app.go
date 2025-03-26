@@ -14,7 +14,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	tmos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -193,7 +192,7 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
+	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.PublicKeepers))
 
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
@@ -254,10 +253,10 @@ func NewNibiruApp(
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(err.Error())
+			cmtos.Exit(err.Error())
 		}
 
-		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
+		ctx := app.NewUncachedContext(true, cmtproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
@@ -405,15 +404,15 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(
-		app.BaseApp.GRPCQueryRouter(), clientCtx,
-		app.BaseApp.Simulate, app.interfaceRegistry)
+		app.GRPCQueryRouter(), clientCtx,
+		app.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(
 		clientCtx,
-		app.BaseApp.GRPCQueryRouter(),
+		app.GRPCQueryRouter(),
 		app.interfaceRegistry,
 		app.Query,
 	)

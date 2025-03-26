@@ -185,7 +185,7 @@ preparation for a second audit starting in November 2024.
 - [#2097](https://github.com/NibiruChain/nibiru/pull/2097) - feat(evm): Add new query to get dated price from the oracle precompile
 - [#2100](https://github.com/NibiruChain/nibiru/pull/2100) - refactor: cleanup statedb and precompile sections
 - [#2098](https://github.com/NibiruChain/nibiru/pull/2098) - test(evm): statedb tests for race conditions within funtoken precompile
-- [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshalling
+- [#2101](https://github.com/NibiruChain/nibiru/pull/2101) - fix(evm): tx receipt proper marshaling
 - [#2105](https://github.com/NibiruChain/nibiru/pull/2105) - test(evm): precompile call with revert
 - [#2106](https://github.com/NibiruChain/nibiru/pull/2106) - chore: scheduled basic e2e tests for evm testnet endpoint
 - [#2107](https://github.com/NibiruChain/nibiru/pull/2107) - feat(evm-funtoken-precompile): Implement methods: balance, bankBalance, whoAmI
@@ -225,7 +225,7 @@ preparation for a second audit starting in November 2024.
 - [#1917](https://github.com/NibiruChain/nibiru/pull/1917) - test(e2e-evm): TypeScript support. Type generation from compiled contracts. Formatter for TS code.
 - [#1922](https://github.com/NibiruChain/nibiru/pull/1922) - feat(evm): tracer option is read from the config.
 - [#1936](https://github.com/NibiruChain/nibiru/pull/1936) - feat(evm): EVM fungible token protobufs and encoding tests
-- [#1947](https://github.com/NibiruChain/nibiru/pull/1947) - fix(evm): fix FunToken state marshalling
+- [#1947](https://github.com/NibiruChain/nibiru/pull/1947) - fix(evm): fix FunToken state marshaling
 - [#1949](https://github.com/NibiruChain/nibiru/pull/1949) - feat(evm): add fungible token mapping queries
 - [#1950](https://github.com/NibiruChain/nibiru/pull/1950) - feat(evm): Tx to create FunToken mapping from ERC20, contract embeds, and ERC20 queries.
 - [#1956](https://github.com/NibiruChain/nibiru/pull/1956) - feat(evm): msg to send bank coin to erc20

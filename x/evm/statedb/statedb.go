@@ -610,7 +610,7 @@ func (s *StateDB) SavePrecompileCalledJournalChange(
 	s.multistoreCacheCount++
 	if s.multistoreCacheCount > maxMultistoreCacheCount {
 		return fmt.Errorf(
-			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d).",
+			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d)",
 			maxMultistoreCacheCount,
 		)
 	}

@@ -32,12 +32,12 @@ func (s *GenesisTestSuite) TestAppModule() {
 
 		s.T().Log("AppModuleBasic.ValidateGenesis")
 		encCfg := codec.MakeEncodingConfig()
-		err = appModule.AppModuleBasic.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
+		err = appModule.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
 		s.NoError(err)
 
 		s.T().Log("CLI commands")
-		s.NotNil(appModule.AppModuleBasic.GetTxCmd())
-		s.NotNil(appModule.AppModuleBasic.GetQueryCmd())
+		s.NotNil(appModule.GetTxCmd())
+		s.NotNil(appModule.GetQueryCmd())
 		s.NotEmpty(appModule.QuerierRoute())
 	})
 }

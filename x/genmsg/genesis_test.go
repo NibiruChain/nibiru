@@ -20,7 +20,7 @@ type mockRouter struct {
 
 func (m mockRouter) Handler(msg sdk.Msg) baseapp.MsgServiceHandler { return m.handler(msg) }
 
-func makeCodec(_ *testing.T) codec.JSONCodec {
+func makeCodec(*testing.T) codec.JSONCodec {
 	ir := types.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(ir)
 	ir.RegisterInterface(sdk.MsgInterfaceProtoName, (*sdk.Msg)(nil), &banktypes.MsgSend{})

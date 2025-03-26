@@ -403,7 +403,7 @@ func (api *FiltersAPI) Logs(
 					continue
 				}
 
-				txResponse, err := evm.DecodeTxResponse(dataTx.TxResult.Result.Data)
+				txResponse, err := evm.DecodeTxResponse(dataTx.Result.Data)
 				if err != nil {
 					api.logger.Error("fail to decode tx response", "error", err)
 					return
@@ -487,7 +487,7 @@ func (api *FiltersAPI) NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, e
 					continue
 				}
 
-				txResponse, err := evm.DecodeTxResponse(dataTx.TxResult.Result.Data)
+				txResponse, err := evm.DecodeTxResponse(dataTx.Result.Data)
 				if err != nil {
 					api.logger.Error("fail to decode tx response", "error", err)
 					return

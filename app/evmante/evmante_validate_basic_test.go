@@ -199,7 +199,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.NewStateDB()
-			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.AppKeepers.EvmKeeper)
+			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())
