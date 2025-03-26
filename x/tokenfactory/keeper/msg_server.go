@@ -7,9 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
 	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -343,7 +344,7 @@ func (k Keeper) SudoSetDenomMetadata(
 		bankDenom := txMsg.DeleteMetadataForDenom
 		_, isSome := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 		if !isSome {
-			return resp, fmt.Errorf("Cannot delete bank.DenomMetadata because it does not exist for %s", bankDenom)
+			return resp, fmt.Errorf("cannot delete bank.DenomMetadata because it does not exist for %s", bankDenom)
 		}
 
 		store := ctx.KVStore(k.bankStoreKey)
