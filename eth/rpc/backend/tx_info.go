@@ -167,7 +167,7 @@ func (r *TransactionReceipt) MarshalJSON() ([]byte, error) {
 	if r.EffectiveGasPrice != nil {
 		output["effectiveGasPrice"] = r.EffectiveGasPrice
 	}
-	// original marshalling of gethcore.Receipt omits type field
+	// original marshaling of gethcore.Receipt omits type field
 	output["type"] = hexutil.Uint64(r.Type)
 
 	// delete deprecated (pre Byzantium) key which is always set to 0x and fails parsing within hardhat
@@ -214,7 +214,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	}
 	cumulativeGasUsed += res.CumulativeGasUsed
 
-	var status uint64 = gethcore.ReceiptStatusSuccessful
+	status := gethcore.ReceiptStatusSuccessful
 	if res.Failed {
 		status = gethcore.ReceiptStatusFailed
 	}
