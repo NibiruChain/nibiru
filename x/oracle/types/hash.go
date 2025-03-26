@@ -74,9 +74,9 @@ func (h AggregateVoteHash) Format(s fmt.State, verb rune) {
 	case 's':
 		_, _ = s.Write([]byte(h.String()))
 	case 'p':
-		_, _ = fmt.Fprintf(s, "%p", h)
+		_, _ = s.Write([]byte(fmt.Sprintf("%p", h)))
 	default:
-		_, _ = fmt.Fprintf(s, "%X", []byte(h))
+		_, _ = s.Write([]byte(fmt.Sprintf("%X", []byte(h))))
 	}
 }
 

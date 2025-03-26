@@ -9,6 +9,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
@@ -136,7 +137,7 @@ func (s *Suite) TestRefundGas() {
 		err := testapp.FundModuleAccount(
 			deps.App.BankKeeper, deps.Ctx, auth.FeeCollectorName,
 			sdk.NewCoins(sdk.NewCoin(
-				evm.EVMBankDenom, sdkmath.NewIntFromBigInt(bal),
+				evm.EVMBankDenom, math.NewIntFromBigInt(bal),
 			)),
 		)
 		s.Require().NoError(err)

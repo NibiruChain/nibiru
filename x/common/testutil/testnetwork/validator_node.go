@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
 
@@ -73,7 +74,7 @@ type Validator struct {
 	Address sdk.AccAddress
 
 	// EthAddress - Ethereum address
-	EthAddress gethcommon.Address
+	EthAddress common.Address
 
 	// ValAddress - validator operator (valoper) address
 	ValAddress sdk.ValAddress

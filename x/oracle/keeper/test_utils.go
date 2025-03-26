@@ -6,6 +6,11 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -40,12 +45,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	"github.com/NibiruChain/nibiru/v2/x/sudo"
-	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 const faucetAccountName = "faucet"

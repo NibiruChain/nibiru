@@ -376,7 +376,7 @@ func (k *Keeper) ApplyEvmMsg(
 
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return
-	if weiInt == nil || (weiInt.Cmp(big.NewInt(0)) <= 0) {
+	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
 		return weiInt, nil
 	}
 

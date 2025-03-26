@@ -196,7 +196,7 @@ func (e erc20Calls) loadERC20String(
 	if err != nil {
 		return out, err
 	}
-	evmResp, err := e.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -239,7 +239,7 @@ func (e erc20Calls) loadERC20Uint8(
 	if err != nil {
 		return out, err
 	}
-	evmResp, err := e.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -282,7 +282,7 @@ func (e erc20Calls) LoadERC20BigInt(
 	if err != nil {
 		return nil, err
 	}
-	evmResp, err := e.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,

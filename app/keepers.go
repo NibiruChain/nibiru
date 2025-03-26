@@ -14,7 +14,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	store "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -157,9 +158,9 @@ type privateKeepers struct {
 }
 
 func initStoreKeys() (
-	keys map[string]*store.KVStoreKey,
-	tkeys map[string]*store.TransientStoreKey,
-	memKeys map[string]*store.MemoryStoreKey,
+	keys map[string]*types.KVStoreKey,
+	tkeys map[string]*types.TransientStoreKey,
+	memKeys map[string]*types.MemoryStoreKey,
 ) {
 	keys = sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
@@ -329,7 +330,7 @@ func (app *NibiruApp) InitKeepers(
 	app.authzKeeper = authzkeeper.NewKeeper(
 		keys[authzkeeper.StoreKey],
 		appCodec,
-		app.MsgServiceRouter(),
+		app.BaseApp.MsgServiceRouter(),
 		app.AccountKeeper,
 	)
 
@@ -626,7 +627,7 @@ func (app *NibiruApp) initAppModules(
 	return []module.AppModule{
 		// core modules
 		genutil.NewAppModule(
-			app.AccountKeeper, app.StakingKeeper, app.DeliverTx,
+			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
@@ -871,7 +872,7 @@ func ModuleAccPerms() map[string][]string {
 
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
-	tkey store.StoreKey,
+	tkey storetypes.StoreKey,
 ) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 

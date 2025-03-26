@@ -48,7 +48,7 @@ func NewEVMTxIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *EV
 // - Iterates over all the messages of the Tx
 // - Builds and stores indexer.TxResult based on parsed events for every message
 func (indexer *EVMTxIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.ResponseDeliverTx) error {
-	height := block.Height
+	height := block.Header.Height
 
 	batch := indexer.db.NewBatch()
 	defer batch.Close()

@@ -344,7 +344,7 @@ func (k Keeper) SudoSetDenomMetadata(
 		bankDenom := txMsg.DeleteMetadataForDenom
 		_, isSome := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
 		if !isSome {
-			return resp, fmt.Errorf("cannot delete bank.DenomMetadata because it does not exist for %s", bankDenom)
+			return resp, fmt.Errorf("Cannot delete bank.DenomMetadata because it does not exist for %s", bankDenom)
 		}
 
 		store := ctx.KVStore(k.bankStoreKey)

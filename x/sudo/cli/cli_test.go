@@ -165,7 +165,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 		contracts = append(contracts, addr.String())
 	}
 
-	sender := s.root.addr
+	var sender sdk.AccAddress = s.root.addr
 
 	pbMsg := types.MsgEditSudoers{
 		Action:    "add_contracts",

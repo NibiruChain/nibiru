@@ -40,7 +40,7 @@ func (app *NibiruApp) ExportAppStateAndValidators(
 		AppState:        appState,
 		Validators:      validators,
 		Height:          height,
-		ConsensusParams: app.GetConsensusParams(ctx),
+		ConsensusParams: app.BaseApp.GetConsensusParams(ctx),
 	}, err
 }
 
@@ -49,9 +49,12 @@ func (app *NibiruApp) ExportAppStateAndValidators(
 //
 //	in favor of export at a block height
 func (app *NibiruApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
-	applyAllowedAddrs := len(jailAllowedAddrs) > 0
+	applyAllowedAddrs := false
 
 	// check if there is a allowed address list
+	if len(jailAllowedAddrs) > 0 {
+		applyAllowedAddrs = true
+	}
 
 	allowedAddrsMap := make(map[string]bool)
 

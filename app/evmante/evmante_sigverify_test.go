@@ -67,7 +67,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.NewStateDB()
-			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.EvmKeeper)
+			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.AppKeepers.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
 			s.Require().NoError(stateDB.Commit())

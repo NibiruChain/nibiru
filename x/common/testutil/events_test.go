@@ -12,7 +12,7 @@ func (s *TestSuite) TestEventsUtils() {
 	bapp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Events on the ctx before we broadcast any txs
-	beforeEvents := ctx.EventManager().Events()
+	var beforeEvents sdk.Events = ctx.EventManager().Events()
 
 	newCoins := func(coinsStr string) sdk.Coins {
 		out, err := sdk.ParseCoinsNormalized(coinsStr)
@@ -33,7 +33,7 @@ func (s *TestSuite) TestEventsUtils() {
 	)
 
 	// Events on the ctx after broadcasting tx
-	sdkEvents := ctx.EventManager().Events()
+	var sdkEvents sdk.Events = ctx.EventManager().Events()
 
 	s.Run("AssertEventsPresent", func() {
 		err = testutil.AssertEventsPresent(sdkEvents,

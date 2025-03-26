@@ -214,7 +214,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	}
 	cumulativeGasUsed += res.CumulativeGasUsed
 
-	status := gethcore.ReceiptStatusSuccessful
+	var status uint64 = gethcore.ReceiptStatusSuccessful
 	if res.Failed {
 		status = gethcore.ReceiptStatusFailed
 	}
