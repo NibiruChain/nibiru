@@ -1,4 +1,4 @@
-SIMAPP = ./simapp
+SIMAPP = ./app/simapp
 
 .PHONY: test-sim-nondeterminism
 test-sim-nondeterminism:
