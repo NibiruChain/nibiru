@@ -69,7 +69,7 @@ func MustSqrtBigInt(i *big.Int) *big.Int {
 	return sqrtInt.Sqrt(i)
 }
 
-// SqrtInt is the panic-safe version of MustSqrtBigInt
+// SqrtBigInt is the panic-safe version of MustSqrtBigInt
 func SqrtBigInt(i *big.Int) (*big.Int, error) {
 	sqrtInt := new(big.Int)
 	var panicErr error = TryCatch(func() {
