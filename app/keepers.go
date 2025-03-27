@@ -552,9 +552,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Nibiru core params keepers | x/
-	paramsKeeper.Subspace(epochstypes.ModuleName)
-	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
