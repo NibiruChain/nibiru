@@ -24,7 +24,7 @@ func (ms msgServer) EditInflationParams(
 	goCtx context.Context, msg *types.MsgEditInflationParams,
 ) (resp *types.MsgEditInflationParamsResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// Stateless field validation is already performed in msg.ValidateBasic()
+	// Stateless field validation was already performed in msg.ValidateBasic()
 	// before the current scope is reached.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	err = ms.Sudo().EditInflationParams(ctx, *msg, sender)
@@ -39,7 +39,7 @@ func (ms msgServer) ToggleInflation(
 	goCtx context.Context, msg *types.MsgToggleInflation,
 ) (resp *types.MsgToggleInflationResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// Stateless field validation is already performed in msg.ValidateBasic()
+	// Stateless field validation was already performed in msg.ValidateBasic()
 	// before the current scope is reached.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	err = ms.Sudo().ToggleInflation(ctx, msg.Enable, sender)

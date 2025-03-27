@@ -300,3 +300,38 @@ func (k Keeper) BurnNative(
 
 	return &types.MsgBurnNativeResponse{}, err
 }
+
+// SudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
+// bank metadata.
+// [SUDO] Only callable by sudoers.
+//
+// Use Cases:
+//   - To define metadata for ICS20 assets brought
+//     over to the chain via IBC, as they don't have metadata by default.
+//   - To set metadata for Bank Coins created via the Token Factory
+//     module in case the admin forgets to do so. This is important because of
+//     the relationship Token Factory assets can have with ERC20s with the
+//     [FunToken Mechanism].
+//
+// [FunToken Mechanism]: https://nibiru.fi/docs/evm/funtoken.html
+func (k Keeper) SudoSetDenomMetadata(
+	goCtx context.Context, txMsg *types.MsgSudoSetDenomMetadata,
+) (resp *types.MsgSudoSetDenomMetadataResponse, err error) {
+	if txMsg == nil {
+		return resp, errNilMsg
+	}
+	if err := txMsg.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Stateless field validation was already performed in msg.ValidateBasic()
+	senderAddr, _ := sdk.AccAddressFromBech32(txMsg.Sender)
+	if err = k.sudoKeeper.CheckPermissions(senderAddr, ctx); err != nil {
+		return resp, err
+	}
+
+	k.bankKeeper.SetDenomMetaData(ctx, txMsg.Metadata)
+
+	return &types.MsgSudoSetDenomMetadataResponse{}, err
+}

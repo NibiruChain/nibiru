@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
@@ -17,6 +19,7 @@ var (
 	_ legacytx.LegacyMsg = &MsgBurn{}
 	_ legacytx.LegacyMsg = &MsgSetDenomMetadata{}
 	_ legacytx.LegacyMsg = &MsgBurnNative{}
+	_ legacytx.LegacyMsg = &MsgSudoSetDenomMetadata{}
 )
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
@@ -257,6 +260,43 @@ func (m MsgSetDenomMetadata) Type() string { return "set_denom_metadata" }
 // GetSignBytes: Get the canonical byte representation of the Msg. Impl
 // legacytx.LegacyMsg.
 func (m MsgSetDenomMetadata) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+// ----------------------------------------------------------------
+// MsgSudoSetDenomMetadata
+
+// ValidateBasic performs stateless validation checks. Impl sdk.Msg.
+func (m MsgSudoSetDenomMetadata) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid sender (%s): %s", m.Sender, err)
+	}
+
+	err = m.Metadata.Validate()
+	if err != nil {
+		return fmt.Errorf("MetadataError: %w", err)
+	}
+	return nil
+}
+
+// GetSigners: Impl sdk.Msg.
+func (m MsgSudoSetDenomMetadata) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+// Route: Impl legacytx.LegacyMsg. The mesage route must be alphanumeric or empty.
+func (m MsgSudoSetDenomMetadata) Route() string { return RouterKey }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgSudoSetDenomMetadata) Type() string { return "sudo_set_denom_metadata" }
+
+// GetSignBytes: Get the canonical byte representation of the Msg. Impl
+// legacytx.LegacyMsg.
+func (m MsgSudoSetDenomMetadata) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 

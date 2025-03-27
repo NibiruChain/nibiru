@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -26,6 +27,7 @@ type Keeper struct {
 	bankKeeper          tftypes.BankKeeper
 	accountKeeper       tftypes.AccountKeeper
 	communityPoolKeeper tftypes.CommunityPoolKeeper
+	sudoKeeper          sudokeeper.Keeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically,
 	// this should be the x/gov module account.
@@ -39,6 +41,7 @@ func NewKeeper(
 	bk tftypes.BankKeeper,
 	ak tftypes.AccountKeeper,
 	communityPoolKeeper tftypes.CommunityPoolKeeper,
+	sk sudokeeper.Keeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -64,6 +67,7 @@ func NewKeeper(
 		bankKeeper:          bk,
 		accountKeeper:       ak,
 		communityPoolKeeper: communityPoolKeeper,
+		sudoKeeper:          sk,
 		authority:           authority,
 	}
 }
