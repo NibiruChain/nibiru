@@ -55,7 +55,7 @@ lint:
   source contrib/bashlib.sh
   if ! which_ok golangci-lint; then
     log_info "Installing golangci-lint"
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
   fi
 
   golangci-lint run --allow-parallel-runners --fix
