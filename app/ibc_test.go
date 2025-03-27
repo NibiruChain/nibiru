@@ -21,7 +21,7 @@ func init() {
 }
 
 /*
-SetupTestingApp returns the TestingApp and default genesis state used to
+SetupNibiruTestingApp returns the TestingApp and default genesis state used to
 
 	initialize the testing app.
 */
