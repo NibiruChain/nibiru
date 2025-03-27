@@ -13,6 +13,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -254,7 +255,7 @@ func TestManual(t *testing.T) {
 		CurrentEpochStartHeight: 0,
 	},
 	)
-	err := inflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err := inflationKeeper.Sudo().ToggleInflation(ctx, true, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	require.NoError(t, err)
 
 	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
@@ -267,7 +268,7 @@ func TestManual(t *testing.T) {
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
-	err = inflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	err = inflationKeeper.Sudo().ToggleInflation(ctx, false, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	require.NoError(t, err)
 
 	for i := 0; i < 42069; i++ {
@@ -278,7 +279,7 @@ func TestManual(t *testing.T) {
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
-	err = inflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err = inflationKeeper.Sudo().ToggleInflation(ctx, true, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	require.NoError(t, err)
 
 	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch

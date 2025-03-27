@@ -2,7 +2,6 @@ package action
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,7 +69,7 @@ func (tc TestCase) Then(action ...Action) TestCase {
 
 func (tc TestCase) Run(t *testing.T) {
 	t.Run(tc.Name, func(t *testing.T) {
-		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
+		app, ctx := testapp.NewNibiruTestAppAndContext()
 		var err error
 		var isNotMandatory bool
 

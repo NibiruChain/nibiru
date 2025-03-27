@@ -15,12 +15,12 @@ import (
 	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
-func TestIntegration(t *testing.T) {
+func TestGenmsgInGenesis(t *testing.T) {
 	senderAddr := sdk.AccAddress("sender")
 	recvAddr := sdk.AccAddress("recv")
 
 	encoding := app.MakeEncodingConfig()
-	appGenesis := app.NewDefaultGenesisState(encoding.Codec)
+	appGenesis := app.ModuleBasics.DefaultGenesis(encoding.Codec)
 
 	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(&banktypes.GenesisState{
 		Balances: []banktypes.Balance{

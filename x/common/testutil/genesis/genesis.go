@@ -3,6 +3,7 @@ package genesis
 import (
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -18,16 +19,15 @@ import (
 genesis as input. The blockchain genesis state is represented as a map from module
 identifier strings to raw json messages.
 */
-func NewTestGenesisState(encodingConfig app.EncodingConfig) app.GenesisState {
-	codec := encodingConfig.Codec
-	genState := app.NewDefaultGenesisState(codec)
+func NewTestGenesisState(appCodec codec.Codec) app.GenesisState {
+	genState := app.ModuleBasics.DefaultGenesis(appCodec)
 
 	// Set short voting period to allow fast gov proposals in tests
 	var govGenState govtypes.GenesisState
-	codec.MustUnmarshalJSON(genState[gov.ModuleName], &govGenState)
-	*govGenState.Params.VotingPeriod = time.Second * 20
-	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
-	genState[gov.ModuleName] = codec.MustMarshalJSON(&govGenState)
+	appCodec.MustUnmarshalJSON(genState[gov.ModuleName], &govGenState)
+	*govGenState.Params.VotingPeriod = 20 * time.Second
+	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e6)) // min deposit of 1 NIBI
+	genState[gov.ModuleName] = appCodec.MustMarshalJSON(&govGenState)
 
 	testapp.SetDefaultSudoGenesis(genState)
 

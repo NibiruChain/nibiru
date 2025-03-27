@@ -5,12 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/NibiruChain/nibiru/v2/app/server"
-	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
-
+	"cosmossdk.io/simapp"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
@@ -23,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -31,14 +27,24 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/app/server"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
-	app.SetPrefixes(appconst.AccountAddressPrefix)
+	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
+	tempApp := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(simapp.DefaultNodeHome))
+	encodingConfig := app.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.GetTxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
@@ -105,7 +111,8 @@ Args:
 	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
-	a := appCreator{encodingConfig}
+	a := appCreator{}
+
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
@@ -214,9 +221,7 @@ func txCommand() *cobra.Command {
 	return cmd
 }
 
-type appCreator struct {
-	encCfg app.EncodingConfig
-}
+type appCreator struct{}
 
 // newApp is an appCreator
 func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
@@ -224,7 +229,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	return app.NewNibiruApp(
 		logger, db, traceStore, true,
-		a.encCfg,
 		appOpts,
 		baseappOptions...,
 	)
@@ -249,7 +253,6 @@ func (a appCreator) appExport(
 		db,
 		traceStore,
 		loadLatestHeight,
-		a.encCfg,
 		appOpts,
 	)
 	if height != -1 {

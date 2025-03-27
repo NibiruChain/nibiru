@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	inflationKeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -102,7 +103,7 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 	partialParams := msgEditParams
 
 	s.T().Log("EditInflationParams should succeed")
-	okSender := testapp.DefaultSudoRoot()
+	okSender := sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
 	err = nibiru.InflationKeeper.Sudo().EditInflationParams(ctx, partialParams, okSender)
 	s.Require().NoError(err)
 
@@ -119,14 +120,14 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 func (s *SuiteInflationSudo) TestToggleInflation() {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 
-	err := nibiru.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err := nibiru.InflationKeeper.Sudo().ToggleInflation(ctx, true, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	s.Require().NoError(err)
 
 	params, err := nibiru.InflationKeeper.Params.Get(ctx)
 	s.Require().NoError(err)
 	s.Require().True(params.InflationEnabled)
 
-	err = nibiru.InflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	err = nibiru.InflationKeeper.Sudo().ToggleInflation(ctx, false, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	s.Require().NoError(err)
 	params, err = nibiru.InflationKeeper.Params.Get(ctx)
 	s.Require().NoError(err)
