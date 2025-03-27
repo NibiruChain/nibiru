@@ -135,11 +135,6 @@ message MsgSetDenomMetadataResponse {}
 //     module in case the admin forgets to do so. This is important because of
 //     the relationship Token Factory assets can have with ERC20s with the
 //     [FunToken Mechanism].
-//   - To delete metadata for a bank denom that was set prematurely. For example,
-//     consider the case where you set denom metadata for a Token Factory coin
-//     before it has been created (MsgCreateDenom). The existence of this
-//     metadata prevents the creation of the token, so there needs to be a delete
-//     operation for cleanup purposes.
 //
 // [FunToken Mechanism]: https://nibiru.fi/docs/evm/funtoken.html
 message MsgSudoSetDenomMetadata {
@@ -147,11 +142,7 @@ message MsgSudoSetDenomMetadata {
 
   // Metadata: Official x/bank metadata for the denom. The "metadata.base" is
   // the denom.
-  cosmos.bank.v1beta1.Metadata metadata = 2 [(gogoproto.nullable) = true];
-
-  // (Optional) Overrides the operation to delete denom metadata instead of
-  // setting to the value from "metadata"
-  string delete_metadata_for_denom = 3 [(gogoproto.nullable) = true];
+  cosmos.bank.v1beta1.Metadata metadata = 2 [(gogoproto.nullable) = false];
 }
 
 message MsgSudoSetDenomMetadataResponse {}

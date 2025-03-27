@@ -18,9 +18,8 @@ import (
 // Keeper of this module maintains collections of feeshares for contracts
 // registered to receive Nibiru Chain gas fees.
 type Keeper struct {
-	storeKey     storetypes.StoreKey
-	bankStoreKey storetypes.StoreKey
-	cdc          codec.BinaryCodec
+	storeKey storetypes.StoreKey
+	cdc      codec.BinaryCodec
 
 	Store StoreAPI
 
@@ -38,7 +37,6 @@ type Keeper struct {
 // NewKeeper: creates a Keeper instance for the module.
 func NewKeeper(
 	storeKey storetypes.StoreKey,
-	bankStoreKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
 	bk tftypes.BankKeeper,
 	ak tftypes.AccountKeeper,
@@ -47,8 +45,7 @@ func NewKeeper(
 	authority string,
 ) Keeper {
 	return Keeper{
-		storeKey:     storeKey,
-		bankStoreKey: bankStoreKey,
+		storeKey: storeKey,
 		Store: StoreAPI{
 			Denoms: NewTFDenomStore(storeKey, cdc),
 			ModuleParams: collections.NewItem(

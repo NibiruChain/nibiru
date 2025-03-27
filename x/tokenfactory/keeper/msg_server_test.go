@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -789,21 +787,21 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   tfdenomStNIBI.Creator,
-						Metadata: &tfdenomStNIBIDefaultBankMetadata,
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
 					},
 					WantErr: sudo.ErrUnauthorized.Error(),
 				},
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   addrs[0].String(),
-						Metadata: &tfdenomStNIBIDefaultBankMetadata,
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
 					},
 					WantErr: sudo.ErrUnauthorized.Error(),
 				},
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   addrNibiruFoundation.String(),
-						Metadata: &tfdenomStNIBIDefaultBankMetadata,
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
 					},
 					WantErr: "",
 				},
@@ -824,7 +822,7 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   addrNibiruFoundation.String(),
-						Metadata: &nobleUSDC,
+						Metadata: nobleUSDC,
 					},
 					WantErr: "",
 				},
@@ -833,43 +831,6 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 				bankDenom := nobleUSDC.Base
 				metadata, _ := bapp.BankKeeper.GetDenomMetaData(ctx, bankDenom)
 				s.Require().Equal(nobleUSDC, metadata)
-			},
-		}, // end case
-
-		{
-			Name:      "happy: deleting metadata",
-			SetupMsgs: []sdk.Msg{},
-			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				bapp.SudoKeeper.Sudoers.Set(ctx, sudoers)
-			},
-			TestMsgs: []TestMsgElem{
-				{
-					TestMsg: &types.MsgSudoSetDenomMetadata{
-						Sender:   addrNibiruFoundation.String(),
-						Metadata: &nobleUSDC,
-					},
-					WantErr: "",
-				},
-				{
-					TestMsg: &types.MsgSudoSetDenomMetadata{
-						Sender:                 addrNibiruFoundation.String(),
-						DeleteMetadataForDenom: nobleUSDC.Base + "noise",
-						Metadata:               &nobleUSDC,
-					},
-					WantErr: fmt.Sprintf("Cannot delete bank.DenomMetadata because it does not exist for %snoise", nobleUSDC.Base),
-				},
-				{
-					TestMsg: &types.MsgSudoSetDenomMetadata{
-						Sender:                 addrNibiruFoundation.String(),
-						DeleteMetadataForDenom: nobleUSDC.Base,
-					},
-					WantErr: "",
-				},
-			},
-			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				bankDenom := nobleUSDC.Base
-				metadata, isFound := bapp.BankKeeper.GetDenomMetaData(ctx, bankDenom)
-				s.Require().Falsef(isFound, "metadata: %+s", metadata)
 			},
 		}, // end case
 
@@ -885,7 +846,7 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   "sender",
-						Metadata: &tfdenomStNIBIDefaultBankMetadata,
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
 					},
 					WantErr: "invalid sender",
 				},

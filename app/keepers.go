@@ -414,9 +414,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	)
 
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		keys[tokenfactorytypes.StoreKey],
-		keys[banktypes.StoreKey],
-		appCodec,
+		app.keys[tokenfactorytypes.StoreKey],
+		app.appCodec,
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.DistrKeeper,

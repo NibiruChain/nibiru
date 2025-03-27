@@ -274,13 +274,6 @@ func (m MsgSudoSetDenomMetadata) ValidateBasic() error {
 			"invalid sender (%s): %s", m.Sender, err)
 	}
 
-	if m.DeleteMetadataForDenom != "" {
-		return sdk.ValidateDenom(m.DeleteMetadataForDenom)
-	}
-
-	if m.Metadata == nil {
-		return fmt.Errorf("MetadataError: nil (empty) metadata")
-	}
 	err = m.Metadata.Validate()
 	if err != nil {
 		return fmt.Errorf("MetadataError: %w", err)

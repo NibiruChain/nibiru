@@ -2,13 +2,9 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common"
 
@@ -316,11 +312,6 @@ func (k Keeper) BurnNative(
 //     module in case the admin forgets to do so. This is important because of
 //     the relationship Token Factory assets can have with ERC20s with the
 //     [FunToken Mechanism].
-//   - To delete metadata for a bank denom that was set prematurely. For example,
-//     consider the case where you set denom metadata for a Token Factory coin
-//     before it has been created (MsgCreateDenom). The existence of this
-//     metadata prevents the creation of the token, so there needs to be a delete
-//     operation for cleanup purposes.
 //
 // [FunToken Mechanism]: https://nibiru.fi/docs/evm/funtoken.html
 func (k Keeper) SudoSetDenomMetadata(
@@ -340,20 +331,7 @@ func (k Keeper) SudoSetDenomMetadata(
 		return resp, err
 	}
 
-	if txMsg.DeleteMetadataForDenom != "" {
-		bankDenom := txMsg.DeleteMetadataForDenom
-		_, isSome := k.bankKeeper.GetDenomMetaData(ctx, bankDenom)
-		if !isSome {
-			return resp, fmt.Errorf("Cannot delete bank.DenomMetadata because it does not exist for %s", bankDenom)
-		}
-
-		store := ctx.KVStore(k.bankStoreKey)
-		denomMetaDataStore := storeprefix.NewStore(store, bank.DenomMetadataPrefix)
-		denomMetaDataStore.Delete([]byte(bankDenom))
-		return resp, nil
-	}
-
-	k.bankKeeper.SetDenomMetaData(ctx, *txMsg.Metadata)
+	k.bankKeeper.SetDenomMetaData(ctx, txMsg.Metadata)
 
 	return &types.MsgSudoSetDenomMetadataResponse{}, err
 }
