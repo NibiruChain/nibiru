@@ -40,6 +40,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- [#2222](https://github.com/NibiruChain/nibiru/pull/2222) - fix(evm): evm indexer proper stopping of the indexer service
+- [#2224](https://github.com/NibiruChain/nibiru/pull/2224) - fix(evm): suppressing error on missing block bloom event
+- [#2238](https://github.com/NibiruChain/nibiru/pull/2238) - feat(evm-embeds): Add WNIBI.sol implementatino to contracts and related TypeScript and Solidity package updates for npm.
+- [#2239](https://github.com/NibiruChain/nibiru/pull/2239) - feat(funtoken): update `FunToken.sendToBank` to accept EVM and nibi addresses.
+- [#2241](https://github.com/NibiruChain/nibiru/pull/2241) - fix(evm): evm-tx-index cli fix to exclude most latest block
+- [#2236](https://github.com/NibiruChain/nibiru/pull/2236) - chore: make function comment match function name and fix linter errors
+- [#2243](https://github.com/NibiruChain/nibiru/pull/2243) - fix(deps): bump Go to v1.24, similar to [#1698](https://github.com/NibiruChain/nibiru/pull/1698)
+
+### Dependencies
+
+- Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
+- Bump `golang.org/x/net` from 0.33.0 to 0.37.0 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- chore: upadte golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- Bump `[golang.org/x/net](https://github.com/golang/net)` from 0.33.0 to 0.37.0. ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+
+## [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0) - 2025-02-25
+
 - [#2104](https://github.com/NibiruChain/nibiru/pull/2104) - chore: update chain IDs
 - [#2202](https://github.com/NibiruChain/nibiru/pull/2202) - chore(build): add build tags and missing flags/variables
 - [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
@@ -52,6 +69,8 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2214](https://github.com/NibiruChain/nibiru/pull/2214) - chore(wasm): bump wasmvm to `v1.5.8`
 - [#2068](https://github.com/NibiruChain/nibiru/pull/2068) - feat: enable wasm light clients on IBC (08-wasm)
 - [#2217](https://github.com/NibiruChain/nibiru/pull/2217) - fix: app-db-backend not recognized on prune command
+- [#2219](https://github.com/NibiruChain/nibiru/pull/2219) - fix(evm): disable unprotected tx check in EVM ante handler
+- [#2220](https://github.com/NibiruChain/nibiru/pull/2220) - fix(evm): improved marshaling of the eth tx receipt
 
 ## [v2.0.0-p1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-p1) - 2025-02-10
 
