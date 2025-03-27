@@ -35,17 +35,18 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), []authtypes.GenesisAccount{acc})
+	genesisState[authtypes.ModuleName] = codec.MustMarshalJSON(authGenesis)
 
+	// add genesis account balance
 	var bankGenesis banktypes.GenesisState
 	codec.MustUnmarshalJSON(genesisState[banktypes.ModuleName], &bankGenesis)
-	balances := bankGenesis.Balances
-
-	balances = append(balances, banktypes.Balance{
+	bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, math.NewIntFromUint64(1e14))),
 	})
 
-	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
+	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []authtypes.GenesisAccount{acc}, bankGenesis.Balances...)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +60,8 @@ func genesisStateWithValSet(
 	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (nibiruapp.GenesisState, error) {
-	// set genesis accounts
-	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	genesisState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenesis)
-
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
-
-	bondAmt := sdk.DefaultPowerReduction
 
 	for _, val := range valSet.Validators {
 		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
@@ -82,7 +77,7 @@ func genesisStateWithValSet(
 			ConsensusPubkey:   pkAny,
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
-			Tokens:            bondAmt,
+			Tokens:            sdk.DefaultPowerReduction,
 			DelegatorShares:   math.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
@@ -94,10 +89,9 @@ func genesisStateWithValSet(
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
 	}
 	// set validators and delegations
-	stakingParams := stakingtypes.DefaultParams()
-	stakingParams.BondDenom = appconst.BondDenom
-	stakingGenesis := stakingtypes.NewGenesisState(stakingParams, validators, delegations)
-	genesisState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(stakingGenesis)
+	genesisState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(
+		stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations),
+	)
 
 	totalSupply := sdk.NewCoins()
 	for _, b := range balances {
@@ -107,24 +101,25 @@ func genesisStateWithValSet(
 
 	for range delegations {
 		// add delegated tokens to total supply
-		totalSupply = totalSupply.Add(sdk.NewCoin(appconst.BondDenom, bondAmt))
+		totalSupply = totalSupply.Add(sdk.NewCoin(appconst.BondDenom, sdk.DefaultPowerReduction))
 	}
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
 		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
-		Coins:   sdk.Coins{sdk.NewCoin(appconst.BondDenom, bondAmt)},
+		Coins:   sdk.Coins{sdk.NewCoin(appconst.BondDenom, sdk.DefaultPowerReduction)},
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(
-		banktypes.DefaultGenesisState().Params,
-		balances,
-		totalSupply,
-		[]banktypes.Metadata{},
-		[]banktypes.SendEnabled{},
+	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(
+		banktypes.NewGenesisState(
+			banktypes.DefaultParams(),
+			balances,
+			totalSupply,
+			[]banktypes.Metadata{},
+			[]banktypes.SendEnabled{},
+		),
 	)
-	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenesis)
 
 	return genesisState, nil
 }
