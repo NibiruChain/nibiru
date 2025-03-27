@@ -26,7 +26,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 				tx := evmtest.HappyCreateContractTx(deps)
 				return tx
 			},
-			wantErr: "rejected unprotected Ethereum transaction",
+			wantErr: "couldn't retrieve sender address from the ethereum transaction: invalid transaction v, r, s values: tx intended signer does not match the given signer",
 		},
 		{
 			name: "sad: non ethereum tx",

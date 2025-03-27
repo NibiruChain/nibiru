@@ -1,15 +1,20 @@
-FROM golang:1.21 AS builder
+FROM golang:1.24 AS builder
 
 WORKDIR /nibiru
 
-# copy go.mod, go.sum to WORKDIR
-COPY go.sum go.mod ./  
-RUN go mod download
-# copy the rest of the project to WORKDIR
-COPY . .               
+# install OS dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
 
+# install Go dependencies
+COPY go.sum go.mod ./
+RUN go mod download
+
+# build nibid
+COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg \
+  --mount=type=cache,target=/nibiru/temp \
   make build
 
 FROM alpine:latest
@@ -25,6 +30,7 @@ RUN apk --no-cache add \
 COPY --from=builder /nibiru/build/nibid /usr/local/bin/nibid
 
 COPY ./contrib/scripts/chaosnet.sh ./
+
 RUN chmod +x ./chaosnet.sh
 ARG MNEMONIC
 ARG CHAIN_ID
