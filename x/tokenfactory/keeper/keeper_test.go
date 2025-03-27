@@ -38,7 +38,6 @@ func TestKeeperTestSuite(t *testing.T) {
 // SetupTest: Runs before each test in the suite. It initializes a fresh app
 // and ctx.
 func (s *TestSuite) SetupTest() {
-	testapp.EnsureNibiruPrefix()
 	s.encConfig = app.MakeEncodingConfig()
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp

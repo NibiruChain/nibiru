@@ -30,7 +30,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	require.False(t, params.InflationEnabled)
 
 	msg = types.MsgToggleInflation{
-		Sender: testapp.DefaultSudoRoot().String(),
+		Sender: testutil.ADDR_SUDO_ROOT,
 		Enable: true,
 	}
 
@@ -60,7 +60,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
 	msg = types.MsgEditInflationParams{
-		Sender:          testapp.DefaultSudoRoot().String(),
+		Sender:          testutil.ADDR_SUDO_ROOT,
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}
 

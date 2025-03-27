@@ -360,3 +360,5 @@ playwright/playwright-report/
 playwright/playwright/.cache/
 playwright/chrome-extensions/keplr/
 playwright/yarn.lock
+
+debug_container.dot

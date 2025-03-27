@@ -8,6 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -15,8 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
@@ -36,10 +35,8 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	// Set up base app and ctx
-	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
+	suite.app = testapp.NewNibiruTestApp(app.ModuleBasics.DefaultGenesis(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,

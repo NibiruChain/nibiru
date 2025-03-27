@@ -29,7 +29,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "happy: properly built eth tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 				return tx
@@ -79,7 +79,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: eth tx with memo should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				txBuilder.SetMemo("memo")
 				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
@@ -90,7 +90,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: eth tx with fee payer should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				txBuilder.SetFeePayer(testutil.AccAddress())
 				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
@@ -101,7 +101,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: eth tx with fee granter should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				txBuilder.SetFeeGranter(testutil.AccAddress())
 				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
@@ -112,11 +112,11 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: eth tx with signatures should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				sigV2 := signing.SignatureV2{
 					PubKey: deps.Sender.PrivKey.PubKey(),
 					Data: &signing.SingleSignatureData{
-						SignMode:  deps.EncCfg.TxConfig.SignModeHandler().DefaultMode(),
+						SignMode:  deps.App.GetTxConfig().SignModeHandler().DefaultMode(),
 						Signature: nil,
 					},
 					Sequence: 0,
@@ -252,7 +252,7 @@ func buildTx(
 	gasLimit uint64,
 	fees sdk.Coins,
 ) sdk.FeeTx {
-	txBuilder, _ := deps.EncCfg.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
+	txBuilder, _ := deps.App.GetTxConfig().NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 	if ethExtentions {
 		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})
 		txBuilder.SetExtensionOptions(option)

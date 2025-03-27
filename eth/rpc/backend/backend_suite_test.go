@@ -32,7 +32,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
@@ -74,9 +73,7 @@ func TestBackendSuite(t *testing.T) {
 }
 
 func (s *BackendSuite) SetupSuite() {
-	testapp.EnsureNibiruPrefix()
-
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	homeDir := s.T().TempDir()
 	s.cfg = testnetwork.BuildNetworkConfig(genState)
 	network, err := testnetwork.New(s.T(), homeDir, s.cfg)

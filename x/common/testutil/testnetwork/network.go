@@ -12,38 +12,33 @@ import (
 	"sync"
 	"time"
 
-	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-
+	"github.com/cometbft/cometbft/libs/log"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -76,14 +71,13 @@ type Network struct {
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
+func NewAppConstructor(chainID string) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewNibiruApp(
 			val.Ctx.Logger,
 			dbm.NewMemDB(),
 			nil,
 			true,
-			encodingCfg,
 			sims.EmptyAppOptions{},
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
@@ -100,7 +94,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	return Config{
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		AppConstructor:    NewAppConstructor(encCfg, chainID),
+		AppConstructor:    NewAppConstructor(chainID),
 		BondDenom:         denoms.NIBI,
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		ChainID:           chainID,

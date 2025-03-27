@@ -38,6 +38,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
+
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
 - [#2222](https://github.com/NibiruChain/nibiru/pull/2222) - fix(evm): evm indexer proper stopping of the indexer service

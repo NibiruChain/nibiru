@@ -15,7 +15,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
-	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding/codec"
 )
 
 var TestCodec amino.Codec
@@ -26,7 +25,7 @@ func init() {
 
 	interfaceRegistry := types.NewInterfaceRegistry()
 	TestCodec = amino.NewProtoCodec(interfaceRegistry)
-	enccodec.RegisterInterfaces(interfaceRegistry)
+	// enccodec.RegisterInterfaces(interfaceRegistry)
 }
 
 const (

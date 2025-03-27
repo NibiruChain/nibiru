@@ -27,8 +27,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 
-	"github.com/NibiruChain/nibiru/v2/app"
-
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -54,7 +52,7 @@ const (
 type EIP712TestSuite struct {
 	suite.Suite
 
-	config                   chainparams.EncodingConfig
+	encCfg                   chainparams.EncodingConfig
 	clientCtx                client.Context
 	useLegacyEIP712TypedData bool
 	denom                    string
@@ -78,12 +76,11 @@ func TestEIP712TestSuite(t *testing.T) {
 }
 
 func (suite *EIP712TestSuite) SetupTest() {
-	suite.config = encoding.MakeConfig(app.ModuleBasics)
-	suite.clientCtx = client.Context{}.WithTxConfig(suite.config.TxConfig)
+	suite.encCfg = encoding.MakeConfig()
+	suite.clientCtx = client.Context{}.WithTxConfig(suite.encCfg.TxConfig)
 	suite.denom = evm.EVMBankDenom
 
-	sdk.GetConfig().SetBech32PrefixForAccount(appconst.AccountAddressPrefix, "")
-	eip712.SetEncodingConfig(suite.config)
+	eip712.SetEncodingConfig(suite.encCfg)
 }
 
 // createTestAddress creates random test addresses for messages
@@ -709,7 +706,7 @@ func (s *EIP712TestSuite) TestUnpackAny() {
 		s.NoError(err)
 
 		reflectVal := reflect.ValueOf(anyGiven)
-		gotReflectType, gotReflectVal, err := eip712.UnpackAny(s.config.Codec, reflectVal)
+		gotReflectType, gotReflectVal, err := eip712.UnpackAny(s.encCfg.Codec, reflectVal)
 		s.Require().NoError(err,
 			"got reflect.Type %s, got reflect.Value %s",
 			gotReflectType, gotReflectVal)

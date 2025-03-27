@@ -13,10 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
-func init() {
-	testapp.EnsureNibiruPrefix()
-}
-
 func TestBurn(t *testing.T) {
 	testCases := []struct {
 		name        string

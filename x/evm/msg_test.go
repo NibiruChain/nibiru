@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/encoding"
@@ -53,7 +52,7 @@ func (s *MsgsSuite) SetupTest() {
 	s.chainID = big.NewInt(1)
 	s.hundredBigInt = big.NewInt(100)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeConfig()
 	s.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 }
 
@@ -927,7 +926,7 @@ func (s *MsgsSuite) TestUnwrapEthererumMsg() {
 	_, err := evm.UnwrapEthereumMsg(nil, common.Hash{})
 	s.NotNil(err)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeConfig()
 	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 	builder, _ := clientCtx.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 

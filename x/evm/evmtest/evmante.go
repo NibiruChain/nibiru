@@ -51,7 +51,7 @@ func BuildTx(
 	fees sdk.Coins,
 	msgs ...sdk.Msg,
 ) sdk.FeeTx {
-	txBuilder, _ := deps.EncCfg.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
+	txBuilder, _ := deps.App.GetTxConfig().NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 	if ethExtentions {
 		option, _ := codectypes.NewAnyWithValue(&evm.ExtensionOptionsEthereumTx{})
 		txBuilder.SetExtensionOptions(option)

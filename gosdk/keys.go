@@ -3,21 +3,17 @@ package gosdk
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/codec"
-
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 )
-
-func EncodingConfig() codec.EncodingConfig { return app.MakeEncodingConfig() }
 
 // NewKeyring: Creates an empty, in-memory keyring
 func NewKeyring() keyring.Keyring {
-	return keyring.NewInMemory(EncodingConfig().Codec)
+	return keyring.NewInMemory(app.MakeEncodingConfig().Codec)
 }
 
 // TODO: Is it necessary to add support for interacting with local file system

@@ -19,7 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
@@ -42,10 +41,9 @@ type TestSuite struct {
 
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-	testapp.EnsureNibiruPrefix()
 
 	encodingConfig := app.MakeEncodingConfig()
-	genesisState := genesis.NewTestGenesisState(encodingConfig)
+	genesisState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
