@@ -9,8 +9,9 @@ import (
 	"os/exec"
 	"path"
 
-	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 	"github.com/stretchr/testify/suite"
+
+	tokenregistry "github.com/NibiruChain/nibiru/v2/token-registry"
 )
 
 var (
@@ -31,7 +32,6 @@ func (s *Suite) SetupSuite() {
 	absPath := path.Join(rootPath, "token-registry/main/main.go")
 	_, err = exec.Command("go", "run", absPath).Output()
 	s.Require().NoError(err)
-
 }
 
 // TestErc20Images ensures that the embedded JSON file correctly unmarshals into the Erc20 struct.
