@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2239](https://github.com/NibiruChain/nibiru/pull/2239) - feat(funtoken): update `FunToken.sendToBank` to accept EVM and nibi addresses.
 - [#2241](https://github.com/NibiruChain/nibiru/pull/2241) - fix(evm): evm-tx-index cli fix to exclude most latest block
 - [#2236](https://github.com/NibiruChain/nibiru/pull/2236) - chore: make function comment match function name and fix linter errors
+- [#2243](https://github.com/NibiruChain/nibiru/pull/2243) - fix(deps): bump Go to v1.24, similar to [#1698](https://github.com/NibiruChain/nibiru/pull/1698)
 
 ### Dependencies
 

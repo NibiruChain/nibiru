@@ -3,7 +3,9 @@
 ###############################################################################
 
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
-GOLANG_CROSS_VERSION  ?= v1.21.5
+# GOLANG_CROSS_VERSION - Latest as of 2025-03-27
+# See https://github.com/goreleaser/goreleaser-cross/releases
+GOLANG_CROSS_VERSION  ?= v1.21.5  
 CMT_VERSION 		  = $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 
 DOCKER_YQ = docker run --rm -v $(PWD):/work -w /work mikefarah/yq:4
