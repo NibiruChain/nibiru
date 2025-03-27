@@ -32,7 +32,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
@@ -49,7 +49,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			name: "sad: signed tx, insufficient funds",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
@@ -66,7 +66,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			name: "sad: unsigned tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)

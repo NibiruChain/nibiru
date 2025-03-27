@@ -9,7 +9,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -118,10 +117,9 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 			deps := evmtest.NewTestDeps()
 			anteDec := ante.AnteDecoratorAuthzGuard{}
 
-			encCfg := app.MakeEncodingConfig()
 			txBuilder, err := sdkclienttx.Factory{}.
 				WithChainID(s.ctx.ChainID()).
-				WithTxConfig(encCfg.TxConfig).
+				WithTxConfig(deps.App.GetTxConfig()).
 				BuildUnsignedTx(tc.txMsg())
 			s.Require().NoError(err)
 

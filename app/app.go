@@ -8,13 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/depinject"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	tmos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -27,20 +28,64 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
+	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
+	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
@@ -50,7 +95,24 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
+	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
+	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/genmsg"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -68,10 +130,67 @@ var (
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
-	ModuleBasics = ModuleBasicManager()
+	ModuleBasics = module.NewBasicManager(
+		auth.AppModuleBasic{},
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		BankModule{},
+		capability.AppModuleBasic{},
+		StakingModule{},
+		distr.AppModuleBasic{},
+		NewGovModuleBasic(
+			paramsclient.ProposalHandler,
+			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
+		),
+		params.AppModuleBasic{},
+		CrisisModule{},
+		slashing.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		groupmodule.AppModuleBasic{},
+		// ibc 'AppModuleBasic's
+		ibc.AppModuleBasic{},
+		ibctransfer.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+		ica.AppModuleBasic{},
+		ibcwasm.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		// native x/
+		evmmodule.AppModuleBasic{},
+		oracle.AppModuleBasic{},
+		epochs.AppModuleBasic{},
+		inflation.AppModuleBasic{},
+		sudo.AppModuleBasic{},
+		wasm.AppModuleBasic{},
+		devgas.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
+		genmsg.AppModule{},
+	)
 
 	// module account permissions
-	maccPerms = ModuleAccPerms()
+	maccPerms = map[string][]string{
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		oracletypes.ModuleName:         {},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         {},
+		icatypes.ModuleName:            {},
+
+		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		epochstypes.ModuleName:           {},
+		sudotypes.ModuleName:             {},
+		common.TreasuryPoolModuleAccount: {},
+		wasmtypes.ModuleName:             {authtypes.Burner},
+		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+	}
 )
 
 var (
@@ -84,35 +203,36 @@ var (
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type NibiruApp struct {
-	*baseapp.BaseApp
+	*runtime.App
+
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
+	txConfig          client.TxConfig
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
+	// TODO(k-yang): remove once depinject is fully integrated
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	AppKeepers // embed all module keepers
 
-	// the module manager
-	ModuleManager *module.Manager
-
 	// simulation manager
 	sm *module.SimulationManager
-
-	// module configurator
-	configurator module.Configurator
 }
 
 func init() {
+	SetPrefixes("nibi")
+
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
+
+	overrideWasmVariables()
 }
 
 // GetWasmOpts build wasm options
@@ -149,15 +269,9 @@ func NewNibiruApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	loadLatest bool,
-	encodingConfig EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
-	overrideWasmVariables()
-	appCodec := encodingConfig.Codec
-	legacyAmino := encodingConfig.Amino
-	interfaceRegistry := encodingConfig.InterfaceRegistry
-	txConfig := encodingConfig.TxConfig
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
 		mp := mempool.NoOpMempool{}
 		app.SetMempool(mp)
@@ -166,65 +280,208 @@ func NewNibiruApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	bApp := baseapp.NewBaseApp(
-		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetVersion(version.Version)
-	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetTxEncoder(txConfig.TxEncoder())
+	var (
+		app        = &NibiruApp{}
+		appBuilder *runtime.AppBuilder
+		appConfig  = depinject.Configs(
+			AppConfig,
+			depinject.Supply(
+				// supply the application options
+				appOpts,
 
-	keys, tkeys, memKeys := initStoreKeys()
-	app := &NibiruApp{
-		BaseApp:           bApp,
-		legacyAmino:       legacyAmino,
-		appCodec:          appCodec,
-		interfaceRegistry: interfaceRegistry,
-		keys:              keys,
-		tkeys:             tkeys,
-		memKeys:           memKeys,
+				// ADVANCED CONFIGURATION
+
+				//
+				// AUTH
+				//
+				// For providing a custom function required in auth to generate custom account types
+				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+				//
+				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+				// For providing a custom a base account type add it below.
+				// By default the auth module uses authtypes.ProtoBaseAccount().
+				//
+				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+
+				//
+				// MINT
+				//
+
+				// For providing a custom inflation function for x/mint add here your
+				// custom function that implements the minttypes.InflationCalculationFn
+				// interface.
+			),
+		)
+	)
+
+	if err := depinject.Inject(appConfig,
+		&appBuilder,
+		&app.appCodec,
+		&app.legacyAmino,
+		&app.txConfig,
+		&app.interfaceRegistry,
+		&app.AccountKeeper,
+	); err != nil {
+		panic(err)
+	}
+	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+
+	// init non-depinject keys
+	app.keys = sdk.NewKVStoreKeys(
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		distrtypes.StoreKey,
+		slashingtypes.StoreKey,
+		govtypes.StoreKey,
+		paramstypes.StoreKey,
+		consensusparamtypes.StoreKey,
+		upgradetypes.StoreKey,
+		feegrant.StoreKey,
+		evidencetypes.StoreKey,
+		capabilitytypes.StoreKey,
+		authzkeeper.StoreKey,
+		crisistypes.StoreKey,
+
+		// ibc keys
+		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
+		ibcexported.StoreKey,
+		icahosttypes.StoreKey,
+		icacontrollertypes.StoreKey,
+		ibcwasmtypes.StoreKey,
+
+		// nibiru x/ keys
+		oracletypes.StoreKey,
+		epochstypes.StoreKey,
+		inflationtypes.StoreKey,
+		sudotypes.StoreKey,
+		wasmtypes.StoreKey,
+		devgastypes.StoreKey,
+		tokenfactorytypes.StoreKey,
+
+		evm.StoreKey,
+	)
+	app.tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
+	app.memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	for _, k := range app.keys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
+	}
+	for _, k := range app.tkeys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
+	}
+	for _, k := range app.memKeys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
 	}
 
-	wasmConfig := app.InitKeepers(appOpts)
+	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 
-	// -------------------------- Module Options --------------------------
+	// register non-depinject modules
+	if err := app.RegisterModules(
+		// core modules
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
+		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
+		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
+		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
+		staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		upgrade.NewAppModule(&app.upgradeKeeper),
+		params.NewAppModule(app.paramsKeeper),
+		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(
-		appOpts.Get(crisis.FlagSkipGenesisInvariants))
+		// Nibiru modules
+		oracle.NewAppModule(app.appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
+		epochs.NewAppModule(app.appCodec, app.EpochsKeeper),
+		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
+		sudo.NewAppModule(app.appCodec, app.SudoKeeper),
+		genmsg.NewAppModule(app.MsgServiceRouter()),
 
-	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
+		// ibc
+		evidence.NewAppModule(app.evidenceKeeper),
+		ibc.NewAppModule(app.ibcKeeper),
+		ibctransfer.NewAppModule(app.ibcTransferKeeper),
+		ibcfee.NewAppModule(app.ibcFeeKeeper),
+		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
+		ibcwasm.NewAppModule(app.WasmClientKeeper),
 
-	app.initModuleManager(encodingConfig, skipGenesisInvariants)
+		// evm
+		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
+
+		// wasm
+		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper, app.GetSubspace(devgastypes.ModuleName)),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
+
+		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
+	); err != nil {
+		panic(err)
+	}
+
+	// make sure to get the ibc tendermint client interface types
+	ibctm.AppModuleBasic{}.RegisterInterfaces(app.interfaceRegistry)
+	ibctm.AppModuleBasic{}.RegisterLegacyAminoCodec(app.legacyAmino)
+
+	// make sure to register the eth crypto codec types
+	cryptocodec.RegisterInterfaces(app.interfaceRegistry)
+	cryptocodec.RegisterCrypto(app.legacyAmino)
+
+	// load state streaming if enabled
+	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
+		logger.Error("failed to load state streaming", "err", err)
+		os.Exit(1)
+	}
+
+	/****  Module Options ****/
+
+	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 
 	app.setupUpgrades()
-	// NOTE: Any module instantiated in the module manager that is later modified
-	// must be passed by reference here.
 
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
-	app.initSimulationManager(app.appCodec)
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
+	overrideModules := map[string]module.AppModuleSimulation{
+		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+	}
+	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
 
-	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
+	app.sm.RegisterStoreDecoders()
 
-	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-	anteHandler := NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
+	// A custom InitChainer can be set if extra pre-init-genesis logic is required.
+	// By default, when using app wiring enabled module, this is not required.
+	// For instance, the upgrade module will set automatically the module version map in its init genesis thanks to app wiring.
+	// However, when registering a module manually (i.e. that does not support app wiring), the module version map
+	// must be set manually as follow. The upgrade module will de-duplicate the module version map.
+	//
+	// app.SetInitChainer(func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+	// 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	// 	return app.App.InitChainer(ctx, req)
+	// })
+
+	// initialize custom antehandler
+	app.SetAnteHandler(NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
 		HandlerOptions: authante.HandlerOptions{
 			AccountKeeper:          app.AccountKeeper,
 			BankKeeper:             app.BankKeeper,
 			FeegrantKeeper:         app.FeeGrantKeeper,
-			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+			SignModeHandler:        app.txConfig.SignModeHandler(),
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
 		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasmtypes.StoreKey],
+		TxCounterStoreKey: app.keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
@@ -232,11 +489,9 @@ func NewNibiruApp(
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
-	})
+	}))
 
-	app.SetAnteHandler(anteHandler)
-	app.SetEndBlocker(app.EndBlocker)
-
+	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
 		if err := snapshotManager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(
@@ -252,33 +507,15 @@ func NewNibiruApp(
 		}
 	}
 
+	if err := app.Load(loadLatest); err != nil {
+		panic(err)
+	}
+
 	if loadLatest {
-		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(err.Error())
-		}
-
-		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
-
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := ibcwasmkeeper.InitializePinnedCodes(ctx, app.appCodec); err != nil {
+		if err := ibcwasmkeeper.InitializePinnedCodes(app.BaseApp.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
-
-		/* Applications that wish to enforce statically created ScopedKeepers should
-		call `Seal` after creating their scoped modules in `NewApp` with
-		`capabilityKeeper.ScopeToModule`.
-
-
-		Calling 'app.capabilityKeeper.Seal()' initializes and seals the capability
-		keeper such that all persistent capabilities are loaded in-memory and prevent
-		any further modules from creating scoped sub-keepers.
-
-		NOTE: This must be done during creation of baseapp rather than in InitChain so
-		that in-memory capabilities get regenerated on app restart.
-		Note that since this reads from the store, we can only perform the seal
-		when `loadLatest` is set to true.
-		*/
-		app.capabilityKeeper.Seal()
 	}
 
 	return app
@@ -368,6 +605,17 @@ func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
+func (app *NibiruApp) kvStoreKeys() map[string]*storetypes.KVStoreKey {
+	keys := make(map[string]*storetypes.KVStoreKey)
+	for _, k := range app.GetStoreKeys() {
+		if kv, ok := k.(*storetypes.KVStoreKey); ok {
+			keys[kv.Name()] = kv
+		}
+	}
+
+	return keys
+}
+
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -447,7 +695,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfig().TxConfig
+	return app.txConfig
 }
 
 // ------------------------------------------------------------------------

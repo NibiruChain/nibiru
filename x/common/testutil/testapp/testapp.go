@@ -17,7 +17,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -26,19 +25,12 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
-func init() {
-	EnsureNibiruPrefix()
-}
-
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	// Prevent "invalid Bech32 prefix; expected nibi, got ...." error
-	EnsureNibiruPrefix()
-
 	// Set up base app
 	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Codec)
+	var appGenesis app.GenesisState = app.ModuleBasics.DefaultGenesis(encoding.Codec)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
 
 	// Set happy genesis: epochs
@@ -48,7 +40,10 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 
 	// Set happy genesis: sudo
 	sudoGenesis := new(sudotypes.GenesisState)
-	sudoGenesis.Sudoers = DefaultSudoers()
+	sudoGenesis.Sudoers = sudotypes.Sudoers{
+		Root:      testutil.ADDR_SUDO_ROOT,
+		Contracts: []string{testutil.ADDR_SUDO_ROOT},
+	}
 	appGenesis[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
@@ -57,7 +52,6 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", math.LegacyNewDec(20000))
-	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx
 }
@@ -77,19 +71,6 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	return ctx
 }
 
-// DefaultSudoers: State for the x/sudo module for the default test app.
-func DefaultSudoers() sudotypes.Sudoers {
-	addr := DefaultSudoRoot().String()
-	return sudotypes.Sudoers{
-		Root:      addr,
-		Contracts: []string{addr},
-	}
-}
-
-func DefaultSudoRoot() sdk.AccAddress {
-	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
-}
-
 func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
@@ -102,45 +83,35 @@ func FirstBlockProposer(
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
 // default. See "DefaultSudoers".
 func SetDefaultSudoGenesis(gen app.GenesisState) {
-	sudoGen := new(sudotypes.GenesisState)
 	encoding := app.MakeEncodingConfig()
-	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
-	if err := sudoGen.Validate(); err != nil {
-		sudoGen.Sudoers = DefaultSudoers()
-		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGen)
-	}
-}
 
-// NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
-// block time set to time zero.
-func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestAppAndContext()
-	ctx := NewContext(app).WithBlockTime(startTime)
-	return app, ctx
+	var sudoGen sudotypes.GenesisState
+	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], &sudoGen)
+	if err := sudoGen.Validate(); err != nil {
+		sudoGen.Sudoers = sudotypes.Sudoers{
+			Root:      testutil.ADDR_SUDO_ROOT,
+			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+		}
+		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
+	}
 }
 
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
-	db := tmdb.NewMemDB()
-	logger := log.NewNopLogger()
-
-	encoding := app.MakeEncodingConfig()
-	cryptocodec.RegisterInterfaces(encoding.InterfaceRegistry)
 	SetDefaultSudoGenesis(gen)
 
 	app := app.NewNibiruApp(
-		logger,
-		db,
+		log.NewNopLogger(),
+		tmdb.NewMemDB(),
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
-		encoding,
 		/*appOpts=*/ sims.EmptyAppOptions{},
 		baseAppOptions...,
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
+	gen, err := GenesisStateWithSingleValidator(app.AppCodec(), gen)
 	if err != nil {
 		panic(err)
 	}
@@ -197,15 +168,4 @@ func FundFeeCollector(
 		auth.FeeCollectorName,
 		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, amount)),
 	)
-}
-
-// EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
-// the default from the Cosmos-SDK, guaranteeing that tests will work with nibi
-// addresses rather than cosmos ones (for Gaia).
-func EnsureNibiruPrefix() {
-	csdkConfig := sdk.GetConfig()
-	nibiruPrefix := appconst.AccountAddressPrefix
-	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
-		app.SetPrefixes(nibiruPrefix)
-	}
 }
