@@ -412,7 +412,7 @@ func NewNibiruApp(
 
 		// wasm
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
-		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper, app.GetSubspace(devgastypes.ModuleName)),
+		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 
 		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them

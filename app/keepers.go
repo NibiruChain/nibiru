@@ -563,7 +563,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
 }
