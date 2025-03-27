@@ -94,6 +94,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
@@ -224,6 +225,7 @@ type NibiruApp struct {
 
 func init() {
 	SetPrefixes("nibi")
+	sdk.DefaultBondDenom = appconst.BondDenom
 
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
