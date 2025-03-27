@@ -419,6 +419,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.DistrKeeper,
+		app.SudoKeeper,
 		govModuleAddr,
 	)
 

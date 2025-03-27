@@ -50,6 +50,7 @@ func TX_MSG_TYPE_URLS() []string {
 		"/nibiru.tokenfactory.v1.MsgBurn",
 		"/nibiru.tokenfactory.v1.MsgBurnNative",
 		"/nibiru.tokenfactory.v1.MsgSetDenomMetadata",
+		"/nibiru.tokenfactory.v1.MsgSudoSetDenomMetadata",
 	}
 }
 
@@ -67,6 +68,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 		{&MsgMint{}, "nibiru/tokenfactory/mint"},
 		{&MsgBurn{}, "nibiru/tokenfactory/burn"},
 		{&MsgSetDenomMetadata{}, "nibiru/tokenfactory/set-denom-metadata"},
+		{&MsgSudoSetDenomMetadata{}, "nibiru/tokenfactory/sudo-set-denom-metadata"},
 	} {
 		cdc.RegisterConcrete(ele.MsgType, ele.Name, nil)
 	}
