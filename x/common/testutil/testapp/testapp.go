@@ -2,6 +2,7 @@ package testapp
 
 import (
 	"encoding/json"
+	"maps"
 	"time"
 
 	"cosmossdk.io/math"
@@ -9,11 +10,12 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -28,25 +30,7 @@ import (
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	// Set up base app
-	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.ModuleBasics.DefaultGenesis(encoding.Codec)
-	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
-
-	// Set happy genesis: epochs
-	appGenesis[epochstypes.ModuleName] = encoding.Codec.MustMarshalJSON(
-		genModEpochs,
-	)
-
-	// Set happy genesis: sudo
-	sudoGenesis := new(sudotypes.GenesisState)
-	sudoGenesis.Sudoers = sudotypes.Sudoers{
-		Root:      testutil.ADDR_SUDO_ROOT,
-		Contracts: []string{testutil.ADDR_SUDO_ROOT},
-	}
-	appGenesis[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
-
-	app := NewNibiruTestApp(appGenesis)
+	app, _ := NewNibiruTestApp(app.GenesisState{})
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
@@ -99,17 +83,44 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
-	SetDefaultSudoGenesis(gen)
-
+func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
+) {
 	app := app.NewNibiruApp(
 		log.NewNopLogger(),
 		tmdb.NewMemDB(),
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*appOpts=*/ sims.EmptyAppOptions{},
-		baseAppOptions...,
 	)
+
+	// configure genesis from default
+	gen = app.DefaultGenesis()
+
+	// Set happy genesis: epochs
+	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+	gen[epochstypes.ModuleName] = app.AppCodec().MustMarshalJSON(
+		genModEpochs,
+	)
+
+	// Set happy genesis: sudo
+	sudoGenesis := sudotypes.GenesisState{
+		Sudoers: sudotypes.Sudoers{
+			Root:      testutil.ADDR_SUDO_ROOT,
+			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+		},
+	}
+	gen[sudotypes.ModuleName] = app.AppCodec().MustMarshalJSON(&sudoGenesis)
+
+	// Set happy genesis: gov
+	// Set short voting period to allow fast gov proposals in tests
+	var govGenesis govtypesv1.GenesisState
+	app.AppCodec().MustUnmarshalJSON(gen[govtypes.ModuleName], &govGenesis)
+	*govGenesis.Params.VotingPeriod = 20 * time.Second
+	govGenesis.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e6)) // min deposit of 1 NIBI
+	gen[govtypes.ModuleName] = app.AppCodec().MustMarshalJSON(&govGenesis)
+
+	maps.Copy(gen, customGenesisOverride)
 
 	gen, err := GenesisStateWithSingleValidator(app.AppCodec(), gen)
 	if err != nil {
@@ -126,7 +137,7 @@ func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.Base
 		AppStateBytes:   stateBytes,
 	})
 
-	return app
+	return app, gen
 }
 
 // FundAccount is a utility function that funds an account by minting and
