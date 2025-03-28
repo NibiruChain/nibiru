@@ -262,7 +262,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
-		app.appCodec, app.keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		app.appCodec, app.keys[inflationtypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
 	)
 
@@ -290,7 +290,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.ibcKeeper = ibckeeper.NewKeeper(
 		app.appCodec,
 		app.keys[ibcexported.StoreKey],
-		app.GetSubspace(ibcexported.ModuleName),
+		app.getSubspace(ibcexported.ModuleName),
 		app.StakingKeeper,
 		app.upgradeKeeper,
 		app.ScopedIBCKeeper,
@@ -309,7 +309,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[ibctransfertypes.StoreKey],
-		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
+		/* paramSubspace */ app.getSubspace(ibctransfertypes.ModuleName),
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
 		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
@@ -320,7 +320,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
 		app.appCodec, app.keys[icacontrollertypes.StoreKey],
-		app.GetSubspace(icacontrollertypes.SubModuleName),
+		app.getSubspace(icacontrollertypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
@@ -331,7 +331,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.icaHostKeeper = icahostkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[icahosttypes.StoreKey],
-		app.GetSubspace(icahosttypes.SubModuleName),
+		app.getSubspace(icahosttypes.SubModuleName),
 		app.ibcFeeKeeper,
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
@@ -553,9 +553,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Nibiru core params keepers | x/
-	paramsKeeper.Subspace(epochstypes.ModuleName)
-	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
@@ -564,7 +561,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
-	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
 }

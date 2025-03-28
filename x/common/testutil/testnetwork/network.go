@@ -111,9 +111,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		SigningAlgo:       string(hd.Secp256k1Type),
 		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(appconst.BondDenom, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
 		TimeoutCommit: time.Second / 2,
 		TxConfig:      encCfg.TxConfig,

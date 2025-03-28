@@ -11,13 +11,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
-	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+	ibctesting.DefaultTestingAppInit = newNibiruTestApp
 }
 
 /*
@@ -25,15 +24,8 @@ SetupNibiruTestingApp returns the TestingApp and default genesis state used to
 
 	initialize the testing app.
 */
-func SetupNibiruTestingApp() (
-	testingApp ibctesting.TestingApp,
-	defaultGenesis map[string]json.RawMessage,
-) {
-	// create testing app
-	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
-	genState := genesis.NewTestGenesisState(nibiruApp.AppCodec())
-
-	return nibiruApp, genState
+func newNibiruTestApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	return testapp.NewNibiruTestApp(app.GenesisState{})
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.
