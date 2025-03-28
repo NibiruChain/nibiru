@@ -41,8 +41,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -319,6 +317,7 @@ func NewNibiruApp(
 		&app.txConfig,
 		&app.interfaceRegistry,
 		&app.AccountKeeper,
+		&app.BankKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -326,7 +325,6 @@ func NewNibiruApp(
 
 	// init non-depinject keys
 	app.keys = sdk.NewKVStoreKeys(
-		banktypes.StoreKey,
 		stakingtypes.StoreKey,
 		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
@@ -383,7 +381,6 @@ func NewNibiruApp(
 	if err := app.RegisterModules(
 		// core modules
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
-		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.getSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),

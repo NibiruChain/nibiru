@@ -17,7 +17,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -167,17 +166,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	*/
 	app.capabilityKeeper.Seal()
 
-	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(
-			app.appCodec,
-			app.keys[banktypes.StoreKey],
-			app.AccountKeeper,
-			BlockedAddresses(),
-			govModuleAddr,
-		),
-		StateDB: nil,
-	}
-	app.BankKeeper = nibiruBankKeeper
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[stakingtypes.StoreKey],
@@ -279,7 +267,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.tkeys[evm.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		nibiruBankKeeper,
+		app.BankKeeper,
 		app.StakingKeeper,
 		cast.ToString(appOpts.Get("evm.tracer")),
 	)
