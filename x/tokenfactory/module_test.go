@@ -6,7 +6,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	module "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -41,7 +41,7 @@ func (s *ModuleTestSuite) TestAppModule() {
 		s.EqualValues(*genesis, *genState, "exported (got): %s", jsonBz)
 
 		s.T().Log("AppModuleBasic.ValidateGenesis")
-		encCfg := codec.MakeEncodingConfig()
+		encCfg := app.MakeEncodingConfig()
 		err = appModule.AppModuleBasic.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
 		s.NoError(err)
 

@@ -38,7 +38,6 @@ func TestKeeperTestSuite(t *testing.T) {
 // SetupTest: Runs before each test in the suite. It initializes a fresh app
 // and ctx.
 func (s *TestSuite) SetupTest() {
-	testapp.EnsureNibiruPrefix()
 	s.encConfig = app.MakeEncodingConfig()
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
@@ -61,6 +60,8 @@ func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
 		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(goCtx, txMsg)
 	case *tftypes.MsgSetDenomMetadata:
 		_, err = s.app.TokenFactoryKeeper.SetDenomMetadata(goCtx, txMsg)
+	case *tftypes.MsgSudoSetDenomMetadata:
+		_, err = s.app.TokenFactoryKeeper.SudoSetDenomMetadata(goCtx, txMsg)
 	case *tftypes.MsgBurnNative:
 		_, err = s.app.TokenFactoryKeeper.BurnNative(goCtx, txMsg)
 	default:

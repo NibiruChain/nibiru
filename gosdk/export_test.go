@@ -22,8 +22,7 @@ type Blockchain struct {
 
 func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	EnsureNibiruPrefix()
-	encConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState(encConfig)
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	cliCfg := testnetwork.BuildNetworkConfig(genState)
 	cfg := &cliCfg
 	cfg.NumValidators = 1

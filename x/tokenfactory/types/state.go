@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -72,7 +73,7 @@ func DenomFormatError(got string, msg ...string) error {
 	if len(msg) > 0 {
 		errStr += fmt.Sprintf(": %v", msg)
 	}
-	return fmt.Errorf(errStr)
+	return errors.New(errStr)
 }
 
 func (denomStr DenomStr) Validate() error {
