@@ -229,8 +229,6 @@ func ProvideNibiruBankModule(in NibiruBankInputs) NibiruBankOutputs {
 		}
 	}
 
-	fmt.Println("blockedAddresses:", blockedAddresses)
-
 	// default to governance authority if not provided
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 	if in.Config.Authority != "" {
