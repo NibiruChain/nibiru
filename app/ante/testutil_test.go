@@ -35,8 +35,7 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.ModuleBasics.DefaultGenesis(encodingConfig.Codec))
+	suite.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,
@@ -47,9 +46,9 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Set up TxConfig
 	suite.clientCtx = client.Context{}.
-		WithTxConfig(encodingConfig.TxConfig).
+		WithTxConfig(suite.app.GetTxConfig()).
 		WithChainID(chainId).
-		WithLegacyAmino(encodingConfig.Amino)
+		WithLegacyAmino(suite.app.LegacyAmino())
 
 	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 	suite.Require().NoError(err)
@@ -72,7 +71,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
 		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(suite.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
-		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, encodingConfig.TxConfig.SignModeHandler()),
+		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, suite.app.GetTxConfig().SignModeHandler()),
 		ante.NewIncrementSequenceDecorator(suite.app.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(suite.app.GetIBCKeeper()),
 	}

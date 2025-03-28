@@ -13,7 +13,6 @@ func (s *GenesisTestSuite) TestAppModule() {
 	appModule := devgas.NewAppModule(
 		s.app.DevGasKeeper,
 		s.app.AccountKeeper,
-		s.app.GetSubspace(devgastypes.ModuleName),
 	)
 
 	s.NotPanics(func() {

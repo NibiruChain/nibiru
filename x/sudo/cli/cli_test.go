@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
@@ -35,7 +35,7 @@ import (
 // MsgEditSudoersPlus is a wrapper struct to extend the default MsgEditSudoers
 // type with convenience functions
 type MsgEditSudoersPlus struct {
-	types.MsgEditSudoers
+	sudotypes.MsgEditSudoers
 }
 
 // ToJson converts the message into a json string and saves it in a temporary
@@ -53,7 +53,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 	`, msg.Action, strings.Join(msg.Contracts, `", "`), msg.Sender)
 
 	t.Log("check the unmarshal json → proto")
-	tempMsg := new(types.MsgEditSudoers)
+	tempMsg := new(sudotypes.MsgEditSudoers)
 	err := jsonpb.UnmarshalString(msgJsonStr, tempMsg)
 	assert.NoErrorf(t, err, "DEBUG tempMsg: %v\njsonStr: %v", tempMsg, msgJsonStr)
 
@@ -107,15 +107,27 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
-	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)
+	// configure the custom sudo genesis
+	sudoGenesis := sudo.DefaultGenesis()
+
+	// Set the root user
+	privKeys, addrs := testutil.PrivKeyAddressPairs(1)
+	rootPrivKey := privKeys[0]
+	rootAddr := addrs[0]
+	sudoGenesis.Sudoers.Root = rootAddr.String()
+	sudoGenesis.Sudoers.Contracts = []string{rootAddr.String()}
+
+	encoding := app.MakeEncodingConfig()
+	gen := app.ModuleBasics.DefaultGenesis(encoding.Codec)
+	gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
+
 	s.root = Account{
 		privKey:    rootPrivKey,
 		addr:       rootAddr,
 		passphrase: "secure-password",
 	}
 	homeDir := s.T().TempDir()
-	s.cfg = testnetwork.BuildNetworkConfig(genState)
+	s.cfg = testnetwork.BuildNetworkConfig(gen)
 	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 
@@ -165,7 +177,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 
 	var sender sdk.AccAddress = s.root.addr
 
-	pbMsg := types.MsgEditSudoers{
+	pbMsg := sudotypes.MsgEditSudoers{
 		Action:    "add_contracts",
 		Contracts: []string{contracts[0], contracts[1], contracts[2]},
 		Sender:    sender.String(),
@@ -198,7 +210,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 		s.True(gotContracts.Has(contract))
 	}
 
-	pbMsg = types.MsgEditSudoers{
+	pbMsg = sudotypes.MsgEditSudoers{
 		Action:    "remove_contracts",
 		Contracts: []string{contracts[1]},
 		Sender:    sender.String(),
@@ -256,7 +268,7 @@ func (s *TestSuite) TestMarshal_EditSudoers() {
 	for _, addr := range addrs[1:] {
 		contracts = append(contracts, addr.String())
 	}
-	msg := types.MsgEditSudoers{
+	msg := sudotypes.MsgEditSudoers{
 		Action:    "add_contracts",
 		Contracts: contracts,
 		Sender:    sender.String(),
@@ -268,7 +280,7 @@ func (s *TestSuite) TestMarshal_EditSudoers() {
 
 	t.Log("check unmarshal file → proto")
 	cdc := app.MakeEncodingConfig().Codec
-	newMsg := new(types.MsgEditSudoers)
+	newMsg := new(sudotypes.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)
 	require.NoError(t, newMsg.ValidateBasic(), newMsg.String())

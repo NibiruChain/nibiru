@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
@@ -18,9 +17,6 @@ import (
 type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
-	// paramSpace: unused but present for backward compatibility. Removing this
-	// breaks the state machine and requires an upgrade.
-	paramSpace paramstypes.Subspace
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -56,7 +52,6 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
-	paramspace paramstypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	distributionKeeper types.DistrKeeper,
@@ -72,7 +67,6 @@ func NewKeeper(
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
-		paramSpace:       paramspace,
 		accountKeeper:    accountKeeper,
 		bankKeeper:       bankKeeper,
 		distrKeeper:      distributionKeeper,
