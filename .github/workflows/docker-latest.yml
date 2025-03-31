@@ -1,18 +1,17 @@
-name: goreleaser-latest
+name: docker-latest
 
 on:
   push:
     branches:
       - main
-      - develop
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  goreleaser-latest:
-    runs-on: ubuntu-latest-m
+  docker-latest:
+    runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -24,12 +23,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: git fetch --force --tags
-
-      - run: make release-snapshot
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Login to GHCR container register
         uses: docker/login-action@v3
         with:
@@ -37,11 +30,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push versioned image
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: latest
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          file: contrib/docker/goreleaser.Dockerfile
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/nibiru:latest
+          tags: ${{ steps.meta.outputs.tags }}

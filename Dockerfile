@@ -20,13 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM alpine:latest
 
 WORKDIR /root
-
-RUN apk --no-cache add \
-  ca-certificates \
-  build-base \
-  curl \
-  jq
-
+RUN apk --no-cache add ca-certificates
 COPY --from=builder /nibiru/build/nibid /usr/local/bin/nibid
 
 ENTRYPOINT ["nibid"]

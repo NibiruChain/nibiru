@@ -18,7 +18,9 @@ ifeq (,$(VERSION))
 endif
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
-ifeq ($(shell uname -m),x86_64)
+ifeq ($(OS_NAME),darwin)
+	ARCH_NAME := all
+else ifeq ($(shell uname -m),x86_64)
 	ARCH_NAME := amd64
 else
 	ARCH_NAME := arm64

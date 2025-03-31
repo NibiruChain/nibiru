@@ -1,0 +1,209 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version:
+    name: Extract Version
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.version.outputs.version-without-v }}
+    steps:
+      - id: version
+        uses: battila7/get-version-action@v2
+
+  build-binaries:
+    name: Build Binaries
+    needs:
+      - version
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin/arm64
+            runner: macos-latest
+          - platform: darwin/amd64
+            runner: macos-latest
+
+    runs-on: ${{ matrix.build.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Prepare env vars
+        run: |
+          OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
+          ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
+          echo "OS=$OS" >> $GITHUB_ENV
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "FINAL_NAME=nibid_${{ needs.version.outputs.value }}_$OS_$ARCH" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          GOARCH=${{ env.ARCH }} make build
+          mv build ${{ env.FINAL_NAME }}
+          tar czf ${{ env.FINAL_NAME }}.tar.gz ./${{ env.FINAL_NAME }}/nibid
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FINAL_NAME }}
+          path: ${{ env.FINAL_NAME }}.tar.gz
+
+  build-darwin-universal:
+    name: Build Darwin Universal Binary
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Prepare env vars
+        run: |
+          DARWIN_NAME=nibid_${{ needs.version.outputs.value }}_darwin
+          echo "DARWIN_NAME_ARM64=$DARWIN_NAME_arm64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_AMD64=$DARWIN_NAME_amd64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_ALL=$DARWIN_NAME_all" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_ARM64 }}
+          path: ./arm64
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_AMD64 }}
+          path: ./amd64
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p arm64_bin amd64_bin
+          tar xzf ./arm64/nibid_*.tar.gz -C arm64_bin
+          tar xzf ./amd64/nibid_*.tar.gz -C amd64_bin
+
+      - name: Create universal binary
+        run: |
+          mkdir -p ${{ env.DARWIN_NAME_ALL }}
+          lipo -create -output ${{ env.DARWIN_NAME_ALL }}/nibid amd64_bin/nibid arm64_bin/nibid
+
+      - name: Compress universal binary
+        run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz ./${{ env.DARWIN_NAME_ALL }}/nibid
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_ALL }}
+          path: ${{ env.DARWIN_NAME_ALL }}.tar.gz
+
+  build-push-docker:
+    name: Build and Push Docker Image
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare env vars
+        run: |
+          LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
+          echo "LINUX_NAME_ARM64=$LINUX_NAME_arm64" >> $GITHUB_ENV
+          echo "LINUX_NAME_AMD64=$LINUX_NAME_amd64" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_ARM64 }}
+          path: ./arm64
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_AMD64 }}
+          path: ./amd64
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p arm64_bin amd64_bin
+          tar xzf ./arm64/nibid_*.tar.gz -C arm64_bin
+          tar xzf ./amd64/nibid_*.tar.gz -C amd64_bin
+
+      - name: Login to GHCR container register
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ needs.version.outputs.value }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          file: contrib/docker/release.Dockerfile
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+
+  publish-release:
+    name: Publish Release
+    needs:
+      - version
+      - build-binaries
+      - build-darwin-universal
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 *.tar.gz > nibid_${{ needs.version.outputs.value }}_checksums.txt
+
+      - name: Get latest release info
+        id: query-release-info
+        uses: release-flow/keep-a-changelog-action@v2
+        with:
+          command: query
+          version: latest
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.query-release-info.outputs.release-notes }}
+          files: |
+            dist/**/*.tar.gz
+            dist/nibid_${{ needs.version.outputs.value }}_checksums.txt
