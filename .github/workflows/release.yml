@@ -269,9 +269,14 @@ jobs:
           ls -la
           shasum -a 256 *.tar.gz > nibid_${{ needs.version.outputs.value }}_checksums.txt
 
+      - name: Generate changelog
+        id: changes
+        uses: simbo/changes-between-tags-action@v1
+
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
+          body: ${{ steps.changes.outputs.changes }}
           files: |
             dist/**/*.tar.gz
             dist/nibid_${{ needs.version.outputs.value }}_checksums.txt
