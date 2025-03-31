@@ -283,10 +283,15 @@ func (k *Keeper) EthCall(
 
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
-	// pass false to not commit StateDB
-	stateDB := statedb.New(ctx, k, txConfig)
-	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evm, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
+	evmObj := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
+	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -419,7 +424,13 @@ func (k Keeper) EstimateGasForEvmCallType(
 		}
 		// pass false to not commit StateDB
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		stateDB := statedb.New(ctx, &k, txConfig)
+		stateDB := k.Bank.StateDB
+		if stateDB == nil {
+			stateDB = k.NewStateDB(ctx, txConfig)
+		}
+		defer func() {
+			k.Bank.StateDB = nil
+		}()
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 		if err != nil {
@@ -514,7 +525,13 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		stateDB := statedb.New(ctx, &k, txConfig)
+		stateDB := k.Bank.StateDB
+		if stateDB == nil {
+			stateDB = k.NewStateDB(ctx, txConfig)
+		}
+		defer func() {
+			k.Bank.StateDB = nil
+		}()
 		evmObj := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
 		rsp, err := k.ApplyEvmMsg(ctx, msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
 		if err != nil {
@@ -788,7 +805,13 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.Gas())).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	stateDB := statedb.New(ctx, k, txConfig)
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
 	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer, stateDB)
 	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash)
 	if err != nil {
