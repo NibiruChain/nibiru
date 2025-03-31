@@ -14,10 +14,10 @@ jobs:
     name: Extract Version
     runs-on: ubuntu-latest
     outputs:
-      value: ${{ steps.version.outputs.version-without-v }}
+      value: ${{ steps.version.outputs.version }}
     steps:
       - id: version
-        uses: battila7/get-version-action@v2
+        uses: jannemattila/get-version-from-tag@v4
 
   build-binaries:
     name: Build Binaries

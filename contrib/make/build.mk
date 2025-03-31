@@ -8,13 +8,9 @@
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%H')
 
-# don't override user values
-ifeq (,$(VERSION))
-	VERSION := $(shell git describe --tags --abbrev=0)
-	# if VERSION is empty, then populate it with branch's name and raw commit hash
-	ifeq (,$(VERSION))
-		VERSION := $(BRANCH)-$(COMMIT)
-	endif
+VERSION ?= $(shell git describe --tags --abbrev=0)
+ifeq ($(strip $(VERSION)),)
+  VERSION := $(BRANCH)-$(COMMIT)
 endif
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
