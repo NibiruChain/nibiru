@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
 - [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for bank
 - [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
+- [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 

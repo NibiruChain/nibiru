@@ -206,6 +206,7 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 		return err
 	}
 
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	AfterOp(ctx)
 	return nil
 }
