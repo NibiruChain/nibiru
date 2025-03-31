@@ -1,8 +1,6 @@
 module github.com/NibiruChain/nibiru/v2
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.24.0
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
@@ -21,7 +19,7 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.7.0 // indirect
+	cosmossdk.io/api v0.7.0
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.4.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
@@ -58,6 +56,8 @@ require (
 
 require (
 	cosmossdk.io/collections v0.4.0
+	cosmossdk.io/core v0.10.0
+	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.3.2-0.20240730185603-13c071f0b34d
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -77,8 +77,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/storage v1.36.0 // indirect
-	cosmossdk.io/core v0.10.0 // indirect
-	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.3.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect

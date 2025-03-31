@@ -164,7 +164,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	when `loadLatest` is set to true.
 	*/
 	app.capabilityKeeper.Seal()
-
+  
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[distrtypes.StoreKey],
