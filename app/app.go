@@ -63,7 +63,6 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
@@ -318,6 +317,7 @@ func NewNibiruApp(
 		&app.interfaceRegistry,
 		&app.AccountKeeper,
 		&app.BankKeeper,
+		&app.StakingKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -325,7 +325,6 @@ func NewNibiruApp(
 
 	// init non-depinject keys
 	app.keys = sdk.NewKVStoreKeys(
-		stakingtypes.StoreKey,
 		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
@@ -386,7 +385,6 @@ func NewNibiruApp(
 		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
 		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(slashingtypes.ModuleName)),
 		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(distrtypes.ModuleName)),
-		staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(&app.upgradeKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
