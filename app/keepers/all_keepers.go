@@ -4,7 +4,6 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
@@ -35,7 +34,7 @@ type PublicKeepers struct {
 	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
 	AccountKeeper authkeeper.AccountKeeper
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
-	BankKeeper    bankkeeper.Keeper
+	BankKeeper    *evmkeeper.NibiruBankKeeper
 	StakingKeeper *stakingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
 	DistrKeeper           distrkeeper.Keeper

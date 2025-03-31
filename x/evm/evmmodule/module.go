@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -15,14 +17,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/bank/exported"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+
+	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 )
 
 // consensusVersion: EVM module consensus version for upgrades.
@@ -169,4 +181,71 @@ func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
 // WeightedOperations returns the all the evm module operations with their respective weights.
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&bankmodulev1.Module{},
+		appmodule.Provide(ProvideNibiruBankModule),
+	)
+}
+
+type NibiruBankInputs struct {
+	depinject.In
+
+	Config *bankmodulev1.Module
+	Cdc    codec.Codec
+	Key    *store.KVStoreKey
+
+	AccountKeeper banktypes.AccountKeeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+type NibiruBankOutputs struct {
+	depinject.Out
+
+	BankKeeper *evmkeeper.NibiruBankKeeper
+	Module     appmodule.AppModule
+}
+
+func ProvideNibiruBankModule(in NibiruBankInputs) NibiruBankOutputs {
+	// Configure blocked module accounts.
+	//
+	// Default behavior for blockedAddresses is to regard any module mentioned in
+	// AccountKeeper's module account permissions as blocked.
+	blockedAddresses := make(map[string]bool)
+	if len(in.Config.BlockedModuleAccountsOverride) > 0 {
+		for _, moduleName := range in.Config.BlockedModuleAccountsOverride {
+			blockedAddresses[authtypes.NewModuleAddress(moduleName).String()] = true
+		}
+	} else {
+		for _, permission := range in.AccountKeeper.GetModulePermissions() {
+			blockedAddresses[permission.GetAddress().String()] = true
+		}
+	}
+
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+		BaseKeeper: bankkeeper.NewBaseKeeper(
+			in.Cdc,
+			in.Key,
+			in.AccountKeeper,
+			blockedAddresses,
+			authority.String(),
+		),
+		StateDB: nil,
+	}
+	m := bank.NewAppModule(in.Cdc, nibiruBankKeeper, in.AccountKeeper, in.LegacySubspace)
+
+	return NibiruBankOutputs{BankKeeper: nibiruBankKeeper, Module: m}
 }
