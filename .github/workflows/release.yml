@@ -1,0 +1,286 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version:
+    name: Extract Version
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: extract
+        run: |
+          TAG_REF="${GITHUB_REF#refs/tags/}"
+          VERSION_WITHOUT_V="${TAG_REF#v}"
+          echo "version=$VERSION_WITHOUT_V" >> "$GITHUB_OUTPUT"
+
+  build-binaries:
+    name: Build Binaries
+    needs:
+      - version
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin/arm64
+            runner: macos-latest
+          - platform: darwin/amd64
+            runner: macos-latest
+
+    runs-on: ${{ matrix.build.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Prepare env vars
+        run: |
+          OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
+          ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
+          FINAL_NAME="nibid_${{ needs.version.outputs.value }}_${OS}_${ARCH}"
+          echo "OS=$OS" >> $GITHUB_ENV
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "FINAL_NAME=$FINAL_NAME" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          GOARCH=${{ env.ARCH }} VERSION=${{ needs.version.outputs.value }} make build
+          mv build ${{ env.FINAL_NAME }}
+          tar czf ${{ env.FINAL_NAME }}.tar.gz ./${{ env.FINAL_NAME }}/nibid
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FINAL_NAME }}
+          path: ${{ env.FINAL_NAME }}.tar.gz
+
+  build-darwin-universal:
+    name: Build Darwin Universal Binary
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Prepare env vars
+        run: |
+          DARWIN_NAME=nibid_${{ needs.version.outputs.value }}_darwin
+          echo "DARWIN_NAME_ARM64=${DARWIN_NAME}_arm64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_AMD64=${DARWIN_NAME}_amd64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_ALL=${DARWIN_NAME}_all" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_ARM64 }}
+          path: ./arm64
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_AMD64 }}
+          path: ./amd64
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p arm64_bin amd64_bin
+          tar xzf arm64/${DARWIN_NAME_ARM64}.tar.gz -C arm64_bin
+          tar xzf amd64/${DARWIN_NAME_AMD64}.tar.gz -C amd64_bin
+
+      - name: Create universal binary
+        run: |
+          mkdir -p ${{ env.DARWIN_NAME_ALL }}
+          lipo -create -output ${{ env.DARWIN_NAME_ALL }}/nibid amd64_bin/${{ env.DARWIN_NAME_AMD64 }}/nibid arm64_bin/${{ env.DARWIN_NAME_ARM64 }}/nibid
+
+      - name: Compress universal binary
+        run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz ./${{ env.DARWIN_NAME_ALL }}/nibid
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DARWIN_NAME_ALL }}
+          path: ${{ env.DARWIN_NAME_ALL }}.tar.gz
+
+  build-push-docker:
+    name: Build and Push Nibiru Image
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare env vars
+        run: |
+          LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
+          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
+          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_ARM64 }}
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_AMD64 }}
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p dist
+          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_ARM64 }} dist/arm64
+          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_AMD64 }} dist/amd64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR container register
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ needs.version.outputs.value }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          target: release
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: src=external
+
+  build-push-chaosnet:
+    name: Build and Push Chaosnet Image
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare env vars
+        run: |
+          LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
+          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
+          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_ARM64 }}
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_AMD64 }}
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p dist
+          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_ARM64 }} dist/arm64
+          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_AMD64 }} dist/amd64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR container register
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chaosnet
+          tags: ${{ needs.version.outputs.value }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          target: release
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: src=external
+
+  publish-release:
+    name: Publish Release
+    needs:
+      - version
+      - build-binaries
+      - build-darwin-universal
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: nibid_${{ needs.version.outputs.value }}_*
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          ls -la
+          shasum -a 256 *.tar.gz > nibid_${{ needs.version.outputs.value }}_checksums.txt
+
+      - name: Generate changelog
+        id: changes
+        uses: simbo/changes-between-tags-action@v1
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changes.outputs.changes }}
+          files: |
+            dist/**/*.tar.gz
+            dist/nibid_${{ needs.version.outputs.value }}_checksums.txt
