@@ -14,10 +14,14 @@ jobs:
     name: Extract Version
     runs-on: ubuntu-latest
     outputs:
-      value: ${{ steps.version.outputs.version }}
+      value: ${{ steps.extract.outputs.version }}
     steps:
-      - id: version
-        uses: jannemattila/get-version-from-tag@v4
+      - name: Extract version from tag
+        id: extract
+        run: |
+          TAG_REF="${GITHUB_REF#refs/tags/}"
+          VERSION_WITHOUT_V="${TAG_REF#v}"
+          echo "version=$VERSION_WITHOUT_V" >> "$GITHUB_OUTPUT"
 
   build-binaries:
     name: Build Binaries
