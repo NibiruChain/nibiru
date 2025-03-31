@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
 - [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
-- [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): proper statedb usage in trace txs
+- [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
