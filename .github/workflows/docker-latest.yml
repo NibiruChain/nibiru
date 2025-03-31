@@ -10,18 +10,32 @@ permissions:
   packages: write
 
 jobs:
-  docker-latest:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - platform: linux/amd64
+            runner: ubuntu-22.04
+          - platform: linux/arm64
+            runner: ubuntu-22.04-arm64
+
+    runs-on: ${{ matrix.build.runner }}
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare env vars
+        run: |
+          OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
+          ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
+          echo "OS=$OS" >> $GITHUB_ENV
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Login to GHCR container register
         uses: docker/login-action@v3
@@ -38,7 +52,7 @@ jobs:
             go-build
             go-pkg
             nibiru-temp
-          key: ${{ runner.os }}-nibid-build-cache-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
 
       - name: Inject cache
         uses: reproducible-containers/buildkit-cache-dance@v3.1.0
@@ -56,13 +70,66 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: latest
 
-      - name: Build and push
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
-          target: release
           context: .
+          target: release
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.OS }}-${{ env.ARCH }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Create multi-arch image
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: latest
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          image=$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          digests=$(printf "$image@sha256:%s " *)
+          docker buildx imagetools create -t "$image" $digests

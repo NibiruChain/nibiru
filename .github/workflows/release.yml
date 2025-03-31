@@ -126,6 +126,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Prepare env vars
         run: |
           LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
@@ -187,6 +190,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Prepare env vars
         run: |
           LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
