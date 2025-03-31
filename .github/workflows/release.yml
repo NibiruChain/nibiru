@@ -100,13 +100,11 @@ jobs:
           mkdir -p arm64_bin amd64_bin
           tar xzf arm64/${DARWIN_NAME_ARM64}.tar.gz -C arm64_bin
           tar xzf amd64/${DARWIN_NAME_AMD64}.tar.gz -C amd64_bin
-          ls -lh arm64_bin
-          ls -lh amd64_bin
 
       - name: Create universal binary
         run: |
           mkdir -p ${{ env.DARWIN_NAME_ALL }}
-          lipo -create -output ${{ env.DARWIN_NAME_ALL }}/nibid amd64_bin/nibid arm64_bin/nibid
+          lipo -create -output ${{ env.DARWIN_NAME_ALL }}/nibid amd64_bin/${{ env.DARWIN_NAME_AMD64 }}/nibid arm64_bin/${{ env.DARWIN_NAME_ARM64 }}/nibid
 
       - name: Compress universal binary
         run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz ./${{ env.DARWIN_NAME_ALL }}/nibid
@@ -139,19 +137,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.LINUX_NAME_ARM64 }}
-          path: ./arm64
 
       - name: Download amd64 artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.LINUX_NAME_AMD64 }}
-          path: ./amd64
 
       - name: Extract artifacts
         run: |
-          mkdir -p arm64_bin amd64_bin
-          tar xzf ./arm64/nibid_*.tar.gz -C arm64_bin
-          tar xzf ./amd64/nibid_*.tar.gz -C amd64_bin
+          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_ARM64 }} arm64
+          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_AMD64 }} amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -203,19 +200,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.LINUX_NAME_ARM64 }}
-          path: ./arm64
 
       - name: Download amd64 artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.LINUX_NAME_AMD64 }}
-          path: ./amd64
 
       - name: Extract artifacts
         run: |
-          mkdir -p arm64_bin amd64_bin
-          tar xzf ./arm64/nibid_*.tar.gz -C arm64_bin
-          tar xzf ./amd64/nibid_*.tar.gz -C amd64_bin
+          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_ARM64 }} arm64
+          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
+          mv ${{ env.LINUX_NAME_AMD64 }} amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
