@@ -55,7 +55,7 @@ jobs:
       - name: Build and push chaosnet image
         uses: docker/build-push-action@v6
         with:
-          file: contrib/docker/chaosnet.Dockerfile
+          target: chaosnet
           context: .
           push: true
           platforms: linux/amd64,linux/arm64

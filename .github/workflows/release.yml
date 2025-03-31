@@ -164,7 +164,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          file: contrib/docker/release.Dockerfile
+          target: release
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
