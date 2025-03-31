@@ -145,10 +145,11 @@ jobs:
 
       - name: Extract artifacts
         run: |
+          mkdir -p dist
           tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
-          mv ${{ env.LINUX_NAME_ARM64 }} arm64
+          mv ${{ env.LINUX_NAME_ARM64 }} dist/arm64
           tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
-          mv ${{ env.LINUX_NAME_AMD64 }} amd64
+          mv ${{ env.LINUX_NAME_AMD64 }} dist/amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -208,10 +209,11 @@ jobs:
 
       - name: Extract artifacts
         run: |
+          mkdir -p dist
           tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz
-          mv ${{ env.LINUX_NAME_ARM64 }} arm64
+          mv ${{ env.LINUX_NAME_ARM64 }} dist/arm64
           tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz
-          mv ${{ env.LINUX_NAME_AMD64 }} amd64
+          mv ${{ env.LINUX_NAME_AMD64 }} dist/amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -258,10 +260,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: nibid_${{ needs.version.outputs.value }}_*
+          merge-multiple: true
 
       - name: Generate checksums
         run: |
           cd dist
+          ls -la
           shasum -a 256 *.tar.gz > nibid_${{ needs.version.outputs.value }}_checksums.txt
 
       - name: Get latest release info

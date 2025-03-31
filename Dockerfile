@@ -26,9 +26,9 @@ COPY ./dist/ /root/
 
 ARG TARGETARCH
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
-      cp arm64_bin/nibid /root/nibid; \
+      cp arm64/nibid /root/nibid; \
     else \
-      cp amd64_bin/nibid /root/nibid; \
+      cp amd64/nibid /root/nibid; \
     fi
 
 # ---------- Binary Build Source ----------
