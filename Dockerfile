@@ -1,3 +1,5 @@
+ARG src=base
+
 # ---------- Build Stage ----------
 FROM golang:1.24 AS build-base
 
@@ -14,8 +16,23 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
     --mount=type=cache,target=/nibiru/temp \
-    make build
+    make build && cp build/nibid /root/
 
+# ---------- Binary Copy (External Build) ----------
+FROM busybox AS build-external
+
+WORKDIR /root
+COPY ./dist/ /root/
+
+ARG TARGETARCH
+RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+      cp arm64_bin/nibid /root/nibid; \
+    else \
+      cp amd64_bin/nibid /root/nibid; \
+    fi
+
+# ---------- Binary Build Source ----------
+FROM build-${src} AS build-source
 
 # ---------- Chaosnet Image ----------
 FROM alpine:latest AS chaosnet
@@ -29,7 +46,7 @@ RUN apk --no-cache add \
   curl \
   jq
 
-COPY --from=build-base /nibiru/build/nibid /usr/local/bin/nibid
+COPY --from=build-source /root/nibid /usr/local/bin/nibid
 COPY ./contrib/scripts/chaosnet.sh ./
 
 ARG MNEMONIC
@@ -49,37 +66,12 @@ RUN chmod +x ./chaosnet.sh && \
 ENTRYPOINT ["nibid"]
 CMD ["start"]
 
-
-# ---------- Binary Copy (External Build) ----------
-FROM busybox AS external
-
-WORKDIR /root
-COPY ./dist/ /root/
-
-ARG TARGETARCH
-RUN if [ "${TARGETARCH}" = "arm64" ]; then \
-      cp arm64_bin/nibid /root/nibid; \
-    else \
-      cp amd64_bin/nibid /root/nibid; \
-    fi
-
+# ---------- Release Image ----------
 FROM alpine:latest AS release
 
 WORKDIR /root
 RUN apk --no-cache add ca-certificates
-COPY --from=external /root/nibid /usr/local/bin/nibid
-
-ENTRYPOINT ["nibid"]
-CMD ["start"]
-
-
-# ---------- Regular Image ----------
-FROM alpine:latest AS regular
-
-WORKDIR /root
-RUN apk --no-cache add ca-certificates
-
-COPY --from=build-base /nibiru/build/nibid /usr/local/bin/nibid
+COPY --from=build-source /root/nibid /usr/local/bin/nibid
 
 ENTRYPOINT ["nibid"]
 CMD ["start"]

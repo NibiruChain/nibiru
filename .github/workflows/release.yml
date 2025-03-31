@@ -50,9 +50,10 @@ jobs:
         run: |
           OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
           ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
+          FINAL_NAME="nibid_${{ needs.version.outputs.value }}_${OS}_${ARCH}"
           echo "OS=$OS" >> $GITHUB_ENV
           echo "ARCH=$ARCH" >> $GITHUB_ENV
-          echo "FINAL_NAME=nibid_${{ needs.version.outputs.value }}_$OS_$ARCH" >> $GITHUB_ENV
+          echo "FINAL_NAME=$FINAL_NAME" >> $GITHUB_ENV
 
       - name: Build
         run: |
@@ -78,9 +79,9 @@ jobs:
       - name: Prepare env vars
         run: |
           DARWIN_NAME=nibid_${{ needs.version.outputs.value }}_darwin
-          echo "DARWIN_NAME_ARM64=$DARWIN_NAME_arm64" >> $GITHUB_ENV
-          echo "DARWIN_NAME_AMD64=$DARWIN_NAME_amd64" >> $GITHUB_ENV
-          echo "DARWIN_NAME_ALL=$DARWIN_NAME_all" >> $GITHUB_ENV
+          echo "DARWIN_NAME_ARM64=${DARWIN_NAME}_arm64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_AMD64=${DARWIN_NAME}_amd64" >> $GITHUB_ENV
+          echo "DARWIN_NAME_ALL=${DARWIN_NAME}_all" >> $GITHUB_ENV
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v4
@@ -126,8 +127,8 @@ jobs:
       - name: Prepare env vars
         run: |
           LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
-          echo "LINUX_NAME_ARM64=$LINUX_NAME_arm64" >> $GITHUB_ENV
-          echo "LINUX_NAME_AMD64=$LINUX_NAME_amd64" >> $GITHUB_ENV
+          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
+          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v4
@@ -169,6 +170,64 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: src=external
+
+  build-push-chaosnet:
+    name: Build and Push Chaosnet Image
+    needs:
+      - version
+      - build-binaries
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare env vars
+        run: |
+          LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
+          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
+          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_ARM64 }}
+          path: ./arm64
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.LINUX_NAME_AMD64 }}
+          path: ./amd64
+
+      - name: Extract artifacts
+        run: |
+          mkdir -p arm64_bin amd64_bin
+          tar xzf ./arm64/nibid_*.tar.gz -C arm64_bin
+          tar xzf ./amd64/nibid_*.tar.gz -C amd64_bin
+
+      - name: Login to GHCR container register
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chaosnet
+          tags: ${{ needs.version.outputs.value }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          target: release
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: src=external
 
   publish-release:
     name: Publish Release

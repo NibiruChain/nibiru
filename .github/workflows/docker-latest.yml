@@ -1,4 +1,4 @@
-name: docker-latest
+name: Docker Latest
 
 on:
   push:
@@ -30,6 +30,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cache for Docker Build
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            go-build
+            go-pkg
+            nibiru-temp
+          key: ${{ runner.os }}-nibid-build-cache-${{ hashFiles('go.sum') }}
+
+      - name: Inject cache
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "go-build": "/root/.cache/go-build",
+              "go-pkg": "/go/pkg",
+              "nibiru-temp": "/nibiru/temp"
+            }
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -40,6 +61,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          target: release
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
