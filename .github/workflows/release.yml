@@ -100,8 +100,8 @@ jobs:
           mkdir -p arm64_bin amd64_bin
           tar xzf arm64/${DARWIN_NAME_ARM64}.tar.gz -C arm64_bin
           tar xzf amd64/${DARWIN_NAME_AMD64}.tar.gz -C amd64_bin
-          ls -lh arm64
-          ls -lh amd64
+          ls -lh arm64_bin
+          ls -lh amd64_bin
 
       - name: Create universal binary
         run: |
@@ -118,7 +118,7 @@ jobs:
           path: ${{ env.DARWIN_NAME_ALL }}.tar.gz
 
   build-push-docker:
-    name: Build and Push Docker Image
+    name: Build and Push Nibiru Image
     needs:
       - version
       - build-binaries
@@ -175,6 +175,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: src=external
 
   build-push-chaosnet:
@@ -235,6 +236,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: src=external
 
   publish-release:
