@@ -204,6 +204,10 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		govModuleAddr,
 	)
 
+	app.StakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
+	)
+
 	app.authzKeeper = authzkeeper.NewKeeper(
 		app.keys[authzkeeper.StoreKey],
 		app.appCodec,

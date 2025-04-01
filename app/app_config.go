@@ -9,6 +9,7 @@ import (
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
 	"cosmossdk.io/core/appconfig"
+	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -24,6 +25,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
@@ -152,6 +154,13 @@ var (
 )
 
 func init() {
+	// ovveride the default Staking module without the InvokeSetStakingHooks.
+	// Remove after Slashing module is wired using depinject
+	appmodule.Register(
+		&stakingmodulev1.Module{},
+		appmodule.Provide(staking.ProvideModule),
+	)
+
 	// application configuration (used by depinject)
 	AppConfig = appconfig.Compose(&appv1alpha1.Config{
 		Modules: []*appv1alpha1.ModuleConfig{
