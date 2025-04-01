@@ -39,7 +39,6 @@ import (
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
@@ -166,13 +165,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	*/
 	app.capabilityKeeper.Seal()
 
-	app.StakingKeeper = stakingkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[stakingtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		govModuleAddr,
-	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[distrtypes.StoreKey],
