@@ -94,7 +94,7 @@ type AppKeepers struct {
 type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
-	crisisKeeper     crisiskeeper.Keeper
+	crisisKeeper     *crisiskeeper.Keeper
 	upgradeKeeper    upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
 	authzKeeper      authzkeeper.Keeper
@@ -164,16 +164,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	when `loadLatest` is set to true.
 	*/
 	app.capabilityKeeper.Seal()
-
-	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
-	app.crisisKeeper = *crisiskeeper.NewKeeper(
-		app.appCodec,
-		app.keys[crisistypes.StoreKey],
-		invCheckPeriod,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(app.appCodec, app.keys[feegrant.StoreKey], app.AccountKeeper)
 
