@@ -5,6 +5,7 @@ import (
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
+	crisismodulev1 "cosmossdk.io/api/cosmos/crisis/module/v1"
 	distrmodulev1 "cosmossdk.io/api/cosmos/distribution/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
@@ -216,6 +217,10 @@ func init() {
 					FeeCollectorName: authtypes.FeeCollectorName,
 					Authority:        authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				}),
+			},
+			{
+				Name:   crisistypes.ModuleName,
+				Config: appconfig.WrapAny(&crisismodulev1.Module{}),
 			},
 		},
 	})
