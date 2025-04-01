@@ -5,9 +5,11 @@ import (
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
+	distrmodulev1 "cosmossdk.io/api/cosmos/distribution/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
 	"cosmossdk.io/core/appconfig"
+	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -23,6 +25,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
@@ -151,6 +154,13 @@ var (
 )
 
 func init() {
+	// ovveride the default Staking module without the InvokeSetStakingHooks.
+	// Remove after Slashing module is wired using depinject
+	appmodule.Register(
+		&stakingmodulev1.Module{},
+		appmodule.Provide(staking.ProvideModule),
+	)
+
 	// application configuration (used by depinject)
 	AppConfig = appconfig.Compose(&appv1alpha1.Config{
 		Modules: []*appv1alpha1.ModuleConfig{
@@ -198,6 +208,13 @@ func init() {
 				Name: stakingtypes.ModuleName,
 				Config: appconfig.WrapAny(&stakingmodulev1.Module{
 					Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				}),
+			},
+			{
+				Name: distrtypes.ModuleName,
+				Config: appconfig.WrapAny(&distrmodulev1.Module{
+					FeeCollectorName: authtypes.FeeCollectorName,
+					Authority:        authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				}),
 			},
 		},
