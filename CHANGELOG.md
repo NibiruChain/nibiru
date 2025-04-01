@@ -43,11 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
 - [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
-- [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for bank
-- [#2248](https://github.com/NibiruChain/nibiru/pull/2248) - feat: add depinject wiring for staking
+- [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for x/bank module
+- [#2248](https://github.com/NibiruChain/nibiru/pull/2248) - feat: add depinject wiring for x/staking module
+- [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
 - [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
-- [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - fix(upgrades): add missing 2.2.0 upgrade handler
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2241](https://github.com/NibiruChain/nibiru/pull/2241) - fix(evm): evm-tx-index cli fix to exclude most latest block
 - [#2236](https://github.com/NibiruChain/nibiru/pull/2236) - chore: make function comment match function name and fix linter errors
 - [#2243](https://github.com/NibiruChain/nibiru/pull/2243) - fix(deps): bump Go to v1.24, similar to [#1698](https://github.com/NibiruChain/nibiru/pull/1698)
+- [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - fix(upgrades): add missing 2.2.0 upgrade handler
 
 ### Dependencies
 

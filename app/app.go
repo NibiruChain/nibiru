@@ -318,6 +318,7 @@ func NewNibiruApp(
 		&app.AccountKeeper,
 		&app.BankKeeper,
 		&app.StakingKeeper,
+		&app.DistrKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -325,7 +326,6 @@ func NewNibiruApp(
 
 	// init non-depinject keys
 	app.keys = sdk.NewKVStoreKeys(
-		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
@@ -384,7 +384,6 @@ func NewNibiruApp(
 		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
 		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(distrtypes.ModuleName)),
 		upgrade.NewAppModule(&app.upgradeKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
