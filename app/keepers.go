@@ -165,16 +165,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	*/
 	app.capabilityKeeper.Seal()
 
-	app.DistrKeeper = distrkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[distrtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
-
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
 	app.crisisKeeper = *crisiskeeper.NewKeeper(
 		app.appCodec,
@@ -212,10 +202,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.keys[slashingtypes.StoreKey],
 		app.StakingKeeper,
 		govModuleAddr,
-	)
-
-	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
 
 	app.authzKeeper = authzkeeper.NewKeeper(
