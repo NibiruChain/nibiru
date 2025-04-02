@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 - [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for distribution
 - [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for crisis
+- [#2256](https://github.com/NibiruChain/nibiru/pull/2256) - fix: fix simulation tests by register interface for vesting and use correct app keys
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
