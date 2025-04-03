@@ -41,14 +41,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -65,7 +61,6 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
@@ -319,6 +314,10 @@ func NewNibiruApp(
 		&app.txConfig,
 		&app.interfaceRegistry,
 		&app.AccountKeeper,
+		&app.BankKeeper,
+		&app.StakingKeeper,
+		&app.DistrKeeper,
+		&app.crisisKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -326,9 +325,6 @@ func NewNibiruApp(
 
 	// init non-depinject keys
 	app.keys = sdk.NewKVStoreKeys(
-		banktypes.StoreKey,
-		stakingtypes.StoreKey,
-		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
@@ -338,7 +334,6 @@ func NewNibiruApp(
 		evidencetypes.StoreKey,
 		capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		crisistypes.StoreKey,
 
 		// ibc keys
 		ibctransfertypes.StoreKey,
@@ -383,13 +378,10 @@ func NewNibiruApp(
 	if err := app.RegisterModules(
 		// core modules
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
-		bank.NewAppModule(app.appCodec, app.BankKeeper, app.AccountKeeper, app.getSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
 		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
 		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(slashingtypes.ModuleName)),
-		distr.NewAppModule(app.appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(distrtypes.ModuleName)),
-		staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(&app.upgradeKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
@@ -416,8 +408,6 @@ func NewNibiruApp(
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
-
-		crisis.NewAppModule(&app.crisisKeeper, cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants)), app.getSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	); err != nil {
 		panic(err)
 	}
@@ -438,7 +428,7 @@ func NewNibiruApp(
 
 	/****  Module Options ****/
 
-	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
+	app.ModuleManager.RegisterInvariants(app.crisisKeeper)
 
 	app.setupUpgrades()
 

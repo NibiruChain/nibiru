@@ -17,7 +17,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -40,7 +39,6 @@ import (
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
@@ -96,7 +94,7 @@ type AppKeepers struct {
 type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
-	crisisKeeper     crisiskeeper.Keeper
+	crisisKeeper     *crisiskeeper.Keeper
 	upgradeKeeper    upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
 	authzKeeper      authzkeeper.Keeper
@@ -166,44 +164,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	when `loadLatest` is set to true.
 	*/
 	app.capabilityKeeper.Seal()
-
-	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(
-			app.appCodec,
-			app.keys[banktypes.StoreKey],
-			app.AccountKeeper,
-			BlockedAddresses(),
-			govModuleAddr,
-		),
-		StateDB: nil,
-	}
-	app.BankKeeper = nibiruBankKeeper
-	app.StakingKeeper = stakingkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[stakingtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		govModuleAddr,
-	)
-	app.DistrKeeper = distrkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[distrtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
-
-	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
-	app.crisisKeeper = *crisiskeeper.NewKeeper(
-		app.appCodec,
-		app.keys[crisistypes.StoreKey],
-		invCheckPeriod,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(app.appCodec, app.keys[feegrant.StoreKey], app.AccountKeeper)
 
@@ -279,7 +239,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.tkeys[evm.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		nibiruBankKeeper,
+		app.BankKeeper,
 		app.StakingKeeper,
 		cast.ToString(appOpts.Get("evm.tracer")),
 	)

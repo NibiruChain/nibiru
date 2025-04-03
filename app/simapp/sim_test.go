@@ -21,6 +21,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -79,6 +80,10 @@ func TestFullAppSimulation(t *testing.T) {
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	app := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+	// Registers interfaces and types that are expected by default in the Cosmos-SDK
+	// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+	// module.
+	vesting.RegisterInterfaces(app.InterfaceRegistry())
 	require.Equal(t, "Nibiru", app.Name())
 	appCodec := app.AppCodec()
 
@@ -133,6 +138,10 @@ func TestAppStateDeterminism(t *testing.T) {
 			logger := log.NewNopLogger()
 
 			app := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+			// Registers interfaces and types that are expected by default in the Cosmos-SDK
+			// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+			// module.
+			vesting.RegisterInterfaces(app.InterfaceRegistry())
 			appCodec := app.AppCodec()
 
 			fmt.Printf(
@@ -190,6 +199,11 @@ func TestAppImportExport(t *testing.T) {
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	oldApp := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+	// Registers interfaces and types that are expected by default in the Cosmos-SDK
+	// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+	// module.
+	vesting.RegisterInterfaces(oldApp.InterfaceRegistry())
+
 	require.Equal(t, "Nibiru", oldApp.Name())
 	appCodec := oldApp.AppCodec()
 
@@ -231,6 +245,10 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	newApp := app.NewNibiruApp(log.NewNopLogger(), newDB, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+	// Registers interfaces and types that are expected by default in the Cosmos-SDK
+	// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+	// module.
+	vesting.RegisterInterfaces(newApp.InterfaceRegistry())
 	require.Equal(t, "Nibiru", newApp.Name())
 
 	var genesisState app.GenesisState
@@ -313,6 +331,10 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	oldApp := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+	// Registers interfaces and types that are expected by default in the Cosmos-SDK
+	// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+	// module.
+	vesting.RegisterInterfaces(oldApp.InterfaceRegistry())
 	require.Equal(t, "Nibiru", oldApp.Name())
 	appCodec := oldApp.AppCodec()
 
@@ -359,6 +381,10 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	newApp := app.NewNibiruApp(log.NewNopLogger(), newDB, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
+	// Registers interfaces and types that are expected by default in the Cosmos-SDK
+	// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
+	// module.
+	vesting.RegisterInterfaces(newApp.InterfaceRegistry())
 	require.Equal(t, "Nibiru", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
