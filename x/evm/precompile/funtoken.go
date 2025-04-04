@@ -40,12 +40,13 @@ func (p precompileFunToken) ABI() *gethabi.ABI {
 }
 
 const (
-	FunTokenMethod_sendToBank  PrecompileMethod = "sendToBank"
-	FunTokenMethod_balance     PrecompileMethod = "balance"
-	FunTokenMethod_bankBalance PrecompileMethod = "bankBalance"
-	FunTokenMethod_whoAmI      PrecompileMethod = "whoAmI"
-	FunTokenMethod_sendToEvm   PrecompileMethod = "sendToEvm"
-	FunTokenMethod_bankMsgSend PrecompileMethod = "bankMsgSend"
+	FunTokenMethod_sendToBank      PrecompileMethod = "sendToBank"
+	FunTokenMethod_balance         PrecompileMethod = "balance"
+	FunTokenMethod_bankBalance     PrecompileMethod = "bankBalance"
+	FunTokenMethod_whoAmI          PrecompileMethod = "whoAmI"
+	FunTokenMethod_sendToEvm       PrecompileMethod = "sendToEvm"
+	FunTokenMethod_bankMsgSend     PrecompileMethod = "bankMsgSend"
+	FunTokenMethod_getErc20Address PrecompileMethod = "getErc20Address"
 )
 
 // Run runs the precompiled contract
@@ -79,6 +80,8 @@ func (p precompileFunToken) Run(
 		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly, evm)
 	case FunTokenMethod_bankMsgSend:
 		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
+	case FunTokenMethod_getErc20Address:
+		bz, err = p.getErc20Address(startResult, contract)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "[decomposeInput]" parses methods directly from the ABI.
@@ -468,23 +471,29 @@ func (p precompileFunToken) whoAmI(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
+	fmt.Println("whoAmI: entered the function")
 	method, args := start.Method, start.Args
+	fmt.Println("whoAmI: method =", method.Name)
+	fmt.Println("whoAmI: args =", args)
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
+			fmt.Println("whoAmI: error occurred:", err)
 		}
 	}()
 	if err := assertContractQuery(contract); err != nil {
+		fmt.Println("whoAmI: assertContractQuery failed:", err)
 		return bz, err
 	}
-
+	fmt.Println("whoAmI: assertContractQuery passed")
 	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
 	if err != nil {
+		fmt.Println("whoAmI: parseArgsWhoAmI failed:", err)
 		err = ErrInvalidArgs(err)
 		return
 	}
-
-	return method.Outputs.Pack([]any{
+	fmt.Println("whoAmI: parsed addresses:", addrEth.Hex(), addrBech32.String())
+	bz, err = method.Outputs.Pack([]any{
 		struct {
 			EthAddr    gethcommon.Address `json:"ethAddr"`
 			Bech32Addr string             `json:"bech32Addr"`
@@ -493,6 +502,12 @@ func (p precompileFunToken) whoAmI(
 			Bech32Addr: addrBech32.String(),
 		},
 	}...)
+	if err != nil {
+		fmt.Println("whoAmI: packing output failed:", err)
+	} else {
+		fmt.Println("whoAmI: output packed successfully")
+	}
+	return bz, err
 }
 
 func (p precompileFunToken) parseArgsWhoAmI(args []any) (
@@ -722,6 +737,80 @@ func (p precompileFunToken) bankMsgSend(
 	}
 	// Return bool success
 	return method.Outputs.Pack(true)
+}
+
+// getErc20Address implements "IFunToken.getErc20Address"
+// It looks up the FunToken mapping by the bank denomination and returns the associated ERC20 address.
+//
+//	```solidity
+//	function getErc20Address(string memory bankDenom) external view returns (address erc20Address);
+//	```
+func (p precompileFunToken) getErc20Address(
+	start OnRunStartResult,
+	contract *vm.Contract, // Needed for assertContractQuery
+) (bz []byte, err error) {
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
+	// Ensure this is called in a read-only context (like view or pure)
+	if err := assertContractQuery(contract); err != nil {
+		return bz, err
+	}
+
+	bankDenom, err := p.parseArgsGetErc20Address(args)
+	if err != nil {
+		err = ErrInvalidArgs(err)
+		return
+	}
+
+	// Perform lookup using the BankDenom index
+	iterator := p.evmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)
+	mappings := p.evmKeeper.FunTokens.Collect(ctx, iterator)
+
+	erc20ResultAddress := gethcommon.Address{} // Default to address(0)
+
+	if len(mappings) == 1 {
+		// Found exactly one mapping
+		erc20ResultAddress = mappings[0].Erc20Addr.Address
+	} else if len(mappings) > 1 {
+		// This case indicates a data inconsistency and shouldn't happen with proper checks.
+		// Log an error, but return address(0) to the caller as specified.
+		p.evmKeeper.Logger(ctx).Error("invariant broken: multiple FunToken mappings found for bank denom", "denom", bankDenom)
+	}
+	// If len(mappings) == 0, we just return the default address(0)
+
+	// Pack the result (either the found address or address(0))
+	return method.Outputs.Pack(erc20ResultAddress)
+}
+
+// parseArgsGetErc20Address parses the arguments for the getErc20Address method.
+// Expected arguments: (string memory bankDenom)
+func (p precompileFunToken) parseArgsGetErc20Address(args []any) (
+	bankDenom string,
+	err error,
+) {
+	if e := assertNumArgs(args, 1); e != nil {
+		err = e
+		return
+	}
+
+	argIdx := 0
+	bankDenom, ok := args[argIdx].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string bankDenom", args[argIdx])
+		return
+	}
+
+	// Validate the bank denomination format using Cosmos SDK validation
+	if err = sdk.ValidateDenom(bankDenom); err != nil {
+		err = fmt.Errorf("invalid bank denomination format: %w", err)
+		return
+	}
+
+	return bankDenom, nil
 }
 
 func parseArgsBankMsgSend(args []any) (toStr, denom string, amount *big.Int, err error) {
