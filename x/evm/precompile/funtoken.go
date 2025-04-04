@@ -471,28 +471,20 @@ func (p precompileFunToken) whoAmI(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	fmt.Println("whoAmI: entered the function")
 	method, args := start.Method, start.Args
-	fmt.Println("whoAmI: method =", method.Name)
-	fmt.Println("whoAmI: args =", args)
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
-			fmt.Println("whoAmI: error occurred:", err)
 		}
 	}()
 	if err := assertContractQuery(contract); err != nil {
-		fmt.Println("whoAmI: assertContractQuery failed:", err)
 		return bz, err
 	}
-	fmt.Println("whoAmI: assertContractQuery passed")
 	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
 	if err != nil {
-		fmt.Println("whoAmI: parseArgsWhoAmI failed:", err)
 		err = ErrInvalidArgs(err)
 		return
 	}
-	fmt.Println("whoAmI: parsed addresses:", addrEth.Hex(), addrBech32.String())
 	bz, err = method.Outputs.Pack([]any{
 		struct {
 			EthAddr    gethcommon.Address `json:"ethAddr"`
@@ -503,9 +495,7 @@ func (p precompileFunToken) whoAmI(
 		},
 	}...)
 	if err != nil {
-		fmt.Println("whoAmI: packing output failed:", err)
 	} else {
-		fmt.Println("whoAmI: output packed successfully")
 	}
 	return bz, err
 }
