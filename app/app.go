@@ -388,7 +388,7 @@ func NewNibiruApp(
 	}
 
 	// remove consensus module from the module manager as we didn't have consensus module from the first place
-	for name, _ := range app.ModuleManager.Modules {
+	for name := range app.ModuleManager.Modules {
 		if name == consensustypes.ModuleName {
 			delete(app.ModuleManager.Modules, name)
 		}
