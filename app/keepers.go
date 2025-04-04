@@ -11,31 +11,21 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
-	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -95,7 +85,7 @@ type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	crisisKeeper     *crisiskeeper.Keeper
-	upgradeKeeper    upgradekeeper.Keeper
+	upgradeKeeper    *upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
 	authzKeeper      authzkeeper.Keeper
 
@@ -121,23 +111,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
-	app.paramsKeeper = initParamsKeeper(
-		app.appCodec, app.legacyAmino, app.keys[paramstypes.StoreKey], app.tkeys[paramstypes.TStoreKey],
-	)
+	initSubspace(app.paramsKeeper)
 
-	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(app.appCodec, app.keys[consensusparamtypes.StoreKey], govModuleAddr)
-	app.BaseApp.SetParamStore(&app.ConsensusParamsKeeper)
-
-	/* Add capabilityKeeper and ScopeToModule for the ibc module
-	   This allows authentication of object-capability permissions for each of
-	   the IBC channels.
-	*/
-	app.capabilityKeeper = capabilitykeeper.NewKeeper(
-		app.appCodec,
-		app.keys[capabilitytypes.StoreKey],
-		app.memKeys[capabilitytypes.MemStoreKey],
-	)
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	app.ScopedICAHostKeeper = app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
@@ -165,45 +140,12 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	*/
 	app.capabilityKeeper.Seal()
 
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(app.appCodec, app.keys[feegrant.StoreKey], app.AccountKeeper)
-
 	// get skipUpgradeHeights from the app options
 	skipUpgradeHeights := map[int64]bool{}
 	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
 		skipUpgradeHeights[int64(h)] = true
 	}
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
-
-	/*upgradeKeeper must be created before ibcKeeper. */
-	app.upgradeKeeper = *upgradekeeper.NewKeeper(
-		skipUpgradeHeights,
-		app.keys[upgradetypes.StoreKey],
-		app.appCodec,
-		homePath,
-		app.BaseApp,
-		govModuleAddr,
-	)
-
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.slashingKeeper = slashingkeeper.NewKeeper(
-		app.appCodec,
-		app.legacyAmino,
-		app.keys[slashingtypes.StoreKey],
-		app.StakingKeeper,
-		govModuleAddr,
-	)
-
-	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
-	)
-
-	app.authzKeeper = authzkeeper.NewKeeper(
-		app.keys[authzkeeper.StoreKey],
-		app.appCodec,
-		app.BaseApp.MsgServiceRouter(),
-		app.AccountKeeper,
-	)
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 
@@ -385,13 +327,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	// register the proposal types
 
-	// Create evidence keeper.
-	// This keeper automatically includes an evidence router.
-	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		app.appCodec, app.keys[evidencetypes.StoreKey], app.StakingKeeper,
-		app.slashingKeeper,
-	)
-
 	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// not replicate if you do not need to test core IBC or light clients.
@@ -463,25 +398,11 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
+		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
-	govConfig := govtypes.DefaultConfig()
-	govKeeper := govkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[govtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		app.MsgServiceRouter(),
-		govConfig,
-		govModuleAddr,
-	)
-	govKeeper.SetLegacyRouter(govRouter)
+	app.GovKeeper.SetLegacyRouter(govRouter)
 
-	app.GovKeeper = *govKeeper.SetHooks(
-		govtypes.NewMultiGovHooks(),
-	)
 	app.EvmKeeper.AddPrecompiles(precompile.InitPrecompiles(app.AppKeepers.PublicKeepers))
 
 	return wasmConfig
@@ -500,12 +421,9 @@ func BlockedAddresses() map[string]bool {
 	return modAccAddrs
 }
 
-func initParamsKeeper(
-	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
-	tkey storetypes.StoreKey,
+func initSubspace(
+	paramsKeeper paramskeeper.Keeper,
 ) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
-
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
@@ -513,6 +431,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
+
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
