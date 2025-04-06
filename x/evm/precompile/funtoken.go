@@ -12,6 +12,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -763,14 +765,10 @@ func (p precompileFunToken) getErc20Address(
 	erc20ResultAddress := gethcommon.Address{} // Default to address(0)
 
 	if len(mappings) == 1 {
-		// Found exactly one mapping
 		erc20ResultAddress = mappings[0].Erc20Addr.Address
 	} else if len(mappings) > 1 {
-		// This case indicates a data inconsistency and shouldn't happen with proper checks.
-		// Log an error, but return address(0) to the caller as specified.
 		p.evmKeeper.Logger(ctx).Error("invariant broken: multiple FunToken mappings found for bank denom", "denom", bankDenom)
 	}
-	// If len(mappings) == 0, we just return the default address(0)
 
 	// Pack the result (either the found address or address(0))
 	return method.Outputs.Pack(erc20ResultAddress)
@@ -796,8 +794,14 @@ func (p precompileFunToken) parseArgsGetErc20Address(args []any) (
 
 	// Validate the bank denomination format using Cosmos SDK validation
 	if err = sdk.ValidateDenom(bankDenom); err != nil {
-		err = fmt.Errorf("invalid bank denomination format: %w", err)
-		return
+		// maybe it's a tf denom
+		tfDenom := tftypes.DenomStr(bankDenom)
+
+		if err = tfDenom.Validate(); err != nil {
+
+			err = fmt.Errorf("invalid bank denomination format: %w", err)
+			return
+		}
 	}
 
 	return bankDenom, nil
