@@ -39,32 +39,25 @@ import (
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
@@ -318,6 +311,15 @@ func NewNibiruApp(
 		&app.StakingKeeper,
 		&app.DistrKeeper,
 		&app.crisisKeeper,
+		&app.capabilityKeeper,
+		&app.slashingKeeper,
+		&app.GovKeeper,
+		&app.upgradeKeeper,
+		&app.paramsKeeper,
+		&app.authzKeeper,
+		&app.evidenceKeeper,
+		&app.FeeGrantKeeper,
+		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -325,16 +327,6 @@ func NewNibiruApp(
 
 	// init non-depinject keys
 	app.keys = sdk.NewKVStoreKeys(
-		slashingtypes.StoreKey,
-		govtypes.StoreKey,
-		paramstypes.StoreKey,
-		consensusparamtypes.StoreKey,
-		upgradetypes.StoreKey,
-		feegrant.StoreKey,
-		evidencetypes.StoreKey,
-		capabilitytypes.StoreKey,
-		authzkeeper.StoreKey,
-
 		// ibc keys
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
@@ -354,8 +346,7 @@ func NewNibiruApp(
 
 		evm.StoreKey,
 	)
-	app.tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evm.TransientKey)
-	app.memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	app.tkeys = sdk.NewTransientStoreKeys(evm.TransientKey)
 	for _, k := range app.keys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
@@ -366,26 +357,11 @@ func NewNibiruApp(
 			panic(err)
 		}
 	}
-	for _, k := range app.memKeys {
-		if err := app.RegisterStores(k); err != nil {
-			panic(err)
-		}
-	}
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
-		// core modules
-		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, app.txConfig),
-		capability.NewAppModule(app.appCodec, *app.capabilityKeeper, false),
-		feegrantmodule.NewAppModule(app.appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(app.appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
-		slashing.NewAppModule(app.appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.getSubspace(slashingtypes.ModuleName)),
-		upgrade.NewAppModule(&app.upgradeKeeper),
-		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(app.appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-
 		// Nibiru modules
 		oracle.NewAppModule(app.appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
 		epochs.NewAppModule(app.appCodec, app.EpochsKeeper),
@@ -394,7 +370,6 @@ func NewNibiruApp(
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
-		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
@@ -410,6 +385,13 @@ func NewNibiruApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 	); err != nil {
 		panic(err)
+	}
+
+	// remove consensus module from the module manager as we didn't have consensus module from the first place
+	for name := range app.ModuleManager.Modules {
+		if name == consensustypes.ModuleName {
+			delete(app.ModuleManager.Modules, name)
+		}
 	}
 
 	// make sure to get the ibc tendermint client interface types
