@@ -57,6 +57,7 @@ import (
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
+	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 )
 
 var (
@@ -281,6 +282,10 @@ func init() {
 			{
 				Name:   sudotypes.ModuleName,
 				Config: appconfig.WrapAny(&sudomodulev1.Module{}),
+			},
+			{
+				Name:   oracletypes.ModuleName,
+				Config: appconfig.WrapAny(&oraclemodulev1.Module{}),
 			},
 		},
 	})
