@@ -43,7 +43,7 @@ func getCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
 func (k Keeper) ERC20() erc20Calls {
 	return erc20Calls{
 		Keeper: &k,
-		ABI:    embeds.SmartContract_ERC20Minter.ABI,
+		ABI:    embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI,
 	}
 }
 

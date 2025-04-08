@@ -11,7 +11,7 @@ import (
 
 func TestLoadContracts(t *testing.T) {
 	require.NotPanics(t, func() {
-		embeds.SmartContract_ERC20Minter.MustLoad()
+		embeds.SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 		embeds.SmartContract_FunToken.MustLoad()
 		embeds.SmartContract_TestERC20.MustLoad()
 		embeds.SmartContract_TestERC20MaliciousName.MustLoad()

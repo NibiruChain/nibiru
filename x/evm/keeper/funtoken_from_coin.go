@@ -73,11 +73,11 @@ func (k *Keeper) deployERC20ForBankCoin(
 	}
 
 	// pass empty method name to deploy the contract
-	packedArgs, err := embeds.SmartContract_ERC20Minter.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
+	packedArgs, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
 	if err != nil {
 		return gethcommon.Address{}, errors.Wrap(err, "failed to pack ABI args")
 	}
-	input := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
+	input := append(embeds.SmartContract_ERC20MinterWithMetadataUpdates.Bytecode, packedArgs...)
 
 	evmMsg := gethcore.NewMessage(
 		evm.EVM_MODULE_ADDRESS,

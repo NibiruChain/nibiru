@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
 - [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for x/crisis module
 - [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
+- [#2251](https://github.com/NibiruChain/nibiru/pull/2251) - feat(evm): add ERC20 contract with metadata updates
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 - [#2257](https://github.com/NibiruChain/nibiru/pull/2257) - fix: simulation tests by register interfaces for vesting and use correct app keys field
 - [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules

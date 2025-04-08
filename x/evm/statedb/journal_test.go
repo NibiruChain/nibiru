@@ -27,7 +27,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 
 	deployResp, err := evmtest.DeployContract(
 		&deps,
-		embeds.SmartContract_ERC20Minter,
+		embeds.SmartContract_ERC20MinterWithMetadataUpdates,
 		"name",
 		"SYMBOL",
 		uint8(18),
@@ -91,7 +91,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 
 	deployResp, err := evmtest.DeployContract(
 		&deps,
-		embeds.SmartContract_ERC20Minter,
+		embeds.SmartContract_ERC20MinterWithMetadataUpdates,
 		"name",
 		"SYMBOL",
 		uint8(18),
@@ -115,7 +115,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 	})
 
 	randomAcc := evmtest.NewEthPrivAcc().EthAddr
-	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("transfer", randomAcc, big.NewInt(69_000))
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", randomAcc, big.NewInt(69_000))
 	s.Require().NoError(err)
 
 	s.Run("Transfer 69_000 tokens", func() {
