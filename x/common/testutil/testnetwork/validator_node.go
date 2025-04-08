@@ -266,7 +266,7 @@ func (val *Validator) AssertERC20Balance(
 	expectedBalance *big.Int,
 	s *suite.Suite,
 ) {
-	input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("balanceOf", accAddr)
+	input, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("balanceOf", accAddr)
 	s.NoError(err)
 	msg := geth.CallMsg{
 		From: accAddr,
