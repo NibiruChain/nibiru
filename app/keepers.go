@@ -66,6 +66,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -144,7 +146,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
-
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		app.appCodec, app.keys[epochstypes.StoreKey],
 	)

@@ -55,7 +55,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
