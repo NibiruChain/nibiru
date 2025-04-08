@@ -55,6 +55,8 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+
+	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
 
 var (
@@ -275,6 +277,10 @@ func init() {
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
+			},
+			{
+				Name:   sudotypes.ModuleName,
+				Config: appconfig.WrapAny(&sudomodulev1.Module{}),
 			},
 		},
 	})

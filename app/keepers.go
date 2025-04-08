@@ -68,8 +68,6 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -148,10 +146,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
-
-	app.SudoKeeper = keeper.NewKeeper(
-		app.appCodec, app.keys[sudotypes.StoreKey],
-	)
 
 	app.OracleKeeper = oraclekeeper.NewKeeper(app.appCodec, app.keys[oracletypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.slashingKeeper,
