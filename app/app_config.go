@@ -46,6 +46,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
+	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
+	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -55,8 +57,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
-	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
 
 var (
@@ -281,6 +281,10 @@ func init() {
 			{
 				Name:   sudotypes.ModuleName,
 				Config: appconfig.WrapAny(&sudomodulev1.Module{}),
+			},
+			{
+				Name:   oracletypes.ModuleName,
+				Config: appconfig.WrapAny(&oraclemodulev1.Module{}),
 			},
 		},
 	})
