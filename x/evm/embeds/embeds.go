@@ -58,9 +58,16 @@ var (
 var (
 	// Contract_ERC20Minter: The default ERC20 contract deployed during the
 	// creation of a `FunToken` mapping from a bank coin.
-	SmartContract_ERC20MinterWithMetadataUpdates = CompiledEvmContract{
+	// Original ERC20 minter contract
+	SmartContract_ERC20Minter = CompiledEvmContract{
 		Name:      "ERC20Minter.sol",
 		EmbedJSON: erc20MinterContractJSON,
+	}
+
+	// Enhanced ERC20 contract with metadata update capabilities
+	SmartContract_ERC20MinterWithMetadataUpdates = CompiledEvmContract{
+		Name:      "ERC20MinterWithMetadataUpdates.sol",
+		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
 	}
 
 	// SmartContract_ERC20MinterWithMetadataUpdatesWithMetadataUpdates: An ERC20 contract with additional
