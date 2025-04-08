@@ -56,6 +56,7 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
+	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
@@ -286,6 +287,10 @@ func init() {
 			{
 				Name:   oracletypes.ModuleName,
 				Config: appconfig.WrapAny(&oraclemodulev1.Module{}),
+			},
+			{
+				Name:   epochstypes.ModuleName,
+				Config: appconfig.WrapAny(&epochsmodulev1.Module{}),
 			},
 		},
 	})
