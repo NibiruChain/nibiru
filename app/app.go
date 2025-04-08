@@ -320,6 +320,7 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
+		&app.SudoKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -339,7 +340,6 @@ func NewNibiruApp(
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		inflationtypes.StoreKey,
-		sudotypes.StoreKey,
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
@@ -366,7 +366,6 @@ func NewNibiruApp(
 		oracle.NewAppModule(app.appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
 		epochs.NewAppModule(app.appCodec, app.EpochsKeeper),
 		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
-		sudo.NewAppModule(app.appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
