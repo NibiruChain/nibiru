@@ -46,6 +46,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
+	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
@@ -57,10 +58,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
-	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
-	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
-	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
 
 var (
