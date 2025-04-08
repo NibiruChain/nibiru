@@ -70,9 +70,9 @@ var (
 		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
 	}
 
-	// SmartContract_ERC20MinterWithMetadataUpdatesWithMetadataUpdates: An ERC20 contract with additional
+	// SmartContract_ERC20WithMetadataUpdates: An ERC20 contract with additional
 	// functionality to update metadata (name, symbol) after deployment.
-	SmartContract_ERC20MinterWithMetadataUpdatesWithMetadataUpdates = CompiledEvmContract{
+	SmartContract_ERC20WithMetadataUpdates = CompiledEvmContract{
 		Name:      "ERC20MinterWithMetadataUpdates.sol",
 		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
 	}
