@@ -206,7 +206,6 @@ type EpochsOutputs struct {
 }
 
 func ProvideModule(in EpochsInputs) EpochsOutputs {
-
 	k := keeper.NewKeeper(in.Cdc, in.Key)
 
 	m := NewAppModule(in.Cdc, k)
