@@ -211,7 +211,6 @@ type SudoOutputs struct {
 }
 
 func ProvideModule(in SudoInputs) SudoOutputs {
-
 	k := keeper.NewKeeper(in.Cdc, in.Key)
 
 	m := NewAppModule(in.Cdc, k)
