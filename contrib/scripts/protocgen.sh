@@ -18,3 +18,5 @@ cd ..
 # move proto files to the right places
 cp -r github.com/NibiruChain/nibiru/v2/* ./
 rm -rf github.com
+
+./contrib/scripts/protocgen-pulsar.sh
