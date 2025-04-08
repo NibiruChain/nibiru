@@ -234,7 +234,6 @@ type OracleOutputs struct {
 }
 
 func ProvideModule(in OracleInputs) OracleOutputs {
-
 	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.DistrKeeper, in.StakingKeeper, in.SlashingKeeper, in.SudoKeeper, distrtypes.ModuleName)
 
 	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.SudoKeeper)
