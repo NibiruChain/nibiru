@@ -70,13 +70,6 @@ var (
 		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
 	}
 
-	// SmartContract_ERC20WithMetadataUpdates: An ERC20 contract with additional
-	// functionality to update metadata (name, symbol) after deployment.
-	SmartContract_ERC20WithMetadataUpdates = CompiledEvmContract{
-		Name:      "ERC20MinterWithMetadataUpdates.sol",
-		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
-	}
-
 	// SmartContract_Funtoken: Precompile contract interface for
 	// "IFunToken.sol". This precompile enables transfers of ERC20 tokens
 	// to non-EVM accounts. Only the ABI is used.
@@ -188,7 +181,6 @@ var (
 
 func init() {
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
-	SmartContract_ERC20MinterWithMetadataUpdatesWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
 	SmartContract_Oracle.MustLoad()
