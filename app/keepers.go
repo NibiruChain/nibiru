@@ -143,7 +143,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
-
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		app.appCodec, app.keys[inflationtypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
