@@ -509,7 +509,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 
 	// 2 | Mint ERC20 tokens to the recipient
 	erc20Addr := funTokenMapping.Erc20Addr.Address
-	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", recipient, coin.Amount.BigInt())
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", recipient, coin.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
@@ -622,7 +622,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// converted to its Bank Coin representation, a balance of the ERC20 is left
 	// inside the EVM module account in order to convert the coins back to
 	// ERC20s.
-	contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
