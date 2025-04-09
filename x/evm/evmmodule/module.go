@@ -38,6 +38,7 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
+
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 )
 

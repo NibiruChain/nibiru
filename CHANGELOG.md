@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: app wiring for oracle
 - [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: app wiring for epochs
 - [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: app wiring for inflation
+- [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: app wiring for evm
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
