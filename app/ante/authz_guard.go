@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// AnteDecoratorAuthzGuard filters autz messages
+// AnteDecoratorAuthzGuard filters authz messages
 type AnteDecoratorAuthzGuard struct{}
 
 // AnteHandle rejects "authz grant generic --msg-type '/eth.evm.v1.MsgEthereumTx'"
