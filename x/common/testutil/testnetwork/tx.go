@@ -62,7 +62,7 @@ type execTxOptions struct {
 
 var DEFAULT_TX_OPTIONS = execTxOptions{
 	Fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.NewInt(1000))),
-	Gas:              2000000,
+	Gas:              3000000,
 	SkipConfirmation: true,
 	BroadcastMode:    flags.BroadcastSync,
 	CanFail:          false,
