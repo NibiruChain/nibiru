@@ -36,7 +36,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 		Decimals: 18,
 	}
 	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_ERC20Minter,
+		&deps, embeds.SmartContract_ERC20MinterWithMetadataUpdates,
 		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
 	s.Require().NoError(err)
@@ -183,7 +183,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		Decimals: 18,
 	}
 	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_ERC20Minter,
+		&deps, embeds.SmartContract_ERC20MinterWithMetadataUpdates,
 		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
 	s.Require().NoError(err)
@@ -202,7 +202,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	bankDemon := resp.FuntokenMapping.BankDenom
 
 	s.Run("happy: mint erc20 tokens", func() {
-		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+		contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
 		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 		evmObj, _ := deps.NewEVM()

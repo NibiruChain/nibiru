@@ -172,7 +172,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
-		contractInput, err := embeds.SmartContract_ERC20Minter.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
+		contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContractWithInput(

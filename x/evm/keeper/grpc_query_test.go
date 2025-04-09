@@ -477,7 +477,7 @@ func (s *Suite) TestQueryEthCall() {
 		{
 			name: "happy: eth call to deploy erc20 contract",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract := embeds.SmartContract_ERC20Minter
+				fungibleTokenContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),

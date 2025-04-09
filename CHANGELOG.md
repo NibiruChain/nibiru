@@ -48,9 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
 - [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for x/crisis module
 - [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
+- [#2251](https://github.com/NibiruChain/nibiru/pull/2251) - feat(evm): add ERC20 contract with metadata updates
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 - [#2257](https://github.com/NibiruChain/nibiru/pull/2257) - fix: simulation tests by register interfaces for vesting and use correct app keys field
 - [#2260](https://github.com/NibiruChain/nibiru/pull/2260) - feat(evm): add getErc20Address method to IFunToken
+- [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules
+- [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: gen pulsar api and app wiring for sudo
+- [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: app wiring for oracle
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
