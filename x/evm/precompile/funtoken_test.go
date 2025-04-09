@@ -770,16 +770,9 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			evmtest.FunTokenGasLimitSendToEvm,
 		)
 
-		s.Require().NoError(err, "CallContractWithInput failed for non-existent mapping")
-		s.Require().Empty(resp.VmError, "VMError should be empty even if mapping not found")
-		s.Require().NotEmpty(resp.Ret, "Return data should not be empty")
-
-		// Unpack the result
-		var resultAddr gethcommon.Address
-		err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(&resultAddr, string(precompile.FunTokenMethod_getErc20Address), resp.Ret)
-		s.Require().NoError(err, "Failed to unpack result for non-existent mapping")
-
-		s.Require().Equal(gethcommon.Address{}.Hex(), resultAddr.Hex(), "Expected address(0) for non-existent mapping")
+		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
+		s.Require().NotEmpty(resp.VmError, "VMError should be not be empty")
+		s.Require().Empty(resp.Ret, "Return data should be empty")
 	})
 
 	// Test case 3: Sad path - invalid bank denom format

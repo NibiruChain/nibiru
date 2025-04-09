@@ -496,9 +496,6 @@ func (p precompileFunToken) whoAmI(
 			Bech32Addr: addrBech32.String(),
 		},
 	}...)
-	if err != nil {
-	} else {
-	}
 	return bz, err
 }
 
@@ -767,7 +764,17 @@ func (p precompileFunToken) getErc20Address(
 	if len(mappings) == 1 {
 		erc20ResultAddress = mappings[0].Erc20Addr.Address
 	} else if len(mappings) > 1 {
-		p.evmKeeper.Logger(ctx).Error("invariant broken: multiple FunToken mappings found for bank denom", "denom", bankDenom)
+		err = fmt.Errorf(
+			"multiple FunToken mappings found for bank denom \"%s\": %d",
+			bankDenom, len(mappings),
+		)
+		return
+	} else {
+		// No mapping found, erc20ResultAddress remains address(0)
+		err = fmt.Errorf(
+			"no FunToken mapping found for bank denom \"%s\"", bankDenom,
+		)
+		return
 	}
 
 	// Pack the result (either the found address or address(0))
