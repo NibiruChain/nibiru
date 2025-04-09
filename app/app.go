@@ -323,6 +323,7 @@ func NewNibiruApp(
 		&app.SudoKeeper,
 		&app.OracleKeeper,
 		&app.EpochsKeeper,
+		&app.InflationKeeper,
 	); err != nil {
 		panic(err)
 	}
