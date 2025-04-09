@@ -267,9 +267,8 @@ type EvmInputs struct {
 	depinject.In
 
 	Config       *modulev1.Module
-	BankConfig   *bankmodulev1.Module
 	Key          *store.KVStoreKey
-	TransientKey *store.KVStoreKey
+	TransientKey *store.TransientStoreKey
 	Cdc          codec.Codec
 	AppOpts      servertypes.AppOptions `optional:"true"`
 
@@ -286,16 +285,6 @@ type EvmOutputs struct {
 }
 
 func ProvideModule(in EvmInputs) EvmOutputs {
-	// Configure blocked module accounts.
-	//
-	// Default behavior for blockedAddresses is to regard any module mentioned in
-	// AccountKeeper's module account permissions as blocked.
-	blockedAddresses := make(map[string]bool)
-	// override later
-	for _, permission := range in.AccountKeeper.GetModulePermissions() {
-		blockedAddresses[permission.GetAddress().String()] = true
-	}
-
 	// default to governance authority if not provided
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
 	if in.Config.Authority != "" {
