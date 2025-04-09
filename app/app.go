@@ -324,6 +324,7 @@ func NewNibiruApp(
 		&app.OracleKeeper,
 		&app.EpochsKeeper,
 		&app.InflationKeeper,
+		&app.EvmKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -343,16 +344,8 @@ func NewNibiruApp(
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
-
-		evm.StoreKey,
 	)
-	app.tkeys = sdk.NewTransientStoreKeys(evm.TransientKey)
 	for _, k := range app.keys {
-		if err := app.RegisterStores(k); err != nil {
-			panic(err)
-		}
-	}
-	for _, k := range app.tkeys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
 		}
@@ -371,9 +364,6 @@ func NewNibiruApp(
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
-
-		// evm
-		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 
 		// wasm
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
