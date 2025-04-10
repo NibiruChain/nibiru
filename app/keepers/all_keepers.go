@@ -55,7 +55,7 @@ type PublicKeepers struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	EpochsKeeper       epochskeeper.Keeper
+	EpochsKeeper       *epochskeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
 	SudoKeeper         sudokeeper.Keeper

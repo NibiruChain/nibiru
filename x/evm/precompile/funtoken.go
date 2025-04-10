@@ -759,7 +759,7 @@ func (p precompileFunToken) getErc20Address(
 	iterator := p.evmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)
 	mappings := p.evmKeeper.FunTokens.Collect(ctx, iterator)
 
-	erc20ResultAddress := gethcommon.Address{} // Default to address(0)
+	var erc20ResultAddress gethcommon.Address // Default to address(0)
 
 	if len(mappings) == 1 {
 		erc20ResultAddress = mappings[0].Erc20Addr.Address
@@ -805,7 +805,6 @@ func (p precompileFunToken) parseArgsGetErc20Address(args []any) (
 		tfDenom := tftypes.DenomStr(bankDenom)
 
 		if err = tfDenom.Validate(); err != nil {
-
 			err = fmt.Errorf("invalid bank denomination format: %w", err)
 			return
 		}
