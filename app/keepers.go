@@ -60,8 +60,6 @@ import (
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -147,18 +145,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 			app.OracleKeeper.Hooks(),
 		),
 	)
-
-	evmKeeper := evmkeeper.NewKeeper(
-		app.appCodec,
-		app.keys[evm.StoreKey],
-		app.tkeys[evm.TransientKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		cast.ToString(appOpts.Get("evm.tracer")),
-	)
-	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
