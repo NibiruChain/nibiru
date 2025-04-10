@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules
 - [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: gen pulsar api and app wiring for sudo
 - [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: app wiring for oracle
+- [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: app wiring for epochs
 - [#2268](https://github.com/NibiruChain/nibiru/pull/2268) - fix(evm): gas limit for erc20 deploy
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27

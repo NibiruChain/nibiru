@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package nibiru.epochs.module.v1;
+
+import "cosmos/app/v1alpha1/module.proto";
+
+// Module is the config object for the epochs module.
+message Module {
+  option (cosmos.app.v1alpha1.module) = {
+    go_import: "github.com/NibiruChain/nibiru/x/epochs"
+  };
+
+    // hooks_order specifies the order of staking hooks and should be a list
+  // of module names which provide a staking hooks instance. If no order is
+  // provided, then hooks will be applied in alphabetical order of module names.
+  repeated string hooks_order = 1;
+
+  // authority defines the custom module authority. If not set, defaults to the governance module.
+  string authority = 2;
+}
+
+// ModuleAccountPermission represents permissions for a module account.
+message ModuleAccountPermission {
+  // account is the name of the module.
+  string account = 1;
+
+  // permissions are the permissions this module has. Currently recognized
+  // values are minter, burner and staking.
+  repeated string permissions = 2;
+}

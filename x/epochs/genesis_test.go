@@ -19,7 +19,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 	app, _ := testapp.NewNibiruTestApp(app.GenesisState{})
 	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
 
-	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
+	genesis := epochs.ExportGenesis(ctx, *app.EpochsKeeper)
 	require.Len(t, genesis.Epochs, 4)
 
 	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
@@ -93,7 +93,7 @@ func TestEpochsInitGenesis(t *testing.T) {
 			},
 		},
 	}
-	err := epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, genesisState)
 	require.Error(t, err)
 
 	require.EqualError(t, genesisState.Validate(), "epoch identifier should be unique")
@@ -112,7 +112,7 @@ func TestEpochsInitGenesis(t *testing.T) {
 		},
 	}
 
-	err = epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	err = epochs.InitGenesis(ctx, *app.EpochsKeeper, genesisState)
 	require.NoError(t, err)
 	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	require.NoError(t, err)
