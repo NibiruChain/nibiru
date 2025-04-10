@@ -800,5 +800,4 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 		s.Require().ErrorContains(err, "invalid bank denomination format")
 		s.Require().ErrorContains(err, "invalid method args") // Error comes from arg parsing/validation
 	})
-
 }
