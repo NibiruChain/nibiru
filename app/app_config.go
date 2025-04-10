@@ -47,10 +47,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
-<<<<<<< HEAD
 	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
-=======
->>>>>>> main
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
@@ -295,13 +292,10 @@ func init() {
 				Name:   epochstypes.ModuleName,
 				Config: appconfig.WrapAny(&epochsmodulev1.Module{}),
 			},
-<<<<<<< HEAD
 			{
 				Name:   inflationtypes.ModuleName,
 				Config: appconfig.WrapAny(&inflationmodulev1.Module{}),
 			},
-=======
->>>>>>> main
 		},
 	})
 }
