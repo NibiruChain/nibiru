@@ -23,6 +23,13 @@ interface IFunToken is INibiruEvm {
         string calldata to
     ) external returns (uint256 sentAmount);
 
+    /// @notice Retrieves the ERC20 contract address associated with a given bank denomination.
+    /// @param bankDenom The bank denomination string (e.g., "unibi", "erc20/0x...", "ibc/...").
+    /// @return erc20Address The corresponding ERC20 contract address, or address(0) if no mapping exists.
+    function getErc20Address(
+        string memory bankDenom
+    ) external view returns (address erc20Address);
+
     struct NibiruAccount {
         address ethAddr;
         string bech32Addr;
