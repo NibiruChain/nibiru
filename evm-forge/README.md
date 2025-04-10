@@ -2,7 +2,7 @@
 
 ## What's Inside
 
-- [Forge](https://github.com/foundry-rs/foundry/blob/master/forge): compile, test, fuzz, format, and deploy smart
+- [Forge](https://github.com/foundry-rs/foundry/tree/master/crates/forge): compile, test, fuzz, format, and deploy smart
   contracts
 - [Forge Std](https://github.com/foundry-rs/forge-std): collection of helpful contracts and utilities for testing
 - [Prettier](https://github.com/prettier/prettier): code formatter for non-Solidity files
