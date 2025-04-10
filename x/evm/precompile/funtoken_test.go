@@ -710,3 +710,95 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 	}
 	return out.BankBal, out.NibiruAcc.EthAddr, out.NibiruAcc.Bech32Addr, nil
 }
+
+func (s *FuntokenSuite) TestGetErc20Address() {
+	deps := evmtest.NewTestDeps()
+	bankDenom := "unibi" // Example bank denom
+
+	s.T().Log("Setup: Create FunToken mapping for unibi")
+	funtokenMapping := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
+	expectedErc20Addr := funtokenMapping.Erc20Addr.Address
+
+	// Test case 1: Happy path - lookup existing mapping
+	s.Run("Lookup existing mapping", func() {
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
+			string(precompile.FunTokenMethod_getErc20Address),
+			bankDenom,
+		)
+		s.Require().NoError(err)
+
+		evmObj, _ := deps.NewEVM()
+		resp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,                 // From address (doesn't matter much for view)
+			&precompile.PrecompileAddr_FunToken, // To the precompile address
+			false,                               // Commit = false (it's a view call)
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm, // Use a reasonable gas limit for queries
+		)
+
+		s.Require().NoError(err, "CallContractWithInput failed")
+		s.Require().Empty(resp.VmError, "VMError should be empty for successful view call")
+		s.Require().NotEmpty(resp.Ret, "Return data should not be empty")
+
+		// Unpack the result
+		var resultAddr gethcommon.Address
+		err = embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(&resultAddr, string(precompile.FunTokenMethod_getErc20Address), resp.Ret)
+		s.Require().NoError(err, "Failed to unpack result")
+
+		s.Require().Equal(expectedErc20Addr.Hex(), resultAddr.Hex(), "Returned ERC20 address mismatch")
+	})
+
+	// Test case 2: Sad path - lookup non-existent mapping
+	s.Run("Lookup non-existent mapping", func() {
+		nonExistentDenom := "nonexistentcoin"
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
+			string(precompile.FunTokenMethod_getErc20Address),
+			nonExistentDenom,
+		)
+		s.Require().NoError(err)
+
+		evmObj, _ := deps.NewEVM()
+		resp, err := deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false, // Commit = false
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+
+		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
+		s.Require().NotEmpty(resp.VmError, "VMError should be not be empty")
+		s.Require().Empty(resp.Ret, "Return data should be empty")
+	})
+
+	// Test case 3: Sad path - invalid bank denom format
+	s.Run("Lookup invalid bank denom format", func() {
+		invalidDenom := "invalid/denom!!!"
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
+			string(precompile.FunTokenMethod_getErc20Address),
+			invalidDenom,
+		)
+		s.Require().NoError(err) // Packing might succeed even if denom is invalid for SDK
+
+		evmObj, _ := deps.NewEVM()
+		_, err = deps.EvmKeeper.CallContractWithInput(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_FunToken,
+			false, // Commit = false
+			contractInput,
+			evmtest.FunTokenGasLimitSendToEvm,
+		)
+
+		// Expect an error because the Go handler validates the denom
+		s.Require().Error(err, "Expected error for invalid bank denom format")
+		s.Require().ErrorContains(err, "invalid bank denomination format")
+		s.Require().ErrorContains(err, "invalid method args") // Error comes from arg parsing/validation
+	})
+
+}
