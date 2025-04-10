@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/depinject"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -17,10 +18,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/bank/exported"
@@ -35,6 +38,8 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 )
 
 // consensusVersion: EVM module consensus version for upgrades.
@@ -131,6 +136,12 @@ func (AppModule) Name() string {
 	return evm.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants interface for registering invariants. Performs a no-op
 // as the evm module doesn't expose invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {
@@ -188,6 +199,9 @@ func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.Weig
 //
 
 func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
 	appmodule.Register(&bankmodulev1.Module{},
 		appmodule.Provide(ProvideNibiruBankModule),
 	)
@@ -248,4 +262,42 @@ func ProvideNibiruBankModule(in NibiruBankInputs) NibiruBankOutputs {
 	m := bank.NewAppModule(in.Cdc, nibiruBankKeeper, in.AccountKeeper, in.LegacySubspace)
 
 	return NibiruBankOutputs{BankKeeper: nibiruBankKeeper, Module: m}
+}
+
+type EvmInputs struct {
+	depinject.In
+
+	Config       *modulev1.Module
+	Key          *store.KVStoreKey
+	TransientKey *store.TransientStoreKey
+	Cdc          codec.Codec
+	AppOpts      servertypes.AppOptions `optional:"true"`
+
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	StakingKeeper evm.StakingKeeper
+}
+
+type EvmOutputs struct {
+	depinject.Out
+
+	Keeper *keeper.Keeper
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in EvmInputs) EvmOutputs {
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, in.BankKeeper.(*evmkeeper.NibiruBankKeeper), in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+
+	m := NewAppModule(&k, in.AccountKeeper)
+
+	return EvmOutputs{
+		Keeper: &k,
+		Module: m,
+	}
 }
