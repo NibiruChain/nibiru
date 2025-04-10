@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2251](https://github.com/NibiruChain/nibiru/pull/2251) - feat(evm): add ERC20 contract with metadata updates
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 - [#2257](https://github.com/NibiruChain/nibiru/pull/2257) - fix: simulation tests by register interfaces for vesting and use correct app keys field
+- [#2260](https://github.com/NibiruChain/nibiru/pull/2260) - feat(evm): add getErc20Address method to IFunToken
 - [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules
 - [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: gen pulsar api and app wiring for sudo
 - [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: app wiring for oracle
@@ -82,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
 - [#2207](https://github.com/NibiruChain/nibiru/pull/2207) - chore(ci): add cache for chaosnet builds
 - [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):
-Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
+  Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
 - [#2211](https://github.com/NibiruChain/nibiru/pull/2211) - ci(chaosnet): avoid building on cache injected directories
 - [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
 - [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
@@ -123,14 +124,14 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
 - [#2149](https://github.com/NibiruChain/nibiru/pull/2149) - feat(evm-oracle):
-add Solidity contract that we can use to expose the Nibiru Oracle in the
-ChainLink interface. Publish all precompiled contracts and ABIs on npm under
-the `@nibiruchain/solidity` package.
+  add Solidity contract that we can use to expose the Nibiru Oracle in the
+  ChainLink interface. Publish all precompiled contracts and ABIs on npm under
+  the `@nibiruchain/solidity` package.
 - [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
 - [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
 - [#2154](https://github.com/NibiruChain/nibiru/pull/2154) - fix(evm):
-JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
-needed to include double quotes around the hexadecimal string.
+  JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
+  needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
 - [#2159](https://github.com/NibiruChain/nibiru/pull/2159) - chore(evm): Augment the Wasm msg handler so that wasm contracts cannot send MsgEthereumTx
