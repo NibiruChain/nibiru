@@ -40,25 +40,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v2.3.0
+
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
-- [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
-- [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for x/bank module
-- [#2248](https://github.com/NibiruChain/nibiru/pull/2248) - feat: add depinject wiring for x/staking module
-- [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
-- [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for x/crisis module
 - [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
 - [#2251](https://github.com/NibiruChain/nibiru/pull/2251) - feat(evm): add ERC20 contract with metadata updates
 - [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
 - [#2257](https://github.com/NibiruChain/nibiru/pull/2257) - fix: simulation tests by register interfaces for vesting and use correct app keys field
 - [#2260](https://github.com/NibiruChain/nibiru/pull/2260) - feat(evm): add getErc20Address method to IFunToken
 - [#2268](https://github.com/NibiruChain/nibiru/pull/2268) - fix(evm): gas limit for erc20 deploy
+- [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
+- [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for x/bank module
+- [#2248](https://github.com/NibiruChain/nibiru/pull/2248) - feat: add depinject wiring for x/staking module
+- [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
+- [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for x/crisis module
 - [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules
-- [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: gen pulsar api and app wiring for sudo
-- [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: app wiring for oracle
-- [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: app wiring for epochs
-- [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: app wiring for inflation
-- [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: app wiring for evm
+- [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: add depinject wiring for x/sudo module
+- [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: add depinject wiring for x/oracle module
+- [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: add depinject wiring for x/epochs module
+- [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: add depinject wiring for x/inflation module
+- [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: add depinject wiring for x/evm module
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
