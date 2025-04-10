@@ -63,8 +63,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -143,11 +141,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
-	app.InflationKeeper = inflationkeeper.NewKeeper(
-		app.appCodec, app.keys[inflationtypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
-	)
-
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.InflationKeeper.Hooks(),

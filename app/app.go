@@ -323,6 +323,7 @@ func NewNibiruApp(
 		&app.SudoKeeper,
 		&app.OracleKeeper,
 		&app.EpochsKeeper,
+		&app.InflationKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -339,7 +340,6 @@ func NewNibiruApp(
 		ibcwasmtypes.StoreKey,
 
 		// nibiru x/ keys
-		inflationtypes.StoreKey,
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
@@ -363,7 +363,6 @@ func NewNibiruApp(
 	// register non-depinject modules
 	if err := app.RegisterModules(
 		// Nibiru modules
-		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
