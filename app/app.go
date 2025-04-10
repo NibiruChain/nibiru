@@ -202,7 +202,6 @@ type NibiruApp struct {
 	// keys to access the substores
 	// TODO(k-yang): remove once depinject is fully integrated
 	keys    map[string]*storetypes.KVStoreKey
-	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	AppKeepers // embed all module keepers
@@ -544,13 +543,6 @@ func (app *NibiruApp) InterfaceRegistry() codectypes.InterfaceRegistry {
 // NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
-}
-
-// GetTKey returns the TransientStoreKey for the provided store key.
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *NibiruApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
-	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
