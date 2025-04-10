@@ -19,8 +19,7 @@ import (
 
 const (
 	// Erc20GasLimitDeploy only used internally when deploying ERC20Minter.
-	// Deployment requires ~1_600_000 gas
-	Erc20GasLimitDeploy uint64 = 2_000_000
+	Erc20GasLimitDeploy uint64 = 2_500_000
 	// Erc20GasLimitQuery used only for querying name, symbol and decimals
 	// Cannot be heavy. Only if the contract is malicious.
 	Erc20GasLimitQuery uint64 = 100_000
