@@ -47,6 +47,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
+	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
@@ -56,6 +57,7 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -301,6 +303,10 @@ func init() {
 			{
 				Name:   evmtypes.ModuleName,
 				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
+			},
+			{
+				Name:   tftypes.ModuleName,
+				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
 			},
 		},
 	})
