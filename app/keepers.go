@@ -61,8 +61,6 @@ import (
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 const wasmVmContractMemoryLimit = 32
@@ -268,16 +266,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.WasmKeeper,
 		app.AccountKeeper,
 		authtypes.FeeCollectorName,
-		govModuleAddr,
-	)
-
-	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		app.keys[tokenfactorytypes.StoreKey],
-		app.appCodec,
-		app.BankKeeper,
-		app.AccountKeeper,
-		app.DistrKeeper,
-		app.SudoKeeper,
 		govModuleAddr,
 	)
 
