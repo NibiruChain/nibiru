@@ -69,10 +69,7 @@ const wasmVmContractMemoryLimit = 32
 
 type AppKeepers struct {
 	keepers.PublicKeepers
-	privateKeepers
-}
 
-type privateKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	crisisKeeper     *crisiskeeper.Keeper
