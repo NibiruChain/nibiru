@@ -14,21 +14,30 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 )
 
 // type check to ensure the interface is properly implemented
@@ -134,6 +143,12 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants registers the fees module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
@@ -189,4 +204,51 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 // WeightedOperations implements module.AppModuleSimulation.
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type TokenFactoryInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    types.BankKeeper
+	DistrKeeper   types.CommunityPoolKeeper
+	SudoKeeper    sudokeeper.Keeper
+}
+
+type TokenFactoryOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in TokenFactoryInputs) TokenFactoryOutputs {
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(in.Key, in.Cdc, in.BankKeeper, in.AccountKeeper, in.DistrKeeper, in.SudoKeeper, authority.String())
+
+	m := NewAppModule(k, in.AccountKeeper)
+
+	return TokenFactoryOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }
