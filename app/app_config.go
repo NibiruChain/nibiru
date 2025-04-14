@@ -51,6 +51,7 @@ import (
 	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
+	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -60,6 +61,7 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -301,6 +303,10 @@ func init() {
 			{
 				Name:   evmtypes.ModuleName,
 				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
+			},
+			{
+				Name:   tftypes.ModuleName,
+				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
 			},
 		},
 	})
