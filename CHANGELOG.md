@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
 - [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
 
 ## v2.3.0
