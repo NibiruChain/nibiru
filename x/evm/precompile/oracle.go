@@ -71,7 +71,7 @@ func (p precompileOracle) Run(
 	return bz, err
 }
 
-func PrecompileOracle(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileOracle(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileOracle{
 		oracleKeeper: keepers.OracleKeeper,
 	}

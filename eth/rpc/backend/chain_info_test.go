@@ -3,6 +3,7 @@ package backend_test
 import (
 	"math/big"
 
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -65,7 +66,7 @@ func (s *BackendSuite) TestFeeHistory() {
 	percentiles := []float64{50, 100}
 
 	res, err := s.backend.FeeHistory(
-		(gethrpc.DecimalOrHex)(blockCount),
+		(gethmath.HexOrDecimal64)(blockCount),
 		gethrpc.BlockNumber(int64(currentBlock)),
 		percentiles,
 	)

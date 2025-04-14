@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core"
 	geth "github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -158,10 +159,10 @@ func (args *JsonTxArgs) ToMsgEthTx() *MsgEthereumTx {
 
 // ToMessage converts the arguments to the Message type used by the core evm.
 // This assumes that setTxDefaults has been called.
-func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (geth.Message, error) {
+func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (core.Message, error) {
 	// Reject invalid combinations of pre- and post-1559 fee styles
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
-		return geth.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
+		return core.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
 	// Set sender address or use zero address if none specified.
@@ -228,8 +229,21 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (get
 		nonce = uint64(*args.Nonce)
 	}
 
-	msg := geth.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
-	return msg, nil
+	evmMsg := core.Message{
+		To:                args.To,
+		From:              addr,
+		Nonce:             nonce,
+		Value:             value, // amount
+		GasLimit:          gas,
+		GasPrice:          gasPrice,
+		GasFeeCap:         gasFeeCap,
+		GasTipCap:         gasTipCap,
+		Data:              data,
+		AccessList:        accessList,
+		SkipAccountChecks: true,
+	}
+
+	return evmMsg, nil
 }
 
 // GetFrom retrieves the transaction sender address.

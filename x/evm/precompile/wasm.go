@@ -114,7 +114,7 @@ type Wasm struct {
 	wasmkeeper.Keeper
 }
 
-func PrecompileWasm(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileWasm(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileWasm{
 		Keeper: keepers.EvmKeeper,
 		Wasm: Wasm{

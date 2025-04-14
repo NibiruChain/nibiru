@@ -4,6 +4,7 @@ package statedb
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -93,6 +94,21 @@ func (s Storage) SortedKeys() []common.Hash {
 	return keys
 }
 
+func (s Storage) Copy() Storage {
+	cpy := make(Storage, len(s))
+	for key, value := range s {
+		cpy[key] = value
+	}
+	return cpy
+}
+
+func (s Storage) String() (str string) {
+	for key, value := range s {
+		str += fmt.Sprintf("%X : %X\n", key, value)
+	}
+	return
+}
+
 // stateObject represents the state of a Nibiru EVM account.
 // It encapsulates both the account data (balance, nonce, code) and the contract
 // storage state. stateObject serves as an in-memory cache and staging area for
@@ -122,12 +138,17 @@ type stateObject struct {
 	address common.Address
 
 	// flags
-	DirtyCode bool
-	Suicided  bool
+	DirtyCode        bool
+	Suicided         bool // True if the stateObject has been self destructed
+	createdThisBlock bool // True if the stateObject was created this block
 }
 
 // newObject creates a state object.
-func newObject(db *StateDB, address common.Address, account Account) *stateObject {
+func newObject(db *StateDB, address common.Address, account *Account) *stateObject {
+	createdThisBlock := account == nil
+	if createdThisBlock {
+		account = &Account{}
+	}
 	if account.BalanceNative == nil {
 		account.BalanceNative = new(big.Int)
 	}
@@ -138,9 +159,10 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 		db:      db,
 		address: address,
 		// Reflect the micronibi (unibi) balance in wei
-		account:       account.ToWei(),
-		OriginStorage: make(Storage),
-		DirtyStorage:  make(Storage),
+		account:          account.ToWei(),
+		OriginStorage:    make(Storage),
+		DirtyStorage:     make(Storage),
+		createdThisBlock: createdThisBlock,
 	}
 }
 

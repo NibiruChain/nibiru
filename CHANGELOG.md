@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
+- [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
 
 ## v2.3.0
 

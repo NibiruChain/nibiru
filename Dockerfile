@@ -1,7 +1,7 @@
 ARG src=base
 
 # ---------- Build Stage ----------
-FROM golang:1.24 AS build-base
+FROM golang:1.22 AS build-base
 
 WORKDIR /nibiru
 

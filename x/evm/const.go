@@ -9,6 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethvm "github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
@@ -17,6 +20,19 @@ var (
 	BASE_FEE_MICRONIBI = big.NewInt(1)
 	BASE_FEE_WEI       = NativeToWei(BASE_FEE_MICRONIBI)
 )
+
+var PRECOMPILE_ADDRS []gethcommon.Address =
+// Using a set cleanly removes potential duplicates
+set.New[gethcommon.Address](
+	append(gethvm.PrecompiledAddressesCancun, []gethcommon.Address{
+		// FunToken 0x...800
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
+		// Wasm 0x...802
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
+		// Oracle 0x...801
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
+	}...)...,
+).ToSlice()
 
 const (
 	// ModuleName string name of module
@@ -153,3 +169,15 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err err
 	newWeiInt = NativeToWei(WeiToNative(weiInt))
 	return newWeiInt, nil
 }
+
+// Parses the block time as a Unix timestamp in seconds for use with
+// "gethcore.MakeSigner".
+func ParseBlockTimeUnixU64(ctx sdk.Context) uint64 {
+	blockTimeI64 := ctx.BlockTime().Unix()
+	if blockTimeI64 <= 0 {
+		return 0
+	}
+	return uint64(blockTimeI64)
+}
+
+var Big0 = big.NewInt(0)

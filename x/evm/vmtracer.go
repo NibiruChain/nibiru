@@ -4,7 +4,6 @@ package evm
 import (
 	"math/big"
 	"os"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -30,12 +29,11 @@ func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height 
 
 	switch tracer {
 	case TracerAccessList:
-		rules := cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil)
-		precompileAddrs := vm.DefaultActivePrecompiles(rules)
+		precompileAddrs := PRECOMPILE_ADDRS
 		return logger.NewAccessListTracer(
-			msg.AccessList(),
-			msg.From(),
-			*msg.To(),
+			msg.AccessList,
+			msg.From,
+			*msg.To,
 			precompileAddrs,
 		)
 	case TracerJSON:
@@ -92,7 +90,7 @@ func (dt NoOpTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64, sco
 // CaptureEnd implements vm.Tracer interface
 //
 //nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, tm time.Duration, err error) {}
+func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {}
 
 // CaptureEnter implements vm.Tracer interface
 //

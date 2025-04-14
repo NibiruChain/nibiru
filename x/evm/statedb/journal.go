@@ -361,3 +361,23 @@ func (ch PrecompileCalled) Revert(s *StateDB) {
 func (ch PrecompileCalled) Dirtied() *common.Address {
 	return nil
 }
+
+// ------------------------------------------------------
+// transientStorageChange represents a [JournalChange] for whenver a transient
+// storage slot changes.
+var _ JournalChange = transientStorageChange{}
+
+// transientStorageChange: [JournalChange] implementation for whenver a transient
+// storage slot changes
+type transientStorageChange struct {
+	address        *common.Address
+	key, prevValue common.Hash
+}
+
+func (ch transientStorageChange) Revert(s *StateDB) {
+	s.transientStorage.Set(*ch.address, ch.key, ch.prevValue)
+}
+
+func (ch transientStorageChange) Dirtied() *common.Address {
+	return nil
+}

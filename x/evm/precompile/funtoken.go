@@ -110,7 +110,7 @@ func (p precompileFunToken) Run(
 	return bz, err
 }
 
-func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileFunToken{
 		evmKeeper: keepers.EvmKeeper,
 	}

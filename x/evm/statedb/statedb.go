@@ -28,6 +28,8 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
 )
 
 var _ vm.StateDB = &StateDB{}
@@ -49,7 +51,8 @@ type StateDB struct {
 	validRevisions []revision
 	nextRevisionID int
 
-	stateObjects map[common.Address]*stateObject
+	stateObjects     map[common.Address]*stateObject
+	transientStorage transientStorage
 
 	txConfig TxConfig
 
@@ -90,8 +93,7 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 		stateObjects: make(map[common.Address]*stateObject),
 		Journal:      newJournal(),
 		accessList:   newAccessList(),
-
-		txConfig: txConfig,
+		txConfig:     txConfig,
 	}
 }
 
@@ -169,12 +171,12 @@ func (s *StateDB) Empty(addr common.Address) bool {
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
-func (s *StateDB) GetBalance(addr common.Address) *big.Int {
+func (s *StateDB) GetBalance(addr common.Address) *uint256.Int {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.Balance()
+		return uint256.MustFromBig(stateObject.Balance())
 	}
-	return common.Big0
+	return uint256.NewInt(0)
 }
 
 // GetNonce returns the nonce of account, 0 if not exists.
@@ -271,7 +273,7 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 	}
 
 	// Insert into the live set
-	obj := newObject(s, addr, *account)
+	obj := newObject(s, addr, account)
 	s.setStateObject(obj)
 	return obj
 }
@@ -290,7 +292,7 @@ func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
 func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) {
 	prev = s.getStateObject(addr)
 
-	newobj = newObject(s, addr, Account{})
+	newobj = newObject(s, addr, nil)
 	if prev == nil {
 		s.Journal.append(createObjectChange{account: &addr})
 	} else {
@@ -351,18 +353,34 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, wei *big.Int) {
+func (s *StateDB) AddBalance(addr common.Address, wei *uint256.Int) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.AddBalance(wei)
+		stateObject.AddBalance(wei.ToBig())
+	}
+}
+
+func (s *StateDB) AddBalanceSigned(addr common.Address, wei *big.Int) {
+	weiSign := wei.Sign()
+	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
+	if isOverflow {
+		// TODO: Is there a better strategy than panicking here?
+		panic(fmt.Errorf(
+			"uint256 overflow occurred for big.Int value %s", wei))
+	}
+
+	if weiSign >= 0 {
+		s.AddBalance(addr, weiAbs)
+	} else {
+		s.SubBalance(addr, weiAbs)
 	}
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, wei *big.Int) {
+func (s *StateDB) SubBalance(addr common.Address, wei *uint256.Int) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SubBalance(wei)
+		stateObject.SubBalance(wei.ToBig())
 	}
 }
 
@@ -397,15 +415,15 @@ func (s *StateDB) SetState(addr common.Address, key, value common.Hash) {
 	}
 }
 
-// Suicide marks the given account as suicided.
+// SelfDestruct marks the given account as suicided.
 // This clears the account balance.
 //
 // The account's state object is still available until the state is committed,
-// getStateObject will return a non-nil account after Suicide.
-func (s *StateDB) Suicide(addr common.Address) bool {
+// getStateObject will return a non-nil account after [SelfDestruct].
+func (s *StateDB) SelfDestruct(addr common.Address) {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
-		return false
+		return
 	}
 	s.Journal.append(suicideChange{
 		account:     &addr,
@@ -414,12 +432,30 @@ func (s *StateDB) Suicide(addr common.Address) bool {
 	})
 	stateObject.Suicided = true
 	stateObject.account.BalanceWei = new(big.Int)
-
-	return true
 }
 
-// PrepareAccessList handles the preparatory steps for executing a state transition with
-// regards to both EIP-2929 and EIP-2930:
+func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
+	stateObject := s.getStateObject(addr)
+	if stateObject == nil {
+		return false
+	}
+	return stateObject.Suicided
+}
+
+// Selfdestruct6780 calls SelfDesrtuct only if the [stateObject] corresponding to
+// the given "addr" was created this block.
+func (s *StateDB) Selfdestruct6780(addr common.Address) {
+	stateObject := s.getStateObject(addr)
+	if stateObject == nil {
+		return
+	}
+	if stateObject.createdThisBlock {
+		s.SelfDestruct(addr)
+	}
+}
+
+// PrepareAccessList handles the preparatory steps for executing a state
+// transition with regards to both EIP-2929 and EIP-2930:
 //
 // - Add sender to access list (2929)
 // - Add destination to access list (2929)
@@ -431,7 +467,7 @@ func (s *StateDB) PrepareAccessList(
 	sender common.Address,
 	dst *common.Address,
 	precompiles []common.Address,
-	list gethcore.AccessList,
+	txAccesses gethcore.AccessList,
 ) {
 	s.AddAddressToAccessList(sender)
 	if dst != nil {
@@ -441,12 +477,51 @@ func (s *StateDB) PrepareAccessList(
 	for _, addr := range precompiles {
 		s.AddAddressToAccessList(addr)
 	}
-	for _, el := range list {
+	for _, el := range txAccesses {
 		s.AddAddressToAccessList(el.Address)
 		for _, key := range el.StorageKeys {
 			s.AddSlotToAccessList(el.Address, key)
 		}
 	}
+}
+
+// Prepare handles the preparatory steps for executing a state transition with.
+// This method must be invoked before state transition.
+//
+// Berlin fork:
+// - Add sender to access list (2929)
+// - Add destination to access list (2929)
+// - Add precompiles to access list (2929)
+// - Add the contents of the optional tx access list (2930)
+//
+// EIPs Included:
+// - Reset access list (Berlin)
+// - Add coinbase to access list (EIP-3651) | Shanghai
+// - Reset transient storage (EIP-1153)
+func (s *StateDB) Prepare(
+	_ gethparams.Rules, // only relevant prior to Shangai and Berlin upgrades
+	sender, coinbase common.Address,
+	dest *common.Address,
+	precompiles []common.Address,
+	txAccesses gethcore.AccessList,
+) {
+	s.AddAddressToAccessList(sender)
+	if dest != nil {
+		s.AddAddressToAccessList(*dest)
+		// If it's a create-tx, the destination will be added inside evm.create
+	}
+	for _, addr := range precompiles {
+		s.AddAddressToAccessList(addr)
+	}
+	for _, el := range txAccesses {
+		s.AddAddressToAccessList(el.Address)
+		for _, key := range el.StorageKeys {
+			s.AddSlotToAccessList(el.Address, key)
+		}
+	}
+	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbse
+	// EIP-1153: Reset transient storage for beginning of tx execution
+	s.transientStorage = make(transientStorage)
 }
 
 // AddAddressToAccessList adds the given address to the access list
@@ -618,3 +693,59 @@ func (s *StateDB) SavePrecompileCalledJournalChange(
 }
 
 const maxMultistoreCacheCount uint8 = 10
+
+// transientStorage is a representation of EIP-1153 "Transient Storage".
+type transientStorage map[common.Address]Storage
+
+// Set sets the transient-storage `value` for `key` at the given `addr`.
+func (t transientStorage) Set(addr common.Address, key, value common.Hash) {
+	if _, ok := t[addr]; !ok {
+		t[addr] = make(Storage)
+	}
+	t[addr][key] = value
+}
+
+// Get gets the transient storage for `key` at the given `addr`.
+func (t transientStorage) Get(addr common.Address, key common.Hash) common.Hash {
+	val, ok := t[addr]
+	if !ok {
+		return common.Hash{}
+	}
+	return val[key]
+}
+
+// Copy does a deep copy of the transientStorage
+func (t transientStorage) Copy() transientStorage {
+	storage := make(transientStorage)
+	for key, value := range t {
+		storage[key] = value.Copy()
+	}
+	return storage
+}
+
+// GetTransientState gets transient storage ([common.Hash]) for a given account.
+func (s *StateDB) GetTransientState(
+	addr common.Address,
+	key common.Hash,
+) common.Hash {
+	return s.transientStorage.Get(addr, key)
+}
+
+// SetTransientState sets transient storage for a given account. It
+// adds the change to the journal so that it can be rolled back
+// to its previous value if there is a revert.
+func (s *StateDB) SetTransientState(
+	addr common.Address,
+	key, value common.Hash,
+) {
+	prev := s.GetTransientState(addr, key)
+	if prev == value {
+		return
+	}
+	s.Journal.append(transientStorageChange{
+		address:   &addr,
+		key:       key,
+		prevValue: prev,
+	})
+	s.transientStorage.Set(addr, key, prev)
+}

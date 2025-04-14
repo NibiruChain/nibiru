@@ -18,19 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
-func (k *Keeper) GetEthIntrinsicGas(
-	ctx sdk.Context,
-	msg core.Message,
-	cfg *params.ChainConfig,
-	isContractCreation bool,
-) (uint64, error) {
-	return core.IntrinsicGas(
-		msg.Data(), msg.AccessList(),
-		isContractCreation, true, true,
-	)
-}
-
 // RefundGas transfers the leftover gas to the sender of the message.
 func (k *Keeper) RefundGas(
 	ctx sdk.Context,
@@ -163,7 +150,14 @@ func VerifyFee(
 		accessList = txData.GetAccessList()
 	}
 
-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, true, true)
+	intrinsicGas, err := core.IntrinsicGas(
+		txData.GetData(),
+		accessList,
+		isContractCreation,
+		true, // isHomestead
+		true, // isEIP2028
+		true, // isEIP3860 === isShanghai
+	)
 	if err != nil {
 		return nil, errors.Wrapf(
 			err,
