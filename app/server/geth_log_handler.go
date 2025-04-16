@@ -1,15 +1,14 @@
 package server
 
 import (
-	"context"
-
-	cmtlog "github.com/cometbft/cometbft/libs/log"
-	gethlog "github.com/ethereum/go-ethereum/log"
-
 	// Use "log/slog" from the Go std lib because Geth migrated to support
 	// slog and deprecated the original go-ethereum/log implementation.
 	// For more info on the migration, see https://github.com/ethereum/go-ethereum/pull/28187
+	"context"
 	"log/slog"
+
+	cmtlog "github.com/cometbft/cometbft/libs/log"
+	gethlog "github.com/ethereum/go-ethereum/log"
 )
 
 // Ensure LogHandler implements slog.Handler

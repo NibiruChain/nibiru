@@ -480,7 +480,6 @@ func (s *StateDB) SelfDestruct(addr common.Address) (prevWei uint256.Int) {
 		stateObject.SelfDestructed = true
 	}
 	return prevWei
-
 }
 
 func (s *StateDB) HasSelfDestructed(addr common.Address) bool {

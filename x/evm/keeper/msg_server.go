@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -145,7 +146,9 @@ func (k *Keeper) NewEVM(
 		tracer = evm.NewTracer(k.tracer, msg, evmCfg.ChainConfig, ctx.BlockHeight())
 	}
 	vmConfig := k.VMConfig(ctx, &evmCfg, tracer)
-	return vm.NewEVM(blockCtx, txCtx, stateDB, evmCfg.ChainConfig, vmConfig)
+	evmObj = vm.NewEVM(blockCtx, txCtx, stateDB, evmCfg.ChainConfig, vmConfig)
+	evmObj.AccessEvents = state.NewAccessEvents(nil) // prevents nil pointers on access
+	return evmObj
 }
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:

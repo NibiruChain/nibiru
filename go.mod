@@ -4,9 +4,7 @@ module github.com/NibiruChain/nibiru/v2
 // See:
 // - [go-ethereum#30100: Build fails with Go 1.23rc](https://github.com/ethereum/go-ethereum/issues/30100)
 // - https://github.com/fjl/memsize/issues/4
-go 1.22
-
-toolchain go1.22.12
+go 1.24
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
@@ -267,8 +265,7 @@ replace (
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => ../nibi-geth
-	// github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.13.15-nibiru
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 

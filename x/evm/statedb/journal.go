@@ -414,6 +414,7 @@ type touchChange struct {
 
 // Revert is an intentional no-op. To revert a [touchChange], do nothing.
 func (ch touchChange) Revert(s *StateDB) {}
+
 func (ch touchChange) Dirtied() *common.Address {
 	return &ch.account
 }
