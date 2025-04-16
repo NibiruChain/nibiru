@@ -261,7 +261,7 @@ func (k *Keeper) ApplyEvmMsg(
 	evmObj *vm.EVM,
 	commit bool,
 	txHash gethcommon.Hash,
-) (resp *evm.MsgEthereumTxResponse, err error) {
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	gasRemaining := msg.GasLimit
 
 	// TODO: UD-DEBUG: feat(evm): Restore Tracer capturing using
@@ -270,11 +270,36 @@ func (k *Keeper) ApplyEvmMsg(
 	// Allow the tracer to capture tx level events pertaining to gas consumption.
 	// Note that "CaptureTxStart" and "CaptureTxEnd" were renamed to
 	// "OnTxStart" and "OnTxEnd".
-	// evmObj.Config.Tracer.CaptureTxStart(gasRemaining)
-	// defer func() {
-	// 	evmObj.Config.Tracer.OnTxEnd(gasRemaining)
-	// 	evmObj.Config.Tracer.CaptureTxEnd(gasRemaining)
-	// }()
+
+	// Formerly: evmObj.Config.Tracer.CaptureTxStart(gasRemaining)
+	if evmObj != nil && evmObj.Config.Tracer != nil && evmObj.Config.Tracer.OnTxStart != nil {
+		ethTx := gasRemainingTxPartial(msg.GasLimit)
+		evmObj.Config.Tracer.OnTxStart(
+			evmObj.GetVMContext(),
+			ethTx,
+			msg.From,
+		)
+	}
+	defer func() {
+		// TODO: UD-DEBUG: Validate OnTxStart for StructLogger tracer
+		// TODO: UD-DEBUG: Validate OnTxStart for JSONLogger tracer
+		// TODO: UD-DEBUG: Validate OnTxStart for callTracer tracer
+		// TODO: UD-DEBUG: Validate OnTxStart for mdLogger tracer
+		// TODO: UD-DEBUG: Validate OnTxEnd for StructLogger tracer
+		// TODO: UD-DEBUG: Validate OnTxEnd for JSONLogger tracer
+		// TODO: UD-DEBUG: Validate OnTxEnd for callTracer tracer
+		// TODO: UD-DEBUG: Validate OnTxEnd for mdLogger tracer
+		// Formerly: evmObj.Config.Tracer.CaptureTxEnd(gasRemaining)
+		if evmObj != nil && evmObj.Config.Tracer != nil && evmObj.Config.Tracer.OnTxEnd != nil {
+			localEvmResp := new(evm.MsgEthereumTxResponse)
+			if evmResp != nil {
+				localEvmResp = evmResp
+			}
+			evmObj.Config.Tracer.OnTxEnd(&gethcore.Receipt{
+				GasUsed: localEvmResp.GasUsed,
+			}, err)
+		}
+	}()
 
 	contractCreation := msg.To == nil
 
@@ -365,7 +390,7 @@ func (k *Keeper) ApplyEvmMsg(
 	gasRemaining += refundAmount
 	gasUsed -= refundAmount
 
-	evmResp := &evm.MsgEthereumTxResponse{
+	evmResp = &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
 		VmError: vmError,
 		Ret:     returnBz,

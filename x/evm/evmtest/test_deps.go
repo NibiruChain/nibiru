@@ -2,11 +2,11 @@ package evmtest
 
 import (
 	"context"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -48,11 +48,13 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	loggerConfig := &logger.Config{Debug: true}
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
 		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
-		evm.NewNoOpTracer().Hooks,
+		logger.NewStructLogger(loggerConfig).Hooks(),
+		// logger.NewJSONLogger(loggerConfig, os.Stdout),
 		stateDB,
 	)
 	return evmObj, stateDB

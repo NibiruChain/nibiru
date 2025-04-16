@@ -495,8 +495,11 @@ func (b *Backend) EthBlockFromTendermintBlock(
 		Uncles:       []*gethcore.Header{},     // unused
 		Withdrawals:  []*gethcore.Withdrawal{}, // unused: Specific to Etheruem mainnet
 	}
-	receipts := ([]*gethcore.Receipt)(nil)
-	// hasher := (gethcore.TrieHasher)(nil)
-	ethBlock := gethcore.NewBlock(ethHeader, body, receipts, trie.NewStackTrie(nil))
+
+	var (
+		receipts []*gethcore.Receipt = nil
+		hasher   gethcore.TrieHasher = trie.NewStackTrie(nil)
+	)
+	ethBlock := gethcore.NewBlock(ethHeader, body, receipts, hasher)
 	return ethBlock, nil
 }

@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core"
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
@@ -214,3 +215,8 @@ func ParseBlockTimeUnixU64(ctx sdk.Context) uint64 {
 }
 
 var Big0 = big.NewInt(0)
+
+func GasPool(gasLimit uint64) *gethcore.GasPool {
+	gasPool := (gethcore.GasPool)(gasLimit)
+	return &gasPool
+}

@@ -93,7 +93,11 @@ func (s *BackendSuite) TestTraceBlock() {
 			s.Require().NoError(err)
 			s.Require().Equal(tc.txCount, len(res))
 			if tc.txCount > 0 {
-				AssertTraceCall(s, res[0].Result.(map[string]interface{}))
+				typedResult, ok := res[0].Result.(map[string]any)
+				if !ok {
+					s.T().Errorf("failed to parse block result as map[string]any. Got %#v", res[0].Result)
+				}
+				AssertTraceCall(s, typedResult)
 			}
 		})
 	}

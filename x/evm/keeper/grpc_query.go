@@ -554,13 +554,13 @@ func (k Keeper) TraceTx(
 		return nil, err
 	}
 
-	resultData, err := json.Marshal(result)
+	resultJson, err := json.Marshal(result)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
 	return &evm.QueryTraceTxResponse{
-		Data: resultData,
+		Data: resultJson,
 	}, nil
 }
 
@@ -723,9 +723,18 @@ func (k Keeper) TraceBlock(
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
+	fmt.Printf("TODO: UD-DEBUG: resultsJson: %s\n", resultData)
+
 	return &evm.QueryTraceBlockResponse{
 		Data: resultData,
 	}, nil
+}
+
+// gasRemainingTxPartial returns a [gethcore.Transaction] that only has its "Gas"
+// field set.
+func gasRemainingTxPartial(gasLimit uint64) *gethcore.Transaction {
+	txData := gethcore.LegacyTx{Gas: gasLimit}
+	return gethcore.NewTx(&txData)
 }
 
 // TraceEthTxMsg do trace on one transaction, it returns a tuple: (traceResult,
@@ -737,12 +746,11 @@ func (k *Keeper) TraceEthTxMsg(
 	msg core.Message,
 	traceConfig *evm.TraceConfig,
 	tracerJSONConfig json.RawMessage,
-) (*any, uint, error) {
+) (traceResult *json.RawMessage, nextLogIndex uint, err error) {
 	// Assemble the structured logger or the JavaScript tracerHooks
 	var (
 		tracerHooks *tracing.Hooks
 		overrides   *gethparams.ChainConfig
-		err         error
 		timeout     = DefaultGethTraceTimeout
 	)
 	if traceConfig == nil {
@@ -759,19 +767,13 @@ func (k *Keeper) TraceEthTxMsg(
 		Overrides:        overrides,
 	}
 
-	defaultLogger := logger.NewStructLogger(&logConfig)
-	tracer := &tracers.Tracer{
-		Hooks:     defaultLogger.Hooks(),
-		GetResult: defaultLogger.GetResult,
-		Stop:      defaultLogger.Stop,
-	}
-
 	tCtx := &tracers.Context{
 		BlockHash: txConfig.BlockHash,
 		TxIndex:   int(txConfig.TxIndex),
 		TxHash:    txConfig.TxHash,
 	}
 
+	var tracer *tracers.Tracer
 	if traceConfig.Tracer != "" {
 		tracerNonDefault, err := tracers.DefaultDirectory.New(
 			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
@@ -781,6 +783,24 @@ func (k *Keeper) TraceEthTxMsg(
 		}
 		tracer = tracerNonDefault
 	}
+	if tracer == nil {
+		defaultLogger := logger.NewStructLogger(&logConfig)
+		tracer = &tracers.Tracer{
+			Hooks:     defaultLogger.Hooks(),
+			GetResult: defaultLogger.GetResult,
+			Stop:      defaultLogger.Stop,
+		}
+	}
+
+	ctx.Logger().Info("TraceEthTxMsg",
+		"tracer type", fmt.Sprintf("%T", tracer),
+		"traceConfig.Tracer", traceConfig.Tracer,
+		"traceConfig.TracerConfig", traceConfig.TracerConfig.String(),
+	)
+
+	fmt.Printf("TODO: UD-DEBUG: tracer type: %T\n", tracer)
+	fmt.Printf("traceConfig.Tracer: %s\n", traceConfig.Tracer)
+	fmt.Printf("traceConfig.TracerConfig: %s\n", traceConfig.TracerConfig)
 
 	// Define a meaningful timeout of a single transaction trace
 	if traceConfig.Timeout != "" {
@@ -817,12 +837,12 @@ func (k *Keeper) TraceEthTxMsg(
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	var result any
-	result, err = tracer.GetResult()
-	// result, err = tracerHooks.GetResult()
+	result, err := tracer.GetResult()
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
+
+	fmt.Printf("TODO: UD-DEBUG: TraceEthTx result: %s\n", result)
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }
