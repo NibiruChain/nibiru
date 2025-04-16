@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/ethereum/go-ethereum/core/tracing"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -69,7 +70,11 @@ func (p precompileWasm) Run(
 	// The reason it's unnecessary to check for a success value is because
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
 	// meter was initialized....
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 
 	if err != nil {
 		return nil, err

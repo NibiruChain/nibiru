@@ -4,13 +4,14 @@ package evm
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
 	geth "github.com/ethereum/go-ethereum/core/types"
 )
@@ -210,7 +211,7 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (cor
 			// Backfill the legacy gasPrice for EVM execution, unless we're all zeroes
 			gasPrice = new(big.Int)
 			if gasFeeCap.BitLen() > 0 || gasTipCap.BitLen() > 0 {
-				gasPrice = math.BigMin(new(big.Int).Add(gasTipCap, baseFeeWei), gasFeeCap)
+				gasPrice = nmath.BigMin(new(big.Int).Add(gasTipCap, baseFeeWei), gasFeeCap)
 			}
 		}
 	}
@@ -230,17 +231,18 @@ func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (cor
 	}
 
 	evmMsg := core.Message{
-		To:                args.To,
-		From:              addr,
-		Nonce:             nonce,
-		Value:             value, // amount
-		GasLimit:          gas,
-		GasPrice:          gasPrice,
-		GasFeeCap:         gasFeeCap,
-		GasTipCap:         gasTipCap,
-		Data:              data,
-		AccessList:        accessList,
-		SkipAccountChecks: true,
+		To:               args.To,
+		From:             addr,
+		Nonce:            nonce,
+		Value:            value, // amount
+		GasLimit:         gas,
+		GasPrice:         gasPrice,
+		GasFeeCap:        gasFeeCap,
+		GasTipCap:        gasTipCap,
+		Data:             data,
+		AccessList:       accessList,
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
 	}
 
 	return evmMsg, nil

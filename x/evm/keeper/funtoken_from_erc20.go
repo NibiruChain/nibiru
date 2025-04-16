@@ -137,20 +137,21 @@ func (k *Keeper) createFunTokenFromERC20(
 		k.Bank.StateDB = nil
 	}()
 	evmMsg := core.Message{
-		To:                &erc20,
-		From:              evm.EVM_MODULE_ADDRESS,
-		Nonce:             k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:             evm.Big0, // amount
-		GasLimit:          0,
-		GasPrice:          evm.Big0,
-		GasFeeCap:         evm.Big0,
-		GasTipCap:         evm.Big0,
-		Data:              []byte{},
-		AccessList:        gethcore.AccessList{},
-		SkipAccountChecks: false,
+		To:               &erc20,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            evm.Big0, // amount
+		GasLimit:         0,
+		GasPrice:         evm.Big0,
+		GasFeeCap:        evm.Big0,
+		GasTipCap:        evm.Big0,
+		Data:             []byte{},
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
 	}
 
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil, stateDB)
 	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20, nil)
 	if err != nil {
 		return nil, err

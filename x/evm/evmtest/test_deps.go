@@ -48,7 +48,13 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	evmObj := deps.EvmKeeper.NewEVM(deps.Ctx, MOCK_GETH_MESSAGE, deps.EvmKeeper.GetEVMConfig(deps.Ctx), evm.NewNoOpTracer(), stateDB)
+	evmObj := deps.EvmKeeper.NewEVM(
+		deps.Ctx,
+		MOCK_GETH_MESSAGE,
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		evm.NewNoOpTracer().Hooks,
+		stateDB,
+	)
 	return evmObj, stateDB
 }
 

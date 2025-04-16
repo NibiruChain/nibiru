@@ -10,6 +10,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -91,7 +92,11 @@ func (p precompileFunToken) Run(
 		return
 	}
 	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 	if err != nil {
 		return nil, err
 	}

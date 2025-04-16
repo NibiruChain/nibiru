@@ -82,17 +82,18 @@ func (k *Keeper) deployERC20ForBankCoin(
 
 	unusedBigInt := big.NewInt(0)
 	evmMsg := core.Message{
-		To:                nil,
-		From:              evm.EVM_MODULE_ADDRESS,
-		Nonce:             k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:             unusedBigInt, // amount
-		GasLimit:          Erc20GasLimitDeploy,
-		GasPrice:          unusedBigInt,
-		GasFeeCap:         unusedBigInt,
-		GasTipCap:         unusedBigInt,
-		Data:              input,
-		AccessList:        gethcore.AccessList{},
-		SkipAccountChecks: false,
+		To:               nil,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitDeploy,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             input,
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
 	}
 	evmCfg := k.GetEVMConfig(ctx)
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))

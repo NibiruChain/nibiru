@@ -45,26 +45,27 @@ func (k Keeper) CallContractWithInput(
 
 	unusedBigInt := big.NewInt(0)
 	evmMsg := core.Message{
-		To:                contract,
-		From:              fromAcc,
-		Nonce:             nonce,
-		Value:             unusedBigInt, // amount
-		GasLimit:          gasLimit,
-		GasPrice:          unusedBigInt,
-		GasFeeCap:         unusedBigInt,
-		GasTipCap:         unusedBigInt,
-		Data:              contractInput,
-		AccessList:        gethcore.AccessList{},
-		BlobGasFeeCap:     &big.Int{},
-		BlobHashes:        []gethcommon.Hash{},
-		SkipAccountChecks: false,
+		To:               contract,
+		From:             fromAcc,
+		Nonce:            nonce,
+		Value:            unusedBigInt, // amount
+		GasLimit:         gasLimit,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
 	}
 
 	// Generating TxConfig with an empty tx hash as there is no actual eth tx
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash,
+		ctx, evmMsg, evmObj, commit, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")

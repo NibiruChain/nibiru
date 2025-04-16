@@ -9,7 +9,7 @@ import (
 	// Use "log/slog" from the Go std lib because Geth migrated to support
 	// slog and deprecated the original go-ethereum/log implementation.
 	// For more info on the migration, see https://github.com/ethereum/go-ethereum/pull/28187
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // Ensure LogHandler implements slog.Handler

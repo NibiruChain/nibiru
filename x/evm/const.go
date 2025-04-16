@@ -10,6 +10,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
@@ -134,6 +135,38 @@ func NativeToWei(evmDenomAmount *big.Int) (weiAmount *big.Int) {
 func WeiToNative(weiAmount *big.Int) (evmDenomAmount *big.Int) {
 	pow10 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
 	return new(big.Int).Quo(weiAmount, pow10)
+}
+
+// WeiToNativeMustU256 is identical to [WeiToNative], except it returns a
+// [uint256.Int] instead of a [big.Int].
+// NOTE: It's okay to panic on overflow here because NIBI has a max supply of
+// 1.5 billion. That means the highest amount of NIBI is in wei units is
+// 1.5 * 10^{9} * 10^{18} == 1.5        * 10^{27},
+// whereas the maximum uint256 value is
+// 2^{256} - 1            == 1.15792089 * 10^{77}
+func WeiToNativeMustU256(wei *big.Int) (evmDenomAmount *uint256.Int) {
+	weiSign := wei.Sign()
+	if weiSign < 0 {
+		panic(fmt.Errorf(
+			"uint256 cannot be parsed from the negative big.Int %s", wei),
+		)
+	}
+
+	nBig := WeiToNative(wei) // <- The output value
+	evmDenomAmount, isOverflow := uint256.FromBig(new(big.Int).Abs(nBig))
+	if isOverflow {
+		// TODO: Is there a better strategy than panicking here?
+		panic(fmt.Errorf(
+			"uint256 overflow occurred for big.Int value %s", wei),
+		)
+	}
+	return evmDenomAmount
+}
+
+// NativeToWeiU256 is the uint256 equivalent of the [NativeToWei] function.
+func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
+	out := NativeToWei(evmDenomAmount.ToBig())
+	return uint256.MustFromBig(out)
 }
 
 // ParseWeiAsMultipleOfMicronibi truncates the given wei amount to the highest

@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -106,13 +104,6 @@ func (k Keeper) BaseFeeWeiPerGas(_ sdk.Context) *big.Int {
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
-}
-
-// Tracer return a default vm.Tracer based on current keeper state
-func (k Keeper) Tracer(
-	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
-) vm.EVMLogger {
-	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
 }
 
 // HandleOutOfGasPanic gracefully captures "out of gas" panic and just sets the value to err

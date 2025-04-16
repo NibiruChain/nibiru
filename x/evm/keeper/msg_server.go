@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -68,7 +69,6 @@ func (k *Keeper) EthereumTx(
 		ctx,
 		*evmMsg,
 		evmObj,
-		nil,  /*tracer*/
 		true, /*commit*/
 		txConfig.TxHash,
 	)
@@ -119,7 +119,7 @@ func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
 	evmCfg statedb.EVMConfig,
-	tracer vm.EVMLogger,
+	tracer *tracing.Hooks,
 	stateDB vm.StateDB,
 ) (evmObj *vm.EVM) {
 	pseudoRandomBytes := make([]byte, 8)
@@ -141,7 +141,8 @@ func (k *Keeper) NewEVM(
 
 	txCtx := core.NewEVMTxContext(&msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, evmCfg.ChainConfig)
+		// Return a default tracer (*[tracing.Hooks]) based on current keeper state
+		tracer = evm.NewTracer(k.tracer, msg, evmCfg.ChainConfig, ctx.BlockHeight())
 	}
 	vmConfig := k.VMConfig(ctx, &evmCfg, tracer)
 	return vm.NewEVM(blockCtx, txCtx, stateDB, evmCfg.ChainConfig, vmConfig)
@@ -255,17 +256,22 @@ func (k *Keeper) ApplyEvmMsg(
 	ctx sdk.Context,
 	msg core.Message,
 	evmObj *vm.EVM,
-	tracer vm.EVMLogger,
 	commit bool,
 	txHash gethcommon.Hash,
 ) (resp *evm.MsgEthereumTxResponse, err error) {
 	gasRemaining := msg.GasLimit
 
+	// TODO: UD-DEBUG: feat(evm): Restore Tracer capturing using
+	// [core.ApplyMessage] and/or [core.ApplyTransaction] in combination with
+	// [core.MakeReceipt].
 	// Allow the tracer to capture tx level events pertaining to gas consumption.
-	evmObj.Config.Tracer.CaptureTxStart(gasRemaining)
-	defer func() {
-		evmObj.Config.Tracer.CaptureTxEnd(gasRemaining)
-	}()
+	// Note that "CaptureTxStart" and "CaptureTxEnd" were renamed to
+	// "OnTxStart" and "OnTxEnd".
+	// evmObj.Config.Tracer.CaptureTxStart(gasRemaining)
+	// defer func() {
+	// 	evmObj.Config.Tracer.OnTxEnd(gasRemaining)
+	// 	evmObj.Config.Tracer.CaptureTxEnd(gasRemaining)
+	// }()
 
 	contractCreation := msg.To == nil
 
@@ -532,19 +538,20 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	}
 	unusedBigInt := big.NewInt(0)
 	evmMsg := core.Message{
-		To:                &erc20Addr,
-		From:              evm.EVM_MODULE_ADDRESS,
-		Nonce:             k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:             unusedBigInt, // amount
-		GasLimit:          Erc20GasLimitExecute,
-		GasPrice:          unusedBigInt,
-		GasFeeCap:         unusedBigInt,
-		GasTipCap:         unusedBigInt,
-		Data:              contractInput,
-		AccessList:        gethcore.AccessList{},
-		BlobGasFeeCap:     &big.Int{},
-		BlobHashes:        []gethcommon.Hash{},
-		SkipAccountChecks: true,
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
 	}
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
 	stateDB := k.Bank.StateDB
@@ -648,19 +655,20 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	}
 	unusedBigInt := big.NewInt(0)
 	evmMsg := core.Message{
-		To:                &erc20Addr,
-		From:              evm.EVM_MODULE_ADDRESS,
-		Nonce:             k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:             unusedBigInt, // amount
-		GasLimit:          Erc20GasLimitExecute,
-		GasPrice:          unusedBigInt,
-		GasFeeCap:         unusedBigInt,
-		GasTipCap:         unusedBigInt,
-		Data:              contractInput,
-		AccessList:        gethcore.AccessList{},
-		BlobGasFeeCap:     &big.Int{},
-		BlobHashes:        []gethcommon.Hash{},
-		SkipAccountChecks: true,
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
 	}
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	_, evmResp, err := k.ERC20().Transfer(

@@ -258,7 +258,7 @@ func debugDirtiesCountMismatch(db *statedb.StateDB, t *testing.T) {
 		obj := *maybeObj
 
 		lines = append(lines, fmt.Sprintf("  balance: %s", obj.Balance()))
-		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.Suicided))
+		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.SelfDestructed))
 		lines = append(lines, fmt.Sprintf("  dirtyCode: %v", obj.DirtyCode))
 
 		// Print storage state

@@ -15,11 +15,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 )
@@ -225,7 +225,7 @@ func NewRPCTxFromEthTx(
 		// if the transaction has been mined, compute the effective gas price
 		if baseFee != nil && blockHash != (gethcommon.Hash{}) {
 			// price = min(tip, gasFeeCap - baseFee) + baseFee
-			price := gethmath.BigMin(new(big.Int).Add(tx.GasTipCap(), baseFee), tx.GasFeeCap())
+			price := nmath.BigMin(new(big.Int).Add(tx.GasTipCap(), baseFee), tx.GasFeeCap())
 			result.GasPrice = (*hexutil.Big)(price)
 		} else {
 			result.GasPrice = (*hexutil.Big)(tx.GasFeeCap())
