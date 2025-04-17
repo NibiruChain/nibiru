@@ -4,6 +4,7 @@ package nibiru.inflation.v1;
 
 import "gogoproto/gogo.proto";
 import "nibiru/inflation/v1/inflation.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
 
@@ -26,7 +27,8 @@ message Params {
   // polynomial_factors takes in the variables to calculate polynomial
   // inflation
   repeated string polynomial_factors = 2[
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // inflation_distribution of the minted denom
