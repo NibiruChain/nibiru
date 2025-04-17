@@ -10,6 +10,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -53,7 +54,11 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
-	evm *vm.EVM, contract *vm.Contract, readonly bool,
+	evm *vm.EVM,
+	sender gethcommon.Address,
+	contract *vm.Contract,
+	readonly bool,
+	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
@@ -91,7 +96,11 @@ func (p precompileFunToken) Run(
 		return
 	}
 	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -226,11 +235,6 @@ func (p precompileFunToken) sendToBank(
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
 	}
-
-	// TODO: UD-DEBUG: feat: Emit EVM events
-	// https://github.com/NibiruChain/nibiru/issues/2121
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
 
 	return method.Outputs.Pack(gotAmount)
 }

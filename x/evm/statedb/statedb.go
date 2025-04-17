@@ -25,10 +25,13 @@ import (
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/stateless"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/holiman/uint256"
 )
 
@@ -174,7 +177,11 @@ func (s *StateDB) Empty(addr common.Address) bool {
 func (s *StateDB) GetBalance(addr common.Address) *uint256.Int {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return uint256.MustFromBig(stateObject.Balance())
+		bal := stateObject.Balance()
+		if bal == nil {
+			return uint256.NewInt(0)
+		}
+		return bal
 	}
 	return uint256.NewInt(0)
 }
@@ -217,10 +224,11 @@ func (s *StateDB) GetCodeHash(addr common.Address) common.Hash {
 }
 
 // GetState retrieves a value from the given account's storage trie.
-func (s *StateDB) GetState(addr common.Address, hash common.Hash) common.Hash {
+func (s *StateDB) GetState(addr common.Address, hash common.Hash) (value common.Hash) {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.GetState(hash)
+		value, _ = stateObject.GetState(hash)
+		return value
 	}
 	return common.Hash{}
 }
@@ -243,7 +251,7 @@ func (s *StateDB) GetRefund() uint64 {
 func (s *StateDB) HasSuicided(addr common.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.Suicided
+		return stateObject.SelfDestructed
 	}
 	return false
 }
@@ -318,7 +326,20 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 func (s *StateDB) CreateAccount(addr common.Address) {
 	newObj, prev := s.createObject(addr)
 	if prev != nil {
-		newObj.setBalance(prev.account.BalanceWei)
+		newObj.setBalance(prev.account.BalanceWei.ToBig())
+	}
+}
+
+// CreateContract is used whenever a contract is created. This may be preceded
+// by CreateAccount, but that is not required if it already existed in the
+// state due to funds sent beforehand.
+// This operation sets the 'newContract'-flag, which is required in order to
+// correctly handle EIP-6780 'delete-in-same-transaction' logic.
+func (s *StateDB) CreateContract(addr common.Address) {
+	obj := s.getStateObject(addr)
+	if !obj.newContract {
+		obj.newContract = true
+		s.Journal.append(createContractChange{account: addr})
 	}
 }
 
@@ -353,13 +374,19 @@ func (s *StateDB) setStateObject(object *stateObject) {
  */
 
 // AddBalance adds amount to the account associated with addr.
-func (s *StateDB) AddBalance(addr common.Address, wei *uint256.Int) {
+func (s *StateDB) AddBalance(
+	addr common.Address,
+	wei *uint256.Int,
+	reason tracing.BalanceChangeReason,
+) (prevWei uint256.Int) {
 	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		stateObject.AddBalance(wei.ToBig())
+	if stateObject == nil {
+		return prevWei // 0 default
 	}
+	return stateObject.AddBalance(wei)
 }
 
+// AddBalanceSigned is only used in tests for convenience.
 func (s *StateDB) AddBalanceSigned(addr common.Address, wei *big.Int) {
 	weiSign := wei.Sign()
 	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
@@ -369,19 +396,27 @@ func (s *StateDB) AddBalanceSigned(addr common.Address, wei *big.Int) {
 			"uint256 overflow occurred for big.Int value %s", wei))
 	}
 
+	reason := tracing.BalanceChangeTransfer
 	if weiSign >= 0 {
-		s.AddBalance(addr, weiAbs)
+		s.AddBalance(addr, weiAbs, reason)
 	} else {
-		s.SubBalance(addr, weiAbs)
+		s.SubBalance(addr, weiAbs, reason)
 	}
 }
 
 // SubBalance subtracts amount from the account associated with addr.
-func (s *StateDB) SubBalance(addr common.Address, wei *uint256.Int) {
+func (s *StateDB) SubBalance(
+	addr common.Address,
+	wei *uint256.Int,
+	reason tracing.BalanceChangeReason,
+) (prevWei uint256.Int) {
 	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		stateObject.SubBalance(wei.ToBig())
+	if stateObject == nil {
+		return prevWei // 0 default
+	} else if wei.IsZero() {
+		return *stateObject.Balance()
 	}
+	return stateObject.SubBalance(wei.ToBig())
 }
 
 func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int) {
@@ -408,11 +443,14 @@ func (s *StateDB) SetCode(addr common.Address, code []byte) {
 }
 
 // SetState sets the contract state.
-func (s *StateDB) SetState(addr common.Address, key, value common.Hash) {
+func (s *StateDB) SetState(
+	addr common.Address, key, value common.Hash,
+) (prevValue common.Hash) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SetState(key, value)
+		return stateObject.SetState(key, value)
 	}
+	return common.Hash{}
 }
 
 // SelfDestruct marks the given account as suicided.
@@ -420,18 +458,28 @@ func (s *StateDB) SetState(addr common.Address, key, value common.Hash) {
 //
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after [SelfDestruct].
-func (s *StateDB) SelfDestruct(addr common.Address) {
+func (s *StateDB) SelfDestruct(addr common.Address) (prevWei uint256.Int) {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
-		return
+		return prevWei
 	}
-	s.Journal.append(suicideChange{
-		account:     &addr,
-		prev:        stateObject.Suicided,
-		prevbalance: new(big.Int).Set(stateObject.Balance()),
-	})
-	stateObject.Suicided = true
-	stateObject.account.BalanceWei = new(big.Int)
+	prevWei = *(stateObject.Balance())
+	// Regardless of whether it is already destructed or not, we do have to
+	// journal the balance-change, if we set it to zero here.
+	if !stateObject.Balance().IsZero() {
+		stateObject.account.BalanceWei = new(uint256.Int)
+	}
+	// If it is already marked as self-destructed, we do not need to add it
+	// for journalling a second time.
+	if !stateObject.SelfDestructed {
+		s.Journal.append(suicideChange{
+			account:     &addr,
+			prev:        stateObject.SelfDestructed,
+			prevbalance: new(big.Int).Set(prevWei.ToBig()),
+		})
+		stateObject.SelfDestructed = true
+	}
+	return prevWei
 }
 
 func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
@@ -439,19 +487,29 @@ func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
 	if stateObject == nil {
 		return false
 	}
-	return stateObject.Suicided
+	return stateObject.SelfDestructed
 }
 
-// Selfdestruct6780 calls SelfDesrtuct only if the [stateObject] corresponding to
+// SelfDestruct6780 calls [SelfDesrtuct] only if the [stateObject] corresponding to
 // the given "addr" was created this block.
-func (s *StateDB) Selfdestruct6780(addr common.Address) {
+//
+// SelfDestruct6780 is post-EIP6780 selfdestruct, which means that it's a
+// send-all-to-beneficiary, unless the contract was created in this same
+// transaction, in which case it will be destructed.
+// This method returns the prior balance, along with a boolean which is
+// true iff the object was indeed destructed.
+func (s *StateDB) SelfDestruct6780(
+	addr common.Address,
+) (prevWei uint256.Int, isSelfDestructed bool) {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
-		return
+		isSelfDestructed = false
+	} else if stateObject.createdThisBlock {
+		prevWei, isSelfDestructed = s.SelfDestruct(addr), true
+	} else {
+		prevWei, isSelfDestructed = *(stateObject.Balance()), false
 	}
-	if stateObject.createdThisBlock {
-		s.SelfDestruct(addr)
-	}
+	return prevWei, isSelfDestructed
 }
 
 // PrepareAccessList handles the preparatory steps for executing a state
@@ -624,7 +682,7 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 			s.Journal.dirties[addr] = 0
 			continue
 		}
-		if obj.Suicided {
+		if obj.SelfDestructed {
 			// Invariant: After [StateDB.Suicide] for some address, the
 			// corresponding account's state object is only available until the
 			// state is committed.
@@ -748,4 +806,69 @@ func (s *StateDB) SetTransientState(
 		prevValue: prev,
 	})
 	s.transientStorage.Set(addr, key, prev)
+}
+
+// Witness returns nil.
+//
+// Rationale: In Geth v1.14+, a [stateless.Witness] encompasses the state
+// required to apply a set of transactions and derive a post state/receipt root.
+//
+// On Ethereum, this can be used to record trie (Merkle Patricia) accesses
+// (storage and account), generate proofs for stateless clients, snap sync, or
+// zkEVMs, and later reconstruct state from those proofs.
+// In  other words, [Witness] is part of an effort toward stateless execution.
+//
+// NOTE: Nibiru does not use a Merkle Patricia Trie.
+// Instead it uses IAVL over KVStore. That means there's no notion of
+// Ethereum-style witnesses unless we simulate that separately.
+//
+// Thus, this function is optional to implement unless we build:
+//   - zkEVM compatibility
+//   - Stateless Ethereum clients
+//   - Custom light client proofs that require a witness
+func (s *StateDB) Witness() *stateless.Witness {
+	return nil
+}
+
+// ↓ If you remove the quotes below, golangci-lint will change the function name
+// to American spelling, "FinFinalizebreaking interface compatibility.
+
+// "Finalise"  prepares state objects at the end of a transaction execution.
+//
+// In Ethereum/Geth, this typically moves dirty storage to a pending layer,
+// flushes prefetchers, and finalizes flags like newContract.
+//
+// Behavior: This matches Ethereum behavior (e.g., EIP-161 and EIP-6780 compatibility).
+//   - If the account is non-empty, it clears the `newContract` flag.
+//   - If the account is empty and deleteEmptyObjects is true, it removes it from live state.
+//
+// In Nibiru, [StateDB.Finalize] can be a a no-op because:
+//   - The Cosmos SDK state machine executes each transaction atomically.
+//   - All writes happen against a cached multistore (`s.cacheCtx`) that gets committed
+//     during `StateDB.Commit`.
+//
+// This function implementsFinalize.StateDB] interface.
+func (s *StateDB) Finalise(deleteEmptyObjects bool) {
+	// No-op for now. May add logic for empty account pruning if desired.
+	for addr, obj := range s.stateObjects {
+		if !obj.isEmpty() {
+			obj.newContract = false
+		} else if obj.isEmpty() && deleteEmptyObjects {
+			delete(s.stateObjects, addr)
+		}
+	}
+}
+
+// GetStorageRoot returns an empty state hash. This is done because a storage
+// root make sense to implement for Nibiru, as it does not use Merkle Patricia
+// Tries.
+// This function implements the [vm.StateDB] interface.
+func (s *StateDB) GetStorageRoot(addr common.Address) (root common.Hash) {
+	return root // or panic("unsupported")
+}
+
+// PointCache returns the point cache used by verkle tree.
+// This function implements the [vm.StateDB] interface.
+func (s *StateDB) PointCache() *utils.PointCache {
+	return nil
 }

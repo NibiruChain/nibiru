@@ -40,8 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
 - [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
+- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update
+to geth v1.14 with tracing updates and new StateDB methods. 
+   - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid
+   incompatibilities stemming from functionality specific to Ethereum's consesnus
+   setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
+   - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
+   dependency and leverage new generics features added in Go 1.23+.
 
 ## v2.3.0
 
@@ -64,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: add depinject wiring for x/epochs module
 - [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: add depinject wiring for x/inflation module
 - [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: add depinject wiring for x/evm module
+- [#2272](https://github.com/NibiruChain/nibiru/pull/2272) - feat: add depinject wiring for x/tokenfactory module
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 

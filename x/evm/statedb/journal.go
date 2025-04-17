@@ -24,6 +24,7 @@ import (
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
 )
 
 // JournalChange, also called a "journal entry", is a modification entry in the
@@ -69,6 +70,13 @@ func (j *journal) append(entry JournalChange) {
 	if addr := entry.Dirtied(); addr != nil {
 		j.dirties[*addr]++
 	}
+}
+
+// dirty explicitly sets an address to dirty, even if the change entries would
+// otherwise suggest it as clean. This method is an ugly hack to handle the RIPEMD
+// precompile consensus exception.
+func (j *journal) dirty(addr common.Address) {
+	j.dirties[addr]++
 }
 
 // Revert undoes a batch of journalled modifications along with any Reverted
@@ -146,7 +154,7 @@ var _ JournalChange = suicideChange{}
 func (ch suicideChange) Revert(s *StateDB) {
 	obj := s.getStateObject(*ch.account)
 	if obj != nil {
-		obj.Suicided = ch.prev
+		obj.SelfDestructed = ch.prev
 		obj.setBalance(ch.prevbalance)
 	}
 }
@@ -161,13 +169,13 @@ func (ch suicideChange) Dirtied() *common.Address {
 // balanceChange: [JournalChange] for an update to the wei balance of an account.
 type balanceChange struct {
 	account *common.Address
-	prevWei *big.Int
+	prevWei *uint256.Int
 }
 
 var _ JournalChange = balanceChange{}
 
 func (ch balanceChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setBalance(ch.prevWei)
+	s.getStateObject(*ch.account).setBalance(ch.prevWei.ToBig())
 }
 
 func (ch balanceChange) Dirtied() *common.Address {
@@ -223,12 +231,13 @@ func (ch codeChange) Dirtied() *common.Address {
 type storageChange struct {
 	account       *common.Address
 	key, prevalue common.Hash
+	origin        common.Hash
 }
 
 var _ JournalChange = storageChange{}
 
 func (ch storageChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setState(ch.key, ch.prevalue)
+	s.getStateObject(*ch.account).setState(ch.key, ch.prevalue, ch.origin)
 }
 
 func (ch storageChange) Dirtied() *common.Address {
@@ -379,5 +388,52 @@ func (ch transientStorageChange) Revert(s *StateDB) {
 }
 
 func (ch transientStorageChange) Dirtied() *common.Address {
+	return nil
+}
+
+var _ JournalChange = touchChange{}
+
+// touchChange is a journal entry that marks an account as 'touched'.
+//
+// This is necessary to comply with EIP-161, which defines that accounts must be
+// considered for deletion at the end of a transaction if they remain empty
+// (balance, nonce, and code are all zero) and were not accessed during the
+// transaction.
+//
+// Calling 'touch' ensures that the account is retained in state for the duration
+// of the transaction, even if it remains empty. This helps prevent unintended
+// deletions of accounts that are interacted with but have no effective state
+// changes.
+//
+// No actual state is reverted during a `touchChange.revert()` — its presence in
+// the journal is only meaningful for dirtiness tracking and snapshot
+// consistency.
+type touchChange struct {
+	account common.Address
+}
+
+// Revert is an intentional no-op. To revert a [touchChange], do nothing.
+func (ch touchChange) Revert(s *StateDB) {}
+
+func (ch touchChange) Dirtied() *common.Address {
+	return &ch.account
+}
+
+// createContractChange represents an account becoming a contract-account.
+// This event happens prior to executing initcode. The journal-event simply
+// manages the created-flag, in order to allow same-tx destruction.
+type createContractChange struct {
+	account common.Address
+}
+
+func (ch createContractChange) Revert(s *StateDB) {
+	obj := s.getStateObject(ch.account)
+	if obj == nil {
+		return
+	}
+	obj.newContract = false
+}
+
+func (ch createContractChange) Dirtied() *common.Address {
 	return nil
 }

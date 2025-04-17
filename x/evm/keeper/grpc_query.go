@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 
@@ -286,7 +287,7 @@ func (k *Keeper) EthCall(
 	// pass false to not commit StateDB
 	stateDB := statedb.New(ctx, k, txConfig)
 	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evm, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
+	res, err := k.ApplyEvmMsg(ctx, msg, evm, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -380,19 +381,20 @@ func (k Keeper) EstimateGasForEvmCallType(
 	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
 		// update the message with the new gas value
 		evmMsg = core.Message{
-			To:                evmMsg.To,
-			From:              evmMsg.From,
-			Nonce:             evmMsg.Nonce,
-			Value:             evmMsg.Value,
-			GasLimit:          gas, // <---- This one changed
-			GasPrice:          evmMsg.GasPrice,
-			GasFeeCap:         evmMsg.GasFeeCap,
-			GasTipCap:         evmMsg.GasTipCap,
-			Data:              evmMsg.Data,
-			AccessList:        evmMsg.AccessList,
-			BlobGasFeeCap:     evmMsg.BlobGasFeeCap,
-			BlobHashes:        evmMsg.BlobHashes,
-			SkipAccountChecks: evmMsg.SkipAccountChecks,
+			To:               evmMsg.To,
+			From:             evmMsg.From,
+			Nonce:            evmMsg.Nonce,
+			Value:            evmMsg.Value,
+			GasLimit:         gas, // <---- This one changed
+			GasPrice:         evmMsg.GasPrice,
+			GasFeeCap:        evmMsg.GasFeeCap,
+			GasTipCap:        evmMsg.GasTipCap,
+			Data:             evmMsg.Data,
+			AccessList:       evmMsg.AccessList,
+			BlobGasFeeCap:    evmMsg.BlobGasFeeCap,
+			BlobHashes:       evmMsg.BlobHashes,
+			SkipNonceChecks:  evmMsg.SkipNonceChecks,
+			SkipFromEOACheck: evmMsg.SkipFromEOACheck,
 		}
 
 		tmpCtx := ctx
@@ -423,7 +425,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 		stateDB := statedb.New(ctx, &k, txConfig)
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
+		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, false /*commit*/, txConfig.TxHash)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -504,10 +506,10 @@ func (k Keeper) TraceTx(
 	)
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
-	// gas used at this point corresponds to GetProposerAddress & CalculateBaseFee
-	// need to reset gas meter per transaction to be consistent with tx execution
-	// and avoid stacking the gas used of every predecessor in the same gas meter
-
+	// gas used at this point corresponds to GetProposerAddress &
+	// CalculateBaseFee need to reset gas meter per transaction to be consistent
+	// with tx execution and avoid stacking the gas used of every predecessor in
+	// the same gas meter
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
 		msg, err := core.TransactionToMessage(ethTx, signer, evmCfg.BaseFeeWei)
@@ -522,7 +524,7 @@ func (k Keeper) TraceTx(
 			WithTransientKVGasConfig(storetypes.GasConfig{})
 		stateDB := statedb.New(ctx, &k, txConfig)
 		evmObj := k.NewEVM(ctx, *msg, evmCfg, nil /*tracer*/, stateDB)
-		rsp, err := k.ApplyEvmMsg(ctx, *msg, evmObj, nil /*tracer*/, false /*commit*/, txConfig.TxHash)
+		rsp, err := k.ApplyEvmMsg(ctx, *msg, evmObj, false /*commit*/, txConfig.TxHash)
 		if err != nil {
 			continue
 		}
@@ -552,13 +554,13 @@ func (k Keeper) TraceTx(
 		return nil, err
 	}
 
-	resultData, err := json.Marshal(result)
+	resultJson, err := json.Marshal(result)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
 	return &evm.QueryTraceTxResponse{
-		Data: resultData,
+		Data: resultJson,
 	}, nil
 }
 
@@ -612,17 +614,18 @@ func (k Keeper) TraceCall(
 		return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to unpack tx data: %s", err.Error())
 	}
 	evmMsg := core.Message{
-		To:                txData.GetTo(),
-		From:              gethcommon.HexToAddress(msgEthTx.From),
-		Nonce:             txData.GetNonce(),
-		Value:             txData.GetValueWei(), // amount
-		GasLimit:          txData.GetGas(),
-		GasPrice:          txData.GetGasPrice(),
-		GasFeeCap:         txData.GetGasFeeCapWei(),
-		GasTipCap:         txData.GetGasTipCapWei(),
-		Data:              txData.GetData(),
-		AccessList:        txData.GetAccessList(),
-		SkipAccountChecks: false,
+		To:               txData.GetTo(),
+		From:             gethcommon.HexToAddress(msgEthTx.From),
+		Nonce:            txData.GetNonce(),
+		Value:            txData.GetValueWei(), // amount
+		GasLimit:         txData.GetGas(),
+		GasPrice:         txData.GetGasPrice(),
+		GasFeeCap:        txData.GetGasFeeCapWei(),
+		GasTipCap:        txData.GetGasTipCapWei(),
+		Data:             txData.GetData(),
+		AccessList:       txData.GetAccessList(),
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
 	}
 	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, evmMsg, req.TraceConfig, tracerConfig)
 	if err != nil {
@@ -725,6 +728,26 @@ func (k Keeper) TraceBlock(
 	}, nil
 }
 
+// gasRemainingTxPartial returns a [gethcore.Transaction] that only has its "Gas"
+// field set.
+func gasRemainingTxPartial(gasLimit uint64) *gethcore.Transaction {
+	txData := gethcore.LegacyTx{Gas: gasLimit}
+	return gethcore.NewTx(&txData)
+}
+
+var gethTracerNames = set.New(
+	"callTracer",     // Tracer with structured call tracer and hierarchical execution
+	"flatCallTracer", // Similar to "callTracer" but with a flattened call trace
+	"noopTracer",     // minimal tracer that doesn't actually collect data
+	"4byteTracer",    // Collects statistics on 4-byte func signatures
+	"muxTracer",      // A tracer that can combine multiple tracers in parallel
+	"prestateTracer", // Captures the state of the tx before execution (pre-state)
+	// Geth's StructLogger. It's not registered in the sense of
+	// "go-ethereum/eth/tracers/native", meaning it cannot be accessed with
+	// the [tracers.DefaultDirectory].New function.
+	evm.TracerStruct,
+)
+
 // TraceEthTxMsg do trace on one transaction, it returns a tuple: (traceResult,
 // nextLogIndex, error).
 func (k *Keeper) TraceEthTxMsg(
@@ -734,12 +757,11 @@ func (k *Keeper) TraceEthTxMsg(
 	msg core.Message,
 	traceConfig *evm.TraceConfig,
 	tracerJSONConfig json.RawMessage,
-) (*any, uint, error) {
-	// Assemble the structured logger or the JavaScript tracer
+) (traceResult *json.RawMessage, nextLogIndex uint, err error) {
+	// Assemble the structured logger or the JavaScript tracerHooks
 	var (
-		tracer    tracers.Tracer
+		tracer    *tracers.Tracer
 		overrides *gethparams.ChainConfig
-		err       error
 		timeout   = DefaultGethTraceTimeout
 	)
 	if traceConfig == nil {
@@ -756,20 +778,37 @@ func (k *Keeper) TraceEthTxMsg(
 		Overrides:        overrides,
 	}
 
-	tracer = logger.NewStructLogger(&logConfig)
-
 	tCtx := &tracers.Context{
 		BlockHash: txConfig.BlockHash,
 		TxIndex:   int(txConfig.TxIndex),
 		TxHash:    txConfig.TxHash,
 	}
 
-	if traceConfig.Tracer != "" {
-		if tracer, err = tracers.DefaultDirectory.New(
-			traceConfig.Tracer, tCtx, tracerJSONConfig,
-		); err != nil {
+	var usingCallTracer bool
+	if traceConfig.Tracer == evm.TracerStruct {
+		logger := logger.NewStructLogger(&logConfig)
+		tracer = &tracers.Tracer{
+			Hooks:     logger.Hooks(),
+			GetResult: logger.GetResult,
+			Stop:      logger.Stop,
+		}
+	} else {
+		if traceConfig.Tracer == "" || !gethTracerNames.Has(traceConfig.Tracer) {
+			traceConfig.Tracer = "callTracer"
+			usingCallTracer = true
+		}
+		tracer, err = tracers.DefaultDirectory.New(
+			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
+		)
+		if err != nil {
 			return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 		}
+	}
+	if tracer == nil && !usingCallTracer {
+		traceConfig.Tracer = "callTracer"
+		tracer, err = tracers.DefaultDirectory.New(
+			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
+		)
 	}
 
 	// Define a meaningful timeout of a single transaction trace
@@ -801,14 +840,13 @@ func (k *Keeper) TraceEthTxMsg(
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	stateDB := statedb.New(ctx, k, txConfig)
-	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer, stateDB)
-	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, tracer, false /*commit*/, txConfig.TxHash)
+	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer.Hooks, stateDB)
+	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	var result any
-	result, err = tracer.GetResult()
+	result, err := tracer.GetResult()
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}

@@ -25,14 +25,14 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 	block, err := s.backend.GetBlockByNumber(transferTxBlockNumber, true)
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
-	s.Require().Greater(len(block["transactions"].([]interface{})), 0)
+	s.Require().Greater(len(block["transactions"].([]any)), 0)
 	s.Require().NotNil(block["size"])
 	s.Require().NotNil(block["nonce"])
 	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
-	blockMap, err := s.backend.GetBlockByHash(transferTxBlockHash, true)
+	blockMap, err := s.backend.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, true)
 	s.Require().NoError(err)
 	AssertBlockContents(s, blockMap)
 }
@@ -55,7 +55,7 @@ func (s *BackendSuite) TestBlockNumberFromTendermint() {
 		{
 			name: "happy: block hash specified",
 			blockNrOrHash: rpc.BlockNumberOrHash{
-				BlockHash: &transferTxBlockHash,
+				BlockHash: s.SuccessfulTxTransfer().BlockHash,
 			},
 			wantBlockNumber: transferTxBlockNumber,
 			wantErr:         "",
@@ -93,7 +93,7 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
-	txCount := s.backend.GetBlockTransactionCountByHash(transferTxBlockHash)
+	txCount := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
@@ -102,9 +102,9 @@ func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
-func AssertBlockContents(s *BackendSuite, blockMap map[string]interface{}) {
+func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
 	s.Require().NotNil(blockMap)
-	s.Require().Greater(len(blockMap["transactions"].([]interface{})), 0)
+	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
 	s.Require().NotNil(blockMap["size"])
 	s.Require().NotNil(blockMap["nonce"])
 	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())

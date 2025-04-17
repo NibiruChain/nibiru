@@ -487,7 +487,19 @@ func (b *Backend) EthBlockFromTendermintBlock(
 		txs[i] = ethMsg.AsTransaction()
 	}
 
-	// TODO: add tx receipts
-	ethBlock := gethcore.NewBlock(ethHeader, txs, nil, nil, trie.NewStackTrie(nil))
+	// TODO: feat(evm-backend): Add tx receipts in gethcore.NewBlock for the
+	// EthBlockFromTendermintBlock function.
+	// TODO: feat: See if we can simulate Trie behavior on CometBFT.
+	body := &gethcore.Body{
+		Transactions: txs,
+		Uncles:       []*gethcore.Header{},     // unused
+		Withdrawals:  []*gethcore.Withdrawal{}, // unused: Specific to Etheruem mainnet
+	}
+
+	var (
+		receipts []*gethcore.Receipt = nil
+		hasher   gethcore.TrieHasher = trie.NewStackTrie(nil)
+	)
+	ethBlock := gethcore.NewBlock(ethHeader, body, receipts, hasher)
 	return ethBlock, nil
 }

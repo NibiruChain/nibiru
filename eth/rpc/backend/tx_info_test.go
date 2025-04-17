@@ -21,7 +21,7 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 	}{
 		{
 			name:        "happy: tx found",
-			txHash:      transferTxHash,
+			txHash:      s.SuccessfulTxTransfer().Receipt.TxHash,
 			wantTxFound: true,
 		},
 		{
@@ -56,7 +56,7 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 	}{
 		{
 			name:        "happy: tx found",
-			txHash:      transferTxHash,
+			txHash:      s.SuccessfulTxTransfer().Receipt.TxHash,
 			wantTxFound: true,
 		},
 		{
@@ -128,7 +128,7 @@ func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
 			}
 			s.Require().NoError(err)
 			s.Require().NotNil(tx)
-			AssertTxResults(s, tx, transferTxHash)
+			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }
@@ -169,7 +169,7 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 			}
 			s.Require().NoError(err)
 			s.Require().NotNil(tx)
-			AssertTxResults(s, tx, transferTxHash)
+			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }

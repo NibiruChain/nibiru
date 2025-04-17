@@ -9,7 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcore "github.com/ethereum/go-ethereum/core"
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
@@ -24,7 +26,7 @@ var (
 var PRECOMPILE_ADDRS []gethcommon.Address =
 // Using a set cleanly removes potential duplicates
 set.New[gethcommon.Address](
-	append(gethvm.PrecompiledAddressesCancun, []gethcommon.Address{
+	append(gethvm.PrecompiledAddressesBerlin, []gethcommon.Address{
 		// FunToken 0x...800
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
 		// Wasm 0x...802
@@ -136,6 +138,38 @@ func WeiToNative(weiAmount *big.Int) (evmDenomAmount *big.Int) {
 	return new(big.Int).Quo(weiAmount, pow10)
 }
 
+// WeiToNativeMustU256 is identical to [WeiToNative], except it returns a
+// [uint256.Int] instead of a [big.Int].
+// NOTE: It's okay to panic on overflow here because NIBI has a max supply of
+// 1.5 billion. That means the highest amount of NIBI is in wei units is
+// 1.5 * 10^{9} * 10^{18} == 1.5        * 10^{27},
+// whereas the maximum uint256 value is
+// 2^{256} - 1            == 1.15792089 * 10^{77}
+func WeiToNativeMustU256(wei *big.Int) (evmDenomAmount *uint256.Int) {
+	weiSign := wei.Sign()
+	if weiSign < 0 {
+		panic(fmt.Errorf(
+			"uint256 cannot be parsed from the negative big.Int %s", wei),
+		)
+	}
+
+	nBig := WeiToNative(wei) // <- The output value
+	evmDenomAmount, isOverflow := uint256.FromBig(new(big.Int).Abs(nBig))
+	if isOverflow {
+		// TODO: Is there a better strategy than panicking here?
+		panic(fmt.Errorf(
+			"uint256 overflow occurred for big.Int value %s", wei),
+		)
+	}
+	return evmDenomAmount
+}
+
+// NativeToWeiU256 is the uint256 equivalent of the [NativeToWei] function.
+func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
+	out := NativeToWei(evmDenomAmount.ToBig())
+	return uint256.MustFromBig(out)
+}
+
 // ParseWeiAsMultipleOfMicronibi truncates the given wei amount to the highest
 // multiple of 1 micronibi (10^12 wei). It returns the truncated value and an
 // error if the input value is too small.
@@ -181,3 +215,8 @@ func ParseBlockTimeUnixU64(ctx sdk.Context) uint64 {
 }
 
 var Big0 = big.NewInt(0)
+
+func GasPool(gasLimit uint64) *gethcore.GasPool {
+	gasPool := (gethcore.GasPool)(gasLimit)
+	return &gasPool
+}
