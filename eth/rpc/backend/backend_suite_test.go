@@ -43,8 +43,6 @@ var (
 	amountToSend = evm.NativeToWei(big.NewInt(1))
 )
 
-var transferTxBlockNumber rpc.BlockNumber
-
 var testContractAddress gethcommon.Address
 
 type BackendSuite struct {
@@ -101,34 +99,40 @@ func (s *BackendSuite) SetupSuite() {
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
 	transferTxHash := s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
-	blockNumber, blockHash, txReceipt := WaitForReceipt(s, transferTxHash)
-	s.NotNil(blockNumber)
-	s.NotNil(blockHash)
-	s.Require().NotNil(txReceipt)
-	s.Require().Equal(transferTxHash, txReceipt.TxHash)
-	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
-	s.SuccessfulTxs["transfer"] = SuccessfulTx{
-		BlockNumber: blockNumber,
-		BlockHash:   blockHash,
-		Receipt:     txReceipt,
+	{
+		blockNumber, blockHash, txReceipt := WaitForReceipt(s, transferTxHash)
+		s.NotNil(blockNumber)
+		s.NotNil(blockHash)
+		s.Require().NotNil(txReceipt)
+		s.Require().Equal(transferTxHash, txReceipt.TxHash)
+		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
+		s.SuccessfulTxs["transfer"] = SuccessfulTx{
+			BlockNumber:    blockNumber,
+			BlockHash:      blockHash,
+			Receipt:        txReceipt,
+			BlockNumberRpc: &blockNumberRpc,
+		}
 	}
 
 	// Deploy test erc20 contract
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
-	blockNumber, blockHash, txReceipt = WaitForReceipt(s, deployContractTxHash)
-	s.NotNil(blockNumber)
-	s.NotNil(blockHash)
-	s.Require().NotNil(txReceipt)
-	s.SuccessfulTxs["deployContract"] = SuccessfulTx{
-		BlockNumber: blockNumber,
-		BlockHash:   blockHash,
-		Receipt:     txReceipt,
+	{
+		blockNumber, blockHash, txReceipt := WaitForReceipt(s, deployContractTxHash)
+		s.NotNil(blockNumber)
+		s.NotNil(blockHash)
+		s.Require().NotNil(txReceipt)
+		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
+		s.SuccessfulTxs["deployContract"] = SuccessfulTx{
+			BlockNumber:    blockNumber,
+			BlockNumberRpc: &blockNumberRpc,
+			BlockHash:      blockHash,
+			Receipt:        txReceipt,
+		}
 	}
 
-	s.Require().Len(s.SuccessfulTxs, 2)
-	for _, successfulTx := range s.SuccessfulTxs {
-		successfulTx.Log(s.T())
+	for _, tx := range s.SuccessfulTxs {
+		s.T().Logf("SuccessfulTx{ BlockNumber: %s, BlockHash: %s, TxHash: %s }", tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex())
 	}
 }
 
@@ -141,17 +145,10 @@ func (s *BackendSuite) SuccessfulTxDeployContract() SuccessfulTx {
 }
 
 type SuccessfulTx struct {
-	BlockNumber *big.Int
-	BlockHash   *gethcommon.Hash
-	Receipt     *backend.TransactionReceipt
-}
-
-func (testTx SuccessfulTx) BlockNumberRpc() rpc.BlockNumber {
-	return rpc.NewBlockNumber(testTx.BlockNumber)
-}
-
-func (testTx SuccessfulTx) Log(t *testing.T) {
-	t.Logf("SuccessfulTx{BlockNumber: %s, BlockHash: %s, TxHash: %s}", testTx.BlockNumber, testTx.BlockHash.Hex(), testTx.Receipt.TxHash.Hex())
+	BlockNumber    *big.Int
+	BlockHash      *gethcommon.Hash
+	Receipt        *backend.TransactionReceipt
+	BlockNumberRpc *rpc.BlockNumber
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend

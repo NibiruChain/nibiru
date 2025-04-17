@@ -89,7 +89,8 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 }
 
 func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
-	blockWithTx, err := s.backend.GetBlockByNumber(transferTxBlockNumber, false)
+	blockWithTx, err := s.backend.GetBlockByNumber(
+		*s.SuccessfulTxTransfer().BlockNumberRpc, false)
 	s.Require().NoError(err)
 	blockHash := gethcommon.BytesToHash(blockWithTx["hash"].(hexutil.Bytes))
 
@@ -142,7 +143,7 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 	}{
 		{
 			name:        "happy: tx found",
-			blockNumber: transferTxBlockNumber,
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			txIndex:     0,
 			wantTxFound: true,
 		},
@@ -154,7 +155,7 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 		},
 		{
 			name:        "sad: tx not found",
-			blockNumber: transferTxBlockNumber,
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			txIndex:     9999,
 			wantTxFound: false,
 		},

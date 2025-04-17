@@ -70,7 +70,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 
 func (s *BackendSuite) TestTraceBlock() {
 	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(
-		s.SuccessfulTxTransfer().BlockNumberRpc(),
+		*s.SuccessfulTxTransfer().BlockNumberRpc,
 	)
 	s.Require().NoError(err)
 
@@ -101,14 +101,14 @@ func (s *BackendSuite) TestTraceBlock() {
 		},
 		{
 			name:        "happy: TraceBlock, transfer tx, tracer: callTracer",
-			blockNumber: transferTxBlockNumber,
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
 			traceConfig: traceConfigCallTracer(),
 		},
 		{
 			name:        "happy: TraceBlock, transfer tx, tracer: default",
-			blockNumber: transferTxBlockNumber,
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
 			traceConfig: traceConfigDefaultTracer(),

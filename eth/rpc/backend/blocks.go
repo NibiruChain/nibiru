@@ -487,17 +487,20 @@ func (b *Backend) EthBlockFromTendermintBlock(
 		txs[i] = ethMsg.AsTransaction()
 	}
 
-	// TODO: feat(evm-backend): Add tx receipts in gethcore.NewBlock for the
-	// EthBlockFromTendermintBlock function.
-	// TODO: feat: See if we can simulate Trie behavior on CometBFT.
 	body := &gethcore.Body{
 		Transactions: txs,
 		Uncles:       []*gethcore.Header{},     // unused
 		Withdrawals:  []*gethcore.Withdrawal{}, // unused: Specific to Etheruem mainnet
 	}
 
+	// TODO: feat(evm-backend): Add tx receipts in gethcore.NewBlock for the
+	// EthBlockFromTendermintBlock function.
+	// ticket: https://github.com/NibiruChain/nibiru/issues/2282
+
+	// TODO: feat: See if we can simulate Trie behavior on CometBFT.
+
 	var (
-		receipts []*gethcore.Receipt = nil
+		receipts                     = []*gethcore.Receipt{}
 		hasher   gethcore.TrieHasher = trie.NewStackTrie(nil)
 	)
 	ethBlock := gethcore.NewBlock(ethHeader, body, receipts, hasher)

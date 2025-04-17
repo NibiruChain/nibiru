@@ -22,7 +22,8 @@ func (s *BackendSuite) TestChainConfig() {
 }
 
 func (s *BackendSuite) TestBaseFeeWei() {
-	resBlock, err := s.backend.TendermintBlockResultByNumber(transferTxBlockNumber.TmHeight())
+	resBlock, err := s.backend.TendermintBlockResultByNumber(
+		s.SuccessfulTxTransfer().BlockNumberRpc.TmHeight())
 	s.Require().NoError(err)
 	baseFeeWei, err := s.backend.BaseFeeWei(resBlock)
 	s.Require().NoError(err)
@@ -33,7 +34,9 @@ func (s *BackendSuite) TestCurrentHeader() {
 	currentHeader, err := s.backend.CurrentHeader()
 	s.Require().NoError(err)
 	s.Require().NotNil(currentHeader)
-	s.Require().GreaterOrEqual(currentHeader.Number.Int64(), transferTxBlockNumber.Int64())
+	s.Require().GreaterOrEqual(
+		currentHeader.Number.Int64(),
+		s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
 
 func (s *BackendSuite) TestPendingTransactions() {
