@@ -52,4 +52,4 @@ jobs:
 
       - name: run e2e tests
         run: |
-          sh ./contrib/scripts/e2e/deploy-wasm.sh
+          bash ./contrib/scripts/e2e/deploy-wasm.sh
