@@ -32,9 +32,9 @@ func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 		// Shanghai switch time (nil = no fork, 0 => already on shanghai)
 		ShanghaiTime: ptrU64(0),
 		// CancunTime switch time (nil = no fork, 0 => already on cancun)
-		CancunTime:              ptrU64(0), // 0 => already on ...
-		PragueTime:              ptrU64(0), // 0 => already on ...
-		VerkleTime:              nil,       // nil => disable stateless verification
+		CancunTime:              nil, // nil => disable "blobs"
+		PragueTime:              nil, // nil => disable EIP-7702, blob improvements, and increased CALL gas costs
+		VerkleTime:              nil, // nil => disable stateless verification
 		TerminalTotalDifficulty: nil,
 		Ethash:                  nil,
 		Clique:                  nil,

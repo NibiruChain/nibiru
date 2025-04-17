@@ -1,9 +1,5 @@
 module github.com/NibiruChain/nibiru/v2
 
-// go-ethereum is incompatible with Go 1.23 and causes issues
-// See:
-// - [go-ethereum#30100: Build fails with Go 1.23rc](https://github.com/ethereum/go-ethereum/issues/30100)
-// - https://github.com/fjl/memsize/issues/4
 go 1.24
 
 require (
@@ -69,10 +65,10 @@ require (
 	github.com/rs/cors v1.8.3
 	github.com/rs/zerolog v1.32.0
 	github.com/status-im/keycard-go v0.2.0
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
-	golang.org/x/net v0.24.0
-	golang.org/x/text v0.14.0
+	golang.org/x/net v0.37.0
+	golang.org/x/text v0.23.0
 )
 
 require (
@@ -238,9 +234,9 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/api v0.155.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -258,11 +254,7 @@ replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
-	// github.com/cockroachdb/pebble: Has to be pinned for compatibilit with
-	// go-ethereum/ethdb, which uses pebble imports
-	// github.com/cockroachdb/pebble => github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593
 	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3
-
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2

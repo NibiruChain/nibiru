@@ -52,8 +52,9 @@ func InitPrecompiles(
 			vm.PrecompiledContractsByzantium,
 			vm.PrecompiledContractsIstanbul,
 			vm.PrecompiledContractsBerlin,
-			vm.PrecompiledContractsCancun,
-			vm.PrecompiledContractsBLS,
+			// Below precompiles omitted intentionally.
+			// vm.PrecompiledContractsCancun,
+			// vm.PrecompiledContractsBLS,
 		} {
 			precompileMap[pc.Address()] = pc
 		}

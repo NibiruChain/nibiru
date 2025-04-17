@@ -73,8 +73,9 @@ func (j *journal) append(entry JournalChange) {
 }
 
 // dirty explicitly sets an address to dirty, even if the change entries would
-// otherwise suggest it as clean. This method is an ugly hack to handle the RIPEMD
-// precompile consensus exception.
+// otherwise suggest it as clean. It is copied directly from go-ethereum. In the
+// words of the library authors, "this method is an ugly hack to handle the
+// RIPEMD precompile consensus exception." - geth/core/state/journal.go
 func (j *journal) dirty(addr common.Address) {
 	j.dirties[addr]++
 }

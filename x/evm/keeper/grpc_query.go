@@ -809,6 +809,9 @@ func (k *Keeper) TraceEthTxMsg(
 		tracer, err = tracers.DefaultDirectory.New(
 			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
 		)
+		if err != nil {
+			return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
+		}
 	}
 
 	// Define a meaningful timeout of a single transaction trace
