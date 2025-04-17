@@ -40,7 +40,11 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
-	evm *vm.EVM, contract *vm.Contract, readonly bool,
+	evm *vm.EVM,
+	sender gethcommon.Address,
+	contract *vm.Contract,
+	readonly bool,
+	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
