@@ -76,7 +76,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToBank(startResult, sender, readonly, evm)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evm)
 	case FunTokenMethod_bankBalance:
@@ -84,9 +84,9 @@ func (p precompileFunToken) Run(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToEvm(startResult, sender, readonly, evm)
 	case FunTokenMethod_bankMsgSend:
-		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
+		bz, err = p.bankMsgSend(startResult, sender, readonly)
 	case FunTokenMethod_getErc20Address:
 		bz, err = p.getErc20Address(startResult, contract)
 	default:
@@ -146,7 +146,7 @@ type precompileFunToken struct {
 // module.
 func (p precompileFunToken) sendToBank(
 	startResult OnRunStartResult,
-	caller gethcommon.Address,
+	sender gethcommon.Address,
 	readOnly bool,
 	evmObj *vm.EVM,
 ) (bz []byte, err error) {
@@ -181,17 +181,20 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
 	}
 
-	// Caller transfers ERC20 to the EVM module account
+	// Sender transfers ERC20 to the EVM module account
 	gotAmount, _, err := p.evmKeeper.ERC20().Transfer(
 		erc20,                  /*erc20*/
-		caller,                 /*from*/
+		sender,                 /*from*/
 		evm.EVM_MODULE_ADDRESS, /*to*/
 		amount,                 /*value*/
 		ctx,
 		evmObj,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
+		return nil, fmt.Errorf(
+			"error in ERC20.transfer from caller to EVM account: %w: from %s, erc20 %s, amount: %s",
+			err, sender, erc20, amount,
+		)
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
@@ -213,7 +216,7 @@ func (p precompileFunToken) sendToBank(
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
-				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
+				evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), sender.Hex(), err,
 			)
 		}
 	}
@@ -232,7 +235,7 @@ func (p precompileFunToken) sendToBank(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("send failed for module \"%s\" (%s): contract caller %s: %w",
-			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
+			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), sender.Hex(), err,
 		)
 	}
 
@@ -540,7 +543,7 @@ func (p precompileFunToken) parseArgsWhoAmI(args []any) (
 // the EVM side.
 func (p precompileFunToken) sendToEvm(
 	startResult OnRunStartResult,
-	caller gethcommon.Address,
+	sender gethcommon.Address,
 	readOnly bool,
 	evmObj *vm.EVM,
 ) ([]byte, error) {
@@ -576,7 +579,7 @@ func (p precompileFunToken) sendToEvm(
 
 	// 1) remove (burn or escrow) the bank coin from caller
 	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(amount))
-	senderBech32 := eth.EthAddrToNibiruAddr(caller)
+	senderBech32 := eth.EthAddrToNibiruAddr(sender)
 
 	// bank send from account => module
 	if err := p.evmKeeper.Bank.SendCoinsFromAccountToModule(
@@ -691,7 +694,7 @@ func parseToAddr(toStr string) (gethcommon.Address, error) {
 
 func (p precompileFunToken) bankMsgSend(
 	startResult OnRunStartResult,
-	caller gethcommon.Address,
+	sender gethcommon.Address,
 	readOnly bool,
 ) ([]byte, error) {
 	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
@@ -710,7 +713,7 @@ func (p precompileFunToken) bankMsgSend(
 	if e != nil {
 		return nil, e
 	}
-	fromBech32 := eth.EthAddrToNibiruAddr(caller)
+	fromBech32 := eth.EthAddrToNibiruAddr(sender)
 	toBech32 := eth.EthAddrToNibiruAddr(toEthAddr)
 
 	// do the bank send
