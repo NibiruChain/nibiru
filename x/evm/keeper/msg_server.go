@@ -262,53 +262,58 @@ func (k *Keeper) ApplyEvmMsg(
 	commit bool,
 	txHash gethcommon.Hash,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	gasRemaining := msg.GasLimit
-
-	// TODO: UD-DEBUG: feat(evm): Restore Tracer capturing using
-	// [core.ApplyMessage] and/or [core.ApplyTransaction] in combination with
-	// [core.MakeReceipt].
-	// Allow the tracer to capture tx level events pertaining to gas consumption.
-	// Note that "CaptureTxStart" and "CaptureTxEnd" were renamed to
-	// "OnTxStart" and "OnTxEnd".
-
-	// Formerly: evmObj.Config.Tracer.CaptureTxStart(gasRemaining)
-	if evmObj != nil && evmObj.Config.Tracer != nil && evmObj.Config.Tracer.OnTxStart != nil {
-		ethTx := gasRemainingTxPartial(msg.GasLimit)
-		evmObj.Config.Tracer.OnTxStart(
-			evmObj.GetVMContext(),
-			ethTx,
-			msg.From,
+	var (
+		contractCreation = msg.To == nil
+		rules            = evmObj.ChainConfig().Rules(
+			big.NewInt(ctx.BlockHeight()), false, evm.ParseBlockTimeUnixU64(ctx),
 		)
-	}
-	defer func() {
-		// TODO: UD-DEBUG: Validate OnTxStart for StructLogger tracer
-		// TODO: UD-DEBUG: Validate OnTxStart for JSONLogger tracer
-		// TODO: UD-DEBUG: Validate OnTxStart for callTracer tracer
-		// TODO: UD-DEBUG: Validate OnTxStart for mdLogger tracer
-		// TODO: UD-DEBUG: Validate OnTxEnd for StructLogger tracer
-		// TODO: UD-DEBUG: Validate OnTxEnd for JSONLogger tracer
-		// TODO: UD-DEBUG: Validate OnTxEnd for callTracer tracer
-		// TODO: UD-DEBUG: Validate OnTxEnd for mdLogger tracer
-		// Formerly: evmObj.Config.Tracer.CaptureTxEnd(gasRemaining)
-		if evmObj != nil && evmObj.Config.Tracer != nil && evmObj.Config.Tracer.OnTxEnd != nil {
-			localEvmResp := new(evm.MsgEthereumTxResponse)
-			if evmResp != nil {
-				localEvmResp = evmResp
-			}
-			evmObj.Config.Tracer.OnTxEnd(&gethcore.Receipt{
-				GasUsed: localEvmResp.GasUsed,
-			}, err)
-		}
-	}()
+		// gasRemaining represents a running tally of remaining gas
+		// available for EVM execution. Gas remaining starts starts at
+		// the [core.Message].GasLimit and is progressively reduced by:
+		//
+		// 1. Intrinsic gas costs (base transaction fees, data payload costs)
+		// 2. Actual EVM operation execution costs
+		// 3. Potential gas refunds
+		//
+		// It determines how much computational work can be performed before the transaction
+		// runs out of gas, with unused gas potentially being refunded to the sender.
+		gasRemaining = msg.GasLimit
+		tracer       = evmObj.Config.Tracer
+		evmStateDB   = evmObj.StateDB.(*statedb.StateDB) // retains doc comments
+	)
 
-	contractCreation := msg.To == nil
+	// Required: Allow the tracer to capture tx level events pertaining to gas consumption.
+	if tracer != nil {
+		// Formerly: evmObj.Config.Tracer.CaptureTxStart in geth v1.10
+		if tracer.OnTxStart != nil {
+			ethTx := gasRemainingTxPartial(msg.GasLimit)
+			tracer.OnTxStart(
+				evmObj.GetVMContext(),
+				ethTx,
+				msg.From,
+			)
+		}
+		// Formerly: evmObj.Config.Tracer.CaptureTxEnd in geth v1.10
+		if tracer.OnTxEnd != nil {
+			defer func() {
+				localEvmResp := new(evm.MsgEthereumTxResponse)
+				if evmResp != nil {
+					localEvmResp = evmResp
+				}
+				tracer.OnTxEnd(&gethcore.Receipt{
+					GasUsed: localEvmResp.GasUsed,
+					TxHash:  txHash,
+				}, err)
+			}()
+		}
+	}
 
 	intrinsicGasCost, err := core.IntrinsicGas(
 		msg.Data, msg.AccessList,
 		contractCreation,
-		true, // isHomestead
-		true, // isEIP2028
-		true, // isEIP3860 === isShanghai
+		rules.IsHomestead,
+		rules.IsIstanbul,
+		rules.IsShanghai,
 	)
 	if err != nil {
 		// should have already been checked on Ante Handler
@@ -329,16 +334,26 @@ func (k *Keeper) ApplyEvmMsg(
 			gasRemaining, intrinsicGasCost,
 		)
 	}
+	if tracer != nil && tracer.OnGasChange != nil {
+		tracer.OnGasChange(
+			gasRemaining, gasRemaining-intrinsicGasCost, tracing.GasChangeTxIntrinsicGas)
+	}
 	gasRemaining -= intrinsicGasCost
+
+	if rules.IsEIP4762 {
+		evmObj.AccessEvents.AddTxOrigin(msg.From)
+		if dest := msg.To; dest != nil {
+			evmObj.AccessEvents.AddTxDestination(
+				*dest, msg.Value.Sign() != 0,
+			)
+		}
+	}
 
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
-	evmObj.StateDB.Prepare(
-		// rules
-		evmObj.ChainConfig().Rules(
-			big.NewInt(ctx.BlockHeight()), false, evm.ParseBlockTimeUnixU64(ctx),
-		),
+	evmStateDB.Prepare(
+		rules,
 		msg.From,                // sender
 		evmObj.Context.Coinbase, // coinbase
 		msg.To,
@@ -354,10 +369,13 @@ func (k *Keeper) ApplyEvmMsg(
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.
 	// - increase sender's nonce by one no matter the result.
-	evmObj.StateDB.SetNonce(msg.From, msg.Nonce)
+	evmStateDB.SetNonce(msg.From, msg.Nonce)
 
-	var returnBz []byte
-	var vmErr error
+	var (
+		returnBz []byte
+		// vmErr: VM errors do not affect consensus and therefore are not assigned to "err"
+		vmErr error
+	)
 	if contractCreation {
 		returnBz, _, gasRemaining, vmErr = evmObj.Create(
 			vm.AccountRef(msg.From),
@@ -375,7 +393,7 @@ func (k *Keeper) ApplyEvmMsg(
 		)
 	}
 	// Increment nonce after processing the message
-	evmObj.StateDB.SetNonce(msg.From, msg.Nonce+1)
+	evmStateDB.SetNonce(msg.From, msg.Nonce+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
@@ -386,7 +404,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// process gas refunds (we refund a portion of the unused gas)
 	gasUsed := msg.GasLimit - gasRemaining
 	// please see https://eips.ethereum.org/EIPS/eip-3529 for why we do refunds
-	refundAmount := gasToRefund(evmObj.StateDB.GetRefund(), gasUsed)
+	refundAmount := gasToRefund(evmStateDB.GetRefund(), gasUsed)
 	gasRemaining += refundAmount
 	gasUsed -= refundAmount
 
@@ -394,7 +412,7 @@ func (k *Keeper) ApplyEvmMsg(
 		GasUsed: gasUsed,
 		VmError: vmError,
 		Ret:     returnBz,
-		Logs:    evm.NewLogsFromEth(evmObj.StateDB.(*statedb.StateDB).Logs()),
+		Logs:    evm.NewLogsFromEth(evmStateDB.Logs()),
 		Hash:    txHash.Hex(),
 	}
 
@@ -405,9 +423,10 @@ func (k *Keeper) ApplyEvmMsg(
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
-		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
+		if err := evmStateDB.Commit(); err != nil {
 			return evmResp, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
+		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
 
 	return evmResp, nil

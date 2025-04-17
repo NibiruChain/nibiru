@@ -232,11 +232,6 @@ func (p precompileFunToken) sendToBank(
 		)
 	}
 
-	// TODO: UD-DEBUG: feat: Emit EVM events
-	// https://github.com/NibiruChain/nibiru/issues/2121
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
-
 	return method.Outputs.Pack(gotAmount)
 }
 

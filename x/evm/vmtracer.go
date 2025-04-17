@@ -21,7 +21,12 @@ const (
 
 // NewTracer creates a new Logger tracer to collect execution traces from an
 // EVM transaction.
-func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64) *tracing.Hooks {
+func NewTracer(
+	tracer string,
+	msg core.Message,
+	cfg *params.ChainConfig,
+	height int64,
+) *tracing.Hooks {
 	// TODO: feat(evm-vmtracer): enable additional log configuration
 	logCfg := &logger.Config{
 		Debug: true,
@@ -41,9 +46,23 @@ func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height 
 	case TracerMarkdown:
 		return logger.NewMarkdownLogger(logCfg, os.Stdout).Hooks()
 	case TracerStruct:
-		return logger.NewStructLogger(logCfg).Hooks()
+		return NewDefaultTracer().Hooks
 	default:
-		return NewNoOpTracer().Hooks
+		// The no-op tracer, `return NewNoOpTracer().Hooks` is meant for testing
+		// in geth, not production.
+		return NewDefaultTracer().Hooks
+	}
+}
+
+func NewDefaultTracer() *tracers.Tracer {
+	logCfg := &logger.Config{
+		Debug: true,
+	}
+	defaultLogger := logger.NewStructLogger(logCfg)
+	return &tracers.Tracer{
+		Hooks:     defaultLogger.Hooks(),
+		GetResult: defaultLogger.GetResult,
+		Stop:      defaultLogger.Stop,
 	}
 }
 

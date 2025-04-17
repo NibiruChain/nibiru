@@ -18,13 +18,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth/tracers"
@@ -506,10 +506,10 @@ func (k Keeper) TraceTx(
 	)
 	txConfig := statedb.NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 
-	// gas used at this point corresponds to GetProposerAddress & CalculateBaseFee
-	// need to reset gas meter per transaction to be consistent with tx execution
-	// and avoid stacking the gas used of every predecessor in the same gas meter
-
+	// gas used at this point corresponds to GetProposerAddress &
+	// CalculateBaseFee need to reset gas meter per transaction to be consistent
+	// with tx execution and avoid stacking the gas used of every predecessor in
+	// the same gas meter
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
 		msg, err := core.TransactionToMessage(ethTx, signer, evmCfg.BaseFeeWei)
@@ -723,8 +723,6 @@ func (k Keeper) TraceBlock(
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	fmt.Printf("TODO: UD-DEBUG: resultsJson: %s\n", resultData)
-
 	return &evm.QueryTraceBlockResponse{
 		Data: resultData,
 	}, nil
@@ -736,6 +734,19 @@ func gasRemainingTxPartial(gasLimit uint64) *gethcore.Transaction {
 	txData := gethcore.LegacyTx{Gas: gasLimit}
 	return gethcore.NewTx(&txData)
 }
+
+var gethTracerNames = set.New(
+	"callTracer",     // Tracer with structured call tracer and hierarchical execution
+	"flatCallTracer", // Similar to "callTracer" but with a flattened call trace
+	"noopTracer",     // minimal tracer that doesn't actually collect data
+	"4byteTracer",    // Collects statistics on 4-byte func signatures
+	"muxTracer",      // A tracer that can combine multiple tracers in parallel
+	"prestateTracer", // Captures the state of the tx before execution (pre-state)
+	// Geth's StructLogger. It's not registered in the sense of
+	// "go-ethereum/eth/tracers/native", meaning it cannot be accessed with
+	// the [tracers.DefaultDirectory].New function.
+	evm.TracerStruct,
+)
 
 // TraceEthTxMsg do trace on one transaction, it returns a tuple: (traceResult,
 // nextLogIndex, error).
@@ -749,9 +760,9 @@ func (k *Keeper) TraceEthTxMsg(
 ) (traceResult *json.RawMessage, nextLogIndex uint, err error) {
 	// Assemble the structured logger or the JavaScript tracerHooks
 	var (
-		tracerHooks *tracing.Hooks
-		overrides   *gethparams.ChainConfig
-		timeout     = DefaultGethTraceTimeout
+		tracer    *tracers.Tracer
+		overrides *gethparams.ChainConfig
+		timeout   = DefaultGethTraceTimeout
 	)
 	if traceConfig == nil {
 		traceConfig = &evm.TraceConfig{}
@@ -773,34 +784,32 @@ func (k *Keeper) TraceEthTxMsg(
 		TxHash:    txConfig.TxHash,
 	}
 
-	var tracer *tracers.Tracer
-	if traceConfig.Tracer != "" {
-		tracerNonDefault, err := tracers.DefaultDirectory.New(
+	var usingCallTracer bool
+	if traceConfig.Tracer == evm.TracerStruct {
+		logger := logger.NewStructLogger(&logConfig)
+		tracer = &tracers.Tracer{
+			Hooks:     logger.Hooks(),
+			GetResult: logger.GetResult,
+			Stop:      logger.Stop,
+		}
+	} else {
+		if traceConfig.Tracer == "" || !gethTracerNames.Has(traceConfig.Tracer) {
+			traceConfig.Tracer = "callTracer"
+			usingCallTracer = true
+		}
+		tracer, err = tracers.DefaultDirectory.New(
 			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
 		)
 		if err != nil {
 			return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 		}
-		tracer = tracerNonDefault
 	}
-	if tracer == nil {
-		defaultLogger := logger.NewStructLogger(&logConfig)
-		tracer = &tracers.Tracer{
-			Hooks:     defaultLogger.Hooks(),
-			GetResult: defaultLogger.GetResult,
-			Stop:      defaultLogger.Stop,
-		}
+	if tracer == nil && !usingCallTracer {
+		traceConfig.Tracer = "callTracer"
+		tracer, err = tracers.DefaultDirectory.New(
+			traceConfig.Tracer, tCtx, tracerJSONConfig, evmCfg.ChainConfig,
+		)
 	}
-
-	ctx.Logger().Info("TraceEthTxMsg",
-		"tracer type", fmt.Sprintf("%T", tracer),
-		"traceConfig.Tracer", traceConfig.Tracer,
-		"traceConfig.TracerConfig", traceConfig.TracerConfig.String(),
-	)
-
-	fmt.Printf("TODO: UD-DEBUG: tracer type: %T\n", tracer)
-	fmt.Printf("traceConfig.Tracer: %s\n", traceConfig.Tracer)
-	fmt.Printf("traceConfig.TracerConfig: %s\n", traceConfig.TracerConfig)
 
 	// Define a meaningful timeout of a single transaction trace
 	if traceConfig.Timeout != "" {
@@ -831,7 +840,7 @@ func (k *Keeper) TraceEthTxMsg(
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	stateDB := statedb.New(ctx, k, txConfig)
-	evmObj := k.NewEVM(ctx, msg, evmCfg, tracerHooks, stateDB)
+	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer.Hooks, stateDB)
 	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, false /*commit*/, txConfig.TxHash)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
@@ -841,8 +850,6 @@ func (k *Keeper) TraceEthTxMsg(
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
-
-	fmt.Printf("TODO: UD-DEBUG: TraceEthTx result: %s\n", result)
 
 	return &result, txConfig.LogIndex + uint(len(res.Logs)), nil
 }

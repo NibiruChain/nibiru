@@ -830,7 +830,10 @@ func (s *StateDB) Witness() *stateless.Witness {
 	return nil
 }
 
-// Finalise prepares state objects at the end of a transaction execution.
+// ↓ If you remove the quotes below, golangci-lint will change the function name
+// to American spelling, "FinFinalizebreaking interface compatibility.
+
+// "Finalise"  prepares state objects at the end of a transaction execution.
 //
 // In Ethereum/Geth, this typically moves dirty storage to a pending layer,
 // flushes prefetchers, and finalizes flags like newContract.
@@ -839,12 +842,12 @@ func (s *StateDB) Witness() *stateless.Witness {
 //   - If the account is non-empty, it clears the `newContract` flag.
 //   - If the account is empty and deleteEmptyObjects is true, it removes it from live state.
 //
-// In Nibiru, this Finalise could be a a no-op because:
+// In Nibiru, [StateDB.Finalize] can be a a no-op because:
 //   - The Cosmos SDK state machine executes each transaction atomically.
 //   - All writes happen against a cached multistore (`s.cacheCtx`) that gets committed
 //     during `StateDB.Commit`.
 //
-// This function implements the [vm.StateDB] interface.
+// This function implementsFinalize.StateDB] interface.
 func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 	// No-op for now. May add logic for empty account pruning if desired.
 	for addr, obj := range s.stateObjects {

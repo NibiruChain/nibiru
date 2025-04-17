@@ -26,7 +26,7 @@ var (
 var PRECOMPILE_ADDRS []gethcommon.Address =
 // Using a set cleanly removes potential duplicates
 set.New[gethcommon.Address](
-	append(gethvm.PrecompiledAddressesCancun, []gethcommon.Address{
+	append(gethvm.PrecompiledAddressesBerlin, []gethcommon.Address{
 		// FunToken 0x...800
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
 		// Wasm 0x...802
