@@ -51,6 +51,9 @@ to geth v1.14 with tracing updates and new StateDB methods.
    - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
    dependency and leverage new generics features added in Go 1.23+.
 
+### Dependencies
+- Bump `golang.org/x/net` from 0.37.0 to 0.39.0 ([#2284](https://github.com/NibiruChain/nibiru/pull/2284))
+
 ## v2.3.0
 
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
