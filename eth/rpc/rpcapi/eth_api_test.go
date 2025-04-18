@@ -31,7 +31,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
@@ -68,9 +67,8 @@ func TestSuite_RunAll(t *testing.T) {
 // "suite.SetupAllSuite" interface.
 func (s *NodeSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-	testapp.EnsureNibiruPrefix()
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	homeDir := s.T().TempDir()
 	s.cfg = testnetwork.BuildNetworkConfig(genState)
 	network, err := testnetwork.New(s.T(), homeDir, s.cfg)

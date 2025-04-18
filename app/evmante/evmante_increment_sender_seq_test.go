@@ -40,7 +40,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 				txMsgOne := evmtest.HappyTransferTx(deps, 0)
 				txMsgTwo := evmtest.HappyTransferTx(deps, 1)
 
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				s.Require().NoError(txBuilder.SetMsgs(txMsgOne, txMsgTwo))
 
 				tx := txBuilder.GetTx()

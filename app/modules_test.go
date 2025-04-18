@@ -24,10 +24,6 @@ func (s *TestSuite) SetupSuite() {
 	s.encCfg = app.MakeEncodingConfig()
 }
 
-func (s *TestSuite) DefaultGenesisCopy() app.GenesisState {
-	return app.NewDefaultGenesisState(s.encCfg.Codec)
-}
-
 func (s *TestSuite) TestGenesis() {
 	getDefaultStakingGenesis := func() *stakingtypes.GenesisState {
 		genStaking := new(stakingtypes.GenesisState)

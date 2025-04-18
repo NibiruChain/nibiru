@@ -1,28 +1,31 @@
-import { type ContractRunner, Contract, type InterfaceAbi } from "ethers"
+import { Contract, type ContractRunner, type InterfaceAbi } from "ethers"
+
+import { ADDR_WNIBI } from "../const"
 import {
-  ADDR_WASM_PRECOMPILE,
-  ADDR_ORACLE_PRECOMPILE,
-  ADDR_FUNTOKEN_PRECOMPILE,
-  ABI_WASM_PRECOMPILE,
-  ABI_ORACLE_PRECOMPILE,
   ABI_FUNTOKEN_PRECOMPILE,
+  ABI_ORACLE_PRECOMPILE,
+  ABI_WASM_PRECOMPILE,
+  ADDR_FUNTOKEN_PRECOMPILE,
+  ADDR_ORACLE_PRECOMPILE,
+  ADDR_WASM_PRECOMPILE,
 } from "../precompile"
+import {
+  ERC20Minter__factory,
+  NibiruOracleChainLinkLike__factory,
+  WNIBI__factory,
+  type ERC20Minter,
+  type IFunToken,
+  type IOracle,
+  type IWasm,
+  type NibiruOracleChainLinkLike,
+  type WNIBI,
+} from "./typechain"
 
 export const ETHERS_ABI = {
   WASM: ABI_WASM_PRECOMPILE as InterfaceAbi,
   ORACLE: ABI_ORACLE_PRECOMPILE as InterfaceAbi,
   FUNTOKEN: ABI_FUNTOKEN_PRECOMPILE as InterfaceAbi,
 }
-
-import {
-  type IWasm,
-  type IOracle,
-  type IFunToken,
-  type NibiruOracleChainLinkLike,
-  type ERC20Minter,
-  NibiruOracleChainLinkLike__factory,
-  ERC20Minter__factory,
-} from "./typechain"
 
 export const wasmPrecompile = (runner: ContractRunner): IWasm =>
   new Contract(
@@ -47,7 +50,7 @@ export const funtokenPrecompile = (runner: ContractRunner): IFunToken =>
 
 /**
  * Returns a typed contract instance for one of the NibiruOracleChainLinkLike.sol
- * contracts. These implement ChainLink's inteface, AggregatorV3Interface.sol, but source
+ * contracts. These implement ChainLink's interface, AggregatorV3Interface.sol, but source
  * data from the Nibiru Oracle mechanism, which publishes data much faster than
  * ChainLink.
  * */
@@ -64,3 +67,15 @@ export const erc20Caller = (
   runner: ContractRunner,
   addr: string,
 ): ERC20Minter => ERC20Minter__factory.connect(addr, runner)
+
+/**
+ * Wrapped Nibiru smart contract for using NIBI as an ERC20.
+ *
+ * @param runner
+ * @param addr - Defaults to the WNIBI address on mainnet. If you're using a
+ *   different network, you can pass a different value for the address.
+ * */
+export const wnibiCaller = (
+  runner: ContractRunner,
+  addr: string = ADDR_WNIBI,
+): WNIBI => WNIBI__factory.connect(addr, runner)

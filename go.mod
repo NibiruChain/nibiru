@@ -1,6 +1,6 @@
 module github.com/NibiruChain/nibiru/v2
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.7.0 // indirect
+	cosmossdk.io/api v0.7.0
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.4.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
@@ -56,6 +56,8 @@ require (
 
 require (
 	cosmossdk.io/collections v0.4.0
+	cosmossdk.io/core v0.10.0
+	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.3.2-0.20240730185603-13c071f0b34d
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -63,10 +65,10 @@ require (
 	github.com/rs/cors v1.8.3
 	github.com/rs/zerolog v1.32.0
 	github.com/status-im/keycard-go v0.0.0-20190316090335-8537d3370df4
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/net v0.33.0
-	golang.org/x/text v0.21.0
+	golang.org/x/net v0.37.0
+	golang.org/x/text v0.23.0
 )
 
 require (
@@ -75,8 +77,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/storage v1.36.0 // indirect
-	cosmossdk.io/core v0.10.0 // indirect
-	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.3.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -137,7 +137,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/golang/glog v1.2.0 // indirect
+	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
@@ -226,9 +226,9 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/api v0.155.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

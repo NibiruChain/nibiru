@@ -3,30 +3,39 @@ package encoding
 
 import (
 	"cosmossdk.io/simapp/params"
+	"github.com/cosmos/cosmos-sdk/codec"
 	amino "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	enccodec "github.com/NibiruChain/nibiru/v2/eth/encoding/codec"
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 )
 
 // MakeConfig creates an EncodingConfig for testing
-func MakeConfig(mb module.BasicManager) params.EncodingConfig {
-	cdc := amino.NewLegacyAmino()
+func MakeConfig() params.EncodingConfig {
 	interfaceRegistry := types.NewInterfaceRegistry()
-	codec := amino.NewProtoCodec(interfaceRegistry)
+	protoCodec := amino.NewProtoCodec(interfaceRegistry)
 
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Codec:             codec,
-		TxConfig:          tx.NewTxConfig(codec, tx.DefaultSignModes),
-		Amino:             cdc,
+		Codec:             protoCodec,
+		Amino:             amino.NewLegacyAmino(),
+		TxConfig:          tx.NewTxConfig(protoCodec, tx.DefaultSignModes),
 	}
 
-	enccodec.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	enccodec.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	mb.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	mb.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	sdk.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	cryptocodec.RegisterCrypto(encodingConfig.Amino)
+	codec.RegisterEvidences(encodingConfig.Amino)
+	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
+
+	std.RegisterInterfaces(interfaceRegistry)
+	cryptocodec.RegisterInterfaces(interfaceRegistry)
+	eth.RegisterInterfaces(interfaceRegistry)
+	app.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
 	return encodingConfig
 }

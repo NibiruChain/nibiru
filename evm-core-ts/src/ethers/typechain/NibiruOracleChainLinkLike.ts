@@ -5,19 +5,20 @@ import type {
   BaseContract,
   BigNumberish,
   BytesLike,
-  FunctionFragment,
-  Result,
-  Interface,
-  ContractRunner,
   ContractMethod,
+  ContractRunner,
+  FunctionFragment,
+  Interface,
   Listener,
+  Result,
 } from "ethers"
+
 import type {
   TypedContractEvent,
+  TypedContractMethod,
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-  TypedContractMethod,
 } from "./common"
 
 export interface NibiruOracleChainLinkLikeInterface extends Interface {

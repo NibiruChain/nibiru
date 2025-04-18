@@ -10,12 +10,9 @@ import (
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/codec"
-
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
@@ -42,7 +39,7 @@ func (s *TestSuite) SetupSuite() {
 
 	encConfig := app.MakeEncodingConfig()
 	cfg := new(testnetwork.Config)
-	*cfg = testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
+	*cfg = testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig.Codec))
 	network, err := testnetwork.New(
 		s.T(),
 		s.T().TempDir(),
@@ -84,7 +81,7 @@ func (s *TestSuite) TestNetwork_LatestHeight() {
 func (s *TestSuite) TestLogMnemonic() {
 	kring, algo, nodeDirName := testnetwork.NewKeyring(s.T())
 
-	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
+	var cdc sdkcodec.Codec = app.MakeEncodingConfig().Codec
 	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
 	s.NoError(err)
 

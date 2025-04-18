@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"
-	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/exported"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -105,22 +104,17 @@ type AppModule struct {
 	AppModuleBasic
 	keeper keeper.Keeper
 	ak     authkeeper.AccountKeeper
-
-	// legacySubspace is used solely for migration of x/params managed parameters
-	legacySubspace exported.Subspace
 }
 
 // NewAppModule creates a new AppModule Object
 func NewAppModule(
 	k keeper.Keeper,
 	ak authkeeper.AccountKeeper,
-	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
 		ak:             ak,
-		legacySubspace: ss,
 	}
 }
 

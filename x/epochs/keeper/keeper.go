@@ -18,8 +18,8 @@ type Keeper struct {
 	Epochs collections.Map[string, types.EpochInfo]
 }
 
-func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey) Keeper {
-	return Keeper{
+func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey) *Keeper {
+	return &Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
 
@@ -28,8 +28,6 @@ func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey) Keeper {
 }
 
 // SetHooks Set the epoch hooks.
-func (k *Keeper) SetHooks(eh types.EpochHooks) *Keeper {
+func (k *Keeper) SetHooks(eh types.EpochHooks) {
 	k.hooks = eh
-
-	return k
 }

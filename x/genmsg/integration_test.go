@@ -15,21 +15,22 @@ import (
 	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )
 
-func TestIntegration(t *testing.T) {
+func TestGenmsgInGenesis(t *testing.T) {
 	senderAddr := sdk.AccAddress("sender")
 	recvAddr := sdk.AccAddress("recv")
 
 	encoding := app.MakeEncodingConfig()
-	appGenesis := app.NewDefaultGenesisState(encoding.Codec)
-
-	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(&banktypes.GenesisState{
-		Balances: []banktypes.Balance{
-			{
-				Address: senderAddr.String(),
-				Coins:   sdk.NewCoins(sdk.NewInt64Coin("unibi", 100000)),
+	appGenesis := app.GenesisState{}
+	appGenesis[banktypes.ModuleName] = encoding.Codec.MustMarshalJSON(
+		&banktypes.GenesisState{
+			Balances: []banktypes.Balance{
+				{
+					Address: senderAddr.String(),
+					Coins:   sdk.NewCoins(sdk.NewInt64Coin("unibi", 100000)),
+				},
 			},
 		},
-	})
+	)
 
 	testMsg := &banktypes.MsgSend{
 		FromAddress: senderAddr.String(),
@@ -46,7 +47,7 @@ func TestIntegration(t *testing.T) {
 		},
 	)
 
-	app := testapp.NewNibiruTestApp(appGenesis)
+	app, _ := testapp.NewNibiruTestApp(appGenesis)
 	ctx := app.NewContext(false, tmproto.Header{
 		Height: 1,
 	})

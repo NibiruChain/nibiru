@@ -2,25 +2,26 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
+  AddressLike,
   BaseContract,
   BigNumberish,
   BytesLike,
-  FunctionFragment,
-  Result,
-  Interface,
-  EventFragment,
-  AddressLike,
-  ContractRunner,
   ContractMethod,
+  ContractRunner,
+  EventFragment,
+  FunctionFragment,
+  Interface,
   Listener,
+  Result,
 } from "ethers"
+
 import type {
   TypedContractEvent,
+  TypedContractMethod,
   TypedDeferredTopicFilter,
   TypedEventLog,
-  TypedLogDescription,
   TypedListener,
-  TypedContractMethod,
+  TypedLogDescription,
 } from "./common"
 
 export declare namespace IFunToken {
@@ -156,7 +157,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
 
   bankBalance: TypedContractMethod<
@@ -167,7 +168,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
 
   bankMsgSend: TypedContractMethod<
@@ -191,7 +192,7 @@ export interface IFunToken extends BaseContract {
   whoAmI: TypedContractMethod<
     [who: string],
     [IFunToken.NibiruAccountStructOutput],
-    "nonpayable"
+    "view"
   >
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -213,7 +214,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
   getFunction(nameOrSignature: "bankBalance"): TypedContractMethod<
     [who: AddressLike, bankDenom: string],
@@ -223,7 +224,7 @@ export interface IFunToken extends BaseContract {
         whoAddrs: IFunToken.NibiruAccountStructOutput
       },
     ],
-    "nonpayable"
+    "view"
   >
   getFunction(
     nameOrSignature: "bankMsgSend",
@@ -251,7 +252,7 @@ export interface IFunToken extends BaseContract {
   ): TypedContractMethod<
     [who: string],
     [IFunToken.NibiruAccountStructOutput],
-    "nonpayable"
+    "view"
   >
 
   getEvent(
