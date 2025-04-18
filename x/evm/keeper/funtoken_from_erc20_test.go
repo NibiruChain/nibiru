@@ -489,43 +489,91 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.Require().NoError(err)
+	// Can't create since the gas cap will be reached for transfer function
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "method 'transfer' not found in contract")
+}
 
-	s.T().Log("happy: call attackBalance()")
-	contractInput, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
-	s.Require().NoError(err)
-	evmObj, _ := deps.NewEVM()
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
-		deps.Ctx,
-		evmObj,
-		deps.Sender.EthAddr, /*from*/
-		&erc20Addr.Address,  /*to*/
-		false,               /*commit*/
-		contractInput,
-		10_000_000,
+// TestFunTokenMissingBalanceOfFunction creates a funtoken with a contract
+// missing the `balanceOf` function
+func (s *FunTokenFromErc20Suite) TestFunTokenMissingBalanceOfFunction() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy Missing Function ERC20")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20MissingFunction,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
 	s.Require().NoError(err)
-	s.Require().NotZero(evmResp.GasUsed)
-	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
-	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
 
-	s.T().Log("sad: call attackTransfer()")
-	contractInput, err = embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackTransfer")
-	s.Require().NoError(err)
-	evmObj, _ = deps.NewEVM()
-	evmResp, err = deps.EvmKeeper.CallContractWithInput(
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
 		deps.Ctx,
-		evmObj,
-		deps.Sender.EthAddr, /*from*/
-		&erc20Addr.Address,  /*to*/
-		true,                /*commit*/
-		contractInput,
-		10_000_000,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
 	)
-	s.Require().ErrorContains(err, "execution reverted")
-	s.Require().NotZero(evmResp.GasUsed)
-	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
-	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	// Can't create since the balanceOf functions are missing
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "method 'balanceOf' not found in contract")
+}
+
+// TestFunTokenInvalidFunction creates a funtoken with a contract
+// having the `transfer` function with no amount parameter
+func (s *FunTokenFromErc20Suite) TestFunTokenInvalidFunction() {
+	deps := evmtest.NewTestDeps()
+
+	s.T().Log("Deploy Invalid Function ERC20")
+	metadata := keeper.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20InvalidFunction,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with invalid function")
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+	))
+
+	_, err = deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	// Can't create since the transfer are invalid
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "method 'transfer' not found in contract")
 }
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.

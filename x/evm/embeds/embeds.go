@@ -31,6 +31,10 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestERC20MissingFunction.sol/TestERC20MissingFunction.json
+	testErc20MissingFunctionJson []byte
+	//go:embed artifacts/contracts/TestERC20InvalidFunction.sol/TestERC20InvalidFunction.json
+	testERC20InvalidFunction []byte
 	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
 	testFunTokenPrecompileLocalGasJson []byte
 	//go:embed artifacts/contracts/TestERC20TransferThenPrecompileSend.sol/TestERC20TransferThenPrecompileSend.json
@@ -106,6 +110,19 @@ var (
 	SmartContract_TestERC20MaliciousTransfer = CompiledEvmContract{
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
+	}
+	// SmartContract_TestERC20MissingFunction is a test contract
+	// which simulates malicious ERC20 behavior by missing the balanceOf function
+	SmartContract_TestERC20MissingFunction = CompiledEvmContract{
+		Name:      "TestERC20MissingFunction.sol",
+		EmbedJSON: testErc20MissingFunctionJson,
+	}
+	// SmartContract_TestERC20InvalidFunction is a test contract
+	// which simulates malicious ERC20 behavior by adding an invalid transfer
+	// function with no `amount` parameter
+	SmartContract_TestERC20InvalidFunction = CompiledEvmContract{
+		Name:      "TestERC20InvalidFunction.sol",
+		EmbedJSON: testERC20InvalidFunction,
 	}
 	// SmartContract_TestFunTokenPrecompileLocalGas is a test contract
 	// which allows precompile execution with custom local gas set (calling precompile within contract)
@@ -187,6 +204,8 @@ func init() {
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestERC20MissingFunction.MustLoad()
+	SmartContract_TestERC20InvalidFunction.MustLoad()
 	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()
