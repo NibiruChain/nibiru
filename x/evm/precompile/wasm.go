@@ -36,9 +36,13 @@ const (
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
 	evm *vm.EVM,
-	sender gethcommon.Address,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
 	contract *vm.Contract,
 	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
@@ -56,13 +60,13 @@ func (p precompileWasm) Run(
 
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
-		bz, err = p.execute(startResult, sender, readonly)
+		bz, err = p.execute(startResult, trueCaller, readonly)
 	case WasmMethod_query:
 		bz, err = p.query(startResult, contract)
 	case WasmMethod_instantiate:
-		bz, err = p.instantiate(startResult, sender, readonly)
+		bz, err = p.instantiate(startResult, trueCaller, readonly)
 	case WasmMethod_executeMulti:
-		bz, err = p.executeMulti(startResult, sender, readonly)
+		bz, err = p.executeMulti(startResult, trueCaller, readonly)
 	case WasmMethod_queryRaw:
 		bz, err = p.queryRaw(startResult, contract)
 	default:
@@ -155,7 +159,7 @@ func PrecompileWasm(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 //     uncommon to use this field, so you'll pass an empty array most of the time.
 func (p precompileWasm) execute(
 	start OnRunStartResult,
-	sender gethcommon.Address,
+	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
 	method, args, ctx := start.Method, start.Args, start.CacheCtx
@@ -173,7 +177,7 @@ func (p precompileWasm) execute(
 		err = ErrInvalidArgs(err)
 		return
 	}
-	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(sender), msgArgsBz, funds)
+	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(caller), msgArgsBz, funds)
 	if err != nil {
 		return
 	}
@@ -239,7 +243,7 @@ func (p precompileWasm) query(
 //	```
 func (p precompileWasm) instantiate(
 	start OnRunStartResult,
-	sender gethcommon.Address,
+	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
 	method, args, ctx := start.Method, start.Args, start.CacheCtx
@@ -252,8 +256,8 @@ func (p precompileWasm) instantiate(
 		return nil, err
 	}
 
-	senderBech32 := eth.EthAddrToNibiruAddr(sender)
-	txMsg, err := p.parseArgsWasmInstantiate(args, senderBech32.String())
+	callerBech32 := eth.EthAddrToNibiruAddr(caller)
+	txMsg, err := p.parseArgsWasmInstantiate(args, callerBech32.String())
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
@@ -264,7 +268,7 @@ func (p precompileWasm) instantiate(
 		adminAddr = sdk.MustAccAddressFromBech32(txMsg.Admin) // validated in parse
 	}
 	contractAddr, data, err := p.Wasm.Instantiate(
-		ctx, txMsg.CodeID, senderBech32, adminAddr, txMsg.Msg, txMsg.Label, txMsg.Funds,
+		ctx, txMsg.CodeID, callerBech32, adminAddr, txMsg.Msg, txMsg.Label, txMsg.Funds,
 	)
 	if err != nil {
 		return
@@ -290,7 +294,7 @@ func (p precompileWasm) instantiate(
 //	```
 func (p precompileWasm) executeMulti(
 	start OnRunStartResult,
-	sender gethcommon.Address,
+	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
 	method, args, ctx := start.Method, start.Args, start.CacheCtx
@@ -308,7 +312,7 @@ func (p precompileWasm) executeMulti(
 		err = ErrInvalidArgs(err)
 		return
 	}
-	senderBech32 := eth.EthAddrToNibiruAddr(sender)
+	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
 	var responses [][]byte
 	for i, m := range wasmExecMsgs {
@@ -329,7 +333,7 @@ func (p precompileWasm) executeMulti(
 				Amount: sdk.NewIntFromBigInt(fund.Amount),
 			})
 		}
-		respBz, e := p.Wasm.Execute(ctx, wasmContract, senderBech32, m.MsgArgs, funds)
+		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
 			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
 			return

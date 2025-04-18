@@ -140,6 +140,7 @@ func WeiToNative(weiAmount *big.Int) (evmDenomAmount *big.Int) {
 
 // WeiToNativeMustU256 is identical to [WeiToNative], except it returns a
 // [uint256.Int] instead of a [big.Int].
+//
 // NOTE: It's okay to panic on overflow here because NIBI has a max supply of
 // 1.5 billion. That means the highest amount of NIBI is in wei units is
 // 1.5 * 10^{9} * 10^{18} == 1.5        * 10^{27},
@@ -149,16 +150,15 @@ func WeiToNativeMustU256(wei *big.Int) (evmDenomAmount *uint256.Int) {
 	weiSign := wei.Sign()
 	if weiSign < 0 {
 		panic(fmt.Errorf(
-			"uint256 cannot be parsed from the negative big.Int %s", wei),
+			"uint256 error: uint256 cannot be parsed from the negative big.Int %s", wei),
 		)
 	}
 
-	nBig := WeiToNative(wei) // <- The output value
-	evmDenomAmount, isOverflow := uint256.FromBig(new(big.Int).Abs(nBig))
+	bigM := WeiToNative(wei) // <- The output value
+	evmDenomAmount, isOverflow := uint256.FromBig(new(big.Int).Abs(bigM))
 	if isOverflow {
-		// TODO: Is there a better strategy than panicking here?
 		panic(fmt.Errorf(
-			"uint256 overflow occurred for big.Int value %s", wei),
+			"uint256 error: uint256 overflow occurred for big.Int value %s", wei),
 		)
 	}
 	return evmDenomAmount

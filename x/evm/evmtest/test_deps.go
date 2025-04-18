@@ -49,13 +49,11 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
-	loggerConfig := &logger.Config{Debug: true}
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
 		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
-		logger.NewStructLogger(loggerConfig).Hooks(),
-		// logger.NewJSONLogger(loggerConfig, os.Stdout),
+		logger.NewStructLogger(&logger.Config{Debug: true}).Hooks(),
 		stateDB,
 	)
 	return evmObj, stateDB

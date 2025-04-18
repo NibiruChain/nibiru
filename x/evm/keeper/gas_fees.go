@@ -10,11 +10,14 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -139,9 +142,13 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 func VerifyFee(
 	txData evm.TxData,
 	baseFeeMicronibi *big.Int,
-	isCheckTx bool,
+	ctx sdk.Context,
 ) (sdk.Coins, error) {
-	isContractCreation := txData.GetTo() == nil
+	var (
+		isContractCreation = txData.GetTo() == nil
+		isCheckTx          = ctx.IsCheckTx()
+		rules              = Rules(ctx)
+	)
 
 	gasLimit := txData.GetGas()
 
@@ -154,9 +161,9 @@ func VerifyFee(
 		txData.GetData(),
 		accessList,
 		isContractCreation,
-		true, // isHomestead
-		true, // isEIP2028
-		true, // isEIP3860 === isShanghai
+		rules.IsHomestead,
+		rules.IsIstanbul, // isEIP2028 === IsInstanbul
+		rules.IsShanghai, // isEIP3860 === isShanghai
 	)
 	if err != nil {
 		return nil, errors.Wrapf(
@@ -187,4 +194,13 @@ func VerifyFee(
 	}
 
 	return sdk.Coins{{Denom: bankDenom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
+}
+
+func Rules(ctx sdk.Context) gethparams.Rules {
+	chainConfig := evm.EthereumConfig(appconst.GetEthChainID(ctx.ChainID()))
+	return chainConfig.Rules(
+		big.NewInt(ctx.BlockHeight()),
+		false, // isMerge
+		evm.ParseBlockTimeUnixU64(ctx),
+	)
 }
