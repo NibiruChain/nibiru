@@ -10,6 +10,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -135,20 +136,22 @@ func (k *Keeper) createFunTokenFromERC20(
 	defer func() {
 		k.Bank.StateDB = nil
 	}()
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&erc20,
-		0,
-		big.NewInt(0),
-		0,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		[]byte{},
-		gethcore.AccessList{},
-		false,
-	)
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), evm.NewNoOpTracer(), stateDB)
+	evmMsg := core.Message{
+		To:               &erc20,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            evm.Big0, // amount
+		GasLimit:         0,
+		GasPrice:         evm.Big0,
+		GasFeeCap:        evm.Big0,
+		GasTipCap:        evm.Big0,
+		Data:             []byte{},
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
+
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil, stateDB)
 	erc20Info, err := k.FindERC20Metadata(ctx, evmObj, erc20, nil)
 	if err != nil {
 		return nil, err

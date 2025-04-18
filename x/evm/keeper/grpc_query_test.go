@@ -808,6 +808,7 @@ func (s *Suite) TestTraceTx() {
 			s.Assert().NoError(err)
 			s.Assert().NotNil(gotResp)
 			s.Assert().NotNil(gotResp.Data)
+			s.Require().True(json.Valid(gotResp.Data), "expected json.RawMessage")
 
 			// // Replace spaces in want resp
 			// re := regexp.MustCompile(`[\s\n\r]+`)

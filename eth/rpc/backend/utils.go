@@ -15,7 +15,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus/misc"
+	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -125,7 +125,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	if err != nil {
 		return err
 	}
-	targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
+	targetOneFeeHistory.NextBaseFee = eip1559.CalcBaseFee(cfg, header)
 
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
