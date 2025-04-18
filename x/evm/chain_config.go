@@ -6,37 +6,44 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 )
 
 // EthereumConfig returns an Ethereum ChainConfig for EVM state transitions.
 func EthereumConfig(chainID *big.Int) *params.ChainConfig {
 	return &params.ChainConfig{
-		ChainID:                 chainID,
-		HomesteadBlock:          big.NewInt(0),
-		DAOForkBlock:            big.NewInt(0),
-		DAOForkSupport:          true,
-		EIP150Block:             big.NewInt(0),
-		EIP150Hash:              common.Hash{},
-		EIP155Block:             big.NewInt(0),
-		EIP158Block:             big.NewInt(0),
-		ByzantiumBlock:          big.NewInt(0),
-		ConstantinopleBlock:     big.NewInt(0),
-		PetersburgBlock:         big.NewInt(0),
-		IstanbulBlock:           big.NewInt(0),
-		MuirGlacierBlock:        big.NewInt(0),
-		BerlinBlock:             big.NewInt(0),
-		LondonBlock:             big.NewInt(0),
-		ArrowGlacierBlock:       big.NewInt(0),
-		GrayGlacierBlock:        big.NewInt(0),
-		MergeNetsplitBlock:      big.NewInt(0),
-		ShanghaiBlock:           nil, // TODO: change this if we upgrade go-ethereum dependency
-		CancunBlock:             nil, // TODO: change this if we upgrade go-ethereum dependency
+		ChainID:             chainID,
+		HomesteadBlock:      Big0,
+		DAOForkBlock:        Big0,
+		DAOForkSupport:      true,
+		EIP150Block:         Big0,
+		EIP155Block:         Big0,
+		EIP158Block:         Big0,
+		ByzantiumBlock:      Big0,
+		ConstantinopleBlock: Big0,
+		PetersburgBlock:     Big0,
+		IstanbulBlock:       Big0,
+		MuirGlacierBlock:    Big0,
+		BerlinBlock:         Big0,
+		LondonBlock:         Big0,
+		ArrowGlacierBlock:   Big0,
+		GrayGlacierBlock:    Big0,
+		MergeNetsplitBlock:  Big0,
+		// Shanghai switch time (nil = no fork, 0 => already on shanghai)
+		ShanghaiTime: ptrU64(0),
+		// CancunTime switch time (nil = no fork, 0 => already on cancun)
+		CancunTime:              nil, // nil => disable "blobs"
+		PragueTime:              nil, // nil => disable EIP-7702, blob improvements, and increased CALL gas costs
+		VerkleTime:              nil, // nil => disable stateless verification
 		TerminalTotalDifficulty: nil,
 		Ethash:                  nil,
 		Clique:                  nil,
 	}
+}
+
+func ptrU64(n uint) *uint64 {
+	u64 := uint64(n)
+	return &u64
 }
 
 // Validate performs a basic validation of the ChainConfig params. The function will return an error

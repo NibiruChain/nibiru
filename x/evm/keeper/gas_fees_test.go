@@ -101,11 +101,11 @@ func (s *Suite) TestVerifyFee() {
 			}
 		},
 	} {
-		isCheckTx := true
 		tc := getTestCase()
+		ctx := sdk.Context{}.WithIsCheckTx(true)
 		s.Run(tc.name, func() {
 			gotCoins, err := evmkeeper.VerifyFee(
-				tc.txData, tc.baseFeeMicronibi, isCheckTx,
+				tc.txData, tc.baseFeeMicronibi, ctx,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

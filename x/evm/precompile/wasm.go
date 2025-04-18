@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/ethereum/go-ethereum/core/tracing"
+
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -33,7 +35,15 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
-	evm *vm.EVM, contract *vm.Contract, readonly bool,
+	evm *vm.EVM,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
+	contract *vm.Contract,
+	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
+	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
@@ -50,13 +60,13 @@ func (p precompileWasm) Run(
 
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
-		bz, err = p.execute(startResult, contract.CallerAddress, readonly)
+		bz, err = p.execute(startResult, trueCaller, readonly)
 	case WasmMethod_query:
 		bz, err = p.query(startResult, contract)
 	case WasmMethod_instantiate:
-		bz, err = p.instantiate(startResult, contract.CallerAddress, readonly)
+		bz, err = p.instantiate(startResult, trueCaller, readonly)
 	case WasmMethod_executeMulti:
-		bz, err = p.executeMulti(startResult, contract.CallerAddress, readonly)
+		bz, err = p.executeMulti(startResult, trueCaller, readonly)
 	case WasmMethod_queryRaw:
 		bz, err = p.queryRaw(startResult, contract)
 	default:
@@ -69,7 +79,11 @@ func (p precompileWasm) Run(
 	// The reason it's unnecessary to check for a success value is because
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
 	// meter was initialized....
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 
 	if err != nil {
 		return nil, err
@@ -114,7 +128,7 @@ type Wasm struct {
 	wasmkeeper.Keeper
 }
 
-func PrecompileWasm(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileWasm(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileWasm{
 		Keeper: keepers.EvmKeeper,
 		Wasm: Wasm{

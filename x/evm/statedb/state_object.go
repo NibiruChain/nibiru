@@ -4,11 +4,13 @@ package statedb
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -21,7 +23,7 @@ var emptyCodeHash = crypto.Keccak256(nil)
 type Account struct {
 	// BalanceNative is the micronibi (unibi) balance of the account, which is
 	// the official balance in the x/bank module state
-	BalanceNative *big.Int
+	BalanceNative *uint256.Int
 	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
 	Nonce uint64
 	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
@@ -34,7 +36,7 @@ type Account struct {
 // values, which are 10^12 times larger than the native unibi value due to the
 // definition of NIBI as "ether".
 type AccountWei struct {
-	BalanceWei *big.Int
+	BalanceWei *uint256.Int
 	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
 	Nonce uint64
 	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
@@ -47,7 +49,7 @@ type AccountWei struct {
 // unibi to wei.
 func (acc Account) ToWei() AccountWei {
 	return AccountWei{
-		BalanceWei: evm.NativeToWei(acc.BalanceNative),
+		BalanceWei: evm.NativeToWeiU256(acc.BalanceNative),
 		Nonce:      acc.Nonce,
 		CodeHash:   acc.CodeHash,
 	}
@@ -59,7 +61,7 @@ func (acc Account) ToWei() AccountWei {
 // convert from wei to unibi.
 func (acc AccountWei) ToNative() Account {
 	return Account{
-		BalanceNative: evm.WeiToNative(acc.BalanceWei),
+		BalanceNative: evm.WeiToNativeMustU256(acc.BalanceWei.ToBig()),
 		Nonce:         acc.Nonce,
 		CodeHash:      acc.CodeHash,
 	}
@@ -68,7 +70,7 @@ func (acc AccountWei) ToNative() Account {
 // NewEmptyAccount returns an empty account.
 func NewEmptyAccount() *Account {
 	return &Account{
-		BalanceNative: new(big.Int),
+		BalanceNative: new(uint256.Int),
 		CodeHash:      emptyCodeHash,
 	}
 }
@@ -91,6 +93,21 @@ func (s Storage) SortedKeys() []common.Hash {
 		return bytes.Compare(keys[i].Bytes(), keys[j].Bytes()) < 0
 	})
 	return keys
+}
+
+func (s Storage) Copy() Storage {
+	cpy := make(Storage, len(s))
+	for key, value := range s {
+		cpy[key] = value
+	}
+	return cpy
+}
+
+func (s Storage) String() (str string) {
+	for key, value := range s {
+		str += fmt.Sprintf("%X : %X\n", key, value)
+	}
+	return
 }
 
 // stateObject represents the state of a Nibiru EVM account.
@@ -122,14 +139,25 @@ type stateObject struct {
 	address common.Address
 
 	// flags
-	DirtyCode bool
-	Suicided  bool
+	DirtyCode        bool
+	SelfDestructed   bool // True if the stateObject has been self destructed
+	createdThisBlock bool // True if the stateObject was created this block
+	// This is an EIP-6780 flag indicating whether the object is eligible for
+	// self-destruct according to EIP-6780. The flag could be set either when
+	// the contract is just created within the current transaction, or when the
+	// object was previously existent and is being deployed as a contract within
+	// the current transaction.
+	newContract bool
 }
 
 // newObject creates a state object.
-func newObject(db *StateDB, address common.Address, account Account) *stateObject {
+func newObject(db *StateDB, address common.Address, account *Account) *stateObject {
+	createdThisBlock := account == nil
+	if createdThisBlock {
+		account = &Account{}
+	}
 	if account.BalanceNative == nil {
-		account.BalanceNative = new(big.Int)
+		account.BalanceNative = new(uint256.Int)
 	}
 	if account.CodeHash == nil {
 		account.CodeHash = emptyCodeHash
@@ -138,9 +166,10 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 		db:      db,
 		address: address,
 		// Reflect the micronibi (unibi) balance in wei
-		account:       account.ToWei(),
-		OriginStorage: make(Storage),
-		DirtyStorage:  make(Storage),
+		account:          account.ToWei(),
+		OriginStorage:    make(Storage),
+		DirtyStorage:     make(Storage),
+		createdThisBlock: createdThisBlock,
 	}
 }
 
@@ -153,33 +182,38 @@ func (s *stateObject) isEmpty() bool {
 
 // AddBalance adds amount to s's balance.
 // It is used to add funds to the destination account of a transfer.
-func (s *stateObject) AddBalance(amount *big.Int) {
+func (s *stateObject) AddBalance(amount *uint256.Int) (prevWei uint256.Int) {
 	if amount.Sign() == 0 {
-		return
+		if s.isEmpty() {
+			s.touch()
+		}
+		return *(s.Balance())
 	}
-	s.SetBalance(new(big.Int).Add(s.Balance(), amount))
+	return s.SetBalance(new(big.Int).Add(s.Balance().ToBig(), amount.ToBig()))
 }
 
 // SubBalance removes amount from s's balance.
 // It is used to remove funds from the origin account of a transfer.
-func (s *stateObject) SubBalance(amount *big.Int) {
+func (s *stateObject) SubBalance(amount *big.Int) (prevWei uint256.Int) {
 	if amount.Sign() == 0 {
-		return
+		return *s.Balance()
 	}
-	s.SetBalance(new(big.Int).Sub(s.Balance(), amount))
+	return s.SetBalance(new(big.Int).Sub(s.Balance().ToBig(), amount))
 }
 
-// SetBalance update account balance.
-func (s *stateObject) SetBalance(amount *big.Int) {
+// SetBalance update account balance and returns the previous balance.
+func (s *stateObject) SetBalance(amount *big.Int) (prevWei uint256.Int) {
+	prevWei = *s.account.BalanceWei
 	s.db.Journal.append(balanceChange{
 		account: &s.address,
-		prevWei: new(big.Int).Set(s.account.BalanceWei),
+		prevWei: (&prevWei).Clone(),
 	})
 	s.setBalance(amount)
+	return prevWei
 }
 
 func (s *stateObject) setBalance(amount *big.Int) {
-	s.account.BalanceWei = amount
+	s.account.BalanceWei = uint256.MustFromBig(amount)
 }
 
 //
@@ -246,7 +280,7 @@ func (s *stateObject) CodeHash() []byte {
 }
 
 // Balance returns the balance of account
-func (s *stateObject) Balance() *big.Int {
+func (s *stateObject) Balance() *uint256.Int {
 	return s.account.BalanceWei
 }
 
@@ -267,29 +301,55 @@ func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 }
 
 // GetState query the current state (including dirty state)
-func (s *stateObject) GetState(key common.Hash) common.Hash {
+func (s *stateObject) GetState(key common.Hash) (val, origin common.Hash) {
+	origin = s.GetCommittedState(key)
 	if value, dirty := s.DirtyStorage[key]; dirty {
-		return value
+		return value, origin
 	}
-	return s.GetCommittedState(key)
+	return origin, origin
 }
 
 // SetState sets the contract state
-func (s *stateObject) SetState(key common.Hash, value common.Hash) {
+func (s *stateObject) SetState(key common.Hash, value common.Hash) (prev common.Hash) {
 	// If the new value is the same as old, don't set
-	prev := s.GetState(key)
+	prev, origin := s.GetState(key)
 	if prev == value {
-		return
+		return prev
 	}
 	// New value is different, update and journal the change
 	s.db.Journal.append(storageChange{
 		account:  &s.address,
 		key:      key,
 		prevalue: prev,
+		origin:   origin,
 	})
-	s.setState(key, value)
+	s.setState(key, value, origin)
+	return prev
 }
 
-func (s *stateObject) setState(key, value common.Hash) {
+// setState updates a value in account dirty storage. The dirtiness will be
+// removed if the value being set equals to the original value.
+func (s *stateObject) setState(key, value, origin common.Hash) {
+	// If storage slot is set back to its original value, undo the dirty marker
+	if value == origin {
+		delete(s.DirtyStorage, key)
+		return
+	}
 	s.DirtyStorage[key] = value
+}
+
+// Copied from /core/state/journal.go in geth v1.14
+var ripemd = common.HexToAddress("0000000000000000000000000000000000000003")
+
+// Copied from /core/state/state_object.go in geth v1.14
+func (s *stateObject) touch() {
+	addr := s.address
+	s.db.Journal.append(touchChange{
+		account: addr,
+	})
+	if addr == ripemd {
+		// Explicitly put it in the dirty-cache, which is otherwise generated
+		// from flattened journals.
+		s.db.Journal.dirty(addr)
+	}
 }

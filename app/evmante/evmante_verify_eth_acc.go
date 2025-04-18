@@ -71,7 +71,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 
 		if err := keeper.CheckSenderBalance(
-			evm.NativeToWei(acct.BalanceNative), txData,
+			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
 		); err != nil {
 			return ctx, errors.Wrap(err, "failed to check sender balance")
 		}

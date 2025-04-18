@@ -9,6 +9,7 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
@@ -79,7 +80,7 @@ func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
 
 // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
 func (b *Backend) FeeHistory(
-	userBlockCount gethrpc.DecimalOrHex, // number blocks to fetch, maximum is 100
+	userBlockCount gethmath.HexOrDecimal64, // number blocks to fetch, maximum is 100
 	lastBlock gethrpc.BlockNumber, // the block to start search, to oldest
 	rewardPercentiles []float64, // percentiles to fetch reward
 ) (*rpc.FeeHistoryResult, error) {

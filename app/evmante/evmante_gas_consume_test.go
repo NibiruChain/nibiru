@@ -26,7 +26,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "",
@@ -47,7 +47,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "exceeds block gas limit (0)",

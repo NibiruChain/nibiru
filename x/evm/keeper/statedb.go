@@ -6,6 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -30,7 +31,7 @@ func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *statedb.A
 		return nil
 	}
 
-	acct.BalanceNative = k.GetEvmGasBalance(ctx, addr)
+	acct.BalanceNative = uint256.MustFromBig(k.GetEvmGasBalance(ctx, addr))
 	return acct
 }
 
@@ -129,7 +130,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.BalanceNative); err != nil {
+	if err := k.SetAccBalance(ctx, addr, account.BalanceNative.ToBig()); err != nil {
 		return err
 	}
 

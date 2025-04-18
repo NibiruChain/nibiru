@@ -4,6 +4,7 @@ package rpcapi
 import (
 	"context"
 
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -86,7 +87,9 @@ type IEthAPI interface {
 		args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber,
 	) (hexutil.Uint64, error)
 	FeeHistory(
-		blockCount gethrpc.DecimalOrHex, lastBlock gethrpc.BlockNumber, rewardPercentiles []float64,
+		blockCount gethmath.HexOrDecimal64,
+		lastBlock gethrpc.BlockNumber,
+		rewardPercentiles []float64,
 	) (*rpc.FeeHistoryResult, error)
 	MaxPriorityFeePerGas() (*hexutil.Big, error)
 	ChainId() (*hexutil.Big, error)
@@ -321,7 +324,7 @@ func (e *EthAPI) EstimateGas(
 	return e.backend.EstimateGas(args, blockNrOptional)
 }
 
-func (e *EthAPI) FeeHistory(blockCount gethrpc.DecimalOrHex,
+func (e *EthAPI) FeeHistory(blockCount gethmath.HexOrDecimal64,
 	lastBlock gethrpc.BlockNumber,
 	rewardPercentiles []float64,
 ) (*rpc.FeeHistoryResult, error) {
