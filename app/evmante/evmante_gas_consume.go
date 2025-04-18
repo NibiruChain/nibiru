@@ -100,7 +100,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 		fees, err := keeper.VerifyFee(
 			txData,
 			baseFeeMicronibiPerGas,
-			ctx.IsCheckTx(),
+			ctx,
 		)
 		if err != nil {
 			return ctx, errors.Wrapf(err, "failed to verify the fees")

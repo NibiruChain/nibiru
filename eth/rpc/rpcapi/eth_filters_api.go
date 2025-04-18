@@ -227,9 +227,6 @@ func (api *FiltersAPI) NewPendingTransactions(ctx context.Context) (*gethrpc.Sub
 			case <-rpcSub.Err():
 				pendingTxSub.Unsubscribe(api.events)
 				return
-			case <-notifier.Closed():
-				pendingTxSub.Unsubscribe(api.events)
-				return
 			}
 		}
 	}(pendingTxSub.EventCh)
@@ -347,9 +344,6 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 			case <-rpcSub.Err():
 				headersSub.Unsubscribe(api.events)
 				return
-			case <-notifier.Closed():
-				headersSub.Unsubscribe(api.events)
-				return
 			}
 		}
 	}(headersSub.EventCh)
@@ -415,9 +409,6 @@ func (api *FiltersAPI) Logs(
 					_ = notifier.Notify(rpcSub.ID, log) // #nosec G703
 				}
 			case <-rpcSub.Err(): // client send an unsubscribe request
-				logsSub.Unsubscribe(api.events)
-				return
-			case <-notifier.Closed(): // connection dropped
 				logsSub.Unsubscribe(api.events)
 				return
 			}
@@ -643,7 +634,7 @@ func (api *FiltersAPI) GetFilterChanges(id gethrpc.ID) (any, error) {
 		hashes := f.hashes
 		f.hashes = nil
 		return returnHashes(hashes), nil
-	case filters.LogsSubscription, filters.MinedAndPendingLogsSubscription:
+	case filters.LogsSubscription:
 		logs := make([]*gethcore.Log, len(f.logs))
 		copy(logs, f.logs)
 		f.logs = []*gethcore.Log{}

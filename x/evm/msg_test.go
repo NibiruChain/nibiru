@@ -827,7 +827,9 @@ func (s *MsgsSuite) TestTxEncoding() {
 		signer    = gethcore.NewEIP2930Signer(common.Big1)
 		addr      = common.HexToAddress("0x0000000000000000000000000000000000000001")
 		recipient = common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87")
-		accesses  = gethcore.AccessList{{Address: addr, StorageKeys: []common.Hash{{0}}}}
+		accesses  = gethcore.AccessList{
+			gethcore.AccessTuple{Address: addr, StorageKeys: []common.Hash{{0}}},
+		}
 	)
 	for i := uint64(0); i < 500; i++ {
 		var txdata gethcore.TxData
