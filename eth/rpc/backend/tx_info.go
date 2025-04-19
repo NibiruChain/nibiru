@@ -74,12 +74,12 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
-		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", blockRes.Height, "error", err)
+		b.logger.Error("failed to fetch Base Fee from pruned block. Check node prunning configuration", "height", blockRes.Height, "error", err)
 	}
 
 	height := uint64(res.Height)    //#nosec G701 -- checked for int overflow already
 	index := uint64(res.EthTxIndex) //#nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsg(
+	return rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
@@ -108,7 +108,7 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 
 		if msg.Hash == hexTx {
 			// use zero block values since it's not included in a block yet
-			rpctx, err := rpc.NewRPCTxFromMsg(
+			rpctx, err := rpc.NewRPCTxFromMsgEthTx(
 				msg,
 				gethcommon.Hash{},
 				uint64(0),
@@ -442,12 +442,12 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 	baseFeeWei, err := b.BaseFeeWei(blockRes)
 	if err != nil {
 		// handle the error for pruned node.
-		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", block.Block.Height, "error", err)
+		b.logger.Error("failed to fetch Base Fee from pruned block. Check node prunning configuration", "height", block.Block.Height, "error", err)
 	}
 
 	height := uint64(block.Block.Height) // #nosec G701 -- checked for int overflow already
 	index := uint64(idx)                 // #nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsg(
+	return rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.Block.Hash()),
 		height,

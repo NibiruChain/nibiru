@@ -132,7 +132,10 @@ func (s *BackendSuite) SetupSuite() {
 	}
 
 	for _, tx := range s.SuccessfulTxs {
-		s.T().Logf("SuccessfulTx{ BlockNumber: %s, BlockHash: %s, TxHash: %s }", tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex())
+		s.T().Logf(
+			"SuccessfulTx{ BlockNumber: %s, BlockHash: %s, TxHash: %s }",
+			tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex(),
+		)
 	}
 }
 
