@@ -338,7 +338,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 
 	s.T().Log("eth_call")
 	{
-		fungibleTokenContract := embeds.SmartContract_ERC20Minter
+		fungibleTokenContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 		jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 			From: &deps.Sender.EthAddr,
 			Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),

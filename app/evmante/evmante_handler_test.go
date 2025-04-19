@@ -29,7 +29,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			name: "happy: signed tx, sufficient funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balanceMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
-				sdb.AddBalance(
+				sdb.AddBalanceSigned(
 					deps.Sender.EthAddr,
 					evm.NativeToWei(balanceMicronibi),
 				)
@@ -51,7 +51,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
-				txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
@@ -77,7 +77,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						AccountKeeper:          deps.App.AccountKeeper,
 						BankKeeper:             deps.App.BankKeeper,
 						FeegrantKeeper:         deps.App.FeeGrantKeeper,
-						SignModeHandler:        deps.EncCfg.TxConfig.SignModeHandler(),
+						SignModeHandler:        deps.App.GetTxConfig().SignModeHandler(),
 						SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 						ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 					},

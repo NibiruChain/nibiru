@@ -87,7 +87,7 @@ func mergeOracleParams(msg *types.MsgEditOracleParams, oracleParams types.Params
 		oracleParams.RewardBand = *msg.Params.RewardBand
 	}
 
-	if msg.Params.Whitelist != nil && len(msg.Params.Whitelist) != 0 {
+	if len(msg.Params.Whitelist) != 0 {
 		oracleParams.Whitelist = msg.Params.Whitelist
 	}
 

@@ -477,7 +477,7 @@ func (s *Suite) TestQueryEthCall() {
 		{
 			name: "happy: eth call to deploy erc20 contract",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract := embeds.SmartContract_ERC20Minter
+				fungibleTokenContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
@@ -808,6 +808,7 @@ func (s *Suite) TestTraceTx() {
 			s.Assert().NoError(err)
 			s.Assert().NotNil(gotResp)
 			s.Assert().NotNil(gotResp.Data)
+			s.Require().True(json.Valid(gotResp.Data), "expected json.RawMessage")
 
 			// // Replace spaces in want resp
 			// re := regexp.MustCompile(`[\s\n\r]+`)

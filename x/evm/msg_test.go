@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/encoding"
@@ -53,7 +52,7 @@ func (s *MsgsSuite) SetupTest() {
 	s.chainID = big.NewInt(1)
 	s.hundredBigInt = big.NewInt(100)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeConfig()
 	s.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 }
 
@@ -828,7 +827,9 @@ func (s *MsgsSuite) TestTxEncoding() {
 		signer    = gethcore.NewEIP2930Signer(common.Big1)
 		addr      = common.HexToAddress("0x0000000000000000000000000000000000000001")
 		recipient = common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87")
-		accesses  = gethcore.AccessList{{Address: addr, StorageKeys: []common.Hash{{0}}}}
+		accesses  = gethcore.AccessList{
+			gethcore.AccessTuple{Address: addr, StorageKeys: []common.Hash{{0}}},
+		}
 	)
 	for i := uint64(0); i < 500; i++ {
 		var txdata gethcore.TxData
@@ -927,7 +928,7 @@ func (s *MsgsSuite) TestUnwrapEthererumMsg() {
 	_, err := evm.UnwrapEthereumMsg(nil, common.Hash{})
 	s.NotNil(err)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeConfig()
 	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 	builder, _ := clientCtx.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 

@@ -10,7 +10,10 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -40,17 +43,26 @@ func (p precompileFunToken) ABI() *gethabi.ABI {
 }
 
 const (
-	FunTokenMethod_sendToBank  PrecompileMethod = "sendToBank"
-	FunTokenMethod_balance     PrecompileMethod = "balance"
-	FunTokenMethod_bankBalance PrecompileMethod = "bankBalance"
-	FunTokenMethod_whoAmI      PrecompileMethod = "whoAmI"
-	FunTokenMethod_sendToEvm   PrecompileMethod = "sendToEvm"
-	FunTokenMethod_bankMsgSend PrecompileMethod = "bankMsgSend"
+	FunTokenMethod_sendToBank      PrecompileMethod = "sendToBank"
+	FunTokenMethod_balance         PrecompileMethod = "balance"
+	FunTokenMethod_bankBalance     PrecompileMethod = "bankBalance"
+	FunTokenMethod_whoAmI          PrecompileMethod = "whoAmI"
+	FunTokenMethod_sendToEvm       PrecompileMethod = "sendToEvm"
+	FunTokenMethod_bankMsgSend     PrecompileMethod = "bankMsgSend"
+	FunTokenMethod_getErc20Address PrecompileMethod = "getErc20Address"
 )
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
-	evm *vm.EVM, contract *vm.Contract, readonly bool,
+	evm *vm.EVM,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
+	contract *vm.Contract,
+	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
+	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
@@ -68,7 +80,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToBank(startResult, trueCaller, readonly, evm)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evm)
 	case FunTokenMethod_bankBalance:
@@ -76,9 +88,11 @@ func (p precompileFunToken) Run(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evm)
 	case FunTokenMethod_bankMsgSend:
-		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
+		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
+	case FunTokenMethod_getErc20Address:
+		bz, err = p.getErc20Address(startResult, contract)
 	default:
 		// Note that this code path should be impossible to reach since
 		// "[decomposeInput]" parses methods directly from the ABI.
@@ -86,7 +100,11 @@ func (p precompileFunToken) Run(
 		return
 	}
 	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +123,7 @@ func (p precompileFunToken) Run(
 	return bz, err
 }
 
-func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileFunToken{
 		evmKeeper: keepers.EvmKeeper,
 	}
@@ -177,7 +195,10 @@ func (p precompileFunToken) sendToBank(
 		evmObj,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
+		return nil, fmt.Errorf(
+			"error in ERC20.transfer from caller to EVM account: %w: from %s, erc20 %s, amount: %s",
+			err, caller, erc20, amount,
+		)
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
@@ -221,11 +242,6 @@ func (p precompileFunToken) sendToBank(
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
 	}
-
-	// TODO: UD-DEBUG: feat: Emit EVM events
-	// https://github.com/NibiruChain/nibiru/issues/2121
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
 
 	return method.Outputs.Pack(gotAmount)
 }
@@ -477,14 +493,12 @@ func (p precompileFunToken) whoAmI(
 	if err := assertContractQuery(contract); err != nil {
 		return bz, err
 	}
-
 	addrEth, addrBech32, err := p.parseArgsWhoAmI(args)
 	if err != nil {
 		err = ErrInvalidArgs(err)
 		return
 	}
-
-	return method.Outputs.Pack([]any{
+	bz, err = method.Outputs.Pack([]any{
 		struct {
 			EthAddr    gethcommon.Address `json:"ethAddr"`
 			Bech32Addr string             `json:"bech32Addr"`
@@ -493,6 +507,7 @@ func (p precompileFunToken) whoAmI(
 			Bech32Addr: addrBech32.String(),
 		},
 	}...)
+	return bz, err
 }
 
 func (p precompileFunToken) parseArgsWhoAmI(args []any) (
@@ -568,11 +583,11 @@ func (p precompileFunToken) sendToEvm(
 
 	// 1) remove (burn or escrow) the bank coin from caller
 	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(amount))
-	senderBech32 := eth.EthAddrToNibiruAddr(caller)
+	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
 	// bank send from account => module
 	if err := p.evmKeeper.Bank.SendCoinsFromAccountToModule(
-		ctx, senderBech32, evm.ModuleName, sdk.NewCoins(coinToSend),
+		ctx, callerBech32, evm.ModuleName, sdk.NewCoins(coinToSend),
 	); err != nil {
 		return nil, fmt.Errorf("failed to send coins to module: %w", err)
 	}
@@ -722,6 +737,91 @@ func (p precompileFunToken) bankMsgSend(
 	}
 	// Return bool success
 	return method.Outputs.Pack(true)
+}
+
+// getErc20Address implements "IFunToken.getErc20Address"
+// It looks up the FunToken mapping by the bank denomination and returns the associated ERC20 address.
+//
+//	```solidity
+//	function getErc20Address(string memory bankDenom) external view returns (address erc20Address);
+//	```
+func (p precompileFunToken) getErc20Address(
+	start OnRunStartResult,
+	contract *vm.Contract, // Needed for assertContractQuery
+) (bz []byte, err error) {
+	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	defer func() {
+		if err != nil {
+			err = ErrMethodCalled(method, err)
+		}
+	}()
+	// Ensure this is called in a read-only context (like view or pure)
+	if err := assertContractQuery(contract); err != nil {
+		return bz, err
+	}
+
+	bankDenom, err := p.parseArgsGetErc20Address(args)
+	if err != nil {
+		err = ErrInvalidArgs(err)
+		return
+	}
+
+	// Perform lookup using the BankDenom index
+	iterator := p.evmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)
+	mappings := p.evmKeeper.FunTokens.Collect(ctx, iterator)
+
+	var erc20ResultAddress gethcommon.Address // Default to address(0)
+
+	if len(mappings) == 1 {
+		erc20ResultAddress = mappings[0].Erc20Addr.Address
+	} else if len(mappings) > 1 {
+		err = fmt.Errorf(
+			"multiple FunToken mappings found for bank denom \"%s\": %d",
+			bankDenom, len(mappings),
+		)
+		return
+	} else {
+		// No mapping found, erc20ResultAddress remains address(0)
+		err = fmt.Errorf(
+			"no FunToken mapping found for bank denom \"%s\"", bankDenom,
+		)
+		return
+	}
+
+	// Pack the result (either the found address or address(0))
+	return method.Outputs.Pack(erc20ResultAddress)
+}
+
+// parseArgsGetErc20Address parses the arguments for the getErc20Address method.
+// Expected arguments: (string memory bankDenom)
+func (p precompileFunToken) parseArgsGetErc20Address(args []any) (
+	bankDenom string,
+	err error,
+) {
+	if e := assertNumArgs(args, 1); e != nil {
+		err = e
+		return
+	}
+
+	argIdx := 0
+	bankDenom, ok := args[argIdx].(string)
+	if !ok {
+		err = ErrArgTypeValidation("string bankDenom", args[argIdx])
+		return
+	}
+
+	// Validate the bank denomination format using Cosmos SDK validation
+	if err = sdk.ValidateDenom(bankDenom); err != nil {
+		// maybe it's a tf denom
+		tfDenom := tftypes.DenomStr(bankDenom)
+
+		if err = tfDenom.Validate(); err != nil {
+			err = fmt.Errorf("invalid bank denomination format: %w", err)
+			return
+		}
+	}
+
+	return bankDenom, nil
 }
 
 func parseArgsBankMsgSend(args []any) (toStr, denom string, amount *big.Int, err error) {

@@ -38,17 +38,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
+
+- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
+- [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
+- [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
+- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update
+to geth v1.14 with tracing updates and new StateDB methods. 
+   - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid
+   incompatibilities stemming from functionality specific to Ethereum's consesnus
+   setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
+   - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
+   dependency and leverage new generics features added in Go 1.23+.
+
+## v2.3.0
+
+- [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
+- [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
+- [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - refactor(ci): separate builds by platform and without goreleaser
+- [#2251](https://github.com/NibiruChain/nibiru/pull/2251) - feat(evm): add ERC20 contract with metadata updates
+- [#2249](https://github.com/NibiruChain/nibiru/pull/2249) - fix(evm): resetting gas meter for afterOp in bank extension
+- [#2257](https://github.com/NibiruChain/nibiru/pull/2257) - fix: simulation tests by register interfaces for vesting and use correct app keys field
+- [#2260](https://github.com/NibiruChain/nibiru/pull/2260) - feat(evm): add getErc20Address method to IFunToken
+- [#2268](https://github.com/NibiruChain/nibiru/pull/2268) - fix(evm): gas limit for erc20 deploy
+- [#2240](https://github.com/NibiruChain/nibiru/pull/2240) - feat: add depinject wiring and wire `x/auth` module
+- [#2246](https://github.com/NibiruChain/nibiru/pull/2246) - feat: add depinject wiring for x/bank module
+- [#2248](https://github.com/NibiruChain/nibiru/pull/2248) - feat: add depinject wiring for x/staking module
+- [#2253](https://github.com/NibiruChain/nibiru/pull/2253) - feat: add depinject wiring for x/distribution module
+- [#2254](https://github.com/NibiruChain/nibiru/pull/2254) - feat: add depinject wiring for x/crisis module
+- [#2259](https://github.com/NibiruChain/nibiru/pull/2259) - feat: add depinject wiring for all sdk modules
+- [#2261](https://github.com/NibiruChain/nibiru/pull/2261) - feat: add depinject wiring for x/sudo module
+- [#2262](https://github.com/NibiruChain/nibiru/pull/2262) - feat: add depinject wiring for x/oracle module
+- [#2263](https://github.com/NibiruChain/nibiru/pull/2263) - feat: add depinject wiring for x/epochs module
+- [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: add depinject wiring for x/inflation module
+- [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: add depinject wiring for x/evm module
+- [#2272](https://github.com/NibiruChain/nibiru/pull/2272) - feat: add depinject wiring for x/tokenfactory module
+
+## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
 - [#2222](https://github.com/NibiruChain/nibiru/pull/2222) - fix(evm): evm indexer proper stopping of the indexer service
 - [#2224](https://github.com/NibiruChain/nibiru/pull/2224) - fix(evm): suppressing error on missing block bloom event
 - [#2238](https://github.com/NibiruChain/nibiru/pull/2238) - feat(evm-embeds): Add WNIBI.sol implementatino to contracts and related TypeScript and Solidity package updates for npm.
 - [#2239](https://github.com/NibiruChain/nibiru/pull/2239) - feat(funtoken): update `FunToken.sendToBank` to accept EVM and nibi addresses.
 - [#2241](https://github.com/NibiruChain/nibiru/pull/2241) - fix(evm): evm-tx-index cli fix to exclude most latest block
+- [#2236](https://github.com/NibiruChain/nibiru/pull/2236) - chore: make function comment match function name and fix linter errors
+- [#2243](https://github.com/NibiruChain/nibiru/pull/2243) - fix(deps): bump Go to v1.24, similar to [#1698](https://github.com/NibiruChain/nibiru/pull/1698)
+- [#2250](https://github.com/NibiruChain/nibiru/pull/2250) - fix(upgrades): add missing 2.2.0 upgrade handler
 
 ### Dependencies
 
 - Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
+- Bump `golang.org/x/net` from 0.33.0 to 0.37.0 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- chore: upadte golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- Bump `[golang.org/x/net](https://github.com/golang/net)` from 0.33.0 to 0.37.0. ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- Bump `github.com/golang/glog` from 1.2.0 to 1.2.4 ([#2182](https://github.com/NibiruChain/nibiru/pull/2182))
 
 ## [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0) - 2025-02-25
 
@@ -57,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2206](https://github.com/NibiruChain/nibiru/pull/2206) - ci(chaosnet): fix docker image build
 - [#2207](https://github.com/NibiruChain/nibiru/pull/2207) - chore(ci): add cache for chaosnet builds
 - [#2209](https://github.com/NibiruChain/nibiru/pull/2209) - refator(ci):
-Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
+  Simplify GitHub actions based on conditional paths, removing the need for files like ".github/workflows/skip-unit-tests.yml".
 - [#2211](https://github.com/NibiruChain/nibiru/pull/2211) - ci(chaosnet): avoid building on cache injected directories
 - [#2212](https://github.com/NibiruChain/nibiru/pull/2212) - fix(evm): proper eth tx logs emission for funtoken operations
 - [#2213](https://github.com/NibiruChain/nibiru/pull/2213) - chore(build): include lib versions on cache
@@ -98,14 +141,14 @@ Simplify GitHub actions based on conditional paths, removing the need for files 
 - [#2145](https://github.com/NibiruChain/nibiru/pull/2145) - chore(token-registry): add xNIBI Astrovault LST to registry
 - [#2147](https://github.com/NibiruChain/nibiru/pull/2147) - fix(simapp): manually add x/vesting Cosmos-SDK module types to the codec in simulation tests since they are expected by default
 - [#2149](https://github.com/NibiruChain/nibiru/pull/2149) - feat(evm-oracle):
-add Solidity contract that we can use to expose the Nibiru Oracle in the
-ChainLink interface. Publish all precompiled contracts and ABIs on npm under
-the `@nibiruchain/solidity` package.
+  add Solidity contract that we can use to expose the Nibiru Oracle in the
+  ChainLink interface. Publish all precompiled contracts and ABIs on npm under
+  the `@nibiruchain/solidity` package.
 - [#2151](https://github.com/NibiruChain/nibiru/pull/2151) - feat(evm): randao support for evm
 - [#2152](https://github.com/NibiruChain/nibiru/pull/2152) - fix(precompile): consume gas for precompile calls regardless of error
 - [#2154](https://github.com/NibiruChain/nibiru/pull/2154) - fix(evm):
-JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
-needed to include double quotes around the hexadecimal string.
+  JSON encoding for the `EIP55Addr` struct was not following the Go conventions and
+  needed to include double quotes around the hexadecimal string.
 - [#2156](https://github.com/NibiruChain/nibiru/pull/2156) - test(evm-e2e): add E2E test using the Nibiru Oracle's ChainLink impl
 - [#2157](https://github.com/NibiruChain/nibiru/pull/2157) - fix(evm): Fix unit inconsistency related to AuthInfo.Fee and txData.Fee using effective fee
 - [#2159](https://github.com/NibiruChain/nibiru/pull/2159) - chore(evm): Augment the Wasm msg handler so that wasm contracts cannot send MsgEthereumTx

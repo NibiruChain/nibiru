@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	core "github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
@@ -359,16 +360,17 @@ func NewEthTxMsgFromTxData(
 	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
 }
 
-var MOCK_GETH_MESSAGE = gethcore.NewMessage(
-	evm.EVM_MODULE_ADDRESS,
-	nil,
-	0,
-	big.NewInt(0),
-	0,
-	big.NewInt(0),
-	big.NewInt(0),
-	big.NewInt(0),
-	[]byte{},
-	gethcore.AccessList{},
-	false,
-)
+var MOCK_GETH_MESSAGE = core.Message{
+	To:               nil,
+	From:             evm.EVM_MODULE_ADDRESS,
+	Nonce:            0,
+	Value:            evm.Big0, // amount
+	GasLimit:         0,
+	GasPrice:         evm.Big0,
+	GasFeeCap:        evm.Big0,
+	GasTipCap:        evm.Big0,
+	Data:             []byte{},
+	AccessList:       gethcore.AccessList{},
+	SkipNonceChecks:  false,
+	SkipFromEOACheck: false,
+}

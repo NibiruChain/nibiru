@@ -74,12 +74,6 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile str
 type GenesisState map[string]json.RawMessage
 
 // NewDefaultGenesisState generates the default state for the application.
-func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
-	gen := ModuleBasics.DefaultGenesis(cdc)
-
-	authGenesis := new(authtypes.GenesisState)
-	authtypes.DefaultGenesisState()
-	cdc.MustUnmarshalJSON(gen[authtypes.ModuleName], authGenesis)
-
-	return gen
-}
+// func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
+// 	return ModuleBasics.DefaultGenesis(cdc)
+// }
