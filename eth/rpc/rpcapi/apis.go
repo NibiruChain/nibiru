@@ -2,6 +2,11 @@
 package rpcapi
 
 import (
+	"context"
+	"fmt"
+	"reflect"
+	"unicode"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 
@@ -133,4 +138,88 @@ func GetRPCAPIs(ctx *server.Context,
 	}
 
 	return apis
+}
+
+var (
+	ctxType          = reflect.TypeOf((*context.Context)(nil)).Elem()
+	errType          = reflect.TypeOf((*error)(nil)).Elem()
+	subscriptionType = reflect.TypeOf(Subscription{})
+)
+
+type MethodInfo struct {
+	TrueName       string
+	GoFunc         reflect.Method
+	IsSubscription bool
+}
+
+// ParseAPIMethods returns all method names exposed by api, e.g. "eth_gasPrice"
+func ParseAPIMethods(api rpc.API) map[string]MethodInfo {
+	svcType := reflect.TypeOf(api.Service)
+	methods := make(map[string]MethodInfo)
+
+	for i := range svcType.NumMethod() {
+		m := svcType.Method(i)
+		if m.PkgPath != "" {
+			continue // unexported
+		}
+		sig := m.Type
+
+		// 1) Detect optional context.Context arg
+		// Args must be: Optional([context.Context]) + zero or more args
+		hasCtx := sig.NumIn() > 1 && sig.In(1) == ctxType
+
+		// 2) Validate outputs: either (error), or (T, error)
+		nOut := sig.NumOut()
+		switch nOut {
+		case 1:
+			if !sig.Out(0).Implements(errType) {
+				continue
+			}
+		case 2:
+			if !sig.Out(1).Implements(errType) {
+				continue
+			}
+		default:
+			continue
+		}
+
+		// 3) detect subscriptions: ctx + (Subscription, error)
+		isSub := false
+		if hasCtx && nOut == 2 {
+			t0 := sig.Out(0)
+			// strip pointer
+			for t0.Kind() == reflect.Ptr {
+				t0 = t0.Elem()
+			}
+			if t0 == subscriptionType {
+				isSub = true
+			}
+		}
+
+		// 3) name the RPC method by lower‑casing the first rune
+		trueName := rpcMethodName(api.Namespace, m.Name)
+		methods[trueName] = MethodInfo{
+			TrueName:       trueName,
+			GoFunc:         m,
+			IsSubscription: isSub,
+		}
+	}
+
+	return methods
+}
+
+// Example: "TransactionByHash" -> "transactionByHash"
+func rpcMethodName(namespace, funcName string) string {
+	return fmt.Sprintf("%v_%v", namespace, lowerFirst(funcName))
+}
+
+// lowerFirst returns lowercases the first letter of the input. For context,
+// service methods are in the form:
+// fmt.Sprintf("%v_%v", namespace, lowerFirst(methodName))
+func lowerFirst(s string) string {
+	r := []rune(s)
+	if len(r) > 0 {
+		r[0] = unicode.ToLower(r[0])
+	}
+	return string(r)
 }

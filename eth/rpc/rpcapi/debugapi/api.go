@@ -3,7 +3,10 @@ package debugapi
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"runtime" // #nosec G702
@@ -23,6 +26,8 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	getheth "github.com/ethereum/go-ethereum/eth"
+	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/rlp"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -344,4 +349,127 @@ func (a *DebugAPI) PrintBlock(number uint64) (string, error) {
 func (a *DebugAPI) IntermediateRoots(hash common.Hash, _ *evm.TraceConfig) ([]common.Hash, error) {
 	a.logger.Debug("debug_intermediateRoots", "hash", hash)
 	return ([]common.Hash)(nil), nil
+}
+
+// GetBadBlocks returns a list of the last 'bad blocks' that the client has seen
+// on the network and returns them as a JSON list of block hashes.
+func (a *DebugAPI) GetBadBlocks(ctx context.Context) ([]*getheth.BadBlockArgs, error) {
+	a.logger.Debug("debug_getBadBlocks")
+	return []*getheth.BadBlockArgs{}, nil
+}
+
+func ErrNotImplemented(method string) error {
+	return fmt.Errorf("method is not implemented: %v", method)
+}
+
+// GetRawBlock returns an RLP-encoded block
+func (a *DebugAPI) GetRawBlock(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (hexutil.Bytes, error) {
+	fnName := "debug_getRawBlock"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// GetRawReceipts returns an array of EIP-2718 binary-encoded receipts
+func (a *DebugAPI) GetRawReceipts(
+	ctx context.Context,
+	blockNrOrHash rpc.BlockNumberOrHash,
+) ([]hexutil.Bytes, error) {
+	fnName := "debug_getRawReceipts"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// GetRawHeader returns an RLP-encoded block header
+func (a *DebugAPI) GetRawHeader(
+	ctx context.Context,
+	blockNrOrHash rpc.BlockNumberOrHash,
+) (hexutil.Bytes, error) {
+	fnName := "debug_getRawHeader"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// GetRawTransaction returns the bytes of the transaction for the given hash.
+func (a *DebugAPI) GetRawTransaction(
+	ctx context.Context,
+	hash common.Hash,
+) (hexutil.Bytes, error) {
+	fnName := "debug_getRawTransaction"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// StandardTraceBadBlockToFile dumps the structured logs created during the
+// execution of EVM against a block pulled from the pool of bad ones to the
+// local file system and returns a list of files to the caller.
+func (a *DebugAPI) StandardTraceBadBlockToFile(
+	ctx context.Context,
+	hash common.Hash,
+	config *tracers.StdTraceConfig,
+) ([]string, error) {
+	fnName := "debug_standardTraceBadBlockToFile"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// StandardTraceBlockToFile dumps the structured logs created during the
+// execution of EVM to the local file system and returns a list of files
+// to the caller.
+func (a *DebugAPI) StandardTraceBlockToFile(
+	ctx context.Context,
+	hash common.Hash,
+	config *tracers.StdTraceConfig,
+) ([]string, error) {
+	fnName := "debug_standardTraceBlockToFile"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// TraceBadBlock returns the structured logs created during the execution of
+// EVM against a block pulled from the pool of bad ones and returns them as a JSON
+// object.
+func (a *DebugAPI) TraceBadBlock(
+	ctx context.Context,
+	hash common.Hash,
+	config *tracers.TraceConfig,
+) ([]json.RawMessage, error) {
+	fnName := "debug_traceBadBlock"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// TraceBlock returns the structured logs created during the execution of EVM
+// and returns them as a JSON object.
+func (a *DebugAPI) TraceBlock(
+	ctx context.Context,
+	blob hexutil.Bytes,
+	config *tracers.TraceConfig,
+) ([]json.RawMessage, error) {
+	fnName := "debug_traceBlock"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// TraceBlockFromFile returns the structured logs created during the execution of
+// EVM and returns them as a JSON object.
+func (a *DebugAPI) TraceBlockFromFile(
+	ctx context.Context,
+	file string,
+	config *tracers.TraceConfig,
+) ([]json.RawMessage, error) {
+	fnName := "debug_traceBlockFromFile"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
+}
+
+// TraceChain returns the structured logs created during the execution of EVM
+// between two blocks (excluding start) and returns them as a JSON object.
+func (a *DebugAPI) TraceChain(
+	ctx context.Context,
+	start, end rpc.BlockNumber,
+	config *tracers.TraceConfig,
+) (subscription any, err error) { // Fetch the block interval that we want to trace
+	fnName := "debug_traceChain"
+	a.logger.Debug(fnName)
+	return nil, ErrNotImplemented(fnName)
 }

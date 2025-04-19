@@ -148,13 +148,13 @@ func (e *EthAPI) BlockNumber() (hexutil.Uint64, error) {
 
 // GetBlockByNumber returns the block identified by number.
 func (e *EthAPI) GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]any, error) {
-	e.logger.Debug("eth_getBlockByNumber", "number", ethBlockNum, "full", fullTx)
+	e.logger.Debug("eth_getBlockByNumber", "blockNumber", ethBlockNum, "fullTx", fullTx)
 	return e.backend.GetBlockByNumber(ethBlockNum, fullTx)
 }
 
 // GetBlockByHash returns the block identified by hash.
 func (e *EthAPI) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, error) {
-	e.logger.Debug("eth_getBlockByHash", "hash", hash.Hex(), "full", fullTx)
+	e.logger.Debug("eth_getBlockByHash", "hash", hash.Hex(), "fullTx", fullTx)
 	return e.backend.GetBlockByHash(hash, fullTx)
 }
 
@@ -437,6 +437,7 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 func (e *EthAPI) FillTransaction(
 	args evm.JsonTxArgs,
 ) (*rpc.SignTransactionResult, error) {
+	e.logger.Debug("eth_fillTransaction")
 	// Set some sanity defaults and terminate on failure
 	args, err := e.backend.SetTxDefaults(args)
 	if err != nil {
@@ -476,7 +477,7 @@ func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 				break
 			}
 
-			rpctx, err := rpc.NewRPCTxFromMsg(
+			rpctx, err := rpc.NewRPCTxFromMsgEthTx(
 				ethMsg,
 				common.Hash{},
 				uint64(0),
