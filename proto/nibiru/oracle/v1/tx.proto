@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 import "nibiru/oracle/v1/oracle.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
@@ -117,7 +118,8 @@ message OracleParamsMsg {
   // received for a ballot to pass.
   string vote_threshold = 2 [
     (gogoproto.moretags) = "yaml:\"vote_threshold\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
   // RewardBand defines a maxium divergence that a price vote can have from the
@@ -130,7 +132,8 @@ message OracleParamsMsg {
   // deviation, the band is taken to be 1 standard deviation.a price
   string reward_band = 3 [
     (gogoproto.moretags) = "yaml:\"reward_band\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
   // The set of whitelisted markets, or asset pairs, for the module.
@@ -145,7 +148,8 @@ message OracleParamsMsg {
   // penalty for failing a voting period.
   string slash_fraction = 5 [
     (gogoproto.moretags) = "yaml:\"slash_fraction\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
   // SlashWindow returns the number of voting periods that specify a
@@ -158,7 +162,8 @@ message OracleParamsMsg {
   ];
   string min_valid_per_window = 7 [
     (gogoproto.moretags) = "yaml:\"min_valid_per_window\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
@@ -180,7 +185,8 @@ message OracleParamsMsg {
   // The validator fee ratio that is given to validators every epoch.
   string validator_fee_ratio = 10 [
     (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
 
