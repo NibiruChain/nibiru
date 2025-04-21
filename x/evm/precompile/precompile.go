@@ -39,22 +39,25 @@ import (
 //   - A map of Ethereum addresses to PrecompiledContract implementations.
 func InitPrecompiles(
 	k keepers.PublicKeepers,
-) (precompiles map[gethcommon.Address]vm.PrecompiledContract) {
-	precompiles = make(map[gethcommon.Address]vm.PrecompiledContract)
-
-	// Default precompiles
-	for addr, pc := range vm.PrecompiledContractsBerlin {
-		precompiles[addr] = pc
-	}
-
+) {
 	// Custom precompiles
-	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) vm.PrecompiledContract{
+	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) NibiruCustomPrecompile{
 		PrecompileFunToken,
 		PrecompileWasm,
 		PrecompileOracle,
 	} {
 		pc := precompileSetupFn(k)
-		precompiles[pc.Address()] = pc
+		for _, precompileMap := range []map[gethcommon.Address]vm.PrecompiledContract{
+			vm.PrecompiledContractsHomestead,
+			vm.PrecompiledContractsByzantium,
+			vm.PrecompiledContractsIstanbul,
+			vm.PrecompiledContractsBerlin,
+			// Below precompiles omitted intentionally.
+			// vm.PrecompiledContractsCancun,
+			// vm.PrecompiledContractsBLS,
+		} {
+			precompileMap[pc.Address()] = pc
+		}
 	}
 
 	// TODO: feat(evm): implement precompiled contracts for ibc transfer
@@ -64,8 +67,11 @@ func InitPrecompiles(
 	// Note that liquid staked assets can be a useful alternative to adding a
 	// staking precompile.
 	// Check if there is sufficient demand for this.
+}
 
-	return precompiles
+type NibiruCustomPrecompile interface {
+	vm.PrecompiledContract
+	Address() gethcommon.Address
 }
 
 // methodById: Looks up an ABI method by the 4-byte id.

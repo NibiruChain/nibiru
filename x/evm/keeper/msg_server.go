@@ -14,10 +14,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -48,7 +50,9 @@ func (k *Keeper) EthereumTx(
 	evmCfg := k.GetEVMConfig(ctx)
 
 	// get the signer according to the chain rules from the config and block height
-	evmMsg, err := tx.AsMessage(gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei)
+	evmMsg, err := core.TransactionToMessage(
+		tx, gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert ethereum transaction as core message")
 	}
@@ -61,12 +65,11 @@ func (k *Keeper) EthereumTx(
 	defer func() {
 		k.Bank.StateDB = nil
 	}()
-	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	evmResp, err = k.ApplyEvmMsg(
 		ctx,
-		evmMsg,
+		*evmMsg,
 		evmObj,
-		nil,  /*tracer*/
 		true, /*commit*/
 		txConfig.TxHash,
 	)
@@ -82,15 +85,15 @@ func (k *Keeper) EthereumTx(
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
 	refundGas := uint64(0)
-	if evmMsg.Gas() > evmResp.GasUsed {
-		refundGas = evmMsg.Gas() - evmResp.GasUsed
+	if evmMsg.GasLimit > evmResp.GasUsed {
+		refundGas = evmMsg.GasLimit - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
-	if err = k.RefundGas(ctx, evmMsg.From(), refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From())
+	if err = k.RefundGas(ctx, evmMsg.From, refundGas, weiPerGas); err != nil {
+		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
 	}
 
-	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), evmMsg, evmResp)
+	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), *evmMsg, evmResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error emitting ethereum tx events")
 	}
@@ -117,9 +120,9 @@ func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
 	evmCfg statedb.EVMConfig,
-	tracer vm.EVMLogger,
+	tracer *tracing.Hooks,
 	stateDB vm.StateDB,
-) *vm.EVM {
+) (evmObj *vm.EVM) {
 	pseudoRandomBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(pseudoRandomBytes, uint64(ctx.BlockHeader().Time.UnixNano()))
 	pseudoRandom := crypto.Keccak256Hash(append(pseudoRandomBytes, ctx.BlockHeader().LastCommitHash...))
@@ -131,20 +134,21 @@ func (k *Keeper) NewEVM(
 		Coinbase:    evmCfg.BlockCoinbase,
 		GasLimit:    eth.BlockGasLimit(ctx),
 		BlockNumber: big.NewInt(ctx.BlockHeight()),
-		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
+		Time:        evm.ParseBlockTimeUnixU64(ctx),
 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
 		BaseFee:     evmCfg.BaseFeeWei,
 		Random:      &pseudoRandom,
 	}
 
-	txCtx := core.NewEVMTxContext(msg)
+	txCtx := core.NewEVMTxContext(&msg)
 	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, evmCfg.ChainConfig)
+		// Return a default tracer (*[tracing.Hooks]) based on current keeper state
+		tracer = evm.NewTracer(k.tracer, msg, evmCfg.ChainConfig, ctx.BlockHeight())
 	}
 	vmConfig := k.VMConfig(ctx, &evmCfg, tracer)
-	theEvm := vm.NewEVM(blockCtx, txCtx, stateDB, evmCfg.ChainConfig, vmConfig)
-	theEvm.WithPrecompiles(k.precompiles.InternalData(), k.precompiles.Keys())
-	return theEvm
+	evmObj = vm.NewEVM(blockCtx, txCtx, stateDB, evmCfg.ChainConfig, vmConfig)
+	evmObj.AccessEvents = state.NewAccessEvents(nil) // prevents nil pointers on access
+	return evmObj
 }
 
 // GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
@@ -255,26 +259,61 @@ func (k *Keeper) ApplyEvmMsg(
 	ctx sdk.Context,
 	msg core.Message,
 	evmObj *vm.EVM,
-	tracer vm.EVMLogger,
 	commit bool,
 	txHash gethcommon.Hash,
-) (resp *evm.MsgEthereumTxResponse, err error) {
-	gasRemaining := msg.Gas()
+) (evmResp *evm.MsgEthereumTxResponse, err error) {
+	var (
+		contractCreation = msg.To == nil
+		rules            = evmObj.ChainConfig().Rules(
+			big.NewInt(ctx.BlockHeight()), false, evm.ParseBlockTimeUnixU64(ctx),
+		)
+		// gasRemaining represents a running tally of remaining gas
+		// available for EVM execution. Gas remaining starts starts at
+		// the [core.Message].GasLimit and is progressively reduced by:
+		//
+		// 1. Intrinsic gas costs (base transaction fees, data payload costs)
+		// 2. Actual EVM operation execution costs
+		// 3. Potential gas refunds
+		//
+		// It determines how much computational work can be performed before the transaction
+		// runs out of gas, with unused gas potentially being refunded to the sender.
+		gasRemaining = msg.GasLimit
+		tracer       = evmObj.Config.Tracer
+		evmStateDB   = evmObj.StateDB.(*statedb.StateDB) // retains doc comments
+	)
 
-	// Allow the tracer captures the tx level events, mainly the gas consumption.
-	vmCfg := evmObj.Config
-	if vmCfg.Debug {
-		vmCfg.Tracer.CaptureTxStart(gasRemaining)
-		defer func() {
-			vmCfg.Tracer.CaptureTxEnd(gasRemaining)
-		}()
+	// Required: Allow the tracer to capture tx level events pertaining to gas consumption.
+	if tracer != nil {
+		// Formerly: evmObj.Config.Tracer.CaptureTxStart in geth v1.10
+		if tracer.OnTxStart != nil {
+			ethTx := gasRemainingTxPartial(msg.GasLimit)
+			tracer.OnTxStart(
+				evmObj.GetVMContext(),
+				ethTx,
+				msg.From,
+			)
+		}
+		// Formerly: evmObj.Config.Tracer.CaptureTxEnd in geth v1.10
+		if tracer.OnTxEnd != nil {
+			defer func() {
+				localEvmResp := new(evm.MsgEthereumTxResponse)
+				if evmResp != nil {
+					localEvmResp = evmResp
+				}
+				tracer.OnTxEnd(&gethcore.Receipt{
+					GasUsed: localEvmResp.GasUsed,
+					TxHash:  txHash,
+				}, err)
+			}()
+		}
 	}
 
-	contractCreation := msg.To() == nil
-
 	intrinsicGasCost, err := core.IntrinsicGas(
-		msg.Data(), msg.AccessList(),
-		contractCreation, true, true,
+		msg.Data, msg.AccessList,
+		contractCreation,
+		rules.IsHomestead,
+		rules.IsIstanbul,
+		rules.IsShanghai,
 	)
 	if err != nil {
 		// should have already been checked on Ante Handler
@@ -295,48 +334,66 @@ func (k *Keeper) ApplyEvmMsg(
 			gasRemaining, intrinsicGasCost,
 		)
 	}
+	if tracer != nil && tracer.OnGasChange != nil {
+		tracer.OnGasChange(
+			gasRemaining, gasRemaining-intrinsicGasCost, tracing.GasChangeTxIntrinsicGas)
+	}
 	gasRemaining -= intrinsicGasCost
+
+	if rules.IsEIP4762 {
+		evmObj.AccessEvents.AddTxOrigin(msg.From)
+		if dest := msg.To; dest != nil {
+			evmObj.AccessEvents.AddTxDestination(
+				*dest, msg.Value.Sign() != 0,
+			)
+		}
+	}
 
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
-	evmObj.StateDB.PrepareAccessList(
-		msg.From(),
-		msg.To(),
-		evmObj.ActivePrecompiles(params.Rules{}),
-		msg.AccessList(),
+	evmStateDB.Prepare(
+		rules,
+		msg.From,                // sender
+		evmObj.Context.Coinbase, // coinbase
+		msg.To,
+		evm.PRECOMPILE_ADDRS,
+		msg.AccessList, // accessList
 	)
 
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value())
+	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
 	if err != nil {
-		return nil, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value())
+		return nil, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
 	}
 
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.
 	// - increase sender's nonce by one no matter the result.
-	evmObj.StateDB.SetNonce(msg.From(), msg.Nonce())
+	evmStateDB.SetNonce(msg.From, msg.Nonce)
 
-	var returnBz []byte
-	var vmErr error
+	var (
+		returnBz []byte
+		// vmErr: VM errors do not affect consensus and therefore are not assigned to "err"
+		vmErr error
+	)
 	if contractCreation {
 		returnBz, _, gasRemaining, vmErr = evmObj.Create(
-			vm.AccountRef(msg.From()),
-			msg.Data(),
+			vm.AccountRef(msg.From),
+			msg.Data,
 			gasRemaining,
 			msgWei,
 		)
 	} else {
 		returnBz, gasRemaining, vmErr = evmObj.Call(
-			vm.AccountRef(msg.From()),
-			*msg.To(),
-			msg.Data(),
+			vm.AccountRef(msg.From),
+			*msg.To,
+			msg.Data,
 			gasRemaining,
 			msgWei,
 		)
 	}
 	// Increment nonce after processing the message
-	evmObj.StateDB.SetNonce(msg.From(), msg.Nonce()+1)
+	evmStateDB.SetNonce(msg.From, msg.Nonce+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
@@ -345,50 +402,63 @@ func (k *Keeper) ApplyEvmMsg(
 	}
 
 	// process gas refunds (we refund a portion of the unused gas)
-	gasUsed := msg.Gas() - gasRemaining
+	gasUsed := msg.GasLimit - gasRemaining
 	// please see https://eips.ethereum.org/EIPS/eip-3529 for why we do refunds
-	refundAmount := gasToRefund(evmObj.StateDB.GetRefund(), gasUsed)
+	refundAmount := gasToRefund(evmStateDB.GetRefund(), gasUsed)
 	gasRemaining += refundAmount
 	gasUsed -= refundAmount
 
-	evmResp := &evm.MsgEthereumTxResponse{
+	evmResp = &evm.MsgEthereumTxResponse{
 		GasUsed: gasUsed,
 		VmError: vmError,
 		Ret:     returnBz,
-		Logs:    evm.NewLogsFromEth(evmObj.StateDB.(*statedb.StateDB).Logs()),
+		Logs:    evm.NewLogsFromEth(evmStateDB.Logs()),
 		Hash:    txHash.Hex(),
 	}
 
-	if gasRemaining > msg.Gas() { // rare case of overflow
-		evmResp.GasUsed = msg.Gas() // cap the gas used to the original gas limit
-		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.Gas(), gasRemaining)
+	if gasRemaining > msg.GasLimit { // rare case of overflow
+		evmResp.GasUsed = msg.GasLimit // cap the gas used to the original gas limit
+		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.GasLimit, gasRemaining)
 	}
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
-		if err := evmObj.StateDB.(*statedb.StateDB).Commit(); err != nil {
+		if err := evmStateDB.Commit(); err != nil {
 			return evmResp, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
+		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
 
 	return evmResp, nil
 }
 
-func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
+func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
+	newWeiInt *uint256.Int, err error,
+) {
 	// if "weiValue" is nil, 0, or negative, early return
-	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
-		return weiInt, nil
+	cmpSign := weiInt.Cmp(big.NewInt(0))
+	if weiInt == nil {
+		return (*uint256.Int)(nil), nil
+	} else if cmpSign == 0 {
+		return uint256.NewInt(0), nil
+	} else if cmpSign < 0 {
+		return newWeiInt, fmt.Errorf("Wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
 	}
 
 	// err if weiInt is too small
 	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
 	if weiInt.Cmp(tenPow12) < 0 {
-		return weiInt, fmt.Errorf(
-			"wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
+		return newWeiInt, fmt.Errorf(
+			"Wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
 	}
 
 	// truncate to highest micronibi amount
-	newWeiInt = evm.NativeToWei(evm.WeiToNative(weiInt))
+	newWeiInt, overflowed := uint256.FromBig(
+		evm.NativeToWei(evm.WeiToNative(weiInt)),
+	)
+	if overflowed {
+		return newWeiInt, fmt.Errorf("Wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
+	}
 	return newWeiInt, nil
 }
 
@@ -513,19 +583,23 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	if err != nil {
 		return nil, err
 	}
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		Erc20GasLimitExecute,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		true,
-	)
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
+	}
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
@@ -626,19 +700,23 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	if err != nil {
 		return nil, err
 	}
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0),
-		Erc20GasLimitExecute,
-		big.NewInt(0),
-		big.NewInt(0),
-		big.NewInt(0),
-		contractInput,
-		gethcore.AccessList{},
-		true,
-	)
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
+	}
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	_, evmResp, err := k.ERC20().Transfer(
 		erc20Addr,
@@ -680,7 +758,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 	ctx sdk.Context,
 	recipient *gethcommon.Address,
 	txType uint8,
-	msg gethcore.Message,
+	msg core.Message,
 	evmResp *evm.MsgEthereumTxResponse,
 ) error {
 	// Typed event: eth.evm.v1.EventEthereumTx
@@ -708,7 +786,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.From().Hex()),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.From.Hex()),
 			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", txType)),
 		),
 	)
@@ -716,21 +794,21 @@ func (k *Keeper) EmitEthereumTxEvents(
 	// Emit typed events
 	if !evmResp.Failed() {
 		if recipient == nil { // contract creation
-			contractAddr := crypto.CreateAddress(msg.From(), msg.Nonce())
+			contractAddr := crypto.CreateAddress(msg.From, msg.Nonce)
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
-				Sender:       msg.From().Hex(),
+				Sender:       msg.From.Hex(),
 				ContractAddr: contractAddr.String(),
 			})
-		} else if len(msg.Data()) > 0 { // contract executed
+		} else if len(msg.Data) > 0 { // contract executed
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
-				Sender:       msg.From().Hex(),
-				ContractAddr: msg.To().String(),
+				Sender:       msg.From.Hex(),
+				ContractAddr: msg.To.String(),
 			})
-		} else if msg.Value().Cmp(big.NewInt(0)) > 0 { // evm transfer
+		} else if msg.Value.Cmp(big.NewInt(0)) > 0 { // evm transfer
 			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
-				Sender:    msg.From().Hex(),
-				Recipient: msg.To().Hex(),
-				Amount:    msg.Value().String(),
+				Sender:    msg.From.Hex(),
+				Recipient: msg.To.Hex(),
+				Amount:    msg.Value.String(),
 			})
 		}
 	}

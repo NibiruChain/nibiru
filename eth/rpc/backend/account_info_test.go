@@ -21,13 +21,13 @@ func (s *BackendSuite) TestGetCode() {
 		{
 			name:         "happy: valid contract address",
 			contractAddr: testContractAddress,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			codeFound:    true,
 		},
 		{
 			name:         "sad: not a contract address",
 			contractAddr: s.fundedAccEthAddr,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			codeFound:    false,
 		},
 	}
@@ -62,7 +62,7 @@ func (s *BackendSuite) TestGetProof() {
 			name:         "happy: balance of the contract deployer",
 			contractAddr: testContractAddress,
 			address:      s.fundedAccEthAddr,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,                        // _balances is the first slot in ERC20
 			wantValue:    "0xd3c21bcecceda1000000", // = 1000000 * (10**18), initial supply
 		},
@@ -70,7 +70,7 @@ func (s *BackendSuite) TestGetProof() {
 			name:         "sad: address which is not in contract storage",
 			contractAddr: s.fundedAccEthAddr,
 			address:      recipient,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,
 			wantValue:    "0x0",
 		},
@@ -104,7 +104,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 			name:         "happy: balance of the contract deployer",
 			contractAddr: testContractAddress,
 			address:      s.fundedAccEthAddr,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			// _balances is the first slot in ERC20
 			slot: 0,
 			// = 1000000 * (10**18), initial supply
@@ -114,7 +114,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 			name:         "sad: address which is not in contract storage",
 			contractAddr: s.fundedAccEthAddr,
 			address:      recipient,
-			blockNumber:  deployContractBlockNumber,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,
 			wantValue:    "0x0000000000000000000000000000000000000000000000000000000000000000",
 		},
@@ -145,7 +145,7 @@ func (s *BackendSuite) TestGetBalance() {
 		{
 			name:                "happy: funded account balance",
 			address:             s.fundedAccEthAddr,
-			blockNumber:         transferTxBlockNumber,
+			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: true,
 		},
 		{
@@ -157,13 +157,13 @@ func (s *BackendSuite) TestGetBalance() {
 		{
 			name:                "happy: recipient balance after transfer",
 			address:             recipient,
-			blockNumber:         transferTxBlockNumber,
+			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: true,
 		},
 		{
 			name:                "sad: not existing account",
 			address:             evmtest.NewEthPrivAcc().EthAddr,
-			blockNumber:         transferTxBlockNumber,
+			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: false,
 		},
 	}

@@ -37,7 +37,7 @@ func (vbt ValidateBasicTest) test() func(t *testing.T) {
 	}
 }
 
-// TestMsgMint_ValidateBasic: Tests if MsgCreateDenom is properly validated.
+// TestMsgCreateDenom_ValidateBasic: Tests if MsgCreateDenom is properly validated.
 func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 	addr := testutil.AccAddress().String()
 	for _, tc := range []ValidateBasicTest{
@@ -70,7 +70,7 @@ func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 	}
 }
 
-// TestMsgMint_ValidateBasic: Tests if MsgChangeAdmin is properly validated.
+// TestMsgChangeAdmin_ValidateBasic: Tests if MsgChangeAdmin is properly validated.
 func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 	sbf := testutil.AccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)

@@ -25,7 +25,11 @@ func (ctd CanTransferDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	ethCfg := evm.EthereumConfig(ctd.EVMKeeper.EthChainID(ctx))
-	signer := gethcore.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()))
+	signer := gethcore.MakeSigner(
+		ethCfg,
+		big.NewInt(ctx.BlockHeight()),
+		evm.ParseBlockTimeUnixU64(ctx),
+	)
 
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
@@ -57,25 +61,25 @@ func (ctd CanTransferDecorator) AnteHandle(
 			return ctx, errors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"gas fee cap (wei) less than block base fee (wei); (%s < %s)",
-				evmMsg.GasFeeCap(), baseFeeWeiPerGas,
+				evmMsg.GasFeeCap, baseFeeWeiPerGas,
 			)
 		}
 
 		// check that caller has enough balance to cover asset transfer for **topmost** call
 		// NOTE: here the gas consumed is from the context with the infinite gas meter
 
-		if evmMsg.Value().Sign() > 0 {
-			nibiruAddr := eth.EthAddrToNibiruAddr(evmMsg.From())
+		if evmMsg.Value.Sign() > 0 {
+			nibiruAddr := eth.EthAddrToNibiruAddr(evmMsg.From)
 			balanceNative := ctd.Bank.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
 			balanceWei := evm.NativeToWei(balanceNative)
 
-			if balanceWei.Cmp(evmMsg.Value()) < 0 {
+			if balanceWei.Cmp(evmMsg.Value) < 0 {
 				return ctx, errors.Wrapf(
 					sdkerrors.ErrInsufficientFunds,
 					"failed to transfer %s wei ( balance=%s )from address %s using the EVM block context transfer function",
-					evmMsg.Value(),
+					evmMsg.Value,
 					balanceWei,
-					evmMsg.From(),
+					evmMsg.From,
 				)
 			}
 		}

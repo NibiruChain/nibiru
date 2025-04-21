@@ -5,13 +5,13 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 )
 
 // BigIntMax returns max(x,y).
@@ -302,7 +302,7 @@ func (tx *DynamicFeeTx) EffectiveGasPriceWeiPerGas(baseFeeWei *big.Int) *big.Int
 	feeWithSpecifiedTip := new(big.Int).Add(tx.GasTipCap.BigInt(), baseFeeWei)
 
 	// Enforce base fee as the minimum [EffectiveGasPriceWei]:
-	rawEffectiveGasPrice := gethmath.BigMin(feeWithSpecifiedTip, tx.GasFeeCap.BigInt())
+	rawEffectiveGasPrice := nmath.BigMin(feeWithSpecifiedTip, tx.GasFeeCap.BigInt())
 	return BigIntMax(baseFeeWei, rawEffectiveGasPrice)
 }
 

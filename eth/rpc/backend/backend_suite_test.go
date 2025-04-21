@@ -43,16 +43,7 @@ var (
 	amountToSend = evm.NativeToWei(big.NewInt(1))
 )
 
-var (
-	transferTxBlockNumber rpc.BlockNumber
-	transferTxBlockHash   gethcommon.Hash
-	transferTxHash        gethcommon.Hash
-)
-
-var (
-	testContractAddress       gethcommon.Address
-	deployContractBlockNumber rpc.BlockNumber
-)
+var testContractAddress gethcommon.Address
 
 type BackendSuite struct {
 	suite.Suite
@@ -64,6 +55,7 @@ type BackendSuite struct {
 	fundedAccNibiAddr   sdk.AccAddress
 	backend             *backend.Backend
 	ethChainID          *big.Int
+	SuccessfulTxs       map[string]SuccessfulTx
 }
 
 func TestBackendSuite(t *testing.T) {
@@ -82,12 +74,15 @@ func (s *BackendSuite) SetupSuite() {
 	s.node = network.Validators[0]
 	s.ethChainID = appconst.GetEthChainID(s.node.ClientCtx.ChainID)
 	s.backend = s.node.EthRpcBackend
+	s.SuccessfulTxs = make(map[string]SuccessfulTx)
+	_, err = s.network.WaitForHeight(10)
+	s.NoError(err)
 
+	s.T().Log("Funding `s.fundedAccEthAddr`")
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
-
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 
 	txResp, err := testnetwork.FillWalletFromValidator(
@@ -96,23 +91,67 @@ func (s *BackendSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp.TxHash)
 	s.NoError(s.network.WaitForNextBlock())
+	s.T().Logf(
+		"s.fundedEthAccAddr: %s, funds: %s, s.node.Address: %s",
+		s.fundedAccEthAddr, funds, s.node.Address,
+	)
 
 	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
-	transferTxHash = s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
-	blockNumber, blockHash, _ := WaitForReceipt(s, transferTxHash)
-	s.Require().NotNil(blockNumber)
-	s.Require().NotNil(blockHash)
-	transferTxBlockNumber = rpc.NewBlockNumber(blockNumber)
-	transferTxBlockHash = *blockHash
+	transferTxHash := s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
+	{
+		blockNumber, blockHash, txReceipt := WaitForReceipt(s, transferTxHash)
+		s.NotNil(blockNumber)
+		s.NotNil(blockHash)
+		s.Require().NotNil(txReceipt)
+		s.Require().Equal(transferTxHash, txReceipt.TxHash)
+		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
+		s.SuccessfulTxs["transfer"] = SuccessfulTx{
+			BlockNumber:    blockNumber,
+			BlockHash:      blockHash,
+			Receipt:        txReceipt,
+			BlockNumberRpc: &blockNumberRpc,
+		}
+	}
 
 	// Deploy test erc20 contract
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
-	blockNumber, blockHash, _ = WaitForReceipt(s, deployContractTxHash)
-	s.Require().NotNil(blockNumber)
-	s.Require().NotNil(blockHash)
-	deployContractBlockNumber = rpc.NewBlockNumber(blockNumber)
+	{
+		blockNumber, blockHash, txReceipt := WaitForReceipt(s, deployContractTxHash)
+		s.NotNil(blockNumber)
+		s.NotNil(blockHash)
+		s.Require().NotNil(txReceipt)
+		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
+		s.SuccessfulTxs["deployContract"] = SuccessfulTx{
+			BlockNumber:    blockNumber,
+			BlockNumberRpc: &blockNumberRpc,
+			BlockHash:      blockHash,
+			Receipt:        txReceipt,
+		}
+	}
+
+	for _, tx := range s.SuccessfulTxs {
+		s.T().Logf(
+			"SuccessfulTx{ BlockNumber: %s, BlockHash: %s, TxHash: %s }",
+			tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex(),
+		)
+	}
+}
+
+func (s *BackendSuite) SuccessfulTxTransfer() SuccessfulTx {
+	return s.SuccessfulTxs["transfer"]
+}
+
+func (s *BackendSuite) SuccessfulTxDeployContract() SuccessfulTx {
+	return s.SuccessfulTxs["deployContract"]
+}
+
+type SuccessfulTx struct {
+	BlockNumber    *big.Int
+	BlockHash      *gethcommon.Hash
+	Receipt        *backend.TransactionReceipt
+	BlockNumberRpc *rpc.BlockNumber
 }
 
 // SendNibiViaEthTransfer sends nibi using the eth rpc backend
@@ -224,7 +263,7 @@ func (s *BackendSuite) broadcastSDKTx(sdkTx sdk.Tx) *sdk.TxResponse {
 }
 
 // buildContractCreationTx builds a contract creation transaction
-func (s *BackendSuite) buildContractCreationTx(nonce uint64, gasLimit uint64) gethcore.Transaction {
+func (s *BackendSuite) buildContractCreationTx(nonce uint64, gasLimit uint64) *gethcore.Transaction {
 	packedArgs, err := embeds.SmartContract_TestERC20.ABI.Pack("")
 	s.Require().NoError(err)
 	bytecodeForCall := append(embeds.SmartContract_TestERC20.Bytecode, packedArgs...)
@@ -240,7 +279,7 @@ func (s *BackendSuite) buildContractCreationTx(nonce uint64, gasLimit uint64) ge
 	signedTx, err := gethcore.SignNewTx(s.fundedAccPrivateKey, signer, creationTx)
 	s.Require().NoError(err)
 
-	return *signedTx
+	return signedTx
 }
 
 // buildContractCallTx builds a contract call transaction
@@ -248,7 +287,7 @@ func (s *BackendSuite) buildContractCallTx(
 	contractAddr gethcommon.Address,
 	nonce uint64,
 	gasLimit uint64,
-) gethcore.Transaction {
+) *gethcore.Transaction {
 	// recipient := crypto.CreateAddress(s.fundedAccEthAddr, 29381)
 	transferAmount := big.NewInt(100)
 
@@ -271,5 +310,5 @@ func (s *BackendSuite) buildContractCallTx(
 	signedTx, err := gethcore.SignNewTx(s.fundedAccPrivateKey, signer, transferTx)
 	s.Require().NoError(err)
 
-	return *signedTx
+	return signedTx
 }

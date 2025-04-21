@@ -11,7 +11,6 @@ issues:
 linters:
   enable:
     - whitespace
-    - misspell
     - goimports
 linters-settings:
   misspell:
@@ -20,5 +19,9 @@ linters-settings:
     # Put imports beginning with prefix after 3rd-party packages.
     # It's a comma-separated list of prefixes.
     local-prefixes: github.com/NibiruChain/nibiru
+  revive:
+    rules:
+      - name: exported
+        disabled: true
 severity:
   default-severity: error

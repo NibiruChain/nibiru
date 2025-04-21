@@ -4,7 +4,7 @@ package indexer
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -122,12 +122,12 @@ func (indexer *EVMTxIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.
 			ethTxIndex++
 
 			if err := saveTxResult(indexer.clientCtx.Codec, batch, txHash, &txResult); err != nil {
-				return errorsmod.Wrapf(err, "IndexBlock %d", height)
+				return sdkioerrors.Wrapf(err, "IndexBlock %d", height)
 			}
 		}
 	}
 	if err := batch.Write(); err != nil {
-		return errorsmod.Wrapf(err, "IndexBlock %d, write batch", block.Height)
+		return sdkioerrors.Wrapf(err, "IndexBlock %d, write batch", block.Height)
 	}
 	return nil
 }
@@ -146,14 +146,14 @@ func (indexer *EVMTxIndexer) FirstIndexedBlock() (int64, error) {
 func (indexer *EVMTxIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error) {
 	bz, err := indexer.db.Get(TxHashKey(hash))
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetByTxHash %s", hash.Hex())
+		return nil, sdkioerrors.Wrapf(err, "GetByTxHash %s", hash.Hex())
 	}
 	if len(bz) == 0 {
 		return nil, fmt.Errorf("tx not found, hash: %s", hash.Hex())
 	}
 	var txKey eth.TxResult
 	if err := indexer.clientCtx.Codec.Unmarshal(bz, &txKey); err != nil {
-		return nil, errorsmod.Wrapf(err, "GetByTxHash %s", hash.Hex())
+		return nil, sdkioerrors.Wrapf(err, "GetByTxHash %s", hash.Hex())
 	}
 	return &txKey, nil
 }
@@ -162,7 +162,7 @@ func (indexer *EVMTxIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error
 func (indexer *EVMTxIndexer) GetByBlockAndIndex(blockNumber int64, txIndex int32) (*eth.TxResult, error) {
 	bz, err := indexer.db.Get(TxIndexKey(blockNumber, txIndex))
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetByBlockAndIndex %d %d", blockNumber, txIndex)
+		return nil, sdkioerrors.Wrapf(err, "GetByBlockAndIndex %d %d", blockNumber, txIndex)
 	}
 	if len(bz) == 0 {
 		return nil, fmt.Errorf("tx not found, block: %d, eth-index: %d", blockNumber, txIndex)
@@ -186,7 +186,7 @@ func TxIndexKey(blockNumber int64, txIndex int32) []byte {
 func LoadLastBlock(db dbm.DB) (int64, error) {
 	it, err := db.ReverseIterator([]byte{KeyPrefixTxIndex}, []byte{KeyPrefixTxIndex + 1})
 	if err != nil {
-		return 0, errorsmod.Wrap(err, "LoadLastBlock")
+		return 0, sdkioerrors.Wrap(err, "LoadLastBlock")
 	}
 	defer it.Close()
 	if !it.Valid() {
@@ -199,7 +199,7 @@ func LoadLastBlock(db dbm.DB) (int64, error) {
 func LoadFirstBlock(db dbm.DB) (int64, error) {
 	it, err := db.Iterator([]byte{KeyPrefixTxIndex}, []byte{KeyPrefixTxIndex + 1})
 	if err != nil {
-		return 0, errorsmod.Wrap(err, "LoadFirstBlock")
+		return 0, sdkioerrors.Wrap(err, "LoadFirstBlock")
 	}
 	defer it.Close()
 	if !it.Valid() {
@@ -213,7 +213,7 @@ func (indexer *EVMTxIndexer) CloseDBAndExit() error {
 	indexer.logger.Info("Closing EVMTxIndexer DB")
 	err := indexer.db.Close()
 	if err != nil {
-		return errorsmod.Wrap(err, "CloseDBAndExit")
+		return sdkioerrors.Wrap(err, "CloseDBAndExit")
 	}
 	return nil
 }
@@ -235,10 +235,10 @@ func isEthTx(tx sdk.Tx) bool {
 func saveTxResult(codec codec.Codec, batch dbm.Batch, txHash common.Hash, txResult *eth.TxResult) error {
 	bz := codec.MustMarshal(txResult)
 	if err := batch.Set(TxHashKey(txHash), bz); err != nil {
-		return errorsmod.Wrap(err, "set tx-hash key")
+		return sdkioerrors.Wrap(err, "set tx-hash key")
 	}
 	if err := batch.Set(TxIndexKey(txResult.Height, txResult.EthTxIndex), txHash.Bytes()); err != nil {
-		return errorsmod.Wrap(err, "set tx-index key")
+		return sdkioerrors.Wrap(err, "set tx-index key")
 	}
 	return nil
 }

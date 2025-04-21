@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
-	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -17,7 +15,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/common/omap"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -42,12 +39,6 @@ type Keeper struct {
 	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
-
-	// precompiles is the set of active precompiled contracts used in the EVM.
-	// Precompiles are special, built-in contract interfaces that exist at
-	// predefined address and run custom logic outside of what is possible only
-	// in Solidity.
-	precompiles omap.SortedMap[gethcommon.Address, vm.PrecompiledContract]
 
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
@@ -113,13 +104,6 @@ func (k Keeper) BaseFeeWeiPerGas(_ sdk.Context) *big.Int {
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
-}
-
-// Tracer return a default vm.Tracer based on current keeper state
-func (k Keeper) Tracer(
-	ctx sdk.Context, msg core.Message, ethCfg *gethparams.ChainConfig,
-) vm.EVMLogger {
-	return evm.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
 }
 
 // HandleOutOfGasPanic gracefully captures "out of gas" panic and just sets the value to err

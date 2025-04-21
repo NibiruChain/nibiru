@@ -5,9 +5,9 @@ import (
 	math "math"
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const maxBitLen = 256
@@ -30,7 +30,7 @@ func IsValidInt256(i *big.Int) bool {
 // SafeInt64 checks for overflows while casting a uint64 to int64 value.
 func SafeInt64(value uint64) (int64, error) {
 	if value > uint64(math.MaxInt64) {
-		return 0, errorsmod.Wrapf(errortypes.ErrInvalidHeight, "uint64 value %v cannot exceed %v", value, int64(math.MaxInt64))
+		return 0, sdkioerrors.Wrapf(sdkerrors.ErrInvalidHeight, "uint64 value %v cannot exceed %v", value, int64(math.MaxInt64))
 	}
 
 	return int64(value), nil // #nosec G701 -- checked for int overflow already

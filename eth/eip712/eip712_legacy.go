@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
@@ -41,7 +41,7 @@ func LegacyWrapTxToTypedData(
 	txData := make(map[string]any)
 
 	if err := json.Unmarshal(data, &txData); err != nil {
-		return apitypes.TypedData{}, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, "failed to JSON unmarshal data")
+		return apitypes.TypedData{}, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "failed to JSON unmarshal data")
 	}
 
 	domain := apitypes.TypedDataDomain{
@@ -60,7 +60,7 @@ func LegacyWrapTxToTypedData(
 	if feeDelegation != nil {
 		feeInfo, ok := txData["fee"].(map[string]any)
 		if !ok {
-			return apitypes.TypedData{}, errorsmod.Wrap(errortypes.ErrInvalidType, "cannot parse fee from tx data")
+			return apitypes.TypedData{}, sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "cannot parse fee from tx data")
 		}
 
 		feeInfo["feePayer"] = feeDelegation.FeePayer.String()
@@ -369,7 +369,7 @@ func jsonNameFromTag(tag reflect.StructTag) string {
 func UnpackAny(cdc codectypes.AnyUnpacker, field reflect.Value) (reflect.Type, reflect.Value, error) {
 	anyData, ok := field.Interface().(*codectypes.Any)
 	if !ok {
-		return nil, reflect.Value{}, errorsmod.Wrapf(errortypes.ErrPackAny, "%T", field.Interface())
+		return nil, reflect.Value{}, sdkioerrors.Wrapf(sdkerrors.ErrPackAny, "%T", field.Interface())
 	}
 
 	anyWrapper := &CosmosAnyWrapper{
@@ -377,7 +377,7 @@ func UnpackAny(cdc codectypes.AnyUnpacker, field reflect.Value) (reflect.Type, r
 	}
 
 	if err := cdc.UnpackAny(anyData, &anyWrapper.Value); err != nil {
-		return nil, reflect.Value{}, errorsmod.Wrap(err, "failed to unpack Any in msg struct")
+		return nil, reflect.Value{}, sdkioerrors.Wrap(err, "failed to unpack Any in msg struct")
 	}
 
 	fieldType := reflect.TypeOf(anyWrapper)

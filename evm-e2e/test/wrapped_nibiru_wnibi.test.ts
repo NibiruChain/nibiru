@@ -54,6 +54,7 @@ test(
     }
 
     // TODO: test: Deposit via method call
+    // ticket: https://github.com/NibiruChain/nibiru/issues/2282
     // TODO: test: totalSupply and transfer tests
   },
   TEST_TIMEOUT,

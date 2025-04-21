@@ -4,6 +4,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -36,15 +37,9 @@ func (k *Keeper) TxConfig(
 // EIPs enabled on the module parameters. The config generated uses the default
 // JumpTable from the EVM.
 func (k Keeper) VMConfig(
-	ctx sdk.Context, cfg *statedb.EVMConfig, tracer vm.EVMLogger,
+	ctx sdk.Context, cfg *statedb.EVMConfig, tracer *tracing.Hooks,
 ) vm.Config {
-	var debug bool
-	if _, ok := tracer.(evm.NoOpTracer); !ok {
-		debug = true
-	}
-
 	return vm.Config{
-		Debug:     debug,
 		Tracer:    tracer,
 		NoBaseFee: false,
 		ExtraEips: cfg.Params.EIPs(),

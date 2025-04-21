@@ -14,8 +14,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	ethlog "github.com/ethereum/go-ethereum/log"
-	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	gethlog "github.com/ethereum/go-ethereum/log"
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
@@ -31,20 +31,13 @@ func StartJSONRPC(
 ) (*http.Server, chan struct{}, error) {
 	tmWsClientForRPCApi := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
 
-	logger := ctx.Logger.With("module", "geth")
-	ethlog.Root().SetHandler(ethlog.FuncHandler(func(r *ethlog.Record) error {
-		switch r.Lvl {
-		case ethlog.LvlTrace, ethlog.LvlDebug:
-			logger.Debug(r.Msg, r.Ctx...)
-		case ethlog.LvlInfo, ethlog.LvlWarn:
-			logger.Info(r.Msg, r.Ctx...)
-		case ethlog.LvlError, ethlog.LvlCrit:
-			logger.Error(r.Msg, r.Ctx...)
-		}
-		return nil
-	}))
+	// Configure the go-ethereum logger to sync with the ctx.Logger
+	gethLogger := gethlog.NewLogger(&LogHandler{
+		CmtLogger: ctx.Logger.With("module", "geth"),
+	})
+	gethlog.SetDefault(gethLogger)
 
-	rpcServer := ethrpc.NewServer()
+	rpcServer := gethrpc.NewServer()
 
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
@@ -53,7 +46,7 @@ func StartJSONRPC(
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
-			ctx.Logger.Error(
+			gethLogger.Error(
 				"failed to register service in JSON RPC namespace",
 				"namespace", api.Namespace,
 				"service", api.Service,
