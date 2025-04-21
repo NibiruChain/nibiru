@@ -129,7 +129,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 		name             string
 		supply           sdkmath.Int
 		malleate         func(nibiruApp *app.NibiruApp, ctx sdk.Context)
-		expInflationRate sdk.Dec
+		expInflationRate math.LegacyDec
 	}{
 		{
 			"no epochs per period",

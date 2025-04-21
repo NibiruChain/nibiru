@@ -1,0 +1,25 @@
+name: Upgrade Handler Check
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+jobs:
+  check-upgrade-handler:
+    name: Validate Upgrade Handler exists
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run Upgrade Handler Checker
+        run: |
+          go run ./contrib/scripts/upgrade-handler-check.go "${{ github.ref_name }}"
