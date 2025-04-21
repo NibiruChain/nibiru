@@ -4,7 +4,7 @@ package evm
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/ethereum/go-ethereum/params"
 )
@@ -51,7 +51,7 @@ func ptrU64(n uint) *uint64 {
 func Validate() error {
 	// NOTE: chain ID is not needed to check config order
 	if err := EthereumConfig(nil).CheckConfigForkOrder(); err != nil {
-		return errorsmod.Wrap(err, "invalid config fork order")
+		return sdkioerrors.Wrap(err, "invalid config fork order")
 	}
 	return nil
 }

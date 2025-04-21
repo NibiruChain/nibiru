@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -54,7 +54,7 @@ func (k *Keeper) RefundGas(
 			refundedCoins,
 		)
 		if err != nil {
-			err = errors.Wrapf(errortypes.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
+			err = errors.Wrapf(sdkerrors.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
 			return errors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
 		}
 	default:
@@ -86,14 +86,14 @@ func CheckSenderBalance(
 
 	if cost.Sign() < 0 {
 		return errors.Wrapf(
-			errortypes.ErrInvalidCoins,
+			sdkerrors.ErrInvalidCoins,
 			"tx cost (%s) is negative and invalid", cost,
 		)
 	}
 
 	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
 		return errors.Wrapf(
-			errortypes.ErrInsufficientFunds,
+			sdkerrors.ErrInsufficientFunds,
 			"sender balance < tx cost (%s < %s)", balanceWei, cost,
 		)
 	}
@@ -176,7 +176,7 @@ func VerifyFee(
 	// intrinsic gas verification during CheckTx
 	if isCheckTx && gasLimit < intrinsicGas {
 		return nil, errors.Wrapf(
-			errortypes.ErrOutOfGas,
+			sdkerrors.ErrOutOfGas,
 			"gas limit too low: %d (gas limit) < %d (intrinsic gas)", gasLimit, intrinsicGas,
 		)
 	}

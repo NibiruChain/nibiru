@@ -2,7 +2,7 @@
 package evmante
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -30,7 +30,7 @@ func (esc EthSetupContextDecorator) AnteHandle(
 	// all transactions must implement GasTx
 	_, ok := tx.(authante.GasTx)
 	if !ok {
-		return ctx, errorsmod.Wrapf(
+		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrInvalidType,
 			"invalid transaction type %T, expected GasTx", tx,
 		)

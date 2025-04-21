@@ -42,7 +42,7 @@ import (
 
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
@@ -417,7 +417,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 		if conf.GRPC.Enable {
 			_, port, err := net.SplitHostPort(conf.GRPC.Address)
 			if err != nil {
-				return errorsmod.Wrapf(err, "invalid grpc address %s", conf.GRPC.Address)
+				return sdkioerrors.Wrapf(err, "invalid grpc address %s", conf.GRPC.Address)
 			}
 
 			maxSendMsgSize := conf.GRPC.MaxSendMsgSize

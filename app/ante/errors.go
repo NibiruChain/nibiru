@@ -1,15 +1,15 @@
 package ante
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var errorCodeIdx uint32 = 1
 
-func registerError(errMsg string) *sdkerrors.Error {
+func registerError(errMsg string) *sdkioerrors.Error {
 	errorCodeIdx += 1
-	return sdkerrors.Register("ante-nibiru", errorCodeIdx, errMsg)
+	return sdkioerrors.Register("ante-nibiru", errorCodeIdx, errMsg)
 }
 
 // app/ante "sentinel" errors

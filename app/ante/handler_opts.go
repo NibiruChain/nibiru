@@ -1,7 +1,7 @@
 package ante
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,7 +51,7 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 }
 
 func AnteHandlerError(shortDesc string) error {
-	return sdkerrors.Wrapf(errors.ErrLogic, "%s is required for AnteHandler", shortDesc)
+	return sdkioerrors.Wrapf(errors.ErrLogic, "%s is required for AnteHandler", shortDesc)
 }
 
 type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)

@@ -4,7 +4,7 @@ package evm
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
@@ -43,7 +43,7 @@ func validateChannels(i any) error {
 
 	for _, channel := range channels {
 		if err := host.ChannelIdentifierValidator(channel); err != nil {
-			return errorsmod.Wrap(
+			return sdkioerrors.Wrap(
 				channeltypes.ErrInvalidChannelIdentifier, err.Error(),
 			)
 		}
