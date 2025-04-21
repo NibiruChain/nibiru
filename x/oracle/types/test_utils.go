@@ -82,7 +82,7 @@ func (DummyStakingKeeper) TotalBondedTokens(_ sdk.Context) sdk.Int {
 }
 
 // Slash nolint
-func (DummyStakingKeeper) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) sdkmath.Int {
+func (DummyStakingKeeper) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdkmath.LegacyDec) sdkmath.Int {
 	return sdkmath.ZeroInt()
 }
 
@@ -140,17 +140,23 @@ func (v MockValidator) GetBondedTokens() sdk.Int {
 }
 func (v MockValidator) GetConsensusPower(powerReduction sdk.Int) int64 { return v.power }
 func (v *MockValidator) SetConsensusPower(power int64)                 { v.power = power }
-func (v MockValidator) GetCommission() sdk.Dec                         { return sdkmath.LegacyZeroDec() }
+func (v MockValidator) GetCommission() sdkmath.LegacyDec               { return sdkmath.LegacyZeroDec() }
 func (v MockValidator) GetMinSelfDelegation() sdk.Int                  { return sdkmath.OneInt() }
-func (v MockValidator) GetDelegatorShares() sdk.Dec                    { return sdkmath.LegacyNewDec(v.power) }
-func (v MockValidator) TokensFromShares(sdk.Dec) sdk.Dec               { return sdkmath.LegacyZeroDec() }
-func (v MockValidator) TokensFromSharesTruncated(sdk.Dec) sdk.Dec      { return sdkmath.LegacyZeroDec() }
-func (v MockValidator) TokensFromSharesRoundUp(sdk.Dec) sdk.Dec        { return sdkmath.LegacyZeroDec() }
-func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdk.Dec, error) {
+func (v MockValidator) GetDelegatorShares() sdkmath.LegacyDec          { return sdkmath.LegacyNewDec(v.power) }
+func (v MockValidator) TokensFromShares(sdkmath.LegacyDec) sdkmath.LegacyDec {
+	return sdkmath.LegacyZeroDec()
+}
+func (v MockValidator) TokensFromSharesTruncated(sdkmath.LegacyDec) sdkmath.LegacyDec {
+	return sdkmath.LegacyZeroDec()
+}
+func (v MockValidator) TokensFromSharesRoundUp(sdkmath.LegacyDec) sdkmath.LegacyDec {
+	return sdkmath.LegacyZeroDec()
+}
+func (v MockValidator) SharesFromTokens(amt sdk.Int) (sdkmath.LegacyDec, error) {
 	return sdkmath.LegacyZeroDec(), nil
 }
 
-func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, error) {
+func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdkmath.LegacyDec, error) {
 	return sdkmath.LegacyZeroDec(), nil
 }
 
