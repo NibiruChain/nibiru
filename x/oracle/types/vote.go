@@ -37,7 +37,7 @@ func NewAggregateExchangeRateVote(exchangeRateTuples ExchangeRateTuples, voter s
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdk.Dec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair asset.Pair, exchangeRate math.LegacyDec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -97,8 +97,8 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 // ExchangeRateTuples - array of ExchangeRateTuple
 type ExchangeRateTuples []ExchangeRateTuple
 
-func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdk.Dec) {
-	exchangeRateMap = make(map[asset.Pair]sdk.Dec)
+func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]math.LegacyDec) {
+	exchangeRateMap = make(map[asset.Pair]math.LegacyDec)
 	for _, tuple := range tuples {
 		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
 	}
