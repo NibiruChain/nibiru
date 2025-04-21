@@ -163,7 +163,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty voteThreshold not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					VoteThreshold: &sdk.Dec{},
+					VoteThreshold: &sdkmath.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -196,7 +196,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty rewardBand not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					RewardBand: &sdk.Dec{},
+					RewardBand: &sdkmath.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -262,7 +262,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty slashFraction not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					SlashFraction: &sdk.Dec{},
+					SlashFraction: &sdkmath.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -317,7 +317,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty minValidPerWindow not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					MinValidPerWindow: &sdk.Dec{},
+					MinValidPerWindow: &sdkmath.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {
@@ -394,7 +394,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty validatorFeeRatio not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					ValidatorFeeRatio: &sdk.Dec{},
+					ValidatorFeeRatio: &sdkmath.LegacyDec{},
 				},
 			},
 			require: func(params types.Params) {

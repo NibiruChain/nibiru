@@ -6,12 +6,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 // These numbers are for year n month 1
-var ExpectedYearlyInflation = []sdk.Dec{
+var ExpectedYearlyInflation = []sdkmath.LegacyDec{
 	sdkmath.LegacyNewDec(193_333_719e6),
 	sdkmath.LegacyNewDec(154_304_107e6),
 	sdkmath.LegacyNewDec(123_153_673e6),
@@ -95,7 +94,7 @@ func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
 
 // withinRange returns an error if the actual value is not within the expected value +/- tolerance
 // tolerance is a percentage set to 0.01% by default
-func withinRange(expected, actual sdk.Dec) error {
+func withinRange(expected, actual sdkmath.LegacyDec) error {
 	tolerance := sdkmath.LegacyNewDecWithPrec(1, 4)
 	if expected.Sub(actual).Abs().Quo(expected).GT(tolerance) {
 		tolerancePercent := tolerance.Mul(sdkmath.LegacyNewDec(100))

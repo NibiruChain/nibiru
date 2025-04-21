@@ -36,7 +36,7 @@ func (suite *AnteTestSuite) TestFeeLogic() {
 	testCases := []struct {
 		name               string
 		incomingFee        sdk.Coins
-		govPercent         sdk.Dec
+		govPercent         sdkmath.LegacyDec
 		numContracts       int
 		expectedFeePayment sdk.Coins
 	}{

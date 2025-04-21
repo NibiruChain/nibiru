@@ -2,14 +2,13 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // CalculateEpochMintProvision returns mint provision per epoch
 func CalculateEpochMintProvision(
 	params Params,
 	period uint64,
-) sdk.Dec {
+) sdkmath.LegacyDec {
 	if params.EpochsPerPeriod == 0 || !params.InflationEnabled || period >= params.MaxPeriod {
 		return sdkmath.LegacyZeroDec()
 	}
@@ -29,7 +28,7 @@ func CalculateEpochMintProvision(
 }
 
 // Compute the value of x given the polynomial factors
-func polynomial(factors []sdk.Dec, x sdk.Dec) sdk.Dec {
+func polynomial(factors []sdkmath.LegacyDec, x sdkmath.LegacyDec) sdkmath.LegacyDec {
 	result := sdkmath.LegacyZeroDec()
 	for i, factor := range factors {
 		result = result.Add(factor.Mul(x.Power(uint64(len(factors) - i - 1))))

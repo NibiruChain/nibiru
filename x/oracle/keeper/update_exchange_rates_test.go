@@ -310,9 +310,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 
-	expectedRewardAmt := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdkmath.LegacyNewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	expectedRewardAmt2 := math.ZeroInt() // even vote power is same KRW with SDR, KRW chosen referenceTerra because alphabetical order
-	expectedRewardAmt3 := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt3 := sdkmath.LegacyNewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
 	assert.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(denoms.Gov).TruncateInt())
@@ -478,7 +478,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	perfs = fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	t.Log("Although validators 0-2 voted, it's for the same period -> expect abstains for everyone")
-	for valIdx := 0; valIdx < 4; valIdx++ {
+	for valIdx := range 4 {
 		perf := perfs[ValAddrs[valIdx].String()]
 		assert.EqualValues(t, 1, perf.WinCount)
 		assert.EqualValues(t, 0, perf.AbstainCount)

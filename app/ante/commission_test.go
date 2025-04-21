@@ -30,7 +30,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 	}
 
 	valAddr := sdk.ValAddress(testutil.AccAddress()).String()
-	commissionRatePointer := new(sdk.Dec)
+	commissionRatePointer := new(sdkmath.LegacyDec)
 	*commissionRatePointer = sdkmath.LegacyNewDecWithPrec(10, 2)
 	happyMsgs := []sdk.Msg{
 		&stakingtypes.MsgCreateValidator{
@@ -61,7 +61,8 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 
 		sadMsgEditVal := new(stakingtypes.MsgEditValidator)
 		*sadMsgEditVal = *(happyMsgs[1]).(*stakingtypes.MsgEditValidator)
-		newCommissionRate := new(sdk.Dec)
+
+		newCommissionRate := new(sdkmath.LegacyDec)
 		*newCommissionRate = sdkmath.LegacyNewDecWithPrec(26, 2)
 		sadMsgEditVal.CommissionRate = newCommissionRate
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 
 var (
 	DefaultInflation         = false
-	DefaultPolynomialFactors = []sdk.Dec{
+	DefaultPolynomialFactors = []sdkmath.LegacyDec{
 		sdkmath.LegacyMustNewDecFromStr("-0.000147085524"),
 		sdkmath.LegacyMustNewDecFromStr("0.074291982762"),
 		sdkmath.LegacyMustNewDecFromStr("-18.867415611180"),
@@ -39,7 +38,7 @@ var (
 )
 
 func NewParams(
-	polynomialCalculation []sdk.Dec,
+	polynomialCalculation []sdkmath.LegacyDec,
 	inflationDistribution InflationDistribution,
 	inflationEnabled bool,
 	hasInflationStarted bool,
@@ -72,7 +71,7 @@ func DefaultParams() Params {
 }
 
 func validatePolynomialFactors(i any) error {
-	v, ok := i.([]sdk.Dec)
+	v, ok := i.([]sdkmath.LegacyDec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

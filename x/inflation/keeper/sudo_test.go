@@ -51,7 +51,7 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 		EpochsPerPeriod: &newEpochsPerPeriod,
 		PeriodsPerYear:  &newEpochsPerPeriod,
 		MaxPeriod:       &newEpochsPerPeriod,
-		PolynomialFactors: []sdk.Dec{
+		PolynomialFactors: []sdkmath.LegacyDec{
 			sdkmath.LegacyMustNewDecFromStr("0.1"),
 			sdkmath.LegacyMustNewDecFromStr("0.2"),
 		},
@@ -63,7 +63,7 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 	s.Require().EqualValues(4, paramsAfter.EpochsPerPeriod)
 	s.Require().EqualValues(4, paramsAfter.PeriodsPerYear)
 	s.Require().EqualValues(4, paramsAfter.MaxPeriod)
-	s.Require().EqualValues([]sdk.Dec{
+	s.Require().EqualValues([]sdkmath.LegacyDec{
 		sdkmath.LegacyMustNewDecFromStr("0.1"),
 		sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}, paramsAfter.PolynomialFactors)
@@ -77,7 +77,7 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 	epochsPerPeriod := sdkmath.NewInt(1_234)
 	periodsPerYear := sdkmath.NewInt(1_234)
 	maxPeriod := sdkmath.NewInt(1_234)
-	polynomialFactors := []sdk.Dec{
+	polynomialFactors := []sdkmath.LegacyDec{
 		sdkmath.LegacyMustNewDecFromStr("0.1"),
 		sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}

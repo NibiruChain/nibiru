@@ -98,19 +98,19 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 				Sender: clientCtx.GetFromAddress().String(),
 			}
 
-			var stakingProportionDec sdk.Dec
+			var stakingProportionDec sdkmath.LegacyDec
 			if stakingProportion, _ := cmd.Flags().GetString("staking-proportion"); stakingProportion != "" {
 				stakingProportionDec = sdkmath.LegacyMustNewDecFromStr(stakingProportion)
 				msg.InflationDistribution.StakingRewards = stakingProportionDec
 			}
 
-			var communityPoolProportionDec sdk.Dec
+			var communityPoolProportionDec sdkmath.LegacyDec
 			if communityPoolProportion, _ := cmd.Flags().GetString("community-pool-proportion"); communityPoolProportion != "" {
 				communityPoolProportionDec = sdkmath.LegacyMustNewDecFromStr(communityPoolProportion)
 				msg.InflationDistribution.CommunityPool = communityPoolProportionDec
 			}
 
-			var strategicReservesProportionDec sdk.Dec
+			var strategicReservesProportionDec sdkmath.LegacyDec
 			if strategicReservesProportion, _ := cmd.Flags().GetString("strategic-reserves-proportion"); strategicReservesProportion != "" {
 				strategicReservesProportionDec = sdkmath.LegacyMustNewDecFromStr(strategicReservesProportion)
 				msg.InflationDistribution.StrategicReserves = strategicReservesProportionDec
@@ -126,7 +126,7 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 
 			if polynomialFactors, _ := cmd.Flags().GetString("polynomial-factors"); polynomialFactors != "" {
 				polynomialFactorsArr := strings.Split(polynomialFactors, ",")
-				realPolynomialFactors := make([]sdk.Dec, len(polynomialFactorsArr))
+				realPolynomialFactors := make([]sdkmath.LegacyDec, len(polynomialFactorsArr))
 				for i, factor := range polynomialFactorsArr {
 					factorDec := sdkmath.LegacyMustNewDecFromStr(factor)
 					realPolynomialFactors[i] = factorDec

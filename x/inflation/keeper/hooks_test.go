@@ -225,7 +225,7 @@ func TestManual(t *testing.T) {
 	params.EpochsPerPeriod = 30
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
-	params.PolynomialFactors = []sdk.Dec{sdkmath.LegacyNewDec(3), sdkmath.LegacyNewDec(3)}
+	params.PolynomialFactors = []sdkmath.LegacyDec{sdkmath.LegacyNewDec(3), sdkmath.LegacyNewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
 		CommunityPool:     sdkmath.LegacyZeroDec(),
 		StakingRewards:    sdkmath.LegacyOneDec(),
@@ -236,7 +236,7 @@ func TestManual(t *testing.T) {
 
 	require.Equal(t, sdkmath.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
-	for i := 0; i < 42069; i++ {
+	for range 42069 {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
