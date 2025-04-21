@@ -184,6 +184,4 @@ func CombineErrorsFromStrings(strs ...string) (err error) {
 	return CombineErrors(errs...)
 }
 
-var (
-	ErrNilGrpcMsg = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
-)
+var ErrNilGrpcMsg = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")

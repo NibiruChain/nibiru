@@ -167,7 +167,6 @@ func (s *Suite) TestExpectedMethods() {
 					)
 					s.Fail(errMsg)
 				}
-
 			}
 
 			if s.T().Failed() {
@@ -179,10 +178,8 @@ func (s *Suite) TestExpectedMethods() {
 				bz, _ := json.MarshalIndent(gotNames, "", "  ")
 				s.T().Logf("gotMethods: %s", bz)
 			}
-
 		})
 	}
-
 }
 
 // SetupSuite runs before every test in the suite. Implements the

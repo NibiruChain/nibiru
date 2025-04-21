@@ -10,8 +10,8 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	errorsmod "cosmossdk.io/errors"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkioerrors "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/tidwall/gjson"
@@ -93,7 +93,7 @@ func addMsgTypesToRoot(eip712Types apitypes.Types, msgField string, msg gjson.Re
 	defer doRecover(&err)
 
 	if !msg.IsObject() {
-		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "message is not valid JSON, cannot parse types")
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "message is not valid JSON, cannot parse types")
 	}
 
 	msgRootType, err := msgRootType(msg)
@@ -117,7 +117,7 @@ func msgRootType(msg gjson.Result) (string, error) {
 	msgType := msg.Get(msgTypeField).Str
 	if msgType == "" {
 		// .Str is empty for arrays and objects
-		return "", errorsmod.Wrap(errortypes.ErrInvalidType, "malformed message type value, expected type string")
+		return "", sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "malformed message type value, expected type string")
 	}
 
 	// Convert e.g. cosmos-sdk/MsgSend to TypeMsgSend
@@ -152,7 +152,7 @@ func recursivelyAddTypesToRoot(
 	// Must sort the JSON keys for deterministic type generation.
 	sortedFieldNames, err := sortedJSONKeys(payload)
 	if err != nil {
-		return "", errorsmod.Wrap(err, "unable to sort object keys")
+		return "", sdkioerrors.Wrap(err, "unable to sort object keys")
 	}
 
 	typeDef := typeDefForPrefix(prefix, rootType)
@@ -224,7 +224,7 @@ func recursivelyAddTypesToRoot(
 // to be used for deterministic iteration.
 func sortedJSONKeys(json gjson.Result) ([]string, error) {
 	if !json.IsObject() {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidType, "expected JSON map to parse")
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "expected JSON map to parse")
 	}
 
 	jsonMap := json.Map()
@@ -299,7 +299,7 @@ func addTypesToRoot(typeMap apitypes.Types, typeDef string, types []apitypes.Typ
 		indexAsDuplicate++
 
 		if indexAsDuplicate == maxDuplicateTypeDefs {
-			return "", errorsmod.Wrap(errortypes.ErrInvalidRequest, "exceeded maximum number of duplicates for a single type definition")
+			return "", sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceeded maximum number of duplicates for a single type definition")
 		}
 	}
 
@@ -380,7 +380,7 @@ func getEthTypeForJSON(json gjson.Result) string {
 func doRecover(err *error) {
 	if r := recover(); r != nil {
 		if e, ok := r.(error); ok {
-			e = errorsmod.Wrap(e, "panicked with error")
+			e = sdkioerrors.Wrap(e, "panicked with error")
 			*err = e
 			return
 		}

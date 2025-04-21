@@ -19,8 +19,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
-	stderrors "github.com/pkg/errors"
-
 	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -226,7 +224,7 @@ func (a *DebugAPI) StartCPUProfile(file string) error {
 			a.logger.Debug("cpu profiling already in use", "error", err.Error())
 			if err := f.Close(); err != nil {
 				a.logger.Debug("failed to close cpu profile file")
-				return stderrors.Wrap(err, "failed to close cpu profile file")
+				return fmt.Errorf("failed to close cpu profile file: %w", err)
 			}
 			return err
 		}
@@ -253,7 +251,7 @@ func (a *DebugAPI) StopCPUProfile() error {
 		pprof.StopCPUProfile()
 		if err := a.handler.cpuFile.Close(); err != nil {
 			a.logger.Debug("failed to close cpu file")
-			return stderrors.Wrap(err, "failed to close cpu file")
+			return fmt.Errorf("failed to close cpu file: %w", err)
 		}
 		a.handler.cpuFile = nil
 		a.handler.cpuFilename = ""

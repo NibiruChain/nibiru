@@ -113,10 +113,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	targetOneFeeHistory *rpc.OneFeeHistory,
 ) error {
 	blockHeight := tendermintBlock.Block.Height
-	blockBaseFee, err := b.BaseFeeWei(tendermintBlockResult)
-	if err != nil {
-		return err
-	}
+	blockBaseFee := evm.BASE_FEE_WEI
 
 	// set basefee
 	targetOneFeeHistory.BaseFee = blockBaseFee
