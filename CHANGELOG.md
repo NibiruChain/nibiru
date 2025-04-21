@@ -50,7 +50,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
    setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
    - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
    dependency and leverage new generics features added in Go 1.23+.
-- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
+- [#2289](https://github.com/NibiruChain/nibiru/pull/2289) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
 
 ## v2.3.0
 
