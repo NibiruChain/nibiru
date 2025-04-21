@@ -5,9 +5,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-
-	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
