@@ -10,10 +10,10 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
@@ -37,7 +37,7 @@ const ErrStateDBCommit = "failed to commit stateDB"
 func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereumTx, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBz)
 	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	ethTxs := make([]*evm.MsgEthereumTx, len(tx.GetMsgs()))
