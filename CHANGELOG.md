@@ -58,6 +58,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
 
 ### Dependencies
 - Bump `golang.org/x/net` from 0.37.0 to 0.39.0. ([#2284](https://github.com/NibiruChain/nibiru/pull/2284))
+- Bump `github.com/golang-jwt/jwt/v4` from 4.5.1 to 4.5.2 ([#2294](https://github.com/NibiruChain/nibiru/pull/2294))
 
 ## v2.3.0
 
