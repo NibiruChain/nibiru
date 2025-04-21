@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"cosmossdk.io/simapp"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
@@ -38,7 +37,12 @@ import (
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
-	tempApp := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(simapp.DefaultNodeHome))
+	tmpAppDir, err := os.MkdirTemp("", "nibid-*")
+	if err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(tmpAppDir)
+	tempApp := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, simtestutil.NewAppOptionsWithFlagHome(tmpAppDir))
 	encodingConfig := app.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Codec:             tempApp.AppCodec(),
