@@ -95,13 +95,15 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
-	txCount := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
+	txCount, err := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
+	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
-	txCount := s.backend.GetBlockTransactionCountByNumber(
+	txCount, err := s.backend.GetBlockTransactionCountByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc)
+	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 

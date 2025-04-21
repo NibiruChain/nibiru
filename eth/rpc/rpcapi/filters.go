@@ -115,11 +115,7 @@ func (f *Filter) Logs(_ context.Context, logLimit int, blockLimit int64) ([]*get
 			return nil, nil
 		}
 
-		bloom, err := f.backend.BlockBloom(blockRes)
-		if err != nil {
-			return nil, err
-		}
-
+		bloom := f.backend.BlockBloom(blockRes)
 		return f.blockLogs(blockRes, bloom)
 	}
 
@@ -167,10 +163,7 @@ func (f *Filter) Logs(_ context.Context, logLimit int, blockLimit int64) ([]*get
 			return nil, nil
 		}
 
-		bloom, err := f.backend.BlockBloom(blockRes)
-		if err != nil {
-			return nil, err
-		}
+		bloom := f.backend.BlockBloom(blockRes)
 
 		filtered, err := f.blockLogs(blockRes, bloom)
 		if err != nil {
