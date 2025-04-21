@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
 - [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
 - [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
+- [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
 
 ## v2.3.0
 
