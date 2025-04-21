@@ -90,7 +90,7 @@ describe("debug queries", () => {
   // ticket: https://github.com/NibiruChain/nibiru/issues/2279
   it("debug_getBadBlocks", async () => {
     try {
-      const traceResult = await provider.send("debug_getBadBlocks", [txHash])
+      const traceResult = await provider.send("debug_getBadBlocks", [])
       expect(traceResult).toBeDefined()
     } catch (err) {
       expect(err.message).toContain(

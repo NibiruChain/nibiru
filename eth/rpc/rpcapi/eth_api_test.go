@@ -3,14 +3,21 @@ package rpcapi_test
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 	"testing"
 
 	"cosmossdk.io/math"
+	cmtlog "github.com/cometbft/cometbft/libs/log"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	geth "github.com/ethereum/go-ethereum"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -55,12 +62,124 @@ type NodeSuite struct {
 	contractData embeds.CompiledEvmContract
 }
 
-func TestSuite_RunAll(t *testing.T) {
+func Test(t *testing.T) {
 	suite.Run(t, new(Suite))
 
 	testutil.RetrySuiteRunIfDbClosed(t, func() {
 		suite.Run(t, new(NodeSuite))
 	}, 2)
+}
+
+type Suite struct {
+	suite.Suite
+}
+
+func (s *Suite) TestExpectedMethods() {
+	serverCtx := server.NewDefaultContext()
+	serverCtx.Logger = cmtlog.TestingLogger()
+	apis := rpcapi.GetRPCAPIs(
+		serverCtx, client.Context{},
+		&cmtrpcclient.WSClient{},
+		true, nil,
+		[]string{
+			rpcapi.NamespaceEth, // eth and filters services
+			rpcapi.NamespaceDebug,
+		},
+	)
+	s.Require().Len(apis, 3)
+	type WantMethod struct {
+		ServiceName string
+		Methods     []string
+	}
+	testCases := []WantMethod{
+		{
+			ServiceName: "rpcapi.EthAPI",
+			Methods: []string{
+				"eth_accounts",
+				"eth_blockNumber",
+				"eth_call",
+				"eth_chainId",
+				"eth_estimateGas",
+				"eth_feeHistory",
+				"eth_fillTransaction",
+				"eth_gasPrice",
+				"eth_getBalance",
+				"eth_getBlockByHash",
+				"eth_getBlockByNumber",
+				"eth_getCode",
+				"eth_getPendingTransactions",
+				"eth_getProof",
+				"eth_getStorageAt",
+				"eth_getTransactionByBlockHashAndIndex",
+				"eth_getTransactionByBlockNumberAndIndex",
+				"eth_getTransactionByHash",
+				"eth_getTransactionCount",
+				"eth_getTransactionLogs",
+				"eth_getTransactionReceipt",
+				"eth_maxPriorityFeePerGas",
+				"eth_sendRawTransaction",
+				"eth_syncing",
+			},
+		},
+		{
+			ServiceName: "rpcapi.FiltersAPI",
+			Methods: []string{
+				"eth_getFilterChanges",
+				"eth_getFilterLogs",
+				"eth_getLogs",
+			},
+		},
+		{
+			ServiceName: "rpcapi.DebugAPI",
+			// See https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-debug
+			Methods: []string{
+				"debug_getBadBlocks",
+				"debug_getRawBlock",
+				"debug_getRawHeader",
+				"debug_getRawReceipts",
+				"debug_getRawTransaction",
+				"debug_intermediateRoots",
+				"debug_standardTraceBadBlockToFile",
+				"debug_standardTraceBlockToFile",
+				"debug_traceBadBlock",
+				"debug_traceBlock",
+				"debug_traceBlockByHash",
+				"debug_traceBlockByNumber",
+				"debug_traceBlockFromFile",
+				"debug_traceCall",
+				"debug_traceChain",
+				"debug_traceTransaction",
+			},
+		},
+	}
+
+	for idx, api := range apis {
+		tc := testCases[idx]
+		testName := fmt.Sprintf("%v-%v", api.Namespace, tc.ServiceName)
+		s.Run(testName, func() {
+			gotMethods := rpcapi.ParseAPIMethods(api)
+			for _, wantMethod := range tc.Methods {
+				_, ok := gotMethods[wantMethod]
+				if !ok {
+					errMsg := fmt.Sprintf(
+						"Missing RPC implementation for \"%s\" : service: %s, namespace: %s",
+						wantMethod, tc.ServiceName, api.Namespace,
+					)
+					s.Fail(errMsg)
+				}
+			}
+
+			if s.T().Failed() {
+				gotNames := []string{}
+				for name := range gotMethods {
+					gotNames = append(gotNames, name)
+				}
+				sort.Strings(gotNames)
+				bz, _ := json.MarshalIndent(gotNames, "", "  ")
+				s.T().Logf("gotMethods: %s", bz)
+			}
+		})
+	}
 }
 
 // SetupSuite runs before every test in the suite. Implements the

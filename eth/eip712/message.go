@@ -4,8 +4,8 @@ package eip712
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkioerrors "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -31,12 +31,12 @@ func createEIP712MessagePayload(data []byte) (eip712MessagePayload, error) {
 
 	payload, numPayloadMsgs, err := FlattenPayloadMessages(basicPayload)
 	if err != nil {
-		return eip712MessagePayload{}, errorsmod.Wrap(err, "failed to flatten payload JSON messages")
+		return eip712MessagePayload{}, sdkioerrors.Wrap(err, "failed to flatten payload JSON messages")
 	}
 
 	message, ok := payload.Value().(map[string]any)
 	if !ok {
-		return eip712MessagePayload{}, errorsmod.Wrap(errortypes.ErrInvalidType, "failed to parse JSON as map")
+		return eip712MessagePayload{}, sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "failed to parse JSON as map")
 	}
 
 	messagePayload := eip712MessagePayload{
@@ -52,13 +52,13 @@ func createEIP712MessagePayload(data []byte) (eip712MessagePayload, error) {
 // a JSON object, then makes sure the JSON is an object.
 func unmarshalBytesToJSONObject(data []byte) (gjson.Result, error) {
 	if !gjson.ValidBytes(data) {
-		return gjson.Result{}, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, "invalid JSON received")
+		return gjson.Result{}, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "invalid JSON received")
 	}
 
 	payload := gjson.ParseBytes(data)
 
 	if !payload.IsObject() {
-		return gjson.Result{}, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, "failed to JSON unmarshal data as object")
+		return gjson.Result{}, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "failed to JSON unmarshal data as object")
 	}
 
 	return payload, nil
@@ -96,11 +96,11 @@ func getPayloadMessages(payload gjson.Result) ([]gjson.Result, error) {
 	rawMsgs := payload.Get(payloadMsgsField)
 
 	if !rawMsgs.Exists() {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "no messages found in payload, unable to parse")
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "no messages found in payload, unable to parse")
 	}
 
 	if !rawMsgs.IsArray() {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "expected type array of messages, cannot parse")
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "expected type array of messages, cannot parse")
 	}
 
 	return rawMsgs.Array(), nil
@@ -112,14 +112,14 @@ func payloadWithNewMessage(payload gjson.Result, msg gjson.Result, index int) (g
 	field := msgFieldForIndex(index)
 
 	if payload.Get(field).Exists() {
-		return gjson.Result{}, errorsmod.Wrapf(
-			errortypes.ErrInvalidRequest,
+		return gjson.Result{}, sdkioerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest,
 			"malformed payload received, did not expect to find key at field %v", field,
 		)
 	}
 
 	if !msg.IsObject() {
-		return gjson.Result{}, errorsmod.Wrapf(errortypes.ErrInvalidRequest, "msg at index %d is not valid JSON: %v", index, msg)
+		return gjson.Result{}, sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "msg at index %d is not valid JSON: %v", index, msg)
 	}
 
 	newRaw, err := sjson.SetRaw(payload.Raw, field, msg.Raw)
