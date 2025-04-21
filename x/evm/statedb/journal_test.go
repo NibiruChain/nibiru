@@ -9,6 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/common"
@@ -58,11 +59,11 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	randomAcc := evmtest.NewEthPrivAcc().EthAddr
 	balDelta := evm.NativeToWei(big.NewInt(4))
 	// 2 dirties from [createObjectChange, balanceChange]
-	stateDB.AddBalance(randomAcc, balDelta)
+	stateDB.AddBalanceSigned(randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
-	stateDB.AddBalance(randomAcc, balDelta)
+	stateDB.AddBalanceSigned(randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
-	stateDB.SubBalance(randomAcc, balDelta)
+	stateDB.AddBalanceSigned(randomAcc, balDelta)
 	if stateDB.DebugDirtiesCount() != 4 {
 		debugDirtiesCountMismatch(stateDB, s.T())
 		s.FailNow("expected 4 dirty journal changes")
@@ -126,7 +127,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			erc20,
 			contractInput,
 			serverconfig.DefaultEthCallGasLimit,
-			big.NewInt(0),
+			uint256.NewInt(0),
 		)
 		s.Require().NoError(err)
 		if stateDB.DebugDirtiesCount() != 2 {
@@ -153,7 +154,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			erc20,
 			contractInput,
 			serverconfig.DefaultEthCallGasLimit,
-			big.NewInt(0),
+			uint256.NewInt(0),
 		)
 		s.Require().ErrorContains(err, vm.ErrExecutionReverted.Error())
 	})
@@ -257,7 +258,7 @@ func debugDirtiesCountMismatch(db *statedb.StateDB, t *testing.T) {
 		obj := *maybeObj
 
 		lines = append(lines, fmt.Sprintf("  balance: %s", obj.Balance()))
-		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.Suicided))
+		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.SelfDestructed))
 		lines = append(lines, fmt.Sprintf("  dirtyCode: %v", obj.DirtyCode))
 
 		// Print storage state

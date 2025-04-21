@@ -10,6 +10,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -53,7 +54,15 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
-	evm *vm.EVM, contract *vm.Contract, readonly bool,
+	evm *vm.EVM,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
+	contract *vm.Contract,
+	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
+	isDelegatedCall bool,
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
@@ -71,7 +80,7 @@ func (p precompileFunToken) Run(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToBank(startResult, trueCaller, readonly, evm)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evm)
 	case FunTokenMethod_bankBalance:
@@ -79,9 +88,9 @@ func (p precompileFunToken) Run(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, contract.CallerAddress, readonly, evm)
+		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evm)
 	case FunTokenMethod_bankMsgSend:
-		bz, err = p.bankMsgSend(startResult, contract.CallerAddress, readonly)
+		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
 	case FunTokenMethod_getErc20Address:
 		bz, err = p.getErc20Address(startResult, contract)
 	default:
@@ -91,7 +100,11 @@ func (p precompileFunToken) Run(
 		return
 	}
 	// Gas consumed by a local gas meter
-	contract.UseGas(startResult.CacheCtx.GasMeter().GasConsumed())
+	contract.UseGas(
+		startResult.CacheCtx.GasMeter().GasConsumed(),
+		evm.Config.Tracer,
+		tracing.GasChangeCallPrecompiledContract,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +123,7 @@ func (p precompileFunToken) Run(
 	return bz, err
 }
 
-func PrecompileFunToken(keepers keepers.PublicKeepers) vm.PrecompiledContract {
+func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileFunToken{
 		evmKeeper: keepers.EvmKeeper,
 	}
@@ -182,7 +195,10 @@ func (p precompileFunToken) sendToBank(
 		evmObj,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error in ERC20.transfer from caller to EVM account: %w", err)
+		return nil, fmt.Errorf(
+			"error in ERC20.transfer from caller to EVM account: %w: from %s, erc20 %s, amount: %s",
+			err, caller, erc20, amount,
+		)
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
@@ -226,11 +242,6 @@ func (p precompileFunToken) sendToBank(
 			evm.ModuleName, evm.EVM_MODULE_ADDRESS.Hex(), caller.Hex(), err,
 		)
 	}
-
-	// TODO: UD-DEBUG: feat: Emit EVM events
-	// https://github.com/NibiruChain/nibiru/issues/2121
-	// TODO: emit event for balance change of sender
-	// TODO: emit event for balance change of recipient
 
 	return method.Outputs.Pack(gotAmount)
 }
@@ -572,11 +583,11 @@ func (p precompileFunToken) sendToEvm(
 
 	// 1) remove (burn or escrow) the bank coin from caller
 	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(amount))
-	senderBech32 := eth.EthAddrToNibiruAddr(caller)
+	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
 	// bank send from account => module
 	if err := p.evmKeeper.Bank.SendCoinsFromAccountToModule(
-		ctx, senderBech32, evm.ModuleName, sdk.NewCoins(coinToSend),
+		ctx, callerBech32, evm.ModuleName, sdk.NewCoins(coinToSend),
 	); err != nil {
 		return nil, fmt.Errorf("failed to send coins to module: %w", err)
 	}

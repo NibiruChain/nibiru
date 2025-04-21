@@ -22,7 +22,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: single message",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return evmtest.HappyTransferTx(deps, 0)
@@ -34,7 +34,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: two messages",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalance(deps.Sender.EthAddr, balance)
+				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txMsgOne := evmtest.HappyTransferTx(deps, 0)

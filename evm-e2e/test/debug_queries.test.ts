@@ -86,10 +86,11 @@ describe("debug queries", () => {
     expectTrace([{ result: traceResult }])
   })
 
-  // TODO: impl in EVM
+  // TODO: feat(evm-rpc): impl the debug_getBadBlocks EVM RPC method
+  // ticket: https://github.com/NibiruChain/nibiru/issues/2279
   it("debug_getBadBlocks", async () => {
     try {
-      const traceResult = await provider.send("debug_getBadBlocks", [txHash])
+      const traceResult = await provider.send("debug_getBadBlocks", [])
       expect(traceResult).toBeDefined()
     } catch (err) {
       expect(err.message).toContain(
@@ -98,7 +99,8 @@ describe("debug queries", () => {
     }
   })
 
-  // TODO: impl in EVM
+  // TODO: feat(evm-rpc): impl the debug_storageRangeAt EVM RPC method
+  // ticket: https://github.com/NibiruChain/nibiru/issues/2281
   it("debug_storageRangeAt", async () => {
     try {
       const traceResult = await provider.send("debug_storageRangeAt", [

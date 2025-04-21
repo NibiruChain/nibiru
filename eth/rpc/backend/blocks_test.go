@@ -22,17 +22,18 @@ func (s *BackendSuite) TestBlockNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockByNumberr() {
-	block, err := s.backend.GetBlockByNumber(transferTxBlockNumber, true)
+	block, err := s.backend.GetBlockByNumber(
+		*s.SuccessfulTxTransfer().BlockNumberRpc, true)
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
-	s.Require().Greater(len(block["transactions"].([]interface{})), 0)
+	s.Require().Greater(len(block["transactions"].([]any)), 0)
 	s.Require().NotNil(block["size"])
 	s.Require().NotNil(block["nonce"])
-	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())
+	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
-	blockMap, err := s.backend.GetBlockByHash(transferTxBlockHash, true)
+	blockMap, err := s.backend.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, true)
 	s.Require().NoError(err)
 	AssertBlockContents(s, blockMap)
 }
@@ -47,17 +48,17 @@ func (s *BackendSuite) TestBlockNumberFromTendermint() {
 		{
 			name: "happy: block number specified",
 			blockNrOrHash: rpc.BlockNumberOrHash{
-				BlockNumber: &transferTxBlockNumber,
+				BlockNumber: s.SuccessfulTxTransfer().BlockNumberRpc,
 			},
-			wantBlockNumber: transferTxBlockNumber,
+			wantBlockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantErr:         "",
 		},
 		{
 			name: "happy: block hash specified",
 			blockNrOrHash: rpc.BlockNumberOrHash{
-				BlockHash: &transferTxBlockHash,
+				BlockHash: s.SuccessfulTxTransfer().BlockHash,
 			},
-			wantBlockNumber: transferTxBlockNumber,
+			wantBlockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantErr:         "",
 		},
 		{
@@ -83,29 +84,33 @@ func (s *BackendSuite) TestBlockNumberFromTendermint() {
 }
 
 func (s *BackendSuite) TestEthBlockByNumber() {
-	block, err := s.backend.EthBlockByNumber(transferTxBlockNumber)
+	block, err := s.backend.EthBlockByNumber(
+		*s.SuccessfulTxTransfer().BlockNumberRpc)
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
-	s.Require().Equal(transferTxBlockNumber.Int64(), block.Number().Int64())
+	s.Require().Equal(s.SuccessfulTxTransfer().BlockNumberRpc.Int64(), block.Number().Int64())
 	s.Require().Greater(block.Transactions().Len(), 0)
 	s.Require().NotNil(block.ParentHash())
 	s.Require().NotNil(block.UncleHash())
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
-	txCount := s.backend.GetBlockTransactionCountByHash(transferTxBlockHash)
+	txCount, err := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
+	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
-	txCount := s.backend.GetBlockTransactionCountByNumber(transferTxBlockNumber)
+	txCount, err := s.backend.GetBlockTransactionCountByNumber(
+		*s.SuccessfulTxTransfer().BlockNumberRpc)
+	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
-func AssertBlockContents(s *BackendSuite, blockMap map[string]interface{}) {
+func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
 	s.Require().NotNil(blockMap)
-	s.Require().Greater(len(blockMap["transactions"].([]interface{})), 0)
+	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
 	s.Require().NotNil(blockMap["size"])
 	s.Require().NotNil(blockMap["nonce"])
-	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), transferTxBlockNumber.Int64())
+	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
