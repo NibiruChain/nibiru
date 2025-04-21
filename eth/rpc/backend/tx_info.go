@@ -7,7 +7,7 @@ import (
 	"math"
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,15 +71,10 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		return nil, errors.New("can't find index of ethereum tx")
 	}
 
-	baseFeeWei, err := b.BaseFeeWei(blockRes)
-	if err != nil {
-		// handle the error for pruned node.
-		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", blockRes.Height, "error", err)
-	}
-
+	baseFeeWei := evm.BASE_FEE_WEI
 	height := uint64(res.Height)    //#nosec G701 -- checked for int overflow already
 	index := uint64(res.EthTxIndex) //#nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsg(
+	return rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
@@ -108,7 +103,7 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 
 		if msg.Hash == hexTx {
 			// use zero block values since it's not included in a block yet
-			rpctx, err := rpc.NewRPCTxFromMsg(
+			rpctx, err := rpc.NewRPCTxFromMsgEthTx(
 				msg,
 				gethcommon.Hash{},
 				uint64(0),
@@ -283,13 +278,8 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	}
 
 	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
-		baseFeeWei, err := b.BaseFeeWei(blockRes)
-		if err != nil {
-			// tolerate the error for pruned node.
-			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
-		} else {
-			receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
-		}
+		baseFeeWei := evm.BASE_FEE_WEI
+		receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
 	} else {
 		receipt.EffectiveGasPrice = (*hexutil.Big)(txData.GetGasPrice())
 	}
@@ -349,7 +339,7 @@ func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
 		return txs.GetTxByHash(hash)
 	})
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetTxByEthHash(%s)", hash.Hex())
+		return nil, sdkioerrors.Wrapf(err, "GetTxByEthHash(%s)", hash.Hex())
 	}
 	return txResult, nil
 }
@@ -372,7 +362,7 @@ func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error
 		return txs.GetTxByTxIndex(int(index)) // #nosec G701 -- checked for int overflow already
 	})
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "GetTxByTxIndex %d %d", height, index)
+		return nil, sdkioerrors.Wrapf(err, "GetTxByTxIndex %d %d", height, index)
 	}
 	return txResult, nil
 }
@@ -439,15 +429,10 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		msg = ethMsgs[i]
 	}
 
-	baseFeeWei, err := b.BaseFeeWei(blockRes)
-	if err != nil {
-		// handle the error for pruned node.
-		b.logger.Error("failed to fetch Base Fee from prunned block. Check node prunning configuration", "height", block.Block.Height, "error", err)
-	}
-
+	baseFeeWei := evm.BASE_FEE_WEI
 	height := uint64(block.Block.Height) // #nosec G701 -- checked for int overflow already
 	index := uint64(idx)                 // #nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsg(
+	return rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.Block.Hash()),
 		height,

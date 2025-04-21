@@ -4,6 +4,7 @@ package rpcapi
 import (
 	"context"
 
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -19,12 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// Ethereum API: Allows connection to a full node of the Nibiru blockchain
-// network via Nibiru EVM. Developers can interact with on-chain EVM data and
-// send different types of transactions to the network by utilizing the endpoints
-// provided by the API. The API follows a JSON-RPC standard. If not otherwise
-// specified, the interface is derived from the Alchemy Ethereum API:
-// https://docs.alchemy.com/alchemy/apis/ethereum
 type IEthAPI interface {
 	// Getting Blocks
 	//
@@ -32,8 +27,8 @@ type IEthAPI interface {
 	BlockNumber() (hexutil.Uint64, error)
 	GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]any, error)
 	GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, error)
-	GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint
-	GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) *hexutil.Uint
+	GetBlockTransactionCountByHash(hash common.Hash) (*hexutil.Uint, error)
+	GetBlockTransactionCountByNumber(blockNum rpc.BlockNumber) (*hexutil.Uint, error)
 
 	// Reading Transactions
 	//
@@ -45,12 +40,6 @@ type IEthAPI interface {
 	GetTransactionByBlockHashAndIndex(hash common.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error)
 	// eth_getBlockReceipts
-
-	// Writing Transactions
-	//
-	// Allows developers to both send ETH from one address to another, write data
-	// on-chain, and interact with smart contracts.
-	SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
 
 	// Account Information
 	//
@@ -69,14 +58,6 @@ type IEthAPI interface {
 		address common.Address, storageKeys []string, blockNrOrHash rpc.BlockNumberOrHash,
 	) (*rpc.AccountResult, error)
 
-	// EVM/Smart Contract Execution
-	//
-	// Allows developers to read data from the blockchain which includes executing
-	// smart contracts. However, no data is published to the Ethereum network.
-	Call(
-		args evm.JsonTxArgs, blockNrOrHash rpc.BlockNumberOrHash, _ *rpc.StateOverride,
-	) (hexutil.Bytes, error)
-
 	// Chain Information
 	//
 	// Returns information on the Ethereum network and internal settings.
@@ -86,7 +67,9 @@ type IEthAPI interface {
 		args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber,
 	) (hexutil.Uint64, error)
 	FeeHistory(
-		blockCount gethrpc.DecimalOrHex, lastBlock gethrpc.BlockNumber, rewardPercentiles []float64,
+		blockCount gethmath.HexOrDecimal64,
+		lastBlock gethrpc.BlockNumber,
+		rewardPercentiles []float64,
 	) (*rpc.FeeHistoryResult, error)
 	MaxPriorityFeePerGas() (*hexutil.Big, error)
 	ChainId() (*hexutil.Big, error)
@@ -115,7 +98,16 @@ type IEthAPI interface {
 
 var _ IEthAPI = (*EthAPI)(nil)
 
-// EthAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.
+// EthAPI: Allows connection to a full node of the Nibiru blockchain
+// network via Nibiru EVM. Developers can interact with on-chain EVM data and
+// send different types of transactions to the network by utilizing the endpoints
+// provided by the API.
+//
+// [EthAPI] contains much of the "eth_" prefixed methods in the Web3 JSON-RPC spec.
+//
+// The API follows a JSON-RPC standard. If not otherwise
+// specified, the interface is derived from the Alchemy Ethereum API:
+// https://docs.alchemy.com/alchemy/apis/ethereum
 type EthAPI struct {
 	ctx     context.Context
 	logger  log.Logger
@@ -145,14 +137,24 @@ func (e *EthAPI) BlockNumber() (hexutil.Uint64, error) {
 
 // GetBlockByNumber returns the block identified by number.
 func (e *EthAPI) GetBlockByNumber(ethBlockNum rpc.BlockNumber, fullTx bool) (map[string]any, error) {
-	e.logger.Debug("eth_getBlockByNumber", "number", ethBlockNum, "full", fullTx)
+	e.logger.Debug("eth_getBlockByNumber", "blockNumber", ethBlockNum, "fullTx", fullTx)
 	return e.backend.GetBlockByNumber(ethBlockNum, fullTx)
 }
 
 // GetBlockByHash returns the block identified by hash.
 func (e *EthAPI) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, error) {
-	e.logger.Debug("eth_getBlockByHash", "hash", hash.Hex(), "full", fullTx)
-	return e.backend.GetBlockByHash(hash, fullTx)
+	methodName := "eth_getBlockByHash"
+	e.logger.Debug(methodName, "hash", hash.Hex(), "fullTx", fullTx)
+	block, err := e.backend.GetBlockByHash(hash, fullTx)
+	logError(e.logger, err, methodName)
+	return block, err
+}
+
+// logError logs a backend error if one is present
+func logError(logger log.Logger, err error, methodName string) {
+	if err != nil {
+		logger.Debug(methodName+" failed", "error", err.Error())
+	}
 }
 
 // --------------------------------------------------------------------------
@@ -161,8 +163,11 @@ func (e *EthAPI) GetBlockByHash(hash common.Hash, fullTx bool) (map[string]any, 
 
 // GetTransactionByHash returns the transaction identified by hash.
 func (e *EthAPI) GetTransactionByHash(hash common.Hash) (*rpc.EthTxJsonRPC, error) {
-	e.logger.Debug("eth_getTransactionByHash", "hash", hash.Hex())
-	return e.backend.GetTransactionByHash(hash)
+	methodName := "eth_getTransactionByHash"
+	e.logger.Debug(methodName, "hash", hash.Hex())
+	tx, err := e.backend.GetTransactionByHash(hash)
+	logError(e.logger, err, methodName)
+	return tx, err
 }
 
 // GetTransactionCount returns the number of transactions at the given address up to the given block number.
@@ -187,17 +192,23 @@ func (e *EthAPI) GetTransactionReceipt(
 }
 
 // GetBlockTransactionCountByHash returns the number of transactions in the block identified by hash.
-func (e *EthAPI) GetBlockTransactionCountByHash(hash common.Hash) *hexutil.Uint {
-	e.logger.Debug("eth_getBlockTransactionCountByHash", "hash", hash.Hex())
-	return e.backend.GetBlockTransactionCountByHash(hash)
+func (e *EthAPI) GetBlockTransactionCountByHash(hash common.Hash) (*hexutil.Uint, error) {
+	methodName := "eth_getBlockTransactionCountByHash"
+	e.logger.Debug(methodName, "hash", hash.Hex())
+	txCount, err := e.backend.GetBlockTransactionCountByHash(hash)
+	logError(e.logger, err, methodName)
+	return txCount, err
 }
 
 // GetBlockTransactionCountByNumber returns the number of transactions in the block identified by number.
 func (e *EthAPI) GetBlockTransactionCountByNumber(
 	blockNum rpc.BlockNumber,
-) *hexutil.Uint {
-	e.logger.Debug("eth_getBlockTransactionCountByNumber", "height", blockNum.Int64())
-	return e.backend.GetBlockTransactionCountByNumber(blockNum)
+) (*hexutil.Uint, error) {
+	methodName := "eth_getBlockTransactionCountByNumber"
+	e.logger.Debug(methodName, "height", blockNum.Int64())
+	txCount, err := e.backend.GetBlockTransactionCountByNumber(blockNum)
+	logError(e.logger, err, methodName)
+	return txCount, err
 }
 
 // GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.
@@ -221,6 +232,8 @@ func (e *EthAPI) GetTransactionByBlockNumberAndIndex(
 // --------------------------------------------------------------------------
 
 // SendRawTransaction send a raw Ethereum transaction.
+// Allows developers to both send ETH from one address to another, write data
+// on-chain, and interact with smart contracts.
 func (e *EthAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	e.logger.Debug("eth_sendRawTransaction", "length", len(data))
 	return e.backend.SendRawTransaction(data)
@@ -274,6 +287,9 @@ func (e *EthAPI) GetProof(address common.Address,
 // --------------------------------------------------------------------------
 
 // Call performs a raw contract call.
+//
+// Allows developers to read data from the blockchain which includes executing
+// smart contracts. However, no data is published to the blockchain network.
 func (e *EthAPI) Call(args evm.JsonTxArgs,
 	blockNrOrHash rpc.BlockNumberOrHash,
 	_ *rpc.StateOverride,
@@ -321,7 +337,7 @@ func (e *EthAPI) EstimateGas(
 	return e.backend.EstimateGas(args, blockNrOptional)
 }
 
-func (e *EthAPI) FeeHistory(blockCount gethrpc.DecimalOrHex,
+func (e *EthAPI) FeeHistory(blockCount gethmath.HexOrDecimal64,
 	lastBlock gethrpc.BlockNumber,
 	rewardPercentiles []float64,
 ) (*rpc.FeeHistoryResult, error) {
@@ -434,6 +450,7 @@ func (e *EthAPI) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
 func (e *EthAPI) FillTransaction(
 	args evm.JsonTxArgs,
 ) (*rpc.SignTransactionResult, error) {
+	e.logger.Debug("eth_fillTransaction")
 	// Set some sanity defaults and terminate on failure
 	args, err := e.backend.SetTxDefaults(args)
 	if err != nil {
@@ -473,7 +490,7 @@ func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 				break
 			}
 
-			rpctx, err := rpc.NewRPCTxFromMsg(
+			rpctx, err := rpc.NewRPCTxFromMsgEthTx(
 				ethMsg,
 				common.Hash{},
 				uint64(0),

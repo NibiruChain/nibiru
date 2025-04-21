@@ -13,7 +13,7 @@ import (
 )
 
 func (s *BackendSuite) TestGetLogsFromBlockResults() {
-	blockWithTx := deployContractBlockNumber.Int64()
+	blockWithTx := s.SuccessfulTxDeployContract().BlockNumberRpc.Int64()
 	blockResults, err := s.backend.TendermintBlockResultByNumber(&blockWithTx)
 	s.Require().NoError(err)
 	s.Require().NotNil(blockResults)

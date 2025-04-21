@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -43,25 +44,28 @@ func (k Keeper) CallContractWithInput(
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
-	evmMsg := gethcore.NewMessage(
-		fromAcc,
-		contract,
-		nonce,
-		unusedBigInt, // amount
-		gasLimit,
-		unusedBigInt, // gasFeeCap
-		unusedBigInt, // gasTipCap
-		unusedBigInt, // gasPrice
-		contractInput,
-		gethcore.AccessList{},
-		!commit, // isFake
-	)
+	evmMsg := core.Message{
+		To:               contract,
+		From:             fromAcc,
+		Nonce:            nonce,
+		Value:            unusedBigInt, // amount
+		GasLimit:         gasLimit,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
 
 	// Generating TxConfig with an empty tx hash as there is no actual eth tx
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash,
+		ctx, evmMsg, evmObj, commit, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
