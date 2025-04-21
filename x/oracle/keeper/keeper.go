@@ -127,7 +127,7 @@ func (k Keeper) ValidateFeeder(
 	return nil
 }
 
-func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
+func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price math.LegacyDec, err error) {
 	params, err := k.Params.Get(ctx)
 	if err != nil {
 		return math.LegacyOneDec().Neg(), err
@@ -183,7 +183,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 }
 
 // SetPrice sets the price for a pair as well as the price snapshot.
-func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
+func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price math.LegacyDec) {
 	blockTimestampMs := ctx.BlockTime().UnixMilli()
 	k.ExchangeRates.Insert(ctx, pair,
 		types.ExchangeRateAtBlock{

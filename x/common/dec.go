@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -40,7 +39,7 @@ var (
 //   - NOTE, MustSqrtDec panics if it is called on a negative number, similar to the
 //     sdk.NewCoin and SqrtBigInt functions. A panic safe version of MustSqrtDec
 //     is available in the SqrtDec method.
-func MustSqrtDec(dec sdk.Dec) sdk.Dec {
+func MustSqrtDec(dec math.LegacyDec) math.LegacyDec {
 	sqrtBigInt := MustSqrtBigInt(dec.BigInt())
 	precision := math.LegacyNewDecFromBigInt(PRECISION_MULT)
 	return math.LegacyNewDecFromBigInt(sqrtBigInt).Quo(precision)
@@ -53,8 +52,8 @@ func MustSqrtDec(dec sdk.Dec) sdk.Dec {
 // The big.Int.Sqrt method is part of the standard library,
 // thoroughly tested, works at seemingly unbound precision (e.g. for numbers as
 // large as 10**99.
-func SqrtDec(dec sdk.Dec) (sdk.Dec, error) {
-	var sqrtDec sdk.Dec
+func SqrtDec(dec math.LegacyDec) (math.LegacyDec, error) {
+	var sqrtDec math.LegacyDec
 	var panicErr error = TryCatch(func() {
 		sqrtDec = MustSqrtDec(dec)
 	})()
@@ -180,7 +179,7 @@ func BankersRound(quo, rem, halfPrecision *big.Int) *big.Int {
 
 // Clamp return the value if it is within the clampValue, otherwise return the clampValue.
 // e.g. Clamp(1.5, 1) = 1, Clamp(-1.5, 1) = -1, Clamp(0.5, 1) = 0.5
-func Clamp(value sdk.Dec, clampValue sdk.Dec) sdk.Dec {
+func Clamp(value math.LegacyDec, clampValue math.LegacyDec) math.LegacyDec {
 	if value.GT(clampValue) {
 		return clampValue
 	} else if value.LT(clampValue.Neg()) {

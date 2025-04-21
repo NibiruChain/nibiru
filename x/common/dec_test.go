@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/assert"
 
@@ -44,8 +43,8 @@ func TestSqrtBigInt(t *testing.T) {
 
 func TestSqrtDec(t *testing.T) {
 	testCases := []struct {
-		dec     sdk.Dec
-		sqrtDec sdk.Dec
+		dec     math.LegacyDec
+		sqrtDec math.LegacyDec
 	}{
 		// --------------------------------------------------------------------
 		// Cases: 1 or higher
@@ -133,9 +132,9 @@ func TestBankersRound(t *testing.T) {
 
 func TestClamp(t *testing.T) {
 	tests := []struct {
-		value       sdk.Dec
-		clampValue  sdk.Dec
-		expected    sdk.Dec
+		value       math.LegacyDec
+		clampValue  math.LegacyDec
+		expected    math.LegacyDec
 		description string
 	}{
 		{
