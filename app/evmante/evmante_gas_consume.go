@@ -4,7 +4,7 @@ package evmante
 import (
 	"math"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -73,7 +73,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),
@@ -83,7 +83,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
-			return ctx, errors.Wrap(err, "failed to unpack tx data")
+			return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
 		}
 
 		if ctx.IsCheckTx() && anteDec.maxGasWanted != 0 {
@@ -103,7 +103,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			ctx,
 		)
 		if err != nil {
-			return ctx, errors.Wrapf(err, "failed to verify the fees")
+			return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
 		}
 
 		if err = anteDec.deductFee(ctx, fees, from); err != nil {
@@ -134,7 +134,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	// from the tx gas pool. The latter only has the value so far since the
 	// EthSetupContextDecorator, so it will never exceed the block gas limit.
 	if gasWanted > blockGasLimit {
-		return ctx, errors.Wrapf(
+		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrOutOfGas,
 			"tx gas (%d) exceeds block gas limit (%d)",
 			gasWanted,
@@ -168,7 +168,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
 		ctx, fees, gethcommon.BytesToAddress(feePayer),
 	); err != nil {
-		return errors.Wrapf(err, "failed to deduct transaction costs from user balance")
+		return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
 	}
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -102,7 +102,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	// Slice of (Pair, ExchangeRate) tuples.
 	exchangeRateTuples, err := types.ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return nil, sdkioerrors.Wrap(errors.ErrInvalidCoins, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidCoins, err.Error())
 	}
 
 	// Check all pairs are in the vote target

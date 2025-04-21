@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -389,8 +389,8 @@ func TestOracleRandomPrices(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		for val := 0; val < 4; val++ {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
-				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
 			}, val)
 		}
 

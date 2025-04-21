@@ -2,7 +2,7 @@ package types
 
 import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,12 +71,12 @@ func (msg MsgAggregateExchangeRatePrevote) ValidateBasic() error {
 
 	_, err = sdk.AccAddressFromBech32(msg.Feeder)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid feeder address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid feeder address (%s)", err)
 	}
 
 	_, err = sdk.ValAddressFromBech32(msg.Validator)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid operator address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid operator address (%s)", err)
 	}
 
 	return nil
@@ -118,23 +118,23 @@ func (msg MsgAggregateExchangeRateVote) GetSigners() []sdk.AccAddress {
 func (msg MsgAggregateExchangeRateVote) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Feeder)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid feeder address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid feeder address (%s)", err)
 	}
 
 	_, err = sdk.ValAddressFromBech32(msg.Validator)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid operator address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid operator address (%s)", err)
 	}
 
 	if l := len(msg.ExchangeRates); l == 0 {
-		return sdkioerrors.Wrap(errors.ErrUnknownRequest, "must provide at least one oracle exchange rate")
+		return sdkioerrors.Wrap(sdkerrors.ErrUnknownRequest, "must provide at least one oracle exchange rate")
 	} else if l > 4096 {
-		return sdkioerrors.Wrap(errors.ErrInvalidRequest, "exchange rates string can not exceed 4096 characters")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "exchange rates string can not exceed 4096 characters")
 	}
 
 	exchangeRates, err := ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return sdkioerrors.Wrap(errors.ErrInvalidCoins, "failed to parse exchange rates string cause: "+err.Error())
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to parse exchange rates string cause: "+err.Error())
 	}
 
 	for _, exchangeRate := range exchangeRates {
@@ -186,12 +186,12 @@ func (msg MsgDelegateFeedConsent) GetSigners() []sdk.AccAddress {
 func (msg MsgDelegateFeedConsent) ValidateBasic() error {
 	_, err := sdk.ValAddressFromBech32(msg.Operator)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid operator address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid operator address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Delegate)
 	if err != nil {
-		return sdkioerrors.Wrapf(errors.ErrInvalidAddress, "Invalid delegate address (%s)", err)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegate address (%s)", err)
 	}
 
 	return nil

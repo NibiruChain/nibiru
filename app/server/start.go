@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -610,7 +610,7 @@ func OpenEVMIndexer(
 	idxLogger := ctx.Logger.With("indexer", "evm")
 	evmIndexer := indexer.NewEVMTxIndexer(indexerDb, idxLogger, clientCtx)
 
-	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
+	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(cmtrpcclient.Client))
 	evmIndexerService.SetLogger(idxLogger)
 
 	errCh := make(chan error)

@@ -2,7 +2,7 @@
 package evmante
 
 import (
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -52,7 +52,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		ethTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),
@@ -65,7 +65,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 		)
 		if effectiveGasPriceDec.LT(minGasPrice) {
 			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"provided gas price < minimum local gas price (%s < %s). "+
 					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+

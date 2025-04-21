@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"strings"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -71,7 +71,7 @@ func (k Keeper) CallContractWithInput(
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to apply ethereum core message")
+		return nil, sdkioerrors.Wrap(err, "failed to apply ethereum core message")
 	}
 
 	if evmResp.Failed() {

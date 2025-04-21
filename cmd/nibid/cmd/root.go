@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/simapp"
 	dbm "github.com/cometbft/cometbft-db"
-	tmcli "github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -118,7 +118,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		GetBuildWasmMsg(),
 		DecodeBase64Cmd(app.DefaultNodeHome),
-		tmcli.NewCompletionCmd(rootCmd, true),
+		cmtcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		config.Cmd(),

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	db "github.com/cometbft/cometbft-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -144,7 +144,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
 		if err != nil {
-			return errors.Wrap(err, "failed to start JSON-RPC server")
+			return sdkioerrors.Wrap(err, "failed to start JSON-RPC server")
 		}
 
 		address := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)

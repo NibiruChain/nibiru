@@ -2,7 +2,7 @@
 package ante
 
 import (
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -20,7 +20,7 @@ func (rmd AnteDecoratorPreventEtheruemTxMsgs) AnteHandle(
 ) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {
 		if _, ok := msg.(*evm.MsgEthereumTx); ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInvalidType,
 				"MsgEthereumTx needs to be contained within a tx with 'ExtensionOptionsEthereumTx' option",
 			)

@@ -15,7 +15,7 @@ import (
 	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
-	tmrand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -90,7 +90,7 @@ func NewAppConstructor(chainID string) AppConstructor {
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeEncodingConfig()
 
-	chainID := "chain-" + tmrand.NewRand().Str(6)
+	chainID := "chain-" + cmtrand.NewRand().Str(6)
 	return Config{
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
