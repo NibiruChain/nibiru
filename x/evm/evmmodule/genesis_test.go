@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -83,7 +83,7 @@ func (s *Suite) TestExportInitGenesis() {
 		deps.Ctx,
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.Coin{Denom: "unibi", Amount: math.NewInt(amountToSendC.Int64())},
+			BankCoin:  sdk.Coin{Denom: "unibi", Amount: sdkmath.NewInt(amountToSendC.Int64())},
 			ToEthAddr: eip55Addr,
 		},
 	)

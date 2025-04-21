@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -51,7 +51,7 @@ func (s *Suite) TestSafeNewIntFromBigInt() {
 				s.Error(err, fmt.Sprintf("result: %s", result))
 			} else {
 				s.NoError(err, fmt.Sprintf("result: %s", result))
-				s.Equal(math.NewIntFromBigInt(tc.input), result, "The results should be equal")
+				s.Equal(sdkmath.NewIntFromBigInt(tc.input), result, "The results should be equal")
 			}
 		})
 	}

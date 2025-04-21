@@ -51,7 +51,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
    - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
    dependency and leverage new generics features added in Go 1.23+.
 - [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
-- [#2xxx](https://github.com/NibiruChain/nibiru/pull/2xxx) - refactor: use importas linter for consistent imports
+- [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
 
 ## v2.3.0
 

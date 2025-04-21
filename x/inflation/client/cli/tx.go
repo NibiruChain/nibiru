@@ -3,7 +3,7 @@ package cli
 import (
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -100,19 +100,19 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 
 			var stakingProportionDec sdk.Dec
 			if stakingProportion, _ := cmd.Flags().GetString("staking-proportion"); stakingProportion != "" {
-				stakingProportionDec = math.LegacyMustNewDecFromStr(stakingProportion)
+				stakingProportionDec = sdkmath.LegacyMustNewDecFromStr(stakingProportion)
 				msg.InflationDistribution.StakingRewards = stakingProportionDec
 			}
 
 			var communityPoolProportionDec sdk.Dec
 			if communityPoolProportion, _ := cmd.Flags().GetString("community-pool-proportion"); communityPoolProportion != "" {
-				communityPoolProportionDec = math.LegacyMustNewDecFromStr(communityPoolProportion)
+				communityPoolProportionDec = sdkmath.LegacyMustNewDecFromStr(communityPoolProportion)
 				msg.InflationDistribution.CommunityPool = communityPoolProportionDec
 			}
 
 			var strategicReservesProportionDec sdk.Dec
 			if strategicReservesProportion, _ := cmd.Flags().GetString("strategic-reserves-proportion"); strategicReservesProportion != "" {
-				strategicReservesProportionDec = math.LegacyMustNewDecFromStr(strategicReservesProportion)
+				strategicReservesProportionDec = sdkmath.LegacyMustNewDecFromStr(strategicReservesProportion)
 				msg.InflationDistribution.StrategicReserves = strategicReservesProportionDec
 			}
 
@@ -128,7 +128,7 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 				polynomialFactorsArr := strings.Split(polynomialFactors, ",")
 				realPolynomialFactors := make([]sdk.Dec, len(polynomialFactorsArr))
 				for i, factor := range polynomialFactorsArr {
-					factorDec := math.LegacyMustNewDecFromStr(factor)
+					factorDec := sdkmath.LegacyMustNewDecFromStr(factor)
 					realPolynomialFactors[i] = factorDec
 				}
 				msg.PolynomialFactors = realPolynomialFactors

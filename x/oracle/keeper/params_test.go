@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -24,13 +24,13 @@ func TestParams(t *testing.T) {
 
 	// Test custom params setting
 	votePeriod := uint64(10)
-	voteThreshold := math.LegacyNewDecWithPrec(33, 2)
+	voteThreshold := sdkmath.LegacyNewDecWithPrec(33, 2)
 	minVoters := uint64(4)
-	oracleRewardBand := math.LegacyNewDecWithPrec(1, 2)
-	slashFraction := math.LegacyNewDecWithPrec(1, 2)
+	oracleRewardBand := sdkmath.LegacyNewDecWithPrec(1, 2)
+	slashFraction := sdkmath.LegacyNewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
-	minValidPerWindow := math.LegacyNewDecWithPrec(1, 4)
-	minFeeRatio := math.LegacyNewDecWithPrec(1, 2)
+	minValidPerWindow := sdkmath.LegacyNewDecWithPrec(1, 4)
+	minFeeRatio := sdkmath.LegacyNewDecWithPrec(1, 2)
 	whitelist := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),

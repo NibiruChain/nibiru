@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
@@ -216,8 +216,8 @@ func InitTestnet(
 			valPubKeys[i],
 			sdk.NewCoin(denoms.NIBI, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(math.LegacyOneDec(), math.LegacyOneDec(), math.LegacyOneDec()),
-			math.OneInt(),
+			stakingtypes.NewCommissionRates(sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec()),
+			sdkmath.OneInt(),
 		)
 		if err != nil {
 			return err

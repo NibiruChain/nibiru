@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
@@ -349,7 +349,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		commission, err := math.LegacyNewDecFromStr("0.05")
+		commission, err := sdkmath.LegacyNewDecFromStr("0.05")
 		if err != nil {
 			return nil, err
 		}
@@ -359,8 +359,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			valPubKeys[valIdx],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(commission, math.LegacyOneDec(), math.LegacyOneDec()),
-			math.OneInt(),
+			stakingtypes.NewCommissionRates(commission, sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec()),
+			sdkmath.OneInt(),
 		)
 		if err != nil {
 			return nil, err
@@ -372,7 +372,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[valIdx], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), math.ZeroInt()))
+		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), sdkmath.ZeroInt()))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {

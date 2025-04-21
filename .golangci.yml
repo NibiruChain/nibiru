@@ -38,6 +38,8 @@ linters-settings:
         alias: sdkioerrors
       - pkg: github.com/cosmos/cosmos-sdk/types/errors
         alias: sdkerrors
+      - pkg: cosmossdk.io/math
+        alias: sdkmath
       - pkg: github.com/cosmos/cosmos-sdk/types
         alias: sdk
       - pkg: github.com/cometbft/cometbft/rpc/core

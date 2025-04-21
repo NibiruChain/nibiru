@@ -3,7 +3,7 @@ package evmante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -40,7 +40,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 
 	minGasPrice := ctx.MinGasPrices().AmountOf(evm.EVMBankDenom)
 	baseFeeMicronibi := d.evmKeeper.BaseFeeMicronibiPerGas(ctx)
-	baseFeeMicronibiDec := math.LegacyNewDecFromBigInt(baseFeeMicronibi)
+	baseFeeMicronibiDec := sdkmath.LegacyNewDecFromBigInt(baseFeeMicronibi)
 
 	// if MinGasPrices is not set, skip the check
 	if minGasPrice.IsZero() {
@@ -60,7 +60,7 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 		}
 
 		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
-		effectiveGasPriceDec := math.LegacyNewDecFromBigInt(
+		effectiveGasPriceDec := sdkmath.LegacyNewDecFromBigInt(
 			evm.WeiToNative(ethTx.EffectiveGasPriceWeiPerGas(baseFeeWei)),
 		)
 		if effectiveGasPriceDec.LT(minGasPrice) {

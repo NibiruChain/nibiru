@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -570,8 +570,8 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 		{
 			name: "baseFee < tip < feeCap",
 			tx: func() evm.DynamicFeeTx {
-				gasTipCap, _ := math.NewIntFromString("5" + strings.Repeat("0", 12))
-				gasFeeCap, _ := math.NewIntFromString("10" + strings.Repeat("0", 12))
+				gasTipCap, _ := sdkmath.NewIntFromString("5" + strings.Repeat("0", 12))
+				gasFeeCap, _ := sdkmath.NewIntFromString("10" + strings.Repeat("0", 12))
 				return evm.DynamicFeeTx{
 					GasTipCap: &gasTipCap,
 					GasFeeCap: &gasFeeCap,
@@ -583,8 +583,8 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 		{
 			name: "baseFee < feeCap < tip",
 			tx: func() evm.DynamicFeeTx {
-				gasTipCap, _ := math.NewIntFromString("10" + strings.Repeat("0", 12))
-				gasFeeCap, _ := math.NewIntFromString("2" + strings.Repeat("0", 12))
+				gasTipCap, _ := sdkmath.NewIntFromString("10" + strings.Repeat("0", 12))
+				gasFeeCap, _ := sdkmath.NewIntFromString("2" + strings.Repeat("0", 12))
 				return evm.DynamicFeeTx{
 					GasTipCap: &gasTipCap,
 					GasFeeCap: &gasFeeCap,
@@ -596,8 +596,8 @@ func (suite *Suite) TestDynamicFeeTxEffectiveGasPrice() {
 		{
 			name: "below baseFee",
 			tx: func() evm.DynamicFeeTx {
-				gasTipCap, _ := math.NewIntFromString("0" + strings.Repeat("0", 12))
-				gasFeeCap, _ := math.NewIntFromString("0" + strings.Repeat("0", 12))
+				gasTipCap, _ := sdkmath.NewIntFromString("0" + strings.Repeat("0", 12))
+				gasFeeCap, _ := sdkmath.NewIntFromString("0" + strings.Repeat("0", 12))
 				return evm.DynamicFeeTx{
 					GasTipCap: &gasTipCap,
 					GasFeeCap: &gasFeeCap,
