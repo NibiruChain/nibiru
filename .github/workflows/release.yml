@@ -272,9 +272,16 @@ jobs:
 
       - name: Generate changelog
         id: changes
-        uses: simbo/changes-between-tags-action@v1
-        with:
-          tag-pattern: '^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.\-]+)?$'
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | grep -Ev 'rc|alpha|beta|p.*' | sed -n '2p')
+          echo "Previous tag: $PREV_TAG"
+
+          CHANGELOG=$(git log "$PREV_TAG"..HEAD --pretty=format:'- %h %s')
+          echo "$CHANGELOG"
+
+          echo "changes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
