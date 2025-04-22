@@ -10,7 +10,6 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -456,7 +455,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 	), nil
 }
 
-func (b *Backend) GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error) {
+func (b *Backend) GetTransactionLogs(txHash gethcommon.Hash) ([]*gethcore.Log, error) {
 	retLogs := []*gethcore.Log{}
 
 	res, err := b.GetTxByEthHash(txHash)
