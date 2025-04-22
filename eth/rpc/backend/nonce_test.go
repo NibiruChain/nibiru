@@ -41,7 +41,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 	s.Assert().Equal(nonce+3, currentNonce)
 
 	// Assert all transactions included in block
-	for _, tx := range []gethcore.Transaction{creationTx, firstTransferTx, secondTransferTx} {
+	for _, tx := range []*gethcore.Transaction{creationTx, firstTransferTx, secondTransferTx} {
 		blockNum, blockHash, _ := WaitForReceipt(s, tx.Hash())
 		s.Require().NotNil(blockNum)
 		s.Require().NotNil(blockHash)
@@ -49,11 +49,11 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 }
 
 // buildSDKTxWithEVMMessages creates an SDK transaction with EVM messages
-func (s *BackendSuite) buildSDKTxWithEVMMessages(txs ...gethcore.Transaction) sdk.Tx {
+func (s *BackendSuite) buildSDKTxWithEVMMessages(txs ...*gethcore.Transaction) sdk.Tx {
 	msgs := make([]sdk.Msg, len(txs))
 	for i, tx := range txs {
 		msg := &evm.MsgEthereumTx{}
-		err := msg.FromEthereumTx(&tx)
+		err := msg.FromEthereumTx(tx)
 		s.Require().NoError(err)
 		msgs[i] = msg
 	}

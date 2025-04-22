@@ -46,7 +46,7 @@ Example from IHooks.sol:
 /// @param sender The initial msg.sender for the remove liquidity call
 /// @param key The key for the pool
 /// @param params The parameters for removing liquidity
-/// @param hookData Arbitrary data handed into the PoolManager by the liquidity provider to be be passed on to the hook
+/// @param hookData Arbitrary data handed into the PoolManager by the liquidity provider to be passed on to the hook
 /// @return bytes4 The function selector for the hook
 function beforeRemoveLiquidity(
     address sender,

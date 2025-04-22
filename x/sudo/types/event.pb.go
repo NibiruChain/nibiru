@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // EventUpdateSudoers: ABCI event emitted upon execution of "MsgEditSudoers".
 type EventUpdateSudoers struct {
 	Sudoers Sudoers `protobuf:"bytes,1,opt,name=sudoers,proto3" json:"sudoers"`
-	// Action is the type of update that occured to the "sudoers"
+	// Action is the type of update that occurred to the "sudoers"
 	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 }
 

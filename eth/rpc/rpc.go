@@ -10,18 +10,16 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	gethparams "github.com/ethereum/go-ethereum/params"
 )
 
 // ErrExceedBlockGasLimit defines the error message when tx execution exceeds the
@@ -39,7 +37,7 @@ const ErrStateDBCommit = "failed to commit stateDB"
 func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereumTx, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBz)
 	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrJSONUnmarshal, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 
 	ethTxs := make([]*evm.MsgEthereumTx, len(tx.GetMsgs()))
@@ -155,42 +153,31 @@ func FormatBlock(
 	return result
 }
 
-// NewRPCTxFromMsg returns a transaction that will serialize to the RPC
+// NewRPCTxFromMsgEthTx returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
-func NewRPCTxFromMsg(
-	msg *evm.MsgEthereumTx,
+func NewRPCTxFromMsgEthTx(
+	msgEthTx *evm.MsgEthereumTx,
 	blockHash gethcommon.Hash,
-	blockNumber, index uint64,
+	blockNumber uint64,
+	index uint64,
 	baseFeeWei *big.Int,
 	chainID *big.Int,
 ) (*EthTxJsonRPC, error) {
-	tx := msg.AsTransaction()
-	return NewRPCTxFromEthTx(tx, blockHash, blockNumber, index, baseFeeWei, chainID)
-}
+	var (
+		tx = msgEthTx.AsTransaction()
+		// Determine the signer. For replay-protected transactions, use the most
+		// permissive signer, because we assume that signers are backwards-compatible
+		// with old transactions. For non-protected transactions, the homestead
+		// signer is used because the return value of ChainId is zero for unprotected
+		// transactions.
+		signer  gethcore.Signer = gethcore.HomesteadSigner{}
+		v, r, s                 = tx.RawSignatureValues()
+	)
 
-// NewRPCTxFromEthTx returns a transaction that will serialize to the RPC
-// representation, with the given location metadata set (if available).
-func NewRPCTxFromEthTx(
-	tx *gethcore.Transaction,
-	blockHash gethcommon.Hash,
-	blockNumber,
-	index uint64,
-	baseFee *big.Int,
-	chainID *big.Int,
-) (*EthTxJsonRPC, error) {
-	// Determine the signer. For replay-protected transactions, use the most
-	// permissive signer, because we assume that signers are backwards-compatible
-	// with old transactions. For non-protected transactions, the homestead
-	// signer is used because the return value of ChainId is zero for unprotected
-	// transactions.
-	var signer gethcore.Signer
 	if tx.Protected() {
 		signer = gethcore.LatestSignerForChainID(tx.ChainId())
-	} else {
-		signer = gethcore.HomesteadSigner{}
 	}
 	from, _ := gethcore.Sender(signer, tx) // #nosec G703
-	v, r, s := tx.RawSignatureValues()
 	result := &EthTxJsonRPC{
 		Type:     hexutil.Uint64(tx.Type()),
 		From:     from,
@@ -211,22 +198,23 @@ func NewRPCTxFromEthTx(
 		result.BlockNumber = (*hexutil.Big)(new(big.Int).SetUint64(blockNumber))
 		result.TransactionIndex = (*hexutil.Uint64)(&index)
 	}
-	switch tx.Type() {
+
+	switch txType := tx.Type(); txType {
 	case gethcore.AccessListTxType:
 		al := tx.AccessList()
 		result.Accesses = &al
 		result.ChainID = (*hexutil.Big)(tx.ChainId())
-	case gethcore.DynamicFeeTxType:
+	case gethcore.DynamicFeeTxType, gethcore.BlobTxType:
 		al := tx.AccessList()
 		result.Accesses = &al
 		result.ChainID = (*hexutil.Big)(tx.ChainId())
 		result.GasFeeCap = (*hexutil.Big)(tx.GasFeeCap())
 		result.GasTipCap = (*hexutil.Big)(tx.GasTipCap())
+
 		// if the transaction has been mined, compute the effective gas price
-		if baseFee != nil && blockHash != (gethcommon.Hash{}) {
+		if baseFeeWei != nil && blockHash != (gethcommon.Hash{}) {
 			// price = min(tip, gasFeeCap - baseFee) + baseFee
-			price := gethmath.BigMin(new(big.Int).Add(tx.GasTipCap(), baseFee), tx.GasFeeCap())
-			result.GasPrice = (*hexutil.Big)(price)
+			result.GasPrice = (*hexutil.Big)(msgEthTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
 		} else {
 			result.GasPrice = (*hexutil.Big)(tx.GasFeeCap())
 		}
@@ -234,43 +222,22 @@ func NewRPCTxFromEthTx(
 	return result, nil
 }
 
-// CheckTxFee is an internal function used to check whether the fee of
-// the given transaction is _reasonable_(under the cap).
-func CheckTxFee(gasPrice *big.Int, gas uint64, cap float64) error {
-	// Short circuit if there is no cap for transaction fee at all.
-	if cap == 0 {
-		return nil
-	}
-	totalfee := new(big.Float).SetInt(new(big.Int).Mul(gasPrice, new(big.Int).SetUint64(gas)))
-	oneEther := new(big.Float).SetInt(big.NewInt(gethparams.Ether))
-	// quo = rounded(x/y)
-	feeEth := new(big.Float).Quo(totalfee, oneEther)
-	// no need to check error from parsing
-	feeFloat, _ := feeEth.Float64()
-	if feeFloat > cap {
-		return fmt.Errorf("tx fee (%.2f ether) exceeds the configured cap (%.2f ether)", feeFloat, cap)
-	}
-	return nil
-}
-
-// TxExceedBlockGasLimit returns true if the tx exceeds block gas limit.
-func TxExceedBlockGasLimit(res *abci.ResponseDeliverTx) bool {
-	return strings.Contains(res.Log, ErrExceedBlockGasLimit)
-}
-
-// TxStateDBCommitError returns true if the evm tx commit error.
-func TxStateDBCommitError(res *abci.ResponseDeliverTx) bool {
-	return strings.Contains(res.Log, ErrStateDBCommit)
-}
-
 // TxIsValidEnough returns true if the transaction was successful
 // or if it failed with an ExceedBlockGasLimit error or TxStateDBCommitError error
+//
+// Include in Block:
+//   - Include successful tx
+//   - Include unsuccessful tx that exceeds block gas limit
+//   - Include unsuccessful tx that failed when committing changes to stateDB
+//
+// Exclude from Block (Not Valid Enough):
+//   - Exclude unsuccessful tx with any other error but ExceedBlockGasLimit
 func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string) {
 	if res.Code == 0 {
 		return true, "tx succeeded"
-	} else if TxExceedBlockGasLimit(res) {
+	} else if strings.Contains(res.Log, ErrExceedBlockGasLimit) {
 		return true, "tx exceeded block gas limit"
-	} else if TxStateDBCommitError(res) {
+	} else if strings.Contains(res.Log, ErrStateDBCommit) {
 		return true, "tx state db commit error"
 	}
 	return false, "unexpected failure"
