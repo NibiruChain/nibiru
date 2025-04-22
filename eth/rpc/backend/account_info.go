@@ -6,15 +6,14 @@ import (
 	"math"
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -57,7 +56,7 @@ func (b *Backend) GetProof(
 	_, err = b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		// the error message imitates geth behavior
-		return nil, errors.New("header not found")
+		return nil, pkgerrors.New("header not found")
 	}
 	ctx := rpc.NewContextWithHeight(height)
 
@@ -118,7 +117,7 @@ func (b *Backend) GetProof(
 
 	balance, ok := sdkmath.NewIntFromString(res.BalanceWei)
 	if !ok {
-		return nil, errors.New("invalid balance")
+		return nil, pkgerrors.New("invalid balance")
 	}
 
 	return &rpc.AccountResult{
@@ -187,7 +186,7 @@ func (b *Backend) GetBalance(
 
 	// balance can only be negative in case of pruned node
 	if val.IsNegative() {
-		return nil, errors.New("couldn't fetch balance. Node state is pruned")
+		return nil, pkgerrors.New("couldn't fetch balance. Node state is pruned")
 	}
 
 	return (*hexutil.Big)(val.BigInt()), nil
@@ -204,7 +203,7 @@ func (b *Backend) GetTransactionCount(address gethcommon.Address, blockNum rpc.B
 
 	currentHeight := int64(bn) //#nosec G701 -- checked for int overflow already
 	if height > currentHeight {
-		return &n, errorsmod.Wrapf(
+		return &n, sdkioerrors.Wrapf(
 			sdkerrors.ErrInvalidHeight,
 			"cannot query with height in the future (current: %d, queried: %d); please provide a valid height",
 			currentHeight, height,

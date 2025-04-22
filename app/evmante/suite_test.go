@@ -3,7 +3,7 @@ package evmante_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
 
@@ -38,7 +38,7 @@ func (s *TestSuite) TestGenesis() {
 	gens = append(gens, getDefaultStakingGenesis())
 
 	genStaking := getDefaultStakingGenesis()
-	genStaking.Params.MinCommissionRate = math.LegacyZeroDec()
+	genStaking.Params.MinCommissionRate = sdkmath.LegacyZeroDec()
 	gens = append(gens, genStaking)
 
 	for _, tc := range []struct {

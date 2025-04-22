@@ -1,6 +1,7 @@
 package backend_test
 
 import (
+	"encoding/json"
 	"math/big"
 	"strings"
 
@@ -13,11 +14,22 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-var traceConfig = &evm.TraceConfig{
-	Tracer: "callTracer",
-	TracerConfig: &evm.TracerConfig{
-		OnlyTopCall: true,
-	},
+func traceConfigCallTracer() *evm.TraceConfig {
+	return &evm.TraceConfig{
+		Tracer: "callTracer",
+		TracerConfig: &evm.TracerConfig{
+			OnlyTopCall: true,
+		},
+	}
+}
+
+func traceConfigDefaultTracer() *evm.TraceConfig {
+	return &evm.TraceConfig{
+		Tracer: "",
+		TracerConfig: &evm.TracerConfig{
+			OnlyTopCall: true,
+		},
+	}
 }
 
 func (s *BackendSuite) TestTraceTransaction() {
@@ -33,7 +45,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 		},
 		{
 			name:    "happy: tx found",
-			txHash:  transferTxHash,
+			txHash:  s.SuccessfulTxTransfer().Receipt.TxHash,
 			wantErr: "",
 		},
 	}
@@ -42,21 +54,24 @@ func (s *BackendSuite) TestTraceTransaction() {
 		s.Run(tc.name, func() {
 			res, err := s.backend.TraceTransaction(
 				tc.txHash,
-				traceConfig,
+				traceConfigCallTracer(),
+				// traceConfigDefaultTracer(),
 			)
 			if tc.wantErr != "" {
 				s.ErrorContains(err, tc.wantErr)
 				return
 			}
-			s.Require().NoError(err)
+			s.Require().NoErrorf(err, "traceResult: %s", res)
 			s.Require().NotNil(res)
-			AssertTraceCall(s, res.(map[string]interface{}))
+			AssertTraceCall(s, res)
 		})
 	}
 }
 
 func (s *BackendSuite) TestTraceBlock() {
-	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(transferTxBlockNumber)
+	tmBlockWithTx, err := s.backend.TendermintBlockByNumber(
+		*s.SuccessfulTxTransfer().BlockNumberRpc,
+	)
 	s.Require().NoError(err)
 
 	blockNumberWithoutTx := rpc.NewBlockNumber(big.NewInt(1))
@@ -68,18 +83,35 @@ func (s *BackendSuite) TestTraceBlock() {
 		blockNumber rpc.BlockNumber
 		tmBlock     *tmrpctypes.ResultBlock
 		txCount     int
+		traceConfig *evm.TraceConfig
 	}{
 		{
-			name:        "happy: block without txs",
+			name:        "happy: TraceBlock, no txs, tracer: default",
 			blockNumber: blockNumberWithoutTx,
 			tmBlock:     tmBlockWithoutTx,
 			txCount:     0,
+			traceConfig: traceConfigDefaultTracer(),
 		},
 		{
-			name:        "happy: block with txs",
-			blockNumber: transferTxBlockNumber,
+			name:        "happy: TraceBlock, no txs, tracer: callTracer",
+			blockNumber: blockNumberWithoutTx,
+			tmBlock:     tmBlockWithoutTx,
+			txCount:     0,
+			traceConfig: traceConfigCallTracer(),
+		},
+		{
+			name:        "happy: TraceBlock, transfer tx, tracer: callTracer",
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
+			traceConfig: traceConfigCallTracer(),
+		},
+		{
+			name:        "happy: TraceBlock, transfer tx, tracer: default",
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
+			tmBlock:     tmBlockWithTx,
+			txCount:     1,
+			traceConfig: traceConfigDefaultTracer(),
 		},
 	}
 
@@ -87,13 +119,22 @@ func (s *BackendSuite) TestTraceBlock() {
 		s.Run(tc.name, func() {
 			res, err := s.backend.TraceBlock(
 				tc.blockNumber,
-				traceConfig,
+				tc.traceConfig,
 				tc.tmBlock,
 			)
 			s.Require().NoError(err)
 			s.Require().Equal(tc.txCount, len(res))
+			prettyBz, err := json.MarshalIndent(res, "", "  ")
+			s.Require().NoError(err)
+			s.T().Logf("TraceBlock result: %s", prettyBz)
 			if tc.txCount > 0 {
-				AssertTraceCall(s, res[0].Result.(map[string]interface{}))
+				typedResult, ok := res[0].Result.(map[string]any)
+				if !ok {
+					s.T().Errorf("failed to parse block result as map[string]any. Got %#v", res[0].Result)
+				}
+				traceResult, err := json.Marshal(typedResult)
+				s.Require().NoError(err)
+				AssertTraceCall(s, traceResult)
 			}
 		})
 	}
@@ -116,6 +157,7 @@ func (s *BackendSuite) TestTraceCall() {
 	}
 	s.Require().NoError(err)
 
+	traceConfig := traceConfigDefaultTracer()
 	res, err := s.backend.TraceCall(
 		txArgs,
 		rpc.BlockNumber(block),
@@ -123,10 +165,17 @@ func (s *BackendSuite) TestTraceCall() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	AssertTraceCall(s, res.(map[string]interface{}))
+	AssertTraceCall(s, res)
 }
 
-func AssertTraceCall(s *BackendSuite, trace map[string]interface{}) {
+func AssertTraceCall(
+	s *BackendSuite,
+	traceResult json.RawMessage,
+) {
+	var trace map[string]any
+	err := json.Unmarshal(traceResult, &trace)
+	s.Require().NoErrorf(err, "error unmarshaling traceResult: traceResult %s", traceResult)
+
 	s.Require().Equal("CALL", trace["type"])
 	s.Require().Equal(strings.ToLower(s.fundedAccEthAddr.Hex()), trace["from"])
 	s.Require().Equal(strings.ToLower(recipient.Hex()), trace["to"])

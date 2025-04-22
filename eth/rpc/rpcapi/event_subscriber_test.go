@@ -8,7 +8,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/libs/log"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -23,10 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
-
-type Suite struct {
-	suite.Suite
-}
 
 func TestEventSubscriber(t *testing.T) {
 	index := make(rpcapi.FilterIndex)
@@ -52,7 +47,7 @@ func TestEventSubscriber(t *testing.T) {
 	<-sub.Installed
 	ch, ok := es.TopicChans[sub.Event]
 	if !ok {
-		t.Error("expect topic channel exist")
+		t.Errorf("expect topic channel exist: event %v", sub.Event)
 	}
 
 	sub = rpcapi.MakeSubscription("2", event)
@@ -60,11 +55,11 @@ func TestEventSubscriber(t *testing.T) {
 	<-sub.Installed
 	newCh, ok := es.TopicChans[sub.Event]
 	if !ok {
-		t.Error("expect topic channel exist")
+		t.Errorf("expect topic channel exist: event %v", sub.Event)
 	}
 
 	if newCh != ch {
-		t.Error("expect topic channel unchanged")
+		t.Errorf("expect topic channel unchanged: event %v", sub.Event)
 	}
 }
 

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"math"
 
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -18,7 +18,10 @@ import (
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig) (any, error) {
+func (b *Backend) TraceTransaction(
+	hash gethcommon.Hash,
+	config *evm.TraceConfig,
+) (res json.RawMessage, err error) {
 	// Get transaction by hash
 	transaction, err := b.GetTxByEthHash(hash)
 	if err != nil {
@@ -28,7 +31,7 @@ func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig
 
 	// check if block number is 0
 	if transaction.Height == 0 {
-		return nil, errors.New("genesis is not traceable")
+		return nil, pkgerrors.New("genesis is not traceable")
 	}
 
 	blk, err := b.TendermintBlockByNumber(rpc.BlockNumber(transaction.Height))
@@ -71,8 +74,7 @@ func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig
 	}
 
 	// add predecessor messages in current cosmos tx
-	index := int(transaction.MsgIndex) // #nosec G701
-	for i := 0; i < index; i++ {
+	for i := range tx.GetMsgs()[:int(transaction.MsgIndex)] {
 		ethMsg, ok := tx.GetMsgs()[i].(*evm.MsgEthereumTx)
 		if !ok {
 			continue
@@ -86,9 +88,9 @@ func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig
 		return nil, fmt.Errorf("invalid transaction type %T", tx)
 	}
 
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &blk.Block.Height)
@@ -111,26 +113,26 @@ func (b *Backend) TraceTransaction(hash gethcommon.Hash, config *evm.TraceConfig
 		traceTxRequest.TraceConfig = config
 	}
 
-	// minus one to get the context of block beginning
-	contextHeight := transaction.Height - 1
-	if contextHeight < 1 {
-		// 0 is a special value in `ContextWithHeight`
-		contextHeight = 1
-	}
-	traceResult, err := b.queryClient.TraceTx(rpc.NewContextWithHeight(contextHeight), &traceTxRequest)
+	// Run "TraceTx":
+	// For the trace context, use tx height minus one to get the context of start
+	// of the block. We set the minimum value of "contextHeight" is set to 1
+	// because 0 is a special value in [rpc.ContextWithHeight].
+	traceResult, err := b.queryClient.TraceTx(
+		rpc.NewContextWithHeight(max(transaction.Height-1, 1)),
+		&traceTxRequest,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Response format is unknown due to custom tracer config param
 	// More information can be found here https://geth.ethereum.org/docs/dapp/tracing-filtered
-	var decodedResult any
-	err = json.Unmarshal(traceResult.Data, &decodedResult)
+	err = json.Unmarshal(traceResult.Data, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	return decodedResult, nil
+	return res, nil
 }
 
 // TraceBlock configures a new tracer according to the provided configuration, and
@@ -176,9 +178,9 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	}
 	ctxWithHeight := rpc.NewContextWithHeight(int64(contextHeight))
 
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &block.Block.Height)
@@ -219,15 +221,15 @@ func (b *Backend) TraceCall(
 	txArgs evm.JsonTxArgs,
 	contextBlock rpc.BlockNumber,
 	config *evm.TraceConfig,
-) (any, error) {
+) (traceResult json.RawMessage, err error) {
 	blk, err := b.TendermintBlockByNumber(contextBlock)
 	if err != nil {
 		b.logger.Debug("block not found", "contextBlock", contextBlock)
 		return nil, err
 	}
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &blk.Block.Height)
@@ -249,14 +251,13 @@ func (b *Backend) TraceCall(
 	if config != nil {
 		traceTxRequest.TraceConfig = config
 	}
-	traceResult, err := b.queryClient.TraceCall(rpc.NewContextWithHeight(contextBlock.Int64()), &traceTxRequest)
+	traceResp, err := b.queryClient.TraceCall(rpc.NewContextWithHeight(contextBlock.Int64()), &traceTxRequest)
 	if err != nil {
 		return nil, err
 	}
-	var decodedResult any
-	err = json.Unmarshal(traceResult.Data, &decodedResult)
+	err = json.Unmarshal(traceResp.Data, &traceResult)
 	if err != nil {
 		return nil, err
 	}
-	return decodedResult, nil
+	return traceResult, nil
 }

@@ -10,8 +10,8 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/sudo/types";
 
 // EventUpdateSudoers: ABCI event emitted upon execution of "MsgEditSudoers".
 message EventUpdateSudoers {
-  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [(gogoproto.nullable) = false];
 
-  // Action is the type of update that occured to the "sudoers"
+  // Action is the type of update that occurred to the "sudoers"
   string action = 2;
 }

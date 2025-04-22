@@ -2,14 +2,13 @@
 package evm
 
 import (
-	"math/big"
 	"os"
-	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
+	tracersnative "github.com/ethereum/go-ethereum/eth/tracers/native"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -22,30 +21,48 @@ const (
 
 // NewTracer creates a new Logger tracer to collect execution traces from an
 // EVM transaction.
-func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64) vm.EVMLogger {
-	// TODO: enable additional log configuration
+func NewTracer(
+	tracer string,
+	msg core.Message,
+	cfg *params.ChainConfig,
+	height int64,
+) *tracing.Hooks {
+	// TODO: feat(evm-vmtracer): enable additional log configuration
 	logCfg := &logger.Config{
 		Debug: true,
 	}
 
 	switch tracer {
 	case TracerAccessList:
-		rules := cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil)
-		precompileAddrs := vm.DefaultActivePrecompiles(rules)
+		precompileAddrs := PRECOMPILE_ADDRS
 		return logger.NewAccessListTracer(
-			msg.AccessList(),
-			msg.From(),
-			*msg.To(),
+			msg.AccessList,
+			msg.From,
+			*msg.To,
 			precompileAddrs,
-		)
+		).Hooks()
 	case TracerJSON:
 		return logger.NewJSONLogger(logCfg, os.Stdout)
 	case TracerMarkdown:
-		return logger.NewMarkdownLogger(logCfg, os.Stdout)
+		return logger.NewMarkdownLogger(logCfg, os.Stdout).Hooks()
 	case TracerStruct:
-		return logger.NewStructLogger(logCfg)
+		return NewDefaultTracer().Hooks
 	default:
-		return NewNoOpTracer()
+		// The no-op tracer, `return NewNoOpTracer().Hooks` is meant for testing
+		// in geth, not production.
+		return NewDefaultTracer().Hooks
+	}
+}
+
+func NewDefaultTracer() *tracers.Tracer {
+	logCfg := &logger.Config{
+		Debug: true,
+	}
+	defaultLogger := logger.NewStructLogger(logCfg)
+	return &tracers.Tracer{
+		Hooks:     defaultLogger.Hooks(),
+		GetResult: defaultLogger.GetResult,
+		Stop:      defaultLogger.Stop,
 	}
 }
 
@@ -55,62 +72,9 @@ type TxTraceResult struct {
 	Error  string `json:"error,omitempty"`  // Trace failure produced by the tracer
 }
 
-var _ vm.EVMLogger = &NoOpTracer{}
-
-// NoOpTracer is an empty implementation of vm.Tracer interface
-type NoOpTracer struct{}
-
 // NewNoOpTracer creates a no-op vm.Tracer
-func NewNoOpTracer() *NoOpTracer {
-	return &NoOpTracer{}
+func NewNoOpTracer() (tracer *tracers.Tracer) {
+	// This function cannot error, so we ignore the second return value
+	tracer, _ = tracersnative.NewNoopTracer(nil, nil, nil)
+	return tracer
 }
-
-// CaptureStart implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureStart(env *vm.EVM,
-	from common.Address,
-	to common.Address,
-	create bool,
-	input []byte,
-	gas uint64,
-	value *big.Int) {
-}
-
-// CaptureState implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureState(pc uint64, op vm.OpCode, gas, cost uint64, scope *vm.ScopeContext, rData []byte, depth int, err error) {
-}
-
-// CaptureFault implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64, scope *vm.ScopeContext, depth int, err error) {
-}
-
-// CaptureEnd implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, tm time.Duration, err error) {}
-
-// CaptureEnter implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureEnter(typ vm.OpCode, from common.Address, to common.Address, input []byte, gas uint64, value *big.Int) {
-}
-
-// CaptureExit implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureExit(output []byte, gasUsed uint64, err error) {}
-
-// CaptureTxStart implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureTxStart(gasLimit uint64) {}
-
-// CaptureTxEnd implements vm.Tracer interface
-//
-//nolint:revive // allow unused parameters to indicate expected signature
-func (dt NoOpTracer) CaptureTxEnd(restGas uint64) {}

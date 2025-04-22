@@ -7,11 +7,12 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	core "github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
@@ -62,7 +63,7 @@ func DeployContract(
 	// Use contract args
 	packedArgs, err := contract.ABI.Pack("", args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to pack contract args")
+		return nil, sdkioerrors.Wrap(err, "failed to pack contract args")
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
@@ -75,15 +76,15 @@ func DeployContract(
 		}, deps, deps.Sender,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 	if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
-		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
 	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute ethereum tx")
+		return nil, sdkioerrors.Wrap(err, "failed to execute ethereum tx")
 	}
 	if resp.VmError != "" {
 		return nil, fmt.Errorf("vm error: %s", resp.VmError)
@@ -359,16 +360,17 @@ func NewEthTxMsgFromTxData(
 	return ethTxMsg, ethTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner)
 }
 
-var MOCK_GETH_MESSAGE = gethcore.NewMessage(
-	evm.EVM_MODULE_ADDRESS,
-	nil,
-	0,
-	big.NewInt(0),
-	0,
-	big.NewInt(0),
-	big.NewInt(0),
-	big.NewInt(0),
-	[]byte{},
-	gethcore.AccessList{},
-	false,
-)
+var MOCK_GETH_MESSAGE = core.Message{
+	To:               nil,
+	From:             evm.EVM_MODULE_ADDRESS,
+	Nonce:            0,
+	Value:            evm.Big0, // amount
+	GasLimit:         0,
+	GasPrice:         evm.Big0,
+	GasFeeCap:        evm.Big0,
+	GasTipCap:        evm.Big0,
+	Data:             []byte{},
+	AccessList:       gethcore.AccessList{},
+	SkipNonceChecks:  false,
+	SkipFromEOACheck: false,
+}

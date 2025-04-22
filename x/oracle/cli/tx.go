@@ -6,9 +6,6 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-
-	"github.com/pkg/errors"
-
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -128,7 +125,7 @@ $ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 			if len(args) == 3 {
 				parsedVal, err := sdk.ValAddressFromBech32(args[2])
 				if err != nil {
-					return errors.Wrap(err, "validator address is invalid")
+					return fmt.Errorf("validator address is invalid: %w", err)
 				}
 
 				validator = parsedVal
@@ -191,7 +188,7 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 			if len(args) == 3 {
 				parsedVal, err := sdk.ValAddressFromBech32(args[2])
 				if err != nil {
-					return errors.Wrap(err, "validator address is invalid")
+					return fmt.Errorf("validator address is invalid: %w", err)
 				}
 				validator = parsedVal
 			}

@@ -7,7 +7,7 @@ import (
 
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -27,7 +27,7 @@ var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	fmt.Sprintf("--%s=%s", flags.FlagFees,
-		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.NewInt(10_000_000))).String()),
+		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(10_000_000))).String()),
 }
 
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)

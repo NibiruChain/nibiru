@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc/codes"
@@ -15,7 +15,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus/misc"
+	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -113,10 +113,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	targetOneFeeHistory *rpc.OneFeeHistory,
 ) error {
 	blockHeight := tendermintBlock.Block.Height
-	blockBaseFee, err := b.BaseFeeWei(tendermintBlockResult)
-	if err != nil {
-		return err
-	}
+	blockBaseFee := evm.BASE_FEE_WEI
 
 	// set basefee
 	targetOneFeeHistory.BaseFee = blockBaseFee
@@ -125,7 +122,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	if err != nil {
 		return err
 	}
-	targetOneFeeHistory.NextBaseFee = misc.CalcBaseFee(cfg, header)
+	targetOneFeeHistory.NextBaseFee = eip1559.CalcBaseFee(cfg, header)
 
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
@@ -223,7 +220,7 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 
 		eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse event tx log")
+			return nil, sdkioerrors.Wrapf(err, "failed to parse event tx log")
 		}
 		return evm.LogsToEthereum(eventTxLog.Logs), nil
 	}

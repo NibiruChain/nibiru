@@ -533,7 +533,7 @@ type EventUpdateSudoers struct {
 	unknownFields protoimpl.UnknownFields
 
 	Sudoers *Sudoers `protobuf:"bytes,1,opt,name=sudoers,proto3" json:"sudoers,omitempty"`
-	// Action is the type of update that occured to the "sudoers"
+	// Action is the type of update that occurred to the "sudoers"
 	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 }
 

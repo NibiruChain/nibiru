@@ -3,13 +3,13 @@ package types
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 var (
-	ErrUnauthorized = sdkerrors.Register(ModuleName, 2, "unauthorized: missing sudo permissions")
-	errGenesis      = sdkerrors.Register(ModuleName, 3, "sudo genesis error")
-	errSudoers      = sdkerrors.Register(ModuleName, 4, "sudoers error")
+	ErrUnauthorized = sdkioerrors.Register(ModuleName, 2, "unauthorized: missing sudo permissions")
+	errGenesis      = sdkioerrors.Register(ModuleName, 3, "sudo genesis error")
+	errSudoers      = sdkioerrors.Register(ModuleName, 4, "sudoers error")
 )
 
 func ErrGenesis(errMsg string) error {

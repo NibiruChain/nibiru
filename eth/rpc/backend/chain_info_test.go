@@ -3,6 +3,7 @@ package backend_test
 import (
 	"math/big"
 
+	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -20,19 +21,13 @@ func (s *BackendSuite) TestChainConfig() {
 	s.Require().Equal(int64(0), config.LondonBlock.Int64())
 }
 
-func (s *BackendSuite) TestBaseFeeWei() {
-	resBlock, err := s.backend.TendermintBlockResultByNumber(transferTxBlockNumber.TmHeight())
-	s.Require().NoError(err)
-	baseFeeWei, err := s.backend.BaseFeeWei(resBlock)
-	s.Require().NoError(err)
-	s.Require().Equal(evm.BASE_FEE_WEI, baseFeeWei)
-}
-
 func (s *BackendSuite) TestCurrentHeader() {
 	currentHeader, err := s.backend.CurrentHeader()
 	s.Require().NoError(err)
 	s.Require().NotNil(currentHeader)
-	s.Require().GreaterOrEqual(currentHeader.Number.Int64(), transferTxBlockNumber.Int64())
+	s.Require().GreaterOrEqual(
+		currentHeader.Number.Int64(),
+		s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
 
 func (s *BackendSuite) TestPendingTransactions() {
@@ -65,7 +60,7 @@ func (s *BackendSuite) TestFeeHistory() {
 	percentiles := []float64{50, 100}
 
 	res, err := s.backend.FeeHistory(
-		(gethrpc.DecimalOrHex)(blockCount),
+		(gethmath.HexOrDecimal64)(blockCount),
 		gethrpc.BlockNumber(int64(currentBlock)),
 		percentiles,
 	)
