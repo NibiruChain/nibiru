@@ -2,6 +2,7 @@
 package evm
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -54,13 +55,16 @@ var (
 // NewRevertError unpacks the revert return bytes and returns a wrapped error
 // with the return reason.
 func NewRevertError(revertReason []byte) error {
-	reason, unpackingError := abi.UnpackRevert(revertReason)
-
-	if unpackingError != nil {
-		return fmt.Errorf("execution reverted, but unable to parse reason \"%v\"", string(revertReason))
+	if len(revertReason) == 0 {
+		return fmt.Errorf("execution reverted with no reason")
 	}
 
-	return fmt.Errorf("execution reverted with reason \"%v\"", reason)
+	reason, err := abi.UnpackRevert(revertReason)
+	if err == nil {
+		return fmt.Errorf("execution reverted with reason \"%s\"", reason)
+	}
+
+	return fmt.Errorf("execution reverted with undecodable reason (raw hex: %v)", hex.EncodeToString(revertReason))
 }
 
 // RevertError is an API error that encompass an EVM revert with JSON error
