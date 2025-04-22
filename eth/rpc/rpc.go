@@ -162,7 +162,7 @@ func NewRPCTxFromMsgEthTx(
 	index uint64,
 	baseFeeWei *big.Int,
 	chainID *big.Int,
-) (*EthTxJsonRPC, error) {
+) *EthTxJsonRPC {
 	var (
 		tx = msgEthTx.AsTransaction()
 		// Determine the signer. For replay-protected transactions, use the most
@@ -219,7 +219,7 @@ func NewRPCTxFromMsgEthTx(
 			result.GasPrice = (*hexutil.Big)(tx.GasFeeCap())
 		}
 	}
-	return result, nil
+	return result
 }
 
 // TxIsValidEnough returns true if the transaction was successful

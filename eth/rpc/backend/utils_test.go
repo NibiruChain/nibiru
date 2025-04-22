@@ -68,7 +68,7 @@ func mockProofs(num int, withData bool) *crypto.ProofOps {
 	var proofOps *crypto.ProofOps
 	if num > 0 {
 		proofOps = new(crypto.ProofOps)
-		for i := 0; i < num; i++ {
+		for range num {
 			proof := crypto.ProofOp{}
 			if withData {
 				proof.Data = []byte("\n\031\n\003KEY\022\005VALUE\032\013\010\001\030\001 \001*\003\000\002\002")

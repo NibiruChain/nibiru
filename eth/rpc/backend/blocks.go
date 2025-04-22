@@ -65,11 +65,6 @@ func (b *Backend) GetBlockByNumber(
 	blockNum rpc.BlockNumber,
 	fullTx bool,
 ) (block map[string]any, err error) {
-	defer func() {
-		if err != nil {
-			b.logger.Debug("eth_getBlockByNumber failed", "error", err.Error())
-		}
-	}()
 	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		return nil, err
@@ -92,7 +87,7 @@ func (b *Backend) GetBlockByNumber(
 	blockRes, err := b.TendermintBlockResultByNumber(&resBlock.Block.Height)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to fetch block result from Tendermint: blockNumber %d: %w", blockNum, err,
+			"blockNumber %d: found block but failed to fetch block result: %w", blockNum, err,
 		)
 	}
 
@@ -123,7 +118,9 @@ func (b *Backend) GetBlockByHash(
 	blockRes, err := b.TendermintBlockResultByNumber(&resBlock.Block.Height)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to fetch block result from Tendermint: blockHash %s: %w", blockHash, err)
+			"blockHash %s: found block but failed to fetch block result: %w",
+			blockHash, err,
+		)
 	}
 
 	res, err := b.RPCBlockFromTendermintBlock(resBlock, blockRes, fullTx)
@@ -211,7 +208,11 @@ func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.Resu
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc client: type %T", b.clientCtx.Client)
 	}
-	return sc.BlockResults(b.ctx, height)
+	blockRes, err := sc.BlockResults(b.ctx, height)
+	if err != nil {
+		err = fmt.Errorf("block result not found: block number %d: %w", height, err)
+	}
+	return blockRes, err
 }
 
 // TendermintBlockByHash returns a Tendermint-formatted block by block number
@@ -223,14 +224,13 @@ func (b *Backend) TendermintBlockByHash(blockHash gethcommon.Hash) (*tmrpctypes.
 	resBlock, err := sc.BlockByHash(b.ctx, blockHash.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf(
-			"TendermintBlockByHash: RPC BlockByHash(%s) failed: %w",
-			blockHash.Hex(), err,
+			"block not found: blockHash %s: %w", blockHash.Hex(), err,
 		)
 	}
 
 	if resBlock == nil || resBlock.Block == nil {
 		return nil, fmt.Errorf(
-			"TendermintBlockByHash: block not found: blockHash %s: %w",
+			"block not found: blockHash %s: %w",
 			blockHash.Hex(), ErrNilBlockSuccess,
 		)
 	}
@@ -238,7 +238,8 @@ func (b *Backend) TendermintBlockByHash(blockHash gethcommon.Hash) (*tmrpctypes.
 	return resBlock, nil
 }
 
-// BlockNumberFromTendermint returns the BlockNumber from BlockNumberOrHash
+// BlockNumberFromTendermint parses the [rpc.BlockNumber] from the given
+// [rpc.BlockNumberOrHash].
 func (b *Backend) BlockNumberFromTendermint(blockNrOrHash rpc.BlockNumberOrHash) (rpc.BlockNumber, error) {
 	switch {
 	case blockNrOrHash.BlockHash == nil && blockNrOrHash.BlockNumber == nil:
@@ -323,7 +324,7 @@ func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, er
 
 	blockRes, err := b.TendermintBlockResultByNumber(&resBlock.Block.Height)
 	if err != nil {
-		return nil, fmt.Errorf("block result not found for height %d. %w", resBlock.Block.Height, err)
+		return nil, err
 	}
 
 	bloom := b.BlockBloom(blockRes)
@@ -375,7 +376,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 
 		height := uint64(block.Height) //#nosec G701 -- checked for int overflow already
 		index := uint64(txIndex)       //#nosec G701 -- checked for int overflow already
-		rpcTx, err := rpc.NewRPCTxFromMsgEthTx(
+		rpcTx := rpc.NewRPCTxFromMsgEthTx(
 			ethMsg,
 			gethcommon.BytesToHash(block.Hash()),
 			height,
@@ -383,10 +384,6 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 			baseFeeWei,
 			b.chainID,
 		)
-		if err != nil {
-			b.logger.Debug("NewTransactionFromData for receipt failed", "hash", ethMsg.Hash, "error", err.Error())
-			continue
-		}
 		ethRPCTxs = append(ethRPCTxs, rpcTx)
 	}
 
@@ -448,14 +445,10 @@ func (b *Backend) EthBlockByNumber(blockNum rpc.BlockNumber) (*gethcore.Block, e
 	if err != nil {
 		return nil, err
 	}
-	if resBlock == nil {
-		// block not found
-		return nil, fmt.Errorf("block not found for height %d", blockNum)
-	}
 
 	blockRes, err := b.TendermintBlockResultByNumber(&resBlock.Block.Height)
 	if err != nil {
-		return nil, fmt.Errorf("block result not found for height %d", resBlock.Block.Height)
+		return nil, err
 	}
 
 	return b.EthBlockFromTendermintBlock(resBlock, blockRes)
