@@ -40,14 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
-- [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
-- [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
-- [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
-- [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
-- [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
-
-## v2.3.0
+## [v2.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.3.0) - 2025-04-22
 
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
@@ -69,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: add depinject wiring for x/inflation module
 - [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: add depinject wiring for x/evm module
 - [#2272](https://github.com/NibiruChain/nibiru/pull/2272) - feat: add depinject wiring for x/tokenfactory module
+- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
+- [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
+- [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
+- [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
+- [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
+- [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
