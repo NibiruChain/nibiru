@@ -56,6 +56,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
 - [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
 - [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
 - [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
+- [#2296](https://github.com/NibiruChain/nibiru/pull/2296) - chore(ci): use shell script for generating changelog in releases
 
 ### Dependencies
 - Bump `golang.org/x/net` from 0.37.0 to 0.39.0. ([#2284](https://github.com/NibiruChain/nibiru/pull/2284))
