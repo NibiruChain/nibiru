@@ -4,7 +4,7 @@ package evm
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -179,7 +179,7 @@ func (tx LegacyTx) Validate() error {
 	}
 
 	if !eth.IsValidInt256(tx.Fee()) {
-		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	return nil

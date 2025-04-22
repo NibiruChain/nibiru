@@ -2,11 +2,11 @@
 package evm
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/gogoproto/proto"
@@ -52,12 +52,12 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 func PackTxData(txData TxData) (*codectypes.Any, error) {
 	msg, ok := txData.(proto.Message)
 	if !ok {
-		return nil, errorsmod.Wrapf(errortypes.ErrPackAny, "cannot proto marshal %T", txData)
+		return nil, sdkioerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", txData)
 	}
 
 	anyTxData, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrPackAny, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
 	}
 
 	return anyTxData, nil
@@ -67,12 +67,12 @@ func PackTxData(txData TxData) (*codectypes.Any, error) {
 // client state can't be unpacked into a TxData.
 func UnpackTxData(any *codectypes.Any) (TxData, error) {
 	if any == nil {
-		return nil, errorsmod.Wrap(errortypes.ErrUnpackAny, "protobuf Any message cannot be nil")
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnpackAny, "protobuf Any message cannot be nil")
 	}
 
 	txData, ok := any.GetCachedValue().(TxData)
 	if !ok {
-		return nil, errorsmod.Wrapf(errortypes.ErrUnpackAny, "cannot unpack Any into TxData %T", any)
+		return nil, sdkioerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into TxData %T", any)
 	}
 
 	return txData, nil

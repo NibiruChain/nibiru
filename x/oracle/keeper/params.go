@@ -1,11 +1,10 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -21,7 +20,7 @@ func (k Keeper) VotePeriod(ctx sdk.Context) (res uint64) {
 }
 
 // VoteThreshold returns the minimum percentage of votes that must be received for a votes to pass.
-func (k Keeper) VoteThreshold(ctx sdk.Context) (res math.LegacyDec) {
+func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.VoteThreshold
 }
@@ -42,7 +41,7 @@ func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 // then rewards are added to the validator performance.
 // Note that if the reward band is smaller than 1 standard
 // deviation, the band is taken to be 1 standard deviation.
-func (k Keeper) RewardBand(ctx sdk.Context) (res math.LegacyDec) {
+func (k Keeper) RewardBand(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.RewardBand
 }
@@ -54,7 +53,7 @@ func (k Keeper) Whitelist(ctx sdk.Context) (res []asset.Pair) {
 }
 
 // SlashFraction returns oracle voting penalty rate
-func (k Keeper) SlashFraction(ctx sdk.Context) (res math.LegacyDec) {
+func (k Keeper) SlashFraction(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.SlashFraction
 }
@@ -69,7 +68,7 @@ func (k Keeper) SlashWindow(ctx sdk.Context) (res uint64) {
 }
 
 // MinValidPerWindow returns oracle slashing threshold
-func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res math.LegacyDec) {
+func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinValidPerWindow
 }

@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/log"
 	tmquery "github.com/cometbft/cometbft/libs/pubsub/query"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -28,13 +28,13 @@ import (
 )
 
 var (
-	txEventsQuery  = tmtypes.QueryForEvent(tmtypes.EventTx).String()
+	txEventsQuery  = cmttypes.QueryForEvent(cmttypes.EventTx).String()
 	evmEventsQuery = tmquery.MustParse(fmt.Sprintf("%s='%s' AND %s.%s='%s'",
-		tmtypes.EventTypeKey,
-		tmtypes.EventTx,
+		cmttypes.EventTypeKey,
+		cmttypes.EventTx,
 		sdk.EventTypeMessage,
 		sdk.AttributeKeyModule, evm.ModuleName)).String()
-	headerEventsQuery = tmtypes.QueryForEvent(tmtypes.EventNewBlockHeader).String()
+	headerEventsQuery = cmttypes.QueryForEvent(cmttypes.EventNewBlockHeader).String()
 )
 
 // EventSubscriber creates subscriptions, processes events and broadcasts them to the
@@ -113,7 +113,7 @@ func (es *EventSubscriber) subscribe(sub *Subscription) (*Subscription, pubsub.U
 		if topic == sub.Event {
 			eventCh, unsubFn, err := es.EventBus.Subscribe(sub.Event)
 			if err != nil {
-				err := errors.Wrapf(err, "failed to subscribe to topic: %s", sub.Event)
+				err := pkgerrors.Wrapf(err, "failed to subscribe to topic: %s", sub.Event)
 				return nil, nil, err
 			}
 
@@ -144,7 +144,7 @@ func (es *EventSubscriber) subscribe(sub *Subscription) (*Subscription, pubsub.U
 
 	eventCh, unsubFn, err := es.EventBus.Subscribe(sub.Event)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to subscribe to topic after installed: %s", sub.Event)
+		return nil, nil, pkgerrors.Wrapf(err, "failed to subscribe to topic after installed: %s", sub.Event)
 	}
 
 	sub.EventCh = eventCh

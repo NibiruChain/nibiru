@@ -1,11 +1,11 @@
 package gosdk
 
 import (
-	cmtrpc "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmtrpchttp "github.com/cometbft/cometbft/rpc/client/http"
 )
 
-var _ cmtrpc.Client = (*cmtrpchttp.HTTP)(nil)
+var _ cmtrpcclient.Client = (*cmtrpchttp.HTTP)(nil)
 
 // NewRPCClient: A remote Comet-BFT RPC client. An error is returned on
 // invalid remote. The function panics when remote is nil.

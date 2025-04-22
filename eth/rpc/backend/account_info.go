@@ -13,7 +13,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -56,7 +56,7 @@ func (b *Backend) GetProof(
 	_, err = b.TendermintBlockByNumber(blockNum)
 	if err != nil {
 		// the error message imitates geth behavior
-		return nil, errors.New("header not found")
+		return nil, pkgerrors.New("header not found")
 	}
 	ctx := rpc.NewContextWithHeight(height)
 
@@ -117,7 +117,7 @@ func (b *Backend) GetProof(
 
 	balance, ok := sdkmath.NewIntFromString(res.BalanceWei)
 	if !ok {
-		return nil, errors.New("invalid balance")
+		return nil, pkgerrors.New("invalid balance")
 	}
 
 	return &rpc.AccountResult{
@@ -186,7 +186,7 @@ func (b *Backend) GetBalance(
 
 	// balance can only be negative in case of pruned node
 	if val.IsNegative() {
-		return nil, errors.New("couldn't fetch balance. Node state is pruned")
+		return nil, pkgerrors.New("couldn't fetch balance. Node state is pruned")
 	}
 
 	return (*hexutil.Big)(val.BigInt()), nil

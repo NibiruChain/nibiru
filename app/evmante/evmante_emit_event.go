@@ -4,7 +4,7 @@ package evmante
 import (
 	"strconv"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -35,7 +35,7 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errorsmod.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T",
 				msg, (*evm.MsgEthereumTx)(nil),

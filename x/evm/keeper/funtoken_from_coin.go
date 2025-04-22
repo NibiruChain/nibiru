@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -34,7 +34,7 @@ func (k *Keeper) createFunTokenFromCoin(
 	// 3 | deploy ERC20 for metadata
 	erc20Addr, err := k.deployERC20ForBankCoin(ctx, bankMetadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to deploy ERC20 for bank coin")
+		return nil, sdkioerrors.Wrap(err, "failed to deploy ERC20 for bank coin")
 	}
 
 	// 4 | ERC20 already registered with FunToken?
@@ -76,7 +76,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 	// pass empty method name to deploy the contract
 	packedArgs, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
 	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to pack ABI args")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to pack ABI args")
 	}
 	input := append(embeds.SmartContract_ERC20MinterWithMetadataUpdates.Bytecode, packedArgs...)
 
@@ -109,12 +109,12 @@ func (k *Keeper) deployERC20ForBankCoin(
 		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy,
 	)
 	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
 	}
 
 	err = stateDB.Commit()
 	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to commit stateDB")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	// Emit the logs from the EVM Contract deploy execution

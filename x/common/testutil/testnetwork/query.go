@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
@@ -68,7 +68,7 @@ func ExecQuery(
 	}
 	switch options.outputEncoding {
 	case EncodingTypeJSON:
-		args = append(args, fmt.Sprintf("--%s=json", tmcli.OutputFlag))
+		args = append(args, fmt.Sprintf("--%s=json", cmtcli.OutputFlag))
 	case EncodingTypeProto:
 		return fmt.Errorf("query proto encoding is not supported")
 	default:

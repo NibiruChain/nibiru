@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -67,22 +67,22 @@ func (s *TestSuite) TestSuccessfulVoting() {
 	// so obviously, in this case, since validators have the same power
 	// once weight (based on power) >= total power (sum of weights)
 	// then the number picked is the one in the middle always.
-	prices := []map[asset.Pair]math.LegacyDec{
+	prices := []map[asset.Pair]sdkmath.LegacyDec{
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100203.0"),
+			"nibi:usdc": sdkmath.LegacyOneDec(),
+			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100203.0"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100150.5"),
+			"nibi:usdc": sdkmath.LegacyOneDec(),
+			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100150.5"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
+			"nibi:usdc": sdkmath.LegacyOneDec(),
+			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100200.9"),
 		},
 		{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100300.9"),
+			"nibi:usdc": sdkmath.LegacyOneDec(),
+			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100300.9"),
 		},
 	}
 	votes := s.sendPrevotes(prices)
@@ -95,15 +95,15 @@ func (s *TestSuite) TestSuccessfulVoting() {
 
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
-		map[asset.Pair]math.LegacyDec{
-			"nibi:usdc": math.LegacyOneDec(),
-			"btc:usdc":  math.LegacyMustNewDecFromStr("100200.9"),
+		map[asset.Pair]sdkmath.LegacyDec{
+			"nibi:usdc": sdkmath.LegacyOneDec(),
+			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100200.9"),
 		},
 		gotPrices,
 	)
 }
 
-func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]math.LegacyDec) []string {
+func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdkmath.LegacyDec) []string {
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
 		raw := prices[i]
@@ -160,11 +160,11 @@ func (s *TestSuite) waitPriceUpdateBlock() {
 	s.waitVoteRevealBlock()
 }
 
-func (s *TestSuite) currentPrices() map[asset.Pair]math.LegacyDec {
+func (s *TestSuite) currentPrices() map[asset.Pair]sdkmath.LegacyDec {
 	rawRates, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &types.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
-	prices := make(map[asset.Pair]math.LegacyDec)
+	prices := make(map[asset.Pair]sdkmath.LegacyDec)
 
 	for _, p := range rawRates.ExchangeRates {
 		prices[p.Pair] = p.ExchangeRate

@@ -5,12 +5,12 @@ import (
 	"maps"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -44,8 +44,8 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
-	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), math.LegacyNewDec(20000))
-	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", math.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdkmath.LegacyNewDec(20000))
 
 	return app, ctx
 }
@@ -181,7 +181,7 @@ func FundModuleAccount(
 // FundFeeCollector funds the module account that collects gas fees with some
 // amount of "unibi", the gas token.
 func FundFeeCollector(
-	bk bankkeeper.Keeper, ctx sdk.Context, amount math.Int,
+	bk bankkeeper.Keeper, ctx sdk.Context, amount sdkmath.Int,
 ) error {
 	return FundModuleAccount(
 		bk,
@@ -201,8 +201,8 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 	}
 
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
@@ -215,7 +215,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 	codec.MustUnmarshalJSON(genesisState[banktypes.ModuleName], &bankGenesis)
 	bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, math.NewIntFromUint64(1e14))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromUint64(1e14))),
 	})
 
 	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []authtypes.GenesisAccount{acc}, bankGenesis.Balances...)
@@ -229,7 +229,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 func genesisStateWithValSet(
 	cdc codec.Codec,
 	genesisState nibiruapp.GenesisState,
-	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
+	valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (nibiruapp.GenesisState, error) {
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
@@ -250,15 +250,15 @@ func genesisStateWithValSet(
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            sdk.DefaultPowerReduction,
-			DelegatorShares:   math.LegacyOneDec(),
+			DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-			MinSelfDelegation: math.ZeroInt(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
+			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdkmath.LegacyOneDec()))
 	}
 	// set validators and delegations
 	genesisState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(

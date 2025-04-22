@@ -3,7 +3,7 @@ package oracle
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -18,7 +18,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	// all the Addrs vote for the block ... not last period block yet, so tally fails
 	for i := range keeper.Addrs[:4] {
 		keeper.MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: math.LegacyOneDec()},
+			{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyOneDec()},
 		}, i)
 	}
 
@@ -51,8 +51,8 @@ func TestOraclePriceExpiration(t *testing.T) {
 	// Set prices for both pairs
 	for i := range keeper.Addrs[:4] {
 		keeper.MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: pair1, ExchangeRate: math.LegacyOneDec()},
-			{Pair: pair2, ExchangeRate: math.LegacyOneDec()},
+			{Pair: pair1, ExchangeRate: sdkmath.LegacyOneDec()},
+			{Pair: pair2, ExchangeRate: sdkmath.LegacyOneDec()},
 		}, i)
 	}
 
@@ -76,7 +76,7 @@ func TestOraclePriceExpiration(t *testing.T) {
 	// Set prices for pair 1
 	for i := range keeper.Addrs[:4] {
 		keeper.MakeAggregatePrevoteAndVote(t, input, h, 19, types.ExchangeRateTuples{
-			{Pair: pair1, ExchangeRate: math.LegacyNewDec(2)},
+			{Pair: pair1, ExchangeRate: sdkmath.LegacyNewDec(2)},
 		}, i)
 	}
 

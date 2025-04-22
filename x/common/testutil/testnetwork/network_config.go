@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -52,7 +52,7 @@ func (cfg *Config) AbsorbServerConfig(srvCfg *serverconfig.Config) {
 	cfg.APIAddress = srvCfg.API.Address
 }
 
-func (cfg *Config) AbsorbTmConfig(tmCfg *tmconfig.Config) {
+func (cfg *Config) AbsorbTmConfig(tmCfg *cmtcfg.Config) {
 	cfg.RPCAddress = tmCfg.RPC.ListenAddress
 }
 

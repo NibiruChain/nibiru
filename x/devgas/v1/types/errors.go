@@ -1,15 +1,15 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 // errors
 var (
-	ErrFeeShareDisabled              = errorsmod.Register(ModuleName, 1, "feeshare module is disabled by governance")
-	ErrFeeShareAlreadyRegistered     = errorsmod.Register(ModuleName, 2, "feeshare already exists for given contract")
-	ErrFeeShareNoContractDeployed    = errorsmod.Register(ModuleName, 3, "no contract deployed")
-	ErrFeeShareContractNotRegistered = errorsmod.Register(ModuleName, 4, "no feeshare registered for contract")
-	ErrFeeSharePayment               = errorsmod.Register(ModuleName, 5, "feeshare payment error")
-	ErrFeeShareInvalidWithdrawer     = errorsmod.Register(ModuleName, 6, "invalid withdrawer address")
+	ErrFeeShareDisabled              = sdkioerrors.Register(ModuleName, 1, "feeshare module is disabled by governance")
+	ErrFeeShareAlreadyRegistered     = sdkioerrors.Register(ModuleName, 2, "feeshare already exists for given contract")
+	ErrFeeShareNoContractDeployed    = sdkioerrors.Register(ModuleName, 3, "no contract deployed")
+	ErrFeeShareContractNotRegistered = sdkioerrors.Register(ModuleName, 4, "no feeshare registered for contract")
+	ErrFeeSharePayment               = sdkioerrors.Register(ModuleName, 5, "feeshare payment error")
+	ErrFeeShareInvalidWithdrawer     = sdkioerrors.Register(ModuleName, 6, "invalid withdrawer address")
 )

@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -82,7 +82,7 @@ func (k Keeper) CirculatingSupply(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
-	circulatingToDec := math.LegacyNewDecFromInt(circulatingSupply)
+	circulatingToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
 	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil

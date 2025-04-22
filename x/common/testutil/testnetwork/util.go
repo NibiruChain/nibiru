@@ -9,7 +9,7 @@ import (
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
@@ -41,7 +41,7 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 		initCfg := genutiltypes.NewInitConfig(cfg.ChainID, gentxsDir, vals[i].NodeID, vals[i].PubKey)
 
 		genFile := tmCfg.GenesisFile()
-		genDoc, err := types.GenesisDocFromFile(genFile)
+		genDoc, err := cmttypes.GenesisDocFromFile(genFile)
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 		return err
 	}
 
-	genDoc := types.GenesisDoc{
+	genDoc := cmttypes.GenesisDoc{
 		ChainID:    cfg.ChainID,
 		AppState:   appGenStateJSON,
 		Validators: nil,

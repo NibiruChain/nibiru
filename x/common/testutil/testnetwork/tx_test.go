@@ -3,7 +3,7 @@ package testnetwork_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -15,7 +15,7 @@ import (
 func (s *TestSuite) TestSendTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
-	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(42))
+	sendCoin := sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(42))
 	txResp, err := s.network.BroadcastMsgs(fromAddr, nil, &banktypes.MsgSend{
 		FromAddress: fromAddr.String(),
 		ToAddress:   toAddr.String(),
@@ -29,7 +29,7 @@ func (s *TestSuite) TestSendTx() {
 func (s *TestSuite) TestExecTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
-	sendCoin := sdk.NewCoin(denoms.NIBI, math.NewInt(69))
+	sendCoin := sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
 	txResp, err := s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args)
 	s.NoError(err)

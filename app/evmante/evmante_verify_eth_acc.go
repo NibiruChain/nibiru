@@ -2,7 +2,7 @@
 package evmante
 
 import (
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -43,18 +43,18 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	for i, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
+			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
 		}
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
-			return ctx, errors.Wrapf(err, "failed to unpack tx data any for tx %d", i)
+			return ctx, sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", i)
 		}
 
 		// sender address should be in the tx cache from the previous AnteHandle call
 		from := msgEthTx.GetFrom()
 		if from.Empty() {
-			return ctx, errors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
+			return ctx, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
 		}
 
 		// check whether the sender address is EOA
@@ -66,14 +66,14 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			anteDec.accountKeeper.SetAccount(ctx, acc)
 			acct = statedb.NewEmptyAccount()
 		} else if acct.IsContract() {
-			return ctx, errors.Wrapf(sdkerrors.ErrInvalidType,
+			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidType,
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
 		if err := keeper.CheckSenderBalance(
 			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
 		); err != nil {
-			return ctx, errors.Wrap(err, "failed to check sender balance")
+			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
 		}
 	}
 	return next(ctx, tx, simulate)

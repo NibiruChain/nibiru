@@ -13,9 +13,9 @@ import (
 
 	"github.com/cometbft/cometbft/libs/strings"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/server/config"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -363,15 +363,15 @@ func GetConfig(v *viper.Viper) (Config, error) {
 // ValidateBasic returns an error any of the application configuration fields are invalid
 func (c Config) ValidateBasic() error {
 	if err := c.EVM.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid evm config value: %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrAppConfig, "invalid evm config value: %s", err.Error())
 	}
 
 	if err := c.JSONRPC.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid json-rpc config value: %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrAppConfig, "invalid json-rpc config value: %s", err.Error())
 	}
 
 	if err := c.TLS.Validate(); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrAppConfig, "invalid tls config value: %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrAppConfig, "invalid tls config value: %s", err.Error())
 	}
 
 	return c.Config.ValidateBasic()

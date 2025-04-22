@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -467,7 +467,7 @@ func (s *NodeSuite) Test_SmartContract() {
 	})
 	s.Require().NoError(err)
 	// Expect 1.005 billion because of the setup function before this test.
-	s.True(resp.Balance.Amount.GT(math.NewInt(1_004_900_000)), "unexpectedly low balance ", resp.Balance.Amount.String())
+	s.True(resp.Balance.Amount.GT(sdkmath.NewInt(1_004_900_000)), "unexpectedly low balance ", resp.Balance.Amount.String())
 
 	s.T().Log("Deploy contract")
 	signer := gethcore.LatestSignerForChainID(chainID)

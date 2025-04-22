@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
@@ -59,11 +59,11 @@ func (m MsgEditInflationParams) ValidateBasic() error {
 			return fmt.Errorf("inflation distribution strategic reserves should not be nil")
 		}
 
-		sum := math.LegacyNewDec(0)
+		sum := sdkmath.LegacyNewDec(0)
 		sum = sum.Add(m.InflationDistribution.CommunityPool)
 		sum = sum.Add(m.InflationDistribution.StakingRewards)
 		sum = sum.Add(m.InflationDistribution.StrategicReserves)
-		if !sum.Equal(math.LegacyOneDec()) {
+		if !sum.Equal(sdkmath.LegacyOneDec()) {
 			return fmt.Errorf("inflation distribution sum should be 1, got %s", sum)
 		}
 	}

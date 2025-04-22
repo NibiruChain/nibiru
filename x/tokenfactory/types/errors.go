@@ -1,14 +1,14 @@
 package types
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 var moduleErrorCodeIdx uint32 = 1
 
-func registerError(msg string) *sdkerrors.Error {
+func registerError(msg string) *sdkioerrors.Error {
 	moduleErrorCodeIdx += 1
-	return sdkerrors.Register(ModuleName, moduleErrorCodeIdx, msg)
+	return sdkioerrors.Register(ModuleName, moduleErrorCodeIdx, msg)
 }
 
 // Module "sentinel" errors

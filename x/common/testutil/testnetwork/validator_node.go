@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cometbft/cometbft/node"
-	tmclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmtcore "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -84,7 +84,7 @@ type Validator struct {
 	// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
 	// - rpc.HTTP
 	// - rpc.Local
-	RPCClient tmclient.Client
+	RPCClient cmtrpcclient.Client
 
 	JSONRPCClient       *ethclient.Client
 	EthRpcQueryClient   *ethrpc.QueryClient

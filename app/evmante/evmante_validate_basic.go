@@ -4,7 +4,7 @@ package evmante
 import (
 	"errors"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -35,14 +35,14 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	err := tx.ValidateBasic()
 	// ErrNoSignatures is fine with eth tx
 	if err != nil && !errors.Is(err, sdkerrors.ErrNoSignatures) {
-		return ctx, errorsmod.Wrap(err, "tx basic validation failed")
+		return ctx, sdkioerrors.Wrap(err, "tx basic validation failed")
 	}
 
 	// For eth type cosmos tx, some fields should be verified as zero values,
 	// since we will only verify the signature against the hash of the MsgEthereumTx.Data
 	wrapperTx, ok := tx.(protoTxProvider)
 	if !ok {
-		return ctx, errorsmod.Wrapf(
+		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrUnknownRequest,
 			"invalid tx type %T, didn't implement interface protoTxProvider",
 			tx,
@@ -52,12 +52,12 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	protoTx := wrapperTx.GetProtoTx()
 	body := protoTx.Body
 	if body.Memo != "" || body.TimeoutHeight != uint64(0) || len(body.NonCriticalExtensionOptions) > 0 {
-		return ctx, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
+		return ctx, sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest,
 			"for eth tx body Memo TimeoutHeight NonCriticalExtensionOptions should be empty")
 	}
 
 	if len(body.ExtensionOptions) != 1 {
-		return ctx, errorsmod.Wrap(
+		return ctx, sdkioerrors.Wrap(
 			sdkerrors.ErrInvalidRequest,
 			"for eth tx length of ExtensionOptions should be 1",
 		)
@@ -65,14 +65,14 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	authInfo := protoTx.AuthInfo
 	if len(authInfo.SignerInfos) > 0 {
-		return ctx, errorsmod.Wrap(
+		return ctx, sdkioerrors.Wrap(
 			sdkerrors.ErrInvalidRequest,
 			"for eth tx AuthInfo SignerInfos should be empty",
 		)
 	}
 
 	if authInfo.Fee.Payer != "" || authInfo.Fee.Granter != "" {
-		return ctx, errorsmod.Wrap(
+		return ctx, sdkioerrors.Wrap(
 			sdkerrors.ErrInvalidRequest,
 			"for eth tx AuthInfo Fee payer and granter should be empty",
 		)
@@ -80,7 +80,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	sigs := protoTx.Signatures
 	if len(sigs) > 0 {
-		return ctx, errorsmod.Wrap(
+		return ctx, sdkioerrors.Wrap(
 			sdkerrors.ErrInvalidRequest,
 			"for eth tx Signatures should be empty",
 		)
@@ -94,7 +94,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	for _, msg := range protoTx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errorsmod.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
@@ -102,7 +102,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 		// Validate `From` field
 		if msgEthTx.From != "" {
-			return ctx, errorsmod.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInvalidRequest,
 				"invalid From %s, expect empty string", msgEthTx.From,
 			)
@@ -112,11 +112,11 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
-			return ctx, errorsmod.Wrap(err, "failed to unpack MsgEthereumTx Data")
+			return ctx, sdkioerrors.Wrap(err, "failed to unpack MsgEthereumTx Data")
 		}
 
 		if baseFeeMicronibi == nil && txData.TxType() == gethcore.DynamicFeeTxType {
-			return ctx, errorsmod.Wrap(
+			return ctx, sdkioerrors.Wrap(
 				gethcore.ErrTxTypeNotSupported,
 				"dynamic fee tx not supported",
 			)
@@ -133,7 +133,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 
 	if !authInfo.Fee.Amount.IsEqual(txFee) {
-		return ctx, errorsmod.Wrapf(
+		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrInvalidRequest,
 			"invalid AuthInfo Fee Amount (%s != %s)",
 			authInfo.Fee.Amount,
@@ -142,7 +142,7 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 
 	if authInfo.Fee.GasLimit != txGasLimit {
-		return ctx, errorsmod.Wrapf(
+		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrInvalidRequest,
 			"invalid AuthInfo Fee GasLimit (%d != %d)",
 			authInfo.Fee.GasLimit,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -13,7 +13,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -41,7 +41,7 @@ func (b *Backend) BaseFeeWei(
 ) (baseFeeWei *big.Int, err error) {
 	res, err := b.queryClient.BaseFee(rpc.NewContextWithHeight(blockRes.Height), &evm.QueryBaseFeeRequest{})
 	if err != nil || res.BaseFee == nil {
-		return nil, errors.Wrap(err, "failed to query base fee")
+		return nil, pkgerrors.Wrap(err, "failed to query base fee")
 	}
 	return res.BaseFee.BigInt(), nil
 }
@@ -56,9 +56,9 @@ func (b *Backend) CurrentHeader() (*gethcore.Header, error) {
 // PendingTransactions returns the transactions that are in the transaction pool
 // and have a from address that is one of the accounts this node manages.
 func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
-	mc, ok := b.clientCtx.Client.(tmrpcclient.MempoolClient)
+	mc, ok := b.clientCtx.Client.(cmtrpcclient.MempoolClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	res, err := mc.UnconfirmedTxs(b.ctx, nil)

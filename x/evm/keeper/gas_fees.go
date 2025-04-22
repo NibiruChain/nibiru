@@ -4,10 +4,10 @@ package keeper
 import (
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
@@ -39,7 +39,7 @@ func (k *Keeper) RefundGas(
 	case -1:
 		// Should be impossible since leftoverGas is a uint64. Reaching this case
 		// would imply a critical error in the effective gas calculation.
-		return errors.Wrapf(evm.ErrInvalidRefund,
+		return sdkioerrors.Wrapf(evm.ErrInvalidRefund,
 			"refunded amount value cannot be negative %s", leftoverMicronibi,
 		)
 	case 1:
@@ -54,8 +54,8 @@ func (k *Keeper) RefundGas(
 			refundedCoins,
 		)
 		if err != nil {
-			err = errors.Wrapf(errortypes.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
-			return errors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
+			err = sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
+			return sdkioerrors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
 		}
 	default:
 		// no refund
@@ -85,15 +85,15 @@ func CheckSenderBalance(
 	cost := txData.Cost()
 
 	if cost.Sign() < 0 {
-		return errors.Wrapf(
-			errortypes.ErrInvalidCoins,
+		return sdkioerrors.Wrapf(
+			sdkerrors.ErrInvalidCoins,
 			"tx cost (%s) is negative and invalid", cost,
 		)
 	}
 
 	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
-		return errors.Wrapf(
-			errortypes.ErrInsufficientFunds,
+		return sdkioerrors.Wrapf(
+			sdkerrors.ErrInsufficientFunds,
 			"sender balance < tx cost (%s < %s)", balanceWei, cost,
 		)
 	}
@@ -111,12 +111,12 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	// fetch sender account
 	signerAcc, err := authante.GetSignerAcc(ctx, k.accountKeeper, from.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "account not found for sender %s", from)
+		return sdkioerrors.Wrapf(err, "account not found for sender %s", from)
 	}
 
 	// deduct the full gas cost from the user balance
 	if err := authante.DeductFees(k.Bank, ctx, signerAcc, fees); err != nil {
-		return errors.Wrapf(err, "failed to deduct full gas cost %s from the user %s balance", fees, from)
+		return sdkioerrors.Wrapf(err, "failed to deduct full gas cost %s from the user %s balance", fees, from)
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func VerifyFee(
 		rules.IsShanghai, // isEIP3860 === isShanghai
 	)
 	if err != nil {
-		return nil, errors.Wrapf(
+		return nil, sdkioerrors.Wrapf(
 			err,
 			"failed to retrieve intrinsic gas, contract creation = %t",
 			isContractCreation,
@@ -175,8 +175,8 @@ func VerifyFee(
 
 	// intrinsic gas verification during CheckTx
 	if isCheckTx && gasLimit < intrinsicGas {
-		return nil, errors.Wrapf(
-			errortypes.ErrOutOfGas,
+		return nil, sdkioerrors.Wrapf(
+			sdkerrors.ErrOutOfGas,
 			"gas limit too low: %d (gas limit) < %d (intrinsic gas)", gasLimit, intrinsicGas,
 		)
 	}

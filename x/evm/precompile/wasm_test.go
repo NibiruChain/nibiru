@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -723,7 +723,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 			sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
 			stakingtypes.NewDescription("validator0", "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.NewDec(1), sdk.NewDec(1), sdk.NewDec(1)),
-			math.OneInt(),
+			sdkmath.OneInt(),
 		)
 		s.Require().NoError(err)
 

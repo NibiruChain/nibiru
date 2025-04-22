@@ -10,7 +10,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -142,40 +142,40 @@ func (msg MsgEthereumTx) Type() string { return proto.MessageName(new(MsgEthereu
 func (msg MsgEthereumTx) ValidateBasic() error {
 	if msg.From != "" {
 		if err := eth.ValidateAddress(msg.From); err != nil {
-			return errorsmod.Wrap(err, "invalid from address")
+			return sdkioerrors.Wrap(err, "invalid from address")
 		}
 	}
 
 	// Validate Size_ field, should be kept empty
 	if msg.Size_ != 0 {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
 	}
 
 	txData, err := UnpackTxData(msg.Data)
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to unpack tx data")
+		return sdkioerrors.Wrap(err, "failed to unpack tx data")
 	}
 
 	gas := txData.GetGas()
 
 	// prevent txs with 0 gas to fill up the mempool
 	if gas == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
 	}
 
 	// prevent gas limit from overflow
 	if g := new(big.Int).SetUint64(gas); !g.IsInt64() {
-		return errorsmod.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
+		return sdkioerrors.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
 	}
 
 	if err := txData.Validate(); err != nil {
-		return errorsmod.Wrap(err, "failed \"TxData.Validate\"")
+		return sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
 	}
 
 	// Validate EthHash field after validated txData to avoid panic
 	txHash := msg.AsTransaction().Hash().Hex()
 	if msg.Hash != txHash {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
 	}
 
 	return nil
@@ -392,7 +392,7 @@ func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgUpdateParams) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return errorsmod.Wrap(err, "invalid authority address")
+		return sdkioerrors.Wrap(err, "invalid authority address")
 	}
 
 	return m.Params.Validate()
@@ -437,7 +437,7 @@ func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 
 	var res MsgEthereumTxResponse
 	if err := proto.Unmarshal(txMsgData.MsgResponses[0].Value, &res); err != nil {
-		return nil, errorsmod.Wrap(err, "failed to unmarshal tx response message data")
+		return nil, sdkioerrors.Wrap(err, "failed to unmarshal tx response message data")
 	}
 
 	return &res, nil

@@ -4,7 +4,7 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -332,7 +332,7 @@ func (s *TestSuite) TestMintBurn() {
 	}
 	nusd69420 := sdk.Coin{
 		Denom:  tfdenom.Denom().String(),
-		Amount: math.NewInt(69_420),
+		Amount: sdkmath.NewInt(69_420),
 	}
 
 	testCases := []TestCaseTx{
@@ -351,7 +351,7 @@ func (s *TestSuite) TestMintBurn() {
 							Creator:  addrs[0].String(),
 							Subdenom: "nusd",
 						}.Denom().String(),
-						Amount: math.NewInt(69_420),
+						Amount: sdkmath.NewInt(69_420),
 					},
 					MintTo: "",
 				},
@@ -365,7 +365,7 @@ func (s *TestSuite) TestMintBurn() {
 								Creator:  addrs[0].String(),
 								Subdenom: "nusd",
 							}.Denom().String(),
-							Amount: math.NewInt(1),
+							Amount: sdkmath.NewInt(1),
 						},
 						BurnFrom: "",
 					},
@@ -384,14 +384,14 @@ func (s *TestSuite) TestMintBurn() {
 				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
-					math.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
+					sdkmath.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
 				)
 
 				s.T().Log("Module account should be empty.")
 				coin := s.app.BankKeeper.GetBalance(
 					s.ctx, tfModuleAddr, denom.Denom().String())
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					coin.Amount,
 				)
 			},
@@ -648,7 +648,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "happy: burn",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -656,7 +656,7 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", math.NewInt(123)),
+						Coin:   sdk.NewCoin("unibi", sdkmath.NewInt(123)),
 					},
 					WantErr: "",
 				},
@@ -667,12 +667,12 @@ func (s *TestSuite) TestBurnNative() {
 				)
 
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, tfModuleAddr, "unibi").Amount,
 				)
 
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},
@@ -682,7 +682,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "sad: not enough funds",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -690,18 +690,18 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", math.NewInt(124)),
+						Coin:   sdk.NewCoin("unibi", sdkmath.NewInt(124)),
 					},
 					WantErr: "spendable balance 123unibi is smaller than 124unibi: insufficient funds",
 				},
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					math.NewInt(123).Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					sdkmath.NewInt(123).Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(
-					math.NewInt(123),
+					sdkmath.NewInt(123),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},

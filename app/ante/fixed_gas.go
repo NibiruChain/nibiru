@@ -1,7 +1,7 @@
 package ante
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -37,13 +37,13 @@ func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
 
 	if hasOracleVoteMsg && hasOraclePreVoteMsg {
 		if len(msgs) > 2 {
-			return ctx, sdkerrors.Wrap(ErrOracleAnte, "a transaction cannot have more than a single oracle vote and prevote message")
+			return ctx, sdkioerrors.Wrap(ErrOracleAnte, "a transaction cannot have more than a single oracle vote and prevote message")
 		}
 
 		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
 	} else if hasOraclePreVoteMsg || hasOracleVoteMsg {
 		if len(msgs) > 1 {
-			return ctx, sdkerrors.Wrap(ErrOracleAnte, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages")
+			return ctx, sdkioerrors.Wrap(ErrOracleAnte, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages")
 		}
 
 		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))

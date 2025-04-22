@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -240,8 +240,8 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			} else {
 				suite.NoError(err)
 			}
-			want := math.NewInt(int64(tc.expectedGas))
-			got := math.NewInt(int64(suite.ctx.GasMeter().GasConsumed()))
+			want := sdkmath.NewInt(int64(tc.expectedGas))
+			got := sdkmath.NewInt(int64(suite.ctx.GasMeter().GasConsumed()))
 			suite.Equal(want.String(), got.String())
 		})
 	}

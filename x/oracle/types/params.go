@@ -4,7 +4,7 @@ import (
 	"fmt"
 	time "time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
@@ -35,8 +35,8 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold = math.LegacyOneDec().Quo(math.LegacyNewDec(3)) // 33.33%
-	DefaultRewardBand    = math.LegacyNewDecWithPrec(2, 2)               // 2% (-1, 1)
+	DefaultVoteThreshold = sdkmath.LegacyOneDec().Quo(sdkmath.LegacyNewDec(3)) // 33.33%
+	DefaultRewardBand    = sdkmath.LegacyNewDecWithPrec(2, 2)                  // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 		// paired against the US fiat dollar
 		asset.Registry.Pair(denoms.BTC, denoms.USD),
@@ -50,10 +50,10 @@ var (
 		// asset.Registry.Pair(denoms.SOL, denoms.USD),
 		// asset.Registry.Pair(denoms.ADA, denoms.USD),
 	}
-	DefaultSlashFraction      = math.LegacyNewDecWithPrec(5, 3)  // 0.5%
-	DefaultMinValidPerWindow  = math.LegacyNewDecWithPrec(69, 2) // 69%
-	DefaultTwapLookbackWindow = time.Duration(15 * time.Minute)  // 15 minutes
-	DefaultValidatorFeeRatio  = math.LegacyNewDecWithPrec(5, 2)  // 0.05%
+	DefaultSlashFraction      = sdkmath.LegacyNewDecWithPrec(5, 3)  // 0.5%
+	DefaultMinValidPerWindow  = sdkmath.LegacyNewDecWithPrec(69, 2) // 69%
+	DefaultTwapLookbackWindow = time.Duration(15 * time.Minute)     // 15 minutes
+	DefaultValidatorFeeRatio  = sdkmath.LegacyNewDecWithPrec(5, 2)  // 0.05%
 )
 
 // DefaultParams creates default oracle module parameters
@@ -79,7 +79,7 @@ func (p Params) Validate() error {
 		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %d", p.VotePeriod)
 	}
 
-	if p.VoteThreshold.LTE(math.LegacyNewDecWithPrec(33, 2)) {
+	if p.VoteThreshold.LTE(sdkmath.LegacyNewDecWithPrec(33, 2)) {
 		return fmt.Errorf("oracle parameter VoteThreshold must be greater than 33 percent")
 	}
 
@@ -87,11 +87,11 @@ func (p Params) Validate() error {
 		return fmt.Errorf("oracle parameter MinVoters must be greater than 0")
 	}
 
-	if p.RewardBand.GT(math.LegacyOneDec()) || p.RewardBand.IsNegative() {
+	if p.RewardBand.GT(sdkmath.LegacyOneDec()) || p.RewardBand.IsNegative() {
 		return fmt.Errorf("oracle parameter RewardBand must be between [0, 1]")
 	}
 
-	if p.SlashFraction.GT(math.LegacyOneDec()) || p.SlashFraction.IsNegative() {
+	if p.SlashFraction.GT(sdkmath.LegacyOneDec()) || p.SlashFraction.IsNegative() {
 		return fmt.Errorf("oracle parameter SlashFraction must be between [0, 1]")
 	}
 
@@ -99,11 +99,11 @@ func (p Params) Validate() error {
 		return fmt.Errorf("oracle parameter SlashWindow must be greater than or equal with VotePeriod")
 	}
 
-	if p.MinValidPerWindow.GT(math.LegacyOneDec()) || p.MinValidPerWindow.IsNegative() {
+	if p.MinValidPerWindow.GT(sdkmath.LegacyOneDec()) || p.MinValidPerWindow.IsNegative() {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 1]")
 	}
 
-	if p.ValidatorFeeRatio.GT(math.LegacyOneDec()) || p.ValidatorFeeRatio.IsNegative() {
+	if p.ValidatorFeeRatio.GT(sdkmath.LegacyOneDec()) || p.ValidatorFeeRatio.IsNegative() {
 		return fmt.Errorf("oracle parameter ValidatorFeeRatio must be between [0, 1]")
 	}
 

@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -45,7 +45,7 @@ func TestMsgAggregateExchangeRatePrevote(t *testing.T) {
 		sdk.AccAddress([]byte("addr1_______________")),
 	}
 
-	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(denoms.USDC, math.LegacyOneDec()), sdk.NewDecCoinFromDec(denoms.NUSD, math.LegacyNewDecWithPrec(32121, 1))}
+	exchangeRates := sdk.DecCoins{sdk.NewDecCoinFromDec(denoms.USDC, sdkmath.LegacyOneDec()), sdk.NewDecCoinFromDec(denoms.NUSD, sdkmath.LegacyNewDecWithPrec(32121, 1))}
 	bz := types.GetAggregateVoteHash("1", exchangeRates.String(), sdk.ValAddress(addrs[0]))
 
 	tests := []struct {
@@ -78,22 +78,22 @@ func TestMsgAggregateExchangeRateVote(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
 			Pair:         "FOO:USD",
-			ExchangeRate: math.LegacyMustNewDecFromStr("1.0"),
+			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
 		},
 		{
 			Pair:         "BAR:USD",
-			ExchangeRate: math.LegacyMustNewDecFromStr("1232.132"),
+			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1232.132"),
 		},
 	}
 
 	abstainExchangeRates := types.ExchangeRateTuples{
 		{
 			Pair:         "FOO:USD",
-			ExchangeRate: math.LegacyZeroDec(),
+			ExchangeRate: sdkmath.LegacyZeroDec(),
 		},
 		{
 			Pair:         "BAR:USD",
-			ExchangeRate: math.LegacyMustNewDecFromStr("1232.132"),
+			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1232.132"),
 		},
 	}
 

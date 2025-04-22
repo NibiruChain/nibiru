@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 )
 
@@ -72,7 +72,7 @@ func AbsorbServerConfig(
 }
 
 func AbsorbTmConfig(
-	cfg *testnetwork.Config, tmCfg *tmconfig.Config,
+	cfg *testnetwork.Config, tmCfg *cmtcfg.Config,
 ) *testnetwork.Config {
 	cfg.RPCAddress = tmCfg.RPC.ListenAddress
 	return cfg

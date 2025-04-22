@@ -8,7 +8,7 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,7 +47,7 @@ func NewEVMTxIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *EV
 // - Parses eth Tx infos from cosmos-sdk events for every TxResult
 // - Iterates over all the messages of the Tx
 // - Builds and stores indexer.TxResult based on parsed events for every message
-func (indexer *EVMTxIndexer) IndexBlock(block *tmtypes.Block, txResults []*abci.ResponseDeliverTx) error {
+func (indexer *EVMTxIndexer) IndexBlock(block *cmttypes.Block, txResults []*abci.ResponseDeliverTx) error {
 	height := block.Header.Height
 
 	batch := indexer.db.NewBatch()

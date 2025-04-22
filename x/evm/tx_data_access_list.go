@@ -4,9 +4,9 @@ package evm
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
@@ -266,14 +266,14 @@ func (tx AccessListTx) Validate() error {
 	}
 
 	if !eth.IsValidInt256(tx.Fee()) {
-		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	chainID := tx.GetChainID()
 
 	if chainID == nil {
-		return errorsmod.Wrap(
-			errortypes.ErrInvalidChainID,
+		return sdkioerrors.Wrap(
+			sdkerrors.ErrInvalidChainID,
 			"chain ID must be present on AccessList txs",
 		)
 	}

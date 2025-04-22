@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -63,7 +63,7 @@ func DeployContract(
 	// Use contract args
 	packedArgs, err := contract.ABI.Pack("", args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to pack contract args")
+		return nil, sdkioerrors.Wrap(err, "failed to pack contract args")
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
@@ -76,15 +76,15 @@ func DeployContract(
 		}, deps, deps.Sender,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 	if err := ethTxMsg.Sign(gethSigner, krSigner); err != nil {
-		return nil, errors.Wrap(err, "failed to generate and sign eth tx msg")
+		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
 	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute ethereum tx")
+		return nil, sdkioerrors.Wrap(err, "failed to execute ethereum tx")
 	}
 	if resp.VmError != "" {
 		return nil, fmt.Errorf("vm error: %s", resp.VmError)

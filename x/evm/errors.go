@@ -4,7 +4,7 @@ package evm
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
@@ -24,31 +24,31 @@ const (
 
 var (
 	// ErrInvalidState returns an error resulting from an invalid Storage State.
-	ErrInvalidState = errorsmod.Register(ModuleName, codeErrInvalidState, "invalid storage state")
+	ErrInvalidState = sdkioerrors.Register(ModuleName, codeErrInvalidState, "invalid storage state")
 
 	// ErrZeroAddress returns an error resulting from an zero (empty) ethereum Address.
-	ErrZeroAddress = errorsmod.Register(ModuleName, codeErrZeroAddress, "invalid zero address")
+	ErrZeroAddress = sdkioerrors.Register(ModuleName, codeErrZeroAddress, "invalid zero address")
 
 	// ErrInvalidAmount returns an error if a tx contains an invalid amount.
-	ErrInvalidAmount = errorsmod.Register(ModuleName, codeErrInvalidAmount, "invalid transaction amount")
+	ErrInvalidAmount = sdkioerrors.Register(ModuleName, codeErrInvalidAmount, "invalid transaction amount")
 
 	// ErrInvalidGasPrice returns an error if an invalid gas price is provided to the tx.
-	ErrInvalidGasPrice = errorsmod.Register(ModuleName, codeErrInvalidGasPrice, "invalid gas price")
+	ErrInvalidGasPrice = sdkioerrors.Register(ModuleName, codeErrInvalidGasPrice, "invalid gas price")
 
 	// ErrInvalidGasFee returns an error if the tx gas fee is out of bound.
-	ErrInvalidGasFee = errorsmod.Register(ModuleName, codeErrInvalidGasFee, "invalid gas fee")
+	ErrInvalidGasFee = sdkioerrors.Register(ModuleName, codeErrInvalidGasFee, "invalid gas fee")
 
 	// ErrInvalidRefund returns an error if the gas refund value is invalid.
-	ErrInvalidRefund = errorsmod.Register(ModuleName, codeErrInvalidRefund, "invalid gas refund amount")
+	ErrInvalidRefund = sdkioerrors.Register(ModuleName, codeErrInvalidRefund, "invalid gas refund amount")
 
 	// ErrInvalidGasCap returns an error if the gas cap value is negative or invalid
-	ErrInvalidGasCap = errorsmod.Register(ModuleName, codeErrInvalidGasCap, "invalid gas cap")
+	ErrInvalidGasCap = sdkioerrors.Register(ModuleName, codeErrInvalidGasCap, "invalid gas cap")
 
 	// ErrInvalidBaseFee returns an error if the base fee cap value is invalid
-	ErrInvalidBaseFee = errorsmod.Register(ModuleName, codeErrInvalidBaseFee, "invalid base fee")
+	ErrInvalidBaseFee = sdkioerrors.Register(ModuleName, codeErrInvalidBaseFee, "invalid base fee")
 
 	// ErrInvalidAccount returns an error if the account is not an EVM compatible account
-	ErrInvalidAccount = errorsmod.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
+	ErrInvalidAccount = sdkioerrors.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
 )
 
 // NewRevertError unpacks the revert return bytes and returns a wrapped error

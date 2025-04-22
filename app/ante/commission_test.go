@@ -1,7 +1,7 @@
 package ante_test
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -30,17 +30,17 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 	}
 
 	valAddr := sdk.ValAddress(testutil.AccAddress()).String()
-	commissionRatePointer := new(math.LegacyDec)
-	*commissionRatePointer = math.LegacyNewDecWithPrec(10, 2)
+	commissionRatePointer := new(sdkmath.LegacyDec)
+	*commissionRatePointer = sdkmath.LegacyNewDecWithPrec(10, 2)
 	happyMsgs := []sdk.Msg{
 		&stakingtypes.MsgCreateValidator{
 			Description: mockDescription,
 			Commission: stakingtypes.CommissionRates{
-				Rate:          math.LegacyNewDecWithPrec(6, 2), // 6%
-				MaxRate:       math.LegacyNewDec(420),
-				MaxChangeRate: math.LegacyNewDec(420),
+				Rate:          sdkmath.LegacyNewDecWithPrec(6, 2), // 6%
+				MaxRate:       sdkmath.LegacyNewDec(420),
+				MaxChangeRate: sdkmath.LegacyNewDec(420),
 			},
-			MinSelfDelegation: math.NewInt(1),
+			MinSelfDelegation: sdkmath.NewInt(1),
 			DelegatorAddress:  testutil.AccAddress().String(),
 			ValidatorAddress:  valAddr,
 			Pubkey:            &codectypes.Any{},
@@ -57,12 +57,13 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 	createSadMsgs := func() []sdk.Msg {
 		sadMsgCreateVal := new(stakingtypes.MsgCreateValidator)
 		*sadMsgCreateVal = *(happyMsgs[0]).(*stakingtypes.MsgCreateValidator)
-		sadMsgCreateVal.Commission.Rate = math.LegacyNewDecWithPrec(26, 2)
+		sadMsgCreateVal.Commission.Rate = sdkmath.LegacyNewDecWithPrec(26, 2)
 
 		sadMsgEditVal := new(stakingtypes.MsgEditValidator)
 		*sadMsgEditVal = *(happyMsgs[1]).(*stakingtypes.MsgEditValidator)
-		newCommissionRate := new(math.LegacyDec)
-		*newCommissionRate = math.LegacyNewDecWithPrec(26, 2)
+
+		newCommissionRate := new(sdkmath.LegacyDec)
+		*newCommissionRate = sdkmath.LegacyNewDecWithPrec(26, 2)
 		sadMsgEditVal.CommissionRate = newCommissionRate
 
 		return []sdk.Msg{
@@ -109,8 +110,8 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 	} {
 		s.Run(tc.name, func() {
 			txGasCoins := sdk.NewCoins(
-				sdk.NewCoin("unibi", math.NewInt(1_000)),
-				sdk.NewCoin("utoken", math.NewInt(500)),
+				sdk.NewCoin("unibi", sdkmath.NewInt(1_000)),
+				sdk.NewCoin("utoken", sdkmath.NewInt(500)),
 			)
 
 			encCfg := app.MakeEncodingConfig()

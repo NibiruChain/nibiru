@@ -10,11 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"cosmossdk.io/math"
-	tmconfig "github.com/cometbft/cometbft/config"
+	sdkmath "cosmossdk.io/math"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	tmrand "github.com/cometbft/cometbft/libs/rand"
-	"github.com/cometbft/cometbft/types"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmttypes "github.com/cometbft/cometbft/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -105,7 +105,7 @@ const nodeDirPerm = 0o755
 func InitTestnet(
 	clientCtx client.Context,
 	cmd *cobra.Command,
-	nodeConfig *tmconfig.Config,
+	nodeConfig *cmtcfg.Config,
 	mbm module.BasicManager,
 	genBalIterator banktypes.GenesisBalancesIterator,
 	outputDir,
@@ -119,7 +119,7 @@ func InitTestnet(
 	numValidators int,
 ) error {
 	if chainID == "" {
-		chainID = "chain-" + tmrand.NewRand().Str(6)
+		chainID = "chain-" + cmtrand.NewRand().Str(6)
 	}
 
 	nodeIDs := make([]string, numValidators)
@@ -216,8 +216,8 @@ func InitTestnet(
 			valPubKeys[i],
 			sdk.NewCoin(denoms.NIBI, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(math.LegacyOneDec(), math.LegacyOneDec(), math.LegacyOneDec()),
-			math.OneInt(),
+			stakingtypes.NewCommissionRates(sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec()),
+			sdkmath.OneInt(),
 		)
 		if err != nil {
 			return err
@@ -303,7 +303,7 @@ func initGenFiles(
 		return err
 	}
 
-	genDoc := types.GenesisDoc{
+	genDoc := cmttypes.GenesisDoc{
 		ChainID:    chainID,
 		AppState:   appGenStateJSON,
 		Validators: nil,
@@ -319,7 +319,7 @@ func initGenFiles(
 }
 
 func collectGenFiles(
-	clientCtx client.Context, nodeConfig *tmconfig.Config, chainID string,
+	clientCtx client.Context, nodeConfig *cmtcfg.Config, chainID string,
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 ) error {
@@ -337,7 +337,7 @@ func collectGenFiles(
 		nodeID, valPubKey := nodeIDs[i], valPubKeys[i]
 		initCfg := genutiltypes.NewInitConfig(chainID, gentxsDir, nodeID, valPubKey)
 
-		genDoc, err := types.GenesisDocFromFile(nodeConfig.GenesisFile())
+		genDoc, err := cmttypes.GenesisDocFromFile(nodeConfig.GenesisFile())
 		if err != nil {
 			return err
 		}

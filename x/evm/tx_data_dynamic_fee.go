@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -239,38 +239,38 @@ func (tx *DynamicFeeTx) SetSignatureValues(chainID, v, r, s *big.Int) {
 // Validate performs a stateless validation of the tx fields.
 func (tx DynamicFeeTx) Validate() error {
 	if tx.GasTipCap == nil {
-		return errorsmod.Wrap(ErrInvalidGasCap, "gas tip cap cannot nil")
+		return sdkioerrors.Wrap(ErrInvalidGasCap, "gas tip cap cannot nil")
 	}
 
 	if tx.GasFeeCap == nil {
-		return errorsmod.Wrap(ErrInvalidGasCap, "gas fee cap cannot nil")
+		return sdkioerrors.Wrap(ErrInvalidGasCap, "gas fee cap cannot nil")
 	}
 
 	if tx.GasTipCap.IsNegative() {
-		return errorsmod.Wrapf(ErrInvalidGasCap, "gas tip cap cannot be negative %s", tx.GasTipCap)
+		return sdkioerrors.Wrapf(ErrInvalidGasCap, "gas tip cap cannot be negative %s", tx.GasTipCap)
 	}
 
 	if tx.GasFeeCap.IsNegative() {
-		return errorsmod.Wrapf(ErrInvalidGasCap, "gas fee cap cannot be negative %s", tx.GasFeeCap)
+		return sdkioerrors.Wrapf(ErrInvalidGasCap, "gas fee cap cannot be negative %s", tx.GasFeeCap)
 	}
 
 	if !eth.IsValidInt256(tx.GetGasTipCapWei()) {
-		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
 	if !eth.IsValidInt256(tx.GetGasFeeCapWei()) {
-		return errorsmod.Wrap(ErrInvalidGasCap, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasCap, "out of bound")
 	}
 
 	if tx.GasFeeCap.LT(*tx.GasTipCap) {
-		return errorsmod.Wrapf(
+		return sdkioerrors.Wrapf(
 			ErrInvalidGasCap, "max priority fee per gas higher than max fee per gas (%s > %s)",
 			tx.GasTipCap, tx.GasFeeCap,
 		)
 	}
 
 	if !eth.IsValidInt256(tx.Fee()) {
-		return errorsmod.Wrap(ErrInvalidGasFee, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasFee, "out of bound")
 	}
 
 	for _, err := range []error{

@@ -3,7 +3,7 @@ package wasmext
 import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -45,13 +45,13 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
-			return nil, errors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
+			return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
 
 	msgTypeUrl := sdk.MsgTypeURL(msg)
 	if msgTypeUrl == sdk.MsgTypeURL(new(evm.MsgEthereumTx)) {
-		return nil, errors.Wrap(sdkerrors.ErrUnauthorized, "Wasm VM to EVM call pattern is not yet supported")
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "Wasm VM to EVM call pattern is not yet supported")
 	}
 
 	// find the handler and execute it
@@ -65,7 +65,7 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 	// proto messages and has registered all `Msg services`, then this
 	// path should never be called, because all those Msgs should be
 	// registered within the `msgServiceRouter` already.
-	return nil, errors.Wrapf(sdkerrors.ErrUnknownRequest, "can't route message %+v", msg)
+	return nil, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "can't route message %+v", msg)
 }
 
 type MsgHandlerArgs struct {

@@ -5,29 +5,29 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type fixedGasMeter struct {
-	consumed types.Gas
+	consumed sdk.Gas
 }
 
 // NewFixedGasMeter returns a reference to a new fixedGasMeter.
-func NewFixedGasMeter(fixedGas types.Gas) types.GasMeter {
+func NewFixedGasMeter(fixedGas sdk.Gas) sdk.GasMeter {
 	return &fixedGasMeter{
 		consumed: fixedGas,
 	}
 }
 
-func (g *fixedGasMeter) GasConsumed() types.Gas {
+func (g *fixedGasMeter) GasConsumed() sdk.Gas {
 	return g.consumed
 }
 
-func (g *fixedGasMeter) GasConsumedToLimit() types.Gas {
+func (g *fixedGasMeter) GasConsumedToLimit() sdk.Gas {
 	return g.consumed
 }
 
-func (g *fixedGasMeter) Limit() types.Gas {
+func (g *fixedGasMeter) Limit() sdk.Gas {
 	return g.consumed
 }
 
@@ -36,10 +36,10 @@ func (g *fixedGasMeter) GasRemaining() storetypes.Gas {
 }
 
 // ConsumeGas is a no-op because the fixed gas meter stays fixed.
-func (g *fixedGasMeter) ConsumeGas(types.Gas, string) {}
+func (g *fixedGasMeter) ConsumeGas(sdk.Gas, string) {}
 
 // RefundGas is a no-op because the fixed gas meter stays fixed.
-func (g *fixedGasMeter) RefundGas(types.Gas, string) {}
+func (g *fixedGasMeter) RefundGas(sdk.Gas, string) {}
 
 func (g *fixedGasMeter) IsPastLimit() bool {
 	return false

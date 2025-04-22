@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,8 +29,8 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 
 	rewards := sdk.NewInt64Coin("reward", 1*common.TO_MICRO)
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
-		QuoDec(math.LegacyNewDec(int64(periods))).
-		QuoDec(math.LegacyNewDec(int64(validators)))
+		QuoDec(sdkmath.LegacyNewDec(int64(periods))).
+		QuoDec(sdkmath.LegacyNewDec(int64(validators)))
 	AllocateRewards(t, fixture, sdk.NewCoins(rewards), periods)
 
 	for i := uint64(1); i <= periods; i++ {
@@ -51,8 +51,8 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 		for valIndex := 0; valIndex < validators; valIndex++ {
 			distributionRewards := fixture.DistrKeeper.GetValidatorOutstandingRewards(fixture.Ctx, ValAddrs[0])
 			truncatedGot, _ := distributionRewards.Rewards.
-				QuoDec(math.LegacyNewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
-				TruncateDecimal()                    // NOTE: not applying this on truncatedExpected because of rounding the test fails
+				QuoDec(sdkmath.LegacyNewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
+				TruncateDecimal()                       // NOTE: not applying this on truncatedExpected because of rounding the test fails
 			truncatedExpected, _ := valPeriodicRewards.TruncateDecimal()
 
 			require.Equalf(t, truncatedExpected, truncatedGot, "period: %d, %s <-> %s", i, truncatedExpected.String(), truncatedGot.String())
