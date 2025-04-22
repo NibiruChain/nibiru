@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -226,22 +225,22 @@ func TestManual(t *testing.T) {
 	params.EpochsPerPeriod = 30
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
-	params.PolynomialFactors = []math.LegacyDec{math.LegacyNewDec(3), math.LegacyNewDec(3)}
+	params.PolynomialFactors = []sdkmath.LegacyDec{sdkmath.LegacyNewDec(3), sdkmath.LegacyNewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
-		CommunityPool:     math.LegacyZeroDec(),
-		StakingRewards:    math.LegacyOneDec(),
-		StrategicReserves: math.LegacyZeroDec(),
+		CommunityPool:     sdkmath.LegacyZeroDec(),
+		StakingRewards:    sdkmath.LegacyOneDec(),
+		StrategicReserves: sdkmath.LegacyZeroDec(),
 	}
 
 	inflationKeeper.Params.Set(ctx, params)
 
-	require.Equal(t, math.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, sdkmath.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
-	for i := 0; i < 42069; i++ {
+	for range 42069 {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
-	require.Equal(t, math.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, sdkmath.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(0), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -261,10 +260,10 @@ func TestManual(t *testing.T) {
 	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
 	for i := 0; i < 30; i++ {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
-		require.Equal(t, math.NewInt(100_000).Mul(math.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
+		require.Equal(t, sdkmath.NewInt(100_000).Mul(sdkmath.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.Equal(t, math.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, sdkmath.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -275,7 +274,7 @@ func TestManual(t *testing.T) {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
-	require.Equal(t, math.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, sdkmath.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
@@ -285,10 +284,10 @@ func TestManual(t *testing.T) {
 	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch
 	for i := 0; i < 30; i++ {
 		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
-		require.Equal(t, math.NewInt(3_000_000).Add(math.NewInt(200_000).Mul(math.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
+		require.Equal(t, sdkmath.NewInt(3_000_000).Add(sdkmath.NewInt(200_000).Mul(sdkmath.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.Equal(t, math.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.Equal(t, sdkmath.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(2), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 

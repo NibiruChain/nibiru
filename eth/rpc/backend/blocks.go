@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"strconv"
 
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
@@ -137,7 +137,7 @@ func (b *Backend) GetBlockByHash(
 // GetBlockTransactionCountByHash returns the number of Ethereum transactions in
 // the block identified by hash.
 func (b *Backend) GetBlockTransactionCountByHash(blockHash gethcommon.Hash) (*hexutil.Uint, error) {
-	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
+	sc, ok := b.clientCtx.Client.(cmtrpcclient.SignClient)
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc client of type %T", b.clientCtx.Client)
 	}
@@ -207,7 +207,7 @@ func (b *Backend) TendermintBlockByNumber(blockNum rpc.BlockNumber) (*tmrpctypes
 // TendermintBlockResultByNumber returns a Tendermint-formatted block result
 // by block number
 func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.ResultBlockResults, error) {
-	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
+	sc, ok := b.clientCtx.Client.(cmtrpcclient.SignClient)
 	if !ok {
 		return nil, fmt.Errorf("invalid rpc client: type %T", b.clientCtx.Client)
 	}
@@ -216,7 +216,7 @@ func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.Resu
 
 // TendermintBlockByHash returns a Tendermint-formatted block by block number
 func (b *Backend) TendermintBlockByHash(blockHash gethcommon.Hash) (*tmrpctypes.ResultBlock, error) {
-	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
+	sc, ok := b.clientCtx.Client.(cmtrpcclient.SignClient)
 	if !ok {
 		return nil, fmt.Errorf("TendermintBlockByHash: invalid RPC client: type %T", b.clientCtx.Client)
 	}

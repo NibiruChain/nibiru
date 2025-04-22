@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -24,7 +24,7 @@ type SuiteInflationSudo struct {
 func (s *SuiteInflationSudo) TestMergeInflationParams() {
 	currentParams := types.DefaultParams()
 
-	newEpochsPerPeriod := math.NewInt(4)
+	newEpochsPerPeriod := sdkmath.NewInt(4)
 	paramsChanges := types.MsgEditInflationParams{
 		EpochsPerPeriod: &newEpochsPerPeriod,
 	}
@@ -42,18 +42,18 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 
 	// Test a change to all parameters
 	newInflationDistribution := types.InflationDistribution{
-		CommunityPool:     math.LegacyMustNewDecFromStr("0.8"),
-		StakingRewards:    math.LegacyMustNewDecFromStr("0.1"),
-		StrategicReserves: math.LegacyMustNewDecFromStr("0.1"),
+		CommunityPool:     sdkmath.LegacyMustNewDecFromStr("0.8"),
+		StakingRewards:    sdkmath.LegacyMustNewDecFromStr("0.1"),
+		StrategicReserves: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
 	paramsChanges = types.MsgEditInflationParams{
 		EpochsPerPeriod: &newEpochsPerPeriod,
 		PeriodsPerYear:  &newEpochsPerPeriod,
 		MaxPeriod:       &newEpochsPerPeriod,
-		PolynomialFactors: []math.LegacyDec{
-			math.LegacyMustNewDecFromStr("0.1"),
-			math.LegacyMustNewDecFromStr("0.2"),
+		PolynomialFactors: []sdkmath.LegacyDec{
+			sdkmath.LegacyMustNewDecFromStr("0.1"),
+			sdkmath.LegacyMustNewDecFromStr("0.2"),
 		},
 		InflationDistribution: &newInflationDistribution,
 	}
@@ -63,9 +63,9 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 	s.Require().EqualValues(4, paramsAfter.EpochsPerPeriod)
 	s.Require().EqualValues(4, paramsAfter.PeriodsPerYear)
 	s.Require().EqualValues(4, paramsAfter.MaxPeriod)
-	s.Require().EqualValues([]math.LegacyDec{
-		math.LegacyMustNewDecFromStr("0.1"),
-		math.LegacyMustNewDecFromStr("0.2"),
+	s.Require().EqualValues([]sdkmath.LegacyDec{
+		sdkmath.LegacyMustNewDecFromStr("0.1"),
+		sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}, paramsAfter.PolynomialFactors)
 	s.Require().EqualValues(newInflationDistribution, paramsAfter.InflationDistribution)
 }
@@ -74,17 +74,17 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Change to all non-defaults to test EditInflationParams as a setter .
-	epochsPerPeriod := math.NewInt(1_234)
-	periodsPerYear := math.NewInt(1_234)
-	maxPeriod := math.NewInt(1_234)
-	polynomialFactors := []math.LegacyDec{
-		math.LegacyMustNewDecFromStr("0.1"),
-		math.LegacyMustNewDecFromStr("0.2"),
+	epochsPerPeriod := sdkmath.NewInt(1_234)
+	periodsPerYear := sdkmath.NewInt(1_234)
+	maxPeriod := sdkmath.NewInt(1_234)
+	polynomialFactors := []sdkmath.LegacyDec{
+		sdkmath.LegacyMustNewDecFromStr("0.1"),
+		sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
 	inflationDistribution := types.InflationDistribution{
-		CommunityPool:     math.LegacyMustNewDecFromStr("0.8"),
-		StakingRewards:    math.LegacyMustNewDecFromStr("0.1"),
-		StrategicReserves: math.LegacyMustNewDecFromStr("0.1"),
+		CommunityPool:     sdkmath.LegacyMustNewDecFromStr("0.8"),
+		StakingRewards:    sdkmath.LegacyMustNewDecFromStr("0.1"),
+		StrategicReserves: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 	msgEditParams := types.MsgEditInflationParams{
 		EpochsPerPeriod:       &epochsPerPeriod,

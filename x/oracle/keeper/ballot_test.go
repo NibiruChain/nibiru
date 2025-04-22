@@ -6,7 +6,7 @@ import (
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,14 +41,14 @@ func TestGroupVotesByPair(t *testing.T) {
 	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
 	btcVotes := types.ExchangeRateVotes{
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(6), Voter: ValAddrs[2], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(6), Voter: ValAddrs[2], Power: power},
 	}
 	ethVotes := types.ExchangeRateVotes{
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_000), Voter: ValAddrs[0], Power: power},
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_300), Voter: ValAddrs[1], Power: power},
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(2_000), Voter: ValAddrs[2], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(1_000), Voter: ValAddrs[0], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(1_300), Voter: ValAddrs[1], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(2_000), Voter: ValAddrs[2], Power: power},
 	}
 
 	for i, v := range btcVotes {
@@ -111,14 +111,14 @@ func TestClearVotesAndPrevotes(t *testing.T) {
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	btcVotes := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(math.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateVote(math.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateVote(math.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethVotes := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(math.LegacyNewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateVote(math.LegacyNewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateVote(math.LegacyNewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcVotes {
@@ -153,8 +153,8 @@ func TestFuzzTally(t *testing.T) {
 	validators := map[string]int64{}
 
 	f := fuzz.New().NilChance(0).Funcs(
-		func(e *math.LegacyDec, c fuzz.Continue) {
-			*e = math.LegacyNewDec(c.Int63())
+		func(e *sdkmath.LegacyDec, c fuzz.Continue) {
+			*e = sdkmath.LegacyNewDec(c.Int63())
 		},
 		func(e *map[string]int64, c fuzz.Continue) {
 			numValidators := c.Intn(100) + 5
@@ -175,7 +175,7 @@ func TestFuzzTally(t *testing.T) {
 			for addr, power := range validators {
 				addr, _ := sdk.ValAddressFromBech32(addr)
 
-				var rate math.LegacyDec
+				var rate sdkmath.LegacyDec
 				c.Fuzz(&rate)
 
 				votes = append(votes, types.NewExchangeRateVote(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
@@ -194,7 +194,7 @@ func TestFuzzTally(t *testing.T) {
 	votes := types.ExchangeRateVotes{}
 	f.Fuzz(&votes)
 
-	var rewardBand math.LegacyDec
+	var rewardBand sdkmath.LegacyDec
 	f.Fuzz(&rewardBand)
 
 	require.NotPanics(t, func() {
@@ -222,20 +222,20 @@ func TestTallyMissCount(t *testing.T) {
 	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
 	// Having validator2 to have 2 votes outside the spread
 	btcVotes := types.ExchangeRateVotes{
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
-		{Pair: pairBtc, ExchangeRate: math.LegacyNewDec(20000), Voter: ValAddrs[2], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(20000), Voter: ValAddrs[2], Power: power},
 	}
 	ethVotes := types.ExchangeRateVotes{
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_000), Voter: ValAddrs[0], Power: power},
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1_300), Voter: ValAddrs[1], Power: power},
-		{Pair: pairEth, ExchangeRate: math.LegacyNewDec(1), Voter: ValAddrs[2], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(1_000), Voter: ValAddrs[0], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(1_300), Voter: ValAddrs[1], Power: power},
+		{Pair: pairEth, ExchangeRate: sdkmath.LegacyNewDec(1), Voter: ValAddrs[2], Power: power},
 	}
 
 	allVotes := append(btcVotes, ethVotes...)
 
 	claimMap := types.ValidatorPerformances{}
-	Tally(allVotes, math.LegacyNewDec(10), claimMap)
+	Tally(allVotes, sdkmath.LegacyNewDec(10), claimMap)
 	assert.Equal(t, int64(1), claimMap[ValAddrs[2].String()].MissCount)
 }
 
@@ -278,7 +278,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 			name: "empty key, nonempty votes, not whitelisted",
 			voteMap: VoteMap{
 				"": types.ExchangeRateVotes{
-					{Pair: "", ExchangeRate: math.LegacyZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
+					{Pair: "", ExchangeRate: sdkmath.LegacyZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
 				},
 			},
 		},
@@ -286,13 +286,13 @@ func TestRemoveInvalidBallots(t *testing.T) {
 			name: "nonempty key, nonempty votes, whitelisted",
 			voteMap: VoteMap{
 				"x": types.ExchangeRateVotes{
-					{Pair: "x", ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: "x", ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: math.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
@@ -326,12 +326,12 @@ func TestFuzzPickReferencePair(t *testing.T) {
 				*e = append(*e, asset.NewPair(testutil.RandLetters(5), testutil.RandLetters(5)))
 			}
 		},
-		func(e *math.LegacyDec, c fuzz.Continue) {
-			*e = math.LegacyNewDec(c.Int63())
+		func(e *sdkmath.LegacyDec, c fuzz.Continue) {
+			*e = sdkmath.LegacyNewDec(c.Int63())
 		},
-		func(e *map[asset.Pair]math.LegacyDec, c fuzz.Continue) {
+		func(e *map[asset.Pair]sdkmath.LegacyDec, c fuzz.Continue) {
 			for _, pair := range pairs {
-				var rate math.LegacyDec
+				var rate sdkmath.LegacyDec
 				c.Fuzz(&rate)
 
 				(*e)[pair] = rate
@@ -352,7 +352,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 				for addr, power := range validators {
 					addr, _ := sdk.ValAddressFromBech32(addr)
 
-					var rate math.LegacyDec
+					var rate sdkmath.LegacyDec
 					c.Fuzz(&rate)
 
 					votes = append(votes, types.NewExchangeRateVote(rate, pair, addr, power))
@@ -388,10 +388,10 @@ func TestFuzzPickReferencePair(t *testing.T) {
 
 func TestZeroBallotPower(t *testing.T) {
 	btcVotess := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(math.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
-		types.NewExchangeRateVote(math.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
-		types.NewExchangeRateVote(math.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
 	}
 
-	assert.False(t, isPassingVoteThreshold(btcVotess, math.ZeroInt(), 0))
+	assert.False(t, isPassingVoteThreshold(btcVotess, sdkmath.ZeroInt(), 0))
 }

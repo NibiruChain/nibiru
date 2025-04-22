@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -215,7 +215,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			name: "invalid denom",
 			msg: &types.MsgMint{
 				Sender: sbf,
-				Coin:   sdk.Coin{Denom: "tf/", Amount: math.NewInt(420)},
+				Coin:   sdk.Coin{Denom: "tf/", Amount: sdkmath.NewInt(420)},
 				MintTo: "",
 			},
 			wantErr: "denom format error",
@@ -233,7 +233,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			name: "invalid coin",
 			msg: &types.MsgMint{
 				Sender: sbf,
-				Coin:   sdk.Coin{Amount: math.NewInt(-420)},
+				Coin:   sdk.Coin{Amount: sdkmath.NewInt(-420)},
 				MintTo: "",
 			},
 			wantErr: "invalid coin",
@@ -270,7 +270,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "invalid denom",
 			msg: &types.MsgBurn{
 				Sender:   sbf,
-				Coin:     sdk.Coin{Denom: "tf/", Amount: math.NewInt(420)},
+				Coin:     sdk.Coin{Denom: "tf/", Amount: sdkmath.NewInt(420)},
 				BurnFrom: "",
 			},
 			wantErr: "denom format error",
@@ -288,7 +288,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "invalid coin",
 			msg: &types.MsgBurn{
 				Sender:   sbf,
-				Coin:     sdk.Coin{Amount: math.NewInt(-420)},
+				Coin:     sdk.Coin{Amount: sdkmath.NewInt(-420)},
 				BurnFrom: "",
 			},
 			wantErr: "invalid coin",

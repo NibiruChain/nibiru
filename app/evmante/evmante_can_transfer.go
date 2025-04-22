@@ -4,7 +4,7 @@ package evmante
 import (
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -34,7 +34,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
@@ -44,21 +44,21 @@ func (ctd CanTransferDecorator) AnteHandle(
 
 		evmMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
 		if err != nil {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				err,
 				"failed to create an ethereum core.Message from signer %T", signer,
 			)
 		}
 
 		if baseFeeWeiPerGas == nil {
-			return ctx, errors.Wrap(
+			return ctx, sdkioerrors.Wrap(
 				evm.ErrInvalidBaseFee,
 				"base fee is nil for this block.",
 			)
 		}
 
 		if msgEthTx.EffectiveGasCapWei(baseFeeWeiPerGas).Cmp(baseFeeWeiPerGas) < 0 {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInsufficientFee,
 				"gas fee cap (wei) less than block base fee (wei); (%s < %s)",
 				evmMsg.GasFeeCap, baseFeeWeiPerGas,
@@ -74,7 +74,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			balanceWei := evm.NativeToWei(balanceNative)
 
 			if balanceWei.Cmp(evmMsg.Value) < 0 {
-				return ctx, errors.Wrapf(
+				return ctx, sdkioerrors.Wrapf(
 					sdkerrors.ErrInsufficientFunds,
 					"failed to transfer %s wei ( balance=%s )from address %s using the EVM block context transfer function",
 					evmMsg.Value,

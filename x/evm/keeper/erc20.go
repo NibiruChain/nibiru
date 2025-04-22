@@ -7,7 +7,7 @@ import (
 	"math"
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -93,7 +93,7 @@ func (e erc20Calls) Transfer(
 ) (balanceIncrease *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
 	recipientBalanceBefore, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
-		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
+		return balanceIncrease, nil, sdkioerrors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
 	contractInput, err := e.ABI.Pack("transfer", recipient, amount)
@@ -119,7 +119,7 @@ func (e erc20Calls) Transfer(
 
 	recipientBalanceAfter, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
-		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
+		return balanceIncrease, nil, sdkioerrors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
 	balanceIncrease = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -202,7 +202,7 @@ func (p precompileFunToken) sendToBank(
 	}
 
 	// EVM account mints FunToken.BankDenom to module account
-	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(gotAmount))
+	coinToSend := sdk.NewCoin(funtoken.BankDenom, sdkmath.NewIntFromBigInt(gotAmount))
 	if funtoken.IsMadeFromCoin {
 		// If the FunToken mapping was created from a bank coin, then the EVM account
 		// owns the ERC20 contract and was the original minter of the ERC20 tokens.
@@ -582,7 +582,7 @@ func (p precompileFunToken) sendToEvm(
 	}
 
 	// 1) remove (burn or escrow) the bank coin from caller
-	coinToSend := sdk.NewCoin(funtoken.BankDenom, math.NewIntFromBigInt(amount))
+	coinToSend := sdk.NewCoin(funtoken.BankDenom, sdkmath.NewIntFromBigInt(amount))
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 
 	// bank send from account => module
@@ -721,7 +721,7 @@ func (p precompileFunToken) bankMsgSend(
 	toBech32 := eth.EthAddrToNibiruAddr(toEthAddr)
 
 	// do the bank send
-	coin := sdk.NewCoins(sdk.NewCoin(denom, math.NewIntFromBigInt(amount)))
+	coin := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewIntFromBigInt(amount)))
 	bankMsg := &bank.MsgSend{
 		FromAddress: fromBech32.String(),
 		ToAddress:   toBech32.String(),

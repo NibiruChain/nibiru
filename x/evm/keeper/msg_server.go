@@ -8,9 +8,9 @@ import (
 	"math/big"
 	"strconv"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -41,7 +41,7 @@ func (k *Keeper) EthereumTx(
 	}()
 
 	if err := txMsg.ValidateBasic(); err != nil {
-		return evmResp, errors.Wrap(err, "EthereumTx validate basic failed")
+		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -54,7 +54,7 @@ func (k *Keeper) EthereumTx(
 		tx, gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to convert ethereum transaction as core message")
+		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
@@ -77,7 +77,7 @@ func (k *Keeper) EthereumTx(
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "error applying ethereum core message")
+		return nil, sdkioerrors.Wrap(err, "error applying ethereum core message")
 	}
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
@@ -90,17 +90,17 @@ func (k *Keeper) EthereumTx(
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
 	if err = k.RefundGas(ctx, evmMsg.From, refundGas, weiPerGas); err != nil {
-		return nil, errors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
+		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
 	}
 
 	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), *evmMsg, evmResp)
 	if err != nil {
-		return nil, errors.Wrap(err, "error emitting ethereum tx events")
+		return nil, sdkioerrors.Wrap(err, "error emitting ethereum tx events")
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err != nil {
-		return nil, errors.Wrap(err, "error emitting tx log event")
+		return nil, sdkioerrors.Wrap(err, "error emitting tx log event")
 	}
 
 	k.EvmState.BlockTxIndex.Set(ctx, uint64(txConfig.TxIndex)+1)
@@ -176,7 +176,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 			// only recompute the hash if not set (eg: checkTxState)
 			contextBlockHeader := ctx.BlockHeader()
-			header, err := tmtypes.HeaderFromProto(&contextBlockHeader)
+			header, err := cmttypes.HeaderFromProto(&contextBlockHeader)
 			if err != nil {
 				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
 				return gethcommon.Hash{}
@@ -196,7 +196,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 				return gethcommon.Hash{}
 			}
 
-			header, err := tmtypes.HeaderFromProto(&histInfo.Header)
+			header, err := cmttypes.HeaderFromProto(&histInfo.Header)
 			if err != nil {
 				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
 				return gethcommon.Hash{}
@@ -317,7 +317,7 @@ func (k *Keeper) ApplyEvmMsg(
 	)
 	if err != nil {
 		// should have already been checked on Ante Handler
-		return nil, errors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
+		return nil, sdkioerrors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
 	}
 
 	// Check if the provided gas in the message is enough to cover the intrinsic
@@ -328,7 +328,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// don't go through Ante Handler.
 	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
-		return nil, errors.Wrapf(
+		return nil, sdkioerrors.Wrapf(
 			core.ErrIntrinsicGas,
 			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
 			gasRemaining, intrinsicGasCost,
@@ -363,7 +363,7 @@ func (k *Keeper) ApplyEvmMsg(
 
 	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
 	if err != nil {
-		return nil, errors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
+		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
 	}
 
 	// take over the nonce management from evm:
@@ -418,13 +418,13 @@ func (k *Keeper) ApplyEvmMsg(
 
 	if gasRemaining > msg.GasLimit { // rare case of overflow
 		evmResp.GasUsed = msg.GasLimit // cap the gas used to the original gas limit
-		return evmResp, errors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.GasLimit, gasRemaining)
+		return evmResp, sdkioerrors.Wrapf(core.ErrGasUintOverflow, "ApplyEvmMsg: message gas limit (%d) < leftover gas (%d)", msg.GasLimit, gasRemaining)
 	}
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := evmStateDB.Commit(); err != nil {
-			return evmResp, errors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+			return evmResp, sdkioerrors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
 		}
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
@@ -574,7 +574,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	// 1 | Send Bank Coins to the EVM module
 	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to send coins to module account")
+		return nil, sdkioerrors.Wrap(err, "failed to send coins to module account")
 	}
 
 	// 2 | Mint ERC20 tokens to the recipient
@@ -629,7 +629,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	}
 
 	if err = stateDB.Commit(); err != nil {
-		return nil, errors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
@@ -676,7 +676,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		evm.ModuleName,
 		sdk.NewCoins(coin),
 	); err != nil {
-		return nil, errors.Wrap(err, "error sending Bank Coins to the EVM")
+		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
 	}
 
 	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
@@ -684,7 +684,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
 	// in the BC → ERC20 conversion.
 	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin)); err != nil {
-		return nil, errors.Wrap(err, "failed to burn coins")
+		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
 	}
 
 	// 2 | EVM sends ERC20 tokens to the "to" account.
@@ -727,13 +727,13 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		evmObj,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to transfer ERC-20 tokens")
+		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
 	}
 
 	// Commit the stateDB to the BankKeeperExtension because we don't go through
 	// ApplyEvmMsg at all in this tx.
 	if err := stateDB.Commit(); err != nil {
-		return nil, errors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	// Emit event with the actual amount received
@@ -768,7 +768,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 		GasUsed: strconv.FormatUint(evmResp.GasUsed, 10),
 	}
 	if len(ctx.TxBytes()) > 0 {
-		eventEthereumTx.Hash = tmbytes.HexBytes(tmtypes.Tx(ctx.TxBytes()).Hash()).String()
+		eventEthereumTx.Hash = tmbytes.HexBytes(cmttypes.Tx(ctx.TxBytes()).Hash()).String()
 	}
 	if recipient != nil {
 		eventEthereumTx.Recipient = recipient.Hex()
@@ -778,7 +778,7 @@ func (k *Keeper) EmitEthereumTxEvents(
 	}
 	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
 	if err != nil {
-		return errors.Wrap(err, "EmitEthereumTxEvents: failed to emit event ethereum tx")
+		return sdkioerrors.Wrap(err, "EmitEthereumTxEvents: failed to emit event ethereum tx")
 	}
 
 	// Untyped event: "message", used for tendermint subscription

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc/codes"
@@ -220,7 +220,7 @@ func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*gethcore.Log, error
 
 		eventTxLog, err := evm.EventTxLogFromABCIEvent(event)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse event tx log")
+			return nil, sdkioerrors.Wrapf(err, "failed to parse event tx log")
 		}
 		return evm.LogsToEthereum(eventTxLog.Logs), nil
 	}

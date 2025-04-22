@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
@@ -188,7 +188,7 @@ func (k *Keeper) createFunTokenFromERC20(
 
 	err = stateDB.Commit()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(

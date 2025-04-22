@@ -4,7 +4,7 @@ package evmante
 import (
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -45,7 +45,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
@@ -62,7 +62,7 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 
 		sender, err := signer.Sender(ethTx)
 		if err != nil {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrorInvalidSigner,
 				"couldn't retrieve sender address from the ethereum transaction: %s",
 				err.Error(),

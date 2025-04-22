@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -37,7 +37,7 @@ func NewAggregateExchangeRateVote(exchangeRateTuples ExchangeRateTuples, voter s
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair asset.Pair, exchangeRate math.LegacyDec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdkmath.LegacyDec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -83,7 +83,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
 
-	dec, err := math.LegacyNewDecFromStr(split[1])
+	dec, err := sdkmath.LegacyNewDecFromStr(split[1])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid decimal %s: %w", split[1], err)
 	}
@@ -97,8 +97,8 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 // ExchangeRateTuples - array of ExchangeRateTuple
 type ExchangeRateTuples []ExchangeRateTuple
 
-func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]math.LegacyDec) {
-	exchangeRateMap = make(map[asset.Pair]math.LegacyDec)
+func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdkmath.LegacyDec) {
+	exchangeRateMap = make(map[asset.Pair]sdkmath.LegacyDec)
 	for _, tuple := range tuples {
 		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
 	}

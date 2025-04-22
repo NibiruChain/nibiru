@@ -12,7 +12,7 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -167,7 +167,7 @@ func (f *Filter) Logs(_ context.Context, logLimit int, blockLimit int64) ([]*get
 
 		filtered, err := f.blockLogs(blockRes, bloom)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to fetch block by number %d", height)
+			return nil, pkgerrors.Wrapf(err, "failed to fetch block by number %d", height)
 		}
 
 		// check logs limit
@@ -187,7 +187,7 @@ func (f *Filter) blockLogs(blockRes *tmrpctypes.ResultBlockResults, bloom gethco
 
 	logsList, err := rpcbackend.GetLogsFromBlockResults(blockRes)
 	if err != nil {
-		return []*gethcore.Log{}, errors.Wrapf(err, "failed to fetch logs block number %d", blockRes.Height)
+		return []*gethcore.Log{}, pkgerrors.Wrapf(err, "failed to fetch logs block number %d", blockRes.Height)
 	}
 
 	unfiltered := make([]*gethcore.Log, 0)

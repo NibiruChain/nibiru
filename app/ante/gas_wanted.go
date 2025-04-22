@@ -2,9 +2,9 @@
 package ante
 
 import (
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
@@ -25,8 +25,8 @@ func (gwd AnteDecoratorGasWanted) AnteHandle(
 	// return error if the tx gas is greater than the block limit (max gas)
 	blockGasLimit := eth.BlockGasLimit(ctx)
 	if gasWanted > blockGasLimit {
-		return ctx, errors.Wrapf(
-			errortypes.ErrOutOfGas,
+		return ctx, sdkioerrors.Wrapf(
+			sdkerrors.ErrOutOfGas,
 			"tx gas (%d) exceeds block gas limit (%d)",
 			gasWanted,
 			blockGasLimit,

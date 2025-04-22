@@ -4,7 +4,7 @@ package evm
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -196,10 +196,10 @@ func ValidateTxDataAmount(txData TxData) error {
 	amount := txData.GetValueWei()
 	// Amount can be 0
 	if amount != nil && amount.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
+		return sdkioerrors.Wrapf(ErrInvalidAmount, "amount cannot be negative %s", amount)
 	}
 	if !eth.IsValidInt256(amount) {
-		return errorsmod.Wrap(ErrInvalidAmount, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidAmount, "out of bound")
 	}
 	return nil
 }
@@ -208,7 +208,7 @@ func ValidateTxDataTo(txData TxData) error {
 	to := txData.GetToRaw()
 	if to != "" {
 		if err := eth.ValidateAddress(to); err != nil {
-			return errorsmod.Wrap(err, "invalid to address")
+			return sdkioerrors.Wrap(err, "invalid to address")
 		}
 	}
 	return nil
@@ -217,14 +217,14 @@ func ValidateTxDataTo(txData TxData) error {
 func ValidateTxDataGasPrice(txData TxData) error {
 	gasPrice := txData.GetGasPrice()
 	if gasPrice == nil {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "cannot be nil")
+		return sdkioerrors.Wrap(ErrInvalidGasPrice, "cannot be nil")
 	}
 	if !eth.IsValidInt256(gasPrice) {
-		return errorsmod.Wrap(ErrInvalidGasPrice, "out of bound")
+		return sdkioerrors.Wrap(ErrInvalidGasPrice, "out of bound")
 	}
 
 	if gasPrice.Sign() == -1 {
-		return errorsmod.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
+		return sdkioerrors.Wrapf(ErrInvalidGasPrice, "gas price cannot be negative %s", gasPrice)
 	}
 	return nil
 }
@@ -233,7 +233,7 @@ func ValidateTxDataChainID(txData TxData) error {
 	chainID := txData.GetChainID()
 
 	if chainID == nil {
-		return errorsmod.Wrap(
+		return sdkioerrors.Wrap(
 			sdkerrors.ErrInvalidChainID,
 			"chain ID must be derived from TxData txs",
 		)

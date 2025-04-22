@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -26,7 +26,7 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/NibiruChain/collections"
 
@@ -319,27 +319,27 @@ func (s *websocketsServer) getParamsAndCheckValid(msg map[string]any, wsConn *ws
 func (s *websocketsServer) tcpGetAndSendResponse(wsConn *wsConn, mb []byte) error {
 	req, err := http.NewRequestWithContext(context.Background(), "POST", "http://"+s.rpcAddr, bytes.NewBuffer(mb))
 	if err != nil {
-		return errors.Wrap(err, "Could not build request")
+		return pkgerrors.Wrap(err, "Could not build request")
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "Could not perform request")
+		return pkgerrors.Wrap(err, "Could not perform request")
 	}
 
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "could not read body from response")
+		return pkgerrors.Wrap(err, "could not read body from response")
 	}
 
 	var wsSend any
 	err = json.Unmarshal(body, &wsSend)
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal rest-server response")
+		return pkgerrors.Wrap(err, "failed to unmarshal rest-server response")
 	}
 
 	return wsConn.WriteJSON(wsSend)
@@ -365,7 +365,7 @@ func newPubSubAPI(clientCtx client.Context, logger log.Logger, tmWSClient *rpccl
 func (api *pubSubAPI) subscribe(wsConn *wsConn, subID gethrpc.ID, params []any) (pubsub.UnsubscribeFunc, error) {
 	method, ok := params[0].(string)
 	if !ok {
-		return nil, errors.New("invalid parameters")
+		return nil, pkgerrors.New("invalid parameters")
 	}
 
 	switch method {
@@ -382,14 +382,14 @@ func (api *pubSubAPI) subscribe(wsConn *wsConn, subID gethrpc.ID, params []any) 
 	case "syncing":
 		return api.subscribeSyncing(wsConn, subID)
 	default:
-		return nil, errors.Errorf("unsupported method %s", method)
+		return nil, pkgerrors.Errorf("unsupported method %s", method)
 	}
 }
 
 func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsub.UnsubscribeFunc, error) {
 	sub, unsubFn, err := api.events.SubscribeNewHeads()
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating block filter")
+		return nil, pkgerrors.Wrap(err, "error creating block filter")
 	}
 
 	// TODO: use events
@@ -405,7 +405,7 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 					return
 				}
 
-				data, ok := event.Data.(tmtypes.EventDataNewBlockHeader)
+				data, ok := event.Data.(cmttypes.EventDataNewBlockHeader)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", event.Data))
 					continue
@@ -468,7 +468,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 	if extra != nil {
 		params, ok := extra.(map[string]any)
 		if !ok {
-			err := errors.New("invalid criteria")
+			err := pkgerrors.New("invalid criteria")
 			api.logger.Debug("invalid criteria", "type", fmt.Sprintf("%T", extra))
 			return nil, err
 		}
@@ -477,7 +477,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 			address, isString := params["address"].(string)
 			addresses, isSlice := params["address"].([]any)
 			if !isString && !isSlice {
-				err := errors.New("invalid addresses; must be address or array of addresses")
+				err := pkgerrors.New("invalid addresses; must be address or array of addresses")
 				api.logger.Debug("invalid addresses", "type", fmt.Sprintf("%T", params["address"]))
 				return nil, err
 			}
@@ -491,7 +491,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 				for _, addr := range addresses {
 					address, ok := addr.(string)
 					if !ok {
-						err := errors.New("invalid address")
+						err := pkgerrors.New("invalid address")
 						api.logger.Debug("invalid address", "type", fmt.Sprintf("%T", addr))
 						return nil, err
 					}
@@ -504,7 +504,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 		if params["topics"] != nil {
 			topics, ok := params["topics"].([]any)
 			if !ok {
-				err := errors.Errorf("invalid topics: %s", topics)
+				err := pkgerrors.Errorf("invalid topics: %s", topics)
 				api.logger.Error("invalid topics", "type", fmt.Sprintf("%T", topics))
 				return nil, err
 			}
@@ -514,7 +514,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 			addCritTopic := func(topicIdx int, topic any) error {
 				tstr, ok := topic.(string)
 				if !ok {
-					err := errors.Errorf("invalid topic: %s", topic)
+					err := pkgerrors.Errorf("invalid topic: %s", topic)
 					api.logger.Error("invalid topic", "type", fmt.Sprintf("%T", topic))
 					return err
 				}
@@ -540,7 +540,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 				// in case we actually have a list of subtopics
 				subtopicsList, ok := subtopics.([]any)
 				if !ok {
-					err := errors.New("invalid subtopics")
+					err := pkgerrors.New("invalid subtopics")
 					api.logger.Error("invalid subtopic", "type", fmt.Sprintf("%T", subtopics))
 					return nil, err
 				}
@@ -549,7 +549,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 				for idx, subtopic := range subtopicsList {
 					tstr, ok := subtopic.(string)
 					if !ok {
-						err := errors.Errorf("invalid subtopic: %s", subtopic)
+						err := pkgerrors.Errorf("invalid subtopic: %s", subtopic)
 						api.logger.Error("invalid subtopic", "type", fmt.Sprintf("%T", subtopic))
 						return nil, err
 					}
@@ -578,7 +578,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 					return
 				}
 
-				dataTx, ok := event.Data.(tmtypes.EventDataTx)
+				dataTx, ok := event.Data.(cmttypes.EventDataTx)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", event.Data))
 					continue
@@ -629,7 +629,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 func (api *pubSubAPI) subscribePendingTransactions(wsConn *wsConn, subID gethrpc.ID) (pubsub.UnsubscribeFunc, error) {
 	sub, unsubFn, err := api.events.SubscribePendingTxs()
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating block filter: %s")
+		return nil, pkgerrors.Wrap(err, "error creating block filter: %s")
 	}
 
 	go func() {
@@ -638,7 +638,7 @@ func (api *pubSubAPI) subscribePendingTransactions(wsConn *wsConn, subID gethrpc
 		for {
 			select {
 			case ev := <-txsCh:
-				data, ok := ev.Data.(tmtypes.EventDataTx)
+				data, ok := ev.Data.(cmttypes.EventDataTx)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", ev.Data))
 					continue
@@ -686,7 +686,7 @@ func (api *pubSubAPI) subscribePendingTransactions(wsConn *wsConn, subID gethrpc
 }
 
 func (api *pubSubAPI) subscribeSyncing(_ *wsConn, _ gethrpc.ID) (pubsub.UnsubscribeFunc, error) {
-	return nil, errors.New("syncing subscription is not implemented")
+	return nil, pkgerrors.New("syncing subscription is not implemented")
 }
 
 // copy from github.com/ethereum/go-ethereum/rpc/json.go

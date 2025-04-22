@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/stretchr/testify/assert"
 
@@ -43,22 +43,22 @@ func TestSqrtBigInt(t *testing.T) {
 
 func TestSqrtDec(t *testing.T) {
 	testCases := []struct {
-		dec     math.LegacyDec
-		sqrtDec math.LegacyDec
+		dec     sdkmath.LegacyDec
+		sqrtDec sdkmath.LegacyDec
 	}{
 		// --------------------------------------------------------------------
 		// Cases: 1 or higher
-		{dec: math.LegacyOneDec(), sqrtDec: math.LegacyOneDec()},
-		{dec: math.LegacyNewDec(4), sqrtDec: math.LegacyNewDec(2)},
-		{dec: math.LegacyNewDec(250_000), sqrtDec: math.LegacyNewDec(500)},
-		{dec: math.LegacyNewDec(4_819_136_400), sqrtDec: math.LegacyNewDec(69_420)},
+		{dec: sdkmath.LegacyOneDec(), sqrtDec: sdkmath.LegacyOneDec()},
+		{dec: sdkmath.LegacyNewDec(4), sqrtDec: sdkmath.LegacyNewDec(2)},
+		{dec: sdkmath.LegacyNewDec(250_000), sqrtDec: sdkmath.LegacyNewDec(500)},
+		{dec: sdkmath.LegacyNewDec(4_819_136_400), sqrtDec: sdkmath.LegacyNewDec(69_420)},
 
 		// --------------------------------------------------------------------
 		// Cases: Between 0 and 1
-		{dec: math.LegacyMustNewDecFromStr("0.81"), sqrtDec: math.LegacyMustNewDecFromStr("0.9")},
-		{dec: math.LegacyMustNewDecFromStr("0.25"), sqrtDec: math.LegacyMustNewDecFromStr("0.5")},
+		{dec: sdkmath.LegacyMustNewDecFromStr("0.81"), sqrtDec: sdkmath.LegacyMustNewDecFromStr("0.9")},
+		{dec: sdkmath.LegacyMustNewDecFromStr("0.25"), sqrtDec: sdkmath.LegacyMustNewDecFromStr("0.5")},
 		// ↓ dec 1e-12, sqrtDec: 1e-6
-		{dec: math.LegacyMustNewDecFromStr("0.000000000001"), sqrtDec: math.LegacyMustNewDecFromStr("0.000001")},
+		{dec: sdkmath.LegacyMustNewDecFromStr("0.000000000001"), sqrtDec: sdkmath.LegacyMustNewDecFromStr("0.000001")},
 
 		// --------------------------------------------------------------------
 		// The math/big library panics if you call sqrt() on a negative number.
@@ -66,7 +66,7 @@ func TestSqrtDec(t *testing.T) {
 
 	t.Run("negative sqrt should panic", func(t *testing.T) {
 		panicString := common.TryCatch(func() {
-			common.MustSqrtDec(math.LegacyNewDec(-9))
+			common.MustSqrtDec(sdkmath.LegacyNewDec(-9))
 		})().Error()
 
 		assert.Contains(t, panicString, "square root of negative number")
@@ -132,27 +132,27 @@ func TestBankersRound(t *testing.T) {
 
 func TestClamp(t *testing.T) {
 	tests := []struct {
-		value       math.LegacyDec
-		clampValue  math.LegacyDec
-		expected    math.LegacyDec
+		value       sdkmath.LegacyDec
+		clampValue  sdkmath.LegacyDec
+		expected    sdkmath.LegacyDec
 		description string
 	}{
 		{
-			value:       math.LegacyNewDec(15),
-			clampValue:  math.LegacyNewDec(1),
-			expected:    math.LegacyNewDec(1),
+			value:       sdkmath.LegacyNewDec(15),
+			clampValue:  sdkmath.LegacyNewDec(1),
+			expected:    sdkmath.LegacyNewDec(1),
 			description: "Clamping 15 to 1",
 		},
 		{
-			value:       math.LegacyNewDec(-15),
-			clampValue:  math.LegacyNewDec(1),
-			expected:    math.LegacyNewDec(-1),
+			value:       sdkmath.LegacyNewDec(-15),
+			clampValue:  sdkmath.LegacyNewDec(1),
+			expected:    sdkmath.LegacyNewDec(-1),
 			description: "Clamping -15 to 1",
 		},
 		{
-			value:       math.LegacyMustNewDecFromStr("0.5"),
-			clampValue:  math.LegacyNewDec(1),
-			expected:    math.LegacyMustNewDecFromStr("0.5"),
+			value:       sdkmath.LegacyMustNewDecFromStr("0.5"),
+			clampValue:  sdkmath.LegacyNewDec(1),
+			expected:    sdkmath.LegacyMustNewDecFromStr("0.5"),
 			description: "Clamping 0.5 to 1",
 		},
 	}

@@ -53,6 +53,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
 - [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
 - [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
 - [#2289](https://github.com/NibiruChain/nibiru/pull/2289) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
+- [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
 - [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
 - [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
 
