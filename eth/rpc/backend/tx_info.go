@@ -8,14 +8,14 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -44,7 +44,7 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 	// the `res.MsgIndex` is inferred from tx index, should be within the bound.
 	msg, ok := tx.GetMsgs()[res.MsgIndex].(*evm.MsgEthereumTx)
 	if !ok {
-		return nil, errors.New("invalid ethereum tx")
+		return nil, pkgerrors.New("invalid ethereum tx")
 	}
 
 	blockRes, err := b.TendermintBlockResultByNumber(&block.Block.Height)
@@ -59,7 +59,7 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		for i := range msgs {
 			if msgs[i].Hash == eth.EthTxHashToString(txHash) {
 				if i > math.MaxInt32 {
-					return nil, errors.New("tx index overflow")
+					return nil, pkgerrors.New("tx index overflow")
 				}
 				res.EthTxIndex = int32(i) //#nosec G701 -- checked for int overflow already
 				break
@@ -68,7 +68,7 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 	}
 	// if we still unable to find the eth tx index, return error, shouldn't happen.
 	if res.EthTxIndex == -1 {
-		return nil, errors.New("can't find index of ethereum tx")
+		return nil, pkgerrors.New("can't find index of ethereum tx")
 	}
 
 	baseFeeWei := evm.BASE_FEE_WEI
@@ -240,7 +240,7 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	}
 	// return error if still unable to find the eth tx index
 	if res.EthTxIndex == -1 {
-		return nil, errors.New("can't find index of ethereum tx")
+		return nil, pkgerrors.New("can't find index of ethereum tx")
 	}
 
 	receipt := TransactionReceipt{
@@ -289,9 +289,9 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 // GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.
 func (b *Backend) GetTransactionByBlockHashAndIndex(hash gethcommon.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error) {
 	b.logger.Debug("eth_getTransactionByBlockHashAndIndex", "hash", hash.Hex(), "index", idx)
-	sc, ok := b.clientCtx.Client.(tmrpcclient.SignClient)
+	sc, ok := b.clientCtx.Client.(cmtrpcclient.SignClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	block, err := sc.BlockByHash(b.ctx, hash.Bytes())
@@ -374,12 +374,12 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 		return nil, err
 	}
 	if len(resTxs.Txs) == 0 {
-		return nil, errors.New("ethereum tx not found")
+		return nil, pkgerrors.New("ethereum tx not found")
 	}
 	txResult := resTxs.Txs[0]
 	isValidEnough, reason := rpc.TxIsValidEnough(&txResult.TxResult)
 	if !isValidEnough {
-		return nil, errors.Errorf("invalid ethereum tx: %s", reason)
+		return nil, pkgerrors.Errorf("invalid ethereum tx: %s", reason)
 	}
 
 	var tx sdk.Tx

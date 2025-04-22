@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"math"
 
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -31,7 +31,7 @@ func (b *Backend) TraceTransaction(
 
 	// check if block number is 0
 	if transaction.Height == 0 {
-		return nil, errors.New("genesis is not traceable")
+		return nil, pkgerrors.New("genesis is not traceable")
 	}
 
 	blk, err := b.TendermintBlockByNumber(rpc.BlockNumber(transaction.Height))
@@ -88,9 +88,9 @@ func (b *Backend) TraceTransaction(
 		return nil, fmt.Errorf("invalid transaction type %T", tx)
 	}
 
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &blk.Block.Height)
@@ -178,9 +178,9 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	}
 	ctxWithHeight := rpc.NewContextWithHeight(int64(contextHeight))
 
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &block.Block.Height)
@@ -227,9 +227,9 @@ func (b *Backend) TraceCall(
 		b.logger.Debug("block not found", "contextBlock", contextBlock)
 		return nil, err
 	}
-	nc, ok := b.clientCtx.Client.(tmrpcclient.NetworkClient)
+	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)
 	if !ok {
-		return nil, errors.New("invalid rpc client")
+		return nil, pkgerrors.New("invalid rpc client")
 	}
 
 	cp, err := nc.ConsensusParams(b.ctx, &blk.Block.Height)

@@ -4,8 +4,8 @@ package evm
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
@@ -30,7 +30,7 @@ func DefaultParams() Params {
 		ExtraEIPs: []int64{},
 		// EVMChannels: Unused but intended for use with future IBC functionality
 		EVMChannels:       []string{},
-		CreateFuntokenFee: math.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
+		CreateFuntokenFee: sdkmath.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
 	}
 }
 
@@ -43,7 +43,7 @@ func validateChannels(i any) error {
 
 	for _, channel := range channels {
 		if err := host.ChannelIdentifierValidator(channel); err != nil {
-			return errorsmod.Wrap(
+			return sdkioerrors.Wrap(
 				channeltypes.ErrInvalidChannelIdentifier, err.Error(),
 			)
 		}

@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -17,7 +17,7 @@ type NetAPI struct {
 	// TODO: epic: test(eth-rpc): "github.com/NibiruChain/nibiru/v2/x/common/testutil/cli"
 	// Validator.RPCClient should be used to test APIs that depend on the CometBFT
 	// RPC client.
-	tmClient rpcclient.Client
+	tmClient cmtrpcclient.Client
 }
 
 // NewImplNetAPI creates an instance of the public Net Web3 API.
@@ -26,7 +26,7 @@ func NewImplNetAPI(clientCtx client.Context) *NetAPI {
 
 	return &NetAPI{
 		networkVersion: chainID.Uint64(),
-		tmClient:       clientCtx.Client.(rpcclient.Client),
+		tmClient:       clientCtx.Client.(cmtrpcclient.Client),
 	}
 }
 

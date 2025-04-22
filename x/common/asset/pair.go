@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // paired against USD
-var ErrInvalidTokenPair = sdkerrors.Register("asset", 1, "invalid token pair")
+var ErrInvalidTokenPair = sdkioerrors.Register("asset", 1, "invalid token pair")
 
 type Pair string
 
@@ -29,16 +29,16 @@ func TryNewPair(pair string) (Pair, error) {
 	splitLen := len(split)
 	if splitLen != 2 {
 		if splitLen == 1 {
-			return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
+			return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
 				"pair separator missing for pair name, %v", pair)
 		} else {
-			return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
+			return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
 				"pair name %v must have exactly two assets, not %v", pair, splitLen)
 		}
 	}
 
 	if split[0] == "" || split[1] == "" {
-		return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
+		return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
 			"empty token identifiers are not allowed. token0: %v, token1: %v.",
 			split[0], split[1])
 	}

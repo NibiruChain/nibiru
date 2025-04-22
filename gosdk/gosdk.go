@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	csdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -54,7 +54,7 @@ func NewNibiruSdk(
 }
 
 func EnsureNibiruPrefix() {
-	csdkConfig := csdk.GetConfig()
+	csdkConfig := sdk.GetConfig()
 	nibiruPrefix := appconst.AccountAddressPrefix
 	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
 		app.SetPrefixes(nibiruPrefix)

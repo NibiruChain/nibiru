@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -42,7 +42,7 @@ import (
 
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
@@ -417,7 +417,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 		if conf.GRPC.Enable {
 			_, port, err := net.SplitHostPort(conf.GRPC.Address)
 			if err != nil {
-				return errorsmod.Wrapf(err, "invalid grpc address %s", conf.GRPC.Address)
+				return sdkioerrors.Wrapf(err, "invalid grpc address %s", conf.GRPC.Address)
 			}
 
 			maxSendMsgSize := conf.GRPC.MaxSendMsgSize
@@ -610,7 +610,7 @@ func OpenEVMIndexer(
 	idxLogger := ctx.Logger.With("indexer", "evm")
 	evmIndexer := indexer.NewEVMTxIndexer(indexerDb, idxLogger, clientCtx)
 
-	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(rpcclient.Client))
+	evmIndexerService := NewEVMIndexerService(evmIndexer, clientCtx.Client.(cmtrpcclient.Client))
 	evmIndexerService.SetLogger(idxLogger)
 
 	errCh := make(chan error)

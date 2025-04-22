@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -310,9 +310,9 @@ func TestOracleMultiRewardDistribution(t *testing.T) {
 
 	rewardDistributedWindow := input.OracleKeeper.RewardDistributionWindow(input.Ctx)
 
-	expectedRewardAmt := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt := sdkmath.LegacyNewDecFromInt(rewardAmt.QuoRaw(3).MulRaw(2)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 	expectedRewardAmt2 := math.ZeroInt() // even vote power is same KRW with SDR, KRW chosen referenceTerra because alphabetical order
-	expectedRewardAmt3 := math.LegacyNewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
+	expectedRewardAmt3 := sdkmath.LegacyNewDecFromInt(rewardAmt.QuoRaw(3)).QuoInt64(int64(rewardDistributedWindow)).TruncateInt()
 
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), ValAddrs[0])
 	assert.Equal(t, expectedRewardAmt, rewards.Rewards.AmountOf(denoms.Gov).TruncateInt())
@@ -389,8 +389,8 @@ func TestOracleRandomPrices(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		for val := 0; val < 4; val++ {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
-				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(rand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
+				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
 			}, val)
 		}
 
@@ -478,7 +478,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	perfs = fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	t.Log("Although validators 0-2 voted, it's for the same period -> expect abstains for everyone")
-	for valIdx := 0; valIdx < 4; valIdx++ {
+	for valIdx := range 4 {
 		perf := perfs[ValAddrs[valIdx].String()]
 		assert.EqualValues(t, 1, perf.WinCount)
 		assert.EqualValues(t, 0, perf.AbstainCount)

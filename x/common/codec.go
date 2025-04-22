@@ -16,7 +16,7 @@ var (
 
 // Collection Codecs
 
-// math.LegacyDec Value Codec
+// sdkmath.LegacyDec Value Codec
 
 type legacyDecValueCodec struct{}
 

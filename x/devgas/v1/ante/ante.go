@@ -3,9 +3,9 @@ package ante
 import (
 	"encoding/json"
 
-	"cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -122,7 +122,10 @@ func (a DevGasPayoutDecorator) settleFeePayments(
 
 // getAllowedFees gets the allowed fees to be paid based on the module
 // parameters of x/devgas
-func getAllowedFees(params devgastypes.ModuleParams, totalFees sdk.Coins) sdk.Coins {
+func getAllowedFees(
+	params devgastypes.ModuleParams,
+	totalFees sdk.Coins,
+) sdk.Coins {
 	// Get only allowed governance fees to be paid (helps for taxes)
 	var allowedFees sdk.Coins
 	if len(params.AllowedDenoms) == 0 {
@@ -143,7 +146,10 @@ func getAllowedFees(params devgastypes.ModuleParams, totalFees sdk.Coins) sdk.Co
 
 // getWithdrawAddressesFromMsgs returns a list of all contract addresses that
 // have opted-in to receiving payments
-func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(ctx sdk.Context, msgs []sdk.Msg) ([]sdk.AccAddress, error) {
+func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(
+	ctx sdk.Context,
+	msgs []sdk.Msg,
+) ([]sdk.AccAddress, error) {
 	toPay := make([]sdk.AccAddress, 0)
 	for _, msg := range msgs {
 		if _, ok := msg.(*wasmtypes.MsgExecuteContract); ok {
@@ -169,7 +175,7 @@ func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(ctx sdk.Context, msg
 // FeePayLogic takes the total fees and splits them based on the governance
 // params and the number of contracts we are executing on. This returns the
 // amount of fees each contract developer should get. tested in ante_test.go
-func FeePayLogic(fees sdk.Coins, govPercent math.LegacyDec, numPairs int) sdk.Coins {
+func FeePayLogic(fees sdk.Coins, govPercent sdkmath.LegacyDec, numPairs int) sdk.Coins {
 	var splitFees sdk.Coins
 	for _, c := range fees.Sort() {
 		rewardAmount := govPercent.MulInt(c.Amount).QuoInt64(int64(numPairs)).RoundInt()

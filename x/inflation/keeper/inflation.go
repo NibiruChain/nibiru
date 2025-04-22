@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -128,11 +127,11 @@ func (k Keeper) AllocatePolynomialInflation(
 func (k Keeper) GetProportions(
 	_ sdk.Context,
 	coin sdk.Coin,
-	proportion math.LegacyDec,
+	proportion sdkmath.LegacyDec,
 ) sdk.Coin {
 	return sdk.Coin{
 		Denom:  coin.Denom,
-		Amount: math.LegacyNewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
+		Amount: sdkmath.LegacyNewDecFromInt(coin.Amount).Mul(proportion).TruncateInt(),
 	}
 }
 
@@ -143,29 +142,29 @@ func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.
 }
 
 // GetInflationRate returns the inflation rate for the current period.
-func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) math.LegacyDec {
+func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdkmath.LegacyDec {
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	if epochMintProvision.IsZero() {
-		return math.LegacyZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, mintDenom)
 	if circulatingSupply.IsZero() {
-		return math.LegacyZeroDec()
+		return sdkmath.LegacyZeroDec()
 	}
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
-	circulatingSupplyToDec := math.LegacyNewDecFromInt(circulatingSupply)
+	circulatingSupplyToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
 	return epochMintProvision.
 		MulInt64(int64(k.GetEpochsPerPeriod(ctx))).
 		MulInt64(int64(k.GetPeriodsPerYear(ctx))).
 		Quo(circulatingSupplyToDec).
-		Mul(math.LegacyNewDec(100))
+		Mul(sdkmath.LegacyNewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage
 // and calculate EpochMintProvision
-func (k Keeper) GetEpochMintProvision(ctx sdk.Context) math.LegacyDec {
+func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdkmath.LegacyDec {
 	peek := k.CurrentPeriod.Peek(ctx)
 
 	return types.CalculateEpochMintProvision(

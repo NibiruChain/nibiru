@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -34,7 +34,7 @@ const ErrExceedBlockGasLimit = "out of gas in location: block gas meter; gasWant
 const ErrStateDBCommit = "failed to commit stateDB"
 
 // RawTxToEthTx returns a evm MsgEthereum transaction from raw tx bytes.
-func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereumTx, error) {
+func RawTxToEthTx(clientCtx client.Context, txBz cmttypes.Tx) ([]*evm.MsgEthereumTx, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBz)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
@@ -54,7 +54,7 @@ func RawTxToEthTx(clientCtx client.Context, txBz tmtypes.Tx) ([]*evm.MsgEthereum
 
 // EthHeaderFromTendermint: Converts a Tendermint block header to an Eth header.
 func EthHeaderFromTendermint(
-	header tmtypes.Header, bloom gethcore.Bloom, baseFeeWei *big.Int,
+	header cmttypes.Header, bloom gethcore.Bloom, baseFeeWei *big.Int,
 ) *gethcore.Header {
 	txHash := gethcore.EmptyRootHash
 	if len(header.DataHash) == 0 {
@@ -87,7 +87,7 @@ func EthHeaderFromTendermint(
 func BlockMaxGasFromConsensusParams(
 	goCtx context.Context, clientCtx client.Context, blockHeight int64,
 ) (int64, error) {
-	tmrpcClient, ok := clientCtx.Client.(tmrpcclient.Client)
+	tmrpcClient, ok := clientCtx.Client.(cmtrpcclient.Client)
 	if !ok {
 		panic("incorrect tm rpc client")
 	}
@@ -111,7 +111,7 @@ func BlockMaxGasFromConsensusParams(
 // FormatBlock creates an ethereum block from a tendermint header and ethereum-formatted
 // transactions.
 func FormatBlock(
-	header tmtypes.Header, size int, gasLimit int64,
+	header cmttypes.Header, size int, gasLimit int64,
 	gasUsed *big.Int, transactions []any, bloom gethcore.Bloom,
 	validatorAddr gethcommon.Address, baseFee *big.Int,
 ) map[string]any {

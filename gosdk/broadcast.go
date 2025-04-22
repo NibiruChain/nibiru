@@ -3,7 +3,7 @@ package gosdk
 import (
 	"context"
 
-	cmtrpc "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -89,7 +89,7 @@ var (
 )
 
 type BroadcasterTmRpc struct {
-	RPC cmtrpc.Client
+	RPC cmtrpcclient.Client
 }
 
 func (b BroadcasterTmRpc) BroadcastTxSync(
@@ -141,7 +141,7 @@ type BroadcastArgs struct {
 	gosdk NibiruSDK
 	// clientCtx   sdkclient.Context // TODO: implement
 	Broadcaster Broadcaster
-	rpc         cmtrpc.Client
+	rpc         cmtrpcclient.Client
 	chainID     string
 }
 

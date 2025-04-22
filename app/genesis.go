@@ -6,7 +6,7 @@ import (
 	"os"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -15,13 +15,13 @@ import (
 
 // AppStateFromGenesisFileFn util function to generate the genesis AppState
 // from a genesis.json file.
-func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
+func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (cmttypes.GenesisDoc, []simtypes.Account) {
 	bytes, err := os.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var genesis tmtypes.GenesisDoc
+	var genesis cmttypes.GenesisDoc
 	// NOTE: Tendermint uses a custom JSON decoder for GenesisDoc
 	err = tmjson.Unmarshal(bytes, &genesis)
 	if err != nil {

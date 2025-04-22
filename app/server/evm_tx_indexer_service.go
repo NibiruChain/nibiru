@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/service"
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-	"github.com/cometbft/cometbft/types"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 )
@@ -24,12 +24,12 @@ type EVMTxIndexerService struct {
 	service.BaseService
 
 	evmTxIndexer *indexer.EVMTxIndexer
-	rpcClient    rpcclient.Client
+	rpcClient    cmtrpcclient.Client
 	cancelFunc   context.CancelFunc
 }
 
 // NewEVMIndexerService returns a new service instance.
-func NewEVMIndexerService(evmTxIndexer *indexer.EVMTxIndexer, rpcClient rpcclient.Client) *EVMTxIndexerService {
+func NewEVMIndexerService(evmTxIndexer *indexer.EVMTxIndexer, rpcClient cmtrpcclient.Client) *EVMTxIndexerService {
 	indexerService := &EVMTxIndexerService{evmTxIndexer: evmTxIndexer, rpcClient: rpcClient}
 	indexerService.BaseService = *service.NewBaseService(nil, EVMTxIndexerServiceName, indexerService)
 	return indexerService
@@ -54,7 +54,7 @@ func (service *EVMTxIndexerService) OnStart() error {
 	blockHeadersChan, err := service.rpcClient.Subscribe(
 		ctx,
 		EVMTxIndexerServiceName,
-		types.QueryForEvent(types.EventNewBlockHeader).String(),
+		cmttypes.QueryForEvent(cmttypes.EventNewBlockHeader).String(),
 		0,
 	)
 	if err != nil {
@@ -73,7 +73,7 @@ func (service *EVMTxIndexerService) OnStart() error {
 				}
 				return
 			case msg := <-blockHeadersChan:
-				eventDataHeader := msg.Data.(types.EventDataNewBlockHeader)
+				eventDataHeader := msg.Data.(cmttypes.EventDataNewBlockHeader)
 				currentChainHeight := eventDataHeader.Header.Height
 				chainHeight := atomic.LoadInt64(&chainHeightStorage)
 				if currentChainHeight > chainHeight {

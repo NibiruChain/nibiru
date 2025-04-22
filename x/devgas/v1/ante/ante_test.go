@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
@@ -31,84 +31,84 @@ func TestAnteSuite(t *testing.T) {
 
 func (suite *AnteTestSuite) TestFeeLogic() {
 	// We expect all to pass
-	feeCoins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(500)), sdk.NewCoin("utoken", math.NewInt(250)))
+	feeCoins := sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(500)), sdk.NewCoin("utoken", sdkmath.NewInt(250)))
 
 	testCases := []struct {
 		name               string
 		incomingFee        sdk.Coins
-		govPercent         math.LegacyDec
+		govPercent         sdkmath.LegacyDec
 		numContracts       int
 		expectedFeePayment sdk.Coins
 	}{
 		{
 			"100% fee / 1 contract",
 			feeCoins,
-			math.LegacyNewDecWithPrec(100, 2),
+			sdkmath.LegacyNewDecWithPrec(100, 2),
 			1,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(500)), sdk.NewCoin("utoken", math.NewInt(250))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(500)), sdk.NewCoin("utoken", sdkmath.NewInt(250))),
 		},
 		{
 			"100% fee / 2 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(100, 2),
+			sdkmath.LegacyNewDecWithPrec(100, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(250)), sdk.NewCoin("utoken", math.NewInt(125))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(250)), sdk.NewCoin("utoken", sdkmath.NewInt(125))),
 		},
 		{
 			"100% fee / 10 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(100, 2),
+			sdkmath.LegacyNewDecWithPrec(100, 2),
 			10,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(50)), sdk.NewCoin("utoken", math.NewInt(25))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(50)), sdk.NewCoin("utoken", sdkmath.NewInt(25))),
 		},
 		{
 			"67% fee / 7 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(67, 2),
+			sdkmath.LegacyNewDecWithPrec(67, 2),
 			7,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(48)), sdk.NewCoin("utoken", math.NewInt(24))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(48)), sdk.NewCoin("utoken", sdkmath.NewInt(24))),
 		},
 		{
 			"50% fee / 1 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(50, 2),
+			sdkmath.LegacyNewDecWithPrec(50, 2),
 			1,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(250)), sdk.NewCoin("utoken", math.NewInt(125))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(250)), sdk.NewCoin("utoken", sdkmath.NewInt(125))),
 		},
 		{
 			"50% fee / 2 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(50, 2),
+			sdkmath.LegacyNewDecWithPrec(50, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(125)), sdk.NewCoin("utoken", math.NewInt(62))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(125)), sdk.NewCoin("utoken", sdkmath.NewInt(62))),
 		},
 		{
 			"50% fee / 3 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(50, 2),
+			sdkmath.LegacyNewDecWithPrec(50, 2),
 			3,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(83)), sdk.NewCoin("utoken", math.NewInt(42))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(83)), sdk.NewCoin("utoken", sdkmath.NewInt(42))),
 		},
 		{
 			"25% fee / 2 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(25, 2),
+			sdkmath.LegacyNewDecWithPrec(25, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(62)), sdk.NewCoin("utoken", math.NewInt(31))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(62)), sdk.NewCoin("utoken", sdkmath.NewInt(31))),
 		},
 		{
 			"15% fee / 3 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(15, 2),
+			sdkmath.LegacyNewDecWithPrec(15, 2),
 			3,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(25)), sdk.NewCoin("utoken", math.NewInt(12))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(25)), sdk.NewCoin("utoken", sdkmath.NewInt(12))),
 		},
 		{
 			"1% fee / 2 contracts",
 			feeCoins,
-			math.LegacyNewDecWithPrec(1, 2),
+			sdkmath.LegacyNewDecWithPrec(1, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(2)), sdk.NewCoin("utoken", math.NewInt(1))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(2)), sdk.NewCoin("utoken", sdkmath.NewInt(1))),
 		},
 	}
 
@@ -127,8 +127,8 @@ func (suite *AnteTestSuite) TestFeeLogic() {
 
 func (suite *AnteTestSuite) TestDevGasPayout() {
 	txGasCoins := sdk.NewCoins(
-		sdk.NewCoin("unibi", math.NewInt(1_000)),
-		sdk.NewCoin("utoken", math.NewInt(500)),
+		sdk.NewCoin("unibi", sdkmath.NewInt(1_000)),
+		sdk.NewCoin("utoken", sdkmath.NewInt(500)),
 	)
 
 	_, addrs := testutil.PrivKeyAddressPairs(11)
@@ -167,7 +167,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
 			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
 			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
-			wantWithdrawerRoyalties: txGasCoins.QuoInt(math.NewInt(2)),
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()
@@ -188,7 +188,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
 			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
 			// wantWithdrawerRoyalties: num_withdrawers * 2 = 4
-			wantWithdrawerRoyalties: txGasCoins.QuoInt(math.NewInt(4)),
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(4)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()
@@ -206,7 +206,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
 			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
 			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
-			wantWithdrawerRoyalties: txGasCoins.QuoInt(math.NewInt(2)),
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 true,
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()
@@ -219,7 +219,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			// The expected royalty is gas / num_withdrawers / 2. Thus, We
 			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
 			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
-			wantWithdrawerRoyalties: txGasCoins.QuoInt(math.NewInt(2)),
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
 				bapp, ctx := testapp.NewNibiruTestAppAndContext()

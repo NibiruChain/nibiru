@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -36,7 +36,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	// check the local node config in case unprotected txs are disabled
 	if !b.allowUnprotectedTxs && !tx.Protected() {
 		// Ensure only eip155 signed transactions are submitted if EIP155Required is set.
-		return common.Hash{}, errors.New("only replay-protected (EIP-155) transactions allowed over RPC")
+		return common.Hash{}, pkgerrors.New("only replay-protected (EIP-155) transactions allowed over RPC")
 	}
 
 	ethereumTx := &evm.MsgEthereumTx{}
@@ -88,12 +88,12 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 // provided on the args
 func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
-		return args, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
+		return args, pkgerrors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
 	head, _ := b.CurrentHeader() // #nosec G703 -- no need to check error cause we're already checking that head == nil
 	if head == nil {
-		return args, errors.New("latest header is nil")
+		return args, pkgerrors.New("latest header is nil")
 	}
 
 	// If user specifies both maxPriorityfee and maxFee, then we do not
@@ -122,7 +122,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 			}
 		} else {
 			if args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil {
-				return args, errors.New("maxFeePerGas or maxPriorityFeePerGas specified but london is not active yet")
+				return args, pkgerrors.New("maxFeePerGas or maxPriorityFeePerGas specified but london is not active yet")
 			}
 
 			if args.GasPrice == nil {
@@ -157,7 +157,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	}
 
 	if args.Data != nil && args.Input != nil && !bytes.Equal(*args.Data, *args.Input) {
-		return args, errors.New("both 'data' and 'input' are set and not equal. Please use 'input' to pass transaction call data")
+		return args, pkgerrors.New("both 'data' and 'input' are set and not equal. Please use 'input' to pass transaction call data")
 	}
 
 	if args.To == nil {
@@ -170,7 +170,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 		}
 
 		if len(input) == 0 {
-			return args, errors.New("contract creation without any data provided")
+			return args, pkgerrors.New("contract creation without any data provided")
 		}
 	}
 
@@ -229,7 +229,7 @@ func (b *Backend) EstimateGas(
 	header, err := b.TendermintBlockByNumber(blockNr)
 	if err != nil {
 		// the error message imitates geth behavior
-		return 0, errors.New("header not found")
+		return 0, pkgerrors.New("header not found")
 	}
 
 	req := evm.EthCallRequest{
@@ -261,7 +261,7 @@ func (b *Backend) DoCall(
 	header, err := b.TendermintBlockByNumber(blockNr)
 	if err != nil {
 		// the error message imitates geth behavior
-		return nil, errors.New("header not found")
+		return nil, pkgerrors.New("header not found")
 	}
 
 	req := evm.EthCallRequest{

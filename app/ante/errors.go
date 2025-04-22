@@ -1,15 +1,15 @@
 package ante
 
 import (
-	sdkerrors "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 )
 
 var errorCodeIdx uint32 = 1
 
-func registerError(errMsg string) *sdkerrors.Error {
+func registerError(errMsg string) *sdkioerrors.Error {
 	errorCodeIdx += 1
-	return sdkerrors.Register("ante-nibiru", errorCodeIdx, errMsg)
+	return sdkioerrors.Register("ante-nibiru", errorCodeIdx, errMsg)
 }
 
 // app/ante "sentinel" errors
@@ -18,7 +18,7 @@ var (
 	ErrMaxValidatorCommission = registerError("validator commission rate is above max")
 )
 
-func NewErrMaxValidatorCommission(gotCommission math.LegacyDec) error {
+func NewErrMaxValidatorCommission(gotCommission sdkmath.LegacyDec) error {
 	return ErrMaxValidatorCommission.Wrapf(
 		"got (%s), max rate is (%s)", gotCommission, MAX_COMMISSION())
 }
