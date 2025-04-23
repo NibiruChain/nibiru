@@ -2,6 +2,7 @@
 package backend
 
 import (
+	"fmt"
 	"time"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -17,13 +18,13 @@ func (b *Backend) Accounts() ([]gethcommon.Address, error) {
 
 	infos, err := b.clientCtx.Keyring.List()
 	if err != nil {
-		return addresses, err
+		return addresses, fmt.Errorf("error listing out the keyring: %w", err)
 	}
 
 	for _, info := range infos {
 		pubKey, err := info.GetPubKey()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error fetching public key from keyring record: %w", err)
 		}
 		addressBytes := pubKey.Address().Bytes()
 		addresses = append(addresses, gethcommon.BytesToAddress(addressBytes))
