@@ -59,7 +59,7 @@ func NewLogsFromEth(ethlogs []*gethcore.Log) []Log {
 
 // LogsToEthereum casts the Proto Logs to a slice of Ethereum Logs.
 func LogsToEthereum(logs []Log) []*gethcore.Log {
-	var ethLogs []*gethcore.Log //nolint: prealloc
+	ethLogs := []*gethcore.Log{} //nolint: prealloc
 	for i := range logs {
 		ethLogs = append(ethLogs, logs[i].ToEthereum())
 	}

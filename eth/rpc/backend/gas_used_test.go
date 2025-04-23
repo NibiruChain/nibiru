@@ -32,8 +32,8 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	txHash1 := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
 	txHash2 := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
 
-	blockNumber1, _, receipt1 := WaitForReceipt(s, txHash1)
-	blockNumber2, _, receipt2 := WaitForReceipt(s, txHash2)
+	blockNumber1, _, receipt1, _ := WaitForReceipt(s, txHash1)
+	blockNumber2, _, receipt2, _ := WaitForReceipt(s, txHash2)
 
 	s.Require().NotNil(receipt1)
 	s.Require().NotNil(receipt2)
@@ -62,11 +62,14 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	)
 }
 
-// TestGasUsedFunTokens verifies that gas used is correctly calculated for precompile "sendToBank" txs.
-// Test creates 3 txs: 2 successful and one failing.
-// Successful txs gas should be refunded and failing tx should consume 100% of the gas limit.
-// It also checks that txs are included in the same block and block gas is greater or equals
-// to the total gas used by txs.
+// TestGasUsedFunTokens verifies that gas used is correctly calculated for
+// precompile "sendToBank" txs.
+//
+// Test creates 3 txs, 2 successful and one failing.
+//   - Successful txs gas should be refunded and failing tx should consume 100%
+//     of the gas limit.
+//   - It also checks that txs are included in the same block and block gas is
+//     greater or equals to the total gas used by txs.
 func (s *BackendSuite) TestGasUsedFunTokens() {
 	// Test is broadcasting txs. Lock to avoid nonce conflicts.
 	testMutex.Lock()
@@ -138,9 +141,12 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 		},
 		false,
 	)
-	blockNumber1, _, receipt1 := WaitForReceipt(s, txHash1)
-	blockNumber2, _, receipt2 := WaitForReceipt(s, txHash2)
-	blockNumber3, _, receipt3 := WaitForReceipt(s, txHash3)
+	blockNumber1, _, receipt1, err1 := WaitForReceipt(s, txHash1)
+	blockNumber2, _, receipt2, err2 := WaitForReceipt(s, txHash2)
+	blockNumber3, _, receipt3, err3 := WaitForReceipt(s, txHash3)
+	for _, err := range []error{err1, err2, err3} {
+		s.NoError(err)
+	}
 
 	s.Require().NotNil(receipt1)
 	s.Require().NotNil(receipt2)
@@ -205,9 +211,9 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	)
 	s.broadcastSDKTx(sdkTx)
 
-	_, _, receiptContractCreation := WaitForReceipt(s, creationTx.Hash())
-	_, _, receiptFirstTransfer := WaitForReceipt(s, firstTransferTx.Hash())
-	_, _, receiptSecondTransfer := WaitForReceipt(s, secondTransferTx.Hash())
+	_, _, receiptContractCreation, _ := WaitForReceipt(s, creationTx.Hash())
+	_, _, receiptFirstTransfer, _ := WaitForReceipt(s, firstTransferTx.Hash())
+	_, _, receiptSecondTransfer, _ := WaitForReceipt(s, secondTransferTx.Hash())
 
 	s.Require().Greater(receiptContractCreation.GasUsed, uint64(0))
 	s.Require().LessOrEqual(receiptContractCreation.GasUsed, contractCreationGasLimit)

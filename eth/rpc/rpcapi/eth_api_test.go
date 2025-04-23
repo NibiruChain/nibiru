@@ -87,11 +87,11 @@ func (s *Suite) TestExpectedMethods() {
 		},
 	)
 	s.Require().Len(apis, 3)
-	type WantMethod struct {
+	type TestCase struct {
 		ServiceName string
 		Methods     []string
 	}
-	testCases := []WantMethod{
+	testCases := []TestCase{
 		{
 			ServiceName: "rpcapi.EthAPI",
 			Methods: []string{
@@ -491,7 +491,7 @@ func (s *NodeSuite) Test_SmartContract() {
 	s.Require().NoError(err)
 
 	s.T().Log("Wait a few blocks so the tx won't be pending")
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		_ = s.network.WaitForNextBlock()
 	}
 

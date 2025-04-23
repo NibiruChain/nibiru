@@ -42,7 +42,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 
 	// Assert all transactions included in block
 	for _, tx := range []*gethcore.Transaction{creationTx, firstTransferTx, secondTransferTx} {
-		blockNum, blockHash, _ := WaitForReceipt(s, tx.Hash())
+		blockNum, blockHash, _, _ := WaitForReceipt(s, tx.Hash())
 		s.Require().NotNil(blockNum)
 		s.Require().NotNil(blockHash)
 	}

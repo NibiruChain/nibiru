@@ -192,7 +192,16 @@ func (b *Backend) GetBalance(
 	return (*hexutil.Big)(val.BigInt()), nil
 }
 
-// GetTransactionCount returns the number of transactions at the given address up to the given block number.
+// GetTransactionCount returns the account nonce for the given address at the specified block.
+// This corresponds to the number of transactions sent from the address, including pending ones
+// if blockNum == "pending". Returns 0 for non-existent accounts.
+//
+// ## Etheruem Nonce Behavior
+//   - The nonce is a per-account counter.
+//   - Is starts at 0 when the account is created and increments by 1 for each
+//     successfully broadcasted transaction sent from that account.
+//   - The nonce is NOT scoped per block but is global and persistent for each
+//     account over time.
 func (b *Backend) GetTransactionCount(address gethcommon.Address, blockNum rpc.BlockNumber) (*hexutil.Uint64, error) {
 	n := hexutil.Uint64(0)
 	bn, err := b.BlockNumber()

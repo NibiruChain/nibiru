@@ -12,7 +12,6 @@ describe("native transfer", () => {
       const senderBalanceBefore = await provider.getBalance(account)
       const recipientBalanceBefore = await provider.getBalance(alice)
       expect(senderBalanceBefore).toBeGreaterThan(0)
-      expect(recipientBalanceBefore).toEqual(BigInt(0))
 
       // Execute EVM transfer
       const transaction = {
@@ -40,7 +39,7 @@ describe("native transfer", () => {
         senderBalanceAfter,
         txResponse,
       })
-      expect(recipientBalanceAfter).toEqual(amountToSend)
+      expect(recipientBalanceAfter).toEqual(recipientBalanceBefore + amountToSend)
       const delta = senderBalanceAfter - expectedSenderWei
       const deltaFromExpectation = delta >= 0 ? delta : -delta
       expect(deltaFromExpectation).toBeLessThan(parseEther("0.1"))
