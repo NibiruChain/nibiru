@@ -29,8 +29,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	// RLP decode raw transaction bytes
 	tx := &gethcore.Transaction{}
 	if err := tx.UnmarshalBinary(data); err != nil {
-		b.logger.Error("transaction decoding failed", "error", err.Error())
-		return common.Hash{}, err
+		return common.Hash{}, pkgerrors.Wrap(err, "transaction decoding failed")
 	}
 
 	// check the local node config in case unprotected txs are disabled
@@ -46,40 +45,39 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	if err := ethereumTx.ValidateBasic(); err != nil {
-		b.logger.Debug("tx failed basic validation", "error", err.Error())
-		return common.Hash{}, err
+		return common.Hash{}, pkgerrors.Wrap(err, "tx failed basic validation")
 	}
 
 	cosmosTx, err := ethereumTx.BuildTx(b.clientCtx.TxConfig.NewTxBuilder(), evm.EVMBankDenom)
 	if err != nil {
-		b.logger.Error("failed to build cosmos tx", "error", err.Error())
-		return common.Hash{}, err
+		return common.Hash{}, pkgerrors.Wrap(err, "failed to build signing.Tx from Ethereum tx")
 	}
 
 	// Encode transaction by default Tx encoder
 	txBytes, err := b.clientCtx.TxConfig.TxEncoder()(cosmosTx)
 	if err != nil {
-		b.logger.Error("failed to encode eth tx using default encoder", "error", err.Error())
-		return common.Hash{}, err
+		return common.Hash{}, pkgerrors.Wrap(err, "failed to encode eth tx using default encoder")
 	}
 
 	txHash := ethereumTx.AsTransaction().Hash()
-	b.logger.Debug("eth_sendRawTransaction",
+	b.logger.Debug("eth_sendRawTransaction beforeBroadcast",
 		"txHash", txHash.Hex(),
 	)
 
 	syncCtx := b.clientCtx.WithBroadcastMode(flags.BroadcastSync)
 	rsp, err := syncCtx.BroadcastTx(txBytes)
+	if err != nil {
+		return txHash, fmt.Errorf(
+			"error broadcasting tx: ethTxHash %s: %w", txHash, err,
+		)
+	}
 	if rsp != nil && rsp.Code != 0 {
 		err = sdkioerrors.ABCIError(rsp.Codespace, rsp.Code, rsp.RawLog)
+		return txHash, fmt.Errorf(
+			"error broadcasting tx: ethTxHash %s: %w",
+			txHash, err,
+		)
 	}
-	if err != nil {
-		b.logger.Error("failed to broadcast tx", "error", err.Error())
-		return txHash, err
-	}
-	b.logger.Debug("eth_sendRawTransaction",
-		"blockHeight", fmt.Sprintf("%d", rsp.Height),
-	)
 
 	return txHash, nil
 }

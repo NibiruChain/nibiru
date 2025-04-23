@@ -10,7 +10,7 @@ setup:
 # Install all dependencies
 install:
   #!/usr/bin/env bash
-  npm install
+  yarn install
   npx hardhat typechain
 
 # Runs the E2E tests

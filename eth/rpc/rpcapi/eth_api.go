@@ -252,8 +252,11 @@ func (e *EthAPI) GetTransactionByBlockNumberAndIndex(
 // Allows developers to both send ETH from one address to another, write data
 // on-chain, and interact with smart contracts.
 func (e *EthAPI) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
-	e.logger.Debug("eth_sendRawTransaction", "length", len(data))
-	return e.backend.SendRawTransaction(data)
+	methodName := "eth_sendRawTransaction"
+	e.logger.Debug(methodName, "length", len(data))
+	out, err := e.backend.SendRawTransaction(data)
+	logError(e.logger, err, methodName)
+	return out, err
 }
 
 // --------------------------------------------------------------------------
