@@ -438,3 +438,29 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		b.chainID,
 	), nil
 }
+
+func (b *Backend) GetTransactionLogs(txHash gethcommon.Hash) ([]*gethcore.Log, error) {
+	retLogs := []*gethcore.Log{}
+
+	res, err := b.GetTxByEthHash(txHash)
+	if err != nil {
+		return retLogs, fmt.Errorf("tx not found: %w", err)
+	} else if res.Failed {
+		return retLogs, fmt.Errorf("eth tx did not succeed: txHash %v", txHash.Hex())
+	}
+
+	resBlockResult, err := b.TendermintBlockResultByNumber(&res.Height)
+	if err != nil {
+		return retLogs, err
+	}
+
+	// parse tx logs from events
+	logs, err := TxLogsFromEvents(
+		resBlockResult.TxsResults[res.TxIndex].Events,
+		int(res.MsgIndex), // #nosec G701
+	)
+	if err != nil {
+		return []*gethcore.Log{}, err
+	}
+	return logs, err
+}

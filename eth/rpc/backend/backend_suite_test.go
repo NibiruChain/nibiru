@@ -100,9 +100,10 @@ func (s *BackendSuite) SetupSuite() {
 	s.Require().NoError(err)
 	transferTxHash := s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
 	{
-		blockNumber, blockHash, txReceipt := WaitForReceipt(s, transferTxHash)
+		blockNumber, blockHash, txReceipt, err := WaitForReceipt(s, transferTxHash)
 		s.NotNil(blockNumber)
 		s.NotNil(blockHash)
+		s.NoError(err)
 		s.Require().NotNil(txReceipt)
 		s.Require().Equal(transferTxHash, txReceipt.TxHash)
 		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
@@ -118,9 +119,10 @@ func (s *BackendSuite) SetupSuite() {
 	deployContractTxHash, contractAddress := s.DeployTestContract(true)
 	testContractAddress = contractAddress
 	{
-		blockNumber, blockHash, txReceipt := WaitForReceipt(s, deployContractTxHash)
+		blockNumber, blockHash, txReceipt, err := WaitForReceipt(s, deployContractTxHash)
 		s.NotNil(blockNumber)
 		s.NotNil(blockHash)
+		s.NoError(err)
 		s.Require().NotNil(txReceipt)
 		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
 		s.SuccessfulTxs["deployContract"] = SuccessfulTx{
@@ -211,25 +213,42 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	return txHash
 }
 
-// WaitForReceipt waits for a transaction to be included in a block, returns block number, block hash and receipt
-func WaitForReceipt(s *BackendSuite, txHash gethcommon.Hash) (*big.Int, *gethcommon.Hash, *backend.TransactionReceipt) {
+// WaitForReceipt polls for the receipt of a given txHash until it's included in
+// a block or until the context deadline is reached. It returns the block number,
+// block hash, and receipt.
+func WaitForReceipt(
+	s *BackendSuite,
+	txHash gethcommon.Hash,
+) (
+	blockNumber *big.Int,
+	blockHash *gethcommon.Hash,
+	receipt *backend.TransactionReceipt,
+	err error,
+) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
-		receipt, err := s.backend.GetTransactionReceipt(txHash)
-		if err != nil {
-			return nil, nil, nil
-		}
-		if receipt != nil {
-			return receipt.BlockNumber, &receipt.BlockHash, receipt
-		}
 		select {
 		case <-ctx.Done():
-			fmt.Println("Timeout reached, transaction not included in a block yet.")
-			return nil, nil, nil
-		default:
-			time.Sleep(1 * time.Second)
+			err = fmt.Errorf("timeout reached while waiting for tx receipt: %s", txHash.Hex())
+			return
+		case <-ticker.C:
+			receipt, err = s.backend.GetTransactionReceipt(txHash)
+			if err != nil {
+				s.T().Logf("WaitForReceipt temporary error: %v", err)
+				err = nil // don't exit loop on transient error
+				continue
+			}
+			if receipt != nil {
+				blockNumber = receipt.BlockNumber
+				blockHash = &receipt.BlockHash
+				return
+			}
+			s.T().Logf("Receipt still not available for tx %s", txHash.Hex())
 		}
 	}
 }
