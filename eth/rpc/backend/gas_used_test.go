@@ -62,11 +62,14 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	)
 }
 
-// TestGasUsedFunTokens verifies that gas used is correctly calculated for precompile "sendToBank" txs.
-// Test creates 3 txs: 2 successful and one failing.
-// Successful txs gas should be refunded and failing tx should consume 100% of the gas limit.
-// It also checks that txs are included in the same block and block gas is greater or equals
-// to the total gas used by txs.
+// TestGasUsedFunTokens verifies that gas used is correctly calculated for
+// precompile "sendToBank" txs.
+//
+// Test creates 3 txs, 2 successful and one failing.
+//   - Successful txs gas should be refunded and failing tx should consume 100%
+//     of the gas limit.
+//   - It also checks that txs are included in the same block and block gas is
+//     greater or equals to the total gas used by txs.
 func (s *BackendSuite) TestGasUsedFunTokens() {
 	// Test is broadcasting txs. Lock to avoid nonce conflicts.
 	testMutex.Lock()

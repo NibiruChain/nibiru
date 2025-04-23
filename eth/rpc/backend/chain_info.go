@@ -110,7 +110,7 @@ func (b *Backend) FeeHistory(
 	// prepare space
 	reward := make([][]*hexutil.Big, blocks)
 	rewardCount := len(rewardPercentiles)
-	for i := 0; i < int(blocks); i++ {
+	for i := range int(blocks) {
 		reward[i] = make([]*hexutil.Big, rewardCount)
 	}
 
@@ -153,7 +153,7 @@ func (b *Backend) FeeHistory(
 		thisBaseFee[index+1] = (*hexutil.Big)(oneFeeHistory.NextBaseFee)
 		thisGasUsedRatio[index] = oneFeeHistory.GasUsedRatio
 		if calculateRewards {
-			for j := 0; j < rewardCount; j++ {
+			for j := range rewardCount {
 				reward[index][j] = (*hexutil.Big)(oneFeeHistory.Reward[j])
 				if reward[index][j] == nil {
 					reward[index][j] = (*hexutil.Big)(big.NewInt(0))

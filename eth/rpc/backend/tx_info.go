@@ -8,7 +8,6 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -283,47 +282,34 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 	return &receipt, nil
 }
 
-// GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.
-func (b *Backend) GetTransactionByBlockHashAndIndex(hash gethcommon.Hash, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error) {
-	b.logger.Debug("eth_getTransactionByBlockHashAndIndex", "hash", hash.Hex(), "index", idx)
-	sc, ok := b.clientCtx.Client.(cmtrpcclient.SignClient)
-	if !ok {
-		return nil, pkgerrors.New("invalid rpc client")
-	}
-
-	block, err := sc.BlockByHash(b.ctx, hash.Bytes())
+// GetTransactionByBlockHashAndIndex returns the Ethereum-formatted transaction
+// in the block with the given hash and specifed index in the block.
+func (b *Backend) GetTransactionByBlockHashAndIndex(
+	blockHash gethcommon.Hash,
+	idx hexutil.Uint,
+) (*rpc.EthTxJsonRPC, error) {
+	resBlock, err := b.TendermintBlockByHash(blockHash)
 	if err != nil {
-		b.logger.Debug("block not found", "hash", hash.Hex(), "error", err.Error())
-		return nil, nil
+		return nil, err
 	}
-
-	if block.Block == nil {
-		b.logger.Debug("block not found", "hash", hash.Hex())
-		return nil, nil
-	}
-
-	return b.GetTransactionByBlockAndIndex(block, idx)
+	return b.GetTransactionByBlockAndIndex(resBlock, idx)
 }
 
-// GetTransactionByBlockNumberAndIndex returns the transaction identified by number and index.
-func (b *Backend) GetTransactionByBlockNumberAndIndex(blockNum rpc.BlockNumber, idx hexutil.Uint) (*rpc.EthTxJsonRPC, error) {
-	b.logger.Debug("eth_getTransactionByBlockNumberAndIndex", "number", blockNum, "index", idx)
-
-	block, err := b.TendermintBlockByNumber(blockNum)
+// GetTransactionByBlockNumberAndIndex returns the Ethereum-formatted transaction
+// in the block at the given block height and index within the block.
+func (b *Backend) GetTransactionByBlockNumberAndIndex(
+	blockNum rpc.BlockNumber,
+	idx hexutil.Uint,
+) (*rpc.EthTxJsonRPC, error) {
+	resBlock, err := b.TendermintBlockByNumber(blockNum)
 	if err != nil {
-		b.logger.Debug("block not found", "height", blockNum.Int64(), "error", err.Error())
-		return nil, nil
+		return nil, err
 	}
-
-	if block.Block == nil {
-		b.logger.Debug("block not found", "height", blockNum.Int64())
-		return nil, nil
-	}
-
-	return b.GetTransactionByBlockAndIndex(block, idx)
+	return b.GetTransactionByBlockAndIndex(resBlock, idx)
 }
 
-// GetTxByEthHash uses `/tx_query` to find transaction by ethereum tx hash
+// GetTxByEthHash uses `/tx_query` to find confirmed (not pending) transaction by
+// ethereum tx hash
 func (b *Backend) GetTxByEthHash(hash gethcommon.Hash) (*eth.TxResult, error) {
 	if b.evmTxIndexer != nil {
 		return b.evmTxIndexer.GetByTxHash(hash)
@@ -359,7 +345,7 @@ func (b *Backend) GetTxByTxIndex(height int64, index uint) (*eth.TxResult, error
 		return txs.GetTxByTxIndex(int(index)) // #nosec G701 -- checked for int overflow already
 	})
 	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "GetTxByTxIndex %d %d", height, index)
+		return nil, sdkioerrors.Wrapf(err, "GetTxByTxIndex(height=%d,index=%d)", height, index)
 	}
 	return txResult, nil
 }
@@ -376,7 +362,7 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 	txResult := resTxs.Txs[0]
 	isValidEnough, reason := rpc.TxIsValidEnough(&txResult.TxResult)
 	if !isValidEnough {
-		return nil, pkgerrors.Errorf("invalid ethereum tx: %s", reason)
+		return nil, fmt.Errorf("invalid ethereum tx: %s", reason)
 	}
 
 	var tx sdk.Tx
@@ -384,7 +370,7 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 		// it's only needed when the tx exceeds block gas limit
 		tx, err = b.clientCtx.TxConfig.TxDecoder()(txResult.Tx)
 		if err != nil {
-			return nil, fmt.Errorf("invalid ethereum tx")
+			return nil, fmt.Errorf("invalid ethereum tx: decoding failed: %w", err)
 		}
 	}
 
@@ -463,4 +449,19 @@ func (b *Backend) GetTransactionLogs(txHash gethcommon.Hash) ([]*gethcore.Log, e
 		return []*gethcore.Log{}, err
 	}
 	return logs, err
+}
+
+// MsgEthereumTxFromSdkMsg attempts to cast an [sdk.Msg] to [*evm.MsgEthereumTx].
+// Returns an error if the type does not match.
+func MsgEthereumTxFromSdkMsg(sdkMsg sdk.Msg) (*evm.MsgEthereumTx, error) {
+	msg, ok := sdkMsg.(*evm.MsgEthereumTx)
+	if !ok {
+		wantTypeUrl := sdk.MsgTypeURL(new(evm.MsgEthereumTx))
+		gotTypeUrl := sdk.MsgTypeURL(sdkMsg)
+		return nil, fmt.Errorf(
+			"invalid ethereum tx: failed to parse type %s and instead received %s",
+			wantTypeUrl, gotTypeUrl,
+		)
+	}
+	return msg, nil
 }
