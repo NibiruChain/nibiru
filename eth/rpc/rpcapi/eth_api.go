@@ -152,7 +152,8 @@ func logError(logger cmtlog.Logger, err error, methodName string) {
 //                           Read Txs
 // --------------------------------------------------------------------------
 
-// GetTransactionByHash returns the transaction identified by hash.
+// GetTransactionByHash returns the Ethereum format transaction identified by
+// Ethereum transaction hash.
 func (e *EthAPI) GetTransactionByHash(hash common.Hash) (*rpc.EthTxJsonRPC, error) {
 	methodName := "eth_getTransactionByHash"
 	e.logger.Debug(methodName, "hash", hash.Hex())
@@ -318,19 +319,21 @@ func (e *EthAPI) GetProof(address common.Address,
 func (e *EthAPI) Call(args evm.JsonTxArgs,
 	blockNrOrHash rpc.BlockNumberOrHash,
 	_ *rpc.StateOverride,
-) (hexutil.Bytes, error) {
+) (bz hexutil.Bytes, err error) {
 	e.logger.Debug("eth_call", "args", args.String(), "block number or hash", blockNrOrHash)
 
 	blockNum, err := e.backend.BlockNumberFromTendermint(blockNrOrHash)
 	if err != nil {
-		return nil, err
+		logError(e.logger, err, "eth_call")
+		return bz, err
 	}
-	data, err := e.backend.DoCall(args, blockNum)
+	msgEthTxResp, err := e.backend.DoCall(args, blockNum)
 	if err != nil {
-		return []byte{}, err
+		logError(e.logger, err, "eth_call")
+		return bz, err
 	}
 
-	return (hexutil.Bytes)(data.Ret), nil
+	return (hexutil.Bytes)(msgEthTxResp.Ret), nil
 }
 
 // --------------------------------------------------------------------------

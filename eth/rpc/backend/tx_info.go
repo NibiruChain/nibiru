@@ -27,7 +27,13 @@ import (
 func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
 	if err != nil {
-		return b.getTransactionByHashPending(txHash)
+		rpcTx, pendingErr := b.getTransactionByHashPending(txHash)
+		if pendingErr != nil {
+			return nil, fmt.Errorf(
+				"no confirmed (pending) or unconfirmed tx found: %s: %w", err, pendingErr,
+			)
+		}
+		return rpcTx, nil
 	}
 
 	block, err := b.TendermintBlockByNumber(rpc.BlockNumber(res.Height))
@@ -41,15 +47,15 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 	}
 
 	// the `res.MsgIndex` is inferred from tx index, should be within the bound.
-	msg, ok := tx.GetMsgs()[res.MsgIndex].(*evm.MsgEthereumTx)
-	if !ok {
-		return nil, pkgerrors.New("invalid ethereum tx")
+	sdkMsg := tx.GetMsgs()[res.MsgIndex]
+	msg, err := MsgEthereumTxFromSdkMsg(sdkMsg)
+	if err != nil {
+		return nil, err
 	}
 
 	blockRes, err := b.TendermintBlockResultByNumber(&block.Block.Height)
 	if err != nil {
-		b.logger.Debug("block result not found", "height", block.Block.Height, "error", err.Error())
-		return nil, nil
+		return nil, err
 	}
 
 	if res.EthTxIndex == -1 {
@@ -85,12 +91,11 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 
 // getTransactionByHashPending find pending tx from mempool
 func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
-	hexTx := txHash.Hex()
+	txHashHex := txHash.Hex()
 	// try to find tx in mempool
 	txs, err := b.PendingTransactions()
 	if err != nil {
-		b.logger.Debug("tx not found", "hash", hexTx, "error", err.Error())
-		return nil, nil
+		return nil, fmt.Errorf("error retrieving pending transactions from the mempool: %w", err)
 	}
 
 	for _, tx := range txs {
@@ -100,9 +105,9 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 			continue
 		}
 
-		if msg.Hash == hexTx {
+		if msg.Hash == txHashHex {
 			// use zero block values since it's not included in a block yet
-			rpctx := rpc.NewRPCTxFromMsgEthTx(
+			rpcTx := rpc.NewRPCTxFromMsgEthTx(
 				msg,
 				gethcommon.Hash{},
 				uint64(0),
@@ -110,12 +115,11 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 				nil,
 				b.chainID,
 			)
-			return rpctx, nil
+			return rpcTx, nil
 		}
 	}
 
-	b.logger.Debug("tx not found", "hash", hexTx)
-	return nil, nil
+	return nil, fmt.Errorf("no pending tx found with hash %s", txHashHex)
 }
 
 // TransactionReceipt represents the results of a transaction. TransactionReceipt
@@ -132,7 +136,8 @@ type TransactionReceipt struct {
 	EffectiveGasPrice *hexutil.Big
 }
 
-// MarshalJSON is necessary because without it non gethcore.Receipt fields are omitted
+// MarshalJSON for [TransactionReceipt] ensures that non-receipt fields from the
+// embedded [gethcore.Receipt] fields are included during JSON marshaling.
 func (r *TransactionReceipt) MarshalJSON() ([]byte, error) {
 	// Marshal / unmarshal gethcore.Receipt to produce map[string]interface{}
 	receiptJson, err := json.Marshal(r.Receipt)
