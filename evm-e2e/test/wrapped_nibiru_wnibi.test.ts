@@ -7,13 +7,12 @@ import { deployContractWNIBI } from "./utils"
 test(
   "WNIBI.sol deposits via ether transfer",
   async () => {
-    console.debug("deployContractWNIBI")
     const { contract } = await deployContractWNIBI()
     const decimals = await contract.decimals()
     expect(decimals).toEqual(BigInt(18))
     const contractAddr = await contract.getAddress()
 
-    console.debug("Check balances before any actions")
+    // Check balances before any actions
     const walletBalWei = await provider.getBalance(account.address)
     expect(walletBalWei).toBeGreaterThan(parseUnits("999", 18))
     {
@@ -21,7 +20,7 @@ test(
       expect(balanceOf).toEqual(BigInt(0))
     }
 
-    console.debug("Deposit via transfer of wei")
+    // Deposit via transfer of wei
     {
       const amountWei = parseUnits("420", 12)
       const txResp = await account.sendTransaction({
@@ -39,7 +38,7 @@ test(
       expect(walletBalWNIBI).toEqual(amountWei)
     }
 
-    console.debug("Withdraw and check balances after")
+    // Withdraw
     {
       const amountWei = parseUnits("351", 12)
       const txResp = await contract.withdraw(amountWei)

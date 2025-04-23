@@ -112,23 +112,26 @@ func (s *BackendSuite) TestLogs() {
 	)
 
 	// Wait for all txs to be included in a block
-	blockNumFirstTx, _, _, err := WaitForReceipt(s, txHashFirst)
-	s.NoError(err)
-	blockNumLastTx, _, _, err := WaitForReceipt(s, txHashLast)
-	s.NoError(err)
+	blockNumFirstTx, _, _ := WaitForReceipt(s, txHashFirst)
+	blockNumLastTx, _, _ := WaitForReceipt(s, txHashLast)
 	s.Require().NotNil(blockNumFirstTx)
 	s.Require().NotNil(blockNumLastTx)
 
 	// Check tx logs for each tx
-	testCases := []TxLogsTestCase{
+	type logsCheck struct {
+		txInfo      string
+		logs        []*gethcore.Log
+		expectEthTx bool
+	}
+	checks := []logsCheck{
 		{
-			TxInfo:      "TX1 - simple eth transfer, should have empty logs",
-			Logs:        []*gethcore.Log{},
-			ExpectEthTx: true,
+			txInfo:      "TX1 - simple eth transfer, should have empty logs",
+			logs:        nil,
+			expectEthTx: true,
 		},
 		{
-			TxInfo: "TX2 - deploying erc20 contract, should have logs",
-			Logs: []*gethcore.Log{
+			txInfo: "TX2 - deploying erc20 contract, should have logs",
+			logs: []*gethcore.Log{
 				// minting initial balance to the account
 				{
 					Address: erc20ContractAddr,
@@ -139,16 +142,16 @@ func (s *BackendSuite) TestLogs() {
 					},
 				},
 			},
-			ExpectEthTx: true,
+			expectEthTx: true,
 		},
 		{
-			TxInfo:      "TX3 - create FunToken from ERC20, no eth tx, no logs",
-			Logs:        []*gethcore.Log{},
-			ExpectEthTx: false,
+			txInfo:      "TX3 - create FunToken from ERC20, no eth tx, no logs",
+			logs:        nil,
+			expectEthTx: false,
 		},
 		{
-			TxInfo: "TX4 - create FunToken from unibi coin, no eth tx, logs for contract deployment",
-			Logs: []*gethcore.Log{
+			txInfo: "TX4 - create FunToken from unibi coin, no eth tx, logs for contract deployment",
+			logs: []*gethcore.Log{
 				// contract ownership to evm module
 				{
 					Address: erc20FromCoinAddr,
@@ -159,11 +162,11 @@ func (s *BackendSuite) TestLogs() {
 					},
 				},
 			},
-			ExpectEthTx: false,
+			expectEthTx: false,
 		},
 		{
-			TxInfo: "TX5 - Convert coin to EVM, no eth tx, logs for minting tokens to the account",
-			Logs: []*gethcore.Log{
+			txInfo: "TX5 - Convert coin to EVM, no eth tx, logs for minting tokens to the account",
+			logs: []*gethcore.Log{
 				// minting to the account
 				{
 					Address: erc20FromCoinAddr,
@@ -174,11 +177,11 @@ func (s *BackendSuite) TestLogs() {
 					},
 				},
 			},
-			ExpectEthTx: false,
+			expectEthTx: false,
 		},
 		{
-			TxInfo: "TX6 - Send erc20 token to coin using precompile, eth tx, logs for transferring tokens to evm module",
-			Logs: []*gethcore.Log{
+			txInfo: "TX6 - Send erc20 token to coin using precompile, eth tx, logs for transferring tokens to evm module",
+			logs: []*gethcore.Log{
 				// transfer from account to evm module
 				{
 					Address: erc20ContractAddr,
@@ -189,7 +192,7 @@ func (s *BackendSuite) TestLogs() {
 					},
 				},
 			},
-			ExpectEthTx: true,
+			expectEthTx: true,
 		},
 	}
 
@@ -200,34 +203,24 @@ func (s *BackendSuite) TestLogs() {
 	s.Require().NotNil(blockRes)
 	txIndex := 0
 	ethTxIndex := 0
-	for idx, tc := range testCases {
-		s.Run(tc.TxInfo, func() {
-			if txIndex+1 > len(blockRes.TxsResults) {
-				blockNumber++
-				if blockNumber > blockNumLastTx.Int64() {
-					s.Fail("TX %d not found in block results", idx)
-				}
-				txIndex = 0
-				ethTxIndex = 0
-				blockRes, err = s.backend.TendermintBlockResultByNumber(&blockNumber)
-				s.Require().NoError(err)
-				s.Require().NotNil(blockRes)
+	for idx, check := range checks {
+		if txIndex+1 > len(blockRes.TxsResults) {
+			blockNumber++
+			if blockNumber > blockNumLastTx.Int64() {
+				s.Fail("TX %d not found in block results", idx)
 			}
-			s.assertTxLogsAndTxIndex(
-				blockRes, txIndex, ethTxIndex, tc,
-			)
-			txIndex++
-			if tc.ExpectEthTx {
-				ethTxIndex++
-			}
-		})
+			txIndex = 0
+			ethTxIndex = 0
+			blockRes, err = s.backend.TendermintBlockResultByNumber(&blockNumber)
+			s.Require().NoError(err)
+			s.Require().NotNil(blockRes)
+		}
+		s.assertTxLogsAndTxIndex(blockRes, txIndex, ethTxIndex, check.logs, check.expectEthTx, check.txInfo)
+		txIndex++
+		if check.expectEthTx {
+			ethTxIndex++
+		}
 	}
-}
-
-type TxLogsTestCase struct {
-	TxInfo      string // Name of the test case
-	Logs        []*gethcore.Log
-	ExpectEthTx bool
 }
 
 // assertTxLogsAndTxIndex gets tx results from the block and checks tx logs and tx index.
@@ -235,10 +228,12 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 	blockRes *tmrpctypes.ResultBlockResults,
 	txIndex int,
 	ethTxIndex int,
-	tc TxLogsTestCase,
+	expectedTxLogs []*gethcore.Log,
+	expectedEthTx bool,
+	txInfo string,
 ) {
 	txResults := blockRes.TxsResults[txIndex]
-	s.Require().Equal(uint32(0x0), txResults.Code, "tx failed, %s. RawLog: %s", tc.TxInfo, txResults.Log)
+	s.Require().Equal(uint32(0x0), txResults.Code, "tx failed, %s. RawLog: %s", txInfo, txResults.Log)
 
 	events := blockRes.TxsResults[txIndex].Events
 
@@ -249,29 +244,29 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			s.Require().NoError(err)
 
 			logs := evm.LogsToEthereum(eventTxLog.Logs)
-			if len(tc.Logs) > 0 {
-				s.Require().GreaterOrEqual(len(logs), len(tc.Logs))
-				s.assertTxLogsMatch(tc.Logs, logs, tc.TxInfo)
+			if len(expectedTxLogs) > 0 {
+				s.Require().GreaterOrEqual(len(logs), len(expectedTxLogs))
+				s.assertTxLogsMatch(expectedTxLogs, logs, txInfo)
 			} else {
-				s.Require().NotNil(logs)
+				s.Require().Nil(logs)
 			}
 		}
 		if event.Type == evm.TypeUrlEventEthereumTx {
 			foundEthTx = true
-			if !tc.ExpectEthTx {
-				s.Fail("unexpected EventEthereumTx event for non-eth tx, %s", tc.TxInfo)
+			if !expectedEthTx {
+				s.Fail("unexpected EventEthereumTx event for non-eth tx, %s", txInfo)
 			}
 			ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
 			s.Require().NoError(err)
 			s.Require().Equal(
 				fmt.Sprintf("%d", ethTxIndex),
 				ethereumTx.Index,
-				"tx index mismatch, %s", tc.TxInfo,
+				"tx index mismatch, %s", txInfo,
 			)
 		}
 	}
-	if tc.ExpectEthTx && !foundEthTx {
-		s.Fail("expected EventEthereumTx event not found, %s", tc.TxInfo)
+	if expectedEthTx && !foundEthTx {
+		s.Fail("expected EventEthereumTx event not found, %s", txInfo)
 	}
 }
 
