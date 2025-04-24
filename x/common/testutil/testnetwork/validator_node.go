@@ -16,7 +16,6 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cometbft/cometbft/node"
@@ -88,7 +87,7 @@ type Validator struct {
 
 	JSONRPCClient       *ethclient.Client
 	EthRpcQueryClient   *ethrpc.QueryClient
-	EthRpcBackend       *backend.Backend
+	EthRpcBackend       *rpcapi.Backend
 	EthTxIndexer        eth.EVMTxIndexer
 	EthTxIndexerService *appserver.EVMTxIndexerService
 

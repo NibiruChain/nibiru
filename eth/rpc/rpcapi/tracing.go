@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package backend
+package rpcapi
 
 import (
 	"encoding/json"
@@ -171,11 +171,7 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	}
 
 	// minus one to get the context at the beginning of the block
-	contextHeight := height - 1
-	if contextHeight < 1 {
-		// 0 is a special value for `ContextWithHeight`.
-		contextHeight = 1
-	}
+	contextHeight := max(height-1, 1) // 0 is a special value for `ContextWithHeight`.
 	ctxWithHeight := rpc.NewContextWithHeight(int64(contextHeight))
 
 	nc, ok := b.clientCtx.Client.(cmtrpcclient.NetworkClient)

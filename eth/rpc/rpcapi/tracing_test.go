@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	"encoding/json"
