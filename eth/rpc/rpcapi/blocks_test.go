@@ -33,7 +33,13 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
-	blockMap, err := s.backend.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, true)
+	fullTx := true
+	var blockMap map[string]any
+	err := s.node.EvmRpcClient.Client().Call(
+		&blockMap, "eth_getBlockByHash",
+		*s.SuccessfulTxTransfer().BlockHash,
+		fullTx,
+	)
 	s.Require().NoError(err)
 	AssertBlockContents(s, blockMap)
 }

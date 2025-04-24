@@ -52,10 +52,10 @@ func (s *BackendSuite) TestTraceTransaction() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
+			traceConfig := traceConfigCallTracer()
 			res, err := s.backend.TraceTransaction(
 				tc.txHash,
-				traceConfigCallTracer(),
-				// traceConfigDefaultTracer(),
+				traceConfig,
 			)
 			if tc.wantErr != "" {
 				s.ErrorContains(err, tc.wantErr)
@@ -64,6 +64,17 @@ func (s *BackendSuite) TestTraceTransaction() {
 			s.Require().NoErrorf(err, "traceResult: %s", res)
 			s.Require().NotNil(res)
 			AssertTraceCall(s, res)
+
+			var res2 json.RawMessage
+			err = s.node.EvmRpcClient.Client().Call(
+				&res2,
+				"debug_traceTransaction",
+				tc.txHash,
+				traceConfig,
+			)
+			s.NoError(err)
+			s.NotEmpty(res2)
+			AssertTraceCall(s, res2)
 		})
 	}
 }
@@ -117,24 +128,62 @@ func (s *BackendSuite) TestTraceBlock() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			res, err := s.backend.TraceBlock(
-				tc.blockNumber,
-				tc.traceConfig,
-				tc.tmBlock,
-			)
-			s.Require().NoError(err)
-			s.Require().Equal(tc.txCount, len(res))
-			prettyBz, err := json.MarshalIndent(res, "", "  ")
-			s.Require().NoError(err)
-			s.T().Logf("TraceBlock result: %s", prettyBz)
-			if tc.txCount > 0 {
-				typedResult, ok := res[0].Result.(map[string]any)
-				if !ok {
-					s.T().Errorf("failed to parse block result as map[string]any. Got %#v", res[0].Result)
-				}
-				traceResult, err := json.Marshal(typedResult)
+			resRes := [][]*evm.TxTraceResult{}
+			{
+				txTraceResults, err := s.backend.TraceBlock(
+					tc.blockNumber,
+					tc.traceConfig,
+					tc.tmBlock,
+				)
 				s.Require().NoError(err)
-				AssertTraceCall(s, traceResult)
+				resRes = append(resRes, txTraceResults)
+			}
+			{
+				var resJson json.RawMessage
+				err = s.node.EvmRpcClient.Client().Call(
+					&resJson,
+					"debug_traceBlockByNumber",
+					rpc.BlockNumber(tc.tmBlock.Block.Height),
+					tc.traceConfig,
+				)
+				s.NoError(err)
+
+				var txTraceResults []*evm.TxTraceResult
+				err = json.Unmarshal(resJson, &txTraceResults)
+				s.Require().NoErrorf(err, "resp: %s", resJson)
+				resRes = append(resRes, txTraceResults)
+			}
+			{
+				var resJson json.RawMessage
+				err = s.node.EvmRpcClient.Client().Call(
+					&resJson,
+					"debug_traceBlockByHash",
+					gethcommon.BytesToHash(
+						tc.tmBlock.Block.Hash().Bytes(),
+					),
+					tc.traceConfig,
+				)
+				s.NoError(err)
+
+				var txTraceResults []*evm.TxTraceResult
+				err = json.Unmarshal(resJson, &txTraceResults)
+				s.Require().NoErrorf(err, "resp: %s", resJson)
+				resRes = append(resRes, txTraceResults)
+			}
+			for _, txTraceResults := range resRes {
+				s.Require().Equal(tc.txCount, len(txTraceResults))
+				prettyBz, err := json.MarshalIndent(txTraceResults, "", "  ")
+				s.Require().NoError(err)
+				s.T().Logf("TraceBlock result: %s", prettyBz)
+				if tc.txCount > 0 {
+					typedResult, ok := txTraceResults[0].Result.(map[string]any)
+					if !ok {
+						s.T().Errorf("failed to parse block result as map[string]any. Got %#v", txTraceResults[0].Result)
+					}
+					traceResult, err := json.Marshal(typedResult)
+					s.Require().NoError(err)
+					AssertTraceCall(s, traceResult)
+				}
 			}
 		})
 	}
@@ -158,9 +207,17 @@ func (s *BackendSuite) TestTraceCall() {
 	s.Require().NoError(err)
 
 	traceConfig := traceConfigDefaultTracer()
-	res, err := s.backend.TraceCall(
+	var res json.RawMessage
+	blockNumber := rpc.NewBlockNumber(
+		new(big.Int).SetUint64(uint64(block)),
+	)
+	err = s.node.EvmRpcClient.Client().Call(
+		&res,
+		"debug_traceCall",
 		txArgs,
-		rpc.BlockNumber(block),
+		rpc.BlockNumberOrHash{
+			BlockNumber: &blockNumber,
+		},
 		traceConfig,
 	)
 	s.Require().NoError(err)
