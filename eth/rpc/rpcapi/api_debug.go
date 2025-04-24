@@ -1,5 +1,6 @@
+package rpcapi
+
 // Copyright (c) 2023-2024 Nibi, Inc.
-package debugapi
 
 import (
 	"bytes"
@@ -9,15 +10,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
+	"path/filepath"
 	"runtime" // #nosec G702
 	"runtime/debug"
 	"runtime/pprof"
+	"runtime/trace"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/cosmos/cosmos-sdk/server"
 
@@ -29,8 +33,31 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
+
+// DebugAPI is the collection of tracing APIs exposed over the private debugging
+// endpoint.
+type DebugAPI struct {
+	ctx     *server.Context
+	logger  log.Logger
+	backend *Backend
+	handler *HandlerT
+}
+
+// NewImplDebugAPI creates a new API definition for the tracing methods of the
+// Ethereum service.
+func NewImplDebugAPI(
+	ctx *server.Context,
+	backend *Backend,
+) *DebugAPI {
+	return &DebugAPI{
+		ctx:     ctx,
+		logger:  ctx.Logger.With("module", "debug"),
+		backend: backend,
+		handler: new(HandlerT),
+	}
+}
 
 // HandlerT keeps track of the cpu profiler and trace execution
 type HandlerT struct {
@@ -39,29 +66,6 @@ type HandlerT struct {
 	mu            sync.Mutex
 	traceFilename string
 	traceFile     io.WriteCloser
-}
-
-// DebugAPI is the collection of tracing APIs exposed over the private debugging
-// endpoint.
-type DebugAPI struct {
-	ctx     *server.Context
-	logger  log.Logger
-	backend *backend.Backend
-	handler *HandlerT
-}
-
-// NewImplDebugAPI creates a new API definition for the tracing methods of the
-// Ethereum service.
-func NewImplDebugAPI(
-	ctx *server.Context,
-	backend *backend.Backend,
-) *DebugAPI {
-	return &DebugAPI{
-		ctx:     ctx,
-		logger:  ctx.Logger.With("module", "debug"),
-		backend: backend,
-		handler: new(HandlerT),
-	}
 }
 
 // TraceTransaction returns the structured logs created during the execution of EVM
@@ -470,4 +474,108 @@ func (a *DebugAPI) TraceChain(
 	fnName := "debug_traceChain"
 	a.logger.Debug(fnName)
 	return nil, ErrNotImplemented(fnName)
+}
+
+// StartGoTrace turns on tracing, writing to the given file.
+func (a *DebugAPI) StartGoTrace(file string) error {
+	a.logger.Debug("debug_startGoTrace", "file", file)
+	a.handler.mu.Lock()
+	defer a.handler.mu.Unlock()
+
+	if a.handler.traceFile != nil {
+		a.logger.Debug("trace already in progress")
+		return errors.New("trace already in progress")
+	}
+	fp, err := ExpandHome(file)
+	if err != nil {
+		a.logger.Debug("failed to get filepath for the CPU profile file", "error", err.Error())
+		return err
+	}
+	f, err := os.Create(fp)
+	if err != nil {
+		a.logger.Debug("failed to create go trace file", "error", err.Error())
+		return err
+	}
+	if err := trace.Start(f); err != nil {
+		a.logger.Debug("Go tracing already started", "error", err.Error())
+		if err := f.Close(); err != nil {
+			a.logger.Debug("failed to close trace file")
+			return pkgerrors.Wrap(err, "failed to close trace file")
+		}
+
+		return err
+	}
+	a.handler.traceFile = f
+	a.handler.traceFilename = file
+	a.logger.Info("Go tracing started", "dump", a.handler.traceFilename)
+	return nil
+}
+
+// StopGoTrace stops an ongoing trace.
+func (a *DebugAPI) StopGoTrace() error {
+	a.logger.Debug("debug_stopGoTrace")
+	a.handler.mu.Lock()
+	defer a.handler.mu.Unlock()
+
+	trace.Stop()
+	if a.handler.traceFile == nil {
+		a.logger.Debug("trace not in progress")
+		return errors.New("trace not in progress")
+	}
+	a.logger.Info("Done writing Go trace", "dump", a.handler.traceFilename)
+	if err := a.handler.traceFile.Close(); err != nil {
+		a.logger.Debug("failed to close trace file")
+		return pkgerrors.Wrap(err, "failed to close trace file")
+	}
+	a.handler.traceFile = nil
+	a.handler.traceFilename = ""
+	return nil
+}
+
+// isCPUProfileConfigurationActivated: Checks if the "cpu-profile" flag was set
+func isCPUProfileConfigurationActivated(ctx *server.Context) bool {
+	// TODO: use same constants as server/start.go
+	// constant declared in start.go cannot be imported (cyclical dependency)
+	const flagCPUProfile = "cpu-profile"
+	if cpuProfile := ctx.Viper.GetString(flagCPUProfile); cpuProfile != "" {
+		return true
+	}
+	return false
+}
+
+// ExpandHome expands home directory in file paths.
+// ~someuser/tmp will not be expanded.
+func ExpandHome(p string) (string, error) {
+	if strings.HasPrefix(p, "~/") || strings.HasPrefix(p, "~\\") {
+		usr, err := user.Current()
+		if err != nil {
+			return p, err
+		}
+		home := usr.HomeDir
+		p = home + p[1:]
+	}
+	return filepath.Clean(p), nil
+}
+
+// writeProfile writes the data to a file
+func writeProfile(name, file string, log log.Logger) error {
+	p := pprof.Lookup(name)
+	log.Info("Writing profile records", "count", p.Count(), "type", name, "dump", file)
+	fp, err := ExpandHome(file)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(fp)
+	if err != nil {
+		return err
+	}
+
+	if err := p.WriteTo(f, 0); err != nil {
+		if err := f.Close(); err != nil {
+			return err
+		}
+		return err
+	}
+
+	return f.Close()
 }

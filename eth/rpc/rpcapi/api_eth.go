@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -92,11 +90,11 @@ var _ IEthAPI = (*EthAPI)(nil)
 type EthAPI struct {
 	ctx     context.Context
 	logger  cmtlog.Logger
-	backend *backend.Backend
+	backend *Backend
 }
 
 // NewImplEthAPI creates an instance of the public ETH Web3 API.
-func NewImplEthAPI(logger cmtlog.Logger, backend *backend.Backend) *EthAPI {
+func NewImplEthAPI(logger cmtlog.Logger, backend *Backend) *EthAPI {
 	api := &EthAPI{
 		ctx:     context.Background(),
 		logger:  logger.With("client", "json-rpc"),
@@ -192,7 +190,7 @@ func (e *EthAPI) GetTransactionCount(
 // opcode), will still produce a receipt
 func (e *EthAPI) GetTransactionReceipt(
 	hash common.Hash,
-) (*backend.TransactionReceipt, error) {
+) (*TransactionReceipt, error) {
 	methodName := "eth_getTransactionReceipt"
 	e.logger.Debug(methodName, "hash", hash.Hex())
 	out, err := e.backend.GetTransactionReceipt(hash)

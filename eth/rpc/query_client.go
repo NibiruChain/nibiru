@@ -2,9 +2,11 @@
 package rpc
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -64,7 +66,15 @@ func (QueryClient) GetProof(
 
 	abciRes, err := clientCtx.QueryABCI(abciReq)
 	if err != nil {
-		return nil, nil, err
+		reqJsonMap := make(map[string]string)
+		reqJsonMap["path"] = abciReq.Path
+		reqJsonMap["storeKey"] = storeKey
+		reqJsonMap["key"] = gethcommon.Bytes2Hex(abciReq.Data)
+		reqJsonMap["height"] = fmt.Sprintf("%d", abciReq.Height)
+		reqJsonMap["prove"] = fmt.Sprintf("%v", abciReq.Prove)
+		reqJson, _ := json.Marshal(reqJsonMap)
+		return nil, nil, fmt.Errorf(
+			"error in ABCI query for merkle proof: request %s: %w", reqJson, err)
 	}
 
 	return abciRes.Value, abciRes.ProofOps, nil

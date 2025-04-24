@@ -8,7 +8,6 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	rpcbackend "github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 
 	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -30,7 +29,7 @@ type BloomIV struct {
 // Filter can be used to retrieve and filter logs.
 type Filter struct {
 	logger   log.Logger
-	backend  rpcbackend.Backend
+	backend  Backend
 	criteria filters.FilterCriteria
 
 	bloomFilters [][]BloomIV // Filter the system is matching for
@@ -38,14 +37,14 @@ type Filter struct {
 
 // NewBlockFilter creates a new filter which directly inspects the contents of
 // a block to figure out whether it is interesting or not.
-func NewBlockFilter(logger log.Logger, backend rpcbackend.Backend, criteria filters.FilterCriteria) *Filter {
+func NewBlockFilter(logger log.Logger, backend Backend, criteria filters.FilterCriteria) *Filter {
 	// Create a generic filter and convert it into a block filter
 	return newFilter(logger, backend, criteria, nil)
 }
 
 // NewRangeFilter creates a new filter which uses a bloom filter on blocks to
 // figure out whether a particular block is interesting or not.
-func NewRangeFilter(logger log.Logger, backend rpcbackend.Backend, begin, end int64, addresses []common.Address, topics [][]common.Hash) *Filter {
+func NewRangeFilter(logger log.Logger, backend Backend, begin, end int64, addresses []common.Address, topics [][]common.Hash) *Filter {
 	// Flatten the address and topic filter clauses into a single bloombits filter
 	// system. Since the bloombits are not positional, nil topics are permitted,
 	// which get flattened into a nil byte slice.
@@ -80,7 +79,7 @@ func NewRangeFilter(logger log.Logger, backend rpcbackend.Backend, begin, end in
 // newFilter returns a new Filter
 func newFilter(
 	logger log.Logger,
-	backend rpcbackend.Backend,
+	backend Backend,
 	criteria filters.FilterCriteria,
 	bloomFilters [][]BloomIV,
 ) *Filter {
@@ -185,7 +184,7 @@ func (f *Filter) blockLogs(blockRes *tmrpctypes.ResultBlockResults, bloom gethco
 		return []*gethcore.Log{}, nil
 	}
 
-	logsList, err := rpcbackend.GetLogsFromBlockResults(blockRes)
+	logsList, err := GetLogsFromBlockResults(blockRes)
 	if err != nil {
 		return []*gethcore.Log{}, pkgerrors.Wrapf(err, "failed to fetch logs block number %d", blockRes.Height)
 	}
