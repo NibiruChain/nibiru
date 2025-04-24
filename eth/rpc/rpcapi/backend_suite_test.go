@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
@@ -53,7 +53,7 @@ type BackendSuite struct {
 	fundedAccPrivateKey *ecdsa.PrivateKey
 	fundedAccEthAddr    gethcommon.Address
 	fundedAccNibiAddr   sdk.AccAddress
-	backend             *backend.Backend
+	backend             *rpcapi.Backend
 	ethChainID          *big.Int
 	SuccessfulTxs       map[string]SuccessfulTx
 }
@@ -152,7 +152,7 @@ func (s *BackendSuite) SuccessfulTxDeployContract() SuccessfulTx {
 type SuccessfulTx struct {
 	BlockNumber    *big.Int
 	BlockHash      *gethcommon.Hash
-	Receipt        *backend.TransactionReceipt
+	Receipt        *rpcapi.TransactionReceipt
 	BlockNumberRpc *rpc.BlockNumber
 }
 
@@ -222,7 +222,7 @@ func WaitForReceipt(
 ) (
 	blockNumber *big.Int,
 	blockHash *gethcommon.Hash,
-	receipt *backend.TransactionReceipt,
+	receipt *rpcapi.TransactionReceipt,
 	err error,
 ) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

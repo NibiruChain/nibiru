@@ -1,5 +1,5 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package backend
+package rpcapi
 
 import (
 	"fmt"
@@ -127,7 +127,7 @@ func (b *Backend) GetProof(
 		CodeHash:     gethcommon.HexToHash(res.CodeHash),
 		Nonce:        hexutil.Uint64(res.Nonce),
 		// NOTE: The StorageHash is blank. Consider whether this is useful in the
-		// future. Currently, all storage is handles by persistent and transient
+		// future. Currently, all storage is handled by persistent and transient
 		// `sdk.KVStore` objects.
 		StorageHash:  gethcommon.Hash{},
 		StorageProof: storageProofs,

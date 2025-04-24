@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"

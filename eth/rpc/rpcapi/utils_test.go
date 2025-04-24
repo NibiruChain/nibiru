@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 )
 
 func (s *BackendSuite) TestGetLogsFromBlockResults() {
@@ -18,7 +18,7 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 	s.Require().NoError(err)
 	s.Require().NotNil(blockResults)
 
-	logs, err := backend.GetLogsFromBlockResults(blockResults)
+	logs, err := rpcapi.GetLogsFromBlockResults(blockResults)
 	s.Require().NoError(err)
 	s.Require().NotNil(logs)
 
@@ -59,7 +59,7 @@ func (s *BackendSuite) TestGetHexProofs() {
 	}
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("Case %s", tc.name), func() {
-			s.Require().Equal(tc.exp, backend.GetHexProofs(tc.proof))
+			s.Require().Equal(tc.exp, rpcapi.GetHexProofs(tc.proof))
 		})
 	}
 }

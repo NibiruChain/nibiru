@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -156,7 +155,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Set up Ethereum JSON-RPC client objects")
 		val.EthRpcQueryClient = ethrpc.NewQueryClient(val.ClientCtx)
-		val.EthRpcBackend = backend.NewBackend(
+		val.EthRpcBackend = rpcapi.NewBackend(
 			val.Ctx,
 			val.Ctx.Logger,
 			val.ClientCtx,

@@ -10,20 +10,17 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	rpcbackend "github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-
-	"github.com/cometbft/cometbft/libs/log"
-
+	cmtlog "github.com/cometbft/cometbft/libs/log"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/filters"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -31,9 +28,9 @@ import (
 // external clients to retrieve various information related to the Ethereum
 // protocol such as blocks, transactions and logs.
 type FiltersAPI struct {
-	logger    log.Logger
+	logger    cmtlog.Logger
 	clientCtx client.Context
-	backend   *rpcbackend.Backend
+	backend   *Backend
 	events    *EventSubscriber
 	filtersMu sync.Mutex
 	filters   map[gethrpc.ID]*filter
@@ -47,7 +44,7 @@ func deadlineForInactivity() time.Duration { return 5 * time.Minute }
 type filter struct {
 	typ      filters.Type
 	deadline *time.Timer // filter is inactive when deadline triggers
-	hashes   []common.Hash
+	hashes   []gethcommon.Hash
 	crit     filters.FilterCriteria
 	logs     []*gethcore.Log
 	s        *Subscription // associated subscription in event system
@@ -55,10 +52,10 @@ type filter struct {
 
 // NewImplFiltersAPI returns a new FiltersAPI instance.
 func NewImplFiltersAPI(
-	logger log.Logger,
+	logger cmtlog.Logger,
 	clientCtx client.Context,
 	tmWSClient *rpcclient.WSClient,
-	backend *rpcbackend.Backend,
+	backend *Backend,
 ) *FiltersAPI {
 	logger = logger.With("api", "filter")
 	api := &FiltersAPI{
@@ -121,7 +118,7 @@ func (api *FiltersAPI) NewPendingTransactionFilter() gethrpc.ID {
 	api.filters[pendingTxSub.ID()] = &filter{
 		typ:      filters.PendingTransactionsSubscription,
 		deadline: time.NewTimer(deadlineForInactivity()),
-		hashes:   make([]common.Hash, 0),
+		hashes:   make([]gethcommon.Hash, 0),
 		s:        pendingTxSub,
 	}
 
@@ -253,7 +250,7 @@ func (api *FiltersAPI) NewBlockFilter() gethrpc.ID {
 		return gethrpc.ID(fmt.Sprintf("error creating block filter: %s", err.Error()))
 	}
 
-	api.filters[headerSub.ID()] = &filter{typ: filters.BlocksSubscription, deadline: time.NewTimer(deadlineForInactivity()), hashes: []common.Hash{}, s: headerSub}
+	api.filters[headerSub.ID()] = &filter{typ: filters.BlocksSubscription, deadline: time.NewTimer(deadlineForInactivity()), hashes: []gethcommon.Hash{}, s: headerSub}
 
 	go func(headersCh <-chan coretypes.ResultEvent, errCh <-chan error) {
 		defer cancelSubs()
@@ -276,7 +273,7 @@ func (api *FiltersAPI) NewBlockFilter() gethrpc.ID {
 
 				api.filtersMu.Lock()
 				if f, found := api.filters[headerSub.ID()]; found {
-					f.hashes = append(f.hashes, common.BytesToHash(data.Header.Hash()))
+					f.hashes = append(f.hashes, gethcommon.BytesToHash(data.Header.Hash()))
 				}
 				api.filtersMu.Unlock()
 			case <-errCh:
@@ -456,7 +453,7 @@ func (api *FiltersAPI) NewFilter(criteria filters.FilterCriteria) (gethrpc.ID, e
 		typ:      filters.LogsSubscription,
 		crit:     criteria,
 		deadline: time.NewTimer(deadlineForInactivity()),
-		hashes:   []common.Hash{},
+		hashes:   []gethcommon.Hash{},
 		s:        logsSub,
 	}
 

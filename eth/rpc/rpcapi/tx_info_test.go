@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -185,7 +185,7 @@ func AssertTxResults(s *BackendSuite, tx *rpc.EthTxJsonRPC, expectedTxHash gethc
 
 func (s *BackendSuite) TestReceiptMarshalJson() {
 	toAddr := evmtest.NewEthPrivAcc().EthAddr
-	tr := backend.TransactionReceipt{
+	tr := rpcapi.TransactionReceipt{
 		Receipt: gethcore.Receipt{
 			Type:              0,
 			PostState:         []byte{},
@@ -213,7 +213,7 @@ func (s *BackendSuite) TestReceiptMarshalJson() {
 	err = json.Unmarshal(jsonBz, gethReceipt)
 	s.Require().NoError(err)
 
-	receipt := new(backend.TransactionReceipt)
+	receipt := new(rpcapi.TransactionReceipt)
 	err = json.Unmarshal(jsonBz, receipt)
 	s.Require().NoError(err)
 }

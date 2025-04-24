@@ -1,4 +1,4 @@
-package backend_test
+package rpcapi_test
 
 import (
 	gethcommon "github.com/ethereum/go-ethereum/common"

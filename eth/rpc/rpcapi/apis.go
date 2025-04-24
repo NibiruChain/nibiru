@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi/debugapi"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
@@ -54,7 +52,7 @@ func init() {
 			allowUnprotectedTxs bool,
 			indexer eth.EVMTxIndexer,
 		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
+			evmBackend := NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
 			return []rpc.API{
 				{
 					Namespace: NamespaceEth,
@@ -106,12 +104,12 @@ func init() {
 			allowUnprotectedTxs bool,
 			indexer eth.EVMTxIndexer,
 		) []rpc.API {
-			evmBackend := backend.NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
+			evmBackend := NewBackend(ctx, ctx.Logger, clientCtx, allowUnprotectedTxs, indexer)
 			return []rpc.API{
 				{
 					Namespace: NamespaceDebug,
 					Version:   apiVersion,
-					Service:   debugapi.NewImplDebugAPI(ctx, evmBackend),
+					Service:   NewImplDebugAPI(ctx, evmBackend),
 					Public:    true,
 				},
 			}
