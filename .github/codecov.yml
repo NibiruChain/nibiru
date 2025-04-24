@@ -4,6 +4,7 @@ ignore:
   - "**/mocks/.*"
   - "**/kubernetes_mock/.*"
   - "pkg"
+  - "api"
 codecov:
   require_ci_to_pass: true
 parsers:
