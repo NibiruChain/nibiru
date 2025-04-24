@@ -59,6 +59,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
 - [#2296](https://github.com/NibiruChain/nibiru/pull/2296) - chore(ci): use shell script for generating changelog in releases
 - [#2297](https://github.com/NibiruChain/nibiru/pull/2297) - fix(evm): fix error handling for revert errors
 - [#2298](https://github.com/NibiruChain/nibiru/pull/2298) - fix(eth-rpc): clean up error propagation and descriptions in eth namespace
+- [#2301](https://github.com/NibiruChain/nibiru/pull/2301) - fix(.github): glob patterns broken in nibiru-go filter for dorny/paths-filter
 
 ### Dependencies
 
