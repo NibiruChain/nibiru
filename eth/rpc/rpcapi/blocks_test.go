@@ -118,5 +118,8 @@ func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
 	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
 	s.Require().NotNil(blockMap["size"])
 	s.Require().NotNil(blockMap["nonce"])
-	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	s.T().Logf("blockMap: %s", blockMap)
+	blockNumber, err := hexutil.DecodeBig(blockMap["number"].(string))
+	s.NoError(err)
+	s.Require().Equal(blockNumber.Int64(), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
