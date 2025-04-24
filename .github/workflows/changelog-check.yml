@@ -34,15 +34,16 @@ jobs:
             changelog: 
               - "**/CHANGELOG.md"
             nibiru-go:
-              - "app/**.go"
-              - "cmd/**.go"
-              - "eth/**.go"
-              - "gosdk/**.go"
-              - "x/**.go"
-              - "**.proto"
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
               - "go.mod"
               - "go.sum"
-              - "contrib/docker/*"
+              - "contrib/docker-compose/*"
+
       - uses: dangoslen/changelog-enforcer@v3
         if: steps.check_changelog.outputs.nibiru-go == 'true' || steps.check_changelog.outputs.changelog == 'false'
         with:
