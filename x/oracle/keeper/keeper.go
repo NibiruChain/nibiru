@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
 
 	sdkioerrors "cosmossdk.io/errors"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -118,7 +118,11 @@ func (k Keeper) ValidateFeeder(
 	}
 
 	// Check that the given validator is in the active set for consensus.
-	if val := k.StakingKeeper.Validator(ctx, validatorAddr); val == nil || !val.IsBonded() {
+	val, err := k.StakingKeeper.Validator(ctx, validatorAddr)
+	if err != nil {
+		return err
+	}
+	if val == nil || !val.IsBonded() {
 		return sdkioerrors.Wrapf(
 			stakingtypes.ErrNoValidatorFound,
 			"validator %s is not active set", validatorAddr.String())

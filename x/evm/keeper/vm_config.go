@@ -60,7 +60,13 @@ func (k Keeper) GetCoinbaseAddress(ctx sdk.Context) common.Address {
 		return common.Address{}
 	}
 
-	return common.BytesToAddress(validator.GetOperator())
+	addr, err := sdk.ValAddressFromBech32(validator.GetOperator())
+	// TODO: handle error
+	if err != nil {
+		panic(err)
+	}
+
+	return common.BytesToAddress(addr)
 }
 
 // ParseProposerAddr returns current block proposer's address when provided

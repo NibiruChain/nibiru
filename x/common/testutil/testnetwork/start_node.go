@@ -18,12 +18,14 @@ import (
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 )
 
 func startNodeAndServers(cfg Config, val *Validator) error {
@@ -50,9 +52,9 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		nodeKey,
 		proxy.NewLocalClientCreator(app),
 		genDocProvider,
-		node.DefaultDBProvider,
+		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
-		logger.With("module", val.Moniker),
+		servercmtlog.CometLoggerWrapper{Logger: logger.With("module", val.Moniker)},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to construct Node: %w", err)
@@ -63,7 +65,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	val.tmNode = tmNode
-	val.tmNode.Logger = logger
+	val.tmNode.Logger = servercmtlog.CometLoggerWrapper{Logger: logger}
 
 	if val.RPCAddress != "" {
 		val.RPCClient = local.New(tmNode)

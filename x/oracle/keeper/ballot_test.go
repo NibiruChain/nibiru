@@ -10,7 +10,6 @@ import (
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,8 @@ func TestGroupVotesByPair(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	_, err = fixture.StakingKeeper.EndBlocker(fixture.Ctx)
+	require.NoError(t, err)
 
 	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
@@ -108,7 +108,8 @@ func TestClearVotesAndPrevotes(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	_, err = fixture.StakingKeeper.EndBlocker(fixture.Ctx)
+	require.NoError(t, err)
 
 	btcVotes := types.ExchangeRateVotes{
 		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
@@ -216,7 +217,8 @@ func TestTallyMissCount(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	_, err = fixture.StakingKeeper.EndBlocker(fixture.Ctx)
+	require.NoError(t, err)
 
 	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)

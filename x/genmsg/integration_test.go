@@ -3,7 +3,6 @@ package genmsg_test
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -48,9 +47,7 @@ func TestGenmsgInGenesis(t *testing.T) {
 	)
 
 	app, _ := testapp.NewNibiruTestApp(appGenesis)
-	ctx := app.NewContext(false, tmproto.Header{
-		Height: 1,
-	})
+	ctx := app.NewContext(false)
 
 	balance, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recvAddr.String(),

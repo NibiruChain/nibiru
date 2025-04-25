@@ -5,12 +5,12 @@ import (
 	"maps"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -56,7 +56,7 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 		Height: 1,
 		Time:   time.Now().UTC(),
 	}
-	ctx := nibiru.NewContext(false, blockHeader)
+	ctx := nibiru.NewContext(false)
 
 	// Make sure there's a block proposer on the context.
 	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
@@ -69,8 +69,8 @@ func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
 	maxQueryCount := uint32(10)
-	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
-	valAddrBz := valopers[0].GetOperator().Bytes()
+	valopers, _ := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
+	valAddrBz := valopers[0].GetOperator()
 	return sdk.ConsAddress(valAddrBz)
 }
 
@@ -98,7 +98,7 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 ) {
 	app := app.NewNibiruApp(
 		log.NewNopLogger(),
-		tmdb.NewMemDB(),
+		dbm.NewMemDB(),
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*appOpts=*/ sims.EmptyAppOptions{},
@@ -142,7 +142,7 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 		panic(err)
 	}
 
-	app.InitChain(abci.RequestInitChain{
+	app.InitChain(&abci.RequestInitChain{
 		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
@@ -258,7 +258,7 @@ func genesisStateWithValSet(
 			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdkmath.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].String(), val.Address.String(), sdkmath.LegacyOneDec()))
 	}
 	// set validators and delegations
 	genesisState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(

@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -83,7 +85,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	})
 
 	s.Run("happy: CreateFunToken for the bank coin", func() {
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
@@ -200,12 +202,12 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	funToken := s.fundAndCreateFunToken(deps, 100)
 
 	s.T().Log("Convert bank coin to erc-20")
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:   deps.Sender.NibiruAddr.String(),
-			BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+			BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10)),
 			ToEthAddr: eth.EIP55Addr{
 				Address: alice.EthAddr,
 			},
@@ -222,7 +224,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			Sender:               deps.Sender.NibiruAddr.String(),
 			Erc20ContractAddress: funToken.Erc20Addr.String(),
 			ToEthAddr:            alice.EthAddr.String(),
-			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10)),
 		},
 	)
 
@@ -259,11 +261,11 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 
 	// Check 1: module balance
 	moduleBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(10), moduleBalance.Amount)
+	s.Require().Equal(sdkmath.NewInt(10), moduleBalance.Amount)
 
 	// Check 2: Sender balance
 	senderBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(90), senderBalance.Amount)
+	s.Require().Equal(sdkmath.NewInt(90), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
 	balance, err := deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
@@ -275,7 +277,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100)),
+				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(100)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: alice.EthAddr,
 				},
@@ -292,7 +294,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -308,11 +310,11 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 
 	// Check 1: module balance
 	moduleBalance = deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), evm.EVMBankDenom)
-	s.Require().True(moduleBalance.Amount.Equal(sdk.ZeroInt()))
+	s.Require().True(moduleBalance.Amount.Equal(sdkmath.ZeroInt()))
 
 	// Check 2: Sender balance
 	senderBalance = deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
-	s.Require().Equal(sdk.NewInt(100), senderBalance.Amount)
+	s.Require().Equal(sdkmath.NewInt(100), senderBalance.Amount)
 
 	// Check 3: erc-20 balance
 	balance, err = deps.EvmKeeper.ERC20().BalanceOf(funToken.Erc20Addr.Address, alice.EthAddr, deps.Ctx, evmObj)
@@ -320,7 +322,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal("0", balance.String())
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -378,7 +380,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		testContractNibiAddr,
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewIntFromBigInt(sendAmt)))),
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(sendAmt)))),
 	)
 	evmtest.AssertBankBalanceEqualWithDescription(
 		s.T(), deps, bankDenom, testContractAddr, sendAmt, "expect 10 balance",
@@ -392,7 +394,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(bankDenom, sdk.NewIntFromBigInt(sendAmt)),
+			BankCoin:  sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(sendAmt)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -432,7 +434,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -478,7 +480,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -555,7 +557,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -595,7 +597,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		big.NewInt(9e6),           /*amount*/
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -673,7 +675,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -684,7 +686,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		eth.EthAddrToNibiruAddr(testContractAddr),
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10e6))),
 	))
 
 	evmObj, _ := deps.NewEVM()
@@ -702,7 +704,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	charles := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack(
 		"selfCallTransferFunds",
@@ -796,7 +798,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -812,7 +814,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		"attack",
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
 	evpResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -888,7 +890,7 @@ func (s *FunTokenFromCoinSuite) fundAndCreateFunToken(deps evmtest.TestDeps, uni
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewCoin(bankDenom, sdk.NewInt(unibiAmount))),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewCoin(bankDenom, sdkmath.NewInt(unibiAmount))),
 	))
 
 	s.T().Log("Create FunToken from coin")

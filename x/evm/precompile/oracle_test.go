@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -84,7 +85,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		// 69 seconds + 420 nanoseconds === 69000 milliseconds for the
 		// return value from the UnixMilli() function
 		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
-		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
+		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdkmath.LegacyMustNewDecFromStr("0.067"))
 
 		resp, err := runQuery(deps.Ctx)
 		s.NoError(err)

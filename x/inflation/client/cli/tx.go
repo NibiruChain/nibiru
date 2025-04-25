@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -135,17 +134,17 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 			}
 
 			if epochsPerPeriod, _ := cmd.Flags().GetUint64("epochs-per-period"); epochsPerPeriod != 0 {
-				epochsPerPeriodInt := sdk.NewIntFromUint64(epochsPerPeriod)
+				epochsPerPeriodInt := sdkmath.NewIntFromUint64(epochsPerPeriod)
 				msg.EpochsPerPeriod = &epochsPerPeriodInt
 			}
 
 			if periodsPerYear, _ := cmd.Flags().GetUint64("periods-per-year"); periodsPerYear != 0 {
-				periodsPerYearInt := sdk.NewIntFromUint64(periodsPerYear)
+				periodsPerYearInt := sdkmath.NewIntFromUint64(periodsPerYear)
 				msg.PeriodsPerYear = &periodsPerYearInt
 			}
 
 			if maxPeriod, _ := cmd.Flags().GetUint64("max-period"); maxPeriod != 0 {
-				maxPeriodInt := sdk.NewIntFromUint64(maxPeriod)
+				maxPeriodInt := sdkmath.NewIntFromUint64(maxPeriod)
 				msg.MaxPeriod = &maxPeriodInt
 			}
 

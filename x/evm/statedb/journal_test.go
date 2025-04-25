@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -87,7 +88,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	deployResp, err := evmtest.DeployContract(
@@ -166,7 +167,7 @@ func (s *Suite) TestJournalReversion() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")

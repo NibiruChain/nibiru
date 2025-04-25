@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -75,7 +77,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 		))
 
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		resp, err := deps.EvmKeeper.CreateFunToken(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgCreateFunToken{
@@ -204,7 +206,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.Run("happy: mint erc20 tokens", func() {
 		contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -225,7 +227,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.Run("happy: send erc20 tokens to Bank", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 		s.Require().NoError(err)
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -246,7 +248,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		evmObj, _ := deps.NewEVM()
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_419), "expect nonzero balance")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(1), "expect nonzero balance")
-		s.Require().Equal(sdk.NewInt(1),
+		s.Require().Equal(sdkmath.NewInt(1),
 			deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount,
 		)
 	})
@@ -254,7 +256,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	s.Run("sad: send too many erc20 tokens to Bank", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 		s.Require().NoError(err)
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
@@ -272,14 +274,14 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	})
 
 	s.Run("happy: send Bank tokens back to erc20", func() {
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
+		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
 				Sender:   randomAcc.String(),
-				BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+				BankCoin: sdk.NewCoin(bankDemon, sdkmath.NewInt(1)),
 			},
 		)
 		s.Require().NoError(err)
@@ -295,7 +297,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 				ToEthAddr:            deps.Sender.EthAddr.String(),
 				BankCoin: sdk.Coin{
 					Denom:  bankDemon,
-					Amount: sdk.NewInt(1),
+					Amount: sdkmath.NewInt(1),
 				},
 			},
 		)
@@ -338,7 +340,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(69_420), "expect nonzero balance")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect nonzero balance")
 		s.Require().True(
-			deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)),
+			deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdkmath.NewInt(0)),
 		)
 	})
 
@@ -349,7 +351,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 				Address: deps.Sender.EthAddr,
 			},
 			Sender:   randomAcc.String(),
-			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(1)),
+			BankCoin: sdk.NewCoin(bankDemon, sdkmath.NewInt(1)),
 		},
 	)
 	s.Require().Error(err)
@@ -437,7 +439,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 	s.T().Log("send erc20 tokens to cosmos")
 	input, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -573,7 +575,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 		randomAcc.String(),      /*to*/
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -594,7 +596,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(10), "expect 10 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(90), "expect 90 balance")
 
-	s.Require().Equal(sdk.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
+	s.Require().Equal(sdkmath.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
 
 	s.T().Log("send Bank tokens back to erc20")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
@@ -603,7 +605,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 				Address: deps.Sender.EthAddr,
 			},
 			Sender:   randomAcc.String(),
-			BankCoin: sdk.NewCoin(bankDemon, sdk.NewInt(90)),
+			BankCoin: sdk.NewCoin(bankDemon, sdkmath.NewInt(90)),
 		},
 	)
 	s.Require().NoError(err)
@@ -613,8 +615,8 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(981), "expect 981 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deployResp.ContractAddr, big.NewInt(19), "expect 19 balance")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance")
-	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdk.NewInt(0)))
-	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS_NIBI, bankDemon).Amount.Equal(sdk.NewInt(0)))
+	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount.Equal(sdkmath.NewInt(0)))
+	s.Require().True(deps.App.BankKeeper.GetBalance(deps.Ctx, evm.EVM_MODULE_ADDRESS_NIBI, bankDemon).Amount.Equal(sdkmath.NewInt(0)))
 }
 
 type MkrMetadata struct {
@@ -652,7 +654,7 @@ func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 	)
 	s.Require().NoError(err)
 
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,

@@ -105,7 +105,9 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				denoms.NIBI,
 			)
 
-			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
+			communityPool, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+			require.NoError(t, err)
+			balanceCommunityPool := communityPool.CommunityPool
 
 			require.NoError(t, err, tc.name)
 			assert.Equal(t,

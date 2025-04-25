@@ -242,12 +242,11 @@ func (s *Suite) TestEthereumTx_ABCI() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
-	blockHeader := deps.Ctx.BlockHeader()
 	// blockHeader := tmproto.Header{Height: deps.Ctx.BlockHeight()}
-	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+	deps.App.BeginBlocker(deps.Ctx)
 	to := evmtest.NewEthPrivAcc()
 	evmTxMsg, err := evmtest.TxTransferWei{
 		Deps:      &deps,
@@ -262,9 +261,9 @@ func (s *Suite) TestEthereumTx_ABCI() {
 
 	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
 	s.Require().NoError(err)
-	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
+	deliverTxResp := deps.App.DeliverTx(txBz)
 	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
-	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx.BlockHeight()})
+	deps.App.EndBlocker(deps.Ctx)
 
 	{
 		r := deliverTxResp
