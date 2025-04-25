@@ -37,7 +37,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
 				maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
 						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
 					},

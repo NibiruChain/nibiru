@@ -3,8 +3,7 @@ package evmante_test
 import (
 	"math"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -26,7 +25,7 @@ func (s *TestSuite) TestEthSetupContextDecorator() {
 
 	// Check that ctx gas meter is set up to infinite
 	ctxGasMeter := newCtx.GasMeter()
-	s.Require().Equal(sdk.Gas(math.MaxUint64), ctxGasMeter.GasRemaining())
+	s.Require().Equal(storetypes.Gas(math.MaxUint64), ctxGasMeter.GasRemaining())
 
 	// Check that gas configs are reset to default
 	defaultGasConfig := storetypes.GasConfig{}

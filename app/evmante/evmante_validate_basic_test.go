@@ -3,9 +3,11 @@ package evmante_test
 import (
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -43,7 +45,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			},
 			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
 				return evm.Params{
-					CreateFuntokenFee: sdk.NewInt(-1),
+					CreateFuntokenFee: sdkmath.NewInt(-1),
 				}
 			},
 			wantErr: "createFuntokenFee cannot be negative: -1",
@@ -112,16 +114,18 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: eth tx with signatures should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+				defaultSignMode, err := xauthsigning.APISignModeToInternal(deps.App.GetTxConfig().SignModeHandler().DefaultMode())
+				s.Require().NoError(err)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 				sigV2 := signing.SignatureV2{
 					PubKey: deps.Sender.PrivKey.PubKey(),
 					Data: &signing.SingleSignatureData{
-						SignMode:  deps.App.GetTxConfig().SignModeHandler().DefaultMode(),
+						SignMode:  defaultSignMode,
 						Signature: nil,
 					},
 					Sequence: 0,
 				}
-				err := txBuilder.SetSignatures(sigV2)
+				err = txBuilder.SetSignatures(sigV2)
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 

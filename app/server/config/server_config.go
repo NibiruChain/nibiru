@@ -204,7 +204,6 @@ func DefaultConfig() *Config {
 	defaultSDKConfig.API.Enable = DefaultAPIEnable
 	defaultSDKConfig.GRPC.Enable = DefaultGRPCEnable
 	defaultSDKConfig.GRPCWeb.Enable = DefaultGRPCWebEnable
-	defaultSDKConfig.Rosetta.Enable = DefaultRosettaEnable
 	defaultSDKConfig.Telemetry.Enabled = DefaultTelemetryEnable
 
 	return &Config{

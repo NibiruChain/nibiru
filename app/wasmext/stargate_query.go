@@ -14,9 +14,9 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 )
 
 /*
@@ -67,8 +67,8 @@ Given only the `PB_MSG.PACKAGE` and the `PB_MSG.NAME` of either the query
 request or response, we should know the `QueryRequest::Stargate.path`
 deterministically.
 */
-func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
-	return wasmkeeper.AcceptedStargateQueries{
+func WasmAcceptedStargateQueries() wasmkeeper.AcceptedQueries {
+	return wasmkeeper.AcceptedQueries{
 		// ibc
 		"/ibc.core.client.v1.Query/ClientState":                  &ibcclienttypes.QueryClientStateResponse{},
 		"/ibc.core.client.v1.Query/ConsensusState":               &ibcclienttypes.QueryConsensusStateResponse{},

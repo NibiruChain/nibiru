@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2/types"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -60,12 +60,12 @@ func (s *Suite) TestEvmFilter() {
 	s.Equal("/eth.evm.v1.MsgEthereumTx", sdk.MsgTypeURL(sdkMsg))
 
 	s.T().Log("Dispatch the Eth tx msg from Wasm (unsuccessfully)")
-	_, _, err = wasmMsgHandler.DispatchMsg(
+	_, _, _, err = wasmMsgHandler.DispatchMsg(
 		deps.Ctx,
 		wasmContractAddr,
 		"ibcport-unused",
 		wasmvm.CosmosMsg{
-			Stargate: &wasmvm.StargateMsg{
+			Any: &wasmvm.AnyMsg{
 				TypeURL: sdk.MsgTypeURL(ethTxMsg),
 				Value:   protoValueBz,
 			},
@@ -83,12 +83,12 @@ func (s *Suite) TestEvmFilter() {
 	}
 	protoValueBz, err = deps.App.AppCodec().Marshal(txMsg)
 	s.NoError(err)
-	_, _, err = wasmMsgHandler.DispatchMsg(
+	_, _, _, err = wasmMsgHandler.DispatchMsg(
 		deps.Ctx,
 		wasmContractAddr,
 		"ibcport-unused",
 		wasmvm.CosmosMsg{
-			Stargate: &wasmvm.StargateMsg{
+			Any: &wasmvm.AnyMsg{
 				TypeURL: sdk.MsgTypeURL(txMsg),
 				Value:   protoValueBz,
 			},
