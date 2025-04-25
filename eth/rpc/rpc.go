@@ -232,7 +232,7 @@ func NewRPCTxFromMsgEthTx(
 //
 // Exclude from Block (Not Valid Enough):
 //   - Exclude unsuccessful tx with any other error but ExceedBlockGasLimit
-func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string) {
+func TxIsValidEnough(res *abci.ExecTxResult) (condition bool, reason string) {
 	if res.Code == 0 {
 		return true, "tx succeeded"
 	} else if strings.Contains(res.Log, ErrExceedBlockGasLimit) {
