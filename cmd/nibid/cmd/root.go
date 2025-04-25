@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/libs/log"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"

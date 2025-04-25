@@ -10,18 +10,19 @@ import (
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/go-bip39"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -140,24 +141,28 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return pkgerrors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &cmttypes.GenesisDoc{}
+			appGenesis := &genutiltypes.AppGenesis{}
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
 				}
 			} else {
-				genDoc, err = cmttypes.GenesisDocFromFile(genFile)
+				appGenesis, err = genutiltypes.AppGenesisFromFile(genFile)
 				if err != nil {
 					return pkgerrors.Wrap(err, "Failed to read genesis doc from file")
 				}
 			}
 
-			genDoc.ChainID = chainID
-			genDoc.Validators = nil
-			genDoc.AppState = appState
-			genDoc.InitialHeight = initHeight
+			appGenesis.AppName = version.AppName
+			appGenesis.AppVersion = version.Version
+			appGenesis.ChainID = chainID
+			appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+				Validators: nil,
+			}
+			appGenesis.AppState = appState
+			appGenesis.InitialHeight = initHeight
 
-			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
+			if err = genutil.ExportGenesisFile(appGenesis, genFile); err != nil {
 				return pkgerrors.Wrap(err, "Failed to export genesis file")
 			}
 
