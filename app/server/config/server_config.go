@@ -7,6 +7,8 @@ import (
 	"path"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	tracerslogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 
 	"github.com/spf13/viper"
@@ -15,7 +17,9 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/server/config"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/rosetta"
 )
 
 const (
@@ -94,11 +98,25 @@ const (
 	// DefaultGasAdjustment value to use as default in gas-adjustment flag
 	DefaultGasAdjustment = 1.2
 
+	// DefaultRosettaBlockchain defines the default blockchain name for the rosetta server
+	DefaultRosettaBlockchain = "nibiru"
+
+	// DefaultRosettaNetwork defines the default network name for the rosetta server
+	DefaultRosettaNetwork = "nibiru"
+
+	// DefaultRosettaGasToSuggest defines the default gas to suggest for the rosetta server
+	DefaultRosettaGasToSuggest = 300_000
+
+	// DefaultRosettaDenomToSuggest defines the default denom for fee suggestion
+	DefaultRosettaDenomToSuggest = "unibi"
+
 	// DefaultZeroCopy is the default value that defines if
 	// the zero-copied slices must be retained beyond current block's execution
 	// the sdk address cache will be disabled if zero-copy is enabled
 	DefaultZeroCopy = false
 )
+
+var DefaultRosettaGasPrices = sdk.NewDecCoins(sdk.NewDecCoin(DefaultRosettaDenomToSuggest, sdkmath.NewInt(4_000_000)))
 
 var evmTracers = []string{"json", "markdown", "struct", "access_list"}
 
@@ -110,6 +128,7 @@ type Config struct {
 	EVM     EVMConfig     `mapstructure:"evm"`
 	JSONRPC JSONRPCConfig `mapstructure:"json-rpc"`
 	TLS     TLSConfig     `mapstructure:"tls"`
+	Rosetta RosettaConfig `mapstructure:"rosetta"`
 }
 
 // EVMConfig defines the application configuration values for the EVM.
@@ -172,6 +191,13 @@ type TLSConfig struct {
 	KeyPath string `mapstructure:"key-path"`
 }
 
+// RosettaConfig defines configuration for the Rosetta server.
+type RosettaConfig struct {
+	rosetta.Config
+	// Enable defines if the Rosetta server should be enabled.
+	Enable bool `mapstructure:"enable"`
+}
+
 // AppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func AppConfig(denom string) (string, any) {
@@ -193,7 +219,7 @@ func AppConfig(denom string) (string, any) {
 		customAppConfig.Config.MinGasPrices = "0" + denom
 	}
 
-	customAppTemplate := config.DefaultConfigTemplate + DefaultConfigTemplate
+	customAppTemplate := config.DefaultConfigTemplate + DefaultConfigTemplate + DefaultRosettaConfigTemplate
 
 	return customAppTemplate, *customAppConfig
 }
@@ -211,6 +237,7 @@ func DefaultConfig() *Config {
 		EVM:     *DefaultEVMConfig(),
 		JSONRPC: *DefaultJSONRPCConfig(),
 		TLS:     *DefaultTLSConfig(),
+		Rosetta: *DefaultRosettaConfig(),
 	}
 }
 
@@ -330,6 +357,26 @@ func DefaultTLSConfig() *TLSConfig {
 	return &TLSConfig{
 		CertificatePath: "",
 		KeyPath:         "",
+	}
+}
+
+// DefaultEVMConfig returns the default EVM configuration
+func DefaultRosettaConfig() *RosettaConfig {
+	return &RosettaConfig{
+		Config: rosetta.Config{
+			Blockchain:          DefaultRosettaBlockchain,
+			Network:             DefaultRosettaNetwork,
+			TendermintRPC:       rosetta.DefaultCometEndpoint,
+			GRPCEndpoint:        rosetta.DefaultGRPCEndpoint,
+			Addr:                rosetta.DefaultAddr,
+			Retries:             rosetta.DefaultRetries,
+			Offline:             rosetta.DefaultOffline,
+			EnableFeeSuggestion: rosetta.DefaultEnableFeeSuggestion,
+			GasToSuggest:        DefaultRosettaGasToSuggest,
+			DenomToSuggest:      DefaultRosettaDenomToSuggest,
+			GasPrices:           DefaultRosettaGasPrices,
+		},
+		Enable: DefaultRosettaEnable,
 	}
 }
 
@@ -491,4 +538,50 @@ certificate-path = "{{ .TLS.CertificatePath }}"
 
 # Key path defines the key.pem file path for the TLS configuration.
 key-path = "{{ .TLS.KeyPath }}"
+`
+const DefaultRosettaConfigTemplate = `
+###############################################################################
+###                           Rosetta Configuration                         ###
+###############################################################################
+
+[rosetta]
+
+# Enable defines if the Rosetta API server should be enabled.
+enable = {{ .Rosetta.Enable }}
+
+# Address defines the Rosetta API server to listen on.
+address = "{{ .Rosetta.Config.Addr }}"
+
+# Network defines the name of the blockchain that will be returned by Rosetta.
+blockchain = "{{ .Rosetta.Config.Blockchain }}"
+
+# Network defines the name of the network that will be returned by Rosetta.
+network = "{{ .Rosetta.Config.Network }}"
+
+# TendermintRPC defines the endpoint to connect to CometBFT RPC,
+# specifying 'tcp://' before is not required, usually it's at port 26657
+tendermint-rpc = "{{ .Rosetta.Config.TendermintRPC }}"
+
+# GRPCEndpoint defines the cosmos application gRPC endpoint
+# usually it is located at 9090 port
+grpc-endpoint = "{{ .Rosetta.Config.GRPCEndpoint }}"
+
+# Retries defines the number of retries when connecting to the node before failing.
+retries = {{ .Rosetta.Config.Retries }}
+
+# Offline defines if Rosetta server should run in offline mode.
+offline = {{ .Rosetta.Config.Offline }}
+
+# EnableFeeSuggestion indicates to use fee suggestion when 'construction/metadata' is called without gas limit and price.
+enable-fee-suggestion = {{ .Rosetta.Config.EnableFeeSuggestion }}
+
+# GasToSuggest defines gas limit when calculating the fee
+gas-to-suggest = {{ .Rosetta.Config.GasToSuggest }}
+
+# DenomToSuggest defines the defult denom for fee suggestion.
+# Price must be in minimum-gas-prices.
+denom-to-suggest = "{{ .Rosetta.Config.DenomToSuggest }}"
+
+# GasPrices defines the gas prices for fee suggestion
+gas-prices = "{{ .Rosetta.Config.GasPrices }}"
 `
