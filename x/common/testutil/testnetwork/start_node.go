@@ -1,12 +1,12 @@
 package testnetwork
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"time"
 
 	sdkioerrors "cosmossdk.io/errors"
-	db "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
+	db "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
@@ -14,12 +14,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
-	"github.com/cosmos/cosmos-sdk/server/api"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
-	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
@@ -30,7 +28,7 @@ import (
 
 func startNodeAndServers(cfg Config, val *Validator) error {
 	logger := val.Ctx.Logger
-	evmServerCtxLogger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	evmServerCtxLogger := sdkserver.NewDefaultContext()
 	tmCfg := val.Ctx.Config
 	tmCfg.Instrumentation.Prometheus = false
 
@@ -44,13 +42,14 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	app := cfg.AppConstructor(*val)
+	cmtApp := sdkserver.NewCometABCIWrapper(app)
 
 	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
 	tmNode, err := node.NewNode(
 		tmCfg,
 		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		proxy.NewLocalClientCreator(cmtApp),
 		genDocProvider,
 		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
@@ -85,44 +84,31 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
 	}
 
-	if val.APIAddress != "" {
-		apiSrv := api.New(val.ClientCtx, logger.With("module", "api-server"))
-		app.RegisterAPIRoutes(apiSrv, val.AppConfig.API)
+	// We'll need a RPC client if the validator exposes a gRPC or REST endpoint.
+	if val.APIAddress != "" || val.AppConfig.GRPC.Enable {
+		val.ClientCtx = val.ClientCtx.
+			WithClient(val.RPCClient)
 
-		errCh := make(chan error)
-
-		go func() {
-			if err := apiSrv.Start(val.AppConfig.Config); err != nil {
-				errCh <- err
-			}
-		}()
-
-		select {
-		case err := <-errCh:
-			return err
-		case <-time.After(srvtypes.ServerStartTime): // assume server started successfully
-		}
-
-		val.api = apiSrv
+		app.RegisterTxService(val.ClientCtx)
+		app.RegisterTendermintService(val.ClientCtx)
+		app.RegisterNodeService(val.ClientCtx, val.AppConfig.Config)
 	}
 
 	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
+		grpcSrv, err := servergrpc.NewGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
+		if err != nil {
+			return err
+		}
+
+		err = servergrpc.StartGRPCServer(context.Background(), logger.With(log.ModuleKey, "grpc-server"), val.AppConfig.GRPC, grpcSrv)
 		if err != nil {
 			return err
 		}
 
 		val.grpc = grpcSrv
-
-		if val.AppConfig.GRPCWeb.Enable {
-			val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, val.AppConfig.Config)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
-	val.Ctx.Logger = evmServerCtxLogger
+	val.Ctx.Logger = evmServerCtxLogger.Logger
 
 	useEthJsonRPC := val.AppConfig.JSONRPC.Enable && val.AppConfig.JSONRPC.Address != ""
 	if useEthJsonRPC {
