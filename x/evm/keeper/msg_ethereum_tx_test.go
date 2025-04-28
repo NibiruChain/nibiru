@@ -18,8 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -259,15 +257,11 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
 	s.Require().NoError(err)
 
-	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
+	gasInfo, _, err := deps.App.SimDeliver(deps.App.GetTxConfig().TxEncoder(), blockTx)
 	s.Require().NoError(err)
-	deliverTxResp := deps.App.DeliverTx(txBz)
-	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
 	deps.App.EndBlocker(deps.Ctx)
 
-	{
-		r := deliverTxResp
-		s.EqualValuesf(21000, r.GasUsed, "%d", r.GasUsed)
-		s.EqualValuesf(21000, r.GasWanted, "%d", r.GasWanted)
-	}
+	s.EqualValuesf(21000, gasInfo.GasUsed, "%d", gasInfo.GasUsed)
+	s.EqualValuesf(21000, gasInfo.GasWanted, "%d", gasInfo.GasWanted)
+
 }
