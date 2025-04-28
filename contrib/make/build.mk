@@ -25,7 +25,7 @@ SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
 
 CMT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 ROCKSDB_VERSION := 8.9.1
-WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
+WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | awk '{sub(/^v/, "", $$2); print $$2}')
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
 
