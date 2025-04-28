@@ -3,12 +3,13 @@ package eth_test
 import (
 	"math"
 
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 // TestGasMeter: Ensures correct behvaior of the `InfiniteGasMeterWithLimit`
@@ -37,8 +38,8 @@ func (s *Suite) TestGasMeter() {
 	s.False(meter.IsOutOfGas())
 
 	// Consume large amount fo gas to test overflow handling
-	meter.ConsumeGas(sdk.Gas(math.MaxUint64/2), "consume half max uint64")
-	s.Require().Panics(func() { meter.ConsumeGas(sdk.Gas(math.MaxUint64/2)+2, "panic") })
+	meter.ConsumeGas(storetypes.Gas(math.MaxUint64/2), "consume half max uint64")
+	s.Require().Panics(func() { meter.ConsumeGas(storetypes.Gas(math.MaxUint64/2)+2, "panic") })
 	s.Require().Panics(func() { meter.RefundGas(meter.GasConsumed()+1, "refund greater than consumed") })
 
 	// Additional tests for RefundGas
@@ -55,7 +56,7 @@ func (s *Suite) TestGasMeter() {
 
 	// Additional tests for IsPastLimit and IsOutOfGas with high gas usage
 	s.Equal(uint64(math.MaxUint64), meter.GasRemaining())
-	meter.ConsumeGas(sdk.Gas(math.MaxUint64-1), "consume nearly all gas")
+	meter.ConsumeGas(storetypes.Gas(math.MaxUint64-1), "consume nearly all gas")
 	s.Equal(uint64(math.MaxUint64), meter.GasRemaining())
 	s.Require().False(meter.IsPastLimit())
 	s.Require().False(meter.IsOutOfGas())
@@ -106,7 +107,7 @@ func (s *Suite) TestBlockGasLimit() {
 			name: "BlockGasMeter is nil and ConsensusParams is nil",
 			setupContext: func() sdk.Context {
 				ctx := newCtx()
-				ctx = ctx.WithConsensusParams(nil)
+				ctx = ctx.WithConsensusParams(cmtproto.ConsensusParams{})
 				return ctx
 			},
 			wantGasLimit: 0,
@@ -115,8 +116,8 @@ func (s *Suite) TestBlockGasLimit() {
 			name: "BlockGasMeter is nil and ConsensusParams has Block with MaxGas -1",
 			setupContext: func() sdk.Context {
 				ctx := newCtx()
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{
+				cp := cmtproto.ConsensusParams{
+					Block: &cmtproto.BlockParams{
 						MaxGas: -1,
 					},
 				}
@@ -129,8 +130,8 @@ func (s *Suite) TestBlockGasLimit() {
 			name: "BlockGasMeter is nil and ConsensusParams has Block with MaxGas > 0",
 			setupContext: func() sdk.Context {
 				ctx := newCtx()
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{
+				cp := cmtproto.ConsensusParams{
+					Block: &cmtproto.BlockParams{
 						MaxGas: 1000,
 					},
 				}
@@ -143,8 +144,8 @@ func (s *Suite) TestBlockGasLimit() {
 			name: "BlockGasMeter is nil and ConsensusParams has Block with MaxGas 0",
 			setupContext: func() sdk.Context {
 				ctx := newCtx()
-				cp := &tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{
+				cp := cmtproto.ConsensusParams{
+					Block: &cmtproto.BlockParams{
 						MaxGas: 0,
 					},
 				}

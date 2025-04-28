@@ -8,6 +8,8 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/bytes"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -109,7 +111,7 @@ func (b *Backend) GetProof(
 	}
 
 	// query account proofs
-	accountKey := authtypes.AddressStoreKey(address.Bytes())
+	accountKey := bytes.HexBytes(append(authtypes.AddressStoreKeyPrefix, address.Bytes()...))
 	_, proof, err := b.queryClient.GetProof(clientCtx, authtypes.StoreKey, accountKey)
 	if err != nil {
 		return nil, err
@@ -220,7 +222,7 @@ func (b *Backend) GetTransactionCount(address gethcommon.Address, blockNum rpc.B
 	}
 
 	includePending := blockNum == rpc.EthPendingBlockNumber
-	nonce, err := b.getAccountNonce(address, includePending, blockNum.Int64(), b.logger)
+	nonce, err := b.getAccountNonce(address, includePending, blockNum.Int64(), servercmtlog.CometLoggerWrapper{Logger: b.logger})
 	if err != nil {
 		return nil, err
 	}

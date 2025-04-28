@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
+
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -77,7 +79,7 @@ func (s *BackendSuite) TestLogs() {
 	nonce++
 	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgConvertCoinToEvm{
 		Sender:   s.node.Address.String(),
-		BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(1)),
+		BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(1)),
 		ToEthAddr: eth.EIP55Addr{
 			Address: s.fundedAccEthAddr,
 		},

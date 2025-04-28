@@ -11,6 +11,7 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -152,7 +153,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	if args.Nonce == nil && args.From != nil {
 		// get the nonce from the account retriever
 		// ignore error in case the account doesn't exist yet
-		nonce, _ := b.getAccountNonce(*args.From, true, 0, b.logger) // #nosec G703s
+		nonce, _ := b.getAccountNonce(*args.From, true, 0, servercmtlog.CometLoggerWrapper{Logger: b.logger}) // #nosec G703s
 		args.Nonce = (*hexutil.Uint64)(&nonce)
 	}
 

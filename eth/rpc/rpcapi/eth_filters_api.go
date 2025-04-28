@@ -327,19 +327,19 @@ func (api *FiltersAPI) NewHeads(ctx context.Context) (*gethrpc.Subscription, err
 					return
 				}
 
-				data, ok := ev.Data.(cmttypes.EventDataNewBlockHeader)
+				data, ok := ev.Data.(cmttypes.EventDataNewBlock)
 				if !ok {
 					api.logger.Debug("event data type mismatch", "type", fmt.Sprintf("%T", ev.Data))
 					continue
 				}
 
 				var baseFee *big.Int = nil
-				bloom, err := ParseBloomFromEvents(data.ResultEndBlock.Events)
+				bloom, err := ParseBloomFromEvents(data.ResultFinalizeBlock.Events)
 				if err != nil {
 					api.logger.Error("failed to parse bloom from end block events")
 					return
 				}
-				header := rpc.EthHeaderFromTendermint(data.Header, bloom, baseFee)
+				header := rpc.EthHeaderFromTendermint(data.Block.Header, bloom, baseFee)
 				_ = notifier.Notify(rpcSub.ID, header) // #nosec G703
 			case <-rpcSub.Err():
 				headersSub.Unsubscribe(api.events)

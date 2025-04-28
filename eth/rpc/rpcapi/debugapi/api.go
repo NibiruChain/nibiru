@@ -20,6 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	"github.com/cosmos/cosmos-sdk/server"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/ethereum/go-ethereum/common"
@@ -58,7 +59,7 @@ func NewImplDebugAPI(
 ) *DebugAPI {
 	return &DebugAPI{
 		ctx:     ctx,
-		logger:  ctx.Logger.With("module", "debug"),
+		logger:  servercmtlog.CometLoggerWrapper{Logger: ctx.Logger.With("module", "debug")},
 		backend: backend,
 		handler: new(HandlerT),
 	}
