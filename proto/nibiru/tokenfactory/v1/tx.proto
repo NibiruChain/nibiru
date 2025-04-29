@@ -13,6 +13,8 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types";
 
 // Msg defines the gRPC Msg service for transactions.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // CreateDenom: registers a token factory denom.
   rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
   rpc ChangeAdmin(MsgChangeAdmin) returns (MsgChangeAdminResponse);
@@ -38,6 +40,7 @@ service Msg {
 //  - The resulting denom's admin is originally set to be the creator, but the
 //    admin can be changed later.
 message MsgCreateDenom {
+  option (cosmos.msg.v1.signer) = "sender";
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // subdenom can be up to 44 "alphanumeric" characters long.
   string subdenom = 2 [(gogoproto.moretags) = "yaml:\"subdenom\""];
@@ -52,6 +55,7 @@ message MsgCreateDenomResponse {
 // MsgChangeAdmin is the sdk.Msg type for allowing an admin account to change
 // admin of a denom to a new account
 message MsgChangeAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   string denom = 2 [(gogoproto.moretags) = "yaml:\"denom\""];
   string new_admin = 3 [(gogoproto.moretags) = "yaml:\"new_admin\""];
@@ -76,6 +80,8 @@ message MsgUpdateModuleParamsResponse {}
 
 // MsgMint: sdk.Msg (TxMsg) where an denom admin mints more of the token.
 message MsgMint {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // coin: The denom identifier and amount to mint.
   cosmos.base.v1beta1.Coin coin = 2 [
@@ -100,6 +106,8 @@ message MsgMintResponse {
 // contract is the message signer and sender, while "burn_from" is based on the
 // contract logic.
 message MsgBurn {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // coin: The denom identifier and amount to burn.
   cosmos.base.v1beta1.Coin coin = 2 [
@@ -115,6 +123,8 @@ message MsgBurnResponse {}
 // MsgSetDenomMetadata: sdk.Msg (TxMsg) enabling the denom admin to change its
 // bank metadata.
 message MsgSetDenomMetadata {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
 
   // Metadata: Official x/bank metadata for the denom. All token factory denoms
@@ -138,6 +148,8 @@ message MsgSetDenomMetadataResponse {}
 //
 // [FunToken Mechanism]: https://nibiru.fi/docs/evm/funtoken.html
 message MsgSudoSetDenomMetadata {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
 
   // Metadata: Official x/bank metadata for the denom. The "metadata.base" is
@@ -149,6 +161,8 @@ message MsgSudoSetDenomMetadataResponse {}
 
 // Burn a native token such as unibi
 message MsgBurnNative {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   cosmos.base.v1beta1.Coin coin = 2 [
     (gogoproto.moretags) = "yaml:\"coin\"",
