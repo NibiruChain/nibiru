@@ -148,7 +148,7 @@ func (s *TestSuite) TearDownSuite() {
 
 func (s *TestSuite) DoTestGetGrpcConnection_NoNetwork() {
 	grpcConn, err := gosdk.GetGRPCConnection(
-		gosdk.DefaultNetworkInfo.GrpcEndpoint+"notendpoint", true, 2,
+		gosdk.NETWORK_INFO_DEFAULT.GrpcEndpoint+"notendpoint", true, 2,
 	)
 	s.Error(err)
 	s.Nil(grpcConn)

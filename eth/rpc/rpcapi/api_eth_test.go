@@ -27,6 +27,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 
@@ -50,10 +51,9 @@ type NodeSuite struct {
 	suite.Suite
 	cfg     testnetwork.Config
 	network *testnetwork.Network
-	val     *testnetwork.Validator
+	node    *testnetwork.Validator
 
 	ethClient *ethclient.Client
-	ethAPI    *rpcapi.EthAPI
 
 	fundedAccPrivateKey *ecdsa.PrivateKey
 	fundedAccEthAddr    gethcommon.Address
@@ -194,9 +194,8 @@ func (s *NodeSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.network = network
-	s.val = network.Validators[0]
-	s.ethClient = s.val.JSONRPCClient
-	s.ethAPI = s.val.EthRPC_ETH
+	s.node = network.Validators[0]
+	s.ethClient = s.node.EvmRpcClient
 	s.contractData = embeds.SmartContract_TestERC20
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
@@ -206,7 +205,7 @@ func (s *NodeSuite) SetupSuite() {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
 	_, err = testnetwork.FillWalletFromValidator(
-		s.fundedAccNibiAddr, funds, s.val, eth.EthBaseDenom,
+		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
 	)
 	s.Require().NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
@@ -395,7 +394,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	s.T().Log("Assert event expectations - successful eth tx")
 	{
 		blockHeightOfTx := int64(txReceipt.BlockNumber.Uint64())
-		blockOfTx, err := s.val.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
+		blockOfTx, err := s.node.RPCClient.BlockResults(blankCtx, &blockHeightOfTx)
 		s.NoError(err)
 		events := blockOfTx.TxsResults[0].Events
 		pendingEthTxEventHash := gethcommon.Hash{}
@@ -470,55 +469,64 @@ func (s *NodeSuite) Test_SmartContract() {
 	s.True(resp.Balance.Amount.GT(sdkmath.NewInt(1_004_900_000)), "unexpectedly low balance ", resp.Balance.Amount.String())
 
 	s.T().Log("Deploy contract")
-	signer := gethcore.LatestSignerForChainID(chainID)
-	txData := s.contractData.Bytecode
-	tx, err := gethcore.SignNewTx(
-		s.fundedAccPrivateKey,
-		signer,
-		&gethcore.LegacyTx{
-			Nonce: nonce,
-			Gas:   100_500_000 + params.TxGasContractCreation,
-			GasPrice: evm.NativeToWei(new(big.Int).Add(
-				evm.BASE_FEE_MICRONIBI, big.NewInt(0),
-			)),
-			Data: txData,
-		})
-	s.Require().NoError(err)
-
-	txBz, err := tx.MarshalBinary()
-	s.NoError(err)
-	txHash, err := s.ethAPI.SendRawTransaction(txBz)
-	s.Require().NoError(err)
-
-	s.T().Log("Wait a few blocks so the tx won't be pending")
-	for range 5 {
-		_ = s.network.WaitForNextBlock()
-	}
-
-	s.T().Log("Assert: tx NOT pending")
 	{
+		signer := gethcore.LatestSignerForChainID(chainID)
+		txData := s.contractData.Bytecode
+		tx, err := gethcore.SignNewTx(
+			s.fundedAccPrivateKey,
+			signer,
+			&gethcore.LegacyTx{
+				Nonce: nonce,
+				Gas:   100_500_000 + params.TxGasContractCreation,
+				GasPrice: evm.NativeToWei(new(big.Int).Add(
+					evm.BASE_FEE_MICRONIBI, big.NewInt(0),
+				)),
+				Data: txData,
+			})
+		s.Require().NoError(err)
+
+		err = s.node.EvmRpcClient.SendTransaction(blankCtx, tx)
+		s.Require().NoError(err)
+
+		s.T().Log("Wait a few blocks so the tx won't be pending")
+		for range 5 {
+			_ = s.network.WaitForNextBlock()
+		}
+
+		s.T().Log("Assert: tx NOT pending")
+
 		wantCount := 0
 		pending, err := s.ethClient.PendingTransactionCount(blankCtx)
 		s.NoError(err)
 		s.Require().EqualValues(uint(wantCount), pending)
 
-		pendingTxs, err := s.ethAPI.GetPendingTransactions()
+		var pendingTxs []*rpc.EthTxJsonRPC
+		err = s.node.EvmRpcClient.Client().Call(
+			&pendingTxs, "eth_getPendingTransactions",
+		)
+		// pendingTxs, err := s.ethAPI.GetPendingTransactions()
 		s.NoError(err)
 		s.Require().Len(pendingTxs, wantCount)
 
 		// This query will succeed only if a receipt is found
-		_, err = s.ethClient.TransactionReceipt(blankCtx, txHash)
+		txHash := tx.Hash()
+		var res json.RawMessage
+		err = s.node.EvmRpcClient.Client().Call(
+			&res, "eth_getTransactionReceipt",
+			txHash,
+		)
 		s.Require().NoErrorf(err, "receipt for txHash: %s", txHash.Hex())
 
-		// This query succeeds if no receipt is found
-		_, err = s.ethAPI.GetTransactionReceipt(txHash)
+		var txReceipt rpcapi.TransactionReceipt
+		err = json.Unmarshal(res, &txReceipt)
 		s.Require().NoError(err)
+		s.Equal(txHash, txReceipt.TxHash)
 	}
 
 	{
 		weiToSend := evm.NativeToWei(big.NewInt(1)) // 1 unibi
 		s.T().Logf("Sending %d wei (sanity check)", weiToSend)
-		accResp, err := s.val.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
+		accResp, err := s.node.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
 			&evm.QueryEthAccountRequest{
 				Address: s.fundedAccEthAddr.Hex(),
 			})
@@ -541,20 +549,27 @@ func (s *NodeSuite) Test_SmartContract() {
 		s.Require().NoError(err)
 		txBz, err := tx.MarshalBinary()
 		s.NoError(err)
-		txHash, err := s.ethAPI.SendRawTransaction(txBz)
+
+		var res json.RawMessage
+		err = s.node.EvmRpcClient.Client().Call(
+			&res, "eth_sendRawTransaction",
+			fmt.Sprintf("0x%X", txBz),
+		)
 		s.Require().NoError(err)
 		_ = s.network.WaitForNextBlock()
 
-		txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, txHash)
+		var resTxHash gethcommon.Hash
+		err = json.Unmarshal(res, &resTxHash)
+		s.NoErrorf(err, "res: %s")
+		s.Equal(tx.Hash().Hex(), resTxHash.Hex())
+
+		txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, resTxHash)
 		s.Require().NoError(err)
 		s.NotNil(txReceipt)
-
 		txHashFromReceipt := txReceipt.TxHash
-		s.Equal(txHash, txHashFromReceipt)
+		s.Equal(resTxHash.Hex(), txHashFromReceipt.Hex())
 
-		// TODO: Test eth_getTransactionByHash using a JSON-RPC request at the
-		// endpoint directly.
-		tx, _, err = s.ethClient.TransactionByHash(blankCtx, txHash)
+		tx, _, err = s.ethClient.TransactionByHash(blankCtx, txHashFromReceipt)
 		s.NoError(err)
 		s.NotNil(tx)
 	}

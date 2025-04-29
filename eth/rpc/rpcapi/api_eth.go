@@ -314,7 +314,8 @@ func (e *EthAPI) GetProof(address common.Address,
 //
 // Allows developers to read data from the blockchain which includes executing
 // smart contracts. However, no data is published to the blockchain network.
-func (e *EthAPI) Call(args evm.JsonTxArgs,
+func (e *EthAPI) Call(
+	args evm.JsonTxArgs,
 	blockNrOrHash rpc.BlockNumberOrHash,
 	_ *rpc.StateOverride,
 ) (bz hexutil.Bytes, err error) {
