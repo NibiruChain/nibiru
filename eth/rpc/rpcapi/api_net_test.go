@@ -5,9 +5,9 @@ import (
 )
 
 func (s *NodeSuite) TestNetNamespace() {
-	api := s.val.EthRpc_NET
+	api := s.node.EthRpc_NET
 	s.Require().True(api.Listening())
 	s.EqualValues(
-		appconst.GetEthChainID(s.val.ClientCtx.ChainID).String(), api.Version())
+		appconst.GetEthChainID(s.node.ClientCtx.ChainID).String(), api.Version())
 	s.Equal(0, api.PeerCount())
 }

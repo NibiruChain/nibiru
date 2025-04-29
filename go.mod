@@ -266,7 +266,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
-	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 

@@ -674,8 +674,8 @@ github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL
 github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
 github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3 h1:MI3c8dJjWDYvhGlgKYexu8Gg9vuaYXFG40ulirlYbx0=
 github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.3/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
-github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2 h1:ck5YAdn2Fklelh8JfLzU9VwXWXmitkbI0ixyoXcD1U8=
-github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
+github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3 h1:vWBieiwll6sjQ4OTagJUXwtjw85Crfk3f7kAPik6BD8=
+github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
 github.com/NibiruChain/wasmd v0.44.0-nibiru h1:b+stNdbMFsl0+o4KedXyF83qRnEpB/jCiTGZZgv2h2U=
 github.com/NibiruChain/wasmd v0.44.0-nibiru/go.mod h1:inrbdsixQ0Kdu4mFUg1u7fn3XPOEkzqieGv0H/gR0ck=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=

@@ -146,9 +146,8 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 			return sdkioerrors.Wrap(err, "failed to start JSON-RPC server")
 		}
 
-		address := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)
-
-		val.JSONRPCClient, err = ethclient.Dial(address)
+		endpointEvmJsonRpc := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)
+		val.EvmRpcClient, err = ethclient.Dial(endpointEvmJsonRpc)
 		if err != nil {
 			return fmt.Errorf("failed to dial JSON-RPC at address %s: %w", val.AppConfig.JSONRPC.Address, err)
 		}
@@ -165,7 +164,6 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Expose typed methods for each namespace")
 		val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
-		val.EthRpc_WEB3 = rpcapi.NewImplWeb3API()
 
 		val.Ctx.Logger = logger // set back to normal setting
 	}

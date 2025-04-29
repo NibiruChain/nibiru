@@ -33,7 +33,13 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
-	blockMap, err := s.backend.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, true)
+	fullTx := true
+	var blockMap map[string]any
+	err := s.node.EvmRpcClient.Client().Call(
+		&blockMap, "eth_getBlockByHash",
+		*s.SuccessfulTxTransfer().BlockHash,
+		fullTx,
+	)
 	s.Require().NoError(err)
 	AssertBlockContents(s, blockMap)
 }
@@ -112,5 +118,8 @@ func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
 	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
 	s.Require().NotNil(blockMap["size"])
 	s.Require().NotNil(blockMap["nonce"])
-	s.Require().Equal(int64(blockMap["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	s.T().Logf("blockMap: %s", blockMap)
+	blockNumber, err := hexutil.DecodeBig(blockMap["number"].(string))
+	s.NoError(err)
+	s.Require().Equal(blockNumber.Int64(), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
