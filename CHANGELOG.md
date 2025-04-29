@@ -38,10 +38,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 
-- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
-- [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
+## v2.4.0
+
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
 - [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update
 to geth v1.14 with tracing updates and new StateDB methods.
@@ -50,17 +50,14 @@ to geth v1.14 with tracing updates and new StateDB methods.
    setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
   - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
    dependency and leverage new generics features added in Go 1.23+.
-- [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
-- [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
 - [#2289](https://github.com/NibiruChain/nibiru/pull/2289) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
 - [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
-- [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
-- [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
 - [#2296](https://github.com/NibiruChain/nibiru/pull/2296) - chore(ci): use shell script for generating changelog in releases
 - [#2297](https://github.com/NibiruChain/nibiru/pull/2297) - fix(evm): fix error handling for revert errors
 - [#2298](https://github.com/NibiruChain/nibiru/pull/2298) - fix(eth-rpc): clean up error propagation and descriptions in eth namespace
 - [#2300](https://github.com/NibiruChain/nibiru/pull/2300) - refactor(eth-rpc): combine rpc/backend and rpc/rpcapi since they essentially one package
 - [#2301](https://github.com/NibiruChain/nibiru/pull/2301) - fix(.github): glob patterns broken in nibiru-go filter for dorny/paths-filter
+- [#2306](https://github.com/NibiruChain/nibiru/pull/2306) - feat(evm): add v2.4.0 upgrade handler
 - [#2303](https://github.com/NibiruChain/nibiru/pull/2303) - test(eth/rpc/rpcapi): increase coverage of the rpcapi package using JSON-RPC calls
 
 ### Dependencies
@@ -68,7 +65,7 @@ to geth v1.14 with tracing updates and new StateDB methods.
 - Bump `golang.org/x/net` from 0.37.0 to 0.39.0. ([#2284](https://github.com/NibiruChain/nibiru/pull/2284))
 - Bump `github.com/golang-jwt/jwt/v4` from 4.5.1 to 4.5.2 ([#2294](https://github.com/NibiruChain/nibiru/pull/2294))
 
-## v2.3.0
+## [v2.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.3.0) - 2025-04-22
 
 - [#2242](https://github.com/NibiruChain/nibiru/pull/2242) - feat(tokenfactory): tx msg SudoSetDenomMetadata
 - [#2244](https://github.com/NibiruChain/nibiru/pull/2244) - refactor(test): update how tests are wired with `NewNibiruTestApp`
@@ -90,6 +87,12 @@ to geth v1.14 with tracing updates and new StateDB methods.
 - [#2265](https://github.com/NibiruChain/nibiru/pull/2265) - feat: add depinject wiring for x/inflation module
 - [#2266](https://github.com/NibiruChain/nibiru/pull/2266) - feat: add depinject wiring for x/evm module
 - [#2272](https://github.com/NibiruChain/nibiru/pull/2272) - feat: add depinject wiring for x/tokenfactory module
+- [#2271](https://github.com/NibiruChain/nibiru/pull/2271) - fix(ci): update tag-pattern for changelog step in releases
+- [#2270](https://github.com/NibiruChain/nibiru/pull/2270) - refactor(app): remove private keeper struct and transient/mem keys from app
+- [#2288](https://github.com/NibiruChain/nibiru/pull/2288) - chore(ci): add workflow to check for missing upgrade handler
+- [#2278](https://github.com/NibiruChain/nibiru/pull/2278) - chore: migrate to cosmossdk.io/mathLegacyDec and cosmossdk.io/math.Int
+- [#2293](https://github.com/NibiruChain/nibiru/pull/2293) - ci(release): pack nibid binary with no enclosing directory
+- [#2292](https://github.com/NibiruChain/nibiru/pull/2292) - fix: use tmp directory for pre-instantiating app
 
 ## [v2.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.2.0) - 2025-03-27
 
