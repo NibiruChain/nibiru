@@ -11,6 +11,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
+	clientcfg "github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -24,6 +25,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	rosettaCmd "github.com/cosmos/rosetta/cmd"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -98,24 +100,6 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig)
-
-	return rootCmd, encodingConfig
-}
-
-/*
-'initRootCmd' adds keybase, auxiliary RPC, query, and transaction (tx) child
-commands, then builds the rosetta root command given a protocol buffers
-serializer/deserializer.
-
-Args:
-
-	rootCmd: The root command called once in the 'main.go' of 'nibid'.
-	encodingConfig: EncodingConfig specifies the concrete encoding types to use
-	  for a given app. This is provided for compatibility between protobuf and
-	  amino implementations.
-*/
-func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	a := appCreator{}
 
 	rootCmd.AddCommand(
@@ -153,11 +137,18 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		server.NewEVMTxIndexCmd(),
 	)
 
-	// TODO add rosettaj
 	// add rosetta
-	// rootCmd.AddCommand(
-	//	server.RosettaCommand(
-	//		encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+
+	autoCliOpts := tempApp.AutoCliOpts()
+	initClientCtx, _ = clientcfg.ReadFromClientConfig(initClientCtx)
+	autoCliOpts.ClientCtx = initClientCtx
+
+	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
+		panic(err)
+	}
+
+	return rootCmd, encodingConfig
 }
 
 // Implements the servertypes.ModuleInitFlags interface
@@ -218,7 +209,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 	)
 
-	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return cmd
