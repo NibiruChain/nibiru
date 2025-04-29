@@ -18,6 +18,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	store "cosmossdk.io/store/types"
+	"cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -205,6 +206,7 @@ func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.Weig
 func init() {
 	appmodule.Register(&modulev1.Module{},
 		appmodule.Provide(ProvideModule),
+		appmodule.Provide(ProvideEthereumTxGetSigners),
 	)
 	appmodule.Register(&bankmodulev1.Module{},
 		appmodule.Provide(ProvideNibiruBankModule),
@@ -306,4 +308,8 @@ func ProvideModule(in EvmInputs) EvmOutputs {
 		Keeper: &k,
 		Module: m,
 	}
+}
+
+func ProvideEthereumTxGetSigners() signing.CustomGetSigner {
+	return evm.MsgEthereumTxCustomGetSigner
 }

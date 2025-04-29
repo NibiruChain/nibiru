@@ -102,9 +102,9 @@ func (k Keeper) ValidatorAccount(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	validator, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
-	if !found {
-		return nil, fmt.Errorf("validator not found for %s", consAddr.String())
+	validator, err := k.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
+	if err != nil {
+		return nil, fmt.Errorf("validator not found for %s: 5s", consAddr.String(), err)
 	}
 
 	nibiruAddr := sdk.AccAddress(validator.GetOperator())
