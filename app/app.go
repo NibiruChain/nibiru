@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -28,6 +30,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -37,6 +40,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -55,6 +59,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
@@ -193,7 +198,8 @@ type NibiruApp struct {
 
 	// keys to access the substores
 	// TODO(k-yang): remove once depinject is fully integrated
-	keys map[string]*storetypes.KVStoreKey
+	keys    map[string]*storetypes.KVStoreKey
+	memKeys map[string]*storetypes.MemoryStoreKey
 
 	AppKeepers // embed all module keepers
 
@@ -263,7 +269,8 @@ func NewNibiruApp(
 			depinject.Supply(
 				// supply the application options
 				appOpts,
-
+				// supply the logger
+				logger,
 				// ADVANCED CONFIGURATION
 
 				//
@@ -277,7 +284,7 @@ func NewNibiruApp(
 				// For providing a custom a base account type add it below.
 				// By default the auth module uses authtypes.ProtoBaseAccount().
 				//
-				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+				func() sdk.AccountI { return eth.ProtoBaseAccount() },
 
 				//
 				// MINT
@@ -301,7 +308,6 @@ func NewNibiruApp(
 		&app.StakingKeeper,
 		&app.DistrKeeper,
 		&app.crisisKeeper,
-		&app.capabilityKeeper,
 		&app.slashingKeeper,
 		&app.GovKeeper,
 		&app.upgradeKeeper,
@@ -330,12 +336,22 @@ func NewNibiruApp(
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		ibcwasmtypes.StoreKey,
+		capabilitytypes.StoreKey,
 
 		// nibiru x/ keys
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 	)
+
+	app.memKeys = storetypes.NewMemoryStoreKeys(
+		capabilitytypes.MemStoreKey,
+	)
 	for _, k := range app.keys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
+	}
+	for _, k := range app.memKeys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
 		}
@@ -640,4 +656,25 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 
 	staticServer := http.FileServer(statikFS)
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
+}
+
+// AutoCliOpts returns the autocli options for the app.
+func (app *NibiruApp) AutoCliOpts() autocli.AppOptions {
+	modules := make(map[string]appmodule.AppModule, 0)
+	for _, m := range app.ModuleManager.Modules {
+		if moduleWithName, ok := m.(module.HasName); ok {
+			moduleName := moduleWithName.Name()
+			if appModule, ok := moduleWithName.(appmodule.AppModule); ok {
+				modules[moduleName] = appModule
+			}
+		}
+	}
+
+	return autocli.AppOptions{
+		Modules:               modules,
+		ModuleOptions:         runtimeservices.ExtractAutoCLIOptions(app.ModuleManager.Modules),
+		AddressCodec:          authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+		ValidatorAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		ConsensusAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
+	}
 }

@@ -29,6 +29,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	icacontroller "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller"
@@ -94,6 +95,12 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 ) (wasmConfig wasmtypes.WasmConfig) {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	initSubspace(app.paramsKeeper)
+
+	app.capabilityKeeper = capabilitykeeper.NewKeeper(
+		app.appCodec,
+		app.keys[capabilitytypes.StoreKey],
+		app.memKeys[capabilitytypes.MemStoreKey],
+	)
 
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
@@ -195,6 +202,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	app.icaHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
