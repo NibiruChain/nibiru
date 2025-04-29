@@ -1,9 +1,11 @@
 package rpcapi_test
 
 import (
+	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
@@ -76,10 +78,25 @@ func (s *BackendSuite) TestDoCall() {
 		To:    &recipient,
 		Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 	}
+
 	txResponse, err := s.backend.DoCall(jsonTxArgs, rpc.EthPendingBlockNumber)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResponse)
-	s.Require().Greater(txResponse.GasUsed, uint64(0))
+	s.Require().GreaterOrEqual(txResponse.GasUsed, gethparams.TxGas)
+	txRespJsonBz, _ := json.Marshal(txResponse)
+	s.T().Logf("txResponse from Backend.DoCall on penging block number: %s\n", txRespJsonBz)
+
+	s.T().Log("eth_call via RPC with the same block number should query latest and properly propagate the true error")
+	var res json.RawMessage
+	blockNumber := rpc.EthPendingBlockNumber
+	err = s.node.EvmRpcClient.Client().Call(
+		&res, "eth_call",
+		jsonTxArgs,
+		rpc.BlockNumberOrHash{
+			BlockNumber: &blockNumber,
+		},
+	)
+	s.Require().ErrorContainsf(err, "insufficient balance for transfer", "res: %s", res)
 }
 
 func (s *BackendSuite) TestGasPrice() {
