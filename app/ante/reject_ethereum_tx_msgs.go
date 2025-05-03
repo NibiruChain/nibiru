@@ -9,8 +9,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// AnteDecoratorPreventEtheruemTxMsgs prevents invalid msg types from being executed
-type AnteDecoratorPreventEtheruemTxMsgs struct{}
+// AnteDecoratorPreventEthereumTxMsgs prevents invalid msg types from being executed
+type AnteDecoratorPreventEthereumTxMsgs struct{}
 
 // AnteHandle rejects messages that requires ethereum-specific authentication.
 // For example `MsgEthereumTx` requires fee to be deducted in the antehandler in
