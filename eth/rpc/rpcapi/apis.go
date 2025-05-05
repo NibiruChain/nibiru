@@ -58,7 +58,7 @@ func init() {
 				{
 					Namespace: NamespaceEth,
 					Version:   apiVersion,
-					Service:   NewImplEthAPI(ctx.Logger, evmBackend),
+					Service:   NewImplEthAPI(servercmtlog.CometLoggerWrapper{Logger: ctx.Logger}, evmBackend),
 					Public:    true,
 				},
 				{
