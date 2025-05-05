@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/docs"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -79,7 +81,6 @@ import (
 	"github.com/cosmos/ibc-go/v8/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
@@ -649,12 +650,12 @@ func (app *NibiruApp) GetTxConfig() client.TxConfig {
 
 // RegisterSwaggerAPI registers swagger route with API Server
 func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
-	statikFS, err := fs.New()
+	root, err := fs.Sub(docs.SwaggerUI, "swagger-ui")
 	if err != nil {
 		panic(err)
 	}
 
-	staticServer := http.FileServer(statikFS)
+	staticServer := http.FileServer(http.FS(root))
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
