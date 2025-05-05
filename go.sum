@@ -686,10 +686,10 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/NibiruChain/collections v0.50.0 h1:zjwZ17G1f/0hoKUeoljIQval0HERF8NmojfQYKEOymw=
 github.com/NibiruChain/collections v0.50.0/go.mod h1:u3NETehzjViSEZLmSjps0Akd8mWVfw3FXSh8lswf5PU=
-github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac h1:n95nhILCcV9m5BbCxmaDPKXhD/CD298caLbCIshEIfo=
-github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac/go.mod h1:gt14Meok2IDCjbDtjwkbUcgVNEpUBDN/4hg9cCUtLgw=
-github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250217040124-0d18d32081ac h1:5z+tlozAPjWiKU0iNTz9eajeZVAzB/GbAwxwRPvjkr0=
-github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250217040124-0d18d32081ac/go.mod h1:8DwVTz83/2PSI366FERGbWSH7hL6sB7HbYp8bqksNwM=
+github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250505091411-76d7096d17ec h1:afE874u3CwrIIJ9/l+SrJ8sPChZ61arZ5h8yezONYaU=
+github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250505091411-76d7096d17ec/go.mod h1:gt14Meok2IDCjbDtjwkbUcgVNEpUBDN/4hg9cCUtLgw=
+github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250505091411-76d7096d17ec h1:rJrQBiofKeqy6NXCSwhShfFs3PqMpOt6W90tHZKQhvI=
+github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250505091411-76d7096d17ec/go.mod h1:8DwVTz83/2PSI366FERGbWSH7hL6sB7HbYp8bqksNwM=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2 h1:ck5YAdn2Fklelh8JfLzU9VwXWXmitkbI0ixyoXcD1U8=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
 github.com/NibiruChain/wasmd v0.51.0-nibiru h1:qXaxYKiWAL67PR7Ug0vN5mD/S9qKJjg/38EHkSb3TPg=
@@ -1813,8 +1813,6 @@ github.com/protolambda/messagediff v1.4.0/go.mod h1:LboJp0EwIbJsePYpzh5Op/9G1/4m
 github.com/protolambda/zrnt v0.32.2/go.mod h1:A0fezkp9Tt3GBLATSPIbuY4ywYESyAuc/FFmPKg8Lqs=
 github.com/protolambda/ztyp v0.2.2/go.mod h1:9bYgKGqg3wJqT9ac1gI2hnVb0STQq7p/1lapqrqY1dU=
 github.com/prysmaticlabs/gohashtree v0.0.1-alpha.0.20220714111606-acbb2962fb48/go.mod h1:4pWaT30XoEx1j8KNJf3TV+E3mQkaufn7mf+jRNb/Fuk=
-github.com/rakyll/statik v0.1.7 h1:OF3QCZUuyPxuGEP7B4ypUa7sB/iHtqOTDYZXGM8KOdQ=
-github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Unghqrcc=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=

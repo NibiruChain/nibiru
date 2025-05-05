@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -14,7 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-var _ bankkeeper.Keeper = &NibiruBankKeeper{}
+var (
+	_ bankkeeper.Keeper         = &NibiruBankKeeper{}
+	_ bankkeeper.SchemaProvider = &NibiruBankKeeper{}
+)
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
@@ -331,4 +335,8 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 			}
 		},
 	)
+}
+
+func (k NibiruBankKeeper) GetSchema() collections.Schema {
+	return k.BaseKeeper.Schema
 }

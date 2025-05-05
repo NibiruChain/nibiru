@@ -38,7 +38,6 @@ require (
 	github.com/holiman/uint256 v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
-	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -54,6 +53,7 @@ require (
 )
 
 require (
+	cosmossdk.io/client/v2 v2.0.0-beta.1
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.1
 	cosmossdk.io/depinject v1.1.0
@@ -86,7 +86,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/storage v1.38.0 // indirect
-	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
 	cosmossdk.io/x/circuit v0.1.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -276,9 +275,9 @@ require (
 )
 
 replace (
-	cosmossdk.io/store => github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250217040124-0d18d32081ac
+	cosmossdk.io/store => github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250505091411-76d7096d17ec
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.51.0-nibiru
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250217040124-0d18d32081ac
+	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250505091411-76d7096d17ec
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2
 
