@@ -16,7 +16,6 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cometbft/cometbft/node"
@@ -86,15 +85,14 @@ type Validator struct {
 	// - rpc.Local
 	RPCClient cmtrpcclient.Client
 
-	JSONRPCClient       *ethclient.Client
+	EvmRpcClient        *ethclient.Client
 	EthRpcQueryClient   *ethrpc.QueryClient
-	EthRpcBackend       *backend.Backend
+	EthRpcBackend       *rpcapi.Backend
 	EthTxIndexer        eth.EVMTxIndexer
 	EthTxIndexerService *appserver.EVMTxIndexerService
 
-	EthRPC_ETH  *rpcapi.EthAPI
-	EthRpc_WEB3 *rpcapi.APIWeb3
-	EthRpc_NET  *rpcapi.NetAPI
+	EthRPC_ETH *rpcapi.EthAPI
+	EthRpc_NET *rpcapi.NetAPI
 
 	Logger Logger
 
@@ -272,7 +270,7 @@ func (val *Validator) AssertERC20Balance(
 		To:   &contract,
 		Data: input,
 	}
-	recipientBalanceBeforeBytes, err := val.JSONRPCClient.CallContract(context.Background(), msg, nil)
+	recipientBalanceBeforeBytes, err := val.EvmRpcClient.CallContract(context.Background(), msg, nil)
 	s.NoError(err)
 	balance := new(big.Int).SetBytes(recipientBalanceBeforeBytes)
 	s.Equal(expectedBalance.String(), balance.String())
@@ -282,7 +280,7 @@ func (node *Validator) BlockByEthTx(
 	ethTxHash gethcommon.Hash,
 ) (*cmtcore.ResultBlockResults, error) {
 	blankCtx := context.Background()
-	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
+	txReceipt, err := node.EvmRpcClient.TransactionReceipt(blankCtx, ethTxHash)
 	if err != nil {
 		return nil, err
 	}

@@ -279,7 +279,7 @@ replace (
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.51.0-nibiru
 	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250505091411-76d7096d17ec
 
-	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.2
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 

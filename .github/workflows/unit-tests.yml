@@ -20,15 +20,15 @@ jobs:
         with:
           filters: |
             nibiru-go:
-              - "app/**.go"
-              - "cmd/**.go"
-              - "eth/**.go"
-              - "gosdk/**.go"
-              - "x/**.go"
-              - "**.proto"
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
               - "go.mod"
               - "go.sum"
-              - "contrib/docker/*"
+              - "contrib/docker-compose/*"
 
       - name: skip-tests
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
@@ -80,15 +80,15 @@ jobs:
         with:
           filters: |
             nibiru-go:
-              - "app/**.go"
-              - "cmd/**.go"
-              - "eth/**.go"
-              - "gosdk/**.go"
-              - "x/**.go"
-              - "**.proto"
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
               - "go.mod"
               - "go.sum"
-              - "contrib/docker/*"
+              - "contrib/docker-compose/*"
 
       - name: "Set up Go"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
