@@ -184,7 +184,11 @@ func init() {
 			{
 				Name: "runtime",
 				Config: appconfig.WrapAny(&runtimev1alpha1.Module{
-					AppName:       "Nibiru",
+					AppName: "Nibiru",
+					// NOTE: upgrade module is required to be prioritized
+					PreBlockers: []string{
+						upgradetypes.ModuleName,
+					},
 					BeginBlockers: orderedModuleNames,
 					EndBlockers:   orderedModuleNames,
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
