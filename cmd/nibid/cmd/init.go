@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/go-bip39"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
 	pkgerrors "github.com/pkg/errors"
@@ -133,7 +132,6 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			// add 08-wasm to AllowedClients
 			ibcState := ibctypes.DefaultGenesisState()
-			ibcState.ClientGenesis.Params.AllowedClients = append(ibcState.ClientGenesis.Params.AllowedClients, ibcwasmtypes.Wasm)
 			appGenState[ibcexported.ModuleName] = cdc.MustMarshalJSON(ibcState)
 
 			appState, err := json.MarshalIndent(appGenState, "", " ")
