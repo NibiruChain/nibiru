@@ -3,7 +3,6 @@ package keeper
 import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -62,6 +61,5 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 // and burns them on behalf of the admin of respective denoms, and sends to the
 // relevant address.
 func (k Keeper) CreateModuleAccount(ctx sdk.Context) {
-	moduleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter, authtypes.Burner)
-	k.accountKeeper.SetModuleAccount(ctx, moduleAcc)
+	k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
