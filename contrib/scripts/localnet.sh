@@ -142,12 +142,13 @@ fi
 
 # nibid config
 echo_info "Updating nibid config..."
-$BINARY config keyring-backend test
-$BINARY config chain-id $CHAIN_ID
-$BINARY config broadcast-mode sync
-$BINARY config output json
-$BINARY config node "http://localhost:26657"
-$BINARY config # Prints config.
+echo $CHAIN_ID
+$BINARY config set client chain-id $CHAIN_ID
+$BINARY config set client keyring-backend test
+$BINARY config set client broadcast-mode sync
+$BINARY config set client output json
+$BINARY config set client node "http://localhost:26657"
+# $BINARY config # Prints config.
 
 # Enable API Server
 echo_info "config/app.toml: Enabling API server"
