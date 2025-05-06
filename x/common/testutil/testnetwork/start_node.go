@@ -43,7 +43,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	app := cfg.AppConstructor(*val)
 	cmtApp := sdkserver.NewCometABCIWrapper(app)
 
-	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
+	genDocProvider := server.GenDocProvider(tmCfg)
 	tmNode, err := node.NewNode(
 		tmCfg,
 		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
@@ -151,7 +151,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		)
 
 		val.Logger.Log("Expose typed methods for each namespace")
-		val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
+		val.EthRPC_ETH = rpcapi.NewImplEthAPI(servercmtlog.CometLoggerWrapper{Logger: val.Ctx.Logger}, val.EthRpcBackend)
 
 		val.Ctx.Logger = logger // set back to normal setting
 	}
