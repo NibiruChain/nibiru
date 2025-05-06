@@ -227,6 +227,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	}
 
 	wmha := wasmext.MsgHandlerArgs{
+		Cdc:              app.appCodec,
 		Router:           app.MsgServiceRouter(),
 		Ics4Wrapper:      app.ibcFeeKeeper,
 		ChannelKeeper:    app.ibcKeeper.ChannelKeeper,
