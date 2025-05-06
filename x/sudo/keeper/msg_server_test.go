@@ -18,8 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-func setup() (*app.NibiruApp, sdk.Context) {
-	return testapp.NewNibiruTestAppAndContext()
+func setup(t *testing.T) (*app.NibiruApp, sdk.Context) {
+	return testapp.NewNibiruTestAppAndContext(t.TempDir())
 }
 
 func TestGenesis(t *testing.T) {
@@ -66,7 +66,7 @@ func TestGenesis(t *testing.T) {
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Setup
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 
 			// InitGenesis
 			if testCase.panic {
@@ -146,7 +146,7 @@ func TestSudo_AddContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _ = setup()
+			_, _ = setup(t)
 			root := testutil.AccAddress().String()
 			sudoers := keeper.Sudoers{
 				Root:      root,
@@ -164,7 +164,7 @@ func TestSudo_AddContracts(t *testing.T) {
 }
 
 func TestMsgServer_ChangeRoot(t *testing.T) {
-	app, ctx := setup()
+	app, ctx := setup(t)
 
 	_, err := app.SudoKeeper.Sudoers.Get(ctx)
 	require.NoError(t, err)
@@ -323,7 +323,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
@@ -432,7 +432,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")

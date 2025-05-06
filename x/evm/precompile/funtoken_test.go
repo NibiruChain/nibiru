@@ -79,7 +79,7 @@ func TestFailToPackABI(t *testing.T) {
 }
 
 func TestWhoAmI(t *testing.T) {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(t.TempDir())
 
 	callWhoAmI := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
 		fmt.Printf("arg: %s", arg)
@@ -117,7 +117,7 @@ func TestWhoAmI(t *testing.T) {
 }
 
 func (s *FuntokenSuite) TestHappyPath() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("Create FunToken mapping and ERC20")
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
@@ -257,7 +257,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
 	randomAcc := testutil.AccAddress()
 
@@ -358,7 +358,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 }
 
 func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("create evmObj")
 	evmObj, _ := deps.NewEVM()
@@ -505,7 +505,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// 	- burn cosmos token
 	// 	- unescrow erc20 token
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()
@@ -713,7 +713,7 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 }
 
 func (s *FuntokenSuite) TestGetErc20Address() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "unibi" // Example bank denom
 
 	s.T().Log("Setup: Create FunToken mapping for unibi")

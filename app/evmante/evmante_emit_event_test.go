@@ -40,7 +40,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewEthEmitEventDecorator(deps.App.AppKeepers.EvmKeeper)
 

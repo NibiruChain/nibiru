@@ -29,7 +29,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 		{
 			name: "happy: deploy contract, sufficient gas limit",
 			scenario: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 				ethAcc := deps.Sender
 
 				// Leftover gas fee is refunded within EthereumTx from the FeeCollector
@@ -78,7 +78,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 		{
 			name: "sad: deploy contract, exceed gas limit",
 			scenario: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 				ethAcc := deps.Sender
 
 				s.T().Log("create eth tx msg, default create contract gas")
@@ -112,7 +112,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 }
 
 func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	ethAcc := deps.Sender
 
 	// Leftover gas fee is refunded within EthereumTx from the FeeCollector
@@ -184,7 +184,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 	}
 
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		ethAcc := deps.Sender
 
 		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
@@ -235,7 +235,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 }
 
 func (s *Suite) TestEthereumTx_ABCI() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,

@@ -27,7 +27,7 @@ func TestWasmExtSuite(t *testing.T) {
 // WasmVM to EVM call pattern is not yet supported. This test verifies the
 // Nibiru's [wasmkeeper.Option] function as expected.
 func (s *Suite) TestEvmFilter() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	// wk := wasmkeeper.NewDefaultPermissionKeeper(deps.App.WasmKeeper)
 	wasmMsgHandler := wasmext.WasmMessageHandler(deps.App.WasmMsgHandlerArgs)
 

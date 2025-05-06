@@ -46,7 +46,7 @@ func TestGenmsgInGenesis(t *testing.T) {
 		},
 	)
 
-	app, _ := testapp.NewNibiruTestApp(appGenesis)
+	app, _ := testapp.NewNibiruTestApp(t.TempDir(), appGenesis)
 	ctx := app.NewContext(false)
 
 	balance, err := app.BankKeeper.Balance(ctx, &banktypes.QueryBalanceRequest{

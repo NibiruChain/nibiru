@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Suite) TestTransferWei() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,

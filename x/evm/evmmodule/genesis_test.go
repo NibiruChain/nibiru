@@ -33,7 +33,7 @@ func TestKeeperSuite(t *testing.T) {
 // - verifies that contracts are in place and user balances match
 // - verifies that fungible token is in place and the balance is correct
 func (s *Suite) TestExportInitGenesis() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	erc20Contract := embeds.SmartContract_TestERC20
 	fromUser := deps.Sender.EthAddr
 	toUserA := gethcommon.HexToAddress("0xAE8A5F44A9b55Ae6D2c9C228253E8fAfb837d2F2")
@@ -94,7 +94,7 @@ func (s *Suite) TestExportInitGenesis() {
 	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 
 	// Init genesis from the exported state
-	deps = evmtest.NewTestDeps()
+	deps = evmtest.NewTestDeps(s.T().TempDir())
 	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
 	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 

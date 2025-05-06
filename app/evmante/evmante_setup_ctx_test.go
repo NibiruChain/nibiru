@@ -10,7 +10,7 @@ import (
 )
 
 func (s *TestSuite) TestEthSetupContextDecorator() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	stateDB := deps.NewStateDB()
 	anteDec := evmante.NewEthSetUpContextDecorator(deps.App.EvmKeeper)
 

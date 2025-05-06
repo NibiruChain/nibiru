@@ -201,7 +201,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.AppKeepers.EvmKeeper)
 

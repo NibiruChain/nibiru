@@ -65,7 +65,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.AppKeepers.EvmKeeper)
 

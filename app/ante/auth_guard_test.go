@@ -114,7 +114,7 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			anteDec := ante.AnteDecoratorAuthzGuard{}
 
 			txBuilder, err := sdkclienttx.Factory{}.

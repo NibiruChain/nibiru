@@ -87,7 +87,7 @@ func (s *Suite) TestGasMeter() {
 }
 
 func (s *Suite) TestBlockGasLimit() {
-	newCtx := func() sdk.Context { return evmtest.NewTestDeps().Ctx }
+	newCtx := func() sdk.Context { return evmtest.NewTestDeps(s.T().TempDir()).Ctx }
 	tests := []struct {
 		name         string
 		setupContext func() sdk.Context

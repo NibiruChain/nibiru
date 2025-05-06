@@ -18,7 +18,7 @@ func TestModuleTestSuite(t *testing.T) {
 }
 
 func (s *ModuleTestSuite) TestAppModule() {
-	bapp, ctx := testapp.NewNibiruTestAppAndContext()
+	bapp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	appModule := module.NewAppModule(
 		bapp.TokenFactoryKeeper,
 		bapp.AccountKeeper,

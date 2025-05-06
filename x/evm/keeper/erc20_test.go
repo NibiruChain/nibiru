@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Suite) TestERC20Calls() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "ibc/btc"
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address

@@ -29,7 +29,7 @@ func (h *MockHooks) BeforeEpochStart(ctx sdk.Context, identifier string, epochNu
 func TestAfterEpochEnd(t *testing.T) {
 	hooks := new(MockHooks)
 
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	identifier := "testID"
 	epochNumber := uint64(10)
 
@@ -42,7 +42,7 @@ func TestAfterEpochEnd(t *testing.T) {
 func TestBeforeEpochStart(t *testing.T) {
 	hooks := new(MockHooks)
 
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	identifier := "testID"
 	epochNumber := uint64(10)
 

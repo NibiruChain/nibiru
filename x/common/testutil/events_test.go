@@ -9,7 +9,7 @@ import (
 )
 
 func (s *TestSuite) TestEventsUtils() {
-	bapp, ctx := testapp.NewNibiruTestAppAndContext()
+	bapp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 
 	// Events on the ctx before we broadcast any txs
 	var beforeEvents sdk.Events = ctx.EventManager().Events()

@@ -128,7 +128,7 @@ func (s *TestSuite) TestModuleAddressEVM() {
 
 	// EVM addr module acc and EVM address should be connected
 	// EVM module should have mint perms
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	{
 		resp, err := deps.EvmKeeper.EthAccount(sdk.WrapSDKContext(deps.Ctx), &evm.QueryEthAccountRequest{
 			Address: evmModuleAddr.Hex(),

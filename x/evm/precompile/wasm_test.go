@@ -39,7 +39,7 @@ func TestWasmSuite(t *testing.T) {
 }
 
 func (s *WasmSuite) TestInstantiate() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	test.SetupWasmContracts(&deps, &s.Suite)
@@ -76,7 +76,7 @@ func (s *WasmSuite) TestInstantiate() {
 }
 
 func (s *WasmSuite) TestExecute() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
@@ -151,7 +151,7 @@ func (s *WasmSuite) TestExecute() {
 }
 
 func (s *WasmSuite) TestExecuteMulti() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
@@ -171,7 +171,7 @@ func (s *WasmSuite) TestExecuteMulti() {
 }
 
 func (s *WasmSuite) TestQueryRaw() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -211,7 +211,7 @@ func (s *WasmSuite) TestQueryRaw() {
 }
 
 func (s *WasmSuite) TestQuerySmart() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -382,7 +382,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 	abi := embeds.SmartContract_Wasm.ABI
 	for _, tc := range testcases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 
 			contractInput, err := abi.Pack(
 				string(tc.methodName),
@@ -413,7 +413,7 @@ type WasmExecuteMsg struct {
 }
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -553,7 +553,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // TestExecuteMultiPartialExecution ensures that no state changes occur if any message
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
@@ -612,7 +612,8 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 // - Test contract funds: 9 NIBI
 // - Alice: 1 NIBI
 func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
+	fmt.Println("wow")
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[2] // bank_transfer.wasm
@@ -622,9 +623,10 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 		&deps,
 		embeds.SmartContract_TestDirtyStateAttack4,
 	)
+	fmt.Println("deploy resp : ", deployResp.ContractAddr)
 	s.Require().NoError(err)
 	testContractAddr := deployResp.ContractAddr
-
+	fmt.Println("testtta log")
 	s.Run("Send 10 NIBI to test contract manually", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
@@ -661,6 +663,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 		)
+		fmt.Println("call contract with input : ", err)
 		s.Require().NoError(err)
 
 		balanceAlice := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, evm.EVMBankDenom)
@@ -686,7 +689,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 // - Staked NIBI from wasm contract: 5 NIBI
 // - Wasm contract: 0 NIBI
 func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[3] // staking.wasm

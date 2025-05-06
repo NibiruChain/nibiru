@@ -165,7 +165,7 @@ func (s *Suite) TestQueryEvmAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -277,7 +277,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -352,7 +352,7 @@ func (s *Suite) TestQueryStorage() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -411,7 +411,7 @@ func (s *Suite) TestQueryCode() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -433,7 +433,7 @@ func (s *Suite) TestQueryCode() {
 }
 
 func (s *Suite) TestQueryParams() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	want := evm.DefaultParams()
 	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
 	s.NoError(err)
@@ -495,7 +495,7 @@ func (s *Suite) TestQueryEthCall() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -573,7 +573,7 @@ func (s *Suite) TestQueryBalance() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -612,7 +612,7 @@ func (s *Suite) TestQueryBaseFee() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -733,7 +733,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -796,7 +796,7 @@ func (s *Suite) TestTraceTx() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -876,7 +876,7 @@ func (s *Suite) TestTraceBlock() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -974,7 +974,7 @@ func (s *Suite) TestTraceCall() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
@@ -1067,7 +1067,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}

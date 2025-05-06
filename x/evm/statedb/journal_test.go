@@ -24,7 +24,7 @@ import (
 )
 
 func (s *Suite) TestCommitRemovesDirties() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	deployResp, err := evmtest.DeployContract(
@@ -53,7 +53,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 }
 
 func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	stateDB := evmObj.StateDB.(*statedb.StateDB)
 
@@ -80,7 +80,7 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 }
 
 func (s *Suite) TestContractCallsAnotherContract() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	stateDB := evmObj.StateDB.(*statedb.StateDB)
 
@@ -162,7 +162,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 }
 
 func (s *Suite) TestJournalReversion() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,

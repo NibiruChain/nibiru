@@ -25,7 +25,7 @@ import (
 )
 
 func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	s.Run("Compute contract address. FindERC20 should fail", func() {
 		evmObj, _ := deps.NewEVM()
 		metadata, err := deps.EvmKeeper.FindERC20Metadata(
@@ -194,7 +194,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 }
 
 func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	alice := evmtest.NewEthPrivAcc()
 
@@ -356,7 +356,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 // - Alice: 20 NIBI
 // - Module account: 0 NIBI escrowed
 func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	bankDenom := evm.EVMBankDenom
 
@@ -538,7 +538,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 // - Alice: 1 WNIBI, 9 NIBI
 // - Module account: 1 NIBI escrowed (which Alice holds as 1 WNIBI)
 func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -656,7 +656,7 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 // - Charles: 0 NIBI
 // - Module account: 10 NIBI escrowed (which Test contract holds as 10 WNIBI)
 func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -778,7 +778,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 // - Bob: 0 NIBI
 // - Module account: 10 NIBI escrowed (which Test contract holds as 10 WNIBI)
 func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)

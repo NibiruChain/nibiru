@@ -58,7 +58,7 @@ func (s *OracleSuite) TestOracle_FailToPackABI() {
 }
 
 func (s *OracleSuite) TestOracle_HappyPath() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	runQuery := func(ctx sdk.Context) (
 		resp *evm.MsgEthereumTxResponse,
 		err error,

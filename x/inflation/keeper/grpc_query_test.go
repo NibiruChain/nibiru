@@ -22,7 +22,7 @@ type QueryServerSuite struct {
 }
 
 func (s *QueryServerSuite) SetupSuite() {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	s.nibiruApp = nibiruApp
 	s.ctx = ctx
 }
