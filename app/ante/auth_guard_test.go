@@ -118,7 +118,7 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 			anteDec := ante.AnteDecoratorAuthzGuard{}
 
 			txBuilder, err := sdkclienttx.Factory{}.
-				WithChainID(s.ctx.ChainID()).
+				WithChainID(s.clientCtx.ChainID).
 				WithTxConfig(deps.App.GetTxConfig()).
 				BuildUnsignedTx(tc.txMsg())
 			s.Require().NoError(err)
