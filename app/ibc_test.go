@@ -25,7 +25,8 @@ SetupNibiruTestingApp returns the TestingApp and default genesis state used to
 	initialize the testing app.
 */
 func newNibiruTestApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	return testapp.NewNibiruTestApp(app.GenesisState{})
+	t := testing.T{}
+	return testapp.NewNibiruTestApp(t.TempDir(), app.GenesisState{})
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.
