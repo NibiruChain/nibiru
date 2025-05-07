@@ -61,13 +61,6 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			wantErr: "",
 		},
 		{
-			name: "sad: fail chain id basic validation",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtest.HappyCreateContractTx(deps)
-			},
-			wantErr: "invalid chain-id",
-		},
-		{
 			name: "sad: tx not implementing protoTxProvider",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)

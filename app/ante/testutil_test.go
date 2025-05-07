@@ -34,7 +34,7 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	suite.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
+	suite.app, _ = testapp.NewNibiruTestApp(suite.T().TempDir(), app.GenesisState{})
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true)
 	suite.ctx = ctx

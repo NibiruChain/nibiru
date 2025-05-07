@@ -83,16 +83,6 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
 	}
 
-	// We'll need a RPC client if the validator exposes a gRPC or REST endpoint.
-	if val.APIAddress != "" || val.AppConfig.GRPC.Enable {
-		val.ClientCtx = val.ClientCtx.
-			WithClient(val.RPCClient)
-
-		app.RegisterTxService(val.ClientCtx)
-		app.RegisterTendermintService(val.ClientCtx)
-		app.RegisterNodeService(val.ClientCtx, val.AppConfig.Config)
-	}
-
 	if val.AppConfig.GRPC.Enable {
 		grpcSrv, err := servergrpc.NewGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
 		if err != nil {
