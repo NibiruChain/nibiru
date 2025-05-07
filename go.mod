@@ -275,9 +275,9 @@ require (
 )
 
 replace (
-	cosmossdk.io/store => github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250505091411-76d7096d17ec
+	cosmossdk.io/store => github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250506085932-446d68f3e818
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.51.0-nibiru
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250505091411-76d7096d17ec
+	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250506085932-446d68f3e818
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3
 

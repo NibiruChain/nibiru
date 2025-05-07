@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	_ bankkeeper.Keeper         = &NibiruBankKeeper{}
-	_ bankkeeper.SchemaProvider = &NibiruBankKeeper{}
+	_ bankkeeper.Keeper          = &NibiruBankKeeper{}
+	_ bankkeeper.SchemaProvider  = &NibiruBankKeeper{}
+	_ bankkeeper.HasAddressCodec = &NibiruBankKeeper{}
 )
 
 type NibiruBankKeeper struct {
@@ -339,4 +341,8 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 
 func (k NibiruBankKeeper) GetSchema() collections.Schema {
 	return k.BaseKeeper.Schema
+}
+
+func (k NibiruBankKeeper) AddressCodec() address.Codec {
+	return k.BaseKeeper.AddressCodec()
 }
