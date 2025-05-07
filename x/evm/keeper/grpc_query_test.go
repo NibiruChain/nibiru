@@ -218,16 +218,17 @@ func (s *Suite) TestQueryValidatorAccount() {
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
 				s.Require().NoError(err)
-				valAddrBz := valopers[0].GetOperator()
+				valAddr, err := sdk.ValAddressFromBech32(valopers[0].GetOperator())
+				s.Require().NoError(err)
 				_, err = sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
-				consAddr := sdk.ConsAddress(valAddrBz)
+				consAddr := sdk.ConsAddress(valAddr)
 
 				req = &evm.QueryValidatorAccountRequest{
 					ConsAddress: consAddr.String(),
 				}
 				wantResp = &evm.QueryValidatorAccountResponse{
-					AccountAddress: sdk.AccAddress(valAddrBz).String(),
+					AccountAddress: sdk.AccAddress(valopers[0].GetOperator()).String(),
 					Sequence:       0,
 					AccountNumber:  0,
 				}
@@ -242,7 +243,8 @@ func (s *Suite) TestQueryValidatorAccount() {
 				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
 				s.Require().NoError(err)
 				valAddrBz := valopers[0].GetOperator()
-				consAddr := sdk.ConsAddress(valAddrBz)
+				valAddress, err := sdk.ValAddressFromBech32(valopers[0].GetOperator())
+				consAddr := sdk.ConsAddress(valAddress)
 
 				s.T().Log(
 					"Send coins to validator to register in the account keeper.")
