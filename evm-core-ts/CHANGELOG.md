@@ -5,7 +5,7 @@ the `@nibiruchain/evm-core` package on `npm`.
 
 ## [0.0.x]
 
-- v0.0.8: [#2xxx](https://gittub.com/NibiruChain/nibiru/pull/2xxx) - feat:
+- v0.0.8: [#2309](https://gittub.com/NibiruChain/nibiru/pull/2309) - feat:
 Publish new version for `@nibiruchain/solidity@0.0.5`, which includes
 `ERC20MinterWithMetadataUpdates` and new additions to the `FunToken` precompile.
 - v0.0.7: [#2238](https://gittub.com/NibiruChain/nibiru/pull/2238) - fix: Set `wnibiCaller` to use a fixed address for mainnet as its default argument.
