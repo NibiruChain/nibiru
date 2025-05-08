@@ -15,8 +15,9 @@ just gen-embeds
 
 From inside the "Nibiru/x/evm/embeds" directory
 ```bash
-npm install
-npx hardhat compile
+yarn --check-files
+yarn hardhat compile && echo "🟩 yarn hardhat compile succeeded!" || echo "Run
+failed"
 ```
 
 ## Precompile Solidity Documentation
