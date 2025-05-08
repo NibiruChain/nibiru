@@ -49,6 +49,7 @@ export interface IFunTokenInterface extends Interface {
       | "balance"
       | "bankBalance"
       | "bankMsgSend"
+      | "getErc20Address"
       | "sendToBank"
       | "sendToEvm"
       | "whoAmI",
@@ -69,6 +70,10 @@ export interface IFunTokenInterface extends Interface {
     values: [string, string, BigNumberish],
   ): string
   encodeFunctionData(
+    functionFragment: "getErc20Address",
+    values: [string],
+  ): string
+  encodeFunctionData(
     functionFragment: "sendToBank",
     values: [AddressLike, BigNumberish, string],
   ): string
@@ -81,6 +86,10 @@ export interface IFunTokenInterface extends Interface {
   decodeFunctionResult(functionFragment: "balance", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "bankBalance", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "bankMsgSend", data: BytesLike): Result
+  decodeFunctionResult(
+    functionFragment: "getErc20Address",
+    data: BytesLike,
+  ): Result
   decodeFunctionResult(functionFragment: "sendToBank", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "sendToEvm", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "whoAmI", data: BytesLike): Result
@@ -177,6 +186,8 @@ export interface IFunToken extends BaseContract {
     "nonpayable"
   >
 
+  getErc20Address: TypedContractMethod<[bankDenom: string], [string], "view">
+
   sendToBank: TypedContractMethod<
     [erc20: AddressLike, amount: BigNumberish, to: string],
     [bigint],
@@ -233,6 +244,9 @@ export interface IFunToken extends BaseContract {
     [boolean],
     "nonpayable"
   >
+  getFunction(
+    nameOrSignature: "getErc20Address",
+  ): TypedContractMethod<[bankDenom: string], [string], "view">
   getFunction(
     nameOrSignature: "sendToBank",
   ): TypedContractMethod<

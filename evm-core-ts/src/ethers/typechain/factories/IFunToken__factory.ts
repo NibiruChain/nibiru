@@ -162,6 +162,25 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "bankDenom",
+        type: "string",
+      },
+    ],
+    name: "getErc20Address",
+    outputs: [
+      {
+        internalType: "address",
+        name: "erc20Address",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "erc20",
         type: "address",
