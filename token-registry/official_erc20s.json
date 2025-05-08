@@ -26,6 +26,24 @@
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/001_stnibi-evm.png"
   },
   {
+    "contractAddr": "0x0829F361A05D993d5CEb035cA6DF3446b060970b",
+    "displayName": "USDC (Stargate)",
+    "symbol": "USDC",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png"
+  },
+  {
+    "contractAddr": "0x43F2376D5D03553aE72F4A8093bbe9de4336EB08",
+    "displayName": "USDT (Stargate)",
+    "symbol": "USDT",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/006_usdt.svg"
+  },
+  {
+    "contractAddr": "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555",
+    "displayName": "WETH (Stargate)",
+    "symbol": "WETH",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/005_eth.svg"
+  },
+  {
     "contractAddr": "0x7168634Dd1ee48b1C5cC32b27fD8Fc84E12D00E6",
     "displayName": "Astrovault (Wrapped)",
     "symbol": "AXV",
