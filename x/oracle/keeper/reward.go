@@ -46,7 +46,7 @@ func (k Keeper) rewardWinners(
 		validator, err := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
 		// TODO: Handle error
 		if err != nil {
-			return
+			panic(err)
 		}
 		if validator == nil {
 			continue

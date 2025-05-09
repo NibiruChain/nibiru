@@ -155,9 +155,9 @@ func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerform
 			continue
 		}
 
-		valAddr := validator.GetOperator()
-		validatorPerformances[valAddr] = types.NewValidatorPerformance(
-			validator.GetConsensusPower(powerReduction), sdk.ValAddress(valAddr),
+		valAddr := sdk.ValAddress(iterator.Value())
+		validatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
+			validator.GetConsensusPower(powerReduction), valAddr,
 		)
 		i++
 	}
