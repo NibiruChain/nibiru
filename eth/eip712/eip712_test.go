@@ -87,9 +87,11 @@ func (suite *EIP712TestSuite) SetupTest() {
 	// the deprecated method legacytx.StdSignBytes
 	legacytx.RegressionTestingAminoCodec = app.LegacyAmino()
 	cfg := simappparams.EncodingConfig{
+		Codec:             app.AppCodec(),
 		Amino:             app.LegacyAmino(),
 		InterfaceRegistry: app.InterfaceRegistry(),
 	}
+	suite.encCfg = cfg
 
 	eip712.SetEncodingConfig(cfg)
 }

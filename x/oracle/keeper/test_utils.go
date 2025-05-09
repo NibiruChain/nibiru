@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -150,8 +151,9 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, nil, nil)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), metrics.NewNoOpMetrics())
 	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC(), Height: 1}, false, log.NewNopLogger())
+
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
@@ -199,9 +201,9 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		log.NewNopLogger(),
 	)
-
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
-	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
+	err := bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
+	require.NoError(t, err)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -232,26 +234,11 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	distrKeeper.Params.Set(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
 
-	feeCollectorAcc := authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
-	notBondedPool := authtypes.NewEmptyModuleAccount(stakingtypes.NotBondedPoolName, authtypes.Burner, authtypes.Staking)
-	bondPool := authtypes.NewEmptyModuleAccount(stakingtypes.BondedPoolName, authtypes.Burner, authtypes.Staking)
-	distrAcc := authtypes.NewEmptyModuleAccount(distrtypes.ModuleName)
-	oracleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter)
-
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
-	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
-
-	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
-	accountKeeper.SetModuleAccount(ctx, bondPool)
-	accountKeeper.SetModuleAccount(ctx, notBondedPool)
-	accountKeeper.SetModuleAccount(ctx, distrAcc)
-	accountKeeper.SetModuleAccount(ctx, oracleAcc)
-	accountKeeper.SetModuleAccount(ctx, sudoAcc)
 
 	for _, addr := range Addrs {
-		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
 		err := bankKeeper.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, InitCoins)
 		require.NoError(t, err)
 	}
@@ -292,7 +279,9 @@ func NewTestMsgCreateValidator(
 	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
 		address.String(), pubKey, sdk.NewCoin(denoms.NIBI, amt),
-		stakingtypes.Description{}, commission, sdkmath.OneInt(),
+		stakingtypes.Description{
+			Moniker: "moniker",
+		}, commission, sdkmath.OneInt(),
 	)
 
 	return msg

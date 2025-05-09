@@ -5,6 +5,7 @@ import (
 	context "context"
 	"math"
 	"math/rand"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -70,7 +71,7 @@ func (sk DummyStakingKeeper) Validators() []MockValidator {
 // Validator nolint
 func (sk DummyStakingKeeper) Validator(ctx context.Context, address sdk.ValAddress) (stakingtypes.ValidatorI, error) {
 	for _, validator := range sk.validators {
-		if sdk.ValAddress(validator.GetOperator()).Equals(address) {
+		if strings.EqualFold(validator.GetOperator(), (address.String())) {
 			return validator, nil
 		}
 	}
