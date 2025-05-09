@@ -9,24 +9,21 @@ import (
 	"strings"
 	"testing"
 
-	dbm "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
+	evidencetypes "cosmossdk.io/x/evidence/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -34,6 +31,7 @@ import (
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -266,8 +264,8 @@ func TestAppImportExport(t *testing.T) {
 		}
 	}()
 
-	ctxA := oldApp.NewContext(true, tmproto.Header{Height: oldApp.LastBlockHeight()})
-	ctxB := newApp.NewContext(true, tmproto.Header{Height: oldApp.LastBlockHeight()})
+	ctxA := oldApp.NewContext(true)
+	ctxB := newApp.NewContext(true)
 	newApp.ModuleManager.InitGenesis(ctxB, oldApp.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
 
@@ -303,7 +301,7 @@ func TestAppImportExport(t *testing.T) {
 		storeA := ctxA.KVStore(skp.A)
 		storeB := ctxB.KVStore(skp.B)
 
-		failedKVAs, failedKVBs := sdk.DiffKVStores(storeA, storeB, skp.Prefixes)
+		failedKVAs, failedKVBs := simtestutil.DiffKVStores(storeA, storeB, skp.Prefixes)
 		require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare")
 
 		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
@@ -387,7 +385,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	vesting.RegisterInterfaces(newApp.InterfaceRegistry())
 	require.Equal(t, "Nibiru", newApp.Name())
 
-	newApp.InitChain(abci.RequestInitChain{
+	newApp.InitChain(&abci.RequestInitChain{
 		ChainId:       SimAppChainID,
 		AppStateBytes: exported.AppState,
 	})

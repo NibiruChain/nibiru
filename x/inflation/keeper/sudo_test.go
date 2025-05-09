@@ -71,7 +71,7 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 }
 
 func (s *SuiteInflationSudo) TestEditInflationParams() {
-	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiru, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 
 	// Change to all non-defaults to test EditInflationParams as a setter .
 	epochsPerPeriod := sdkmath.NewInt(1_234)
@@ -118,7 +118,7 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 }
 
 func (s *SuiteInflationSudo) TestToggleInflation() {
-	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiru, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 
 	err := nibiru.InflationKeeper.Sudo().ToggleInflation(ctx, true, sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT))
 	s.Require().NoError(err)

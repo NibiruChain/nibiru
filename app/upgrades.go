@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -12,7 +12,6 @@ import (
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_0_1"

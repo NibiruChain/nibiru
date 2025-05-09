@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
@@ -247,7 +248,7 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 			}
 
 			if voteThreshold, _ := cmd.Flags().GetString("vote-threshold"); voteThreshold != "" {
-				voteThresholdDec, err := sdk.NewDecFromStr(voteThreshold)
+				voteThresholdDec, err := math.LegacyNewDecFromStr(voteThreshold)
 				if err != nil {
 					return err
 				}
@@ -256,7 +257,7 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 			}
 
 			if rewardBand, _ := cmd.Flags().GetString("reward-band"); rewardBand != "" {
-				rewardBandDec, err := sdk.NewDecFromStr(rewardBand)
+				rewardBandDec, err := math.LegacyNewDecFromStr(rewardBand)
 				if err != nil {
 					return err
 				}
@@ -265,7 +266,7 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 			}
 
 			if slashFraction, _ := cmd.Flags().GetString("slash-fraction"); slashFraction != "" {
-				slashFractionDec, err := sdk.NewDecFromStr(slashFraction)
+				slashFractionDec, err := math.LegacyNewDecFromStr(slashFraction)
 				if err != nil {
 					return err
 				}
@@ -278,7 +279,7 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 			}
 
 			if minValidPerWindow, _ := cmd.Flags().GetString("min-valid-per-window"); minValidPerWindow != "" {
-				minValidPerWindowDec, err := sdk.NewDecFromStr(minValidPerWindow)
+				minValidPerWindowDec, err := math.LegacyNewDecFromStr(minValidPerWindow)
 				if err != nil {
 					return err
 				}
@@ -296,7 +297,7 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 			}
 
 			if validatorFeeRatio, _ := cmd.Flags().GetString("validator-fee-ratio"); validatorFeeRatio != "" {
-				validatorFeeRatioDec, err := sdk.NewDecFromStr(validatorFeeRatio)
+				validatorFeeRatioDec, err := math.LegacyNewDecFromStr(validatorFeeRatio)
 				if err != nil {
 					return err
 				}

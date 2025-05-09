@@ -6,8 +6,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -25,7 +25,8 @@ SetupNibiruTestingApp returns the TestingApp and default genesis state used to
 	initialize the testing app.
 */
 func newNibiruTestApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	return testapp.NewNibiruTestApp(app.GenesisState{})
+	t := testing.T{}
+	return testapp.NewNibiruTestApp(t.TempDir(), app.GenesisState{})
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.

@@ -727,9 +727,6 @@ func (p precompileFunToken) bankMsgSend(
 		ToAddress:   toBech32.String(),
 		Amount:      coin,
 	}
-	if err := bankMsg.ValidateBasic(); err != nil {
-		return nil, err
-	}
 	if _, err := bankkeeper.NewMsgServerImpl(p.evmKeeper.Bank).Send(
 		sdk.WrapSDKContext(ctx), bankMsg,
 	); err != nil {

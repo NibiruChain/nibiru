@@ -9,11 +9,11 @@ import (
 
 // Tendermint/cosmos-sdk full-node start flags
 const (
-	WithTendermint = "with-tendermint"
-	Address        = "address"
-	Transport      = "transport"
-	TraceStore     = "trace-store"
-	CPUProfile     = "cpu-profile"
+	WithComet  = "with-comet"
+	Address    = "address"
+	Transport  = "transport"
+	TraceStore = "trace-store"
+	CPUProfile = "cpu-profile"
 	// The type of database for application and snapshots databases
 	AppDBBackend = "app-db-backend"
 )

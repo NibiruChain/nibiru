@@ -40,7 +40,7 @@ func TestQuerySudoers(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 
 			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
 
@@ -57,7 +57,7 @@ func TestQuerySudoers(t *testing.T) {
 	}
 
 	t.Run("nil request should error", func(t *testing.T) {
-		nibiru, ctx := setup()
+		nibiru, ctx := setup(t)
 		var req *types.QuerySudoersRequest = nil
 		querier := keeper.NewQuerier(nibiru.SudoKeeper)
 		_, err := querier.QuerySudoers(

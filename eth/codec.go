@@ -4,6 +4,7 @@ package eth
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
@@ -30,7 +31,7 @@ const (
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	// proto name: "cosmos.auth.v1beta1.AccountI"
 	registry.RegisterImplementations(
-		(*authtypes.AccountI)(nil),
+		(*sdk.AccountI)(nil),
 		&EthAccount{},
 		// Also impl by: [
 		//   &authtypes.BaseAccount{},

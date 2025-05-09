@@ -14,7 +14,7 @@ import (
 )
 
 func TestMsgServer_EditOracleParams(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+	app, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	goCtx := sdk.WrapSDKContext(ctx)
 
 	msgServer := keeper.NewMsgServerImpl(app.OracleKeeper, app.SudoKeeper)

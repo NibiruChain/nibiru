@@ -13,7 +13,7 @@ import (
 )
 
 func TestMsgToggleInflation(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+	app, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
 
 	params := app.InflationKeeper.GetParams(ctx)
@@ -42,7 +42,7 @@ func TestMsgToggleInflation(t *testing.T) {
 }
 
 func TestMsgEditInflationParams(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+	app, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
 
 	params := app.InflationKeeper.GetParams(ctx)

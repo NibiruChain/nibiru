@@ -11,14 +11,17 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdkioerrors "cosmossdk.io/errors"
+	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	protov2 "google.golang.org/protobuf/proto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
@@ -26,6 +29,8 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	evmapi "github.com/NibiruChain/nibiru/v2/api/eth/evm/v1"
 )
 
 var (
@@ -37,6 +42,17 @@ var (
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
+
+// message type and route constants
+const (
+	// TypeMsgEthereumTx defines the type string of an Ethereum transaction
+	TypeMsgEthereumTx = "ethereum_tx"
+)
+
+var MsgEthereumTxCustomGetSigner = txsigning.CustomGetSigner{
+	MsgType: protov2.MessageName(&evmapi.MsgEthereumTx{}),
+	Fn:      EthereumTxGetSigners,
+}
 
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
@@ -186,6 +202,10 @@ func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
 
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	return nil, errors.New("not implemented")
+}
+
 // GetSigners returns the expected signers for an Ethereum transaction message.
 // For such a message, there should exist only a single 'signer'.
 //
@@ -203,6 +223,18 @@ func (msg *MsgEthereumTx) GetSigners() []sdk.AccAddress {
 
 	signer := sdk.AccAddress(sender.Bytes())
 	return []sdk.AccAddress{signer}
+}
+
+func EthereumTxGetSigners(msg protov2.Message) ([][]byte, error) {
+	msgEthereumTx, ok := msg.(*evmapi.MsgEthereumTx)
+	if !ok {
+		return nil, fmt.Errorf("invalid type, expected MsgConvertERC20 and got %T", msg)
+	}
+
+	// The sender on the msg is a hex address
+	sender := common.HexToAddress(msgEthereumTx.From)
+
+	return [][]byte{sender.Bytes()}, nil
 }
 
 // GetSignBytes returns the Amino bytes of an Ethereum transaction message used
@@ -230,7 +262,7 @@ func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.
 	tx := msg.AsTransaction()
 	txHash := ethSigner.Hash(tx)
 
-	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes())
+	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes(), signing.SignMode_SIGN_MODE_TEXTUAL)
 	if err != nil {
 		return err
 	}
@@ -343,7 +375,7 @@ func (msg *MsgEthereumTx) UnmarshalBinary(b []byte) error {
 }
 
 // BuildTx builds the Cosmos-SDK [signing.Tx] from ethereum tx ([MsgEthereumTx])
-func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.Tx, error) {
+func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (authsigning.Tx, error) {
 	builder, ok := b.(authtx.ExtensionOptionsTxBuilder)
 	if !ok {
 		return nil, errors.New("unsupported builder")

@@ -39,7 +39,7 @@ func TestKeeperTestSuite(t *testing.T) {
 // and ctx.
 func (s *TestSuite) SetupTest() {
 	s.encConfig = app.MakeEncodingConfig()
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	s.app = nibiruApp
 	s.ctx = ctx
 	s.keeper = s.app.TokenFactoryKeeper

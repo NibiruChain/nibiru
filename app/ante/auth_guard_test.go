@@ -114,11 +114,11 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			anteDec := ante.AnteDecoratorAuthzGuard{}
 
 			txBuilder, err := sdkclienttx.Factory{}.
-				WithChainID(s.ctx.ChainID()).
+				WithChainID(s.clientCtx.ChainID).
 				WithTxConfig(deps.App.GetTxConfig()).
 				BuildUnsignedTx(tc.txMsg())
 			s.Require().NoError(err)

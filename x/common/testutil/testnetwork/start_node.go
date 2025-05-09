@@ -1,33 +1,33 @@
 package testnetwork
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"time"
 
 	sdkioerrors "cosmossdk.io/errors"
-	db "github.com/cometbft/cometbft-db"
+	"cosmossdk.io/log"
+	db "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
-	"github.com/cosmos/cosmos-sdk/server/api"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
-	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 
-	"github.com/cometbft/cometbft/libs/log"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	pvm "github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 )
 
 func startNodeAndServers(cfg Config, val *Validator) error {
 	logger := val.Ctx.Logger
-	evmServerCtxLogger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	evmServerCtxLogger := sdkserver.NewDefaultContext()
 	tmCfg := val.Ctx.Config
 	tmCfg.Instrumentation.Prometheus = false
 
@@ -41,17 +41,18 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	app := cfg.AppConstructor(*val)
+	cmtApp := sdkserver.NewCometABCIWrapper(app)
 
-	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
+	genDocProvider := server.GenDocProvider(tmCfg)
 	tmNode, err := node.NewNode(
 		tmCfg,
 		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		proxy.NewLocalClientCreator(cmtApp),
 		genDocProvider,
-		node.DefaultDBProvider,
+		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
-		logger.With("module", val.Moniker),
+		servercmtlog.CometLoggerWrapper{Logger: logger.With("module", val.Moniker)},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to construct Node: %w", err)
@@ -62,7 +63,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	val.tmNode = tmNode
-	val.tmNode.Logger = logger
+	val.tmNode.Logger = servercmtlog.CometLoggerWrapper{Logger: logger}
 
 	if val.RPCAddress != "" {
 		val.RPCClient = local.New(tmNode)
@@ -82,44 +83,21 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
 	}
 
-	if val.APIAddress != "" {
-		apiSrv := api.New(val.ClientCtx, logger.With("module", "api-server"))
-		app.RegisterAPIRoutes(apiSrv, val.AppConfig.API)
-
-		errCh := make(chan error)
-
-		go func() {
-			if err := apiSrv.Start(val.AppConfig.Config); err != nil {
-				errCh <- err
-			}
-		}()
-
-		select {
-		case err := <-errCh:
+	if val.AppConfig.GRPC.Enable {
+		grpcSrv, err := servergrpc.NewGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
+		if err != nil {
 			return err
-		case <-time.After(srvtypes.ServerStartTime): // assume server started successfully
 		}
 
-		val.api = apiSrv
-	}
-
-	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
+		err = servergrpc.StartGRPCServer(context.Background(), logger.With(log.ModuleKey, "grpc-server"), val.AppConfig.GRPC, grpcSrv)
 		if err != nil {
 			return err
 		}
 
 		val.grpc = grpcSrv
-
-		if val.AppConfig.GRPCWeb.Enable {
-			val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, val.AppConfig.Config)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
-	val.Ctx.Logger = evmServerCtxLogger
+	val.Ctx.Logger = evmServerCtxLogger.Logger
 
 	useEthJsonRPC := val.AppConfig.JSONRPC.Enable && val.AppConfig.JSONRPC.Address != ""
 	if useEthJsonRPC {
@@ -163,7 +141,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		)
 
 		val.Logger.Log("Expose typed methods for each namespace")
-		val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
+		val.EthRPC_ETH = rpcapi.NewImplEthAPI(servercmtlog.CometLoggerWrapper{Logger: val.Ctx.Logger}, val.EthRpcBackend)
 
 		val.Ctx.Logger = logger // set back to normal setting
 	}

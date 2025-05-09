@@ -3,7 +3,6 @@ package action
 import (
 	"time"
 
-	"github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -15,7 +14,7 @@ type increaseBlockNumberBy struct {
 }
 
 func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx, types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.EndBlocker(ctx)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + i.numBlocks)
 
@@ -70,7 +69,7 @@ func SetBlockNumber(blockNumber int64) Action {
 type moveToNextBlock struct{}
 
 func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlock(types.RequestEndBlock{})
+	app.EndBlocker(ctx)
 	app.Commit()
 
 	newHeader := tmproto.Header{
@@ -78,13 +77,10 @@ func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 		Time:   ctx.BlockTime().Add(time.Second * 5),
 	}
 
-	app.BeginBlock(types.RequestBeginBlock{
-		Header: newHeader,
-	})
+	app.BeginBlocker(ctx)
 
 	return app.NewContext(
 		false,
-		newHeader,
 	).WithBlockTime(newHeader.Time), nil
 }
 
@@ -97,7 +93,7 @@ type moveToNextBlockWithDuration struct {
 }
 
 func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.EndBlocker(ctx)
 	app.Commit()
 
 	newHeader := tmproto.Header{
@@ -105,13 +101,10 @@ func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sd
 		Time:   ctx.BlockTime().Add(m.blockDuration),
 	}
 
-	app.BeginBlock(types.RequestBeginBlock{
-		Header: newHeader,
-	})
+	app.BeginBlocker(ctx)
 
 	return app.NewContext(
 		false,
-		newHeader,
 	).WithBlockTime(newHeader.Time), nil
 }
 
@@ -126,7 +119,7 @@ type moveToNextBlockWithTime struct {
 }
 
 func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.EndBlocker(ctx)
 	app.Commit()
 
 	newHeader := tmproto.Header{
@@ -134,13 +127,10 @@ func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 		Time:   m.blockTime,
 	}
 
-	app.BeginBlock(types.RequestBeginBlock{
-		Header: newHeader,
-	})
+	app.BeginBlocker(ctx)
 
 	return app.NewContext(
 		false,
-		newHeader,
 	).WithBlockTime(newHeader.Time), nil
 }
 
