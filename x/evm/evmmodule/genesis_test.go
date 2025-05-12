@@ -5,7 +5,9 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -95,7 +97,9 @@ func (s *Suite) TestExportInitGenesis() {
 
 	// Init genesis from the exported state
 	deps = evmtest.NewTestDeps(s.T().TempDir())
-	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
+	logger := log.NewTestLogger(s.T())
+	ctx := sdk.NewContext(deps.App.CommitMultiStore(), cmtproto.Header{}, true, logger)
+	deps.App.AccountKeeper.InitGenesis(ctx, *authGenesisState)
 	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	// Verify erc20 balances for users A, B and sender

@@ -8,12 +8,14 @@ import (
 	"cosmossdk.io/log"
 	db "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -79,8 +81,24 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		// Add the tendermint queries service in the gRPC router.
 		app.RegisterTendermintService(val.ClientCtx)
+		app.RegisterNodeService(val.ClientCtx, val.AppConfig.Config)
 
 		val.EthRpc_NET = rpcapi.NewImplNetAPI(val.ClientCtx)
+	}
+
+	ctx := context.Background()
+	ctx, val.cancelFn = context.WithCancel(ctx)
+	val.errGroup, ctx = errgroup.WithContext(ctx)
+
+	if val.AppConfig.API.Enable && val.APIAddress != "" {
+		apiSrv := api.New(val.ClientCtx, logger.With("module", "api-server"), val.grpc)
+		app.RegisterAPIRoutes(apiSrv, val.AppConfig.API)
+
+		val.errGroup.Go(func() error {
+			return apiSrv.Start(ctx, val.AppConfig.Config)
+		})
+
+		val.api = apiSrv
 	}
 
 	if val.AppConfig.GRPC.Enable {
@@ -89,10 +107,9 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 			return err
 		}
 
-		err = servergrpc.StartGRPCServer(context.Background(), logger.With(log.ModuleKey, "grpc-server"), val.AppConfig.GRPC, grpcSrv)
-		if err != nil {
-			return err
-		}
+		val.errGroup.Go(func() error {
+			return servergrpc.StartGRPCServer(ctx, logger.With(log.ModuleKey, "grpc-server"), val.AppConfig.GRPC, grpcSrv)
+		})
 
 		val.grpc = grpcSrv
 	}

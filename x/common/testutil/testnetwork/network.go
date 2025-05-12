@@ -81,7 +81,7 @@ func NewAppConstructor(chainID string) AppConstructor {
 			dbm.NewMemDB(),
 			nil,
 			true,
-			sims.EmptyAppOptions{},
+			sims.NewAppOptionsWithFlagHome(val.Ctx.Config.RootDir),
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 			baseapp.SetChainID(chainID),
@@ -91,23 +91,28 @@ func NewAppConstructor(chainID string) AppConstructor {
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeEncodingConfig()
+	dir, err := os.MkdirTemp("", "simapp")
+	if err != nil {
+		panic(fmt.Sprintf("failed creating temporary directory: %v", err))
+	}
 
 	chainID := "chain-" + cmtrand.NewRand().Str(6)
+	app := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, sims.NewAppOptionsWithFlagHome(dir), baseapp.SetChainID(chainID))
 	return Config{
+		Codec:             app.AppCodec(),
+		TxConfig:          app.GetTxConfig(),
+		LegacyAmino:       app.LegacyAmino(),
+		InterfaceRegistry: app.InterfaceRegistry(),
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		AppConstructor:    NewAppConstructor(chainID),
+		GenesisState:      appGenesis,
 		BondDenom:         denoms.NIBI,
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		ChainID:           chainID,
 		CleanupDir:        true,
-		Codec:             encCfg.Codec,
 		EnableTMLogging:   false, // super noisy
-		GenesisState:      appGenesis,
-		InterfaceRegistry: encCfg.InterfaceRegistry,
 		KeyringOptions:    []keyring.Option{},
-		LegacyAmino:       encCfg.Amino,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
 		NumValidators:     1,
 		PruningStrategy:   types.PruningOptionNothing,
@@ -117,7 +122,6 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 			sdk.NewCoin(appconst.BondDenom, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
 		TimeoutCommit: time.Second / 2,
-		TxConfig:      encCfg.TxConfig,
 	}
 }
 
@@ -259,7 +263,6 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		serverCtxLogger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			log.NewLogger(os.Stdout)
 			serverCtxLogger = log.NewLogger(os.Stdout)
 		}
 		ctx.Logger = serverCtxLogger

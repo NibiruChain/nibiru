@@ -147,6 +147,8 @@ func (s *TestSuite) FundRoot(root Account) {
 		root.addr, funds, val, feeDenom,
 	)
 	s.NoError(err)
+	err = s.network.WaitForNextBlock()
+	s.Require().NoError(err)
 }
 
 func (s *TestSuite) AddRootToKeyring(root Account) {
@@ -243,7 +245,6 @@ func (s *TestSuite) Test_ZCmdChangeRoot() {
 	sudoers, err := testnetwork.QuerySudoers(val.ClientCtx)
 	s.NoError(err)
 	initialRoot := sudoers.Sudoers.Root
-
 	newRoot := testutil.AccAddress()
 	_, err = s.network.ExecTxCmd(
 		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
