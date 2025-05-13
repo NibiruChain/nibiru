@@ -119,7 +119,6 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 
 	// RegsisFeeShare
 	for _, contractAddress := range contractAddressList {
-
 		msg := &devgastypes.MsgRegisterFeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
@@ -131,7 +130,6 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 	}
 
 	s.Run("Total", func() {
-
 		resp, err := s.queryClient.FeeSharesByWithdrawer(s.ctx,
 			&devgastypes.QueryFeeSharesByWithdrawerRequest{
 				WithdrawerAddress: withdrawer.String(),

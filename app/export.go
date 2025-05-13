@@ -173,7 +173,7 @@ func (app *NibiruApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 	/* Handle staking state. */
 
 	// iterate through redelegations, reset creation height
-	app.StakingKeeper.IterateRedelegations(ctx, func(_ int64, red stakingtypes.Redelegation) (stop bool) {
+	err = app.StakingKeeper.IterateRedelegations(ctx, func(_ int64, red stakingtypes.Redelegation) (stop bool) {
 		for i := range red.Entries {
 			red.Entries[i].CreationHeight = 0
 		}
@@ -183,6 +183,9 @@ func (app *NibiruApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 		}
 		return false
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	// iterate through unbonding delegations, reset creation height
 	err = app.StakingKeeper.IterateUnbondingDelegations(ctx, func(_ int64, ubd stakingtypes.UnbondingDelegation) (stop bool) {

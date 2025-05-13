@@ -430,11 +430,6 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 	return m.Params.Validate()
 }
 
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
 func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
@@ -526,11 +521,6 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgCreateFunToken) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
 // GetSigners returns the expected signers for a MsgConvertCoinToEvm message.
 func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
@@ -546,9 +536,4 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 		return fmt.Errorf("empty to_eth_addr")
 	}
 	return nil
-}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }

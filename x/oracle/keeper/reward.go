@@ -53,7 +53,11 @@ func (k Keeper) rewardWinners(
 		}
 
 		rewardPortion, _ := totalRewards.MulDec(sdkmath.LegacyNewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
-		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
+		err = k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
+		// TODO: Handle error
+		if err != nil {
+			panic(err)
+		}
 		distributedRewards = distributedRewards.Add(rewardPortion...)
 	}
 

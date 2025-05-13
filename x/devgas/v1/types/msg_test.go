@@ -30,7 +30,6 @@ func (suite *MsgsTestSuite) SetupTest() {
 }
 
 func (suite *MsgsTestSuite) TestMsgRegisterFeeShareGetters() {
-	msgInvalid := MsgRegisterFeeShare{}
 	msg := NewMsgRegisterFeeShare(
 		suite.contract,
 		suite.deployer,
@@ -38,7 +37,6 @@ func (suite *MsgsTestSuite) TestMsgRegisterFeeShareGetters() {
 	)
 	suite.Require().Equal(RouterKey, msg.Route())
 	suite.Require().Equal(TypeMsgRegisterFeeShare, msg.Type())
-	suite.Require().NotNil(msgInvalid.GetSignBytes())
 	suite.Require().NotNil(msg.GetSigners())
 }
 
@@ -112,14 +110,12 @@ func (suite *MsgsTestSuite) TestMsgRegisterFeeShareNew() {
 }
 
 func (suite *MsgsTestSuite) TestMsgCancelFeeShareGetters() {
-	msgInvalid := MsgCancelFeeShare{}
 	msg := NewMsgCancelFeeShare(
 		suite.contract,
 		sdk.AccAddress(suite.deployer.Bytes()),
 	)
 	suite.Require().Equal(RouterKey, msg.Route())
 	suite.Require().Equal(TypeMsgCancelFeeShare, msg.Type())
-	suite.Require().NotNil(msgInvalid.GetSignBytes())
 	suite.Require().NotNil(msg.GetSigners())
 }
 
@@ -167,7 +163,6 @@ func (suite *MsgsTestSuite) TestMsgCancelFeeShareNew() {
 }
 
 func (suite *MsgsTestSuite) TestMsgUpdateFeeShareGetters() {
-	msgInvalid := MsgUpdateFeeShare{}
 	msg := NewMsgUpdateFeeShare(
 		suite.contract,
 		sdk.AccAddress(suite.deployer.Bytes()),
@@ -175,7 +170,6 @@ func (suite *MsgsTestSuite) TestMsgUpdateFeeShareGetters() {
 	)
 	suite.Require().Equal(RouterKey, msg.Route())
 	suite.Require().Equal(TypeMsgUpdateFeeShare, msg.Type())
-	suite.Require().NotNil(msgInvalid.GetSignBytes())
 	suite.Require().NotNil(msg.GetSigners())
 }
 

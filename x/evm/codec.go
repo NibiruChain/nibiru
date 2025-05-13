@@ -14,8 +14,6 @@ import (
 
 var (
 	amino = codec.NewLegacyAmino()
-	// AminoCdc is a amino codec created to support amino JSON compatible msgs.
-	AminoCdc = codec.NewAminoCodec(amino)
 )
 
 // NOTE: This is required for the GetSignBytes function

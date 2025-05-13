@@ -265,5 +265,4 @@ func (s *Suite) TestEthereumTx_ABCI() {
 
 	s.EqualValuesf(21000, gasInfo.GasUsed, "%d", gasInfo.GasUsed)
 	s.EqualValuesf(21000, gasInfo.GasWanted, "%d", gasInfo.GasWanted)
-
 }

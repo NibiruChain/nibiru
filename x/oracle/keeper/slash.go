@@ -52,7 +52,11 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 					panic(err)
 				}
 				k.Logger(ctx).Info("oracle slash", "validator", consAddr, "fraction", slashFraction.String())
-				k.slashingKeeper.Jail(ctx, consAddr)
+				err = k.slashingKeeper.Jail(ctx, consAddr)
+				if err != nil {
+					// TODO: Handle error
+					panic(err)
+				}
 			}
 		}
 

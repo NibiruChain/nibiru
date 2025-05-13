@@ -16,9 +16,6 @@ var (
 	// The actual codec used for serialization should be provided to
 	// modules/erc20 and defined at the application level.
 	ModuleCdc = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-
-	// AminoCdc is a amino codec created to support amino JSON compatible msgs.
-	AminoCdc = codec.NewAminoCodec(amino)
 )
 
 const (

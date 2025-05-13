@@ -232,7 +232,6 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-
 			if !tc.shouldErr {
 				resp, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)
@@ -330,7 +329,6 @@ func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-
 			if !tc.shouldErr {
 				_, err := s.devgasMsgServer.UpdateFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)
@@ -396,7 +394,6 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-
 			if !tc.shouldErr {
 				resp, err := s.devgasMsgServer.CancelFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)

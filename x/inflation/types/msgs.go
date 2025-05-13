@@ -5,14 +5,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 // ensure Msg interface compliance at compile time
 var (
-	_ legacytx.LegacyMsg = &MsgEditInflationParams{}
-	_ legacytx.LegacyMsg = &MsgToggleInflation{}
-	_ legacytx.LegacyMsg = &MsgBurn{}
+	_ sdk.Msg = &MsgEditInflationParams{}
+	_ sdk.Msg = &MsgToggleInflation{}
+	_ sdk.Msg = &MsgBurn{}
 )
 
 // oracle message types
@@ -27,11 +26,6 @@ func (msg MsgEditInflationParams) Route() string { return RouterKey }
 
 // Type implements legacytx.LegacyMsg
 func (msg MsgEditInflationParams) Type() string { return TypeMsgEditInflationParams }
-
-// GetSignBytes implements legacytx.LegacyMsg
-func (msg MsgEditInflationParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
 
 // GetSigners implements sdk.Msg
 func (msg MsgEditInflationParams) GetSigners() []sdk.AccAddress {
@@ -85,11 +79,6 @@ func (msg MsgToggleInflation) Route() string { return RouterKey }
 // Type implements legacytx.LegacyMsg
 func (msg MsgToggleInflation) Type() string { return TypeMsgToggleInflation }
 
-// GetSignBytes implements legacytx.LegacyMsg
-func (msg MsgToggleInflation) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
 // GetSigners implements sdk.Msg
 func (msg MsgToggleInflation) GetSigners() []sdk.AccAddress {
 	feeder, err := sdk.AccAddressFromBech32(msg.Sender)
@@ -114,11 +103,6 @@ func (msg MsgBurn) Route() string { return RouterKey }
 
 // Type implements legacytx.LegacyMsg
 func (msg MsgBurn) Type() string { return TypeMsgBurn }
-
-// GetSignBytes implements legacytx.LegacyMsg
-func (msg MsgBurn) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
 
 // GetSigners implements legacytx.LegacyMsg
 func (msg MsgBurn) GetSigners() []sdk.AccAddress {
