@@ -15,11 +15,23 @@ just gen-embeds
 
 From inside the "Nibiru/x/evm/embeds" directory
 ```bash
-npm install
-npx hardhat compile
+yarn --check-files
+yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
 ```
 
-## Precompile Solidity Documentation
+## Publishing
+
+After incrementing the version number in the `package.json`:
+
+```bash
+just gen-embeds # if you've not already
+npm publish --access public
+```
+
+This suggests a hyperlink to authorize yourself on `npm` and then publish a
+new version of the [`@nibiruchain/solidity` package](https://nibiru.fi/docs/dev/evm/npm-solidity.html).
+
+## Solidity Documentation for the Nibiru Precompiles
 
 Example of a well-documented contract: [[Uniswap/v4-core/.../IHooks.sol](https://github.com/Uniswap/v4-core/blob/3407bce4b39869fe41ad5ec724b2df308c34900f/src/interfaces/IHooks.sol)]
 
