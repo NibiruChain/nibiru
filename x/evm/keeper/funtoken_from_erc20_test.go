@@ -60,7 +60,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 	s.Run("sad: insufficient funds to create FunToken mapping", func() {
 		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -79,7 +79,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		resp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -137,7 +137,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 		))
 
 		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -148,7 +148,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 	s.Run("sad: CreateFunToken for the ERC20: invalid sender", func() {
 		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgCreateFunToken{
 				FromErc20: &erc20Addr,
 			},
@@ -158,7 +158,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 
 	s.Run("sad: CreateFunToken for the ERC20: missing erc20 address", func() {
 		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgCreateFunToken{
 				FromErc20:     nil,
 				FromBankDenom: "",
@@ -192,7 +192,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 
 	s.T().Log("CreateFunToken for the ERC20")
 	resp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromErc20: &eth.EIP55Addr{
 				Address: deployResp.ContractAddr,
@@ -275,7 +275,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 
 	s.Run("happy: send Bank tokens back to erc20", func() {
 		deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
-		_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+		_, err = deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
@@ -345,7 +345,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 	})
 
 	s.T().Log("sad: send too many Bank tokens back to erc20")
-	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,
@@ -388,7 +388,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20MaliciousName() {
 	))
 
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromErc20: &erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
@@ -427,7 +427,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 
 	s.T().Log("happy: CreateFunToken for ERC20 with malicious transfer")
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromErc20: &erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
@@ -485,7 +485,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 
 	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromErc20: &erc20Addr,
 			Sender:    deps.Sender.NibiruAddr.String(),
@@ -554,7 +554,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 
 	s.T().Log("CreateFunToken for the ERC20 with fee")
 	resp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromErc20: &eth.EIP55Addr{
 				Address: deployResp.ContractAddr,
@@ -599,7 +599,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 	s.Require().Equal(sdkmath.NewInt(90), deps.App.BankKeeper.GetBalance(deps.Ctx, randomAcc, bankDemon).Amount)
 
 	s.T().Log("send Bank tokens back to erc20")
-	_, err = deps.EvmKeeper.ConvertCoinToEvm(sdk.WrapSDKContext(deps.Ctx),
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 		&evm.MsgConvertCoinToEvm{
 			ToEthAddr: eth.EIP55Addr{
 				Address: deps.Sender.EthAddr,

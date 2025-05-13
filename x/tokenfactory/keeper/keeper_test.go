@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -48,26 +47,23 @@ func (s *TestSuite) SetupTest() {
 }
 
 func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
-	goCtx := sdk.WrapSDKContext(s.ctx)
 	switch txMsg := txMsg.(type) {
 	case *tftypes.MsgCreateDenom:
-		_, err = s.app.TokenFactoryKeeper.CreateDenom(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.CreateDenom(s.ctx, txMsg)
 	case *tftypes.MsgMint:
-		_, err = s.app.TokenFactoryKeeper.Mint(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.Mint(s.ctx, txMsg)
 	case *tftypes.MsgBurn:
-		_, err = s.app.TokenFactoryKeeper.Burn(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.Burn(s.ctx, txMsg)
 	case *tftypes.MsgChangeAdmin:
-		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(s.ctx, txMsg)
 	case *tftypes.MsgSetDenomMetadata:
-		_, err = s.app.TokenFactoryKeeper.SetDenomMetadata(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.SetDenomMetadata(s.ctx, txMsg)
 	case *tftypes.MsgSudoSetDenomMetadata:
-		_, err = s.app.TokenFactoryKeeper.SudoSetDenomMetadata(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.SudoSetDenomMetadata(s.ctx, txMsg)
 	case *tftypes.MsgBurnNative:
-		_, err = s.app.TokenFactoryKeeper.BurnNative(goCtx, txMsg)
+		_, err = s.app.TokenFactoryKeeper.BurnNative(s.ctx, txMsg)
 	default:
 		err = fmt.Errorf("unknown message type: %t", txMsg)
 	}
 	return err
 }
-
-func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

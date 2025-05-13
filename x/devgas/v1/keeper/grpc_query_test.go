@@ -31,7 +31,6 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 	// Register FeeShares
 	var feeShares []devgastypes.FeeShare
 	for _, contractAddress := range contractAddressList {
-		goCtx := sdk.WrapSDKContext(s.ctx)
 		msg := &devgastypes.MsgRegisterFeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
@@ -46,7 +45,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 
 		feeShares = append(feeShares, feeShare)
 
-		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
+		_, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, msg)
 		s.Require().NoError(err)
 	}
 
@@ -55,8 +54,8 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 		req := &devgastypes.QueryFeeSharesRequest{
 			Deployer: deployer,
 		}
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.FeeShares(goCtx, req)
+
+		resp, err := s.queryClient.FeeShares(s.ctx, req)
 		s.NoError(err)
 		s.Len(resp.Feeshare, len(feeShares))
 	})
@@ -65,8 +64,8 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 		req := &devgastypes.QueryFeeSharesRequest{
 			Deployer: deployer,
 		}
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.FeeShares(goCtx, req)
+
+		resp, err := s.queryClient.FeeShares(s.ctx, req)
 		s.NoError(err)
 		s.Len(resp.Feeshare, 0)
 	})
@@ -80,7 +79,7 @@ func (s *KeeperTestSuite) TestFeeShare() {
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
-	goCtx := sdk.WrapSDKContext(s.ctx)
+
 	msg := &devgastypes.MsgRegisterFeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
@@ -92,14 +91,13 @@ func (s *KeeperTestSuite) TestFeeShare() {
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, msg)
 	s.Require().NoError(err)
 
 	req := &devgastypes.QueryFeeShareRequest{
 		ContractAddress: contractAddress,
 	}
-	goCtx = sdk.WrapSDKContext(s.ctx)
-	resp, err := s.queryClient.FeeShare(goCtx, req)
+	resp, err := s.queryClient.FeeShare(s.ctx, req)
 	s.Require().NoError(err)
 	s.Require().Equal(resp.Feeshare, feeShare)
 }
@@ -121,20 +119,20 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 
 	// RegsisFeeShare
 	for _, contractAddress := range contractAddressList {
-		goCtx := sdk.WrapSDKContext(s.ctx)
+
 		msg := &devgastypes.MsgRegisterFeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
 			WithdrawerAddress: withdrawer.String(),
 		}
 
-		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
+		_, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, msg)
 		s.Require().NoError(err)
 	}
 
 	s.Run("Total", func() {
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.FeeSharesByWithdrawer(goCtx,
+
+		resp, err := s.queryClient.FeeSharesByWithdrawer(s.ctx,
 			&devgastypes.QueryFeeSharesByWithdrawerRequest{
 				WithdrawerAddress: withdrawer.String(),
 			})
@@ -145,23 +143,23 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 
 func (s *KeeperTestSuite) TestQueryParams() {
 	s.SetupTest()
-	goCtx := sdk.WrapSDKContext(s.ctx)
-	resp, err := s.queryClient.Params(goCtx, nil)
+
+	resp, err := s.queryClient.Params(s.ctx, nil)
 	s.NoError(err)
 	s.NotNil(resp)
 }
 
 func (s *KeeperTestSuite) TestNilRequests() {
 	s.SetupTest()
-	goCtx := sdk.WrapSDKContext(s.ctx)
+
 	querier := devgaskeeper.NewQuerier(s.app.DevGasKeeper)
 
-	_, err := querier.FeeShare(goCtx, nil)
+	_, err := querier.FeeShare(s.ctx, nil)
 	s.Error(err)
 
-	_, err = querier.FeeShares(goCtx, nil)
+	_, err = querier.FeeShares(s.ctx, nil)
 	s.Error(err)
 
-	_, err = querier.FeeSharesByWithdrawer(goCtx, nil)
+	_, err = querier.FeeSharesByWithdrawer(s.ctx, nil)
 	s.Error(err)
 }

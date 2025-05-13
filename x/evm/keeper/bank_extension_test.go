@@ -345,7 +345,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		})
 		s.Require().NoError(err)
 		req := &evm.EthCallRequest{Args: jsonTxArgs}
-		_, err = deps.EvmKeeper.EthCall(deps.GoCtx(), req)
+		_, err = deps.EvmKeeper.EthCall(deps.Ctx, req)
 		s.Require().NoError(err)
 		stateDBs = append(stateDBs, StateDBWithExplanation{
 			StateDB:     deps.App.EvmKeeper.Bank.StateDB,

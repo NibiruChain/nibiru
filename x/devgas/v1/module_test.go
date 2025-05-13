@@ -15,15 +15,17 @@ func (s *GenesisTestSuite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(s.ctx)
-		appModule.EndBlock(s.ctx)
+		err := appModule.BeginBlock(s.ctx)
+		s.Require().NoError(err)
+		err = appModule.EndBlock(s.ctx)
+		s.Require().NoError(err)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := s.app.AppCodec()
 		jsonBz := appModule.ExportGenesis(s.ctx, cdc)
 
 		genState := new(devgastypes.GenesisState)
-		err := cdc.UnmarshalJSON(jsonBz, genState)
+		err = cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
 		s.EqualValues(s.genesis, *genState)
 

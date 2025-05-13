@@ -728,7 +728,7 @@ func (p precompileFunToken) bankMsgSend(
 		Amount:      coin,
 	}
 	if _, err := bankkeeper.NewMsgServerImpl(p.evmKeeper.Bank).Send(
-		sdk.WrapSDKContext(ctx), bankMsg,
+		ctx, bankMsg,
 	); err != nil {
 		return nil, fmt.Errorf("bankMsgSend: %w", err)
 	}

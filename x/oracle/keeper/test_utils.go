@@ -353,10 +353,10 @@ func MakeAggregatePrevoteAndVote(
 	hash := types.GetAggregateVoteHash(salt, ratesStr, ValAddrs[valIdx])
 
 	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx.WithBlockHeight(height), prevoteMsg)
 	require.NoError(t, err)
 
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(height+1), voteMsg)
 	require.NoError(t, err)
 }

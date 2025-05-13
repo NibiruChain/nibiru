@@ -154,7 +154,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.Run("ConvertCoinToEvm", func() {
 		_, err := deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
 				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420)),
@@ -279,7 +279,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 	s.Run("Fund contract with erc20 coins", func() {
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
 				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(1000)),
@@ -523,7 +523,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// create fun token from that erc20
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			FromErc20: &eth.EIP55Addr{Address: erc20Addr},

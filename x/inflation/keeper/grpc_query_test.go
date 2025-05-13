@@ -35,7 +35,7 @@ func (s *QueryServerSuite) TestQueryPeriod() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
 
 	resp, err := nibiruApp.InflationKeeper.Period(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryPeriodRequest{},
+		ctx, &inflationtypes.QueryPeriodRequest{},
 	)
 
 	s.NoError(err)
@@ -44,7 +44,7 @@ func (s *QueryServerSuite) TestQueryPeriod() {
 	nibiruApp.InflationKeeper.CurrentPeriod.Next(ctx)
 
 	resp, err = nibiruApp.InflationKeeper.Period(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryPeriodRequest{},
+		ctx, &inflationtypes.QueryPeriodRequest{},
 	)
 	s.NoError(err)
 	s.Assert().Equal(uint64(1), resp.Period)
@@ -53,7 +53,7 @@ func (s *QueryServerSuite) TestQueryPeriod() {
 func (s *QueryServerSuite) TestQuerySkippedEpochs() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
 	resp, err := nibiruApp.InflationKeeper.SkippedEpochs(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QuerySkippedEpochsRequest{},
+		ctx, &inflationtypes.QuerySkippedEpochsRequest{},
 	)
 
 	s.Require().NoError(err)
@@ -62,7 +62,7 @@ func (s *QueryServerSuite) TestQuerySkippedEpochs() {
 	nibiruApp.InflationKeeper.NumSkippedEpochs.Next(ctx)
 
 	resp, err = nibiruApp.InflationKeeper.SkippedEpochs(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QuerySkippedEpochsRequest{},
+		ctx, &inflationtypes.QuerySkippedEpochsRequest{},
 	)
 	s.NoError(err)
 	s.Assert().Equal(uint64(1), resp.SkippedEpochs)
@@ -71,7 +71,7 @@ func (s *QueryServerSuite) TestQuerySkippedEpochs() {
 func (s *QueryServerSuite) TestQueryEpochMintProvision() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
 	resp, err := nibiruApp.InflationKeeper.EpochMintProvision(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryEpochMintProvisionRequest{},
+		ctx, &inflationtypes.QueryEpochMintProvisionRequest{},
 	)
 	s.NoError(err)
 	s.NotNil(resp)
@@ -80,7 +80,7 @@ func (s *QueryServerSuite) TestQueryEpochMintProvision() {
 func (s *QueryServerSuite) TestQueryInflationRate() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
 	resp, err := nibiruApp.InflationKeeper.InflationRate(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryInflationRateRequest{},
+		ctx, &inflationtypes.QueryInflationRateRequest{},
 	)
 	s.NoError(err)
 	s.NotNil(resp)
@@ -89,7 +89,7 @@ func (s *QueryServerSuite) TestQueryInflationRate() {
 func (s *QueryServerSuite) TestQueryCirculatingSupply() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
 	resp, err := nibiruApp.InflationKeeper.CirculatingSupply(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryCirculatingSupplyRequest{},
+		ctx, &inflationtypes.QueryCirculatingSupplyRequest{},
 	)
 	s.NoError(err)
 	s.NotNil(resp)
@@ -103,7 +103,7 @@ func (s *QueryServerSuite) TestQueryParams() {
 
 	queryServer := keeper.NewQuerier(nibiruApp.InflationKeeper)
 
-	resp2, err := queryServer.Params(sdk.WrapSDKContext(ctx), &inflationtypes.QueryParamsRequest{})
+	resp2, err := queryServer.Params(ctx, &inflationtypes.QueryParamsRequest{})
 	s.NoError(err)
 	s.NotNil(resp2)
 }

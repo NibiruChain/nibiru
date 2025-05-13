@@ -43,11 +43,6 @@ func (msg MsgAggregateExchangeRatePrevote) Route() string { return RouterKey }
 // Type implements sdk.Msg
 func (msg MsgAggregateExchangeRatePrevote) Type() string { return TypeMsgAggregateExchangeRatePrevote }
 
-// GetSignBytes implements sdk.Msg
-func (msg MsgAggregateExchangeRatePrevote) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
 // GetSigners implements sdk.Msg
 func (msg MsgAggregateExchangeRatePrevote) GetSigners() []sdk.AccAddress {
 	feeder, err := sdk.AccAddressFromBech32(msg.Feeder)
@@ -99,11 +94,6 @@ func (msg MsgAggregateExchangeRateVote) Route() string { return RouterKey }
 
 // Type implements sdk.Msg
 func (msg MsgAggregateExchangeRateVote) Type() string { return TypeMsgAggregateExchangeRateVote }
-
-// GetSignBytes implements sdk.Msg
-func (msg MsgAggregateExchangeRateVote) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
 
 // GetSigners implements sdk.Msg
 func (msg MsgAggregateExchangeRateVote) GetSigners() []sdk.AccAddress {
@@ -168,11 +158,6 @@ func (msg MsgDelegateFeedConsent) Route() string { return RouterKey }
 // Type implements sdk.Msg
 func (msg MsgDelegateFeedConsent) Type() string { return TypeMsgDelegateFeedConsent }
 
-// GetSignBytes implements sdk.Msg
-func (msg MsgDelegateFeedConsent) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
-}
-
 // GetSigners implements sdk.Msg
 func (msg MsgDelegateFeedConsent) GetSigners() []sdk.AccAddress {
 	operator, err := sdk.ValAddressFromBech32(msg.Operator)
@@ -208,10 +193,6 @@ func (m MsgEditOracleParams) ValidateBasic() error {
 		return err
 	}
 	return nil
-}
-
-func (m MsgEditOracleParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
 func (m MsgEditOracleParams) GetSigners() []sdk.AccAddress {

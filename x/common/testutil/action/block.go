@@ -14,7 +14,10 @@ type increaseBlockNumberBy struct {
 }
 
 func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx)
+	_, err := app.EndBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + i.numBlocks)
 
@@ -69,15 +72,24 @@ func SetBlockNumber(blockNumber int64) Action {
 type moveToNextBlock struct{}
 
 func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx)
-	app.Commit()
+	_, err := app.EndBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	_, err = app.Commit()
+	if err != nil {
+		return ctx, err
+	}
 
 	newHeader := tmproto.Header{
 		Height: ctx.BlockHeight() + 1,
 		Time:   ctx.BlockTime().Add(time.Second * 5),
 	}
 
-	app.BeginBlocker(ctx)
+	_, err = app.BeginBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
 
 	return app.NewContext(
 		false,
@@ -93,15 +105,24 @@ type moveToNextBlockWithDuration struct {
 }
 
 func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx)
-	app.Commit()
+	_, err := app.EndBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	_, err = app.Commit()
+	if err != nil {
+		return ctx, err
+	}
 
 	newHeader := tmproto.Header{
 		Height: ctx.BlockHeight() + 1,
 		Time:   ctx.BlockTime().Add(m.blockDuration),
 	}
 
-	app.BeginBlocker(ctx)
+	_, err = app.BeginBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
 
 	return app.NewContext(
 		false,
@@ -119,15 +140,24 @@ type moveToNextBlockWithTime struct {
 }
 
 func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	app.EndBlocker(ctx)
-	app.Commit()
+	_, err := app.EndBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	_, err = app.Commit()
+	if err != nil {
+		return ctx, err
+	}
 
 	newHeader := tmproto.Header{
 		Height: ctx.BlockHeight() + 1,
 		Time:   m.blockTime,
 	}
 
-	app.BeginBlocker(ctx)
+	_, err = app.BeginBlocker(ctx)
+	if err != nil {
+		return ctx, err
+	}
 
 	return app.NewContext(
 		false,

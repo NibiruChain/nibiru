@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -15,7 +14,6 @@ import (
 
 func TestMsgServer_EditOracleParams(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
-	goCtx := sdk.WrapSDKContext(ctx)
 
 	msgServer := keeper.NewMsgServerImpl(app.OracleKeeper, app.SudoKeeper)
 
@@ -30,7 +28,7 @@ func TestMsgServer_EditOracleParams(t *testing.T) {
 		},
 	}
 
-	_, err := msgServer.EditOracleParams(goCtx, &msg)
+	_, err := msgServer.EditOracleParams(ctx, &msg)
 	require.Error(t, err)
 	require.EqualError(t, sudotypes.ErrUnauthorized, err.Error())
 
@@ -49,6 +47,6 @@ func TestMsgServer_EditOracleParams(t *testing.T) {
 		},
 	}
 
-	_, err = msgServer.EditOracleParams(goCtx, &msg)
+	_, err = msgServer.EditOracleParams(ctx, &msg)
 	require.NoError(t, err)
 }

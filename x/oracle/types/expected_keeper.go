@@ -4,7 +4,6 @@ import (
 	context "context"
 
 	corestore "cosmossdk.io/core/store"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -22,7 +21,7 @@ type StakingKeeper interface {
 }
 
 type SlashingKeeper interface {
-	Slash(ctx context.Context, consAddr sdk.ConsAddress, fraction math.LegacyDec, power int64, height int64) error
+	Slash(ctx context.Context, consAddr sdk.ConsAddress, fraction sdkmath.LegacyDec, power int64, height int64) error
 	Jail(context.Context, sdk.ConsAddress) error
 }
 

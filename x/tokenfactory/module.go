@@ -17,7 +17,6 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
 	store "cosmossdk.io/store/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
@@ -48,6 +47,7 @@ var (
 	_ module.HasGenesis          = AppModule{}
 	_ module.HasServices         = AppModule{}
 	_ module.HasInvariants       = AppModule{}
+	_ appmodule.HasEndBlocker    = AppModule{}
 )
 
 // ConsensusVersion defines the current module consensus version.
@@ -174,8 +174,8 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 
 // EndBlock executes all ABCI EndBlock logic respective to the fee-share module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(_ context.Context) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+func (am AppModule) EndBlock(_ context.Context) error {
+	return nil
 }
 
 // InitGenesis performs the fees module's genesis initialization. It returns

@@ -24,7 +24,8 @@ func TestValidateFeeder(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
-	input.StakingKeeper.EndBlocker(ctx)
+	_, err = input.StakingKeeper.EndBlocker(ctx)
+	require.NoError(t, err)
 
 	params, err := input.StakingKeeper.GetParams(ctx)
 	require.NoError(t, err)
@@ -53,6 +54,7 @@ func TestValidateFeeder(t *testing.T) {
 
 	// only active validators can do oracle votes
 	validator.Status = stakingtypes.Unbonded
-	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	err = input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.NoError(t, err)
 	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
 }

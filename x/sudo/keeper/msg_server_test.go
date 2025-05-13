@@ -180,14 +180,14 @@ func TestMsgServer_ChangeRoot(t *testing.T) {
 	// try to change root with non-root account
 	msgServer := keeper.NewMsgServer(app.SudoKeeper)
 	_, err = msgServer.ChangeRoot(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		&types.MsgChangeRoot{Sender: fakeRoot, NewRoot: newRoot},
 	)
 	require.EqualError(t, err, "unauthorized: missing sudo permissions")
 
 	// try to change root with root account
 	_, err = msgServer.ChangeRoot(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		&types.MsgChangeRoot{Sender: actualRoot, NewRoot: newRoot},
 	)
 	require.NoError(t, err)
@@ -339,9 +339,9 @@ func TestKeeper_AddContracts(t *testing.T) {
 			t.Log("Execute message")
 			// Check via message handler directly
 			msgServer := keeper.NewMsgServer(k)
-			res, err := msgServer.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
+			res, err := msgServer.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
-			res2, err2 := k.AddContracts(sdk.WrapSDKContext(ctx), tc.msg)
+			res2, err2 := k.AddContracts(ctx, tc.msg)
 			if tc.shouldFail {
 				require.Errorf(t, err, "resp: %s", res)
 				require.Errorf(t, err2, "resp: %s", res2)
@@ -450,7 +450,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 			msgServer := keeper.NewMsgServer(k)
 			res, err := msgServer.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
-			res2, err2 := k.RemoveContracts(sdk.WrapSDKContext(ctx), tc.msg)
+			res2, err2 := k.RemoveContracts(ctx, tc.msg)
 			if tc.shouldFail {
 				require.Errorf(t, err, "resp: %s", res)
 				require.Errorf(t, err2, "resp: %s", res2)

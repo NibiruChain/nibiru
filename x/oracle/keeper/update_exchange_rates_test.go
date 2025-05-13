@@ -44,8 +44,8 @@ func TestOracleThreshold(t *testing.T) {
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
 		voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[i], ValAddrs[i])
 
-		_, err1 := msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(0)), prevoteMsg)
-		_, err2 := msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(1)), voteMsg)
+		_, err1 := msgServer.AggregateExchangeRatePrevote(fixture.Ctx.WithBlockHeight(0), prevoteMsg)
+		_, err2 := msgServer.AggregateExchangeRateVote(fixture.Ctx.WithBlockHeight(1), voteMsg)
 		require.NoError(t, err1)
 		require.NoError(t, err2)
 	}
@@ -61,8 +61,8 @@ func TestOracleThreshold(t *testing.T) {
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
 		voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[i], ValAddrs[i])
 
-		_, err1 := msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(0)), prevoteMsg)
-		_, err2 := msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(1)), voteMsg)
+		_, err1 := msgServer.AggregateExchangeRatePrevote(fixture.Ctx.WithBlockHeight(0), prevoteMsg)
+		_, err2 := msgServer.AggregateExchangeRateVote(fixture.Ctx.WithBlockHeight(1), voteMsg)
 		require.NoError(t, err1)
 		require.NoError(t, err2)
 	}
@@ -82,8 +82,8 @@ func TestOracleThreshold(t *testing.T) {
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
 		voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[i], ValAddrs[i])
 
-		_, err1 := msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(0)), prevoteMsg)
-		_, err2 := msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(1)), voteMsg)
+		_, err1 := msgServer.AggregateExchangeRatePrevote(fixture.Ctx.WithBlockHeight(0), prevoteMsg)
+		_, err2 := msgServer.AggregateExchangeRateVote(fixture.Ctx.WithBlockHeight(1), voteMsg)
 		require.NoError(t, err1)
 		require.NoError(t, err2)
 	}
@@ -149,8 +149,8 @@ func TestOracleTally(t *testing.T) {
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, sdk.AccAddress(valAddrs[i]), valAddrs[i])
 		voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, sdk.AccAddress(valAddrs[i]), valAddrs[i])
 
-		_, err1 := h.AggregateExchangeRatePrevote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(0)), prevoteMsg)
-		_, err2 := h.AggregateExchangeRateVote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(1)), voteMsg)
+		_, err1 := h.AggregateExchangeRatePrevote(fixture.Ctx.WithBlockHeight(0), prevoteMsg)
+		_, err2 := h.AggregateExchangeRateVote(fixture.Ctx.WithBlockHeight(1), voteMsg)
 		require.NoError(t, err1)
 		require.NoError(t, err2)
 

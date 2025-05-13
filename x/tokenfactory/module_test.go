@@ -26,8 +26,10 @@ func (s *ModuleTestSuite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(ctx)
-		appModule.EndBlock(ctx)
+		err := appModule.BeginBlock(ctx)
+		s.Require().NoError(err)
+		err = appModule.EndBlock(ctx)
+		s.Require().NoError(err)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := bapp.AppCodec()
@@ -35,7 +37,7 @@ func (s *ModuleTestSuite) TestAppModule() {
 
 		genesis := types.DefaultGenesis()
 		genState := new(types.GenesisState)
-		err := cdc.UnmarshalJSON(jsonBz, genState)
+		err = cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
 		s.EqualValues(*genesis, *genState, "exported (got): %s", jsonBz)
 

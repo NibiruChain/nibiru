@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 

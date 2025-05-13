@@ -55,7 +55,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 				s.Require().NoError(
 					err,
 					"resp: %s\nblock header: %s",
@@ -94,7 +94,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 				s.Require().ErrorContains(
 					err,
 					core.ErrIntrinsicGas.Error(),
@@ -148,7 +148,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 	s.Require().NoError(
 		err,
 		"resp: %s\nblock header: %s",
@@ -213,7 +213,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		)
 		s.NoError(err)
 
-		resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+		resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
 
@@ -244,7 +244,8 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	))
 
 	// blockHeader := tmproto.Header{Height: deps.Ctx.BlockHeight()}
-	deps.App.BeginBlocker(deps.Ctx)
+	_, err := deps.App.BeginBlocker(deps.Ctx)
+	s.Require().NoError(err)
 	to := evmtest.NewEthPrivAcc()
 	evmTxMsg, err := evmtest.TxTransferWei{
 		Deps:      &deps,
@@ -259,7 +260,8 @@ func (s *Suite) TestEthereumTx_ABCI() {
 
 	gasInfo, _, err := deps.App.SimDeliver(deps.App.GetTxConfig().TxEncoder(), blockTx)
 	s.Require().NoError(err)
-	deps.App.EndBlocker(deps.Ctx)
+	_, err = deps.App.EndBlocker(deps.Ctx)
+	s.Require().NoError(err)
 
 	s.EqualValuesf(21000, gasInfo.GasUsed, "%d", gasInfo.GasUsed)
 	s.EqualValuesf(21000, gasInfo.GasWanted, "%d", gasInfo.GasWanted)

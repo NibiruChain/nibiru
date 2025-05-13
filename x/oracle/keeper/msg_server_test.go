@@ -30,52 +30,52 @@ func TestFeederDelegation(t *testing.T) {
 
 	// Case 1: empty message
 	delegateFeedConsentMsg := types.MsgDelegateFeedConsent{}
-	_, err = msgServer.DelegateFeedConsent(sdk.WrapSDKContext(input.Ctx), &delegateFeedConsentMsg)
+	_, err = msgServer.DelegateFeedConsent(input.Ctx, &delegateFeedConsentMsg)
 	require.Error(t, err)
 
 	// Case 2: Normal Prevote - without delegation
 	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, prevoteMsg)
 	require.NoError(t, err)
 
 	// Case 2.1: Normal Prevote - with delegation fails
 	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, prevoteMsg)
 	require.Error(t, err)
 
 	// Case 2.2: Normal Vote - without delegation
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(2), voteMsg)
 	require.NoError(t, err)
 
 	// Case 2.3: Normal Vote - with delegation fails
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(2), voteMsg)
 	require.Error(t, err)
 
 	// Case 3: Normal MsgDelegateFeedConsent succeeds
 	msg := types.NewMsgDelegateFeedConsent(ValAddrs[0], Addrs[1])
-	_, err = msgServer.DelegateFeedConsent(sdk.WrapSDKContext(input.Ctx), msg)
+	_, err = msgServer.DelegateFeedConsent(input.Ctx, msg)
 	require.NoError(t, err)
 
 	// Case 4.1: Normal Prevote - without delegation fails
 	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[2], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, prevoteMsg)
 	require.Error(t, err)
 
 	// Case 4.2: Normal Prevote - with delegation succeeds
 	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, prevoteMsg)
 	require.NoError(t, err)
 
 	// Case 4.3: Normal Vote - without delegation fails
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[2], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(2), voteMsg)
 	require.Error(t, err)
 
 	// Case 4.4: Normal Vote - with delegation succeeds
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(2), voteMsg)
 	require.NoError(t, err)
 }
 
@@ -141,54 +141,54 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, ValAddrs[0])
 
 	aggregateExchangeRatePrevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.NoError(t, err)
 
 	// Unauthorized feeder
 	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.Error(t, err)
 
 	// Invalid addr
 	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, sdk.AccAddress{}, ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.Error(t, err)
 
 	// Invalid validator addr
 	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], sdk.ValAddress{})
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx, aggregateExchangeRatePrevoteMsg)
 	require.Error(t, err)
 
 	// Invalid reveal period
 	aggregateExchangeRateVoteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Invalid reveal period
 	input.Ctx = input.Ctx.WithBlockHeight(3)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Other exchange rate with valid real period
 	input.Ctx = input.Ctx.WithBlockHeight(2)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, otherExchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Unauthorized feeder
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Unintended denom vote
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, unintendedExchageRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Valid exchange rate reveal submission
 	input.Ctx = input.Ctx.WithBlockHeight(2)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx, aggregateExchangeRateVoteMsg)
 	require.NoError(t, err)
 }

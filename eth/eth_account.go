@@ -21,7 +21,7 @@ func NibiruAddrToEthAddr(nibiruAddr sdk.AccAddress) gethcommon.Address {
 }
 
 var (
-	_ sdk.AccountI                 = (*EthAccount)(nil)
+	_ sdk.AccountI                       = (*EthAccount)(nil)
 	_ EthAccountI                        = (*EthAccount)(nil)
 	_ authtypes.GenesisAccount           = (*EthAccount)(nil)
 	_ codectypes.UnpackInterfacesMessage = (*EthAccount)(nil)

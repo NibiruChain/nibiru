@@ -146,11 +146,13 @@ func NewNibiruTestApp(homedir string, customGenesisOverride app.GenesisState) (
 		panic(err)
 	}
 
-	app.InitChain(&abci.RequestInitChain{
+	_, err = app.InitChain(&abci.RequestInitChain{
 		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
-
+	if err != nil {
+		panic(err)
+	}
 	return app, gen
 }
 

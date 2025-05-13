@@ -74,7 +74,8 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Status = stakingtypes.Unbonded
 	validator.Jailed = false
 	validator.Tokens = amt
-	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	err = input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.NoError(t, err)
 
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
@@ -87,7 +88,8 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Status = stakingtypes.Bonded
 	validator.Jailed = true
 	validator.Tokens = amt
-	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	err = input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.NoError(t, err)
 
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
