@@ -38,7 +38,7 @@ func (s *Suite) SetupSuite() {
 		WithKeyring(s.keyring).
 		WithTxConfig(s.encCfg.TxConfig).
 		WithCodec(s.encCfg.Codec).
-		WithClient(sdktestutilcli.MockTendermintRPC{Client: rpcclientmock.Client{}}).
+		WithClient(sdktestutilcli.MockCometRPC{Client: rpcclientmock.Client{}}).
 		WithAccountRetriever(sdkclient.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")

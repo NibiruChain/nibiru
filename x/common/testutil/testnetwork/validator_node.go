@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/sync/errgroup"
 
 	appserver "github.com/NibiruChain/nibiru/v2/app/server"
 
@@ -107,6 +108,8 @@ type Validator struct {
 	secretMnemonic string
 	jsonrpc        *http.Server
 	jsonrpcDone    chan struct{}
+	errGroup       *errgroup.Group
+	cancelFn       context.CancelFunc
 }
 
 // stopValidatorNode shuts down all services associated with a validator node.

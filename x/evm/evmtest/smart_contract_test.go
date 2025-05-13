@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Suite) TestCreateContractTxMsg() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	ethAcc := evmtest.NewEthPrivAcc()
 
 	args := evmtest.ArgsCreateContract{
@@ -26,7 +26,7 @@ func (s *Suite) TestCreateContractTxMsg() {
 }
 
 func (s *Suite) TestExecuteContractTxMsg() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	ethAcc := evmtest.NewEthPrivAcc()
 	contractAddress := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
 	args := evmtest.ArgsExecuteContract{
