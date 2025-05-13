@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -37,7 +37,7 @@ func (s *TestSuite) SetupTest() {
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
-	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
+	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() proto.Message {
 		gs := types.DefaultGenesisState()
 		gs.Params.Whitelist = []asset.Pair{
 			"nibi:usdc",

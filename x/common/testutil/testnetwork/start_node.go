@@ -65,7 +65,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 	}
 
 	val.tmNode = tmNode
-	val.tmNode.Logger = servercmtlog.CometLoggerWrapper{Logger: logger}
+	// val.tmNode.Logger = servercmtlog.CometLoggerWrapper{Logger: logger}
 
 	if val.RPCAddress != "" {
 		val.RPCClient = local.New(tmNode)
