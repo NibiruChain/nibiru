@@ -7,6 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
+func init() {
+	amino.Seal()
+}
+
 var (
 	amino = codec.NewLegacyAmino()
 
