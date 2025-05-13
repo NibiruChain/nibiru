@@ -97,7 +97,7 @@ wasmvmlib: $(TEMPDIR)/
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.x86_64.a; \
 		else \
 		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		fi; \
