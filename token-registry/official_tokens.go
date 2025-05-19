@@ -51,7 +51,7 @@ func ParseOfficialSaveBz(tokens []TokenOfficial) ([]byte, error) {
 
 var ERC20S []TokenOfficial = []TokenOfficial{
 	{
-		ContractAddr: "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6",
+		ContractAddr: "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97",
 		DisplayName:  "Wrapped Nibiru",
 		Symbol:       "WNIBI",
 		LogoSrc:      "./img/000_nibiru-evm.png",
