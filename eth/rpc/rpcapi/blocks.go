@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strconv"
 
+	abcicmt "github.com/cometbft/cometbft/abci/types"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -344,7 +345,18 @@ func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (bloom get
 		if event.Type != msgType {
 			continue
 		}
-		blockBloomEvent, err := evm.EventBlockBloomFromABCIEvent(event)
+
+		// Trim the event to only include the bloom attribute and ignore the rest, which is:
+		//   {
+		//     "key": "mode",
+		//     "value": "EndBlock",
+		//     "index": true
+		//   }
+		trimmedEvent := abcicmt.Event{
+			Type:       event.Type,
+			Attributes: []abcicmt.EventAttribute{event.Attributes[0]},
+		}
+		blockBloomEvent, err := evm.EventBlockBloomFromABCIEvent(trimmedEvent)
 		if err != nil {
 			continue
 		}
