@@ -32,11 +32,12 @@ gen-embeds:
 
   embeds_dir="x/evm/embeds"
   log_info "Begin to compile Solidity in $embeds_dir"
-  which_ok npm
-  log_info "Using system node version: $(npm exec -- node -v)"
+  which_ok yarn
+  log_info "Using system node version: $(yarn exec -- node -v)"
 
   cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit)
-  npx hardhat compile
+  yarn --check-files
+  yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
   log_success "Compiled Solidity in $embeds_dir"
 
   go run "gen-abi/main.go"
