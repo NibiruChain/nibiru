@@ -2,11 +2,13 @@
 package rpcapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"strconv"
+	"strings"
 
 	abcicmt "github.com/cometbft/cometbft/abci/types"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
@@ -346,17 +348,9 @@ func (b *Backend) BlockBloom(blockRes *tmrpctypes.ResultBlockResults) (bloom get
 			continue
 		}
 
-		// Trim the event to only include the bloom attribute and ignore the rest, which is:
-		//   {
-		//     "key": "mode",
-		//     "value": "EndBlock",
-		//     "index": true
-		//   }
-		trimmedEvent := abcicmt.Event{
-			Type:       event.Type,
-			Attributes: []abcicmt.EventAttribute{event.Attributes[0]},
-		}
-		blockBloomEvent, err := evm.EventBlockBloomFromABCIEvent(trimmedEvent)
+		sanitizedEvent := SanitizeEventForParsing(event)
+
+		blockBloomEvent, err := evm.EventBlockBloomFromABCIEvent(sanitizedEvent)
 		if err != nil {
 			continue
 		}
@@ -449,6 +443,35 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 		ethRPCTxs, bloom, validatorAddr, baseFeeWei,
 	)
 	return formattedBlock, nil
+}
+
+// SanitizeEventForParsing makes sure all values are valid JSON
+func SanitizeEventForParsing(event abcicmt.Event) abcicmt.Event {
+	sanitized := abcicmt.Event{
+		Type:       event.Type,
+		Attributes: make([]abcicmt.EventAttribute, 0, len(event.Attributes)),
+	}
+
+	for _, attr := range event.Attributes {
+		val := strings.TrimSpace(attr.Value)
+
+		if !isValidJSON(val) {
+			val = strconv.Quote(val)
+		}
+
+		sanitized.Attributes = append(sanitized.Attributes, abcicmt.EventAttribute{
+			Key:   attr.Key,
+			Value: val,
+			Index: attr.Index,
+		})
+	}
+
+	return sanitized
+}
+
+func isValidJSON(val string) bool {
+	var js json.RawMessage
+	return json.Unmarshal([]byte(val), &js) == nil
 }
 
 // EthBlockByNumber returns the Ethereum Block identified by number.
