@@ -38,7 +38,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+<!-- 
+NOTE: The brackets around the word "Unreleased" are required to pass the [CI test
+that checks if we updated the changelog. This is a convention from the [keep a
+changelog format](https://keepachangelog.com/en/1.0.0/).  
+See https://github.com/dangoslen/changelog-enforcer.
+--> 
+
+- [#2314](https://github.com/NibiruChain/nibiru/pull/2314) - refactor(upgrades): add public keepers to upgrade handlers + DRY improvements
 
 ## v2.4.0
 
