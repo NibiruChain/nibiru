@@ -1,8 +1,6 @@
 package devgas_test
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -17,15 +15,17 @@ func (s *GenesisTestSuite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(s.ctx, abci.RequestBeginBlock{})
-		appModule.EndBlock(s.ctx, abci.RequestEndBlock{})
+		err := appModule.BeginBlock(s.ctx)
+		s.Require().NoError(err)
+		err = appModule.EndBlock(s.ctx)
+		s.Require().NoError(err)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := s.app.AppCodec()
 		jsonBz := appModule.ExportGenesis(s.ctx, cdc)
 
 		genState := new(devgastypes.GenesisState)
-		err := cdc.UnmarshalJSON(jsonBz, genState)
+		err = cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
 		s.EqualValues(s.genesis, *genState)
 

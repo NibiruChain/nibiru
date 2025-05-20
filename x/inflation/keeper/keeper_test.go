@@ -39,7 +39,7 @@ func TestBurn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 			// mint and send money to the sender
 			require.NoError(t,

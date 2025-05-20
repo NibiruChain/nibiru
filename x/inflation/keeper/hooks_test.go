@@ -22,15 +22,17 @@ import (
 // pool after an epoch ends is greater than the amount before the epoch ends
 // with the default module parameters.
 func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 	params := nibiruApp.InflationKeeper.GetParams(ctx)
 	params.InflationEnabled = true
 	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
-	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
+	feePoolOld, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+	require.NoError(t, err)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
-	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
+	feePoolNew, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+	require.NoError(t, err)
 
 	require.Greater(t, feePoolNew.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64(),
 		feePoolOld.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64())
@@ -40,7 +42,7 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 // the number of skipped epochs are accurately updated and that skipped epochs
 // are handled correctly.
 func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	inflationKeeper := nibiruApp.InflationKeeper
 
 	testCases := []struct {
@@ -214,7 +216,7 @@ func TestManual(t *testing.T) {
 	// We turn it off again and check if the balance is not increasing
 	// We turn it on again and check if the balance is increasing again with the correct amount
 
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	inflationKeeper := nibiruApp.InflationKeeper
 
 	params := inflationKeeper.GetParams(ctx)

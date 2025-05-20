@@ -61,11 +61,6 @@ func (msg MsgRegisterFeeShare) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes encodes the message for signing
-func (msg *MsgRegisterFeeShare) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(msg))
-}
-
 // GetSigners defines whose signature is required
 func (msg MsgRegisterFeeShare) GetSigners() []sdk.AccAddress {
 	from, _ := sdk.AccAddressFromBech32(msg.DeployerAddress)
@@ -100,11 +95,6 @@ func (msg MsgCancelFeeShare) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// GetSignBytes encodes the message for signing
-func (msg *MsgCancelFeeShare) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners defines whose signature is required
@@ -149,11 +139,6 @@ func (msg MsgUpdateFeeShare) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes encodes the message for signing
-func (msg *MsgUpdateFeeShare) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(msg))
-}
-
 // GetSigners defines whose signature is required
 func (msg MsgUpdateFeeShare) GetSigners() []sdk.AccAddress {
 	from, _ := sdk.AccAddressFromBech32(msg.DeployerAddress)
@@ -161,11 +146,6 @@ func (msg MsgUpdateFeeShare) GetSigners() []sdk.AccAddress {
 }
 
 var _ sdk.Msg = &MsgUpdateParams{}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
-}
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
 func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {

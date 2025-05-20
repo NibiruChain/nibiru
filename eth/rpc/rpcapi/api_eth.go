@@ -4,10 +4,9 @@ package rpcapi
 import (
 	"context"
 
+	cmtlog "github.com/cometbft/cometbft/libs/log"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
-
-	cmtlog "github.com/cometbft/cometbft/libs/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

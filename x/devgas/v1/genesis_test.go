@@ -30,7 +30,7 @@ func TestGenesisTestSuite(t *testing.T) {
 }
 
 func (s *GenesisTestSuite) SetupTest() {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+	app, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 
 	s.app = app
 	s.ctx = ctx

@@ -13,12 +13,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/types"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 	gethlog "github.com/ethereum/go-ethereum/log"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
+
+const ServerStartTime = 5 * time.Second
 
 // StartJSONRPC starts the JSON-RPC server
 func StartJSONRPC(
@@ -29,11 +31,11 @@ func StartJSONRPC(
 	config *srvconfig.Config,
 	indexer eth.EVMTxIndexer,
 ) (*http.Server, chan struct{}, error) {
-	tmWsClientForRPCApi := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
+	tmWsClientForRPCApi := ConnectTmWS(tmRPCAddr, tmEndpoint, servercmtlog.CometLoggerWrapper{Logger: ctx.Logger})
 
 	// Configure the go-ethereum logger to sync with the ctx.Logger
 	gethLogger := gethlog.NewLogger(&LogHandler{
-		CmtLogger: ctx.Logger.With("module", "geth"),
+		CmtLogger: servercmtlog.CometLoggerWrapper{Logger: ctx.Logger.With("module", "geth")},
 	})
 	gethlog.SetDefault(gethLogger)
 
@@ -96,14 +98,14 @@ func StartJSONRPC(
 	case err := <-errCh:
 		ctx.Logger.Error("failed to boot JSON-RPC server", "error", err.Error())
 		return nil, nil, err
-	case <-time.After(types.ServerStartTime): // assume JSON RPC server started successfully
+	case <-time.After(ServerStartTime): // assume JSON RPC server started successfully
 	}
 
 	ctx.Logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
 
 	// allocate separate WS connection to Tendermint
-	tmWsClientForRPCWs := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClientForRPCWs, config)
+	tmWsClientForRPCWs := ConnectTmWS(tmRPCAddr, tmEndpoint, servercmtlog.CometLoggerWrapper{Logger: ctx.Logger})
+	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, servercmtlog.CometLoggerWrapper{Logger: ctx.Logger}, tmWsClientForRPCWs, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

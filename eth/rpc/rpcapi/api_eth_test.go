@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	cmtlog "github.com/cometbft/cometbft/libs/log"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -76,7 +76,7 @@ type Suite struct {
 
 func (s *Suite) TestExpectedMethods() {
 	serverCtx := server.NewDefaultContext()
-	serverCtx.Logger = cmtlog.TestingLogger()
+	serverCtx.Logger = log.NewTestLogger(s.T())
 	apis := rpcapi.GetRPCAPIs(
 		serverCtx, client.Context{},
 		&cmtrpcclient.WSClient{},

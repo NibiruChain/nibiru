@@ -155,7 +155,10 @@ func (ms msgServer) DelegateFeedConsent(
 	}
 
 	// Check the delegator is a validator
-	val := ms.StakingKeeper.Validator(ctx, operatorAddr)
+	val, err := ms.StakingKeeper.Validator(ctx, operatorAddr)
+	if err != nil {
+		return nil, err
+	}
 	if val == nil {
 		return nil, sdkioerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Operator)
 	}

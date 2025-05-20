@@ -10,9 +10,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 
-	wasmvm "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2/types"
 )
 
 // YieldStargateMsgs takes a byte slice of JSON data and converts it into a slice
@@ -26,7 +25,7 @@ import (
 //   - sgMsgs []wasmvm.StargateMsg: A slice of wasmvm.StargateMsg objects parsed
 //     from the provided JSON data.
 //   - err error: An error object, which is nil if the operation is successful.
-func YieldStargateMsgs(jsonBz []byte) (sgMsgs []wasmvm.StargateMsg, err error) {
+func YieldStargateMsgs(jsonBz []byte) (sgMsgs []wasmvm.AnyMsg, err error) {
 	var data any
 	if err := json.Unmarshal(jsonBz, &data); err != nil {
 		return sgMsgs, err
@@ -48,12 +47,12 @@ func YieldStargateMsgs(jsonBz []byte) (sgMsgs []wasmvm.StargateMsg, err error) {
 //   - msgs *[]wasmvm.StargateMsg: Mutable reference to a slice of protobuf
 //     messages. These are potentially altered in place if the value is an
 //     encoded base 64 string.
-func parseStargateMsgs(jsonData any, msgs *[]wasmvm.StargateMsg) {
+func parseStargateMsgs(jsonData any, msgs *[]wasmvm.AnyMsg) {
 	switch v := jsonData.(type) {
 	case map[string]any:
 		if typeURL, ok := v["type_url"].(string); ok {
 			if value, ok := v["value"].(string); ok {
-				*msgs = append(*msgs, wasmvm.StargateMsg{
+				*msgs = append(*msgs, wasmvm.AnyMsg{
 					TypeURL: typeURL,
 					Value:   []byte(value),
 				})
@@ -119,14 +118,13 @@ func DecodeBase64StargateMsgs(
 			}
 
 			decodedBz, _ := base64.StdEncoding.Strict().DecodeString(string(sgMsg.Value))
-			concrete := protoMsg.(sdkcodec.ProtoMarshaler)
 
-			err = codec.Unmarshal(decodedBz, concrete)
+			err = codec.Unmarshal(decodedBz, protoMsg)
 			if err != nil {
 				return newSgMsgs, err
 			}
 
-			outBytes, err := codec.MarshalJSON(concrete)
+			outBytes, err := codec.MarshalJSON(protoMsg)
 			if err != nil {
 				return newSgMsgs, err
 			}

@@ -1,8 +1,6 @@
 package evmtest
 
 import (
-	"context"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -25,8 +23,8 @@ type TestDeps struct {
 	Sender    EthPrivKeyAcc
 }
 
-func NewTestDeps() TestDeps {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+func NewTestDeps(homeDir string) TestDeps {
+	app, ctx := testapp.NewNibiruTestAppAndContext(homeDir)
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
 
 	return TestDeps{
@@ -61,8 +59,4 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
 	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
-}
-
-func (deps TestDeps) GoCtx() context.Context {
-	return sdk.WrapSDKContext(deps.Ctx)
 }
