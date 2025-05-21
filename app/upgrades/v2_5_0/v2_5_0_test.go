@@ -6,6 +6,11 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gogoproto "github.com/cosmos/gogoproto/proto"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_5_0"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -15,9 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *Suite) TestUpgrade() {
@@ -42,11 +45,13 @@ func (s *Suite) TestUpgrade() {
 	)
 
 	s.T().Log("Adds some tokens in circulation. We'll use these later to create ERC20 holders")
-	testapp.FundAccount(
-		deps.App.BankKeeper,
-		deps.Ctx,
-		erisAddr,
-		sdk.NewCoins(sdk.NewInt64Coin(originalbankMetadata.Base, 69_420)),
+	s.NoError(
+		testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			erisAddr,
+			sdk.NewCoins(sdk.NewInt64Coin(originalbankMetadata.Base, 69_420)),
+		),
 	)
 
 	s.T().Logf("evm.EVM_MODULE_ADDRESS %s", evm.EVM_MODULE_ADDRESS)
@@ -97,13 +102,32 @@ func (s *Suite) TestUpgrade() {
 		s.Equal("0", fmt.Sprintf("%d", gotDecimals))
 	}
 
-	s.T().Logf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address)
-	{
+	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
+		s.T().Log("IMPORATNT: Schedule the ugprade")
+		s.Require().True(deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName))
+
+		beforeEvents := deps.Ctx.EventManager().Events()
 		err := v2_5_0.UpgradeStNibiContractOnMainnet(
 			&deps.App.PublicKeepers, deps.Ctx, funtoken.Erc20Addr.Address,
 		)
 		s.Require().NoError(err)
-	}
+		upgradeEvents := testutil.FilterNewEvents(beforeEvents, deps.Ctx.EventManager().Events())
+
+		err = testutil.AssertEventPresent(upgradeEvents,
+			gogoproto.MessageName(new(evm.EventContractDeployed)),
+		)
+		s.Require().NoError(err)
+
+		err = testutil.AssertEventPresent(upgradeEvents,
+			gogoproto.MessageName(new(tokenfactory.EventSetDenomMetadata)),
+		)
+		s.Require().NoError(err)
+
+		err = testutil.AssertEventPresent(upgradeEvents,
+			gogoproto.MessageName(new(evm.EventTxLog)),
+		)
+		s.Require().NoError(err)
+	})
 
 	compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 	s.Run("Confirm that stNIBI has desired metadata after upgrade", func() {

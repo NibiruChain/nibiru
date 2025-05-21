@@ -47,6 +47,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 --> 
 
 - [#2314](https://github.com/NibiruChain/nibiru/pull/2314) - refactor(upgrades): add public keepers to upgrade handlers + DRY improvements
+- [#2315](https://github.com/NibiruChain/nibiru/pull/2315) - feat(upgrades): implement v2.5.0 upgrade handler that modifies the stNIBI ERC20 and Bank Coin metadata in place
 
 ## v2.4.0
 

@@ -12,17 +12,19 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 const UpgradeName = "v2.5.0"
@@ -77,7 +79,7 @@ func UpgradeStNibiContractOnMainnet(
 	erc20Addr gethcommon.Address,
 ) error {
 	// -------------------------------------------------------------------------
-	// STEP 0: Early return if the FunToken mapping or ERC20 hasan invalid state
+	// STEP 0: Early return if the FunToken mapping or ERC20 has an invalid state
 	// -------------------------------------------------------------------------
 
 	// Early return if the mapping for stNIBI doesn't exist
@@ -100,6 +102,7 @@ func UpgradeStNibiContractOnMainnet(
 	var (
 		holderBalsBefore = make(map[gethcommon.Address]*big.Int) // Pre-upgrade token balances
 		holders          = MAINNET_STNIBI_HOLDERS()              // Pre-upgrade set of holders
+		evmLogs          = []evm.Log{}
 	)
 
 	// Blank EVM [core.Message] with no value to use as a placeholder for queries
@@ -153,9 +156,7 @@ func UpgradeStNibiContractOnMainnet(
 	// Now that we have the balances in memory, it's safe to erase the contract
 	// state. The goal is to inject new bytecode and state in.
 	{
-
-		var erc20StateRange collections.Ranger[evmkeeper.AccStatePrimaryKey]
-		erc20StateRange = collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.
+		var erc20StateRange collections.Ranger[evmkeeper.AccStatePrimaryKey] = collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.
 			Prefix(erc20Addr)
 		// ↑ The extra type hint above is meant to make the generics easier to
 		// understand
@@ -168,8 +169,7 @@ func UpgradeStNibiContractOnMainnet(
 			// `sdk.KVStore.Iterator` uses a snapshot. This means deleting the
 			// current key does not affect the iterator unless you call `Set` on that
 			// key again.
-			nibiru.EvmKeeper.EvmState.AccState.Delete(ctx, key)
-
+			_ = nibiru.EvmKeeper.EvmState.AccState.Delete(ctx, key)
 		}
 	}
 
@@ -197,6 +197,11 @@ func UpgradeStNibiContractOnMainnet(
 		Symbol:  symbol,
 	}
 	nibiru.BankKeeper.SetDenomMetaData(ctx, bankMetadata)
+	_ = ctx.EventManager().EmitTypedEvent(&tokenfactory.EventSetDenomMetadata{
+		Denom:    bankDenom,
+		Metadata: bankMetadata,
+		Caller:   evm.EVM_MODULE_ADDRESS_NIBI.String(),
+	})
 
 	// -------------------------------------------------------------------------
 	// STEP 4: Deploy the new bytecode for a configurable ERC20 at a new address.
@@ -256,6 +261,13 @@ func UpgradeStNibiContractOnMainnet(
 	} else if len(evmResp.VmError) > 0 {
 		return fmt.Errorf("VM Error in deploy ERC20: %s", evmResp.VmError)
 	}
+	evmResp.Logs = append(evmLogs, evmResp.Logs...)
+	_ = ctx.EventManager().EmitTypedEvents(
+		&evm.EventContractDeployed{
+			Sender:       evmMsg.From.Hex(),
+			ContractAddr: erc20AddrForNewDeploment.Hex(),
+		},
+	)
 
 	// -------------------------------------------------------------------------
 	// STEP 5: Sanity check the new contract with address "erc20AddrForNewDeploment"
@@ -308,10 +320,8 @@ func UpgradeStNibiContractOnMainnet(
 	// changes corresponding to the new deployment.
 	// -------------------------------------------------------------------------
 	{
-		var erc20StateRange collections.Ranger[evmkeeper.AccStatePrimaryKey]
-		erc20StateRange = collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.
+		var erc20StateRange collections.Ranger[evmkeeper.AccStatePrimaryKey] = collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.
 			Prefix(erc20AddrForNewDeploment)
-		stateKVs := []collections.KeyValue[evmkeeper.AccStatePrimaryKey, []byte]{}
 		iter := nibiru.EvmKeeper.EVMState().AccState.Iterate(ctx, erc20StateRange)
 		defer iter.Close()
 		for ; iter.Valid(); iter.Next() {
@@ -324,10 +334,16 @@ func UpgradeStNibiContractOnMainnet(
 				collections.Join(erc20Addr, stateKey),
 				stateValue,
 			)
-
-			stateKVs = append(stateKVs, iter.KeyValue())
 		}
 	}
+	_ = ctx.EventManager().EmitTypedEvents(
+		// This event is to show we've overwritten the bytecode. Think of this
+		// like a redeployment.
+		&evm.EventContractDeployed{
+			Sender:       evmMsg.From.Hex(),
+			ContractAddr: erc20Addr.Hex(),
+		},
+	)
 
 	// -------------------------------------------------------------------------
 	// STEP 8: Copy over old balance state to the new contract instance
@@ -336,7 +352,7 @@ func UpgradeStNibiContractOnMainnet(
 		for holder, bal := range holderBalsBefore {
 			to := holder
 			amount := bal
-			_, err := nibiru.EvmKeeper.ERC20().Mint(
+			evmResp, err := nibiru.EvmKeeper.ERC20().Mint(
 				erc20Addr,              /*erc20Contract*/
 				evm.EVM_MODULE_ADDRESS, /*from*/
 				to,                     /*to*/
@@ -347,8 +363,10 @@ func UpgradeStNibiContractOnMainnet(
 			if err != nil {
 				return fmt.Errorf("mint erc20 error: %w", err)
 			}
+			evmResp.Logs = append(evmLogs, evmResp.Logs...)
 		}
 	}
 
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmLogs})
 	return nil
 }
