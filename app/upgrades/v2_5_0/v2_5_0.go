@@ -174,7 +174,7 @@ func UpgradeStNibiContractOnMainnet(
 		// ↑ The extra type hint above is meant to make the generics easier to
 		// understand
 
-		iter := nibiru.EvmKeeper.EVMState().AccState.Iterate(ctx, erc20StateRange)
+		iter := nibiru.EvmKeeper.EvmState.AccState.Iterate(ctx, erc20StateRange)
 		defer iter.Close()
 		for ; iter.Valid(); iter.Next() {
 			key := iter.Key()
@@ -335,7 +335,7 @@ func UpgradeStNibiContractOnMainnet(
 	{
 		var erc20StateRange collections.Ranger[evmkeeper.AccStatePrimaryKey] = collections.PairRange[gethcommon.Address, gethcommon.Hash]{}.
 			Prefix(erc20AddrForNewDeploment)
-		iter := nibiru.EvmKeeper.EVMState().AccState.Iterate(ctx, erc20StateRange)
+		iter := nibiru.EvmKeeper.EvmState.AccState.Iterate(ctx, erc20StateRange)
 		defer iter.Close()
 		for ; iter.Valid(); iter.Next() {
 			// Insert state at the original address, "erc20Addr"
