@@ -81,6 +81,24 @@ func (s *Suite) TestUpgrade() {
 			s.Require().Equalf(balToFund.String(), balErc20.String(),
 				"holderAddr %s", holderAddr)
 		}
+
+		s.T().Log("Send the remainder of Eris's balance to ERC20")
+		holderAddr := v2_5_0.MAINNET_NIBIRU_SAFE_ADDR
+		balToFund := deps.App.BankKeeper.GetBalance(deps.Ctx, erisAddr, funtoken.BankDenom)
+		_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
+			&evm.MsgConvertCoinToEvm{
+				ToEthAddr: eth.EIP55Addr{Address: holderAddr},
+				Sender:    erisAddr.String(),
+				BankCoin:  balToFund,
+			},
+		)
+		s.Require().NoError(err)
+
+		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(
+			funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
+		s.Require().NoError(err)
+		s.Require().Equal("69420", totalSupplyErc20.String())
 	}
 
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
@@ -191,6 +209,35 @@ func (s *Suite) TestUpgrade() {
 				"holderAddr %s", holderAddr)
 		}
 	})
+
+	s.Run("Potential excess supply is sent to Nibiru team for redistribution", func() {
+		// Each holder got a balance as an incrementing multiple of 20
+		// The total supply was 69,420.
+		// Thus, the excess balance is 69_420 - ( 20 * SumFrom0To(numHolders) )
+		numHolders := big.NewInt(int64(len(mainnetHolderBals)))
+		wantExcessBal := new(big.Int).Sub(
+			big.NewInt(69_420),
+			new(big.Int).Mul(SumFrom0To(numHolders), big.NewInt(20)),
+		)
+		holderAddr := v2_5_0.MAINNET_NIBIRU_SAFE_ADDR
+		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(
+			funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+		s.Require().NoError(err)
+		s.Require().Equalf(wantExcessBal.String(), balErc20.String(),
+			"holderAddr %s", holderAddr)
+	})
+}
+
+func SumFrom0To(n *big.Int) *big.Int {
+	if n.Cmp(big.NewInt(0)) == 0 {
+		return big.NewInt(0)
+	} else if n.Cmp(big.NewInt(1)) == 0 {
+		return big.NewInt(1)
+	}
+	return new(big.Int).Add(
+		n, SumFrom0To(new(big.Int).Sub(n, big.NewInt(1))),
+	)
 }
 
 type Suite struct {

@@ -69,13 +69,20 @@ func MAINNET_STNIBI_HOLDERS() []gethcommon.Address {
 	return holders
 }
 
-// MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet
-var MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
+var (
+	// MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet.
+	MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
+
+	// MAINNET_NIBIRU_SAFE_ADDR: Address of a Gnosis Safe managed by the Nibiru team
+	// See https://nibiscan.io/address/0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2/contract/6900/code
+	MAINNET_NIBIRU_SAFE_ADDR = gethcommon.HexToAddress("0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2")
+)
 
 func UpgradeStNibiContractOnMainnet(
 	nibiru *keepers.PublicKeepers,
 	ctx sdk.Context,
 	// erc20Addr is the hex address of stNIBI on mainnet
+	// The upgrade handler takes the address as an argument for testing purposes
 	erc20Addr gethcommon.Address,
 ) error {
 	// -------------------------------------------------------------------------
@@ -103,6 +110,12 @@ func UpgradeStNibiContractOnMainnet(
 		holderBalsBefore = make(map[gethcommon.Address]*big.Int) // Pre-upgrade token balances
 		holders          = MAINNET_STNIBI_HOLDERS()              // Pre-upgrade set of holders
 		evmLogs          = []evm.Log{}
+
+		// excessBalance: Send excess ERC20 balance to Nibiru team, so it can be
+		// sent out in case there are new holders before the upgrade.
+		// Gnosis Safe: "cataclysm-1:0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2"
+		// This helps guarantee the total supply won't change.
+		excessBalance *big.Int
 	)
 
 	// Blank EVM [core.Message] with no value to use as a placeholder for queries
@@ -139,7 +152,7 @@ func UpgradeStNibiContractOnMainnet(
 	if err != nil {
 		return err
 	}
-	excessBalance := new(big.Int).Set(totalSupplyErc20)
+	excessBalance = new(big.Int).Set(totalSupplyErc20)
 	for _, holder := range holders {
 		bal, err := nibiru.EvmKeeper.ERC20().BalanceOf(erc20Addr, holder, ctx, evmObj)
 		if err != nil {
@@ -349,6 +362,9 @@ func UpgradeStNibiContractOnMainnet(
 	// STEP 8: Copy over old balance state to the new contract instance
 	// -------------------------------------------------------------------------
 	{
+		if excessBalance.Cmp(big.NewInt(0)) > 0 {
+			holderBalsBefore[MAINNET_NIBIRU_SAFE_ADDR] = excessBalance
+		}
 		for holder, bal := range holderBalsBefore {
 			to := holder
 			amount := bal
