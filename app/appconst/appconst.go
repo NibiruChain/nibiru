@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	db "github.com/cometbft/cometbft-db"
+	"github.com/cosmos/cosmos-sdk/version"
 )
 
 const (
@@ -32,22 +33,25 @@ var (
 )
 
 func init() {
+	verInfo := version.NewInfo()
+	AppVersion = verInfo.Version
 	if len(AppVersion) == 0 {
 		AppVersion = "dev"
 	}
-
+	GitCommit = verInfo.GitCommit
 	GoVersion = runtime.Version()
 	GoArch = runtime.GOARCH
 }
 
 func RuntimeVersion() string {
+	verInfo := version.NewInfo()
 	return fmt.Sprintf(
-		"Version %s (%s)\nCompiled at %s using Go %s (%s)",
+		"Nibiru %s: Compiled at Git commit %s using Go %s, arch %s, build tags %s",
 		AppVersion,
 		GitCommit,
-		BuildDate,
 		GoVersion,
 		GoArch,
+		verInfo.BuildTags,
 	)
 }
 
