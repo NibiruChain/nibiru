@@ -43,6 +43,9 @@ func init() {
 	GoArch = runtime.GOARCH
 }
 
+// RuntimeVersion returns a string containing the traceability info like the
+// client name, version, Git commit, Go version, runtime architecture, and build
+// tags.
 func RuntimeVersion() string {
 	verInfo := version.NewInfo()
 	return fmt.Sprintf(
