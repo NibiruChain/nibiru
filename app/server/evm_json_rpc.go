@@ -26,10 +26,8 @@ import (
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
-var (
-	//go:embed evm_json_rpc_get.html
-	htmlTemplateEvmJsonRpc []byte
-)
+//go:embed evm_json_rpc_get.html
+var htmlTemplateEvmJsonRpc []byte
 
 // StartEthereumJSONRPC starts the Ethereum JSON-RPC server and websocket server
 // for Nibiru.
