@@ -147,6 +147,15 @@ func (e erc20Calls) BalanceOf(
 	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "balanceOf", account)
 }
 
+// TotalSupply returns the amaount of ERC20 tokens in existence.
+// Implements "ERC20.totalSupply".
+func (e erc20Calls) TotalSupply(
+	contract gethcommon.Address,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "totalSupply")
+}
+
 /*
 Burn implements "ERC20Burnable.burn"
 
