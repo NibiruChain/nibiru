@@ -476,11 +476,8 @@ func (k Keeper) TraceTx(
 	}
 
 	// get the context of block beginning
-	contextHeight := req.BlockNumber
-	if contextHeight < 1 {
-		// 0 is a special value in `ContextWithHeight`
-		contextHeight = 1
-	}
+	// 0 is a special value in `ContextWithHeight`
+	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ctx = ctx.WithBlockHeight(contextHeight)
@@ -575,11 +572,8 @@ func (k Keeper) TraceCall(
 	}
 
 	// get the context of block beginning
-	contextHeight := req.BlockNumber
-	if contextHeight < 1 {
-		// 0 is a special value in `ContextWithHeight`
-		contextHeight = 1
-	}
+	// 0 is a special value in `ContextWithHeight`
+	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ctx = ctx.WithBlockHeight(contextHeight)
@@ -660,11 +654,8 @@ func (k Keeper) TraceBlock(
 	}
 
 	// get the context of block beginning
-	contextHeight := req.BlockNumber
-	if contextHeight < 1 {
-		// 0 is a special value in `ContextWithHeight`
-		contextHeight = 1
-	}
+	// 0 is a special value in `ContextWithHeight`
+	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx).
 		WithBlockHeight(contextHeight).
