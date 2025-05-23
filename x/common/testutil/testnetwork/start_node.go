@@ -141,7 +141,7 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.EthTxIndexer = evmTxIndexer
 		val.EthTxIndexerService = evmTxIndexerService
 
-		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
+		val.jsonrpc, val.jsonrpcDone, err = server.StartEthereumJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to start JSON-RPC server")
 		}

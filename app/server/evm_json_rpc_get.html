@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="canonical" href="https://evm-rpc.nibiru.fi" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/css">
+      body {
+        margin: 40px auto;
+        max-width: 650px;
+        line-height: 1.6;
+        font-size: 16px;
+        color: #444;
+        padding: 0 10px;
+        font-family: "Inter", Helvetica, sans-serif;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ethereum JSON-RPC endpoint for Nibiru</h1>
+    <p>
+      Often when people open the link to an RPC endpoint, the page is either
+      blank or displays some error. Here's some useful info instead.
+    </p>
+    <ul>
+      <li>RPC Status: {{.Status}}</li>
+      <li>Time: {{.NowTime}}</li>
+    </ul>
+
+    <h2>Nibiru Mainnet Info</h2>
+    <p>
+      EIP-155 Chain ID: 6900 ("0x1AF4" in hex) <br />EVM RPC:
+      <a target="_blank" href="https://evm-rpc.nibiru.fi"
+        >https://evm-rpc.nibiru.fi</a
+      >
+    </p>
+
+    <h2>Awesome Nibiru Links</h2>
+    These ones are useful for building on Nibiru EVM.
+    <ul>
+      <li>
+        <a target="_blank" href="https://nibiru.fi/docs/concepts/gas.html">
+          Gas on Nibiru and Its EVM
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://nibiru.fi/docs/dev/networks/">
+          Nibiru Networks and RPCs
+        </a>
+      </li>
+      <li>
+        <a
+          target="_blank"
+          href="https://nibiru.fi/docs/dev/evm/npm-evm-core.html"
+        >
+          @nibiruchain/evm-core
+        </a>
+        on <code>npm</code>: Core Nibiru EVM TypeScript library with functions
+        to call Nibiru-specific precompiled contracts.
+      </li>
+      <li>
+        <a
+          target="_blank"
+          href="https://nibiru.fi/docs/dev/evm/npm-solidity.html"
+        >
+          @nibiruchain/solidity
+        </a>
+        on <code>npm</code>: Nibiru EVM solidity contracts and ABIs for
+        Nibiru-specific precompiles and core functionality.
+      </li>
+    </ul>
+
+    These links are more general.
+    <ul>
+      <li>
+        <a target="_blank" href="https://nibiru.fi/docs/dev/">
+          Developer Hub
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://nibiru.fi/brand"> Brand Kit </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://nibiru.fi/docs/community/">
+          Community Hub
+        </a>
+      </li>
+    </ul>
+
+    <h2>Using this EVM JSON-RPC Endpoint with <code>curl</code></h2>
+    <p>
+      You can find a comprehensive list of EVM JSON-RPC methods with
+      descriptions and examples
+      <a
+        href="https://ethereum.org/en/developers/docs/apis/json-rpc/#:~:text=On%20this%20page%20we%20provide%20examples"
+        target="_blank"
+        >here on ethereum.org in the RPC page</a
+      >. Here are a few copy-pasteable examples below.
+    </p>
+
+    <div>
+      <h4>
+        Example <code>"web3_clientVersion"</code>: Queries the traceability info
+        like the client name, version, Git commit, Go version, runtime
+        architecture, and build tags.
+      </h4>
+      <textarea
+        readonly
+        rows="9"
+        style="width: 100%; font-family: monospace; padding: 1rem"
+      >
+curl -X POST https://evm-rpc.nibiru.fi \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "web3_clientVersion",
+    "params": [],
+    "id": 1
+  }'
+</textarea
+      >
+      The response looks like this: "<code>{{.Web3ClientVersion}}</code>"
+    </div>
+
+    <div>
+      <h4>
+        Example <code>"eth_chainId"</code>: Queries the EIP-155
+        replay-protection chain id for the current ethereum blockchain (Nibiru).
+      </h4>
+      <textarea
+        readonly
+        rows="9"
+        style="width: 100%; font-family: monospace; padding: 1rem"
+      >
+curl -X POST https://evm-rpc.nibiru.fi \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "eth_chainId",
+    "params": [],
+    "id": 1
+  }'
+</textarea
+      >
+    </div>
+  </body>
+</html>
