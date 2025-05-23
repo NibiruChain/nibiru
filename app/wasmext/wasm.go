@@ -136,6 +136,7 @@ func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddr
 		}
 		// append data
 		data = append(data, res.Data)
+		msgResponses = append(msgResponses, res.MsgResponses)
 		// append events
 		sdkEvents := make([]sdk.Event, len(res.Events))
 		for i := range res.Events {
