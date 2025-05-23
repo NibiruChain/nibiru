@@ -1,10 +1,14 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
+// Package appconst defines global constants and utility functions
+// used throughout the Nibiru application.
 package appconst
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"fmt"
 	"math/big"
 	"runtime"
+	"strings"
 
 	db "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -12,7 +16,8 @@ import (
 
 const (
 	BinaryName = "nibiru"
-	BondDenom  = "unibi"
+	// BondDenom is the Bank Coin denomination for staking, governance, and gas.
+	BondDenom = "unibi"
 	// AccountAddressPrefix: Bech32 prefix for Nibiru accounts.
 	AccountAddressPrefix = "nibi"
 )
@@ -22,43 +27,27 @@ var (
 	HavePebbleDBBuildTag bool
 )
 
-// Runtime version vars
-var (
-	AppVersion = ""
-	GitCommit  = ""
-	BuildDate  = ""
-
-	GoVersion = ""
-	GoArch    = ""
-)
-
-func init() {
-	verInfo := version.NewInfo()
-	AppVersion = verInfo.Version
-	if len(AppVersion) == 0 {
-		AppVersion = "dev"
-	}
-	GitCommit = verInfo.GitCommit
-	GoVersion = runtime.Version()
-	GoArch = runtime.GOARCH
-}
-
-// RuntimeVersion returns a string containing the traceability info like the
-// client name, version, Git commit, Go version, runtime architecture, and build
-// tags.
+// RuntimeVersion returns a formatted string with versioning and build metadata,
+// including the Nibiru version, Git commit, Go runtime, architecture, and build tags.
 func RuntimeVersion() string {
-	verInfo := version.NewInfo()
+	info := version.NewInfo()
+	nibiruVersion := info.Version
+	if len(nibiruVersion) == 0 {
+		nibiruVersion = "dev"
+	}
+	goVersion := runtime.Version()
+	goArch := runtime.GOARCH
 	return fmt.Sprintf(
-		"Nibiru %s: Compiled at Git commit %s using Go %s, arch %s, build tags %s",
-		AppVersion,
-		GitCommit,
-		GoVersion,
-		GoArch,
-		verInfo.BuildTags,
+		"Nibiru %s: Compiled at Git commit %s using Go %s, arch %s, and build tags (%s)",
+		nibiruVersion,
+		info.GitCommit,
+		goVersion,
+		goArch,
+		strings.TrimRight(info.BuildTags, ","), // build tags have a trailing comma
 	)
 }
 
-// EIP 155 Chain IDs exported for tests.
+// EIP 155 Chain IDs for Nibiru
 const (
 	ETH_CHAIN_ID_MAINNET int64 = 6900
 
@@ -78,6 +67,8 @@ const (
 	ETH_CHAIN_ID_DEFAULT int64 = 6930
 )
 
+// knownEthChainIDMap maps `sdk.Context` chain IDs to their corresponding EIP-155
+// Ethereum Chain IDs, which must be positive integers.
 var knownEthChainIDMap = map[string]int64{
 	"cataclysm-1": ETH_CHAIN_ID_MAINNET,
 
@@ -100,9 +91,7 @@ var knownEthChainIDMap = map[string]int64{
 func GetEthChainID(ctxChainID string) (ethChainID *big.Int) {
 	ethChainIdInt, found := knownEthChainIDMap[ctxChainID]
 	if !found {
-		ethChainID = big.NewInt(ETH_CHAIN_ID_DEFAULT)
-	} else {
-		ethChainID = big.NewInt(ethChainIdInt)
+		return big.NewInt(ETH_CHAIN_ID_DEFAULT)
 	}
-	return ethChainID
+	return big.NewInt(ethChainIdInt)
 }
