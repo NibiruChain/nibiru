@@ -14,11 +14,7 @@ import (
 const UpgradeName = "v2.4.0"
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
-	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator, clientKeeper clientkeeper.Keeper) upgradetypes.UpgradeHandler {
-		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return mm.RunMigrations(ctx, cfg, fromVM)
-		}
-	},
-	StoreUpgrades: types.StoreUpgrades{},
+	UpgradeName:          UpgradeName,
+	CreateUpgradeHandler: upgrades.DefaultUpgradeHandler,
+	StoreUpgrades:        types.StoreUpgrades{},
 }

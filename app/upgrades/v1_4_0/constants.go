@@ -1,12 +1,7 @@
 package v1_4_0
 
 import (
-	"context"
-
 	"cosmossdk.io/store/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
@@ -14,12 +9,8 @@ import (
 const UpgradeName = "v1.4.0"
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
-	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator, clientKeeper clientkeeper.Keeper) upgradetypes.UpgradeHandler {
-		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return mm.RunMigrations(ctx, cfg, fromVM)
-		}
-	},
+	UpgradeName:          UpgradeName,
+	CreateUpgradeHandler: upgrades.DefaultUpgradeHandler,
 	StoreUpgrades: types.StoreUpgrades{
 		Added: []string{},
 	},
