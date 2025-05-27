@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	evidencetypes "cosmossdk.io/x/evidence/types"
@@ -264,8 +266,8 @@ func TestAppImportExport(t *testing.T) {
 		}
 	}()
 
-	ctxA := oldApp.NewContext(true)
-	ctxB := newApp.NewContext(true)
+	ctxA := oldApp.NewContextLegacy(true, tmproto.Header{Height: oldApp.LastBlockHeight()})
+	ctxB := newApp.NewContextLegacy(true, tmproto.Header{Height: oldApp.LastBlockHeight()})
 	_, err = newApp.ModuleManager.InitGenesis(ctxB, oldApp.AppCodec(), genesisState)
 	require.NoError(t, err)
 	err = newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)

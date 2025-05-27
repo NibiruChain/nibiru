@@ -3,6 +3,9 @@ package ante_test
 import (
 	"context"
 	"testing"
+	"time"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -36,7 +39,11 @@ type AnteTestSuite struct {
 func (suite *AnteTestSuite) SetupTest() {
 	suite.app, _ = testapp.NewNibiruTestApp(suite.T().TempDir(), app.GenesisState{})
 	chainId := "test-chain-id"
-	ctx := suite.app.NewContext(true)
+	ctx := suite.app.NewContextLegacy(true, tmproto.Header{
+		Height:  1,
+		ChainID: chainId,
+		Time:    time.Now().UTC(),
+	})
 	suite.ctx = ctx
 
 	// Set up TxConfig
