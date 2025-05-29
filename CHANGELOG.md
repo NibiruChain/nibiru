@@ -40,16 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## v2.4.0
+## [v2.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0) - 2025-05-29
 
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
-- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update
-to geth v1.14 with tracing updates and new StateDB methods.
-  - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid
-   incompatibilities stemming from functionality specific to Ethereum's consesnus
-   setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
-  - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
-   dependency and leverage new generics features added in Go 1.23+.
+- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update to geth v1.14 with tracing updates and new StateDB methods.
+  - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid incompatibilities stemming from functionality specific to Ethereum's consensus setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
+  - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB dependency and leverage new generics features added in Go 1.23+.
 - [#2289](https://github.com/NibiruChain/nibiru/pull/2289) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
 - [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
 - [#2296](https://github.com/NibiruChain/nibiru/pull/2296) - chore(ci): use shell script for generating changelog in releases
