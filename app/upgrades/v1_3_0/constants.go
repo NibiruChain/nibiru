@@ -18,6 +18,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
 
@@ -25,9 +26,14 @@ const UpgradeName = "v1.3.0"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
-	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator, clientKeeper clientkeeper.Keeper) upgradetypes.UpgradeHandler {
-		return func(c context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			ctx := sdk.UnwrapSDKContext(c)
+	CreateUpgradeHandler: func(
+		mm *module.Manager,
+		cfg module.Configurator,
+		nibiru *keepers.PublicKeepers,
+		clientKeeper clientkeeper.Keeper,
+	) upgradetypes.UpgradeHandler {
+		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			c := sdk.UnwrapSDKContext(ctx)
 			// set the ICS27 consensus version so InitGenesis is not run
 			fromVM[icatypes.ModuleName] = mm.GetVersionMap()[icatypes.ModuleName]
 
@@ -59,7 +65,7 @@ var Upgrade = upgrades.Upgrade{
 			if !correctTypecast {
 				panic("mm.Modules[icatypes.ModuleName] is not of type ica.AppModule")
 			}
-			icamodule.InitModule(ctx, controllerParams, hostParams)
+			icamodule.InitModule(c, controllerParams, hostParams)
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
 		}

@@ -177,13 +177,14 @@ func queryCommand() *cobra.Command {
 	}
 
 	rootQueryCmd.AddCommand(
+		rpc.WaitTxCmd(),
 		rpc.ValidatorCommand(),
+		sdkserver.QueryBlocksCmd(),
 		authcmd.QueryTxsByEventsCmd(),
 		authcmd.QueryTxCmd(),
+		sdkserver.QueryBlockResultsCmd(),
 	)
 
-	// Adds all query commands to the 'rootQueryCmd'
-	app.ModuleBasics.AddQueryCommands(rootQueryCmd)
 	rootQueryCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
 	return rootQueryCmd

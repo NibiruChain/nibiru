@@ -58,7 +58,7 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 		Height: 1,
 		Time:   time.Now().UTC(),
 	}
-	ctx := nibiru.NewContext(false)
+	ctx := nibiru.NewContextLegacy(false, blockHeader)
 
 	// Make sure there's a block proposer on the context.
 	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
