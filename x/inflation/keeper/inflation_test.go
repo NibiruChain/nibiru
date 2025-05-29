@@ -65,7 +65,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 			t.Logf("setting root account to %s", tc.rootAccount)
 			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
@@ -105,7 +105,9 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				denoms.NIBI,
 			)
 
-			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
+			communityPool, err := nibiruApp.DistrKeeper.FeePool.Get(ctx)
+			require.NoError(t, err)
+			balanceCommunityPool := communityPool.CommunityPool
 
 			require.NoError(t, err, tc.name)
 			assert.Equal(t,
@@ -164,7 +166,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 			tc.malleate(nibiruApp, ctx)
 
@@ -186,7 +188,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 }
 
 func TestGetters(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	k := nibiruApp.InflationKeeper
 	require.NotPanics(t, func() {
 		_ = k.GetPolynomialFactors(ctx)

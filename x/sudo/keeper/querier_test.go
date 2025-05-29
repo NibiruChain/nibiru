@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
@@ -40,14 +39,14 @@ func TestQuerySudoers(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 
 			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
 
 			req := new(types.QuerySudoersRequest)
 			querier := keeper.NewQuerier(nibiru.SudoKeeper)
 			resp, err := querier.QuerySudoers(
-				sdk.WrapSDKContext(ctx), req,
+				ctx, req,
 			)
 			require.NoError(t, err)
 
@@ -57,11 +56,11 @@ func TestQuerySudoers(t *testing.T) {
 	}
 
 	t.Run("nil request should error", func(t *testing.T) {
-		nibiru, ctx := setup()
+		nibiru, ctx := setup(t)
 		var req *types.QuerySudoersRequest = nil
 		querier := keeper.NewQuerier(nibiru.SudoKeeper)
 		_, err := querier.QuerySudoers(
-			sdk.WrapSDKContext(ctx), req,
+			ctx, req,
 		)
 		require.Error(t, err)
 	})

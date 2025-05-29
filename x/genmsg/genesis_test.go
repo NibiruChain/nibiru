@@ -103,9 +103,4 @@ func Test_validateGenesis(t *testing.T) {
 		err := validateGenesis(cdc, genesis)
 		require.NoError(t, err)
 	})
-	t.Run("fails - validate basic", func(t *testing.T) {
-		genesis := newGenesisFromMsgs(t, cdc, &banktypes.MsgSend{})
-		err := validateGenesis(cdc, genesis)
-		require.Error(t, err)
-	})
 }

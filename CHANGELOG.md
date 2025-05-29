@@ -49,6 +49,8 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2311](https://github.com/NibiruChain/nibiru/pull/2311) - refactor: use Go's built-in min and max functions to simplify logic
 - [#2314](https://github.com/NibiruChain/nibiru/pull/2314) - refactor(upgrades): add public keepers to upgrade handlers + DRY improvements
 
+- [#2308](https://github.com/NibiruChain/nibiru/pull/2308) - feat: cosmos v50 upgrade
+
 ## v2.4.0
 
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support

@@ -79,7 +79,7 @@ func (s *Suite) TestParseBloomFromEvents() {
 		{
 			name: "happy: events with bloom included",
 			endBlockEvents: func() (gethcore.Bloom, []abci.Event) {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 
 				// populate valid bloom
 				bloom := gethcore.Bloom{}

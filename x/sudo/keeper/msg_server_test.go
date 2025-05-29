@@ -18,8 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-func setup() (*app.NibiruApp, sdk.Context) {
-	return testapp.NewNibiruTestAppAndContext()
+func setup(t *testing.T) (*app.NibiruApp, sdk.Context) {
+	return testapp.NewNibiruTestAppAndContext(t.TempDir())
 }
 
 func TestGenesis(t *testing.T) {
@@ -66,7 +66,7 @@ func TestGenesis(t *testing.T) {
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// Setup
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 
 			// InitGenesis
 			if testCase.panic {
@@ -146,7 +146,7 @@ func TestSudo_AddContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _ = setup()
+			_, _ = setup(t)
 			root := testutil.AccAddress().String()
 			sudoers := keeper.Sudoers{
 				Root:      root,
@@ -164,7 +164,7 @@ func TestSudo_AddContracts(t *testing.T) {
 }
 
 func TestMsgServer_ChangeRoot(t *testing.T) {
-	app, ctx := setup()
+	app, ctx := setup(t)
 
 	_, err := app.SudoKeeper.Sudoers.Get(ctx)
 	require.NoError(t, err)
@@ -180,14 +180,14 @@ func TestMsgServer_ChangeRoot(t *testing.T) {
 	// try to change root with non-root account
 	msgServer := keeper.NewMsgServer(app.SudoKeeper)
 	_, err = msgServer.ChangeRoot(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		&types.MsgChangeRoot{Sender: fakeRoot, NewRoot: newRoot},
 	)
 	require.EqualError(t, err, "unauthorized: missing sudo permissions")
 
 	// try to change root with root account
 	_, err = msgServer.ChangeRoot(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		&types.MsgChangeRoot{Sender: actualRoot, NewRoot: newRoot},
 	)
 	require.NoError(t, err)
@@ -323,7 +323,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
@@ -339,9 +339,9 @@ func TestKeeper_AddContracts(t *testing.T) {
 			t.Log("Execute message")
 			// Check via message handler directly
 			msgServer := keeper.NewMsgServer(k)
-			res, err := msgServer.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
+			res, err := msgServer.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
-			res2, err2 := k.AddContracts(sdk.WrapSDKContext(ctx), tc.msg)
+			res2, err2 := k.AddContracts(ctx, tc.msg)
 			if tc.shouldFail {
 				require.Errorf(t, err, "resp: %s", res)
 				require.Errorf(t, err2, "resp: %s", res2)
@@ -432,7 +432,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+			nibiru, ctx := setup(t)
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
@@ -450,7 +450,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 			msgServer := keeper.NewMsgServer(k)
 			res, err := msgServer.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
-			res2, err2 := k.RemoveContracts(sdk.WrapSDKContext(ctx), tc.msg)
+			res2, err2 := k.RemoveContracts(ctx, tc.msg)
 			if tc.shouldFail {
 				require.Errorf(t, err, "resp: %s", res)
 				require.Errorf(t, err2, "resp: %s", res2)

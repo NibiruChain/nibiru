@@ -8,7 +8,7 @@ import (
 )
 
 func (s *TestSuite) TestQueryModuleParams() {
-	res, err := s.querier.Params(s.GoCtx(), &types.QueryParamsRequest{})
+	res, err := s.querier.Params(s.ctx, &types.QueryParamsRequest{})
 	s.NoError(err)
 	s.Equal(res.Params, types.DefaultModuleParams())
 }
@@ -36,7 +36,7 @@ func (s *TestSuite) TestQueryDenoms() {
 	queryDenoms := func(creator string) (
 		resp *types.QueryDenomsResponse, err error,
 	) {
-		return s.querier.Denoms(s.GoCtx(),
+		return s.querier.Denoms(s.ctx,
 			&types.QueryDenomsRequest{
 				Creator: creator,
 			})
@@ -59,7 +59,7 @@ func (s *TestSuite) TestQueryDenoms() {
 	_, err = queryDenoms("")
 	s.ErrorContains(err, "empty creator address")
 
-	_, err = s.querier.Denoms(s.GoCtx(), nil)
+	_, err = s.querier.Denoms(s.ctx, nil)
 	s.ErrorContains(err, "nil msg")
 }
 
@@ -73,13 +73,13 @@ func (s *TestSuite) TestQueryDenomInfo() {
 	s.createDenom(creator, denom.Subdenom)
 
 	s.Run("case: nil msg", func() {
-		_, err := s.querier.DenomInfo(s.GoCtx(),
+		_, err := s.querier.DenomInfo(s.ctx,
 			nil)
 		s.ErrorContains(err, "nil msg")
 	})
 
 	s.Run("case: fail denom validation", func() {
-		_, err := s.querier.DenomInfo(s.GoCtx(),
+		_, err := s.querier.DenomInfo(s.ctx,
 			&types.QueryDenomInfoRequest{
 				Denom: "notadenom",
 			})
@@ -89,7 +89,7 @@ func (s *TestSuite) TestQueryDenomInfo() {
 	})
 
 	s.Run("case: happy", func() {
-		resp, err := s.querier.DenomInfo(s.GoCtx(),
+		resp, err := s.querier.DenomInfo(s.ctx,
 			&types.QueryDenomInfoRequest{
 				Denom: denom.Denom().String(),
 			})

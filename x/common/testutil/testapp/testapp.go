@@ -5,18 +5,20 @@ import (
 	"maps"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -39,8 +41,8 @@ import (
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestApp(app.GenesisState{})
+func NewNibiruTestAppAndContext(homeDir string) (*app.NibiruApp, sdk.Context) {
+	app, _ := NewNibiruTestApp(homeDir, app.GenesisState{})
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
@@ -56,7 +58,7 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 		Height: 1,
 		Time:   time.Now().UTC(),
 	}
-	ctx := nibiru.NewContext(false, blockHeader)
+	ctx := nibiru.NewContextLegacy(false, blockHeader)
 
 	// Make sure there's a block proposer on the context.
 	blockHeader.ProposerAddress = FirstBlockProposer(nibiru, ctx)
@@ -69,8 +71,8 @@ func FirstBlockProposer(
 	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
 	maxQueryCount := uint32(10)
-	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
-	valAddrBz := valopers[0].GetOperator().Bytes()
+	valopers, _ := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
+	valAddrBz := valopers[0].GetOperator()
 	return sdk.ConsAddress(valAddrBz)
 }
 
@@ -93,15 +95,17 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
+func NewNibiruTestApp(homedir string, customGenesisOverride app.GenesisState) (
 	nibiruApp *app.NibiruApp, gen app.GenesisState,
 ) {
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = homedir // ensure unique folder
 	app := app.NewNibiruApp(
 		log.NewNopLogger(),
-		tmdb.NewMemDB(),
+		dbm.NewMemDB(),
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
-		/*appOpts=*/ sims.EmptyAppOptions{},
+		/*appOpts=*/ appOptions,
 	)
 
 	// configure genesis from default
@@ -142,11 +146,13 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 		panic(err)
 	}
 
-	app.InitChain(abci.RequestInitChain{
+	_, err = app.InitChain(&abci.RequestInitChain{
 		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
-
+	if err != nil {
+		panic(err)
+	}
 	return app, gen
 }
 
@@ -229,14 +235,15 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 func genesisStateWithValSet(
 	cdc codec.Codec,
 	genesisState nibiruapp.GenesisState,
-	valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
+	valSet *cmttypes.ValidatorSet,
+	genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (nibiruapp.GenesisState, error) {
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 
 	for _, val := range valSet.Validators {
-		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pk, err := cryptocodec.FromCmtPubKeyInterface(val.PubKey)
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +265,7 @@ func genesisStateWithValSet(
 			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdkmath.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), sdk.ValAddress(val.Address).String(), sdkmath.LegacyOneDec()))
 	}
 	// set validators and delegations
 	genesisState[stakingtypes.ModuleName] = cdc.MustMarshalJSON(
