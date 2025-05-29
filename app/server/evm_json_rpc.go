@@ -2,8 +2,13 @@ package server
 
 import (
 	"errors"
+	"html/template"
 	"net/http"
 	"time"
+
+	// The `_ "embed"` import adds access to files embedded in the running Go
+	// program (smart contracts).
+	_ "embed"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
@@ -17,11 +22,16 @@ import (
 	gethlog "github.com/ethereum/go-ethereum/log"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 )
 
-// StartJSONRPC starts the JSON-RPC server
-func StartJSONRPC(
+//go:embed evm_json_rpc_get.html
+var htmlTemplateEvmJsonRpc []byte
+
+// StartEthereumJSONRPC starts the Ethereum JSON-RPC server and websocket server
+// for Nibiru.
+func StartEthereumJSONRPC(
 	ctx *server.Context,
 	clientCtx client.Context,
 	tmRPCAddr,
@@ -55,8 +65,37 @@ func StartJSONRPC(
 		}
 	}
 
+	// This router for the Ethereum JSON-RPC matches on both the path ("/")
+	// and method ("POST", "GET", "PUT") to choose a handler. This allows us
+	// to add different behavior based on the type of request to display a
+	// webpage if someone visits the RPC URL.
 	r := mux.NewRouter()
 	r.HandleFunc("/", rpcServer.ServeHTTP).Methods("POST")
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Accept-Ranges", "bytes")
+		w.Header().Set("Vary", "User-Agent")
+		w.WriteHeader(http.StatusOK)
+
+		tmpl := template.Must(
+			template.New("evm_json_rpc_get").
+				Parse(string(htmlTemplateEvmJsonRpc)),
+		)
+		err := tmpl.Execute(w,
+			struct {
+				Status            string
+				NowTime           string
+				Web3ClientVersion string
+			}{
+				Status:            "Active",
+				NowTime:           startTime.Format(time.DateTime),
+				Web3ClientVersion: appconst.RuntimeVersion(),
+			})
+		if err != nil {
+			http.Error(w, "Internal template error", http.StatusInternalServerError)
+		}
+	}).Methods("GET")
 
 	handlerWithCors := cors.Default()
 	if config.API.EnableUnsafeCORS {
