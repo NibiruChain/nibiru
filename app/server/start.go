@@ -517,7 +517,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 
 		tmEndpoint := "/websocket"
 		tmRPCAddr := cfg.RPC.ListenAddress
-		httpSrv, httpSrvDone, err = StartJSONRPC(
+		httpSrv, httpSrvDone, err = StartEthereumJSONRPC(
 			ctx, clientCtx, tmRPCAddr, tmEndpoint, &conf, evmIdxer,
 		)
 		if err != nil {
