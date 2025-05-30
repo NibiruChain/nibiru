@@ -49,7 +49,6 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2311](https://github.com/NibiruChain/nibiru/pull/2311) - refactor: use Go's built-in min and max functions to simplify logic
 - [#2314](https://github.com/NibiruChain/nibiru/pull/2314) - refactor(upgrades): add public keepers to upgrade handlers + DRY improvements
 - [#2316](https://github.com/NibiruChain/nibiru/pull/2316) - feat(ux): add GET behavior to the Ethereum JSON-RPC endpoints for Nibiru so they return info instead of a blank page or error.
-- [#2317](https://github.com/NibiruChain/nibiru/pull/2317) - chore(evm): add MIM & USDC.arb to official erc20 token registry
 
 ## v2.4.0
 
