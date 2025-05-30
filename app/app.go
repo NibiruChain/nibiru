@@ -210,7 +210,7 @@ type NibiruApp struct {
 }
 
 func init() {
-	SetPrefixes("nibi")
+	SetPrefixes(appconst.AccountAddressPrefix)
 	sdk.DefaultBondDenom = appconst.BondDenom
 
 	userHomeDir, err := os.UserHomeDir()
