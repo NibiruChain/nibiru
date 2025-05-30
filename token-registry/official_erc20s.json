@@ -41,7 +41,7 @@
     "contractAddr": "0x08EBA8ff53c6ee5d37A90eD4b5239f2F85e7B291",
     "displayName": "Bridged USDC (VIA Labs)",
     "symbol": "USDC.arb",
-    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_arb.png"
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc-arb.png"
   },
   {
     "contractAddr": "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555",
@@ -59,7 +59,7 @@
     "contractAddr": "0xfCfc58685101e2914cBCf7551B432500db84eAa8",
     "displayName": "Magic Internet Money",
     "symbol": "MIM",
-    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_mim.svg"
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_mim.png"
   },
   {
     "contractAddr": "0xF63fCFcd000af6401dc1848E7e147AeDf56f9355",

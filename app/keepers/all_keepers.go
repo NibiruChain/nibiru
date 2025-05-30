@@ -20,6 +20,8 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
@@ -41,6 +43,7 @@ type PublicKeepers struct {
 	GovKeeper             *govkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
+	UpgradeKeeper         *upgradekeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper

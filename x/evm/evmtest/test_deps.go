@@ -59,6 +59,18 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 	return evmObj, stateDB
 }
 
+func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *statedb.StateDB) {
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	evmObj := deps.EvmKeeper.NewEVM(
+		deps.Ctx,
+		MOCK_GETH_MESSAGE,
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
+		stateDB,
+	)
+	return evmObj, stateDB
+}
+
 func (deps *TestDeps) GethSigner() gethcore.Signer {
 	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
 }
