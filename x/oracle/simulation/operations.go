@@ -98,7 +98,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		// ensure the validator exists
 		val, err := k.StakingKeeper.Validator(ctx, address)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
 		}
 		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "unable to find validator"), nil, nil
@@ -165,7 +165,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		// ensure the validator exists
 		val, err := k.StakingKeeper.Validator(ctx, address)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
 		}
 		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "unable to find validator"), nil, nil
@@ -240,7 +240,7 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 		// ensure the validator exists
 		val, err := k.StakingKeeper.Validator(ctx, valAddress)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
 		}
 		if val == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgDelegateFeedConsent, "unable to find validator"), nil, nil
@@ -249,7 +249,7 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 		// ensure the target address is not a validator
 		val2, err := k.StakingKeeper.Validator(ctx, delegateValAddress)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
 		}
 		if val2 != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgDelegateFeedConsent, "unable to delegate to validator"), nil, nil

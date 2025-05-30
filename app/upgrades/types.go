@@ -6,9 +6,11 @@ import (
 	store "cosmossdk.io/store/types"
 	"cosmossdk.io/x/upgrade/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
 	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
+
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
 )
 
 type Upgrade struct {
