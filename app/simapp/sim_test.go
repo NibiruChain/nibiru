@@ -76,7 +76,7 @@ func TestFullAppSimulation(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	app := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
@@ -127,7 +127,6 @@ func TestAppStateDeterminism(t *testing.T) {
 
 	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	for i := 0; i < numSeeds; i++ {
@@ -136,7 +135,7 @@ func TestAppStateDeterminism(t *testing.T) {
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
 			logger := log.NewNopLogger()
-
+			appOptions[flags.FlagHome] = t.TempDir()
 			app := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
 			// Registers interfaces and types that are expected by default in the Cosmos-SDK
 			// even if they are disabled on Nibiru. This is the case for x/vesting Cosmos-SDK
@@ -195,7 +194,7 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	oldApp := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
@@ -329,7 +328,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir()
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	oldApp := app.NewNibiruApp(logger, db, nil, true, appOptions, baseapp.SetChainID(SimAppChainID))
