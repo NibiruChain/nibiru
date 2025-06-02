@@ -51,7 +51,7 @@ const (
 
 var MsgEthereumTxCustomGetSigner = txsigning.CustomGetSigner{
 	MsgType: protov2.MessageName(&evmapi.MsgEthereumTx{}),
-	Fn:      EthereumTxGetSigners,
+	Fn:      evmapi.EthereumTxGetSigners,
 }
 
 // NewTx returns a reference to a new Ethereum transaction message.
@@ -223,18 +223,6 @@ func (msg *MsgEthereumTx) GetSigners() []sdk.AccAddress {
 
 	signer := sdk.AccAddress(sender.Bytes())
 	return []sdk.AccAddress{signer}
-}
-
-func EthereumTxGetSigners(msg protov2.Message) ([][]byte, error) {
-	msgEthereumTx, ok := msg.(*evmapi.MsgEthereumTx)
-	if !ok {
-		return nil, fmt.Errorf("invalid type, expected MsgConvertERC20 and got %T", msg)
-	}
-
-	// The sender on the msg is a hex address
-	sender := common.HexToAddress(msgEthereumTx.From)
-
-	return [][]byte{sender.Bytes()}, nil
 }
 
 // GetSignBytes returns the Amino bytes of an Ethereum transaction message used
