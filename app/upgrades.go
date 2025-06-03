@@ -28,7 +28,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_2_0"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_3_0"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_4_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_5_0"
 )
 
 var Upgrades = []upgrades.Upgrade{
@@ -45,7 +44,6 @@ var Upgrades = []upgrades.Upgrade{
 	v2_2_0.Upgrade,
 	v2_3_0.Upgrade,
 	v2_4_0.Upgrade,
-	v2_5_0.Upgrade,
 }
 
 func (app *NibiruApp) setupUpgrades() {
@@ -75,7 +73,7 @@ func (app *NibiruApp) setupUpgrades() {
 
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
-		app.UpgradeKeeper.SetUpgradeHandler(u.UpgradeName,
+		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName,
 			u.CreateUpgradeHandler(
 				app.ModuleManager,
 				app.Configurator(),
@@ -86,12 +84,12 @@ func (app *NibiruApp) setUpgradeHandlers() {
 }
 
 func (app *NibiruApp) setUpgradeStoreLoaders() {
-	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	upgradeInfo, err := app.upgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Sprintf("failed to read upgrade info from disk: %s", err.Error()))
 	}
 
-	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+	if app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		return
 	}
 
