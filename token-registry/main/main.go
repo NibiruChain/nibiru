@@ -51,7 +51,12 @@ func main() {
 
 	// Create token-registry/official_erc20s.json
 	savePath = path.Join(rootPath, SAVE_PATH_OFFICIAL_ERC20S)
-	prettyBz, err = tokenregistry.ParseOfficialSaveBz(tokenregistry.ERC20S)
+	tokens, err := tokenregistry.LoadERC20s()
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return
+	}
+	prettyBz, err = tokenregistry.ParseOfficialSaveBz(tokens)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return
@@ -64,7 +69,12 @@ func main() {
 
 	// Create token-registry/official_bank_coins.json
 	savePath = path.Join(rootPath, SAVE_PATH_OFFICIAL_BANK_COINS)
-	prettyBz, err = tokenregistry.ParseOfficialSaveBz(tokenregistry.BANK_COINS)
+	tokens, err = tokenregistry.LoadBankCoins()
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return
+	}
+	prettyBz, err = tokenregistry.ParseOfficialSaveBz(tokens)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return

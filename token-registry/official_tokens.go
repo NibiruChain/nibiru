@@ -2,7 +2,9 @@ package tokenregistry
 
 import (
 	"encoding/json"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 )
 
@@ -13,6 +15,11 @@ type TokenOfficial struct {
 	LogoSrc      string     `json:"logoSrc"`
 	PriceInfo    *PriceInfo `json:"priceInfo,omitempty"`
 }
+
+const (
+	SAVE_PATH_OFFICIAL_ERC20S     = "token-registry/official_erc20s.json"
+	SAVE_PATH_OFFICIAL_BANK_COINS = "token-registry/official_bank_coins.json"
+)
 
 type PriceInfo struct {
 	// "source" identifies where to get the USD price
@@ -49,62 +56,34 @@ func ParseOfficialSaveBz(tokens []TokenOfficial) ([]byte, error) {
 	return json.MarshalIndent(parsedTokens, "", "  ")
 }
 
-var ERC20S []TokenOfficial = []TokenOfficial{
-	{
-		ContractAddr: "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97",
-		DisplayName:  "Wrapped Nibiru",
-		Symbol:       "WNIBI",
-		LogoSrc:      "./img/000_nibiru-evm.png",
-		PriceInfo: &PriceInfo{
-			Source:  "bybit",
-			PriceId: "NIBIUSDT",
-		},
-	},
-	{
-		ContractAddr: "0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b",
-		DisplayName:  "Liquid Staked Nibiru (Wrapped)",
-		Symbol:       "stNIBI",
-		LogoSrc:      "./img/001_stnibi-evm.png",
-	},
-	{
-		ContractAddr: "0x7168634Dd1ee48b1C5cC32b27fD8Fc84E12D00E6",
-		DisplayName:  "Astrovault (Wrapped)",
-		Symbol:       "AXV",
-		LogoSrc:      "./img/003_astrovault-axv.png",
-	},
+func LoadERC20s() (tokens []TokenOfficial, err error) {
+	rootPath, err := FindRootPath()
+	if err != nil {
+		return tokens, err
+	}
+
+	fpath := path.Join(rootPath, SAVE_PATH_OFFICIAL_ERC20S)
+	bz, err := os.ReadFile(fpath)
+	if err != nil {
+		return tokens, err
+	}
+	err = json.Unmarshal(bz, &tokens)
+	return tokens, err
 }
 
-var BANK_COINS []TokenOfficial = []TokenOfficial{
-	{
-		ContractAddr: "unibi",
-		DisplayName:  "Nibiru",
-		Symbol:       "NIBI",
-		LogoSrc:      "./img/000_nibiru.png",
-		PriceInfo: &PriceInfo{
-			Source:  "bybit",
-			PriceId: "NIBIUSDT",
-		},
-	},
-	{
-		ContractAddr: "tf/nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m/ampNIBI",
-		DisplayName:  "Liquid Staked Nibiru",
-		Symbol:       "stNIBI",
-		LogoSrc:      "./img/001_stnibi-bank.png",
-	},
-	{
-		ContractAddr: "tf/nibi1vetfuua65frvf6f458xgtjerf0ra7wwjykrdpuyn0jur5x07awxsfka0ga/axv",
-		DisplayName:  "Astrovault",
-		Symbol:       "AXV",
-		LogoSrc:      "./img/003_astrovault-axv-bank.png",
-	},
-	{
-		ContractAddr: "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
-		DisplayName:  "Noble USDC",
-		Symbol:       "USDC.noble",
-		LogoSrc:      "./img/002_usdc-noble.png",
-		PriceInfo: &PriceInfo{
-			Source:  "bybit",
-			PriceId: "USDCUSDT",
-		},
-	},
+func LoadBankCoins() ([]TokenOfficial, error) {
+	rootPath, err := FindRootPath()
+	if err != nil {
+		return nil, err
+	}
+
+	fpath := path.Join(rootPath, SAVE_PATH_OFFICIAL_BANK_COINS)
+	bz, err := os.ReadFile(fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []TokenOfficial
+	err = json.Unmarshal(bz, &tokens)
+	return tokens, err
 }
