@@ -9,7 +9,6 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	core "github.com/ethereum/go-ethereum/core"
@@ -41,7 +40,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, *evm
 	err = ethTxMsg.Sign(gethSigner, krSigner)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg, resp
@@ -82,7 +81,7 @@ func DeployContract(
 		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
-	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to execute ethereum tx")
 	}
@@ -115,7 +114,8 @@ func DeployAndExecuteERC20Transfer(
 
 	// Contract address is deterministic
 	contractAddr = crypto.CreateAddress(deps.Sender.EthAddr, nonce)
-	deps.App.Commit()
+	_, err = deps.App.Commit()
+	require.NoError(t, err)
 	predecessors = []*evm.MsgEthereumTx{
 		deployResp.EthTxMsg,
 	}
@@ -137,7 +137,7 @@ func DeployAndExecuteERC20Transfer(
 	err = erc20Transfer.Sign(gethSigner, krSigner)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(deps.GoCtx(), erc20Transfer)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, erc20Transfer)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 
@@ -165,7 +165,7 @@ func GenerateEthTxMsgAndSigner(
 		return
 	}
 	res, err := deps.App.EvmKeeper.EstimateGas(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.EthCallRequest{
 			Args:            estimateArgs,
 			GasCap:          srvconfig.DefaultEthCallGasLimit,
@@ -222,7 +222,7 @@ func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
 	if err != nil {
 		return
 	}
-	evmResp, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), evmTxMsg)
+	evmResp, err = deps.App.EvmKeeper.EthereumTx(deps.Ctx, evmTxMsg)
 	if err != nil {
 		err = fmt.Errorf("error while transferring wei: %w", err)
 	}

@@ -51,6 +51,8 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2315](https://github.com/NibiruChain/nibiru/pull/2315) - feat(upgrades): implement v2.5.0 upgrade handler that modifies the stNIBI ERC20 and Bank Coin metadata in place
 - [#2316](https://github.com/NibiruChain/nibiru/pull/2316) - feat(ux): add GET behavior to the Ethereum JSON-RPC endpoints for Nibiru so they return info instead of a blank page or error.
 
+- [#2308](https://github.com/NibiruChain/nibiru/pull/2308) - feat: cosmos v50 upgrade
+
 ## v2.4.0
 
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support

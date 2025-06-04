@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpsertEpochInfo_HappyPath(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 	epochInfo := types.EpochInfo{
 		Identifier:              "bi-monthly",
@@ -41,7 +41,7 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 }
 
 func TestEpochExists(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
@@ -58,7 +58,7 @@ func TestEpochExists(t *testing.T) {
 }
 
 func TestItFailsAddingEpochThatExists(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",

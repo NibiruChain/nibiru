@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -23,7 +24,7 @@ import (
 )
 
 func (s *Suite) TestCommitRemovesDirties() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	deployResp, err := evmtest.DeployContract(
@@ -52,7 +53,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 }
 
 func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	stateDB := evmObj.StateDB.(*statedb.StateDB)
 
@@ -79,7 +80,7 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 }
 
 func (s *Suite) TestContractCallsAnotherContract() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	stateDB := evmObj.StateDB.(*statedb.StateDB)
 
@@ -87,7 +88,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	deployResp, err := evmtest.DeployContract(
@@ -161,12 +162,12 @@ func (s *Suite) TestContractCallsAnotherContract() {
 }
 
 func (s *Suite) TestJournalReversion() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	s.T().Log("Set up helloworldcounter.wasm")

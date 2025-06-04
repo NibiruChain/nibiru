@@ -26,7 +26,7 @@ import (
 func (s *Suite) TestUpgrade() {
 	s.T().Log("Set up a token with default metadata that mimics stNIBI on mainnet prior to v2.5.0")
 	var (
-		deps = evmtest.NewTestDeps()
+		deps = evmtest.NewTestDeps(s.T().TempDir())
 
 		// Original creator of the Bank Coin version of the token
 		erisAddr = testutil.AccAddress()
@@ -62,7 +62,7 @@ func (s *Suite) TestUpgrade() {
 			// Each holder gets balance as a multiple of 20
 			balToFund := big.NewInt(20 * int64(idx+1))
 			mainnetHolderBals[holderAddr] = balToFund
-			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
+			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 				&evm.MsgConvertCoinToEvm{
 					ToEthAddr: eth.EIP55Addr{Address: holderAddr},
 					Sender:    erisAddr.String(),
@@ -85,7 +85,7 @@ func (s *Suite) TestUpgrade() {
 		s.T().Log("Send the remainder of Eris's balance to ERC20")
 		holderAddr := v2_5_0.MAINNET_NIBIRU_SAFE_ADDR
 		balToFund := deps.App.BankKeeper.GetBalance(deps.Ctx, erisAddr, funtoken.BankDenom)
-		_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
+		_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				ToEthAddr: eth.EIP55Addr{Address: holderAddr},
 				Sender:    erisAddr.String(),
