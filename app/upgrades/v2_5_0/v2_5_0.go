@@ -52,7 +52,7 @@ var Upgrade = upgrades.Upgrade{
 }
 
 // MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet.
-var MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6")
+var MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
 
 func UpgradeStNibiContractOnMainnet(
 	keepers *keepers.PublicKeepers,
