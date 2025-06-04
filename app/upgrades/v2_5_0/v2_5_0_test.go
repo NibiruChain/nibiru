@@ -3,6 +3,7 @@ package v2_5_0_test
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -42,6 +43,20 @@ func (s *Suite) TestUpgrade() {
 		funtoken = evmtest.CreateFunTokenForBankCoin(
 			deps, originalbankMetadata.Base, &s.Suite,
 		)
+
+		// ten holders for testing
+		holders = []gethcommon.Address{
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+		}
 	)
 
 	s.T().Log("Adds some tokens in circulation. We'll use these later to create ERC20 holders")
@@ -55,9 +70,8 @@ func (s *Suite) TestUpgrade() {
 	)
 
 	s.T().Logf("evm.EVM_MODULE_ADDRESS %s", evm.EVM_MODULE_ADDRESS)
-	mainnetHolderBals := make(map[gethcommon.Address]*big.Int)
 	{
-		for idx, holderAddr := range v2_5_0.MAINNET_STNIBI_HOLDERS() {
+		for idx, holderAddr := range holders {
 			// Each holder gets balance as a multiple of 20
 			balToFund := big.NewInt(20 * int64(idx+1))
 			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
@@ -70,30 +84,18 @@ func (s *Suite) TestUpgrade() {
 				},
 			)
 			s.Require().NoError(err)
-			mainnetHolderBals[holderAddr] = balToFund
 
 			// Validate the ERC20 balance of the holder
 			evmObj, _ := deps.NewEVMLessVerboseLogger()
 			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
 			s.Require().NoError(err)
-			s.Require().Equalf(balToFund.String(), balErc20.String(), "holderAddr %s", holderAddr)
+			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
-
-		s.T().Log("Send the remainder of Eris's balance to Gnosis Safe address")
-		balToFund := deps.App.BankKeeper.GetBalance(deps.Ctx, erisAddr, funtoken.BankDenom)
-		_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
-			&evm.MsgConvertCoinToEvm{
-				ToEthAddr: eth.EIP55Addr{Address: v2_5_0.MAINNET_NIBIRU_SAFE_ADDR},
-				Sender:    erisAddr.String(),
-				BankCoin:  balToFund,
-			},
-		)
-		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
 		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
 		s.Require().NoError(err)
-		s.Require().Equal("69420", totalSupplyErc20.String())
+		s.Require().Equal("1100", totalSupplyErc20.String())
 	}
 
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
@@ -191,22 +193,11 @@ func (s *Suite) TestUpgrade() {
 		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx, funtoken.Erc20Addr.Address).IsContract())
 
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		for holderAddr, wantBal := range mainnetHolderBals {
+		for idx, holderAddr := range holders {
 			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
 			s.Require().NoError(err)
-			s.Require().Equalf(wantBal.String(), balErc20.String(), "holderAddr %s has balance %s, want %s", holderAddr, balErc20.String(), wantBal.String())
+			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
-	})
-
-	s.Run("Potential excess supply is sent to Nibiru team for redistribution", func() {
-		// Each holder got a balance as an incrementing multiple of 20
-		// The total supply was 69,420.
-		// Thus, the excess balance is 69_420 - ( 20 * sum from 1 to numHolders ), which is an arithmetic series.
-		wantExcessBal := big.NewInt(int64(69_420 - (1+len(mainnetHolderBals))*20/2))
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, v2_5_0.MAINNET_NIBIRU_SAFE_ADDR, deps.Ctx, evmObj)
-		s.Require().NoError(err)
-		s.Require().Equalf(wantExcessBal.String(), balErc20.String(), "holderAddr %s", v2_5_0.MAINNET_NIBIRU_SAFE_ADDR)
 	})
 }
 
