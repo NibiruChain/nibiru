@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -66,7 +65,6 @@ type AppKeepers struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	crisisKeeper     *crisiskeeper.Keeper
-	upgradeKeeper    *upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
 	authzKeeper      authzkeeper.Keeper
 
@@ -149,7 +147,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.keys[ibcexported.StoreKey],
 		app.getSubspace(ibcexported.ModuleName),
 		app.StakingKeeper,
-		app.upgradeKeeper,
+		app.UpgradeKeeper,
 		app.ScopedIBCKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

@@ -309,7 +309,7 @@ func NewNibiruApp(
 		&app.crisisKeeper,
 		&app.slashingKeeper,
 		&app.GovKeeper,
-		&app.upgradeKeeper,
+		&app.UpgradeKeeper,
 		&app.paramsKeeper,
 		&app.authzKeeper,
 		&app.evidenceKeeper,
