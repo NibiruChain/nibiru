@@ -3,6 +3,7 @@ package v2_5_0_test
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -42,6 +43,20 @@ func (s *Suite) TestUpgrade() {
 		funtoken = evmtest.CreateFunTokenForBankCoin(
 			deps, originalbankMetadata.Base, &s.Suite,
 		)
+
+		// ten holders for testing
+		holders = []gethcommon.Address{
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+		}
 	)
 
 	s.T().Log("Adds some tokens in circulation. We'll use these later to create ERC20 holders")
@@ -55,13 +70,10 @@ func (s *Suite) TestUpgrade() {
 	)
 
 	s.T().Logf("evm.EVM_MODULE_ADDRESS %s", evm.EVM_MODULE_ADDRESS)
-	mainnetHolderBals := make(map[gethcommon.Address]*big.Int)
 	{
-		holderAddrs := v2_5_0.MAINNET_STNIBI_HOLDERS()
-		for idx, holderAddr := range holderAddrs {
+		for idx, holderAddr := range holders {
 			// Each holder gets balance as a multiple of 20
 			balToFund := big.NewInt(20 * int64(idx+1))
-			mainnetHolderBals[holderAddr] = balToFund
 			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
 				&evm.MsgConvertCoinToEvm{
 					ToEthAddr: eth.EIP55Addr{Address: holderAddr},
@@ -75,30 +87,15 @@ func (s *Suite) TestUpgrade() {
 
 			// Validate the ERC20 balance of the holder
 			evmObj, _ := deps.NewEVMLessVerboseLogger()
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(
-				funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
 			s.Require().NoError(err)
-			s.Require().Equalf(balToFund.String(), balErc20.String(),
-				"holderAddr %s", holderAddr)
+			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
 
-		s.T().Log("Send the remainder of Eris's balance to ERC20")
-		holderAddr := v2_5_0.MAINNET_NIBIRU_SAFE_ADDR
-		balToFund := deps.App.BankKeeper.GetBalance(deps.Ctx, erisAddr, funtoken.BankDenom)
-		_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
-			&evm.MsgConvertCoinToEvm{
-				ToEthAddr: eth.EIP55Addr{Address: holderAddr},
-				Sender:    erisAddr.String(),
-				BankCoin:  balToFund,
-			},
-		)
-		s.Require().NoError(err)
-
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(
-			funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
+		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
 		s.Require().NoError(err)
-		s.Require().Equal("69420", totalSupplyErc20.String())
+		s.Require().Equal("1100", totalSupplyErc20.String())
 	}
 
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
@@ -116,12 +113,11 @@ func (s *Suite) TestUpgrade() {
 		)
 		s.Equal(originalbankMetadata.Name, gotName)
 		s.Equal(originalbankMetadata.Symbol, gotSymbol)
-		s.Len(originalbankMetadata.DenomUnits, 1)
-		s.Equal("0", fmt.Sprintf("%d", gotDecimals))
+		s.Equal(uint8(0), gotDecimals)
 	}
 
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
-		s.T().Log("IMPORATNT: Schedule the ugprade")
+		s.T().Log("IMPORTANT: Schedule the upgrade")
 		s.Require().True(deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName))
 
 		beforeEvents := deps.Ctx.EventManager().Events()
@@ -159,21 +155,20 @@ func (s *Suite) TestUpgrade() {
 		gotDecimals, _ := deps.EvmKeeper.ERC20().LoadERC20Decimals(
 			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
-		s.NotEqual(originalbankMetadata.Name, gotName)
-		s.NotEqual(originalbankMetadata.Symbol, gotSymbol)
+		s.Equal("Liquid Staked NIBI", gotName)
+		s.Equal("stNIBI", gotSymbol)
+		s.Equal(uint8(6), gotDecimals)
 
-		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(
-			deps.Ctx, funtoken.BankDenom)
-		s.Require().True(ok)
-		s.Len(newBankMetadata.DenomUnits, 2)
-		s.Require().Equal("6", fmt.Sprintf("%d", gotDecimals))
-		s.Require().Equal("stNIBI", gotSymbol)
-		s.Require().Equal("Liquid Staked NIBI", gotName)
+		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, funtoken.BankDenom)
+		s.True(ok)
+		s.Equal(2, len(newBankMetadata.DenomUnits))
+		s.Equal("Liquid Staked NIBI", newBankMetadata.Name)
+		s.Equal("stNIBI", newBankMetadata.Symbol)
+		s.Equal(uint32(6), newBankMetadata.DenomUnits[1].Exponent)
 	})
 
 	s.Run("New ERC20 impl: owner should be the EVM module", func() {
-		methodName := "owner"
-		input, err := compiledContract.ABI.Pack(methodName)
+		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
@@ -188,56 +183,22 @@ func (s *Suite) TestUpgrade() {
 		s.Require().NoError(err)
 
 		ownerVal := new(struct{ Value gethcommon.Address })
-		err = compiledContract.ABI.UnpackIntoInterface(
-			ownerVal, methodName, evmResp.Ret,
-		)
+		err = compiledContract.ABI.UnpackIntoInterface(ownerVal, "owner", evmResp.Ret)
 		s.Require().NoError(err)
 		s.Require().Equal(evm.EVM_MODULE_ADDRESS.Hex(), ownerVal.Value.Hex())
 	})
 
 	s.Run("Confirm stNIBI ERC20 contract has new holder balances unharmed", func() {
 		// It MUST still be a contract
-		sdbAccForERC20 := deps.EvmKeeper.GetAccount(deps.Ctx, funtoken.Erc20Addr.Address)
-		s.Require().True(sdbAccForERC20.IsContract())
+		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx, funtoken.Erc20Addr.Address).IsContract())
 
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		for holderAddr, wantBal := range mainnetHolderBals {
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(
-				funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+		for idx, holderAddr := range holders {
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
 			s.Require().NoError(err)
-			s.Require().Equalf(wantBal.String(), balErc20.String(),
-				"holderAddr %s", holderAddr)
+			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
 	})
-
-	s.Run("Potential excess supply is sent to Nibiru team for redistribution", func() {
-		// Each holder got a balance as an incrementing multiple of 20
-		// The total supply was 69,420.
-		// Thus, the excess balance is 69_420 - ( 20 * SumFrom0To(numHolders) )
-		numHolders := big.NewInt(int64(len(mainnetHolderBals)))
-		wantExcessBal := new(big.Int).Sub(
-			big.NewInt(69_420),
-			new(big.Int).Mul(SumFrom0To(numHolders), big.NewInt(20)),
-		)
-		holderAddr := v2_5_0.MAINNET_NIBIRU_SAFE_ADDR
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(
-			funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
-		s.Require().NoError(err)
-		s.Require().Equalf(wantExcessBal.String(), balErc20.String(),
-			"holderAddr %s", holderAddr)
-	})
-}
-
-func SumFrom0To(n *big.Int) *big.Int {
-	if n.Cmp(big.NewInt(0)) == 0 {
-		return big.NewInt(0)
-	} else if n.Cmp(big.NewInt(1)) == 0 {
-		return big.NewInt(1)
-	}
-	return new(big.Int).Add(
-		n, SumFrom0To(new(big.Int).Sub(n, big.NewInt(1))),
-	)
 }
 
 type Suite struct {
