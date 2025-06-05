@@ -17,8 +17,7 @@ import (
 )
 
 type (
-	AccStatePrimaryKey = collections.Pair[gethcommon.Address, gethcommon.Hash]
-	CodeHash           = []byte
+	CodeHash = []byte
 )
 
 // EvmState isolates the key-value stores (collections) for the x/evm module.
@@ -35,7 +34,7 @@ type EvmState struct {
 	//    a piece of state in that contract forms the primary key.
 	//  - value (V): State value bytes.
 	AccState collections.Map[
-		AccStatePrimaryKey, // account (EthAddr) + state key (EthHash)
+		collections.Pair[gethcommon.Address, gethcommon.Hash], // account (EthAddr) + state key (EthHash)
 		[]byte,
 	]
 
