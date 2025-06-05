@@ -5,6 +5,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "nibiru/inflation/v1/genesis.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
 
@@ -104,7 +105,8 @@ message QueryInflationRateRequest {}
 message QueryInflationRateResponse {
   // inflation_rate by which the total supply increases within one period
   string inflation_rate = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }

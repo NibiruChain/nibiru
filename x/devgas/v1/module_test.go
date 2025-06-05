@@ -3,7 +3,7 @@ package devgas_test
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/codec"
+	"github.com/NibiruChain/nibiru/v2/app"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
@@ -13,7 +13,6 @@ func (s *GenesisTestSuite) TestAppModule() {
 	appModule := devgas.NewAppModule(
 		s.app.DevGasKeeper,
 		s.app.AccountKeeper,
-		s.app.GetSubspace(devgastypes.ModuleName),
 	)
 
 	s.NotPanics(func() {
@@ -31,7 +30,7 @@ func (s *GenesisTestSuite) TestAppModule() {
 		s.EqualValues(s.genesis, *genState)
 
 		s.T().Log("AppModuleBasic.ValidateGenesis")
-		encCfg := codec.MakeEncodingConfig()
+		encCfg := app.MakeEncodingConfig()
 		err = appModule.AppModuleBasic.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
 		s.NoError(err)
 

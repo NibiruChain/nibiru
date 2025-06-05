@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -338,7 +338,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 
 	s.T().Log("eth_call")
 	{
-		fungibleTokenContract := embeds.SmartContract_ERC20Minter
+		fungibleTokenContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 		jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 			From: &deps.Sender.EthAddr,
 			Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
@@ -400,7 +400,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		for _, err := range []error{
 			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
 			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
-				math.NewIntFromUint64(gethparams.TxGas),
+				sdkmath.NewIntFromUint64(gethparams.TxGas),
 			),
 		} {
 			s.NoError(err)

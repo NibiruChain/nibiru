@@ -7,18 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	tmcfg "github.com/cometbft/cometbft/config"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
-
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-	tmrand "github.com/cometbft/cometbft/libs/rand"
-	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
+	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -26,9 +18,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-
+	"github.com/cosmos/go-bip39"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/core/types"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 const (
@@ -85,7 +82,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			case clientCtx.ChainID != "":
 				chainID = clientCtx.ChainID
 			default:
-				chainID = fmt.Sprintf("test-chain-%v", tmrand.Str(6))
+				chainID = fmt.Sprintf("test-chain-%v", cmtrand.Str(6))
 			}
 
 			// Get bip39 mnemonic
@@ -100,7 +97,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 				mnemonic = value
 				if !bip39.IsMnemonicValid(mnemonic) {
-					return errors.New("invalid mnemonic")
+					return pkgerrors.New("invalid mnemonic")
 				}
 			}
 
@@ -140,18 +137,18 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			appState, err := json.MarshalIndent(appGenState, "", " ")
 			if err != nil {
-				return errors.Wrap(err, "Failed to marshal default genesis state")
+				return pkgerrors.Wrap(err, "Failed to marshal default genesis state")
 			}
 
-			genDoc := &tmtypes.GenesisDoc{}
+			genDoc := &cmttypes.GenesisDoc{}
 			if _, err := os.Stat(genFile); err != nil {
 				if !os.IsNotExist(err) {
 					return err
 				}
 			} else {
-				genDoc, err = tmtypes.GenesisDocFromFile(genFile)
+				genDoc, err = cmttypes.GenesisDocFromFile(genFile)
 				if err != nil {
-					return errors.Wrap(err, "Failed to read genesis doc from file")
+					return pkgerrors.Wrap(err, "Failed to read genesis doc from file")
 				}
 			}
 
@@ -161,7 +158,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			genDoc.InitialHeight = initHeight
 
 			if err = genutil.ExportGenesisFile(genDoc, genFile); err != nil {
-				return errors.Wrap(err, "Failed to export genesis file")
+				return pkgerrors.Wrap(err, "Failed to export genesis file")
 			}
 
 			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", appState)
@@ -169,12 +166,12 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			customCfg := appconst.NewDefaultTendermintConfig()
 			config.Consensus = customCfg.Consensus
 			config.DBBackend = customCfg.DBBackend
-			tmcfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+			cmtcfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
 			return displayInfo(toPrint)
 		},
 	}
 
-	cmd.Flags().String(tmcli.HomeFlag, defaultNodeHome, "node's home directory")
+	cmd.Flags().String(cmtcli.HomeFlag, defaultNodeHome, "node's home directory")
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
 	cmd.Flags().String(sdkflags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")

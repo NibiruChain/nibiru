@@ -8,7 +8,7 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -63,15 +63,15 @@ func TestEVMTxIndexer(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		block       *tmtypes.Block
+		block       *cmttypes.Block
 		blockResult []*abci.ResponseDeliverTx
 		expSuccess  bool
 	}{
 		{
 			"happy, only pending_ethereum_tx presents",
-			&tmtypes.Block{
-				Header: tmtypes.Header{Height: 1},
-				Data:   tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}},
+			&cmttypes.Block{
+				Header: cmttypes.Header{Height: 1},
+				Data:   cmttypes.Data{Txs: []cmttypes.Tx{validEVMTxBz}},
 			},
 			[]*abci.ResponseDeliverTx{
 				{
@@ -91,7 +91,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		},
 		{
 			"happy: code 0, pending_ethereum_tx and typed EventEthereumTx present",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
+			&cmttypes.Block{Header: cmttypes.Header{Height: 1}, Data: cmttypes.Data{Txs: []cmttypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code: 0,
@@ -120,7 +120,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		},
 		{
 			"happy: code 11, exceed block gas limit",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
+			&cmttypes.Block{Header: cmttypes.Header{Height: 1}, Data: cmttypes.Data{Txs: []cmttypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   11,
@@ -132,7 +132,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		},
 		{
 			"sad: failed eth tx",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
+			&cmttypes.Block{Header: cmttypes.Header{Height: 1}, Data: cmttypes.Data{Txs: []cmttypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   15,
@@ -144,7 +144,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		},
 		{
 			"sad: invalid events",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{validEVMTxBz}}},
+			&cmttypes.Block{Header: cmttypes.Header{Height: 1}, Data: cmttypes.Data{Txs: []cmttypes.Tx{validEVMTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   0,
@@ -155,7 +155,7 @@ func TestEVMTxIndexer(t *testing.T) {
 		},
 		{
 			"sad: not eth tx",
-			&tmtypes.Block{Header: tmtypes.Header{Height: 1}, Data: tmtypes.Data{Txs: []tmtypes.Tx{invalidTxBz}}},
+			&cmttypes.Block{Header: cmttypes.Header{Height: 1}, Data: cmttypes.Data{Txs: []cmttypes.Tx{invalidTxBz}}},
 			[]*abci.ResponseDeliverTx{
 				{
 					Code:   0,

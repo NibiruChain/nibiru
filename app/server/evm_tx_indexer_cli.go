@@ -54,7 +54,7 @@ nibid evm-tx-index last-indexed latest
 			}
 			blockStore := tmstore.NewBlockStore(tmdb)
 			minAvailableHeight := blockStore.Base()
-			maxAvailableHeight := blockStore.Height()
+			maxAvailableHeight := blockStore.Height() - 1 // exclude last block as block info could be uncommitted
 			fmt.Printf("Block range available on the node: %d - %d\n", minAvailableHeight, maxAvailableHeight)
 
 			var fromBlock int64

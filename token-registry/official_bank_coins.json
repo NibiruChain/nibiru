@@ -1,0 +1,34 @@
+[
+  {
+    "contractAddr": "unibi",
+    "displayName": "Nibiru",
+    "symbol": "NIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "NIBIUSDT"
+    }
+  },
+  {
+    "contractAddr": "tf/nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m/ampNIBI",
+    "displayName": "Liquid Staked Nibiru",
+    "symbol": "stNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/001_stnibi-bank.png"
+  },
+  {
+    "contractAddr": "tf/nibi1vetfuua65frvf6f458xgtjerf0ra7wwjykrdpuyn0jur5x07awxsfka0ga/axv",
+    "displayName": "Astrovault",
+    "symbol": "AXV",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/003_astrovault-axv-bank.png"
+  },
+  {
+    "contractAddr": "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+    "displayName": "Noble USDC",
+    "symbol": "USDC.noble",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc-noble.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "USDCUSDT"
+    }
+  }
+]

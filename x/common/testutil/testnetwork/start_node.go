@@ -5,13 +5,12 @@ import (
 	"os"
 	"time"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	db "github.com/cometbft/cometbft-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -142,21 +141,20 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.EthTxIndexer = evmTxIndexer
 		val.EthTxIndexerService = evmTxIndexerService
 
-		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
+		val.jsonrpc, val.jsonrpcDone, err = server.StartEthereumJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, val.EthTxIndexer)
 		if err != nil {
-			return errors.Wrap(err, "failed to start JSON-RPC server")
+			return sdkioerrors.Wrap(err, "failed to start JSON-RPC server")
 		}
 
-		address := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)
-
-		val.JSONRPCClient, err = ethclient.Dial(address)
+		endpointEvmJsonRpc := fmt.Sprintf("http://%s", val.AppConfig.JSONRPC.Address)
+		val.EvmRpcClient, err = ethclient.Dial(endpointEvmJsonRpc)
 		if err != nil {
 			return fmt.Errorf("failed to dial JSON-RPC at address %s: %w", val.AppConfig.JSONRPC.Address, err)
 		}
 
 		val.Logger.Log("Set up Ethereum JSON-RPC client objects")
 		val.EthRpcQueryClient = ethrpc.NewQueryClient(val.ClientCtx)
-		val.EthRpcBackend = backend.NewBackend(
+		val.EthRpcBackend = rpcapi.NewBackend(
 			val.Ctx,
 			val.Ctx.Logger,
 			val.ClientCtx,
@@ -166,7 +164,6 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 
 		val.Logger.Log("Expose typed methods for each namespace")
 		val.EthRPC_ETH = rpcapi.NewImplEthAPI(val.Ctx.Logger, val.EthRpcBackend)
-		val.EthRpc_WEB3 = rpcapi.NewImplWeb3API()
 
 		val.Ctx.Logger = logger // set back to normal setting
 	}

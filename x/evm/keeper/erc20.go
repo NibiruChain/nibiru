@@ -7,7 +7,7 @@ import (
 	"math"
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -19,8 +19,7 @@ import (
 
 const (
 	// Erc20GasLimitDeploy only used internally when deploying ERC20Minter.
-	// Deployment requires ~1_600_000 gas
-	Erc20GasLimitDeploy uint64 = 2_000_000
+	Erc20GasLimitDeploy uint64 = 2_500_000
 	// Erc20GasLimitQuery used only for querying name, symbol and decimals
 	// Cannot be heavy. Only if the contract is malicious.
 	Erc20GasLimitQuery uint64 = 100_000
@@ -43,7 +42,7 @@ func getCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
 func (k Keeper) ERC20() erc20Calls {
 	return erc20Calls{
 		Keeper: &k,
-		ABI:    embeds.SmartContract_ERC20Minter.ABI,
+		ABI:    embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI,
 	}
 }
 
@@ -94,7 +93,7 @@ func (e erc20Calls) Transfer(
 ) (balanceIncrease *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
 	recipientBalanceBefore, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
-		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
+		return balanceIncrease, nil, sdkioerrors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
 	contractInput, err := e.ABI.Pack("transfer", recipient, amount)
@@ -120,7 +119,7 @@ func (e erc20Calls) Transfer(
 
 	recipientBalanceAfter, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
-		return balanceIncrease, nil, errors.Wrap(err, "failed to retrieve recipient balance")
+		return balanceIncrease, nil, sdkioerrors.Wrap(err, "failed to retrieve recipient balance")
 	}
 
 	balanceIncrease = new(big.Int).Sub(recipientBalanceAfter, recipientBalanceBefore)
@@ -146,6 +145,15 @@ func (e erc20Calls) BalanceOf(
 	ctx sdk.Context, evmObj *vm.EVM,
 ) (out *big.Int, err error) {
 	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "balanceOf", account)
+}
+
+// TotalSupply returns the amaount of ERC20 tokens in existence.
+// Implements "ERC20.totalSupply".
+func (e erc20Calls) TotalSupply(
+	contract gethcommon.Address,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "totalSupply")
 }
 
 /*
@@ -196,7 +204,7 @@ func (e erc20Calls) loadERC20String(
 	if err != nil {
 		return out, err
 	}
-	res, err := e.Keeper.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -211,13 +219,13 @@ func (e erc20Calls) loadERC20String(
 
 	erc20Val := new(ERC20String)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Val, methodName, res.Ret,
+		erc20Val, methodName, evmResp.Ret,
 	); err == nil {
 		return erc20Val.Value, err
 	}
 
 	erc20Bytes32Val := new(ERC20Bytes32)
-	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, res.Ret); err == nil {
+	if err := erc20Abi.UnpackIntoInterface(erc20Bytes32Val, methodName, evmResp.Ret); err == nil {
 		return bytes32ToString(erc20Bytes32Val.Value), nil
 	}
 
@@ -239,7 +247,7 @@ func (e erc20Calls) loadERC20Uint8(
 	if err != nil {
 		return out, err
 	}
-	res, err := e.Keeper.CallContractWithInput(
+	evmResp, err := e.Keeper.CallContractWithInput(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -254,14 +262,14 @@ func (e erc20Calls) loadERC20Uint8(
 
 	erc20Val := new(ERC20Uint8)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Val, methodName, res.Ret,
+		erc20Val, methodName, evmResp.Ret,
 	); err == nil {
 		return erc20Val.Value, err
 	}
 
 	erc20Uint256Val := new(ERC20BigInt)
 	if err := erc20Abi.UnpackIntoInterface(
-		erc20Uint256Val, methodName, res.Ret,
+		erc20Uint256Val, methodName, evmResp.Ret,
 	); err == nil {
 		// We can safely cast to uint8 because it's nonsense for decimals to be larger than 255
 		return uint8(erc20Uint256Val.Value.Uint64()), err

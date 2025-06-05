@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -30,7 +30,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	require.False(t, params.InflationEnabled)
 
 	msg = types.MsgToggleInflation{
-		Sender: testapp.DefaultSudoRoot().String(),
+		Sender: testutil.ADDR_SUDO_ROOT,
 		Enable: true,
 	}
 
@@ -48,7 +48,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	params := app.InflationKeeper.GetParams(ctx)
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
-	newEpochPerPeriod := math.NewInt(42)
+	newEpochPerPeriod := sdkmath.NewInt(42)
 	msg := types.MsgEditInflationParams{
 		Sender:          testutil.AccAddress().String(),
 		EpochsPerPeriod: &newEpochPerPeriod,
@@ -60,7 +60,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
 	msg = types.MsgEditInflationParams{
-		Sender:          testapp.DefaultSudoRoot().String(),
+		Sender:          testutil.ADDR_SUDO_ROOT,
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}
 

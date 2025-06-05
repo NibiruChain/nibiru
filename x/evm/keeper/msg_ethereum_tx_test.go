@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -40,7 +40,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 					deps.App.BankKeeper,
 					deps.Ctx,
 					authtypes.FeeCollectorName,
-					sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1_000_000))),
+					sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(1_000_000))),
 				)
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
@@ -123,7 +123,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		authtypes.FeeCollectorName,
-		sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(1000_000))),
+		sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(1000_000))),
 	)
 	s.Require().NoError(err)
 	deployResp, err := evmtest.DeployContract(
@@ -256,11 +256,11 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	}.Build()
 	s.NoError(err)
 
-	txBuilder := deps.EncCfg.TxConfig.NewTxBuilder()
+	txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
 	s.Require().NoError(err)
 
-	txBz, err := deps.EncCfg.TxConfig.TxEncoder()(blockTx)
+	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
 	s.Require().NoError(err)
 	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
 	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)

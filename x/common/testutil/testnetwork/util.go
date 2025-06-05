@@ -7,26 +7,23 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	tmtypes "github.com/cometbft/cometbft/abci/types"
+	tmos "github.com/cometbft/cometbft/libs/os"
+	cmttypes "github.com/cometbft/cometbft/types"
+	tmtime "github.com/cometbft/cometbft/types/time"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-
-	"github.com/NibiruChain/nibiru/v2/app/codec"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/types"
-	tmtime "github.com/cometbft/cometbft/types/time"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/app"
 )
 
 func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
@@ -44,7 +41,7 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 		initCfg := genutiltypes.NewInitConfig(cfg.ChainID, gentxsDir, vals[i].NodeID, vals[i].PubKey)
 
 		genFile := tmCfg.GenesisFile()
-		genDoc, err := types.GenesisDocFromFile(genFile)
+		genDoc, err := cmttypes.GenesisDocFromFile(genFile)
 		if err != nil {
 			return err
 		}
@@ -89,7 +86,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 		return err
 	}
 
-	genDoc := types.GenesisDoc{
+	genDoc := cmttypes.GenesisDoc{
 		ChainID:    cfg.ChainID,
 		AppState:   appGenStateJSON,
 		Validators: nil,
@@ -194,7 +191,7 @@ func NewKeyring(t *testing.T) (
 	algo keyring.SignatureAlgo,
 	nodeDirName string,
 ) {
-	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Codec
+	var cdc sdkcodec.Codec = app.MakeEncodingConfig().Codec
 	kring = keyring.NewInMemory(cdc)
 	nodeDirName = t.TempDir()
 	algo = hd.Secp256k1

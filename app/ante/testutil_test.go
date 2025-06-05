@@ -8,6 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -15,8 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
@@ -36,10 +35,7 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	// Set up base app and ctx
-	testapp.EnsureNibiruPrefix()
-	encodingConfig := app.MakeEncodingConfig()
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
+	suite.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,
@@ -50,9 +46,9 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Set up TxConfig
 	suite.clientCtx = client.Context{}.
-		WithTxConfig(encodingConfig.TxConfig).
+		WithTxConfig(suite.app.GetTxConfig()).
 		WithChainID(chainId).
-		WithLegacyAmino(encodingConfig.Amino)
+		WithLegacyAmino(suite.app.LegacyAmino())
 
 	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
 	suite.Require().NoError(err)
@@ -75,7 +71,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
 		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(suite.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
-		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, encodingConfig.TxConfig.SignModeHandler()),
+		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, suite.app.GetTxConfig().SignModeHandler()),
 		ante.NewIncrementSequenceDecorator(suite.app.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(suite.app.GetIBCKeeper()),
 	}

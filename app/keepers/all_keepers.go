@@ -4,15 +4,13 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	// ---------------------------------------------------------------
 	// IBC imports
@@ -22,15 +20,15 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
-
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
 )
 
@@ -38,13 +36,14 @@ type PublicKeepers struct {
 	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
 	AccountKeeper authkeeper.AccountKeeper
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
-	BankKeeper    bankkeeper.Keeper
+	BankKeeper    *evmkeeper.NibiruBankKeeper
 	StakingKeeper *stakingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
 	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
+	GovKeeper             *govkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
+	UpgradeKeeper         *upgradekeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
@@ -59,10 +58,10 @@ type PublicKeepers struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	EpochsKeeper       epochskeeper.Keeper
+	EpochsKeeper       *epochskeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
-	SudoKeeper         keeper.Keeper
+	SudoKeeper         sudokeeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmkeeper.Keeper

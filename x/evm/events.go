@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -34,46 +34,43 @@ const (
 )
 
 func EventTxLogFromABCIEvent(event abci.Event) (*EventTxLog, error) {
-	typeUrl := TypeUrlEventTxLog
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventTxLog)
 	}
 	typedEvent, ok := (typedProtoEvent).(*EventTxLog)
 	if !ok {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventTxLog)
 	}
 	return typedEvent, nil
 }
 
 func EventBlockBloomFromABCIEvent(event abci.Event) (*EventBlockBloom, error) {
-	typeUrl := TypeUrlEventBlockBloom
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventBlockBloom)
 	}
 	typedEvent, ok := (typedProtoEvent).(*EventBlockBloom)
 	if !ok {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventBlockBloom)
 	}
 	return typedEvent, nil
 }
 
 func EventEthereumTxFromABCIEvent(event abci.Event) (*EventEthereumTx, error) {
-	typeUrl := TypeUrlEventEthereumTx
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
 	if err != nil {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventEthereumTx)
 	}
 	typedEvent, ok := (typedProtoEvent).(*EventEthereumTx)
 	if !ok {
-		return nil, errors.Wrapf(
-			err, "failed to parse event of type %s", typeUrl)
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventEthereumTx)
 	}
 	return typedEvent, nil
 }

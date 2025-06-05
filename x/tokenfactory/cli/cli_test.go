@@ -9,7 +9,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -45,9 +44,8 @@ func (s *TestSuite) TestTokenFactory() {
 
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState(encodingConfig)
+	genState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)

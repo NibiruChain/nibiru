@@ -4,13 +4,14 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudo "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -331,7 +332,7 @@ func (s *TestSuite) TestMintBurn() {
 	}
 	nusd69420 := sdk.Coin{
 		Denom:  tfdenom.Denom().String(),
-		Amount: math.NewInt(69_420),
+		Amount: sdkmath.NewInt(69_420),
 	}
 
 	testCases := []TestCaseTx{
@@ -350,7 +351,7 @@ func (s *TestSuite) TestMintBurn() {
 							Creator:  addrs[0].String(),
 							Subdenom: "nusd",
 						}.Denom().String(),
-						Amount: math.NewInt(69_420),
+						Amount: sdkmath.NewInt(69_420),
 					},
 					MintTo: "",
 				},
@@ -364,7 +365,7 @@ func (s *TestSuite) TestMintBurn() {
 								Creator:  addrs[0].String(),
 								Subdenom: "nusd",
 							}.Denom().String(),
-							Amount: math.NewInt(1),
+							Amount: sdkmath.NewInt(1),
 						},
 						BurnFrom: "",
 					},
@@ -383,14 +384,14 @@ func (s *TestSuite) TestMintBurn() {
 				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
-					math.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
+					sdkmath.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.Denom().String()).Amount,
 				)
 
 				s.T().Log("Module account should be empty.")
 				coin := s.app.BankKeeper.GetBalance(
 					s.ctx, tfModuleAddr, denom.Denom().String())
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					coin.Amount,
 				)
 			},
@@ -647,7 +648,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "happy: burn",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -655,7 +656,7 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", math.NewInt(123)),
+						Coin:   sdk.NewCoin("unibi", sdkmath.NewInt(123)),
 					},
 					WantErr: "",
 				},
@@ -666,12 +667,12 @@ func (s *TestSuite) TestBurnNative() {
 				)
 
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, tfModuleAddr, "unibi").Amount,
 				)
 
 				s.Equal(
-					math.NewInt(0),
+					sdkmath.NewInt(0),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},
@@ -681,7 +682,7 @@ func (s *TestSuite) TestBurnNative() {
 			Name:      "sad: not enough funds",
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
-				coins := sdk.NewCoins(sdk.NewCoin("unibi", math.NewInt(123)))
+				coins := sdk.NewCoins(sdk.NewCoin("unibi", sdkmath.NewInt(123)))
 				s.NoError(bapp.BankKeeper.MintCoins(ctx, types.ModuleName, coins))
 				s.NoError(bapp.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addrs[0], coins))
 			},
@@ -689,18 +690,18 @@ func (s *TestSuite) TestBurnNative() {
 				{
 					TestMsg: &types.MsgBurnNative{
 						Sender: addrs[0].String(),
-						Coin:   sdk.NewCoin("unibi", math.NewInt(124)),
+						Coin:   sdk.NewCoin("unibi", sdkmath.NewInt(124)),
 					},
 					WantErr: "spendable balance 123unibi is smaller than 124unibi: insufficient funds",
 				},
 			},
 			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				s.Equal(
-					math.NewInt(123).Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
+					sdkmath.NewInt(123).Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), s.app.BankKeeper.GetSupply(s.ctx, "unibi").Amount,
 				)
 
 				s.Equal(
-					math.NewInt(123),
+					sdkmath.NewInt(123),
 					s.app.BankKeeper.GetBalance(s.ctx, addrs[0], "unibi").Amount,
 				)
 			},
@@ -715,6 +716,153 @@ func (s *TestSuite) TestBurnNative() {
 				},
 			},
 		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.Name, func() {
+			s.SetupTest()
+			tc.RunTest(s)
+		})
+	}
+}
+
+func (s *TestSuite) TestSudoSetDenomMetadata() {
+	_, addrs := testutil.PrivKeyAddressPairs(4)
+
+	var (
+		// Constant for a Token Factory token with default metadata: stNIBI on
+		// Nibiru mainnet
+		tfdenomStNIBI types.TFDenom
+
+		// Constant for a realistic sudoers. Has the Nibiru Foundation
+		sudoers sudo.Sudoers
+
+		// Constant for an ICS20 token: USDC.noble on Nibiru mainnet
+		nobleUSDC banktypes.Metadata = banktypes.Metadata{
+			Description: "Native USDC minted into the IBC ecosystem via the Noble blockchain",
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+					Exponent: 0,
+					Aliases:  []string(nil),
+				},
+				{
+					Denom:    "USDC.noble",
+					Exponent: 6,
+					Aliases:  []string(nil),
+				},
+			},
+			Base:    "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349",
+			Name:    "Noble USDC",
+			Display: "USDC.noble",
+			Symbol:  "USDC.noble",
+			URI:     "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc-noble.png",
+			// Reproducible with `go run token-registry/document_hash/main.go`
+			URIHash: "b5981177a00fc1e76a206a984523a765ff6edab03f8b127199e20640713c23a9",
+		}
+	)
+	tfdenomStNIBI, err := types.DenomStr("tf/nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m/ampNIBI").ToStruct()
+	s.Require().NoError(err)
+	tfdenomStNIBIDefaultBankMetadata := tfdenomStNIBI.DefaultBankMetadata()
+
+	addrNibiruFoundation := sdk.MustAccAddressFromBech32("nibi1l8dxzwz9d4peazcqjclnkj2mhvtj7mpnkqx85mg0ndrlhwrnh7gskkzg0v")
+	sudoers = sudo.Sudoers{
+		Root: addrNibiruFoundation.String(),
+	}
+
+	testCases := []TestCaseTx{
+		{
+			Name:      "happy: sudo set metadata",
+			SetupMsgs: []sdk.Msg{},
+			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				bapp.SudoKeeper.Sudoers.Set(ctx, sudoers)
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgCreateDenom{
+						Sender:   tfdenomStNIBI.Creator,
+						Subdenom: tfdenomStNIBI.Subdenom,
+					},
+				},
+				{
+					TestMsg: &types.MsgSudoSetDenomMetadata{
+						Sender:   tfdenomStNIBI.Creator,
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
+					},
+					WantErr: sudo.ErrUnauthorized.Error(),
+				},
+				{
+					TestMsg: &types.MsgSudoSetDenomMetadata{
+						Sender:   addrs[0].String(),
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
+					},
+					WantErr: sudo.ErrUnauthorized.Error(),
+				},
+				{
+					TestMsg: &types.MsgSudoSetDenomMetadata{
+						Sender:   addrNibiruFoundation.String(),
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
+					},
+					WantErr: "",
+				},
+			},
+			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				metadataStNIBI, _ := bapp.BankKeeper.GetDenomMetaData(ctx, tfdenomStNIBI.Denom().String())
+				s.Equal(tfdenomStNIBI.DefaultBankMetadata(), metadataStNIBI)
+			},
+		}, // end case
+
+		{
+			Name:      "happy: ICS20 token",
+			SetupMsgs: []sdk.Msg{},
+			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				bapp.SudoKeeper.Sudoers.Set(ctx, sudoers)
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSudoSetDenomMetadata{
+						Sender:   addrNibiruFoundation.String(),
+						Metadata: nobleUSDC,
+					},
+					WantErr: "",
+				},
+			},
+			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				bankDenom := nobleUSDC.Base
+				metadata, _ := bapp.BankKeeper.GetDenomMetaData(ctx, bankDenom)
+				s.Require().Equal(nobleUSDC, metadata)
+			},
+		}, // end case
+
+		{
+			Name: "sad: invalid sender",
+			SetupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSudoSetDenomMetadata{
+						Sender:   "sender",
+						Metadata: tfdenomStNIBIDefaultBankMetadata,
+					},
+					WantErr: "invalid sender",
+				},
+			},
+		}, // end case
+
+		{
+			Name: "sad: nil msg",
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: (*types.MsgSudoSetDenomMetadata)(nil),
+					WantErr: "nil msg",
+				},
+			},
+		}, // end case
+
 	}
 
 	for _, tc := range testCases {

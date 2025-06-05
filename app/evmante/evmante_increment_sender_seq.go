@@ -2,7 +2,7 @@
 package evmante
 
 import (
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -37,7 +37,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 	for _, msg := range tx.GetMsgs() {
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
 				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
 			)
@@ -45,13 +45,13 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
-			return ctx, errors.Wrap(err, "failed to unpack tx data")
+			return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
 		}
 
 		// increase sequence of sender
 		acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
 		if acc == nil {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrUnknownAddress,
 				"account %s is nil", gethcommon.BytesToAddress(msgEthTx.GetFrom().Bytes()),
 			)
@@ -61,14 +61,14 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 		// we merged the nonce verification to nonce increment, so when tx includes multiple messages
 		// with same sender, they'll be accepted.
 		if txData.GetNonce() != nonce {
-			return ctx, errors.Wrapf(
+			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInvalidSequence,
 				"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
 			)
 		}
 
 		if err := acc.SetSequence(nonce + 1); err != nil {
-			return ctx, errors.Wrapf(err, "failed to set sequence to %d", acc.GetSequence()+1)
+			return ctx, sdkioerrors.Wrapf(err, "failed to set sequence to %d", acc.GetSequence()+1)
 		}
 
 		issd.accountKeeper.SetAccount(ctx, acc)

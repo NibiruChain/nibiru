@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
@@ -15,7 +15,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(
-		s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))),
+		s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(1_000_000))),
 	)
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 func (s *KeeperTestSuite) TestFeeShare() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(1_000_000))))
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
@@ -107,7 +107,7 @@ func (s *KeeperTestSuite) TestFeeShare() {
 func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1_000_000))))
+	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(1_000_000))))
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 

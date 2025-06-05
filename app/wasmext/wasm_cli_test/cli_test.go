@@ -7,7 +7,7 @@ import (
 
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -19,7 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 )
 
@@ -28,7 +27,7 @@ var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	fmt.Sprintf("--%s=%s", flags.FlagFees,
-		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, math.NewInt(10_000_000))).String()),
+		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(10_000_000))).String()),
 }
 
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)
@@ -42,10 +41,9 @@ type TestSuite struct {
 
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-	testapp.EnsureNibiruPrefix()
 
 	encodingConfig := app.MakeEncodingConfig()
-	genesisState := genesis.NewTestGenesisState(encodingConfig)
+	genesisState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)

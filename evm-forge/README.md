@@ -2,7 +2,7 @@
 
 ## What's Inside
 
-- [Forge](https://github.com/foundry-rs/foundry/blob/master/forge): compile, test, fuzz, format, and deploy smart
+- [Forge](https://github.com/foundry-rs/foundry/tree/master/crates/forge): compile, test, fuzz, format, and deploy smart
   contracts
 - [Forge Std](https://github.com/foundry-rs/forge-std): collection of helpful contracts and utilities for testing
 - [Prettier](https://github.com/prettier/prettier): code formatter for non-Solidity files
@@ -181,7 +181,7 @@ For this script to work, you need to have a `MNEMONIC` environment variable set 
 [BIP39 mnemonic](https://iancoleman.io/bip39/).
 
 For instructions on how to deploy to a testnet or mainnet, check out the
-[Solidity Scripting](https://book.getfoundry.sh/tutorials/solidity-scripting.html) tutorial.
+[Solidity Scripting](https://book.getfoundry.sh/guides/scripting-with-solidity) tutorial.
 
 ### Format
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -16,28 +16,16 @@ import (
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
-	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
-	testapp.EnsureNibiruPrefix()
+	ibctesting.DefaultTestingAppInit = newNibiruTestApp
 }
 
 /*
-SetupTestingApp returns the TestingApp and default genesis state used to
+SetupNibiruTestingApp returns the TestingApp and default genesis state used to
 
 	initialize the testing app.
 */
-func SetupNibiruTestingApp() (
-	testingApp ibctesting.TestingApp,
-	defaultGenesis map[string]json.RawMessage,
-) {
-	// create testing app
-	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
-
-	// Create genesis state
-	encCdc := app.MakeEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Codec)
-	testapp.SetDefaultSudoGenesis(genesisState)
-
-	return nibiruApp, genesisState
+func newNibiruTestApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	return testapp.NewNibiruTestApp(app.GenesisState{})
 }
 
 // IBCTestSuite is a testing suite to test keeper functions.
@@ -92,7 +80,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	path := NewIBCTestingTransferPath(suite.chainA, suite.chainB)
 	suite.coordinator.Setup(path)
 
-	amount, ok := math.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
+	amount, ok := sdkmath.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
 	suite.Require().True(ok)
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, amount)
 
@@ -197,7 +185,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	// check that module account escrow address is empty
 	escrowAddress := transfertypes.GetEscrowAddress(packet.GetDestPort(), packet.GetDestChannel())
 	balance = chainBApp.BankKeeper.GetBalance(suite.chainB.GetContext(), escrowAddress, sdk.DefaultBondDenom)
-	suite.Require().Equal(sdk.NewCoin(sdk.DefaultBondDenom, math.ZeroInt()), balance)
+	suite.Require().Equal(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.ZeroInt()), balance)
 
 	// check that balance on chain B is empty
 	balance = chainCApp.BankKeeper.GetBalance(suite.chainC.GetContext(), suite.chainC.SenderAccount.GetAddress(), voucherDenomTrace.IBCDenom())

@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
@@ -82,6 +83,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 	})
 
 	s.Run("happy: CreateFunToken for the bank coin", func() {
+		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
@@ -97,6 +99,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 			},
 		)
 		s.Require().NoError(err)
+		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 
 		s.Equal(
 			createFuntokenResp.FuntokenMapping,
@@ -137,6 +140,36 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 				IsMadeFromCoin:       true,
 			},
 		)
+
+		// Event "EventTxLog" must present with OwnershipTransferred event
+		emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+		signature := crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)")).Hex()
+		ownershipFrom := emptyHash
+		ownershipTo := gethcommon.BytesToHash(evm.EVM_MODULE_ADDRESS.Bytes()).Hex()
+
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventTxLog{
+				Logs: []evm.Log{
+					{
+						Address: actualErc20Addr.Address.Hex(),
+						Topics: []string{
+							signature,
+							ownershipFrom,
+							ownershipTo,
+						},
+						Data:        nil,
+						BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
+						TxHash:      emptyHash,
+						TxIndex:     0,
+						BlockHash:   emptyHash,
+						Index:       0,
+						Removed:     false,
+					},
+				},
+			},
+		)
 	})
 
 	s.Run("sad: CreateFunToken for the bank coin: already registered", func() {
@@ -167,6 +200,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	funToken := s.fundAndCreateFunToken(deps, 100)
 
 	s.T().Log("Convert bank coin to erc-20")
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
 	_, err := deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
@@ -178,8 +212,9 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		},
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 
-	s.T().Log("Check typed event")
+	s.T().Log("Check typed event ConvertCoinToEvm")
 	testutil.RequireContainsTypedEvent(
 		s.T(),
 		deps.Ctx,
@@ -188,6 +223,37 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 			Erc20ContractAddress: funToken.Erc20Addr.String(),
 			ToEthAddr:            alice.EthAddr.String(),
 			BankCoin:             sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10)),
+		},
+	)
+
+	s.T().Log("Check typed event EventTxLog with Transfer event")
+	emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+	signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
+	fromAddress := emptyHash // Mint
+	toAddress := gethcommon.BytesToHash(alice.EthAddr.Bytes()).Hex()
+	amountBase64 := gethcommon.LeftPadBytes(big.NewInt(10).Bytes(), 32)
+
+	testutil.RequireContainsTypedEvent(
+		s.T(),
+		deps.Ctx,
+		&evm.EventTxLog{
+			Logs: []evm.Log{
+				{
+					Address: funToken.Erc20Addr.Hex(),
+					Topics: []string{
+						signature,
+						fromAddress,
+						toAddress,
+					},
+					Data:        amountBase64,
+					BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
+					TxHash:      emptyHash,
+					TxIndex:     0,
+					BlockHash:   emptyHash,
+					Index:       1,
+					Removed:     false,
+				},
+			},
 		},
 	)
 
@@ -226,6 +292,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		deps.Sender.NibiruAddr.String(),
 	)
 	s.Require().NoError(err)
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -237,6 +304,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 
 	// Check 1: module balance
 	moduleBalance = deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), evm.EVMBankDenom)
@@ -252,6 +320,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 	s.Require().Equal("0", balance.String())
 
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -263,6 +332,7 @@ func (s *FunTokenFromCoinSuite) TestConvertCoinToEvmAndBack() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().ErrorContains(err, "transfer amount exceeds balance")
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 }
 
 // TestNativeSendThenPrecompileSend tests a race condition where the state DB
@@ -362,6 +432,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -373,6 +444,9 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NotZero(evmResp.GasUsed)
+	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 	s.Empty(evmResp.VmError)
 	gasUsedFor2Ops := evmResp.GasUsed
 
@@ -404,6 +478,7 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		newSendAmtSendToBank,      /*amount*/
 	)
 	s.Require().NoError(err)
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
@@ -415,6 +490,9 @@ func (s *FunTokenFromCoinSuite) TestNativeSendThenPrecompileSend() {
 		evmtest.DefaultEthCallGasLimit,
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NotZero(evmResp.GasUsed)
+	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 	s.Empty(evmResp.VmError)
 	gasUsedFor1Op := evmResp.GasUsed
 
@@ -517,8 +595,9 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		big.NewInt(9e6),           /*amount*/
 	)
 	s.Require().NoError(err)
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr, // from
@@ -528,6 +607,9 @@ func (s *FunTokenFromCoinSuite) TestERC20TransferThenPrecompileSend() {
 		10_000_000, // gas limit
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NotZero(evmResp.GasUsed)
+	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -620,6 +702,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 	charles := evmtest.NewEthPrivAcc()
 
 	s.T().Log("call test contract")
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	contractInput, err := embeds.SmartContract_TestPrecompileSelfCallRevert.ABI.Pack(
 		"selfCallTransferFunds",
@@ -629,7 +712,7 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		big.NewInt(9e6),
 	)
 	s.Require().NoError(err)
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
@@ -639,6 +722,9 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSelfCallRevert() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().NoError(err)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NotZero(evpResp.GasUsed)
+	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evpResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,
@@ -726,8 +812,9 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		"attack",
 	)
 	s.Require().NoError(err)
+	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
@@ -737,6 +824,9 @@ func (s *FunTokenFromCoinSuite) TestPrecompileSendToBankThenErc20Transfer() {
 		evmtest.FunTokenGasLimitSendToEvm,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NotZero(evpResp.GasUsed)
+	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evpResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,

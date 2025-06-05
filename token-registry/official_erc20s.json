@@ -1,0 +1,70 @@
+[
+  {
+    "contractAddr": "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97",
+    "displayName": "Wrapped Nibiru",
+    "symbol": "WNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru-evm.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "NIBIUSDT"
+    }
+  },
+  {
+    "contractAddr": "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6",
+    "displayName": "(DEPRECATED) FunToken Nibiru",
+    "symbol": "WNIBI (d)",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/000_nibiru-evm.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "NIBIUSDT"
+    }
+  },
+  {
+    "contractAddr": "0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b",
+    "displayName": "Liquid Staked Nibiru (Wrapped)",
+    "symbol": "stNIBI",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/001_stnibi-evm.png"
+  },
+  {
+    "contractAddr": "0x0829F361A05D993d5CEb035cA6DF3446b060970b",
+    "displayName": "USDC (Stargate)",
+    "symbol": "USDC.e",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png"
+  },
+  {
+    "contractAddr": "0x43F2376D5D03553aE72F4A8093bbe9de4336EB08",
+    "displayName": "USDT (Stargate)",
+    "symbol": "USDT",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/006_usdt.svg"
+  },
+  {
+    "contractAddr": "0x08EBA8ff53c6ee5d37A90eD4b5239f2F85e7B291",
+    "displayName": "Bridged USDC (VIA Labs)",
+    "symbol": "USDC.arb",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc-arb.png"
+  },
+  {
+    "contractAddr": "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555",
+    "displayName": "WETH (Stargate)",
+    "symbol": "WETH",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/005_eth.svg"
+  },
+  {
+    "contractAddr": "0x7168634Dd1ee48b1C5cC32b27fD8Fc84E12D00E6",
+    "displayName": "Astrovault (Wrapped)",
+    "symbol": "AXV",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/003_astrovault-axv.png"
+  },
+  {
+    "contractAddr": "0xfCfc58685101e2914cBCf7551B432500db84eAa8",
+    "displayName": "Magic Internet Money",
+    "symbol": "MIM",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_mim.png"
+  },
+  {
+    "contractAddr": "0xF63fCFcd000af6401dc1848E7e147AeDf56f9355",
+    "displayName": "MagicLP MIM/USDC.e",
+    "symbol": "MagicLP",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_mim_usdc.png"
+  }
+]

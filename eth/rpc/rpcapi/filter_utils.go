@@ -4,7 +4,7 @@ package rpcapi
 import (
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -122,7 +122,7 @@ func ParseBloomFromEvents(events []abci.Event) (bloom gethcore.Bloom, err error)
 		}
 		bloomTypedEvent, err := evm.EventBlockBloomFromABCIEvent(event)
 		if err != nil {
-			return bloom, errors.Wrapf(
+			return bloom, sdkioerrors.Wrapf(
 				err, "failed to parse event of type %s", bloomEventType)
 		}
 		return eth.BloomFromHex(bloomTypedEvent.Bloom)

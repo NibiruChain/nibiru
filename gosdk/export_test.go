@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
 
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 )
 
@@ -22,8 +22,7 @@ type Blockchain struct {
 
 func CreateBlockchain(t *testing.T) (nibiru Blockchain, err error) {
 	EnsureNibiruPrefix()
-	encConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState(encConfig)
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	cliCfg := testnetwork.BuildNetworkConfig(genState)
 	cfg := &cliCfg
 	cfg.NumValidators = 1
@@ -73,7 +72,7 @@ func AbsorbServerConfig(
 }
 
 func AbsorbTmConfig(
-	cfg *testnetwork.Config, tmCfg *tmconfig.Config,
+	cfg *testnetwork.Config, tmCfg *cmtcfg.Config,
 ) *testnetwork.Config {
 	cfg.RPCAddress = tmCfg.RPC.ListenAddress
 	return cfg

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -33,7 +34,7 @@ func (k *Keeper) createFunTokenFromCoin(
 	// 3 | deploy ERC20 for metadata
 	erc20Addr, err := k.deployERC20ForBankCoin(ctx, bankMetadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to deploy ERC20 for bank coin")
+		return nil, sdkioerrors.Wrap(err, "failed to deploy ERC20 for bank coin")
 	}
 
 	// 4 | ERC20 already registered with FunToken?
@@ -73,25 +74,29 @@ func (k *Keeper) deployERC20ForBankCoin(
 	}
 
 	// pass empty method name to deploy the contract
-	packedArgs, err := embeds.SmartContract_ERC20Minter.ABI.Pack("", bankCoin.Name, bankCoin.Symbol, decimals)
-	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to pack ABI args")
-	}
-	input := append(embeds.SmartContract_ERC20Minter.Bytecode, packedArgs...)
-
-	evmMsg := gethcore.NewMessage(
-		evm.EVM_MODULE_ADDRESS,
-		nil, /*contract*/
-		k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		big.NewInt(0), /*amount*/
-		Erc20GasLimitDeploy,
-		big.NewInt(0), /*gasFeeCap*/
-		big.NewInt(0), /*gasTipCap*/
-		big.NewInt(0), /*gasPrice*/
-		input,
-		gethcore.AccessList{},
-		false, /*isFake*/
+	packedArgs, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
+		"", bankCoin.Name, bankCoin.Symbol, decimals,
 	)
+	if err != nil {
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to pack ABI args")
+	}
+	input := append(embeds.SmartContract_ERC20MinterWithMetadataUpdates.Bytecode, packedArgs...)
+
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               nil,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         Erc20GasLimitDeploy,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             input,
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
 	evmCfg := k.GetEVMConfig(ctx)
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	stateDB := k.Bank.StateDB
@@ -106,15 +111,19 @@ func (k *Keeper) deployERC20ForBankCoin(
 		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy,
 	)
 	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to deploy ERC20 contract")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
 	}
 
 	err = stateDB.Commit()
 	if err != nil {
-		return gethcommon.Address{}, errors.Wrap(err, "failed to commit stateDB")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
-	ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "deploy erc20 funtoken contract")
+	// Emit the logs from the EVM Contract deploy execution
+	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	if err == nil {
+		k.updateBlockBloom(ctx, evmResp, uint64(0))
+	}
 
 	return erc20Addr, nil
 }

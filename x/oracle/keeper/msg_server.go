@@ -2,24 +2,27 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/errors"
-
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type msgServer struct {
 	Keeper
+	SudoKeeper sudokeeper.Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the oracle MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+func NewMsgServerImpl(keeper Keeper, sudoKeeper sudokeeper.Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper, SudoKeeper: sudoKeeper}
 }
 
 func (ms msgServer) AggregateExchangeRatePrevote(
@@ -45,7 +48,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 	// Convert hex string to votehash
 	voteHash, err := types.AggregateVoteHashFromHexString(msg.Hash)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidHash, err.Error())
+		return nil, sdkioerrors.Wrap(types.ErrInvalidHash, err.Error())
 	}
 
 	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
@@ -84,7 +87,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	// An aggergate prevote is required to get an aggregate vote.
 	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
+		return nil, sdkioerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
 
 	// Check a msg is submitted proper period
@@ -99,20 +102,20 @@ func (ms msgServer) AggregateExchangeRateVote(
 	// Slice of (Pair, ExchangeRate) tuples.
 	exchangeRateTuples, err := types.ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return nil, sdkerrors.Wrap(errors.ErrInvalidCoins, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidCoins, err.Error())
 	}
 
 	// Check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
 		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
-			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
+			return nil, sdkioerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
 		}
 	}
 
 	// Verify an exchange rate with aggregate prevote hash
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
-		return nil, sdkerrors.Wrapf(
+		return nil, sdkioerrors.Wrapf(
 			types.ErrHashVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
 		)
 	}
@@ -154,7 +157,7 @@ func (ms msgServer) DelegateFeedConsent(
 	// Check the delegator is a validator
 	val := ms.StakingKeeper.Validator(ctx, operatorAddr)
 	if val == nil {
-		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Operator)
+		return nil, sdkioerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Operator)
 	}
 
 	// Set the delegation
@@ -170,18 +173,27 @@ func (ms msgServer) DelegateFeedConsent(
 
 // EditOracleParams: gRPC tx msg for editing the oracle module params.
 // [SUDO] Only callable by sudoers.
-func (ms msgServer) EditOracleParams(
-	goCtx context.Context, msg *types.MsgEditOracleParams,
-) (resp *types.MsgEditOracleParamsResponse, err error) {
+func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// Stateless field validation is already performed in msg.ValidateBasic()
-	// before the current scope is reached.
-	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	newParams, err := ms.Sudo().EditOracleParams(
-		ctx, *msg, sender,
-	)
-	resp = &types.MsgEditOracleParamsResponse{
-		NewParams: &newParams,
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address")
 	}
-	return resp, err
+
+	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
+	if err != nil {
+		return nil, sudotypes.ErrUnauthorized
+	}
+
+	params, err := ms.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
+	}
+
+	mergedParams := mergeOracleParams(msg, params)
+
+	ms.Keeper.UpdateParams(ctx, mergedParams)
+
+	return &types.MsgEditOracleParamsResponse{}, nil
 }

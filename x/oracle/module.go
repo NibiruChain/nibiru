@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
+
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
+
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -14,14 +19,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 )
 
 var (
@@ -90,9 +100,11 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
+
 	keeper        keeper.Keeper
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
+	sudoKeeper    sudokeeper.Keeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -101,24 +113,32 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	sudoKeeper sudokeeper.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc},
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
+		sudoKeeper:     sudoKeeper,
 	}
 }
 
 // Name returns the oracle module's name.
 func (AppModule) Name() string { return types.ModuleName }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.sudoKeeper))
 	querier := keeper.NewQuerier(am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), querier)
 }
@@ -178,4 +198,48 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		simState.AppParams, simState.Cdc,
 		am.accountKeeper, am.bankKeeper, am.keeper,
 	)
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type OracleInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+
+	AccountKeeper  authkeeper.AccountKeeper
+	BankKeeper     types.BankKeeper
+	DistrKeeper    types.DistributionKeeper
+	StakingKeeper  types.StakingKeeper
+	SlashingKeeper types.SlashingKeeper
+	SudoKeeper     sudokeeper.Keeper
+}
+
+type OracleOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in OracleInputs) OracleOutputs {
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.DistrKeeper, in.StakingKeeper, in.SlashingKeeper, in.SudoKeeper, distrtypes.ModuleName)
+
+	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.SudoKeeper)
+
+	return OracleOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

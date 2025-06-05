@@ -17,6 +17,8 @@ import (
 var (
 	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
 	erc20MinterContractJSON []byte
+	//go:embed artifacts/contracts/ERC20MinterWithMetadataUpdates.sol/ERC20MinterWithMetadataUpdates.json
+	erc20MinterWithMetadataUpdatesContractJSON []byte
 	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
 	oracleContractJSON []byte
 	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
@@ -56,9 +58,16 @@ var (
 var (
 	// Contract_ERC20Minter: The default ERC20 contract deployed during the
 	// creation of a `FunToken` mapping from a bank coin.
+	// Original ERC20 minter contract
 	SmartContract_ERC20Minter = CompiledEvmContract{
 		Name:      "ERC20Minter.sol",
 		EmbedJSON: erc20MinterContractJSON,
+	}
+
+	// Enhanced ERC20 contract with metadata update capabilities
+	SmartContract_ERC20MinterWithMetadataUpdates = CompiledEvmContract{
+		Name:      "ERC20MinterWithMetadataUpdates.sol",
+		EmbedJSON: erc20MinterWithMetadataUpdatesContractJSON,
 	}
 
 	// SmartContract_Funtoken: Precompile contract interface for
@@ -171,7 +180,7 @@ var (
 )
 
 func init() {
-	SmartContract_ERC20Minter.MustLoad()
+	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
 	SmartContract_Oracle.MustLoad()

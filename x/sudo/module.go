@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -16,9 +19,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	simulation "github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
 
 // Ensure the interface is properly implemented at compile time
@@ -113,6 +119,12 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
@@ -143,7 +155,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 3 }
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
@@ -170,4 +182,41 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 // WeightedOperations implements module.AppModuleSimulation.
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type SudoInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+}
+
+type SudoOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in SudoInputs) SudoOutputs {
+	k := keeper.NewKeeper(in.Cdc, in.Key)
+
+	m := NewAppModule(in.Cdc, k)
+
+	return SudoOutputs{
+		Keeper: k,
+		Module: m,
+	}
 }

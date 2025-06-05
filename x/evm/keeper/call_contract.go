@@ -5,9 +5,10 @@ import (
 	"math/big"
 	"strings"
 
-	"cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -39,33 +40,38 @@ func (k Keeper) CallContractWithInput(
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
-	defer HandleOutOfGasPanic(&err, "CallContractError")
+	defer HandleOutOfGasPanic(&err, "CallContractError")()
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
-	evmMsg := gethcore.NewMessage(
-		fromAcc,
-		contract,
-		nonce,
-		unusedBigInt, // amount
-		gasLimit,
-		unusedBigInt, // gasFeeCap
-		unusedBigInt, // gasTipCap
-		unusedBigInt, // gasPrice
-		contractInput,
-		gethcore.AccessList{},
-		!commit, // isFake
-	)
+	evmMsg := core.Message{
+		To:               contract,
+		From:             fromAcc,
+		Nonce:            nonce,
+		Value:            unusedBigInt, // amount
+		GasLimit:         gasLimit,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
 
 	// Generating TxConfig with an empty tx hash as there is no actual eth tx
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, evm.NewNoOpTracer(), commit, txConfig.TxHash, true,
+		ctx, evmMsg, evmObj, commit, txConfig.TxHash,
 	)
+	if evmResp != nil {
+		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")
+	}
 	if err != nil {
-		err = errors.Wrap(err, "failed to apply ethereum core message")
-		return
+		return nil, sdkioerrors.Wrap(err, "failed to apply ethereum core message")
 	}
 
 	if evmResp.Failed() {
@@ -79,16 +85,6 @@ func (k Keeper) CallContractWithInput(
 		}
 		err = fmt.Errorf("VMError: %s", evmResp.VmError)
 		return
-	}
-
-	// Success, update block gas used and bloom filter
-	if commit {
-		k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
-
-		err = k.EmitLogEvents(ctx, evmResp)
-		if err != nil {
-			return nil, errors.Wrap(err, "error emitting tx logs")
-		}
 	}
 	return evmResp, nil
 }

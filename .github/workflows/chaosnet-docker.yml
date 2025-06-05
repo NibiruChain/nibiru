@@ -1,0 +1,115 @@
+name: Chaosnet Latest
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - platform: linux/amd64
+            runner: ubuntu-22.04
+          - platform: linux/arm64
+            runner: ubuntu-22.04-arm
+
+    runs-on: ${{ matrix.build.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare env vars
+        run: |
+          OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
+          ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
+          echo "OS=$OS" >> $GITHUB_ENV
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR container register
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache for Docker Build
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            go-build
+            go-pkg
+            nibiru-temp
+          key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
+
+      - name: Inject cache
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "go-build": "/root/.cache/go-build",
+              "go-pkg": "/go/pkg",
+              "nibiru-temp": "/nibiru/temp"
+            }
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chaosnet
+          tags: latest-${{ env.ARCH }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: chaosnet
+          push: true
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+
+  merge:
+    name: Create multi-arch image
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chaosnet
+          tags: latest
+
+      - name: Create manifest list and push
+        run: |
+          image=$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create \
+            --tag "$image" \
+            "${image}-amd64" \
+            "${image}-arm64"

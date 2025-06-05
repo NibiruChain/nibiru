@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	cmt "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/stretchr/testify/assert"
 
@@ -73,7 +73,7 @@ func NewEthTxMsgs(count uint64) (ethTxMsgs []*evm.MsgEthereumTx) {
 // NewEthTxMsgAsCmt: Helper that returns an Ethereum tx msg converted into
 // tx bytes used in the Consensus Engine.
 func NewEthTxMsgAsCmt(t *testing.T) (
-	txBz cmt.Tx,
+	txBz cmttypes.Tx,
 	ethTxMsgs []*evm.MsgEthereumTx,
 	clientCtx client.Context,
 ) {

@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -244,7 +244,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 
 				s.T().Log(
 					"Send coins to validator to register in the account keeper.")
-				coinsToSend := sdk.NewCoins(sdk.NewCoin(eth.EthBaseDenom, math.NewInt(69420)))
+				coinsToSend := sdk.NewCoins(sdk.NewCoin(eth.EthBaseDenom, sdkmath.NewInt(69420)))
 				valAddr := sdk.AccAddress(valAddrBz)
 				s.NoError(testapp.FundAccount(
 					deps.App.BankKeeper,
@@ -477,7 +477,7 @@ func (s *Suite) TestQueryEthCall() {
 		{
 			name: "happy: eth call to deploy erc20 contract",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				fungibleTokenContract := embeds.SmartContract_ERC20Minter
+				fungibleTokenContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 				jsonTxArgs, err := json.Marshal(&evm.JsonTxArgs{
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
@@ -596,8 +596,8 @@ func (s *Suite) TestQueryBaseFee() {
 			name: "happy: base fee value",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBaseFeeRequest{}
-				defaultFeeWei := math.NewIntFromBigInt(evm.BASE_FEE_WEI)
-				defaultFeeUnibi := math.NewIntFromBigInt(evm.BASE_FEE_MICRONIBI)
+				defaultFeeWei := sdkmath.NewIntFromBigInt(evm.BASE_FEE_WEI)
+				defaultFeeUnibi := sdkmath.NewIntFromBigInt(evm.BASE_FEE_MICRONIBI)
 				wantResp = &evm.QueryBaseFeeResponse{
 					BaseFee:      &defaultFeeWei,
 					BaseFeeUnibi: &defaultFeeUnibi,
@@ -808,6 +808,7 @@ func (s *Suite) TestTraceTx() {
 			s.Assert().NoError(err)
 			s.Assert().NotNil(gotResp)
 			s.Assert().NotNil(gotResp.Data)
+			s.Require().True(json.Valid(gotResp.Data), "expected json.RawMessage")
 
 			// // Replace spaces in want resp
 			// re := regexp.MustCompile(`[\s\n\r]+`)

@@ -4,6 +4,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,7 +20,7 @@ func (k Keeper) VotePeriod(ctx sdk.Context) (res uint64) {
 }
 
 // VoteThreshold returns the minimum percentage of votes that must be received for a votes to pass.
-func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
+func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.VoteThreshold
 }
@@ -40,7 +41,7 @@ func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 // then rewards are added to the validator performance.
 // Note that if the reward band is smaller than 1 standard
 // deviation, the band is taken to be 1 standard deviation.
-func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
+func (k Keeper) RewardBand(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.RewardBand
 }
@@ -52,7 +53,7 @@ func (k Keeper) Whitelist(ctx sdk.Context) (res []asset.Pair) {
 }
 
 // SlashFraction returns oracle voting penalty rate
-func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
+func (k Keeper) SlashFraction(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.SlashFraction
 }
@@ -67,7 +68,57 @@ func (k Keeper) SlashWindow(ctx sdk.Context) (res uint64) {
 }
 
 // MinValidPerWindow returns oracle slashing threshold
-func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdk.Dec) {
+func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinValidPerWindow
+}
+
+// mergeOracleParams takes the oracle params from the wasm msg and merges them into the existing params
+// keeping any existing values if not set in the wasm msg
+func mergeOracleParams(msg *types.MsgEditOracleParams, oracleParams types.Params) types.Params {
+	if msg.Params.VotePeriod != 0 {
+		oracleParams.VotePeriod = msg.Params.VotePeriod
+	}
+
+	if msg.Params.VoteThreshold != nil && !msg.Params.VoteThreshold.IsNil() {
+		oracleParams.VoteThreshold = *msg.Params.VoteThreshold
+	}
+
+	if msg.Params.RewardBand != nil && !msg.Params.RewardBand.IsNil() {
+		oracleParams.RewardBand = *msg.Params.RewardBand
+	}
+
+	if len(msg.Params.Whitelist) != 0 {
+		oracleParams.Whitelist = msg.Params.Whitelist
+	}
+
+	if msg.Params.SlashFraction != nil && !msg.Params.SlashFraction.IsNil() {
+		oracleParams.SlashFraction = *msg.Params.SlashFraction
+	}
+
+	if msg.Params.SlashWindow != 0 {
+		oracleParams.SlashWindow = msg.Params.SlashWindow
+	}
+
+	if msg.Params.MinValidPerWindow != nil && !msg.Params.MinValidPerWindow.IsNil() {
+		oracleParams.MinValidPerWindow = *msg.Params.MinValidPerWindow
+	}
+
+	if msg.Params.TwapLookbackWindow != nil {
+		oracleParams.TwapLookbackWindow = *msg.Params.TwapLookbackWindow
+	}
+
+	if msg.Params.MinVoters != 0 {
+		oracleParams.MinVoters = msg.Params.MinVoters
+	}
+
+	if msg.Params.ValidatorFeeRatio != nil && !msg.Params.ValidatorFeeRatio.IsNil() {
+		oracleParams.ValidatorFeeRatio = *msg.Params.ValidatorFeeRatio
+	}
+
+	if msg.Params.ExpirationBlocks != 0 {
+		oracleParams.ExpirationBlocks = msg.Params.ExpirationBlocks
+	}
+
+	return oracleParams
 }

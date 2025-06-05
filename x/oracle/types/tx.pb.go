@@ -5,24 +5,30 @@ package types
 
 import (
 	context "context"
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	github_com_NibiruChain_nibiru_v2_x_common_asset "github.com/NibiruChain/nibiru/v2/x/common/asset"
+	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	_ "google.golang.org/protobuf/types/known/durationpb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -277,25 +283,9 @@ func (m *MsgDelegateFeedConsentResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDelegateFeedConsentResponse proto.InternalMessageInfo
 
-// MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
-// [SUDO] Only callable by sudoers.
 type MsgEditOracleParams struct {
-	Sender     string                                  `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	VotePeriod *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=vote_period,json=votePeriod,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"vote_period,omitempty"`
-	// vote_threshold: [cosmossdk.io/math.LegacyDec] TODO:
-	VoteThreshold *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=vote_threshold,json=voteThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"vote_threshold,omitempty"`
-	// reward_band: [cosmossdk.io/math.LegacyDec] TODO:
-	RewardBand *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=reward_band,json=rewardBand,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_band,omitempty"`
-	Whitelist  []string                                `protobuf:"bytes,5,rep,name=whitelist,proto3" json:"whitelist,omitempty"`
-	// slash_fraction: [cosmossdk.io/math.LegacyDec] TODO:
-	SlashFraction *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=slash_fraction,json=slashFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction,omitempty"`
-	SlashWindow   *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=slash_window,json=slashWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"slash_window,omitempty"`
-	// min_valid_per_window: [cosmossdk.io/math.LegacyDec] TODO:
-	MinValidPerWindow  *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_valid_per_window,omitempty"`
-	TwapLookbackWindow *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=twap_lookback_window,json=twapLookbackWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"twap_lookback_window,omitempty"`
-	MinVoters          *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,10,opt,name=min_voters,json=minVoters,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_voters,omitempty"`
-	// VoteThreshold: [cosmossdk.io/math.LegacyDec] TODO:
-	ValidatorFeeRatio *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=validator_fee_ratio,json=validatorFeeRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"validator_fee_ratio,omitempty"`
+	Sender string           `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty" yaml:"sender"`
+	Params *OracleParamsMsg `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty" yaml:"params"`
 }
 
 func (m *MsgEditOracleParams) Reset()         { *m = MsgEditOracleParams{} }
@@ -331,24 +321,7 @@ func (m *MsgEditOracleParams) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgEditOracleParams proto.InternalMessageInfo
 
-func (m *MsgEditOracleParams) GetSender() string {
-	if m != nil {
-		return m.Sender
-	}
-	return ""
-}
-
-func (m *MsgEditOracleParams) GetWhitelist() []string {
-	if m != nil {
-		return m.Whitelist
-	}
-	return nil
-}
-
-// MsgEditOracleParamsResponse defines the Msg/EditOracleParams response
-// type.
 type MsgEditOracleParamsResponse struct {
-	NewParams *Params `protobuf:"bytes,1,opt,name=new_params,json=newParams,proto3" json:"new_params,omitempty"`
 }
 
 func (m *MsgEditOracleParamsResponse) Reset()         { *m = MsgEditOracleParamsResponse{} }
@@ -384,11 +357,110 @@ func (m *MsgEditOracleParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgEditOracleParamsResponse proto.InternalMessageInfo
 
-func (m *MsgEditOracleParamsResponse) GetNewParams() *Params {
+type OracleParamsMsg struct {
+	// VotePeriod defines the number of blocks during which voting takes place.
+	VotePeriod uint64 `protobuf:"varint,1,opt,name=vote_period,json=votePeriod,proto3" json:"vote_period,omitempty" yaml:"vote_period"`
+	// VoteThreshold specifies the minimum proportion of votes that must be
+	// received for a ballot to pass.
+	VoteThreshold *cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=vote_threshold,json=voteThreshold,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"vote_threshold,omitempty" yaml:"vote_threshold"`
+	// RewardBand defines a maxium divergence that a price vote can have from the
+	// weighted median in the ballot. If a vote lies within the valid range
+	// defined by:
+	//	μ := weightedMedian,
+	//	validRange := μ ± (μ * rewardBand / 2),
+	// then rewards are added to the validator performance.
+	// Note that if the reward band is smaller than 1 standard
+	// deviation, the band is taken to be 1 standard deviation.a price
+	RewardBand *cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=reward_band,json=rewardBand,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"reward_band,omitempty" yaml:"reward_band"`
+	// The set of whitelisted markets, or asset pairs, for the module.
+	// Ex. '["unibi:uusd","ubtc:uusd"]'
+	Whitelist []github_com_NibiruChain_nibiru_v2_x_common_asset.Pair `protobuf:"bytes,4,rep,name=whitelist,proto3,customtype=github.com/NibiruChain/nibiru/v2/x/common/asset.Pair" json:"whitelist,omitempty" yaml:"whitelist"`
+	// SlashFraction returns the proportion of an oracle's stake that gets
+	// slashed in the event of slashing. `SlashFraction` specifies the exact
+	// penalty for failing a voting period.
+	SlashFraction *cosmossdk_io_math.LegacyDec `protobuf:"bytes,5,opt,name=slash_fraction,json=slashFraction,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"slash_fraction,omitempty" yaml:"slash_fraction"`
+	// SlashWindow returns the number of voting periods that specify a
+	// "slash window". After each slash window, all oracles that have missed more
+	// than the penalty threshold are slashed. Missing the penalty threshold is
+	// synonymous with submitting fewer valid votes than `MinValidPerWindow`.
+	SlashWindow       uint64                       `protobuf:"varint,6,opt,name=slash_window,json=slashWindow,proto3" json:"slash_window,omitempty" yaml:"slash_window"`
+	MinValidPerWindow *cosmossdk_io_math.LegacyDec `protobuf:"bytes,7,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_valid_per_window,omitempty" yaml:"min_valid_per_window"`
+	// Amount of time to look back for TWAP calculations
+	TwapLookbackWindow *time.Duration `protobuf:"bytes,8,opt,name=twap_lookback_window,json=twapLookbackWindow,proto3,stdduration" json:"twap_lookback_window,omitempty" yaml:"twap_lookback_window"`
+	// The minimum number of voters (i.e. oracle validators) per pair for it to be
+	// considered a passing ballot. Recommended at least 4.
+	MinVoters uint64 `protobuf:"varint,9,opt,name=min_voters,json=minVoters,proto3" json:"min_voters,omitempty" yaml:"min_voters"`
+	// The validator fee ratio that is given to validators every epoch.
+	ValidatorFeeRatio *cosmossdk_io_math.LegacyDec `protobuf:"bytes,10,opt,name=validator_fee_ratio,json=validatorFeeRatio,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"validator_fee_ratio,omitempty" yaml:"validator_fee_ratio"`
+	ExpirationBlocks  uint64                       `protobuf:"varint,11,opt,name=expiration_blocks,json=expirationBlocks,proto3" json:"expiration_blocks,omitempty" yaml:"expiration_blocks"`
+}
+
+func (m *OracleParamsMsg) Reset()         { *m = OracleParamsMsg{} }
+func (m *OracleParamsMsg) String() string { return proto.CompactTextString(m) }
+func (*OracleParamsMsg) ProtoMessage()    {}
+func (*OracleParamsMsg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_11e362c65eb610f4, []int{8}
+}
+func (m *OracleParamsMsg) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleParamsMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleParamsMsg.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleParamsMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleParamsMsg.Merge(m, src)
+}
+func (m *OracleParamsMsg) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleParamsMsg) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleParamsMsg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleParamsMsg proto.InternalMessageInfo
+
+func (m *OracleParamsMsg) GetVotePeriod() uint64 {
 	if m != nil {
-		return m.NewParams
+		return m.VotePeriod
+	}
+	return 0
+}
+
+func (m *OracleParamsMsg) GetSlashWindow() uint64 {
+	if m != nil {
+		return m.SlashWindow
+	}
+	return 0
+}
+
+func (m *OracleParamsMsg) GetTwapLookbackWindow() *time.Duration {
+	if m != nil {
+		return m.TwapLookbackWindow
 	}
 	return nil
+}
+
+func (m *OracleParamsMsg) GetMinVoters() uint64 {
+	if m != nil {
+		return m.MinVoters
+	}
+	return 0
+}
+
+func (m *OracleParamsMsg) GetExpirationBlocks() uint64 {
+	if m != nil {
+		return m.ExpirationBlocks
+	}
+	return 0
 }
 
 func init() {
@@ -400,70 +472,170 @@ func init() {
 	proto.RegisterType((*MsgDelegateFeedConsentResponse)(nil), "nibiru.oracle.v1.MsgDelegateFeedConsentResponse")
 	proto.RegisterType((*MsgEditOracleParams)(nil), "nibiru.oracle.v1.MsgEditOracleParams")
 	proto.RegisterType((*MsgEditOracleParamsResponse)(nil), "nibiru.oracle.v1.MsgEditOracleParamsResponse")
+	proto.RegisterType((*OracleParamsMsg)(nil), "nibiru.oracle.v1.OracleParamsMsg")
 }
 
 func init() { proto.RegisterFile("nibiru/oracle/v1/tx.proto", fileDescriptor_11e362c65eb610f4) }
 
 var fileDescriptor_11e362c65eb610f4 = []byte{
-	// 917 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0x41, 0x6f, 0xdc, 0x44,
-	0x14, 0xc7, 0xe3, 0x26, 0x5d, 0xb2, 0xb3, 0xa4, 0x4d, 0xbd, 0x69, 0xe4, 0x6c, 0x83, 0x1d, 0x5c,
-	0x08, 0xc9, 0x61, 0x6d, 0x12, 0x24, 0x10, 0x3d, 0x41, 0xda, 0x46, 0xaa, 0xc4, 0xd2, 0x60, 0x41,
-	0x90, 0x38, 0x60, 0x66, 0xd7, 0x2f, 0xb6, 0x15, 0xaf, 0xc7, 0x9a, 0x99, 0xee, 0xa6, 0x57, 0xc4,
-	0x01, 0x6e, 0x48, 0x3d, 0x71, 0xcb, 0x07, 0x40, 0xe2, 0x6b, 0xf4, 0x58, 0x89, 0x0b, 0xe2, 0xb0,
-	0x42, 0x09, 0x42, 0x9c, 0x38, 0xec, 0x27, 0x40, 0x33, 0x1e, 0xbb, 0xdb, 0xcd, 0xb6, 0xcd, 0xee,
-	0x29, 0xce, 0xbc, 0xff, 0xfc, 0xde, 0xff, 0x3d, 0x7b, 0xde, 0x2c, 0x5a, 0x4b, 0xe3, 0x76, 0x4c,
-	0x1f, 0xb9, 0x84, 0xe2, 0x4e, 0x02, 0x6e, 0x6f, 0xc7, 0xe5, 0x27, 0x4e, 0x46, 0x09, 0x27, 0xfa,
-	0x72, 0x1e, 0x72, 0xf2, 0x90, 0xd3, 0xdb, 0x69, 0xac, 0x84, 0x24, 0x24, 0x32, 0xe8, 0x8a, 0xa7,
-	0x5c, 0xd7, 0x58, 0x0f, 0x09, 0x09, 0x13, 0x70, 0x71, 0x16, 0xbb, 0x38, 0x4d, 0x09, 0xc7, 0x3c,
-	0x26, 0x29, 0x53, 0xd1, 0xb7, 0x2e, 0x24, 0x50, 0x3c, 0x19, 0xb6, 0x7f, 0xd3, 0x90, 0xd5, 0x62,
-	0xe1, 0xa7, 0x61, 0x48, 0x21, 0xc4, 0x1c, 0xee, 0x9f, 0x74, 0x22, 0x9c, 0x86, 0xe0, 0x61, 0x0e,
-	0x07, 0x14, 0x7a, 0x84, 0x83, 0x7e, 0x1b, 0x2d, 0x44, 0x98, 0x45, 0x86, 0xb6, 0xa1, 0x6d, 0x55,
-	0xf7, 0xae, 0x0f, 0x07, 0x56, 0xed, 0x31, 0xee, 0x26, 0x77, 0x6c, 0xb1, 0x6a, 0x7b, 0x32, 0xa8,
-	0x6f, 0xa3, 0xca, 0x11, 0x40, 0x00, 0xd4, 0xb8, 0x22, 0x65, 0x37, 0x86, 0x03, 0x6b, 0x29, 0x97,
-	0xe5, 0xeb, 0xb6, 0xa7, 0x04, 0xfa, 0x2e, 0xaa, 0xf6, 0x70, 0x12, 0x07, 0x98, 0x13, 0x6a, 0xcc,
-	0x4b, 0xf5, 0xca, 0x70, 0x60, 0x2d, 0xe7, 0xea, 0x32, 0x64, 0x7b, 0xcf, 0x65, 0x77, 0x16, 0x7f,
-	0x3c, 0xb5, 0xe6, 0xfe, 0x3d, 0xb5, 0xe6, 0xec, 0x6d, 0xf4, 0xde, 0x6b, 0x0c, 0x7b, 0xc0, 0x32,
-	0x92, 0x32, 0xb0, 0xff, 0xd3, 0xd0, 0xfa, 0xcb, 0xb4, 0x87, 0xaa, 0x32, 0x86, 0x13, 0x7e, 0xb1,
-	0x32, 0xb1, 0x6a, 0x7b, 0x32, 0xa8, 0x7f, 0x82, 0xae, 0x81, 0xda, 0xe8, 0x53, 0xcc, 0x81, 0xa9,
-	0x0a, 0xd7, 0x86, 0x03, 0xeb, 0x66, 0x2e, 0x7f, 0x31, 0x6e, 0x7b, 0x4b, 0x30, 0x92, 0x89, 0x8d,
-	0xf4, 0x66, 0x7e, 0xaa, 0xde, 0x2c, 0x4c, 0xdb, 0x9b, 0x4d, 0xf4, 0xce, 0xab, 0xea, 0x2d, 0x1b,
-	0xf3, 0x83, 0x86, 0x56, 0x5b, 0x2c, 0xbc, 0x07, 0x89, 0xd4, 0xed, 0x03, 0x04, 0x77, 0x45, 0x20,
-	0xe5, 0xba, 0x8b, 0x16, 0x49, 0x06, 0x54, 0xe6, 0xcf, 0xdb, 0x52, 0x1f, 0x0e, 0xac, 0xeb, 0x79,
-	0xfe, 0x22, 0x62, 0x7b, 0xa5, 0x48, 0x6c, 0x08, 0x14, 0x47, 0x35, 0x66, 0x64, 0x43, 0x11, 0xb1,
-	0xbd, 0x52, 0x34, 0x62, 0x77, 0x03, 0x99, 0x93, 0x5d, 0x94, 0x46, 0xff, 0xa9, 0xa0, 0x7a, 0x8b,
-	0x85, 0xf7, 0x83, 0x98, 0x3f, 0x94, 0x9f, 0xed, 0x01, 0xa6, 0xb8, 0xcb, 0xf4, 0x55, 0x54, 0x61,
-	0x90, 0x8a, 0x8e, 0x4a, 0x8f, 0x9e, 0xfa, 0x4f, 0x7f, 0x88, 0x6a, 0xe2, 0x0b, 0xf0, 0x33, 0xa0,
-	0x31, 0x09, 0x94, 0x1f, 0xe7, 0xe9, 0xc0, 0xd2, 0xfe, 0x1c, 0x58, 0x9b, 0x61, 0xcc, 0xa3, 0x47,
-	0x6d, 0xa7, 0x43, 0xba, 0x6e, 0x87, 0xb0, 0x2e, 0x61, 0xea, 0x4f, 0x93, 0x05, 0xc7, 0x2e, 0x7f,
-	0x9c, 0x01, 0x73, 0x1e, 0xa4, 0xdc, 0x43, 0x02, 0x71, 0x20, 0x09, 0xfa, 0x57, 0xe8, 0x9a, 0x04,
-	0xf2, 0x88, 0x02, 0x8b, 0x48, 0x12, 0xa8, 0x57, 0x38, 0x0d, 0xf3, 0x1e, 0x74, 0xbc, 0x25, 0x41,
-	0xf9, 0xb2, 0x80, 0x08, 0x9f, 0x14, 0xfa, 0x98, 0x06, 0x7e, 0x1b, 0xa7, 0x81, 0x7a, 0xd1, 0xd3,
-	0x32, 0x51, 0x8e, 0xd8, 0xc3, 0x69, 0xa0, 0xdb, 0xa8, 0xda, 0x8f, 0x62, 0x0e, 0x49, 0xcc, 0xb8,
-	0x71, 0x75, 0x63, 0x7e, 0xab, 0xba, 0xb7, 0x20, 0x70, 0xde, 0xf3, 0x65, 0x51, 0x0b, 0x4b, 0x30,
-	0x8b, 0xfc, 0x23, 0x8a, 0x3b, 0x62, 0x46, 0x18, 0x95, 0xd9, 0x6a, 0x91, 0x94, 0x7d, 0x05, 0xd1,
-	0xbf, 0x40, 0x6f, 0xe6, 0xd8, 0x7e, 0x9c, 0x06, 0xa4, 0x6f, 0xbc, 0x31, 0x53, 0xd3, 0x6b, 0x92,
-	0xf1, 0xb5, 0x44, 0xe8, 0x3e, 0x5a, 0xe9, 0xc6, 0xa9, 0x2f, 0x3f, 0x71, 0xf1, 0x2e, 0x0b, 0xf4,
-	0xe2, 0x4c, 0x7e, 0x6f, 0x74, 0xe3, 0xf4, 0x50, 0xa0, 0x0e, 0x80, 0xaa, 0x04, 0xdf, 0xa1, 0x15,
-	0xde, 0xc7, 0x99, 0x9f, 0x10, 0x72, 0xdc, 0xc6, 0x9d, 0xe3, 0x22, 0x41, 0x75, 0x26, 0xef, 0xba,
-	0x60, 0x7d, 0xa6, 0x50, 0x2a, 0x43, 0x0b, 0x21, 0x59, 0x02, 0xe1, 0x40, 0x99, 0x81, 0x66, 0xe2,
-	0x56, 0x85, 0x71, 0x09, 0xd0, 0xbf, 0x45, 0xf5, 0xf2, 0xc0, 0xfb, 0x47, 0x20, 0x27, 0x4d, 0x4c,
-	0x8c, 0xda, 0x6c, 0x0d, 0x29, 0x51, 0xfb, 0x20, 0x86, 0x43, 0x4c, 0xec, 0x43, 0x74, 0x6b, 0xc2,
-	0x39, 0x2b, 0xce, 0xa1, 0xfe, 0x11, 0x42, 0x29, 0xf4, 0xfd, 0x4c, 0xae, 0xca, 0x33, 0x57, 0xdb,
-	0x35, 0x9c, 0xf1, 0x0b, 0xca, 0x51, 0xbb, 0xaa, 0x29, 0xf4, 0xf3, 0xc7, 0xdd, 0x9f, 0xae, 0xa2,
-	0xf9, 0x16, 0x0b, 0xf5, 0x5f, 0x35, 0xb4, 0xfe, 0xca, 0x4b, 0x66, 0xe7, 0x22, 0xed, 0x35, 0x63,
-	0xbe, 0xf1, 0xf1, 0xd4, 0x5b, 0xca, 0xb9, 0x62, 0x7e, 0xff, 0xfb, 0xdf, 0x4f, 0xae, 0x18, 0xf6,
-	0xaa, 0xfb, 0xe2, 0xf5, 0x98, 0x29, 0x37, 0xa7, 0x1a, 0x5a, 0x7b, 0xf9, 0xb5, 0xe1, 0x5c, 0x3e,
-	0xb1, 0xd0, 0x37, 0x3e, 0x9c, 0x4e, 0x5f, 0xba, 0xbc, 0x25, 0x5d, 0xde, 0xb4, 0xeb, 0x63, 0x2e,
-	0xa5, 0xc5, 0x5f, 0x34, 0x54, 0x9f, 0x34, 0xc0, 0xb7, 0x26, 0x26, 0x9b, 0xa0, 0x6c, 0xbc, 0x7f,
-	0x59, 0x65, 0x69, 0x68, 0x53, 0x1a, 0xda, 0xb0, 0xcd, 0x31, 0x43, 0xf9, 0xe5, 0xd5, 0x2c, 0x46,
-	0xbc, 0xfe, 0x44, 0x43, 0xcb, 0x17, 0x66, 0xf6, 0xbb, 0x13, 0xd3, 0x8d, 0xcb, 0x1a, 0xcd, 0x4b,
-	0xc9, 0x4a, 0x4b, 0xdb, 0xd2, 0xd2, 0x6d, 0xfb, 0xed, 0x31, 0x4b, 0x10, 0xc4, 0xbc, 0x99, 0x3f,
-	0x37, 0xf3, 0xcf, 0x76, 0xef, 0xc1, 0xd3, 0x33, 0x53, 0x7b, 0x76, 0x66, 0x6a, 0x7f, 0x9d, 0x99,
-	0xda, 0xcf, 0xe7, 0xe6, 0xdc, 0xb3, 0x73, 0x73, 0xee, 0x8f, 0x73, 0x73, 0xee, 0x1b, 0x77, 0xe4,
-	0xe0, 0x7c, 0x2e, 0x31, 0x77, 0x23, 0x1c, 0xa7, 0x05, 0xb2, 0xb7, 0xeb, 0x9e, 0x14, 0x5c, 0x79,
-	0x8a, 0xda, 0x15, 0xf9, 0xeb, 0xe9, 0x83, 0xff, 0x03, 0x00, 0x00, 0xff, 0xff, 0x0e, 0x15, 0xe1,
-	0xb0, 0xbf, 0x09, 0x00, 0x00,
+	// 1125 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x56, 0x4f, 0x6f, 0xe3, 0xc4,
+	0x1b, 0xae, 0xb7, 0xfd, 0xf5, 0xd7, 0x4c, 0xe8, 0xb6, 0x75, 0xda, 0xc5, 0x49, 0x5b, 0xbb, 0x0c,
+	0xb0, 0x74, 0x25, 0x6a, 0xd3, 0x82, 0x10, 0x14, 0x09, 0x41, 0xb6, 0x5b, 0xb4, 0xa8, 0x65, 0x23,
+	0x0b, 0x2d, 0x12, 0x97, 0x68, 0x62, 0x4f, 0x6d, 0xab, 0xb6, 0xc7, 0x78, 0xa6, 0xff, 0x4e, 0x08,
+	0x84, 0x04, 0x47, 0x24, 0x24, 0x54, 0x6e, 0xfd, 0x00, 0x48, 0x5c, 0xf8, 0x10, 0x7b, 0x5c, 0xc1,
+	0x05, 0x71, 0x08, 0xa8, 0xe5, 0xb0, 0xe2, 0xc0, 0x21, 0x77, 0x04, 0xf2, 0xcc, 0xc4, 0x49, 0x9d,
+	0xec, 0x6e, 0xca, 0x2d, 0x33, 0xcf, 0x33, 0xef, 0xfb, 0xbc, 0x8f, 0x67, 0xde, 0x37, 0xa0, 0x1a,
+	0x07, 0xad, 0x20, 0x3d, 0xb0, 0x48, 0x8a, 0x9c, 0x10, 0x5b, 0x87, 0xeb, 0x16, 0x3b, 0x36, 0x93,
+	0x94, 0x30, 0xa2, 0xce, 0x0a, 0xc8, 0x14, 0x90, 0x79, 0xb8, 0x5e, 0x9b, 0xf7, 0x88, 0x47, 0x38,
+	0x68, 0x65, 0xbf, 0x04, 0xaf, 0xb6, 0xe4, 0x11, 0xe2, 0x85, 0xd8, 0x42, 0x49, 0x60, 0xa1, 0x38,
+	0x26, 0x0c, 0xb1, 0x80, 0xc4, 0x54, 0xa2, 0xba, 0x44, 0xf9, 0xaa, 0x75, 0xb0, 0x67, 0xb9, 0x07,
+	0x29, 0x27, 0x48, 0x7c, 0x79, 0x40, 0x80, 0xcc, 0x27, 0xe0, 0xaa, 0x43, 0x68, 0x44, 0x68, 0x53,
+	0x64, 0x15, 0x0b, 0x01, 0xc1, 0x1f, 0x14, 0x60, 0xec, 0x52, 0xef, 0x5d, 0xcf, 0x4b, 0xb1, 0x87,
+	0x18, 0xbe, 0x73, 0xec, 0xf8, 0x28, 0xf6, 0xb0, 0x8d, 0x18, 0x6e, 0xa4, 0xf8, 0x90, 0x30, 0xac,
+	0x3e, 0x0f, 0x26, 0x7c, 0x44, 0x7d, 0x4d, 0x59, 0x51, 0x56, 0x4b, 0xf5, 0x99, 0x4e, 0xdb, 0x28,
+	0x9f, 0xa0, 0x28, 0xdc, 0x84, 0xd9, 0x2e, 0xb4, 0x39, 0xa8, 0xde, 0x02, 0x93, 0x7b, 0x18, 0xbb,
+	0x38, 0xd5, 0xae, 0x71, 0xda, 0x5c, 0xa7, 0x6d, 0x4c, 0x0b, 0x9a, 0xd8, 0x87, 0xb6, 0x24, 0xa8,
+	0x1b, 0xa0, 0x74, 0x88, 0xc2, 0xc0, 0x45, 0x8c, 0xa4, 0xda, 0x38, 0x67, 0xcf, 0x77, 0xda, 0xc6,
+	0xac, 0x60, 0xe7, 0x10, 0xb4, 0x7b, 0xb4, 0xcd, 0xa9, 0xaf, 0xce, 0x8c, 0xb1, 0x47, 0x67, 0xc6,
+	0x18, 0xbc, 0x05, 0x5e, 0x7a, 0x8a, 0x60, 0x1b, 0xd3, 0x84, 0xc4, 0x14, 0xc3, 0xbf, 0x14, 0xb0,
+	0xf4, 0x38, 0xee, 0x7d, 0x59, 0x19, 0x45, 0x21, 0x1b, 0xac, 0x2c, 0xdb, 0x85, 0x36, 0x07, 0xd5,
+	0x77, 0xc0, 0x75, 0x2c, 0x0f, 0x36, 0x53, 0xc4, 0x30, 0x95, 0x15, 0x56, 0x3b, 0x6d, 0x63, 0x41,
+	0xd0, 0x2f, 0xe3, 0xd0, 0x9e, 0xc6, 0x7d, 0x99, 0x68, 0x9f, 0x37, 0xe3, 0x57, 0xf2, 0x66, 0xe2,
+	0xaa, 0xde, 0xdc, 0x04, 0x2f, 0x3c, 0xa9, 0xde, 0xdc, 0x98, 0x2f, 0x14, 0x70, 0x63, 0x97, 0x7a,
+	0x5b, 0x38, 0xe4, 0xbc, 0x6d, 0x8c, 0xdd, 0xdb, 0x19, 0x10, 0x33, 0xd5, 0x02, 0x53, 0x24, 0xc1,
+	0x29, 0xcf, 0x2f, 0x6c, 0xa9, 0x74, 0xda, 0xc6, 0x8c, 0xc8, 0xdf, 0x45, 0xa0, 0x9d, 0x93, 0xb2,
+	0x03, 0xae, 0x8c, 0x23, 0x8d, 0xe9, 0x3b, 0xd0, 0x45, 0xa0, 0x9d, 0x93, 0xfa, 0xe4, 0xae, 0x00,
+	0x7d, 0xb8, 0x8a, 0x5c, 0xe8, 0xa9, 0x02, 0x2a, 0xbb, 0xd4, 0xbb, 0xe3, 0x06, 0xec, 0x1e, 0xbf,
+	0xd1, 0x0d, 0x94, 0xa2, 0x88, 0x3b, 0x4a, 0x71, 0x9c, 0x39, 0xaa, 0x14, 0x1d, 0x15, 0xfb, 0xd0,
+	0x96, 0x04, 0x75, 0x07, 0x4c, 0x26, 0xfc, 0x10, 0x57, 0x57, 0xde, 0x78, 0xce, 0x2c, 0x3e, 0x49,
+	0xb3, 0x3f, 0xf4, 0x2e, 0xf5, 0xfa, 0xa3, 0x89, 0xa3, 0xd0, 0x96, 0x31, 0xfa, 0xc4, 0x2f, 0x83,
+	0xc5, 0x21, 0xca, 0x72, 0xe5, 0xff, 0x4c, 0x81, 0x99, 0x42, 0x5c, 0xf5, 0x2d, 0x50, 0xce, 0xee,
+	0x67, 0x33, 0xc1, 0x69, 0x40, 0x5c, 0x2e, 0x7d, 0xa2, 0x5e, 0x7b, 0xd0, 0x36, 0x94, 0x4e, 0xdb,
+	0x50, 0xe5, 0x27, 0xee, 0x11, 0xa0, 0x0d, 0xb2, 0x55, 0x83, 0x2f, 0xd4, 0x4f, 0xc0, 0x75, 0x8e,
+	0x31, 0x3f, 0xc5, 0xd4, 0x27, 0xa1, 0x2b, 0xdd, 0x7e, 0x3f, 0x3b, 0xff, 0x6b, 0xdb, 0x58, 0x14,
+	0xef, 0x9a, 0xba, 0xfb, 0x66, 0x40, 0xac, 0x08, 0x31, 0xdf, 0xdc, 0xc1, 0x1e, 0x72, 0x4e, 0xb6,
+	0xb0, 0xd3, 0xbb, 0xa9, 0x97, 0x43, 0xc0, 0x9f, 0x7e, 0x5c, 0x03, 0xb2, 0x1f, 0x6c, 0x61, 0xc7,
+	0x9e, 0xce, 0xe0, 0x0f, 0xbb, 0xa8, 0xea, 0x83, 0x72, 0x8a, 0x8f, 0x50, 0xea, 0x36, 0x5b, 0x28,
+	0x76, 0xe5, 0xe5, 0x7d, 0x6f, 0xb4, 0x7c, 0xb2, 0x9c, 0xbe, 0xf3, 0xc5, 0x64, 0x40, 0x60, 0x75,
+	0x14, 0xbb, 0x6a, 0x0c, 0x4a, 0x47, 0x7e, 0xc0, 0x70, 0x18, 0x50, 0xa6, 0x4d, 0xac, 0x8c, 0xaf,
+	0x96, 0xea, 0x0d, 0x99, 0xe7, 0x35, 0x2f, 0x60, 0xfe, 0x41, 0xcb, 0x74, 0x48, 0x64, 0x7d, 0xc0,
+	0xbf, 0xdc, 0x6d, 0x1f, 0x05, 0xb1, 0x25, 0x5b, 0xde, 0xe1, 0x86, 0x75, 0x6c, 0x39, 0x24, 0x8a,
+	0x48, 0x6c, 0x21, 0x4a, 0x31, 0x33, 0x1b, 0x28, 0x48, 0x7b, 0x4f, 0x26, 0x0f, 0x0b, 0xed, 0x5e,
+	0x8a, 0xcc, 0x4c, 0x1a, 0x22, 0xea, 0x37, 0xf7, 0x52, 0xe4, 0x64, 0x8d, 0x54, 0xfb, 0xdf, 0x7f,
+	0x30, 0xf3, 0x72, 0x88, 0x01, 0x33, 0x39, 0xbc, 0x2d, 0x51, 0xf5, 0x6d, 0xf0, 0x8c, 0xe0, 0x1f,
+	0x05, 0xb1, 0x4b, 0x8e, 0xb4, 0x49, 0xfe, 0xf5, 0x17, 0xe5, 0xd7, 0xaf, 0xf4, 0x47, 0x14, 0x0c,
+	0x68, 0x97, 0xf9, 0xf2, 0x23, 0xbe, 0x52, 0x3f, 0x53, 0xc0, 0x7c, 0x14, 0xc4, 0x4d, 0xfe, 0xee,
+	0xb3, 0x1b, 0xd2, 0x0d, 0xf4, 0x7f, 0xae, 0xbc, 0x31, 0x9a, 0xf2, 0x45, 0x91, 0x67, 0x58, 0xa0,
+	0xa2, 0xfe, 0xb9, 0x28, 0x88, 0xef, 0x67, 0x9c, 0x06, 0x4e, 0xa5, 0x86, 0x6f, 0x15, 0x30, 0xcf,
+	0x8e, 0x50, 0xd2, 0x0c, 0x09, 0xd9, 0x6f, 0x21, 0x67, 0xbf, 0xab, 0x61, 0x8a, 0x3f, 0xad, 0xaa,
+	0x29, 0xe6, 0x94, 0xd9, 0x9d, 0x53, 0xe6, 0x96, 0x9c, 0x53, 0xf5, 0xbb, 0x99, 0xbc, 0x3f, 0xdb,
+	0x86, 0x3e, 0xec, 0xf8, 0xcb, 0x24, 0x0a, 0x18, 0x8e, 0x12, 0x76, 0xd2, 0x53, 0x38, 0x8c, 0x07,
+	0x4f, 0x7f, 0x33, 0x14, 0x5b, 0xcd, 0xa0, 0x1d, 0x89, 0x48, 0x61, 0x6f, 0x00, 0xc0, 0x4b, 0x22,
+	0x0c, 0xa7, 0x54, 0x2b, 0x71, 0x6b, 0xab, 0xd2, 0xda, 0xb9, 0xbe, 0x92, 0x39, 0x0e, 0xed, 0x52,
+	0x56, 0x1a, 0xff, 0xad, 0x7e, 0x0a, 0x2a, 0x79, 0x27, 0x6d, 0xee, 0x61, 0xde, 0xc2, 0x03, 0xa2,
+	0x01, 0x6e, 0xea, 0xbd, 0xd1, 0x4c, 0xad, 0x15, 0xba, 0x73, 0x2f, 0xce, 0x80, 0xa7, 0x39, 0x67,
+	0x1b, 0x67, 0x6d, 0x39, 0x20, 0xea, 0x2e, 0x98, 0xc3, 0xc7, 0x49, 0x20, 0x7c, 0x6a, 0xb6, 0x42,
+	0xe2, 0xec, 0x53, 0xad, 0xcc, 0x2b, 0x58, 0x91, 0x15, 0x68, 0xdd, 0x29, 0x53, 0xa0, 0x41, 0x7b,
+	0xb6, 0xb7, 0x57, 0xe7, 0x5b, 0x9b, 0x53, 0xa7, 0x67, 0x86, 0xf2, 0xe8, 0xcc, 0x50, 0x36, 0xfe,
+	0x9e, 0x00, 0xe3, 0x59, 0xd7, 0xf9, 0x5e, 0x01, 0x4b, 0x4f, 0x9c, 0xef, 0xeb, 0x83, 0x1d, 0xf1,
+	0x29, 0x13, 0xb6, 0xf6, 0xe6, 0x95, 0x8f, 0xe4, 0x8d, 0x51, 0xff, 0xfc, 0xe7, 0x3f, 0xbe, 0xb9,
+	0xa6, 0xc1, 0x1b, 0xd6, 0xe5, 0x3f, 0x2d, 0x89, 0x54, 0x73, 0xa6, 0x80, 0xea, 0xe3, 0x27, 0xb6,
+	0x39, 0x7a, 0xe2, 0x8c, 0x5f, 0x7b, 0xfd, 0x6a, 0xfc, 0x5c, 0xe5, 0x22, 0x57, 0xb9, 0x00, 0x2b,
+	0x05, 0x95, 0x5c, 0xe2, 0x77, 0x0a, 0xa8, 0x0c, 0x9b, 0x9d, 0xab, 0x43, 0x93, 0x0d, 0x61, 0xd6,
+	0x5e, 0x19, 0x95, 0x99, 0x0b, 0xba, 0xc9, 0x05, 0xad, 0x40, 0xbd, 0x20, 0x48, 0xfc, 0x6f, 0x58,
+	0xeb, 0x4e, 0x57, 0xf5, 0x4b, 0x05, 0xcc, 0x0e, 0x8c, 0xcb, 0x17, 0x87, 0xa6, 0x2b, 0xd2, 0x6a,
+	0x6b, 0x23, 0xd1, 0x72, 0x49, 0xcb, 0x5c, 0xd2, 0xb3, 0x70, 0xa1, 0xf8, 0x25, 0x39, 0xad, 0x7e,
+	0xf7, 0xc1, 0xb9, 0xae, 0x3c, 0x3c, 0xd7, 0x95, 0xdf, 0xcf, 0x75, 0xe5, 0xeb, 0x0b, 0x7d, 0xec,
+	0xe1, 0x85, 0x3e, 0xf6, 0xcb, 0x85, 0x3e, 0xf6, 0xb1, 0x35, 0x42, 0x4b, 0x97, 0xb1, 0xd8, 0x49,
+	0x82, 0x69, 0x6b, 0x92, 0x37, 0x94, 0x57, 0xff, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x15, 0x0e, 0x3a,
+	0xaa, 0x69, 0x0b, 0x00, 0x00,
+}
+
+func (this *OracleParamsMsg) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*OracleParamsMsg)
+	if !ok {
+		that2, ok := that.(OracleParamsMsg)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.VotePeriod != that1.VotePeriod {
+		return false
+	}
+	if that1.VoteThreshold == nil {
+		if this.VoteThreshold != nil {
+			return false
+		}
+	} else if !this.VoteThreshold.Equal(*that1.VoteThreshold) {
+		return false
+	}
+	if that1.RewardBand == nil {
+		if this.RewardBand != nil {
+			return false
+		}
+	} else if !this.RewardBand.Equal(*that1.RewardBand) {
+		return false
+	}
+	if len(this.Whitelist) != len(that1.Whitelist) {
+		return false
+	}
+	for i := range this.Whitelist {
+		if !this.Whitelist[i].Equal(that1.Whitelist[i]) {
+			return false
+		}
+	}
+	if that1.SlashFraction == nil {
+		if this.SlashFraction != nil {
+			return false
+		}
+	} else if !this.SlashFraction.Equal(*that1.SlashFraction) {
+		return false
+	}
+	if this.SlashWindow != that1.SlashWindow {
+		return false
+	}
+	if that1.MinValidPerWindow == nil {
+		if this.MinValidPerWindow != nil {
+			return false
+		}
+	} else if !this.MinValidPerWindow.Equal(*that1.MinValidPerWindow) {
+		return false
+	}
+	if this.TwapLookbackWindow != nil && that1.TwapLookbackWindow != nil {
+		if *this.TwapLookbackWindow != *that1.TwapLookbackWindow {
+			return false
+		}
+	} else if this.TwapLookbackWindow != nil {
+		return false
+	} else if that1.TwapLookbackWindow != nil {
+		return false
+	}
+	if this.MinVoters != that1.MinVoters {
+		return false
+	}
+	if that1.ValidatorFeeRatio == nil {
+		if this.ValidatorFeeRatio != nil {
+			return false
+		}
+	} else if !this.ValidatorFeeRatio.Equal(*that1.ValidatorFeeRatio) {
+		return false
+	}
+	if this.ExpirationBlocks != that1.ExpirationBlocks {
+		return false
+	}
+	return true
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -889,118 +1061,13 @@ func (m *MsgEditOracleParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ValidatorFeeRatio != nil {
+	if m.Params != nil {
 		{
-			size := m.ValidatorFeeRatio.Size()
-			i -= size
-			if _, err := m.ValidatorFeeRatio.MarshalTo(dAtA[i:]); err != nil {
+			size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x5a
-	}
-	if m.MinVoters != nil {
-		{
-			size := m.MinVoters.Size()
 			i -= size
-			if _, err := m.MinVoters.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x52
-	}
-	if m.TwapLookbackWindow != nil {
-		{
-			size := m.TwapLookbackWindow.Size()
-			i -= size
-			if _, err := m.TwapLookbackWindow.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x4a
-	}
-	if m.MinValidPerWindow != nil {
-		{
-			size := m.MinValidPerWindow.Size()
-			i -= size
-			if _, err := m.MinValidPerWindow.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x42
-	}
-	if m.SlashWindow != nil {
-		{
-			size := m.SlashWindow.Size()
-			i -= size
-			if _, err := m.SlashWindow.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x3a
-	}
-	if m.SlashFraction != nil {
-		{
-			size := m.SlashFraction.Size()
-			i -= size
-			if _, err := m.SlashFraction.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x32
-	}
-	if len(m.Whitelist) > 0 {
-		for iNdEx := len(m.Whitelist) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Whitelist[iNdEx])
-			copy(dAtA[i:], m.Whitelist[iNdEx])
-			i = encodeVarintTx(dAtA, i, uint64(len(m.Whitelist[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
-	if m.RewardBand != nil {
-		{
-			size := m.RewardBand.Size()
-			i -= size
-			if _, err := m.RewardBand.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x22
-	}
-	if m.VoteThreshold != nil {
-		{
-			size := m.VoteThreshold.Size()
-			i -= size
-			if _, err := m.VoteThreshold.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.VotePeriod != nil {
-		{
-			size := m.VotePeriod.Size()
-			i -= size
-			if _, err := m.VotePeriod.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
@@ -1036,17 +1103,132 @@ func (m *MsgEditOracleParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	_ = i
 	var l int
 	_ = l
-	if m.NewParams != nil {
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleParamsMsg) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleParamsMsg) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleParamsMsg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ExpirationBlocks != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.ExpirationBlocks))
+		i--
+		dAtA[i] = 0x58
+	}
+	if m.ValidatorFeeRatio != nil {
 		{
-			size, err := m.NewParams.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
+			size := m.ValidatorFeeRatio.Size()
+			i -= size
+			if _, err := m.ValidatorFeeRatio.MarshalTo(dAtA[i:]); err != nil {
 				return 0, err
 			}
-			i -= size
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x52
+	}
+	if m.MinVoters != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.MinVoters))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.TwapLookbackWindow != nil {
+		n2, err2 := github_com_cosmos_gogoproto_types.StdDurationMarshalTo(*m.TwapLookbackWindow, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdDuration(*m.TwapLookbackWindow):])
+		if err2 != nil {
+			return 0, err2
+		}
+		i -= n2
+		i = encodeVarintTx(dAtA, i, uint64(n2))
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.MinValidPerWindow != nil {
+		{
+			size := m.MinValidPerWindow.Size()
+			i -= size
+			if _, err := m.MinValidPerWindow.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.SlashWindow != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.SlashWindow))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.SlashFraction != nil {
+		{
+			size := m.SlashFraction.Size()
+			i -= size
+			if _, err := m.SlashFraction.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Whitelist) > 0 {
+		for iNdEx := len(m.Whitelist) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Whitelist[iNdEx].Size()
+				i -= size
+				if _, err := m.Whitelist[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if m.RewardBand != nil {
+		{
+			size := m.RewardBand.Size()
+			i -= size
+			if _, err := m.RewardBand.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.VoteThreshold != nil {
+		{
+			size := m.VoteThreshold.Size()
+			i -= size
+			if _, err := m.VoteThreshold.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.VotePeriod != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.VotePeriod))
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -1162,46 +1344,8 @@ func (m *MsgEditOracleParams) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	if m.VotePeriod != nil {
-		l = m.VotePeriod.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.VoteThreshold != nil {
-		l = m.VoteThreshold.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.RewardBand != nil {
-		l = m.RewardBand.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if len(m.Whitelist) > 0 {
-		for _, s := range m.Whitelist {
-			l = len(s)
-			n += 1 + l + sovTx(uint64(l))
-		}
-	}
-	if m.SlashFraction != nil {
-		l = m.SlashFraction.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.SlashWindow != nil {
-		l = m.SlashWindow.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.MinValidPerWindow != nil {
-		l = m.MinValidPerWindow.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.TwapLookbackWindow != nil {
-		l = m.TwapLookbackWindow.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.MinVoters != nil {
-		l = m.MinVoters.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.ValidatorFeeRatio != nil {
-		l = m.ValidatorFeeRatio.Size()
+	if m.Params != nil {
+		l = m.Params.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
@@ -1213,9 +1357,56 @@ func (m *MsgEditOracleParamsResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.NewParams != nil {
-		l = m.NewParams.Size()
+	return n
+}
+
+func (m *OracleParamsMsg) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.VotePeriod != 0 {
+		n += 1 + sovTx(uint64(m.VotePeriod))
+	}
+	if m.VoteThreshold != nil {
+		l = m.VoteThreshold.Size()
 		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.RewardBand != nil {
+		l = m.RewardBand.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Whitelist) > 0 {
+		for _, e := range m.Whitelist {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if m.SlashFraction != nil {
+		l = m.SlashFraction.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.SlashWindow != 0 {
+		n += 1 + sovTx(uint64(m.SlashWindow))
+	}
+	if m.MinValidPerWindow != nil {
+		l = m.MinValidPerWindow.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.TwapLookbackWindow != nil {
+		l = github_com_cosmos_gogoproto_types.SizeOfStdDuration(*m.TwapLookbackWindow)
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.MinVoters != 0 {
+		n += 1 + sovTx(uint64(m.MinVoters))
+	}
+	if m.ValidatorFeeRatio != nil {
+		l = m.ValidatorFeeRatio.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ExpirationBlocks != 0 {
+		n += 1 + sovTx(uint64(m.ExpirationBlocks))
 	}
 	return n
 }
@@ -1877,9 +2068,9 @@ func (m *MsgEditOracleParams) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VotePeriod", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -1889,345 +2080,25 @@ func (m *MsgEditOracleParams) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthTx
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthTx
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
-			m.VotePeriod = &v
-			if err := m.VotePeriod.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if m.Params == nil {
+				m.Params = &OracleParamsMsg{}
 			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VoteThreshold", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.VoteThreshold = &v
-			if err := m.VoteThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RewardBand", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.RewardBand = &v
-			if err := m.RewardBand.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Whitelist", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Whitelist = append(m.Whitelist, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashFraction", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.SlashFraction = &v
-			if err := m.SlashFraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashWindow", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
-			m.SlashWindow = &v
-			if err := m.SlashWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinValidPerWindow", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.MinValidPerWindow = &v
-			if err := m.MinValidPerWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TwapLookbackWindow", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
-			m.TwapLookbackWindow = &v
-			if err := m.TwapLookbackWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinVoters", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Int
-			m.MinVoters = &v
-			if err := m.MinVoters.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 11:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorFeeRatio", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_cosmos_cosmos_sdk_types.Dec
-			m.ValidatorFeeRatio = &v
-			if err := m.ValidatorFeeRatio.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2281,9 +2152,277 @@ func (m *MsgEditOracleParamsResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgEditOracleParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleParamsMsg) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleParamsMsg: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleParamsMsg: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotePeriod", wireType)
+			}
+			m.VotePeriod = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotePeriod |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NewParams", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field VoteThreshold", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.VoteThreshold = &v
+			if err := m.VoteThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardBand", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.RewardBand = &v
+			if err := m.RewardBand.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Whitelist", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_NibiruChain_nibiru_v2_x_common_asset.Pair
+			m.Whitelist = append(m.Whitelist, v)
+			if err := m.Whitelist[len(m.Whitelist)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashFraction", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.SlashFraction = &v
+			if err := m.SlashFraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashWindow", wireType)
+			}
+			m.SlashWindow = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SlashWindow |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinValidPerWindow", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.MinValidPerWindow = &v
+			if err := m.MinValidPerWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TwapLookbackWindow", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2310,13 +2449,87 @@ func (m *MsgEditOracleParamsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.NewParams == nil {
-				m.NewParams = &Params{}
+			if m.TwapLookbackWindow == nil {
+				m.TwapLookbackWindow = new(time.Duration)
 			}
-			if err := m.NewParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdDurationUnmarshal(m.TwapLookbackWindow, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinVoters", wireType)
+			}
+			m.MinVoters = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinVoters |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorFeeRatio", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.ValidatorFeeRatio = &v
+			if err := m.ValidatorFeeRatio.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpirationBlocks", wireType)
+			}
+			m.ExpirationBlocks = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ExpirationBlocks |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

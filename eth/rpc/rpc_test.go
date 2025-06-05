@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	cmt "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
@@ -24,7 +24,7 @@ func TestSuiteRPC(t *testing.T) {
 
 func (s *SuiteRPC) TestRawTxToEthTx() {
 	type TestCase struct {
-		tx        cmt.Tx
+		tx        cmttypes.Tx
 		clientCtx client.Context
 		wantErr   string
 	}
@@ -60,10 +60,10 @@ func (s *SuiteRPC) TestRawTxToEthTx() {
 }
 
 func (s *SuiteRPC) TestEthHeaderFromTendermint() {
-	for _, block := range []*cmt.Block{
+	for _, block := range []*cmttypes.Block{
 		// Some happy path test cases for good measure
-		cmt.MakeBlock(1, []cmt.Tx{}, nil, nil),
-		cmt.MakeBlock(420, []cmt.Tx{}, nil, nil),
+		cmttypes.MakeBlock(1, []cmttypes.Tx{}, nil, nil),
+		cmttypes.MakeBlock(420, []cmttypes.Tx{}, nil, nil),
 	} {
 		ethHeader := rpc.EthHeaderFromTendermint(
 			block.Header, gethcore.Bloom{}, sdkmath.NewInt(1).BigInt())

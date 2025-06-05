@@ -19,7 +19,7 @@ func TestQueryEpochInfos(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
-	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
+	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
 	queryClient := epochstypes.NewQueryClient(queryHelper)
 
 	epochInfos := nibiruApp.EpochsKeeper.AllEpochInfos(ctx)
@@ -31,7 +31,7 @@ func TestQueryEpochInfos(t *testing.T) {
 		gocontext.Background(), &epochstypes.QueryEpochInfosRequest{},
 	)
 	require.NoError(t, err, errMsg)
-	require.Len(t, epochInfosResponse.Epochs, 3)
+	require.Len(t, epochInfosResponse.Epochs, 4)
 
 	// check if EpochInfos are correct
 	require.Equal(t, epochInfosResponse.Epochs[0].StartTime, chainStartTime, errMsg)
@@ -53,7 +53,7 @@ func TestCurrentEpochQuery(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
-	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
+	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
 	queryClient := epochstypes.NewQueryClient(queryHelper)
 
 	// Valid epoch

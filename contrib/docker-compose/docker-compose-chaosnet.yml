@@ -4,7 +4,7 @@ services:
   nibiru-0:
     build:
       context: ../.. # nibiru project folder
-      dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
+      target: chaosnet
       args:
         MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
         CHAIN_ID: nibiru-localnet-0
@@ -41,7 +41,7 @@ services:
   nibiru-1:
     build:
       context: ../.. # nibiru project folder
-      dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
+      target: chaosnet
       args:
         MNEMONIC: gallery grass trick siren sunset chimney crawl hover eagle rug dice quick false dizzy abandon issue history transfer lyrics clever any narrow taste exotic
         CHAIN_ID: nibiru-localnet-1

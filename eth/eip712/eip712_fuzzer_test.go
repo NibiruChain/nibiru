@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	rand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -56,7 +56,7 @@ var params = EIP712FuzzTestParams{
 // tests as they are.
 func (s *EIP712TestSuite) TestRandomPayloadFlattening() {
 	// Re-seed rand generator
-	rand.Seed(rand.Int64())
+	cmtrand.Seed(cmtrand.Int64())
 
 	for i := 0; i < params.numTestObjects; i++ {
 		s.Run(fmt.Sprintf("%v%d", fuzzTestName, i), func() {
@@ -125,7 +125,7 @@ func (s *EIP712TestSuite) createRandomJSONField(t int, depth int) interface{} {
 
 // createRandomJSONNestedArray creates an array of random nested JSON fields.
 func (s *EIP712TestSuite) createRandomJSONNestedArray(depth int) []interface{} {
-	arr := make([]interface{}, rand.Intn(params.maxArrayLength))
+	arr := make([]interface{}, cmtrand.Intn(params.maxArrayLength))
 	for i := range arr {
 		arr[i] = s.createRandomJSONNestedField(depth)
 	}
@@ -135,7 +135,7 @@ func (s *EIP712TestSuite) createRandomJSONNestedArray(depth int) []interface{} {
 
 // createRandomJSONNestedObject creates a key-value set of objects with random nested JSON fields.
 func (s *EIP712TestSuite) createRandomJSONNestedObject(depth int) interface{} {
-	numFields := rand.Intn(params.maxNumFieldsPerObject)
+	numFields := cmtrand.Intn(params.maxNumFieldsPerObject)
 	obj := make(map[string]interface{})
 
 	for i := 0; i < numFields; i++ {
@@ -153,20 +153,20 @@ func (s *EIP712TestSuite) createRandomJSONNestedField(depth int) interface{} {
 	var newFieldType int
 
 	if depth == params.maxObjectDepth {
-		newFieldType = rand.Intn(numPrimitiveJSONTypes)
+		newFieldType = cmtrand.Intn(numPrimitiveJSONTypes)
 	} else {
-		newFieldType = rand.Intn(numJSONTypes)
+		newFieldType = cmtrand.Intn(numJSONTypes)
 	}
 
 	return s.createRandomJSONField(newFieldType, depth+1)
 }
 
 func (s *EIP712TestSuite) createRandomBoolean() bool {
-	return rand.Intn(2) == 0
+	return cmtrand.Intn(2) == 0
 }
 
 func (s *EIP712TestSuite) createRandomFloat() float64 {
-	return (rand.Float64() - 0.5) * params.randomFloatRange
+	return (cmtrand.Float64() - 0.5) * params.randomFloatRange
 }
 
 func (s *EIP712TestSuite) createRandomString() string {
@@ -190,5 +190,5 @@ func (s *EIP712TestSuite) createRandomString() string {
 
 // createRandomIntInRange provides a random integer between [min, max)
 func (s *EIP712TestSuite) createRandomIntInRange(min int, max int) int {
-	return rand.Intn(max-min) + min
+	return cmtrand.Intn(max-min) + min
 }

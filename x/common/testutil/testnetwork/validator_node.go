@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
 
@@ -17,11 +16,10 @@ import (
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/backend"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
 	"github.com/cometbft/cometbft/node"
-	tmclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmtcore "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -74,7 +72,7 @@ type Validator struct {
 	Address sdk.AccAddress
 
 	// EthAddress - Ethereum address
-	EthAddress common.Address
+	EthAddress gethcommon.Address
 
 	// ValAddress - validator operator (valoper) address
 	ValAddress sdk.ValAddress
@@ -85,17 +83,16 @@ type Validator struct {
 	// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
 	// - rpc.HTTP
 	// - rpc.Local
-	RPCClient tmclient.Client
+	RPCClient cmtrpcclient.Client
 
-	JSONRPCClient       *ethclient.Client
+	EvmRpcClient        *ethclient.Client
 	EthRpcQueryClient   *ethrpc.QueryClient
-	EthRpcBackend       *backend.Backend
+	EthRpcBackend       *rpcapi.Backend
 	EthTxIndexer        eth.EVMTxIndexer
 	EthTxIndexerService *appserver.EVMTxIndexerService
 
-	EthRPC_ETH  *rpcapi.EthAPI
-	EthRpc_WEB3 *rpcapi.APIWeb3
-	EthRpc_NET  *rpcapi.NetAPI
+	EthRPC_ETH *rpcapi.EthAPI
+	EthRpc_NET *rpcapi.NetAPI
 
 	Logger Logger
 
@@ -266,14 +263,14 @@ func (val *Validator) AssertERC20Balance(
 	expectedBalance *big.Int,
 	s *suite.Suite,
 ) {
-	input, err := embeds.SmartContract_ERC20Minter.ABI.Pack("balanceOf", accAddr)
+	input, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("balanceOf", accAddr)
 	s.NoError(err)
 	msg := geth.CallMsg{
 		From: accAddr,
 		To:   &contract,
 		Data: input,
 	}
-	recipientBalanceBeforeBytes, err := val.JSONRPCClient.CallContract(context.Background(), msg, nil)
+	recipientBalanceBeforeBytes, err := val.EvmRpcClient.CallContract(context.Background(), msg, nil)
 	s.NoError(err)
 	balance := new(big.Int).SetBytes(recipientBalanceBeforeBytes)
 	s.Equal(expectedBalance.String(), balance.String())
@@ -283,7 +280,7 @@ func (node *Validator) BlockByEthTx(
 	ethTxHash gethcommon.Hash,
 ) (*cmtcore.ResultBlockResults, error) {
 	blankCtx := context.Background()
-	txReceipt, err := node.JSONRPCClient.TransactionReceipt(blankCtx, ethTxHash)
+	txReceipt, err := node.EvmRpcClient.TransactionReceipt(blankCtx, ethTxHash)
 	if err != nil {
 		return nil, err
 	}
