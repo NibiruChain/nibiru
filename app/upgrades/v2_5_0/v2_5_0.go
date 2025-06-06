@@ -149,8 +149,14 @@ func UpgradeStNibiContractOnMainnet(
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-	sdb := keepers.EvmKeeper.NewStateDB(ctx, keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
-	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
+	stateDB := keepers.EvmKeeper.Bank.StateDB
+	if stateDB == nil {
+		stateDB = keepers.EvmKeeper.NewStateDB(ctx, keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
+	}
+	defer func() {
+		keepers.EvmKeeper.Bank.StateDB = nil
+	}()
+	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
 	evmResp, err := keepers.EvmKeeper.CallContractWithInput(
 		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
