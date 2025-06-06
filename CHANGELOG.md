@@ -51,6 +51,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2315](https://github.com/NibiruChain/nibiru/pull/2315) - feat(upgrades): implement v2.5.0 upgrade handler that modifies the stNIBI ERC20 and Bank Coin metadata in place
 - [#2316](https://github.com/NibiruChain/nibiru/pull/2316) - feat(ux): add GET behavior to the Ethereum JSON-RPC endpoints for Nibiru so they return info instead of a blank page or error.
 - [#2324](https://github.com/NibiruChain/nibiru/pull/2324) - fix(evm): adjust the v2.5.0 upgrade handler to maintain the original stNIBI ERC20 contract's state.
+- [#2327](https://github.com/NibiruChain/nibiru/pull/2327) - fix(eth): implement unmarshal json for TransactionReceipt
 
 ## [v2.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0) - 2025-05-29
 

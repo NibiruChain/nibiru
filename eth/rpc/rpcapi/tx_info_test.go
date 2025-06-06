@@ -185,6 +185,7 @@ func AssertTxResults(s *BackendSuite, tx *rpc.EthTxJsonRPC, expectedTxHash gethc
 
 func (s *BackendSuite) TestReceiptMarshalJson() {
 	toAddr := evmtest.NewEthPrivAcc().EthAddr
+	contractAddr := evmtest.NewEthPrivAcc().EthAddr
 	tr := rpcapi.TransactionReceipt{
 		Receipt: gethcore.Receipt{
 			Type:              0,
@@ -200,7 +201,7 @@ func (s *BackendSuite) TestReceiptMarshalJson() {
 			BlockNumber:       &big.Int{},
 			TransactionIndex:  0,
 		},
-		ContractAddress:   nil,
+		ContractAddress:   &contractAddr,
 		From:              evmtest.NewEthPrivAcc().EthAddr,
 		To:                &toAddr,
 		EffectiveGasPrice: (*hexutil.Big)(big.NewInt(1)),
@@ -216,4 +217,8 @@ func (s *BackendSuite) TestReceiptMarshalJson() {
 	receipt := new(rpcapi.TransactionReceipt)
 	err = json.Unmarshal(jsonBz, receipt)
 	s.Require().NoError(err)
+	s.Require().Equal(tr.From, receipt.From)
+	s.Require().Equal(tr.To, receipt.To)
+	s.Require().Equal(tr.ContractAddress, receipt.ContractAddress)
+	s.Require().Equal(tr.EffectiveGasPrice, receipt.EffectiveGasPrice)
 }

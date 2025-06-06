@@ -171,6 +171,62 @@ func (r *TransactionReceipt) MarshalJSON() ([]byte, error) {
 	return json.Marshal(output)
 }
 
+func (r *TransactionReceipt) UnmarshalJSON(data []byte) error {
+	// First unmarshal into a temporary map
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	// Unmarshal known geth Receipt
+	if err := json.Unmarshal(data, &r.Receipt); err != nil {
+		return fmt.Errorf("unmarshal embedded Receipt: %w", err)
+	}
+
+	// Unmarshal extra fields manually
+	if v, ok := raw["from"]; ok {
+		if err := json.Unmarshal(v, &r.From); err != nil {
+			return fmt.Errorf("unmarshal from: %w", err)
+		}
+	}
+
+	if v, ok := raw["to"]; ok {
+		var to gethcommon.Address
+		if string(v) != "null" {
+			if err := json.Unmarshal(v, &to); err != nil {
+				return fmt.Errorf("unmarshal to: %w", err)
+			}
+			r.To = &to
+		}
+	}
+
+	if v, ok := raw["contractAddress"]; ok {
+		var addr gethcommon.Address
+		if err := json.Unmarshal(v, &addr); err != nil {
+			return fmt.Errorf("unmarshal contractAddress: %w", err)
+		}
+		r.ContractAddress = &addr
+	}
+
+	if v, ok := raw["effectiveGasPrice"]; ok {
+		var price hexutil.Big
+		if err := json.Unmarshal(v, &price); err != nil {
+			return fmt.Errorf("unmarshal effectiveGasPrice: %w", err)
+		}
+		r.EffectiveGasPrice = &price
+	}
+
+	if v, ok := raw["type"]; ok {
+		var txType hexutil.Uint64
+		if err := json.Unmarshal(v, &txType); err != nil {
+			return fmt.Errorf("unmarshal type: %w", err)
+		}
+		r.Type = uint8(txType)
+	}
+
+	return nil
+}
+
 // GetTransactionReceipt returns the transaction receipt identified by hash.
 func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionReceipt, error) {
 	hexTx := hash.Hex()
