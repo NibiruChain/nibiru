@@ -72,9 +72,6 @@ where "nibi1..." is the address you want to delegate your voting rights to.
 			}
 
 			msg := types.NewMsgDelegateFeedConsent(validator, feeder)
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -136,9 +133,6 @@ $ nibid tx oracle aggregate-prevote 1234 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD)
 			hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, validator)
 
 			msg := types.NewMsgAggregateExchangeRatePrevote(hash, feeder, validator)
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -196,9 +190,6 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 			}
 
 			msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, feeder, validator)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -323,10 +314,6 @@ $ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-ban
 				}
 
 				msg.Params.Whitelist = realWhitelist
-			}
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

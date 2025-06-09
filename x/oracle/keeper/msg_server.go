@@ -9,6 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
@@ -29,6 +30,14 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 	goCtx context.Context,
 	msg *types.MsgAggregateExchangeRatePrevote,
 ) (*types.MsgAggregateExchangeRatePrevoteResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.Validator)
@@ -63,6 +72,14 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 func (ms msgServer) AggregateExchangeRateVote(
 	goCtx context.Context, msg *types.MsgAggregateExchangeRateVote,
 ) (msgResp *types.MsgAggregateExchangeRateVoteResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.Validator)
@@ -142,6 +159,14 @@ func (ms msgServer) AggregateExchangeRateVote(
 func (ms msgServer) DelegateFeedConsent(
 	goCtx context.Context, msg *types.MsgDelegateFeedConsent,
 ) (*types.MsgDelegateFeedConsentResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	operatorAddr, err := sdk.ValAddressFromBech32(msg.Operator)
@@ -177,6 +202,14 @@ func (ms msgServer) DelegateFeedConsent(
 // EditOracleParams: gRPC tx msg for editing the oracle module params.
 // [SUDO] Only callable by sudoers.
 func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
