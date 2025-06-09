@@ -9,6 +9,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
@@ -28,6 +29,14 @@ var _ sudotypes.MsgServer = MsgServer{}
 func (m MsgServer) EditSudoers(
 	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
 ) (*sudotypes.MsgEditSudoersResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	switch msg.RootAction() {
 	case sudotypes.AddContracts:
 		return m.keeper.AddContracts(goCtx, msg)
@@ -39,6 +48,14 @@ func (m MsgServer) EditSudoers(
 }
 
 func (m MsgServer) ChangeRoot(ctx context.Context, msg *sudotypes.MsgChangeRoot) (*sudotypes.MsgChangeRootResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	sdkContext := sdk.UnwrapSDKContext(ctx)
 
 	pbSudoers, err := m.keeper.Sudoers.Get(sdkContext)
