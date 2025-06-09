@@ -297,6 +297,12 @@ func (k Keeper) CancelFeeShare(
 func (k Keeper) UpdateParams(
 	goCtx context.Context, req *types.MsgUpdateParams,
 ) (resp *types.MsgUpdateParamsResponse, err error) {
+	if _, err := sdk.AccAddressFromBech32(req.Authority); err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid WithdrawerAddress %s", req.Authority,
+		)
+	}
+
 	if k.authority != req.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, req.Authority)
 	}

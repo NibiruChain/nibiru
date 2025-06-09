@@ -1,8 +1,6 @@
 package types
 
 import (
-	sdkioerrors "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -42,25 +40,6 @@ func (msg MsgRegisterFeeShare) Route() string { return RouterKey }
 // Type returns the action
 func (msg MsgRegisterFeeShare) Type() string { return TypeMsgRegisterFeeShare }
 
-// ValidateBasic runs stateless checks on the message
-func (msg MsgRegisterFeeShare) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.DeployerAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid deployer address %s", msg.DeployerAddress)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.ContractAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid contract address %s", msg.ContractAddress)
-	}
-
-	if msg.WithdrawerAddress != "" {
-		if _, err := sdk.AccAddressFromBech32(msg.WithdrawerAddress); err != nil {
-			return sdkioerrors.Wrapf(err, "invalid withdraw address %s", msg.WithdrawerAddress)
-		}
-	}
-
-	return nil
-}
-
 // GetSigners defines whose signature is required
 func (msg MsgRegisterFeeShare) GetSigners() []sdk.AccAddress {
 	from, _ := sdk.AccAddressFromBech32(msg.DeployerAddress)
@@ -83,19 +62,6 @@ func (msg MsgCancelFeeShare) Route() string { return RouterKey }
 
 // Type returns the message type for a MsgCancelFeeShare.
 func (msg MsgCancelFeeShare) Type() string { return TypeMsgCancelFeeShare }
-
-// ValidateBasic runs stateless checks on the message
-func (msg MsgCancelFeeShare) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.DeployerAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid deployer address %s", msg.DeployerAddress)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.ContractAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid deployer address %s", msg.DeployerAddress)
-	}
-
-	return nil
-}
 
 // GetSigners defines whose signature is required
 func (msg MsgCancelFeeShare) GetSigners() []sdk.AccAddress {
@@ -122,23 +88,6 @@ func (msg MsgUpdateFeeShare) Route() string { return RouterKey }
 // Type returns the action
 func (msg MsgUpdateFeeShare) Type() string { return TypeMsgUpdateFeeShare }
 
-// ValidateBasic runs stateless checks on the message
-func (msg MsgUpdateFeeShare) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.DeployerAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid deployer address %s", msg.DeployerAddress)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.ContractAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid contract address %s", msg.ContractAddress)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.WithdrawerAddress); err != nil {
-		return sdkioerrors.Wrapf(err, "invalid withdraw address %s", msg.WithdrawerAddress)
-	}
-
-	return nil
-}
-
 // GetSigners defines whose signature is required
 func (msg MsgUpdateFeeShare) GetSigners() []sdk.AccAddress {
 	from, _ := sdk.AccAddressFromBech32(msg.DeployerAddress)
@@ -151,13 +100,4 @@ var _ sdk.Msg = &MsgUpdateParams{}
 func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Authority)
 	return []sdk.AccAddress{addr}
-}
-
-// ValidateBasic does a sanity check on the provided data.
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return sdkioerrors.Wrap(err, "invalid authority address")
-	}
-
-	return m.Params.Validate()
 }

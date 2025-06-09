@@ -57,10 +57,6 @@ func CmdRegisterFeeShare() *cobra.Command {
 				WithdrawerAddress: withdrawer,
 			}
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
@@ -90,10 +86,6 @@ func CmdCancelFeeShare() *cobra.Command {
 			msg := &types.MsgCancelFeeShare{
 				ContractAddress: contract,
 				DeployerAddress: deployer.String(),
-			}
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
@@ -131,10 +123,6 @@ func CmdUpdateFeeShare() *cobra.Command {
 				ContractAddress:   contract,
 				DeployerAddress:   deployer.String(),
 				WithdrawerAddress: withdrawer,
-			}
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
