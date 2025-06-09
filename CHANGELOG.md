@@ -52,6 +52,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2316](https://github.com/NibiruChain/nibiru/pull/2316) - feat(ux): add GET behavior to the Ethereum JSON-RPC endpoints for Nibiru so they return info instead of a blank page or error.
 - [#2324](https://github.com/NibiruChain/nibiru/pull/2324) - fix(evm): adjust the v2.5.0 upgrade handler to maintain the original stNIBI ERC20 contract's state.
 - [#2327](https://github.com/NibiruChain/nibiru/pull/2327) - fix(eth): implement unmarshal json for TransactionReceipt
+- [#2328](https://github.com/NibiruChain/nibiru/pull/2328) - fix(evm): ensure StateDB doesn't persist between EVM calls
 
 ## [v2.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0) - 2025-05-29
 
