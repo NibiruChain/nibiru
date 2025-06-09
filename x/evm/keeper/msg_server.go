@@ -22,6 +22,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -472,6 +473,9 @@ func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
 	var funtoken *evm.FunToken
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
 	err = msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -536,6 +540,14 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "ConvertCoinToEvm validate basic failed")
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
