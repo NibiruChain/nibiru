@@ -33,12 +33,21 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			txResponse, err := s.backend.GetTransactionByHash(tc.txHash)
+			var resJson json.RawMessage
+			err := s.node.EvmRpcClient.Client().Call(
+				&resJson, "eth_getTransactionByHash", tc.txHash.Hex(),
+			)
 			if !tc.wantTxFound {
-				s.Require().Nil(txResponse)
+				s.Require().Nil(resJson)
 				return
 			}
+
 			s.Require().NoError(err)
+
+			txResponse := new(rpc.EthTxJsonRPC)
+			err = json.Unmarshal(resJson, txResponse)
+			s.Require().NoError(err)
+
 			s.Require().NotNil(txResponse)
 			s.Require().Equal(tc.txHash, txResponse.Hash)
 			s.Require().Equal(s.fundedAccEthAddr, txResponse.From)
@@ -68,22 +77,31 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			receipt, err := s.backend.GetTransactionReceipt(tc.txHash)
+			var resJson json.RawMessage
+			err := s.node.EvmRpcClient.Client().Call(
+				&resJson, "eth_getTransactionReceipt", tc.txHash.Hex(),
+			)
+
 			if !tc.wantTxFound {
-				s.Require().Nil(receipt)
+				s.Require().Equal("null", string(resJson))
 				return
 			}
 			s.Require().NoError(err)
-			s.Require().NotNil(receipt)
+
+			var txReceipt rpcapi.TransactionReceipt
+			err = json.Unmarshal(resJson, &txReceipt)
+			s.Require().NoError(err)
+
+			s.Require().NotNil(txReceipt)
 
 			// Check fields
-			s.Equal(s.fundedAccEthAddr, receipt.From)
-			s.Equal(&recipient, receipt.To)
-			s.Greater(receipt.GasUsed, uint64(0))
-			s.Equal(receipt.GasUsed, receipt.CumulativeGasUsed)
-			s.Equal(tc.txHash, receipt.TxHash)
-			s.Nil(receipt.ContractAddress)
-			s.Require().Equal(gethcore.ReceiptStatusSuccessful, receipt.Status)
+			s.Equal(s.fundedAccEthAddr, txReceipt.From)
+			s.Equal(&recipient, txReceipt.To)
+			s.Greater(txReceipt.GasUsed, uint64(0))
+			s.Equal(txReceipt.GasUsed, txReceipt.CumulativeGasUsed)
+			s.Equal(tc.txHash, txReceipt.TxHash)
+			s.Equal(&gethcommon.Address{}, txReceipt.ContractAddress)
+			s.Require().Equal(gethcore.ReceiptStatusSuccessful, txReceipt.Status)
 		})
 	}
 }
@@ -122,14 +140,25 @@ func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			tx, err := s.backend.GetTransactionByBlockHashAndIndex(tc.blockHash, hexutil.Uint(tc.txIndex))
+			var resJson json.RawMessage
+			err := s.node.EvmRpcClient.Client().Call(
+				&resJson, "eth_getTransactionByBlockHashAndIndex", tc.blockHash.Hex(), hexutil.Uint(tc.txIndex),
+			)
+
 			if !tc.wantTxFound {
-				s.Require().Nil(tx)
-				return
+				if resJson == nil || string(resJson) == "null" {
+					return
+				}
+				s.Fail("expected null result for missing transaction, got: %s", string(resJson))
 			}
 			s.Require().NoError(err)
+
+			var tx rpc.EthTxJsonRPC
+			err = json.Unmarshal(resJson, &tx)
+			s.Require().NoError(err)
+
 			s.Require().NotNil(tx)
-			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
+			AssertTxResults(s, &tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }
@@ -163,14 +192,26 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			tx, err := s.backend.GetTransactionByBlockNumberAndIndex(tc.blockNumber, hexutil.Uint(tc.txIndex))
+			var resJson json.RawMessage
+			err := s.node.EvmRpcClient.Client().Call(
+				&resJson, "eth_getTransactionByBlockNumberAndIndex", tc.blockNumber, hexutil.Uint(tc.txIndex),
+			)
+
 			if !tc.wantTxFound {
-				s.Require().Nil(tx)
+				if resJson == nil || string(resJson) == "null" {
+					return
+				}
+				s.Fail("expected null result for missing transaction, got: %s", string(resJson))
 				return
 			}
 			s.Require().NoError(err)
+
+			var tx rpc.EthTxJsonRPC
+			err = json.Unmarshal(resJson, &tx)
+			s.Require().NoError(err)
+
 			s.Require().NotNil(tx)
-			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
+			AssertTxResults(s, &tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }
