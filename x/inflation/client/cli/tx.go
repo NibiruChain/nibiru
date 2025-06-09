@@ -53,10 +53,6 @@ $ nibid tx inflation toggle-inflation true
 				Enable: args[0] == "true",
 			}
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
@@ -146,10 +142,6 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 			if maxPeriod, _ := cmd.Flags().GetUint64("max-period"); maxPeriod != 0 {
 				maxPeriodInt := sdkmath.NewIntFromUint64(maxPeriod)
 				msg.MaxPeriod = &maxPeriodInt
-			}
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
