@@ -48,13 +48,7 @@ func (deps TestDeps) NewStateDB() *statedb.StateDB {
 }
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
-	if deps.EvmKeeper.Bank.StateDB == nil {
-		deps.EvmKeeper.Bank.StateDB = deps.NewStateDB()
-	}
-	stateDB := deps.EvmKeeper.Bank.StateDB
-	defer func() {
-		deps.EvmKeeper.Bank.StateDB = nil
-	}()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
@@ -66,13 +60,7 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 }
 
 func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *statedb.StateDB) {
-	if deps.EvmKeeper.Bank.StateDB == nil {
-		deps.EvmKeeper.Bank.StateDB = deps.NewStateDB()
-	}
-	stateDB := deps.EvmKeeper.Bank.StateDB
-	defer func() {
-		deps.EvmKeeper.Bank.StateDB = nil
-	}()
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
