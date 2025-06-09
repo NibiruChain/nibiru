@@ -118,6 +118,7 @@ func (s *Suite) TestUpgrade() {
 
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
 		s.T().Log("IMPORTANT: Schedule the upgrade")
+		deps.EvmKeeper.Bank.StateDB = nil // IMPORTANT: make sure to clear the StateDB before running the upgrade
 		s.Require().True(deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName))
 
 		beforeEvents := deps.Ctx.EventManager().Events()
