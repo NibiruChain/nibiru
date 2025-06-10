@@ -7,11 +7,11 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
+	store "cosmossdk.io/store/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -158,11 +158,11 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(_ context.Context) {}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(_ context.Context) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
 
@@ -176,7 +176,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // RegisterStoreDecoder implements module.AppModuleSimulation.
-func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
+func (AppModule) RegisterStoreDecoder(simtypes.StoreDecoderRegistry) {
 }
 
 // WeightedOperations implements module.AppModuleSimulation.

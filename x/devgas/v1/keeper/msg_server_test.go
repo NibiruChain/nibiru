@@ -232,13 +232,12 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				resp, err := s.devgasMsgServer.RegisterFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)
 				s.Require().Equal(resp, tc.resp)
 			} else {
-				resp, err := s.devgasMsgServer.RegisterFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Nil(resp)
 			}
@@ -260,13 +259,13 @@ func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	s.Require().NotEqual(contractAddress, contractAddressNoRegisFeeShare)
 
 	// RegsisFeeShare
-	goCtx := sdk.WrapSDKContext(s.ctx)
+
 	msg := &types.MsgRegisterFeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, msg)
 	s.Require().NoError(err)
 	_, _, newWithdrawer := testdata.KeyTestPubAddr()
 	s.Require().NotEqual(withdrawer, newWithdrawer)
@@ -330,12 +329,11 @@ func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				_, err := s.devgasMsgServer.UpdateFeeShare(goCtx, tc.msg)
+				_, err := s.devgasMsgServer.UpdateFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)
 			} else {
-				resp, err := s.devgasMsgServer.UpdateFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.UpdateFeeShare(s.ctx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Nil(resp)
 			}
@@ -351,13 +349,13 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
 	// RegsisFeeShare
-	goCtx := sdk.WrapSDKContext(s.ctx)
+
 	msg := &types.MsgRegisterFeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(s.ctx, msg)
 	s.Require().NoError(err)
 
 	for _, tc := range []struct {
@@ -396,13 +394,12 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 	} {
 		tc := tc
 		s.Run(tc.desc, func() {
-			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				resp, err := s.devgasMsgServer.CancelFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.CancelFeeShare(s.ctx, tc.msg)
 				s.Require().NoError(err)
 				s.Require().Equal(resp, tc.resp)
 			} else {
-				resp, err := s.devgasMsgServer.CancelFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.CancelFeeShare(s.ctx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Equal(resp, tc.resp)
 			}
@@ -412,7 +409,6 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 
 func (s *KeeperTestSuite) TestUpdateParams() {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
-	goCtx := sdk.WrapSDKContext(s.ctx)
 
 	for _, tc := range []struct {
 		desc      string
@@ -454,10 +450,10 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		tc := tc
 		s.Run(tc.desc, func() {
 			if !tc.shouldErr {
-				_, err := s.devgasMsgServer.UpdateParams(goCtx, tc.msg)
+				_, err := s.devgasMsgServer.UpdateParams(s.ctx, tc.msg)
 				s.NoError(err)
 			} else {
-				_, err := s.devgasMsgServer.UpdateParams(goCtx, tc.msg)
+				_, err := s.devgasMsgServer.UpdateParams(s.ctx, tc.msg)
 				s.Error(err)
 			}
 		})

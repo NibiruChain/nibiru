@@ -19,7 +19,7 @@ import (
 // balances, ensuring correct conversion between native tokens (unibi) and EVM
 // tokens (wei), as well as proper balance updates during transfers.
 func (s *Suite) TestStateDBBalance() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	{
 		db := deps.NewStateDB()
 		s.Equal("0", db.GetBalance(deps.Sender.EthAddr).String())
@@ -72,7 +72,7 @@ func (s *Suite) TestStateDBBalance() {
 
 	s.T().Log("Send via bank transfer from account to account. See expected wei amounts.")
 	{
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		toNibiAddr := eth.EthAddrToNibiruAddr(to)
 		err := testapp.FundAccount(
 			deps.App.BankKeeper,

@@ -6,6 +6,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
+
+	ethutils "github.com/NibiruChain/nibiru/v2/utils"
 )
 
 func TestTxData_chainID(t *testing.T) {
@@ -83,7 +85,7 @@ func TestTxData_DeriveChainID(t *testing.T) {
 	for _, tc := range testCases {
 		v, _, _ := tc.data.GetRawSignatureValues()
 
-		chainID := DeriveChainID(v)
+		chainID := ethutils.DeriveChainID(v)
 		require.Equal(t, tc.expChainID, chainID, tc.msg)
 	}
 }

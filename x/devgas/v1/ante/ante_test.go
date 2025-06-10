@@ -170,7 +170,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
-				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				bapp, ctx := testapp.NewNibiruTestAppAndContext(suite.T().TempDir())
 				err := testapp.FundModuleAccount(
 					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
 				suite.NoError(err)
@@ -191,7 +191,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(4)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
-				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				bapp, ctx := testapp.NewNibiruTestAppAndContext(suite.T().TempDir())
 				err := testapp.FundModuleAccount(
 					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
 				suite.NoError(err)
@@ -209,7 +209,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 true,
 			setup: func() (*app.NibiruApp, sdk.Context) {
-				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				bapp, ctx := testapp.NewNibiruTestAppAndContext(suite.T().TempDir())
 				return bapp, ctx
 			},
 		},
@@ -222,7 +222,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdkmath.NewInt(2)),
 			wantErr:                 false,
 			setup: func() (*app.NibiruApp, sdk.Context) {
-				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				bapp, ctx := testapp.NewNibiruTestAppAndContext(suite.T().TempDir())
 				return bapp, ctx
 			},
 		},

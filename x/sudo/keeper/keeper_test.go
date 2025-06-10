@@ -19,7 +19,7 @@ func TestCheckPermissions(t *testing.T) {
 		mockContractAddrStrs = append(mockContractAddrStrs, mockAddr.String())
 	}
 
-	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
+	nibiru, ctx := testapp.NewNibiruTestAppAndContext(t.TempDir())
 	nibiru.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
 		Root:      "mockroot",
 		Contracts: mockContractAddrStrs,

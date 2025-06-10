@@ -12,7 +12,6 @@ func InitGenesis(
 	ctx sdk.Context,
 	k keeper.Keeper,
 	ak types.AccountKeeper,
-	_ types.StakingKeeper,
 	data types.GenesisState,
 ) {
 	// Ensure inflation module account is set on genesis
