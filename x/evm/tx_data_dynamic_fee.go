@@ -11,8 +11,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 	ethutils "github.com/NibiruChain/nibiru/v2/utils"
+	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 )
 
 // BigIntMax returns max(x,y).

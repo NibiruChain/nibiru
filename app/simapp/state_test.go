@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -153,7 +152,7 @@ func AppStateRandomizedFn(
 	// number of bonded accounts
 	var (
 		numInitiallyBonded int64
-		initialStake       math.Int
+		initialStake       sdkmath.Int
 	)
 	appParams.GetOrGenerate(
 		sims.StakePerAccount, &initialStake, r,
