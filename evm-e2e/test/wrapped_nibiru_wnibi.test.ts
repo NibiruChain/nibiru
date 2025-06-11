@@ -1,7 +1,7 @@
 import { expect, test } from "@jest/globals"
-import { parseUnits, toBigInt } from "ethers"
+import { parseUnits, toBigInt, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT } from "./setup"
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
 import { deployContractWNIBI } from "./utils"
 
 test(
@@ -53,9 +53,42 @@ test(
       expect(walletBalWNIBI).toEqual(parseUnits("69", 12))
     }
 
-    // TODO: test: Deposit via method call
-    // ticket: https://github.com/NibiruChain/nibiru/issues/2282
-    // TODO: test: totalSupply and transfer tests
+    // Deposit via method call
+    {
+      const balanceBefore = await contract.balanceOf(account.address)
+      const amountToSend = parseUnits("911", 12)
+      let tx = await contract.deposit({
+        value: amountToSend,
+      })
+      await tx.wait(1, TX_WAIT_TIMEOUT)
+
+      // Check balanaces after deposit
+      const balanceAfter = await contract.balanceOf(account.address)
+      expect(balanceAfter).toEqual(balanceBefore + amountToSend)
+    }
+
+    // Transfer via method call and total supply check
+    {
+      const alice = Wallet.createRandom()
+      const amountToSend = parseUnits("200", 12) // WNIBI tokens for alice
+
+      let tx = await contract.transfer(
+        alice.address,
+        amountToSend,
+      )
+      await tx.wait(1, TX_WAIT_TIMEOUT)
+
+      // Check balances after transfer and correct total supply
+      const aliceBalance = await contract.balanceOf(alice)
+      expect(aliceBalance).toEqual(amountToSend)
+
+      const accountBalance = await contract.balanceOf(account.address)
+
+      const totalSupply = await contract.totalSupply()
+      expect(totalSupply).toEqual(
+        accountBalance + aliceBalance,
+      )
+    }
   },
-  TEST_TIMEOUT,
+  TEST_TIMEOUT * 2,
 )
