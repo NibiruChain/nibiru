@@ -53,13 +53,6 @@ jobs:
           echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
           echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
-      - name: "Go build cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
-          key: go-build-cache-${{ hashFiles('**/go.sum') }}
-
       - name: "Run all integration tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: make test-coverage-integration
