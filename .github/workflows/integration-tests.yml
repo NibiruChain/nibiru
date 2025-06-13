@@ -55,9 +55,10 @@ jobs:
 
       - name: Free up space
         run: |
-          go clean -cache -testcache
-          sudo rm -rf /tmp/*
-          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/hostedtoolcache
+          docker system prune -af
           
       - name: "Run all integration tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
