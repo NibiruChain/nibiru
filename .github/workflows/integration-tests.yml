@@ -57,7 +57,6 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/hostedtoolcache
           docker system prune -af
           
       - name: "Run all integration tests."
