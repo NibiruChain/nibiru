@@ -16,7 +16,7 @@ concurrency:
 jobs:
   integration-tests:
     # Job that runs all tests and publishes code coverage reports.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -53,20 +53,12 @@ jobs:
           echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
           echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
-      - name: "Go build cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
-          key: go-build-cache-${{ hashFiles('**/go.sum') }}
-
-      - name: "Go mod cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
-          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
-
+      - name: Free up space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          docker system prune -af
+          
       - name: "Run all integration tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: make test-coverage-integration

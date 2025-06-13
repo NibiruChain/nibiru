@@ -208,7 +208,7 @@ func (s *Suite) TestRefundGas() {
 			}
 		},
 	} {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		tc := getTestCase(&deps)
 		s.Run(tc.name, func() {
 			fromBalBefore := deps.App.BankKeeper.GetBalance(

@@ -20,6 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	appsim "github.com/NibiruChain/nibiru/v2/app/sim"
 )
 
@@ -149,14 +150,17 @@ func AppStateRandomizedFn(
 
 	// generate a random amount of initial stake coins and collateral
 	// number of bonded accounts
-	var initialStake, numInitiallyBonded int64
-	appParams.GetOrGenerate(
-		cdc, sims.StakePerAccount, &initialStake, r,
-		func(r *rand.Rand) { initialStake = r.Int63n(1e12) },
+	var (
+		numInitiallyBonded int64
+		initialStake       sdkmath.Int
 	)
 	appParams.GetOrGenerate(
-		cdc, sims.InitiallyBondedValidators, &numInitiallyBonded, r,
-		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(300)) },
+		sims.StakePerAccount, &initialStake, r,
+		func(r *rand.Rand) { initialStake = sdk.DefaultPowerReduction.AddRaw(r.Int63n(1e12)) },
+	)
+	appParams.GetOrGenerate(
+		sims.InitiallyBondedValidators, &numInitiallyBonded, r,
+		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(299) + 1) },
 	)
 
 	if numInitiallyBonded > numAccs {
@@ -178,8 +182,9 @@ func AppStateRandomizedFn(
 		Rand:         r,
 		GenState:     genesisState,
 		Accounts:     accs,
-		InitialStake: sdkmath.NewIntFromUint64(uint64(initialStake)),
+		InitialStake: initialStake,
 		NumBonded:    numInitiallyBonded,
+		BondDenom:    appconst.BondDenom,
 		GenTimestamp: genesisTimestamp,
 	}
 

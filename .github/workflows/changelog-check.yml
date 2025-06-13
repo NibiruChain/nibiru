@@ -23,7 +23,7 @@ jobs:
   # ELSE, some changelog file must have been modified that was not the root
   #   one, so the workflow can skip  "dangoslen/changelog-enforcer".
   changelog:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: "Check for changelog and Go edits"
