@@ -6,7 +6,7 @@ on:
 
 jobs:
   pr-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: seferov/pr-lint-action@v1.2.0
         with:
