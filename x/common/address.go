@@ -6,10 +6,12 @@ import (
 )
 
 func AddrsToStrings(addrs ...sdk.AccAddress) []string {
+
 	var addrStrings []string
 	for _, addr := range addrs {
 		addrStrings = append(addrStrings, addr.String())
 	}
+	
 	return addrStrings
 }
 
