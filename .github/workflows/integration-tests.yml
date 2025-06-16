@@ -67,15 +67,24 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
           key: go-mod-cache-${{ hashFiles('**/go.sum') }}
 
+      - name: Show disk usage summary before cleanup
+        run: df -h /
+
       - name: Free up space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           docker system prune -af
+      
+      - name: Show disk usage summary after cleanup
+        run: df -h /
 
       - name: "Run all integration tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: make test-coverage-integration
+
+      - name: Show disk usage summary after tests
+        run: df -h /
 
       - name: "Upload coverage reports to Codecov"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
