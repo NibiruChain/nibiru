@@ -5,6 +5,9 @@ the `@nibiruchain/evm-core` package on `npm`.
 
 ## [0.0.x]
 
+- v0.0.9: [#2xxx](https://gittub.com/NibiruChain/nibiru/pull/2xxx) - feat:
+Publish new version for `@nibiruchain/solidity@0.0.6`, which updates
+`NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
 - v0.0.8: [#2309](https://gittub.com/NibiruChain/nibiru/pull/2309) - feat:
 Publish new version for `@nibiruchain/solidity@0.0.5`, which includes
 `ERC20MinterWithMetadataUpdates` and new additions to the `FunToken` precompile.
