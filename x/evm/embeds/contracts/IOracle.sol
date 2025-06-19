@@ -71,6 +71,8 @@ interface ChainLinkAggregatorV3Interface {
             uint80 answeredInRound
         );
 
+    function latestAnswer() external view returns (int256);
+
     function latestTimestamp() external view returns (uint256);
 
     function latestRound() external view returns (uint256);
