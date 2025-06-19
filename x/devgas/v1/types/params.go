@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"slices"
 
 	sdkmath "cosmossdk.io/math"
 )
@@ -64,10 +65,8 @@ func validateArray(i any) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	for _, denom := range i.([]string) {
-		if denom == "" {
-			return fmt.Errorf("denom cannot be blank")
-		}
+	if slices.Contains(i.([]string), "") {
+		return fmt.Errorf("denom cannot be blank")
 	}
 
 	return nil
