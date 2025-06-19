@@ -39,12 +39,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+- [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply 
+
 <!-- 
 NOTE: The brackets around the word "Unreleased" are required to pass the [CI test
 that checks if we updated the changelog. This is a convention from the [keep a
 changelog format](https://keepachangelog.com/en/1.0.0/).  
 See https://github.com/dangoslen/changelog-enforcer.
---> 
+-->
+## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
 - [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
 
@@ -52,6 +56,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - [#2311](https://github.com/NibiruChain/nibiru/pull/2311) - refactor: use Go's built-in min and max functions to simplify logic
 - [#2314](https://github.com/NibiruChain/nibiru/pull/2314) - refactor(upgrades): add public keepers to upgrade handlers + DRY improvements
+- [#2315](https://github.com/NibiruChain/nibiru/pull/2315) - feat(upgrades): implement v2.5.0 upgrade handler that modifies the stNIBI ERC20 and Bank Coin metadata in place
 - [#2316](https://github.com/NibiruChain/nibiru/pull/2316) - feat(ux): add GET behavior to the Ethereum JSON-RPC endpoints for Nibiru so they return info instead of a blank page or error.
 - [#2324](https://github.com/NibiruChain/nibiru/pull/2324) - fix(evm): adjust the v2.5.0 upgrade handler to maintain the original stNIBI ERC20 contract's state.
 - [#2327](https://github.com/NibiruChain/nibiru/pull/2327) - fix(eth): implement unmarshal json for TransactionReceipt
@@ -61,13 +66,9 @@ See https://github.com/dangoslen/changelog-enforcer.
 ## [v2.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0) - 2025-05-29
 
 - [#2274](https://github.com/NibiruChain/nibiru/pull/2274) - feat(evm)!: update to geth v1.13 with EIP-1153, PRECOMPILE_ADDRS, and transient storage support
-- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update
-to geth v1.14 with tracing updates and new StateDB methods.
-  - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid
-   incompatibilities stemming from functionality specific to Ethereum's consesnus
-   setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
-  - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB
-   dependency and leverage new generics features added in Go 1.23+.
+- [#2275](https://github.com/NibiruChain/nibiru/pull/2275) - feat(evm)!: update to geth v1.14 with tracing updates and new StateDB methods.
+  - This upgrade keeps Nibiru's EVM on the Berlin upgrade to avoid incompatibilities stemming from functionality specific to Ethereum's consensus setup. Namely, blobs (Cancun) and Verkle additions for zkEVM.
+  - The jump to v1.14 was necessary to use an up-to-date "cockroach/pebble" DB dependency and leverage new generics features added in Go 1.23+.
 - [#2289](https://github.com/NibiruChain/nibiru/pull/2289) - fix(eth-rpc): error propagation fixes and tests for the methods exposed by Nibiru's EVM JSON-RPC
 - [#2290](https://github.com/NibiruChain/nibiru/pull/2290) - refactor: use importas linter for consistent imports
 - [#2296](https://github.com/NibiruChain/nibiru/pull/2296) - chore(ci): use shell script for generating changelog in releases
