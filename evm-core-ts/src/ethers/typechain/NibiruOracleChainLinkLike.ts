@@ -27,8 +27,13 @@ export interface NibiruOracleChainLinkLikeInterface extends Interface {
       | "_decimals"
       | "decimals"
       | "description"
+      | "getAnswer"
       | "getRoundData"
+      | "getTimestamp"
+      | "latestAnswer"
+      | "latestRound"
       | "latestRoundData"
+      | "latestTimestamp"
       | "pair"
       | "version",
   ): FunctionFragment
@@ -40,11 +45,31 @@ export interface NibiruOracleChainLinkLikeInterface extends Interface {
     values?: undefined,
   ): string
   encodeFunctionData(
+    functionFragment: "getAnswer",
+    values: [BigNumberish],
+  ): string
+  encodeFunctionData(
     functionFragment: "getRoundData",
     values: [BigNumberish],
   ): string
   encodeFunctionData(
+    functionFragment: "getTimestamp",
+    values: [BigNumberish],
+  ): string
+  encodeFunctionData(
+    functionFragment: "latestAnswer",
+    values?: undefined,
+  ): string
+  encodeFunctionData(
+    functionFragment: "latestRound",
+    values?: undefined,
+  ): string
+  encodeFunctionData(
     functionFragment: "latestRoundData",
+    values?: undefined,
+  ): string
+  encodeFunctionData(
+    functionFragment: "latestTimestamp",
     values?: undefined,
   ): string
   encodeFunctionData(functionFragment: "pair", values?: undefined): string
@@ -53,12 +78,26 @@ export interface NibiruOracleChainLinkLikeInterface extends Interface {
   decodeFunctionResult(functionFragment: "_decimals", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "description", data: BytesLike): Result
+  decodeFunctionResult(functionFragment: "getAnswer", data: BytesLike): Result
   decodeFunctionResult(
     functionFragment: "getRoundData",
     data: BytesLike,
   ): Result
   decodeFunctionResult(
+    functionFragment: "getTimestamp",
+    data: BytesLike,
+  ): Result
+  decodeFunctionResult(
+    functionFragment: "latestAnswer",
+    data: BytesLike,
+  ): Result
+  decodeFunctionResult(functionFragment: "latestRound", data: BytesLike): Result
+  decodeFunctionResult(
     functionFragment: "latestRoundData",
+    data: BytesLike,
+  ): Result
+  decodeFunctionResult(
+    functionFragment: "latestTimestamp",
     data: BytesLike,
   ): Result
   decodeFunctionResult(functionFragment: "pair", data: BytesLike): Result
@@ -114,6 +153,8 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
 
   description: TypedContractMethod<[], [string], "view">
 
+  getAnswer: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">
+
   getRoundData: TypedContractMethod<
     [arg0: BigNumberish],
     [
@@ -128,6 +169,12 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
     "view"
   >
 
+  getTimestamp: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">
+
+  latestAnswer: TypedContractMethod<[], [bigint], "view">
+
+  latestRound: TypedContractMethod<[], [bigint], "view">
+
   latestRoundData: TypedContractMethod<
     [],
     [
@@ -141,6 +188,8 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
     ],
     "view"
   >
+
+  latestTimestamp: TypedContractMethod<[], [bigint], "view">
 
   pair: TypedContractMethod<[], [string], "view">
 
@@ -159,6 +208,9 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
   getFunction(
     nameOrSignature: "description",
   ): TypedContractMethod<[], [string], "view">
+  getFunction(
+    nameOrSignature: "getAnswer",
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">
   getFunction(nameOrSignature: "getRoundData"): TypedContractMethod<
     [arg0: BigNumberish],
     [
@@ -172,6 +224,15 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
     ],
     "view"
   >
+  getFunction(
+    nameOrSignature: "getTimestamp",
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">
+  getFunction(
+    nameOrSignature: "latestAnswer",
+  ): TypedContractMethod<[], [bigint], "view">
+  getFunction(
+    nameOrSignature: "latestRound",
+  ): TypedContractMethod<[], [bigint], "view">
   getFunction(nameOrSignature: "latestRoundData"): TypedContractMethod<
     [],
     [
@@ -185,6 +246,9 @@ export interface NibiruOracleChainLinkLike extends BaseContract {
     ],
     "view"
   >
+  getFunction(
+    nameOrSignature: "latestTimestamp",
+  ): TypedContractMethod<[], [bigint], "view">
   getFunction(
     nameOrSignature: "pair",
   ): TypedContractMethod<[], [string], "view">

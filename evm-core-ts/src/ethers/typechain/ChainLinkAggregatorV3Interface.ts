@@ -26,8 +26,12 @@ export interface ChainLinkAggregatorV3InterfaceInterface extends Interface {
     nameOrSignature:
       | "decimals"
       | "description"
+      | "getAnswer"
       | "getRoundData"
+      | "getTimestamp"
+      | "latestRound"
       | "latestRoundData"
+      | "latestTimestamp"
       | "version",
   ): FunctionFragment
 
@@ -37,23 +41,49 @@ export interface ChainLinkAggregatorV3InterfaceInterface extends Interface {
     values?: undefined,
   ): string
   encodeFunctionData(
+    functionFragment: "getAnswer",
+    values: [BigNumberish],
+  ): string
+  encodeFunctionData(
     functionFragment: "getRoundData",
     values: [BigNumberish],
   ): string
   encodeFunctionData(
+    functionFragment: "getTimestamp",
+    values: [BigNumberish],
+  ): string
+  encodeFunctionData(
+    functionFragment: "latestRound",
+    values?: undefined,
+  ): string
+  encodeFunctionData(
     functionFragment: "latestRoundData",
+    values?: undefined,
+  ): string
+  encodeFunctionData(
+    functionFragment: "latestTimestamp",
     values?: undefined,
   ): string
   encodeFunctionData(functionFragment: "version", values?: undefined): string
 
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result
   decodeFunctionResult(functionFragment: "description", data: BytesLike): Result
+  decodeFunctionResult(functionFragment: "getAnswer", data: BytesLike): Result
   decodeFunctionResult(
     functionFragment: "getRoundData",
     data: BytesLike,
   ): Result
   decodeFunctionResult(
+    functionFragment: "getTimestamp",
+    data: BytesLike,
+  ): Result
+  decodeFunctionResult(functionFragment: "latestRound", data: BytesLike): Result
+  decodeFunctionResult(
     functionFragment: "latestRoundData",
+    data: BytesLike,
+  ): Result
+  decodeFunctionResult(
+    functionFragment: "latestTimestamp",
     data: BytesLike,
   ): Result
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result
@@ -106,6 +136,8 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
 
   description: TypedContractMethod<[], [string], "view">
 
+  getAnswer: TypedContractMethod<[roundId: BigNumberish], [bigint], "view">
+
   getRoundData: TypedContractMethod<
     [_roundId: BigNumberish],
     [
@@ -119,6 +151,10 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
     ],
     "view"
   >
+
+  getTimestamp: TypedContractMethod<[roundId: BigNumberish], [bigint], "view">
+
+  latestRound: TypedContractMethod<[], [bigint], "view">
 
   latestRoundData: TypedContractMethod<
     [],
@@ -134,6 +170,8 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
     "view"
   >
 
+  latestTimestamp: TypedContractMethod<[], [bigint], "view">
+
   version: TypedContractMethod<[], [bigint], "view">
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -146,6 +184,9 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
   getFunction(
     nameOrSignature: "description",
   ): TypedContractMethod<[], [string], "view">
+  getFunction(
+    nameOrSignature: "getAnswer",
+  ): TypedContractMethod<[roundId: BigNumberish], [bigint], "view">
   getFunction(nameOrSignature: "getRoundData"): TypedContractMethod<
     [_roundId: BigNumberish],
     [
@@ -159,6 +200,12 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
     ],
     "view"
   >
+  getFunction(
+    nameOrSignature: "getTimestamp",
+  ): TypedContractMethod<[roundId: BigNumberish], [bigint], "view">
+  getFunction(
+    nameOrSignature: "latestRound",
+  ): TypedContractMethod<[], [bigint], "view">
   getFunction(nameOrSignature: "latestRoundData"): TypedContractMethod<
     [],
     [
@@ -172,6 +219,9 @@ export interface ChainLinkAggregatorV3Interface extends BaseContract {
     ],
     "view"
   >
+  getFunction(
+    nameOrSignature: "latestTimestamp",
+  ): TypedContractMethod<[], [bigint], "view">
   getFunction(
     nameOrSignature: "version",
   ): TypedContractMethod<[], [bigint], "view">
