@@ -16,9 +16,6 @@ func anyToMsg(ir types.InterfaceRegistry, anyMsg *types.Any) (sdk.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = sdkMsg.ValidateBasic(); err != nil {
-		return nil, err
-	}
 	return sdkMsg, nil
 }
 

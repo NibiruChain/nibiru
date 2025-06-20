@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -78,7 +79,7 @@ func TestFailToPackABI(t *testing.T) {
 }
 
 func TestWhoAmI(t *testing.T) {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(t.TempDir())
 
 	callWhoAmI := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
 		fmt.Printf("arg: %s", arg)
@@ -116,7 +117,7 @@ func TestWhoAmI(t *testing.T) {
 }
 
 func (s *FuntokenSuite) TestHappyPath() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("Create FunToken mapping and ERC20")
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
@@ -126,7 +127,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -153,10 +154,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.Run("ConvertCoinToEvm", func() {
 		_, err := deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -256,7 +257,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
 	randomAcc := testutil.AccAddress()
 
@@ -272,16 +273,16 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
+			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(1000))),
 		))
 	})
 
 	s.Run("Fund contract with erc20 coins", func() {
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(1000)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: contractAddr,
 				},
@@ -357,7 +358,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 }
 
 func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("create evmObj")
 	evmObj, _ := deps.NewEVM()
@@ -372,7 +373,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdkmath.NewInt(1234))),
 	)
 	s.Require().NoError(err)
 
@@ -504,7 +505,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// 	- burn cosmos token
 	// 	- unescrow erc20 token
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()
@@ -522,7 +523,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// create fun token from that erc20
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
@@ -712,7 +713,7 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 }
 
 func (s *FuntokenSuite) TestGetErc20Address() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "unibi" // Example bank denom
 
 	s.T().Log("Setup: Create FunToken mapping for unibi")

@@ -50,7 +50,7 @@ func (s *TestSuite) TestCreateDenom() {
 					Iterate(ctx, collections.Range[string]{}).Values()
 				s.Len(allDenoms, 0)
 				_, err := bapp.TokenFactoryKeeper.CreateDenom(
-					sdk.WrapSDKContext(s.ctx), &types.MsgCreateDenom{
+					s.ctx, &types.MsgCreateDenom{
 						Sender:   addrs[0].String(),
 						Subdenom: "nusd",
 					},
@@ -87,7 +87,7 @@ func (s *TestSuite) TestCreateDenom() {
 			}
 
 			resp, err := s.app.TokenFactoryKeeper.CreateDenom(
-				sdk.WrapSDKContext(s.ctx), tc.txMsg,
+				s.ctx, tc.txMsg,
 			)
 
 			if tc.wantErr != "" {
@@ -144,7 +144,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			wantErr: "only the current admin can set a new admin",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				_, err := bapp.TokenFactoryKeeper.CreateDenom(
-					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
+					ctx, &types.MsgCreateDenom{
 						Sender:   sbf,
 						Subdenom: "ftt",
 					},
@@ -163,7 +163,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			wantErr: "",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				_, err := bapp.TokenFactoryKeeper.CreateDenom(
-					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
+					ctx, &types.MsgCreateDenom{
 						Sender:   sbf,
 						Subdenom: "ftt",
 					},
@@ -191,7 +191,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			}
 
 			_, err := s.app.TokenFactoryKeeper.ChangeAdmin(
-				sdk.WrapSDKContext(s.ctx), tc.txMsg,
+				s.ctx, tc.txMsg,
 			)
 
 			if tc.wantErr != "" {
@@ -260,7 +260,7 @@ func (s *TestSuite) TestUpdateModuleParams() {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			_, err := s.app.TokenFactoryKeeper.UpdateModuleParams(
-				sdk.WrapSDKContext(s.ctx), tc.txMsg,
+				s.ctx, tc.txMsg,
 			)
 
 			if tc.wantErr != "" {

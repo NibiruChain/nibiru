@@ -165,13 +165,13 @@ func (s *Suite) TestQueryEvmAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.EthAccount(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.EthAccount(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -216,17 +216,19 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: default values",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
-				valAddrBz := valopers[0].GetOperator().Bytes()
-				_, err := sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
+				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				s.Require().NoError(err)
+				valAddr, err := sdk.ValAddressFromBech32(valopers[0].GetOperator())
+				s.Require().NoError(err)
+				_, err = sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
-				consAddr := sdk.ConsAddress(valAddrBz)
+				consAddr := sdk.ConsAddress(valAddr)
 
 				req = &evm.QueryValidatorAccountRequest{
 					ConsAddress: consAddr.String(),
 				}
 				wantResp = &evm.QueryValidatorAccountResponse{
-					AccountAddress: sdk.AccAddress(valAddrBz).String(),
+					AccountAddress: sdk.AccAddress(valopers[0].GetOperator()).String(),
 					Sequence:       0,
 					AccountNumber:  0,
 				}
@@ -238,9 +240,12 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: with nonce",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
-				valAddrBz := valopers[0].GetOperator().Bytes()
-				consAddr := sdk.ConsAddress(valAddrBz)
+				valopers, err := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				s.Require().NoError(err)
+				valAddrBz := valopers[0].GetOperator()
+				valAddress, err := sdk.ValAddressFromBech32(valopers[0].GetOperator())
+				s.Require().NoError(err)
+				consAddr := sdk.ConsAddress(valAddress)
 
 				s.T().Log(
 					"Send coins to validator to register in the account keeper.")
@@ -275,13 +280,13 @@ func (s *Suite) TestQueryValidatorAccount() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.ValidatorAccount(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.ValidatorAccount(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -350,14 +355,13 @@ func (s *Suite) TestQueryStorage() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.EvmKeeper.Storage(goCtx, req)
+			gotResp, err := deps.EvmKeeper.Storage(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -409,14 +413,13 @@ func (s *Suite) TestQueryCode() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
 
-			gotResp, err := deps.EvmKeeper.Code(goCtx, req)
+			gotResp, err := deps.EvmKeeper.Code(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -431,12 +434,12 @@ func (s *Suite) TestQueryCode() {
 }
 
 func (s *Suite) TestQueryParams() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	want := evm.DefaultParams()
 	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
 	s.NoError(err)
 
-	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
+	gotResp, err := deps.EvmKeeper.Params(deps.Ctx, nil)
 	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
@@ -448,7 +451,7 @@ func (s *Suite) TestQueryParams() {
 	want.EVMChannels = []string{"channel-420"}
 	err = deps.EvmKeeper.SetParams(deps.Ctx, want)
 	s.NoError(err)
-	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
+	gotResp, err = deps.EvmKeeper.Params(deps.Ctx, nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
@@ -493,12 +496,12 @@ func (s *Suite) TestQueryEthCall() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			gotResp, err := deps.App.EvmKeeper.EthCall(sdk.WrapSDKContext(deps.Ctx), req)
+			gotResp, err := deps.App.EvmKeeper.EthCall(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -571,13 +574,13 @@ func (s *Suite) TestQueryBalance() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.Balance(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.Balance(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -610,13 +613,13 @@ func (s *Suite) TestQueryBaseFee() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.BaseFee(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.BaseFee(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -675,7 +678,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				s.Require().NoError(err)
 
 				// assert balance of 1000 * 10^12 wei
-				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx), &evm.QueryBalanceRequest{
+				resp, _ := deps.App.EvmKeeper.Balance(deps.Ctx, &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				s.Equal("1000", resp.Balance)
@@ -731,13 +734,13 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.EstimateGas(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.EstimateGas(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -794,13 +797,13 @@ func (s *Suite) TestTraceTx() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.TraceTx(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.TraceTx(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -874,13 +877,13 @@ func (s *Suite) TestTraceBlock() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.TraceBlock(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.TraceBlock(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -972,13 +975,13 @@ func (s *Suite) TestTraceCall() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.TraceCall(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.TraceCall(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -1065,13 +1068,13 @@ func (s *Suite) TestQueryFunTokenMapping() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
-			gotResp, err := deps.EvmKeeper.FunTokenMapping(goCtx, req)
+
+			gotResp, err := deps.EvmKeeper.FunTokenMapping(deps.Ctx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return

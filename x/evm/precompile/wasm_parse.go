@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -43,7 +44,7 @@ func parseFundsArg(arg any) (funds sdk.Coins, err error) {
 			// as an argument during the execution of a transaction.
 			sdk.Coin{
 				Denom:  coin.Denom,
-				Amount: sdk.NewIntFromBigInt(coin.Amount),
+				Amount: sdkmath.NewIntFromBigInt(coin.Amount),
 			},
 		)
 	}

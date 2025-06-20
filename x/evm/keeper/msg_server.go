@@ -22,6 +22,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
@@ -190,9 +191,9 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			// the hash from the store for the current chain epoch. This only
 			// applies if the current height is greater than the requested
 			// height.
-			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
-			if !found {
-				k.Logger(ctx).Debug("historical info not found", "height", h)
+			histInfo, err := k.stakingKeeper.GetHistoricalInfo(ctx, h)
+			if err != nil {
+				k.Logger(ctx).Debug("historical info not found", "height", h, "error", err)
 				return gethcommon.Hash{}
 			}
 
@@ -472,6 +473,9 @@ func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
 	var funtoken *evm.FunToken
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
 	err = msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -536,6 +540,14 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "ConvertCoinToEvm validate basic failed")
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
