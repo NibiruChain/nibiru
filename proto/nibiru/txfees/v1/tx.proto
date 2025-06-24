@@ -1,0 +1,27 @@
+syntax = "proto3";
+package nibiru.txfees.v1;
+
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "nibiru/txfees/v1/feetoken.proto";
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+
+service Msg {
+  rpc SetFeeTokens(MsgSetFeeTokens) returns (MsgSetFeeTokensResponse);
+}
+
+// ===================== MsgSetFeeTokens
+message MsgSetFeeTokens {
+  option (amino.name) = "nibiru/set-fee-tokens";
+  option (cosmos.msg.v1.signer) = "sender";
+
+  repeated FeeToken fee_tokens = 1 [
+    (gogoproto.moretags) = "yaml:\"fee_tokens\"",
+    (gogoproto.nullable) = false
+  ];
+  string sender = 2 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+}
+
+message MsgSetFeeTokensResponse {}

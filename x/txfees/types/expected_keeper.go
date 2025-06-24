@@ -1,0 +1,52 @@
+package types
+
+import (
+	context "context"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+)
+
+// AccountKeeper defines the contract needed for AccountKeeper related APIs.
+// Interface provides support to use non-sdk AccountKeeper for AnteHandler's decorators.
+type AccountKeeper interface {
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) (account authtypes.AccountI)
+	GetModuleAddress(moduleName string) sdk.AccAddress
+}
+
+// FeegrantKeeper defines the expected feegrant keeper.
+type FeegrantKeeper interface {
+	UseGrantedFees(ctx sdk.Context, granter, grantee sdk.AccAddress, fee sdk.Coins, msgs []sdk.Msg) error
+}
+
+// BankKeeper defines the contract needed for supply related APIs (noalias)
+type BankKeeper interface {
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
+	IsSendEnabledCoins(ctx context.Context, coins ...sdk.Coin) error
+	SendCoins(ctx context.Context, from, to sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+}
+
+// TxFeesKeeper defines the expected transaction fee keeper
+type TxFeesKeeper interface {
+	ConvertToBaseToken(ctx sdk.Context, inputFee sdk.Coin) (sdk.Coin, error)
+	GetBaseDenom(ctx sdk.Context) (denom string, err error)
+	GetFeeToken(ctx sdk.Context, denom string) (FeeToken, error)
+}
+
+type ProtorevKeeper interface {
+	GetPoolForDenomPairNoOrder(ctx sdk.Context, baseDenom, denomToMatch string) (uint64, error)
+}
+
+type DistributionKeeper interface {
+	FundCommunityPool(ctx context.Context, amount sdk.Coins, sender sdk.AccAddress) error
+}
+
+type ConsensusKeeper interface {
+	Params(ctx context.Context, _ *consensustypes.QueryParamsRequest) (*consensustypes.QueryParamsResponse, error)
+}
