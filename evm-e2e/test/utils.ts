@@ -1,5 +1,6 @@
 import { wnibiCaller } from "@nibiruchain/evm-core"
 import {
+  Contract,
   ContractFactory,
   ContractTransactionResponse,
   parseEther,
@@ -101,6 +102,12 @@ export const deployContractWNIBI = async (): Promise<{
   await contract.waitForDeployment()
   return { contract: contract as unknown as WNIBI & DeploymentTx }
 }
+
+export const getWNIBIContract = (CONTRACT_ADDRESS): WNIBI => {
+  const { abi } = WNIBI_JSON;
+  const contract = new Contract(CONTRACT_ADDRESS, abi, account);
+  return contract as unknown as WNIBI;
+};
 
 export const numberToHex = (num: Number) => {
   return "0x" + num.toString(16)

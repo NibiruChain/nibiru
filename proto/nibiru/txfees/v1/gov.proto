@@ -16,7 +16,7 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 message UpdateFeeTokenProposal {
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;
-  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_stringer) = true;
   option (amino.name) = "nibiru/UpdateFeeTokenProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 

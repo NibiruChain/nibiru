@@ -15,26 +15,32 @@ import (
 	"fmt"
 
 	"cosmossdk.io/core/appmodule"
-	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"
+	"cosmossdk.io/depinject"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/txfees/module"
+	"github.com/NibiruChain/nibiru/v2/x/txfees/cli"
 )
 
 var (
 	_ module.AppModuleBasic   = AppModuleBasic{}
 	_ module.HasGenesisBasics = AppModuleBasic{}
 
-	_ appmodule.AppModule        = AppModule{}
+	_ module.AppModule           = AppModule{}
 	_ module.HasConsensusVersion = AppModule{}
 	_ module.HasServices         = AppModule{}
 
@@ -90,7 +96,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the txfees module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.NewTxCmd()
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns the txfees module's root query command.
@@ -142,7 +148,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the txfees module's genesis initialization It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
@@ -151,6 +157,8 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	}
 
 	am.keeper.InitGenesis(ctx, genState)
+
+	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the txfees module's exported genesis state as raw JSON bytes.
@@ -170,3 +178,44 @@ func (am AppModule) EndBlock(context context.Context) error {
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
+
+//
+// App Wiring Setup
+//
+
+func init() {
+	appmodule.Register(&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type TxFeesInputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Key    *store.KVStoreKey
+	Cdc    codec.Codec
+
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    types.BankKeeper
+	DistrKeeper   types.DistributionKeeper
+}
+
+type TxFeesOutputs struct {
+	depinject.Out
+
+	Keeper keeper.Keeper
+
+	Module appmodule.AppModule
+}
+
+func ProvideModule(in TxFeesInputs) TxFeesOutputs {
+	k := keeper.NewKeeper(in.AccountKeeper, in.BankKeeper, in.Key, in.DistrKeeper)
+
+	m := NewAppModule(k)
+
+	return TxFeesOutputs{
+		Keeper: k,
+		Module: m,
+	}
+}

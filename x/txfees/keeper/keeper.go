@@ -5,15 +5,14 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"cosmossdk.io/store/prefix"
+	sdkioerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+
 	"github.com/cometbft/cometbft/libs/log"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
@@ -25,10 +24,8 @@ type Keeper struct {
 	bankKeeper         types.BankKeeper
 	protorevKeeper     types.ProtorevKeeper
 	distributionKeeper types.DistributionKeeper
-	consensusKeeper    types.ConsensusKeeper
-	dataDir            string
 
-	paramSpace paramtypes.Subspace
+	WhitelistedFeeTokenSetters []string
 }
 
 var _ types.TxFeesKeeper = (*Keeper)(nil)
@@ -38,41 +35,31 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	storeKey storetypes.StoreKey,
 	distributionKeeper types.DistributionKeeper,
-	consensusKeeper types.ConsensusKeeper,
-	dataDir string,
-	paramSpace paramtypes.Subspace,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !paramSpace.HasKeyTable() {
-		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		accountKeeper:      accountKeeper,
 		bankKeeper:         bankKeeper,
 		storeKey:           storeKey,
 		distributionKeeper: distributionKeeper,
-		consensusKeeper:    consensusKeeper,
-		dataDir:            dataDir,
-		paramSpace:         paramSpace,
 	}
 }
 
 // GetParams returns the total set of txfees parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramSpace.GetParamSet(ctx, &params)
-	return params
+	return types.Params{
+		WhitelistedFeeTokenSetters: k.WhitelistedFeeTokenSetters,
+	}
 }
 
 // SetParams sets the total set of txfees parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramSpace.SetParamSet(ctx, &params)
+	k.WhitelistedFeeTokenSetters = params.WhitelistedFeeTokenSetters
 }
 
-// SetParam sets a specific txfees module's parameter with the provided parameter.
-func (k Keeper) SetParam(ctx sdk.Context, key []byte, value interface{}) {
-	k.paramSpace.Set(ctx, key, value)
-}
+// // SetParam sets a specific txfees module's parameter with the provided parameter.
+// func (k Keeper) SetParam(ctx sdk.Context, key []byte, value interface{}) {
+// 	k.paramSpace.Set(ctx, key, value)
+// }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
@@ -81,11 +68,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) GetFeeTokensStore(ctx sdk.Context) storetypes.KVStore {
 	store := ctx.KVStore(k.storeKey)
 	return prefix.NewStore(store, types.FeeTokensStorePrefix)
-}
-
-// GetConsParams returns the current consensus parameters from the consensus params store.
-func (k Keeper) GetConsParams(ctx sdk.Context) (*consensustypes.QueryParamsResponse, error) {
-	return k.consensusKeeper.Params(ctx, &consensustypes.QueryParamsRequest{})
 }
 
 func (k Keeper) GetFeeTokens(ctx sdk.Context) (feetokens []types.FeeToken) {
@@ -135,6 +117,22 @@ func (k Keeper) SetBaseDenom(ctx sdk.Context, denom string) error {
 	return nil
 }
 
+func (k Keeper) GetFeeToken(ctx sdk.Context, denom string) (types.FeeToken, error) {
+	prefixStore := k.GetFeeTokensStore(ctx)
+	if !prefixStore.Has([]byte(denom)) {
+		return types.FeeToken{}, sdkioerrors.Wrapf(types.ErrInvalidFeeToken, "%s", denom)
+	}
+	bz := prefixStore.Get([]byte(denom))
+
+	feeToken := types.FeeToken{}
+	err := proto.Unmarshal(bz, &feeToken)
+	if err != nil {
+		return types.FeeToken{}, err
+	}
+
+	return feeToken, nil
+}
+
 func (k Keeper) SetFeeTokens(ctx sdk.Context, feetokens []types.FeeToken) error {
 	for _, feeToken := range feetokens {
 		err := k.setFeeToken(ctx, feeToken)
@@ -142,6 +140,26 @@ func (k Keeper) SetFeeTokens(ctx sdk.Context, feetokens []types.FeeToken) error 
 			return err
 		}
 	}
+	return nil
+}
+
+func (k Keeper) setFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
+	prefixStore := k.GetFeeTokensStore(ctx)
+
+	baseDenom, err := k.GetBaseDenom(ctx)
+	if err != nil {
+		return err
+	}
+	if baseDenom == feeToken.Denom {
+		return sdkioerrors.Wrap(types.ErrInvalidFeeToken, "cannot add basedenom as a whitelisted fee token")
+	}
+
+	bz, err := proto.Marshal(&feeToken)
+	if err != nil {
+		return err
+	}
+
+	prefixStore.Set([]byte(feeToken.Denom), bz)
 	return nil
 }
 
@@ -156,18 +174,6 @@ func (k Keeper) ConvertToBaseToken(ctx sdk.Context, inputFee sdk.Coin) (sdk.Coin
 		return inputFee, nil
 	}
 
-	feeToken, err := k.GetFeeToken(ctx, inputFee.Denom)
-	if err != nil {
-		return sdk.Coin{}, err
-	}
-
-	spotPrice, err := k.CalcFeeSpotPrice(ctx, feeToken.Denom)
-	if err != nil {
-		return sdk.Coin{}, err
-	}
-
-	// Note: spotPrice truncation is done here for maintaining state-compatibility with v19.x
-	// It should be changed to support full spot price precision before
-	// https://github.com/osmosis-labs/osmosis/issues/6064 is complete
-	return sdk.NewCoin(baseDenom, spotPrice.Dec().MulIntMut(inputFee.Amount).RoundInt()), nil
+	// return 1:1
+	return sdk.NewCoin(baseDenom, math.OneInt()), nil
 }

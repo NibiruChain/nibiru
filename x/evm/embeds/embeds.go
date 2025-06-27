@@ -53,6 +53,8 @@ var (
 	testDirtyStateAttack4 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
 	testDirtyStateAttack5 []byte
+	//go:embed artifacts/contracts/WNIBI.sol/WNIBI.json
+	wnibi []byte
 )
 
 var (
@@ -177,6 +179,11 @@ var (
 		Name:      "TestDirtyStateAttack5.sol",
 		EmbedJSON: testDirtyStateAttack5,
 	}
+
+	SmartContract_WNIBI = CompiledEvmContract{
+		Name:      "WNIBI.sol",
+		EmbedJSON: wnibi,
+	}
 )
 
 func init() {
@@ -198,6 +205,7 @@ func init() {
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
+	SmartContract_WNIBI.MustLoad()
 }
 
 type CompiledEvmContract struct {
