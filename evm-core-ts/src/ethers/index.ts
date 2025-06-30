@@ -1,6 +1,6 @@
 import { Contract, type ContractRunner, type InterfaceAbi } from "ethers"
 
-import { ADDR_WNIBI } from "../const"
+import { ADDR_ERIS_EVM, ADDR_WNIBI } from "../const"
 import {
   ABI_FUNTOKEN_PRECOMPILE,
   ABI_ORACLE_PRECOMPILE,
@@ -11,9 +11,11 @@ import {
 } from "../precompile"
 import {
   ERC20Minter__factory,
+  ErisEvm__factory,
   NibiruOracleChainLinkLike__factory,
   WNIBI__factory,
   type ERC20Minter,
+  type ErisEvm,
   type IFunToken,
   type IOracle,
   type IWasm,
@@ -63,7 +65,7 @@ export const chainlinkLike = (
 /**
  * Returns a typed contract instance for a standard ERC20 contract.
  * */
-export const erc20Caller = (
+export const erc20Runner = (
   runner: ContractRunner,
   addr: string,
 ): ERC20Minter => ERC20Minter__factory.connect(addr, runner)
@@ -75,7 +77,21 @@ export const erc20Caller = (
  * @param addr - Defaults to the WNIBI address on mainnet. If you're using a
  *   different network, you can pass a different value for the address.
  * */
-export const wnibiCaller = (
+export const wnibiRunner = (
   runner: ContractRunner,
   addr: string = ADDR_WNIBI,
 ): WNIBI => WNIBI__factory.connect(addr, runner)
+
+/**
+ * Delegate call interface for liquid staking NIBI via the Eris protocol "hub"
+ * contract. Eris is programmed in Rust and compiled to Wasm. Its Rust
+ * implementation can be found here: [erisprotocol/.../hub.rs](https://github.com/erisprotocol/contracts-tokenfactory/blob/b9c993981f5190eb2fb584884471e3d8f03bd6b4/packages/eris/src/hub.rs#L147).
+ *
+ * @param runner
+ * @param addr - Defaults to the WNIBI address on mainnet. If you're using a
+ *   different network, you can pass a different value for the address.
+ * */
+export const erisEvmRunner = (
+  runner: ContractRunner,
+  addr: string = ADDR_ERIS_EVM,
+): ErisEvm => ErisEvm__factory.connect(addr, runner)

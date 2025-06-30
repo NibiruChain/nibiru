@@ -1,7 +1,7 @@
 {
   "name": "@nibiruchain/evm-core",
   "description": "Lightweight Nibiru EVM TypeScript library for type-safe interactions with precompiled contracts, essential constants, and other core utilites.",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
