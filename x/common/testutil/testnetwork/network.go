@@ -8,14 +8,17 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/store/pruning/types"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -25,8 +28,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	networkutil "github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -78,7 +81,7 @@ func NewAppConstructor(chainID string) AppConstructor {
 			dbm.NewMemDB(),
 			nil,
 			true,
-			sims.EmptyAppOptions{},
+			sims.NewAppOptionsWithFlagHome(val.Ctx.Config.RootDir),
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 			baseapp.SetChainID(chainID),
@@ -88,23 +91,28 @@ func NewAppConstructor(chainID string) AppConstructor {
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeEncodingConfig()
+	dir, err := os.MkdirTemp("", "simapp")
+	if err != nil {
+		panic(fmt.Sprintf("failed creating temporary directory: %v", err))
+	}
 
 	chainID := "chain-" + cmtrand.NewRand().Str(6)
+	app := app.NewNibiruApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, sims.NewAppOptionsWithFlagHome(dir), baseapp.SetChainID(chainID))
 	return Config{
+		Codec:             app.AppCodec(),
+		TxConfig:          app.GetTxConfig(),
+		LegacyAmino:       app.LegacyAmino(),
+		InterfaceRegistry: app.InterfaceRegistry(),
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		AppConstructor:    NewAppConstructor(chainID),
+		GenesisState:      appGenesis,
 		BondDenom:         denoms.NIBI,
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		ChainID:           chainID,
 		CleanupDir:        true,
-		Codec:             encCfg.Codec,
 		EnableTMLogging:   false, // super noisy
-		GenesisState:      appGenesis,
-		InterfaceRegistry: encCfg.InterfaceRegistry,
 		KeyringOptions:    []keyring.Option{},
-		LegacyAmino:       encCfg.Amino,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
 		NumValidators:     1,
 		PruningStrategy:   types.PruningOptionNothing,
@@ -114,7 +122,6 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 			sdk.NewCoin(appconst.BondDenom, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
 		TimeoutCommit: time.Second / 2,
-		TxConfig:      encCfg.TxConfig,
 	}
 }
 
@@ -201,7 +208,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 				apiListenAddr = cfg.APIAddress
 			} else {
 				var err error
-				apiListenAddr, _, err = server.FreeTCPAddr()
+				apiListenAddr, _, _, err = networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, fmt.Errorf("failed to get free TCP address for API: %w", err)
 				}
@@ -217,7 +224,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			if cfg.RPCAddress != "" {
 				tmCfg.RPC.ListenAddress = cfg.RPCAddress
 			} else {
-				rpcAddr, _, err := server.FreeTCPAddr()
+				rpcAddr, _, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -227,7 +234,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			if cfg.GRPCAddress != "" {
 				appCfg.GRPC.Address = cfg.GRPCAddress
 			} else {
-				_, grpcPort, err := server.FreeTCPAddr()
+				_, grpcPort, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -235,17 +242,16 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			}
 			appCfg.GRPC.Enable = true
 
-			_, grpcWebPort, err := server.FreeTCPAddr()
+			_, _, _, err = networkutil.FreeTCPAddr()
 			if err != nil {
 				return nil, err
 			}
-			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
 
 			if cfg.JSONRPCAddress != "" {
 				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
 			} else {
-				_, jsonRPCPort, err := server.FreeTCPAddr()
+				_, jsonRPCPort, _, err := networkutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
@@ -257,7 +263,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		serverCtxLogger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			serverCtxLogger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			serverCtxLogger = log.NewLogger(os.Stdout)
 		}
 		ctx.Logger = serverCtxLogger
 
@@ -280,13 +286,13 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		tmCfg.Moniker = nodeDirName
 		monikers[valIdx] = nodeDirName
 
-		proxyAddr, _, err := server.FreeTCPAddr()
+		proxyAddr, _, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
 		tmCfg.ProxyApp = proxyAddr
 
-		p2pAddr, _, err := server.FreeTCPAddr()
+		p2pAddr, _, _, err := networkutil.FreeTCPAddr()
 		if err != nil {
 			return nil, err
 		}
@@ -355,7 +361,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		}
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
+			sdk.ValAddress(addr).String(),
 			valPubKeys[valIdx],
 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
@@ -389,7 +395,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			WithKeybase(kb).
 			WithTxConfig(cfg.TxConfig)
 
-		err = tx.Sign(txFactory, nodeDirName, txBuilder, true)
+		err = tx.Sign(context.Background(), txFactory, nodeDirName, txBuilder, true)
 		if err != nil {
 			return nil, err
 		}
@@ -462,7 +468,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
 	// any defer in a test would not be called.
-	server.TrapSignal(network.Cleanup)
+	trapSignal(network.Cleanup)
 
 	return network, err
 }
@@ -636,4 +642,28 @@ func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, *
 	}
 
 	return nil, nil, fmt.Errorf("address not found in any of the known validators keyrings: %s", addr.String())
+}
+
+// trapSignal traps SIGINT and SIGTERM and calls os.Exit once a signal is received.
+func trapSignal(cleanupFunc func()) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+
+		if cleanupFunc != nil {
+			cleanupFunc()
+		}
+		exitCode := 128
+
+		switch sig {
+		case syscall.SIGINT:
+			exitCode += int(syscall.SIGINT)
+		case syscall.SIGTERM:
+			exitCode += int(syscall.SIGTERM)
+		}
+
+		os.Exit(exitCode)
+	}()
 }

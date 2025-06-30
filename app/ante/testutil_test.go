@@ -1,14 +1,16 @@
 package ante_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -35,9 +37,9 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	suite.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
+	suite.app, _ = testapp.NewNibiruTestApp(suite.T().TempDir(), app.GenesisState{})
 	chainId := "test-chain-id"
-	ctx := suite.app.NewContext(true, tmproto.Header{
+	ctx := suite.app.NewContextLegacy(true, tmproto.Header{
 		Height:  1,
 		ChainID: chainId,
 		Time:    time.Now().UTC(),
@@ -50,7 +52,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithChainID(chainId).
 		WithLegacyAmino(suite.app.LegacyAmino())
 
-	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	err := suite.app.AccountKeeper.Params.Set(ctx, authtypes.DefaultParams())
 	suite.Require().NoError(err)
 	params := suite.app.AccountKeeper.GetParams(ctx)
 	suite.Require().NoError(params.Validate())
@@ -81,6 +83,8 @@ func (suite *AnteTestSuite) SetupTest() {
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
 func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []uint64, accSeqs []uint64, chainID string) (xauthsigning.Tx, error) {
+	defaultSignMode, err := xauthsigning.APISignModeToInternal(suite.clientCtx.TxConfig.SignModeHandler().DefaultMode())
+	suite.Require().NoError(err)
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
 	var sigsV2 []signing.SignatureV2
@@ -88,7 +92,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 		sigV2 := signing.SignatureV2{
 			PubKey: priv.PubKey(),
 			Data: &signing.SingleSignatureData{
-				SignMode:  suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(),
+				SignMode:  defaultSignMode,
 				Signature: nil,
 			},
 			Sequence: accSeqs[i],
@@ -99,7 +103,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 		err := acc.SetAccountNumber(uint64(i) + 100)
 		suite.Require().NoError(err)
 	}
-	err := suite.txBuilder.SetSignatures(sigsV2...)
+	err = suite.txBuilder.SetSignatures(sigsV2...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +117,7 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 			Sequence:      accSeqs[i],
 		}
 		sigV2, err := tx.SignWithPrivKey(
-			suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(), signerData,
+			context.TODO(), defaultSignMode, signerData,
 			suite.txBuilder, priv, suite.clientCtx.TxConfig, accSeqs[i])
 		if err != nil {
 			return nil, err

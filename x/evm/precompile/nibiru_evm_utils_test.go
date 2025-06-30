@@ -70,7 +70,7 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 	s.True(some, abiEventName)
 	eventId := event.ID
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := deps.NewStateDB()
 
 	s.T().Log("Mint coins to generate ABCI events")

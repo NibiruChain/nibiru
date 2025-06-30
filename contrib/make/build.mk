@@ -25,7 +25,7 @@ SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
 
 CMT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 ROCKSDB_VERSION := 8.9.1
-WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
+WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | awk '{sub(/^v/, "", $$2); print $$2}')
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
 
@@ -97,7 +97,7 @@ wasmvmlib: $(TEMPDIR)/
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
-		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.x86_64.a; \
 		else \
 		  wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		fi; \

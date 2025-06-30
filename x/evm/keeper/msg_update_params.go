@@ -8,12 +8,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func (k *Keeper) UpdateParams(
 	goCtx context.Context, req *evm.MsgUpdateParams,
 ) (resp *evm.MsgUpdateParamsResponse, err error) {
+	if req == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	if err := req.ValidateBasic(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "UpdateParams validate basic failed")
+	}
 	if k.authority.String() != req.Authority {
 		return nil, sdkioerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority, expected %s, got %s", k.authority.String(), req.Authority)
 	}

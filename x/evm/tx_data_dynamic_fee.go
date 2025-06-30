@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	ethutils "github.com/NibiruChain/nibiru/v2/utils"
 	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
 )
 
@@ -216,7 +217,7 @@ func (tx *DynamicFeeTx) AsEthereumData() gethcore.TxData {
 // GetRawSignatureValues returns the V, R, S signature values of the transaction.
 // The return values should not be modified by the caller.
 func (tx *DynamicFeeTx) GetRawSignatureValues() (v, r, s *big.Int) {
-	return rawSignatureValues(tx.V, tx.R, tx.S)
+	return ethutils.RawSignatureValues(tx.V, tx.R, tx.S)
 }
 
 // SetSignatureValues sets the signature values to the transaction.

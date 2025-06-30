@@ -37,7 +37,7 @@ type ParsedTxs struct {
 }
 
 // ParseTxResult parses eth tx info from the ABCI events of Eth tx msgs
-func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error) {
+func ParseTxResult(result *abci.ExecTxResult, tx sdk.Tx) (*ParsedTxs, error) {
 	// Parsed txs is the structure being populated from the events
 	// So far (until we allow ethereum_txs as cosmos tx messages) it'll have single tx
 	parsedTxs := &ParsedTxs{
