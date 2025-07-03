@@ -3,6 +3,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -69,7 +70,7 @@ nibid evm-tx-index last-indexed latest
 					fromBlock = 0
 				}
 			} else {
-				fromBlock, err = strconv.ParseInt(args[1], 10, 64)
+				fromBlock, err = strconv.ParseInt(args[0], 10, 64)
 				if err != nil {
 					return fmt.Errorf("cannot parse min block number: %s", args[1])
 				}
@@ -108,18 +109,22 @@ nibid evm-tx-index last-indexed latest
 
 			fmt.Printf("Indexing blocks from %d to %d\n", fromBlock, toBlock)
 			for height := fromBlock; height <= toBlock; height++ {
+				slog.Info("Started indexing block", "height", height)
+				slog.Info("Loading block meta", "height", height)
 				block := blockStore.LoadBlock(height)
 				if block == nil {
 					return fmt.Errorf("block not found %d", height)
 				}
+				slog.Info("Loading block abci responses", "height", height)
 				blockResults, err := stateStore.LoadABCIResponses(height)
 				if err != nil {
 					return err
 				}
+				slog.Info("Indexing block evm txs", "height", height)
 				if err := evmTxIndexer.IndexBlock(block, blockResults.DeliverTxs); err != nil {
 					return err
 				}
-				fmt.Println(height)
+				slog.Info("Finished indexing block", "height", height)
 			}
 			err = evmTxIndexer.CloseDBAndExit()
 			if err != nil {
