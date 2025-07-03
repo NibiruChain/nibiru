@@ -70,7 +70,7 @@ nibid evm-tx-index last-indexed latest
 					fromBlock = 0
 				}
 			} else {
-				fromBlock, err = strconv.ParseInt(args[1], 10, 64)
+				fromBlock, err = strconv.ParseInt(args[0], 10, 64)
 				if err != nil {
 					return fmt.Errorf("cannot parse min block number: %s", args[1])
 				}
