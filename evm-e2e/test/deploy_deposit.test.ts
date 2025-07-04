@@ -13,6 +13,7 @@ test(
     expect(decimals).toEqual(BigInt(18))
     const contractAddr = await contract.getAddress()
     console.log("WNIBI contract address:", contractAddr)
+    console.log("user :", account.address)
 
     // Check balances before any actions
     const walletBalWei = await provider.getBalance(account.address)

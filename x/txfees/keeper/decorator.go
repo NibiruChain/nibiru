@@ -13,6 +13,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
@@ -26,13 +27,13 @@ import (
 // CONTRACT: Tx must implement FeeTx interface to use DeductFeeDecorator
 type DeductFeeDecorator struct {
 	ak             types.AccountKeeper
-	evmkeeper      evmkeeper.Keeper
+	evmkeeper      *evmkeeper.Keeper
 	bankKeeper     authtypes.BankKeeper
 	feegrantKeeper types.FeegrantKeeper
 	txFeesKeeper   Keeper
 }
 
-func NewDeductFeeDecorator(tk Keeper, ek evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper) DeductFeeDecorator {
+func NewDeductFeeDecorator(tk Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper) DeductFeeDecorator {
 	return DeductFeeDecorator{
 		ak:             ak,
 		evmkeeper:      ek,
@@ -52,11 +53,6 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	if addr := dfd.ak.GetModuleAddress(types.FeeCollectorName); addr == nil {
 		return ctx, fmt.Errorf("fee collector module account (%s) has not been set", types.FeeCollectorName)
 	}
-
-	// // checks to make sure a separate module account has been set to collect fees not in base token
-	// if addrNonNativeFee := dfd.ak.GetModuleAddress(types.FeeCollectorForStakingRewardsName); addrNonNativeFee == nil {
-	// 	return ctx, fmt.Errorf("fee collector for staking module account (%s) has not been set", types.FeeCollectorForStakingRewardsName)
-	// }
 
 	// TODO: only 1 denom for fee and that denom is either accepted or base denom
 
@@ -115,7 +111,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	return next(ctx, tx, simulate)
 }
 
-func DeductFees(accountkeeper types.AccountKeeper, evmkeeper evmkeeper.Keeper, txFeesKeeper types.TxFeesKeeper, bankKeeper authtypes.BankKeeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
+func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesKeeper types.TxFeesKeeper, bankKeeper authtypes.BankKeeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
 	// Checks the validity of the fee tokens (sorted, have positive amount, valid and unique denomination)
 	if !fees.IsValid() {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
@@ -135,28 +131,34 @@ func DeductFees(accountkeeper types.AccountKeeper, evmkeeper evmkeeper.Keeper, t
 			return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 		}
 	} else {
+		// A random account
+		// TODO: change to another account so that we can swap to Nibi in the future
 		addr := gethcommon.HexToAddress("0x4675eAE0Cc880F0E0A0D130e6619Cef08012EE65")
 		if err != nil {
-			return fmt.Errorf("failed to parse WNIBI contract address: %w", err)
+			return fmt.Errorf("failed to parse address: %w", err)
 		}
 
 		amount := fees[0].Amount.BigInt()
-		packedArgs, err := embeds.SmartContract_WNIBI.ABI.Pack(
-			"transfer", addr, amount,
-		)
-		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to pack ABI args for approve")
-		}
-		input := append(embeds.SmartContract_WNIBI.Bytecode, packedArgs...)
 
 		unusedBigInt := big.NewInt(0)
 		to := gethcommon.HexToAddress(feeTokens[0].Denom)
-		from := gethcommon.BytesToAddress(acc.GetAddress().Bytes())
-		nonce := evmkeeper.GetAccNonce(ctx, from)
+		pubKey := acc.GetPubKey()
+		pubKeyBytes := pubKey.Bytes()
+
+		uncompressed, err := gethcrypto.DecompressPubkey(pubKeyBytes)
+		from := gethcrypto.PubkeyToAddress(*uncompressed)
+
+		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
+			"transfer", addr, amount,
+		)
+		if err != nil {
+			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
+		}
+
 		evmMsg := core.Message{
 			To:               &to,
 			From:             from,
-			Nonce:            nonce,
+			Nonce:            ek.GetAccNonce(ctx, from),
 			Value:            unusedBigInt, // amount
 			GasLimit:         5_500_000,
 			GasPrice:         unusedBigInt,
@@ -168,32 +170,27 @@ func DeductFees(accountkeeper types.AccountKeeper, evmkeeper evmkeeper.Keeper, t
 			SkipFromEOACheck: false,
 		}
 
-		txConfig := evmkeeper.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-		stateDB := evmkeeper.Bank.StateDB
+		txConfig := ek.TxConfig(ctx, gethcommon.Hash{})
+		stateDB := ek.Bank.StateDB
 		if stateDB == nil {
-			stateDB = evmkeeper.NewStateDB(ctx, txConfig)
+			stateDB = ek.NewStateDB(ctx, txConfig)
 		}
-		evmCfg := evmkeeper.GetEVMConfig(ctx)
-		evmObj := evmkeeper.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-
 		defer func() {
-			evmkeeper.Bank.StateDB = nil
+			ek.Bank.StateDB = nil
 		}()
-		// Call the WNIBI contract to approve the transfer of WNIBI tokens
+		evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-		ret, err := evmkeeper.CallContractWithInput(ctx, evmObj, from, &to, true /*commit*/, input, 5_500_000)
+		_, resp, err := ek.ERC20().Transfer(to, from, addr, amount, ctx, evmObj)
 		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract approve")
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
 		}
-		if ret.Failed() {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract approve with VM error")
-		}
-
-		if err := acc.SetSequence(nonce); err != nil {
-			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		if resp.Failed() {
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
 		}
 
-		accountkeeper.SetAccount(ctx, acc)
+		if err := stateDB.Commit(); err != nil {
+			return sdkioerrors.Wrap(err, "failed to commit stateDB")
+		}
 	}
 
 	return nil

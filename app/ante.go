@@ -80,7 +80,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
 		// TODO: spike(security): Does minimum gas price of 0 pose a risk?
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1916
-		txfeeskeeper.NewDeductFeeDecorator(opts.TxFeesKeeper, *opts.EvmKeeper, opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper),
+		txfeeskeeper.NewDeductFeeDecorator(opts.TxFeesKeeper, opts.EvmKeeper, opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper),
 		// ----------- Ante Handlers:  devgas
 		devgasante.NewDevGasPayoutDecorator(opts.DevGasBankKeeper, opts.DevGasKeeper),
 		// ----------- Ante Handlers:  Keys and signatures
