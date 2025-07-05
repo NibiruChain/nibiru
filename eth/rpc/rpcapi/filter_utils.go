@@ -3,6 +3,7 @@ package rpcapi
 
 import (
 	"math/big"
+	"slices"
 
 	sdkioerrors "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -56,13 +57,7 @@ Logs:
 }
 
 func includes(addresses []common.Address, a common.Address) bool {
-	for _, addr := range addresses {
-		if addr == a {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(addresses, a)
 }
 
 // https://github.com/ethereum/go-ethereum/blob/v1.10.14/eth/filters/filter.go#L321
