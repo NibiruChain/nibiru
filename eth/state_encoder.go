@@ -59,7 +59,7 @@ type keEthAddr struct{}
 
 func (_ keEthAddr) Encode(value gethcommon.Address) []byte { return value.Bytes() }
 func (_ keEthAddr) Decode(bz []byte) (int, gethcommon.Address) {
-	return gethcommon.AddressLength, gethcommon.BytesToAddress(bz)
+	return gethcommon.AddressLength, gethcommon.BytesToAddress(bz[:gethcommon.AddressLength])
 }
 func (_ keEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
 
