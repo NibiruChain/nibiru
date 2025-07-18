@@ -8,21 +8,23 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 )
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
 	evmKeeper     *EVMKeeper
+	txFeesKeeper  txfeeskeeper.Keeper
 	accountKeeper evm.AccountKeeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, txf txfeeskeeper.Keeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
 		evmKeeper:     k,
 		accountKeeper: ak,
+		txFeesKeeper:  txf,
 	}
 }
 
@@ -70,10 +72,50 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		if err := keeper.CheckSenderBalance(
-			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
-		); err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
+		canCover := false
+		cost := txData.Cost()
+		if cost.Sign() < 0 {
+			return ctx, sdkioerrors.Wrapf(
+				sdkerrors.ErrInvalidCoins,
+				"tx cost (%s) is negative and invalid", cost,
+			)
+		}
+		balanceWei := evm.NativeToWei(acct.BalanceNative.ToBig())
+		if balanceWei.Cmp(cost) >= 0 {
+			canCover = true
+		}
+
+		// check whether the sender has enough balance to pay for the transaction cost in alternative token
+		txConfig := anteDec.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
+		stateDB := anteDec.evmKeeper.Bank.StateDB
+		if stateDB == nil {
+			stateDB = anteDec.evmKeeper.NewStateDB(ctx, txConfig)
+		}
+		defer func() {
+			anteDec.evmKeeper.Bank.StateDB = nil
+		}()
+
+		evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+		feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
+		for _, feeToken := range feeTokens {
+			out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeTokens[0].Denom), fromAddr, ctx, evmObj)
+			if err != nil {
+				return ctx, sdkioerrors.Wrapf(
+					err, "failed to get balance of fee payer %s for token %s",
+					fromAddr.String(), feeToken.Denom,
+				)
+			}
+			// Get the first token that have enough amount
+			if out.Cmp(txData.Cost()) >= 0 {
+				canCover = true
+			}
+		}
+		if !canCover {
+			return ctx, sdkioerrors.Wrapf(
+				sdkerrors.ErrInsufficientFunds,
+				"sender balance < tx cost (native: %s, required: %s), no ERC20 fallback sufficient",
+				balanceWei.String(), cost.String(),
+			)
 		}
 	}
 	return next(ctx, tx, simulate)

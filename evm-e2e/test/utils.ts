@@ -19,7 +19,7 @@ import {
   TransactionReverter__factory,
   type NibiruOracleChainLinkLike,
 } from "../types"
-import { account, provider, TX_WAIT_TIMEOUT } from "./setup"
+import { account, account2, provider, TX_WAIT_TIMEOUT } from "./setup"
 
 export const alice = Wallet.createRandom()
 
@@ -106,6 +106,12 @@ export const deployContractWNIBI = async (): Promise<{
 export const getWNIBIContract = (CONTRACT_ADDRESS): WNIBI => {
   const { abi } = WNIBI_JSON;
   const contract = new Contract(CONTRACT_ADDRESS, abi, account);
+  return contract as unknown as WNIBI;
+};
+
+export const getWNIBIContract2 = (CONTRACT_ADDRESS): WNIBI => {
+  const { abi } = WNIBI_JSON;
+  const contract = new Contract(CONTRACT_ADDRESS, abi, account2);
   return contract as unknown as WNIBI;
 };
 

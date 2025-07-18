@@ -25,7 +25,7 @@ test(
 
     // Deposit via transfer of wei
     {
-      const amountWei = parseUnits("420", 12)
+      const amountWei = parseUnits("420", 18)
       const txResp = await account.sendTransaction({
         to: contractAddr,
         value: amountWei,

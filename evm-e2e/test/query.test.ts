@@ -9,13 +9,12 @@ import { deployContractWNIBI, getWNIBIContract } from "./utils"
 test(
   "query",
   async () => {
-    const contract = await getWNIBIContract("0xe5F54D19AA5c3c16ba70bC1E5112Fe37F1764134")
-    
+    const contract = await getWNIBIContract("0x11277c937C71c83A31EDA13360CC3661fDc13651")
 
     {
       const total = await contract.totalSupply()
       console.log("totalSupply:", total.toString())
-      const balanceOf = await contract.balanceOf(account.address)
+      const balanceOf = await contract.balanceOf("0xe35fdcAde710De4E7A1889dD15dE6c656aba21f0")
       console.log("balanceOf:", balanceOf.toString())
       console.log("account.address :", account.address)
     }

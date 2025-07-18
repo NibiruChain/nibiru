@@ -13,8 +13,8 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
@@ -142,11 +142,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 
 		unusedBigInt := big.NewInt(0)
 		to := gethcommon.HexToAddress(feeTokens[0].Denom)
-		pubKey := acc.GetPubKey()
-		pubKeyBytes := pubKey.Bytes()
-
-		uncompressed, err := gethcrypto.DecompressPubkey(pubKeyBytes)
-		from := gethcrypto.PubkeyToAddress(*uncompressed)
+		from := eth.NibiruAddrToEthAddr(acc.GetAddress())
 
 		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
 			"transfer", addr, amount,
@@ -155,10 +151,11 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
 		}
 
+		nonce := ek.GetAccNonce(ctx, from)
 		evmMsg := core.Message{
 			To:               &to,
 			From:             from,
-			Nonce:            ek.GetAccNonce(ctx, from),
+			Nonce:            nonce,
 			Value:            unusedBigInt, // amount
 			GasLimit:         5_500_000,
 			GasPrice:         unusedBigInt,
@@ -191,6 +188,13 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		if err := stateDB.Commit(); err != nil {
 			return sdkioerrors.Wrap(err, "failed to commit stateDB")
 		}
+
+
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		accountkeeper.SetAccount(ctx, acc)
 	}
 
 	return nil
