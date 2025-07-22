@@ -1,5 +1,6 @@
 import { wnibiCaller } from "@nibiruchain/evm-core"
 import {
+  ethers,
   Contract,
   ContractFactory,
   ContractTransactionResponse,
@@ -103,17 +104,30 @@ export const deployContractWNIBI = async (): Promise<{
   return { contract: contract as unknown as WNIBI & DeploymentTx }
 }
 
-export const getWNIBIContract = (CONTRACT_ADDRESS): WNIBI => {
-  const { abi } = WNIBI_JSON;
-  const contract = new Contract(CONTRACT_ADDRESS, abi, account);
-  return contract as unknown as WNIBI;
-};
+export const deployContractWNIBIIfNeeded = async (
+  maybeAddress?: string
+): Promise<{
+  contract: WNIBI & DeploymentTx
+}> => {
+  const { abi, bytecode } = WNIBI_JSON
+  const factory = new ContractFactory(abi, bytecode, account)
 
-export const getWNIBIContract2 = (CONTRACT_ADDRESS): WNIBI => {
-  const { abi } = WNIBI_JSON;
-  const contract = new Contract(CONTRACT_ADDRESS, abi, account2);
-  return contract as unknown as WNIBI;
-};
+  let contract: ethers.Contract
+
+  if (maybeAddress) {
+    const code = await account.provider.getCode(maybeAddress)
+    if (code !== "0x") {
+      // Contract already deployed
+      console.log(`Contract already deployed at ${maybeAddress}`)
+      contract = new ethers.Contract(maybeAddress, abi, account)
+      return { contract: contract as unknown as WNIBI & DeploymentTx }
+    }
+  }
+
+  contract = (await factory.deploy()) as ethers.Contract
+  await contract.waitForDeployment()
+  return { contract: contract as unknown as WNIBI & DeploymentTx }
+}
 
 export const numberToHex = (num: Number) => {
   return "0x" + num.toString(16)

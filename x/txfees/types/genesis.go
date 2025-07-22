@@ -1,6 +1,11 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+)
 
 // DefaultGenesis returns the default txfee genesis state.
 func DefaultGenesis() *GenesisState {
@@ -21,9 +26,9 @@ func (gs GenesisState) Validate() error {
 	}
 
 	for _, feeToken := range gs.Feetokens {
-		err := sdk.ValidateDenom(feeToken.Denom)
-		if err != nil {
-			return err
+		ok := gethcommon.IsHexAddress(feeToken.Denom)
+		if !ok {
+			return fmt.Errorf("invalid fee token denom %s: must be a valid hex address", feeToken.Denom)
 		}
 	}
 

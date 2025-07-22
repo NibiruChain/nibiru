@@ -15,6 +15,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
@@ -177,7 +178,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		}()
 		evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-		_, resp, err := ek.ERC20().Transfer(to, from, addr, amount, ctx, evmObj)
+		_, resp, err := ek.ERC20().Transfer(to, from, addr, evm.NativeToWei(amount), ctx, evmObj)
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
 		}
@@ -188,7 +189,6 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		if err := stateDB.Commit(); err != nil {
 			return sdkioerrors.Wrap(err, "failed to commit stateDB")
 		}
-
 
 		if err := acc.SetSequence(nonce); err != nil {
 			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)

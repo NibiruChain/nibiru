@@ -82,7 +82,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 		balanceWei := evm.NativeToWei(acct.BalanceNative.ToBig())
 		if balanceWei.Cmp(cost) >= 0 {
-			canCover = true
+			return next(ctx, tx, simulate)
 		}
 
 		// check whether the sender has enough balance to pay for the transaction cost in alternative token

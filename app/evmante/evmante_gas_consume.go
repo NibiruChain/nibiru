@@ -212,14 +212,11 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 			)
 		}
 		// Get the first token that have enough amount
-		if out.Cmp(fees[0].Amount.BigInt()) > 0 {
+		if out.Cmp(evm.NativeToWei(fees[0].Amount.BigInt())) > 0 {
 			unusedBigInt := big.NewInt(0)
 			// A random account
 			// TODO: change to another account so that we can swap to Nibi in the future
 			addr := gethcommon.HexToAddress("0x4675eAE0Cc880F0E0A0D130e6619Cef08012EE65")
-			if err != nil {
-				return fmt.Errorf("failed to parse address: %w", err)
-			}
 
 			input, err := embeds.SmartContract_WNIBI.ABI.Pack(
 				"transfer", addr, fees[0].Amount.BigInt(),
@@ -244,7 +241,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 				SkipFromEOACheck: false,
 			}
 			evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-			_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), addr, fees[0].Amount.BigInt(), ctx, evmObj)
+			_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), addr, evm.NativeToWei(fees[0].Amount.BigInt()), ctx, evmObj)
 			if err != nil {
 				return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
 			}
