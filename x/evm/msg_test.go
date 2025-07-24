@@ -1002,10 +1002,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 	validErc20Addr := "0x1111111111111111122222222222222222222222"
 
 	testCases := []struct {
-		name      string
-		msg       *evm.MsgConvertEvmToCoin
-		expErr    bool
-		errMsg    string
+		name   string
+		msg    *evm.MsgConvertEvmToCoin
+		expErr bool
+		errMsg string
 	}{
 		{
 			name: "valid message",

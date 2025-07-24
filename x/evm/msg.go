@@ -534,19 +534,19 @@ func (m *MsgConvertEvmToCoin) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender address: %w", err)
 	}
-	
+
 	if _, err := sdk.AccAddressFromBech32(m.ToAddress); err != nil {
 		return fmt.Errorf("invalid to_address: %w", err)
 	}
-	
+
 	if m.Erc20ContractAddress.Address == (common.Address{}) {
 		return fmt.Errorf("empty erc20_contract_address")
 	}
-	
+
 	if m.Amount.IsNil() || !m.Amount.IsPositive() {
 		return fmt.Errorf("amount must be positive")
 	}
-	
+
 	return nil
 }
 
