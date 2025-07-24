@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
+	servercmtlog "github.com/cosmos/cosmos-sdk/server/log"
 
 	"github.com/ethereum/go-ethereum/rpc"
 
@@ -57,13 +58,13 @@ func init() {
 				{
 					Namespace: NamespaceEth,
 					Version:   apiVersion,
-					Service:   NewImplEthAPI(ctx.Logger, evmBackend),
+					Service:   NewImplEthAPI(servercmtlog.CometLoggerWrapper{Logger: ctx.Logger}, evmBackend),
 					Public:    true,
 				},
 				{
 					Namespace: NamespaceEth,
 					Version:   apiVersion,
-					Service:   NewImplFiltersAPI(ctx.Logger, clientCtx, tmWSClient, evmBackend),
+					Service:   NewImplFiltersAPI(servercmtlog.CometLoggerWrapper{Logger: ctx.Logger}, clientCtx, tmWSClient, evmBackend),
 					Public:    true,
 				},
 			}
@@ -93,7 +94,7 @@ func init() {
 				{
 					Namespace: NamespaceTxPool,
 					Version:   apiVersion,
-					Service:   NewImplTxPoolAPI(ctx.Logger),
+					Service:   NewImplTxPoolAPI(servercmtlog.CometLoggerWrapper{Logger: ctx.Logger}),
 					Public:    true,
 				},
 			}

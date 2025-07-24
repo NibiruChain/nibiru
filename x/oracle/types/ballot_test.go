@@ -132,7 +132,9 @@ func TestPBPower(t *testing.T) {
 	totalPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
-		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
+		validator, err := sk.Validator(ctx, valAccAddrs[i])
+		require.NoError(t, err)
+		power := validator.GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewExchangeRateVote(
 			sdkmath.LegacyZeroDec(),
 			asset.Registry.Pair(denoms.ETH, denoms.NUSD),

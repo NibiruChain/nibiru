@@ -278,6 +278,13 @@ func (k Keeper) SetDenomMetadata(
 func (k Keeper) BurnNative(
 	goCtx context.Context, msg *types.MsgBurnNative,
 ) (resp *types.MsgBurnNativeResponse, err error) {
+	if msg == nil {
+		return resp, errNilMsg
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)

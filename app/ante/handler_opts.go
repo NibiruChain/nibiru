@@ -1,14 +1,14 @@
 package ante
 
 import (
+	"cosmossdk.io/core/store"
 	sdkioerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
@@ -23,7 +23,7 @@ type AnteHandlerOptions struct {
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
-	TxCounterStoreKey types.StoreKey
+	TxCounterStoreKey store.KVStoreService
 	WasmConfig        *wasmtypes.WasmConfig
 	MaxTxGasWanted    uint64
 }
