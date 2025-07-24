@@ -66,5 +66,17 @@
     "displayName": "MagicLP MIM/USDC.e",
     "symbol": "MagicLP",
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_mim_usdc.png"
+  },
+  {
+    "contractAddr": "0xf4e097E36d2064E2bDCA96e60439f3A369522003",
+    "displayName": "USDa (Avalon Finance)",
+    "symbol": "USDa",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_usda-avalon.png"
+  },
+  {
+    "contractAddr": "0x84f682626302EA7BCA2A7c338b84863292131319",
+    "displayName": "sUSDa (Avalon Finance)",
+    "symbol": "sUSDa",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_susda-avalon.png"
   }
 ]
