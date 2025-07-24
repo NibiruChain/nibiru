@@ -3791,7 +3791,7 @@ type Params struct {
 	// VoteThreshold specifies the minimum proportion of votes that must be
 	// received for a ballot to pass.
 	VoteThreshold string `protobuf:"bytes,2,opt,name=vote_threshold,json=voteThreshold,proto3" json:"vote_threshold,omitempty"`
-	// RewardBand defines a maxium divergence that a price vote can have from the
+	// RewardBand defines a maximum divergence that a price vote can have from the
 	// weighted median in the ballot. If a vote lies within the valid range
 	// defined by:
 	//
