@@ -901,7 +901,30 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		k.Bank.StateDB = nil
 	}()
 
-	// 1 | Transfer ERC20 tokens from sender to EVM module
+	// 1 | Check approval and transfer ERC20 tokens from sender to EVM module
+	approvalInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("allowance", senderEthAddr, evm.EVM_MODULE_ADDRESS)
+	if err != nil {
+		return nil, err
+	}
+
+	approvalResp, err := k.CallContractWithInput(
+		ctx,
+		k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB),
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Addr,
+		true, /*commit*/
+		approvalInput,
+		Erc20GasLimitExecute,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	approvedAmount := new(big.Int)
+	approvedAmount.SetBytes(approvalResp.ReturnData)
+	if approvedAmount.Cmp(amount) < 0 {
+		return nil, fmt.Errorf("insufficient approval for transferFrom: approved %s, required %s", approvedAmount.String(), amount.String())
+	}
 	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transferFrom", senderEthAddr, evm.EVM_MODULE_ADDRESS, amount)
 	if err != nil {
 		return nil, err
