@@ -47,6 +47,10 @@ that checks if we updated the changelog. This is a convention from the [keep a
 changelog format](https://keepachangelog.com/en/1.0.0/).  
 See https://github.com/dangoslen/changelog-enforcer.
 -->
+
+- [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
+- [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
+
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
 - [#2311](https://github.com/NibiruChain/nibiru/pull/2311) - refactor: use Go's built-in min and max functions to simplify logic
