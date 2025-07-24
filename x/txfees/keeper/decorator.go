@@ -124,29 +124,27 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		return err
 	}
 
-	feeTokens := txFeesKeeper.GetFeeTokens(ctx)
+	feeToken, err := txFeesKeeper.GetFeeToken(ctx)
+	if err != nil {
+		return err
+	}
 
 	if fees[0].Denom == baseDenom {
 		err := bankKeeper.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), types.FeeCollectorName, fees)
 		if err != nil {
-			return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+			return sdkioerrors.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
 		}
 	} else {
-		// A random account
-		// TODO: change to another account so that we can swap to Nibi in the future
-		addr := gethcommon.HexToAddress("0x4675eAE0Cc880F0E0A0D130e6619Cef08012EE65")
-		if err != nil {
-			return fmt.Errorf("failed to parse address: %w", err)
-		}
+		feeCollector := eth.NibiruAddrToEthAddr(accountkeeper.GetModuleAddress(types.ModuleName))
 
 		amount := fees[0].Amount.BigInt()
 
 		unusedBigInt := big.NewInt(0)
-		to := gethcommon.HexToAddress(feeTokens[0].Denom)
+		to := gethcommon.HexToAddress(feeToken.Address)
 		from := eth.NibiruAddrToEthAddr(acc.GetAddress())
 
 		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
-			"transfer", addr, amount,
+			"transfer", feeCollector, amount,
 		)
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
@@ -178,12 +176,12 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		}()
 		evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-		_, resp, err := ek.ERC20().Transfer(to, from, addr, evm.NativeToWei(amount), ctx, evmObj)
+		_, resp, err := ek.ERC20().Transfer(to, from, feeCollector, evm.NativeToWei(amount), ctx, evmObj)
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
 		}
 		if resp.Failed() {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
+			return fmt.Errorf("failed to call WNIBI contract transfer with VM error: %s", resp.VmError)
 		}
 
 		if err := stateDB.Commit(); err != nil {

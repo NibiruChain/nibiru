@@ -33,6 +33,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/txfees/module"
+	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/cli"
 )
 
@@ -66,12 +67,10 @@ func (AppModuleBasic) Name() string {
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterLegacyAminoCodec(cdc)
 }
 
 // RegisterInterfaces registers the module's interface types.
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
-	types.RegisterInterfaces(reg)
 }
 
 // DefaultGenesis returns the txfees module's default genesis state.
@@ -96,7 +95,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the txfees module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return nil
 }
 
 // GetQueryCmd returns the txfees module's root query command.
@@ -139,7 +138,6 @@ func (AppModule) QuerierRoute() string { return "" }
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(&am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
 }
 
@@ -198,7 +196,7 @@ type TxFeesInputs struct {
 
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    types.BankKeeper
-	DistrKeeper   types.DistributionKeeper
+	EvmKeeper     *evmkeeper.Keeper
 }
 
 type TxFeesOutputs struct {
@@ -210,7 +208,7 @@ type TxFeesOutputs struct {
 }
 
 func ProvideModule(in TxFeesInputs) TxFeesOutputs {
-	k := keeper.NewKeeper(in.AccountKeeper, in.BankKeeper, in.Key, in.DistrKeeper)
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.EvmKeeper)
 
 	m := NewAppModule(k)
 

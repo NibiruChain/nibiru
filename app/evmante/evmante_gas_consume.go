@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -202,64 +203,63 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	}()
 	evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-	feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
-	for _, feeToken := range feeTokens {
-		out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeTokens[0].Denom), feePayerAddr, ctx, evmObj)
+	feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to get fee token")
+	}
+	out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeToken.Address), feePayerAddr, ctx, evmObj)
+	if err != nil {
+		return sdkioerrors.Wrapf(
+			err, "failed to get balance of fee payer %s for token %s",
+			feePayerAddr.String(), feeToken.Address,
+		)
+	}
+	// Get the first token that have enough amount
+	if out.Cmp(evm.NativeToWei(fees[0].Amount.BigInt())) > 0 {
+		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
+
+		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
+			"transfer", feeCollector, fees[0].Amount.BigInt(),
+		)
 		if err != nil {
-			return sdkioerrors.Wrapf(
-				err, "failed to get balance of fee payer %s for token %s",
-				feePayerAddr.String(), feeToken.Denom,
-			)
+			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
 		}
-		// Get the first token that have enough amount
-		if out.Cmp(evm.NativeToWei(fees[0].Amount.BigInt())) > 0 {
-			unusedBigInt := big.NewInt(0)
-			// A random account
-			// TODO: change to another account so that we can swap to Nibi in the future
-			addr := gethcommon.HexToAddress("0x4675eAE0Cc880F0E0A0D130e6619Cef08012EE65")
-
-			input, err := embeds.SmartContract_WNIBI.ABI.Pack(
-				"transfer", addr, fees[0].Amount.BigInt(),
-			)
-			if err != nil {
-				return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
-			}
-			to := gethcommon.HexToAddress(feeTokens[0].Denom)
-			nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
-			evmMsg := core.Message{
-				To:               &to,
-				From:             gethcommon.Address(gethcommon.FromHex(msgEthTx.From)),
-				Nonce:            anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr),
-				Value:            unusedBigInt, // amount
-				GasLimit:         5_500_000,
-				GasPrice:         unusedBigInt,
-				GasFeeCap:        unusedBigInt,
-				GasTipCap:        unusedBigInt,
-				Data:             input,
-				AccessList:       gethcore.AccessList{},
-				SkipNonceChecks:  false,
-				SkipFromEOACheck: false,
-			}
-			evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-			_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), addr, evm.NativeToWei(fees[0].Amount.BigInt()), ctx, evmObj)
-			if err != nil {
-				return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
-			}
-			if resp.Failed() {
-				return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
-			}
-			if err := stateDB.Commit(); err != nil {
-				return sdkioerrors.Wrap(err, "failed to commit stateDB")
-			}
-
-			acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
-			if err := acc.SetSequence(nonce); err != nil {
-				return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
-			}
-
-			anteDec.accountKeeper.SetAccount(ctx, acc)
-			return nil
+		to := gethcommon.HexToAddress(feeToken.Address)
+		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
+		unusedBigInt := big.NewInt(0)
+		evmMsg := core.Message{
+			To:               &to,
+			From:             gethcommon.Address(gethcommon.FromHex(msgEthTx.From)),
+			Nonce:            anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr),
+			Value:            unusedBigInt, // amount
+			GasLimit:         5_500_000,
+			GasPrice:         unusedBigInt,
+			GasFeeCap:        unusedBigInt,
+			GasTipCap:        unusedBigInt,
+			Data:             input,
+			AccessList:       gethcore.AccessList{},
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
 		}
+		evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, evm.NativeToWei(fees[0].Amount.BigInt()), ctx, evmObj)
+		if err != nil {
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
+		}
+		if resp.Failed() {
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
+		}
+		if err := stateDB.Commit(); err != nil {
+			return sdkioerrors.Wrap(err, "failed to commit stateDB")
+		}
+
+		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
 	}
 
 	return fmt.Errorf(

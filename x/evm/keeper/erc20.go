@@ -28,6 +28,11 @@ const (
 	Erc20GasLimitExecute uint64 = 200_000
 )
 
+func GetCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
+	return getCallGasWithLimit(ctx, gasLimit)
+}
+
+
 // getCallGas returns the gas limit for a call to an ERC20 contract following 63/64 rule (EIP-150)
 // protection against recursive calls ERC20 -> precompile -> ERC20.
 func getCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {

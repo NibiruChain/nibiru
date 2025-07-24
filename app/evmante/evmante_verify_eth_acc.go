@@ -96,20 +96,23 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}()
 
 		evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-		feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
-		for _, feeToken := range feeTokens {
-			out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeTokens[0].Denom), fromAddr, ctx, evmObj)
-			if err != nil {
-				return ctx, sdkioerrors.Wrapf(
-					err, "failed to get balance of fee payer %s for token %s",
-					fromAddr.String(), feeToken.Denom,
-				)
-			}
-			// Get the first token that have enough amount
-			if out.Cmp(txData.Cost()) >= 0 {
-				canCover = true
-			}
+		feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx)
+		if err != nil {
+			return ctx, sdkioerrors.Wrap(err, "failed to get fee token")
 		}
+
+		out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeToken.Address), fromAddr, ctx, evmObj)
+		if err != nil {
+			return ctx, sdkioerrors.Wrapf(
+				err, "failed to get balance of fee payer %s for token %s",
+				fromAddr.String(), feeToken.Address,
+			)
+		}
+		// Get the first token that have enough amount
+		if out.Cmp(txData.Cost()) >= 0 {
+			canCover = true
+		}
+
 		if !canCover {
 			return ctx, sdkioerrors.Wrapf(
 				sdkerrors.ErrInsufficientFunds,

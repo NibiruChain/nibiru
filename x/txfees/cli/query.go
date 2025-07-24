@@ -25,7 +25,7 @@ func GetQueryCmd() *cobra.Command {
 
 	// Add subcommands
 	cmds := []*cobra.Command{
-		GetCmdFeeTokens(),
+		GetCmdFeeToken(),
 		GetCmdBaseDenom(),
 	}
 	for _, cmd := range cmds {
@@ -35,17 +35,16 @@ func GetQueryCmd() *cobra.Command {
 
 }
 
-func GetCmdFeeTokens() *cobra.Command {
+func GetCmdFeeToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fee-tokens",
-		Short: "Query txfees viable feetokens",
+		Use:   "fee-token",
+		Short: "Query txfees viable feetoken",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query txfees viable feetokens.
+			fmt.Sprintf(`Query txfees viable feetoken.
 
 Examples:
 $ %s query %s fee-tokens
 `,
-				version.AppName, types.ModuleName,
 				version.AppName, types.ModuleName,
 			),
 		),
@@ -57,7 +56,7 @@ $ %s query %s fee-tokens
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.FeeTokens(cmd.Context(), &types.QueryFeeTokensRequest{})
+			res, err := queryClient.FeeToken(cmd.Context(), &types.QueryFeeTokenRequest{})
 			if err != nil {
 				return err
 			}

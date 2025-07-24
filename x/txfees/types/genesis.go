@@ -11,8 +11,7 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Basedenom: sdk.DefaultBondDenom,
-		Feetokens: []FeeToken{},
-		Params:    DefaultParams(),
+		Feetoken:  FeeToken{},
 	}
 }
 
@@ -25,15 +24,9 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	for _, feeToken := range gs.Feetokens {
-		ok := gethcommon.IsHexAddress(feeToken.Denom)
-		if !ok {
-			return fmt.Errorf("invalid fee token denom %s: must be a valid hex address", feeToken.Denom)
-		}
-	}
-
-	if err := gs.Params.Validate(); err != nil {
-		return err
+	ok := gethcommon.IsHexAddress(gs.Feetoken.Address)
+	if !ok {
+		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", gs.Feetoken.Address)
 	}
 
 	return nil

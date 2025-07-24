@@ -16,23 +16,23 @@ import (
 )
 
 var (
-	md_QueryFeeTokensRequest protoreflect.MessageDescriptor
+	md_QueryFeeTokenRequest protoreflect.MessageDescriptor
 )
 
 func init() {
 	file_nibiru_txfees_v1_query_proto_init()
-	md_QueryFeeTokensRequest = File_nibiru_txfees_v1_query_proto.Messages().ByName("QueryFeeTokensRequest")
+	md_QueryFeeTokenRequest = File_nibiru_txfees_v1_query_proto.Messages().ByName("QueryFeeTokenRequest")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryFeeTokensRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryFeeTokenRequest)(nil)
 
-type fastReflection_QueryFeeTokensRequest QueryFeeTokensRequest
+type fastReflection_QueryFeeTokenRequest QueryFeeTokenRequest
 
-func (x *QueryFeeTokensRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryFeeTokensRequest)(x)
+func (x *QueryFeeTokenRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryFeeTokenRequest)(x)
 }
 
-func (x *QueryFeeTokensRequest) slowProtoReflect() protoreflect.Message {
+func (x *QueryFeeTokenRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_nibiru_txfees_v1_query_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -44,43 +44,43 @@ func (x *QueryFeeTokensRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryFeeTokensRequest_messageType fastReflection_QueryFeeTokensRequest_messageType
-var _ protoreflect.MessageType = fastReflection_QueryFeeTokensRequest_messageType{}
+var _fastReflection_QueryFeeTokenRequest_messageType fastReflection_QueryFeeTokenRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryFeeTokenRequest_messageType{}
 
-type fastReflection_QueryFeeTokensRequest_messageType struct{}
+type fastReflection_QueryFeeTokenRequest_messageType struct{}
 
-func (x fastReflection_QueryFeeTokensRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryFeeTokensRequest)(nil)
+func (x fastReflection_QueryFeeTokenRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryFeeTokenRequest)(nil)
 }
-func (x fastReflection_QueryFeeTokensRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryFeeTokensRequest)
+func (x fastReflection_QueryFeeTokenRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryFeeTokenRequest)
 }
-func (x fastReflection_QueryFeeTokensRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryFeeTokensRequest
+func (x fastReflection_QueryFeeTokenRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryFeeTokenRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryFeeTokensRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryFeeTokensRequest
+func (x *fastReflection_QueryFeeTokenRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryFeeTokenRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryFeeTokensRequest) Type() protoreflect.MessageType {
-	return _fastReflection_QueryFeeTokensRequest_messageType
+func (x *fastReflection_QueryFeeTokenRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryFeeTokenRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryFeeTokensRequest) New() protoreflect.Message {
-	return new(fastReflection_QueryFeeTokensRequest)
+func (x *fastReflection_QueryFeeTokenRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryFeeTokenRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryFeeTokensRequest) Interface() protoreflect.ProtoMessage {
-	return (*QueryFeeTokensRequest)(x)
+func (x *fastReflection_QueryFeeTokenRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryFeeTokenRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -88,7 +88,7 @@ func (x *fastReflection_QueryFeeTokensRequest) Interface() protoreflect.ProtoMes
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryFeeTokensRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_QueryFeeTokenRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 }
 
 // Has reports whether a field is populated.
@@ -102,13 +102,13 @@ func (x *fastReflection_QueryFeeTokensRequest) Range(f func(protoreflect.FieldDe
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryFeeTokensRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryFeeTokenRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -118,13 +118,13 @@ func (x *fastReflection_QueryFeeTokensRequest) Has(fd protoreflect.FieldDescript
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryFeeTokenRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -134,13 +134,13 @@ func (x *fastReflection_QueryFeeTokensRequest) Clear(fd protoreflect.FieldDescri
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryFeeTokensRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -154,13 +154,13 @@ func (x *fastReflection_QueryFeeTokensRequest) Get(descriptor protoreflect.Field
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryFeeTokenRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -174,36 +174,36 @@ func (x *fastReflection_QueryFeeTokensRequest) Set(fd protoreflect.FieldDescript
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryFeeTokensRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenRequest"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryFeeTokensRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryFeeTokenRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in nibiru.txfees.v1.QueryFeeTokensRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in nibiru.txfees.v1.QueryFeeTokenRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -211,7 +211,7 @@ func (x *fastReflection_QueryFeeTokensRequest) WhichOneof(d protoreflect.OneofDe
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryFeeTokensRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryFeeTokenRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -222,7 +222,7 @@ func (x *fastReflection_QueryFeeTokensRequest) GetUnknown() protoreflect.RawFiel
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryFeeTokenRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -234,7 +234,7 @@ func (x *fastReflection_QueryFeeTokensRequest) SetUnknown(fields protoreflect.Ra
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryFeeTokensRequest) IsValid() bool {
+func (x *fastReflection_QueryFeeTokenRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -244,9 +244,9 @@ func (x *fastReflection_QueryFeeTokensRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryFeeTokensRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryFeeTokenRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryFeeTokensRequest)
+		x := input.Message.Interface().(*QueryFeeTokenRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -268,7 +268,7 @@ func (x *fastReflection_QueryFeeTokensRequest) ProtoMethods() *protoiface.Method
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryFeeTokensRequest)
+		x := input.Message.Interface().(*QueryFeeTokenRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -298,7 +298,7 @@ func (x *fastReflection_QueryFeeTokensRequest) ProtoMethods() *protoiface.Method
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryFeeTokensRequest)
+		x := input.Message.Interface().(*QueryFeeTokenRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -330,10 +330,10 @@ func (x *fastReflection_QueryFeeTokensRequest) ProtoMethods() *protoiface.Method
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokensRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokenRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokensRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokenRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			default:
@@ -371,77 +371,26 @@ func (x *fastReflection_QueryFeeTokensRequest) ProtoMethods() *protoiface.Method
 	}
 }
 
-var _ protoreflect.List = (*_QueryFeeTokensResponse_1_list)(nil)
-
-type _QueryFeeTokensResponse_1_list struct {
-	list *[]*FeeToken
-}
-
-func (x *_QueryFeeTokensResponse_1_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_QueryFeeTokensResponse_1_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
-}
-
-func (x *_QueryFeeTokensResponse_1_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*FeeToken)
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_QueryFeeTokensResponse_1_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*FeeToken)
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_QueryFeeTokensResponse_1_list) AppendMutable() protoreflect.Value {
-	v := new(FeeToken)
-	*x.list = append(*x.list, v)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_QueryFeeTokensResponse_1_list) Truncate(n int) {
-	for i := n; i < len(*x.list); i++ {
-		(*x.list)[i] = nil
-	}
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_QueryFeeTokensResponse_1_list) NewElement() protoreflect.Value {
-	v := new(FeeToken)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_QueryFeeTokensResponse_1_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
-	md_QueryFeeTokensResponse            protoreflect.MessageDescriptor
-	fd_QueryFeeTokensResponse_fee_tokens protoreflect.FieldDescriptor
+	md_QueryFeeTokenResponse           protoreflect.MessageDescriptor
+	fd_QueryFeeTokenResponse_fee_token protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_nibiru_txfees_v1_query_proto_init()
-	md_QueryFeeTokensResponse = File_nibiru_txfees_v1_query_proto.Messages().ByName("QueryFeeTokensResponse")
-	fd_QueryFeeTokensResponse_fee_tokens = md_QueryFeeTokensResponse.Fields().ByName("fee_tokens")
+	md_QueryFeeTokenResponse = File_nibiru_txfees_v1_query_proto.Messages().ByName("QueryFeeTokenResponse")
+	fd_QueryFeeTokenResponse_fee_token = md_QueryFeeTokenResponse.Fields().ByName("fee_token")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryFeeTokensResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryFeeTokenResponse)(nil)
 
-type fastReflection_QueryFeeTokensResponse QueryFeeTokensResponse
+type fastReflection_QueryFeeTokenResponse QueryFeeTokenResponse
 
-func (x *QueryFeeTokensResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryFeeTokensResponse)(x)
+func (x *QueryFeeTokenResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryFeeTokenResponse)(x)
 }
 
-func (x *QueryFeeTokensResponse) slowProtoReflect() protoreflect.Message {
+func (x *QueryFeeTokenResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_nibiru_txfees_v1_query_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -453,43 +402,43 @@ func (x *QueryFeeTokensResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryFeeTokensResponse_messageType fastReflection_QueryFeeTokensResponse_messageType
-var _ protoreflect.MessageType = fastReflection_QueryFeeTokensResponse_messageType{}
+var _fastReflection_QueryFeeTokenResponse_messageType fastReflection_QueryFeeTokenResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryFeeTokenResponse_messageType{}
 
-type fastReflection_QueryFeeTokensResponse_messageType struct{}
+type fastReflection_QueryFeeTokenResponse_messageType struct{}
 
-func (x fastReflection_QueryFeeTokensResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryFeeTokensResponse)(nil)
+func (x fastReflection_QueryFeeTokenResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryFeeTokenResponse)(nil)
 }
-func (x fastReflection_QueryFeeTokensResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryFeeTokensResponse)
+func (x fastReflection_QueryFeeTokenResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryFeeTokenResponse)
 }
-func (x fastReflection_QueryFeeTokensResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryFeeTokensResponse
+func (x fastReflection_QueryFeeTokenResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryFeeTokenResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryFeeTokensResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryFeeTokensResponse
+func (x *fastReflection_QueryFeeTokenResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryFeeTokenResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryFeeTokensResponse) Type() protoreflect.MessageType {
-	return _fastReflection_QueryFeeTokensResponse_messageType
+func (x *fastReflection_QueryFeeTokenResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryFeeTokenResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryFeeTokensResponse) New() protoreflect.Message {
-	return new(fastReflection_QueryFeeTokensResponse)
+func (x *fastReflection_QueryFeeTokenResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryFeeTokenResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryFeeTokensResponse) Interface() protoreflect.ProtoMessage {
-	return (*QueryFeeTokensResponse)(x)
+func (x *fastReflection_QueryFeeTokenResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryFeeTokenResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -497,10 +446,10 @@ func (x *fastReflection_QueryFeeTokensResponse) Interface() protoreflect.ProtoMe
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryFeeTokensResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.FeeTokens) != 0 {
-		value := protoreflect.ValueOfList(&_QueryFeeTokensResponse_1_list{list: &x.FeeTokens})
-		if !f(fd_QueryFeeTokensResponse_fee_tokens, value) {
+func (x *fastReflection_QueryFeeTokenResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.FeeToken != nil {
+		value := protoreflect.ValueOfMessage(x.FeeToken.ProtoReflect())
+		if !f(fd_QueryFeeTokenResponse_fee_token, value) {
 			return
 		}
 	}
@@ -517,15 +466,15 @@ func (x *fastReflection_QueryFeeTokensResponse) Range(f func(protoreflect.FieldD
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryFeeTokensResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryFeeTokenResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		return len(x.FeeTokens) != 0
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		return x.FeeToken != nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -535,15 +484,15 @@ func (x *fastReflection_QueryFeeTokensResponse) Has(fd protoreflect.FieldDescrip
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryFeeTokenResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		x.FeeTokens = nil
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		x.FeeToken = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -553,19 +502,16 @@ func (x *fastReflection_QueryFeeTokensResponse) Clear(fd protoreflect.FieldDescr
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryFeeTokensResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		if len(x.FeeTokens) == 0 {
-			return protoreflect.ValueOfList(&_QueryFeeTokensResponse_1_list{})
-		}
-		listValue := &_QueryFeeTokensResponse_1_list{list: &x.FeeTokens}
-		return protoreflect.ValueOfList(listValue)
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		value := x.FeeToken
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -579,17 +525,15 @@ func (x *fastReflection_QueryFeeTokensResponse) Get(descriptor protoreflect.Fiel
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryFeeTokenResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		lv := value.List()
-		clv := lv.(*_QueryFeeTokensResponse_1_list)
-		x.FeeTokens = *clv.list
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		x.FeeToken = value.Message().Interface().(*FeeToken)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -603,45 +547,44 @@ func (x *fastReflection_QueryFeeTokensResponse) Set(fd protoreflect.FieldDescrip
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		if x.FeeTokens == nil {
-			x.FeeTokens = []*FeeToken{}
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		if x.FeeToken == nil {
+			x.FeeToken = new(FeeToken)
 		}
-		value := &_QueryFeeTokensResponse_1_list{list: &x.FeeTokens}
-		return protoreflect.ValueOfList(value)
+		return protoreflect.ValueOfMessage(x.FeeToken.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryFeeTokensResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryFeeTokenResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens":
-		list := []*FeeToken{}
-		return protoreflect.ValueOfList(&_QueryFeeTokensResponse_1_list{list: &list})
+	case "nibiru.txfees.v1.QueryFeeTokenResponse.fee_token":
+		m := new(FeeToken)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokensResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.QueryFeeTokenResponse"))
 		}
-		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokensResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message nibiru.txfees.v1.QueryFeeTokenResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryFeeTokensResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryFeeTokenResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in nibiru.txfees.v1.QueryFeeTokensResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in nibiru.txfees.v1.QueryFeeTokenResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -649,7 +592,7 @@ func (x *fastReflection_QueryFeeTokensResponse) WhichOneof(d protoreflect.OneofD
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryFeeTokensResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryFeeTokenResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -660,7 +603,7 @@ func (x *fastReflection_QueryFeeTokensResponse) GetUnknown() protoreflect.RawFie
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryFeeTokensResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryFeeTokenResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -672,7 +615,7 @@ func (x *fastReflection_QueryFeeTokensResponse) SetUnknown(fields protoreflect.R
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryFeeTokensResponse) IsValid() bool {
+func (x *fastReflection_QueryFeeTokenResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -682,9 +625,9 @@ func (x *fastReflection_QueryFeeTokensResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryFeeTokenResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryFeeTokensResponse)
+		x := input.Message.Interface().(*QueryFeeTokenResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -696,11 +639,9 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 		var n int
 		var l int
 		_ = l
-		if len(x.FeeTokens) > 0 {
-			for _, e := range x.FeeTokens {
-				l = options.Size(e)
-				n += 1 + l + runtime.Sov(uint64(l))
-			}
+		if x.FeeToken != nil {
+			l = options.Size(x.FeeToken)
+			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -712,7 +653,7 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryFeeTokensResponse)
+		x := input.Message.Interface().(*QueryFeeTokenResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -731,21 +672,19 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.FeeTokens) > 0 {
-			for iNdEx := len(x.FeeTokens) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.FeeTokens[iNdEx])
-				if err != nil {
-					return protoiface.MarshalOutput{
-						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-						Buf:               input.Buf,
-					}, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
-				i--
-				dAtA[i] = 0xa
+		if x.FeeToken != nil {
+			encoded, err := options.Marshal(x.FeeToken)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
 			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0xa
 		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
@@ -758,7 +697,7 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryFeeTokensResponse)
+		x := input.Message.Interface().(*QueryFeeTokenResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -790,15 +729,15 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokensResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokenResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokensResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryFeeTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field FeeTokens", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field FeeToken", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -825,8 +764,10 @@ func (x *fastReflection_QueryFeeTokensResponse) ProtoMethods() *protoiface.Metho
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.FeeTokens = append(x.FeeTokens, &FeeToken{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.FeeTokens[len(x.FeeTokens)-1]); err != nil {
+				if x.FeeToken == nil {
+					x.FeeToken = &FeeToken{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.FeeToken); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -1654,14 +1595,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type QueryFeeTokensRequest struct {
+type QueryFeeTokenRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *QueryFeeTokensRequest) Reset() {
-	*x = QueryFeeTokensRequest{}
+func (x *QueryFeeTokenRequest) Reset() {
+	*x = QueryFeeTokenRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_nibiru_txfees_v1_query_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1669,27 +1610,27 @@ func (x *QueryFeeTokensRequest) Reset() {
 	}
 }
 
-func (x *QueryFeeTokensRequest) String() string {
+func (x *QueryFeeTokenRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryFeeTokensRequest) ProtoMessage() {}
+func (*QueryFeeTokenRequest) ProtoMessage() {}
 
-// Deprecated: Use QueryFeeTokensRequest.ProtoReflect.Descriptor instead.
-func (*QueryFeeTokensRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryFeeTokenRequest.ProtoReflect.Descriptor instead.
+func (*QueryFeeTokenRequest) Descriptor() ([]byte, []int) {
 	return file_nibiru_txfees_v1_query_proto_rawDescGZIP(), []int{0}
 }
 
-type QueryFeeTokensResponse struct {
+type QueryFeeTokenResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeeTokens []*FeeToken `protobuf:"bytes,1,rep,name=fee_tokens,json=feeTokens,proto3" json:"fee_tokens,omitempty"`
+	FeeToken *FeeToken `protobuf:"bytes,1,opt,name=fee_token,json=feeToken,proto3" json:"fee_token,omitempty"`
 }
 
-func (x *QueryFeeTokensResponse) Reset() {
-	*x = QueryFeeTokensResponse{}
+func (x *QueryFeeTokenResponse) Reset() {
+	*x = QueryFeeTokenResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_nibiru_txfees_v1_query_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1697,20 +1638,20 @@ func (x *QueryFeeTokensResponse) Reset() {
 	}
 }
 
-func (x *QueryFeeTokensResponse) String() string {
+func (x *QueryFeeTokenResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryFeeTokensResponse) ProtoMessage() {}
+func (*QueryFeeTokenResponse) ProtoMessage() {}
 
-// Deprecated: Use QueryFeeTokensResponse.ProtoReflect.Descriptor instead.
-func (*QueryFeeTokensResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryFeeTokenResponse.ProtoReflect.Descriptor instead.
+func (*QueryFeeTokenResponse) Descriptor() ([]byte, []int) {
 	return file_nibiru_txfees_v1_query_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *QueryFeeTokensResponse) GetFeeTokens() []*FeeToken {
+func (x *QueryFeeTokenResponse) GetFeeToken() *FeeToken {
 	if x != nil {
-		return x.FeeTokens
+		return x.FeeToken
 	}
 	return nil
 }
@@ -1789,51 +1730,51 @@ var file_nibiru_txfees_v1_query_proto_rawDesc = []byte{
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66,
 	0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x66, 0x65, 0x65, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x17, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65,
-	0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x6e,
-	0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x0a, 0x66, 0x65, 0x65, 0x5f,
-	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6e,
-	0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e,
-	0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x19, 0xc8, 0xde, 0x1f, 0x00, 0xf2, 0xde,
-	0x1f, 0x11, 0x79, 0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65,
-	0x6e, 0x73, 0x22, 0x52, 0x09, 0x66, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x22, 0x17,
-	0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x4e, 0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x34, 0x0a, 0x0a, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x15, 0xf2, 0xde, 0x1f, 0x11, 0x79, 0x61, 0x6d, 0x6c, 0x3a,
-	0x22, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x22, 0x52, 0x09, 0x62, 0x61,
-	0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x32, 0x95, 0x02, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72,
-	0x79, 0x12, 0x84, 0x01, 0x0a, 0x09, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x12,
-	0x27, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e,
-	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72,
-	0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72,
-	0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x24, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1e, 0x12, 0x1c, 0x2f, 0x6e, 0x69, 0x62,
-	0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x66, 0x65,
-	0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x12, 0x84, 0x01, 0x0a, 0x09, 0x42, 0x61, 0x73,
-	0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x27, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x16, 0x0a, 0x14, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65,
+	0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x6a, 0x0a,
+	0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x09, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6e, 0x69, 0x62, 0x69,
+	0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x18, 0xc8, 0xde, 0x1f, 0x00, 0xf2, 0xde, 0x1f, 0x10, 0x79,
+	0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x52,
+	0x08, 0x66, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x17, 0x0a, 0x15, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x22, 0x4e, 0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x61, 0x73, 0x65, 0x44,
+	0x65, 0x6e, 0x6f, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34, 0x0a, 0x0a,
+	0x62, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x15, 0xf2, 0xde, 0x1f, 0x11, 0x79, 0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x62, 0x61, 0x73, 0x65,
+	0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x22, 0x52, 0x09, 0x62, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e,
+	0x6f, 0x6d, 0x32, 0x91, 0x02, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x80, 0x01, 0x0a,
+	0x08, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x26, 0x2e, 0x6e, 0x69, 0x62, 0x69,
+	0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x27, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65,
+	0x73, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x1d, 0x12, 0x1b, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65,
+	0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
+	0x84, 0x01, 0x0a, 0x09, 0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x27, 0x2e,
+	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31,
+	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e,
 	0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42,
-	0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x28, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e,
-	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x42, 0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f,
-	0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x24, 0x82, 0xd3, 0xe4, 0x93, 0x02,
-	0x1e, 0x12, 0x1c, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65,
-	0x73, 0x2f, 0x76, 0x31, 0x2f, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x42,
-	0xb0, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74,
-	0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50,
-	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64,
-	0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f,
-	0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73,
-	0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x54, 0x58, 0xaa, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72,
-	0x75, 0x2e, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69,
-	0x62, 0x69, 0x72, 0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02,
-	0x1c, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56,
-	0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12,
-	0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a,
-	0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x73, 0x65, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x24, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1e, 0x12, 0x1c, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72,
+	0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x62, 0x61, 0x73, 0x65,
+	0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x42, 0xb0, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x6e,
+	0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x42,
+	0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2a, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31,
+	0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x54, 0x58, 0xaa,
+	0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e,
+	0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x54, 0x78, 0x66, 0x65,
+	0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x54,
+	0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a, 0x54,
+	0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -1850,17 +1791,17 @@ func file_nibiru_txfees_v1_query_proto_rawDescGZIP() []byte {
 
 var file_nibiru_txfees_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_nibiru_txfees_v1_query_proto_goTypes = []interface{}{
-	(*QueryFeeTokensRequest)(nil),  // 0: nibiru.txfees.v1.QueryFeeTokensRequest
-	(*QueryFeeTokensResponse)(nil), // 1: nibiru.txfees.v1.QueryFeeTokensResponse
+	(*QueryFeeTokenRequest)(nil),   // 0: nibiru.txfees.v1.QueryFeeTokenRequest
+	(*QueryFeeTokenResponse)(nil),  // 1: nibiru.txfees.v1.QueryFeeTokenResponse
 	(*QueryBaseDenomRequest)(nil),  // 2: nibiru.txfees.v1.QueryBaseDenomRequest
 	(*QueryBaseDenomResponse)(nil), // 3: nibiru.txfees.v1.QueryBaseDenomResponse
 	(*FeeToken)(nil),               // 4: nibiru.txfees.v1.FeeToken
 }
 var file_nibiru_txfees_v1_query_proto_depIdxs = []int32{
-	4, // 0: nibiru.txfees.v1.QueryFeeTokensResponse.fee_tokens:type_name -> nibiru.txfees.v1.FeeToken
-	0, // 1: nibiru.txfees.v1.Query.FeeTokens:input_type -> nibiru.txfees.v1.QueryFeeTokensRequest
+	4, // 0: nibiru.txfees.v1.QueryFeeTokenResponse.fee_token:type_name -> nibiru.txfees.v1.FeeToken
+	0, // 1: nibiru.txfees.v1.Query.FeeToken:input_type -> nibiru.txfees.v1.QueryFeeTokenRequest
 	2, // 2: nibiru.txfees.v1.Query.BaseDenom:input_type -> nibiru.txfees.v1.QueryBaseDenomRequest
-	1, // 3: nibiru.txfees.v1.Query.FeeTokens:output_type -> nibiru.txfees.v1.QueryFeeTokensResponse
+	1, // 3: nibiru.txfees.v1.Query.FeeToken:output_type -> nibiru.txfees.v1.QueryFeeTokenResponse
 	3, // 4: nibiru.txfees.v1.Query.BaseDenom:output_type -> nibiru.txfees.v1.QueryBaseDenomResponse
 	3, // [3:5] is the sub-list for method output_type
 	1, // [1:3] is the sub-list for method input_type
@@ -1877,7 +1818,7 @@ func file_nibiru_txfees_v1_query_proto_init() {
 	file_nibiru_txfees_v1_feetoken_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_nibiru_txfees_v1_query_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryFeeTokensRequest); i {
+			switch v := v.(*QueryFeeTokenRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1889,7 +1830,7 @@ func file_nibiru_txfees_v1_query_proto_init() {
 			}
 		}
 		file_nibiru_txfees_v1_query_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryFeeTokensResponse); i {
+			switch v := v.(*QueryFeeTokenResponse); i {
 			case 0:
 				return &v.state
 			case 1:

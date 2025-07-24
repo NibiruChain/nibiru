@@ -106,6 +106,7 @@ var (
 		{Account: common.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
 		{Account: tokenfactorytypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: txfeestypes.ModuleName},
 	}
 
 	orderedModuleNames = []string{
