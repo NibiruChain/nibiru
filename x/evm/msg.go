@@ -34,6 +34,8 @@ var (
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
+	_ sdk.Msg    = &MsgConvertCoinToEvm{}
+	_ sdk.Msg    = &MsgConvertEvmToCoin{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -518,5 +520,37 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
+
+// GetSigners returns the expected signers for a MsgConvertEvmToCoin message.
+func (m MsgConvertEvmToCoin) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgConvertEvmToCoin) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return fmt.Errorf("invalid sender address: %w", err)
+	}
+	
+	if _, err := sdk.AccAddressFromBech32(m.ToAddress); err != nil {
+		return fmt.Errorf("invalid to_address: %w", err)
+	}
+	
+	if m.Erc20ContractAddress.Address == (common.Address{}) {
+		return fmt.Errorf("empty erc20_contract_address")
+	}
+	
+	if m.Amount.IsNil() || !m.Amount.IsPositive() {
+		return fmt.Errorf("amount must be positive")
+	}
+	
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgConvertEvmToCoin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
