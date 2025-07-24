@@ -165,4 +165,4 @@ jobs:
       - name: "Generate Rust proto bindings"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          bash scripts/buf.gen.rs.sh
+          bash proto/buf.gen.rs.sh
