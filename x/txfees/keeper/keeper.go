@@ -24,6 +24,8 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	evmKeeper     *evmkeeper.Keeper
+
+	authority string // authority is the x/txfees module authority, which is used to update the fee token.
 }
 
 var _ types.TxFeesKeeper = (*Keeper)(nil)
@@ -34,6 +36,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	evmKeeper *evmkeeper.Keeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		cdc:           cdc,
@@ -41,6 +44,7 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		evmKeeper:     evmKeeper,
+		authority:     authority,
 	}
 }
 
