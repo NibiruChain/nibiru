@@ -114,8 +114,6 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-
-
 # dotenv environment variable files
 .env
 .env.development.local
@@ -362,3 +360,4 @@ playwright/chrome-extensions/keplr/
 playwright/yarn.lock
 
 debug_container.dot
+CLAUDE.md
