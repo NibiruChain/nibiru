@@ -93,7 +93,13 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 	}
 }
 
-// getPairVotes returns a map of pairs and votes excluding abstained votes and votes that don't meet the threshold criteria
+// getPairVotes returns a map of pairs and votes excluding abstained votes and
+// votes that don't meet the threshold criteria
+//
+// Returns:
+//   - pairVotes: A filtered collection of valid votes that have passed all
+//     validation criteria. If an asset pair has a value in this map, it is a viable
+//     next value for the module's current exchange rate.
 func (k Keeper) getPairVotes(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
@@ -106,17 +112,25 @@ func (k Keeper) getPairVotes(
 	return pairVotes
 }
 
-// clearExchangeRates removes all exchange rates from the state
-// We remove the price for pair with expired prices or valid votes
-func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
-	params, _ := k.Params.Get(ctx)
-
+// clearExchangeRates removes all exchange rates from the state for pairs that
+// have new valid votes.
+//
+// Note that "expired" prices are not removed from state to maintain liveness of
+// the queries. This is because many downstream applications depend on the
+// exchange rate queries always returning a reasonable value.
+//
+// Args:
+//   - pairVotes: A filtered collection of valid votes that have passed all
+//     validation criteria. If an asset pair has a value in this map, it is a viable
+//     next value for the module's current exchange rate.
+//   - .
+func (k Keeper) clearExchangeRates(
+	ctx sdk.Context,
+	pairVotes map[asset.Pair]types.ExchangeRateVotes,
+) {
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		_, isValid := pairVotes[key]
-		previousExchangeRate, _ := k.ExchangeRates.Get(ctx, key)
-		isExpired := previousExchangeRate.CreatedBlock+params.ExpirationBlocks <= uint64(ctx.BlockHeight())
-
-		if isValid || isExpired {
+		_, hasValidVotes := pairVotes[key]
+		if hasValidVotes {
 			err := k.ExchangeRates.Delete(ctx, key)
 			if err != nil {
 				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)

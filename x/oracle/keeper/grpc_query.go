@@ -54,10 +54,21 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	if err != nil {
 		return nil, err
 	}
+
+	var isVintage bool // if the exchange rate has passed its expiration block
+	oracleParams, err := q.Keeper.Params.Get(ctx)
+	if err != nil {
+		isVintage = false
+	} else {
+		expirationBlock := out.CreatedBlock + oracleParams.ExpirationBlocks
+		isVintage = expirationBlock <= uint64(ctx.BlockHeight())
+	}
+
 	return &types.QueryExchangeRateResponse{
 		ExchangeRate:     out.ExchangeRate,
 		BlockTimestampMs: out.BlockTimestampMs,
 		BlockHeight:      out.CreatedBlock,
+		IsVintage:        isVintage,
 	}, nil
 }
 
