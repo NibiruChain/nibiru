@@ -25,8 +25,6 @@ type QueryClient interface {
 	// FeeToken returns the fee token address. It does not include the BaseDenom, which has its own
 	// query endpoint
 	FeeToken(ctx context.Context, in *QueryFeeTokenRequest, opts ...grpc.CallOption) (*QueryFeeTokenResponse, error)
-	// Returns a list of all base denom tokens and their corresponding pools.
-	BaseDenom(ctx context.Context, in *QueryBaseDenomRequest, opts ...grpc.CallOption) (*QueryBaseDenomResponse, error)
 }
 
 type queryClient struct {
@@ -46,15 +44,6 @@ func (c *queryClient) FeeToken(ctx context.Context, in *QueryFeeTokenRequest, op
 	return out, nil
 }
 
-func (c *queryClient) BaseDenom(ctx context.Context, in *QueryBaseDenomRequest, opts ...grpc.CallOption) (*QueryBaseDenomResponse, error) {
-	out := new(QueryBaseDenomResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.txfees.v1.Query/BaseDenom", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -62,8 +51,6 @@ type QueryServer interface {
 	// FeeToken returns the fee token address. It does not include the BaseDenom, which has its own
 	// query endpoint
 	FeeToken(context.Context, *QueryFeeTokenRequest) (*QueryFeeTokenResponse, error)
-	// Returns a list of all base denom tokens and their corresponding pools.
-	BaseDenom(context.Context, *QueryBaseDenomRequest) (*QueryBaseDenomResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -73,9 +60,6 @@ type UnimplementedQueryServer struct {
 
 func (UnimplementedQueryServer) FeeToken(context.Context, *QueryFeeTokenRequest) (*QueryFeeTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FeeToken not implemented")
-}
-func (UnimplementedQueryServer) BaseDenom(context.Context, *QueryBaseDenomRequest) (*QueryBaseDenomResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BaseDenom not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -108,24 +92,6 @@ func _Query_FeeToken_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BaseDenom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBaseDenomRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).BaseDenom(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/nibiru.txfees.v1.Query/BaseDenom",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BaseDenom(ctx, req.(*QueryBaseDenomRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,10 +102,6 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FeeToken",
 			Handler:    _Query_FeeToken_Handler,
-		},
-		{
-			MethodName: "BaseDenom",
-			Handler:    _Query_BaseDenom_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

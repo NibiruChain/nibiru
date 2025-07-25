@@ -32,8 +32,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/txfees/module"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/cli"
@@ -46,8 +44,6 @@ var (
 	_ module.AppModule           = AppModule{}
 	_ module.HasConsensusVersion = AppModule{}
 	_ module.HasServices         = AppModule{}
-
-	cachedConsParams cmtproto.ConsensusParams
 )
 
 const ModuleName = types.ModuleName
@@ -155,9 +151,6 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
-	if genState.Basedenom == "" {
-		panic("genState.Basedenom must be set for txfees")
-	}
 
 	am.keeper.InitGenesis(ctx, genState)
 

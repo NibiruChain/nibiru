@@ -110,122 +110,36 @@ func (m *QueryFeeTokenResponse) GetFeeToken() FeeToken {
 	return FeeToken{}
 }
 
-type QueryBaseDenomRequest struct {
-}
-
-func (m *QueryBaseDenomRequest) Reset()         { *m = QueryBaseDenomRequest{} }
-func (m *QueryBaseDenomRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBaseDenomRequest) ProtoMessage()    {}
-func (*QueryBaseDenomRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fd3997369341c145, []int{2}
-}
-func (m *QueryBaseDenomRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryBaseDenomRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryBaseDenomRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryBaseDenomRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBaseDenomRequest.Merge(m, src)
-}
-func (m *QueryBaseDenomRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryBaseDenomRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBaseDenomRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryBaseDenomRequest proto.InternalMessageInfo
-
-type QueryBaseDenomResponse struct {
-	BaseDenom string `protobuf:"bytes,1,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty" yaml:"base_denom"`
-}
-
-func (m *QueryBaseDenomResponse) Reset()         { *m = QueryBaseDenomResponse{} }
-func (m *QueryBaseDenomResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBaseDenomResponse) ProtoMessage()    {}
-func (*QueryBaseDenomResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fd3997369341c145, []int{3}
-}
-func (m *QueryBaseDenomResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryBaseDenomResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryBaseDenomResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryBaseDenomResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBaseDenomResponse.Merge(m, src)
-}
-func (m *QueryBaseDenomResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryBaseDenomResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBaseDenomResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryBaseDenomResponse proto.InternalMessageInfo
-
-func (m *QueryBaseDenomResponse) GetBaseDenom() string {
-	if m != nil {
-		return m.BaseDenom
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterType((*QueryFeeTokenRequest)(nil), "nibiru.txfees.v1.QueryFeeTokenRequest")
 	proto.RegisterType((*QueryFeeTokenResponse)(nil), "nibiru.txfees.v1.QueryFeeTokenResponse")
-	proto.RegisterType((*QueryBaseDenomRequest)(nil), "nibiru.txfees.v1.QueryBaseDenomRequest")
-	proto.RegisterType((*QueryBaseDenomResponse)(nil), "nibiru.txfees.v1.QueryBaseDenomResponse")
 }
 
 func init() { proto.RegisterFile("nibiru/txfees/v1/query.proto", fileDescriptor_fd3997369341c145) }
 
 var fileDescriptor_fd3997369341c145 = []byte{
-	// 400 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0xc1, 0xce, 0xd2, 0x40,
-	0x14, 0x85, 0xdb, 0x3f, 0xd1, 0xfc, 0x1d, 0x37, 0x38, 0x01, 0x24, 0x15, 0xa7, 0xa6, 0x1a, 0x65,
-	0xd5, 0x09, 0xe8, 0xca, 0x65, 0x35, 0x26, 0x6e, 0x48, 0x20, 0xae, 0xdc, 0x90, 0x56, 0x6e, 0x4b,
-	0x15, 0x3a, 0xa5, 0x33, 0x25, 0xb0, 0x33, 0xc6, 0x07, 0xd0, 0xf8, 0x52, 0x2c, 0x49, 0xdc, 0xb8,
-	0x22, 0x06, 0x7c, 0x02, 0x9e, 0xc0, 0x74, 0x3a, 0x85, 0xa4, 0x60, 0xd8, 0xb5, 0xf7, 0x9c, 0x7b,
-	0xe6, 0x9b, 0x93, 0x41, 0xed, 0x38, 0xf2, 0xa3, 0x34, 0xa3, 0x62, 0x19, 0x00, 0x70, 0xba, 0xe8,
-	0xd2, 0x79, 0x06, 0xe9, 0xca, 0x49, 0x52, 0x26, 0x18, 0xae, 0x15, 0xaa, 0x53, 0xa8, 0xce, 0xa2,
-	0x6b, 0xd6, 0x43, 0x16, 0x32, 0x29, 0xd2, 0xfc, 0xab, 0xf0, 0x99, 0xed, 0x90, 0xb1, 0x70, 0x0a,
-	0xd4, 0x4b, 0x22, 0xea, 0xc5, 0x31, 0x13, 0x9e, 0x88, 0x58, 0xcc, 0x95, 0x4a, 0x94, 0x2a, 0xff,
-	0xfc, 0x2c, 0xa0, 0xe3, 0x2c, 0x95, 0x06, 0xa5, 0x5b, 0x67, 0x0c, 0x01, 0x80, 0x60, 0x9f, 0x41,
-	0x19, 0xec, 0x26, 0xaa, 0x0f, 0x72, 0xaa, 0xb7, 0x00, 0xef, 0xf3, 0xf1, 0x10, 0xe6, 0x19, 0x70,
-	0x61, 0x7f, 0x42, 0x8d, 0xca, 0x9c, 0x27, 0x2c, 0xe6, 0x80, 0x07, 0xc8, 0x08, 0x00, 0x46, 0x32,
-	0xa3, 0xa5, 0x3f, 0xd6, 0x3b, 0xf7, 0x7a, 0xa6, 0x53, 0xbd, 0x8b, 0x53, 0xae, 0xb9, 0xad, 0xf5,
-	0xd6, 0xd2, 0x0e, 0x5b, 0xab, 0xb6, 0xf2, 0x66, 0xd3, 0x57, 0xf6, 0x71, 0xd5, 0x1e, 0xde, 0x06,
-	0xca, 0x63, 0x3f, 0x50, 0x67, 0xb9, 0x1e, 0x87, 0x37, 0x10, 0xb3, 0x59, 0x09, 0xd1, 0x47, 0xcd,
-	0xaa, 0xa0, 0x28, 0x5e, 0x22, 0xe4, 0x7b, 0x1c, 0x46, 0xe3, 0x7c, 0x2a, 0x31, 0x0c, 0xb7, 0x71,
-	0xd8, 0x5a, 0xf7, 0x8b, 0x63, 0x4e, 0x9a, 0x3d, 0x34, 0xfc, 0x72, 0xbb, 0xf7, 0xe3, 0x06, 0xdd,
-	0x91, 0x81, 0xf8, 0x8b, 0x8e, 0x6e, 0x4b, 0x46, 0xfc, 0xec, 0x9c, 0xff, 0x52, 0x27, 0xe6, 0xf3,
-	0xab, 0xbe, 0x82, 0xce, 0x7e, 0xf2, 0xf5, 0xd7, 0xdf, 0x9f, 0x37, 0x8f, 0xf0, 0x43, 0x7a, 0xa9,
-	0xfe, 0xa2, 0x00, 0xfc, 0x4d, 0x47, 0xc6, 0xf1, 0x62, 0xf8, 0x7f, 0xd9, 0xd5, 0x4e, 0xcc, 0xce,
-	0x75, 0xa3, 0xa2, 0x78, 0x2a, 0x29, 0x08, 0x6e, 0x9f, 0x53, 0x9c, 0xfa, 0x71, 0xdf, 0xad, 0x77,
-	0x44, 0xdf, 0xec, 0x88, 0xfe, 0x67, 0x47, 0xf4, 0xef, 0x7b, 0xa2, 0x6d, 0xf6, 0x44, 0xfb, 0xbd,
-	0x27, 0xda, 0x07, 0x1a, 0x46, 0x62, 0x92, 0xf9, 0xce, 0x47, 0x36, 0xa3, 0x7d, 0x99, 0xf0, 0x7a,
-	0xe2, 0x45, 0x71, 0x99, 0xb6, 0xe8, 0xd1, 0x65, 0x19, 0x29, 0x56, 0x09, 0x70, 0xff, 0xae, 0x7c,
-	0x52, 0x2f, 0xfe, 0x05, 0x00, 0x00, 0xff, 0xff, 0x73, 0x83, 0x20, 0x78, 0xf9, 0x02, 0x00, 0x00,
+	// 322 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0xc9, 0xcb, 0x4c, 0xca,
+	0x2c, 0x2a, 0xd5, 0x2f, 0xa9, 0x48, 0x4b, 0x4d, 0x2d, 0xd6, 0x2f, 0x33, 0xd4, 0x2f, 0x2c, 0x4d,
+	0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x80, 0xc8, 0xea, 0x41, 0x64, 0xf5,
+	0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x92, 0xfa, 0x20, 0x16, 0x44, 0x9d, 0x94,
+	0x4c, 0x7a, 0x7e, 0x7e, 0x7a, 0x4e, 0xaa, 0x7e, 0x62, 0x41, 0xa6, 0x7e, 0x62, 0x5e, 0x5e, 0x7e,
+	0x49, 0x62, 0x49, 0x66, 0x7e, 0x5e, 0x31, 0x54, 0x56, 0x0e, 0x2a, 0x0b, 0xe6, 0x25, 0x95, 0xa6,
+	0xe9, 0xa7, 0x94, 0x16, 0x81, 0x15, 0x40, 0xe5, 0xe5, 0x31, 0xdc, 0x90, 0x96, 0x9a, 0x5a, 0x92,
+	0x9f, 0x9d, 0x0a, 0x55, 0xa0, 0x24, 0xc6, 0x25, 0x12, 0x08, 0x72, 0x95, 0x5b, 0x6a, 0x6a, 0x08,
+	0x48, 0x38, 0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44, 0x29, 0x8b, 0x4b, 0x14, 0x4d, 0xbc, 0xb8,
+	0x20, 0x3f, 0xaf, 0x38, 0x55, 0x28, 0x90, 0x8b, 0x33, 0x2d, 0x35, 0x35, 0x1e, 0x6c, 0x86, 0x04,
+	0xa3, 0x02, 0xa3, 0x06, 0xb7, 0x91, 0x94, 0x1e, 0xba, 0x5f, 0xf4, 0x60, 0xda, 0x9c, 0x24, 0x4e,
+	0xdc, 0x93, 0x67, 0xf8, 0x74, 0x4f, 0x5e, 0xa0, 0x32, 0x31, 0x37, 0xc7, 0x4a, 0x09, 0xae, 0x55,
+	0x29, 0x88, 0x23, 0x0d, 0xaa, 0xc6, 0xa8, 0x8b, 0x91, 0x8b, 0x15, 0x6c, 0x99, 0x50, 0x03, 0x23,
+	0x17, 0x07, 0x4c, 0xab, 0x90, 0x1a, 0xa6, 0xb1, 0xd8, 0x9c, 0x2a, 0xa5, 0x4e, 0x50, 0x1d, 0xc4,
+	0xe9, 0x4a, 0xca, 0x4d, 0x97, 0x9f, 0x4c, 0x66, 0x92, 0x15, 0x92, 0xd6, 0xc7, 0x16, 0x2a, 0x10,
+	0x77, 0x39, 0x79, 0x9e, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c,
+	0x13, 0x1e, 0xcb, 0x31, 0x5c, 0x78, 0x2c, 0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43, 0x94, 0x7e, 0x7a,
+	0x66, 0x49, 0x46, 0x69, 0x92, 0x5e, 0x72, 0x7e, 0xae, 0xbe, 0x1f, 0xd8, 0x00, 0xe7, 0x8c, 0xc4,
+	0xcc, 0x3c, 0x98, 0x61, 0x65, 0x46, 0xfa, 0x15, 0x30, 0x13, 0x4b, 0x2a, 0x0b, 0x52, 0x8b, 0x93,
+	0xd8, 0xc0, 0x41, 0x6c, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xb0, 0xa2, 0x15, 0xbb, 0x09, 0x02,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -243,8 +157,6 @@ type QueryClient interface {
 	// FeeToken returns the fee token address. It does not include the BaseDenom, which has its own
 	// query endpoint
 	FeeToken(ctx context.Context, in *QueryFeeTokenRequest, opts ...grpc.CallOption) (*QueryFeeTokenResponse, error)
-	// Returns a list of all base denom tokens and their corresponding pools.
-	BaseDenom(ctx context.Context, in *QueryBaseDenomRequest, opts ...grpc.CallOption) (*QueryBaseDenomResponse, error)
 }
 
 type queryClient struct {
@@ -264,22 +176,11 @@ func (c *queryClient) FeeToken(ctx context.Context, in *QueryFeeTokenRequest, op
 	return out, nil
 }
 
-func (c *queryClient) BaseDenom(ctx context.Context, in *QueryBaseDenomRequest, opts ...grpc.CallOption) (*QueryBaseDenomResponse, error) {
-	out := new(QueryBaseDenomResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.txfees.v1.Query/BaseDenom", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// FeeToken returns the fee token address. It does not include the BaseDenom, which has its own
 	// query endpoint
 	FeeToken(context.Context, *QueryFeeTokenRequest) (*QueryFeeTokenResponse, error)
-	// Returns a list of all base denom tokens and their corresponding pools.
-	BaseDenom(context.Context, *QueryBaseDenomRequest) (*QueryBaseDenomResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -288,9 +189,6 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) FeeToken(ctx context.Context, req *QueryFeeTokenRequest) (*QueryFeeTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FeeToken not implemented")
-}
-func (*UnimplementedQueryServer) BaseDenom(ctx context.Context, req *QueryBaseDenomRequest) (*QueryBaseDenomResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BaseDenom not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -315,24 +213,6 @@ func _Query_FeeToken_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BaseDenom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBaseDenomRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).BaseDenom(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/nibiru.txfees.v1.Query/BaseDenom",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BaseDenom(ctx, req.(*QueryBaseDenomRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.txfees.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -340,10 +220,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FeeToken",
 			Handler:    _Query_FeeToken_Handler,
-		},
-		{
-			MethodName: "BaseDenom",
-			Handler:    _Query_BaseDenom_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -406,59 +282,6 @@ func (m *QueryFeeTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBaseDenomRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBaseDenomRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBaseDenomRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBaseDenomResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBaseDenomResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBaseDenomResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.BaseDenom) > 0 {
-		i -= len(m.BaseDenom)
-		copy(dAtA[i:], m.BaseDenom)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.BaseDenom)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -487,28 +310,6 @@ func (m *QueryFeeTokenResponse) Size() (n int) {
 	_ = l
 	l = m.FeeToken.Size()
 	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
-func (m *QueryBaseDenomRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *QueryBaseDenomResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.BaseDenom)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
 	return n
 }
 
@@ -629,138 +430,6 @@ func (m *QueryFeeTokenResponse) Unmarshal(dAtA []byte) error {
 			if err := m.FeeToken.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryBaseDenomRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBaseDenomRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBaseDenomRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryBaseDenomResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBaseDenomResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBaseDenomResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseDenom", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.BaseDenom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

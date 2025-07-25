@@ -9,11 +9,7 @@ import (
 // InitGenesis initializes the txfees module's state from a provided genesis
 // state.
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	err := k.SetBaseDenom(ctx, genState.Basedenom)
-	if err != nil {
-		panic(err)
-	}
-	err = k.SetFeeToken(ctx, genState.Feetoken)
+	err := k.SetFeeToken(ctx, genState.Feetoken)
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +18,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 // ExportGenesis returns the txfees module's exported genesis.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
-	genesis.Basedenom, _ = k.GetBaseDenom(ctx)
 	feetoken, err := k.GetFeeToken(ctx)
 	if err != nil {
 		panic(err)

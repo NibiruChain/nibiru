@@ -9,6 +9,5 @@ const (
 )
 
 var (
-	BaseDenomKey = []byte("base_denom")
-	FeeTokenKey  = []byte("fee_token")
+	FeeTokenKey = []byte("fee_token")
 )

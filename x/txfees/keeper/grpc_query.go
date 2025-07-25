@@ -29,14 +29,3 @@ func (q Querier) FeeToken(ctx context.Context, _ *types.QueryFeeTokenRequest) (*
 
 	return &types.QueryFeeTokenResponse{FeeToken: feeToken}, nil
 }
-
-func (q Querier) BaseDenom(ctx context.Context, _ *types.QueryBaseDenomRequest) (*types.QueryBaseDenomResponse, error) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	baseDenom, err := q.Keeper.GetBaseDenom(sdkCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryBaseDenomResponse{BaseDenom: baseDenom}, nil
-}

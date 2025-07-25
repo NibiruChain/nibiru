@@ -1,4 +1,4 @@
-package keeper
+package ante
 
 import (
 	"fmt"
@@ -14,10 +14,12 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
@@ -31,10 +33,10 @@ type DeductFeeDecorator struct {
 	evmkeeper      *evmkeeper.Keeper
 	bankKeeper     authtypes.BankKeeper
 	feegrantKeeper types.FeegrantKeeper
-	txFeesKeeper   Keeper
+	txFeesKeeper   txfeeskeeper.Keeper
 }
 
-func NewDeductFeeDecorator(tk Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper) DeductFeeDecorator {
+func NewDeductFeeDecorator(tk txfeeskeeper.Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper) DeductFeeDecorator {
 	return DeductFeeDecorator{
 		ak:             ak,
 		evmkeeper:      ek,
@@ -118,18 +120,12 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
 	}
 
-	// pulls base denom from TxFeesKeeper
-	baseDenom, err := txFeesKeeper.GetBaseDenom(ctx)
-	if err != nil {
-		return err
-	}
-
 	feeToken, err := txFeesKeeper.GetFeeToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	if fees[0].Denom == baseDenom {
+	if fees[0].Denom == appconst.BondDenom {
 		err := bankKeeper.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), types.FeeCollectorName, fees)
 		if err != nil {
 			return sdkioerrors.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())

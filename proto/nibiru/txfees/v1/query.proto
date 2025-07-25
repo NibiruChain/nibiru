@@ -15,11 +15,6 @@ service Query {
   rpc FeeToken(QueryFeeTokenRequest) returns (QueryFeeTokenResponse) {
     option (google.api.http).get = "/nibiru/txfees/v1/fee_token";
   }
-
-  // Returns a list of all base denom tokens and their corresponding pools.
-  rpc BaseDenom(QueryBaseDenomRequest) returns (QueryBaseDenomResponse) {
-    option (google.api.http).get = "/nibiru/txfees/v1/base_denom";
-  }
 }
 
 message QueryFeeTokenRequest {}
@@ -28,10 +23,4 @@ message QueryFeeTokenResponse {
     (gogoproto.moretags) = "yaml:\"fee_token\"",
     (gogoproto.nullable) = false
   ];
-}
-
-
-message QueryBaseDenomRequest {}
-message QueryBaseDenomResponse {
-  string base_denom = 1 [ (gogoproto.moretags) = "yaml:\"base_denom\"" ];
 }

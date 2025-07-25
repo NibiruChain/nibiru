@@ -222,7 +222,7 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
-add_genesis_param '.app_state.txfees.feetokens[0].denom = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
+add_genesis_param '.app_state.txfees.feetoken.address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
 
 # ------------------------------------------------------------------------
 # Gentx

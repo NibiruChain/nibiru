@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -52,31 +50,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBaseDenom(ctx sdk.Context) (denom string, err error) {
-	store := ctx.KVStore(k.storeKey)
-
-	if !store.Has(types.BaseDenomKey) {
-		return "", types.ErrNoBaseDenom
-	}
-
-	bz := store.Get(types.BaseDenomKey)
-
-	return string(bz), nil
-}
-
-// SetBaseDenom sets the base fee denom for the chain. Should only be used once.
-func (k Keeper) SetBaseDenom(ctx sdk.Context, denom string) error {
-	store := ctx.KVStore(k.storeKey)
-
-	err := sdk.ValidateDenom(denom)
-	if err != nil {
-		return err
-	}
-
-	store.Set(types.BaseDenomKey, []byte(denom))
-	return nil
-}
-
 func (k Keeper) SetFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
 	ok := gethcommon.IsHexAddress(feeToken.Address)
 	if !ok {
@@ -107,19 +80,4 @@ func (k Keeper) GetFeeToken(ctx sdk.Context) (types.FeeToken, error) {
 	}
 
 	return feeToken, nil
-}
-
-// ConvertToBaseToken converts a fee amount in a whitelisted fee token to the base fee token amount.
-func (k Keeper) ConvertToBaseToken(ctx sdk.Context, inputFee sdk.Coin) (sdk.Coin, error) {
-	baseDenom, err := k.GetBaseDenom(ctx)
-	if err != nil {
-		return sdk.Coin{}, err
-	}
-
-	if inputFee.Denom == baseDenom {
-		return inputFee, nil
-	}
-
-	// return 1:1
-	return sdk.NewCoin(baseDenom, math.OneInt()), nil
 }
