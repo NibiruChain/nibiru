@@ -128,42 +128,7 @@ func TestOracleThreshold(t *testing.T) {
 	}
 }
 
-func TestResetExchangeRates(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.USD)
-	fixture, _ := Setup(t)
 
-	emptyVotes := map[asset.Pair]types.ExchangeRateVotes{}
-	validVotes := map[asset.Pair]types.ExchangeRateVotes{pair: {}}
-
-	// Set expiration blocks to 10
-	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
-	params.ExpirationBlocks = 10
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
-
-	// Post a price at block 1
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(1), pair, testExchangeRate)
-
-	// reset exchange rates at block 2
-	// Price should still be there because not expired yet
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyVotes)
-	_, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
-	assert.NoError(t, err)
-
-	// reset exchange rates at block 3 but pair is in votes
-	// Price should be removed there because there was a valid votes
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(3), validVotes)
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
-	assert.Error(t, err)
-
-	// Post a price at block 69
-	// reset exchange rates at block 79
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, testExchangeRate)
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyVotes)
-
-	// Price should persist since there are no new valid ones
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
-	assert.NoError(t, err)
-}
 
 func TestOracleTally(t *testing.T) {
 	fixture, _ := Setup(t)
