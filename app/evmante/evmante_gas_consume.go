@@ -2,33 +2,46 @@
 package evmante
 
 import (
+	"fmt"
 	"math"
+	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    *EVMKeeper
-	maxGasWanted uint64
+	evmKeeper     *EVMKeeper
+	accountKeeper evm.AccountKeeper
+	txFeesKeeper  txfeeskeeper.Keeper
+	maxGasWanted  uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
+	ak evm.AccountKeeper,
+	txFeesKeeper txfeeskeeper.Keeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		evmKeeper:    k,
-		maxGasWanted: maxGasWanted,
+		evmKeeper:     k,
+		accountKeeper: ak,
+		txFeesKeeper:  txFeesKeeper,
+		maxGasWanted:  maxGasWanted,
 	}
 }
 
@@ -106,7 +119,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
 		}
 
-		if err = anteDec.deductFee(ctx, fees, from); err != nil {
+		if err = anteDec.deductFee(ctx, fees, from, msgEthTx); err != nil {
 			return ctx, err
 		}
 
@@ -159,16 +172,113 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 // deductFee checks if the fee payer has enough funds to pay for the fees and
 // deducts them.
 func (anteDec AnteDecEthGasConsume) deductFee(
-	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
+	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress, msgEthTx *evm.MsgEthereumTx,
 ) error {
 	if fees.IsZero() {
 		return nil
 	}
 
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
-		ctx, fees, gethcommon.BytesToAddress(feePayer),
-	); err != nil {
-		return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+	feePayerAddr := gethcommon.BytesToAddress(feePayer)
+
+	// check available balance of the fee payer
+	nibiBal := anteDec.evmKeeper.Bank.GetBalance(ctx, feePayer, fees[0].Denom)
+	if !nibiBal.IsZero() && nibiBal.Amount.GTE(fees[0].Amount) {
+		if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+			ctx, fees, gethcommon.BytesToAddress(feePayer),
+		); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+		}
+
+		return nil
 	}
-	return nil
+
+	// fall back to erc20 token deduction
+	txConfig := anteDec.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := anteDec.evmKeeper.Bank.StateDB
+	if stateDB == nil {
+		stateDB = anteDec.evmKeeper.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		anteDec.evmKeeper.Bank.StateDB = nil
+	}()
+	evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+
+	feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to get fee token")
+	}
+	out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeToken.Address), feePayerAddr, ctx, evmObj)
+	if err != nil {
+		return sdkioerrors.Wrapf(
+			err, "failed to get balance of fee payer %s for token %s",
+			feePayerAddr.String(), feeToken.Address,
+		)
+	}
+	// Get the first token that have enough amount
+	if out.Cmp(evm.NativeToWei(fees[0].Amount.BigInt())) > 0 {
+		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
+
+		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
+			"transfer", feeCollector, fees[0].Amount.BigInt(),
+		)
+		if err != nil {
+			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
+		}
+		to := gethcommon.HexToAddress(feeToken.Address)
+		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
+		unusedBigInt := big.NewInt(0)
+		evmMsg := core.Message{
+			To:               &to,
+			From:             gethcommon.Address(gethcommon.FromHex(msgEthTx.From)),
+			Nonce:            anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr),
+			Value:            unusedBigInt, // amount
+			GasLimit:         5_500_000,
+			GasPrice:         unusedBigInt,
+			GasFeeCap:        unusedBigInt,
+			GasTipCap:        unusedBigInt,
+			Data:             input,
+			AccessList:       gethcore.AccessList{},
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
+		}
+		evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, evm.NativeToWei(fees[0].Amount.BigInt()), ctx, evmObj)
+		if err != nil {
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
+		}
+		if resp.Failed() {
+			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
+		}
+		if err := stateDB.Commit(); err != nil {
+			return sdkioerrors.Wrap(err, "failed to commit stateDB")
+		}
+
+		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
+	}
+
+	return fmt.Errorf(
+		"fee payer %s has no enough balance to pay for the fees %s",
+		feePayerAddr.String(), fees.String(),
+	)
+}
+
+var MOCK_GETH_MESSAGE = core.Message{
+	To:               nil,
+	From:             evm.EVM_MODULE_ADDRESS,
+	Nonce:            0,
+	Value:            evm.Big0, // amount
+	GasLimit:         0,
+	GasPrice:         evm.Big0,
+	GasFeeCap:        evm.Big0,
+	GasTipCap:        evm.Big0,
+	Data:             []byte{},
+	AccessList:       gethcore.AccessList{},
+	SkipNonceChecks:  false,
+	SkipFromEOACheck: false,
 }

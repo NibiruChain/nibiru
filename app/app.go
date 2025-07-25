@@ -102,6 +102,7 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/txfees"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -157,6 +158,7 @@ var (
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
+		txfees.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
 
@@ -324,6 +326,7 @@ func NewNibiruApp(
 		&app.InflationKeeper,
 		&app.EvmKeeper,
 		&app.TokenFactoryKeeper,
+		&app.TxFeesKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -441,6 +444,7 @@ func NewNibiruApp(
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
+		TxFeesKeeper:   app.TxFeesKeeper,
 	}))
 
 	// register snapshot extensions
