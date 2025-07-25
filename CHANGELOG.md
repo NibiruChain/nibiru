@@ -53,6 +53,9 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2346](https://gittub.com/NibiruChain/nibiru/pull/2346) - fix(buf-gen-rs): improve Rust proto binding generation script robustness and get it to work with a forked Cosmos-SDK dependency and exit correctly on failure
 
 
+### Dependencies
+- Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
+
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
 - [#2311](https://github.com/NibiruChain/nibiru/pull/2311) - refactor: use Go's built-in min and max functions to simplify logic
