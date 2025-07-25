@@ -3,8 +3,6 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/omap"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -110,8 +108,6 @@ func (k Keeper) getPairVotes(
 
 	return pairVotes
 }
-
-
 
 // newValidatorPerformances creates a new map of validators and their performance, excluding validators that are
 // not bonded.

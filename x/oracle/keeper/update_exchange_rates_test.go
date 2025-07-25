@@ -128,8 +128,6 @@ func TestOracleThreshold(t *testing.T) {
 	}
 }
 
-
-
 func TestOracleTally(t *testing.T) {
 	fixture, _ := Setup(t)
 
