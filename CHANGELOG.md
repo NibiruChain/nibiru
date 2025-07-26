@@ -58,6 +58,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
 - Bump `golang.org/x/oauth2` from 0.16.0 to 0.27.0 ([#2342](https://github.com/NibiruChain/nibiru/pull/2342))
 - Bump `undici` from 5.28.5 to 5.29.0 ([#2310](https://github.com/NibiruChain/nibiru/pull/2310))
+- Bump `base-x` from 3.0.10 to 3.0.11 ([#2307](https://github.com/NibiruChain/nibiru/pull/2307))
 
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
