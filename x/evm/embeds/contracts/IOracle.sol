@@ -38,6 +38,7 @@ IOracle constant NIBIRU_ORACLE = IOracle(ORACLE_PRECOMPILE_ADDRESS);
 
 // ChainLink interface from:
 // import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+// Also includes Aave V3 Chainlink methods: https://github.com/aave-dao/aave-v3-origin/blob/969ee04160751319eb4eaf5cbac12a183c1c9c8e/src/contracts/dependencies/chainlink/AggregatorInterface.sol
 // solhint-disable-next-line interface-starts-with-i
 interface ChainLinkAggregatorV3Interface {
     function decimals() external view returns (uint8);
@@ -69,4 +70,14 @@ interface ChainLinkAggregatorV3Interface {
             uint256 updatedAt,
             uint80 answeredInRound
         );
+
+    function latestAnswer() external view returns (int256);
+
+    function latestTimestamp() external view returns (uint256);
+
+    function latestRound() external view returns (uint256);
+
+    function getAnswer(uint256 roundId) external view returns (int256);
+
+    function getTimestamp(uint256 roundId) external view returns (uint256);
 }

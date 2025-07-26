@@ -110,4 +110,34 @@ contract NibiruOracleChainLinkLike is ChainLinkAggregatorV3Interface {
         uint8 pow10 = 18 - _decimals;
         return answer18Dec / int256(10 ** pow10);
     }
+
+    function latestAnswer() public view returns (int256) {
+        (, int256 answer, , , ) = latestRoundData();
+        return answer;
+    }
+
+    /// @notice Returns the Unix timestamp in seconds for the block of the latest
+    /// answer.
+    function latestTimestamp() public view returns (uint256) {
+        (, uint64 blockTimeMs, ) = NIBIRU_ORACLE.queryExchangeRate(pair);
+        return uint256(blockTimeMs) / 1000;
+    }
+
+    function latestRound() external view override returns (uint256) {
+        (uint80 roundId, , , , ) = latestRoundData();
+        return uint256(roundId);
+    }
+
+    /// @notice Returns the latest answer from the Nibiru Oracle. Historical round
+    /// retrieval is not supported. This method is a duplicate of
+    /// "latestAnswer".
+    function getAnswer(uint256) external view returns (int256) {
+        return latestAnswer();
+    }
+
+    /// @notice Returns the Unix timestamp in seconds for the block of the latest
+    /// answer. This method is a duplicate of "latestTimestamp".
+    function getTimestamp(uint256) external view returns (uint256) {
+        return latestTimestamp();
+    }
 }
