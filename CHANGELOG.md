@@ -134,7 +134,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
 - Bump `golang.org/x/net` from 0.33.0 to 0.37.0 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
-- chore: upadte golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- chore: update golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `[golang.org/x/net](https://github.com/golang/net)` from 0.33.0 to 0.37.0. ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `github.com/golang/glog` from 1.2.0 to 1.2.4 ([#2182](https://github.com/NibiruChain/nibiru/pull/2182))
 
