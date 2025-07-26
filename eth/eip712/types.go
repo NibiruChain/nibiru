@@ -31,7 +31,7 @@ const (
 	maxDuplicateTypeDefs = 1000
 )
 
-// getEIP712Types creates and returns the EIP-712 types
+// createEIP712Types creates and returns the EIP-712 types
 // for the given message payload.
 func createEIP712Types(messagePayload eip712MessagePayload) (apitypes.Types, error) {
 	eip712Types := apitypes.Types{
