@@ -34,6 +34,7 @@ var (
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
+	_ sdk.Msg    = &MsgConvertCoinToEvm{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
