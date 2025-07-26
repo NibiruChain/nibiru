@@ -56,6 +56,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 ### Dependencies
 - Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
+- Bump `golang.org/x/oauth2` from 0.16.0 to 0.27.0 ([#2342](https://github.com/NibiruChain/nibiru/pull/2342))
 
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
