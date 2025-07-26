@@ -48,6 +48,15 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
 - [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
+- [#2340](https://github.com/NibiruChain/nibiru/pull/2340) - fix: evm indexer proper parsing of the start block
+- [#2344](https://gittub.com/NibiruChain/nibiru/pull/23344) - feat(evm): Add some evm messages into the evm codec.
+- [#2346](https://gittub.com/NibiruChain/nibiru/pull/2346) - fix(buf-gen-rs): improve Rust proto binding generation script robustness and get it to work with a forked Cosmos-SDK dependency and exit correctly on failure
+- [#2348](https://github.com/NibiruChain/nibiru/pull/2348) - fix(oracle): max expiration a label rather than an invalidation for additional query liveness
+- [#2350](https://github.com/NibiruChain/nibiru/pull/2350) - fix(simapp): sim tests with empty validator set panic
+
+### Dependencies
+- Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
+- Bump `golang.org/x/oauth2` from 0.16.0 to 0.27.0 ([#2342](https://github.com/NibiruChain/nibiru/pull/2342))
 
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
@@ -125,7 +134,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
 - Bump `golang.org/x/net` from 0.33.0 to 0.37.0 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
-- chore: upadte golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- chore: update golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `[golang.org/x/net](https://github.com/golang/net)` from 0.33.0 to 0.37.0. ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `github.com/golang/glog` from 1.2.0 to 1.2.4 ([#2182](https://github.com/NibiruChain/nibiru/pull/2182))
 
