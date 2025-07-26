@@ -38,7 +38,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	// Case 1.
 	// Less than the threshold signs, exchange rate consensus fails
-	for i := 0; i < 1; i++ {
+	for i := range 1 {
 		salt := fmt.Sprintf("%d", i)
 		hash := types.GetAggregateVoteHash(salt, exchangeRateStr, ValAddrs[i])
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
@@ -55,7 +55,7 @@ func TestOracleThreshold(t *testing.T) {
 
 	// Case 2.
 	// More than the threshold signs, exchange rate consensus succeeds
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		salt := fmt.Sprintf("%d", i)
 		hash := types.GetAggregateVoteHash(salt, exchangeRateStr, ValAddrs[i])
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
@@ -71,12 +71,32 @@ func TestOracleThreshold(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testExchangeRate, rate.ExchangeRate)
 
+	querier := NewQuerier(fixture.OracleKeeper)
+	assetPair := exchangeRates[0].Pair
+	var priorCreateBlockHeight uint64
+	{
+		resp, err := querier.ExchangeRate(
+			fixture.Ctx,
+			&types.QueryExchangeRateRequest{
+				Pair: assetPair,
+			})
+		require.NoError(t, err)
+		require.Truef(
+			t,
+			resp.IsVintage,
+			"resp: current block: %d, ExchangeRateResp{ %+v }",
+			fixture.Ctx.BlockHeight(),
+			resp,
+		)
+		priorCreateBlockHeight = resp.BlockHeight
+	}
+
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
 	val, _ := fixture.StakingKeeper.GetValidator(fixture.Ctx, ValAddrs[4])
 	_, _ = fixture.StakingKeeper.Delegate(fixture.Ctx.WithBlockHeight(0), Addrs[4], testStakingAmt.MulRaw(8), stakingtypes.Unbonded, val, false)
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		salt := fmt.Sprintf("%d", i)
 		hash := types.GetAggregateVoteHash(salt, exchangeRateStr, ValAddrs[i])
 		prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[i], ValAddrs[i])
@@ -88,45 +108,24 @@ func TestOracleThreshold(t *testing.T) {
 		require.NoError(t, err2)
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
-	assert.Error(t, err)
-}
-
-func TestResetExchangeRates(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.USD)
-	fixture, _ := Setup(t)
-
-	emptyVotes := map[asset.Pair]types.ExchangeRateVotes{}
-	validVotes := map[asset.Pair]types.ExchangeRateVotes{pair: {}}
-
-	// Set expiration blocks to 10
-	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
-	params.ExpirationBlocks = 10
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
-
-	// Post a price at block 1
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(1), pair, testExchangeRate)
-
-	// reset exchange rates at block 2
-	// Price should still be there because not expired yet
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyVotes)
-	_, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
+	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, assetPair)
 	assert.NoError(t, err)
-
-	// reset exchange rates at block 3 but pair is in votes
-	// Price should be removed there because there was a valid votes
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(3), validVotes)
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
-	assert.Error(t, err)
-
-	// Post a price at block 69
-	// reset exchange rates at block 79
-	// Price should not be there anymore because expired
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, testExchangeRate)
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyVotes)
-
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
-	assert.Error(t, err)
+	{
+		resp, err := querier.ExchangeRate(
+			fixture.Ctx,
+			&types.QueryExchangeRateRequest{
+				Pair: assetPair,
+			})
+		require.NoError(t, err)
+		require.Truef(
+			t,
+			resp.IsVintage,
+			"resp: current block: %d, ExchangeRateResp{ %+v }",
+			fixture.Ctx.BlockHeight(),
+			resp,
+		)
+		require.Equal(t, priorCreateBlockHeight, resp.BlockHeight, "the exchange rate should not has been updated")
+	}
 }
 
 func TestOracleTally(t *testing.T) {
@@ -386,8 +385,8 @@ func TestOracleExchangeRate(t *testing.T) {
 func TestOracleRandomPrices(t *testing.T) {
 	fixture, msgServer := Setup(t)
 
-	for i := 0; i < 100; i++ {
-		for val := 0; val < 4; val++ {
+	for range 100 {
+		for val := range 4 {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
 				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
 				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
