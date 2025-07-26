@@ -52,6 +52,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2344](https://gittub.com/NibiruChain/nibiru/pull/23344) - feat(evm): Add some evm messages into the evm codec.
 - [#2346](https://gittub.com/NibiruChain/nibiru/pull/2346) - fix(buf-gen-rs): improve Rust proto binding generation script robustness and get it to work with a forked Cosmos-SDK dependency and exit correctly on failure
 - [#2348](https://github.com/NibiruChain/nibiru/pull/2348) - fix(oracle): max expiration a label rather than an invalidation for additional query liveness
+- [#2350](https://github.com/NibiruChain/nibiru/pull/2350) - fix(simapp): sim tests with empty validator set panic
 
 ### Dependencies
 - Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
