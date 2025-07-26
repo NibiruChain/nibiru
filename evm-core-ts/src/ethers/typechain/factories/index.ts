@@ -5,6 +5,7 @@ export { ChainLinkAggregatorV3Interface__factory } from "./ChainLinkAggregatorV3
 export { ERC20__factory } from "./ERC20__factory"
 export { ERC20Minter__factory } from "./ERC20Minter__factory"
 export { ERC20MinterWithMetadataUpdates__factory } from "./ERC20MinterWithMetadataUpdates__factory"
+export { ErisEvm__factory } from "./ErisEvm__factory"
 export { IFunToken__factory } from "./IFunToken__factory"
 export { INibiruEvm__factory } from "./INibiruEvm__factory"
 export { IOracle__factory } from "./IOracle__factory"
