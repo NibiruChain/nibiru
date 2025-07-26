@@ -210,7 +210,7 @@ type NibiruApp struct {
 }
 
 func init() {
-	SetPrefixes("nibi")
+	SetPrefixes(appconst.AccountAddressPrefix)
 	sdk.DefaultBondDenom = appconst.BondDenom
 
 	userHomeDir, err := os.UserHomeDir()
@@ -312,7 +312,7 @@ func NewNibiruApp(
 		&app.capabilityKeeper,
 		&app.slashingKeeper,
 		&app.GovKeeper,
-		&app.upgradeKeeper,
+		&app.UpgradeKeeper,
 		&app.paramsKeeper,
 		&app.authzKeeper,
 		&app.evidenceKeeper,
@@ -492,7 +492,7 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.upgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
