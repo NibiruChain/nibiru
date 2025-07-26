@@ -85,12 +85,28 @@ func TestOraclePriceExpiration(t *testing.T) {
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
 	// Set the block height to 1 block after the expiration
-	// End blocker should delete the price of pair2
+	// End blocker should not delete the price of pair2, but it should show up as
+	// expired when queried.
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.ExpirationBlocks+params.VotePeriod) + 1)
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
 	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair1)
 	require.NoError(t, err)
 	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair2)
-	require.Error(t, err)
+	require.NoError(t, err)
+
+	querier := keeper.NewQuerier(input.OracleKeeper)
+	{
+		res, err := querier.ExchangeRate(input.Ctx, &types.QueryExchangeRateRequest{
+			Pair: pair1,
+		})
+		require.NoError(t, err)
+		require.False(t, res.IsVintage)
+
+		res, err = querier.ExchangeRate(input.Ctx, &types.QueryExchangeRateRequest{
+			Pair: pair2,
+		})
+		require.NoError(t, err)
+		require.True(t, res.IsVintage)
+	}
 }
