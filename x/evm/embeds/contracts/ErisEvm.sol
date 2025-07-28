@@ -142,22 +142,11 @@ contract ErisEvm {
     }
 
     /// @notice Redeem any stNIBI that has finished unstaking to receive the NIBI
-    /// principal and any accrued rewards from liquid staking. NIBI received is
-    /// converted to WNIBI.
+    /// principal and any accrued rewards from liquid staking.
     function redeem() external {
-        uint256 nibiBalBefore = address(msg.sender).balance;
-
         bytes memory wasmMsg = bytes('{"withdraw_unbonded":{}}');
         INibiruEvm.BankCoin[] memory funds = new INibiruEvm.BankCoin[](0);
         _doWasmExecute(ERIS_WASM_CONTRACT, wasmMsg, funds);
-
-        uint256 nibiBalAfter = address(msg.sender).balance;
-        uint256 nibiReceived = nibiBalAfter > nibiBalBefore
-            ? nibiBalAfter - nibiBalBefore
-            : 0;
-        if (nibiReceived > 0) {
-            WNIBI(WNIBI_ADDRESS).deposit{value: nibiBalAfter - nibiBalBefore}();
-        }
     }
 
     /// @notice Queue to unstake stNIBI to later redeem it for the principal and

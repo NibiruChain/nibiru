@@ -30,5 +30,25 @@
       "source": "bybit",
       "priceId": "USDCUSDT"
     }
+  },
+  {
+    "contractAddr": "erc20/0x0829F361A05D993d5CEb035cA6DF3446b060970b",
+    "displayName": "USDC (Stargate, Bank)",
+    "symbol": "USDC.e",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "USDCUSDT"
+    }
+  },
+  {
+    "contractAddr": "erc20/0x43F2376D5D03553aE72F4A8093bbe9de4336EB08",
+    "displayName": "USDT (Stargate, Bank)",
+    "symbol": "USDT",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/006_usdt.svg",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "USDCUSDT"
+    }
   }
 ]
