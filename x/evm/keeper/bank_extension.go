@@ -182,12 +182,26 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	BaseOp func(ctx sdk.Context) error,
 	AfterOp func(ctx sdk.Context),
 ) error {
+
+	isSimulation := bk.isSimulation(ctx)
+
+	// Take StateDB snapshot if in simulation
+	var stateSnapshot int = -1
+	if isSimulation && bk.StateDB != nil {
+		stateSnapshot = bk.StateDB.Snapshot()
+	}
+
 	// Assign vars for the tx gas meter
 	gasMeterBefore := ctx.GasMeter() // Tx gas meter MUST be defined
 	gasConsumedBefore := gasMeterBefore.GasConsumed()
 	baseOpGasConsumed := uint64(0)
 
 	defer func() {
+		// Revert StateDB changes if in simulation
+		if stateSnapshot >= 0 {
+			bk.StateDB.RevertToSnapshot(stateSnapshot)
+		}
+
 		// NOTE: we have to refund the entire gasMeterBefore because it's modified by AfterOp
 		// stateDB.getStateObject() reads from state using the local root ctx which affects the gas meter
 		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
@@ -319,4 +333,14 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 			}
 		},
 	)
+}
+
+// isSimulation checks if the context is a simulation context.
+func (bk NibiruBankKeeper) isSimulation(ctx sdk.Context) bool {
+	if val := ctx.Value(SimulationContextKey); val != nil {
+		if isSimulation, ok := val.(bool); ok && isSimulation {
+			return true
+		}
+	}
+	return false
 }
