@@ -182,7 +182,6 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 	BaseOp func(ctx sdk.Context) error,
 	AfterOp func(ctx sdk.Context),
 ) error {
-
 	isSimulation := bk.isSimulation(ctx)
 
 	// Take StateDB snapshot if in simulation
