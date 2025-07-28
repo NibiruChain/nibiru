@@ -116,3 +116,53 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
           just test-localnet
+
+  # proto-gen-rs: Tests the script that generates protobuf bindings in Rust
+  proto-gen-rs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Check for Go-related changes"
+        id: check_nibiru_go
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            nibiru-go:
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker-compose/*"
+
+      - name: skip-tests
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
+        run: |
+          echo "job: proto-gen-rs was skipped since Nibiru Golang files were not changed."
+
+      - name: Set up Go
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+          cache: false
+
+      - name: "Install buf CLI"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: |
+          go install github.com/bufbuild/buf/cmd/buf@latest
+
+      - name: "Setup Node & npm (for npx)"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/jod" # Node v20
+
+      - name: "Generate Rust proto bindings"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: |
+          bash proto/buf.gen.rs.sh
