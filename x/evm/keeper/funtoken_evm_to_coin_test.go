@@ -204,27 +204,6 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	toAddr := evmtest.NewEthPrivAcc().NibiruAddr
 	s.Run("happy: convert ERC20 to bank coins", func() {
 		convertAmount := sdkmath.NewInt(100000)
-
-		// First, need to approve the EVM module to spend tokens
-		input, err := embeds.SmartContract_TestERC20.ABI.Pack(
-			"approve",
-			evm.EVM_MODULE_ADDRESS,
-			convertAmount.BigInt(),
-		)
-		s.Require().NoError(err)
-
-		_, err = deps.EvmKeeper.CallContractWithInput(
-			deps.Ctx,
-			evmObj,
-			deps.Sender.EthAddr,
-			&erc20Addr,
-			true, /* commit */
-			input,
-			keeper.Erc20GasLimitExecute,
-		)
-		s.Require().NoError(err)
-
-		// Now convert
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
@@ -268,7 +247,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		)
 		s.Require().NoError(err)
 
-		// Transfer some tokens to new sender
+		s.T().Log("Transfer some tokens to new sender")
 		input, err := embeds.SmartContract_TestERC20.ABI.Pack(
 			"transfer",
 			newSender.EthAddr,
@@ -287,7 +266,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		)
 		s.Require().NoError(err)
 
-		// Create FunToken for new ERC20
+		s.T().Log("Create FunToken for new ERC20")
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
@@ -304,7 +283,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		)
 		s.Require().NoError(err)
 
-		// Try to convert without approval - should fail
+		s.T().Log("Convert without approval should succeed")
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
@@ -314,7 +293,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 				ToAddr:    toAddr.String(),
 			},
 		)
-		s.Require().Error(err)
+		s.Require().NoError(err)
 	})
 }
 

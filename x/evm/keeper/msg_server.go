@@ -902,7 +902,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	}()
 
 	// 1 | Transfer ERC20 tokens from sender to EVM module
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transferFrom", senderEthAddr, evm.EVM_MODULE_ADDRESS, amount)
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", evm.EVM_MODULE_ADDRESS, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -929,9 +929,9 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		true, /*commit*/
+		senderEthAddr, /* fromAcc */
+		&erc20Addr,    /* contract */
+		true,          /* commit */
 		contractInput,
 		Erc20GasLimitExecute,
 	)
