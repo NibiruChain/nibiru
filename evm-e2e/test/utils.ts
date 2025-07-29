@@ -1,5 +1,7 @@
 import { wnibiCaller } from "@nibiruchain/evm-core"
 import {
+  ethers,
+  Contract,
   ContractFactory,
   ContractTransactionResponse,
   parseEther,
@@ -18,7 +20,7 @@ import {
   TransactionReverter__factory,
   type NibiruOracleChainLinkLike,
 } from "../types"
-import { account, provider, TX_WAIT_TIMEOUT } from "./setup"
+import { account, account2, provider, TX_WAIT_TIMEOUT } from "./setup"
 
 export const alice = Wallet.createRandom()
 
@@ -98,6 +100,31 @@ export const deployContractWNIBI = async (): Promise<{
   const { abi, bytecode } = WNIBI_JSON
   const factory = new ContractFactory(abi, bytecode, account)
   const contract = await factory.deploy()
+  await contract.waitForDeployment()
+  return { contract: contract as unknown as WNIBI & DeploymentTx }
+}
+
+export const deployContractWNIBIIfNeeded = async (
+  maybeAddress?: string
+): Promise<{
+  contract: WNIBI & DeploymentTx
+}> => {
+  const { abi, bytecode } = WNIBI_JSON
+  const factory = new ContractFactory(abi, bytecode, account)
+
+  let contract: ethers.Contract
+
+  if (maybeAddress) {
+    const code = await account.provider.getCode(maybeAddress)
+    if (code !== "0x") {
+      // Contract already deployed
+      console.log(`Contract already deployed at ${maybeAddress}`)
+      contract = new ethers.Contract(maybeAddress, abi, account)
+      return { contract: contract as unknown as WNIBI & DeploymentTx }
+    }
+  }
+
+  contract = (await factory.deploy()) as ethers.Contract
   await contract.waitForDeployment()
   return { contract: contract as unknown as WNIBI & DeploymentTx }
 }

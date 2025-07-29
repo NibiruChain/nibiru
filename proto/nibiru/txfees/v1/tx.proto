@@ -1,0 +1,31 @@
+syntax = "proto3";
+package nibiru.txfees.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/duration.proto";
+import "cosmos_proto/cosmos.proto";
+
+import "nibiru/txfees/v1/feetoken.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+
+// Msg defines the fees Msg service.
+service Msg {
+    // RegisterFeeShare registers a new contract for receiving transaction fees
+    rpc UpdateFeeToken(MsgUpdateFeeToken)
+        returns (MsgUpdateFeeTokenResponse) {
+      option (google.api.http).post = "/nibiru/txfees/v1/update_fee_token";
+    };
+}
+
+// MsgUpdateFeeToken defines a message that update fee token
+message MsgUpdateFeeToken{
+    // contract_address in hex format
+    string contract_address = 1;
+    // Authority: Address of the governance module account.
+    string authority = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
+message MsgUpdateFeeTokenResponse {}

@@ -30,6 +30,7 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 )
 
 type PublicKeepers struct {
@@ -65,6 +66,7 @@ type PublicKeepers struct {
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmkeeper.Keeper
+	TxFeesKeeper       txfeeskeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper         wasmkeeper.Keeper
