@@ -159,10 +159,10 @@ func CmdConvertEvmToCoin() *cobra.Command {
 			}
 
 			msg := &evm.MsgConvertEvmToCoin{
-				Sender:               clientCtx.GetFromAddress().String(),
-				Erc20ContractAddress: erc20Addr,
-				Amount:               amount,
-				ToAddress:            toAddress,
+				Sender:    clientCtx.GetFromAddress().String(),
+				Erc20Addr: erc20Addr,
+				Amount:    amount,
+				ToAddr:    toAddress,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

@@ -1010,20 +1010,20 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "valid message",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(100),
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: false,
 		},
 		{
 			name: "invalid sender address",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               "invalid",
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(100),
+				Sender:    "invalid",
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
 			errMsg: "invalid sender address",
@@ -1031,10 +1031,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "empty sender address",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               "",
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(100),
+				Sender:    "",
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
 			errMsg: "invalid sender address",
@@ -1042,10 +1042,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "invalid to address",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            "invalid",
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(100),
+				Sender:    validSender,
+				ToAddr:    "invalid",
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
 			errMsg: "invalid to_address",
@@ -1053,10 +1053,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "empty to address",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            "",
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(100),
+				Sender:    validSender,
+				ToAddr:    "",
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
 			errMsg: "invalid to_address",
@@ -1064,9 +1064,9 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "empty erc20 contract address",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:    validSender,
-				ToAddress: validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{
+				Sender: validSender,
+				ToAddr: validToAddress,
+				Erc20Addr: eth.EIP55Addr{
 					Address: common.Address{},
 				},
 				Amount: sdkmath.NewInt(100),
@@ -1077,10 +1077,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "nil amount",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.Int{},
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.Int{},
 			},
 			expErr: true,
 			errMsg: "amount must be positive",
@@ -1088,10 +1088,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "zero amount",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(0),
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(0),
 			},
 			expErr: true,
 			errMsg: "amount must be positive",
@@ -1099,10 +1099,10 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 		{
 			name: "negative amount",
 			msg: &evm.MsgConvertEvmToCoin{
-				Sender:               validSender,
-				ToAddress:            validToAddress,
-				Erc20ContractAddress: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
-				Amount:               sdkmath.NewInt(-100),
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(-100),
 			},
 			expErr: true,
 			errMsg: "amount must be positive",

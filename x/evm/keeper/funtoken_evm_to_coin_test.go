@@ -104,10 +104,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               deps.Sender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: erc20Addr},
-				Amount:               convertAmount,
-				ToAddress:            toAddr.String(),
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
+				Amount:    convertAmount,
+				ToAddr:    toAddr.String(),
 			},
 		)
 		s.Require().NoError(err)
@@ -132,10 +132,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               deps.Sender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: erc20Addr},
-				Amount:               convertAmount,
-				ToAddress:            toAddr.String(),
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
+				Amount:    convertAmount,
+				ToAddr:    toAddr.String(),
 			},
 		)
 		s.Require().Error(err)
@@ -147,10 +147,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               deps.Sender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: invalidErc20},
-				Amount:               sdkmath.NewInt(100),
-				ToAddress:            toAddr.String(),
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: invalidErc20},
+				Amount:    sdkmath.NewInt(100),
+				ToAddr:    toAddr.String(),
 			},
 		)
 		s.Require().Error(err)
@@ -228,10 +228,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               deps.Sender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: erc20Addr},
-				Amount:               convertAmount,
-				ToAddress:            toAddr.String(),
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
+				Amount:    convertAmount,
+				ToAddr:    toAddr.String(),
 			},
 		)
 		s.Require().NoError(err)
@@ -308,10 +308,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               newSender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: deployResp2.ContractAddr},
-				Amount:               sdkmath.NewInt(5000),
-				ToAddress:            toAddr.String(),
+				Sender:    newSender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: deployResp2.ContractAddr},
+				Amount:    sdkmath.NewInt(5000),
+				ToAddr:    toAddr.String(),
 			},
 		)
 		s.Require().Error(err)
@@ -374,10 +374,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_Events() {
 	_, err = deps.EvmKeeper.ConvertEvmToCoin(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertEvmToCoin{
-			Sender:               deps.Sender.NibiruAddr.String(),
-			Erc20ContractAddress: eth.EIP55Addr{Address: erc20Addr},
-			Amount:               convertAmount,
-			ToAddress:            toAddr.String(),
+			Sender:    deps.Sender.NibiruAddr.String(),
+			Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
+			Amount:    convertAmount,
+			ToAddr:    toAddr.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -476,10 +476,10 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_MultipleRecipients() {
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertEvmToCoin{
-				Sender:               deps.Sender.NibiruAddr.String(),
-				Erc20ContractAddress: eth.EIP55Addr{Address: erc20Addr},
-				Amount:               amount,
-				ToAddress:            recipient.String(),
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
+				Amount:    amount,
+				ToAddr:    recipient.String(),
 			},
 		)
 		s.Require().NoError(err)

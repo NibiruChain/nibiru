@@ -761,8 +761,8 @@ func (k *Keeper) ConvertEvmToCoin(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	toAddress := sdk.MustAccAddressFromBech32(msg.ToAddress)
-	erc20Addr := msg.Erc20ContractAddress.Address
+	toAddress := sdk.MustAccAddressFromBech32(msg.ToAddr)
+	erc20Addr := msg.Erc20Addr.Address
 
 	// Find the FunToken mapping for this ERC20
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr))
