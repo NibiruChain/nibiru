@@ -49,7 +49,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
 - [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
-- [#2345](https://gittub.com/NibiruChain/nibiru/pull/2345) - feat(evm): add convertEvmToCoin functions
+- [#2345](https://gittub.com/NibiruChain/nibiru/pull/2345) - feat(evm): add "eth.evm.v1.MsgConvertCoinToEvm" tx for ERC20 to bank coin conversions with a non-Ethereum transaction
 - [#2340](https://github.com/NibiruChain/nibiru/pull/2340) - fix: evm indexer proper parsing of the start block
 - [#2344](https://gittub.com/NibiruChain/nibiru/pull/23344) - feat(evm): Add some evm messages into the evm codec.
 - [#2346](https://gittub.com/NibiruChain/nibiru/pull/2346) - fix(buf-gen-rs): improve Rust proto binding generation script robustness and get it to work with a forked Cosmos-SDK dependency and exit correctly on failure
