@@ -44,6 +44,7 @@ var (
 		asset.Registry.Pair(denoms.ATOM, denoms.USD),
 		asset.Registry.Pair(denoms.USDC, denoms.USD),
 		asset.Registry.Pair(denoms.USDT, denoms.USD),
+		asset.Registry.Pair(denoms.USDA, denoms.USD),
 		// asset.Registry.Pair(denoms.BNB, denoms.USD),
 		// asset.Registry.Pair(denoms.OSMO, denoms.USD),
 		// asset.Registry.Pair(denoms.AVAX, denoms.USD),
