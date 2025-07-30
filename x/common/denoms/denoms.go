@@ -5,7 +5,7 @@ const ( // stablecoins
 	NUSD = "unusd"
 	USD  = "uusd"
 	USDT = "uusdt"
-	USDA = "uusda"
+	USDA = "usda"
 )
 
 const ( // volatile assets
