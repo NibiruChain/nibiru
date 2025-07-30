@@ -10,16 +10,15 @@ import "nibiru/txfees/v1/feetoken.proto";
 option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 
 service Query {
-  // FeeToken returns the fee token address. It does not include the BaseDenom, which has its own
-  // query endpoint
-  rpc FeeToken(QueryFeeTokenRequest) returns (QueryFeeTokenResponse) {
+  // FeeTokens returns the list of fee token addresses.
+  rpc FeeTokens(QueryFeeTokensRequest) returns (QueryFeeTokensResponse) {
     option (google.api.http).get = "/nibiru/txfees/v1/fee_token";
   }
 }
 
-message QueryFeeTokenRequest {}
-message QueryFeeTokenResponse {
-  FeeToken fee_token = 1 [
+message QueryFeeTokensRequest {}
+message QueryFeeTokensResponse {
+  repeated FeeToken fee_tokens = 1 [
     (gogoproto.moretags) = "yaml:\"fee_token\"",
     (gogoproto.nullable) = false
   ];

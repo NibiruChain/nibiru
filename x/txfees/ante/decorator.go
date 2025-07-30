@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -16,9 +17,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
@@ -34,15 +37,17 @@ type DeductFeeDecorator struct {
 	bankKeeper     authtypes.BankKeeper
 	feegrantKeeper types.FeegrantKeeper
 	txFeesKeeper   txfeeskeeper.Keeper
+	oracleKeeper   oraclekeeper.Keeper
 }
 
-func NewDeductFeeDecorator(tk txfeeskeeper.Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper) DeductFeeDecorator {
+func NewDeductFeeDecorator(tk txfeeskeeper.Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper, ok oraclekeeper.Keeper) DeductFeeDecorator {
 	return DeductFeeDecorator{
 		ak:             ak,
 		evmkeeper:      ek,
 		bankKeeper:     bk,
 		feegrantKeeper: fk,
 		txFeesKeeper:   tk,
+		oracleKeeper:   ok,
 	}
 }
 
@@ -101,7 +106,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 
 	// deducts the fees and transfer them to the module account
 	if !fees.IsZero() {
-		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.txFeesKeeper, dfd.bankKeeper, ctx, deductFeesFromAcc, fees)
+		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.txFeesKeeper, dfd.bankKeeper, dfd.oracleKeeper, ctx, deductFeesFromAcc, fees)
 		if err != nil {
 			return ctx, err
 		}
@@ -114,15 +119,10 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	return next(ctx, tx, simulate)
 }
 
-func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesKeeper types.TxFeesKeeper, bankKeeper authtypes.BankKeeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
+func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesKeeper types.TxFeesKeeper, bankKeeper authtypes.BankKeeper, ok oraclekeeper.Keeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
 	// Checks the validity of the fee tokens (sorted, have positive amount, valid and unique denomination)
 	if !fees.IsValid() {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
-	}
-
-	feeToken, err := txFeesKeeper.GetFeeToken(ctx)
-	if err != nil {
-		return err
 	}
 
 	if fees[0].Denom == appconst.BondDenom {
@@ -131,6 +131,31 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 			return sdkioerrors.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
 		}
 	} else {
+		feeToken, err := txFeesKeeper.GetFeeToken(ctx, "0"+fees[0].Denom)
+		if err != nil {
+			return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "fee token %s not found", fees[0].Denom)
+		}
+
+		var ratio sdkmath.LegacyDec
+		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE {
+			price, err := ok.GetExchangeRateTwap(ctx, asset.Pair(feeToken.Pair))
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to get exchange rate for pair %s", feeToken.Pair)
+			}
+			basePrice, err := ok.GetExchangeRateTwap(ctx, asset.Pair("unibi:uusd"))
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to get TWAP for unibi:uusd")
+			}
+			if price.IsZero() {
+				return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "price for %s is zero", feeToken.Pair)
+			}
+			ratio = basePrice.Quo(price)
+		} else {
+			ratio = sdkmath.LegacyOneDec()
+		}
+		fmt.Println("teststst :", ratio.TruncateInt())
+		fmt.Println("teststst :", fees[0].Amount)
+		fmt.Println("teststst :", sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt())
 		feeCollector := eth.NibiruAddrToEthAddr(accountkeeper.GetModuleAddress(types.ModuleName))
 
 		amount := fees[0].Amount.BigInt()

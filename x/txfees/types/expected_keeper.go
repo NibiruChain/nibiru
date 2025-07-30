@@ -33,5 +33,6 @@ type BankKeeper interface {
 
 // TxFeesKeeper defines the expected transaction fee keeper
 type TxFeesKeeper interface {
-	GetFeeToken(ctx sdk.Context) (FeeToken, error)
+	GetFeeToken(ctx sdk.Context, address string) (FeeToken, error)
+	GetFeeTokens(ctx sdk.Context) []FeeToken
 }

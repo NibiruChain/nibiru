@@ -9,7 +9,7 @@ import (
 // DefaultGenesis returns the default txfee genesis state.
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Feetoken: FeeToken{},
+		Feetokens: []FeeToken{},
 	}
 }
 
@@ -17,9 +17,11 @@ func DefaultGenesis() *GenesisState {
 // failure. It does not verify that the corresponding pool IDs actually exist.
 // This is done in InitGenesis.
 func (gs GenesisState) Validate() error {
-	ok := gethcommon.IsHexAddress(gs.Feetoken.Address)
-	if !ok {
-		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", gs.Feetoken.Address)
+	for _, feeToken := range gs.Feetokens {
+		ok := gethcommon.IsHexAddress(feeToken.Address)
+		if !ok {
+			return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Address)
+		}
 	}
 
 	return nil

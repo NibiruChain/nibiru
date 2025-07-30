@@ -17,7 +17,7 @@ func NewAnteHandlerEVM(
 		NewMempoolGasPriceDecorator(options.EvmKeeper),
 		NewEthValidateBasicDecorator(options.EvmKeeper),
 		NewEthSigVerificationDecorator(options.EvmKeeper),
-		NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper, options.TxFeesKeeper),
+		NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper, options.TxFeesKeeper, options.OracleKeeper),
 		CanTransferDecorator{options.EvmKeeper},
 		NewAnteDecEthGasConsume(options.EvmKeeper, options.AccountKeeper, options.TxFeesKeeper, options.MaxTxGasWanted),
 		NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),

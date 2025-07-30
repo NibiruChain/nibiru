@@ -1,4 +1,4 @@
-import { wnibiCaller } from "@nibiruchain/evm-core"
+import { erc20Caller, wnibiCaller } from "@nibiruchain/evm-core"
 import {
   ethers,
   Contract,
@@ -11,6 +11,7 @@ import {
 } from "ethers"
 
 import WNIBI_JSON from "../../x/evm/embeds/artifacts/contracts/WNIBI.sol/WNIBI.json"
+import USDC_JSON from "../../x/evm/embeds/artifacts/contracts/ERC20Minter.sol/ERC20Minter.json"
 import {
   EventsEmitter__factory,
   InifiniteLoopGas__factory,
@@ -90,6 +91,7 @@ export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
   return { oraclePair, contract }
 }
 
+export type USDC = ReturnType<typeof erc20Caller>
 export type WNIBI = ReturnType<typeof wnibiCaller>
 export type DeploymentTx = {
   deploymentTransaction(): ContractTransactionResponse
@@ -127,6 +129,31 @@ export const deployContractWNIBIIfNeeded = async (
   contract = (await factory.deploy()) as ethers.Contract
   await contract.waitForDeployment()
   return { contract: contract as unknown as WNIBI & DeploymentTx }
+}
+
+export const deployContractUSDCIfNeeded = async (
+  maybeAddress?: string
+): Promise<{
+  contract: USDC & DeploymentTx
+}> => {
+  const { abi, bytecode } = USDC_JSON
+  const factory = new ContractFactory(abi, bytecode, account)
+
+  let contract: ethers.Contract
+
+  if (maybeAddress) {
+    const code = await account.provider.getCode(maybeAddress)
+    if (code !== "0x") {
+      // Contract already deployed
+      console.log(`Contract already deployed at ${maybeAddress}`)
+      contract = new ethers.Contract(maybeAddress, abi, account)
+      return { contract: contract as unknown as USDC & DeploymentTx }
+    }
+  }
+
+  contract = (await factory.deploy("USDC", "USDC", 18)) as ethers.Contract
+  await contract.waitForDeployment()
+  return { contract: contract as unknown as USDC & DeploymentTx }
 }
 
 export const numberToHex = (num: Number) => {

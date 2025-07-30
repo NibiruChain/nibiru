@@ -9,5 +9,5 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 
 // GenesisState defines the txfees module's genesis state.
 message GenesisState {
-  FeeToken feetoken = 1 [ (gogoproto.nullable) = false ];
+  repeated FeeToken feetokens = 1 [ (gogoproto.nullable) = false ];
 }

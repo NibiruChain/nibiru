@@ -218,11 +218,21 @@ add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 # hack for localnet since we don't have a pricefeeder yet
 price_btc="50000"
 price_eth="2000"
+price_nibi="0.01"
+price_usdc="1"
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
-add_genesis_param '.app_state.txfees.feetoken.address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
+add_genesis_param '.app_state.oracle.exchange_rates[2].pair = "uusdc:uusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[2].exchange_rate = "'"$price_usdc"'"'
+add_genesis_param '.app_state.oracle.exchange_rates[3].pair = "unibi:uusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[3].exchange_rate = "'"$price_nibi"'"'
+add_genesis_param '.app_state.txfees.feetokens[0].address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
+add_genesis_param '.app_state.txfees.feetokens[0].token_type = "FEE_TOKEN_TYPE_CONVERTIBLE"'
+add_genesis_param '.app_state.txfees.feetokens[1].address = "0x869EAa3b34B51D631FB0B6B1f9586ab658C2D25F"'
+add_genesis_param '.app_state.txfees.feetokens[1].pair = "uusdc:uusd"'
+add_genesis_param '.app_state.txfees.feetokens[1].token_type = "FEE_TOKEN_TYPE_SWAPPABLE"'
 
 # ------------------------------------------------------------------------
 # Gentx

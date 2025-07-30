@@ -43,15 +43,23 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNu
 // AfterEpochEnd convert all fees collected in the previous epoch to the base token
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
 	feeCollector := eth.NibiruAddrToEthAddr(h.K.accountKeeper.GetModuleAddress(types.ModuleName))
-	fmt.Println("address of fee collector:", feeCollector.Hex())
 
 	unusedBigInt := big.NewInt(0)
-	feeToken, err := h.K.GetFeeToken(ctx)
-	if err != nil {
-		panic(sdkioerrors.Wrap(err, "failed to get fee token"))
-	}
-	contract := gethcommon.HexToAddress(feeToken.Address)
+	feeTokens := h.K.GetFeeTokens(ctx)
 
+	for _, feeToken := range feeTokens {
+		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
+			h.withdrawFeeToken(ctx, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+		}
+		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE {
+			// TODO: implement swappable fee token withdrawal
+			return
+		}
+	}
+	// TODO: events
+}
+
+func (h Hooks) withdrawFeeToken(ctx sdk.Context, contract, feeCollector gethcommon.Address, unusedBigInt *big.Int) {
 	txConfig := h.K.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
 	stateDB := h.K.evmKeeper.Bank.StateDB
 	if stateDB == nil {
@@ -137,10 +145,6 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 	if err := acc.SetSequence(nonce); err != nil {
 		panic(sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce))
 	}
-
-	h.K.accountKeeper.SetAccount(ctx, acc)
-	fmt.Println("done after epoch ends")
-	// TODO: events
 }
 
 var MOCK_GETH_MESSAGE = core.Message{

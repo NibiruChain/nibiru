@@ -14,15 +14,66 @@ import (
 	sync "sync"
 )
 
+var _ protoreflect.List = (*_GenesisState_1_list)(nil)
+
+type _GenesisState_1_list struct {
+	list *[]*FeeToken
+}
+
+func (x *_GenesisState_1_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_1_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_1_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*FeeToken)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_1_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*FeeToken)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_1_list) AppendMutable() protoreflect.Value {
+	v := new(FeeToken)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_1_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_1_list) NewElement() protoreflect.Value {
+	v := new(FeeToken)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_1_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_GenesisState          protoreflect.MessageDescriptor
-	fd_GenesisState_feetoken protoreflect.FieldDescriptor
+	md_GenesisState           protoreflect.MessageDescriptor
+	fd_GenesisState_feetokens protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_nibiru_txfees_v1_genesis_proto_init()
 	md_GenesisState = File_nibiru_txfees_v1_genesis_proto.Messages().ByName("GenesisState")
-	fd_GenesisState_feetoken = md_GenesisState.Fields().ByName("feetoken")
+	fd_GenesisState_feetokens = md_GenesisState.Fields().ByName("feetokens")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -90,9 +141,9 @@ func (x *fastReflection_GenesisState) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Feetoken != nil {
-		value := protoreflect.ValueOfMessage(x.Feetoken.ProtoReflect())
-		if !f(fd_GenesisState_feetoken, value) {
+	if len(x.Feetokens) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_1_list{list: &x.Feetokens})
+		if !f(fd_GenesisState_feetokens, value) {
 			return
 		}
 	}
@@ -111,8 +162,8 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		return x.Feetoken != nil
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		return len(x.Feetokens) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -129,8 +180,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		x.Feetoken = nil
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		x.Feetokens = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -147,9 +198,12 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		value := x.Feetoken
-		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		if len(x.Feetokens) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_1_list{})
+		}
+		listValue := &_GenesisState_1_list{list: &x.Feetokens}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -170,8 +224,10 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		x.Feetoken = value.Message().Interface().(*FeeToken)
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		lv := value.List()
+		clv := lv.(*_GenesisState_1_list)
+		x.Feetokens = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -192,11 +248,12 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		if x.Feetoken == nil {
-			x.Feetoken = new(FeeToken)
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		if x.Feetokens == nil {
+			x.Feetokens = []*FeeToken{}
 		}
-		return protoreflect.ValueOfMessage(x.Feetoken.ProtoReflect())
+		value := &_GenesisState_1_list{list: &x.Feetokens}
+		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -210,9 +267,9 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.GenesisState.feetoken":
-		m := new(FeeToken)
-		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "nibiru.txfees.v1.GenesisState.feetokens":
+		list := []*FeeToken{}
+		return protoreflect.ValueOfList(&_GenesisState_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.GenesisState"))
@@ -282,9 +339,11 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		if x.Feetoken != nil {
-			l = options.Size(x.Feetoken)
-			n += 1 + l + runtime.Sov(uint64(l))
+		if len(x.Feetokens) > 0 {
+			for _, e := range x.Feetokens {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -315,19 +374,21 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.Feetoken != nil {
-			encoded, err := options.Marshal(x.Feetoken)
-			if err != nil {
-				return protoiface.MarshalOutput{
-					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-					Buf:               input.Buf,
-				}, err
+		if len(x.Feetokens) > 0 {
+			for iNdEx := len(x.Feetokens) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Feetokens[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0xa
 			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
-			i--
-			dAtA[i] = 0xa
 		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
@@ -380,7 +441,7 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Feetoken", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Feetokens", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -407,10 +468,8 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				if x.Feetoken == nil {
-					x.Feetoken = &FeeToken{}
-				}
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Feetoken); err != nil {
+				x.Feetokens = append(x.Feetokens, &FeeToken{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Feetokens[len(x.Feetokens)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -468,7 +527,7 @@ type GenesisState struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Feetoken *FeeToken `protobuf:"bytes,1,opt,name=feetoken,proto3" json:"feetoken,omitempty"`
+	Feetokens []*FeeToken `protobuf:"bytes,1,rep,name=feetokens,proto3" json:"feetokens,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -491,9 +550,9 @@ func (*GenesisState) Descriptor() ([]byte, []int) {
 	return file_nibiru_txfees_v1_genesis_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenesisState) GetFeetoken() *FeeToken {
+func (x *GenesisState) GetFeetokens() []*FeeToken {
 	if x != nil {
-		return x.Feetoken
+		return x.Feetokens
 	}
 	return nil
 }
@@ -509,24 +568,24 @@ var file_nibiru_txfees_v1_genesis_proto_rawDesc = []byte{
 	0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x66, 0x65, 0x65, 0x74, 0x6f,
 	0x6b, 0x65, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
 	0x73, 0x2f, 0x62, 0x61, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2f, 0x63,
-	0x6f, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x4c, 0x0a, 0x0c, 0x47, 0x65, 0x6e,
-	0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x3c, 0x0a, 0x08, 0x66, 0x65, 0x65,
-	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6e, 0x69,
-	0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x46,
-	0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x08, 0x66,
-	0x65, 0x65, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0xb2, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e,
-	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31,
-	0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x2a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73,
-	0x2f, 0x76, 0x31, 0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e,
-	0x54, 0x58, 0xaa, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x54, 0x78, 0x66, 0x65,
-	0x65, 0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x54,
-	0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x4e, 0x69, 0x62, 0x69, 0x72,
-	0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75,
-	0x3a, 0x3a, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x4e, 0x0a, 0x0c, 0x47, 0x65, 0x6e,
+	0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x3e, 0x0a, 0x09, 0x66, 0x65, 0x65,
+	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6e,
+	0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e,
+	0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x09,
+	0x66, 0x65, 0x65, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x42, 0xb2, 0x01, 0x0a, 0x14, 0x63, 0x6f,
+	0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e,
+	0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f,
+	0x50, 0x01, 0x5a, 0x2a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65,
+	0x65, 0x73, 0x2f, 0x76, 0x31, 0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x76, 0x31, 0xa2, 0x02,
+	0x03, 0x4e, 0x54, 0x58, 0xaa, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x54, 0x78,
+	0x66, 0x65, 0x65, 0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75,
+	0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x4e, 0x69, 0x62,
+	0x69, 0x72, 0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50,
+	0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69,
+	0x72, 0x75, 0x3a, 0x3a, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -547,7 +606,7 @@ var file_nibiru_txfees_v1_genesis_proto_goTypes = []interface{}{
 	(*FeeToken)(nil),     // 1: nibiru.txfees.v1.FeeToken
 }
 var file_nibiru_txfees_v1_genesis_proto_depIdxs = []int32{
-	1, // 0: nibiru.txfees.v1.GenesisState.feetoken:type_name -> nibiru.txfees.v1.FeeToken
+	1, // 0: nibiru.txfees.v1.GenesisState.feetokens:type_name -> nibiru.txfees.v1.FeeToken
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

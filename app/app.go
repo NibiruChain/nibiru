@@ -445,6 +445,7 @@ func NewNibiruApp(
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
 		TxFeesKeeper:   app.TxFeesKeeper,
+		OracleKeeper:   app.OracleKeeper,
 	}))
 
 	// register snapshot extensions

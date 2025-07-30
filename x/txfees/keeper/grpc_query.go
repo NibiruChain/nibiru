@@ -20,12 +20,9 @@ func NewQuerier(k Keeper) Querier {
 	return Querier{Keeper: k}
 }
 
-func (q Querier) FeeToken(ctx context.Context, _ *types.QueryFeeTokenRequest) (*types.QueryFeeTokenResponse, error) {
+func (q Querier) FeeTokens(ctx context.Context, _ *types.QueryFeeTokensRequest) (*types.QueryFeeTokensResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	feeToken, err := q.Keeper.GetFeeToken(sdkCtx)
-	if err != nil {
-		return nil, err
-	}
+	feeTokens := q.Keeper.GetFeeTokens(sdkCtx)
 
-	return &types.QueryFeeTokenResponse{FeeToken: feeToken}, nil
+	return &types.QueryFeeTokensResponse{FeeTokens: feeTokens}, nil
 }

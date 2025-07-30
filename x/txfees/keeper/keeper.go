@@ -3,9 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	sdkioerrors "cosmossdk.io/errors"
+
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -50,29 +53,45 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+func (k Keeper) GetFeeTokensStore(ctx sdk.Context) sdk.KVStore {
+	store := ctx.KVStore(k.storeKey)
+	return prefix.NewStore(store, types.FeeTokenKey)
+}
+
+func (k Keeper) SetFeeTokens(ctx sdk.Context, feetokens []types.FeeToken) error {
+	for _, feeToken := range feetokens {
+		err := k.SetFeeToken(ctx, feeToken)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (k Keeper) SetFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
+	prefixStore := k.GetFeeTokensStore(ctx)
+
 	ok := gethcommon.IsHexAddress(feeToken.Address)
 	if !ok {
 		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Address)
 	}
 
-	store := ctx.KVStore(k.storeKey)
 	bz, err := k.cdc.Marshal(&feeToken)
 	if err != nil {
 		return err
 	}
 
-	store.Set(types.FeeTokenKey, bz)
+	prefixStore.Set([]byte(feeToken.Address), bz)
 	return nil
 }
 
-func (k Keeper) GetFeeToken(ctx sdk.Context) (types.FeeToken, error) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetFeeToken(ctx sdk.Context, address string) (types.FeeToken, error) {
+	prefixStore := k.GetFeeTokensStore(ctx)
 
-	bz := store.Get(types.FeeTokenKey)
-	if bz == nil {
-		return types.FeeToken{}, nil
+	if !prefixStore.Has([]byte(address)) {
+		return types.FeeToken{}, sdkioerrors.Wrapf(types.ErrInvalidFeeToken, "%s", address)
 	}
+	bz := prefixStore.Get([]byte(address))
 
 	var feeToken types.FeeToken
 	if err := k.cdc.Unmarshal(bz, &feeToken); err != nil {
@@ -80,4 +99,26 @@ func (k Keeper) GetFeeToken(ctx sdk.Context) (types.FeeToken, error) {
 	}
 
 	return feeToken, nil
+}
+
+func (k Keeper) GetFeeTokens(ctx sdk.Context) (feetokens []types.FeeToken) {
+	prefixStore := k.GetFeeTokensStore(ctx)
+
+	// this entire store just contains FeeTokens, so iterate over all entries.
+	iterator := prefixStore.Iterator(nil, nil)
+	defer iterator.Close()
+
+	feeTokens := []types.FeeToken{}
+
+	for ; iterator.Valid(); iterator.Next() {
+		feeToken := types.FeeToken{}
+
+		err := k.cdc.Unmarshal(iterator.Value(), &feeToken)
+		if err != nil {
+			panic(err)
+		}
+
+		feeTokens = append(feeTokens, feeToken)
+	}
+	return feeTokens
 }

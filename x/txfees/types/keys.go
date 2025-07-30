@@ -9,5 +9,5 @@ const (
 )
 
 var (
-	FeeTokenKey = []byte("fee_token")
+	FeeTokenKey = []byte("fee_tokens")
 )

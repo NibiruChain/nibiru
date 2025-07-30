@@ -55,7 +55,7 @@ $ %s query %s fee-tokens
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.FeeToken(cmd.Context(), &types.QueryFeeTokenRequest{})
+			res, err := queryClient.FeeTokens(cmd.Context(), &types.QueryFeeTokensRequest{})
 			if err != nil {
 				return err
 			}

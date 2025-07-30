@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -203,19 +204,21 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	}()
 	evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-	feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx)
-	if err != nil {
-		return sdkioerrors.Wrap(err, "failed to get fee token")
-	}
-	out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeToken.Address), feePayerAddr, ctx, evmObj)
+	feeTokenAddress := ctx.Value(feeTokenUsedKey).(string)
+	ratio := ctx.Value("ratio").(sdkmath.LegacyDec)
+
+	out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeTokenAddress), feePayerAddr, ctx, evmObj)
 	if err != nil {
 		return sdkioerrors.Wrapf(
 			err, "failed to get balance of fee payer %s for token %s",
-			feePayerAddr.String(), feeToken.Address,
+			feePayerAddr.String(), feeTokenAddress,
 		)
 	}
-	// Get the first token that have enough amount
-	if out.Cmp(evm.NativeToWei(fees[0].Amount.BigInt())) > 0 {
+
+	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
+	feeAmountWei := evm.NativeToWei(fees[0].Amount.BigInt())
+	feeAmount := sdkmath.LegacyNewDecFromBigInt(feeAmountWei).Mul(ratio)
+	if tokenBalance.GT(feeAmount) {
 		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
 
 		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
@@ -224,7 +227,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
 		}
-		to := gethcommon.HexToAddress(feeToken.Address)
+		to := gethcommon.HexToAddress(feeTokenAddress)
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
 		unusedBigInt := big.NewInt(0)
 		evmMsg := core.Message{
@@ -241,13 +244,14 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 			SkipNonceChecks:  false,
 			SkipFromEOACheck: false,
 		}
+
 		evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, evm.NativeToWei(fees[0].Amount.BigInt()), ctx, evmObj)
+		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, feeAmountWei, ctx, evmObj)
 		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
+			return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer")
 		}
 		if resp.Failed() {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error")
+			return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer with VM error")
 		}
 		if err := stateDB.Commit(); err != nil {
 			return sdkioerrors.Wrap(err, "failed to commit stateDB")
