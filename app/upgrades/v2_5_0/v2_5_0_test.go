@@ -21,7 +21,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *Suite) TestUpgrade() {
@@ -134,7 +133,7 @@ func (s *Suite) TestUpgrade() {
 		s.Require().NoError(err)
 
 		err = testutil.AssertEventPresent(upgradeEvents,
-			gogoproto.MessageName(new(tokenfactory.EventSetDenomMetadata)),
+			gogoproto.MessageName(new(tf.EventSetDenomMetadata)),
 		)
 		s.Require().NoError(err)
 

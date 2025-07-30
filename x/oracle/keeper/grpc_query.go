@@ -86,7 +86,7 @@ func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRat
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	twap, err := q.Keeper.GetExchangeRateTwap(ctx, req.Pair)
+	twap, err := q.GetExchangeRateTwap(ctx, req.Pair)
 	if err != nil {
 		return &types.QueryExchangeRateResponse{}, err
 	}
@@ -192,7 +192,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.Keeper.Votes.Get(ctx, valAddr)
+	vote, err := q.Votes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}

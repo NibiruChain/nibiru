@@ -24,8 +24,8 @@ type ValidateBasicTest struct {
 }
 
 func (vbt ValidateBasicTest) test() func(t *testing.T) {
-	var msg sdk.Msg = vbt.msg
-	var wantErr string = vbt.wantErr
+	var msg = vbt.msg
+	var wantErr = vbt.wantErr
 	return func(t *testing.T) {
 		err := msg.ValidateBasic()
 		if wantErr != "" {
