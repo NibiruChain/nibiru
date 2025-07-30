@@ -759,34 +759,53 @@ func (k *Keeper) ConvertEvmToCoin(
 	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderBech32, erc20, amount, toAddr, err := msg.Validate()
+	if err != nil {
+		return
+	}
 
-	sender := sdk.MustAccAddressFromBech32(msg.Sender)
-	toAddress := sdk.MustAccAddressFromBech32(msg.ToAddr)
-	erc20Addr := msg.Erc20Addr.Address
+	// TODO: Store WNIBI addr in state
+	// TODO: Add setter sudo method for  WNIBI addr in state
+	evmParams := k.GetParams(ctx)
+
+	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
+		// TODO: UD-DEBUG: Handle case of WNIBI
+		// erc20Addr is WNIBI addr
+
+		// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
+
+		// Check if WNIBI exists the WNIBI over to the module
+	}
 
 	// Find the FunToken mapping for this ERC20
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20Addr))
-	if len(funTokens) == 0 {
-		return nil, fmt.Errorf("funtoken for ERC20 address \"%s\" does not exist", erc20Addr.Hex())
-	}
-	if len(funTokens) > 1 {
-		return nil, fmt.Errorf("multiple funtokens for ERC20 address \"%s\" found", erc20Addr.Hex())
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+	if len(funTokens) != 1 {
+		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Address.Hex())
+		return
 	}
 
-	fungibleTokenMapping := funTokens[0]
-	amount := msg.Amount.BigInt()
-	bankCoin := sdk.NewCoin(fungibleTokenMapping.BankDenom, msg.Amount)
+	funtokenMapping := funTokens[0]
+	amountBig := amount.BigInt()
+	bankCoin := sdk.NewCoin(funtokenMapping.BankDenom, msg.Amount)
 
 	// Get the sender's ETH address
-	senderEthAddr := eth.NibiruAddrToEthAddr(sender)
+	senderEthAddr := eth.NibiruAddrToEthAddr(senderBech32)
 
-	if fungibleTokenMapping.IsMadeFromCoin {
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
+
+	if funtokenMapping.IsMadeFromCoin {
 		return k.convertEvmToCoinForCoinOriginated(
-			ctx, sender, senderEthAddr, toAddress, erc20Addr, amount, bankCoin,
+			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, bankCoin,
 		)
 	} else {
 		return k.convertEvmToCoinForERC20Originated(
-			ctx, sender, senderEthAddr, toAddress, erc20Addr, amount, bankCoin,
+			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, bankCoin,
 		)
 	}
 }

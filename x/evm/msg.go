@@ -529,25 +529,55 @@ func (m MsgConvertEvmToCoin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-// ValidateBasic does a sanity check of the provided data
-func (m *MsgConvertEvmToCoin) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return fmt.Errorf("invalid sender address: %w", err)
+// Validate does a sanity check of the provided data
+func (m *MsgConvertEvmToCoin) Validate() (
+	senderBech32 sdk.AccAddress,
+	erc20 eth.EIP55Addr,
+	amount sdkmath.Int,
+	toAddr struct {
+		Eth    common.Address
+		Bech32 sdk.AccAddress
+	},
+	err error,
+) {
+	senderBech32, err = sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		err = fmt.Errorf("invalid sender address: %w", err)
+		return
 	}
 
-	if _, err := sdk.AccAddressFromBech32(m.ToAddr); err != nil {
-		return fmt.Errorf("invalid to_address: %w", err)
+	err = eth.ValidateAddress(m.ToAddr)
+	if err == nil {
+		// err == nil means this is an Eth addr
+		toAddr.Eth = common.HexToAddress(m.ToAddr)
+		toAddr.Bech32 = eth.EthAddrToNibiruAddr(toAddr.Eth)
+	} else {
+		// Try bech32
+		toAddr.Bech32, err = sdk.AccAddressFromBech32(m.ToAddr)
+		if err != nil {
+			err = fmt.Errorf("invalid bech32 or hex address: %w", err)
+			return
+		}
+		toAddr.Eth = eth.NibiruAddrToEthAddr(toAddr.Bech32)
 	}
 
 	if m.Erc20Addr.Address == (common.Address{}) {
-		return fmt.Errorf("empty erc20_contract_address")
+		err = fmt.Errorf("empty erc20_addr")
+		return
 	}
 
 	if m.Amount.IsNil() || !m.Amount.IsPositive() {
-		return fmt.Errorf("amount must be positive")
+		err = fmt.Errorf("amount must be positive")
+		return
 	}
 
-	return nil
+	return senderBech32, m.Erc20Addr, m.Amount, toAddr, nil
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgConvertEvmToCoin) ValidateBasic() error {
+	_, _, _, _, err := m.Validate()
+	return err
 }
 
 // GetSignBytes implements the LegacyMsg interface.
