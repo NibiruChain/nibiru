@@ -126,3 +126,18 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 		}
 	}
 }
+
+// IsSimulation checks if the context is a simulation context.
+func IsSimulation(ctx sdk.Context) bool {
+	if val := ctx.Value(SimulationContextKey); val != nil {
+		if simulation, ok := val.(bool); ok && simulation {
+			return true
+		}
+	}
+	return false
+}
+
+// IsDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
+func IsDeliverTx(ctx sdk.Context) bool {
+	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !IsSimulation(ctx)
+}

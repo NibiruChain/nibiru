@@ -235,7 +235,7 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	ctx sdk.Context, acc sdk.AccAddress,
 ) {
 	// If there's no StateDB set, it means we're not in an EthereumTx.
-	if bk.StateDB == nil || !isDeliverTx(ctx) {
+	if bk.StateDB == nil || !IsDeliverTx(ctx) {
 		return
 	}
 
@@ -319,19 +319,4 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 			}
 		},
 	)
-}
-
-// isSimulation checks if the context is a simulation context.
-func isSimulation(ctx sdk.Context) bool {
-	if val := ctx.Value(SimulationContextKey); val != nil {
-		if simulation, ok := val.(bool); ok && simulation {
-			return true
-		}
-	}
-	return false
-}
-
-// isDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
-func isDeliverTx(ctx sdk.Context) bool {
-	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !isSimulation(ctx)
 }
