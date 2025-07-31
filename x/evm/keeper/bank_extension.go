@@ -1,14 +1,13 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 var _ bankkeeper.Keeper = &NibiruBankKeeper{}
@@ -235,7 +234,7 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	ctx sdk.Context, acc sdk.AccAddress,
 ) {
 	// If there's no StateDB set, it means we're not in an EthereumTx.
-	if bk.StateDB == nil {
+	if bk.StateDB == nil && !isDeliverTx(ctx) {
 		return
 	}
 
@@ -319,4 +318,19 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 			}
 		},
 	)
+}
+
+// isSimulation checks if the context is a simulation context.
+func isSimulation(ctx sdk.Context) bool {
+	if val := ctx.Value(SimulationContextKey); val != nil {
+		if simulation, ok := val.(bool); ok && simulation {
+			return true
+		}
+	}
+	return false
+}
+
+// isDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
+func isDeliverTx(ctx sdk.Context) bool {
+	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !isSimulation(ctx)
 }

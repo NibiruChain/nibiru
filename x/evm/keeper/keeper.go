@@ -18,6 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
+type contextKey string
+
+const SimulationContextKey contextKey = "evm_simulation"
+
 type Keeper struct {
 	cdc codec.BinaryCodec
 	// storeKey: For persistent storage of EVM state.
