@@ -154,7 +154,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 			},
 		)
 		s.Require().Error(err)
-		s.Require().Contains(err.Error(), "funtoken for ERC20 address")
+		s.Require().Contains(err.Error(), "no FunToken mapping exists for ERC20")
 	})
 }
 

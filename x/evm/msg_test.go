@@ -1048,7 +1048,7 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
-			errMsg: "invalid to_address",
+			errMsg: "invalid bech32 or hex addr",
 		},
 		{
 			name: "empty to address",
@@ -1059,7 +1059,7 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 				Amount:    sdkmath.NewInt(100),
 			},
 			expErr: true,
-			errMsg: "invalid to_address",
+			errMsg: "invalid bech32 or hex addr",
 		},
 		{
 			name: "empty erc20 contract address",
@@ -1072,7 +1072,7 @@ func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
 				Amount: sdkmath.NewInt(100),
 			},
 			expErr: true,
-			errMsg: "empty erc20_contract_address",
+			errMsg: "empty erc20_addr",
 		},
 		{
 			name: "nil amount",
