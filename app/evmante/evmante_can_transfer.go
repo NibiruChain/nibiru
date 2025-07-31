@@ -24,7 +24,7 @@ type CanTransferDecorator struct {
 func (ctd CanTransferDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
-	ethCfg := evm.EthereumConfig(ctd.EVMKeeper.EthChainID(ctx))
+	ethCfg := evm.EthereumConfig(ctd.EthChainID(ctx))
 	signer := gethcore.MakeSigner(
 		ethCfg,
 		big.NewInt(ctx.BlockHeight()),
@@ -40,7 +40,7 @@ func (ctd CanTransferDecorator) AnteHandle(
 			)
 		}
 
-		baseFeeWeiPerGas := evm.NativeToWei(ctd.EVMKeeper.BaseFeeMicronibiPerGas(ctx))
+		baseFeeWeiPerGas := evm.NativeToWei(ctd.BaseFeeMicronibiPerGas(ctx))
 
 		evmMsg, err := msgEthTx.AsMessage(signer, baseFeeWeiPerGas)
 		if err != nil {

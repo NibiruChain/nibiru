@@ -25,7 +25,7 @@ func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochInfosRequest) 
 	ctx := sdk.UnwrapSDKContext(c)
 
 	return &types.QueryEpochInfosResponse{
-		Epochs: q.Keeper.AllEpochInfos(ctx),
+		Epochs: q.AllEpochInfos(ctx),
 	}, nil
 }
 
@@ -33,7 +33,7 @@ func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochInfosRequest) 
 func (q Querier) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (resp *types.QueryCurrentEpochResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	info, err := q.Keeper.GetEpochInfo(ctx, req.Identifier)
+	info, err := q.GetEpochInfo(ctx, req.Identifier)
 	if err != nil {
 		return
 	}

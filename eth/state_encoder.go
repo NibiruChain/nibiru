@@ -29,45 +29,45 @@ var (
 // collections ValueEncoder[[]byte]
 type veBytes struct{}
 
-func (_ veBytes) Encode(value []byte) []byte    { return value }
-func (_ veBytes) Decode(bz []byte) []byte       { return bz }
-func (_ veBytes) Stringify(value []byte) string { return BytesToHex(value) }
-func (_ veBytes) Name() string                  { return "[]byte" }
+func (veBytes) Encode(value []byte) []byte    { return value }
+func (veBytes) Decode(bz []byte) []byte       { return bz }
+func (veBytes) Stringify(value []byte) string { return BytesToHex(value) }
+func (veBytes) Name() string                  { return "[]byte" }
 
 // veEthAddr: Implements a `collections.ValueEncoder` for an Ethereum address.
 type veEthAddr struct{}
 
-func (_ veEthAddr) Encode(value gethcommon.Address) []byte    { return value.Bytes() }
-func (_ veEthAddr) Decode(bz []byte) gethcommon.Address       { return gethcommon.BytesToAddress(bz) }
-func (_ veEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
-func (_ veEthAddr) Name() string                              { return "gethcommon.Address" }
+func (veEthAddr) Encode(value gethcommon.Address) []byte    { return value.Bytes() }
+func (veEthAddr) Decode(bz []byte) gethcommon.Address       { return gethcommon.BytesToAddress(bz) }
+func (veEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
+func (veEthAddr) Name() string                              { return "gethcommon.Address" }
 
 type keBytes struct{}
 
 // Encode encodes the type T into bytes.
-func (_ keBytes) Encode(key []byte) []byte { return key }
+func (keBytes) Encode(key []byte) []byte { return key }
 
 // Decode decodes the given bytes back into T.
 // And it also must return the bytes of the buffer which were read.
-func (_ keBytes) Decode(bz []byte) (int, []byte) { return len(bz), bz }
+func (keBytes) Decode(bz []byte) (int, []byte) { return len(bz), bz }
 
 // Stringify returns a string representation of T.
-func (_ keBytes) Stringify(key []byte) string { return BytesToHex(key) }
+func (keBytes) Stringify(key []byte) string { return BytesToHex(key) }
 
 // keEthAddr: Implements a `collections.KeyEncoder` for an Ethereum address.
 type keEthAddr struct{}
 
-func (_ keEthAddr) Encode(value gethcommon.Address) []byte { return value.Bytes() }
-func (_ keEthAddr) Decode(bz []byte) (int, gethcommon.Address) {
+func (keEthAddr) Encode(value gethcommon.Address) []byte { return value.Bytes() }
+func (keEthAddr) Decode(bz []byte) (int, gethcommon.Address) {
 	return gethcommon.AddressLength, gethcommon.BytesToAddress(bz[:gethcommon.AddressLength])
 }
-func (_ keEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
+func (keEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
 
 // keEthHash: Implements a `collections.KeyEncoder` for an Ethereum hash.
 type keEthHash struct{}
 
-func (_ keEthHash) Encode(value gethcommon.Hash) []byte { return value.Bytes() }
-func (_ keEthHash) Decode(bz []byte) (int, gethcommon.Hash) {
+func (keEthHash) Encode(value gethcommon.Hash) []byte { return value.Bytes() }
+func (keEthHash) Decode(bz []byte) (int, gethcommon.Hash) {
 	return gethcommon.HashLength, gethcommon.BytesToHash(bz)
 }
-func (_ keEthHash) Stringify(value gethcommon.Hash) string { return value.Hex() }
+func (keEthHash) Stringify(value gethcommon.Hash) string { return value.Hex() }

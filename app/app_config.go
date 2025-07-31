@@ -55,14 +55,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var (
@@ -77,12 +75,12 @@ var (
 		ibcfeetypes.ModuleName,
 		icatypes.ModuleName,
 
-		evm.ModuleName,
+		evmtypes.ModuleName,
 		epochstypes.ModuleName,
 		sudotypes.ModuleName,
 		common.TreasuryPoolModuleAccount,
 		wasmtypes.ModuleName,
-		tokenfactorytypes.ModuleName,
+		tftypes.ModuleName,
 	}
 
 	// module account permissions
@@ -98,12 +96,12 @@ var (
 		{Account: ibcfeetypes.ModuleName},
 		{Account: icatypes.ModuleName},
 
-		{Account: evm.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: evmtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: epochstypes.ModuleName},
 		{Account: sudotypes.ModuleName},
 		{Account: common.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
-		{Account: tokenfactorytypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: tftypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 	}
 
 	orderedModuleNames = []string{
@@ -158,13 +156,13 @@ var (
 		ibcwasmtypes.ModuleName,
 
 		// --------------------------------------------------------------------
-		evm.ModuleName,
+		evmtypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
-		tokenfactorytypes.ModuleName,
+		tftypes.ModuleName,
 
 		// Everything else should be before genmsg
 		genmsg.ModuleName,
