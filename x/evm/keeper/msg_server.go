@@ -775,7 +775,6 @@ func (k *Keeper) ConvertEvmToCoin(
 		k.Bank.StateDB = nil
 	}()
 
-	// TODO: Add setter sudo method for  WNIBI addr in state
 	// TODO: Update the module params in the upgrade handler
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
@@ -817,7 +816,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	},
 	amount math.Int,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-
 	// isTx: value to use for commit in any EVM calls
 	isTx := true
 
