@@ -18,7 +18,6 @@ import (
 	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	store "github.com/cosmos/cosmos-sdk/store/types"
@@ -221,7 +220,7 @@ type TokenFactoryInputs struct {
 
 	Config *modulev1.Module
 	Key    *store.KVStoreKey
-	Cdc    codec.Codec
+	Cdc    sdkcodec.Codec
 
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    types.BankKeeper

@@ -556,7 +556,7 @@ func (suite *EIP712TestSuite) TestTypedDataErrorHandling() {
 
 	messagesArr.WriteString("[")
 	for i := 0; i < maxRecursionDepth; i++ {
-		messagesArr.WriteString(fmt.Sprintf(`{ "type": "msgType", "value": { "field%v": 10 } }`, i))
+		fmt.Fprintf(messagesArr, `{ "type": "msgType", "value": { "field%v": 10 } }`, i)
 		if i != maxRecursionDepth-1 {
 			messagesArr.WriteString(",")
 		}

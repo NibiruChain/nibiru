@@ -5,6 +5,8 @@ import (
 	"maps"
 	"time"
 
+	wasmapp "github.com/CosmWasm/wasmd/app"
+
 	sdkmath "cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -19,14 +21,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -39,8 +39,8 @@ import (
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestApp(app.GenesisState{})
+func NewNibiruTestAppAndContext() (*nibiruapp.NibiruApp, sdk.Context) {
+	app, _ := NewNibiruTestApp(nibiruapp.GenesisState{})
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
@@ -51,7 +51,7 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 }
 
 // NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
-func NewContext(nibiru *app.NibiruApp) sdk.Context {
+func NewContext(nibiru *nibiruapp.NibiruApp) sdk.Context {
 	blockHeader := tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
@@ -66,7 +66,7 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 }
 
 func FirstBlockProposer(
-	chain *app.NibiruApp, ctx sdk.Context,
+	chain *nibiruapp.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
 	maxQueryCount := uint32(10)
 	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
@@ -76,8 +76,8 @@ func FirstBlockProposer(
 
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
 // default. See "DefaultSudoers".
-func SetDefaultSudoGenesis(gen app.GenesisState) {
-	encoding := app.MakeEncodingConfig()
+func SetDefaultSudoGenesis(gen wasmapp.GenesisState) {
+	encoding := wasmapp.MakeEncodingConfig()
 
 	var sudoGen sudotypes.GenesisState
 	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], &sudoGen)
@@ -93,10 +93,10 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
-	nibiruApp *app.NibiruApp, gen app.GenesisState,
+func NewNibiruTestApp(customGenesisOverride nibiruapp.GenesisState) (
+	nibiruApp *nibiruapp.NibiruApp, gen nibiruapp.GenesisState,
 ) {
-	app := app.NewNibiruApp(
+	app := nibiruapp.NewNibiruApp(
 		log.NewNopLogger(),
 		tmdb.NewMemDB(),
 		/*traceStore=*/ nil,
@@ -206,9 +206,9 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
-	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
-	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), []authtypes.GenesisAccount{acc})
-	genesisState[authtypes.ModuleName] = codec.MustMarshalJSON(authGenesis)
+	acc := auth.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	authGenesis := auth.NewGenesisState(auth.DefaultParams(), []auth.GenesisAccount{acc})
+	genesisState[auth.ModuleName] = codec.MustMarshalJSON(authGenesis)
 
 	// add genesis account balance
 	var bankGenesis banktypes.GenesisState
@@ -218,7 +218,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromUint64(1e14))),
 	})
 
-	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []authtypes.GenesisAccount{acc}, bankGenesis.Balances...)
+	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []auth.GenesisAccount{acc}, bankGenesis.Balances...)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 func genesisStateWithValSet(
 	cdc codec.Codec,
 	genesisState nibiruapp.GenesisState,
-	valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
+	valSet *cmttypes.ValidatorSet, genAccs []auth.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (nibiruapp.GenesisState, error) {
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
@@ -278,7 +278,7 @@ func genesisStateWithValSet(
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
-		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
+		Address: auth.NewModuleAddress(stakingtypes.BondedPoolName).String(),
 		Coins:   sdk.Coins{sdk.NewCoin(appconst.BondDenom, sdk.DefaultPowerReduction)},
 	})
 
