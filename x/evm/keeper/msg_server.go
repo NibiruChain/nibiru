@@ -442,14 +442,14 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 	} else if cmpSign == 0 {
 		return uint256.NewInt(0), nil
 	} else if cmpSign < 0 {
-		return newWeiInt, fmt.Errorf("Wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
+		return newWeiInt, fmt.Errorf("wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
 	}
 
 	// err if weiInt is too small
 	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
 	if weiInt.Cmp(tenPow12) < 0 {
 		return newWeiInt, fmt.Errorf(
-			"Wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
+			"wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
 	}
 
 	// truncate to highest micronibi amount
@@ -457,7 +457,7 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 		evm.NativeToWei(evm.WeiToNative(weiInt)),
 	)
 	if overflowed {
-		return newWeiInt, fmt.Errorf("Wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
+		return newWeiInt, fmt.Errorf("wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
 	}
 	return newWeiInt, nil
 }

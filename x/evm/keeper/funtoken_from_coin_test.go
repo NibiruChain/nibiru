@@ -153,7 +153,7 @@ func (s *FunTokenFromCoinSuite) TestCreateFunTokenFromCoin() {
 			&evm.EventTxLog{
 				Logs: []evm.Log{
 					{
-						Address: actualErc20Addr.Address.Hex(),
+						Address: actualErc20Addr.Hex(),
 						Topics: []string{
 							signature,
 							ownershipFrom,

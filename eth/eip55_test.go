@@ -216,7 +216,7 @@ func (s *EIP55AddrSuite) TestStringEncoding() {
 	addrHex := "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
 	addr, err := eth.NewEIP55AddrFromStr(addrHex)
 	s.Require().NoError(err)
-	s.Require().Equal(addrHex, addr.Address.Hex())
+	s.Require().Equal(addrHex, addr.Hex())
 
 	addrBz, err := addr.Marshal()
 	s.Require().NoError(err)
