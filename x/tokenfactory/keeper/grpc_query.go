@@ -27,7 +27,7 @@ func (q Querier) Params(
 	_ *types.QueryParamsRequest,
 ) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	params, _ := q.Keeper.Store.ModuleParams.Get(ctx)
+	params, _ := q.Store.ModuleParams.Get(ctx)
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
@@ -51,7 +51,7 @@ func (q Querier) Denoms(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	return &types.QueryDenomsResponse{
-		Denoms: q.Keeper.QueryDenoms(ctx, req.Creator),
+		Denoms: q.QueryDenoms(ctx, req.Creator),
 	}, err
 }
 
@@ -84,5 +84,5 @@ func (q Querier) DenomInfo(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	return q.Keeper.QueryDenomInfo(ctx, req.Denom)
+	return q.QueryDenomInfo(ctx, req.Denom)
 }

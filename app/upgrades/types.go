@@ -6,7 +6,6 @@ import (
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 )
@@ -19,7 +18,7 @@ type Upgrade struct {
 		cfg module.Configurator,
 		nibiru *keepers.PublicKeepers,
 		ibcKeeperClientKeeper clientkeeper.Keeper,
-	) types.UpgradeHandler
+	) upgradetypes.UpgradeHandler
 
 	StoreUpgrades store.StoreUpgrades
 }

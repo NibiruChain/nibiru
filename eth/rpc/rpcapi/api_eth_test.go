@@ -526,7 +526,7 @@ func (s *NodeSuite) Test_SmartContract() {
 	{
 		weiToSend := evm.NativeToWei(big.NewInt(1)) // 1 unibi
 		s.T().Logf("Sending %d wei (sanity check)", weiToSend)
-		accResp, err := s.node.EthRpcQueryClient.QueryClient.EthAccount(blankCtx,
+		accResp, err := s.node.EthRpcQueryClient.EthAccount(blankCtx,
 			&evm.QueryEthAccountRequest{
 				Address: s.fundedAccEthAddr.Hex(),
 			})
