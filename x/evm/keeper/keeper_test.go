@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
