@@ -182,7 +182,7 @@ func UpgradeStNibiContractOnMainnet(
 	// account's bytecode hash
 	// -------------------------------------------------------------------------
 	fmt.Println("old originalErc20Account", originalErc20Account)
-	fmt.Println("old code hash", originalErc20Account.CodeHash)
+	fmt.Println("old code hash", string(originalErc20Account.CodeHash))
 	fmt.Println("overwriting bytecode hash")
 	newErc20Acc := keepers.EvmKeeper.GetAccount(ctx, newErc20Addr)
 	originalErc20Account.CodeHash = newErc20Acc.CodeHash
@@ -190,7 +190,7 @@ func UpgradeStNibiContractOnMainnet(
 	if err != nil {
 		return fmt.Errorf("overwrite of contract bytecode failed: %w", err)
 	}
-	fmt.Println("new code hash", newErc20Acc.CodeHash)
+	fmt.Println("new code hash", string(newErc20Acc.CodeHash))
 	fmt.Println("new originalErc20Account", originalErc20Account)
 	fmt.Println("overwrote bytecode hash")
 

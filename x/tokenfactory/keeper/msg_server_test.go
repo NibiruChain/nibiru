@@ -738,7 +738,7 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 		sudoers sudo.Sudoers
 
 		// Constant for an ICS20 token: USDC.noble on Nibiru mainnet
-		nobleUSDC banktypes.Metadata = banktypes.Metadata{
+		nobleUSDC = banktypes.Metadata{
 			Description: "Native USDC minted into the IBC ecosystem via the Noble blockchain",
 			DenomUnits: []*banktypes.DenomUnit{
 				{

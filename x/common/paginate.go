@@ -42,7 +42,7 @@ func ParsePagination(
 	case haveKey && haveOffset:
 		newPageReq = nil
 		page = -1
-		err = fmt.Errorf("invalid page request, either offset or key is expected, not both.")
+		err = fmt.Errorf("invalid page request, either offset or key is expected, not both")
 	case haveOffset:
 		page = (int(newPageReq.Offset) / int(newPageReq.Limit)) + 1
 	case haveKey:

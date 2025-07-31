@@ -386,7 +386,7 @@ func NewNibiruApp(
 	cryptocodec.RegisterCrypto(app.legacyAmino)
 
 	// load state streaming if enabled
-	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
+	if _, _, err := streaming.LoadStreamingServices(app.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
 		logger.Error("failed to load state streaming", "err", err)
 		os.Exit(1)
 	}
@@ -465,7 +465,7 @@ func NewNibiruApp(
 
 	if loadLatest {
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		if err := ibcwasmkeeper.InitializePinnedCodes(app.BaseApp.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
+		if err := ibcwasmkeeper.InitializePinnedCodes(app.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 	}
@@ -591,15 +591,15 @@ func (app *NibiruApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 // RegisterTxService implements the Application.RegisterTxService method.
 func (app *NibiruApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(
-		app.BaseApp.GRPCQueryRouter(), clientCtx,
-		app.BaseApp.Simulate, app.interfaceRegistry)
+		app.GRPCQueryRouter(), clientCtx,
+		app.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *NibiruApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(
 		clientCtx,
-		app.BaseApp.GRPCQueryRouter(),
+		app.GRPCQueryRouter(),
 		app.interfaceRegistry,
 		app.Query,
 	)

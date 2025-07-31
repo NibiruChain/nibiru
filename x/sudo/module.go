@@ -19,9 +19,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	simulation "github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
@@ -205,13 +204,13 @@ type SudoInputs struct {
 type SudoOutputs struct {
 	depinject.Out
 
-	Keeper keeper.Keeper
+	Keeper sudokeeper.Keeper
 
 	Module appmodule.AppModule
 }
 
 func ProvideModule(in SudoInputs) SudoOutputs {
-	k := keeper.NewKeeper(in.Cdc, in.Key)
+	k := sudokeeper.NewKeeper(in.Cdc, in.Key)
 
 	m := NewAppModule(in.Cdc, k)
 

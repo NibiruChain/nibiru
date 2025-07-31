@@ -3,7 +3,6 @@ package encoding
 
 import (
 	"cosmossdk.io/simapp/params"
-	"github.com/cosmos/cosmos-sdk/codec"
 	amino "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -29,7 +28,7 @@ func MakeConfig() params.EncodingConfig {
 
 	sdk.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	cryptocodec.RegisterCrypto(encodingConfig.Amino)
-	codec.RegisterEvidences(encodingConfig.Amino)
+	amino.RegisterEvidences(encodingConfig.Amino)
 	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 
 	std.RegisterInterfaces(interfaceRegistry)

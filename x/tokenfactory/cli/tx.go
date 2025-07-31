@@ -136,7 +136,7 @@ func CmdMint() *cobra.Command {
 			mintTo, err := cmd.Flags().GetString("mint-to")
 			if err != nil {
 				return fmt.Errorf(
-					"Please provide a valid address using the --mint-to flag: %s", err)
+					"please provide a valid address using the --mint-to flag: %s", err)
 			}
 			mintToAddr, err := sdk.AccAddressFromBech32(mintTo)
 			if err != nil {
@@ -191,7 +191,7 @@ func CmdBurn() *cobra.Command {
 			burnFrom, err := cmd.Flags().GetString("burn-from")
 			if err != nil {
 				return fmt.Errorf(
-					"Please provide a valid address using the --burn-from flag: %s", err)
+					"please provide a valid address using the --burn-from flag: %s", err)
 			}
 
 			burnFromAddr, err := sdk.AccAddressFromBech32(burnFrom)

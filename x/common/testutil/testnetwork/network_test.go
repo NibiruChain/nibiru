@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -81,7 +80,7 @@ func (s *TestSuite) TestNetwork_LatestHeight() {
 func (s *TestSuite) TestLogMnemonic() {
 	kring, algo, nodeDirName := testnetwork.NewKeyring(s.T())
 
-	var cdc sdkcodec.Codec = app.MakeEncodingConfig().Codec
+	var cdc = app.MakeEncodingConfig().Codec
 	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
 	s.NoError(err)
 

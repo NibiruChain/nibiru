@@ -318,12 +318,12 @@ func (p precompileWasm) executeMulti(
 	for i, m := range wasmExecMsgs {
 		wasmContract, e := sdk.AccAddressFromBech32(m.ContractAddr)
 		if e != nil {
-			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: %w", i, e)
 			return
 		}
 		msgArgsCopy := wasm.RawContractMessage(m.MsgArgs)
 		if e := msgArgsCopy.ValidateBasic(); e != nil {
-			err = fmt.Errorf("Execute failed at index %d: error parsing msg args: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: error parsing msg args: %w", i, e)
 			return
 		}
 		var funds sdk.Coins
@@ -335,7 +335,7 @@ func (p precompileWasm) executeMulti(
 		}
 		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
-			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: %w", i, e)
 			return
 		}
 		responses = append(responses, respBz)

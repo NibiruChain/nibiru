@@ -584,7 +584,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID gethrpc.ID, extra any)
 					continue
 				}
 
-				txResponse, err := evm.DecodeTxResponse(dataTx.TxResult.Result.Data)
+				txResponse, err := evm.DecodeTxResponse(dataTx.Result.Data)
 				if err != nil {
 					api.logger.Error("failed to decode tx response", "error", err.Error())
 					return

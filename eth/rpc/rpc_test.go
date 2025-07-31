@@ -68,6 +68,6 @@ func (s *SuiteRPC) TestEthHeaderFromTendermint() {
 		ethHeader := rpc.EthHeaderFromTendermint(
 			block.Header, gethcore.Bloom{}, sdkmath.NewInt(1).BigInt())
 		s.NotNil(ethHeader)
-		s.Equal(block.Header.Height, ethHeader.Number.Int64())
+		s.Equal(block.Height, ethHeader.Number.Int64())
 	}
 }

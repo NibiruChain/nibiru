@@ -190,7 +190,7 @@ func AppConfig(denom string) (string, any) {
 	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
 	//   own app.toml to override, or use this default value.
 	if denom != "" {
-		customAppConfig.Config.MinGasPrices = "0" + denom
+		customAppConfig.MinGasPrices = "0" + denom
 	}
 
 	customAppTemplate := config.DefaultConfigTemplate + DefaultConfigTemplate

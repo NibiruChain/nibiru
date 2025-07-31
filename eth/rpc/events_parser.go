@@ -49,7 +49,8 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 	msgIndex := -1
 	for _, event := range result.Events {
 		// Pending tx event could be single if tx didn't succeed
-		if event.Type == evm.PendingEthereumTxEvent {
+		switch event.Type {
+		case evm.PendingEthereumTxEvent:
 			msgIndex++
 			ethHash, txIndex, err := evm.GetEthHashAndIndexFromPendingEthereumTxEvent(event)
 			if err != nil {
@@ -62,7 +63,7 @@ func ParseTxResult(result *abci.ResponseDeliverTx, tx sdk.Tx) (*ParsedTxs, error
 			}
 			parsedTxs.Txs = append(parsedTxs.Txs, pendingTx)
 			parsedTxs.TxHashes[ethHash] = msgIndex
-		} else if event.Type == evm.TypeUrlEventEthereumTx { // Full event replaces the pending tx
+		case evm.TypeUrlEventEthereumTx: // Full event replaces the pending tx
 			eventEthereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
 			if err != nil {
 				return nil, err

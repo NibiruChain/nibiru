@@ -51,7 +51,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, sdkioerrors.Wrap(types.ErrInvalidHash, err.Error())
 	}
 
-	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
+	ms.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregatePrevote{
 		Validator: msg.Validator,
@@ -79,13 +79,13 @@ func (ms msgServer) AggregateExchangeRateVote(
 		return nil, err
 	}
 
-	params, err := ms.Keeper.Params.Get(ctx)
+	params, err := ms.Params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// An aggergate prevote is required to get an aggregate vote.
-	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)
+	aggregatePrevote, err := ms.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
@@ -121,10 +121,10 @@ func (ms msgServer) AggregateExchangeRateVote(
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.Keeper.Votes.Insert(
+	ms.Votes.Insert(
 		ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr),
 	)
-	_ = ms.Keeper.Prevotes.Delete(ctx, valAddr)
+	_ = ms.Prevotes.Delete(ctx, valAddr)
 
 	priceTuples, err := types.NewExchangeRateTuplesFromString(msg.ExchangeRates)
 	if err != nil {
@@ -161,7 +161,7 @@ func (ms msgServer) DelegateFeedConsent(
 	}
 
 	// Set the delegation
-	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
+	ms.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventDelegateFeederConsent{
 		Feeder:    msg.Delegate,
@@ -186,14 +186,14 @@ func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOr
 		return nil, sudotypes.ErrUnauthorized
 	}
 
-	params, err := ms.Keeper.Params.Get(ctx)
+	params, err := ms.Params.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
 	}
 
 	mergedParams := mergeOracleParams(msg, params)
 
-	ms.Keeper.UpdateParams(ctx, mergedParams)
+	ms.UpdateParams(ctx, mergedParams)
 
 	return &types.MsgEditOracleParamsResponse{}, nil
 }

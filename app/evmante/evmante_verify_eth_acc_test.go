@@ -65,7 +65,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.NewStateDB()
-			anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.AppKeepers.EvmKeeper, &deps.App.AppKeepers.AccountKeeper)
+			anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.EvmKeeper, &deps.App.AccountKeeper)
 
 			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)
