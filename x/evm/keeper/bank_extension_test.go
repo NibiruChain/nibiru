@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/rs/zerolog/log"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -423,5 +427,84 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 			continue
 		}
 		s.True(first == db.StateDB, db.Explanation)
+	}
+}
+
+// TestSyncStateDBWithAccount_DeliverTxCheck ensures that SyncStateDBWithAccount
+// only syncs during DeliverTx, not during CheckTx, ReCheckTx, or simulations
+func (s *Suite) TestSyncStateDBWithAccount_DeliverTxCheck() {
+	deps := evmtest.NewTestDeps()
+
+	testAddr := evmtest.NewEthPrivAcc()
+
+	// Fund the account with some NIBI
+	fundCoins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 1000))
+	s.NoError(testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, testAddr.NibiruAddr, fundCoins))
+
+	testCases := []struct {
+		name            string
+		setupContext    func(ctx sdk.Context) sdk.Context
+		shouldSync      bool
+		expectedBalance string
+	}{
+		{
+			name: "DeliverTx context - should sync",
+			setupContext: func(ctx sdk.Context) sdk.Context {
+				// Default context is DeliverTx
+				return ctx
+			},
+			shouldSync:      true,
+			expectedBalance: evm.NativeToWei(fundCoins[0].Amount.BigInt()).String(),
+		},
+		{
+			name: "CheckTx context - should NOT sync",
+			setupContext: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsCheckTx(true)
+			},
+			shouldSync:      false,
+			expectedBalance: "0", // Should remain 0 as sync is skipped
+		},
+		{
+			name: "ReCheckTx context - should NOT sync",
+			setupContext: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsReCheckTx(true)
+			},
+			shouldSync:      false,
+			expectedBalance: "0",
+		},
+		{
+			name: "Simulation context - should NOT sync",
+			setupContext: func(ctx sdk.Context) sdk.Context {
+				// Mark context as simulation using SimulationContextKey
+				return ctx.WithValue(keeper.SimulationContextKey, true)
+			},
+			shouldSync:      false,
+			expectedBalance: "0",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Create a fresh StateDB for each test
+			deps.EvmKeeper.Bank.StateDB = deps.NewStateDB()
+
+			// Set initial balance to 0 in StateDB
+			ethAddr := eth.NibiruAddrToEthAddr(testAddr.NibiruAddr)
+			deps.EvmKeeper.Bank.StateDB.SetBalanceWei(ethAddr, big.NewInt(0))
+
+			// Apply context modifications
+			testCtx := tc.setupContext(deps.Ctx)
+
+			// Call SyncStateDBWithAccount
+			deps.EvmKeeper.Bank.SyncStateDBWithAccount(testCtx, testAddr.NibiruAddr)
+
+			// Check if balance was synced
+			actualBalance := deps.EvmKeeper.Bank.StateDB.GetBalance(ethAddr)
+			s.Equal(tc.expectedBalance, actualBalance.String(),
+				"Balance sync behavior incorrect for %s", tc.name)
+
+			// Clean up
+			deps.EvmKeeper.Bank.StateDB = nil
+		})
 	}
 }
