@@ -67,7 +67,7 @@ func (p Params) Validate() error {
 		return fmt.Errorf("ParamsError: %w", err)
 	}
 
-	if _, err := eth.NewEIP55AddrFromStr(p.CanonicalWnibi.Address.Hex()); err != nil {
+	if _, err := eth.NewEIP55AddrFromStr(p.CanonicalWnibi.Hex()); err != nil {
 		return fmt.Errorf("ParamsError: %w", err)
 	} else if (p.CanonicalWnibi.Address == gethcommon.Address{}) {
 		err = fmt.Errorf("ParamsError: evm.Params.CanonicalWnibi cannot be the zero address")

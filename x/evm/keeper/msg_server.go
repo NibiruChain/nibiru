@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -787,7 +787,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	// Find the FunToken mapping for this ERC20
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
 	if len(funTokens) != 1 {
-		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Address.Hex())
+		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
 		return
 	}
 
@@ -814,7 +814,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		Eth    gethcommon.Address
 		Bech32 sdk.AccAddress
 	},
-	amount math.Int,
+	amount sdkmath.Int,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
 	// isTx: value to use for commit in any EVM calls
 	isTx := true
@@ -855,7 +855,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	}
 
 	if stateDB.GetCodeSize(erc20.Address) == 0 {
-		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Address.Hex())
+		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Hex())
 		return
 	}
 
@@ -875,12 +875,10 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		contractInput,
 		Erc20GasLimitExecute,
 	)
-	// TODO: error checks
-	// TODO: Failed EVM Resp
 	if err != nil {
-		return resp, fmt.Errorf("Failed to convert WNIBI to NIBI: %w", err)
+		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
 	} else if evmResp.Failed() {
-		err = fmt.Errorf("Failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
 		return resp, err
 	}
 
@@ -894,7 +892,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	withdrawnMicronibi := math.NewIntFromBigInt(
+	withdrawnMicronibi := sdkmath.NewIntFromBigInt(
 		evm.WeiToNative(withdrawWei.ToBig()),
 	)
 	if err := k.Bank.SendCoins(ctx, senderBech32, toAddr.Bech32,

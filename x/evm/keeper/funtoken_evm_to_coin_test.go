@@ -554,7 +554,6 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ForWNIBI() {
 		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx, evmObj)
 		s.NoError(err)
 		s.Require().Equal(wnibiAmount.String(), wnibiBal.String())
-
 	}
 
 	s.Run("works with WNIBI", func() {
