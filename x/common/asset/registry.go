@@ -25,6 +25,7 @@ func init() {
 		denoms.NUSD: set.New(denoms.USD, denoms.USDC),
 		denoms.USDC: set.New(denoms.USD, denoms.NUSD),
 		denoms.USDT: set.New(denoms.USD, denoms.NUSD, denoms.USDC),
+		denoms.USDA: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
 	}
 }
 
