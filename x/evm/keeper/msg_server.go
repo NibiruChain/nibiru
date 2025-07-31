@@ -765,9 +765,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	if err != nil {
 		return
 	}
-	var (
-		senderEthAddr = eth.NibiruAddrToEthAddr(senderBech32)
-	)
+	senderEthAddr := eth.NibiruAddrToEthAddr(senderBech32)
 
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
@@ -778,8 +776,9 @@ func (k *Keeper) ConvertEvmToCoin(
 	}()
 
 	// TODO: Add setter sudo method for  WNIBI addr in state
-	evmParams := k.GetParams(ctx)
+	// TODO: Update the module params in the upgrade handler
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
+	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
 		return k.convertEvmToCoinForWNIBI(
 			ctx, stateDB, erc20, senderEthAddr, senderBech32, toAddr, amount,
@@ -818,19 +817,22 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	},
 	amount math.Int,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	var (
-		// isTx: value to use for commit in any EVM calls
-		isTx = true
-	)
+
+	// isTx: value to use for commit in any EVM calls
+	isTx := true
 
 	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
 	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", amount)
+		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
 	}
 	contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
 		"withdraw",
-		withdrawWei,
+		withdrawWei.ToBig(),
 	)
+	if err != nil {
+		err = fmt.Errorf("ABI packing error in WNIBI.withdraw: %w", err)
+		return
+	}
 
 	var evmObj *vm.EVM
 	{
@@ -848,10 +850,21 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 			AccessList:       gethcore.AccessList{},
 			BlobGasFeeCap:    &big.Int{},
 			BlobHashes:       []gethcommon.Hash{},
-			SkipNonceChecks:  true,
-			SkipFromEOACheck: true,
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
 		}
 		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	}
+
+	if stateDB.GetCodeSize(erc20.Address) == 0 {
+		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Address.Hex())
+		return
+	}
+
+	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
+		return
 	}
 
 	// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
@@ -871,6 +884,16 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	} else if evmResp.Failed() {
 		err = fmt.Errorf("Failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
 		return resp, err
+	}
+
+	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
+		return
+	}
+	if new(big.Int).Sub(wnibiBalBefore, wnibiBalAfter).Cmp(withdrawWei.ToBig()) != 0 {
+		err = fmt.Errorf("WNIBI withdraw failed: withdraw amount %s, balBefore %s, balAfter %s", withdrawWei, wnibiBalBefore, wnibiBalAfter)
+		return
 	}
 
 	withdrawnMicronibi := math.NewIntFromBigInt(

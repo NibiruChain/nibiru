@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -477,4 +478,108 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_MultipleRecipients() {
 		BalanceBank:  big.NewInt(0),
 		BalanceERC20: big.NewInt(4000),
 	}.Assert(s.T(), deps, evmObjAfter)
+}
+
+func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ForWNIBI() {
+	toAcc := evmtest.NewEthPrivAcc()
+
+	s.Run("Should error if the ERC20 is WNIBI, but that contract does not exist", func() {
+		deps := evmtest.NewTestDeps()
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 5_000)),
+		))
+
+		defaultWnibiAddr := evm.DefaultParams().CanonicalWnibi
+		erc20Addr := defaultWnibiAddr
+		amount := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
+		_, err := deps.EvmKeeper.ConvertEvmToCoin(
+			sdk.WrapSDKContext(deps.Ctx),
+			&evm.MsgConvertEvmToCoin{
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: erc20Addr,
+				Amount:    amount,
+				ToAddr:    toAcc.NibiruAddr.String(),
+			},
+		)
+		s.Require().ErrorContains(err, "canonical WNIBI address in state is a not a smart contract")
+	})
+
+	s.T().Log("Deploy WNIBI.sol and make it canonical")
+	deps := evmtest.NewTestDeps()
+	deployRes, err := evmtest.DeployContract(&deps, embeds.SmartContract_WNIBI)
+	s.Require().NoError(err)
+	wnibi := eth.EIP55Addr{Address: deployRes.ContractAddr}
+
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+	evmParams.CanonicalWnibi = wnibi
+	s.NoError(
+		deps.EvmKeeper.SetParams(deps.Ctx, evmParams),
+	)
+
+	s.T().Log("Wrap some NIBI to get a WNIBI balance")
+	{
+		// Convert half of the sender's 5000 micronibi into WNIBI
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 5_000)),
+		))
+
+		wnibiAmount := evm.NativeToWei(big.NewInt(2_500))
+		evmObj, sdb := deps.NewEVM()
+		senderBal := sdb.GetBalance(deps.Sender.EthAddr)
+		s.Require().Equal(new(big.Int).Mul(wnibiAmount, big.NewInt(2)).String(), senderBal.String())
+
+		for _, err := range []error{
+			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
+				sdkmath.NewIntFromUint64(gethparams.TxGas*5),
+			),
+		} {
+			s.NoError(err)
+		}
+		resp, err := evmtest.TxTransferWei{
+			Deps:      &deps,
+			To:        wnibi.Address,
+			AmountWei: wnibiAmount,
+			GasLimit:  gethparams.TxGas * 3,
+			// GasLimit: keeper.Erc20GasLimitExecute,
+		}.Run()
+		s.Require().NoErrorf(err, "resp: %#v, wnibiAmount %s", resp, wnibiAmount)
+		s.Require().Empty(resp.VmError, "resp: %#v, wnibiAmount %s", resp, wnibiAmount)
+
+		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx, evmObj)
+		s.NoError(err)
+		s.Require().Equal(wnibiAmount.String(), wnibiBal.String())
+
+	}
+
+	s.Run("works with WNIBI", func() {
+		erc20Addr := wnibi
+		amount := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
+		_, err := deps.EvmKeeper.ConvertEvmToCoin(
+			sdk.WrapSDKContext(deps.Ctx),
+			&evm.MsgConvertEvmToCoin{
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: erc20Addr,
+				Amount:    amount,
+				ToAddr:    toAcc.NibiruAddr.String(),
+			},
+		)
+		s.Require().NoError(err)
+
+		evmObj, sdb := deps.NewEVM()
+		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx, evmObj)
+		s.NoError(err)
+		s.Require().Equal(evm.NativeToWei(big.NewInt(2_500-420)).String(), wnibiBal.String())
+
+		s.Require().Equal(
+			amount.String(),
+			sdb.GetBalance(toAcc.EthAddr).String(),
+			"recipient should receive the bank coins",
+		)
+	})
 }
