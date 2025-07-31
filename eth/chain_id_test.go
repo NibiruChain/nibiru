@@ -40,7 +40,7 @@ func TestParseChainID_Happy(t *testing.T) {
 	for _, tc := range testCases {
 		chainIDEpoch, err := ParseEthChainIDStrict(tc.chainID)
 		require.NoError(t, err, tc.name)
-		var errMsg = ""
+		errMsg := ""
 		if err != nil {
 			errMsg = err.Error()
 		}
