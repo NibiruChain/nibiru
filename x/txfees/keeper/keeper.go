@@ -85,6 +85,16 @@ func (k Keeper) SetFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
 	return nil
 }
 
+func (k Keeper) RemoveFeeToken(ctx sdk.Context, address string) error {
+	if !gethcommon.IsHexAddress(address) {
+		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", address)
+	}
+
+	store := k.GetFeeTokensStore(ctx)
+	store.Delete([]byte(address))
+	return nil
+}
+
 func (k Keeper) GetFeeToken(ctx sdk.Context, address string) (types.FeeToken, error) {
 	prefixStore := k.GetFeeTokensStore(ctx)
 

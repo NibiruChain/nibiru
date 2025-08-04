@@ -17,16 +17,18 @@ import (
 )
 
 var (
-	md_MsgUpdateFeeToken                  protoreflect.MessageDescriptor
-	fd_MsgUpdateFeeToken_contract_address protoreflect.FieldDescriptor
-	fd_MsgUpdateFeeToken_authority        protoreflect.FieldDescriptor
+	md_MsgUpdateFeeToken           protoreflect.MessageDescriptor
+	fd_MsgUpdateFeeToken_fee_token protoreflect.FieldDescriptor
+	fd_MsgUpdateFeeToken_authority protoreflect.FieldDescriptor
+	fd_MsgUpdateFeeToken_action    protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_nibiru_txfees_v1_tx_proto_init()
 	md_MsgUpdateFeeToken = File_nibiru_txfees_v1_tx_proto.Messages().ByName("MsgUpdateFeeToken")
-	fd_MsgUpdateFeeToken_contract_address = md_MsgUpdateFeeToken.Fields().ByName("contract_address")
+	fd_MsgUpdateFeeToken_fee_token = md_MsgUpdateFeeToken.Fields().ByName("fee_token")
 	fd_MsgUpdateFeeToken_authority = md_MsgUpdateFeeToken.Fields().ByName("authority")
+	fd_MsgUpdateFeeToken_action = md_MsgUpdateFeeToken.Fields().ByName("action")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgUpdateFeeToken)(nil)
@@ -94,15 +96,21 @@ func (x *fastReflection_MsgUpdateFeeToken) Interface() protoreflect.ProtoMessage
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_MsgUpdateFeeToken) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.ContractAddress != "" {
-		value := protoreflect.ValueOfString(x.ContractAddress)
-		if !f(fd_MsgUpdateFeeToken_contract_address, value) {
+	if x.FeeToken != nil {
+		value := protoreflect.ValueOfMessage(x.FeeToken.ProtoReflect())
+		if !f(fd_MsgUpdateFeeToken_fee_token, value) {
 			return
 		}
 	}
 	if x.Authority != "" {
 		value := protoreflect.ValueOfString(x.Authority)
 		if !f(fd_MsgUpdateFeeToken_authority, value) {
+			return
+		}
+	}
+	if x.Action != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Action))
+		if !f(fd_MsgUpdateFeeToken_action, value) {
 			return
 		}
 	}
@@ -121,10 +129,12 @@ func (x *fastReflection_MsgUpdateFeeToken) Range(f func(protoreflect.FieldDescri
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_MsgUpdateFeeToken) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		return x.ContractAddress != ""
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		return x.FeeToken != nil
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		return x.Authority != ""
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		return x.Action != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -141,10 +151,12 @@ func (x *fastReflection_MsgUpdateFeeToken) Has(fd protoreflect.FieldDescriptor) 
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgUpdateFeeToken) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		x.ContractAddress = ""
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		x.FeeToken = nil
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		x.Authority = ""
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		x.Action = 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -161,12 +173,15 @@ func (x *fastReflection_MsgUpdateFeeToken) Clear(fd protoreflect.FieldDescriptor
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_MsgUpdateFeeToken) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		value := x.ContractAddress
-		return protoreflect.ValueOfString(value)
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		value := x.FeeToken
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		value := x.Authority
 		return protoreflect.ValueOfString(value)
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		value := x.Action
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -187,10 +202,12 @@ func (x *fastReflection_MsgUpdateFeeToken) Get(descriptor protoreflect.FieldDesc
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgUpdateFeeToken) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		x.ContractAddress = value.Interface().(string)
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		x.FeeToken = value.Message().Interface().(*FeeToken)
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		x.Authority = value.Interface().(string)
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		x.Action = (FeeTokenUpdateAction)(value.Enum())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -211,10 +228,15 @@ func (x *fastReflection_MsgUpdateFeeToken) Set(fd protoreflect.FieldDescriptor, 
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgUpdateFeeToken) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		panic(fmt.Errorf("field contract_address of message nibiru.txfees.v1.MsgUpdateFeeToken is not mutable"))
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		if x.FeeToken == nil {
+			x.FeeToken = new(FeeToken)
+		}
+		return protoreflect.ValueOfMessage(x.FeeToken.ProtoReflect())
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		panic(fmt.Errorf("field authority of message nibiru.txfees.v1.MsgUpdateFeeToken is not mutable"))
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		panic(fmt.Errorf("field action of message nibiru.txfees.v1.MsgUpdateFeeToken is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -228,10 +250,13 @@ func (x *fastReflection_MsgUpdateFeeToken) Mutable(fd protoreflect.FieldDescript
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_MsgUpdateFeeToken) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.txfees.v1.MsgUpdateFeeToken.contract_address":
-		return protoreflect.ValueOfString("")
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.fee_token":
+		m := new(FeeToken)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	case "nibiru.txfees.v1.MsgUpdateFeeToken.authority":
 		return protoreflect.ValueOfString("")
+	case "nibiru.txfees.v1.MsgUpdateFeeToken.action":
+		return protoreflect.ValueOfEnum(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.txfees.v1.MsgUpdateFeeToken"))
@@ -301,13 +326,16 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.ContractAddress)
-		if l > 0 {
+		if x.FeeToken != nil {
+			l = options.Size(x.FeeToken)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		l = len(x.Authority)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.Action != 0 {
+			n += 1 + runtime.Sov(uint64(x.Action))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -338,6 +366,11 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
+		if x.Action != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Action))
+			i--
+			dAtA[i] = 0x18
+		}
 		if len(x.Authority) > 0 {
 			i -= len(x.Authority)
 			copy(dAtA[i:], x.Authority)
@@ -345,10 +378,17 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 			i--
 			dAtA[i] = 0x12
 		}
-		if len(x.ContractAddress) > 0 {
-			i -= len(x.ContractAddress)
-			copy(dAtA[i:], x.ContractAddress)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ContractAddress)))
+		if x.FeeToken != nil {
+			encoded, err := options.Marshal(x.FeeToken)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -403,9 +443,9 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ContractAddress", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field FeeToken", wireType)
 				}
-				var stringLen uint64
+				var msglen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -415,23 +455,27 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					msglen |= int(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
+				if msglen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + intStringLen
+				postIndex := iNdEx + msglen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.ContractAddress = string(dAtA[iNdEx:postIndex])
+				if x.FeeToken == nil {
+					x.FeeToken = &FeeToken{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.FeeToken); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
@@ -465,6 +509,25 @@ func (x *fastReflection_MsgUpdateFeeToken) ProtoMethods() *protoiface.Methods {
 				}
 				x.Authority = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
+				}
+				x.Action = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Action |= FeeTokenUpdateAction(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -869,6 +932,52 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type FeeTokenUpdateAction int32
+
+const (
+	FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD    FeeTokenUpdateAction = 0
+	FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE FeeTokenUpdateAction = 1
+)
+
+// Enum value maps for FeeTokenUpdateAction.
+var (
+	FeeTokenUpdateAction_name = map[int32]string{
+		0: "FEE_TOKEN_ACTION_ADD",
+		1: "FEE_TOKEN_ACTION_REMOVE",
+	}
+	FeeTokenUpdateAction_value = map[string]int32{
+		"FEE_TOKEN_ACTION_ADD":    0,
+		"FEE_TOKEN_ACTION_REMOVE": 1,
+	}
+)
+
+func (x FeeTokenUpdateAction) Enum() *FeeTokenUpdateAction {
+	p := new(FeeTokenUpdateAction)
+	*p = x
+	return p
+}
+
+func (x FeeTokenUpdateAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FeeTokenUpdateAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_nibiru_txfees_v1_tx_proto_enumTypes[0].Descriptor()
+}
+
+func (FeeTokenUpdateAction) Type() protoreflect.EnumType {
+	return &file_nibiru_txfees_v1_tx_proto_enumTypes[0]
+}
+
+func (x FeeTokenUpdateAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FeeTokenUpdateAction.Descriptor instead.
+func (FeeTokenUpdateAction) EnumDescriptor() ([]byte, []int) {
+	return file_nibiru_txfees_v1_tx_proto_rawDescGZIP(), []int{0}
+}
+
 // MsgUpdateFeeToken defines a message that update fee token
 type MsgUpdateFeeToken struct {
 	state         protoimpl.MessageState
@@ -876,9 +985,11 @@ type MsgUpdateFeeToken struct {
 	unknownFields protoimpl.UnknownFields
 
 	// contract_address in hex format
-	ContractAddress string `protobuf:"bytes,1,opt,name=contract_address,json=contractAddress,proto3" json:"contract_address,omitempty"`
+	FeeToken *FeeToken `protobuf:"bytes,1,opt,name=fee_token,json=feeToken,proto3" json:"fee_token,omitempty"`
 	// Authority: Address of the governance module account.
 	Authority string `protobuf:"bytes,2,opt,name=authority,proto3" json:"authority,omitempty"`
+	// action defines the action to perform on the fee token
+	Action FeeTokenUpdateAction `protobuf:"varint,3,opt,name=action,proto3,enum=nibiru.txfees.v1.FeeTokenUpdateAction" json:"action,omitempty"`
 }
 
 func (x *MsgUpdateFeeToken) Reset() {
@@ -901,11 +1012,11 @@ func (*MsgUpdateFeeToken) Descriptor() ([]byte, []int) {
 	return file_nibiru_txfees_v1_tx_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *MsgUpdateFeeToken) GetContractAddress() string {
+func (x *MsgUpdateFeeToken) GetFeeToken() *FeeToken {
 	if x != nil {
-		return x.ContractAddress
+		return x.FeeToken
 	}
-	return ""
+	return nil
 }
 
 func (x *MsgUpdateFeeToken) GetAuthority() string {
@@ -913,6 +1024,13 @@ func (x *MsgUpdateFeeToken) GetAuthority() string {
 		return x.Authority
 	}
 	return ""
+}
+
+func (x *MsgUpdateFeeToken) GetAction() FeeTokenUpdateAction {
+	if x != nil {
+		return x.Action
+	}
+	return FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD
 }
 
 // MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
@@ -956,38 +1074,48 @@ var file_nibiru_txfees_v1_tx_proto_rawDesc = []byte{
 	0x6f, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
 	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1f, 0x6e, 0x69,
 	0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x66,
-	0x65, 0x65, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x76, 0x0a,
-	0x11, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x12, 0x29, 0x0a, 0x10, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x5f, 0x61,
-	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x63, 0x6f,
-	0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x36, 0x0a,
-	0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64,
-	0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68,
-	0x6f, 0x72, 0x69, 0x74, 0x79, 0x22, 0x1b, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x32, 0x96, 0x01, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x8e, 0x01, 0x0a, 0x0e, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x23, 0x2e,
-	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31,
-	0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x1a, 0x2b, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65,
-	0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46,
-	0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x2a, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x24, 0x22, 0x22, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75,
-	0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x5f, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0xad, 0x01, 0x0a, 0x14,
-	0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65,
-	0x73, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a,
-	0x2a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70,
-	0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f,
-	0x76, 0x31, 0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x54,
-	0x58, 0xaa, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x54, 0x78, 0x66, 0x65, 0x65,
-	0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x54, 0x78,
-	0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75,
-	0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a,
-	0x3a, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x65, 0x65, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xca, 0x01,
+	0x0a, 0x11, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x12, 0x37, 0x0a, 0x09, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e,
+	0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x52, 0x08, 0x66, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x36, 0x0a, 0x09,
+	0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f,
+	0x72, 0x69, 0x74, 0x79, 0x12, 0x3e, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x26, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78,
+	0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x04, 0xe8, 0xa0, 0x1f, 0x01, 0x22, 0x1b, 0x0a, 0x19, 0x4d, 0x73,
+	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2a, 0x4d, 0x0a, 0x14, 0x46, 0x65, 0x65, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x18, 0x0a, 0x14, 0x46, 0x45, 0x45, 0x5f, 0x54, 0x4f, 0x4b, 0x45, 0x4e, 0x5f, 0x41, 0x43, 0x54,
+	0x49, 0x4f, 0x4e, 0x5f, 0x41, 0x44, 0x44, 0x10, 0x00, 0x12, 0x1b, 0x0a, 0x17, 0x46, 0x45, 0x45,
+	0x5f, 0x54, 0x4f, 0x4b, 0x45, 0x4e, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x52, 0x45,
+	0x4d, 0x4f, 0x56, 0x45, 0x10, 0x01, 0x32, 0x96, 0x01, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x8e,
+	0x01, 0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x12, 0x23, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74, 0x78, 0x66, 0x65, 0x65,
+	0x73, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65,
+	0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x1a, 0x2b, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e,
+	0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x46, 0x65, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x2a, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x24, 0x22, 0x22, 0x2f, 0x6e, 0x69,
+	0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x75,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x5f, 0x66, 0x65, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x42,
+	0xad, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x74,
+	0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74,
+	0x6f, 0x50, 0x01, 0x5a, 0x2a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69,
+	0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x74, 0x78, 0x66,
+	0x65, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x3b, 0x74, 0x78, 0x66, 0x65, 0x65, 0x73, 0x76, 0x31, 0xa2,
+	0x02, 0x03, 0x4e, 0x54, 0x58, 0xaa, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x54,
+	0x78, 0x66, 0x65, 0x65, 0x73, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72,
+	0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x4e, 0x69,
+	0x62, 0x69, 0x72, 0x75, 0x5c, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x5c, 0x56, 0x31, 0x5c, 0x47,
+	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x4e, 0x69, 0x62,
+	0x69, 0x72, 0x75, 0x3a, 0x3a, 0x54, 0x78, 0x66, 0x65, 0x65, 0x73, 0x3a, 0x3a, 0x56, 0x31, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1002,19 +1130,24 @@ func file_nibiru_txfees_v1_tx_proto_rawDescGZIP() []byte {
 	return file_nibiru_txfees_v1_tx_proto_rawDescData
 }
 
+var file_nibiru_txfees_v1_tx_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_nibiru_txfees_v1_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_nibiru_txfees_v1_tx_proto_goTypes = []interface{}{
-	(*MsgUpdateFeeToken)(nil),         // 0: nibiru.txfees.v1.MsgUpdateFeeToken
-	(*MsgUpdateFeeTokenResponse)(nil), // 1: nibiru.txfees.v1.MsgUpdateFeeTokenResponse
+	(FeeTokenUpdateAction)(0),         // 0: nibiru.txfees.v1.FeeTokenUpdateAction
+	(*MsgUpdateFeeToken)(nil),         // 1: nibiru.txfees.v1.MsgUpdateFeeToken
+	(*MsgUpdateFeeTokenResponse)(nil), // 2: nibiru.txfees.v1.MsgUpdateFeeTokenResponse
+	(*FeeToken)(nil),                  // 3: nibiru.txfees.v1.FeeToken
 }
 var file_nibiru_txfees_v1_tx_proto_depIdxs = []int32{
-	0, // 0: nibiru.txfees.v1.Msg.UpdateFeeToken:input_type -> nibiru.txfees.v1.MsgUpdateFeeToken
-	1, // 1: nibiru.txfees.v1.Msg.UpdateFeeToken:output_type -> nibiru.txfees.v1.MsgUpdateFeeTokenResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: nibiru.txfees.v1.MsgUpdateFeeToken.fee_token:type_name -> nibiru.txfees.v1.FeeToken
+	0, // 1: nibiru.txfees.v1.MsgUpdateFeeToken.action:type_name -> nibiru.txfees.v1.FeeTokenUpdateAction
+	1, // 2: nibiru.txfees.v1.Msg.UpdateFeeToken:input_type -> nibiru.txfees.v1.MsgUpdateFeeToken
+	2, // 3: nibiru.txfees.v1.Msg.UpdateFeeToken:output_type -> nibiru.txfees.v1.MsgUpdateFeeTokenResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_nibiru_txfees_v1_tx_proto_init() }
@@ -1054,13 +1187,14 @@ func file_nibiru_txfees_v1_tx_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_nibiru_txfees_v1_tx_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_nibiru_txfees_v1_tx_proto_goTypes,
 		DependencyIndexes: file_nibiru_txfees_v1_tx_proto_depIdxs,
+		EnumInfos:         file_nibiru_txfees_v1_tx_proto_enumTypes,
 		MessageInfos:      file_nibiru_txfees_v1_tx_proto_msgTypes,
 	}.Build()
 	File_nibiru_txfees_v1_tx_proto = out.File

@@ -36,7 +36,7 @@ func GetQueryCmd() *cobra.Command {
 
 func GetCmdFeeToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fee-token",
+		Use:   "fee-tokens",
 		Short: "Query txfees viable feetoken",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query txfees viable feetoken.

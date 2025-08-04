@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,24 +12,32 @@ import (
 var _ types.MsgServer = (*Keeper)(nil)
 
 // UpdateFeeToken: gRPC tx msg for updating fee token
-func (k Keeper) UpdateFeeToken(
-	goCtx context.Context, msg *types.MsgUpdateFeeToken,
-) (resp *types.MsgUpdateFeeTokenResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	// Stateless field validation was already performed in msg.ValidateBasic()
-	// before the current scope is reached.
 
-	if k.authority != msg.Authority {
+func (k Keeper) UpdateFeeToken(
+	goCtx context.Context,
+	msg *types.MsgUpdateFeeToken,
+) (*types.MsgUpdateFeeTokenResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if msg.Authority != k.authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, msg.Authority)
 	}
 
-	err = k.SetFeeToken(ctx, types.FeeToken{
-		Address: msg.ContractAddress,
-	})
-	if err != nil {
-		return nil, err
+	switch msg.Action {
+	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD:
+		if err := k.SetFeeToken(ctx, *msg.FeeToken); err != nil {
+			return nil, err
+		}
+	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE:
+		if err := k.RemoveFeeToken(ctx, msg.FeeToken.Address); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("invalid action %s; must be one of %s or %s",
+			msg.Action,
+			types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
+			types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE)
 	}
 
-	resp = &types.MsgUpdateFeeTokenResponse{}
-	return resp, err
+	return &types.MsgUpdateFeeTokenResponse{}, nil
 }

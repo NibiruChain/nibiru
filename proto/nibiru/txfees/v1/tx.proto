@@ -19,12 +19,20 @@ service Msg {
     };
 }
 
+enum FeeTokenUpdateAction {
+  FEE_TOKEN_ACTION_ADD = 0;
+  FEE_TOKEN_ACTION_REMOVE = 1;
+}
+
 // MsgUpdateFeeToken defines a message that update fee token
 message MsgUpdateFeeToken{
+    option (gogoproto.equal) = true;
     // contract_address in hex format
-    string contract_address = 1;
+    FeeToken fee_token = 1;
     // Authority: Address of the governance module account.
     string authority = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    // action defines the action to perform on the fee token
+    FeeTokenUpdateAction action = 3;
 }
 
 // MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
