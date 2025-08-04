@@ -235,7 +235,7 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	ctx sdk.Context, acc sdk.AccAddress,
 ) {
 	// If there's no StateDB set, it means we're not in an EthereumTx.
-	if bk.StateDB == nil {
+	if bk.StateDB == nil || !IsDeliverTx(ctx) {
 		return
 	}
 

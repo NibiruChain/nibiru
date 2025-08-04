@@ -18,6 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
+type contextKey string
+
+const SimulationContextKey contextKey = "evm_simulation"
+
 type Keeper struct {
 	cdc codec.BinaryCodec
 	// storeKey: For persistent storage of EVM state.
@@ -121,4 +125,19 @@ func HandleOutOfGasPanic(err *error, format string) func() {
 			*err = fmt.Errorf("%s: %w", format, *err)
 		}
 	}
+}
+
+// IsSimulation checks if the context is a simulation context.
+func IsSimulation(ctx sdk.Context) bool {
+	if val := ctx.Value(SimulationContextKey); val != nil {
+		if simulation, ok := val.(bool); ok && simulation {
+			return true
+		}
+	}
+	return false
+}
+
+// IsDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
+func IsDeliverTx(ctx sdk.Context) bool {
+	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !IsSimulation(ctx)
 }
