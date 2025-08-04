@@ -265,6 +265,7 @@ func (k *Keeper) EthCall(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithValue(SimulationContextKey, true)
 
 	var args evm.JsonTxArgs
 	err := json.Unmarshal(req.Args, &args)
@@ -325,6 +326,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithValue(SimulationContextKey, true)
 	evmCfg := k.GetEVMConfig(ctx)
 
 	if req.GasCap < gethparams.TxGas {
@@ -451,14 +453,14 @@ func (k Keeper) EstimateGasForEvmCallType(
 
 		if failed && result != nil {
 			if result.VmError == vm.ErrExecutionReverted.Error() {
-				return nil, fmt.Errorf("Estimate gas VMError: %w", evm.NewRevertError(result.Ret))
+				return nil, fmt.Errorf("estimate gas VMError: %w", evm.NewRevertError(result.Ret))
 			}
 
 			if result.VmError == vm.ErrOutOfGas.Error() {
 				return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
 			}
 
-			return nil, fmt.Errorf("Estimate gas VMError: %s", result.VmError)
+			return nil, fmt.Errorf("estimate gas VMError: %s", result.VmError)
 		}
 	}
 
@@ -480,6 +482,7 @@ func (k Keeper) TraceTx(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithValue(SimulationContextKey, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -576,6 +579,7 @@ func (k Keeper) TraceCall(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx = ctx.WithValue(SimulationContextKey, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -665,6 +669,7 @@ func (k Keeper) TraceBlock(
 		WithConsensusParams(&cmtproto.ConsensusParams{
 			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 		})
+	ctx = ctx.WithValue(SimulationContextKey, true)
 
 	evmCfg := k.GetEVMConfig(ctx)
 
