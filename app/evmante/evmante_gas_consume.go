@@ -216,8 +216,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	}
 
 	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
-	feeAmountWei := evm.NativeToWei(fees[0].Amount.BigInt())
-	feeAmount := sdkmath.LegacyNewDecFromBigInt(feeAmountWei).Mul(ratio)
+	feeAmount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio)
 	if tokenBalance.GT(feeAmount) {
 		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
 
@@ -246,7 +245,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		}
 
 		evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, feeAmountWei, ctx, evmObj)
+		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, evm.NativeToWei(feeAmount.TruncateInt().BigInt()), ctx, evmObj)
 		if err != nil {
 			return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer")
 		}

@@ -3,6 +3,7 @@ package ante
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -131,9 +132,9 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 			return sdkioerrors.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
 		}
 	} else {
-		feeToken, err := txFeesKeeper.GetFeeToken(ctx, "0"+fees[0].Denom)
+		feeToken, err := txFeesKeeper.GetFeeToken(ctx, strings.TrimPrefix(fees[0].Denom, "erc20/"))
 		if err != nil {
-			return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "fee token %s not found", fees[0].Denom)
+			return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "fee token %s not found, must follow the format erc20/{token_address}", fees[0].Denom)
 		}
 
 		var ratio sdkmath.LegacyDec
@@ -153,12 +154,9 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		} else {
 			ratio = sdkmath.LegacyOneDec()
 		}
-		fmt.Println("teststst :", ratio.TruncateInt())
-		fmt.Println("teststst :", fees[0].Amount)
-		fmt.Println("teststst :", sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt())
 		feeCollector := eth.NibiruAddrToEthAddr(accountkeeper.GetModuleAddress(types.ModuleName))
 
-		amount := fees[0].Amount.BigInt()
+		amount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt().BigInt()
 
 		unusedBigInt := big.NewInt(0)
 		to := gethcommon.HexToAddress(feeToken.Address)
