@@ -46,6 +46,8 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
+
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
 - [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
 - [#2340](https://github.com/NibiruChain/nibiru/pull/2340) - fix: evm indexer proper parsing of the start block
