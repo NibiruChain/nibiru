@@ -34,6 +34,7 @@ var (
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
+	_ sdk.Msg    = &MsgConvertCoinToEvm{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -510,7 +511,7 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender addr")
 	}
-	if m.ToEthAddr.Address.String() == "" || m.ToEthAddr.Size() == 0 {
+	if m.ToEthAddr.String() == "" || m.ToEthAddr.Size() == 0 {
 		return fmt.Errorf("empty to_eth_addr")
 	}
 	return nil

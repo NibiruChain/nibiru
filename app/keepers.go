@@ -346,7 +346,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
-	precompile.InitPrecompiles(app.AppKeepers.PublicKeepers)
+	precompile.InitPrecompiles(app.PublicKeepers)
 
 	return wasmConfig
 }

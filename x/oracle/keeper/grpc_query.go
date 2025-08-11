@@ -54,10 +54,21 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	if err != nil {
 		return nil, err
 	}
+
+	var isVintage bool // if the exchange rate has passed its expiration block
+	oracleParams, err := q.Keeper.Params.Get(ctx)
+	if err != nil {
+		isVintage = false
+	} else {
+		expirationBlock := out.CreatedBlock + oracleParams.ExpirationBlocks
+		isVintage = expirationBlock <= uint64(ctx.BlockHeight())
+	}
+
 	return &types.QueryExchangeRateResponse{
 		ExchangeRate:     out.ExchangeRate,
 		BlockTimestampMs: out.BlockTimestampMs,
 		BlockHeight:      out.CreatedBlock,
+		IsVintage:        isVintage,
 	}, nil
 }
 
@@ -75,7 +86,7 @@ func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRat
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	twap, err := q.Keeper.GetExchangeRateTwap(ctx, req.Pair)
+	twap, err := q.GetExchangeRateTwap(ctx, req.Pair)
 	if err != nil {
 		return &types.QueryExchangeRateResponse{}, err
 	}
@@ -181,7 +192,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.Keeper.Votes.Get(ctx, valAddr)
+	vote, err := q.Votes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}

@@ -14,4 +14,5 @@
   - This prevents test runs from overwriting source-controlled files when
   executing the script, resolving issues caused by `os.WriteFile` truncating the
   embedded JSON files on error.
-
+- [#2341](https://github.com/NibiruChain/nibiru/pull/2341) - chore(token-registry): Add the USDa and sUSDa ERC20 from Avalon Finance
+- [#2352](https://github.com/NibiruChain/nibiru/pull/2352) - chore(token-registry): Add bank coin versions of USDC and USDT from Stargate and LayerZero, and update ErisEvm.sol to fix redeem.
