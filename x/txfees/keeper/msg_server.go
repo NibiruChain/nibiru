@@ -12,7 +12,6 @@ import (
 var _ types.MsgServer = (*Keeper)(nil)
 
 // UpdateFeeToken: gRPC tx msg for updating fee token
-
 func (k Keeper) UpdateFeeToken(
 	goCtx context.Context,
 	msg *types.MsgUpdateFeeToken,
@@ -25,7 +24,7 @@ func (k Keeper) UpdateFeeToken(
 
 	switch msg.Action {
 	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD:
-		if err := k.SetFeeToken(ctx, *msg.FeeToken); err != nil {
+		if err := k.AddFeeToken(ctx, *msg.FeeToken); err != nil {
 			return nil, err
 		}
 	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE:
