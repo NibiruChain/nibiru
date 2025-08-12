@@ -94,26 +94,13 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 
 		// check whether the sender has enough balance to pay for the transaction cost in alternative token
-		txConfig := anteDec.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
-		stateDB := anteDec.evmKeeper.Bank.StateDB
-		if stateDB == nil {
-			stateDB = anteDec.evmKeeper.NewStateDB(ctx, txConfig)
-		}
-		defer func() {
-			anteDec.evmKeeper.Bank.StateDB = nil
-		}()
-
-		evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-
 		feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
 		for _, feeToken := range feeTokens {
 			var ratio sdkmath.LegacyDec
-			out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeToken.Address), fromAddr, ctx, evmObj)
+
+			out, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(feeToken.Address))
 			if err != nil {
-				return ctx, sdkioerrors.Wrapf(
-					err, "failed to get balance of fee payer %s for token %s",
-					fromAddr.String(), feeToken.Address,
-				)
+				return ctx, err
 			}
 
 			switch feeToken.TokenType {

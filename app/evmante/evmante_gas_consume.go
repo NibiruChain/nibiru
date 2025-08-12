@@ -4,19 +4,15 @@ package evmante
 import (
 	"fmt"
 	"math"
-	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
 	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
@@ -194,66 +190,30 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	}
 
 	// fall back to erc20 token deduction
-	txConfig := anteDec.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := anteDec.evmKeeper.Bank.StateDB
-	if stateDB == nil {
-		stateDB = anteDec.evmKeeper.NewStateDB(ctx, txConfig)
-	}
-	defer func() {
-		anteDec.evmKeeper.Bank.StateDB = nil
-	}()
-	evmObj := anteDec.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	// 1. Get balance
+	// 2. Deduct fees
+	// 3. Set nonce for account
 
-	feeTokenAddress := ctx.Value(feeTokenUsedKey).(string)
+	feeTokenAddress := gethcommon.HexToAddress(ctx.Value(feeTokenUsedKey).(string))
 	ratio := ctx.Value("ratio").(sdkmath.LegacyDec)
 
-	out, err := anteDec.evmKeeper.ERC20().BalanceOf(gethcommon.HexToAddress(feeTokenAddress), feePayerAddr, ctx, evmObj)
+	out, err := anteDec.evmKeeper.GetErc20Balance(ctx, feePayerAddr, feeTokenAddress)
 	if err != nil {
-		return sdkioerrors.Wrapf(
-			err, "failed to get balance of fee payer %s for token %s",
-			feePayerAddr.String(), feeTokenAddress,
-		)
+		return err
 	}
 
 	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
 	feeAmount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio)
 	if tokenBalance.GT(feeAmount) {
-		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
-
-		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
-			"transfer", feeCollector, fees[0].Amount.BigInt(),
-		)
-		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
-		}
-		to := gethcommon.HexToAddress(feeTokenAddress)
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
-		unusedBigInt := big.NewInt(0)
-		evmMsg := core.Message{
-			To:               &to,
-			From:             gethcommon.Address(gethcommon.FromHex(msgEthTx.From)),
-			Nonce:            anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr),
-			Value:            unusedBigInt, // amount
-			GasLimit:         5_500_000,
-			GasPrice:         unusedBigInt,
-			GasFeeCap:        unusedBigInt,
-			GasTipCap:        unusedBigInt,
-			Data:             input,
-			AccessList:       gethcore.AccessList{},
-			SkipNonceChecks:  false,
-			SkipFromEOACheck: false,
-		}
+		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
+		err := anteDec.evmKeeper.Erc20Transfer(ctx, feeTokenAddress, feePayerAddr, feeCollector, fees[0].Amount.BigInt())
 
-		evmObj := anteDec.evmKeeper.NewEVM(ctx, evmMsg, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-		_, resp, err := anteDec.evmKeeper.ERC20().Transfer(to, gethcommon.Address(gethcommon.FromHex(msgEthTx.From)), feeCollector, evm.NativeToWei(feeAmount.TruncateInt().BigInt()), ctx, evmObj)
 		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer")
-		}
-		if resp.Failed() {
-			return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer with VM error")
-		}
-		if err := stateDB.Commit(); err != nil {
-			return sdkioerrors.Wrap(err, "failed to commit stateDB")
+			return sdkioerrors.Wrapf(
+				err, "failed to transfer %s from %s to %s",
+				fees[0].Amount.String(), feePayerAddr.String(), feeCollector.String(),
+			)
 		}
 
 		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
@@ -269,19 +229,4 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		"fee payer %s has no enough balance to pay for the fees %s",
 		feePayerAddr.String(), fees.String(),
 	)
-}
-
-var MOCK_GETH_MESSAGE = core.Message{
-	To:               nil,
-	From:             evm.EVM_MODULE_ADDRESS,
-	Nonce:            0,
-	Value:            evm.Big0, // amount
-	GasLimit:         0,
-	GasPrice:         evm.Big0,
-	GasFeeCap:        evm.Big0,
-	GasTipCap:        evm.Big0,
-	Data:             []byte{},
-	AccessList:       gethcore.AccessList{},
-	SkipNonceChecks:  false,
-	SkipFromEOACheck: false,
 }

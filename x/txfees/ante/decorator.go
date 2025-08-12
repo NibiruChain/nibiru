@@ -2,7 +2,6 @@ package ante
 
 import (
 	"fmt"
-	"math/big"
 	"strings"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -11,16 +10,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/core"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
@@ -59,8 +54,8 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	}
 
 	// checks to make sure the module account has been set to collect fees in base token
-	if addr := dfd.ak.GetModuleAddress(types.FeeCollectorName); addr == nil {
-		return ctx, fmt.Errorf("fee collector module account (%s) has not been set", types.FeeCollectorName)
+	if addr := dfd.ak.GetModuleAddress(authtypes.FeeCollectorName); addr == nil {
+		return ctx, fmt.Errorf("fee collector module account (%s) has not been set", authtypes.FeeCollectorName)
 	}
 
 	// TODO: only 1 denom for fee and that denom is either accepted or base denom
@@ -127,7 +122,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 	}
 
 	if fees[0].Denom == appconst.BondDenom {
-		err := bankKeeper.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), types.FeeCollectorName, fees)
+		err := bankKeeper.SendCoinsFromAccountToModule(ctx, acc.GetAddress(), authtypes.FeeCollectorName, fees)
 		if err != nil {
 			return sdkioerrors.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
 		}
@@ -155,56 +150,13 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 			ratio = sdkmath.LegacyOneDec()
 		}
 		feeCollector := eth.NibiruAddrToEthAddr(accountkeeper.GetModuleAddress(types.ModuleName))
-
 		amount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt().BigInt()
+		sender := eth.NibiruAddrToEthAddr(acc.GetAddress())
+		nonce := ek.GetAccNonce(ctx, sender)
 
-		unusedBigInt := big.NewInt(0)
-		to := gethcommon.HexToAddress(feeToken.Address)
-		from := eth.NibiruAddrToEthAddr(acc.GetAddress())
-
-		input, err := embeds.SmartContract_WNIBI.ABI.Pack(
-			"transfer", feeCollector, amount,
-		)
+		err = ek.Erc20Transfer(ctx, gethcommon.HexToAddress(feeToken.Address), sender, feeCollector, amount)
 		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
-		}
-
-		nonce := ek.GetAccNonce(ctx, from)
-		evmMsg := core.Message{
-			To:               &to,
-			From:             from,
-			Nonce:            nonce,
-			Value:            unusedBigInt, // amount
-			GasLimit:         5_500_000,
-			GasPrice:         unusedBigInt,
-			GasFeeCap:        unusedBigInt,
-			GasTipCap:        unusedBigInt,
-			Data:             input,
-			AccessList:       gethcore.AccessList{},
-			SkipNonceChecks:  false,
-			SkipFromEOACheck: false,
-		}
-
-		txConfig := ek.TxConfig(ctx, gethcommon.Hash{})
-		stateDB := ek.Bank.StateDB
-		if stateDB == nil {
-			stateDB = ek.NewStateDB(ctx, txConfig)
-		}
-		defer func() {
-			ek.Bank.StateDB = nil
-		}()
-		evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-
-		_, resp, err := ek.ERC20().Transfer(to, from, feeCollector, evm.NativeToWei(amount), ctx, evmObj)
-		if err != nil {
-			return sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer")
-		}
-		if resp.Failed() {
-			return fmt.Errorf("failed to call WNIBI contract transfer with VM error: %s", resp.VmError)
-		}
-
-		if err := stateDB.Commit(); err != nil {
-			return sdkioerrors.Wrap(err, "failed to commit stateDB")
+			return err
 		}
 
 		if err := acc.SetSequence(nonce); err != nil {

@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	sdkioerrors "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	epochtypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -36,8 +38,6 @@ type Hooks struct {
 
 // BeforeEpochStart is a hook that runs just prior to the start of a new epoch.
 func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
-	// Perform no operations; we don't need to do anything here
-	_, _, _ = ctx, epochIdentifier, epochNumber
 }
 
 // AfterEpochEnd convert all fees collected in the previous epoch to the base token
@@ -68,7 +68,7 @@ func (h Hooks) withdrawFeeToken(ctx sdk.Context, contract, feeCollector gethcomm
 	defer func() {
 		h.K.evmKeeper.Bank.StateDB = nil
 	}()
-	evmObj := h.K.evmKeeper.NewEVM(ctx, MOCK_GETH_MESSAGE, h.K.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	evmObj := h.K.evmKeeper.NewEVM(ctx, evmKeeper.MOCK_GETH_MESSAGE, h.K.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
 	input, err := embeds.SmartContract_WNIBI.ABI.Pack("balanceOf", feeCollector)
 	if err != nil {
@@ -141,23 +141,8 @@ func (h Hooks) withdrawFeeToken(ctx sdk.Context, contract, feeCollector gethcomm
 		panic(sdkioerrors.Wrap(err, "failed to commit stateDB"))
 	}
 
-	acc := h.K.accountKeeper.GetModuleAccount(ctx, types.FeeCollectorName)
+	acc := h.K.accountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
 	if err := acc.SetSequence(nonce); err != nil {
 		panic(sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce))
 	}
-}
-
-var MOCK_GETH_MESSAGE = core.Message{
-	To:               nil,
-	From:             evm.EVM_MODULE_ADDRESS,
-	Nonce:            0,
-	Value:            evm.Big0, // amount
-	GasLimit:         0,
-	GasPrice:         evm.Big0,
-	GasFeeCap:        evm.Big0,
-	GasTipCap:        evm.Big0,
-	Data:             []byte{},
-	AccessList:       gethcore.AccessList{},
-	SkipNonceChecks:  false,
-	SkipFromEOACheck: false,
 }
