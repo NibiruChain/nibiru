@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	epochtypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmKeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
@@ -60,52 +58,13 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 }
 
 func (h Hooks) withdrawFeeToken(ctx sdk.Context, contract, feeCollector gethcommon.Address, unusedBigInt *big.Int) {
-	txConfig := h.K.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := h.K.evmKeeper.Bank.StateDB
-	if stateDB == nil {
-		stateDB = h.K.evmKeeper.NewStateDB(ctx, txConfig)
-	}
-	defer func() {
-		h.K.evmKeeper.Bank.StateDB = nil
-	}()
-	evmObj := h.K.evmKeeper.NewEVM(ctx, evmKeeper.MOCK_GETH_MESSAGE, h.K.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-
-	input, err := embeds.SmartContract_WNIBI.ABI.Pack("balanceOf", feeCollector)
+	out, err := h.K.evmKeeper.GetErc20Balance(ctx, feeCollector, contract)
 	if err != nil {
-		panic(err)
-	}
-	evmResp, err := h.K.evmKeeper.CallContractWithInput(
-		ctx,
-		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&contract,
-		false,
-		input,
-		evmKeeper.GetCallGasWithLimit(ctx, evmKeeper.Erc20GasLimitQuery),
-	)
-	if err != nil {
-		panic(err)
+		return
 	}
 
-	if evmResp.Failed() {
-		panic(fmt.Errorf("failed to get balance of %s with VM error: %s", feeCollector, evmResp.VmError))
-	}
-
-	if len(evmResp.Ret) == 0 {
-		return // No fees collected in the previous epoch
-	}
-
-	// Unpack the response to get the balance of the fee collector
-	erc20BigInt := new(evmKeeper.ERC20BigInt)
-	err = embeds.SmartContract_WNIBI.ABI.UnpackIntoInterface(
-		erc20BigInt, "balanceOf", evmResp.Ret,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	input, err = embeds.SmartContract_WNIBI.ABI.Pack(
-		"withdraw", erc20BigInt.Value,
+	input, err := embeds.SmartContract_WNIBI.ABI.Pack(
+		"withdraw", out,
 	)
 	if err != nil {
 		panic(sdkioerrors.Wrap(err, "failed to pack ABI args for withdraw"))
@@ -126,15 +85,23 @@ func (h Hooks) withdrawFeeToken(ctx sdk.Context, contract, feeCollector gethcomm
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-	evmObj = h.K.evmKeeper.NewEVM(ctx, evmMsg, h.K.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	txConfig := h.K.evmKeeper.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := h.K.evmKeeper.Bank.StateDB
+	if stateDB == nil {
+		stateDB = h.K.evmKeeper.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		h.K.evmKeeper.Bank.StateDB = nil
+	}()
+	evmObj := h.K.evmKeeper.NewEVM(ctx, evmMsg, h.K.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
 	resp, err := h.K.evmKeeper.CallContractWithInput(ctx, evmObj, feeCollector, &contract, false /*commit*/, input, evmKeeper.GetCallGasWithLimit(ctx, evmKeeper.Erc20GasLimitExecute))
 	if err != nil {
-		panic(sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer"))
+		panic(sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw"))
 	}
 
 	if resp.Failed() {
-		panic(sdkioerrors.Wrap(err, "failed to call WNIBI contract transfer with VM error"))
+		panic(sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw with VM error"))
 	}
 
 	if err := stateDB.Commit(); err != nil {
