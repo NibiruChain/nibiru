@@ -46,6 +46,9 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+### Dependencies
+- Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))
+
 ## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
 
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
