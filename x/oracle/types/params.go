@@ -39,17 +39,11 @@ var (
 	DefaultRewardBand    = sdkmath.LegacyNewDecWithPrec(2, 2)                  // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 		// paired against the US fiat dollar
-		asset.Registry.Pair(denoms.BTC, denoms.USD),
-		asset.Registry.Pair(denoms.ETH, denoms.USD),
-		asset.Registry.Pair(denoms.ATOM, denoms.USD),
-		asset.Registry.Pair(denoms.USDC, denoms.USD),
-		asset.Registry.Pair(denoms.USDT, denoms.USD),
-		asset.Registry.Pair(denoms.USDA, denoms.USD),
-		// asset.Registry.Pair(denoms.BNB, denoms.USD),
-		// asset.Registry.Pair(denoms.OSMO, denoms.USD),
-		// asset.Registry.Pair(denoms.AVAX, denoms.USD),
-		// asset.Registry.Pair(denoms.SOL, denoms.USD),
-		// asset.Registry.Pair(denoms.ADA, denoms.USD),
+		asset.Registry.Pair(denoms.BTC, denoms.UUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.UUSD),
+		asset.Registry.Pair(denoms.ATOM, denoms.UUSD),
+		asset.Registry.Pair(denoms.USDC, denoms.UUSD),
+		asset.Registry.Pair(denoms.USDT, denoms.UUSD),
 	}
 	DefaultSlashFraction      = sdkmath.LegacyNewDecWithPrec(5, 3)  // 0.5%
 	DefaultMinValidPerWindow  = sdkmath.LegacyNewDecWithPrec(69, 2) // 69%

@@ -13,19 +13,22 @@ func init() {
 	// map of base asset to supported quote assets
 	// quote assets are usually stables
 	Registry = map[string]set.Set[string]{
-		denoms.BTC:  set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.ETH:  set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.NIBI: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.ATOM: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.OSMO: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.AVAX: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.SOL:  set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.BNB:  set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.ADA:  set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
-		denoms.NUSD: set.New(denoms.USD, denoms.USDC),
-		denoms.USDC: set.New(denoms.USD, denoms.NUSD),
-		denoms.USDT: set.New(denoms.USD, denoms.NUSD, denoms.USDC),
-		denoms.USDA: set.New(denoms.USDC, denoms.NUSD, denoms.USD, denoms.USDT),
+		denoms.BTC:  set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.ETH:  set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.NIBI: set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.ATOM: set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.OSMO: set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.AVAX: set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.SOL:  set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.BNB:  set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.ADA:  set.New(denoms.USDC, denoms.NUSD, denoms.UUSD, denoms.USDT),
+		denoms.NUSD: set.New(denoms.UUSD, denoms.USDC),
+		denoms.USDC: set.New(denoms.USD, denoms.UUSD, denoms.NUSD),
+		denoms.USDT: set.New(denoms.USD, denoms.UUSD, denoms.NUSD, denoms.USDC),
+
+		// Post v2.6.0
+		denoms.USDA:  set.New(denoms.USD, denoms.USDC, denoms.USDT),
+		denoms.SUSDA: set.New(denoms.USD, denoms.USDA),
 	}
 }
 

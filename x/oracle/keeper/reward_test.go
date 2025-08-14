@@ -40,7 +40,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 			// then changes the height to current height + vote period for the vote
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, fixture.Ctx.BlockHeight(), types.ExchangeRateTuples{
 				{
-					Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
+					Pair:         asset.Registry.Pair(denoms.ATOM, denoms.UUSD),
 					ExchangeRate: testExchangeRate,
 				},
 			}, valIndex)
