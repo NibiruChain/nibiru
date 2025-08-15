@@ -46,7 +46,7 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
-- [#2353](https://github.com/NibiruChain/nibiru/pull/2353) - chore(oracle): add USDa stable coin to the oracle registry
+- [#2353](https://github.com/NibiruChain/nibiru/pull/2353) - refactor(oracle): remove dead code from asset registry 
 
 ### Dependencies
 - Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))

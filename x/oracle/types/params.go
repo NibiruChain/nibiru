@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 )
 
 // Parameter keys
@@ -39,11 +38,11 @@ var (
 	DefaultRewardBand    = sdkmath.LegacyNewDecWithPrec(2, 2)                  // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 		// paired against the US fiat dollar
-		asset.Registry.Pair(denoms.BTC, denoms.UUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.UUSD),
-		asset.Registry.Pair(denoms.ATOM, denoms.UUSD),
-		asset.Registry.Pair(denoms.USDC, denoms.UUSD),
-		asset.Registry.Pair(denoms.USDT, denoms.UUSD),
+		asset.PAIR_BTC,
+		asset.PAIR_ETH,
+		asset.PAIR_ATOM,
+		asset.PAIR_USDC,
+		asset.PAIR_USDT,
 	}
 	DefaultSlashFraction      = sdkmath.LegacyNewDecWithPrec(5, 3)  // 0.5%
 	DefaultMinValidPerWindow  = sdkmath.LegacyNewDecWithPrec(69, 2) // 69%

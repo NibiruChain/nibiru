@@ -32,8 +32,8 @@ func TestParams(t *testing.T) {
 	minValidPerWindow := sdkmath.LegacyNewDecWithPrec(1, 4)
 	minFeeRatio := sdkmath.LegacyNewDecWithPrec(1, 2)
 	whitelist := []asset.Pair{
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.NewPair(denoms.BTC, denoms.NUSD),
+		asset.NewPair(denoms.ETH, denoms.NUSD),
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -67,12 +67,12 @@ func TestMergeOracleParams(t *testing.T) {
 	changedRewardBand := sdk.NewDecWithPrec(2, 2)
 
 	whitelist := []asset.Pair{
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.NewPair(denoms.BTC, denoms.NUSD),
+		asset.NewPair(denoms.ETH, denoms.NUSD),
 	}
 	chagedWhitelist := []asset.Pair{
-		asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
-		asset.Registry.Pair(denoms.ADA, denoms.NUSD),
+		asset.NewPair(denoms.ATOM, denoms.NUSD),
+		asset.NewPair(denoms.ADA, denoms.NUSD),
 	}
 
 	slashFraction := sdk.NewDecWithPrec(1, 2)
