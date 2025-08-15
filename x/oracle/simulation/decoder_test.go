@@ -33,8 +33,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdkmath.LegacyNewDecWithPrec(1234, 1)},
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdkmath.LegacyNewDecWithPrec(4321, 1)},
+		{Pair: asset.NewPair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdkmath.LegacyNewDecWithPrec(1234, 1)},
+		{Pair: asset.NewPair(denoms.ETH, denoms.NUSD), ExchangeRate: sdkmath.LegacyNewDecWithPrec(4321, 1)},
 	}, valAddr)
 
 	pair := "btc:usd"
