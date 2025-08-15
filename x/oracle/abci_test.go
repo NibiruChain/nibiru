@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -18,7 +17,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	// all the Addrs vote for the block ... not last period block yet, so tally fails
 	for i := range keeper.Addrs[:4] {
 		keeper.MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyOneDec()},
+			{Pair: asset.PAIR_BTC, ExchangeRate: sdkmath.LegacyOneDec()},
 		}, i)
 	}
 
@@ -31,13 +30,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 1, int(input.Ctx.BlockHeight()))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.USD))
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.PAIR_BTC)
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.USD))
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.PAIR_BTC)
 	require.NoError(t, err)
 }
 
@@ -45,8 +44,8 @@ func TestOracleTallyTiming(t *testing.T) {
 // Ensure that the updated pair is not deleted and the other pair is deleted after a certain time.
 func TestOraclePriceExpiration(t *testing.T) {
 	input, h := keeper.Setup(t)
-	pair1 := asset.Registry.Pair(denoms.BTC, denoms.USD)
-	pair2 := asset.Registry.Pair(denoms.ETH, denoms.USD)
+	pair1 := asset.PAIR_BTC
+	pair2 := asset.PAIR_ETH
 
 	// Set prices for both pairs
 	for i := range keeper.Addrs[:4] {

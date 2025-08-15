@@ -44,7 +44,7 @@ func NewNibiruTestAppAndContext() (*nibiruapp.NibiruApp, sdk.Context) {
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
-	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, asset.NewPair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdkmath.LegacyNewDec(20000))
 
 	return app, ctx

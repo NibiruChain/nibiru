@@ -94,12 +94,12 @@ func TestUpdateWhitelist(t *testing.T) {
 		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
 	}
 
-	currentWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
+	currentWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.UUSD), asset.NewPair(denoms.BTC, denoms.UUSD))
 	for p := range currentWhitelist {
 		fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, p)
 	}
 
-	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
+	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.UUSD), asset.NewPair(denoms.BTC, denoms.UUSD))
 
 	// no updates case
 	whitelistSlice := nextWhitelist.ToSlice()

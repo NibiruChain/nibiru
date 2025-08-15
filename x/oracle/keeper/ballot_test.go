@@ -38,8 +38,8 @@ func TestGroupVotesByPair(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
-	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
+	pairBtc := asset.NewPair(denoms.BTC, denoms.NUSD)
+	pairEth := asset.NewPair(denoms.ETH, denoms.NUSD)
 	btcVotes := types.ExchangeRateVotes{
 		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
 		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(10), Voter: ValAddrs[1], Power: power},
@@ -87,11 +87,11 @@ func TestGroupVotesByPair(t *testing.T) {
 	// sort each votes for comparison
 	sort.Sort(btcVotes)
 	sort.Sort(ethVotes)
-	sort.Sort(pairVotes[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
-	sort.Sort(pairVotes[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
+	sort.Sort(pairVotes[asset.NewPair(denoms.BTC, denoms.NUSD)])
+	sort.Sort(pairVotes[asset.NewPair(denoms.ETH, denoms.NUSD)])
 
-	require.Equal(t, btcVotes, pairVotes[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
-	require.Equal(t, ethVotes, pairVotes[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
+	require.Equal(t, btcVotes, pairVotes[asset.NewPair(denoms.BTC, denoms.NUSD)])
+	require.Equal(t, ethVotes, pairVotes[asset.NewPair(denoms.ETH, denoms.NUSD)])
 }
 
 func TestClearVotesAndPrevotes(t *testing.T) {
@@ -111,14 +111,14 @@ func TestClearVotesAndPrevotes(t *testing.T) {
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	btcVotes := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.NewPair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.NewPair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.NewPair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethVotes := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1000), asset.NewPair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(1300), asset.NewPair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(2000), asset.NewPair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcVotes {
@@ -218,8 +218,8 @@ func TestTallyMissCount(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
-	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
+	pairBtc := asset.NewPair(denoms.BTC, denoms.NUSD)
+	pairEth := asset.NewPair(denoms.ETH, denoms.NUSD)
 	// Having validator2 to have 2 votes outside the spread
 	btcVotes := types.ExchangeRateVotes{
 		{Pair: pairBtc, ExchangeRate: sdkmath.LegacyNewDec(17), Voter: ValAddrs[0], Power: power},
@@ -288,11 +288,11 @@ func TestRemoveInvalidBallots(t *testing.T) {
 				"x": types.ExchangeRateVotes{
 					{Pair: "x", ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.NewPair(denoms.BTC, denoms.NUSD): types.ExchangeRateVotes{
+					{Pair: asset.NewPair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateVotes{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.NewPair(denoms.ETH, denoms.NUSD): types.ExchangeRateVotes{
+					{Pair: asset.NewPair(denoms.BTC, denoms.NUSD), ExchangeRate: sdkmath.LegacyDec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
@@ -388,9 +388,9 @@ func TestFuzzPickReferencePair(t *testing.T) {
 
 func TestZeroBallotPower(t *testing.T) {
 	btcVotess := types.ExchangeRateVotes{
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
-		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(17), asset.NewPair(denoms.BTC, denoms.UUSD), ValAddrs[0], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(10), asset.NewPair(denoms.BTC, denoms.UUSD), ValAddrs[1], 0),
+		types.NewExchangeRateVote(sdkmath.LegacyNewDec(6), asset.NewPair(denoms.BTC, denoms.UUSD), ValAddrs[2], 0),
 	}
 
 	assert.False(t, isPassingVoteThreshold(btcVotess, sdkmath.ZeroInt(), 0))

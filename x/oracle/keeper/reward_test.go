@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
@@ -40,7 +39,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 			// then changes the height to current height + vote period for the vote
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, fixture.Ctx.BlockHeight(), types.ExchangeRateTuples{
 				{
-					Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
+					Pair:         asset.PAIR_ATOM,
 					ExchangeRate: testExchangeRate,
 				},
 			}, valIndex)
