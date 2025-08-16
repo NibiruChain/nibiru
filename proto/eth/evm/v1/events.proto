@@ -75,3 +75,14 @@ message EventContractExecuted {
   string sender = 1;
   string contract_addr = 2;
 }
+
+// EventConvertEvmToCoin defines sending erc20 to bank coin event.
+message EventConvertEvmToCoin {
+  string sender = 1;
+  string erc20_contract_address = 2;
+  string to_address = 3;
+  cosmos.base.v1beta1.Coin bank_coin = 4 [
+    (gogoproto.moretags) = "yaml:\"bank_coin\"",
+    (gogoproto.nullable) = false
+  ];
+}
