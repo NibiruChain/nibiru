@@ -52,6 +52,7 @@ import (
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
+	txfeesmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/txfees/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
@@ -61,6 +62,8 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 var (
@@ -101,7 +104,8 @@ var (
 		{Account: sudotypes.ModuleName},
 		{Account: common.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
-		{Account: tftypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: tokenfactorytypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: txfeestypes.ModuleName},
 	}
 
 	orderedModuleNames = []string{
@@ -146,6 +150,7 @@ var (
 		oracletypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
+		txfeestypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -305,6 +310,10 @@ func init() {
 			{
 				Name:   tftypes.ModuleName,
 				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
+			},
+			{
+				Name:   txfeestypes.ModuleName,
+				Config: appconfig.WrapAny(&txfeesmodulev1.Module{}),
 			},
 		},
 	})

@@ -3,26 +3,36 @@ package evmante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	oracleKeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
+
+const feeTokenUsedKey string = "feeTokenUsed"
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
 	evmKeeper     *EVMKeeper
+	txFeesKeeper  txfeeskeeper.Keeper
 	accountKeeper evm.AccountKeeper
+	oracleKeeper  oracleKeeper.Keeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, txf txfeeskeeper.Keeper, ok oracleKeeper.Keeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
 		evmKeeper:     k,
 		accountKeeper: ak,
+		txFeesKeeper:  txf,
+		oracleKeeper:  ok,
 	}
 }
 
@@ -70,10 +80,64 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		if err := keeper.CheckSenderBalance(
-			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
-		); err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
+		canCover := false
+		cost := txData.Cost()
+		if cost.Sign() < 0 {
+			return ctx, sdkioerrors.Wrapf(
+				sdkerrors.ErrInvalidCoins,
+				"tx cost (%s) is negative and invalid", cost,
+			)
+		}
+		balanceWei := evm.NativeToWei(acct.BalanceNative.ToBig())
+		if balanceWei.Cmp(cost) >= 0 {
+			return next(ctx, tx, simulate)
+		}
+
+		// check whether the sender has enough balance to pay for the transaction cost in alternative token
+		feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
+		for _, feeToken := range feeTokens {
+			var ratio sdkmath.LegacyDec
+
+			out, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(feeToken.Address))
+			if err != nil {
+				return ctx, err
+			}
+
+			switch feeToken.TokenType {
+			case txfeestypes.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE:
+				ratio = sdkmath.LegacyOneDec()
+			case txfeestypes.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE:
+				price, err := anteDec.oracleKeeper.GetExchangeRateTwap(ctx, asset.Pair(feeToken.Pair))
+				if err != nil {
+					return ctx, sdkioerrors.Wrapf(
+						err, "failed to get exchange rate for pair %s", feeToken.Pair,
+					)
+				}
+				basePrice, err := anteDec.oracleKeeper.GetExchangeRateTwap(ctx, asset.Pair("unibi:uusd"))
+				if err != nil {
+					return ctx, sdkioerrors.Wrapf(err, "failed to get TWAP for unibi:uusd")
+				}
+				if price.IsZero() {
+					return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "price for %s is zero", feeToken.Pair)
+				}
+				ratio = basePrice.Quo(price)
+			}
+
+			tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
+			txCost := sdkmath.LegacyNewDecFromBigInt(txData.Cost())
+			if tokenBalance.GTE(txCost.Mul(ratio)) {
+				canCover = true
+				ctx = ctx.WithValue(feeTokenUsedKey, feeToken.Address).WithValue("ratio", ratio)
+				break
+			}
+		}
+
+		if !canCover {
+			return ctx, sdkioerrors.Wrapf(
+				sdkerrors.ErrInsufficientFunds,
+				"sender balance < tx cost (native: %s, required: %s), no ERC20 fallback sufficient",
+				balanceWei.String(), cost.String(),
+			)
 		}
 	}
 	return next(ctx, tx, simulate)

@@ -2,9 +2,11 @@
 package evmante
 
 import (
+	"fmt"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -12,23 +14,31 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    *EVMKeeper
-	maxGasWanted uint64
+	evmKeeper     *EVMKeeper
+	accountKeeper evm.AccountKeeper
+	txFeesKeeper  txfeeskeeper.Keeper
+	maxGasWanted  uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
+	ak evm.AccountKeeper,
+	txFeesKeeper txfeeskeeper.Keeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		evmKeeper:    k,
-		maxGasWanted: maxGasWanted,
+		evmKeeper:     k,
+		accountKeeper: ak,
+		txFeesKeeper:  txFeesKeeper,
+		maxGasWanted:  maxGasWanted,
 	}
 }
 
@@ -106,7 +116,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
 		}
 
-		if err = anteDec.deductFee(ctx, fees, from); err != nil {
+		if err = anteDec.deductFee(ctx, fees, from, msgEthTx); err != nil {
 			return ctx, err
 		}
 
@@ -159,16 +169,64 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 // deductFee checks if the fee payer has enough funds to pay for the fees and
 // deducts them.
 func (anteDec AnteDecEthGasConsume) deductFee(
-	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
+	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress, msgEthTx *evm.MsgEthereumTx,
 ) error {
 	if fees.IsZero() {
 		return nil
 	}
 
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
-		ctx, fees, gethcommon.BytesToAddress(feePayer),
-	); err != nil {
-		return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+	feePayerAddr := gethcommon.BytesToAddress(feePayer)
+
+	// check available balance of the fee payer
+	nibiBal := anteDec.evmKeeper.Bank.GetBalance(ctx, feePayer, fees[0].Denom)
+	if !nibiBal.IsZero() && nibiBal.Amount.GTE(fees[0].Amount) {
+		if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+			ctx, fees, gethcommon.BytesToAddress(feePayer),
+		); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+		}
+
+		return nil
 	}
-	return nil
+
+	// fall back to erc20 token deduction
+	// 1. Get balance
+	// 2. Deduct fees
+	// 3. Set nonce for account
+
+	feeTokenAddress := gethcommon.HexToAddress(ctx.Value(feeTokenUsedKey).(string))
+	ratio := ctx.Value("ratio").(sdkmath.LegacyDec)
+
+	out, err := anteDec.evmKeeper.GetErc20Balance(ctx, feePayerAddr, feeTokenAddress)
+	if err != nil {
+		return err
+	}
+
+	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
+	feeAmount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio)
+	if tokenBalance.GT(feeAmount) {
+		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
+		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
+		err := anteDec.evmKeeper.Erc20Transfer(ctx, feeTokenAddress, feePayerAddr, feeCollector, fees[0].Amount.BigInt())
+
+		if err != nil {
+			return sdkioerrors.Wrapf(
+				err, "failed to transfer %s from %s to %s",
+				fees[0].Amount.String(), feePayerAddr.String(), feeCollector.String(),
+			)
+		}
+
+		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
+	}
+
+	return fmt.Errorf(
+		"fee payer %s has no enough balance to pay for the fees %s",
+		feePayerAddr.String(), fees.String(),
+	)
 }

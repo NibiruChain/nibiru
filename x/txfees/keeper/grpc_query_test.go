@@ -1,0 +1,49 @@
+package keeper_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
+)
+
+func TestQueryFeeTokens(t *testing.T) {
+	testCases := []struct {
+		name     string
+		malleate func(app *app.NibiruApp, ctx sdk.Context)
+	}{
+		{
+			name: "success: query fee tokens",
+			malleate: func(app *app.NibiruApp, ctx sdk.Context) {
+				app.TxFeesKeeper.SetFeeTokens(ctx, validFeeTokens)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+			tc.malleate(nibiruApp, ctx)
+			queryHelper := baseapp.NewQueryServerTestHelper(
+				ctx, nibiruApp.InterfaceRegistry(),
+			)
+			types.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.TxFeesKeeper))
+			queryClient := types.NewQueryClient(queryHelper)
+			resp, err := queryClient.FeeTokens(ctx, &types.QueryFeeTokensRequest{})
+			require.NoError(t, err)
+
+			sortFeeTokens(validFeeTokens)
+			sortFeeTokens(resp.FeeTokens)
+			require.Equal(t, validFeeTokens, resp.FeeTokens)
+		})
+	}
+
+}
