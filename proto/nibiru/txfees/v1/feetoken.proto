@@ -16,10 +16,14 @@ enum FeeTokenType {
 message FeeToken {
   option (gogoproto.equal) = true;
 
-  string address = 1 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+  string name = 1 [ (gogoproto.moretags) = "yaml:\"name\"" ];
+
+  string address = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
 
   // A string identifier for the price pair
-  string pair = 2 [ (gogoproto.moretags) = "yaml:\"pair\"" ];
+  string pair = 3 [ (gogoproto.moretags) = "yaml:\"pair\"" ];
 
-  FeeTokenType token_type = 3 [ (gogoproto.moretags) = "yaml:\"type\"" ];
+  FeeTokenType token_type = 4 [ (gogoproto.moretags) = "yaml:\"type\"" ];
+
+  string pool_address = 5 [ (gogoproto.moretags) = "yaml:\"pool_address\"" ];
 }

@@ -7,6 +7,7 @@ import "google/protobuf/duration.proto";
 import "cosmos_proto/cosmos.proto";
 
 import "nibiru/txfees/v1/feetoken.proto";
+import "nibiru/txfees/v1/params.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 
@@ -16,6 +17,11 @@ service Msg {
     rpc UpdateFeeToken(MsgUpdateFeeToken)
         returns (MsgUpdateFeeTokenResponse) {
       option (google.api.http).post = "/nibiru/txfees/v1/update_fee_token";
+    };
+
+    rpc UpdateParams(MsgUpdateParams)
+        returns (MsgUpdateParamsResponse) {
+      option (google.api.http).post = "/nibiru/txfees/v1/update_params";
     };
 }
 
@@ -30,10 +36,25 @@ message MsgUpdateFeeToken{
     // contract_address in hex format
     FeeToken fee_token = 1;
     // Authority: Address of the governance module account.
-    string authority = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    string sender = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
     // action defines the action to perform on the fee token
     FeeTokenUpdateAction action = 3;
 }
 
 // MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
 message MsgUpdateFeeTokenResponse {}
+
+// MsgUpdateParams defines a message that updates the parameters of the txfees module
+message MsgUpdateParams {
+    option (gogoproto.equal) = true;
+    // params defines the parameters to update
+    Params params = 1 [(gogoproto.nullable) = false];
+    // Authority: Address of the governance module account.
+    string sender = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+} 
+
+// MsgUpdateParamsResponse defines the MsgUpdateParams response type
+message MsgUpdateParamsResponse {
+    // params defines the updated parameters
+    Params params = 1 [(gogoproto.nullable) = false];
+} 

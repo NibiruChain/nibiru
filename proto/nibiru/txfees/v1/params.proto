@@ -1,0 +1,13 @@
+syntax = "proto3";
+package nibiru.txfees.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+
+// Params holds parameters for the txfees module
+message Params {
+  option (gogoproto.equal) = true;
+  string router_addr = 1 [(gogoproto.moretags) = "yaml:\"router_addr\""];
+}
