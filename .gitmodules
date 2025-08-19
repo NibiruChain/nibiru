@@ -1,3 +1,6 @@
 [submodule "geth"]
 	path = geth
 	url = git@github.com:NibiruChain/go-ethereum.git
+[submodule "dex-deploy/external/deploy-v3"]
+	path = dex-deploy/external/deploy-v3
+	url = https://github.com/Uniswap/deploy-v3.git
