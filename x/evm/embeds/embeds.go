@@ -55,6 +55,10 @@ var (
 	testDirtyStateAttack5 []byte
 	//go:embed artifacts/contracts/WNIBI.sol/WNIBI.json
 	wnibi []byte
+	//go:embed artifacts/contracts/UniswapV3Pool.sol/IUniswapV3PoolActions.json
+	uniswapV3Pool []byte
+	//go:embed artifacts/contracts/UniswapV3SwapRouter.sol/IV3SwapRouter.json
+	uniswapV3Router []byte
 )
 
 var (
@@ -184,6 +188,16 @@ var (
 		Name:      "WNIBI.sol",
 		EmbedJSON: wnibi,
 	}
+
+	SmartContract_UniswapV3Pool = CompiledEvmContract{
+		Name:      "UniswapV3Pool.sol",
+		EmbedJSON: uniswapV3Pool,
+	}
+
+	SmartContract_UniswapV3SwapRouter = CompiledEvmContract{
+		Name:      "UniswapV3SwapRouter.sol",
+		EmbedJSON: uniswapV3Router,
+	}
 )
 
 func init() {
@@ -206,6 +220,8 @@ func init() {
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
 	SmartContract_WNIBI.MustLoad()
+	SmartContract_UniswapV3Pool.MustLoad()
+	SmartContract_UniswapV3SwapRouter.MustLoad()
 }
 
 type CompiledEvmContract struct {

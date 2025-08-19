@@ -161,6 +161,54 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 	return nil
 }
 
+func (k *Keeper) Erc20Approve(ctx sdk.Context, contract, sender, spender gethcommon.Address, amount *big.Int) (err error) {
+	input, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
+		"approve", spender, amount,
+	)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
+	}
+	nonce := k.GetAccNonce(ctx, sender)
+
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &contract,
+		From:             sender,
+		Nonce:            nonce,
+		Value:            unusedBigInt, // amount
+		GasLimit:         5_500_000,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             input,
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
+	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
+
+	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	_, resp, err := k.ERC20().Approve(contract, sender, spender, amount, ctx, evmObj)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to call ERC20 contract approve")
+	}
+	if resp.Failed() {
+		return sdkioerrors.Wrap(err, "failed to call ERC20 contract approve with VM error")
+	}
+	if err := stateDB.Commit(); err != nil {
+		return sdkioerrors.Wrap(err, "failed to commit stateDB")
+	}
+
+	return nil
+}
+
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {
 	return appconst.GetEthChainID(ctx.ChainID())
 }

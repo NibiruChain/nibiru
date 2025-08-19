@@ -2,6 +2,7 @@ package ante
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -12,10 +13,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
@@ -115,7 +119,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	return next(ctx, tx, simulate)
 }
 
-func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesKeeper types.TxFeesKeeper, bankKeeper authtypes.BankKeeper, ok oraclekeeper.Keeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
+func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesKeeper txfeeskeeper.Keeper, bankKeeper authtypes.BankKeeper, ok oraclekeeper.Keeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
 	// Checks the validity of the fee tokens (sorted, have positive amount, valid and unique denomination)
 	if !fees.IsValid() {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
@@ -153,7 +157,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		amount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt().BigInt()
 		sender := eth.NibiruAddrToEthAddr(acc.GetAddress())
 		nonce := ek.GetAccNonce(ctx, sender)
-
+		fmt.Println("amount :", amount.String(), "fee token:", feeToken.Address, "sender:", sender.Hex(), "fee collector:", feeCollector.Hex())
 		err = ek.Erc20Transfer(ctx, gethcommon.HexToAddress(feeToken.Address), sender, feeCollector, amount)
 		if err != nil {
 			return err
@@ -164,6 +168,193 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		}
 
 		accountkeeper.SetAccount(ctx, acc)
+
+		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
+			unusedBigInt := big.NewInt(0)
+			err = withdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
+			}
+		} else {
+			err = swapFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector)
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func withdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, contract, feeCollector gethcommon.Address, unusedBigInt *big.Int) error {
+	out, err := ek.GetErc20Balance(ctx, feeCollector, contract)
+	if err != nil {
+		return fmt.Errorf("failed to get ERC20 balance: %w", err)
+	}
+
+	input, err := embeds.SmartContract_WNIBI.ABI.Pack(
+		"withdraw", out,
+	)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to pack ABI args for withdraw")
+	}
+
+	nonce := ek.GetAccNonce(ctx, feeCollector)
+	evmMsg := core.Message{
+		To:               &contract,
+		From:             feeCollector,
+		Nonce:            nonce,
+		Value:            unusedBigInt, // amount
+		GasLimit:         5_500_000,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             input,
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
+	txConfig := ek.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := ek.Bank.StateDB
+	if stateDB == nil {
+		stateDB = ek.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		ek.Bank.StateDB = nil
+	}()
+	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+
+	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &contract, false /*commit*/, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw")
+	}
+
+	if resp.Failed() {
+		return sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw with VM error")
+	}
+
+	if err := stateDB.Commit(); err != nil {
+		return sdkioerrors.Wrap(err, "failed to commit stateDB")
+	}
+
+	acc := ak.GetModuleAccount(ctx, authtypes.FeeCollectorName)
+	if err := acc.SetSequence(nonce); err != nil {
+		return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+	}
+
+	return nil
+}
+
+var (
+	MinSqrtRatio    = new(big.Int).SetUint64(4295128739)
+	MaxSqrtRatio, _ = new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
+)
+
+func swapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, txfk txfeeskeeper.Keeper, feeToken types.FeeToken, feeCollector gethcommon.Address) error {
+	poolAddr := gethcommon.HexToAddress(feeToken.PoolAddress)
+	out, err := ek.GetErc20Balance(ctx, feeCollector, gethcommon.HexToAddress(feeToken.Address))
+	if err != nil {
+		return fmt.Errorf("failed to get ERC20 balance: %w", err)
+	}
+
+	err = ek.Erc20Approve(ctx, gethcommon.HexToAddress(feeToken.Address), feeCollector, poolAddr, out)
+	if err != nil {
+		return sdkioerrors.Wrapf(err, "failed to approve UniswapV3Pool contract %s for fee token %s", poolAddr.Hex(), feeToken.Address)
+	}
+
+	amountIn := out
+	zeroForOne := true // tokenIn -> tokenOut
+	var sqrtPriceLimitX96 *big.Int
+	if zeroForOne {
+		sqrtPriceLimitX96 = new(big.Int).Add(MinSqrtRatio, big.NewInt(1))
+	} else {
+		sqrtPriceLimitX96 = new(big.Int).Sub(MaxSqrtRatio, big.NewInt(1))
+	}
+	// // Pack swap call data using Uniswap V3 ABI
+	// input, err := embeds.SmartContract_UniswapV3Pool.ABI.Pack(
+	// 	"swap",
+	// 	feeCollector,      // recipient
+	// 	zeroForOne,        // zeroForOne
+	// 	amountIn,          // amountSpecified
+	// 	sqrtPriceLimitX96, // sqrtPriceLimitX96 (0 = no limit)
+	// 	[]byte{},          // data (empty for direct swap)
+	// )
+
+	fmt.Println("sqrtPriceLimitX96 :", sqrtPriceLimitX96)
+	baseToken, err := txfk.GetBaseToken(ctx, "WNIBI")
+
+	if err != nil {
+		return sdkioerrors.Wrapf(err, "failed to get base token for pair %s", feeToken.Pair)
+	}
+	if baseToken.Address == "" {
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "base token address for pair %s is empty", feeToken.Pair)
+	}
+	// Pack swap call data using Uniswap V3 ABI
+	input, err := embeds.SmartContract_UniswapV3SwapRouter.ABI.Pack(
+		"exactInputSingle",
+		struct {
+			TokenIn           gethcommon.Address
+			TokenOut          gethcommon.Address
+			Fee               *big.Int
+			Recipient         gethcommon.Address
+			AmountIn          *big.Int
+			AmountOutMinimum  *big.Int
+			SqrtPriceLimitX96 *big.Int
+		}{
+			TokenIn:           gethcommon.HexToAddress(feeToken.Address),  // tokenIn
+			TokenOut:          gethcommon.HexToAddress(baseToken.Address), // tokenOut
+			Fee:               big.NewInt(3000),                           // fee
+			Recipient:         feeCollector,                               // recipient                                // deadline
+			AmountIn:          amountIn,                                   // amountSpecified
+			AmountOutMinimum:  big.NewInt(0),                              // sqrtPriceLimitX96 (0 = no limit)
+			SqrtPriceLimitX96: big.NewInt(0),                              // data (empty for direct swap)
+		},
+	)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to pack ABI args for swap")
+	}
+
+	nonce := ek.GetAccNonce(ctx, feeCollector)
+	evmMsg := core.Message{
+		To:               &poolAddr,
+		From:             feeCollector,
+		Nonce:            nonce,
+		Value:            big.NewInt(0),
+		GasLimit:         5_500_000,
+		GasPrice:         big.NewInt(0),
+		GasFeeCap:        big.NewInt(0),
+		GasTipCap:        big.NewInt(0),
+		Data:             input,
+		AccessList:       gethcore.AccessList{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
+	}
+
+	txConfig := ek.TxConfig(ctx, gethcommon.Hash{})
+	stateDB := ek.Bank.StateDB
+	if stateDB == nil {
+		stateDB = ek.NewStateDB(ctx, txConfig)
+	}
+	defer func() {
+		ek.Bank.StateDB = nil
+	}()
+	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil, stateDB)
+
+	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &poolAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to call UniswapV3Pool swap")
+	}
+	if resp.Failed() {
+		return sdkioerrors.Wrap(err, "UniswapV3Pool swap VM error")
+	}
+	if err := stateDB.Commit(); err != nil {
+		return sdkioerrors.Wrap(err, "failed to commit stateDB after swap")
+	}
+
+	acc := ak.GetModuleAccount(ctx, authtypes.FeeCollectorName)
+	if err := acc.SetSequence(nonce); err != nil {
+		return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
 	}
 
 	return nil

@@ -16,17 +16,21 @@ var (
 	invalidAddress = "0xinvalidHexAddress"
 
 	validFeeToken = types.FeeToken{
+		Name:      "Valid Fee Token",
 		Address:   evmtest.NewEthPrivAcc().EthAddr.String(),
 		TokenType: types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE,
 	}
 
 	anotherValidFeeToken = types.FeeToken{
-		Address:   evmtest.NewEthPrivAcc().EthAddr.String(),
-		Pair:      "uusdc:uusd",
-		TokenType: types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE,
+		Name:        "Another Valid Fee Token",
+		Address:     evmtest.NewEthPrivAcc().EthAddr.String(),
+		Pair:        "uusdc:uusd",
+		TokenType:   types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE,
+		PoolAddress: evmtest.NewEthPrivAcc().EthAddr.String(),
 	}
 
 	invalidFeeToken = types.FeeToken{
+		Name:      "Invalid Fee Token",
 		Address:   invalidAddress,
 		Pair:      "uusdc:uusd",
 		TokenType: types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE,

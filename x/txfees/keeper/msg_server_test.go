@@ -8,10 +8,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
@@ -30,9 +30,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeToken(ctx, feeToken)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
-				FeeToken:  &anotherValidFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
+				FeeToken: &anotherValidFeeToken,
 			},
 			expectedFeeTokens: validFeeTokens,
 			expectedErr:       nil,
@@ -44,9 +44,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
-				FeeToken:  &anotherValidFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
+				FeeToken: &anotherValidFeeToken,
 			},
 			expectedFeeTokens: []types.FeeToken{validFeeToken},
 			expectedErr:       nil,
@@ -58,9 +58,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
-				FeeToken:  &invalidFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
+				FeeToken: &invalidFeeToken,
 			},
 			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidAddress),
 		},
@@ -71,9 +71,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
-				FeeToken:  &validFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
+				FeeToken: &validFeeToken,
 			},
 			expectedErr: fmt.Errorf("fee token with address %s already exists", validFeeToken.Address),
 		},
@@ -84,9 +84,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeToken(ctx, feeToken)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
-				FeeToken:  &anotherValidFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
+				FeeToken: &anotherValidFeeToken,
 			},
 			expectedErr: fmt.Errorf("fee token with address %s not exists", anotherValidFeeToken.Address),
 		},
@@ -97,9 +97,9 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Action:    types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
-				FeeToken:  &invalidFeeToken,
+				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
+				FeeToken: &invalidFeeToken,
 			},
 			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeToken.Address),
 		},

@@ -15,6 +15,8 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 
+	"github.com/NibiruChain/collections"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
@@ -25,8 +27,9 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	evmKeeper     *evmkeeper.Keeper
+	sudoKeeper    types.SudoKeeper
 
-	authority string // authority is the x/txfees module authority, which is used to update the fee token.
+	Params collections.Item[types.Params]
 }
 
 var _ types.TxFeesKeeper = (*Keeper)(nil)
@@ -37,6 +40,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	evmKeeper *evmkeeper.Keeper,
+	sudoKeeper types.SudoKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -45,7 +49,7 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		evmKeeper:     evmKeeper,
-		authority:     authority,
+		sudoKeeper:    sudoKeeper,
 	}
 }
 
@@ -153,4 +157,28 @@ func (k Keeper) GetFeeTokens(ctx sdk.Context) (feetokens []types.FeeToken) {
 		feeTokens = append(feeTokens, feeToken)
 	}
 	return feeTokens
+}
+
+func (k Keeper) GetBaseToken(ctx sdk.Context, name string) (types.FeeToken, error) {
+	feetokens := k.GetFeeTokens(ctx)
+	for _, feeToken := range feetokens {
+		if feeToken.Name == name {
+			return feeToken, nil
+		}
+	}
+	return types.FeeToken{}, sdkioerrors.Wrapf(types.ErrInvalidFeeToken, "base token %s not found", name)
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params, err error) {
+	params, err = k.Params.Get(ctx)
+	if err != nil {
+		return types.Params{}, sdkioerrors.Wrapf(err, "failed to get params")
+	}
+
+	return params, nil
+}
+
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	k.Params.Set(ctx, params)
+	return nil
 }

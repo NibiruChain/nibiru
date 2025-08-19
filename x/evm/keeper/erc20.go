@@ -55,6 +55,39 @@ type erc20Calls struct {
 	ABI *gethabi.ABI
 }
 
+func (e erc20Calls) Approve(
+	erc20Contract, owner, spender gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (allowance *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
+	contractInput, err := e.ABI.Pack("approve", spender, amount)
+	if err != nil {
+		return allowance, nil, err
+	}
+	resp, err = e.CallContractWithInput(ctx, evmObj, owner, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	if err != nil {
+		return allowance, nil, err
+	}
+
+	var erc20Bool ERC20Bool
+	err = e.ABI.UnpackIntoInterface(&erc20Bool, "approve", resp.Ret)
+	if err != nil {
+		return allowance, nil, err
+	}
+
+	// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
+	success := erc20Bool.Value
+	if !success {
+		return allowance, nil, fmt.Errorf("approve executed but returned success=false")
+	}
+
+	allowance, err = e.Allowance(erc20Contract, owner, spender, ctx, evmObj)
+	if err != nil {
+		return allowance, nil, sdkioerrors.Wrap(err, "failed to retrieve spender allowance")
+	}
+
+	return allowance, resp, err
+}
+
 /*
 Mint implements "ERC20Minter.mint" from ERC20Minter.sol.
 See [nibiru/x/evm/embeds].
@@ -140,6 +173,13 @@ func (e erc20Calls) Transfer(
 	}
 
 	return balanceIncrease, resp, err
+}
+
+func (e erc20Calls) Allowance(
+	contract, owner, spender gethcommon.Address,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "allowance", owner, spender)
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.

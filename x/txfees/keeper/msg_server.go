@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
@@ -18,8 +20,12 @@ func (k Keeper) UpdateFeeToken(
 ) (*types.MsgUpdateFeeTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if msg.Authority != k.authority {
-		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	sudoAddr, err := k.sudoKeeper.GetRootAddr(ctx)
+	if err != nil {
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "failed to get root address")
+	}
+	if msg.Sender != sudoAddr.String() {
+		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", sudoAddr, msg.Sender)
 	}
 
 	switch msg.Action {
@@ -39,4 +45,25 @@ func (k Keeper) UpdateFeeToken(
 	}
 
 	return &types.MsgUpdateFeeTokenResponse{}, nil
+}
+
+func (k Keeper) UpdateParams(
+	goCtx context.Context,
+	msg *types.MsgUpdateParams,
+) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sudoAddr, err := k.sudoKeeper.GetRootAddr(ctx)
+	if err != nil {
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "failed to get root address")
+	}
+	if msg.Sender != sudoAddr.String() {
+		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", sudoAddr, msg.Sender)
+	}
+
+	if err := k.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

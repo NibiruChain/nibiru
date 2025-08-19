@@ -11,6 +11,7 @@ import (
 const (
 	// Amino names
 	updateFeeToken = "nibiru/MsgUpdateFeeToken"
+	updateParams   = "nibiru/MsgUpdateParams"
 )
 
 var (
@@ -35,6 +36,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgUpdateFeeToken{},
+		&MsgUpdateParams{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -45,4 +47,5 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 // Amino JSON serialization and EIP-712 compatibility.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUpdateFeeToken{}, updateFeeToken, nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, updateParams, nil)
 }

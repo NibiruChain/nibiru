@@ -36,3 +36,8 @@ type TxFeesKeeper interface {
 	GetFeeToken(ctx sdk.Context, address string) (FeeToken, error)
 	GetFeeTokens(ctx sdk.Context) []FeeToken
 }
+
+type SudoKeeper interface {
+	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
+	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
+}

@@ -95,7 +95,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the txfees module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return nil
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns the txfees module's root query command.
@@ -193,6 +193,7 @@ type TxFeesInputs struct {
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    types.BankKeeper
 	EvmKeeper     *evmkeeper.Keeper
+	SudoKeeper    types.SudoKeeper
 }
 
 type TxFeesOutputs struct {
@@ -208,7 +209,7 @@ func ProvideModule(in TxFeesInputs) TxFeesOutputs {
 	if in.Config.Authority != "" {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
-	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.EvmKeeper, authority.String())
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.EvmKeeper, in.SudoKeeper, authority.String())
 
 	m := NewAppModule(k)
 
