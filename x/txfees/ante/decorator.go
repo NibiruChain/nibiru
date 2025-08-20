@@ -180,6 +180,12 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 			if err != nil {
 				return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
 			}
+
+			unusedBigInt := big.NewInt(0)
+			err = withdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
+			}
 		}
 
 	}

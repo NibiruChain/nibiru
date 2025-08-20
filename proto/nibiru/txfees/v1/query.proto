@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 
 import "nibiru/txfees/v1/feetoken.proto";
+import "nibiru/txfees/v1/params.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 
@@ -14,6 +15,11 @@ service Query {
   rpc FeeTokens(QueryFeeTokensRequest) returns (QueryFeeTokensResponse) {
     option (google.api.http).get = "/nibiru/txfees/v1/fee_token";
   }
+
+  // Params returns the parameters of the txfees module.
+  rpc Params(ParamsRequest) returns (ParamsResponse) {
+    option (google.api.http).get = "/nibiru/txfees/v1/params";
+  }
 }
 
 message QueryFeeTokensRequest {}
@@ -21,5 +27,13 @@ message QueryFeeTokensResponse {
   repeated FeeToken fee_tokens = 1 [
     (gogoproto.moretags) = "yaml:\"fee_token\"",
     (gogoproto.nullable) = false
+  ];
+}
+
+message ParamsRequest {}
+message ParamsResponse {
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"params\""
   ];
 }

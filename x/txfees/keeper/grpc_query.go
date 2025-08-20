@@ -26,3 +26,13 @@ func (q Querier) FeeTokens(ctx context.Context, _ *types.QueryFeeTokensRequest) 
 
 	return &types.QueryFeeTokensResponse{FeeTokens: feeTokens}, nil
 }
+
+func (q Querier) Params(ctx context.Context, _ *types.ParamsRequest) (*types.ParamsResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	params, err := q.Keeper.GetParams(sdkCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.ParamsResponse{Params: params}, nil
+}

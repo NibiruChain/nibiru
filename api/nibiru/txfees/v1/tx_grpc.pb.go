@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClient interface {
-	// RegisterFeeShare registers a new contract for receiving transaction fees
 	UpdateFeeToken(ctx context.Context, in *MsgUpdateFeeToken, opts ...grpc.CallOption) (*MsgUpdateFeeTokenResponse, error)
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -57,7 +56,6 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
 type MsgServer interface {
-	// RegisterFeeShare registers a new contract for receiving transaction fees
 	UpdateFeeToken(context.Context, *MsgUpdateFeeToken) (*MsgUpdateFeeTokenResponse, error)
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	mustEmbedUnimplementedMsgServer()

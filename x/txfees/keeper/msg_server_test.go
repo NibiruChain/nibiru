@@ -7,11 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
@@ -30,7 +29,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeToken(ctx, feeToken)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
 				FeeToken: &anotherValidFeeToken,
 			},
@@ -44,7 +43,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
 				FeeToken: &anotherValidFeeToken,
 			},
@@ -58,7 +57,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
 				FeeToken: &invalidFeeToken,
 			},
@@ -71,7 +70,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
 				FeeToken: &validFeeToken,
 			},
@@ -84,7 +83,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeToken(ctx, feeToken)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
 				FeeToken: &anotherValidFeeToken,
 			},
@@ -97,7 +96,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				app.TxFeesKeeper.SetFeeTokens(ctx, feeTokens)
 			},
 			msg: types.MsgUpdateFeeToken{
-				Sender:   authtypes.NewModuleAddress(sudotypes.ModuleName).String(),
+				Sender:   testutil.ADDR_SUDO_ROOT,
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
 				FeeToken: &invalidFeeToken,
 			},

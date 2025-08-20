@@ -9,6 +9,7 @@ import (
 // DefaultGenesis returns the default txfee genesis state.
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
+		Params:    Params{},
 		Feetokens: []FeeToken{},
 	}
 }

@@ -29,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 	txFeesTxCmd.AddCommand(
 		CmdAddFeeToken(),
 		CmdRemoveFeeToken(),
+		CmdUpdateParams(),
 	)
 
 	return txFeesTxCmd
@@ -151,6 +152,49 @@ $ nibid tx remove-fee-token --token-address 0xabc
 
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String("token-address", "", "the address of the fee token in hex format")
+
+	return cmd
+}
+
+func CmdUpdateParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-params --token-address [token-address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Update the parameters of the txfees module",
+		Long: strings.TrimSpace(`
+Update the parameters of the txfees module.
+
+Requires sudo permissions.
+
+$ nibid tx remove-fee-token --token-address 0xabc
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			routerAddr := args[0]
+			if !gethcommon.IsHexAddress(routerAddr) {
+				return sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid router address %s", routerAddr)
+			}
+
+			msg := &types.MsgUpdateParams{
+				Params: types.Params{
+					RouterAddr: args[0],
+				},
+				Sender: clientCtx.GetFromAddress().String(),
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

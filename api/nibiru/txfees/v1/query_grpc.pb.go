@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type QueryClient interface {
 	// FeeTokens returns the list of fee token addresses.
 	FeeTokens(ctx context.Context, in *QueryFeeTokensRequest, opts ...grpc.CallOption) (*QueryFeeTokensResponse, error)
+	// Params returns the parameters of the txfees module.
+	Params(ctx context.Context, in *ParamsRequest, opts ...grpc.CallOption) (*ParamsResponse, error)
 }
 
 type queryClient struct {
@@ -43,12 +45,23 @@ func (c *queryClient) FeeTokens(ctx context.Context, in *QueryFeeTokensRequest, 
 	return out, nil
 }
 
+func (c *queryClient) Params(ctx context.Context, in *ParamsRequest, opts ...grpc.CallOption) (*ParamsResponse, error) {
+	out := new(ParamsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.txfees.v1.Query/Params", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
 type QueryServer interface {
 	// FeeTokens returns the list of fee token addresses.
 	FeeTokens(context.Context, *QueryFeeTokensRequest) (*QueryFeeTokensResponse, error)
+	// Params returns the parameters of the txfees module.
+	Params(context.Context, *ParamsRequest) (*ParamsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -58,6 +71,9 @@ type UnimplementedQueryServer struct {
 
 func (UnimplementedQueryServer) FeeTokens(context.Context, *QueryFeeTokensRequest) (*QueryFeeTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FeeTokens not implemented")
+}
+func (UnimplementedQueryServer) Params(context.Context, *ParamsRequest) (*ParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -90,6 +106,24 @@ func _Query_FeeTokens_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ParamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Params(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.txfees.v1.Query/Params",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Params(ctx, req.(*ParamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +134,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FeeTokens",
 			Handler:    _Query_FeeTokens_Handler,
+		},
+		{
+			MethodName: "Params",
+			Handler:    _Query_Params_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

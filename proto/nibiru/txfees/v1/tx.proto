@@ -13,7 +13,6 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
 
 // Msg defines the fees Msg service.
 service Msg {
-    // RegisterFeeShare registers a new contract for receiving transaction fees
     rpc UpdateFeeToken(MsgUpdateFeeToken)
         returns (MsgUpdateFeeTokenResponse) {
       option (google.api.http).post = "/nibiru/txfees/v1/update_fee_token";

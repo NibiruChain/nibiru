@@ -10,8 +10,8 @@ import (
 
 const (
 	// Amino names
-	updateFeeToken = "nibiru/MsgUpdateFeeToken"
-	updateParams   = "nibiru/MsgUpdateParams"
+	updateFeeToken = "txfees/MsgUpdateFeeToken"
+	updateParams   = "txfees/MsgUpdateParams"
 )
 
 var (

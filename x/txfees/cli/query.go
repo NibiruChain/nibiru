@@ -26,6 +26,7 @@ func GetQueryCmd() *cobra.Command {
 	// Add subcommands
 	cmds := []*cobra.Command{
 		GetCmdFeeToken(),
+		GetCmdParams(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -56,6 +57,38 @@ $ %s query %s fee-tokens
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.FeeTokens(cmd.Context(), &types.QueryFeeTokensRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetCmdParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the parameters of the txfees module",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query the parameters of the txfees module.
+
+Examples:
+$ %s query %s params
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Params(cmd.Context(), &types.ParamsRequest{})
 			if err != nil {
 				return err
 			}

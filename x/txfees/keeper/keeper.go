@@ -50,6 +50,7 @@ func NewKeeper(
 		bankKeeper:    bankKeeper,
 		evmKeeper:     evmKeeper,
 		sudoKeeper:    sudoKeeper,
+		Params:        collections.NewItem(storeKey, 0, collections.ProtoValueEncoder[types.Params](cdc)),
 	}
 }
 
