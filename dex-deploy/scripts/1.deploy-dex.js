@@ -5,6 +5,20 @@ const fs = require("fs");
 const path = require("path");
 
 async function main() {
+    // Path to the file you want to delete
+    const filePath = path.join(__dirname, "../external/deploy-v3/state.json");
+
+    // Delete file if it exists
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log("Deleted old state.json");
+        } else {
+            console.log("No previous state.json found, skipping deletion");
+        }
+    } catch (err) {
+        console.error("Error deleting state.json:", err);
+    }
     const [deployer] = await ethers.getSigners();
 
     pk = getPrivateKeyFromMnemonic(deployer._accounts.mnemonic, 0);
@@ -37,15 +51,6 @@ async function main() {
     });
 
     child.on("exit", (code) => {
-        // Copy state.json after deployment
-        const src = path.join("external", "deploy-v3", "state.json");
-        const dest = path.join(process.cwd(), "state.json");
-        try {
-            fs.copyFileSync(src, dest);
-            console.log("state.json copied to:", dest);
-        } catch (err) {
-            console.error("Failed to copy state.json:", err);
-        }
         process.exit(code);
     });
 }

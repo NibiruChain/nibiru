@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 // Load deployment addresses from state.json
-const statePath = path.join(__dirname, "../state.json");
+const statePath = path.join(__dirname, "../external/deploy-v3/state.json");
 const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
 
 // Load ABIs from @uniswap/v3-periphery
