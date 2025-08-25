@@ -157,7 +157,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 		amount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio).TruncateInt().BigInt()
 		sender := eth.NibiruAddrToEthAddr(acc.GetAddress())
 		nonce := ek.GetAccNonce(ctx, sender)
-		fmt.Println("amount :", amount.String(), "fee token:", feeToken.Address, "sender:", sender.Hex(), "fee collector:", feeCollector.Hex())
+
 		err = ek.Erc20Transfer(ctx, gethcommon.HexToAddress(feeToken.Address), sender, feeCollector, amount)
 		if err != nil {
 			return err
@@ -171,20 +171,24 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 
 		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
 			unusedBigInt := big.NewInt(0)
-			err = withdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+			err = WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
 			if err != nil {
 				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
 			}
 		} else {
-			err = swapFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector)
+			err = SwapFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector)
 			if err != nil {
 				return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
 			}
 
 			unusedBigInt := big.NewInt(0)
-			err = withdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+			baseToken, err := txFeesKeeper.GetBaseToken(ctx, "WNIBI")
 			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
+				return sdkioerrors.Wrapf(err, "failed to get base token ")
+			}
+			err = WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(baseToken.Address), feeCollector, unusedBigInt)
+			if err != nil {
+				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", baseToken.Address)
 			}
 		}
 
@@ -193,7 +197,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 	return nil
 }
 
-func withdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, contract, feeCollector gethcommon.Address, unusedBigInt *big.Int) error {
+func WithdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, contract, feeCollector gethcommon.Address, unusedBigInt *big.Int) error {
 	out, err := ek.GetErc20Balance(ctx, feeCollector, contract)
 	if err != nil {
 		return fmt.Errorf("failed to get ERC20 balance: %w", err)
@@ -257,37 +261,24 @@ var (
 	MaxSqrtRatio, _ = new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
 )
 
-func swapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, txfk txfeeskeeper.Keeper, feeToken types.FeeToken, feeCollector gethcommon.Address) error {
-	poolAddr := gethcommon.HexToAddress(feeToken.PoolAddress)
+func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, txfk txfeeskeeper.Keeper, feeToken types.FeeToken, feeCollector gethcommon.Address) error {
+	txFeesParams, err := txfk.GetParams(ctx)
+	if err != nil {
+		return sdkioerrors.Wrapf(err, "failed to get tx fees params")
+	}
+
+	routerAddr := gethcommon.HexToAddress(txFeesParams.RouterAddr)
 	out, err := ek.GetErc20Balance(ctx, feeCollector, gethcommon.HexToAddress(feeToken.Address))
 	if err != nil {
 		return fmt.Errorf("failed to get ERC20 balance: %w", err)
 	}
 
-	err = ek.Erc20Approve(ctx, gethcommon.HexToAddress(feeToken.Address), feeCollector, poolAddr, out)
+	err = ek.Erc20Approve(ctx, gethcommon.HexToAddress(feeToken.Address), feeCollector, routerAddr, out)
 	if err != nil {
-		return sdkioerrors.Wrapf(err, "failed to approve UniswapV3Pool contract %s for fee token %s", poolAddr.Hex(), feeToken.Address)
+		return sdkioerrors.Wrapf(err, "failed to approve UniswapV3Pool contract %s for fee token %s", routerAddr.Hex(), feeToken.Address)
 	}
 
 	amountIn := out
-	zeroForOne := true // tokenIn -> tokenOut
-	var sqrtPriceLimitX96 *big.Int
-	if zeroForOne {
-		sqrtPriceLimitX96 = new(big.Int).Add(MinSqrtRatio, big.NewInt(1))
-	} else {
-		sqrtPriceLimitX96 = new(big.Int).Sub(MaxSqrtRatio, big.NewInt(1))
-	}
-	// // Pack swap call data using Uniswap V3 ABI
-	// input, err := embeds.SmartContract_UniswapV3Pool.ABI.Pack(
-	// 	"swap",
-	// 	feeCollector,      // recipient
-	// 	zeroForOne,        // zeroForOne
-	// 	amountIn,          // amountSpecified
-	// 	sqrtPriceLimitX96, // sqrtPriceLimitX96 (0 = no limit)
-	// 	[]byte{},          // data (empty for direct swap)
-	// )
-
-	fmt.Println("sqrtPriceLimitX96 :", sqrtPriceLimitX96)
 	baseToken, err := txfk.GetBaseToken(ctx, "WNIBI")
 
 	if err != nil {
@@ -323,7 +314,7 @@ func swapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 
 	nonce := ek.GetAccNonce(ctx, feeCollector)
 	evmMsg := core.Message{
-		To:               &poolAddr,
+		To:               &routerAddr,
 		From:             feeCollector,
 		Nonce:            nonce,
 		Value:            big.NewInt(0),
@@ -347,7 +338,7 @@ func swapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 	}()
 	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil, stateDB)
 
-	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &poolAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &routerAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to call UniswapV3Pool swap")
 	}

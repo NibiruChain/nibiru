@@ -4,6 +4,7 @@ package evmante
 import (
 	"fmt"
 	"math"
+	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -14,7 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	txfeesante "github.com/NibiruChain/nibiru/v2/x/txfees/ante"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
@@ -204,9 +207,9 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 
 	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
 	feeAmount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio)
+	feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
 	if tokenBalance.GT(feeAmount) {
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
-		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
 		err := anteDec.evmKeeper.Erc20Transfer(ctx, feeTokenAddress, feePayerAddr, feeCollector, fees[0].Amount.BigInt())
 
 		if err != nil {
@@ -222,11 +225,38 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		}
 
 		anteDec.accountKeeper.SetAccount(ctx, acc)
-		return nil
+	} else {
+		return fmt.Errorf(
+			"fee payer %s has no enough balance to pay for the fees %s",
+			feePayerAddr.String(), fees.String(),
+		)
 	}
 
-	return fmt.Errorf(
-		"fee payer %s has no enough balance to pay for the fees %s",
-		feePayerAddr.String(), fees.String(),
-	)
+	feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx, feeTokenAddress.Hex())
+	if err != nil {
+		return sdkioerrors.Wrapf(err, "failed to get fee token %s", feeTokenAddress.Hex())
+	}
+	if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
+		unusedBigInt := big.NewInt(0)
+		err = txfeesante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
+		}
+	} else {
+		err = txfeesante.SwapFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.txFeesKeeper, feeToken, feeCollector)
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
+		}
+
+		unusedBigInt := big.NewInt(0)
+		baseToken, err := anteDec.txFeesKeeper.GetBaseToken(ctx, "WNIBI")
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to get base token ")
+		}
+		err = txfeesante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(baseToken.Address), feeCollector, unusedBigInt)
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", baseToken.Address)
+		}
+	}
+	return nil
 }
