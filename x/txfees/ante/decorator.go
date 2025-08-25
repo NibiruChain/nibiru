@@ -169,29 +169,37 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, txFeesK
 
 		accountkeeper.SetAccount(ctx, acc)
 
-		if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
-			unusedBigInt := big.NewInt(0)
-			err = WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
-			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
-			}
-		} else {
-			err = SwapFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector)
-			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
-			}
+		err = ProcessFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector)
+		if err != nil {
+			return err
+		}
+	}
 
-			unusedBigInt := big.NewInt(0)
-			baseToken, err := txFeesKeeper.GetBaseToken(ctx, "WNIBI")
-			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to get base token ")
-			}
-			err = WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(baseToken.Address), feeCollector, unusedBigInt)
-			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", baseToken.Address)
-			}
+	return nil
+}
+
+func ProcessFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, accountkeeper types.AccountKeeper, txFeesKeeper txfeeskeeper.Keeper, feeToken types.FeeToken, feeCollector gethcommon.Address) error {
+	unusedBigInt := big.NewInt(0)
+
+	if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
+		// Just withdraw the convertible token
+		if err := WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
+		}
+	} else {
+		// Swap non-convertible token first
+		if err := SwapFeeToken(ctx, ek, accountkeeper, txFeesKeeper, feeToken, feeCollector); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
 		}
 
+		// Then withdraw
+		baseToken, err := txFeesKeeper.GetBaseToken(ctx, "WNIBI")
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to get base token")
+		}
+		if err := WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(baseToken.Address), feeCollector, unusedBigInt); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", baseToken.Address)
+		}
 	}
 
 	return nil
@@ -255,11 +263,6 @@ func WithdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKee
 
 	return nil
 }
-
-var (
-	MinSqrtRatio    = new(big.Int).SetUint64(4295128739)
-	MaxSqrtRatio, _ = new(big.Int).SetString("1461446703485210103287273052203988822378723970342", 10)
-)
 
 func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, txfk txfeeskeeper.Keeper, feeToken types.FeeToken, feeCollector gethcommon.Address) error {
 	txFeesParams, err := txfk.GetParams(ctx)

@@ -4,7 +4,6 @@ package evmante
 import (
 	"fmt"
 	"math"
-	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -17,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	txfeesante "github.com/NibiruChain/nibiru/v2/x/txfees/ante"
 	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/txfees/types"
 	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
@@ -236,27 +234,10 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to get fee token %s", feeTokenAddress.Hex())
 	}
-	if feeToken.TokenType == types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE {
-		unusedBigInt := big.NewInt(0)
-		err = txfeesante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(feeToken.Address), feeCollector, unusedBigInt)
-		if err != nil {
-			return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", feeToken.Address)
-		}
-	} else {
-		err = txfeesante.SwapFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.txFeesKeeper, feeToken, feeCollector)
-		if err != nil {
-			return sdkioerrors.Wrapf(err, "failed to swap fee token %s", feeToken.Address)
-		}
 
-		unusedBigInt := big.NewInt(0)
-		baseToken, err := anteDec.txFeesKeeper.GetBaseToken(ctx, "WNIBI")
-		if err != nil {
-			return sdkioerrors.Wrapf(err, "failed to get base token ")
-		}
-		err = txfeesante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(baseToken.Address), feeCollector, unusedBigInt)
-		if err != nil {
-			return sdkioerrors.Wrapf(err, "failed to withdraw fee token %s", baseToken.Address)
-		}
+	err = txfeesante.ProcessFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.txFeesKeeper, feeToken, feeCollector)
+	if err != nil {
+		return err
 	}
 	return nil
 }
