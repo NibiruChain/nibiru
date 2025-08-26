@@ -3,7 +3,7 @@ package nibiru.gastoken.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
 
 // The conversion rate of the convertible fee token to the native token (nibiru) is 1:1.
 // The conversion rate of the swappable fee token to the native token (nibiru) is based on oracle price.
