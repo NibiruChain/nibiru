@@ -380,7 +380,7 @@
     "yocto-queue": "^0.1.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "hardhat test"
   },
   "keywords": [],
   "author": "",

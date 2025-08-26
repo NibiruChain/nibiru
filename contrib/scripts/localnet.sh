@@ -228,9 +228,9 @@ add_genesis_param '.app_state.oracle.exchange_rates[2].pair = "uusdc:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[2].exchange_rate = "'"$price_usdc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[3].pair = "unibi:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[3].exchange_rate = "'"$price_nibi"'"'
-add_genesis_param '.app_state.txfees.feetokens[0].address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
-add_genesis_param '.app_state.txfees.feetokens[0].token_type = "FEE_TOKEN_TYPE_CONVERTIBLE"'
-add_genesis_param '.app_state.txfees.feetokens[0].name = "WNIBI"'
+add_genesis_param '.app_state.gastoken.feetokens[0].address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"'
+add_genesis_param '.app_state.gastoken.feetokens[0].token_type = "FEE_TOKEN_TYPE_CONVERTIBLE"'
+add_genesis_param '.app_state.gastoken.feetokens[0].name = "WNIBI"'
 
 # ------------------------------------------------------------------------
 # Gentx

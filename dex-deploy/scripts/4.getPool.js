@@ -17,6 +17,16 @@ async function main() {
     const TOKEN1 = "0x869EAa3b34B51D631FB0B6B1f9586ab658C2D25F";
     const FEE = 3000; // 0.3%
 
+    if (!FACTORY_ADDRESS) {
+        throw new Error("v3CoreFactoryAddress missing in dex-deploy/state.json");
+    }
+    if (
+        !(ethers.isAddress ? ethers.isAddress(TOKEN0) : ethers.utils.isAddress(TOKEN0)) ||
+        !(ethers.isAddress ? ethers.isAddress(TOKEN1) : ethers.utils.isAddress(TOKEN1))
+    ) {
+        throw new Error("TOKEN0 or TOKEN1 is not a valid Ethereum address");
+    }
+
     // Load artifacts
     const {
         abi: FACTORY_ABI,
@@ -28,11 +38,13 @@ async function main() {
 
     const poolAddress = await factory.getPool(TOKEN0, TOKEN1, FEE);
 
-    if (poolAddress === ethers.ZeroAddress) {
+    const ZERO_ADDRESS = (ethers.ZeroAddress) ? ethers.ZeroAddress : ((ethers.constants && ethers.constants.AddressZero) || "0x0000000000000000000000000000000000000000");
+    if (poolAddress === ZERO_ADDRESS) {
         console.log("❌ Pool does not exist yet");
-    } else {
-        console.log("✅ Pool exists at:", poolAddress);
+        return;
     }
+
+    console.log("✅ Pool exists at:", poolAddress);
 
     // ABI for the pool
     const POOL_ABI = [

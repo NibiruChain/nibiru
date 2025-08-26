@@ -28,11 +28,10 @@ async function main() {
         );
     }
 
-    paddedPk = pk.privateKey.startsWith("0x")
+    const paddedPk = pk.privateKey.startsWith("0x")
         ? pk.privateKey
         : "0x" + pk.privateKey;
 
-    console.log("Using private key:", paddedPk);
     const args = [
         "-pk", paddedPk,
         "-j", "http://localhost:8545",

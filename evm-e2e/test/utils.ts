@@ -117,12 +117,17 @@ export const deployContractWNIBIIfNeeded = async (
   let contract: ethers.Contract
 
   if (maybeAddress) {
-    const code = await account.provider.getCode(maybeAddress)
-    if (code !== "0x") {
-      // Contract already deployed
-      console.log(`Contract already deployed at ${maybeAddress}`)
-      contract = new ethers.Contract(maybeAddress, abi, account)
-      return { contract: contract as unknown as WNIBI & DeploymentTx }
+    try {
+      const code = await account.provider.getCode(maybeAddress)
+      if (code !== "0x") {
+        // Contract already deployed
+        console.log(`Contract already deployed at ${maybeAddress}`)
+        contract = new ethers.Contract(maybeAddress, abi, account)
+        return { contract: contract as unknown as WNIBI & DeploymentTx }
+      }
+    } catch (error) {
+      console.warn(`Failed to check code at ${maybeAddress}:`, error)
+      // Fall through to deploy new contract
     }
   }
 
@@ -142,12 +147,17 @@ export const deployContractUSDCIfNeeded = async (
   let contract: ethers.Contract
 
   if (maybeAddress) {
-    const code = await account.provider.getCode(maybeAddress)
-    if (code !== "0x") {
-      // Contract already deployed
-      console.log(`Contract already deployed at ${maybeAddress}`)
-      contract = new ethers.Contract(maybeAddress, abi, account)
-      return { contract: contract as unknown as USDC & DeploymentTx }
+    try {
+      const code = await account.provider.getCode(maybeAddress)
+      if (code !== "0x") {
+        // Contract already deployed
+        console.log(`Contract already deployed at ${maybeAddress}`)
+        contract = new ethers.Contract(maybeAddress, abi, account)
+        return { contract: contract as unknown as USDC & DeploymentTx }
+      }
+    } catch (error) {
+      console.warn(`Failed to check code at ${maybeAddress}:`, error)
+      // Fall through to deploy new contract
     }
   }
 

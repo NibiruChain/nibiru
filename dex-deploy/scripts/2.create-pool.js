@@ -68,14 +68,18 @@ async function main() {
     await (await usdc.approve(NPM_ADDRESS, amountUSDC)).wait();
 
     // -------- Step 3: Add Liquidity (mint a position) --------
+
+    const amount0Desired = token0.toLowerCase() === WNIBI.toLowerCase() ? amountWNIBI : amountUSDC;
+    const amount1Desired = token1.toLowerCase() === WNIBI.toLowerCase() ? amountWNIBI : amountUSDC;
+
     const mintParams = {
         token0,
         token1,
         fee: FEE,
         tickLower: -887220, // full range
         tickUpper: 887220,
-        amount0Desired: amountWNIBI,
-        amount1Desired: amountUSDC,
+        amount0Desired,
+        amount1Desired,
         amount0Min: 0,
         amount1Min: 0,
         recipient: deployer.address,
