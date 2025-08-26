@@ -11,28 +11,28 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
+	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
 	oracleKeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
-	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
-	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 const feeTokenUsedKey string = "feeTokenUsed"
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
-	evmKeeper     *EVMKeeper
-	txFeesKeeper  txfeeskeeper.Keeper
-	accountKeeper evm.AccountKeeper
-	oracleKeeper  oracleKeeper.Keeper
+	evmKeeper      *EVMKeeper
+	gasTokenKeeper gastokenkeeper.Keeper
+	accountKeeper  evm.AccountKeeper
+	oracleKeeper   oracleKeeper.Keeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, txf txfeeskeeper.Keeper, ok oracleKeeper.Keeper) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, gtk gastokenkeeper.Keeper, ok oracleKeeper.Keeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
-		evmKeeper:     k,
-		accountKeeper: ak,
-		txFeesKeeper:  txf,
-		oracleKeeper:  ok,
+		evmKeeper:      k,
+		accountKeeper:  ak,
+		gasTokenKeeper: gtk,
+		oracleKeeper:   ok,
 	}
 }
 
@@ -94,7 +94,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 
 		// check whether the sender has enough balance to pay for the transaction cost in alternative token
-		feeTokens := anteDec.txFeesKeeper.GetFeeTokens(ctx)
+		feeTokens := anteDec.gasTokenKeeper.GetFeeTokens(ctx)
 		for _, feeToken := range feeTokens {
 			var ratio sdkmath.LegacyDec
 
@@ -104,9 +104,9 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			}
 
 			switch feeToken.TokenType {
-			case txfeestypes.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE:
+			case gastokentypes.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE:
 				ratio = sdkmath.LegacyOneDec()
-			case txfeestypes.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE:
+			case gastokentypes.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE:
 				price, err := anteDec.oracleKeeper.GetExchangeRateTwap(ctx, asset.Pair(feeToken.Pair))
 				if err != nil {
 					return ctx, sdkioerrors.Wrapf(

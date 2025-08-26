@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -15,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -92,6 +93,10 @@ func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (bal
 }
 
 func (k *Keeper) GetErc20Balance(ctx sdk.Context, account, contract gethcommon.Address) (balance *big.Int, err error) {
+	if contract == (gethcommon.Address{}) {
+		return nil, fmt.Errorf("contract address is empty")
+	}
+
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
@@ -114,6 +119,12 @@ func (k *Keeper) GetErc20Balance(ctx sdk.Context, account, contract gethcommon.A
 }
 
 func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethcommon.Address, amount *big.Int) (err error) {
+	if contract == (gethcommon.Address{}) {
+		return fmt.Errorf("contract address is empty")
+	}
+	if amount == nil || amount.Sign() < 0 {
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "amount must be non-negative")
+	}
 	input, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
 		"transfer", receiver, amount,
 	)
@@ -128,7 +139,7 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 		From:             sender,
 		Nonce:            nonce,
 		Value:            unusedBigInt, // amount
-		GasLimit:         5_500_000,
+		GasLimit:         Erc20GasLimitExecute,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
 		GasTipCap:        unusedBigInt,
@@ -147,7 +158,7 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 	}()
 
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	_, resp, err := k.ERC20().Transfer(contract, sender, receiver, evm.NativeToWei(amount), ctx, evmObj)
+	_, resp, err := k.ERC20().Transfer(contract, sender, receiver, amount, ctx, evmObj)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer")
 	}
@@ -162,11 +173,17 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 }
 
 func (k *Keeper) Erc20Approve(ctx sdk.Context, contract, sender, spender gethcommon.Address, amount *big.Int) (err error) {
+	if contract == (gethcommon.Address{}) {
+		return fmt.Errorf("contract address is empty")
+	}
+	if amount == nil || amount.Sign() < 0 {
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "amount must be non-negative")
+	}
 	input, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
 		"approve", spender, amount,
 	)
 	if err != nil {
-		return sdkioerrors.Wrap(err, "failed to pack ABI args for transfer")
+		return sdkioerrors.Wrap(err, "failed to pack ABI args for approve")
 	}
 	nonce := k.GetAccNonce(ctx, sender)
 
@@ -176,7 +193,7 @@ func (k *Keeper) Erc20Approve(ctx sdk.Context, contract, sender, spender gethcom
 		From:             sender,
 		Nonce:            nonce,
 		Value:            unusedBigInt, // amount
-		GasLimit:         5_500_000,
+		GasLimit:         Erc20GasLimitExecute,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
 		GasTipCap:        unusedBigInt,

@@ -14,32 +14,32 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	txfeesante "github.com/NibiruChain/nibiru/v2/x/txfees/ante"
-	txfeeskeeper "github.com/NibiruChain/nibiru/v2/x/txfees/keeper"
-	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
+	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
+	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
+	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper     *EVMKeeper
-	accountKeeper evm.AccountKeeper
-	txFeesKeeper  txfeeskeeper.Keeper
-	maxGasWanted  uint64
+	evmKeeper      *EVMKeeper
+	accountKeeper  evm.AccountKeeper
+	gasTokenKeeper gastokenkeeper.Keeper
+	maxGasWanted   uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
 	ak evm.AccountKeeper,
-	txFeesKeeper txfeeskeeper.Keeper,
+	gtk gastokenkeeper.Keeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		evmKeeper:     k,
-		accountKeeper: ak,
-		txFeesKeeper:  txFeesKeeper,
-		maxGasWanted:  maxGasWanted,
+		evmKeeper:      k,
+		accountKeeper:  ak,
+		gasTokenKeeper: gtk,
+		maxGasWanted:   maxGasWanted,
 	}
 }
 
@@ -194,9 +194,24 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	// 1. Get balance
 	// 2. Deduct fees
 	// 3. Set nonce for account
+	feeTokenVal := ctx.Value(feeTokenUsedKey)
+	if feeTokenVal == nil {
+		return fmt.Errorf("fee token address not found in context")
+	}
+	feeTokenStr, ok := feeTokenVal.(string)
+	if !ok {
+		return fmt.Errorf("fee token address in context is not a string")
+	}
+	feeTokenAddress := gethcommon.HexToAddress(feeTokenStr)
 
-	feeTokenAddress := gethcommon.HexToAddress(ctx.Value(feeTokenUsedKey).(string))
-	ratio := ctx.Value("ratio").(sdkmath.LegacyDec)
+	ratioVal := ctx.Value("ratio")
+	if ratioVal == nil {
+		return fmt.Errorf("ratio not found in context")
+	}
+	ratio, ok := ratioVal.(sdkmath.LegacyDec)
+	if !ok {
+		return fmt.Errorf("ratio in context is not a LegacyDec")
+	}
 
 	out, err := anteDec.evmKeeper.GetErc20Balance(ctx, feePayerAddr, feeTokenAddress)
 	if err != nil {
@@ -205,10 +220,10 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 
 	tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
 	feeAmount := sdkmath.LegacyNewDecFromInt(fees[0].Amount).Mul(ratio)
-	feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(txfeestypes.ModuleName))
+	feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(gastokentypes.ModuleName))
 	if tokenBalance.GT(feeAmount) {
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
-		err := anteDec.evmKeeper.Erc20Transfer(ctx, feeTokenAddress, feePayerAddr, feeCollector, fees[0].Amount.BigInt())
+		err := anteDec.evmKeeper.Erc20Transfer(ctx, feeTokenAddress, feePayerAddr, feeCollector, evm.NativeToWei(fees[0].Amount.BigInt()))
 
 		if err != nil {
 			return sdkioerrors.Wrapf(
@@ -230,12 +245,12 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		)
 	}
 
-	feeToken, err := anteDec.txFeesKeeper.GetFeeToken(ctx, feeTokenAddress.Hex())
+	feeToken, err := anteDec.gasTokenKeeper.GetFeeToken(ctx, feeTokenAddress.Hex())
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to get fee token %s", feeTokenAddress.Hex())
 	}
 
-	err = txfeesante.ProcessFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.txFeesKeeper, feeToken, feeCollector)
+	err = gastokenante.ProcessFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.gasTokenKeeper, feeToken, feeCollector)
 	if err != nil {
 		return err
 	}

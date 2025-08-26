@@ -48,22 +48,22 @@ import (
 
 	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
 	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
+	gastokenmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/gastoken/module"
 	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
-	txfeesmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/txfees/module"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
+	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	txfeestypes "github.com/NibiruChain/nibiru/v2/x/txfees/types"
 )
 
 var (
@@ -105,7 +105,7 @@ var (
 		{Account: common.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
 		{Account: tokenfactorytypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
-		{Account: txfeestypes.ModuleName},
+		{Account: gastokentypes.ModuleName},
 	}
 
 	orderedModuleNames = []string{
@@ -150,7 +150,7 @@ var (
 		oracletypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
-		txfeestypes.ModuleName,
+		gastokentypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -312,8 +312,8 @@ func init() {
 				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
 			},
 			{
-				Name:   txfeestypes.ModuleName,
-				Config: appconfig.WrapAny(&txfeesmodulev1.Module{}),
+				Name:   gastokentypes.ModuleName,
+				Config: appconfig.WrapAny(&gastokenmodulev1.Module{}),
 			},
 		},
 	})

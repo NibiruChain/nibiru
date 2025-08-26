@@ -61,7 +61,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewAnteDecEthGasConsume(
-				deps.App.AppKeepers.EvmKeeper, deps.App.AccountKeeper, deps.App.AppKeepers.TxFeesKeeper, tc.maxGasWanted,
+				deps.App.AppKeepers.EvmKeeper, deps.App.AccountKeeper, deps.App.AppKeepers.GasTokenKeeper, tc.maxGasWanted,
 			)
 
 			tc.beforeTxSetup(&deps, stateDB)
