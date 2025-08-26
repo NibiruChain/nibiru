@@ -138,6 +138,129 @@ func deployWasmBytecode(
 	return codeIds
 }
 
+// SetupVaultContracts deploys and instantiates the vault-related WASM contracts
+// (vault_token_minter, vault) for testing gas consumption
+func SetupVaultContracts(deps *evmtest.TestDeps, s *suite.Suite) (
+	contracts map[string]sdk.AccAddress,
+) {
+	contracts = make(map[string]sdk.AccAddress)
+	wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(deps.App.WasmKeeper)
+
+	// Get root path for reading WASM files
+	rootPathBz, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}").Output()
+	s.Require().NoError(err)
+	rootPath := strings.Trim(string(rootPathBz), "\n")
+
+	// Deploy contracts in order (vault needs minter first)
+	contractFiles := []struct {
+		name string
+		file string
+	}{
+		{"vault_token_minter", "x/evm/precompile/test/vault_token_minter.wasm"},
+		{"vault", "x/evm/precompile/test/vault.wasm"},
+	}
+
+	codeIds := make(map[string]uint64)
+
+	// Store all WASM bytecode
+	for _, contract := range contractFiles {
+		binPath := path.Join(rootPath, contract.file)
+		wasmBytecode, err := os.ReadFile(binPath)
+		if err != nil {
+			// If file doesn't exist, skip (for testing purposes)
+			s.T().Logf("Warning: Could not read %s: %v", binPath, err)
+			continue
+		}
+
+		codeId, _, err := wasmPermissionedKeeper.Create(
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			wasmBytecode,
+			&wasm.AccessConfig{Permission: wasm.AccessTypeEverybody},
+		)
+		s.Require().NoError(err)
+		codeIds[contract.name] = codeId
+		s.T().Logf("Stored %s with code ID: %d", contract.name, codeId)
+	}
+
+	// Instantiate vault_token_minter first
+	// Note: We need to predict the vault address and set it as owner initially
+	// For simplicity, we'll instantiate with sender as owner and update it later
+	if codeIds["vault_token_minter"] > 0 {
+		minterInitMsg := `{"denom": "vault_shares", "owner": "` + deps.Sender.NibiruAddr.String() + `"}`
+		minterAddr, _, err := wasmPermissionedKeeper.Instantiate(
+			deps.Ctx,
+			codeIds["vault_token_minter"],
+			deps.Sender.NibiruAddr,
+			deps.Sender.NibiruAddr,
+			[]byte(minterInitMsg),
+			"vault_token_minter",
+			sdk.Coins{},
+		)
+		s.Require().NoError(err)
+		contracts["vault_token_minter"] = minterAddr
+	}
+
+	// Instantiate vault with simplified config (dummy addresses for oracle and perp)
+	if codeIds["vault"] > 0 && contracts["vault_token_minter"] != nil {
+		// Use dummy addresses for oracle and perp since we're only testing deposits
+		dummyAddress := deps.Sender.NibiruAddr.String()
+		vaultInitMsg := `{
+			"name": "Vault",
+			"symbol": "VAULT",
+			"collateral_denom": "utest",
+			"owner": "` + dummyAddress + `",
+			"manager": "` + dummyAddress + `",
+			"admin": "` + dummyAddress + `",
+			"open_trades_pnl_feed": "` + dummyAddress + `",
+			"vault_token_minter_contract": "` + contracts["vault_token_minter"].String() + `",
+			"perp_contract": "` + dummyAddress + `",
+			"oracle": "` + dummyAddress + `",
+			"min_lock_duration": 1,
+			"max_acc_open_pnl_delta": "0.05",
+			"max_daily_acc_pnl_delta": "0.10",
+			"withdraw_lock_thresholds_percentage": ["0.05", "0.10"],
+			"max_supply_increase_daily_percentage": "0.05",
+			"losses_burn_percentage": "0.01",
+			"max_discount_percentage": "0.02",
+			"max_discount_threshold_percentage": "0.10"
+		}`
+		vaultAddr, _, err := wasmPermissionedKeeper.Instantiate(
+			deps.Ctx,
+			codeIds["vault"],
+			deps.Sender.NibiruAddr,
+			deps.Sender.NibiruAddr,
+			[]byte(vaultInitMsg),
+			"vault",
+			sdk.Coins{},
+		)
+		s.Require().NoError(err)
+		contracts["vault"] = vaultAddr
+		
+		// Add vault as a minter
+		addMinterMsg := `{"add_minter": {"address": "` + vaultAddr.String() + `"}}`
+		_, err = wasmPermissionedKeeper.Execute(
+			deps.Ctx,
+			contracts["vault_token_minter"],
+			deps.Sender.NibiruAddr,
+			[]byte(addMinterMsg),
+			sdk.Coins{},
+		)
+		if err != nil {
+			s.T().Logf("Warning: Could not add vault as minter: %v", err)
+		}
+	}
+
+	return contracts
+}
+
+// SetupTradingWasmContracts is a wrapper for SetupVaultContracts for compatibility
+func SetupTradingWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
+	contracts map[string]sdk.AccAddress,
+) {
+	return SetupVaultContracts(deps, s)
+}
+
 // From IWasm.query of Wasm.sol:
 //
 //	```solidity

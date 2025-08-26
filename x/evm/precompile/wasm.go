@@ -45,6 +45,10 @@ func (p precompileWasm) Run(
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
+	// DEBUG: Log initial gas available
+	initialGas := contract.Gas
+	fmt.Printf("[WASM_GAS_DEBUG] Run started - Initial EVM gas: %d\n", initialGas)
+	
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
@@ -58,6 +62,10 @@ func (p precompileWasm) Run(
 
 	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
 
+	// DEBUG: Log method being called
+	fmt.Printf("[WASM_GAS_DEBUG] Calling method: %s\n", startResult.Method.Name)
+	gasBeforeMethod := startResult.CacheCtx.GasMeter().GasConsumed()
+	
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
 		bz, err = p.execute(startResult, trueCaller, readonly)
@@ -75,15 +83,29 @@ func (p precompileWasm) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", startResult.Method.Name)
 		return
 	}
+	
+	// DEBUG: Log gas consumed by method
+	gasAfterMethod := startResult.CacheCtx.GasMeter().GasConsumed()
+	fmt.Printf("[WASM_GAS_DEBUG] Method %s consumed: %d gas\n", startResult.Method.Name, gasAfterMethod-gasBeforeMethod)
 	// Gas consumed by a local gas meter
 	// The reason it's unnecessary to check for a success value is because
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
 	// meter was initialized....
+	wasmGasConsumed := startResult.CacheCtx.GasMeter().GasConsumed()
+	
+	// DEBUG: Log gas consumption details
+	fmt.Printf("[WASM_GAS_DEBUG] Total WASM gas consumed: %d\n", wasmGasConsumed)
+	fmt.Printf("[WASM_GAS_DEBUG] Charging EVM contract with: %d gas\n", wasmGasConsumed)
+	fmt.Printf("[WASM_GAS_DEBUG] Gas multiplier: 1.0x (no multiplication detected)\n")
+	fmt.Printf("[WASM_GAS_DEBUG] Remaining EVM gas before charge: %d\n", contract.Gas)
+	
 	contract.UseGas(
-		startResult.CacheCtx.GasMeter().GasConsumed(),
+		wasmGasConsumed,
 		evm.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
+	
+	fmt.Printf("[WASM_GAS_DEBUG] Remaining EVM gas after charge: %d\n", contract.Gas)
 
 	if err != nil {
 		return nil, err
@@ -177,7 +199,18 @@ func (p precompileWasm) execute(
 		err = ErrInvalidArgs(err)
 		return
 	}
+	
+	// DEBUG: Log gas before WASM execution
+	gasBeforeWasm := ctx.GasMeter().GasConsumed()
+	fmt.Printf("[WASM_GAS_DEBUG] execute() - Gas before WASM: %d, Contract: %s\n", gasBeforeWasm, wasmContract)
+	
 	data, err := p.Wasm.Execute(ctx, wasmContract, eth.EthAddrToNibiruAddr(caller), msgArgsBz, funds)
+	
+	// DEBUG: Log gas after WASM execution
+	gasAfterWasm := ctx.GasMeter().GasConsumed()
+	wasmOnlyGas := gasAfterWasm - gasBeforeWasm
+	fmt.Printf("[WASM_GAS_DEBUG] execute() - Gas after WASM: %d, WASM execution consumed: %d\n", gasAfterWasm, wasmOnlyGas)
+	
 	if err != nil {
 		return
 	}
@@ -215,7 +248,18 @@ func (p precompileWasm) query(
 		err = ErrInvalidArgs(err)
 		return
 	}
+	
+	// DEBUG: Log gas before WASM query
+	gasBeforeQuery := ctx.GasMeter().GasConsumed()
+	fmt.Printf("[WASM_GAS_DEBUG] query() - Gas before WASM query: %d, Contract: %s\n", gasBeforeQuery, wasmContract)
+	
 	respBz, err := p.Wasm.QuerySmart(ctx, wasmContract, req)
+	
+	// DEBUG: Log gas after WASM query
+	gasAfterQuery := ctx.GasMeter().GasConsumed()
+	queryGas := gasAfterQuery - gasBeforeQuery
+	fmt.Printf("[WASM_GAS_DEBUG] query() - Gas after WASM query: %d, Query consumed: %d\n", gasAfterQuery, queryGas)
+	
 	if err != nil {
 		return
 	}
