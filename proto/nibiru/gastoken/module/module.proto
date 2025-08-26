@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package nibiru.txfees.module.v1;
+package nibiru.gastoken.module.v1;
 
 import "cosmos/app/v1alpha1/module.proto";
 
-// Module is the config object for the txfees module.
+// Module is the config object for the gastoken module.
 message Module {
   option (cosmos.app.v1alpha1.module) = {
-    go_import: "github.com/NibiruChain/nibiru/x/txfees"
+    go_import: "github.com/NibiruChain/nibiru/x/gastoken"
   };
 
   // authority defines the custom module authority. If not set, defaults to the governance module.

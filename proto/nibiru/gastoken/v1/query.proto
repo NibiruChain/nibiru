@@ -1,24 +1,24 @@
 syntax = "proto3";
-package nibiru.txfees.v1;
+package nibiru.gastoken.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 
-import "nibiru/txfees/v1/feetoken.proto";
-import "nibiru/txfees/v1/params.proto";
+import "nibiru/gastoken/v1/feetoken.proto";
+import "nibiru/gastoken/v1/params.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
 
 service Query {
   // FeeTokens returns the list of fee token addresses.
   rpc FeeTokens(QueryFeeTokensRequest) returns (QueryFeeTokensResponse) {
-    option (google.api.http).get = "/nibiru/txfees/v1/fee_token";
+    option (google.api.http).get = "/nibiru/gastoken/v1/fee_token";
   }
 
-  // Params returns the parameters of the txfees module.
+  // Params returns the parameters of the gastoken module.
   rpc Params(ParamsRequest) returns (ParamsResponse) {
-    option (google.api.http).get = "/nibiru/txfees/v1/params";
+    option (google.api.http).get = "/nibiru/gastoken/v1/params";
   }
 }
 

@@ -1,26 +1,26 @@
 syntax = "proto3";
-package nibiru.txfees.v1;
+package nibiru.gastoken.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/duration.proto";
 import "cosmos_proto/cosmos.proto";
 
-import "nibiru/txfees/v1/feetoken.proto";
-import "nibiru/txfees/v1/params.proto";
+import "nibiru/gastoken/v1/feetoken.proto";
+import "nibiru/gastoken/v1/params.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/txfees/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
 
 // Msg defines the fees Msg service.
 service Msg {
     rpc UpdateFeeToken(MsgUpdateFeeToken)
         returns (MsgUpdateFeeTokenResponse) {
-      option (google.api.http).post = "/nibiru/txfees/v1/update_fee_token";
+      option (google.api.http).post = "/nibiru/gastoken/v1/update_fee_token";
     };
 
     rpc UpdateParams(MsgUpdateParams)
         returns (MsgUpdateParamsResponse) {
-      option (google.api.http).post = "/nibiru/txfees/v1/update_params";
+      option (google.api.http).post = "/nibiru/gastoken/v1/update_params";
     };
 }
 
@@ -43,12 +43,12 @@ message MsgUpdateFeeToken{
 // MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
 message MsgUpdateFeeTokenResponse {}
 
-// MsgUpdateParams defines a message that updates the parameters of the txfees module
+// MsgUpdateParams defines a message that updates the parameters of the gastoken module
 message MsgUpdateParams {
     option (gogoproto.equal) = true;
     // params defines the parameters to update
     Params params = 1 [(gogoproto.nullable) = false];
-    // Authority: Address of the governance module account.
+    // sender: Address of the sender account.
     string sender = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 } 
 
