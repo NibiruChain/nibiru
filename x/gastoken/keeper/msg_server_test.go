@@ -74,7 +74,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD,
 				FeeToken: &validFeeToken,
 			},
-			expectedErr: fmt.Errorf("fee token with address %s already exists", validFeeToken.Address),
+			expectedErr: fmt.Errorf("fee token with address %s already exists", validFeeToken.Erc20Address),
 		},
 		{
 			name: "fail to remove an non-existed fee token address",
@@ -87,7 +87,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
 				FeeToken: &anotherValidFeeToken,
 			},
-			expectedErr: fmt.Errorf("fee token with address %s not exists", anotherValidFeeToken.Address),
+			expectedErr: fmt.Errorf("fee token with address %s not exists", anotherValidFeeToken.Erc20Address),
 		},
 		{
 			name: "fail to remove an invalid fee token address",
@@ -100,7 +100,7 @@ func TestUpdateFeeToken(t *testing.T) {
 				Action:   types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE,
 				FeeToken: &invalidFeeToken,
 			},
-			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeToken.Address),
+			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeToken.Erc20Address),
 		},
 	}
 

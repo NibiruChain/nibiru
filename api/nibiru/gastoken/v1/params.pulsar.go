@@ -15,14 +15,18 @@ import (
 )
 
 var (
-	md_Params             protoreflect.MessageDescriptor
-	fd_Params_router_addr protoreflect.FieldDescriptor
+	md_Params                                protoreflect.MessageDescriptor
+	fd_Params_uniswap_v3_swap_router_address protoreflect.FieldDescriptor
+	fd_Params_uniswap_v3_quoter_address      protoreflect.FieldDescriptor
+	fd_Params_wnibi_address                  protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_nibiru_gastoken_v1_params_proto_init()
 	md_Params = File_nibiru_gastoken_v1_params_proto.Messages().ByName("Params")
-	fd_Params_router_addr = md_Params.Fields().ByName("router_addr")
+	fd_Params_uniswap_v3_swap_router_address = md_Params.Fields().ByName("uniswap_v3_swap_router_address")
+	fd_Params_uniswap_v3_quoter_address = md_Params.Fields().ByName("uniswap_v3_quoter_address")
+	fd_Params_wnibi_address = md_Params.Fields().ByName("wnibi_address")
 }
 
 var _ protoreflect.Message = (*fastReflection_Params)(nil)
@@ -90,9 +94,21 @@ func (x *fastReflection_Params) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_Params) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.RouterAddr != "" {
-		value := protoreflect.ValueOfString(x.RouterAddr)
-		if !f(fd_Params_router_addr, value) {
+	if x.UniswapV3SwapRouterAddress != "" {
+		value := protoreflect.ValueOfString(x.UniswapV3SwapRouterAddress)
+		if !f(fd_Params_uniswap_v3_swap_router_address, value) {
+			return
+		}
+	}
+	if x.UniswapV3QuoterAddress != "" {
+		value := protoreflect.ValueOfString(x.UniswapV3QuoterAddress)
+		if !f(fd_Params_uniswap_v3_quoter_address, value) {
+			return
+		}
+	}
+	if x.WnibiAddress != "" {
+		value := protoreflect.ValueOfString(x.WnibiAddress)
+		if !f(fd_Params_wnibi_address, value) {
 			return
 		}
 	}
@@ -111,8 +127,12 @@ func (x *fastReflection_Params) Range(f func(protoreflect.FieldDescriptor, proto
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
-		return x.RouterAddr != ""
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		return x.UniswapV3SwapRouterAddress != ""
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		return x.UniswapV3QuoterAddress != ""
+	case "nibiru.gastoken.v1.Params.wnibi_address":
+		return x.WnibiAddress != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.gastoken.v1.Params"))
@@ -129,8 +149,12 @@ func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
-		x.RouterAddr = ""
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		x.UniswapV3SwapRouterAddress = ""
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		x.UniswapV3QuoterAddress = ""
+	case "nibiru.gastoken.v1.Params.wnibi_address":
+		x.WnibiAddress = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.gastoken.v1.Params"))
@@ -147,8 +171,14 @@ func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
-		value := x.RouterAddr
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		value := x.UniswapV3SwapRouterAddress
+		return protoreflect.ValueOfString(value)
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		value := x.UniswapV3QuoterAddress
+		return protoreflect.ValueOfString(value)
+	case "nibiru.gastoken.v1.Params.wnibi_address":
+		value := x.WnibiAddress
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
@@ -170,8 +200,12 @@ func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) pro
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
-		x.RouterAddr = value.Interface().(string)
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		x.UniswapV3SwapRouterAddress = value.Interface().(string)
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		x.UniswapV3QuoterAddress = value.Interface().(string)
+	case "nibiru.gastoken.v1.Params.wnibi_address":
+		x.WnibiAddress = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.gastoken.v1.Params"))
@@ -192,8 +226,12 @@ func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value proto
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
-		panic(fmt.Errorf("field router_addr of message nibiru.gastoken.v1.Params is not mutable"))
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		panic(fmt.Errorf("field uniswap_v3_swap_router_address of message nibiru.gastoken.v1.Params is not mutable"))
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		panic(fmt.Errorf("field uniswap_v3_quoter_address of message nibiru.gastoken.v1.Params is not mutable"))
+	case "nibiru.gastoken.v1.Params.wnibi_address":
+		panic(fmt.Errorf("field wnibi_address of message nibiru.gastoken.v1.Params is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.gastoken.v1.Params"))
@@ -207,7 +245,11 @@ func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protore
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_Params) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "nibiru.gastoken.v1.Params.router_addr":
+	case "nibiru.gastoken.v1.Params.uniswap_v3_swap_router_address":
+		return protoreflect.ValueOfString("")
+	case "nibiru.gastoken.v1.Params.uniswap_v3_quoter_address":
+		return protoreflect.ValueOfString("")
+	case "nibiru.gastoken.v1.Params.wnibi_address":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
@@ -278,7 +320,15 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.RouterAddr)
+		l = len(x.UniswapV3SwapRouterAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.UniswapV3QuoterAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.WnibiAddress)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -311,10 +361,24 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.RouterAddr) > 0 {
-			i -= len(x.RouterAddr)
-			copy(dAtA[i:], x.RouterAddr)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.RouterAddr)))
+		if len(x.WnibiAddress) > 0 {
+			i -= len(x.WnibiAddress)
+			copy(dAtA[i:], x.WnibiAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.WnibiAddress)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if len(x.UniswapV3QuoterAddress) > 0 {
+			i -= len(x.UniswapV3QuoterAddress)
+			copy(dAtA[i:], x.UniswapV3QuoterAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UniswapV3QuoterAddress)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if len(x.UniswapV3SwapRouterAddress) > 0 {
+			i -= len(x.UniswapV3SwapRouterAddress)
+			copy(dAtA[i:], x.UniswapV3SwapRouterAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UniswapV3SwapRouterAddress)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -369,7 +433,7 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RouterAddr", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UniswapV3SwapRouterAddress", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -397,7 +461,71 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.RouterAddr = string(dAtA[iNdEx:postIndex])
+				x.UniswapV3SwapRouterAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UniswapV3QuoterAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.UniswapV3QuoterAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field WnibiAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.WnibiAddress = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -453,7 +581,9 @@ type Params struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RouterAddr string `protobuf:"bytes,1,opt,name=router_addr,json=routerAddr,proto3" json:"router_addr,omitempty"`
+	UniswapV3SwapRouterAddress string `protobuf:"bytes,1,opt,name=uniswap_v3_swap_router_address,json=uniswapV3SwapRouterAddress,proto3" json:"uniswap_v3_swap_router_address,omitempty"`
+	UniswapV3QuoterAddress     string `protobuf:"bytes,2,opt,name=uniswap_v3_quoter_address,json=uniswapV3QuoterAddress,proto3" json:"uniswap_v3_quoter_address,omitempty"`
+	WnibiAddress               string `protobuf:"bytes,3,opt,name=wnibi_address,json=wnibiAddress,proto3" json:"wnibi_address,omitempty"`
 }
 
 func (x *Params) Reset() {
@@ -476,9 +606,23 @@ func (*Params) Descriptor() ([]byte, []int) {
 	return file_nibiru_gastoken_v1_params_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Params) GetRouterAddr() string {
+func (x *Params) GetUniswapV3SwapRouterAddress() string {
 	if x != nil {
-		return x.RouterAddr
+		return x.UniswapV3SwapRouterAddress
+	}
+	return ""
+}
+
+func (x *Params) GetUniswapV3QuoterAddress() string {
+	if x != nil {
+		return x.UniswapV3QuoterAddress
+	}
+	return ""
+}
+
+func (x *Params) GetWnibiAddress() string {
+	if x != nil {
+		return x.WnibiAddress
 	}
 	return ""
 }
@@ -492,24 +636,38 @@ var file_nibiru_gastoken_v1_params_proto_rawDesc = []byte{
 	0x65, 0x6e, 0x2e, 0x76, 0x31, 0x1a, 0x14, 0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x75, 0x72,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x47, 0x0a, 0x06, 0x50,
-	0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x37, 0x0a, 0x0b, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x5f,
-	0x61, 0x64, 0x64, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x16, 0xf2, 0xde, 0x1f, 0x12,
-	0x79, 0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x5f, 0x61, 0x64, 0x64,
-	0x72, 0x22, 0x52, 0x0a, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x3a, 0x04,
-	0xe8, 0xa0, 0x1f, 0x01, 0x42, 0xbf, 0x01, 0x0a, 0x16, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62,
-	0x69, 0x72, 0x75, 0x2e, 0x67, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x76, 0x31, 0x42,
-	0x0b, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2e,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x67, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
-	0x2f, 0x76, 0x31, 0x3b, 0x67, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x76, 0x31, 0xa2, 0x02,
-	0x03, 0x4e, 0x47, 0x58, 0xaa, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x47, 0x61,
-	0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69,
-	0x72, 0x75, 0x5c, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02,
-	0x1e, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
-	0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea,
-	0x02, 0x14, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b,
-	0x65, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9d, 0x02, 0x0a, 0x06,
+	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x6d, 0x0a, 0x1e, 0x75, 0x6e, 0x69, 0x73, 0x77, 0x61,
+	0x70, 0x5f, 0x76, 0x33, 0x5f, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x72,
+	0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x29,
+	0xf2, 0xde, 0x1f, 0x25, 0x79, 0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x75, 0x6e, 0x69, 0x73, 0x77, 0x61,
+	0x70, 0x5f, 0x76, 0x33, 0x5f, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x72,
+	0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x52, 0x1a, 0x75, 0x6e, 0x69, 0x73, 0x77,
+	0x61, 0x70, 0x56, 0x33, 0x53, 0x77, 0x61, 0x70, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x41, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x5f, 0x0a, 0x19, 0x75, 0x6e, 0x69, 0x73, 0x77, 0x61, 0x70,
+	0x5f, 0x76, 0x33, 0x5f, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x24, 0xf2, 0xde, 0x1f, 0x20, 0x79, 0x61,
+	0x6d, 0x6c, 0x3a, 0x22, 0x75, 0x6e, 0x69, 0x73, 0x77, 0x61, 0x70, 0x5f, 0x76, 0x33, 0x5f, 0x71,
+	0x75, 0x6f, 0x74, 0x65, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x52, 0x16,
+	0x75, 0x6e, 0x69, 0x73, 0x77, 0x61, 0x70, 0x56, 0x33, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x72, 0x41,
+	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x3d, 0x0a, 0x0d, 0x77, 0x6e, 0x69, 0x62, 0x69, 0x5f,
+	0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xf2,
+	0xde, 0x1f, 0x14, 0x79, 0x61, 0x6d, 0x6c, 0x3a, 0x22, 0x77, 0x6e, 0x69, 0x62, 0x69, 0x5f, 0x61,
+	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x52, 0x0c, 0x77, 0x6e, 0x69, 0x62, 0x69, 0x41, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x3a, 0x04, 0xe8, 0xa0, 0x1f, 0x01, 0x42, 0xbf, 0x01, 0x0a, 0x16,
+	0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x67, 0x61, 0x73, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b,
+	0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x67,
+	0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x67, 0x61, 0x73, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x47, 0x58, 0xaa, 0x02, 0x12, 0x4e, 0x69,
+	0x62, 0x69, 0x72, 0x75, 0x2e, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x56, 0x31,
+	0xca, 0x02, 0x12, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b,
+	0x65, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1e, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x47,
+	0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x14, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a,
+	0x3a, 0x47, 0x61, 0x73, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

@@ -2,21 +2,23 @@
 package evmante
 
 import (
+	"math/big"
+
 	sdkioerrors "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
 	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
-	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
 	oracleKeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
-const feeTokenUsedKey string = "feeTokenUsed"
+const gasTokenUsedKey string = "gasTokenUsed"
+const gasTokenAmountKey string = "gasTokenAmount"
+const useWNibiKey string = "useWNibi"
 
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
@@ -80,7 +82,6 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		canCover := false
 		cost := txData.Cost()
 		if cost.Sign() < 0 {
 			return ctx, sdkioerrors.Wrapf(
@@ -93,41 +94,47 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			return next(ctx, tx, simulate)
 		}
 
+		params, err := anteDec.gasTokenKeeper.GetParams(ctx)
+		if err != nil {
+			return ctx, sdkioerrors.Wrapf(err, "failed to get gastoken params")
+		}
+		wnibi := params.WnibiAddress
+
+		wnibiBal, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(wnibi))
+		if err != nil {
+			return ctx, sdkioerrors.Wrapf(err, "failed to get WNIBI balance for account %s", fromAddr)
+		}
+
+		if wnibiBal.Cmp(cost) >= 0 {
+			ctx = ctx.WithValue(useWNibiKey, true)
+			return next(ctx, tx, simulate)
+		}
+
+		canCover := false
 		// check whether the sender has enough balance to pay for the transaction cost in alternative token
 		feeTokens := anteDec.gasTokenKeeper.GetFeeTokens(ctx)
 		for _, feeToken := range feeTokens {
-			var ratio sdkmath.LegacyDec
-
-			out, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(feeToken.Address))
+			bal, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(feeToken.Erc20Address))
 			if err != nil {
 				return ctx, err
 			}
 
-			switch feeToken.TokenType {
-			case gastokentypes.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE:
-				ratio = sdkmath.LegacyOneDec()
-			case gastokentypes.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE:
-				price, err := anteDec.oracleKeeper.GetExchangeRateTwap(ctx, asset.Pair(feeToken.Pair))
-				if err != nil {
-					return ctx, sdkioerrors.Wrapf(
-						err, "failed to get exchange rate for pair %s", feeToken.Pair,
-					)
-				}
-				basePrice, err := anteDec.oracleKeeper.GetExchangeRateTwap(ctx, asset.Pair("unibi:uusd"))
-				if err != nil {
-					return ctx, sdkioerrors.Wrapf(err, "failed to get TWAP for unibi:uusd")
-				}
-				if price.IsZero() {
-					return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "price for %s is zero", feeToken.Pair)
-				}
-				ratio = basePrice.Quo(price)
+			amountNeeded, err := gastokenante.GetAmountInFromUniswap(
+				ctx,
+				anteDec.evmKeeper,
+				anteDec.gasTokenKeeper,
+				gethcommon.HexToAddress(feeToken.Erc20Address),
+				gethcommon.HexToAddress(wnibi),
+				big.NewInt(3000),
+				cost,
+			)
+			if err != nil {
+				return ctx, sdkioerrors.Wrapf(err, "failed to get amount in from uniswap for token %s", feeToken.Erc20Address)
 			}
-
-			tokenBalance := sdkmath.LegacyNewDecFromBigInt(out)
-			txCost := sdkmath.LegacyNewDecFromBigInt(txData.Cost())
-			if tokenBalance.GTE(txCost.Mul(ratio)) {
+			if bal.Cmp(amountNeeded) >= 0 {
 				canCover = true
-				ctx = ctx.WithValue(feeTokenUsedKey, feeToken.Address).WithValue("ratio", ratio)
+				ctx = ctx.WithValue(gasTokenUsedKey, feeToken.Erc20Address)
+				ctx = ctx.WithValue(gasTokenAmountKey, amountNeeded)
 				break
 			}
 		}

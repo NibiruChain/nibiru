@@ -76,9 +76,9 @@ func (k Keeper) SetFeeTokens(ctx sdk.Context, feetokens []types.FeeToken) error 
 func (k Keeper) SetFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
 	prefixStore := k.GetFeeTokensStore(ctx)
 
-	ok := gethcommon.IsHexAddress(feeToken.Address)
+	ok := gethcommon.IsHexAddress(feeToken.Erc20Address)
 	if !ok {
-		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Address)
+		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Erc20Address)
 	}
 
 	bz, err := k.cdc.Marshal(&feeToken)
@@ -87,7 +87,7 @@ func (k Keeper) SetFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
 	}
 
 	// Use 20-byte canonical address key
-	prefixStore.Set(gethcommon.HexToAddress(feeToken.Address).Bytes(), bz)
+	prefixStore.Set(gethcommon.HexToAddress(feeToken.Erc20Address).Bytes(), bz)
 	return nil
 }
 
@@ -95,13 +95,13 @@ func (k Keeper) AddFeeToken(ctx sdk.Context, feeToken types.FeeToken) error {
 	prefixStore := k.GetFeeTokensStore(ctx)
 
 	// Validate address format first
-	if !gethcommon.IsHexAddress(feeToken.Address) {
-		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Address)
+	if !gethcommon.IsHexAddress(feeToken.Erc20Address) {
+		return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Erc20Address)
 	}
 
 	// Check if token already exists
-	if prefixStore.Has(gethcommon.HexToAddress(feeToken.Address).Bytes()) {
-		return fmt.Errorf("fee token with address %s already exists", feeToken.Address)
+	if prefixStore.Has(gethcommon.HexToAddress(feeToken.Erc20Address).Bytes()) {
+		return fmt.Errorf("fee token with address %s already exists", feeToken.Erc20Address)
 	}
 
 	return k.SetFeeToken(ctx, feeToken)

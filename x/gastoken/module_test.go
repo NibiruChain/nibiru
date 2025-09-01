@@ -22,6 +22,7 @@ func (s *ModuleTestSuite) TestAppModule() {
 	bapp, ctx := testapp.NewNibiruTestAppAndContext()
 	appModule := module.NewAppModule(
 		bapp.GasTokenKeeper,
+		bapp.AccountKeeper,
 	)
 
 	s.NotPanics(func() {

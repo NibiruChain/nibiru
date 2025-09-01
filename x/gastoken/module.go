@@ -108,12 +108,14 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper keeper.Keeper
+	ak     types.AccountKeeper
 }
 
-func NewAppModule(keeper keeper.Keeper) AppModule {
+func NewAppModule(keeper keeper.Keeper, ak types.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(),
 		keeper:         keeper,
+		ak:             ak,
 	}
 }
 
@@ -148,7 +150,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	am.keeper.InitGenesis(ctx, genState)
+	am.keeper.InitGenesis(ctx, genState, am.ak)
 
 	return []abci.ValidatorUpdate{}
 }
@@ -207,7 +209,7 @@ func ProvideModule(in GasTokenInputs) GasTokenOutputs {
 	}
 	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.EvmKeeper, in.SudoKeeper, authority.String())
 
-	m := NewAppModule(k)
+	m := NewAppModule(k, in.AccountKeeper)
 
 	return GasTokenOutputs{
 		Keeper: k,

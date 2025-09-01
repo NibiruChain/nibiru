@@ -59,6 +59,8 @@ var (
 	uniswapV3Pool []byte
 	//go:embed artifacts/contracts/UniswapV3SwapRouter.sol/IV3SwapRouter.json
 	uniswapV3Router []byte
+	//go:embed artifacts/contracts/UniswapV3Quoter.sol/IQuoterV2.json
+	uniswapV3Quoter []byte
 )
 
 var (
@@ -198,6 +200,10 @@ var (
 		Name:      "UniswapV3SwapRouter.sol",
 		EmbedJSON: uniswapV3Router,
 	}
+	SmartContract_UniswapV3Quoter = CompiledEvmContract{
+		Name:      "UniswapV3Quoter.sol",
+		EmbedJSON: uniswapV3Quoter,
+	}
 )
 
 func init() {
@@ -222,6 +228,7 @@ func init() {
 	SmartContract_WNIBI.MustLoad()
 	SmartContract_UniswapV3Pool.MustLoad()
 	SmartContract_UniswapV3SwapRouter.MustLoad()
+	SmartContract_UniswapV3Quoter.MustLoad()
 }
 
 type CompiledEvmContract struct {

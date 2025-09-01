@@ -8,11 +8,15 @@ import (
 
 // InitGenesis initializes the gas_token module's state from a provided genesis
 // state.
-func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState, accountKeeper types.AccountKeeper) {
 	k.Params.Set(ctx, genState.Params)
 	err := k.SetFeeTokens(ctx, genState.Feetokens)
 	if err != nil {
 		panic(err)
+	}
+
+	if gasTokenModule := accountKeeper.GetModuleAccount(ctx, types.ModuleName); gasTokenModule == nil {
+		panic("the GasToken module account has not been set")
 	}
 }
 

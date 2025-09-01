@@ -16,24 +16,19 @@ var (
 	invalidAddress = "0xinvalidHexAddress"
 
 	validFeeToken = types.FeeToken{
-		Name:      "Valid Fee Token",
-		Address:   evmtest.NewEthPrivAcc().EthAddr.String(),
-		TokenType: types.FeeTokenType_FEE_TOKEN_TYPE_CONVERTIBLE,
+		Name:         "Valid Fee Token",
+		Erc20Address: evmtest.NewEthPrivAcc().EthAddr.String(),
 	}
 
 	anotherValidFeeToken = types.FeeToken{
-		Name:        "Another Valid Fee Token",
-		Address:     evmtest.NewEthPrivAcc().EthAddr.String(),
-		Pair:        "uusdc:uusd",
-		TokenType:   types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE,
-		PoolAddress: evmtest.NewEthPrivAcc().EthAddr.String(),
+		Name:         "Another Valid Fee Token",
+		Erc20Address: evmtest.NewEthPrivAcc().EthAddr.String(),
+		// PoolAddress:  evmtest.NewEthPrivAcc().EthAddr.String(),
 	}
 
 	invalidFeeToken = types.FeeToken{
-		Name:      "Invalid Fee Token",
-		Address:   invalidAddress,
-		Pair:      "uusdc:uusd",
-		TokenType: types.FeeTokenType_FEE_TOKEN_TYPE_SWAPPABLE,
+		Name:         "Invalid Fee Token",
+		Erc20Address: invalidAddress,
 	}
 
 	validFeeTokens = []types.FeeToken{
@@ -59,7 +54,7 @@ func TestSetFeeToken(t *testing.T) {
 		{
 			name:        "invalid fee token",
 			feeToken:    invalidFeeToken,
-			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeToken.Address),
+			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeToken.Erc20Address),
 		},
 	}
 
@@ -78,7 +73,7 @@ func TestSetFeeToken(t *testing.T) {
 				ctx, tc.feeToken)
 			require.NoError(t, err)
 
-			feeToken, err := nibiruApp.GasTokenKeeper.GetFeeToken(ctx, tc.feeToken.Address)
+			feeToken, err := nibiruApp.GasTokenKeeper.GetFeeToken(ctx, tc.feeToken.Erc20Address)
 			require.NoError(t, err)
 			require.Equal(t, feeToken, tc.feeToken)
 
@@ -100,7 +95,7 @@ func TestSetFeeTokens(t *testing.T) {
 		{
 			name:        "invalid fee tokens",
 			feeTokens:   invalidFeeTokens,
-			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeTokens[1].Address),
+			expectedErr: fmt.Errorf("invalid fee token address %s: must be a valid hex address", invalidFeeTokens[1].Erc20Address),
 		},
 	}
 
@@ -164,7 +159,7 @@ func TestRemoveFeeToken(t *testing.T) {
 				return
 			}
 
-			err = nibiruApp.GasTokenKeeper.RemoveFeeToken(ctx, validFeeTokens[0].Address)
+			err = nibiruApp.GasTokenKeeper.RemoveFeeToken(ctx, validFeeTokens[0].Erc20Address)
 			require.NoError(t, err)
 		})
 	}
@@ -172,6 +167,6 @@ func TestRemoveFeeToken(t *testing.T) {
 
 func sortFeeTokens(tokens []types.FeeToken) {
 	sort.Slice(tokens, func(i, j int) bool {
-		return tokens[i].Address < tokens[j].Address
+		return tokens[i].Erc20Address < tokens[j].Erc20Address
 	})
 }

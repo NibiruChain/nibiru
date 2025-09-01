@@ -20,13 +20,13 @@ func DefaultGenesis() *GenesisState {
 func (gs GenesisState) Validate() error {
 	seen := make(map[string]struct{})
 	for _, feeToken := range gs.Feetokens {
-		ok := gethcommon.IsHexAddress(feeToken.Address)
+		ok := gethcommon.IsHexAddress(feeToken.Erc20Address)
 		if !ok {
-			return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Address)
+			return fmt.Errorf("invalid fee token address %s: must be a valid hex address", feeToken.Erc20Address)
 		}
 
 		// normalize to checksummed hex for equality checks
-		addr := gethcommon.HexToAddress(feeToken.Address).Hex()
+		addr := gethcommon.HexToAddress(feeToken.Erc20Address).Hex()
 		if _, exists := seen[addr]; exists {
 			return fmt.Errorf("duplicate fee token address %s", addr)
 		}

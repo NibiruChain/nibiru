@@ -34,7 +34,7 @@ func (k Keeper) UpdateFeeToken(
 			return nil, err
 		}
 	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE:
-		if err := k.RemoveFeeToken(ctx, msg.FeeToken.Address); err != nil {
+		if err := k.RemoveFeeToken(ctx, msg.FeeToken.Erc20Address); err != nil {
 			return nil, err
 		}
 	default:

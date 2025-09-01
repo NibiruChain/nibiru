@@ -69,11 +69,11 @@ func (s *GenesisTestSuite) TestGenesis() {
 
 			if tc.expPanic {
 				s.Require().Panics(func() {
-					s.app.GasTokenKeeper.InitGenesis(s.ctx, tc.genesis)
+					s.app.GasTokenKeeper.InitGenesis(s.ctx, tc.genesis, s.app.AccountKeeper)
 				})
 			} else {
 				s.Require().NotPanics(func() {
-					s.app.GasTokenKeeper.InitGenesis(s.ctx, tc.genesis)
+					s.app.GasTokenKeeper.InitGenesis(s.ctx, tc.genesis, s.app.AccountKeeper)
 				})
 
 				feeTokens := s.app.GasTokenKeeper.GetFeeTokens(s.ctx)

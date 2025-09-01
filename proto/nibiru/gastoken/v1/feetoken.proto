@@ -5,25 +5,11 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
 
-// The conversion rate of the convertible fee token to the native token (nibiru) is 1:1.
-// The conversion rate of the swappable fee token to the native token (nibiru) is based on oracle price.
-enum FeeTokenType {
-  FEE_TOKEN_TYPE_CONVERTIBLE = 0;
-  FEE_TOKEN_TYPE_SWAPPABLE = 1;
-}
-
 // FeeToken is a struct that specifies a token that can be used as a transaction fee asset in the Nibiru network.
 message FeeToken {
   option (gogoproto.equal) = true;
 
   string name = 1 [ (gogoproto.moretags) = "yaml:\"name\"" ];
 
-  string address = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
-
-  // A string identifier for the price pair
-  string pair = 3 [ (gogoproto.moretags) = "yaml:\"pair\"" ];
-
-  FeeTokenType token_type = 4 [ (gogoproto.moretags) = "yaml:\"type\"" ];
-
-  string pool_address = 5 [ (gogoproto.moretags) = "yaml:\"pool_address\"" ];
+  string erc20_address = 2 [ (gogoproto.moretags) = "yaml:\"erc20_address\"" ];
 }
