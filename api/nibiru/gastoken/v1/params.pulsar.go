@@ -581,9 +581,12 @@ type Params struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Hexadecimal address of the Uniswap V3 Swap Router contract
 	UniswapV3SwapRouterAddress string `protobuf:"bytes,1,opt,name=uniswap_v3_swap_router_address,json=uniswapV3SwapRouterAddress,proto3" json:"uniswap_v3_swap_router_address,omitempty"`
-	UniswapV3QuoterAddress     string `protobuf:"bytes,2,opt,name=uniswap_v3_quoter_address,json=uniswapV3QuoterAddress,proto3" json:"uniswap_v3_quoter_address,omitempty"`
-	WnibiAddress               string `protobuf:"bytes,3,opt,name=wnibi_address,json=wnibiAddress,proto3" json:"wnibi_address,omitempty"`
+	// Hexadecimal address of the Uniswap V3 Quoter contract
+	UniswapV3QuoterAddress string `protobuf:"bytes,2,opt,name=uniswap_v3_quoter_address,json=uniswapV3QuoterAddress,proto3" json:"uniswap_v3_quoter_address,omitempty"`
+	// Hexadecimal address of the wrapped NIBI (wNIBI) contract
+	WnibiAddress string `protobuf:"bytes,3,opt,name=wnibi_address,json=wnibiAddress,proto3" json:"wnibi_address,omitempty"`
 }
 
 func (x *Params) Reset() {

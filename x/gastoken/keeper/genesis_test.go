@@ -50,7 +50,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 		{
 			name: "custom genesis - fee tokens",
 			genesis: types.GenesisState{
-				Feetokens: validFeeTokens,
+				Feetokens: append([]types.FeeToken(nil), validFeeTokens...),
 			},
 			expPanic: false,
 		},
@@ -78,8 +78,9 @@ func (s *GenesisTestSuite) TestGenesis() {
 
 				feeTokens := s.app.GasTokenKeeper.GetFeeTokens(s.ctx)
 				sortFeeTokens(feeTokens)
-				sortFeeTokens(tc.genesis.Feetokens)
-				s.Require().Equal(tc.genesis.Feetokens, feeTokens)
+				expected := append([]types.FeeToken(nil), tc.genesis.Feetokens...)
+				sortFeeTokens(expected)
+				s.Require().Equal(expected, feeTokens)
 
 				gen := devgas.ExportGenesis(s.ctx, s.app.DevGasKeeper)
 				s.NoError(gen.Validate())

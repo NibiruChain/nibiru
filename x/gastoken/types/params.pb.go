@@ -26,9 +26,12 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params holds parameters for the gastoken module
 type Params struct {
+	// Hexadecimal address of the Uniswap V3 Swap Router contract
 	UniswapV3SwapRouterAddress string `protobuf:"bytes,1,opt,name=uniswap_v3_swap_router_address,json=uniswapV3SwapRouterAddress,proto3" json:"uniswap_v3_swap_router_address,omitempty" yaml:"uniswap_v3_swap_router_address"`
-	UniswapV3QuoterAddress     string `protobuf:"bytes,2,opt,name=uniswap_v3_quoter_address,json=uniswapV3QuoterAddress,proto3" json:"uniswap_v3_quoter_address,omitempty" yaml:"uniswap_v3_quoter_address"`
-	WnibiAddress               string `protobuf:"bytes,3,opt,name=wnibi_address,json=wnibiAddress,proto3" json:"wnibi_address,omitempty" yaml:"wnibi_address"`
+	// Hexadecimal address of the Uniswap V3 Quoter contract
+	UniswapV3QuoterAddress string `protobuf:"bytes,2,opt,name=uniswap_v3_quoter_address,json=uniswapV3QuoterAddress,proto3" json:"uniswap_v3_quoter_address,omitempty" yaml:"uniswap_v3_quoter_address"`
+	// Hexadecimal address of the wrapped NIBI (wNIBI) contract
+	WnibiAddress string `protobuf:"bytes,3,opt,name=wnibi_address,json=wnibiAddress,proto3" json:"wnibi_address,omitempty" yaml:"wnibi_address"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }

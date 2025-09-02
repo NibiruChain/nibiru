@@ -9,7 +9,11 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
 // Params holds parameters for the gastoken module
 message Params {
   option (gogoproto.equal) = true;
+  
+  // Hexadecimal address of the Uniswap V3 Swap Router contract
   string uniswap_v3_swap_router_address = 1 [(gogoproto.moretags) = "yaml:\"uniswap_v3_swap_router_address\""];
+  // Hexadecimal address of the Uniswap V3 Quoter contract
   string uniswap_v3_quoter_address = 2 [(gogoproto.moretags) = "yaml:\"uniswap_v3_quoter_address\""];
+  // Hexadecimal address of the wrapped NIBI (wNIBI) contract
   string wnibi_address = 3 [(gogoproto.moretags) = "yaml:\"wnibi_address\""];
 }

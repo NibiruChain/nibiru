@@ -14,7 +14,6 @@ import (
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
-	oracleKeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
 type AnteHandlerOptions struct {
@@ -24,8 +23,7 @@ type AnteHandlerOptions struct {
 	DevGasBankKeeper devgasante.BankKeeper
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
-	GasTokenKeeper   gastokenkeeper.Keeper
-	OracleKeeper     oracleKeeper.Keeper
+	GasTokenKeeper   *gastokenkeeper.Keeper
 
 	TxCounterStoreKey types.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig

@@ -63,7 +63,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var (
@@ -104,7 +103,7 @@ var (
 		{Account: sudotypes.ModuleName},
 		{Account: common.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
-		{Account: tokenfactorytypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: tftypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: gastokentypes.ModuleName},
 	}
 

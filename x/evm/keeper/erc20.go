@@ -22,10 +22,10 @@ const (
 	Erc20GasLimitDeploy uint64 = 2_500_000
 	// Erc20GasLimitQuery used only for querying name, symbol and decimals
 	// Cannot be heavy. Only if the contract is malicious.
-	Erc20GasLimitQuery uint64 = 100_000
+	Erc20GasLimitQuery uint64 = 200_000
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
-	Erc20GasLimitExecute uint64 = 200_000
+	Erc20GasLimitExecute uint64 = 300_000
 )
 
 func GetCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {

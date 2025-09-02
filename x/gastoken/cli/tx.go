@@ -37,7 +37,7 @@ func GetTxCmd() *cobra.Command {
 
 func CmdAddFeeToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-fee-token --token-address [token-address] --pair [pair] --token-type [token-type] ",
+		Use:   "add-fee-token --name [name] --erc20-address [erc20-address]",
 		Args:  cobra.ExactArgs(0),
 		Short: "Add a fee token to the gastoken module",
 		Long: strings.TrimSpace(`
@@ -45,7 +45,7 @@ Add a fee token to the gastoken module.
 
 Requires sudo permissions.
 
-$ nibid tx gastoken add-fee-token --token-address 0xabc --pair unibi:uusdc --token-type FEE_TOKEN_TYPE_CONVERTIBLE
+$ nibid tx gastoken add-fee-token --name USDC --erc20-address 0xabc
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

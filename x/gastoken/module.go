@@ -204,7 +204,7 @@ type GasTokenOutputs struct {
 
 func ProvideModule(in GasTokenInputs) GasTokenOutputs {
 	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
-	if in.Config.Authority != "" {
+	if in.Config != nil && in.Config.Authority != "" {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.EvmKeeper, in.SudoKeeper, authority.String())

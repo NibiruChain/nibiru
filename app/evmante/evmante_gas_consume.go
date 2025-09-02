@@ -17,7 +17,6 @@ import (
 	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
 	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
 	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -25,7 +24,7 @@ import (
 type AnteDecEthGasConsume struct {
 	evmKeeper      *EVMKeeper
 	accountKeeper  evm.AccountKeeper
-	gasTokenKeeper gastokenkeeper.Keeper
+	gasTokenKeeper *gastokenkeeper.Keeper
 	maxGasWanted   uint64
 }
 
@@ -33,7 +32,7 @@ type AnteDecEthGasConsume struct {
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
 	ak evm.AccountKeeper,
-	gtk gastokenkeeper.Keeper,
+	gtk *gastokenkeeper.Keeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
@@ -180,8 +179,8 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 	feePayerAddr := gethcommon.BytesToAddress(feePayer)
 
 	gasTokenUsed := ctx.Value(gasTokenUsedKey)
-	amountGasTokenNeeded := ctx.Value(gasTokenAmountKey)
-	useWNibi := ctx.Value(useWNibiKey)
+	useWNibiVal := ctx.Value(useWNibiKey)
+	useWNibi, _ := useWNibiVal.(bool)
 
 	feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(gastokentypes.ModuleName))
 	switch {
@@ -192,7 +191,11 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		}
 
 		gasTokenAddress := gethcommon.HexToAddress(gasTokenStr)
-		gasTokenAmount := amountGasTokenNeeded.(*big.Int)
+		amtVal := ctx.Value(gasTokenAmountKey)
+		gasTokenAmount, ok := amtVal.(*big.Int)
+		if !ok || gasTokenAmount == nil || gasTokenAmount.Sign() <= 0 {
+			return fmt.Errorf("invalid gas token amount in context: %v", amtVal)
+		}
 		params, err := anteDec.gasTokenKeeper.GetParams(ctx)
 		if err != nil {
 			return sdkioerrors.Wrapf(err, "failed to get gastoken params")
@@ -215,7 +218,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		anteDec.accountKeeper.SetAccount(ctx, acc)
 		return nil
 
-	case useWNibi != nil && useWNibi.(bool):
+	case useWNibi:
 		params, err := anteDec.gasTokenKeeper.GetParams(ctx)
 		if err != nil {
 			return sdkioerrors.Wrapf(err, "failed to get gastoken params")
@@ -226,13 +229,12 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		if err != nil {
 			return sdkioerrors.Wrapf(err, "failed to get WNIBI balance for account %s", feePayerAddr)
 		}
-		feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(types.ModuleName))
 
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
 
 		feesAmount := fees[0].Amount
 
-		if wnibiBal.Cmp(feesAmount.BigInt()) >= 0 {
+		if wnibiBal.Cmp(evm.NativeToWei(feesAmount.BigInt())) >= 0 {
 			// If the user has enough WNIBI, just deduct in WNIBI
 			err = anteDec.evmKeeper.Erc20Transfer(ctx, gethcommon.HexToAddress(wnibi), feePayerAddr, feeCollector, evm.NativeToWei(feesAmount.BigInt()))
 			if err != nil {
@@ -249,6 +251,7 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		}
 
 		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
 	default:
 		if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
 			ctx, fees, gethcommon.BytesToAddress(feePayer),

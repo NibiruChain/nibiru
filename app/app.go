@@ -444,8 +444,7 @@ func NewNibiruApp(
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
-		GasTokenKeeper: app.GasTokenKeeper,
-		OracleKeeper:   app.OracleKeeper,
+		GasTokenKeeper: &app.GasTokenKeeper,
 	}))
 
 	// register snapshot extensions

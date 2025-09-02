@@ -24,7 +24,6 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/gastoken/types"
-	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
 // DeductFeeDecorator deducts fees from the first signer of the tx.
@@ -37,13 +36,12 @@ type DeductFeeDecorator struct {
 	evmkeeper      *evmkeeper.Keeper
 	bankKeeper     authtypes.BankKeeper
 	feegrantKeeper types.FeegrantKeeper
-	gasTokenKeeper keeper.Keeper
-	oracleKeeper   oraclekeeper.Keeper
+	gasTokenKeeper *keeper.Keeper
 
 	txFeeChecker authante.TxFeeChecker
 }
 
-func NewDeductFeeDecorator(gtk keeper.Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper, ok oraclekeeper.Keeper, tfc authante.TxFeeChecker) DeductFeeDecorator {
+func NewDeductFeeDecorator(gtk *keeper.Keeper, ek *evmkeeper.Keeper, ak types.AccountKeeper, bk authtypes.BankKeeper, fk types.FeegrantKeeper, tfc authante.TxFeeChecker) DeductFeeDecorator {
 	if tfc == nil {
 		tfc = checkTxFeeWithValidatorMinGasPrices
 	}
@@ -53,7 +51,6 @@ func NewDeductFeeDecorator(gtk keeper.Keeper, ek *evmkeeper.Keeper, ak types.Acc
 		bankKeeper:     bk,
 		feegrantKeeper: fk,
 		gasTokenKeeper: gtk,
-		oracleKeeper:   ok,
 		txFeeChecker:   tfc,
 	}
 }
@@ -129,7 +126,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 
 	// deducts the fees and transfer them to the module account
 	if !fees.IsZero() {
-		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.gasTokenKeeper, dfd.bankKeeper, dfd.oracleKeeper, ctx, deductFeesFromAcc, fees)
+		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.gasTokenKeeper, dfd.bankKeeper, ctx, deductFeesFromAcc, fees)
 		if err != nil {
 			return ctx, err
 		}
@@ -144,7 +141,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	return next(newCtx, tx, simulate)
 }
 
-func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk keeper.Keeper, bankKeeper authtypes.BankKeeper, ok oraclekeeper.Keeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
+func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *keeper.Keeper, bankKeeper authtypes.BankKeeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
 	// Checks the validity of the fee tokens (sorted, have positive amount, valid and unique denomination)
 	if !fees.IsValid() {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
@@ -292,7 +289,7 @@ func WithdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKee
 	return nil
 }
 
-func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, gtk keeper.Keeper, sender gethcommon.Address, feeToken gethcommon.Address, feeCollector gethcommon.Address, amountIn, amountOut *big.Int) error {
+func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper, gtk *keeper.Keeper, sender gethcommon.Address, feeToken gethcommon.Address, feeCollector gethcommon.Address, amountIn, amountOut *big.Int) error {
 	txFeesParams, err := gtk.GetParams(ctx)
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to get tx fees params")
@@ -329,7 +326,7 @@ func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 		return sdkioerrors.Wrap(err, "failed to pack ABI args for swap")
 	}
 
-	nonce := ek.GetAccNonce(ctx, feeCollector)
+	nonce := ek.GetAccNonce(ctx, sender)
 	evmMsg := core.Message{
 		To:               &routerAddr,
 		From:             sender,
@@ -374,7 +371,7 @@ func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 func GetAmountInFromUniswap(
 	ctx sdk.Context,
 	ek *evmkeeper.Keeper,
-	gtk keeper.Keeper,
+	gtk *keeper.Keeper,
 	tokenIn gethcommon.Address,
 	tokenOut gethcommon.Address,
 	fee *big.Int,

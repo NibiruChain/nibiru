@@ -13,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
 	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
-	oracleKeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
 const gasTokenUsedKey string = "gasTokenUsed"
@@ -23,18 +22,16 @@ const useWNibiKey string = "useWNibi"
 // AnteDecVerifyEthAcc validates an account balance checks
 type AnteDecVerifyEthAcc struct {
 	evmKeeper      *EVMKeeper
-	gasTokenKeeper gastokenkeeper.Keeper
+	gasTokenKeeper *gastokenkeeper.Keeper
 	accountKeeper  evm.AccountKeeper
-	oracleKeeper   oracleKeeper.Keeper
 }
 
 // NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, gtk gastokenkeeper.Keeper, ok oracleKeeper.Keeper) AnteDecVerifyEthAcc {
+func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper, gtk *gastokenkeeper.Keeper) AnteDecVerifyEthAcc {
 	return AnteDecVerifyEthAcc{
 		evmKeeper:      k,
 		accountKeeper:  ak,
 		gasTokenKeeper: gtk,
-		oracleKeeper:   ok,
 	}
 }
 
@@ -107,7 +104,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 
 		if wnibiBal.Cmp(cost) >= 0 {
 			ctx = ctx.WithValue(useWNibiKey, true)
-			return next(ctx, tx, simulate)
+			continue
 		}
 
 		canCover := false

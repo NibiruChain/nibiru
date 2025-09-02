@@ -30,13 +30,20 @@ func (k Keeper) UpdateFeeToken(
 
 	switch msg.Action {
 	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD:
+		if msg.FeeToken == nil {
+			return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "fee_token must be provided")
+		}
 		if err := k.AddFeeToken(ctx, *msg.FeeToken); err != nil {
 			return nil, err
 		}
 	case types.FeeTokenUpdateAction_FEE_TOKEN_ACTION_REMOVE:
+		if msg.FeeToken == nil || msg.FeeToken.Erc20Address == "" {
+			return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "fee_token.Erc20Address must be provided")
+		}
 		if err := k.RemoveFeeToken(ctx, msg.FeeToken.Erc20Address); err != nil {
 			return nil, err
 		}
+
 	default:
 		return nil, fmt.Errorf("invalid action %s; must be one of %s or %s",
 			msg.Action,

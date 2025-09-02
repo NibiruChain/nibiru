@@ -69,5 +69,9 @@ func (m MsgUpdateParams) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return fmt.Errorf("invalid sender address: %w", err)
 	}
+
+	if err := m.Params.Validate(); err != nil {
+		return fmt.Errorf("invalid params: %w", err)
+	}
 	return nil
 }
