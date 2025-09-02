@@ -47,6 +47,14 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+- [#2353](https://github.com/NibiruChain/nibiru/pull/2353) - refactor(oracle): remove dead code from asset registry 
+
+### Dependencies
+- Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))
+- Bump `pbkdf2` from 3.1.2 to 3.1.3 ([#2356](https://github.com/NibiruChain/nibiru/pull/2356))
+
+## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
+
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
 - [#2334](https://github.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
 - [#2345](https://github.com/NibiruChain/nibiru/pull/2345) - feat(evm): add "eth.evm.v1.MsgConvertEvmToCoin" tx for ERC20 to bank coin conversions with a non-Ethereum transaction
@@ -56,6 +64,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2348](https://github.com/NibiruChain/nibiru/pull/2348) - fix(oracle): max expiration a label rather than an invalidation for additional query liveness
 - [#2350](https://github.com/NibiruChain/nibiru/pull/2350) - fix(simapp): sim tests with empty validator set panic
 - [#2352](https://github.com/NibiruChain/nibiru/pull/2352) - chore(token-registry): Add bank coin versions of USDC and USDT from Stargate and LayerZero, and update ErisEvm.sol to fix redeem
+- [#2354](https://github.com/NibiruChain/nibiru/pull/2354) - chore: linter upgrade to v2
 - [#2357](https://github.com/NibiruChain/nibiru/pull/2357) - fix: proper statedb isolation in nibiru bank_extension
 
 ### Dependencies

@@ -17,14 +17,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestOracleThreshold(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.Registry.Pair(denoms.BTC, denoms.USD),
+			Pair:         asset.PAIR_BTC,
 			ExchangeRate: testExchangeRate,
 		},
 	}
@@ -139,7 +138,7 @@ func TestOracleTally(t *testing.T) {
 	for i, rate := range rates {
 		decExchangeRate := sdkmath.LegacyNewDecWithPrec(int64(rate*math.Pow10(OracleDecPrecision)), int64(OracleDecPrecision))
 		exchangeRateStr, err := types.ExchangeRateTuples{
-			{ExchangeRate: decExchangeRate, Pair: asset.Registry.Pair(denoms.BTC, denoms.USD)},
+			{ExchangeRate: decExchangeRate, Pair: asset.PAIR_BTC},
 		}.ToString()
 		require.NoError(t, err)
 
@@ -159,7 +158,7 @@ func TestOracleTally(t *testing.T) {
 		}
 
 		vote := types.NewExchangeRateVote(
-			decExchangeRate, asset.Registry.Pair(denoms.BTC, denoms.USD), valAddrs[i], power)
+			decExchangeRate, asset.PAIR_BTC, valAddrs[i], power)
 		votes = append(votes, vote)
 
 		// change power of every three validator
@@ -220,35 +219,35 @@ func TestOracleRewardBand(t *testing.T) {
 	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
 	require.NoError(t, err)
 
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)}
+	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 
 	// clear pairs to reset vote targets
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
 	}
-	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
+	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.PAIR_ATOM)
 
 	rewardSpread := testExchangeRate.Mul(fixture.OracleKeeper.RewardBand(fixture.Ctx).QuoInt64(2))
 
 	// Account 1, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Sub(rewardSpread)},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate.Sub(rewardSpread)},
 	}, 0)
 
 	// Account 2, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate},
 	}, 1)
 
 	// Account 3, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate},
 	}, 2)
 
 	// Account 4, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(rewardSpread)},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate.Add(rewardSpread)},
 	}, 3)
 
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
@@ -261,22 +260,22 @@ func TestOracleRewardBand(t *testing.T) {
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Sub(rewardSpread.Add(sdkmath.LegacyOneDec()))},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate.Sub(rewardSpread.Add(sdkmath.LegacyOneDec()))},
 	}, 0)
 
 	// Account 2, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate},
 	}, 1)
 
 	// Account 3, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate},
 	}, 2)
 
 	// Account 4, atom:usd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(rewardSpread)},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate.Add(rewardSpread)},
 	}, 3)
 
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
@@ -333,29 +332,29 @@ func TestOracleExchangeRate(t *testing.T) {
 
 	// Account 1, eth:usd, atom:usd, btc:usd
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: btcusdExchangeRate},
+		{Pair: asset.PAIR_ETH, ExchangeRate: ethUsdExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: atomUsdExchangeRate},
+		{Pair: asset.PAIR_BTC, ExchangeRate: btcusdExchangeRate},
 	}, 0)
 
 	// Account 2, eth:usd, atom:usd
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
+		{Pair: asset.PAIR_ETH, ExchangeRate: ethUsdExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: atomUsdExchangeRate},
 	}, 1)
 
 	// Account 3, eth:usd, atom:usd, btc:usd(abstain)
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyZeroDec()},
+		{Pair: asset.PAIR_ETH, ExchangeRate: ethUsdExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: atomUsdExchangeRate},
+		{Pair: asset.PAIR_BTC, ExchangeRate: sdkmath.LegacyZeroDec()},
 	}, 2)
 
 	// Account 4, eth:usd, atom:usd, btc:usd
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: ethUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: atomUsdExchangeRate},
-		{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdkmath.LegacyZeroDec()},
+		{Pair: asset.PAIR_ETH, ExchangeRate: ethUsdExchangeRate},
+		{Pair: asset.PAIR_ATOM, ExchangeRate: atomUsdExchangeRate},
+		{Pair: asset.PAIR_BTC, ExchangeRate: sdkmath.LegacyZeroDec()},
 	}, 3)
 
 	ethUsdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.TO_MICRO)
@@ -388,8 +387,8 @@ func TestOracleRandomPrices(t *testing.T) {
 	for range 100 {
 		for val := range 4 {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-				{Pair: asset.Registry.Pair(denoms.ETH, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
-				{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
+				{Pair: asset.PAIR_ETH, ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
+				{Pair: asset.PAIR_ATOM, ExchangeRate: sdkmath.LegacyNewDec(int64(cmtrand.Uint64() % 1e6))},
 			}, val)
 		}
 
@@ -408,11 +407,11 @@ func TestWhitelistedPairs(t *testing.T) {
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
 	}
-	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
+	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.PAIR_ATOM)
 
 	t.Log("vote and prevote from all vals on atom:usd")
 	priceVoteFromVal := func(valIdx int, block int64) {
-		MakeAggregatePrevoteAndVote(t, fixture, msgServer, block, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, valIdx)
+		MakeAggregatePrevoteAndVote(t, fixture, msgServer, block, types.ExchangeRateTuples{{Pair: asset.PAIR_ATOM, ExchangeRate: testExchangeRate}}, valIdx)
 	}
 	block := int64(0)
 	priceVoteFromVal(0, block)
@@ -421,7 +420,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	priceVoteFromVal(3, block)
 
 	t.Log("whitelist btc:usd for next vote period")
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD), asset.Registry.Pair(denoms.BTC, denoms.USD)}
+	params.Whitelist = []asset.Pair{asset.PAIR_ATOM, asset.PAIR_BTC}
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
@@ -434,8 +433,8 @@ func TestWhitelistedPairs(t *testing.T) {
 	t.Log("whitelisted pairs are {atom:usd, btc:usd}")
 	assert.Equal(t,
 		[]asset.Pair{
-			asset.Registry.Pair(denoms.ATOM, denoms.USD),
-			asset.Registry.Pair(denoms.BTC, denoms.USD),
+			asset.PAIR_ATOM,
+			asset.PAIR_BTC,
 		},
 		fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
@@ -446,7 +445,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	priceVoteFromVal(3, block)
 
 	t.Log("delete btc:usd for next vote period")
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)}
+	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 	perfs := fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
@@ -464,10 +463,11 @@ func TestWhitelistedPairs(t *testing.T) {
 	assert.EqualValues(t, 0, perf.MissCount)
 
 	t.Log("btc:usd must be deleted")
-	assert.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)},
+	assert.Equal(t, []asset.Pair{asset.PAIR_ATOM},
 		fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 	require.False(t, fixture.OracleKeeper.WhitelistedPairs.Has(
-		fixture.Ctx, asset.Registry.Pair(denoms.BTC, denoms.USD)))
+		fixture.Ctx, asset.PAIR_BTC,
+	))
 
 	t.Log("vote from vals 0-3 on atom:usd")
 	priceVoteFromVal(0, block)

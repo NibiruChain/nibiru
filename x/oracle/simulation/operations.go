@@ -35,7 +35,11 @@ const (
 )
 
 var (
-	whitelist                     = []asset.Pair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.ETH, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	whitelist = []asset.Pair{
+		asset.NewPair(denoms.BTC, denoms.NUSD),
+		asset.NewPair(denoms.ETH, denoms.NUSD),
+		asset.NewPair(denoms.NIBI, denoms.NUSD),
+	}
 	voteHashMap map[string]string = make(map[string]string)
 )
 
