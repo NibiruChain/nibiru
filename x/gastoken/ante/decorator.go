@@ -171,7 +171,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *ke
 
 		feesAmount := fees[0].Amount
 
-		if wnibiBal.Cmp(feesAmount.BigInt()) >= 0 {
+		if wnibiBal.Cmp(evm.NativeToWei(feesAmount.BigInt())) >= 0 {
 			// If the user has enough WNIBI, just deduct in WNIBI
 			err = ek.Erc20Transfer(ctx, gethcommon.HexToAddress(wnibi), sender, feeCollector, evm.NativeToWei(feesAmount.BigInt()))
 			if err != nil {
@@ -181,6 +181,7 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *ke
 			if err := WithdrawFeeToken(ctx, ek, accountkeeper, gethcommon.HexToAddress(wnibi), feeCollector, big.NewInt(0)); err != nil {
 				return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
 			}
+			return nil
 		}
 
 		gasTokens := gtk.GetFeeTokens(ctx)
@@ -213,17 +214,17 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *ke
 					return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
 				}
 
-				break
+				if err := acc.SetSequence(nonce); err != nil {
+					return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+				}
+
+				accountkeeper.SetAccount(ctx, acc)
+
+				return nil
 			}
 		}
 
-		if err := acc.SetSequence(nonce); err != nil {
-			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
-		}
-
-		accountkeeper.SetAccount(ctx, acc)
-
-		return nil
+		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "insufficient balance across supported gas tokens to cover %s", feesAmount)
 
 	} else {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "fee denom must be %s, got %s", appconst.BondDenom, fees[0].Denom)
@@ -274,7 +275,7 @@ func WithdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKee
 	}
 
 	if resp.Failed() {
-		return sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw with VM error")
+		return fmt.Errorf("WNIBI withdraw failed: %s", resp.VmError)
 	}
 
 	if err := stateDB.Commit(); err != nil {

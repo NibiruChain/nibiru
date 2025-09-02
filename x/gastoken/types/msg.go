@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -38,6 +39,17 @@ func (m MsgUpdateFeeToken) ValidateBasic() error {
 
 	if !m.Action.IsValid() {
 		return fmt.Errorf("invalid action: must be 0 (add token) or 1 (remove token)")
+	}
+	// Validate ERC-20 address
+	if !gethcommon.IsHexAddress(m.FeeToken.Erc20Address) {
+		return fmt.Errorf("invalid fee_token.erc20_address: %q", m.FeeToken.Erc20Address)
+	}
+	if gethcommon.HexToAddress(m.FeeToken.Erc20Address) == (gethcommon.Address{}) {
+		return fmt.Errorf("fee_token.erc20_address must not be the zero address")
+	}
+	// Name required only when adding
+	if m.Action == FeeTokenUpdateAction_FEE_TOKEN_ACTION_ADD && m.FeeToken.Name == "" {
+		return fmt.Errorf("fee_token.name must be set for add action")
 	}
 	return nil
 }

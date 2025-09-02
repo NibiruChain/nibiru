@@ -117,7 +117,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
 		}
 
-		if err = anteDec.deductFee(ctx, fees, from, msgEthTx); err != nil {
+		if err = anteDec.deductFee(ctx, fees, from); err != nil {
 			return ctx, err
 		}
 
@@ -170,7 +170,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 // deductFee checks if the fee payer has enough funds to pay for the fees and
 // deducts them.
 func (anteDec AnteDecEthGasConsume) deductFee(
-	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress, msgEthTx *evm.MsgEthereumTx,
+	ctx sdk.Context, fees sdk.Coins, feePayer sdk.AccAddress,
 ) error {
 	if fees.IsZero() {
 		return nil
@@ -260,8 +260,4 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		}
 		return nil
 	}
-	return fmt.Errorf(
-		"fee payer %s has no enough balance to pay for the fees %s",
-		feePayerAddr.String(), fees.String(),
-	)
 }

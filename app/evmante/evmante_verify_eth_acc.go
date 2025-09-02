@@ -96,6 +96,9 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			return ctx, sdkioerrors.Wrapf(err, "failed to get gastoken params")
 		}
 		wnibi := params.WnibiAddress
+		if !gethcommon.IsHexAddress(wnibi) {
+			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid WNIBI address in params: %q", wnibi)
+		}
 
 		wnibiBal, err := anteDec.evmKeeper.GetErc20Balance(ctx, fromAddr, gethcommon.HexToAddress(wnibi))
 		if err != nil {
