@@ -9,7 +9,11 @@ import (
 // DefaultGenesis returns the default txfee genesis state.
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:    Params{},
+		Params: Params{
+			UniswapV3SwapRouterAddress: gethcommon.Address{}.String(),
+			UniswapV3QuoterAddress:     gethcommon.Address{}.String(),
+			WnibiAddress:               gethcommon.Address{}.String(),
+		},
 		Feetokens: []FeeToken{},
 	}
 }

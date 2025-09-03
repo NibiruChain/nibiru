@@ -233,18 +233,23 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
 
 		feesAmount := fees[0].Amount
-
-		if wnibiBal.Cmp(evm.NativeToWei(feesAmount.BigInt())) >= 0 {
-			// If the user has enough WNIBI, just deduct in WNIBI
-			err = anteDec.evmKeeper.Erc20Transfer(ctx, gethcommon.HexToAddress(wnibi), feePayerAddr, feeCollector, evm.NativeToWei(feesAmount.BigInt()))
-			if err != nil {
-				return sdkioerrors.Wrapf(err, "failed to transfer WNIBI from %s to fee collector", feePayerAddr)
-			}
-
-			if err := gastokenante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(wnibi), feeCollector, big.NewInt(0)); err != nil {
-				return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
-			}
+		if wnibiBal.Cmp(evm.NativeToWei(feesAmount.BigInt())) < 0 {
+			return sdkerrors.ErrInsufficientFee.Wrapf(
+				"insufficient WNIBI for fees: have %s want %s",
+				wnibiBal.String(), evm.NativeToWei(feesAmount.BigInt()).String(),
+			)
 		}
+
+		// If the user has enough WNIBI, just deduct in WNIBI
+		err = anteDec.evmKeeper.Erc20Transfer(ctx, gethcommon.HexToAddress(wnibi), feePayerAddr, feeCollector, evm.NativeToWei(feesAmount.BigInt()))
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to transfer WNIBI from %s to fee collector", feePayerAddr)
+		}
+
+		if err := gastokenante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(wnibi), feeCollector, big.NewInt(0)); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
+		}
+
 		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
 		if err := acc.SetSequence(nonce); err != nil {
 			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)

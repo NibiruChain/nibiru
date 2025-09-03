@@ -78,7 +78,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 
 				feeTokens := s.app.GasTokenKeeper.GetFeeTokens(s.ctx)
 				sortFeeTokens(feeTokens)
-				expected := append([]types.FeeToken(nil), tc.genesis.Feetokens...)
+				expected := append([]types.FeeToken{}, tc.genesis.Feetokens...)
 				sortFeeTokens(expected)
 				s.Require().Equal(expected, feeTokens)
 

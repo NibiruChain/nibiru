@@ -4,9 +4,11 @@ import (
 	"math/big"
 
 	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -64,7 +66,16 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
+			deployResp, err := evmtest.DeployContract(
+				&deps,
+				embeds.SmartContract_WNIBI,
+			)
+			s.Require().NoError(err)
 			stateDB := deps.NewStateDB()
+			gasTokenParams, err := deps.App.GasTokenKeeper.Params.Get(deps.Ctx)
+			require.NoError(s.T(), err)
+			gasTokenParams.WnibiAddress = deployResp.ContractAddr.String()
+			deps.App.GasTokenKeeper.Params.Set(deps.Ctx, gasTokenParams)
 			anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.AppKeepers.EvmKeeper, &deps.App.AppKeepers.AccountKeeper, &deps.App.GasTokenKeeper)
 
 			tc.beforeTxSetup(&deps, stateDB)
@@ -72,7 +83,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			s.Require().NoError(stateDB.Commit())
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
-			_, err := anteDec.AnteHandle(
+			_, err = anteDec.AnteHandle(
 				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
