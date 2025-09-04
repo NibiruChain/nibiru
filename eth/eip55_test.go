@@ -231,3 +231,40 @@ func (s *EIP55AddrSuite) TestStringEncoding() {
 	s.Require().NoError(err)
 	s.Require().EqualValues(addrHex, newAddr.Hex())
 }
+
+// Ensure Unmarshal accepts ASCII hex strings (with/without 0x) in addition to raw 20 bytes.
+func (s *EIP55AddrSuite) TestUnmarshalAcceptsASCIIHexStrings() {
+	expected := gethcommon.HexToAddress("0xb45ad9d1cf36cb1a55cf5f781a791415846465d3")
+
+	for idx, input := range []string{
+		"0xb45ad9d1cf36cb1a55cf5f781a791415846465d3", // lower, with 0x
+		"b45ad9d1cf36cb1a55cf5f781a791415846465d3",   // lower, without 0x
+		"0xB45AD9D1CF36CB1A55CF5F781A791415846465D3", // upper, with 0x
+	} {
+		s.Run("ascii-hex-"+strconv.Itoa(idx), func() {
+			var got eth.EIP55Addr
+			// Pass the ASCII hex string bytes to Unmarshal, simulating a client
+			// that encoded the hex string directly in protobuf bytes.
+			err := got.Unmarshal([]byte(input))
+			s.Require().NoError(err)
+
+			s.Equal(expected, got.Address)
+
+			// Round-trip back to bytes should equal the raw 20 bytes
+			bz, err := got.Marshal()
+			s.Require().NoError(err)
+			s.Equal(expected.Bytes(), bz)
+
+			// Size should be exactly 20 bytes
+			s.Equal(20, got.Size())
+		})
+	}
+
+	// Raw 20-byte input still works (baseline behavior)
+	s.Run("raw-20-bytes", func() {
+		var got eth.EIP55Addr
+		err := got.Unmarshal(expected.Bytes())
+		s.Require().NoError(err)
+		s.Equal(expected, got.Address)
+	})
+}
