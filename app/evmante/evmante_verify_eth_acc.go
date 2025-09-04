@@ -54,22 +54,18 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		if !ok {
 			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
 		}
-
 		txData, err := evm.UnpackTxData(msgEthTx.Data)
 		if err != nil {
 			return ctx, sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", i)
 		}
-
 		// sender address should be in the tx cache from the previous AnteHandle call
 		from := msgEthTx.GetFrom()
 		if from.Empty() {
 			return ctx, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
 		}
-
 		// check whether the sender address is EOA
 		fromAddr := gethcommon.BytesToAddress(from)
 		acct := anteDec.evmKeeper.GetAccount(ctx, fromAddr)
-
 		if acct == nil {
 			acc := anteDec.accountKeeper.NewAccountWithAddress(ctx, from)
 			anteDec.accountKeeper.SetAccount(ctx, acc)
@@ -78,7 +74,6 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidType,
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
-
 		cost := txData.Cost()
 		if cost.Sign() < 0 {
 			return ctx, sdkioerrors.Wrapf(
@@ -104,7 +99,6 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		if err != nil {
 			return ctx, sdkioerrors.Wrapf(err, "failed to get WNIBI balance for account %s", fromAddr)
 		}
-
 		if wnibiBal.Cmp(cost) >= 0 {
 			ctx = ctx.WithValue(useWNibiKey, true)
 			continue

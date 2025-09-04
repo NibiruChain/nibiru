@@ -142,6 +142,18 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 }
 
 func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *keeper.Keeper, bankKeeper authtypes.BankKeeper, ctx sdk.Context, acc authtypes.AccountI, fees sdk.Coins) error {
+	gasMeterBefore := ctx.GasMeter()
+	gasConsumedBefore := gasMeterBefore.GasConsumed()
+	baseOpGasConsumed := uint64(0)
+
+	defer func() {
+		// NOTE: we have to refund the entire gasMeterBefore because it's modified by AfterOp
+		// stateDB.getStateObject() reads from state using the local root ctx which affects the gas meter
+		gasMeterBefore.RefundGas(gasMeterBefore.GasConsumed(), "")
+		gasMeterBefore.ConsumeGas(gasConsumedBefore+baseOpGasConsumed, "DeductFeeDecorator invariant")
+		fmt.Println("baseOpGasConsumed :", baseOpGasConsumed)
+	}()
+
 	// Checks the validity of the fee tokens (sorted, have positive amount, valid and unique denomination)
 	if !fees.IsValid() {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "invalid fee amount: %s", fees)
@@ -153,6 +165,8 @@ func DeductFees(accountkeeper types.AccountKeeper, ek *evmkeeper.Keeper, gtk *ke
 			return nil
 		}
 
+		baseOpGasConsumed = ctx.GasMeter().GasConsumed()
+		ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 		// First fall back to wnibi
 
 		params, err := gtk.GetParams(ctx)
