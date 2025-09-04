@@ -47,6 +47,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 -->
 
 - [#2353](https://github.com/NibiruChain/nibiru/pull/2353) - refactor(oracle): remove dead code from asset registry 
+- [#2371](https://github.com/NibiruChain/nibiru/pull/2371) - feat(evm): fix UnmarshalJSON to accept ASCII hex strings
 - [#2372](https://github.com/NibiruChain/nibiru/pull/2372) - feat(tokenfactory-cli): add CLI commands for set denom functions
 
 ### Dependencies
