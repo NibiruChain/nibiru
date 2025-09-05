@@ -113,6 +113,7 @@ func (s *GenesisSuite) TestValidateGenesis() {
 		{
 			name:     "empty genesis",
 			genState: &evm.GenesisState{},
+			wantErr:  "ParamsError: evm.Params.CanonicalWnibi cannot be the zero address",
 		},
 		{
 			name: "copied genesis",
@@ -129,6 +130,7 @@ func (s *GenesisSuite) TestValidateGenesis() {
 						Address: gethcommon.Address{}.String(), // zero address
 					},
 				},
+				Params: evm.DefaultParams(),
 			},
 		},
 		{
@@ -173,10 +175,11 @@ func (s *GenesisSuite) TestValidateGenesis() {
 			},
 		},
 		{
-			name: "happy: empty params",
+			name: "empty params",
 			genState: &evm.GenesisState{
 				Params: evm.Params{},
 			},
+			wantErr: "ParamsError",
 		},
 	}
 

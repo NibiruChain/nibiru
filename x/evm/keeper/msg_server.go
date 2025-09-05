@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -751,6 +753,154 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// ConvertEvmToCoin Sends an ERC20 token with a valid "FunToken" mapping to the
+// given recipient address as a bank coin.
+func (k *Keeper) ConvertEvmToCoin(
+	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
+) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderBech32, erc20, amount, toAddr, err := msg.Validate()
+	if err != nil {
+		return
+	}
+	senderEthAddr := eth.NibiruAddrToEthAddr(senderBech32)
+
+	stateDB := k.Bank.StateDB
+	if stateDB == nil {
+		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	}
+	defer func() {
+		k.Bank.StateDB = nil
+	}()
+
+	// TODO: Update the module params in the upgrade handler
+	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
+	evmParams := k.GetParams(ctx)
+	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
+		return k.convertEvmToCoinForWNIBI(
+			ctx, stateDB, erc20, senderEthAddr, senderBech32, toAddr, amount,
+		)
+	}
+
+	// Find the FunToken mapping for this ERC20
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+	if len(funTokens) != 1 {
+		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
+		return
+	}
+
+	funtokenMapping := funTokens[0]
+	amountBig := amount.BigInt()
+	if funtokenMapping.IsMadeFromCoin {
+		return k.convertEvmToCoinForCoinOriginated(
+			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		)
+	} else {
+		return k.convertEvmToCoinForERC20Originated(
+			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		)
+	}
+}
+
+func (k Keeper) convertEvmToCoinForWNIBI(
+	ctx sdk.Context,
+	stateDB *statedb.StateDB,
+	erc20 eth.EIP55Addr,
+	senderEthAddr gethcommon.Address,
+	senderBech32 sdk.AccAddress,
+	toAddr struct {
+		Eth    gethcommon.Address
+		Bech32 sdk.AccAddress
+	},
+	amount sdkmath.Int,
+) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
+	// isTx: value to use for commit in any EVM calls
+	isTx := true
+
+	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
+	}
+	contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
+		"withdraw",
+		withdrawWei.ToBig(),
+	)
+	if err != nil {
+		err = fmt.Errorf("ABI packing error in WNIBI.withdraw: %w", err)
+		return
+	}
+
+	var evmObj *vm.EVM
+	{
+		unusedBigInt := big.NewInt(0)
+		evmMsg := core.Message{
+			To:               &erc20.Address,
+			From:             senderEthAddr,
+			Nonce:            k.GetAccNonce(ctx, senderEthAddr),
+			Value:            unusedBigInt,
+			GasLimit:         Erc20GasLimitExecute,
+			GasPrice:         unusedBigInt,
+			GasFeeCap:        unusedBigInt,
+			GasTipCap:        unusedBigInt,
+			Data:             contractInput,
+			AccessList:       gethcore.AccessList{},
+			BlobGasFeeCap:    &big.Int{},
+			BlobHashes:       []gethcommon.Hash{},
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
+		}
+		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	}
+
+	if stateDB.GetCodeSize(erc20.Address) == 0 {
+		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Hex())
+		return
+	}
+
+	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
+		return
+	}
+
+	// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
+	evmResp, err := k.CallContractWithInput(
+		ctx,
+		evmObj,
+		senderEthAddr,  /* fromAcc */
+		&erc20.Address, /* contract */
+		isTx,           /* commit */
+		contractInput,
+		Erc20GasLimitExecute,
+	)
+	if err != nil {
+		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
+	} else if evmResp.Failed() {
+		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		return resp, err
+	}
+
+	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
+		return
+	}
+	if new(big.Int).Sub(wnibiBalBefore, wnibiBalAfter).Cmp(withdrawWei.ToBig()) != 0 {
+		err = fmt.Errorf("WNIBI withdraw failed: withdraw amount %s, balBefore %s, balAfter %s", withdrawWei, wnibiBalBefore, wnibiBalAfter)
+		return
+	}
+
+	withdrawnMicronibi := sdkmath.NewIntFromBigInt(
+		evm.WeiToNative(withdrawWei.ToBig()),
+	)
+	if err := k.Bank.SendCoins(ctx, senderBech32, toAddr.Bech32,
+		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, withdrawnMicronibi)),
+	); err != nil {
+		return resp, err
+	}
+	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
