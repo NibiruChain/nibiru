@@ -363,3 +363,4 @@ playwright/chrome-extensions/keplr/
 playwright/yarn.lock
 
 debug_container.dot
+precompile.test
