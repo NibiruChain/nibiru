@@ -14,8 +14,8 @@ func GetBuildWasmMsg() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build-stargate-wasm [message data]",
 		Short: "Build wasm Stargate message in Base64",
-		Long: `This message is used to build a Cosmos SDK,
-	in the format used to be sent as a Stargate message in a CosmWasm transaction.`,
+		Long: `This message is used to build an sdk.Msg as a protobuf Any 
+	type for use as a Stargate message in a CosmWasm transaction.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
