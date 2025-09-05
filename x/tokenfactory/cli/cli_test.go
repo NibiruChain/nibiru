@@ -1,9 +1,14 @@
 package cli_test
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io"
+	"os"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -14,6 +19,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
+	testutilmod "github.com/cosmos/cosmos-sdk/types/module/testutil"
 )
 
 var (
@@ -30,6 +43,8 @@ type TestSuite struct {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(CmdSuiteLite))
+
 	testutil.RetrySuiteRunIfDbClosed(t, func() {
 		suite.Run(t, new(TestSuite))
 	}, 2)
@@ -195,4 +210,188 @@ func (s *TestSuite) TestQueryModuleParams() {
 func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
+}
+
+type CmdTestCase struct {
+	name      string
+	args      []string
+	extraArgs []string
+	wantErr   string
+}
+
+// Flags for broadcasting transactions
+func (s *CmdSuiteLite) commonTxArgs() []string {
+	return []string{
+		"--yes=true", // skip confirmation
+		"--broadcast-mode=sync",
+		"--fees=1unibi",
+		"--chain-id=test-chain",
+	}
+}
+
+type CmdSuiteLite struct {
+	suite.Suite
+
+	keyring    keyring.Keyring
+	testEncCfg testutilmod.TestEncodingConfig
+
+	testAcc sdktestutil.TestAccount
+}
+
+func (s *CmdSuiteLite) SetupSuite() {
+	s.testEncCfg = testutilmod.TestEncodingConfig(app.MakeEncodingConfig())
+	s.keyring = keyring.NewInMemory(s.testEncCfg.Codec)
+
+	testAccs := sdktestutil.CreateKeyringAccounts(s.T(), s.keyring, 1)
+	s.testAcc = testAccs[0]
+}
+
+func (s *CmdSuiteLite) TestCmdSetDenomMetadata() {
+	s.T().Log(`Create a valid metadata file as "metadata.json"`)
+	tempDir := s.T().TempDir()
+	metadataFile, err := os.CreateTemp(tempDir, "metadata.json")
+	s.Require().NoError(err)
+	defer metadataFile.Close()
+
+	_, err = metadataFile.Write([]byte(`
+{
+  "description": "A short description of the token",
+  "denom_units": [
+    {
+      "denom": "testdenom"
+    },
+    {
+      "denom": "TEST",
+      "exponent": 6
+    }
+  ],
+  "base": "testdenom",
+  "display": "TEST",
+  "name": "Test Token",
+  "symbol": "TEST"
+}`),
+	)
+	s.Require().NoError(err)
+
+	metadatFilePath := metadataFile.Name()
+
+	testCases := []CmdTestCase{
+		{
+			name: "happy: set-denom-metadata",
+			args: []string{
+				"set-denom-metadata",
+				metadatFilePath,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "happy: sudo-set-denom-metadata",
+			args: []string{
+				"sudo-set-denom-metadata",
+				metadatFilePath,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "happy: template flag",
+			args: []string{
+				"set-denom-metadata",
+				"args.json",
+				"--template",
+			},
+			extraArgs: []string{},
+			wantErr:   "",
+		},
+		{
+			name: "happy: template flag sudo",
+			args: []string{
+				"sudo-set-denom-metadata",
+				"args.json",
+				"--template",
+			},
+			extraArgs: []string{},
+			wantErr:   "",
+		},
+		{
+			name: "sad: no FILE given",
+			args: []string{
+				"set-denom-metadata",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "accepts 1 arg(s), received 0",
+		},
+		{
+			name: "sad: file does not exist",
+			args: []string{
+				"set-denom-metadata",
+				"not-a-file.json",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "no such file or directory",
+		},
+	}
+
+	for _, tc := range testCases {
+		testOutput := new(bytes.Buffer)
+		tc.RunTxCmd(
+			s,
+			cli.NewTxCmd(),
+			testOutput,
+		)
+	}
+}
+
+func (tc CmdTestCase) NewCtx(s *CmdSuiteLite) sdkclient.Context {
+	return sdkclient.Context{}.
+		WithKeyring(s.keyring).
+		WithTxConfig(s.testEncCfg.TxConfig).
+		WithCodec(s.testEncCfg.Codec).
+		WithClient(sdktestutilcli.MockTendermintRPC{Client: rpcclientmock.Client{}}).
+		WithAccountRetriever(sdkclient.MockAccountRetriever{}).
+		WithOutput(io.Discard).
+		WithChainID("test-chain")
+}
+
+func (tc CmdTestCase) RunTxCmd(s *CmdSuiteLite, txCmd *cobra.Command, output io.Writer) {
+	s.Run(tc.name, func() {
+		ctx := svrcmd.CreateExecuteContext(context.Background())
+
+		cmd := txCmd
+		cmd.SetContext(ctx)
+		cmd.SetOutput(output)
+		args := append(tc.args, s.commonTxArgs()...)
+		cmd.SetArgs(append(args, tc.extraArgs...))
+
+		s.Require().NoError(sdkclient.SetCmdClientContextHandler(tc.NewCtx(s), cmd))
+
+		err := cmd.Execute()
+		if tc.wantErr != "" {
+			s.Require().ErrorContains(err, tc.wantErr)
+			return
+		}
+		s.Require().NoError(err)
+	})
+}
+
+func (tc CmdTestCase) RunQueryCmd(s *CmdSuiteLite, queryCmd *cobra.Command, output io.Writer) {
+	s.Run(tc.name, func() {
+		ctx := svrcmd.CreateExecuteContext(context.Background())
+
+		cmd := queryCmd
+		cmd.SetContext(ctx)
+		cmd.SetOutput(output)
+		args := tc.args // don't append common tx args
+		cmd.SetArgs(append(args, tc.extraArgs...))
+
+		s.Require().NoError(sdkclient.SetCmdClientContextHandler(tc.NewCtx(s), cmd))
+
+		err := cmd.Execute()
+		if tc.wantErr != "" {
+			s.Require().ErrorContains(err, tc.wantErr)
+			return
+		}
+		s.Require().NoError(err)
+	})
 }

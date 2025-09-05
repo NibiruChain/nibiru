@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
@@ -9,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -31,7 +34,8 @@ func NewTxCmd() *cobra.Command {
 		CmdMint(),
 		CmdBurn(),
 		CmdBurnNative(),
-		// CmdModifyDenomMetadata(), // CosmWasm only
+		CmdSetDenomMetadata(),
+		CmdSudoSetDenomMetadata(),
 	)
 
 	return cmd
@@ -250,4 +254,165 @@ $ nibid tx tokenfactory burn-native 100unibi
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+func CmdSetDenomMetadata() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: strings.TrimSpace(
+			`set-denom-metadata FILE [--template]
+		Arguments:
+		  FILE
+		         Name of a file containing new JSON metadata for the bank coin.
+		  [--template]
+		         Add this optional flag to create a template JSON file for new metadata.
+		Examples:
+		  nibid tx tokenfactory set-denom-metadata metadata.json
+		  nibid tx tokenfactory set-denom-metadata metadata.json --template
+		`),
+		Short: `Set bank coin metadata for a "tf/"-prefixed token as its admin`,
+		Long: strings.TrimSpace(`
+					Set bank coin metadata for a  Token Factory token ("tf/{creator}/{subdenom}") as its admin.
+		`),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			isTemplate, _ := cmd.Flags().GetBool("template")
+			if isTemplate {
+				metadata := bank.Metadata{
+					Description: "A short description of the token",
+					Base:        "foodenom",
+					Name:        "Foo Token (template)",
+					Display:     "FOO",
+					Symbol:      "FOO",
+					DenomUnits: []*bank.DenomUnit{
+						{
+							Denom:    "foodenom",
+							Exponent: 0,
+						},
+						{
+							Denom:    "FOO - This exponent determines ERC20 decimals",
+							Exponent: 6,
+							Aliases:  []string{},
+						},
+					},
+				}
+				jsonBz, _ := json.MarshalIndent(metadata, "", "  ")
+				fmt.Println(string(jsonBz))
+				return nil
+			}
+			fileContents, err := parseMetadataFromFile(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgSetDenomMetadata{
+				Sender:   clientCtx.GetFromAddress().String(),
+				Metadata: fileContents,
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Bool("template", false, "Optional flag to create a template JSON file for new metadata")
+
+	return cmd
+}
+
+func CmdSudoSetDenomMetadata() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: strings.TrimSpace(
+			`sudo-set-denom-metadata FILE [--template]
+
+Arguments:
+  FILE
+         Name of a file containing new JSON metadata for the bank coin.
+  [--template]
+         Add this optional flag to create a template JSON file for new metadata.
+
+Examples:
+  nibid tx tokenfactory sudo-set-denom-metadata metadata.json
+  nibid tx tokenfactory sudo-set-denom-metadata metadata.json --template
+`),
+		Short: `Set bank coin metadata with x/sudo permissions. Usable for ICS20, ERC20, and "tf" tokens`,
+		Long: strings.TrimSpace(`
+Set bank coin metadata with x/sudo permissions.
+
+Arguments:
+  FILE
+         Name of a file containing new JSON metadata for the bank coin.
+  [--template]
+         Add this optional flag to create a template JSON file for new metadata.
+
+Examples:
+  nibid tx tokenfactory sudo-set-denom-metadata metadata.json
+  nibid tx tokenfactory sudo-set-denom-metadata metadata.json --template
+`),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			isTemplate, _ := cmd.Flags().GetBool("template")
+			if isTemplate {
+				metadata := bank.Metadata{
+					Description: "A short description of the token",
+					Base:        "foodenom",
+					Name:        "Foo Token (template)",
+					Display:     "FOO",
+					Symbol:      "FOO",
+					DenomUnits: []*bank.DenomUnit{
+						{
+							Denom:    "foodenom",
+							Exponent: 0,
+						},
+						{
+							Denom:    "FOO - This exponent determines ERC20 decimals",
+							Exponent: 6,
+							Aliases:  []string{},
+						},
+					},
+				}
+				jsonBz, _ := json.MarshalIndent(metadata, "", "  ")
+				fmt.Println(string(jsonBz))
+				return nil
+			}
+
+			fileContents, err := parseMetadataFromFile(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgSudoSetDenomMetadata{
+				Sender:   clientCtx.GetFromAddress().String(),
+				Metadata: fileContents,
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Bool("template", false, "Optional flag to create a template JSON file for new metadata")
+
+	return cmd
+}
+
+func parseMetadataFromFile(path string) (bank.Metadata, error) {
+	var md bank.Metadata
+	bz, err := os.ReadFile(path)
+	if err != nil {
+		return md, fmt.Errorf("read file %q: %w", path, err)
+	}
+	if err := json.Unmarshal(bz, &md); err != nil {
+		return md, fmt.Errorf("unmarshal %q as bank.Metadata: %w", path, err)
+	}
+	return md, nil
 }
