@@ -2,7 +2,9 @@
 package evmante
 
 import (
+	"fmt"
 	"math"
+	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,23 +14,32 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
+	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
+	gastokentypes "github.com/NibiruChain/nibiru/v2/x/gastoken/types"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    *EVMKeeper
-	maxGasWanted uint64
+	evmKeeper      *EVMKeeper
+	accountKeeper  evm.AccountKeeper
+	gasTokenKeeper *gastokenkeeper.Keeper
+	maxGasWanted   uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
+	ak evm.AccountKeeper,
+	gtk *gastokenkeeper.Keeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		evmKeeper:    k,
-		maxGasWanted: maxGasWanted,
+		evmKeeper:      k,
+		accountKeeper:  ak,
+		gasTokenKeeper: gtk,
+		maxGasWanted:   maxGasWanted,
 	}
 }
 
@@ -165,10 +176,93 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		return nil
 	}
 
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
-		ctx, fees, gethcommon.BytesToAddress(feePayer),
-	); err != nil {
-		return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+	feePayerAddr := gethcommon.BytesToAddress(feePayer)
+
+	gasTokenUsed := ctx.Value(gasTokenUsedKey)
+	useWNibiVal := ctx.Value(useWNibiKey)
+	useWNibi, _ := useWNibiVal.(bool)
+
+	feeCollector := eth.NibiruAddrToEthAddr(anteDec.accountKeeper.GetModuleAddress(gastokentypes.ModuleName))
+	switch {
+	case gasTokenUsed != nil:
+		gasTokenStr, ok := gasTokenUsed.(string)
+		if !ok {
+			return fmt.Errorf("gas token address in context is not a string: %v", gasTokenUsed)
+		}
+
+		gasTokenAddress := gethcommon.HexToAddress(gasTokenStr)
+		amtVal := ctx.Value(gasTokenAmountKey)
+		gasTokenAmount, ok := amtVal.(*big.Int)
+		if !ok || gasTokenAmount == nil || gasTokenAmount.Sign() <= 0 {
+			return fmt.Errorf("invalid gas token amount in context: %v", amtVal)
+		}
+		params, err := anteDec.gasTokenKeeper.GetParams(ctx)
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to get gastoken params")
+		}
+		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
+		wnibi := params.WnibiAddress
+		if err := gastokenante.SwapFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, anteDec.gasTokenKeeper, feePayerAddr, gasTokenAddress, feeCollector, gasTokenAmount, evm.NativeToWei(fees[0].Amount.BigInt())); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to swap gas token %s", gasTokenAddress)
+		}
+
+		if err := gastokenante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(wnibi), feeCollector, big.NewInt(0)); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
+		}
+
+		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
+
+	case useWNibi:
+		params, err := anteDec.gasTokenKeeper.GetParams(ctx)
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to get gastoken params")
+		}
+		wnibi := params.WnibiAddress
+
+		wnibiBal, err := anteDec.evmKeeper.GetErc20Balance(ctx, feePayerAddr, gethcommon.HexToAddress(wnibi))
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to get WNIBI balance for account %s", feePayerAddr)
+		}
+
+		nonce := anteDec.evmKeeper.GetAccNonce(ctx, feePayerAddr)
+
+		feesAmount := fees[0].Amount
+		if wnibiBal.Cmp(evm.NativeToWei(feesAmount.BigInt())) < 0 {
+			return sdkerrors.ErrInsufficientFee.Wrapf(
+				"insufficient WNIBI for fees: have %s want %s",
+				wnibiBal.String(), evm.NativeToWei(feesAmount.BigInt()).String(),
+			)
+		}
+
+		// If the user has enough WNIBI, just deduct in WNIBI
+		err = anteDec.evmKeeper.Erc20Transfer(ctx, gethcommon.HexToAddress(wnibi), feePayerAddr, feeCollector, evm.NativeToWei(feesAmount.BigInt()))
+		if err != nil {
+			return sdkioerrors.Wrapf(err, "failed to transfer WNIBI from %s to fee collector", feePayerAddr)
+		}
+
+		if err := gastokenante.WithdrawFeeToken(ctx, anteDec.evmKeeper, anteDec.accountKeeper, gethcommon.HexToAddress(wnibi), feeCollector, big.NewInt(0)); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to withdraw base token %s", gethcommon.HexToAddress(wnibi))
+		}
+
+		acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+		if err := acc.SetSequence(nonce); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to set sequence to %d", nonce)
+		}
+
+		anteDec.accountKeeper.SetAccount(ctx, acc)
+		return nil
+	default:
+		if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+			ctx, fees, gethcommon.BytesToAddress(feePayer),
+		); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+		}
+		return nil
 	}
-	return nil
 }

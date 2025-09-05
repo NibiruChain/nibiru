@@ -26,6 +26,7 @@ import (
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	gastokenkeeper "github.com/NibiruChain/nibiru/v2/x/gastoken/keeper"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
@@ -65,6 +66,7 @@ type PublicKeepers struct {
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmkeeper.Keeper
+	GasTokenKeeper     gastokenkeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper         wasmkeeper.Keeper

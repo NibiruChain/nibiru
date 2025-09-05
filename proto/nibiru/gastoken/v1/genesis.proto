@@ -1,0 +1,17 @@
+syntax = "proto3";
+package nibiru.gastoken.v1;
+
+import "gogoproto/gogo.proto";
+import "nibiru/gastoken/v1/feetoken.proto";
+import "nibiru/gastoken/v1/params.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
+
+// GenesisState defines the gastoken module's genesis state.
+message GenesisState {
+  Params params = 1 [
+    (gogoproto.nullable) = false
+  ];
+  repeated FeeToken feetokens = 2 [ (gogoproto.nullable) = false ];
+}

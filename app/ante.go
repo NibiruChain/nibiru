@@ -12,6 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	gastokenante "github.com/NibiruChain/nibiru/v2/x/gastoken/ante"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -79,7 +80,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
 		// TODO: spike(security): Does minimum gas price of 0 pose a risk?
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1916
-		authante.NewDeductFeeDecorator(opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
+		gastokenante.NewDeductFeeDecorator(opts.GasTokenKeeper, opts.EvmKeeper, opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, nil),
 		// ----------- Ante Handlers:  devgas
 		devgasante.NewDevGasPayoutDecorator(opts.DevGasBankKeeper, opts.DevGasKeeper),
 		// ----------- Ante Handlers:  Keys and signatures
