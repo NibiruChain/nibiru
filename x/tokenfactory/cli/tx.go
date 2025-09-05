@@ -359,12 +359,35 @@ Examples:
 			if err != nil {
 				return err
 			}
+			isTemplate, _ := cmd.Flags().GetBool("template")
+			if isTemplate {
+				metadata := bank.Metadata{
+					Description: "A short description of the token",
+					Base:        "foodenom",
+					Name:        "Foo Token (template)",
+					Display:     "FOO",
+					Symbol:      "FOO",
+					DenomUnits: []*bank.DenomUnit{
+						{
+							Denom:    "foodenom",
+							Exponent: 0,
+						},
+						{
+							Denom:    "FOO - This exponent determines ERC20 decimals",
+							Exponent: 6,
+							Aliases:  []string{},
+						},
+					},
+				}
+				jsonBz, _ := json.MarshalIndent(metadata, "", "  ")
+				fmt.Println(string(jsonBz))
+				return nil
+			}
 
 			fileContents, err := parseMetadataFromFile(args[0])
 			if err != nil {
 				return err
 			}
-
 			msg := &types.MsgSudoSetDenomMetadata{
 				Sender:   clientCtx.GetFromAddress().String(),
 				Metadata: fileContents,
