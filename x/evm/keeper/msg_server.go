@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -535,12 +534,33 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 // ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
+//
+// In Nibiru v2.7.0, one special case was added to this function to handle
+// wrapped NIBI (WNIBI) conversions. How this works is, if the Bank Coin given is
+// NIBI, then WNIBI is treated as the fungible token mapping for the NIBI tokens.
+// This can only happen if WNIBI contract is well-defined (non-empty bytecode at
+// the contract address).
+//
+// If WNIBI is not well-defined, this function falls back to using the "FunToken"
+// mapping if one is present. That cannot happen on mainnet (Eth Chain ID 6900),
+// however it can for local networks and testnets, so we mention it here for
+// completeness.
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = msg.ValidateBasic()
+	if err != nil {
+		return
+	}
 
-	sender := sdk.MustAccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderBech32 := sdk.MustAccAddressFromBech32(msg.Sender)
+
+	if msg.BankCoin.Denom == appconst.BondDenom {
+		return k.convertCoinToEvmForWNIBI(
+			ctx, msg, senderBech32,
+		)
+	}
 
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
@@ -554,11 +574,11 @@ func (k *Keeper) ConvertCoinToEvm(
 
 	if fungibleTokenMapping.IsMadeFromCoin {
 		return k.convertCoinToEvmBornCoin(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	} else {
 		return k.convertCoinToEvmBornERC20(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	}
 }
@@ -620,6 +640,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		true, /*commit*/
 		contractInput,
 		Erc20GasLimitExecute,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -775,7 +796,6 @@ func (k *Keeper) ConvertEvmToCoin(
 		k.Bank.StateDB = nil
 	}()
 
-	// TODO: Update the module params in the upgrade handler
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
@@ -802,105 +822,6 @@ func (k *Keeper) ConvertEvmToCoin(
 			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 		)
 	}
-}
-
-func (k Keeper) convertEvmToCoinForWNIBI(
-	ctx sdk.Context,
-	stateDB *statedb.StateDB,
-	erc20 eth.EIP55Addr,
-	senderEthAddr gethcommon.Address,
-	senderBech32 sdk.AccAddress,
-	toAddr struct {
-		Eth    gethcommon.Address
-		Bech32 sdk.AccAddress
-	},
-	amount sdkmath.Int,
-) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	// isTx: value to use for commit in any EVM calls
-	isTx := true
-
-	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
-	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
-	}
-	contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
-		"withdraw",
-		withdrawWei.ToBig(),
-	)
-	if err != nil {
-		err = fmt.Errorf("ABI packing error in WNIBI.withdraw: %w", err)
-		return
-	}
-
-	var evmObj *vm.EVM
-	{
-		unusedBigInt := big.NewInt(0)
-		evmMsg := core.Message{
-			To:               &erc20.Address,
-			From:             senderEthAddr,
-			Nonce:            k.GetAccNonce(ctx, senderEthAddr),
-			Value:            unusedBigInt,
-			GasLimit:         Erc20GasLimitExecute,
-			GasPrice:         unusedBigInt,
-			GasFeeCap:        unusedBigInt,
-			GasTipCap:        unusedBigInt,
-			Data:             contractInput,
-			AccessList:       gethcore.AccessList{},
-			BlobGasFeeCap:    &big.Int{},
-			BlobHashes:       []gethcommon.Hash{},
-			SkipNonceChecks:  false,
-			SkipFromEOACheck: false,
-		}
-		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	}
-
-	if stateDB.GetCodeSize(erc20.Address) == 0 {
-		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Hex())
-		return
-	}
-
-	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
-	if err != nil {
-		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
-		return
-	}
-
-	// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
-	evmResp, err := k.CallContractWithInput(
-		ctx,
-		evmObj,
-		senderEthAddr,  /* fromAcc */
-		&erc20.Address, /* contract */
-		isTx,           /* commit */
-		contractInput,
-		Erc20GasLimitExecute,
-	)
-	if err != nil {
-		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
-	} else if evmResp.Failed() {
-		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
-		return resp, err
-	}
-
-	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
-	if err != nil {
-		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
-		return
-	}
-	if new(big.Int).Sub(wnibiBalBefore, wnibiBalAfter).Cmp(withdrawWei.ToBig()) != 0 {
-		err = fmt.Errorf("WNIBI withdraw failed: withdraw amount %s, balBefore %s, balAfter %s", withdrawWei, wnibiBalBefore, wnibiBalAfter)
-		return
-	}
-
-	withdrawnMicronibi := sdkmath.NewIntFromBigInt(
-		evm.WeiToNative(withdrawWei.ToBig()),
-	)
-	if err := k.Bank.SendCoins(ctx, senderBech32, toAddr.Bech32,
-		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, withdrawnMicronibi)),
-	); err != nil {
-		return resp, err
-	}
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

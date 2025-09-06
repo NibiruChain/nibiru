@@ -30,7 +30,7 @@ func TestConvertEvmToCoinSuite(t *testing.T) {
 
 func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := "unibi"
+	bankDenom := "ibc/testevm2coin"
 
 	// Create EVM for balance assertions
 	evmObj, _ := deps.NewEVM()
@@ -46,7 +46,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 		Base:    bankDenom,
 		Display: bankDenom,
 		Name:    bankDenom,
-		Symbol:  "NIBI",
+		Symbol:  "IBC-testE2C",
 	})
 
 	// Fund sender for FunToken creation fee
@@ -264,6 +264,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 			true, /* commit */
 			input,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 

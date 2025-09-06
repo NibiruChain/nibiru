@@ -93,6 +93,7 @@ func TestWhoAmI(t *testing.T) {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 	}
 
@@ -141,6 +142,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -183,6 +185,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
@@ -202,6 +205,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			true, /*commit*/
 			input,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError)
@@ -242,6 +246,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,                               // commit
 			contractInput,
 			keeper.Erc20GasLimitQuery,
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -306,6 +311,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -328,6 +334,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -350,6 +357,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			nil,
 		)
 		s.Require().ErrorContains(err, "execution reverted")
 		s.Require().NotZero(resp.GasUsed)
@@ -393,6 +401,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToEvm VMError")
@@ -439,6 +448,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToBank VMError")
@@ -547,6 +557,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,
 			contractInput,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 
@@ -573,6 +584,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,                                /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, /* gasLimit */
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -605,6 +617,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -713,7 +726,7 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 
 func (s *FuntokenSuite) TestGetErc20Address() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := "unibi" // Example bank denom
+	bankDenom := "testdenom" // Example bank denom
 
 	s.T().Log("Setup: Create FunToken mapping for unibi")
 	funtokenMapping := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
@@ -736,6 +749,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false,                               // Commit = false (it's a view call)
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // Use a reasonable gas limit for queries
+			nil,
 		)
 
 		s.Require().NoError(err, "CallContractWithInput failed")
@@ -768,6 +782,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 
 		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
@@ -793,6 +808,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 
 		// Expect an error because the Go handler validates the denom

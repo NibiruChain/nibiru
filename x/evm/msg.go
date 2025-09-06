@@ -22,7 +22,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -297,7 +297,7 @@ func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
 		return nil
 	}
 
-	return common.HexToAddress(msg.From).Bytes()
+	return gethcommon.HexToAddress(msg.From).Bytes()
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
@@ -319,11 +319,11 @@ func (msg MsgEthereumTx) AsMessage(
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
-func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (common.Address, error) {
+func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (gethcommon.Address, error) {
 	signer := gethcore.LatestSignerForChainID(chainID)
 	from, err := signer.Sender(msg.AsTransaction())
 	if err != nil {
-		return common.Address{}, err
+		return gethcommon.Address{}, err
 	}
 
 	msg.From = from.Hex()
@@ -406,7 +406,7 @@ func (m MsgUpdateParams) GetSignBytes() []byte {
 }
 
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
-func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
+func UnwrapEthereumMsg(tx *sdk.Tx, ethHash gethcommon.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
 		return nil, fmt.Errorf("invalid tx: nil")
 	}
@@ -510,10 +510,13 @@ func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return fmt.Errorf("invalid sender addr")
+		return fmt.Errorf("error in MsgConvertCoinToEvm: invalid sender addr: %w", err)
 	}
 	if m.ToEthAddr.String() == "" || m.ToEthAddr.Size() == 0 {
-		return fmt.Errorf("empty to_eth_addr")
+		return fmt.Errorf("error in MsgConvertCoinToEvm: empty to_eth_addr")
+	}
+	if err := m.BankCoin.Validate(); err != nil {
+		return fmt.Errorf("error in MsgConvertCoinToEvm: %w", err)
 	}
 	return nil
 }
@@ -535,7 +538,7 @@ func (m *MsgConvertEvmToCoin) Validate() (
 	erc20 eth.EIP55Addr,
 	amount sdkmath.Int,
 	toAddr struct {
-		Eth    common.Address
+		Eth    gethcommon.Address
 		Bech32 sdk.AccAddress
 	},
 	err error,
@@ -546,10 +549,10 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		return
 	}
 
-	err = eth.ValidateAddress(m.ToAddr)
+	ethAddr, err := eth.NewEIP55AddrFromStr(m.ToAddr)
 	if err == nil {
 		// err == nil means this is an Eth addr
-		toAddr.Eth = common.HexToAddress(m.ToAddr)
+		toAddr.Eth = ethAddr.Address
 		toAddr.Bech32 = eth.EthAddrToNibiruAddr(toAddr.Eth)
 	} else {
 		// Try bech32
@@ -561,7 +564,7 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		toAddr.Eth = eth.NibiruAddrToEthAddr(toAddr.Bech32)
 	}
 
-	if m.Erc20Addr.Address == (common.Address{}) {
+	if (m.Erc20Addr.Address == gethcommon.Address{}) {
 		err = fmt.Errorf("empty erc20_addr")
 		return
 	}

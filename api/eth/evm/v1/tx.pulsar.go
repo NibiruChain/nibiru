@@ -9479,14 +9479,22 @@ type MsgConvertEvmToCoin struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Sender: bech32 address for the signer of the transaction. This is also the
-	// address whose ERC20 balance will be deducted.
+	// Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
+	// This is also the address whose ERC20 balance will be deducted.
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Hexadecimal address of the ERC20 token to be converted and sent
 	Erc20Addr string `protobuf:"bytes,2,opt,name=erc20_addr,json=erc20Addr,proto3" json:"erc20_addr,omitempty"`
 	// Amount of ERC20 tokens to convert
 	Amount string `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	// Recipient address in bech32 format for the bank coins
+	// Recipient address for the bank coins in Ethereum hexadecimal or
+	// nibi-prefixed Bech32 format.
+	//
+	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
+	// because the function that maps between Bech32 and Eth hex addresses is not
+	// bijective for these types of accounts.
+	//
+	// See [bug(evm): nibid q evm account is not symmetric for wasm
+	// addresses](https://github.com/NibiruChain/nibiru/issues/2138)
 	ToAddr string `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
 }
 

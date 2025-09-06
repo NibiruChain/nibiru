@@ -214,6 +214,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 			true,                     /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
@@ -235,6 +236,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 			true,                                /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
@@ -264,6 +266,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 			true,                                /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().Error(err, evmResp.String())
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
@@ -447,6 +450,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 		true,
 		input,
 		evmtest.FunTokenGasLimitSendToEvm,
+		nil,
 	)
 	s.Require().ErrorContains(err, "gas required exceeds allowance")
 	s.Require().NotZero(evmResp.GasUsed)
@@ -503,6 +507,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 		false,               /*commit*/
 		contractInput,
 		10_000_000,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotZero(evmResp.GasUsed)
@@ -521,6 +526,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 		true,                /*commit*/
 		contractInput,
 		10_000_000,
+		nil,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
 	s.Require().NotZero(evmResp.GasUsed)
@@ -583,6 +589,7 @@ func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
 		true,                                /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
@@ -662,6 +669,7 @@ func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 		true,
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())

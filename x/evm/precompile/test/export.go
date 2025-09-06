@@ -197,6 +197,7 @@ func AssertWasmCounterStateWithEvm(
 		false,
 		contractInput,
 		WasmGasLimitQuery,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(evmResp.Ret)
@@ -301,6 +302,7 @@ func IncrementWasmCounterWithExecuteMulti(
 		commit,
 		contractInput,
 		WasmGasLimitExecute,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
