@@ -126,9 +126,17 @@ type BalanceAssertNIBI struct {
 	BalanceBank  *big.Int
 	BalanceERC20 *big.Int
 	Description  string
+	EvmObj       *vm.EVM
 }
 
-func (bals BalanceAssertNIBI) Assert(t *testing.T, deps TestDeps, evmObj *vm.EVM) {
+func (bals BalanceAssertNIBI) Assert(t *testing.T, deps TestDeps) {
+	var evmObj *vm.EVM
+	if bals.EvmObj != nil {
+		evmObj = bals.EvmObj
+	} else {
+		evmObj, _ = deps.NewEVM()
+	}
+
 	AssertBankBalanceEqualWithDescription(
 		t, deps, appconst.BondDenom, bals.Account, bals.BalanceBank,
 		"(bank)"+bals.Description,

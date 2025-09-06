@@ -5,13 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -23,7 +21,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
-func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
+func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
 	deps := evmtest.NewTestDeps()
 
 	// assert that the ERC20 contract is not deployed
@@ -167,7 +165,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20() {
 	})
 }
 
-func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
+func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 	deps := evmtest.NewTestDeps()
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -361,7 +359,7 @@ func (s *FunTokenFromErc20Suite) TestSendFromEvmToBank_MadeFromErc20() {
 // TestCreateFunTokenFromERC20MaliciousName tries to create funtoken from a contract
 // with a malicious (gas intensive) name() function.
 // Fun token should fail creation with "out of gas"
-func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20MaliciousName() {
+func (s *SuiteFunToken) TestCreateFunTokenFromERC20MaliciousName() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy ERC20MaliciousName")
@@ -401,7 +399,7 @@ func (s *FunTokenFromErc20Suite) TestCreateFunTokenFromERC20MaliciousName() {
 // TestFunTokenFromERC20MaliciousTransfer creates a funtoken from a contract
 // with a malicious (gas intensive) transfer() function.
 // Fun token should be created but sending from erc20 to bank should fail with out of gas
-func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
+func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	deps := evmtest.NewTestDeps()
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -460,7 +458,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenFromERC20MaliciousTransfer() {
 
 // TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
 // with a malicious recursive balanceOf() and transfer() functions.
-func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
+func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	deps := evmtest.NewTestDeps()
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -536,7 +534,7 @@ func (s *FunTokenFromErc20Suite) TestFunTokenInfiniteRecursionERC20() {
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.
 // Test ensures that after sending ERC20 token to coin and back, all bank coins are burned.
-func (s *FunTokenFromErc20Suite) TestSendERC20WithFee() {
+func (s *SuiteFunToken) TestSendERC20WithFee() {
 	deps := evmtest.NewTestDeps()
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -628,7 +626,7 @@ type MkrMetadata struct {
 	Symbol [32]byte
 }
 
-func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
+func (s *SuiteFunToken) TestFindMKRMetadata() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy MKR")
@@ -685,12 +683,4 @@ func (s *FunTokenFromErc20Suite) TestFindMKRMetadata() {
 		Decimals: 18,
 	}
 	s.Require().Equal(actualMetadata, *info)
-}
-
-type FunTokenFromErc20Suite struct {
-	suite.Suite
-}
-
-func TestFunTokenFromErc20Suite(t *testing.T) {
-	suite.Run(t, new(FunTokenFromErc20Suite))
 }

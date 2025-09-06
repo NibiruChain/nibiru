@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -21,11 +22,32 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	msg *evm.MsgConvertCoinToEvm,
 	senderBech32 sdk.AccAddress,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
-	// Check if WNIBI is well-defined.
-	// If it is, convert NIBI (Bank Coin) into WNIBI (ERC20)
-	evmParams := k.GetParams(ctx)
+	balMicronibi := k.Bank.GetBalance(ctx, senderBech32, msg.BankCoin.Denom)
+	if balMicronibi.IsLT(msg.BankCoin) {
+		err = fmt.Errorf(
+			"ConvertEvmToCoin: insufficient funds to send WNIBI, balance %s, msg.BankCoin %s", balMicronibi, msg.BankCoin,
+		)
+		return
+	}
 
-	// 1 | Sender deposits NIBI and receives WNIBI
+	var (
+		// Check if WNIBI is well-defined (non-zero bytecode size).
+		// If it is, convert NIBI -> WNIBI (Bank Coin -> ERC20)
+		evmParams = k.GetParams(ctx)
+
+		// isTx: value to use for commit in any EVM calls
+		isTx = true
+
+		senderEthAddr = eth.NibiruAddrToEthAddr(senderBech32)
+
+		// ERC20 contract taken to be WNIBI.sol
+		erc20 = evmParams.CanonicalWnibi
+	)
+
+	// -------------------------------------------------------------------------
+	// STEP 1: Sender deposits NIBI and receives WNIBI
+	// -------------------------------------------------------------------------
+
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
@@ -34,13 +56,8 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		k.Bank.StateDB = nil
 	}()
 
-	// isTx: value to use for commit in any EVM calls
-	isTx := true
-
-	senderEthAddr := eth.NibiruAddrToEthAddr(senderBech32)
-	erc20 := evmParams.CanonicalWnibi
 	if stateDB.GetCodeSize(erc20.Address) == 0 {
-		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Hex())
+		err = fmt.Errorf("ConvertCoinToEvm: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
 		return
 	}
 
@@ -84,7 +101,6 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		return
 	}
 
-	// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
@@ -108,23 +124,50 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		return
 	}
 
-	fmt.Println("TODO: UD-DEBUG: ")
-	fmt.Printf("wnibiBalBefore: %v\n", wnibiBalBefore)
-	fmt.Printf("wnibiBalAfter: %v\n", wnibiBalAfter)
-	fmt.Printf("senderEthAddr: %v\n", senderEthAddr)
-	fmt.Printf("evmResp: %v\n", evmResp)
-	fmt.Printf("erc20.Hex(): %v\n", erc20.Hex())
-	fmt.Printf("depositWei: %s\n", depositWei)
-
-	if new(big.Int).Sub(wnibiBalBefore, wnibiBalAfter).Cmp(depositWei) != 0 {
+	if new(big.Int).Sub(wnibiBalAfter, wnibiBalBefore).Cmp(depositWei) != 0 {
 		err = fmt.Errorf("WNIBI deposit failed: deposit amount %s, balBefore %s, balAfter %s", depositWei, wnibiBalBefore, wnibiBalAfter)
 		return
 	}
 
-	panic("WOOHOO!")
+	// -------------------------------------------------------------------------
+	// STEP 2: Sender tranfers WNIBI to intended recipient
+	// -------------------------------------------------------------------------
+	balIncrease, evmResp, err := k.ERC20().Transfer(
+		erc20.Address,         /*erc20Contract*/
+		senderEthAddr,         /*sender*/
+		msg.ToEthAddr.Address, /*recipient*/
+		depositWei,            /*amount*/
+		ctx,                   /*ctx*/
+		evmObj,                /*evmObj*/
+	)
+	if err != nil {
+		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
+	} else if evmResp.Failed() {
+		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		return resp, err
+	} else if balIncrease.Cmp(depositWei) != 0 {
+		err = fmt.Errorf(
+			"ConvertCoinToEvm: transfer of WNIBI succeeded but did not deliver the correct number of tokens: transfer amount %s, balance increase %s, senderHex %s, receipient %s",
+			depositWei,
+			balIncrease,
+			senderEthAddr,
+			msg.ToEthAddr.Hex(),
+		)
+		return
+	}
 
-	// 2 | Sender tranfers WNIBI to intended recipient
+	// Commit the stateDB to the BankKeeperExtension because we don't go through
+	// ApplyEvmMsg at all in this tx.
+	if err := stateDB.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit stateDB: %w", err)
+	}
 
-	// evmParams.CanonicalWnibi.He
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               senderBech32.String(),
+		Erc20ContractAddress: erc20.Hex(),
+		ToEthAddr:            msg.ToEthAddr.Hex(),
+		BankCoin:             msg.BankCoin,
+	})
 
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }

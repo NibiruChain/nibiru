@@ -11,14 +11,24 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// ------------------------------------------------------------
+// Test Suite struct definitions
+
+// TestAll: Runs all the tests in the suite.
+func TestAll(t *testing.T) {
+	suite.Run(t, new(Suite))
+	suite.Run(t, new(SuiteFunToken))
+}
+
 type Suite struct {
 	suite.Suite
 }
 
-// TestSuite: Runs all the tests in the suite.
-func TestSuite(t *testing.T) {
-	suite.Run(t, new(Suite))
+type SuiteFunToken struct {
+	suite.Suite
 }
+
+// ------------------------------------------------------------
 
 // TestIsSimulation verifies the IsSimulation helper function
 func (s *Suite) TestIsSimulation() {

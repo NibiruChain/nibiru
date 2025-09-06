@@ -61,7 +61,7 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
 		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
-		logger.NewStructLogger(&logger.Config{Debug: true}).Hooks(),
+		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
 		stateDB,
 	)
 	return evmObj, stateDB

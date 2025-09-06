@@ -3,14 +3,12 @@ package keeper_test
 
 import (
 	"math/big"
-	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
@@ -20,15 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
-type ConvertEvmToCoinSuite struct {
-	suite.Suite
-}
-
-func TestConvertEvmToCoinSuite(t *testing.T) {
-	suite.Run(t, new(ConvertEvmToCoinSuite))
-}
-
-func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
+func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "ibc/testevm2coin"
 
@@ -159,7 +149,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_CoinOriginatedToken() {
 	})
 }
 
-func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
+func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	deps := evmtest.NewTestDeps()
 
 	// Create EVM for balance assertions
@@ -299,7 +289,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	})
 }
 
-func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_Events() {
+func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "utest"
 
@@ -396,7 +386,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_Events() {
 	// )
 }
 
-func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_MultipleRecipients() {
+func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 	deps := evmtest.NewTestDeps()
 	bankDenom := "umulti"
 
@@ -481,7 +471,7 @@ func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_MultipleRecipients() {
 	}.Assert(s.T(), deps, evmObjAfter)
 }
 
-func (s *ConvertEvmToCoinSuite) TestConvertEvmToCoin_ForWNIBI() {
+func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 	toAcc := evmtest.NewEthPrivAcc()
 
 	s.Run("Should error if the ERC20 is WNIBI, but that contract does not exist", func() {

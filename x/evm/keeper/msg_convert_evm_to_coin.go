@@ -253,7 +253,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	}
 
 	if stateDB.GetCodeSize(erc20.Address) == 0 {
-		err = fmt.Errorf("ConvertEvmToCoin: the canonical WNIBI address in state is a not a smart contract: canonical WNIBI %s ", erc20.Hex())
+		err = fmt.Errorf("ConvertEvmToCoin: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
 		return
 	}
 
