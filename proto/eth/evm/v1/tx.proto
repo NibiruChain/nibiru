@@ -291,8 +291,8 @@ message MsgConvertCoinToEvmResponse {}
 
 // MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin representation
 message MsgConvertEvmToCoin {
-  // Sender: bech32 address for the signer of the transaction. This is also the
-  // address whose ERC20 balance will be deducted.
+  // Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
+  // This is also the address whose ERC20 balance will be deducted.
   string sender = 1;
 
   // Hexadecimal address of the ERC20 token to be converted and sent
@@ -307,7 +307,15 @@ message MsgConvertEvmToCoin {
     (gogoproto.nullable) = false
   ];
 
-  // Recipient address in bech32 format for the bank coins
+  // Recipient address for the bank coins in Ethereum hexadecimal or
+  // nibi-prefixed Bech32 format.
+  //
+  // Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
+  // because the function that maps between Bech32 and Eth hex addresses is not
+  // bijective for these types of accounts.
+  //
+  // See [bug(evm): nibid q evm account is not symmetric for wasm
+  // addresses](https://github.com/NibiruChain/nibiru/issues/2138)
   string to_addr = 4;
 }
 message MsgConvertEvmToCoinResponse {}
