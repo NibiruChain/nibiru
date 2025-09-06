@@ -6,10 +6,11 @@ package appconst
 
 import (
 	"fmt"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"runtime"
 	"strings"
+
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	db "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/version"

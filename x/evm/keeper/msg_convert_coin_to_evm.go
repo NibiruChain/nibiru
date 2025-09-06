@@ -126,5 +126,5 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	// 2 | Sender tranfers WNIBI to intended recipient
 
 	// evmParams.CanonicalWnibi.He
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
+
 }

@@ -120,14 +120,14 @@ func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -158,7 +158,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -169,8 +169,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 		evmtest.AssertERC20BalanceEqualWithDescription(
 			s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance",
 		)
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
 	})
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
@@ -217,10 +217,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
+			s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
+			s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
 		)
 
 		s.T().Log("Parse the response contract addr and response bytes")
@@ -262,7 +262,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps()
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	randomAcc := testutil.AccAddress()
 
 	deployResp, err := evmtest.DeployContract(
