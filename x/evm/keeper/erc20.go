@@ -20,9 +20,11 @@ import (
 const (
 	// Erc20GasLimitDeploy only used internally when deploying ERC20Minter.
 	Erc20GasLimitDeploy uint64 = 2_500_000
+
 	// Erc20GasLimitQuery used only for querying name, symbol and decimals
 	// Cannot be heavy. Only if the contract is malicious.
 	Erc20GasLimitQuery uint64 = 100_000
+
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
 	Erc20GasLimitExecute uint64 = 200_000
@@ -74,7 +76,7 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute), nil)
 }
 
 /*
@@ -100,7 +102,7 @@ func (e erc20Calls) Transfer(
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
-	resp, err = e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	resp, err = e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute), nil)
 	if err != nil {
 		return balanceIncrease, nil, err
 	}
@@ -172,7 +174,7 @@ func (e erc20Calls) Burn(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	return e.CallContractWithInput(ctx, evmObj, sender, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute), nil)
 }
 
 func (e erc20Calls) LoadERC20Name(
@@ -212,6 +214,7 @@ func (e erc20Calls) loadERC20String(
 		false,
 		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		nil,
 	)
 	if err != nil {
 		return out, err
@@ -255,6 +258,7 @@ func (e erc20Calls) loadERC20Uint8(
 		false,
 		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		nil,
 	)
 	if err != nil {
 		return out, err
@@ -298,6 +302,7 @@ func (e erc20Calls) LoadERC20BigInt(
 		false,
 		input,
 		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		nil,
 	)
 	if err != nil {
 		return nil, err

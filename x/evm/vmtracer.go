@@ -29,7 +29,7 @@ func NewTracer(
 ) *tracing.Hooks {
 	// TODO: feat(evm-vmtracer): enable additional log configuration
 	logCfg := &logger.Config{
-		Debug: true,
+		Debug: false,
 	}
 
 	switch tracer {
@@ -56,7 +56,7 @@ func NewTracer(
 
 func NewDefaultTracer() *tracers.Tracer {
 	logCfg := &logger.Config{
-		Debug: true,
+		Debug: false,
 	}
 	defaultLogger := logger.NewStructLogger(logCfg)
 	return &tracers.Tracer{

@@ -109,3 +109,7 @@ func (h *EIP55Addr) UnmarshalJSON(bz []byte) error {
 func (h EIP55Addr) Size() int {
 	return len(h.Bytes())
 }
+
+func (h EIP55Addr) Equal(other EIP55Addr) bool {
+	return h.Address == other.Address
+}

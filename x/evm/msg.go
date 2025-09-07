@@ -22,7 +22,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,6 +35,7 @@ var (
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
 	_ sdk.Msg    = &MsgConvertCoinToEvm{}
+	_ sdk.Msg    = &MsgConvertEvmToCoin{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -296,7 +297,7 @@ func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
 		return nil
 	}
 
-	return common.HexToAddress(msg.From).Bytes()
+	return gethcommon.HexToAddress(msg.From).Bytes()
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
@@ -318,11 +319,11 @@ func (msg MsgEthereumTx) AsMessage(
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
-func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (common.Address, error) {
+func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (gethcommon.Address, error) {
 	signer := gethcore.LatestSignerForChainID(chainID)
 	from, err := signer.Sender(msg.AsTransaction())
 	if err != nil {
-		return common.Address{}, err
+		return gethcommon.Address{}, err
 	}
 
 	msg.From = from.Hex()
@@ -405,7 +406,7 @@ func (m MsgUpdateParams) GetSignBytes() []byte {
 }
 
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
-func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
+func UnwrapEthereumMsg(tx *sdk.Tx, ethHash gethcommon.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
 		return nil, fmt.Errorf("invalid tx: nil")
 	}
@@ -509,15 +510,86 @@ func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return fmt.Errorf("invalid sender addr")
+		return fmt.Errorf("error in MsgConvertCoinToEvm: invalid sender addr: %w", err)
 	}
 	if m.ToEthAddr.String() == "" || m.ToEthAddr.Size() == 0 {
-		return fmt.Errorf("empty to_eth_addr")
+		return fmt.Errorf("error in MsgConvertCoinToEvm: empty to_eth_addr")
+	}
+	if err := m.BankCoin.Validate(); err != nil {
+		return fmt.Errorf("error in MsgConvertCoinToEvm: %w", err)
 	}
 	return nil
 }
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
+
+// GetSigners returns the expected signers for a MsgConvertEvmToCoin message.
+func (m MsgConvertEvmToCoin) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{addr}
+}
+
+// Addrs holds Corresponding nibi-prefixed Bech32 and Ethereum hexadecimal
+// addresses for an account.
+type Addrs struct {
+	Eth    gethcommon.Address
+	Bech32 sdk.AccAddress
+}
+
+// Validate does a sanity check of the provided data
+func (m *MsgConvertEvmToCoin) Validate() (
+	sender Addrs,
+	erc20 eth.EIP55Addr,
+	amount sdkmath.Int,
+	toAddr Addrs,
+	err error,
+) {
+	senderBech32, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		err = fmt.Errorf("invalid sender address: %w", err)
+		return
+	}
+	sender.Bech32 = senderBech32
+	sender.Eth = eth.NibiruAddrToEthAddr(senderBech32)
+
+	ethAddr, err := eth.NewEIP55AddrFromStr(m.ToAddr)
+	if err == nil {
+		// err == nil means this is an Eth addr
+		toAddr.Eth = ethAddr.Address
+		toAddr.Bech32 = eth.EthAddrToNibiruAddr(toAddr.Eth)
+	} else {
+		// Try bech32
+		toAddr.Bech32, err = sdk.AccAddressFromBech32(m.ToAddr)
+		if err != nil {
+			err = fmt.Errorf("invalid bech32 or hex address: to_addr=\"%s\": %w", m.ToAddr, err)
+			return
+		}
+		toAddr.Eth = eth.NibiruAddrToEthAddr(toAddr.Bech32)
+	}
+
+	if (m.Erc20Addr.Address == gethcommon.Address{}) {
+		err = fmt.Errorf("empty erc20_addr")
+		return
+	}
+
+	if m.Amount.IsNil() || !m.Amount.IsPositive() {
+		err = fmt.Errorf("amount must be positive: amount=\"%s\"", m.Amount)
+		return
+	}
+
+	return sender, m.Erc20Addr, m.Amount, toAddr, nil
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgConvertEvmToCoin) ValidateBasic() error {
+	_, _, _, _, err := m.Validate()
+	return err
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgConvertEvmToCoin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
