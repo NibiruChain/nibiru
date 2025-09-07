@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	db "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/version"
 )
@@ -25,6 +27,14 @@ const (
 var (
 	DefaultDBBackend     db.BackendType = db.PebbleDBBackend
 	HavePebbleDBBuildTag bool
+
+	// MAINNET_WNIBI_ADDR is the (real) hex address of WNIBI on mainnet. NIBI acts as
+	// "ether" in the Nibiru EVM state. WNIBI is the Nibiru equivalent of WETH on
+	// Ethereum.
+	MAINNET_WNIBI_ADDR = gethcommon.HexToAddress("0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97")
+
+	// MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet.
+	MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
 )
 
 // RuntimeVersion returns a formatted string with versioning and build metadata,
