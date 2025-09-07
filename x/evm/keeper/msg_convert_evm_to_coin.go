@@ -210,7 +210,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	toAddrBech32 sdk.AccAddress,
 	amount sdkmath.Int,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-
 	// isTx: value to use for commit in any EVM calls
 	isTx := true
 

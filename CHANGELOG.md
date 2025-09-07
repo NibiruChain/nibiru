@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 <!--
-NOTE: The brackets around the word "Unreleased" are required to pass the [CI test
+NOTE: The brackets around the word "Unreleased" are required to pass the CI test
 that checks if we updated the changelog. This is a convention from the [keep a
 changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
