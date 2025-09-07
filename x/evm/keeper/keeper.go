@@ -43,6 +43,7 @@ type Keeper struct {
 	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
+	sudoKeeper    evm.SudoKeeper
 
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other

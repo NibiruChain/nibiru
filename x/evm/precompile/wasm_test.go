@@ -62,6 +62,7 @@ func (s *WasmSuite) TestInstantiate() {
 		true,
 		contractInput,
 		WasmGasLimitExecute,
+		nil,
 	)
 
 	s.Require().NoError(err)
@@ -106,6 +107,7 @@ func (s *WasmSuite) TestExecute() {
 			true,
 			contractInput,
 			WasmGasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotEmpty(ethTxResp.Ret)
@@ -141,6 +143,7 @@ func (s *WasmSuite) TestExecute() {
 			true,
 			contractInput,
 			WasmGasLimitExecute,
+			nil,
 		)
 
 		s.Require().NoError(err)
@@ -191,6 +194,7 @@ func (s *WasmSuite) TestQueryRaw() {
 		false, // commit
 		contractInput,
 		WasmGasLimitQuery,
+		nil,
 	)
 
 	s.Require().NoError(err)
@@ -231,6 +235,7 @@ func (s *WasmSuite) TestQuerySmart() {
 		false, // commit
 		contractInput,
 		WasmGasLimitQuery,
+		nil,
 	)
 
 	s.Require().NoError(err)
@@ -399,6 +404,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 				true,
 				contractInput,
 				WasmGasLimitExecute,
+				nil,
 			)
 
 			s.Require().ErrorContains(err, tc.wantError, "ethTxResp %v", ethTxResp)
@@ -537,6 +543,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 				true,
 				contractInput,
 				WasmGasLimitExecute,
+				nil,
 			)
 
 			if tc.wantError != "" {
@@ -589,6 +596,7 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		true,
 		contractInput,
 		WasmGasLimitExecute,
+		nil,
 	)
 
 	// Verify that the call failed
@@ -660,6 +668,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 
@@ -751,6 +760,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 

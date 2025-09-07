@@ -17,6 +17,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -40,7 +41,7 @@ var Upgrade = upgrades.Upgrade{
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
-			err := UpgradeStNibiContractOnMainnet(nibiru, ctx, MAINNET_STNIBI_ADDR)
+			err := UpgradeStNibiContractOnMainnet(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
 			if err != nil {
 				panic(fmt.Errorf("v2.5.0 upgrade failure: %w", err))
 			}
@@ -50,9 +51,6 @@ var Upgrade = upgrades.Upgrade{
 	},
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
-
-// MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet.
-var MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
 
 func UpgradeStNibiContractOnMainnet(
 	keepers *keepers.PublicKeepers,
@@ -160,7 +158,7 @@ func UpgradeStNibiContractOnMainnet(
 
 	evmResp, err := keepers.EvmKeeper.CallContractWithInput(
 		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
-		evmkeeper.Erc20GasLimitDeploy,
+		evmkeeper.Erc20GasLimitDeploy, nil,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to deploy ERC20 contract: %w", err)
