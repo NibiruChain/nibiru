@@ -284,9 +284,9 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		nil,
 	)
 	if err != nil {
-		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
+		return resp, fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: %w", err)
 	} else if evmResp.Failed() {
-		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		err = fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: VmError: %s", evmResp.VmError)
 		return resp, err
 	}
 

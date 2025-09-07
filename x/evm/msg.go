@@ -564,7 +564,7 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		// Try bech32
 		toAddr.Bech32, err = sdk.AccAddressFromBech32(m.ToAddr)
 		if err != nil {
-			err = fmt.Errorf("invalid bech32 or hex address: %w", err)
+			err = fmt.Errorf("invalid bech32 or hex address: to_addr=%q: %w", m.ToAddr, err)
 			return
 		}
 		toAddr.Eth = eth.NibiruAddrToEthAddr(toAddr.Bech32)
@@ -576,7 +576,7 @@ func (m *MsgConvertEvmToCoin) Validate() (
 	}
 
 	if m.Amount.IsNil() || !m.Amount.IsPositive() {
-		err = fmt.Errorf("amount must be positive")
+		err = fmt.Errorf("amount must be positive: amount=%q", m.Amount)
 		return
 	}
 

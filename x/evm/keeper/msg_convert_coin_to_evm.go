@@ -70,7 +70,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		"deposit",
 	)
 	if err != nil {
-		err = fmt.Errorf("ABI packing error in WNIBI.despoit: %w", err)
+		err = fmt.Errorf("ABI packing error in WNIBI.deposit: %w", err)
 		return resp, err
 	}
 
@@ -113,9 +113,9 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		depositWei,
 	)
 	if err != nil {
-		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
+		return resp, fmt.Errorf("failed to convert NIBI to WNIBI via WNIBI.deposit: %w", err)
 	} else if evmResp.Failed() {
-		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		err = fmt.Errorf("failed to convert NIBI to WNIBI via WNIBI.deposit: VmError: %s", evmResp.VmError)
 		return resp, err
 	}
 
@@ -131,7 +131,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 2: Sender tranfers WNIBI to intended recipient
+	// STEP 2: Sender transfers WNIBI to intended recipient
 	// -------------------------------------------------------------------------
 	balIncrease, evmResp, err := k.ERC20().Transfer(
 		erc20.Address,         /*erc20Contract*/
@@ -148,7 +148,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		return resp, err
 	} else if balIncrease.Cmp(depositWei) != 0 {
 		err = fmt.Errorf(
-			"ConvertCoinToEvm: transfer of WNIBI succeeded but did not deliver the correct number of tokens: transfer amount %s, balance increase %s, senderHex %s, receipient %s",
+			"ConvertCoinToEvm: transfer of WNIBI succeeded but did not deliver the correct number of tokens: transfer amount %s, balance increase %s, senderHex %s, recipient %s",
 			depositWei,
 			balIncrease,
 			senderEthAddr,
