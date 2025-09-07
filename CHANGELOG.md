@@ -62,6 +62,7 @@ handling for NIBI via WNIBI.
 - Bump `sha.js` from 2.4.11 to 2.4.12 ([#2366](https://github.com/NibiruChain/nibiru/pull/2366))
 - Bump `github.com/ulikunitz/xz` from 0.5.11 to 0.5.14 ([#2370](https://github.com/NibiruChain/nibiru/pull/2370))
 - Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2367](https://github.com/NibiruChain/nibiru/pull/2367))
+- Bump `github.com/hashicorp/go-getter` from 1.7.5 to 1.7.9 ([#2364](https://github.com/NibiruChain/nibiru/pull/2364))
 
 ## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
 
