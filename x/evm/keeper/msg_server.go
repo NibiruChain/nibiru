@@ -152,19 +152,19 @@ func (k *Keeper) NewEVM(
 	return evmObj
 }
 
-// GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
+// GetHashFn implements [vm.GetHashFunc] for the [vm.EVM] object. It handles 3 cases:
 //  1. The requested height matches the current height from context (and thus same epoch number)
 //  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
 		h, err := eth.SafeInt64(height)
-		if err != nil {
-			k.Logger(ctx).Error("failed to cast height to int64", "error", err)
-			return gethcommon.Hash{}
-		}
 
 		switch {
+		case err != nil:
+			k.Logger(ctx).Error("failed to cast height to int64", "error", err.Error())
+			return gethcommon.Hash{}
+
 		case ctx.BlockHeight() == h:
 			// Case 1: The requested height matches the one from the context, so
 			// we can retrieve the header hash directly from the context. Note:
@@ -179,7 +179,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			contextBlockHeader := ctx.BlockHeader()
 			header, err := cmttypes.HeaderFromProto(&contextBlockHeader)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 
@@ -199,7 +199,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 			header, err := cmttypes.HeaderFromProto(&histInfo.Header)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 

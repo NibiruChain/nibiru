@@ -53,7 +53,7 @@ func AddWnibiToNibiruEvm(
 		Address: wnibiAddrMainnet,
 	}
 
-	keepers.EvmKeeper.SetParams(ctx, evmParams)
+	err := keepers.EvmKeeper.SetParams(ctx, evmParams)
 
-	return nil
+	return err
 }

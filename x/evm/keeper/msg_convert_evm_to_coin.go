@@ -263,7 +263,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	// TODO: UD-DEBUG: deploy WNIBI in test and make sure this works.
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,

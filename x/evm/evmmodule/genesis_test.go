@@ -120,6 +120,7 @@ func (s *Suite) TestExportInitGenesis() {
 	}.Assert(s.T(), deps, evmObj)
 
 	s.T().Log("Export genesis")
+
 	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper)
 	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 	bankGensisState := deps.App.BankKeeper.ExportGenesis(deps.Ctx)
@@ -127,7 +128,7 @@ func (s *Suite) TestExportInitGenesis() {
 	s.T().Log("Init genesis from the exported state for modules [auth, bank, evm]")
 	deps = evmtest.NewTestDeps()
 	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-	deps.App.BankKeeper.InitGenesis(deps.Ctx, *&bankGensisState)
+	deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
 	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
 	s.T().Log("Verify erc20 balances for users A, B and sender")
