@@ -59,6 +59,7 @@ handling for NIBI via WNIBI.
 ### Dependencies
 - Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))
 - Bump `pbkdf2` from 3.1.2 to 3.1.3 ([#2356](https://github.com/NibiruChain/nibiru/pull/2356))
+- Bump `github.com/ulikunitz/xz` from 0.5.11 to 0.5.14 ([#2370](https://github.com/NibiruChain/nibiru/pull/2370))
 
 ## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
 
