@@ -38,9 +38,10 @@ func TestKeeperSuite(t *testing.T) {
 // - verifies that fungible token is in place and the balance is correct
 func (s *Suite) TestExportInitGenesis() {
 	var (
-		deps          = evmtest.NewTestDeps()
+		deps = evmtest.NewTestDeps()
+		// Keep the sender as a variable since "deps" will be reset after we export the genesis
+		depsSender    = deps.Sender
 		erc20Contract = embeds.SmartContract_TestERC20
-
 		toUserA       = gethcommon.HexToAddress("0xAE8A5F44A9b55Ae6D2c9C228253E8fAfb837d2F2")
 		toUserB       = gethcommon.HexToAddress("0xf893292542F2578F1004e62fd723901ddE5EC5Cf")
 		toUserC       = gethcommon.HexToAddress("0xe90f75496E744b92B52535bB05a29123D0D94D49")
@@ -95,7 +96,7 @@ func (s *Suite) TestExportInitGenesis() {
 			Description:  "EVM holds ERC20 tokens to back the newly minted Bank Coins",
 		}.Assert(s.T(), deps, evmObj)
 		evmtest.FunTokenBalanceAssert{
-			Account:     deps.Sender.EthAddr,
+			Account:     depsSender.EthAddr,
 			FunToken:    ft,
 			BalanceBank: big.NewInt(0),
 			BalanceERC20: new(big.Int).Sub(

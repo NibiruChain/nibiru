@@ -409,10 +409,10 @@ func parseMetadataFromFile(path string) (bank.Metadata, error) {
 	var md bank.Metadata
 	bz, err := os.ReadFile(path)
 	if err != nil {
-		return md, fmt.Errorf("read file %q: %w", path, err)
+		return md, fmt.Errorf("read file %+q: %w", path, err)
 	}
 	if err := json.Unmarshal(bz, &md); err != nil {
-		return md, fmt.Errorf("unmarshal %q as bank.Metadata: %w", path, err)
+		return md, fmt.Errorf("unmarshal %+q as bank.Metadata: %w", path, err)
 	}
 	return md, nil
 }
