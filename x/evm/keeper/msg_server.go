@@ -21,9 +21,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -151,19 +151,19 @@ func (k *Keeper) NewEVM(
 	return evmObj
 }
 
-// GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
+// GetHashFn implements [vm.GetHashFunc] for the [vm.EVM] object. It handles 3 cases:
 //  1. The requested height matches the current height from context (and thus same epoch number)
 //  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
 		h, err := eth.SafeInt64(height)
-		if err != nil {
-			k.Logger(ctx).Error("failed to cast height to int64", "error", err)
-			return gethcommon.Hash{}
-		}
 
 		switch {
+		case err != nil:
+			k.Logger(ctx).Error("failed to cast height to int64", "error", err.Error())
+			return gethcommon.Hash{}
+
 		case ctx.BlockHeight() == h:
 			// Case 1: The requested height matches the one from the context, so
 			// we can retrieve the header hash directly from the context. Note:
@@ -178,7 +178,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			contextBlockHeader := ctx.BlockHeader()
 			header, err := cmttypes.HeaderFromProto(&contextBlockHeader)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 
@@ -198,7 +198,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 			header, err := cmttypes.HeaderFromProto(&histInfo.Header)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 
@@ -533,12 +533,33 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 // ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
+//
+// In Nibiru v2.7.0, one special case was added to this function to handle
+// wrapped NIBI (WNIBI) conversions. How this works is, if the Bank Coin given is
+// NIBI, then WNIBI is treated as the fungible token mapping for the NIBI tokens.
+// This can only happen if WNIBI contract is well-defined (non-empty bytecode at
+// the contract address).
+//
+// If WNIBI is not well-defined, this function falls back to using the "FunToken"
+// mapping if one is present. That cannot happen on mainnet (Eth Chain ID 6900),
+// however it can for local networks and testnets, so we mention it here for
+// completeness.
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = msg.ValidateBasic()
+	if err != nil {
+		return
+	}
 
-	sender := sdk.MustAccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderBech32 := sdk.MustAccAddressFromBech32(msg.Sender)
+
+	if msg.BankCoin.Denom == appconst.BondDenom {
+		return k.convertCoinToEvmForWNIBI(
+			ctx, msg, senderBech32,
+		)
+	}
 
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
@@ -552,114 +573,26 @@ func (k *Keeper) ConvertCoinToEvm(
 
 	if fungibleTokenMapping.IsMadeFromCoin {
 		return k.convertCoinToEvmBornCoin(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	} else {
 		return k.convertCoinToEvmBornERC20(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	}
 }
 
-// Converts Bank Coins for FunToken mapping that was born from a coin
-// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
-// contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinToEvmBornCoin(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// 1 | Send Bank Coins to the EVM module
-	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+// ConvertEvmToCoin Sends an ERC20 token with a valid "FunToken" mapping to the
+// given recipient address as a bank coin.
+func (k *Keeper) ConvertEvmToCoin(
+	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
+) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderAddrs, erc20, amount, toAddrs, err := msg.Validate()
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to send coins to module account")
+		return
 	}
 
-	// 2 | Mint ERC20 tokens to the recipient
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, err
-	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.Bank.StateDB
-	if stateDB == nil {
-		stateDB = k.NewStateDB(ctx, txConfig)
-	}
-	defer func() {
-		k.Bank.StateDB = nil
-	}()
-
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
-		ctx,
-		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		true, /*commit*/
-		contractInput,
-		Erc20GasLimitExecute,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if evmResp.Failed() {
-		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
-	}
-
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Mint event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
-	}
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
-}
-
-// Converts a coin that was originally an ERC20 token, and that was converted to
-// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
-// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
-// the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinToEvmBornERC20(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// needs to run first to populate the StateDB on the BankKeeperExtension
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
@@ -668,89 +601,32 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		k.Bank.StateDB = nil
 	}()
 
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
-	if err := k.Bank.SendCoinsFromAccountToModule(
-		ctx,
-		sender,
-		evm.ModuleName,
-		sdk.NewCoins(coin),
-	); err != nil {
-		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
+	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
+	evmParams := k.GetParams(ctx)
+	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
+		return k.convertEvmToCoinForWNIBI(
+			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32, amount,
+		)
 	}
 
-	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
-	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
-	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
-	// in the BC → ERC20 conversion.
-	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin)); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
+	// Find the FunToken mapping for this ERC20
+	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+	if len(funTokens) != 1 {
+		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
+		return
 	}
 
-	// 2 | EVM sends ERC20 tokens to the "to" account.
-	// This should never fail due to the EVM account lacking ERc20 fund because
-	// the account must have sent the EVM module ERC20 tokens in the mapping
-	// in order to create the coins originally.
-	//
-	// Said another way, if an asset is created as an ERC20 and some amount is
-	// converted to its Bank Coin representation, a balance of the ERC20 is left
-	// inside the EVM module account in order to convert the coins back to
-	// ERC20s.
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, err
+	funtokenMapping := funTokens[0]
+	amountBig := amount.BigInt()
+	if funtokenMapping.IsMadeFromCoin {
+		return k.convertEvmToCoinForCoinOriginated(
+			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		)
+	} else {
+		return k.convertEvmToCoinForERC20Originated(
+			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		)
 	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	_, evmResp, err := k.ERC20().Transfer(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		recipient,
-		coin.Amount.BigInt(),
-		ctx,
-		evmObj,
-	)
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
-	}
-
-	// Commit the stateDB to the BankKeeperExtension because we don't go through
-	// ApplyEvmMsg at all in this tx.
-	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	// Emit event with the actual amount received
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Transfer event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
-	}
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

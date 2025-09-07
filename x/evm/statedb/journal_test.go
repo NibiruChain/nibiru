@@ -46,6 +46,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 		true,                // commit
 		input,
 		keeper.Erc20GasLimitExecute,
+		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().EqualValues(0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount())
@@ -111,6 +112,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			true,                // commit
 			contractInput,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 	})

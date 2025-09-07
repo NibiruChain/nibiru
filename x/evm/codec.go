@@ -36,6 +36,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgUpdateParams{},
 		&MsgCreateFunToken{},
 		&MsgConvertCoinToEvm{},
+		&MsgConvertEvmToCoin{},
 	)
 	registry.RegisterInterface(
 		"eth.evm.v1.TxData",

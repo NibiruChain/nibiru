@@ -50,6 +50,8 @@ var (
 
 	// ErrInvalidAccount returns an error if the account is not an EVM compatible account
 	ErrInvalidAccount = sdkioerrors.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
+
+	ErrCanonicalWnibi = "canonical WNIBI address in state is a not a smart contract"
 )
 
 // NewRevertError unpacks the revert return bytes and returns a wrapped error

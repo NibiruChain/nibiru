@@ -9,10 +9,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/exp/slices"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 const (
@@ -31,6 +33,9 @@ func DefaultParams() Params {
 		// EVMChannels: Unused but intended for use with future IBC functionality
 		EVMChannels:       []string{},
 		CreateFuntokenFee: sdkmath.NewIntWithDecimal(10_000, 6), // 10_000 NIBI
+		CanonicalWnibi: eth.EIP55Addr{
+			Address: gethcommon.HexToAddress("0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"),
+		},
 	}
 }
 
@@ -55,10 +60,21 @@ func validateChannels(i any) error {
 // Validate performs basic validation on evm parameters.
 func (p Params) Validate() error {
 	if err := validateEIPs(p.ExtraEIPs); err != nil {
+		return fmt.Errorf("ParamsError: %w", err)
+	}
+
+	if err := validateChannels(p.EVMChannels); err != nil {
+		return fmt.Errorf("ParamsError: %w", err)
+	}
+
+	if _, err := eth.NewEIP55AddrFromStr(p.CanonicalWnibi.Hex()); err != nil {
+		return fmt.Errorf("ParamsError: %w", err)
+	} else if (p.CanonicalWnibi.Address == gethcommon.Address{}) {
+		err = fmt.Errorf("ParamsError: evm.Params.CanonicalWnibi cannot be the zero address")
 		return err
 	}
 
-	return validateChannels(p.EVMChannels)
+	return nil
 }
 
 // EIPs returns the ExtraEIPS as a int slice

@@ -37,6 +37,7 @@ func (k Keeper) CallContractWithInput(
 	commit bool,
 	contractInput []byte,
 	gasLimit uint64,
+	weiValue *big.Int,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
 	// error is non-nil, creating a concise way to add extra information.
@@ -44,11 +45,17 @@ func (k Keeper) CallContractWithInput(
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
+	var value *big.Int
+	if weiValue == nil {
+		value = unusedBigInt
+	} else {
+		value = weiValue
+	}
 	evmMsg := core.Message{
 		To:               contract,
 		From:             fromAcc,
 		Nonce:            nonce,
-		Value:            unusedBigInt, // amount
+		Value:            value, // amount
 		GasLimit:         gasLimit,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,

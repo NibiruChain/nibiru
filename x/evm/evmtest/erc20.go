@@ -1,6 +1,7 @@
 package evmtest
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -120,22 +122,57 @@ func CreateFunTokenForBankCoin(
 	return funtoken
 }
 
-type FunTokenBalanceAssert struct {
-	FunToken     evm.FunToken
+type BalanceAssertNIBI struct {
 	Account      gethcommon.Address
+	BalanceBank  *big.Int
+	BalanceERC20 *big.Int
+	Description  string
+	EvmObj       *vm.EVM
+}
+
+func (bals BalanceAssertNIBI) Assert(t *testing.T, deps TestDeps) {
+	var evmObj *vm.EVM
+	if bals.EvmObj != nil {
+		evmObj = bals.EvmObj
+	} else {
+		evmObj, _ = deps.NewEVM()
+	}
+
+	AssertBankBalanceEqualWithDescription(
+		t, deps, appconst.BondDenom, bals.Account, bals.BalanceBank,
+		"(bank)"+bals.Description,
+	)
+	if bals.BalanceERC20 != nil {
+		erc20 := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi
+		AssertERC20BalanceEqualWithDescription(
+			t, deps, evmObj, erc20.Address, bals.Account, bals.BalanceERC20,
+			"(erc20_WNIBI)"+bals.Description,
+		)
+	}
+}
+
+type FunTokenBalanceAssert struct {
+	Account      gethcommon.Address
+	FunToken     evm.FunToken
 	BalanceBank  *big.Int
 	BalanceERC20 *big.Int
 	Description  string
 }
 
 func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps, evmObj *vm.EVM) {
+	appendDescription := func(prefix string) string {
+		if bals.Description == "" {
+			return prefix
+		}
+		return fmt.Sprintf("%s: %s", prefix, bals.Description)
+	}
 	AssertERC20BalanceEqualWithDescription(
 		t, deps, evmObj, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
-		bals.Description,
+		appendDescription("(erc20)"),
 	)
 	AssertBankBalanceEqualWithDescription(
 		t, deps, bals.FunToken.BankDenom, bals.Account, bals.BalanceBank,
-		bals.Description,
+		appendDescription("(bank)"),
 	)
 }
 

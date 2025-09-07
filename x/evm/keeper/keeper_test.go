@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
+	"math"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
@@ -11,14 +13,24 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// ------------------------------------------------------------
+// Test Suite struct definitions
+
+// TestAll: Runs all the tests in the suite.
+func TestAll(t *testing.T) {
+	suite.Run(t, new(Suite))
+	suite.Run(t, new(SuiteFunToken))
+}
+
 type Suite struct {
 	suite.Suite
 }
 
-// TestSuite: Runs all the tests in the suite.
-func TestSuite(t *testing.T) {
-	suite.Run(t, new(Suite))
+type SuiteFunToken struct {
+	suite.Suite
 }
+
+// ------------------------------------------------------------
 
 // TestIsSimulation verifies the IsSimulation helper function
 func (s *Suite) TestIsSimulation() {
@@ -145,4 +157,13 @@ func (s *Suite) TestIsDeliverTx() {
 			s.Equal(tc.expected, result, "IsDeliverTx result incorrect for %s", tc.name)
 		})
 	}
+}
+
+func (s *Suite) TestGetHashFn() {
+	deps := evmtest.NewTestDeps()
+	fn := deps.EvmKeeper.GetHashFn(deps.Ctx)
+	s.Equal(gethcommon.Hash{}, fn(math.MaxInt64+1))
+	s.Equal(gethcommon.BytesToHash(deps.Ctx.HeaderHash()), fn(uint64(deps.Ctx.BlockHeight())))
+	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx.BlockHeight())+1))
+	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx.BlockHeight())-1))
 }

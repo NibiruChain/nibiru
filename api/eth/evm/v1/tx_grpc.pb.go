@@ -36,6 +36,9 @@ type MsgClient interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error)
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
+	// given recipient address as a bank coin.
+	ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error)
 }
 
 type msgClient struct {
@@ -82,6 +85,15 @@ func (c *msgClient) ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEv
 	return out, nil
 }
 
+func (c *msgClient) ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error) {
+	out := new(MsgConvertEvmToCoinResponse)
+	err := c.cc.Invoke(ctx, "/eth.evm.v1.Msg/ConvertEvmToCoin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -100,6 +112,9 @@ type MsgServer interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error)
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
+	// given recipient address as a bank coin.
+	ConvertEvmToCoin(context.Context, *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -118,6 +133,9 @@ func (UnimplementedMsgServer) CreateFunToken(context.Context, *MsgCreateFunToken
 }
 func (UnimplementedMsgServer) ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConvertCoinToEvm not implemented")
+}
+func (UnimplementedMsgServer) ConvertEvmToCoin(context.Context, *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConvertEvmToCoin not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -204,6 +222,24 @@ func _Msg_ConvertCoinToEvm_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ConvertEvmToCoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgConvertEvmToCoin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ConvertEvmToCoin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eth.evm.v1.Msg/ConvertEvmToCoin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ConvertEvmToCoin(ctx, req.(*MsgConvertEvmToCoin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -226,6 +262,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConvertCoinToEvm",
 			Handler:    _Msg_ConvertCoinToEvm_Handler,
+		},
+		{
+			MethodName: "ConvertEvmToCoin",
+			Handler:    _Msg_ConvertEvmToCoin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

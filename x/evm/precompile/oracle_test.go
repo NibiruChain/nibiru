@@ -76,6 +76,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			false,
 			contractInput,
 			OracleGasLimitQuery,
+			nil,
 		)
 	}
 
@@ -141,6 +142,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			false,
 			contractInput,
 			OracleGasLimitQuery,
+			nil,
 		)
 		s.NoError(err)
 

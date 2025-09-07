@@ -93,6 +93,7 @@ func TestWhoAmI(t *testing.T) {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 	}
 
@@ -119,14 +120,14 @@ func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -141,6 +142,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -156,7 +158,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			sdk.WrapSDKContext(deps.Ctx),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -167,8 +169,8 @@ func (s *FuntokenSuite) TestHappyPath() {
 		evmtest.AssertERC20BalanceEqualWithDescription(
 			s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance",
 		)
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
 	})
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
@@ -183,6 +185,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
@@ -202,6 +205,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			true, /*commit*/
 			input,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError)
@@ -213,10 +217,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
+			s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
+			s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
 		)
 
 		s.T().Log("Parse the response contract addr and response bytes")
@@ -242,6 +246,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			false,                               // commit
 			contractInput,
 			keeper.Erc20GasLimitQuery,
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -257,7 +262,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps()
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	randomAcc := testutil.AccAddress()
 
 	deployResp, err := evmtest.DeployContract(
@@ -306,6 +311,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -328,6 +334,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -350,6 +357,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			nil,
 		)
 		s.Require().ErrorContains(err, "execution reverted")
 		s.Require().NotZero(resp.GasUsed)
@@ -393,6 +401,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToEvm VMError")
@@ -439,6 +448,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToBank VMError")
@@ -547,6 +557,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,
 			contractInput,
 			keeper.Erc20GasLimitExecute,
+			nil,
 		)
 		s.Require().NoError(err)
 
@@ -573,6 +584,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,                                /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, /* gasLimit */
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -605,6 +617,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -713,7 +726,7 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 
 func (s *FuntokenSuite) TestGetErc20Address() {
 	deps := evmtest.NewTestDeps()
-	bankDenom := "unibi" // Example bank denom
+	bankDenom := "testdenom" // Example bank denom
 
 	s.T().Log("Setup: Create FunToken mapping for unibi")
 	funtokenMapping := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)
@@ -736,6 +749,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false,                               // Commit = false (it's a view call)
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // Use a reasonable gas limit for queries
+			nil,
 		)
 
 		s.Require().NoError(err, "CallContractWithInput failed")
@@ -768,6 +782,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 
 		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
@@ -793,6 +808,7 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			nil,
 		)
 
 		// Expect an error because the Go handler validates the denom
