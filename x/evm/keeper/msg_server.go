@@ -24,7 +24,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -583,210 +582,16 @@ func (k *Keeper) ConvertCoinToEvm(
 	}
 }
 
-// Converts Bank Coins for FunToken mapping that was born from a coin
-// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
-// contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinToEvmBornCoin(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// 1 | Send Bank Coins to the EVM module
-	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to send coins to module account")
-	}
-
-	// 2 | Mint ERC20 tokens to the recipient
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, err
-	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.Bank.StateDB
-	if stateDB == nil {
-		stateDB = k.NewStateDB(ctx, txConfig)
-	}
-	defer func() {
-		k.Bank.StateDB = nil
-	}()
-
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
-		ctx,
-		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		true, /*commit*/
-		contractInput,
-		Erc20GasLimitExecute,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if evmResp.Failed() {
-		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
-	}
-
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Mint event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
-	}
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
-}
-
-// Converts a coin that was originally an ERC20 token, and that was converted to
-// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
-// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
-// the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinToEvmBornERC20(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// needs to run first to populate the StateDB on the BankKeeperExtension
-	stateDB := k.Bank.StateDB
-	if stateDB == nil {
-		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
-	}
-	defer func() {
-		k.Bank.StateDB = nil
-	}()
-
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
-	if err := k.Bank.SendCoinsFromAccountToModule(
-		ctx,
-		sender,
-		evm.ModuleName,
-		sdk.NewCoins(coin),
-	); err != nil {
-		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
-	}
-
-	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
-	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
-	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
-	// in the BC → ERC20 conversion.
-	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin)); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
-	}
-
-	// 2 | EVM sends ERC20 tokens to the "to" account.
-	// This should never fail due to the EVM account lacking ERc20 fund because
-	// the account must have sent the EVM module ERC20 tokens in the mapping
-	// in order to create the coins originally.
-	//
-	// Said another way, if an asset is created as an ERC20 and some amount is
-	// converted to its Bank Coin representation, a balance of the ERC20 is left
-	// inside the EVM module account in order to convert the coins back to
-	// ERC20s.
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, err
-	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	_, evmResp, err := k.ERC20().Transfer(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		recipient,
-		coin.Amount.BigInt(),
-		ctx,
-		evmObj,
-	)
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
-	}
-
-	// Commit the stateDB to the BankKeeperExtension because we don't go through
-	// ApplyEvmMsg at all in this tx.
-	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	// Emit event with the actual amount received
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Transfer event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
-	}
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
-}
-
 // ConvertEvmToCoin Sends an ERC20 token with a valid "FunToken" mapping to the
 // given recipient address as a bank coin.
 func (k *Keeper) ConvertEvmToCoin(
 	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	senderBech32, erc20, amount, toAddr, err := msg.Validate()
+	senderAddrs, erc20, amount, toAddrs, err := msg.Validate()
 	if err != nil {
 		return
 	}
-	senderEthAddr := eth.NibiruAddrToEthAddr(senderBech32)
 
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
@@ -800,7 +605,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
 		return k.convertEvmToCoinForWNIBI(
-			ctx, stateDB, erc20, senderEthAddr, senderBech32, toAddr, amount,
+			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32, amount,
 		)
 	}
 
@@ -815,11 +620,11 @@ func (k *Keeper) ConvertEvmToCoin(
 	amountBig := amount.BigInt()
 	if funtokenMapping.IsMadeFromCoin {
 		return k.convertEvmToCoinForCoinOriginated(
-			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 		)
 	} else {
 		return k.convertEvmToCoinForERC20Originated(
-			ctx, senderBech32, senderEthAddr, toAddr.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 		)
 	}
 }

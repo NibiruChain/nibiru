@@ -11,6 +11,7 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -228,7 +229,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		s.Require().Equal(big.NewInt(100000), evmModuleBalance)
 	})
 
-	s.Run("sad: no approval to transfer", func() {
+	s.Run("happy: no transfer approval, yet still transfer", func() {
 		// Try to convert without approval
 		newSender := evmtest.NewEthPrivAcc()
 
@@ -307,7 +308,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 		Symbol:  "TEST",
 	})
 
-	// Setup: Create FunToken and fund account
+	s.T().Log("Setup: Create FunToken and fund account")
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
@@ -326,7 +327,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	funtoken := createFunTokenResp.FuntokenMapping
 	erc20Addr := funtoken.Erc20Addr.Address
 
-	// Convert bank coins to ERC20 first
+	s.T().Log("Convert bank coins to ERC20 first")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgConvertCoinToEvm{
@@ -337,7 +338,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	)
 	s.Require().NoError(err)
 
-	// Convert ERC20 back to bank coins and check events
+	s.T().Log("Convert ERC20 back to bank coins and check events")
 	toAddr := evmtest.NewEthPrivAcc().NibiruAddr
 	convertAmount := sdkmath.NewInt(200)
 
@@ -353,28 +354,14 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	)
 	s.Require().NoError(err)
 
-	// Check EventConvertEvmToCoin was emitted
-	// Instead of checking exact equality, just verify the event was emitted
-	foundEvent := false
-	for _, event := range deps.Ctx.EventManager().Events() {
-		if event.Type == "eth.evm.v1.EventConvertEvmToCoin" {
-			foundEvent = true
-			// Verify attributes
-			attrs := make(map[string]string)
-			for _, attr := range event.Attributes {
-				attrs[attr.Key] = attr.Value
-			}
-			// The attribute values come with quotes, so we need to strip them or compare with quotes
-			s.Require().Equal(`"`+deps.Sender.NibiruAddr.String()+`"`, attrs["sender"])
-			s.Require().Equal(`"`+erc20Addr.String()+`"`, attrs["erc20_contract_address"])
-			s.Require().Equal(`"`+toAddr.String()+`"`, attrs["to_address"])
-			// The bank_coin is serialized as JSON, so just check it contains the expected values
-			s.Require().Contains(attrs["bank_coin"], bankDenom)
-			s.Require().Contains(attrs["bank_coin"], convertAmount.String())
-			break
-		}
-	}
-	s.Require().True(foundEvent, "EventConvertEvmToCoin not found")
+	s.T().Log("Check EventConvertEvmToCoin was emitted")
+	testutil.RequireContainsTypedEvent(s.T(), deps.Ctx, &evm.EventConvertEvmToCoin{
+		Sender:               deps.Sender.NibiruAddr.String(),
+		Erc20ContractAddress: erc20Addr.Hex(),
+		ToAddress:            toAddr.String(),
+		BankCoin:             sdk.NewCoin(bankDenom, convertAmount),
+		SenderEthAddr:        deps.Sender.EthAddr.Hex(),
+	})
 
 	// Check EventTxLog was emitted
 	// Note: EventTxLog check is commented out as it may have timing issues with the event manager

@@ -329,12 +329,11 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	s.Empty(evmResp.VmError)
 	gasUsedFor2Ops := evmResp.GasUsed
 
-	// Summary
-	s.T().Log(heredoc.Doc(`Summary - Before the tx, sender has [only enough NIBI for the native send, 10 BC], while the test contract has [10 microNIBI, 10 BC]
+	s.T().Log(heredoc.Doc(
+		`Summary - Before the tx, sender has [only enough NIBI for the native send, 10 BC], while the test contract has [10 microNIBI, 10 BC]
 Sender calls "nativeSendThenPrecompileSend".
 - Expect 5 microNIBI to go from the sender to Alice (nativeRecipient.send)
 - Expect 5 ERC20s from the testContract balance to go to Alice as BCs (FUNTOKEN_PRECOMPILE.sendToBank)
-
 `,
 	))
 	// Assertions for Alice
@@ -751,6 +750,17 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 			BalanceERC20: evm.NativeToWei(big.NewInt(69)),
 		}.Assert(s.T(), deps)
 
+		testutil.RequireContainsTypedEvent(
+			s.T(),
+			deps.Ctx,
+			&evm.EventConvertCoinToEvm{
+				Sender:               deps.Sender.NibiruAddr.String(),
+				Erc20ContractAddress: erc20Addr.Hex(),
+				ToEthAddr:            someoneElse.EthAddr.Hex(),
+				BankCoin:             unibi(big.NewInt(69)),
+			},
+		)
+
 		s.T().Log("sad: sender has insufficient funds, exit before EVM call")
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
 			deps.GoCtx(),
@@ -760,7 +770,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 				ToEthAddr: eth.EIP55Addr{Address: someoneElse.EthAddr},
 			},
 		)
-		s.Require().ErrorContains(err, "ConvertEvmToCoin: insufficient funds to send WNIBI")
+		s.Require().ErrorContains(err, "ConvertCoinToEvm: insufficient funds to convert NIBI into WNIBI")
 	})
 
 	s.Run("WNIBI not deployed (other networks)", func() {

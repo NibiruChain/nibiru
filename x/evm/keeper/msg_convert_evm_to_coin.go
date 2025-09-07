@@ -26,8 +26,7 @@ import (
 // owns the ERC20 contract and will burn the tokens
 func (k Keeper) convertEvmToCoinForCoinOriginated(
 	ctx sdk.Context,
-	sender sdk.AccAddress,
-	senderEthAddr gethcommon.Address,
+	sender evm.Addrs,
 	toAddress sdk.AccAddress,
 	erc20Addr gethcommon.Address,
 	amount *big.Int,
@@ -39,7 +38,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	// 1 | Burn the ERC20 tokens from the sender's account
 	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
 		"burnFromAuthority",
-		senderEthAddr /*from: address where we burn the token balance from*/, amount,
+		sender.Eth /*from: address where we burn the token balance from*/, amount,
 	)
 	if err != nil {
 		return nil, err
@@ -95,10 +94,11 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
-		Sender:               sender.String(),
+		Sender:               sender.Bech32.String(),
 		Erc20ContractAddress: erc20Addr.String(),
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoins[0],
+		SenderEthAddr:        sender.Eth.Hex(),
 	})
 
 	// Emit tx logs of Burn event
@@ -115,8 +115,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 // transfers tokens to itself and mints bank coins
 func (k Keeper) convertEvmToCoinForERC20Originated(
 	ctx sdk.Context,
-	sender sdk.AccAddress,
-	senderEthAddr gethcommon.Address,
+	sender evm.Addrs,
 	toAddress sdk.AccAddress,
 	erc20Addr gethcommon.Address,
 	amount *big.Int,
@@ -153,7 +152,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 
 	balIncrease, evmResp, err := k.ERC20().Transfer(
 		erc20Addr,              /*erc20Contract gethcommon.Address*/
-		senderEthAddr,          /*sender*/
+		sender.Eth,             /*sender*/
 		evm.EVM_MODULE_ADDRESS, /*recipient*/
 		amount,                 /*amount*/
 		ctx,
@@ -187,10 +186,11 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
-		Sender:               sender.String(),
+		Sender:               sender.Bech32.String(),
 		Erc20ContractAddress: erc20Addr.String(),
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoin,
+		SenderEthAddr:        sender.Eth.Hex(),
 	})
 
 	// Emit tx logs of Transfer event
@@ -206,14 +206,11 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	ctx sdk.Context,
 	stateDB *statedb.StateDB,
 	erc20 eth.EIP55Addr,
-	senderEthAddr gethcommon.Address,
-	senderBech32 sdk.AccAddress,
-	toAddr struct {
-		Eth    gethcommon.Address
-		Bech32 sdk.AccAddress
-	},
+	sender evm.Addrs,
+	toAddrBech32 sdk.AccAddress,
 	amount sdkmath.Int,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
+
 	// isTx: value to use for commit in any EVM calls
 	isTx := true
 
@@ -221,6 +218,14 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	if err != nil {
 		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
 	}
+
+	// Unwrap from the sender "WNIBI.withdraw"
+	//
+	//	```solidity
+	//	function withdraw(
+	//	    uint amount
+	//	) external;
+	//	```
 	contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
 		"withdraw",
 		withdrawWei.ToBig(),
@@ -235,8 +240,8 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		unusedBigInt := big.NewInt(0)
 		evmMsg := core.Message{
 			To:               &erc20.Address,
-			From:             senderEthAddr,
-			Nonce:            k.GetAccNonce(ctx, senderEthAddr),
+			From:             sender.Eth,
+			Nonce:            k.GetAccNonce(ctx, sender.Eth),
 			Value:            unusedBigInt,
 			GasLimit:         Erc20GasLimitExecute,
 			GasPrice:         unusedBigInt,
@@ -257,16 +262,22 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, ctx, evmObj)
 	if err != nil {
 		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
+		return
+	}
+	if wnibiBalBefore.Cmp(amount.BigInt()) < 0 {
+		err = fmt.Errorf(
+			"ConvertEvmToCoin: insufficient funds to convert WNIBI into NIBI: WNIBI balance %s, msg.Amount %s", wnibiBalBefore, amount,
+		)
 		return
 	}
 
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
-		senderEthAddr,  /* fromAcc */
+		sender.Eth,     /* fromAcc */
 		&erc20.Address, /* contract */
 		isTx,           /* commit */
 		contractInput,
@@ -280,7 +291,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return resp, err
 	}
 
-	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, ctx, evmObj)
+	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, ctx, evmObj)
 	if err != nil {
 		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
 		return
@@ -290,13 +301,27 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	withdrawnMicronibi := sdkmath.NewIntFromBigInt(
+	// Commit the stateDB
+	if err = stateDB.Commit(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+	}
+
+	withdrawnMicronibi := sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromBigInt(
 		evm.WeiToNative(withdrawWei.ToBig()),
-	)
-	if err := k.Bank.SendCoins(ctx, senderBech32, toAddr.Bech32,
-		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, withdrawnMicronibi)),
+	))
+	if err := k.Bank.SendCoins(ctx, sender.Bech32, toAddrBech32,
+		sdk.NewCoins(withdrawnMicronibi),
 	); err != nil {
 		return resp, err
 	}
+
+	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
+		Sender:               sender.Bech32.String(),
+		Erc20ContractAddress: erc20.Hex(),
+		ToAddress:            toAddrBech32.String(),
+		BankCoin:             withdrawnMicronibi,
+		SenderEthAddr:        sender.Eth.Hex(),
+	})
+
 	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }

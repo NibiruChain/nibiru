@@ -532,22 +532,28 @@ func (m MsgConvertEvmToCoin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
+// Addrs holds Corresponding nibi-prefixed Bech32 and Ethereum hexadecimal
+// addresses for an account.
+type Addrs struct {
+	Eth    gethcommon.Address
+	Bech32 sdk.AccAddress
+}
+
 // Validate does a sanity check of the provided data
 func (m *MsgConvertEvmToCoin) Validate() (
-	senderBech32 sdk.AccAddress,
+	sender Addrs,
 	erc20 eth.EIP55Addr,
 	amount sdkmath.Int,
-	toAddr struct {
-		Eth    gethcommon.Address
-		Bech32 sdk.AccAddress
-	},
+	toAddr Addrs,
 	err error,
 ) {
-	senderBech32, err = sdk.AccAddressFromBech32(m.Sender)
+	senderBech32, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		err = fmt.Errorf("invalid sender address: %w", err)
 		return
 	}
+	sender.Bech32 = senderBech32
+	sender.Eth = eth.NibiruAddrToEthAddr(senderBech32)
 
 	ethAddr, err := eth.NewEIP55AddrFromStr(m.ToAddr)
 	if err == nil {
@@ -574,7 +580,7 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		return
 	}
 
-	return senderBech32, m.Erc20Addr, m.Amount, toAddr, nil
+	return sender, m.Erc20Addr, m.Amount, toAddr, nil
 }
 
 // ValidateBasic does a sanity check of the provided data
