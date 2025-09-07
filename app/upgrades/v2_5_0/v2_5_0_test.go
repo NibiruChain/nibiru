@@ -179,6 +179,7 @@ func (s *Suite) TestUpgrade() {
 			false, // commit
 			input,
 			evmkeeper.Erc20GasLimitQuery,
+			nil,
 		)
 		s.Require().NoError(err)
 

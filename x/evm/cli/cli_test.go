@@ -49,6 +49,80 @@ func (s *Suite) TestCmdConvertCoinToEvm() {
 	}
 }
 
+func (s *Suite) TestCmdConvertEvmToCoin() {
+	testCases := []TestCase{
+		{
+			name: "happy: convert-evm-to-coin",
+			args: []string{
+				"convert-evm-to-coin",
+				dummyFuntoken.Erc20Addr.String(),
+				"123456",
+				s.testAcc.Address.String(),
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "sad: invalid erc20 address",
+			args: []string{
+				"convert-evm-to-coin",
+				"not-an-address",
+				"123456",
+				s.testAcc.Address.String(),
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "invalid ERC20 contract address",
+		},
+		{
+			name: "sad: invalid amount",
+			args: []string{
+				"convert-evm-to-coin",
+				dummyFuntoken.Erc20Addr.String(),
+				"not-a-number",
+				s.testAcc.Address.String(),
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "invalid amount",
+		},
+		{
+			name: "sad: invalid recipient address",
+			args: []string{
+				"convert-evm-to-coin",
+				dummyFuntoken.Erc20Addr.String(),
+				"123456",
+				"invalid-address",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "invalid recipient address",
+		},
+		{
+			name: "sad: missing args",
+			args: []string{
+				"convert-evm-to-coin",
+				dummyFuntoken.Erc20Addr.String(),
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "accepts 3 arg(s), received 1",
+		},
+		{
+			name: "sad: too many args",
+			args: []string{
+				"convert-evm-to-coin",
+				dummyFuntoken.Erc20Addr.String(),
+				"123456",
+				s.testAcc.Address.String(),
+				"extra-arg",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
+			wantErr:   "accepts 3 arg(s), received 4",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc.RunTxCmd(s)
+	}
+}
+
 func (s *Suite) TestCmdCreateFunToken() {
 	testCases := []TestCase{
 		{

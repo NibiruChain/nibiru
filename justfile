@@ -53,14 +53,13 @@ gen-proto-rs:
 
 lint: 
   #!/usr/bin/env bash
-  source contrib/bashlib.sh
-  if ! which_ok golangci-lint; then
-    log_info "Installing golangci-lint"
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
-  fi
-
-  golangci-lint run --allow-parallel-runners --fix
-
+  echo "Running golangci-lint with docker!"
+  docker run --rm \
+    -v "$(pwd)":/app \
+    -v ~/.cache/golangci-lint/v2.1.6:/root/.cache \
+    -w /app \
+    golangci/golangci-lint:v2.1.6 \
+    golangci-lint run -v --fix 2>&1
 
 # Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
 localnet *PASS_FLAGS:
