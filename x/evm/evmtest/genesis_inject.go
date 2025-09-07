@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	// "github.com/NibiruChain/nibiru/v2/app"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -21,7 +20,6 @@ var (
 )
 
 func init() {
-	// encCfg := app.MakeEncodingConfig()
 	{
 		var genAcc evm.GenesisAccount
 		err := json.Unmarshal([]byte(WNIBI_GENESIS_ACC_STRING), &genAcc)
@@ -53,11 +51,6 @@ func init() {
 			},
 			CodeHash: "0xffb88e0eb48147949565e65de3ec8a54b746214da7b9dd5b9a8a3ae7df46193b",
 		}
-		// err := encCfg.Codec.Unmarshal([]byte(WNIBI_GENESIS_AUTH_ACC_STRING), &genAcc)
-		// // err := json.Unmarshal([]byte(WNIBI_GENESIS_AUTH_ACC_STRING), &genAcc)
-		// if err != nil {
-		// 	panic(fmt.Errorf("failed to unpack WNIBI_GENESIS_AUTH_ACC_STRING as eth.EthAccount: %w", err))
-		// }
 		WNIBI_GENESIS_AUTH_ACC = genAcc
 	}
 }

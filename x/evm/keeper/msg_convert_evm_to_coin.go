@@ -95,7 +95,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
 		Sender:               sender.Bech32.String(),
-		Erc20ContractAddress: erc20Addr.String(),
+		Erc20ContractAddress: erc20Addr.Hex(),
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoins[0],
 		SenderEthAddr:        sender.Eth.Hex(),
@@ -132,9 +132,9 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	{
 		unusedBigInt := big.NewInt(0)
 		evmMsg := core.Message{
-			To:               &erc20Addr,
-			From:             evm.EVM_MODULE_ADDRESS,
-			Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+			From:             sender.Eth,
+			To:               &evm.EVM_MODULE_ADDRESS,
+			Nonce:            k.GetAccNonce(ctx, sender.Eth),
 			Value:            unusedBigInt,
 			GasLimit:         Erc20GasLimitExecute,
 			GasPrice:         unusedBigInt,
@@ -187,7 +187,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
 		Sender:               sender.Bech32.String(),
-		Erc20ContractAddress: erc20Addr.String(),
+		Erc20ContractAddress: erc20Addr.Hex(),
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoin,
 		SenderEthAddr:        sender.Eth.Hex(),
@@ -266,9 +266,9 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
 		return
 	}
-	if wnibiBalBefore.Cmp(amount.BigInt()) < 0 {
+	if wnibiBalBefore.Cmp(withdrawWei.ToBig()) < 0 {
 		err = fmt.Errorf(
-			"ConvertEvmToCoin: insufficient funds to convert WNIBI into NIBI: WNIBI balance %s, msg.Amount %s", wnibiBalBefore, amount,
+			"ConvertEvmToCoin: insufficient funds to convert WNIBI into NIBI: WNIBI balance %s, withdrawamount %s", wnibiBalBefore, withdrawWei,
 		)
 		return
 	}

@@ -1,6 +1,7 @@
 package evmtest
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -159,13 +160,19 @@ type FunTokenBalanceAssert struct {
 }
 
 func (bals FunTokenBalanceAssert) Assert(t *testing.T, deps TestDeps, evmObj *vm.EVM) {
+	appendDescription := func(prefix string) string {
+		if bals.Description == "" {
+			return prefix
+		}
+		return fmt.Sprintf("%s: %s", prefix, bals.Description)
+	}
 	AssertERC20BalanceEqualWithDescription(
 		t, deps, evmObj, bals.FunToken.Erc20Addr.Address, bals.Account, bals.BalanceERC20,
-		"(erc20)"+bals.Description,
+		appendDescription("(erc20)"),
 	)
 	AssertBankBalanceEqualWithDescription(
 		t, deps, bals.FunToken.BankDenom, bals.Account, bals.BalanceBank,
-		"(bank)"+bals.Description,
+		appendDescription("(bank)"),
 	)
 }
 

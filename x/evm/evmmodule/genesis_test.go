@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -39,43 +41,116 @@ func (s *Suite) TestExportInitGenesis() {
 		deps          = evmtest.NewTestDeps()
 		erc20Contract = embeds.SmartContract_TestERC20
 
-		fromUser      = deps.Sender.EthAddr
 		toUserA       = gethcommon.HexToAddress("0xAE8A5F44A9b55Ae6D2c9C228253E8fAfb837d2F2")
 		toUserB       = gethcommon.HexToAddress("0xf893292542F2578F1004e62fd723901ddE5EC5Cf")
 		toUserC       = gethcommon.HexToAddress("0xe90f75496E744b92B52535bB05a29123D0D94D49")
-		amountToSendA = big.NewInt(1550)
-		amountToSendB = big.NewInt(333)
-		amountToSendC = big.NewInt(228)
+		amountToSendA = big.NewInt(1500)
+		amountToSendB = big.NewInt(350)
+		amountToSendC = big.NewInt(200)
 
 		// [evm.FunToken] mapping used throughout the test
 		ft evm.FunToken
+
+		totalSupply *big.Int
+		erc20Addr   gethcommon.Address
 	)
 
-	// Create ERC-20 contract
-	deployResp, err := evmtest.DeployContract(&deps, erc20Contract)
-	s.Require().NoError(err)
-	erc20Addr := deployResp.ContractAddr
+	// Create re-usable function to perform the assertion later afer exporting
+	// the genesis.
+	assertBalsOfAB := func(deps evmtest.TestDeps, evmObj *vm.EVM) {
+		evmtest.FunTokenBalanceAssert{
+			Account:      toUserA,
+			FunToken:     ft,
+			BalanceBank:  big.NewInt(0),
+			BalanceERC20: amountToSendA,
+		}.Assert(s.T(), deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:      toUserB,
+			FunToken:     ft,
+			BalanceBank:  big.NewInt(0),
+			BalanceERC20: amountToSendB,
+		}.Assert(s.T(), deps, evmObj)
+	}
 
-	evmObj, _ := deps.NewEVM()
-	totalSupply, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
-		deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
-	)
-	s.Require().NoError(err)
-	s.Require().Equal("1000000"+strings.Repeat("0", 18), totalSupply.String())
+	assertBalsAfterConvert := func(deps evmtest.TestDeps) {
+		s.T().Log("Assert balances for users A, B, C, the sender and the EVM")
 
-	s.T().Log("Transfer ERC-20 tokens to user A")
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserA, amountToSendA, deps.Ctx, evmObj)
-	s.Require().NoError(err)
+		// NOTE: You need a fresh evmObj here
+		evmObj, _ := deps.NewEVM()
 
-	s.T().Log("Transfer ERC-20 tokens to user B")
-	_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, fromUser, toUserB, amountToSendB, deps.Ctx, evmObj)
-	s.Require().NoError(err)
+		assertBalsOfAB(deps, evmObj)
+
+		evmtest.FunTokenBalanceAssert{
+			Account:      toUserC,
+			FunToken:     ft,
+			BalanceBank:  amountToSendC,
+			BalanceERC20: big.NewInt(0),
+			Description:  "C receives amountToSendC as Bank Coins",
+		}.Assert(s.T(), deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:      evm.EVM_MODULE_ADDRESS,
+			FunToken:     ft,
+			BalanceBank:  big.NewInt(0),
+			BalanceERC20: amountToSendC,
+			Description:  "EVM holds ERC20 tokens to back the newly minted Bank Coins",
+		}.Assert(s.T(), deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:     deps.Sender.EthAddr,
+			FunToken:    ft,
+			BalanceBank: big.NewInt(0),
+			BalanceERC20: new(big.Int).Sub(
+				totalSupply,
+				big.NewInt(amountToSendA.Int64()+amountToSendB.Int64()+amountToSendC.Int64()),
+			),
+			Description: "Sender should lose amountToSendC",
+		}.Assert(s.T(), deps, evmObj)
+	}
+
+	{
+		// Create ERC-20 contract
+		deployResp, err := evmtest.DeployContract(&deps, erc20Contract)
+		s.Require().NoError(err)
+		erc20Addr = deployResp.ContractAddr
+
+		evmObj, sdb := deps.NewEVM()
+		totalSupply, err = deps.EvmKeeper.ERC20().LoadERC20BigInt(
+			deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
+		)
+		s.Require().NoError(err)
+		s.Require().Equal("1000000"+strings.Repeat("0", 18), totalSupply.String())
+		s.T().Log(heredoc.Docf(
+			`Deployed ERC20 with total supply held by deps.Sender
+totalSupply: %s
+deps.Sender.EthAddr: %s
+erc20Addr: %s
+amountToSendA: %s
+amountToSendB: %s
+amountToSendC: %s`,
+			totalSupply,
+			deps.Sender.EthAddr.Hex(),
+			erc20Addr,
+			amountToSendA,
+			amountToSendB,
+			amountToSendC,
+		))
+
+		s.T().Log("Transfer ERC-20 tokens to [userA, userB]")
+		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserA, amountToSendA, deps.Ctx, evmObj)
+		s.Require().NoError(err)
+
+		s.T().Log("Transfer ERC-20 tokens to user B")
+		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserB, amountToSendB, deps.Ctx, evmObj)
+		s.Require().NoError(err)
+		s.NoError(
+			sdb.Commit(),
+		)
+	}
 
 	s.T().Logf("Create FunToken from the er20 %s", erc20Addr)
 	{
 		// There's a fee for "evm.MsgCreateFunToken". The sender account needs
 		// needs funds for that.
-		err = testapp.FundAccount(
+		err := testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
@@ -96,28 +171,52 @@ func (s *Suite) TestExportInitGenesis() {
 		ft = createFuntokenResp.FuntokenMapping
 	}
 
-	eip55Addr, err := eth.NewEIP55AddrFromStr(toUserC.String())
-	s.Require().NoError(err)
-	// Send fungible token coins from bank to evm
-	_, err = deps.EvmKeeper.ConvertEvmToCoin(
-		deps.Ctx,
-		&evm.MsgConvertEvmToCoin{
-			Sender:    deps.Sender.NibiruAddr.String(),
-			Erc20Addr: ft.Erc20Addr,
-			Amount:    sdkmath.NewIntFromBigInt(amountToSendC),
-			ToAddr:    eip55Addr.Hex(),
-		},
-	)
-	s.Require().NoError(err)
+	s.T().Log("balance assertions after transfer to [userA, userB]")
 
-	s.T().Log("Check that fungible token balance of user C is correct")
-	evmtest.FunTokenBalanceAssert{
-		Account:      toUserC,
-		FunToken:     ft,
-		BalanceBank:  amountToSendC,
-		BalanceERC20: big.NewInt(0),
-		Description:  "",
-	}.Assert(s.T(), deps, evmObj)
+	{
+		evmObj, _ := deps.NewEVM()
+		assertBalsOfAB(deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:      toUserC,
+			FunToken:     ft,
+			BalanceBank:  big.NewInt(0),
+			BalanceERC20: big.NewInt(0),
+			Description:  "C should not have any funds yet",
+		}.Assert(s.T(), deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:     deps.Sender.EthAddr,
+			FunToken:    ft,
+			BalanceBank: big.NewInt(0),
+			BalanceERC20: new(big.Int).Sub(
+				totalSupply,
+				big.NewInt(amountToSendA.Int64()+amountToSendB.Int64()),
+			),
+			Description: "Sender has total supply minus A and B",
+		}.Assert(s.T(), deps, evmObj)
+		evmtest.FunTokenBalanceAssert{
+			Account:      evm.EVM_MODULE_ADDRESS,
+			FunToken:     ft,
+			BalanceBank:  big.NewInt(0),
+			BalanceERC20: big.NewInt(0),
+			Description:  "inactive so far",
+		}.Assert(s.T(), deps, evmObj)
+	}
+
+	s.T().Log("Send fungible token coins from bank to evm")
+	{
+		_, err := deps.EvmKeeper.ConvertEvmToCoin(
+			deps.Ctx,
+			&evm.MsgConvertEvmToCoin{
+				Sender:    deps.Sender.NibiruAddr.String(),
+				Erc20Addr: ft.Erc20Addr,
+				Amount:    sdkmath.NewIntFromBigInt(amountToSendC),
+				ToAddr:    toUserC.Hex(),
+			},
+		)
+		s.Require().NoError(err)
+	}
+
+	assertBalsAfterConvert(deps)
 
 	s.T().Log("Export genesis")
 
@@ -126,41 +225,21 @@ func (s *Suite) TestExportInitGenesis() {
 	bankGensisState := deps.App.BankKeeper.ExportGenesis(deps.Ctx)
 
 	s.T().Log("Init genesis from the exported state for modules [auth, bank, evm]")
-	deps = evmtest.NewTestDeps()
-	deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-	deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
-	evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
+	{
+		deps = evmtest.NewTestDeps()
+		deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
+		deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
+		evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
 
-	s.T().Log("Verify erc20 balances for users A, B and sender")
-	balance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserA, deps.Ctx, evmObj)
-	s.Require().NoError(err)
-	s.Require().Equal(amountToSendA, balance)
+		s.T().Log("Assert balances for users A, B, C, the sender and the EVM")
+		assertBalsAfterConvert(deps)
 
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, toUserB, deps.Ctx, evmObj)
-	s.Require().NoError(err)
-	s.Require().Equal(amountToSendB, balance)
-
-	balance, err = deps.EvmKeeper.ERC20().BalanceOf(erc20Addr, fromUser, deps.Ctx, evmObj)
-	s.Require().NoError(err)
-	s.Require().Equal(
-		new(big.Int).Sub(totalSupply, big.NewInt(amountToSendA.Int64()+amountToSendB.Int64())),
-		balance,
-	)
-
-	s.T().Log("Check that fungible token mapping is in place")
-	iter := deps.EvmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(deps.Ctx, ft.BankDenom)
-	funTokens := deps.EvmKeeper.FunTokens.Collect(deps.Ctx, iter)
-	s.Require().Len(funTokens, 1)
-	s.Equal(ft.Erc20Addr.Hex(), funTokens[0].Erc20Addr.String())
-	s.Equal(ft.BankDenom, funTokens[0].BankDenom)
-	s.False(funTokens[0].IsMadeFromCoin)
-
-	s.T().Log("Check that fungible token balance of user C is correct")
-	evmtest.FunTokenBalanceAssert{
-		Account:      toUserC,
-		FunToken:     ft,
-		BalanceBank:  amountToSendC,
-		BalanceERC20: big.NewInt(0),
-		Description:  "",
-	}.Assert(s.T(), deps, evmObj)
+		s.T().Log("Check that fungible token mapping is in place")
+		iter := deps.EvmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(deps.Ctx, ft.BankDenom)
+		funTokens := deps.EvmKeeper.FunTokens.Collect(deps.Ctx, iter)
+		s.Require().Len(funTokens, 1)
+		s.Equal(ft.Erc20Addr.Hex(), funTokens[0].Erc20Addr.String())
+		s.Equal(ft.BankDenom, funTokens[0].BankDenom)
+		s.False(funTokens[0].IsMadeFromCoin)
+	}
 }
