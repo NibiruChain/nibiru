@@ -235,9 +235,8 @@ add_genesis_param '.app_state.gastoken.feetokens[0].name = "USDC"'
 # Gentx
 # ------------------------------------------------------------------------
 
-jq --slurpfile evm contrib/evm.json '.app_state.evm = $evm[0].evm' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis.new.json
-jq --slurpfile evm contrib/evm.json '.app_state.auth = $evm[0].auth' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis.new.json
-mv $CHAIN_DIR/config/genesis.new.json $CHAIN_DIR/config/genesis.json
+jq --slurpfile evm contrib/evm.json '.app_state.evm = $evm[0].evm | .app_state.auth = $evm[0].auth' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis_tmp.json
+mv $CHAIN_DIR/config/genesis_tmp.json $CHAIN_DIR/config/genesis.json
 
 echo_info "Adding gentx validator..."
 if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then

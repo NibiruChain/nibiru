@@ -329,9 +329,9 @@
         ],
         "funtoken_mappings": [],
         "params": {
-            "create_funtoken_fee": "10000000000",
-            "evm_channels": [],
             "extra_eips": [],
+            "evm_channels": [],
+            "create_funtoken_fee": "10000000000",
             "canonical_wnibi": "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"
         }
     },
