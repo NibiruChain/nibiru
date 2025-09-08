@@ -131,8 +131,8 @@ func NewTFDenomStore(
 	primaryKeyEncoder := collections.StringKeyEncoder
 	valueEncoder := collections.ProtoValueEncoder[tftypes.TFDenom](cdc)
 
-	var namespace = tftypes.KeyPrefixDenom
-	var namespaceCreatorIdx = tftypes.KeyPrefixCreatorIndexer
+	namespace := tftypes.KeyPrefixDenom
+	namespaceCreatorIdx := tftypes.KeyPrefixCreatorIndexer
 
 	return collections.NewIndexedMap[storePKType, storeVType](
 		storeKey, namespace, primaryKeyEncoder, valueEncoder,

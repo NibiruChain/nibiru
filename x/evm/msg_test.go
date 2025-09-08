@@ -995,3 +995,143 @@ func (s *MsgsSuite) TestMarshalJSON() {
 	s.Equal(addrHex, goType.FromErc20.Hex())
 	s.Equal(sender, goType.Sender)
 }
+
+func (s *MsgsSuite) TestMsgConvertEvmToCoin_ValidateBasic() {
+	validSender := "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	validToAddress := "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl" // Using same valid address
+	validErc20Addr := "0x1111111111111111122222222222222222222222"
+
+	testCases := []struct {
+		name   string
+		msg    *evm.MsgConvertEvmToCoin
+		expErr bool
+		errMsg string
+	}{
+		{
+			name: "valid message",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
+			},
+			expErr: false,
+		},
+		{
+			name: "invalid sender address",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    "invalid",
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
+			},
+			expErr: true,
+			errMsg: "invalid sender address",
+		},
+		{
+			name: "empty sender address",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    "",
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
+			},
+			expErr: true,
+			errMsg: "invalid sender address",
+		},
+		{
+			name: "invalid to address",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    "invalid",
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
+			},
+			expErr: true,
+			errMsg: "invalid bech32 or hex addr",
+		},
+		{
+			name: "empty to address",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    "",
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(100),
+			},
+			expErr: true,
+			errMsg: "invalid bech32 or hex addr",
+		},
+		{
+			name: "empty erc20 contract address",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender: validSender,
+				ToAddr: validToAddress,
+				Erc20Addr: eth.EIP55Addr{
+					Address: common.Address{},
+				},
+				Amount: sdkmath.NewInt(100),
+			},
+			expErr: true,
+			errMsg: "empty erc20_addr",
+		},
+		{
+			name: "nil amount",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.Int{},
+			},
+			expErr: true,
+			errMsg: "amount must be positive",
+		},
+		{
+			name: "zero amount",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(0),
+			},
+			expErr: true,
+			errMsg: "amount must be positive",
+		},
+		{
+			name: "negative amount",
+			msg: &evm.MsgConvertEvmToCoin{
+				Sender:    validSender,
+				ToAddr:    validToAddress,
+				Erc20Addr: eth.EIP55Addr{Address: common.HexToAddress(validErc20Addr)},
+				Amount:    sdkmath.NewInt(-100),
+			},
+			expErr: true,
+			errMsg: "amount must be positive",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			err := tc.msg.ValidateBasic()
+			if tc.expErr {
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), tc.errMsg)
+			} else {
+				s.Require().NoError(err)
+			}
+		})
+	}
+}
+
+func (s *MsgsSuite) TestMsgConvertEvmToCoin_GetSigners() {
+	validSender := "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+	msg := &evm.MsgConvertEvmToCoin{
+		Sender: validSender,
+	}
+
+	signers := msg.GetSigners()
+	s.Require().Equal(1, len(signers))
+
+	expectedAddr, err := sdk.AccAddressFromBech32(validSender)
+	s.Require().NoError(err)
+	s.Require().Equal(expectedAddr, signers[0])
+}

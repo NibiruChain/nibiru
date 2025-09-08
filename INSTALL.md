@@ -10,8 +10,7 @@ This guide will explain how to install the Nibiru Chain binary, `nibid`, onto yo
 - [4. Clone the Nibiru Repository](#4-clone-the-nibiru-repository)
 - [Upgrade](#upgrade)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Troubleshooting](#troubleshooting-1)
+  - [Contributing](#contributing)
   - [Error when running `make install` on MacOS](#error-when-running-make-install-on-macos)
 
 ## 1. Update the system
@@ -86,7 +85,7 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 B. New commands you've made on the `nibid` don't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
 
-## Contributing
+### Contributing
 
 The code for `nibid` is located in the `/cmd/nibid` folder.
 
@@ -109,8 +108,6 @@ nibid query --help
 nibid tx --help
 nibid query oracle --help
 ```
-
-## Troubleshooting
 
 ### Error when running `make install` on MacOS
 

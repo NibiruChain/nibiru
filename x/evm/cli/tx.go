@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		CmdCreateFunToken(),
 		CmdConvertCoinToEvm(),
+		CmdConvertEvmToCoin(),
 	}
 	for _, cmd := range cmds {
 		txCmd.AddCommand(cmd)
@@ -116,6 +117,52 @@ func CmdConvertCoinToEvm() *cobra.Command {
 				Sender:    clientCtx.GetFromAddress().String(),
 				BankCoin:  coin,
 				ToEthAddr: eip55Addr,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdConvertEvmToCoin broadcast MsgConvertEvmToCoin
+func CmdConvertEvmToCoin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "convert-evm-to-coin [erc20_contract_address] [amount] [to_address] [flags]",
+		Short: `Convert ERC20 tokens to their bank coin representation and send to the [to_address] account`,
+		Long: heredoc.Doc(`
+	Convert ERC20 tokens to their bank coin representation.
+
+	Example:
+	convert-evm-to-coin 0x1234...abcd 100000000 nibi1...xyz --from mykey
+		`),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			erc20Addr, err := eth.NewEIP55AddrFromStr(args[0])
+			if err != nil {
+				return fmt.Errorf("invalid ERC20 contract address: %w", err)
+			}
+
+			amount, ok := sdk.NewIntFromString(args[1])
+			if !ok {
+				return fmt.Errorf("invalid amount: %s", args[1])
+			}
+
+			toAddress := args[2]
+			if _, err := sdk.AccAddressFromBech32(toAddress); err != nil {
+				return fmt.Errorf("invalid recipient address: %w", err)
+			}
+
+			msg := &evm.MsgConvertEvmToCoin{
+				Sender:    clientCtx.GetFromAddress().String(),
+				Erc20Addr: erc20Addr,
+				Amount:    amount,
+				ToAddr:    toAddress,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

@@ -135,7 +135,7 @@ func (s *TestSuite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
 	txHashHex = s.AssertTxResponseSuccess(txResp)
 
 	base := 10
-	var txRespCode = strconv.FormatUint(uint64(txResp.Code), base)
+	txRespCode := strconv.FormatUint(uint64(txResp.Code), base)
 	s.EqualValuesf(txResp.Code, 0,
 		"code: %v\nraw log: %s", txRespCode, txResp.RawLog)
 	return txHashHex
