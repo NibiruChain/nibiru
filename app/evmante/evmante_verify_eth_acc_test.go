@@ -4,9 +4,8 @@ import (
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/sha3"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -82,7 +81,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			contract, err := deployWNIBI(&deps)
-			require.NoError(s.T(), err)
+			s.Require().NoError(err)
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.AppKeepers.EvmKeeper, &deps.App.AppKeepers.AccountKeeper, &deps.App.GasTokenKeeper)
 
@@ -128,15 +127,7 @@ func deployWNIBI(deps *evmtest.TestDeps) (gethcommon.Address, error) {
 }
 
 func CalcMappingSlot(key gethcommon.Address, baseSlot uint64) gethcommon.Hash {
-	// pad base slot to 32 bytes
-	baseSlotHash := gethcommon.BigToHash(new(big.Int).SetUint64(baseSlot))
-
-	// concatenate key + slot
-	data := append(make([]byte, 0, 64), key.Hash().Bytes()...)
-	data = append(data, baseSlotHash.Bytes()...)
-
-	// keccak256
-	hash := sha3.NewLegacyKeccak256()
-	hash.Write(data)
-	return gethcommon.BytesToHash(hash.Sum(nil))
+	addrPadded := gethcommon.LeftPadBytes(key.Bytes(), 32)
+	slotPadded := gethcommon.LeftPadBytes(new(big.Int).SetUint64(baseSlot).Bytes(), 32)
+	return gethcrypto.Keccak256Hash(addrPadded, slotPadded)
 }

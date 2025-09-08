@@ -5,13 +5,16 @@ set -e
 BINARY="nibid"
 CHAIN_ID="nibiru-localnet-0"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
 CHAIN_DIR="$HOME/.nibid"
 GENESIS_EXPORT="./contrib/genesis.json"
 
 echo "CHAIN_DIR: $CHAIN_DIR"
 echo "CHAIN_ID: $CHAIN_ID"
 
+if ! command -v "$BINARY" >/dev/null 2>&1; then
+  >&2 echo "Error: Binary '$BINARY' not found in PATH. Build or install it first."
+  exit 1
+fi
 # ------------------------------------------------------------
 # Set up colored text logging
 # ------------------------------------------------------------
@@ -116,7 +119,7 @@ echo_info "Successfully finished localnet script setup."
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
   echo_error "Terminating $BINARY..."
-  killall nibid
+  pkill -x "$BINARY" || true
 fi
 
 # Remove previous data, preserving keyring and config files
@@ -132,7 +135,7 @@ if ! mkdir -p "$CHAIN_DIR" 2>/dev/null; then
 fi
 
 # 1. Initialize chain
-if $BINARY init $CHAIN_ID --chain-id $CHAIN_ID --overwrite; then
+if "$BINARY" init "$CHAIN_ID" --chain-id "$CHAIN_ID" --overwrite --home "$CHAIN_DIR"; then
   echo_success "Successfully initialized $CHAIN_ID"
 else
   echo_error "Failed to initialize $CHAIN_ID"
@@ -154,11 +157,11 @@ sed -i "s/\"chain_id\": \".*\"/\"chain_id\": \"$CHAIN_ID\"/" "$CHAIN_DIR/config/
 nibid tendermint unsafe-reset-all --home "$CHAIN_DIR"
 
 # 5. (Optional) Create a new validator key and add to genesis
-if ! nibid keys show validator --home "$CHAIN_DIR" >/dev/null 2>&1; then
-    nibid keys add validator --home "$CHAIN_DIR"
-    nibid add-genesis-account validator "$STAKE" --home "$CHAIN_DIR"
-    nibid gentx validator "$STAKE" --chain-id "$CHAIN_ID" --home "$CHAIN_DIR"
-    nibid collect-gentxs --home "$CHAIN_DIR"
+if ! "$BINARY" keys show validator --home "$CHAIN_DIR" >/dev/null 2>&1; then
+    "$BINARY" keys add validator --home "$CHAIN_DIR"
+    "$BINARY" add-genesis-account validator "$STAKE" --home "$CHAIN_DIR"
+    "$BINARY" gentx validator "$STAKE" --chain-id "$CHAIN_ID" --home "$CHAIN_DIR"
+    "$BINARY" collect-gentxs --home "$CHAIN_DIR"
 fi
 
 # 6. Start the new chain

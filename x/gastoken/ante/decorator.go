@@ -104,12 +104,6 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 
 	if simulate && fees.IsZero() {
 		fees = sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 1))
-		burnAcctAddr, _ := sdk.AccAddressFromBech32("nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl")
-		// were doing 1 extra get account call alas
-		burnAcct := dfd.ak.GetAccount(ctx, burnAcctAddr)
-		if burnAcct != nil {
-			deductFeesFromAcc = burnAcct
-		}
 	}
 
 	var (
@@ -125,7 +119,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	}
 
 	// deducts the fees and transfer them to the module account
-	if !fees.IsZero() {
+	if !fees.IsZero() && !simulate {
 		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.gasTokenKeeper, dfd.bankKeeper, ctx, deductFeesFromAcc, fees)
 		if err != nil {
 			return ctx, err
@@ -372,7 +366,7 @@ func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 		return sdkioerrors.Wrap(err, "failed to call UniswapV3Pool swap")
 	}
 	if resp.Failed() {
-		return sdkioerrors.Wrap(err, "UniswapV3Pool swap VM error")
+		return fmt.Errorf("UniswapV3 swap failed: %s", resp.VmError)
 	}
 	if err := stateDB.Commit(); err != nil {
 		return sdkioerrors.Wrap(err, "failed to commit stateDB after swap")
