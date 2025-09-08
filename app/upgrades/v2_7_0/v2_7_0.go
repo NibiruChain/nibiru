@@ -112,7 +112,7 @@ func UpgradeAddWNIBIToNibiruEvm(
 		gethcommon.Hex2Bytes(evmGenAcc.Code),
 	)
 	if codeHashAuth != codeHashEvm {
-		return fmt.Errorf("code has mismatch between auth and evm modules")
+		return fmt.Errorf("code hash mismatch between auth and evm modules")
 	}
 
 	err = keepers.EvmKeeper.ImportGenesisAccount(ctx, evmGenAcc)
@@ -120,7 +120,7 @@ func UpgradeAddWNIBIToNibiruEvm(
 		return err
 	}
 
-	if !keepers.EvmKeeper.GetAccount(ctx, appconst.MAINNET_WNIBI_ADDR).IsContract() {
+	if acc := keepers.EvmKeeper.GetAccount(ctx, appconst.MAINNET_WNIBI_ADDR); acc == nil || !acc.IsContract() {
 		err = fmt.Errorf("v2.7.0 state corruption: WNIBI is not a contract according to the EVM StateDB")
 		return err
 	}
