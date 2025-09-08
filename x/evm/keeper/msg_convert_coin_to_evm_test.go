@@ -123,19 +123,20 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	)
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ = deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		true,                                // commit
+		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Require().NoError(sdb.Commit())
 
 	// Check 1: module balance
 	moduleBalance = deps.App.BankKeeper.GetBalance(deps.Ctx, authtypes.NewModuleAddress(evm.ModuleName), funToken.BankDenom)
@@ -158,7 +159,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		true,                                // commit
+		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -311,13 +312,13 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	)
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ = deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,              /*evmObj*/
 		deps.Sender.EthAddr, /*fromAcc*/
 		&testContractAddr,   /*contract*/
-		true,                /*commit*/
+		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -328,6 +329,7 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 	s.Empty(evmResp.VmError)
 	gasUsedFor2Ops := evmResp.GasUsed
+	s.Require().NoError(sdb.Commit())
 
 	s.T().Log(heredoc.Doc(
 		`Summary - Before the tx, sender has [only enough NIBI for the native send, 10 BC], while the test contract has [10 microNIBI, 10 BC]
@@ -386,13 +388,13 @@ Sender calls "nativeSendThenPrecompileSend".
 	)
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ = deps.NewEVM()
+	evmObj, sdb = deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.DefaultEthCallGasLimit,
 		nil,
@@ -403,6 +405,7 @@ Sender calls "nativeSendThenPrecompileSend".
 	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 	s.Empty(evmResp.VmError)
 	gasUsedFor1Op := evmResp.GasUsed
+	s.Require().NoError(sdb.Commit())
 
 	// Assertions for Alice
 	evmtest.FunTokenBalanceAssert{
@@ -513,7 +516,7 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -648,7 +651,7 @@ func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,

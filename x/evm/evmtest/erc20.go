@@ -16,7 +16,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
+
+func FinalizeEthereumTx(evmObj *vm.EVM, s *suite.Suite) {
+	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+}
 
 func AssertERC20BalanceEqualWithDescription(
 	t *testing.T,

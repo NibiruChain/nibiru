@@ -68,7 +68,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
-		true, /*commit*/
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		Erc20GasLimitExecute,
 		nil,
@@ -76,9 +76,11 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	if err != nil {
 		return nil, err
 	}
-
 	if evmResp.Failed() {
 		return nil, fmt.Errorf("failed to burn ERC20 tokens: %s", evmResp.VmError)
+	}
+	if err := stateDB.Commit(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	// 2 | Send Bank Coins from the EVM module to the recipient
@@ -218,13 +220,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	amount sdkmath.Int,
 	evmObj *vm.EVM,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	// commitEvmTx: value to use for "commit" in any EVM calls
-	// Although counterintuitive, "commit" should be false when we apply the
-	// EVM transaction message because the same evmObj (*vm.EVM) can be used
-	// for consecutive EVM operations, and "commit" should only occur at the
-	// end when the transaction is successful and will be finalized.
-	commitEvmTx := false
-
 	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
 	if err != nil {
 		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
@@ -289,7 +284,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		evmObj,
 		sender.Eth,           /* fromAcc */
 		&erc20.Address,       /* contract */
-		commitEvmTx,          /* commit */
+		evm.COMMIT_CALL,      /* commit */
 		contractInput,        /* contractInput */
 		Erc20GasLimitExecute, /* gasLimit */
 		nil,                  /* weiValue */

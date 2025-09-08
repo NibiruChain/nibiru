@@ -43,12 +43,19 @@ func (s *Suite) TestCommitRemovesDirties() {
 		evmObj,
 		deps.Sender.EthAddr, // caller
 		&erc20,              // contract
-		true,                // commit
+		evm.COMMIT_CALL,     /*commit*/
 		input,
 		keeper.Erc20GasLimitExecute,
 		nil,
 	)
 	s.Require().NoError(err)
+
+	s.Less(
+		0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount(),
+		"after a state modifying contract call (ERC20.mint), there should be dirty entries",
+	)
+
+	evmtest.FinalizeEthereumTx(evmObj, &s.Suite)
 	s.Require().EqualValues(0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount())
 }
 
@@ -109,12 +116,13 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			evmObj,
 			deps.Sender.EthAddr, // caller
 			&erc20,              // contract
-			true,                // commit
+			evm.COMMIT_CALL,     /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
 			nil,
 		)
 		s.Require().NoError(err)
+		evmtest.FinalizeEthereumTx(evmObj, &s.Suite)
 	})
 
 	randomAcc := evmtest.NewEthPrivAcc().EthAddr

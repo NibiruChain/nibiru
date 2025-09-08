@@ -14,9 +14,11 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // rough gas limits for wasm execution - used in tests only
@@ -194,7 +196,7 @@ func AssertWasmCounterStateWithEvm(
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		false,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitQuery,
 		nil,
@@ -299,11 +301,14 @@ func IncrementWasmCounterWithExecuteMulti(
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		commit,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitExecute,
 		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
+	if commit {
+		s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+	}
 }

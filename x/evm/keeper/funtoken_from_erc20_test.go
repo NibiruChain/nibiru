@@ -203,13 +203,13 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
 		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-		evmObj, _ := deps.NewEVM()
+		evmObj, sdb := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,      /*from*/
 			&deployResp.ContractAddr, /*to*/
-			true,                     /*commit*/
+			evm.COMMIT_CALL,          /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
 			nil,
@@ -218,6 +218,7 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 		s.Require().NotZero(evmResp.GasUsed)
 		s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+		s.Require().NoError(sdb.Commit())
 	})
 
 	randomAcc := testutil.AccAddress()
@@ -225,13 +226,13 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 		s.Require().NoError(err)
 		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-		evmObj, _ := deps.NewEVM()
+		evmObj, sdb := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
-			true,                                /*commit*/
+			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -240,6 +241,7 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 		s.Require().NotZero(evmResp.GasUsed)
 		s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+		s.Require().NoError(sdb.Commit())
 	})
 
 	s.Run("happy: check balances", func() {
@@ -255,13 +257,13 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(70_000), randomAcc.String())
 		s.Require().NoError(err)
 		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-		evmObj, _ := deps.NewEVM()
+		evmObj, sdb := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContractWithInput(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
-			true,                                /*commit*/
+			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -270,6 +272,7 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 		s.Require().NotZero(evmResp.GasUsed)
 		s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+		s.Require().NoError(sdb.Commit())
 	})
 
 	s.Run("happy: send Bank tokens back to erc20", func() {
@@ -439,13 +442,13 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	input, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ := deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&precompile.PrecompileAddr_FunToken,
-		true,
+		evm.COMMIT_CALL, /*commit*/
 		input,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -454,6 +457,7 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	s.Require().NoError(sdb.Commit())
 }
 
 // TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
@@ -502,7 +506,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
-		false,               /*commit*/
+		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		10_000_000,
 		nil,
@@ -515,13 +519,13 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	s.T().Log("sad: call attackTransfer()")
 	contractInput, err = embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackTransfer")
 	s.Require().NoError(err)
-	evmObj, _ = deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
-		true,                /*commit*/
+		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		10_000_000,
 		nil,
@@ -530,6 +534,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	s.Require().NoError(sdb.Commit())
 }
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.
@@ -578,13 +583,13 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	)
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ := deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,                 /*from*/
 		&precompile.PrecompileAddr_FunToken, /*to*/
-		true,                                /*commit*/
+		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -593,6 +598,7 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	s.Require().NoError(sdb.Commit())
 
 	s.T().Log("check balances")
 	evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, deployResp.ContractAddr, deps.Sender.EthAddr, big.NewInt(900), "expect 900 balance")
@@ -658,13 +664,13 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 	s.Require().NoError(err)
 
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, _ := deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&deployResp.ContractAddr,
-		true,
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -673,6 +679,7 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	s.Require().NoError(sdb.Commit())
 
 	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr, embeds.SmartContract_TestBytes32Metadata.ABI)
 	s.Require().NoError(err)

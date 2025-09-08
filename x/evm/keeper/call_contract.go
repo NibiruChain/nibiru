@@ -45,17 +45,14 @@ func (k Keeper) CallContractWithInput(
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
-	var value *big.Int
 	if weiValue == nil {
-		value = unusedBigInt
-	} else {
-		value = weiValue
+		weiValue = unusedBigInt
 	}
 	evmMsg := core.Message{
 		To:               contract,
 		From:             fromAcc,
 		Nonce:            nonce,
-		Value:            value, // amount
+		Value:            weiValue, // amount
 		GasLimit:         gasLimit,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,

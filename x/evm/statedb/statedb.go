@@ -1,4 +1,4 @@
-// The "evm/statedb" package implements a go-ethereum [vm.StateDB] with state
+// The "evm/statedb" package implements a go-ethereum vm.StateDB] with state
 // management and journal changes specific to the Nibiru EVM.
 //
 // This package plays a critical role in managing the state of accounts,
