@@ -64,7 +64,7 @@ func (e erc20Calls) Approve(
 	if err != nil {
 		return allowance, nil, err
 	}
-	resp, err = e.CallContractWithInput(ctx, evmObj, owner, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute))
+	resp, err = e.CallContractWithInput(ctx, evmObj, owner, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute), nil)
 	if err != nil {
 		return allowance, nil, err
 	}

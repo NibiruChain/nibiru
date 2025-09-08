@@ -121,7 +121,7 @@ func (k *Keeper) GetErc20Balance(ctx sdk.Context, account, contract gethcommon.A
 
 func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethcommon.Address, amount *big.Int) (err error) {
 	if contract == (gethcommon.Address{}) {
-		return fmt.Errorf("contract address is empty")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "contract address cannot be zero")
 	}
 	if amount == nil || amount.Sign() < 0 {
 		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "amount must be non-negative")
@@ -164,7 +164,7 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 		return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer")
 	}
 	if resp.Failed() {
-		return sdkioerrors.Wrap(err, "failed to call ERC20 contract transfer with VM error")
+		return fmt.Errorf("ERC20 transfer failed with VM error: %s", resp.VmError)
 	}
 	if err := stateDB.Commit(); err != nil {
 		return sdkioerrors.Wrap(err, "failed to commit stateDB")
@@ -175,7 +175,7 @@ func (k *Keeper) Erc20Transfer(ctx sdk.Context, contract, sender, receiver gethc
 
 func (k *Keeper) Erc20Approve(ctx sdk.Context, contract, sender, spender gethcommon.Address, amount *big.Int) (err error) {
 	if contract == (gethcommon.Address{}) {
-		return fmt.Errorf("contract address is empty")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "contract address cannot be zero")
 	}
 	if amount == nil || amount.Sign() < 0 {
 		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "amount must be non-negative")
@@ -218,7 +218,7 @@ func (k *Keeper) Erc20Approve(ctx sdk.Context, contract, sender, spender gethcom
 		return sdkioerrors.Wrap(err, "failed to call ERC20 contract approve")
 	}
 	if resp.Failed() {
-		return sdkioerrors.Wrap(err, "failed to call ERC20 contract approve with VM error")
+		return fmt.Errorf("ERC20 transfer failed with VM error: %s", resp.VmError)
 	}
 	if err := stateDB.Commit(); err != nil {
 		return sdkioerrors.Wrap(err, "failed to commit stateDB")

@@ -277,7 +277,7 @@ func WithdrawFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKee
 	}()
 	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 
-	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &contract, false /*commit*/, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	resp, err := ek.CallContractWithInput(ctx, evmObj, feeCollector, &contract, false /*commit*/, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute), nil)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to call WNIBI contract withdraw")
 	}
@@ -361,7 +361,7 @@ func SwapFeeToken(ctx sdk.Context, ek *evmkeeper.Keeper, ak types.AccountKeeper,
 	}()
 	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil, stateDB)
 
-	resp, err := ek.CallContractWithInput(ctx, evmObj, sender, &routerAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	resp, err := ek.CallContractWithInput(ctx, evmObj, sender, &routerAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute), nil)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to call UniswapV3Pool swap")
 	}
@@ -455,7 +455,7 @@ func GetAmountInFromUniswap(
 	}()
 	evmObj := ek.NewEVM(ctx, evmMsg, ek.GetEVMConfig(ctx), nil, stateDB)
 
-	resp, err := ek.CallContractWithInput(ctx, evmObj, gethcommon.Address{}, &quoterAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute))
+	resp, err := ek.CallContractWithInput(ctx, evmObj, gethcommon.Address{}, &quoterAddr, false, input, evmkeeper.GetCallGasWithLimit(ctx, evmkeeper.Erc20GasLimitExecute), nil)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "quoter eth_call failed")
 	}
