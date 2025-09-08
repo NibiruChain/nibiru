@@ -87,10 +87,11 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		return nil, sdkioerrors.Wrap(err, "failed to send coins from module to account")
 	}
 
+	//  TODO: safe to remove?
 	// Commit the stateDB
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
+	// if err = stateDB.Commit(); err != nil {
+	// 	return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+	// }
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
@@ -179,10 +180,11 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		return nil, sdkioerrors.Wrap(err, "failed to send coins to recipient")
 	}
 
-	// Commit the stateDB
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
+	//  TODO: safe to remove?
+	// // Commit the stateDB
+	// if err = stateDB.Commit(); err != nil {
+	// 	return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+	// }
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
@@ -202,6 +204,11 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
+// NOTE: This function is unsafe and assumes all arguments are valid. It should
+// never be called directly.
+// It can only be called from the logic:
+//   - (1) Inside of "eth.evm.v1.MsgConvertEvmToCoin"
+//   - (2) Or inside the of FunToken precompile "sendToBank"
 func (k Keeper) convertEvmToCoinForWNIBI(
 	ctx sdk.Context,
 	stateDB *statedb.StateDB,
@@ -209,9 +216,14 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	sender evm.Addrs,
 	toAddrBech32 sdk.AccAddress,
 	amount sdkmath.Int,
+	evmObj *vm.EVM,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	// isTx: value to use for commit in any EVM calls
-	isTx := true
+	// commitEvmTx: value to use for "commit" in any EVM calls
+	// Although counterintuitive, "commit" should be false when we apply the
+	// EVM transaction message because the same evmObj (*vm.EVM) can be used
+	// for consecutive EVM operations, and "commit" should only occur at the
+	// end when the transaction is successful and will be finalized.
+	commitEvmTx := false
 
 	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
 	if err != nil {
@@ -234,8 +246,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	var evmObj *vm.EVM
-	{
+	if evmObj == nil {
 		unusedBigInt := big.NewInt(0)
 		evmMsg := core.Message{
 			To:               &erc20.Address,
@@ -276,12 +287,12 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
-		sender.Eth,     /* fromAcc */
-		&erc20.Address, /* contract */
-		isTx,           /* commit */
-		contractInput,
-		Erc20GasLimitExecute,
-		nil,
+		sender.Eth,           /* fromAcc */
+		&erc20.Address,       /* contract */
+		commitEvmTx,          /* commit */
+		contractInput,        /* contractInput */
+		Erc20GasLimitExecute, /* gasLimit */
+		nil,                  /* weiValue */
 	)
 	if err != nil {
 		return resp, fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: %w", err)
@@ -298,11 +309,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	if new(big.Int).Sub(wnibiBalBefore, wnibiBalAfter).Cmp(withdrawWei.ToBig()) != 0 {
 		err = fmt.Errorf("WNIBI withdraw failed: withdraw amount %s, balBefore %s, balAfter %s", withdrawWei, wnibiBalBefore, wnibiBalAfter)
 		return
-	}
-
-	// Commit the stateDB
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
 	}
 
 	withdrawnMicronibi := sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromBigInt(

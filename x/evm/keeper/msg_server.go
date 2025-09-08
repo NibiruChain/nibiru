@@ -70,7 +70,7 @@ func (k *Keeper) EthereumTx(
 		ctx,
 		*evmMsg,
 		evmObj,
-		true, /*commit*/
+		evm.COMMIT_ETHEREUM_TX, /*commit*/
 		txConfig.TxHash,
 	)
 	if evmResp != nil {
@@ -604,29 +604,40 @@ func (k *Keeper) ConvertEvmToCoin(
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
-		return k.convertEvmToCoinForWNIBI(
-			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32, amount,
-		)
-	}
-
-	// Find the FunToken mapping for this ERC20
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
-	if len(funTokens) != 1 {
-		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
-		return
-	}
-
-	funtokenMapping := funTokens[0]
-	amountBig := amount.BigInt()
-	if funtokenMapping.IsMadeFromCoin {
-		return k.convertEvmToCoinForCoinOriginated(
-			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		resp, err = k.convertEvmToCoinForWNIBI(
+			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32,
+			amount,
+			nil, /*evmObj*/
 		)
 	} else {
-		return k.convertEvmToCoinForERC20Originated(
-			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
-		)
+		// Find the FunToken mapping for this ERC20
+		funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+		if len(funTokens) != 1 {
+			err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
+			return
+		}
+
+		funtokenMapping := funTokens[0]
+		amountBig := amount.BigInt()
+		if funtokenMapping.IsMadeFromCoin {
+			resp, err = k.convertEvmToCoinForCoinOriginated(
+				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		} else {
+			resp, err = k.convertEvmToCoinForERC20Originated(
+				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		}
 	}
+
+	if err != nil {
+		return
+	}
+	if err = stateDB.Commit(); err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+	}
+	return
+
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

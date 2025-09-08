@@ -36,9 +36,6 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		// If it is, convert NIBI -> WNIBI (Bank Coin -> ERC20)
 		evmParams = k.GetParams(ctx)
 
-		// isTx: value to use for commit in any EVM calls
-		isTx = true
-
 		senderEthAddr = eth.NibiruAddrToEthAddr(senderBech32)
 
 		// ERC20 contract taken to be WNIBI.sol
@@ -105,9 +102,9 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
-		senderEthAddr,  /* fromAcc */
-		&erc20.Address, /* contract */
-		isTx,           /* commit */
+		senderEthAddr,   /* fromAcc */
+		&erc20.Address,  /* contract */
+		evm.COMMIT_CALL, /* commit */
 		contractInput,
 		Erc20GasLimitExecute,
 		depositWei,
@@ -227,7 +224,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
-		true, /*commit*/
+		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		Erc20GasLimitExecute,
 		nil,
