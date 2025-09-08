@@ -4,14 +4,15 @@ import (
 	"math/big"
 	"testing"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
 )
 
 // Prior to v2.7.0 on mainnet, WNIBI.sol is live as a contract, but the EVM
@@ -19,7 +20,6 @@ import (
 // This test shows that the upgrade edits only the EVM module parameters without
 // deploying anything.
 func (s *Suite) TestMainnet() {
-
 	deps := evmtest.NewTestDeps()
 
 	deps.Ctx = deps.Ctx.WithChainID("cataclysm-1") // Pretend to be mainnet
@@ -53,7 +53,6 @@ func (s *Suite) TestMainnet() {
 // "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97". If an account already exists
 // with that address, it gets overwritten to become WNIBI.sol.
 func (s *Suite) TestOtherNibirus() {
-
 	deps := evmtest.NewTestDeps()
 
 	s.NotEqual(

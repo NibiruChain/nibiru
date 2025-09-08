@@ -180,5 +180,4 @@ func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccoun
 	}
 
 	return nil
-
 }

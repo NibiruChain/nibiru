@@ -103,7 +103,6 @@ func UpgradeAddWNIBIToNibiruEvm(
 		}
 
 		keepers.AccountKeeper.SetAccount(ctx, &authAcc)
-
 	}
 
 	// Sanity check again before proceeding
@@ -139,7 +138,6 @@ func WNIBI_GENESIS_EVM_ACC() evm.GenesisAccount {
 	}
 	genAcc.Validate()
 	return genAcc
-
 }
 
 /*

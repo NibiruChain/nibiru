@@ -1,5 +1,6 @@
+package keeper
+
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmmodule
 
 import (
 	"fmt"
@@ -11,14 +12,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 // InitGenesis initializes genesis state based on exported genesis
-func InitGenesis(
+func (k *Keeper) InitGenesis(
 	ctx sdk.Context,
-	k *keeper.Keeper,
-	accountKeeper evm.AccountKeeper,
 	genState evm.GenesisState,
 ) []abci.ValidatorUpdate {
 	err := k.SetParams(ctx, genState.Params)
@@ -29,7 +27,7 @@ func InitGenesis(
 	// Note that "GetModuleAccount" initializes the module account with permissions
 	// under the hood if it did not already exist. This is important because the
 	// EVM module needs to be able to send and receive funds during MsgEthereumTx
-	if evmModule := accountKeeper.GetModuleAccount(ctx, evm.ModuleName); evmModule == nil {
+	if evmModule := k.accountKeeper.GetModuleAccount(ctx, evm.ModuleName); evmModule == nil {
 		panic("the EVM module account has not been set")
 	}
 
@@ -55,12 +53,12 @@ func InitGenesis(
 }
 
 // ExportGenesis exports genesis state of the EVM module
-func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak evm.AccountKeeper) *evm.GenesisState {
+func (k *Keeper) ExportGenesis(ctx sdk.Context) *evm.GenesisState {
 	var genesisAccounts []evm.GenesisAccount
 
 	// 1. Export EVM contacts
 	// TODO: find the way to get eth contract addresses from the evm keeper
-	allAccounts := ak.GetAllAccounts(ctx)
+	allAccounts := k.accountKeeper.GetAllAccounts(ctx)
 	for _, acc := range allAccounts {
 		ethAcct, ok := acc.(eth.EthAccountI)
 		if ok {
