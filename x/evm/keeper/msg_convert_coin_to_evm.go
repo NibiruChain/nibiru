@@ -102,9 +102,8 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	evmResp, err := k.CallContractWithInput(
 		ctx,
 		evmObj,
-		senderEthAddr,   /* fromAcc */
-		&erc20.Address,  /* contract */
-		evm.COMMIT_CALL, /* commit */
+		senderEthAddr,  /* fromAcc */
+		&erc20.Address, /* contract */
 		contractInput,
 		Erc20GasLimitExecute,
 		depositWei,
@@ -157,7 +156,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	// Commit the stateDB to the BankKeeperExtension because we don't go through
 	// ApplyEvmMsg at all in this tx.
 	if err := stateDB.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit stateDB: %w", err)
+		return nil, fmt.Errorf("%s: %w", evm.ErrStateDBCommit, err)
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
@@ -224,7 +223,6 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		Erc20GasLimitExecute,
 		nil,
@@ -239,7 +237,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	}
 
 	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
@@ -343,7 +341,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	// Commit the stateDB to the BankKeeperExtension because we don't go through
 	// ApplyEvmMsg at all in this tx.
 	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// Emit event with the actual amount received

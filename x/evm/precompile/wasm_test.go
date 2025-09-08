@@ -60,7 +60,6 @@ func (s *WasmSuite) TestInstantiate() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitExecute,
 		nil,
@@ -106,7 +105,6 @@ func (s *WasmSuite) TestExecute() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			WasmGasLimitExecute,
 			nil,
@@ -143,7 +141,6 @@ func (s *WasmSuite) TestExecute() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			WasmGasLimitExecute,
 			nil,
@@ -195,7 +192,6 @@ func (s *WasmSuite) TestQueryRaw() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitQuery,
 		nil,
@@ -236,7 +232,6 @@ func (s *WasmSuite) TestQuerySmart() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitQuery,
 		nil,
@@ -405,7 +400,6 @@ func (s *WasmSuite) TestSadArgsExecute() {
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
-				evm.COMMIT_CALL, /*commit*/
 				contractInput,
 				WasmGasLimitExecute,
 				nil,
@@ -545,7 +539,6 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
-				evm.COMMIT_CALL, /*commit*/
 				contractInput,
 				WasmGasLimitExecute,
 				nil,
@@ -599,7 +592,6 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitExecute,
 		nil,
@@ -673,7 +665,6 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -766,7 +757,6 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,

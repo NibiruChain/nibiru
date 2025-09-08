@@ -34,7 +34,7 @@ func (k sudoExtension) EditInflationParams(
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("%w: failed to read inflation params", err)
+		return fmt.Errorf("failed to read inflation params: %w", err)
 	}
 
 	paramsAfter, err := MergeInflationParams(newParams, params)

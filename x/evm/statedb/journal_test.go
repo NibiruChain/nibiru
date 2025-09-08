@@ -43,7 +43,6 @@ func (s *Suite) TestCommitRemovesDirties() {
 		evmObj,
 		deps.Sender.EthAddr, // caller
 		&erc20,              // contract
-		evm.COMMIT_CALL,     /*commit*/
 		input,
 		keeper.Erc20GasLimitExecute,
 		nil,
@@ -116,7 +115,6 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			evmObj,
 			deps.Sender.EthAddr, // caller
 			&erc20,              // contract
-			evm.COMMIT_CALL,     /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
 			nil,

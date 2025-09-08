@@ -188,7 +188,7 @@ func (k *Keeper) createFunTokenFromERC20(
 
 	err = stateDB.Commit()
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(

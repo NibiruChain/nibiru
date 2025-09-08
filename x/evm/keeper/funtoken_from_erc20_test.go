@@ -209,7 +209,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 			evmObj,
 			deps.Sender.EthAddr,      /*from*/
 			&deployResp.ContractAddr, /*to*/
-			evm.COMMIT_CALL,          /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
 			nil,
@@ -232,7 +231,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
-			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -263,7 +261,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
-			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -448,7 +445,6 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&precompile.PrecompileAddr_FunToken,
-		evm.COMMIT_CALL, /*commit*/
 		input,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -506,7 +502,6 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
-		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		10_000_000,
 		nil,
@@ -525,7 +520,6 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
-		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		10_000_000,
 		nil,
@@ -589,7 +583,6 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 		evmObj,
 		deps.Sender.EthAddr,                 /*from*/
 		&precompile.PrecompileAddr_FunToken, /*to*/
-		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -670,7 +663,6 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&deployResp.ContractAddr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,

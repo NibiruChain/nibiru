@@ -253,7 +253,6 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&deployResp2.ContractAddr,
-			evm.COMMIT_CALL, /* commit */
 			input,
 			keeper.Erc20GasLimitExecute,
 			nil,

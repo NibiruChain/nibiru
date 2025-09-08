@@ -23,8 +23,6 @@ import (
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
 //   - contract: Pointer to the Ethereum address of the contract. Nil if new
 //     contract is deployed.
-//   - commit: Boolean flag indicating whether to commit the transaction (true)
-//     or simulate it (false).
 //   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
 //
 // Note: This function handles both contract method calls and simulations,
@@ -34,7 +32,6 @@ func (k Keeper) CallContractWithInput(
 	evmObj *vm.EVM,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
-	commit bool,
 	contractInput []byte,
 	gasLimit uint64,
 	weiValue *big.Int,
@@ -69,7 +66,7 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, commit, txConfig.TxHash,
+		ctx, evmMsg, evmObj, evm.COMMIT_CALL /*commit*/, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")

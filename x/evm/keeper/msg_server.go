@@ -424,7 +424,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := evmStateDB.Commit(); err != nil {
-			return evmResp, sdkioerrors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+			return evmResp, sdkioerrors.Wrapf(err, "ApplyEvmMsg: %s", evm.ErrStateDBCommit)
 		}
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
@@ -634,10 +634,9 @@ func (k *Keeper) ConvertEvmToCoin(
 		return
 	}
 	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 	return
-
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

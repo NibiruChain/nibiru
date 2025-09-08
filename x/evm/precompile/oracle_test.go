@@ -73,7 +73,6 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			OracleGasLimitQuery,
 			nil,
@@ -139,7 +138,6 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			OracleGasLimitQuery,
 			nil,

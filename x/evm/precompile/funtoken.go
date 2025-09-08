@@ -196,8 +196,8 @@ func (p precompileFunToken) sendToBank(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error in ERC20.transfer from caller to EVM account: %w: from %s, erc20 %s, amount: %s",
-			err, caller, erc20, amount,
+			"error in ERC20.transfer from caller to EVM account: from %s, erc20 %s, amount: %s: %w",
+			caller, erc20, amount, err,
 		)
 	}
 

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -196,7 +195,6 @@ func AssertWasmCounterStateWithEvm(
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitQuery,
 		nil,
@@ -301,7 +299,6 @@ func IncrementWasmCounterWithExecuteMulti(
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		WasmGasLimitExecute,
 		nil,

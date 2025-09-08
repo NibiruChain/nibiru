@@ -272,7 +272,6 @@ func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
 		evmObj,
 		deps.Sender.EthAddr, // from
 		&testContractAddr,   // to
-		evm.COMMIT_CALL,     // commit
 		contractInput,
 		10_000_000, // gas limit
 		nil,

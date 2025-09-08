@@ -68,7 +68,6 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		Erc20GasLimitExecute,
 		nil,
@@ -80,7 +79,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		return nil, fmt.Errorf("failed to burn ERC20 tokens: %s", evmResp.VmError)
 	}
 	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// 2 | Send Bank Coins from the EVM module to the recipient
@@ -88,12 +87,6 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to send coins from module to account")
 	}
-
-	//  TODO: safe to remove?
-	// Commit the stateDB
-	// if err = stateDB.Commit(); err != nil {
-	// 	return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	// }
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
@@ -181,12 +174,6 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to send coins to recipient")
 	}
-
-	//  TODO: safe to remove?
-	// // Commit the stateDB
-	// if err = stateDB.Commit(); err != nil {
-	// 	return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	// }
 
 	// Emit event
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
@@ -284,7 +271,6 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		evmObj,
 		sender.Eth,           /* fromAcc */
 		&erc20.Address,       /* contract */
-		evm.COMMIT_CALL,      /* commit */
 		contractInput,        /* contractInput */
 		Erc20GasLimitExecute, /* gasLimit */
 		nil,                  /* weiValue */

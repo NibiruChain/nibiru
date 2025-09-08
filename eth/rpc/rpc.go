@@ -27,12 +27,6 @@ import (
 // ignored in JSON-RPC API.
 const ErrExceedBlockGasLimit = "out of gas in location: block gas meter; gasWanted:"
 
-// ErrStateDBCommit defines the error message when commit after executing EVM
-// transaction, for example transfer native token to a distribution module
-// account using an evm transaction. Note, the transfer amount cannot be set to
-// 0, otherwise this problem will not be triggered.
-const ErrStateDBCommit = "failed to commit stateDB"
-
 // RawTxToEthTx returns a evm MsgEthereum transaction from raw tx bytes.
 func RawTxToEthTx(clientCtx client.Context, txBz cmttypes.Tx) ([]*evm.MsgEthereumTx, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBz)
@@ -237,7 +231,7 @@ func TxIsValidEnough(res *abci.ResponseDeliverTx) (condition bool, reason string
 		return true, "tx succeeded"
 	} else if strings.Contains(res.Log, ErrExceedBlockGasLimit) {
 		return true, "tx exceeded block gas limit"
-	} else if strings.Contains(res.Log, ErrStateDBCommit) {
+	} else if strings.Contains(res.Log, evm.ErrStateDBCommit) {
 		return true, "tx state db commit error"
 	}
 	return false, "unexpected failure"

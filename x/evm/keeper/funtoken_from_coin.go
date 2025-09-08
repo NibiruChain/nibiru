@@ -108,7 +108,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContractWithInput(
-		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, evm.COMMIT_CALL /*commit*/, input, Erc20GasLimitDeploy, nil,
+		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy, nil,
 	)
 	if err != nil {
 		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
@@ -116,7 +116,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 
 	err = stateDB.Commit()
 	if err != nil {
-		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// Emit the logs from the EVM Contract deploy execution

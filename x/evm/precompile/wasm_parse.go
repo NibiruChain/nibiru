@@ -59,7 +59,7 @@ func parseArgContractAddr(arg any) (addr sdk.AccAddress, err error) {
 	}
 	addr, err = sdk.AccAddressFromBech32(addrStr)
 	if err != nil {
-		err = fmt.Errorf("%w: %s",
+		err = fmt.Errorf("%s: %w",
 			ErrArgTypeValidation("string contractAddr", arg), err,
 		)
 		return
@@ -144,7 +144,7 @@ func (p precompileWasm) parseArgsWasmExecute(args []any) (
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(contractAddrStr)
 	if err != nil {
-		err = fmt.Errorf("%w: %s",
+		err = fmt.Errorf("%s: %w",
 			ErrArgTypeValidation("string contractAddr", args[argIdx]), err,
 		)
 		return

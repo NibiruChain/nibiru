@@ -132,7 +132,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
 	evmResp, err := deps.EvmKeeper.CallContractWithInput(
-		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
+		ctx, evmObj, evmMsg.From, nil, contractInput,
 		keeper.Erc20GasLimitDeploy, evmMsg.Value,
 	)
 	if err != nil {
@@ -140,6 +140,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	} else if len(evmResp.VmError) > 0 {
 		return fmt.Errorf("VM Error deploying WNIBI: %s", evmResp.VmError)
 	}
+	FinalizeEthereumTx(evmObj, s)
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&evm.EventContractDeployed{

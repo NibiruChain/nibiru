@@ -90,7 +90,6 @@ func TestWhoAmI(t *testing.T) {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -139,7 +138,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -182,7 +180,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20,
-			evm.COMMIT_CALL, /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -202,7 +199,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /* commit */
 			input,
 			keeper.Erc20GasLimitExecute,
 			nil,
@@ -244,7 +240,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			evmObj,
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
-			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitQuery,
 			nil,
@@ -309,7 +304,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -333,7 +327,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 			nil,
@@ -357,7 +350,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
 			nil,
@@ -402,7 +394,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -450,7 +441,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -560,7 +550,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Addr,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			keeper.Erc20GasLimitExecute,
 			nil,
@@ -588,7 +577,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			evmObj,
 			bob.EthAddr,                         /* from */
 			&precompile.PrecompileAddr_FunToken, /* to */
-			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, /* gasLimit */
 			nil,
@@ -622,7 +610,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 			evmObj,
 			alice.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -755,7 +742,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			evmObj,
 			deps.Sender.EthAddr,                 // From address (doesn't matter much for view)
 			&precompile.PrecompileAddr_FunToken, // To the precompile address
-			evm.COMMIT_CALL,                     /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // Use a reasonable gas limit for queries
 			nil,
@@ -788,7 +774,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,
@@ -814,7 +799,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			evm.COMMIT_CALL, /*commit*/
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
 			nil,

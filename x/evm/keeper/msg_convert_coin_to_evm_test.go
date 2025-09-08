@@ -129,7 +129,6 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -159,7 +158,6 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		evm.COMMIT_CALL,                     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -318,7 +316,6 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 		evmObj,              /*evmObj*/
 		deps.Sender.EthAddr, /*fromAcc*/
 		&testContractAddr,   /*contract*/
-		evm.COMMIT_CALL,     /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -394,7 +391,6 @@ Sender calls "nativeSendThenPrecompileSend".
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.DefaultEthCallGasLimit,
 		nil,
@@ -516,7 +512,6 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,
@@ -651,7 +646,6 @@ func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		evm.COMMIT_CALL, /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
 		nil,

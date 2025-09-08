@@ -176,7 +176,6 @@ func (s *Suite) TestUpgrade() {
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
-			false, // commit
 			input,
 			evmkeeper.Erc20GasLimitQuery,
 			nil,
