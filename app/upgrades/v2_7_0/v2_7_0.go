@@ -136,7 +136,6 @@ func WNIBI_GENESIS_EVM_ACC() evm.GenesisAccount {
 	if err != nil {
 		panic(fmt.Errorf("failed to unpack WNIBI_GENESIS_ACC_STRING as evm.GenesisAccount: %w", err))
 	}
-	genAcc.Validate()
 	return genAcc
 }
 
