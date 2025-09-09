@@ -2,7 +2,6 @@ package evmtest
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +86,7 @@ func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
 }
 
-func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
+func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	var (
 		ctx         = deps.Ctx
 		wnibiAddr   = deps.EvmKeeper.GetParams(ctx).CanonicalWnibi.Address
@@ -99,9 +98,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	newCompiledContract := embeds.SmartContract_WNIBI
 	// empty method name means deploy with the constructor
 	packedArgs, err := newCompiledContract.ABI.Pack("")
-	if err != nil {
-		return fmt.Errorf("failed to pack ABI args: %w", err)
-	}
+	s.NoError(err, "failed to pack ABI args")
 	contractInput := append(newCompiledContract.Bytecode, packedArgs...)
 
 	// Rebuild evmObj with new evmMsg for contract creation.
@@ -135,11 +132,8 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
 		keeper.Erc20GasLimitDeploy, evmMsg.Value,
 	)
-	if err != nil {
-		return fmt.Errorf("failed to deploy WNIBI contract: %w", err)
-	} else if len(evmResp.VmError) > 0 {
-		return fmt.Errorf("VM Error deploying WNIBI: %s", evmResp.VmError)
-	}
+	s.Require().NoError(err, "failed to deploy WNIBI contract")
+	s.Require().Len(evmResp.VmError, 0, "VM Error deploying WNIBI")
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&evm.EventContractDeployed{
@@ -153,9 +147,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	wnibiAcc := statedb.NewEmptyAccount()
 	wnibiAcc.CodeHash = tempWnibiAcc.CodeHash
 	err = deps.EvmKeeper.SetAccount(ctx, wnibiAddr, *wnibiAcc)
-	if err != nil {
-		return fmt.Errorf("overwrite of contract bytecode failed: %w", err)
-	}
+	s.Require().NoError(err, "overwrite of contract bytecode failed")
 
 	s.T().Log("Set WNIBI contract state")
 	{
@@ -175,6 +167,4 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 			ContractAddr: wnibiAddr.Hex(),
 		},
 	)
-
-	return nil
 }

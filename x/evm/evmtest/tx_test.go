@@ -39,3 +39,16 @@ func (s *Suite) TestTransferWei() {
 		evmtest.DeployAndExecuteERC20Transfer(&deps, s.T())
 	})
 }
+
+func (s *Suite) TestDeployWNIBI() {
+	deps := evmtest.NewTestDeps()
+
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+	acc := deps.EvmKeeper.GetAccount(deps.Ctx, evmParams.CanonicalWnibi.Address)
+	s.Require().True(acc == nil || !acc.IsContract())
+
+	deps.DeployWNIBI(&s.Suite)
+	acc = deps.EvmKeeper.GetAccount(deps.Ctx, evmParams.CanonicalWnibi.Address)
+	s.Require().NotNil(acc)
+	s.True(acc.IsContract())
+}
