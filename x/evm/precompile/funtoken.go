@@ -172,6 +172,7 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
 	}
 
+	// case 1 - ERC20 is WNIBI
 	if erc20.Hex() == p.evmKeeper.GetParams(ctx).CanonicalWnibi.Hex() {
 		gotAmountU256, err := p.evmKeeper.ConvertEvmToCoinForWNIBI(
 			ctx, startResult.StateDB,
@@ -191,7 +192,7 @@ func (p precompileFunToken) sendToBank(
 		return method.Outputs.Pack(gotAmount)
 	}
 
-	// ERC20 must have FunToken mapping
+	// case 2 - ERC20 has a FunToken mapping
 	funtokens := p.evmKeeper.FunTokens.Collect(
 		ctx, p.evmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
 	)
