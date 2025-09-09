@@ -121,7 +121,7 @@ fi
 
 # Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
-$BINARY tendermint unsafe-reset-all
+$BINARY tendermint unsafe-reset-all --home "$CHAIN_DIR"
 rm -f "$CHAIN_DIR/config/genesis.json"
 rm -rf "$CHAIN_DIR/config/gentx/"
 
@@ -230,12 +230,13 @@ add_genesis_param '.app_state.oracle.exchange_rates[3].pair = "unibi:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[3].exchange_rate = "'"$price_nibi"'"'
 add_genesis_param '.app_state.gastoken.feetokens[0].erc20_address = "0x869EAa3b34B51D631FB0B6B1f9586ab658C2D25F"'
 add_genesis_param '.app_state.gastoken.feetokens[0].name = "USDC"'
+add_genesis_param '.app_state.bank.supply[0].amount = "30004200000000"'
 
 # ------------------------------------------------------------------------
 # Gentx
 # ------------------------------------------------------------------------
 
-jq --slurpfile evm contrib/evm.json '.app_state.evm = $evm[0].evm | .app_state.auth = $evm[0].auth' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis_tmp.json
+jq --slurpfile evm contrib/evm.json '.app_state.evm = $evm[0].evm | .app_state.auth = $evm[0].auth | .app_state.gastoken = $evm[0].gastoken |.app_state.bank.balances += $evm[0].bank.balances' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis_tmp.json
 mv $CHAIN_DIR/config/genesis_tmp.json $CHAIN_DIR/config/genesis.json
 
 echo_info "Adding gentx validator..."
