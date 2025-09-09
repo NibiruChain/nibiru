@@ -56,6 +56,12 @@ var (
 	testDirtyStateAttack4 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
 	testDirtyStateAttack5 []byte
+	//go:embed artifacts/contracts/UniswapV3Pool.sol/IUniswapV3PoolActions.json
+	uniswapV3Pool []byte
+	//go:embed artifacts/contracts/UniswapV3SwapRouter.sol/IV3SwapRouter.json
+	uniswapV3Router []byte
+	//go:embed artifacts/contracts/UniswapV3Quoter.sol/IQuoterV2.json
+	uniswapV3Quoter []byte
 )
 
 var (
@@ -186,6 +192,20 @@ var (
 		Name:      "TestDirtyStateAttack5.sol",
 		EmbedJSON: testDirtyStateAttack5,
 	}
+
+	SmartContract_UniswapV3Pool = CompiledEvmContract{
+		Name:      "UniswapV3Pool.sol",
+		EmbedJSON: uniswapV3Pool,
+	}
+
+	SmartContract_UniswapV3SwapRouter = CompiledEvmContract{
+		Name:      "UniswapV3SwapRouter.sol",
+		EmbedJSON: uniswapV3Router,
+	}
+	SmartContract_UniswapV3Quoter = CompiledEvmContract{
+		Name:      "UniswapV3Quoter.sol",
+		EmbedJSON: uniswapV3Quoter,
+	}
 )
 
 func init() {
@@ -209,6 +229,9 @@ func init() {
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
+	SmartContract_UniswapV3Pool.MustLoad()
+	SmartContract_UniswapV3SwapRouter.MustLoad()
+	SmartContract_UniswapV3Quoter.MustLoad()
 }
 
 type CompiledEvmContract struct {

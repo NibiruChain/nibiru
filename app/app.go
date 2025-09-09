@@ -93,6 +93,7 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/gastoken"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -157,6 +158,7 @@ var (
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
+		gastoken.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
 
@@ -324,6 +326,7 @@ func NewNibiruApp(
 		&app.InflationKeeper,
 		&app.EvmKeeper,
 		&app.TokenFactoryKeeper,
+		&app.GasTokenKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -441,6 +444,7 @@ func NewNibiruApp(
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
 		AccountKeeper:  app.AccountKeeper,
+		GasTokenKeeper: &app.GasTokenKeeper,
 	}))
 
 	// register snapshot extensions

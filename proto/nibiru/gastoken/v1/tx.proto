@@ -1,0 +1,59 @@
+syntax = "proto3";
+package nibiru.gastoken.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/duration.proto";
+import "cosmos_proto/cosmos.proto";
+
+import "nibiru/gastoken/v1/feetoken.proto";
+import "nibiru/gastoken/v1/params.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
+
+// Msg defines the fees Msg service.
+service Msg {
+    rpc UpdateFeeToken(MsgUpdateFeeToken)
+        returns (MsgUpdateFeeTokenResponse) {
+      option (google.api.http).post = "/nibiru/gastoken/v1/update_fee_token";
+    };
+
+    rpc UpdateParams(MsgUpdateParams)
+        returns (MsgUpdateParamsResponse) {
+      option (google.api.http).post = "/nibiru/gastoken/v1/update_params";
+    };
+}
+
+enum FeeTokenUpdateAction {
+  FEE_TOKEN_ACTION_ADD = 0;
+  FEE_TOKEN_ACTION_REMOVE = 1;
+}
+
+// MsgUpdateFeeToken defines a message that update fee token
+message MsgUpdateFeeToken{
+    option (gogoproto.equal) = true;
+    // contract_address in hex format
+    FeeToken fee_token = 1;
+    // Authority: Address of the governance module account.
+    string sender = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    // action defines the action to perform on the fee token
+    FeeTokenUpdateAction action = 3;
+}
+
+// MsgUpdateFeeTokenResponse defines the MsgUpdateFeeToken response type
+message MsgUpdateFeeTokenResponse {}
+
+// MsgUpdateParams defines a message that updates the parameters of the gastoken module
+message MsgUpdateParams {
+    option (gogoproto.equal) = true;
+    // params defines the parameters to update
+    Params params = 1 [(gogoproto.nullable) = false];
+    // sender: Address of the sender account.
+    string sender = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+} 
+
+// MsgUpdateParamsResponse defines the MsgUpdateParams response type
+message MsgUpdateParamsResponse {
+    // params defines the updated parameters
+    Params params = 1 [(gogoproto.nullable) = false];
+} 

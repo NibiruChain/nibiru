@@ -1,0 +1,39 @@
+syntax = "proto3";
+package nibiru.gastoken.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/duration.proto";
+
+import "nibiru/gastoken/v1/feetoken.proto";
+import "nibiru/gastoken/v1/params.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/x/gastoken/types";
+
+service Query {
+  // FeeTokens returns the list of fee token addresses.
+  rpc FeeTokens(QueryFeeTokensRequest) returns (QueryFeeTokensResponse) {
+    option (google.api.http).get = "/nibiru/gastoken/v1/fee_token";
+  }
+
+  // Params returns the parameters of the gastoken module.
+  rpc Params(ParamsRequest) returns (ParamsResponse) {
+    option (google.api.http).get = "/nibiru/gastoken/v1/params";
+  }
+}
+
+message QueryFeeTokensRequest {}
+message QueryFeeTokensResponse {
+  repeated FeeToken fee_tokens = 1 [
+    (gogoproto.moretags) = "yaml:\"fee_token\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message ParamsRequest {}
+message ParamsResponse {
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"params\""
+  ];
+}

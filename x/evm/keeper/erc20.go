@@ -23,12 +23,15 @@ const (
 
 	// Erc20GasLimitQuery used only for querying name, symbol and decimals
 	// Cannot be heavy. Only if the contract is malicious.
-	Erc20GasLimitQuery uint64 = 100_000
-
+	Erc20GasLimitQuery uint64 = 200_000
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
-	Erc20GasLimitExecute uint64 = 200_000
+	Erc20GasLimitExecute uint64 = 300_000
 )
+
+func GetCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
+	return getCallGasWithLimit(ctx, gasLimit)
+}
 
 // getCallGas returns the gas limit for a call to an ERC20 contract following 63/64 rule (EIP-150)
 // protection against recursive calls ERC20 -> precompile -> ERC20.
@@ -51,6 +54,39 @@ func (k Keeper) ERC20() erc20Calls {
 type erc20Calls struct {
 	*Keeper
 	ABI *gethabi.ABI
+}
+
+func (e erc20Calls) Approve(
+	erc20Contract, owner, spender gethcommon.Address, amount *big.Int,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (allowance *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
+	contractInput, err := e.ABI.Pack("approve", spender, amount)
+	if err != nil {
+		return allowance, nil, err
+	}
+	resp, err = e.CallContractWithInput(ctx, evmObj, owner, &erc20Contract, false /*commit*/, contractInput, getCallGasWithLimit(ctx, Erc20GasLimitExecute), nil)
+	if err != nil {
+		return allowance, nil, err
+	}
+
+	var erc20Bool ERC20Bool
+	err = e.ABI.UnpackIntoInterface(&erc20Bool, "approve", resp.Ret)
+	if err != nil {
+		return allowance, nil, err
+	}
+
+	// Handle the case of success=false: https://github.com/NibiruChain/nibiru/issues/2080
+	success := erc20Bool.Value
+	if !success {
+		return allowance, nil, fmt.Errorf("approve executed but returned success=false")
+	}
+
+	allowance, err = e.Allowance(erc20Contract, owner, spender, ctx, evmObj)
+	if err != nil {
+		return allowance, nil, sdkioerrors.Wrap(err, "failed to retrieve spender allowance")
+	}
+
+	return allowance, resp, err
 }
 
 /*
@@ -138,6 +174,13 @@ func (e erc20Calls) Transfer(
 	}
 
 	return balanceIncrease, resp, err
+}
+
+func (e erc20Calls) Allowance(
+	contract, owner, spender gethcommon.Address,
+	ctx sdk.Context, evmObj *vm.EVM,
+) (out *big.Int, err error) {
+	return e.LoadERC20BigInt(ctx, evmObj, e.ABI, contract, "allowance", owner, spender)
 }
 
 // BalanceOf retrieves the balance of an ERC20 token for a specific account.
