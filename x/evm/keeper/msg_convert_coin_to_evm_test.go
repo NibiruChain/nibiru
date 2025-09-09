@@ -189,8 +189,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 //   - Module account: 0 BC escrowed
 func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
-	err := deps.DeployWNIBI(&s.Suite)
-	s.Require().NoError(err)
+	deps.DeployWNIBI(&s.Suite)
 	evmObj, _ := deps.NewEVM()
 
 	// Initial setup
@@ -577,8 +576,7 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 //   - Module account: 10 BC escrowed (which Test contract holds as 10 E20)
 func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 	deps := evmtest.NewTestDeps()
-	err := deps.DeployWNIBI(&s.Suite)
-	s.Require().NoError(err)
+	deps.DeployWNIBI(&s.Suite)
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -708,12 +706,11 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 		// "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"
 
 		deps := evmtest.NewTestDeps()
-		err := deps.DeployWNIBI(&s.Suite)
-		s.Require().NoError(err)
+		deps.DeployWNIBI(&s.Suite)
 		erc20Addr := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi
 
 		s.T().Log("happy path. Sender has NIBI and gets the correct amount")
-		err = testapp.FundAccount(
+		err := testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,

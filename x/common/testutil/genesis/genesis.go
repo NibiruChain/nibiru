@@ -11,10 +11,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 // NewTestGenesisState returns [app.GenesisState] using the default genesis as input.
@@ -47,7 +47,7 @@ func NewTestGenesisState(appCodec codec.Codec) app.GenesisState {
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal genesis from default: moduleName %s: %w", moduleName, err))
 		}
-		evmGenState.Accounts = append(evmGenState.Accounts, evmtest.WNIBI_GENESIS_EVM_ACC)
+		evmGenState.Accounts = append(evmGenState.Accounts, v2_7_0.WNIBI_GENESIS_EVM_ACC())
 
 		jsonBz, err := appCodec.MarshalJSON(&evmGenState)
 		if err != nil {
@@ -64,7 +64,7 @@ func NewTestGenesisState(appCodec codec.Codec) app.GenesisState {
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal genesis from default: moduleName %s: %w", moduleName, err))
 		}
-		wnibiAcc := evmtest.WNIBI_GENESIS_AUTH_ACC
+		wnibiAcc := v2_7_0.WNIBI_GENESIS_AUTH_ACC()
 		nextOpenAccNumber := len(authGenState.Accounts)
 		wnibiAcc.AccountNumber = uint64(nextOpenAccNumber)
 
