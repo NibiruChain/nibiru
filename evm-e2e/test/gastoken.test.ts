@@ -35,7 +35,7 @@ describe("Gastoken tests", () => {
                 let tx = await wnibi.connect(account2).transfer(account, amountToSend)
                 await tx.wait()
                 const wnibiBal = await wnibi.balanceOf(account2.address)
-                expect(wnibiBal).toBeLessThan(parseUnits("0.5", 18))
+                expect(wnibiBal < parseUnits("0.5", 18)).toBe(true)
             }
         },
         TEST_TIMEOUT,
@@ -70,7 +70,7 @@ describe("Gastoken tests", () => {
                 let tx = await usdc.connect(account3).transfer(account, amountToSend)
                 await tx.wait()
                 const usdcBal = await usdc.balanceOf(account3.address)
-                expect(usdcBal).toBeLessThan(parseUnits("0.5", 18))
+                expect(usdcBal < parseUnits("0.5", 18)).toBe(true)
             }
         },
         TEST_TIMEOUT,

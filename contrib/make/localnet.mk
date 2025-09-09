@@ -8,4 +8,4 @@ localnet:
 	./contrib/scripts/localnet.sh $(FLAGS)
 
 localnet-uniswap:
-./contrib/scripts/localnet-uniswap.sh $(FLAGS)
+	./contrib/scripts/localnet-uniswap.sh $(FLAGS)
