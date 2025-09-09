@@ -119,7 +119,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	}
 
 	// deducts the fees and transfer them to the module account
-	if !fees.IsZero() && !simulate {
+	if !fees.IsZero() && !simulate && !ctx.IsCheckTx() {
 		err = DeductFees(dfd.ak, dfd.evmkeeper, dfd.gasTokenKeeper, dfd.bankKeeper, ctx, deductFeesFromAcc, fees)
 		if err != nil {
 			return ctx, err

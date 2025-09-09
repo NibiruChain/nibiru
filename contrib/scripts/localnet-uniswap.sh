@@ -188,10 +188,10 @@ fi
 val_address=$($BINARY keys show $val_key_name -a)
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
-$BINARY add-genesis-account $val_address $GENESIS_COINS
+$BINARY add-genesis-account $val_address $GENESIS_COINS --home "$CHAIN_DIR"
 # EVM encoded nibi address for the same account
-$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
-$BINARY add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS
+$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS --home "$CHAIN_DIR"
+$BINARY add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS --home "$CHAIN_DIR"
 echo_success "Successfully added genesis account: $val_key_name"
 
 # ------------------------------------------------------------------------
@@ -239,14 +239,14 @@ jq --slurpfile evm contrib/evm.json '.app_state.evm = $evm[0].evm | .app_state.a
 mv $CHAIN_DIR/config/genesis_tmp.json $CHAIN_DIR/config/genesis.json
 
 echo_info "Adding gentx validator..."
-if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID --home "$CHAIN_DIR"; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
 fi
 
 echo_info "Collecting gentx..."
-if $BINARY genesis collect-gentxs; then
+if $BINARY genesis collect-gentxs --home "$CHAIN_DIR"; then
   echo_success "Successfully collected genesis txs into genesis.json"
 else
   echo_error "Failed to collect genesis txs"
