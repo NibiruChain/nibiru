@@ -314,7 +314,9 @@ func (s *FuntokenSuite) TestHappyPath() {
 			BalanceERC20: depositWei,
 		}.Assert(s.T(), deps)
 
-		s.T().Log("sendToBank with WNIBI")
+		// TODO: [feat] Handle WNIBI as a case in the FunToken precompile sendToBank and sendToEvm methods for v2.7.0
+		// https://github.com/NibiruChain/nibiru/issues/2376
+		s.T().Log("sendToBank with WNIBI: unimplemented ")
 		randomAcc := evmtest.NewEthPrivAcc()
 
 		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *statedb.StateDB) {
@@ -336,30 +338,33 @@ func (s *FuntokenSuite) TestHappyPath() {
 				evm.COMMIT_ETH_TX, /*commit*/
 				nil,               /*weiValue*/
 			)
-			s.Require().NoError(err)
-			s.Require().Empty(ethTxResp.VmError)
+			s.Require().ErrorContains(err, "no FunToken mapping exists for ERC20")
+			// // For later: https://github.com/NibiruChain/nibiru/issues/2376
+			// s.Require().NoError(err)
+			// s.Require().Empty(ethTxResp.VmError)
 		})
 
-		evmtest.BalanceAssertNIBI{
-			Account:      deps.Sender.EthAddr,
-			BalanceBank:  evm.Big0,
-			BalanceERC20: evm.NativeToWei(big.NewInt(420 - 69)),
-		}.Assert(s.T(), deps)
-		evmtest.BalanceAssertNIBI{
-			Account:      randomAcc.EthAddr,
-			BalanceBank:  big.NewInt(69),
-			BalanceERC20: evm.Big0,
-		}.Assert(s.T(), deps)
+		// // For later: https://github.com/NibiruChain/nibiru/issues/2376
+		// evmtest.BalanceAssertNIBI{
+		// 	Account:      deps.Sender.EthAddr,
+		// 	BalanceBank:  evm.Big0,
+		// 	BalanceERC20: evm.NativeToWei(big.NewInt(420 - 69)),
+		// }.Assert(s.T(), deps)
+		// evmtest.BalanceAssertNIBI{
+		// 	Account:      randomAcc.EthAddr,
+		// 	BalanceBank:  big.NewInt(69),
+		// 	BalanceERC20: evm.Big0,
+		// }.Assert(s.T(), deps)
 
-		s.T().Log("Parse the response contract addr and response bytes")
-		var sentAmt *big.Int
-		s.NoError(embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
-			&sentAmt,
-			string(precompile.FunTokenMethod_sendToBank),
-			ethTxResp.Ret,
-		))
-		s.NotEqual(depositWei.String(), sentAmt.String())
-		s.Equal(evm.NativeToWei(big.NewInt(69)).String(), sentAmt.String())
+		// s.T().Log("Parse the response contract addr and response bytes")
+		// var sentAmt *big.Int
+		// s.NoError(embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		// 	&sentAmt,
+		// 	string(precompile.FunTokenMethod_sendToBank),
+		// 	ethTxResp.Ret,
+		// ))
+		// s.NotEqual(depositWei.String(), sentAmt.String())
+		// s.Equal(evm.NativeToWei(big.NewInt(69)).String(), sentAmt.String())
 	})
 }
 

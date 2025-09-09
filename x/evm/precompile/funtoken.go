@@ -159,6 +159,12 @@ func (p precompileFunToken) sendToBank(
 		return nil, err
 	}
 
+	// gotAmount is the actual number of tokens credited to the recipient after
+	// the ERC20 transfer. This may differ from the requested `amount` if the
+	// ERC20 contract charges a fee or reduces the transfer value.
+	//
+	// The Solidity ABI for `sendToBank` expects this return value to be encoded
+	// as a single *big.Int packed into bytes.
 	var gotAmount *big.Int
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
@@ -172,27 +178,7 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
 	}
 
-	// case 1 - ERC20 is WNIBI
-	if erc20.Hex() == p.evmKeeper.GetParams(ctx).CanonicalWnibi.Hex() {
-		gotAmountU256, err := p.evmKeeper.ConvertEvmToCoinForWNIBI(
-			ctx, startResult.StateDB,
-			eth.EIP55Addr{Address: erc20},
-			evm.Addrs{
-				Eth:    caller,
-				Bech32: eth.EthAddrToNibiruAddr(caller),
-			},
-			eth.EthAddrToNibiruAddr(toAddr),
-			sdkmath.NewIntFromBigInt(amount),
-			evmObj,
-		)
-		if err != nil {
-			return nil, err
-		}
-		gotAmount = gotAmountU256.ToBig()
-		return method.Outputs.Pack(gotAmount)
-	}
-
-	// case 2 - ERC20 has a FunToken mapping
+	// ERC20 must have a FunToken mapping with the Bank Coin.
 	funtokens := p.evmKeeper.FunTokens.Collect(
 		ctx, p.evmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
 	)
@@ -235,10 +221,11 @@ func (p precompileFunToken) sendToBank(
 			return nil, fmt.Errorf("ERC20.Burn: %w", err)
 		}
 	} else {
-		// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
-		// any operation that has the potential to use Bank send methods. This will
-		// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
-		// recorded if wei (NIBI) is transferred.
+		// NOTE: [Security - Nibiru#2095](https://github.com/NibiruChain/nibiru/pull/2095)
+		// The NibiruBankKeeper needs to reference the current [vm.StateDB]
+		// before any operation that has the potential to use Bank send methods.
+		// This will guarantee that [evmkeeper.Keeper.SetAccBalance] journal
+		// changes are recorded if wei (NIBI) is transferred.
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
@@ -249,10 +236,11 @@ func (p precompileFunToken) sendToBank(
 
 	// Transfer the bank coin
 	//
-	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
-	// any operation that has the potential to use Bank send methods. This will
-	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
-	// recorded if wei (NIBI) is transferred.
+	// NOTE: [Security - Nibiru#2095](https://github.com/NibiruChain/nibiru/pull/2095)
+	// The NibiruBankKeeper needs to reference the current [vm.StateDB]
+	// before any operation that has the potential to use Bank send methods.
+	// This will guarantee that [evmkeeper.Keeper.SetAccBalance] journal
+	// changes are recorded if wei (NIBI) is transferred.
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,
