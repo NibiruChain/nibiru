@@ -1,18 +1,25 @@
 package v2_7_0
 
 import (
+	"encoding/json"
 	"fmt"
+	"math/big"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 const UpgradeName = "v2.7.0"
@@ -30,7 +37,7 @@ var Upgrade = upgrades.Upgrade{
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
-			err := AddWnibiToNibiruEvm(nibiru, ctx)
+			err := UpgradeAddWNIBIToNibiruEvm(nibiru, ctx)
 			if err != nil {
 				panic(fmt.Errorf("v2.7.0 upgrade failure: %w", err))
 			}
@@ -41,19 +48,141 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
 
-// AddWnibiToNibiruEvm adds the canonical WNIBI contract address to the EVM
-// module parameters.
-func AddWnibiToNibiruEvm(
+// UpgradeAddWNIBIToNibiruEvm adds the canonical WNIBI contract address to the
+// EVM module parameters. Then, if the instance of Nibiru is NOT mainnet, inject
+// the WNIBI.sol contract into state at the same address used on mainnet.
+func UpgradeAddWNIBIToNibiruEvm(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
-) error {
+) (err error) {
+	// 1 | Set evm.Params.CanonicalWnibi to the address live on mainnet
 	wnibiAddrMainnet := appconst.MAINNET_WNIBI_ADDR
 	evmParams := keepers.EvmKeeper.GetParams(ctx)
 	evmParams.CanonicalWnibi = eth.EIP55Addr{
 		Address: wnibiAddrMainnet,
 	}
+	err = keepers.EvmKeeper.SetParams(ctx, evmParams)
+	if err != nil {
+		return
+	}
 
-	err := keepers.EvmKeeper.SetParams(ctx, evmParams)
+	//  2 | If this instance of Nibiru is mainnet, early return to stop here
+	//  because WNIBI is already deployed.
+	if keepers.EvmKeeper.EthChainID(ctx).
+		Cmp(big.NewInt(appconst.ETH_CHAIN_ID_MAINNET)) == 0 {
+		// WNIBI is already deployed on mainnet. Early return to stop here.
+		return nil
+	}
 
-	return err
+	// 3 | If the network is NOT mainnet, inject the WNIBI contract in at the
+	// same address as the mainnet contract.
+	//
+	// Injecting a smart contract -> modify auth and evm account state
+	authAcc := WNIBI_GENESIS_AUTH_ACC()
+	{
+		maybeAuthAcc := keepers.AccountKeeper.GetAccount(ctx, authAcc.GetAddress())
+		if maybeAuthAcc == nil {
+			// Most likely scenario
+			nextOpenAccNumber := keepers.AccountKeeper.NextAccountNumber(ctx)
+			authAcc.AccountNumber = nextOpenAccNumber
+		} else {
+			// If for some reason the account with that address already exists,
+			// take over that account number instead of adding a new one to the
+			// account keeper.
+			//
+			// This is super unlikely to happen unless someone intentionally sets up
+			// a chain with a weird genesis. It's included here in the upgrade
+			// handler for completeness and to be defensive.
+			acc, ok := maybeAuthAcc.(*eth.EthAccount)
+			if !ok {
+				err = fmt.Errorf(`existing account has WNIBI's address \"%s\" and it's not an "eth.EthAccount" instance`, authAcc.Address)
+				return
+			}
+			authAcc.AccountNumber = acc.AccountNumber
+			authAcc.Sequence = acc.Sequence
+		}
+
+		keepers.AccountKeeper.SetAccount(ctx, &authAcc)
+	}
+
+	// Sanity check again before proceeding
+	evmGenAcc := WNIBI_GENESIS_EVM_ACC()
+	codeHashAuth := authAcc.GetCodeHash()
+	codeHashEvm := crypto.Keccak256Hash(
+		gethcommon.Hex2Bytes(evmGenAcc.Code),
+	)
+	if codeHashAuth != codeHashEvm {
+		return fmt.Errorf("code hash mismatch between auth and evm modules")
+	}
+
+	err = keepers.EvmKeeper.ImportGenesisAccount(ctx, evmGenAcc)
+	if err != nil {
+		return err
+	}
+
+	if acc := keepers.EvmKeeper.GetAccount(ctx, appconst.MAINNET_WNIBI_ADDR); acc == nil || !acc.IsContract() {
+		err = fmt.Errorf("v2.7.0 state corruption: WNIBI is not a contract according to the EVM StateDB")
+		return err
+	}
+
+	return nil
 }
+
+// Returns WNIBI.sol from Nibiru mainnet as an [evm.GenesisAccount] that can be
+// imported to any instance of Nibiru.
+func WNIBI_GENESIS_EVM_ACC() evm.GenesisAccount {
+	var genAcc evm.GenesisAccount
+	err := json.Unmarshal([]byte(_WNIBI_GENESIS_ACC_STRING), &genAcc)
+	if err != nil {
+		panic(fmt.Errorf("failed to unpack WNIBI_GENESIS_ACC_STRING as evm.GenesisAccount: %w", err))
+	}
+	return genAcc
+}
+
+/*
+Comes from this account in the Auth genesis state
+
+	{
+	  "@type": "/eth.types.v1.EthAccount",
+	  "base_account": {
+		"address": "nibi1pjk0v60cg347e2pxjyarc6uk4n2tq25hhymgg9",
+		"pub_key": null,
+		"account_number": "13",
+		"sequence": "0"
+	  },
+	  "code_hash": "0xffb88e0eb48147949565e65de3ec8a54b746214da7b9dd5b9a8a3ae7df46193b"
+	}
+*/
+func WNIBI_GENESIS_AUTH_ACC() eth.EthAccount {
+	return eth.EthAccount{
+		BaseAccount: &auth.BaseAccount{
+			Address: eth.EthAddrToNibiruAddr(appconst.MAINNET_WNIBI_ADDR).String(),
+			PubKey:  nil,
+			// 13 isn't a magic number. It's a valid placeholder. This field
+			// needs to be rewritten if you're going to inject this account.
+			AccountNumber: 13,
+			Sequence:      0,
+		},
+		CodeHash: "0xffb88e0eb48147949565e65de3ec8a54b746214da7b9dd5b9a8a3ae7df46193b",
+	}
+}
+
+const _WNIBI_GENESIS_ACC_STRING = `
+{
+  "address": "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97",
+  "code": "6080604052600436106100a05760003560e01c8063313ce56711610064578063313ce567146101b257806370a08231146101dd57806395d89b411461021a578063a9059cbb14610245578063d0e30db014610282578063dd62ed3e1461028c576100af565b806306fdde03146100b9578063095ea7b3146100e457806318160ddd1461012157806323b872dd1461014c5780632e1a7d4d14610189576100af565b366100af576100ad6102c9565b005b6100b76102c9565b005b3480156100c557600080fd5b506100ce61036f565b6040516100db9190610b18565b60405180910390f35b3480156100f057600080fd5b5061010b60048036038101906101069190610bd3565b6103fd565b6040516101189190610c2e565b60405180910390f35b34801561012d57600080fd5b506101366104ef565b6040516101439190610c58565b60405180910390f35b34801561015857600080fd5b50610173600480360381019061016e9190610c73565b6104f7565b6040516101809190610c2e565b60405180910390f35b34801561019557600080fd5b506101b060048036038101906101ab9190610cc6565b61085b565b005b3480156101be57600080fd5b506101c7610995565b6040516101d49190610d0f565b60405180910390f35b3480156101e957600080fd5b5061020460048036038101906101ff9190610d2a565b6109a8565b6040516102119190610c58565b60405180910390f35b34801561022657600080fd5b5061022f6109c0565b60405161023c9190610b18565b60405180910390f35b34801561025157600080fd5b5061026c60048036038101906102679190610bd3565b610a4e565b6040516102799190610c2e565b60405180910390f35b61028a6102c9565b005b34801561029857600080fd5b506102b360048036038101906102ae9190610d57565b610a63565b6040516102c09190610c58565b60405180910390f35b34600360003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546103189190610dc6565b925050819055503373ffffffffffffffffffffffffffffffffffffffff167fe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c346040516103659190610c58565b60405180910390a2565b6000805461037c90610e29565b80601f01602080910402602001604051908101604052809291908181526020018280546103a890610e29565b80156103f55780601f106103ca576101008083540402835291602001916103f5565b820191906000526020600020905b8154815290600101906020018083116103d857829003601f168201915b505050505081565b600081600460003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925846040516104dd9190610c58565b60405180910390a36001905092915050565b600047905090565b600081600360008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054101561054557600080fd5b3373ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff161415801561061d57507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff600460008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205414155b1561073f5781600460008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205410156106ab57600080fd5b81600460008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546107379190610e5a565b925050819055505b81600360008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825461078e9190610e5a565b9250508190555081600360008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546107e49190610dc6565b925050819055508273ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040516108489190610c58565b60405180910390a3600190509392505050565b80600360003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205410156108a757600080fd5b80600360003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008282546108f69190610e5a565b925050819055503373ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f19350505050158015610943573d6000803e3d6000fd5b503373ffffffffffffffffffffffffffffffffffffffff167f7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b658260405161098a9190610c58565b60405180910390a250565b600260009054906101000a900460ff1681565b60036020528060005260406000206000915090505481565b600180546109cd90610e29565b80601f01602080910402602001604051908101604052809291908181526020018280546109f990610e29565b8015610a465780601f10610a1b57610100808354040283529160200191610a46565b820191906000526020600020905b815481529060010190602001808311610a2957829003601f168201915b505050505081565b6000610a5b3384846104f7565b905092915050565b6004602052816000526040600020602052806000526040600020600091509150505481565b600081519050919050565b600082825260208201905092915050565b60005b83811015610ac2578082015181840152602081019050610aa7565b60008484015250505050565b6000601f19601f8301169050919050565b6000610aea82610a88565b610af48185610a93565b9350610b04818560208601610aa4565b610b0d81610ace565b840191505092915050565b60006020820190508181036000830152610b328184610adf565b905092915050565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000610b6a82610b3f565b9050919050565b610b7a81610b5f565b8114610b8557600080fd5b50565b600081359050610b9781610b71565b92915050565b6000819050919050565b610bb081610b9d565b8114610bbb57600080fd5b50565b600081359050610bcd81610ba7565b92915050565b60008060408385031215610bea57610be9610b3a565b5b6000610bf885828601610b88565b9250506020610c0985828601610bbe565b9150509250929050565b60008115159050919050565b610c2881610c13565b82525050565b6000602082019050610c436000830184610c1f565b92915050565b610c5281610b9d565b82525050565b6000602082019050610c6d6000830184610c49565b92915050565b600080600060608486031215610c8c57610c8b610b3a565b5b6000610c9a86828701610b88565b9350506020610cab86828701610b88565b9250506040610cbc86828701610bbe565b9150509250925092565b600060208284031215610cdc57610cdb610b3a565b5b6000610cea84828501610bbe565b91505092915050565b600060ff82169050919050565b610d0981610cf3565b82525050565b6000602082019050610d246000830184610d00565b92915050565b600060208284031215610d4057610d3f610b3a565b5b6000610d4e84828501610b88565b91505092915050565b60008060408385031215610d6e57610d6d610b3a565b5b6000610d7c85828601610b88565b9250506020610d8d85828601610b88565b9150509250929050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6000610dd182610b9d565b9150610ddc83610b9d565b9250828201905080821115610df457610df3610d97565b5b92915050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b60006002820490506001821680610e4157607f821691505b602082108103610e5457610e53610dfa565b5b50919050565b6000610e6582610b9d565b9150610e7083610b9d565b9250828203905081811115610e8857610e87610d97565b5b9291505056fea2646970667358221220e2bbe4e79fbff010e16625cff639a72785d4dbf62ac4a60275168b532643766464736f6c63430008180033",
+  "storage": [
+	{
+	  "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	  "value": "0x57726170706564204e696269727500000000000000000000000000000000001c"
+	},
+	{
+	  "key": "0x0000000000000000000000000000000000000000000000000000000000000001",
+	  "value": "0x574e49424900000000000000000000000000000000000000000000000000000a"
+	},
+	{
+	  "key": "0x0000000000000000000000000000000000000000000000000000000000000002",
+	  "value": "0x0000000000000000000000000000000000000000000000000000000000000012"
+	}
+  ]
+}`

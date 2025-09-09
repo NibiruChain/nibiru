@@ -1,4 +1,4 @@
-package tokenfactory_test
+package evmmodule_test
 
 import (
 	"testing"
@@ -8,20 +8,23 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
-	module "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
-	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 )
 
-type Suite struct{ suite.Suite }
+type Suite struct {
+	suite.Suite
+}
 
+// TestSuite: Runs all the tests in the suite.
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
 
 func (s *Suite) TestAppModule() {
 	bapp, ctx := testapp.NewNibiruTestAppAndContext()
-	appModule := module.NewAppModule(
-		bapp.TokenFactoryKeeper,
+	appModule := evmmodule.NewAppModule(
+		bapp.EvmKeeper,
 		bapp.AccountKeeper,
 	)
 
@@ -34,11 +37,9 @@ func (s *Suite) TestAppModule() {
 		cdc := bapp.AppCodec()
 		jsonBz := appModule.ExportGenesis(ctx, cdc)
 
-		genesis := types.DefaultGenesis()
-		genState := new(types.GenesisState)
+		genState := new(evm.GenesisState)
 		err := cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
-		s.EqualValues(*genesis, *genState, "exported (got): %s", jsonBz)
 
 		s.T().Log("AppModuleBasic.ValidateGenesis")
 		encCfg := app.MakeEncodingConfig()
@@ -48,6 +49,5 @@ func (s *Suite) TestAppModule() {
 		s.T().Log("CLI commands")
 		s.NotNil(appModule.GetTxCmd())
 		s.NotNil(appModule.GetQueryCmd())
-		s.NotEmpty(appModule.QuerierRoute())
 	})
 }
