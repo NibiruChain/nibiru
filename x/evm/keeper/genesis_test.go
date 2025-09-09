@@ -1,34 +1,22 @@
 // Copyright (c) 2023-2024 Nibi, Inc.
-package evmmodule_test
+package keeper_test
 
 import (
 	"math/big"
 	"strings"
-	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
-
-type Suite struct {
-	suite.Suite
-}
-
-// TestKeeperSuite: Runs all the tests in the suite.
-func TestKeeperSuite(t *testing.T) {
-	suite.Run(t, new(Suite))
-}
 
 // TestExportInitGenesis
 // - creates evm state with erc20 contract, sends tokens to user A and B
@@ -221,7 +209,7 @@ amountToSendC: %s`,
 
 	s.T().Log("Export genesis")
 
-	evmGenesisState := evmmodule.ExportGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper)
+	evmGenesisState := deps.EvmKeeper.ExportGenesis(deps.Ctx)
 	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
 	bankGensisState := deps.App.BankKeeper.ExportGenesis(deps.Ctx)
 
@@ -230,7 +218,7 @@ amountToSendC: %s`,
 		deps = evmtest.NewTestDeps()
 		deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
 		deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
-		evmmodule.InitGenesis(deps.Ctx, deps.EvmKeeper, deps.App.AccountKeeper, *evmGenesisState)
+		deps.EvmKeeper.InitGenesis(deps.Ctx, *evmGenesisState)
 
 		s.T().Log("Assert balances for users A, B, C, the sender and the EVM")
 		assertBalsAfterConvert(deps)

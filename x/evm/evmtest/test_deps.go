@@ -118,6 +118,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	// empty method name means deploy with the constructor
 	packedArgs, err := newCompiledContract.ABI.Pack("")
 	s.Require().NoError(err, "failed to pack ABI args")
+
 	contractInput := append(newCompiledContract.Bytecode, packedArgs...)
 
 	// Rebuild evmObj with new evmMsg for contract creation.
@@ -155,7 +156,6 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	)
 	s.Require().NoError(err, "failed to deploy WNIBI contract")
 	s.Require().Empty(evmResp.VmError, "VM Error deploying WNIBI")
-	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&evm.EventContractDeployed{
@@ -189,5 +189,4 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 			ContractAddr: wnibiAddr.Hex(),
 		},
 	)
-
 }

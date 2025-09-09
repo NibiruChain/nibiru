@@ -159,9 +159,7 @@ func (p precompileFunToken) sendToBank(
 		return nil, err
 	}
 
-	var (
-		gotAmount *big.Int
-	)
+	var gotAmount *big.Int
 
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {

@@ -268,7 +268,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("IFunToken.sendToBank() - WNIBI", func() {
-
 		erc20Wnibi := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi.Address
 		deps.DeployWNIBI(&s.Suite)
 
