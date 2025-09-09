@@ -69,6 +69,9 @@ localnet *PASS_FLAGS:
 localnet-fast:
   make localnet FLAGS="--no-build"
 
+localnet-uniswap *PASS_FLAGS:
+  make localnet-uniswap FLAGS="{{PASS_FLAGS}}"
+
 # Clears the logs directory
 log-clear:
   #!/usr/bin/env bash

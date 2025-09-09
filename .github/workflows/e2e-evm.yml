@@ -72,9 +72,9 @@ jobs:
         run: just install
         working-directory: "evm-e2e"
 
-      - name: "Launch localnet"
+      - name: "Launch localnet-uniswap"
         run: |
-          just localnet --no-build &
+          just localnet-uniswap --no-build &
           sleep 10
 
       - name: "Run tests (just test)"
