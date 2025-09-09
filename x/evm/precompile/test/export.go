@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -190,13 +191,14 @@ func AssertWasmCounterStateWithEvm(
 	)
 	s.Require().NoError(err)
 
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		contractInput,
 		WasmGasLimitQuery,
+		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -294,13 +296,14 @@ func IncrementWasmCounterWithExecuteMulti(
 	)
 	s.Require().NoError(err)
 
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
 		contractInput,
 		WasmGasLimitExecute,
+		commit, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)

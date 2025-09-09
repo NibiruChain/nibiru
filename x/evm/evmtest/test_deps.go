@@ -2,7 +2,6 @@ package evmtest
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +86,26 @@ func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
 }
 
-func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
+func (deps *TestDeps) MimicEthereumTx(
+	s *suite.Suite,
+	doTx func(evmObj *vm.EVM, sdb *statedb.StateDB),
+) {
+	sdb := deps.EvmKeeper.NewStateDB(
+		deps.Ctx,
+		statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
+	)
+	evmObj := deps.EvmKeeper.NewEVM(
+		deps.Ctx,
+		MOCK_GETH_MESSAGE,
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
+		sdb,
+	)
+	doTx(evmObj, sdb)
+	s.Require().NoError(sdb.Commit())
+}
+
+func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	var (
 		ctx         = deps.Ctx
 		wnibiAddr   = deps.EvmKeeper.GetParams(ctx).CanonicalWnibi.Address
@@ -99,9 +117,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	newCompiledContract := embeds.SmartContract_WNIBI
 	// empty method name means deploy with the constructor
 	packedArgs, err := newCompiledContract.ABI.Pack("")
-	if err != nil {
-		return fmt.Errorf("failed to pack ABI args: %w", err)
-	}
+	s.Require().NoError(err, "failed to pack ABI args")
 	contractInput := append(newCompiledContract.Bytecode, packedArgs...)
 
 	// Rebuild evmObj with new evmMsg for contract creation.
@@ -131,16 +147,15 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	}()
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContract(
 		ctx, evmObj, evmMsg.From, nil, contractInput,
-		keeper.Erc20GasLimitDeploy, evmMsg.Value,
+		keeper.Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		evmMsg.Value,
 	)
-	if err != nil {
-		return fmt.Errorf("failed to deploy WNIBI contract: %w", err)
-	} else if len(evmResp.VmError) > 0 {
-		return fmt.Errorf("VM Error deploying WNIBI: %s", evmResp.VmError)
-	}
-	FinalizeEthereumTx(evmObj, s)
+	s.Require().NoError(err, "failed to deploy WNIBI contract")
+	s.Require().Empty(evmResp.VmError, "VM Error deploying WNIBI")
+	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&evm.EventContractDeployed{
@@ -154,9 +169,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 	wnibiAcc := statedb.NewEmptyAccount()
 	wnibiAcc.CodeHash = tempWnibiAcc.CodeHash
 	err = deps.EvmKeeper.SetAccount(ctx, wnibiAddr, *wnibiAcc)
-	if err != nil {
-		return fmt.Errorf("overwrite of contract bytecode failed: %w", err)
-	}
+	s.Require().NoError(err, "overwrite of contract bytecode failed")
 
 	s.T().Log("Set WNIBI contract state")
 	{
@@ -177,5 +190,4 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) error {
 		},
 	)
 
-	return nil
 }

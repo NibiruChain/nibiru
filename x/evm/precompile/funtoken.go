@@ -159,9 +159,38 @@ func (p precompileFunToken) sendToBank(
 		return nil, err
 	}
 
+	var (
+		gotAmount *big.Int
+	)
+
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
 		return nil, ErrInvalidArgs(err)
+	}
+
+	// The "to" argument must be a valid nibi or EVM address
+	toAddr, err := parseToAddr(to)
+	if err != nil {
+		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
+	}
+
+	if erc20.Hex() == p.evmKeeper.GetParams(ctx).CanonicalWnibi.Hex() {
+		gotAmountU256, err := p.evmKeeper.ConvertEvmToCoinForWNIBI(
+			ctx, startResult.StateDB,
+			eth.EIP55Addr{Address: erc20},
+			evm.Addrs{
+				Eth:    caller,
+				Bech32: eth.EthAddrToNibiruAddr(caller),
+			},
+			eth.EthAddrToNibiruAddr(toAddr),
+			sdkmath.NewIntFromBigInt(amount),
+			evmObj,
+		)
+		if err != nil {
+			return nil, err
+		}
+		gotAmount = gotAmountU256.ToBig()
+		return method.Outputs.Pack(gotAmount)
 	}
 
 	// ERC20 must have FunToken mapping
@@ -179,14 +208,8 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("transfer amount must be positive")
 	}
 
-	// The "to" argument must be a valid nibi or EVM address
-	toAddr, err := parseToAddr(to)
-	if err != nil {
-		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
-	}
-
 	// Caller transfers ERC20 to the EVM module account
-	gotAmount, _, err := p.evmKeeper.ERC20().Transfer(
+	gotAmount, _, err = p.evmKeeper.ERC20().Transfer(
 		erc20,                  /*erc20*/
 		caller,                 /*from*/
 		evm.EVM_MODULE_ADDRESS, /*to*/

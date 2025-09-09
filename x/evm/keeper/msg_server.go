@@ -70,7 +70,7 @@ func (k *Keeper) EthereumTx(
 		ctx,
 		*evmMsg,
 		evmObj,
-		evm.COMMIT_ETHEREUM_TX, /*commit*/
+		evm.COMMIT_ETH_TX, /*commit*/
 		txConfig.TxHash,
 	)
 	if evmResp != nil {
@@ -604,7 +604,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
-		resp, err = k.convertEvmToCoinForWNIBI(
+		_, err = k.ConvertEvmToCoinForWNIBI(
 			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32,
 			amount,
 			nil, /*evmObj*/
@@ -620,11 +620,11 @@ func (k *Keeper) ConvertEvmToCoin(
 		funtokenMapping := funTokens[0]
 		amountBig := amount.BigInt()
 		if funtokenMapping.IsMadeFromCoin {
-			resp, err = k.convertEvmToCoinForCoinOriginated(
+			err = k.convertEvmToCoinForCoinOriginated(
 				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 			)
 		} else {
-			resp, err = k.convertEvmToCoinForERC20Originated(
+			err = k.convertEvmToCoinForERC20Originated(
 				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 			)
 		}
@@ -636,7 +636,8 @@ func (k *Keeper) ConvertEvmToCoin(
 	if err = stateDB.Commit(); err != nil {
 		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
-	return
+
+	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

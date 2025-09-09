@@ -266,21 +266,21 @@ func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
 	)
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	evmObj, sdb := deps.NewEVM()
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmObj, _ = deps.NewEVM()
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr, // from
 		&testContractAddr,   // to
 		contractInput,
-		10_000_000, // gas limit
+		10_000_000,        // gas limit
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
-	s.Require().NoError(sdb.Commit())
 
 	evmtest.FunTokenBalanceAssert{
 		FunToken:     funToken,

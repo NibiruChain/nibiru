@@ -16,8 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
@@ -248,17 +246,17 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		)
 		s.Require().NoError(err)
 
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&deployResp2.ContractAddr,
 			input,
-			keeper.Erc20GasLimitExecute,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 
 		s.T().Log("Create FunToken for new ERC20")
 		s.Require().NoError(testapp.FundAccount(

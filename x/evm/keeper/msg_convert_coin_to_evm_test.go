@@ -124,13 +124,14 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, sdb := deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -153,13 +154,14 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().ErrorContains(err, "transfer amount exceeds balance")
@@ -188,8 +190,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 //   - Module account: 0 BC escrowed
 func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	deps := evmtest.NewTestDeps()
-	err := deps.DeployWNIBI(&s.Suite)
-	s.Require().NoError(err)
+	deps.DeployWNIBI(&s.Suite)
 	evmObj, _ := deps.NewEVM()
 
 	// Initial setup
@@ -311,13 +312,14 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, sdb := deps.NewEVM()
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,              /*evmObj*/
 		deps.Sender.EthAddr, /*fromAcc*/
 		&testContractAddr,   /*contract*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -386,13 +388,14 @@ Sender calls "nativeSendThenPrecompileSend".
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, sdb = deps.NewEVM()
-	evmResp, err = deps.EvmKeeper.CallContractWithInput(
+	evmResp, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		contractInput,
 		evmtest.DefaultEthCallGasLimit,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -401,7 +404,6 @@ Sender calls "nativeSendThenPrecompileSend".
 	s.Require().Greaterf(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, "total gas consumed on cosmos context should be greater than gas used by EVM")
 	s.Empty(evmResp.VmError)
 	gasUsedFor1Op := evmResp.GasUsed
-	s.Require().NoError(sdb.Commit())
 
 	// Assertions for Alice
 	evmtest.FunTokenBalanceAssert{
@@ -507,13 +509,14 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
-	evpResp, err := deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
@@ -575,8 +578,7 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 //   - Module account: 10 BC escrowed (which Test contract holds as 10 E20)
 func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 	deps := evmtest.NewTestDeps()
-	err := deps.DeployWNIBI(&s.Suite)
-	s.Require().NoError(err)
+	deps.DeployWNIBI(&s.Suite)
 
 	// Initial setup
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -641,13 +643,14 @@ func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 		big.NewInt(9e6),
 	)
 	s.Require().NoError(err)
-	evpResp, err := deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -705,12 +708,11 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 		// "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"
 
 		deps := evmtest.NewTestDeps()
-		err := deps.DeployWNIBI(&s.Suite)
-		s.Require().NoError(err)
+		deps.DeployWNIBI(&s.Suite)
 		erc20Addr := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi
 
 		s.T().Log("happy path. Sender has NIBI and gets the correct amount")
-		err = testapp.FundAccount(
+		err := testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,

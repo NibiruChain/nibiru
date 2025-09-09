@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// CallContractWithInput invokes a smart contract with the given [contractInput]
+// CallContract invokes a smart contract with the given [contractInput]
 // or deploys a new contract.
 //
 // Parameters:
@@ -27,13 +27,14 @@ import (
 //
 // Note: This function handles both contract method calls and simulations,
 // depending on the 'commit' parameter. It uses a default gas limit.
-func (k Keeper) CallContractWithInput(
+func (k Keeper) CallContract(
 	ctx sdk.Context,
 	evmObj *vm.EVM,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
 	contractInput []byte,
 	gasLimit uint64,
+	commit bool,
 	weiValue *big.Int,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
@@ -66,7 +67,7 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, evm.COMMIT_CALL /*commit*/, txConfig.TxHash,
+		ctx, evmMsg, evmObj, commit /*commit*/, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")

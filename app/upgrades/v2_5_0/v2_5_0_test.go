@@ -171,13 +171,14 @@ func (s *Suite) TestUpgrade() {
 		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		evmResp, err := deps.EvmKeeper.CallContractWithInput(
+		evmResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
 			evmkeeper.Erc20GasLimitQuery,
+			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)

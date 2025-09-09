@@ -17,20 +17,22 @@ import (
 )
 
 const (
-	// COMMIT_CALL: Value to use for commit in any EVM calls that occur
-	// with a persitent EVM instance. This is the value to be used for any
-	// - EVM queries, tracing, or other read operations
-	// - Multi-step calls that are part of an Ethereum transaction
+	// COMMIT_READONLY: Value to use for "commit" for any EVM queries, tracing,
+	// or other read operations.
 	//
 	// Although counterintuitive, "commit" should be false when we apply multiple
 	// EVM messages to the same `evmObj (*vm.EVM)`. The same VM can be used
 	// for consecutive EVM operations, and "commit" should only occur at the
 	// end when the transaction is successful and will be finalized.
-	COMMIT_CALL = false
+	COMMIT_READONLY = false
 
-	// COMMIT_ETHEREUM_TX: The counterpart to [COMMIT_CALL] used as the value for
+	// COMMIT_ETH_TX: The counterpart to [COMMIT_CALL] used as the value for
 	// "commit" in any Ethereum transaction ("eth.evm.v1.MsgEthereumTx").
-	COMMIT_ETHEREUM_TX = true
+	COMMIT_ETH_TX = true
+
+	// Erc20GasLimitExecute used for transfer, mint and burn.
+	// All must not exceed 200_000
+	Erc20GasLimitExecute uint64 = 200_000
 )
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a

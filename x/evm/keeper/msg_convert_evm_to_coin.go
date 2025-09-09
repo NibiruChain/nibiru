@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -32,7 +33,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	amount *big.Int,
 	bankDenom string,
 	stateDB *statedb.StateDB,
-) (*evm.MsgConvertEvmToCoinResponse, error) {
+) error {
 	bankCoins := sdk.NewCoins(sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(amount)))
 
 	// 1 | Burn the ERC20 tokens from the sender's account
@@ -41,7 +42,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		sender.Eth /*from: address where we burn the token balance from*/, amount,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	unusedBigInt := big.NewInt(0)
@@ -50,7 +51,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		From:             evm.EVM_MODULE_ADDRESS,
 		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
 		Value:            unusedBigInt,
-		GasLimit:         Erc20GasLimitExecute,
+		GasLimit:         evm.Erc20GasLimitExecute,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
 		GasTipCap:        unusedBigInt,
@@ -63,29 +64,30 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	}
 
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
+	evmResp, err := k.CallContract(
 		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
 		contractInput,
-		Erc20GasLimitExecute,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if evmResp.Failed() {
-		return nil, fmt.Errorf("failed to burn ERC20 tokens: %s", evmResp.VmError)
+		return fmt.Errorf("failed to burn ERC20 tokens: %s", evmResp.VmError)
 	}
 	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
+		return sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// 2 | Send Bank Coins from the EVM module to the recipient
 	err = k.Bank.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddress, bankCoins)
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to send coins from module to account")
+		return sdkioerrors.Wrap(err, "failed to send coins from module to account")
 	}
 
 	// Emit event
@@ -103,7 +105,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
 	}
 
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
+	return nil
 }
 
 // convertEvmToCoinForERC20Originated handles conversion of ERC20 tokens that
@@ -117,11 +119,11 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	amount *big.Int,
 	bankDenom string,
 	stateDB *statedb.StateDB,
-) (*evm.MsgConvertEvmToCoinResponse, error) {
+) error {
 	// 1 | Transfer ERC20 tokens from sender to EVM module
 	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", evm.EVM_MODULE_ADDRESS, amount)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var evmObj *vm.EVM
@@ -132,7 +134,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 			To:               &evm.EVM_MODULE_ADDRESS,
 			Nonce:            k.GetAccNonce(ctx, sender.Eth),
 			Value:            unusedBigInt,
-			GasLimit:         Erc20GasLimitExecute,
+			GasLimit:         evm.Erc20GasLimitExecute,
 			GasPrice:         unusedBigInt,
 			GasFeeCap:        unusedBigInt,
 			GasTipCap:        unusedBigInt,
@@ -155,10 +157,10 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		evmObj,
 	)
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC20 tokens")
+		return sdkioerrors.Wrap(err, "failed to transfer ERC20 tokens")
 	}
 	if evmResp.Failed() {
-		return nil, fmt.Errorf("failed to transfer ERC20 tokens: %s", evmResp.VmError)
+		return fmt.Errorf("failed to transfer ERC20 tokens: %s", evmResp.VmError)
 	}
 
 	bankCoin := sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(balIncrease))
@@ -166,13 +168,13 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	// 2 | Mint Bank Coins to the recipient
 	err = k.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(bankCoin))
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to mint coins")
+		return sdkioerrors.Wrap(err, "failed to mint coins")
 	}
 
 	// 3 | Send the minted coins to the recipient
 	err = k.Bank.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddress, sdk.NewCoins(bankCoin))
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to send coins to recipient")
+		return sdkioerrors.Wrap(err, "failed to send coins to recipient")
 	}
 
 	// Emit event
@@ -190,7 +192,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
 	}
 
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
+	return nil
 }
 
 // NOTE: This function is unsafe and assumes all arguments are valid. It should
@@ -198,7 +200,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 // It can only be called from the logic:
 //   - (1) Inside of "eth.evm.v1.MsgConvertEvmToCoin"
 //   - (2) Or inside the of FunToken precompile "sendToBank"
-func (k Keeper) convertEvmToCoinForWNIBI(
+func (k Keeper) ConvertEvmToCoinForWNIBI(
 	ctx sdk.Context,
 	stateDB *statedb.StateDB,
 	erc20 eth.EIP55Addr,
@@ -206,10 +208,10 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	toAddrBech32 sdk.AccAddress,
 	amount sdkmath.Int,
 	evmObj *vm.EVM,
-) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	withdrawWei, err := ParseWeiAsMultipleOfMicronibi(amount.BigInt())
+) (withdrawWei *uint256.Int, err error) {
+	withdrawWei, err = ParseWeiAsMultipleOfMicronibi(amount.BigInt())
 	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
+		return withdrawWei, sdkioerrors.Wrapf(err, "ConvertEvmToCoin: invalid wei amount %s", amount)
 	}
 
 	// Unwrap from the sender "WNIBI.withdraw"
@@ -235,7 +237,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 			From:             sender.Eth,
 			Nonce:            k.GetAccNonce(ctx, sender.Eth),
 			Value:            unusedBigInt,
-			GasLimit:         Erc20GasLimitExecute,
+			GasLimit:         evm.Erc20GasLimitExecute,
 			GasPrice:         unusedBigInt,
 			GasFeeCap:        unusedBigInt,
 			GasTipCap:        unusedBigInt,
@@ -266,20 +268,21 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
-	evmResp, err := k.CallContractWithInput(
+	evmResp, err := k.CallContract(
 		ctx,
 		evmObj,
-		sender.Eth,           /* fromAcc */
-		&erc20.Address,       /* contract */
-		contractInput,        /* contractInput */
-		Erc20GasLimitExecute, /* gasLimit */
-		nil,                  /* weiValue */
+		sender.Eth,               /* fromAcc */
+		&erc20.Address,           /* contract */
+		contractInput,            /* contractInput */
+		evm.Erc20GasLimitExecute, /* gasLimit */
+		evm.COMMIT_ETH_TX,        /*commit*/
+		nil,                      /* weiValue */
 	)
 	if err != nil {
-		return resp, fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: %w", err)
+		return withdrawWei, fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: %w", err)
 	} else if evmResp.Failed() {
 		err = fmt.Errorf("failed to convert WNIBI to NIBI via WNIBI.withdraw: VmError: %s", evmResp.VmError)
-		return resp, err
+		return withdrawWei, err
 	}
 
 	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, ctx, evmObj)
@@ -298,7 +301,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	if err := k.Bank.SendCoins(ctx, sender.Bech32, toAddrBech32,
 		sdk.NewCoins(withdrawnMicronibi),
 	); err != nil {
-		return resp, err
+		return withdrawWei, err
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
@@ -309,5 +312,5 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		SenderEthAddr:        sender.Eth.Hex(),
 	})
 
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
+	return withdrawWei, nil
 }

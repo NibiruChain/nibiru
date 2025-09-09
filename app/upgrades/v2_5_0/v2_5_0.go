@@ -156,9 +156,11 @@ func UpgradeStNibiContractOnMainnet(
 	}()
 	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
-	evmResp, err := keepers.EvmKeeper.CallContractWithInput(
+	evmResp, err := keepers.EvmKeeper.CallContract(
 		ctx, evmObj, evmMsg.From, nil, contractInput,
-		evmkeeper.Erc20GasLimitDeploy, nil,
+		evmkeeper.Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to deploy ERC20 contract: %w", err)

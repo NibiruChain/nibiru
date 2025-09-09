@@ -107,8 +107,10 @@ func (k *Keeper) deployERC20ForBankCoin(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
-		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy, nil,
+	evmResp, err := k.CallContract(
+		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
 	)
 	if err != nil {
 		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
