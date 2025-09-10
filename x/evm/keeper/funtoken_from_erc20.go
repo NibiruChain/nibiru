@@ -7,7 +7,6 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -34,7 +33,7 @@ func (k Keeper) FindERC20Metadata(
 	evmObj *vm.EVM,
 	contract gethcommon.Address,
 	abi *gethabi.ABI,
-) (info *ERC20Metadata, err error) {
+) (info *evm.ERC20Metadata, err error) {
 	effectiveAbi := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI
 
 	if abi != nil {
@@ -56,33 +55,11 @@ func (k Keeper) FindERC20Metadata(
 		return nil, err
 	}
 
-	return &ERC20Metadata{
+	return &evm.ERC20Metadata{
 		Name:     name,
 		Symbol:   symbol,
 		Decimals: decimals,
 	}, nil
-}
-
-// ERC20Metadata: Optional metadata fields parsed from an ERC20 contract.
-// The [Wrapped Ether contract] is a good example for reference.
-//
-//	```solidity
-//	constract WETH9 {
-//	  string public name     = "Wrapped Ether";
-//	  string public symbol   = "WETH"
-//	  uint8  public decimals = 18;
-//	}
-//	```
-//
-// Note that the name and symbol fields may be empty, according to the [ERC20
-// specification].
-//
-// [Wrapped Ether contract]: https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2#code
-// [ERC20 specification]: https://eips.ethereum.org/EIPS/eip-20
-type ERC20Metadata struct {
-	Name     string
-	Symbol   string
-	Decimals uint8
 }
 
 type (
@@ -120,7 +97,7 @@ type (
 //   - If the bank metadata validation fails.
 //   - If the FunToken insertion fails.
 func (k *Keeper) createFunTokenFromERC20(
-	ctx sdk.Context, erc20 gethcommon.Address,
+	ctx sdk.Context, erc20 gethcommon.Address, allowZeroDecimals bool,
 ) (funtoken *evm.FunToken, err error) {
 	// 1 | ERC20 already registered with FunToken?
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20)); len(funtokens) > 0 {
@@ -174,6 +151,12 @@ func (k *Keeper) createFunTokenFromERC20(
 	err = bankMetadata.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate bank metadata: %w", err)
+	} else if _, err = evm.ValidateFunTokenBankMetadata(
+		bankMetadata,
+		allowZeroDecimals,
+	); err != nil {
+		err = fmt.Errorf(`metadata unsuitable to create FunToken mapping for ERC20 "%s": %w`, erc20.Hex(), err)
+		return
 	}
 	k.Bank.SetDenomMetaData(ctx, bankMetadata)
 
@@ -194,54 +177,4 @@ func (k *Keeper) createFunTokenFromERC20(
 	return funtoken, k.FunTokens.SafeInsert(
 		ctx, erc20, bankDenom, false,
 	)
-}
-
-// ToBankMetadata produces the "bank.Metadata" corresponding to a FunToken
-// mapping created from an ERC20 token.
-//
-// The first argument of DenomUnits is required and the official base unit
-// onchain, meaning the denom must be equivalent to bank.Metadata.Base.
-//
-// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
-// they mean for external clients like wallets.
-func (erc20Info ERC20Metadata) ToBankMetadata(
-	bankDenom string, erc20 gethcommon.Address,
-) bank.Metadata {
-	var symbol string
-	if erc20Info.Symbol != "" {
-		symbol = erc20Info.Symbol
-	} else {
-		symbol = bankDenom
-	}
-
-	var name string
-	if erc20Info.Name != "" {
-		name = erc20Info.Name
-	} else {
-		name = bankDenom
-	}
-
-	denomUnits := []*bank.DenomUnit{
-		{
-			Denom:    bankDenom,
-			Exponent: 0,
-		},
-	}
-	display := symbol
-	if erc20Info.Decimals > 0 {
-		denomUnits = append(denomUnits, &bank.DenomUnit{
-			Denom:    display,
-			Exponent: uint32(erc20Info.Decimals),
-		})
-	}
-	return bank.Metadata{
-		Description: fmt.Sprintf(
-			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20.String(),
-		),
-		DenomUnits: denomUnits,
-		Base:       bankDenom,
-		Display:    display,
-		Name:       name,
-		Symbol:     symbol,
-	}
 }

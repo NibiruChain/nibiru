@@ -487,9 +487,17 @@ func (k *Keeper) CreateFunToken(
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Address)
+		funtoken, err = k.createFunTokenFromERC20(
+			ctx,
+			msg.FromErc20.Address,
+			msg.AllowZeroDecimals,
+		)
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
+		funtoken, err = k.createFunTokenFromCoin(
+			ctx,
+			msg.FromBankDenom,
+			msg.AllowZeroDecimals,
+		)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(

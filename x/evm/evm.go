@@ -6,6 +6,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -47,4 +48,112 @@ func NewFunToken(
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: isMadeFromCoin,
 	}
+}
+
+// ERC20Metadata: Optional metadata fields parsed from an ERC20 contract.
+// The [Wrapped Ether contract] is a good example for reference.
+//
+//	```solidity
+//	constract WETH9 {
+//	  string public name     = "Wrapped Ether";
+//	  string public symbol   = "WETH"
+//	  uint8  public decimals = 18;
+//	}
+//	```
+//
+// Note that the name and symbol fields may be empty, according to the [ERC20
+// specification].
+//
+// [Wrapped Ether contract]: https://etherscan.io/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2#code
+// [ERC20 specification]: https://eips.ethereum.org/EIPS/eip-20
+type ERC20Metadata struct {
+	Name     string
+	Symbol   string
+	Decimals uint8
+}
+
+// ToBankMetadata produces the "bank.Metadata" corresponding to a FunToken
+// mapping created from an ERC20 token.
+//
+// The first argument of DenomUnits is required and the official base unit
+// onchain, meaning the denom must be equivalent to bank.Metadata.Base.
+//
+// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
+// they mean for external clients like wallets.
+func (erc20Info ERC20Metadata) ToBankMetadata(
+	bankDenom string, erc20 gethcommon.Address,
+) bank.Metadata {
+	var symbol string
+	if erc20Info.Symbol != "" {
+		symbol = erc20Info.Symbol
+	} else {
+		symbol = bankDenom
+	}
+
+	var name string
+	if erc20Info.Name != "" {
+		name = erc20Info.Name
+	} else {
+		name = bankDenom
+	}
+
+	denomUnits := []*bank.DenomUnit{
+		{
+			Denom:    bankDenom,
+			Exponent: 0,
+		},
+	}
+	display := symbol
+	if erc20Info.Decimals > 0 {
+		denomUnits = append(denomUnits, &bank.DenomUnit{
+			Denom:    display,
+			Exponent: uint32(erc20Info.Decimals),
+		})
+	}
+	return bank.Metadata{
+		Description: fmt.Sprintf(
+			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20.String(),
+		),
+		DenomUnits: denomUnits,
+		Base:       bankDenom,
+		Display:    display,
+		Name:       name,
+		Symbol:     symbol,
+	}
+}
+
+func ParseDecimalsFromBank(bankCoin bank.Metadata) uint8 {
+	// bank.Metadata validation guarantees that both "Base" and "Display" denoms
+	// pass "sdk.ValidateDenom" and that the "DenomUnits" slice has exponents in
+	// ascending order with at least one element, which must be the base
+	// denomination and have exponent 0.
+	decimals := uint8(0)
+	if len(bankCoin.DenomUnits) > 0 {
+		decimalsIdx := len(bankCoin.DenomUnits) - 1
+		decimals = uint8(bankCoin.DenomUnits[decimalsIdx].Exponent)
+	}
+	return decimals
+}
+
+func ValidateFunTokenBankMetadata(
+	bc bank.Metadata, allowZeroDecimals bool,
+) (out ERC20Metadata, err error) {
+	bc.Validate()
+	out = ERC20Metadata{
+		Name:     bc.Name,
+		Symbol:   bc.Symbol,
+		Decimals: ParseDecimalsFromBank(bc),
+	}
+	if out.Name == "" {
+		err = fmt.Errorf("TODO")
+		return
+	} else if out.Symbol == "" {
+		err = fmt.Errorf("TODO")
+		return
+	} else if out.Decimals == 0 && !allowZeroDecimals {
+		err = fmt.Errorf("TODO")
+		return
+	}
+	return out, nil
+
 }

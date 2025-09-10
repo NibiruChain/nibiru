@@ -17,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
@@ -28,7 +27,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
 	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.NewStateDB().GetNonce(deps.Sender.EthAddr))
 
 	s.T().Log("Deploy ERC20")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
@@ -175,7 +174,7 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 	))
 
 	s.T().Log("Deploy ERC20")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
@@ -366,7 +365,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20MaliciousName() {
 	deps := evmtest.NewTestDeps()
 
 	s.T().Log("Deploy ERC20MaliciousName")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
@@ -412,7 +411,7 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	))
 
 	s.T().Log("Deploy ERC20MaliciousTransfer")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
@@ -472,7 +471,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	))
 
 	s.T().Log("Deploy InfiniteRecursionERC20")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
@@ -549,7 +548,7 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	))
 
 	s.T().Log("Deploy ERC20")
-	metadata := keeper.ERC20Metadata{
+	metadata := evm.ERC20Metadata{
 		Name:   "erc20name",
 		Symbol: "TOKEN",
 	}
@@ -684,7 +683,7 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 	info, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr, embeds.SmartContract_TestBytes32Metadata.ABI)
 	s.Require().NoError(err)
 
-	actualMetadata := keeper.ERC20Metadata{
+	actualMetadata := evm.ERC20Metadata{
 		Name:     "Maker",
 		Symbol:   "MKR",
 		Decimals: 18,

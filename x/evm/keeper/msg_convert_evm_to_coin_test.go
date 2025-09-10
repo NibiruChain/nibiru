@@ -25,20 +25,6 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 	// Create EVM for balance assertions
 	evmObj, _ := deps.NewEVM()
 
-	// Set bank metadata for the denom
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "IBC-testE2C",
-	})
-
 	// Fund sender for FunToken creation fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -46,6 +32,23 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
+
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+		DenomUnits: []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+			{
+				Denom:    "TESTEVM2COIN",
+				Exponent: 18,
+			},
+		},
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    bankDenom,
+		Symbol:  "IBC-testE2C",
+	})
 
 	// Create FunToken mapping from bank coin
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
@@ -300,6 +303,10 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 				Denom:    bankDenom,
 				Exponent: 0,
 			},
+			{
+				Denom:    bankDenom,
+				Exponent: 18,
+			},
 		},
 		Base:    bankDenom,
 		Display: bankDenom,
@@ -382,6 +389,10 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 			{
 				Denom:    bankDenom,
 				Exponent: 0,
+			},
+			{
+				Denom:    bankDenom,
+				Exponent: 18,
 			},
 		},
 		Base:    bankDenom,

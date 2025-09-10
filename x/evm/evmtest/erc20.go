@@ -76,6 +76,10 @@ func CreateFunTokenForBankCoin(
 				Denom:    bankDenom,
 				Exponent: 0,
 			},
+			{
+				Denom:    bankDenom,
+				Exponent: 18,
+			},
 		},
 		Base:    bankDenom,
 		Display: bankDenom,
