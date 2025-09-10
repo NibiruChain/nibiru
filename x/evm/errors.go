@@ -74,3 +74,9 @@ func NewRevertError(revertReason []byte) error {
 type RevertError struct {
 	error
 }
+
+// ErrStateDBCommit defines the error message when commit after executing EVM
+// transaction, for example transfer native token to a distribution module
+// account using an evm transaction. Note, the transfer amount cannot be set to
+// 0, otherwise this problem will not be triggered.
+const ErrStateDBCommit = "failed to commit stateDB"

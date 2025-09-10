@@ -5764,10 +5764,11 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgCreateFunToken                 protoreflect.MessageDescriptor
-	fd_MsgCreateFunToken_from_erc20      protoreflect.FieldDescriptor
-	fd_MsgCreateFunToken_from_bank_denom protoreflect.FieldDescriptor
-	fd_MsgCreateFunToken_sender          protoreflect.FieldDescriptor
+	md_MsgCreateFunToken                     protoreflect.MessageDescriptor
+	fd_MsgCreateFunToken_from_erc20          protoreflect.FieldDescriptor
+	fd_MsgCreateFunToken_from_bank_denom     protoreflect.FieldDescriptor
+	fd_MsgCreateFunToken_sender              protoreflect.FieldDescriptor
+	fd_MsgCreateFunToken_allow_zero_decimals protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -5776,6 +5777,7 @@ func init() {
 	fd_MsgCreateFunToken_from_erc20 = md_MsgCreateFunToken.Fields().ByName("from_erc20")
 	fd_MsgCreateFunToken_from_bank_denom = md_MsgCreateFunToken.Fields().ByName("from_bank_denom")
 	fd_MsgCreateFunToken_sender = md_MsgCreateFunToken.Fields().ByName("sender")
+	fd_MsgCreateFunToken_allow_zero_decimals = md_MsgCreateFunToken.Fields().ByName("allow_zero_decimals")
 }
 
 var _ protoreflect.Message = (*fastReflection_MsgCreateFunToken)(nil)
@@ -5861,6 +5863,12 @@ func (x *fastReflection_MsgCreateFunToken) Range(f func(protoreflect.FieldDescri
 			return
 		}
 	}
+	if x.AllowZeroDecimals != false {
+		value := protoreflect.ValueOfBool(x.AllowZeroDecimals)
+		if !f(fd_MsgCreateFunToken_allow_zero_decimals, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -5882,6 +5890,8 @@ func (x *fastReflection_MsgCreateFunToken) Has(fd protoreflect.FieldDescriptor) 
 		return x.FromBankDenom != ""
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		return x.Sender != ""
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		return x.AllowZeroDecimals != false
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -5904,6 +5914,8 @@ func (x *fastReflection_MsgCreateFunToken) Clear(fd protoreflect.FieldDescriptor
 		x.FromBankDenom = ""
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		x.Sender = ""
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		x.AllowZeroDecimals = false
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -5929,6 +5941,9 @@ func (x *fastReflection_MsgCreateFunToken) Get(descriptor protoreflect.FieldDesc
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		value := x.Sender
 		return protoreflect.ValueOfString(value)
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		value := x.AllowZeroDecimals
+		return protoreflect.ValueOfBool(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -5955,6 +5970,8 @@ func (x *fastReflection_MsgCreateFunToken) Set(fd protoreflect.FieldDescriptor, 
 		x.FromBankDenom = value.Interface().(string)
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		x.Sender = value.Interface().(string)
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		x.AllowZeroDecimals = value.Bool()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -5981,6 +5998,8 @@ func (x *fastReflection_MsgCreateFunToken) Mutable(fd protoreflect.FieldDescript
 		panic(fmt.Errorf("field from_bank_denom of message eth.evm.v1.MsgCreateFunToken is not mutable"))
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		panic(fmt.Errorf("field sender of message eth.evm.v1.MsgCreateFunToken is not mutable"))
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		panic(fmt.Errorf("field allow_zero_decimals of message eth.evm.v1.MsgCreateFunToken is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -6000,6 +6019,8 @@ func (x *fastReflection_MsgCreateFunToken) NewField(fd protoreflect.FieldDescrip
 		return protoreflect.ValueOfString("")
 	case "eth.evm.v1.MsgCreateFunToken.sender":
 		return protoreflect.ValueOfString("")
+	case "eth.evm.v1.MsgCreateFunToken.allow_zero_decimals":
+		return protoreflect.ValueOfBool(false)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: eth.evm.v1.MsgCreateFunToken"))
@@ -6081,6 +6102,9 @@ func (x *fastReflection_MsgCreateFunToken) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.AllowZeroDecimals {
+			n += 2
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -6109,6 +6133,16 @@ func (x *fastReflection_MsgCreateFunToken) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.AllowZeroDecimals {
+			i--
+			if x.AllowZeroDecimals {
+				dAtA[i] = 1
+			} else {
+				dAtA[i] = 0
+			}
+			i--
+			dAtA[i] = 0x20
 		}
 		if len(x.Sender) > 0 {
 			i -= len(x.Sender)
@@ -6276,6 +6310,26 @@ func (x *fastReflection_MsgCreateFunToken) ProtoMethods() *protoiface.Methods {
 				}
 				x.Sender = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AllowZeroDecimals", wireType)
+				}
+				var v int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				x.AllowZeroDecimals = bool(v != 0)
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -9313,6 +9367,13 @@ type MsgCreateFunToken struct {
 	FromBankDenom string `protobuf:"bytes,2,opt,name=from_bank_denom,json=fromBankDenom,proto3" json:"from_bank_denom,omitempty"`
 	// Sender: Address for the signer of the transaction.
 	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Optional flag to allow the `FunToken` mapping to be created with 0 decimals
+	// in the ERC20 sense. Often times, tokens are meant to behave like money and
+	// be divisible, meaning "decimals = 0" is often a mistake. This field defaults
+	// to false as a safety guard against accidental creation of FunTokens with
+	// missing metadata.
+	// Set this to true if the token is truly intended to have 0 decimals.
+	AllowZeroDecimals bool `protobuf:"varint,4,opt,name=allow_zero_decimals,json=allowZeroDecimals,proto3" json:"allow_zero_decimals,omitempty"`
 }
 
 func (x *MsgCreateFunToken) Reset() {
@@ -9354,6 +9415,13 @@ func (x *MsgCreateFunToken) GetSender() string {
 		return x.Sender
 	}
 	return ""
+}
+
+func (x *MsgCreateFunToken) GetAllowZeroDecimals() bool {
+	if x != nil {
+		return x.AllowZeroDecimals
+	}
+	return false
 }
 
 type MsgCreateFunTokenResponse struct {
@@ -9697,7 +9765,7 @@ var file_eth_evm_v1_tx_proto_rawDesc = []byte{
 	0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x3a, 0x0e, 0x82,
 	0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x22, 0x19, 0x0a,
 	0x17, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xaa, 0x01, 0x0a, 0x11, 0x4d, 0x73, 0x67,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xda, 0x01, 0x0a, 0x11, 0x4d, 0x73, 0x67,
 	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x75, 0x6e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x55,
 	0x0a, 0x0a, 0x66, 0x72, 0x6f, 0x6d, 0x5f, 0x65, 0x72, 0x63, 0x32, 0x30, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x42, 0x36, 0xc8, 0xde, 0x1f, 0x01, 0xda, 0xde, 0x1f, 0x2e, 0x67, 0x69, 0x74, 0x68,
@@ -9708,7 +9776,10 @@ var file_eth_evm_v1_tx_proto_rawDesc = []byte{
 	0x6e, 0x6b, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d,
 	0x66, 0x72, 0x6f, 0x6d, 0x42, 0x61, 0x6e, 0x6b, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x16, 0x0a,
 	0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73,
-	0x65, 0x6e, 0x64, 0x65, 0x72, 0x22, 0x62, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61,
+	0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x2e, 0x0a, 0x13, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x5f, 0x7a,
+	0x65, 0x72, 0x6f, 0x5f, 0x64, 0x65, 0x63, 0x69, 0x6d, 0x61, 0x6c, 0x73, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x11, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x5a, 0x65, 0x72, 0x6f, 0x44, 0x65, 0x63,
+	0x69, 0x6d, 0x61, 0x6c, 0x73, 0x22, 0x62, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61,
 	0x74, 0x65, 0x46, 0x75, 0x6e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
 	0x73, 0x65, 0x12, 0x45, 0x0a, 0x10, 0x66, 0x75, 0x6e, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x6d,
 	0x61, 0x70, 0x70, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x65,

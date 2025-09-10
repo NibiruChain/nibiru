@@ -76,12 +76,18 @@ func CreateFunTokenForBankCoin(
 				Denom:    bankDenom,
 				Exponent: 0,
 			},
+			{
+				Denom:    "display_denom",
+				Exponent: 18,
+			},
 		},
 		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  bankDenom,
+		Display: "display_denom",
+		Name:    fmt.Sprintf("Name for %v", bankDenom),
+		Symbol:  "TEST",
 	}
+	err := bankMetadata.Validate()
+	s.Require().NoError(err)
 
 	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 

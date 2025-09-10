@@ -37,7 +37,7 @@ func GetGRPCConnection(
 	conn, err := grpc.DialContext(ctx, grpcUrl, options...)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"%w: Cannot connect to gRPC endpoint %s", err, grpcUrl)
+			"cannot connect to gRPC endpoint %s: %w", grpcUrl, err)
 	}
 
 	return conn, nil

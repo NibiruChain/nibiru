@@ -70,7 +70,7 @@ func (k *Keeper) EthereumTx(
 		ctx,
 		*evmMsg,
 		evmObj,
-		true, /*commit*/
+		evm.COMMIT_ETH_TX, /*commit*/
 		txConfig.TxHash,
 	)
 	if evmResp != nil {
@@ -424,7 +424,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := evmStateDB.Commit(); err != nil {
-			return evmResp, sdkioerrors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+			return evmResp, sdkioerrors.Wrapf(err, "ApplyEvmMsg: %s", evm.ErrStateDBCommit)
 		}
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
@@ -468,10 +468,25 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 // If the mapping is generated from an ERC20, this tx creates a bank coin to go
 // with it, and if the mapping's generated from a coin, the EVM module
 // deploys an ERC20 contract that for which it will be the owner.
+//
+// ## Mapping an ERC20 Token a Newly Generated Bank Coin
+//
+// When an ERC20 token is used to create a FunToken mapping and corresponding
+// Bank Coin, it must produce valid "bank.Metadata"
+//
+// Constraints:
+//   - The first argument of DenomUnits is required and the official base unit
+//     onchain, meaning the denom must be equivalent to bank.Metadata.Base.
+//   - Coin `bank.Metadata.Display` must be a denom of one of the
+//     `bank.Metadata.DenomUnits`. It is taken by Cosmos-SDK clients like wallets
+//     to be "bank.DenomUnit" client takes the exponent from to display wallet
+//     balances.
+//
+// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
+// they mean for external clients like wallets.
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
-	var funtoken *evm.FunToken
 	err = msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -484,12 +499,21 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
+	var funtoken *evm.FunToken
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Address)
+		funtoken, err = k.createFunTokenFromERC20(
+			ctx,
+			msg.FromErc20.Address,
+			msg.AllowZeroDecimals,
+		)
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
+		funtoken, err = k.createFunTokenFromCoin(
+			ctx,
+			msg.FromBankDenom,
+			msg.AllowZeroDecimals,
+		)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -604,29 +628,40 @@ func (k *Keeper) ConvertEvmToCoin(
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
-		return k.convertEvmToCoinForWNIBI(
-			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32, amount,
-		)
-	}
-
-	// Find the FunToken mapping for this ERC20
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
-	if len(funTokens) != 1 {
-		err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
-		return
-	}
-
-	funtokenMapping := funTokens[0]
-	amountBig := amount.BigInt()
-	if funtokenMapping.IsMadeFromCoin {
-		return k.convertEvmToCoinForCoinOriginated(
-			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+		_, err = k.ConvertEvmToCoinForWNIBI(
+			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32,
+			amount,
+			nil, /*evmObj*/
 		)
 	} else {
-		return k.convertEvmToCoinForERC20Originated(
-			ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
-		)
+		// Find the FunToken mapping for this ERC20
+		funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+		if len(funTokens) != 1 {
+			err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
+			return
+		}
+
+		funtokenMapping := funTokens[0]
+		amountBig := amount.BigInt()
+		if funtokenMapping.IsMadeFromCoin {
+			err = k.convertEvmToCoinForCoinOriginated(
+				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		} else {
+			err = k.convertEvmToCoinForERC20Originated(
+				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		}
 	}
+
+	if err != nil {
+		return
+	}
+	if err = stateDB.Commit(); err != nil {
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
+	}
+
+	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

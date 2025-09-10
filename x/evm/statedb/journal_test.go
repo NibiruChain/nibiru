@@ -17,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -38,17 +37,24 @@ func (s *Suite) TestCommitRemovesDirties() {
 
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr, // caller
 		&erc20,              // contract
-		true,                // commit
 		input,
-		keeper.Erc20GasLimitExecute,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
+
+	s.Less(
+		0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount(),
+		"after a state modifying contract call (ERC20.mint), there should be dirty entries",
+	)
+
+	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 	s.Require().EqualValues(0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount())
 }
 
@@ -104,14 +110,14 @@ func (s *Suite) TestContractCallsAnotherContract() {
 	s.Run("Mint 69_420 tokens", func() {
 		contractInput, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr, // caller
 			&erc20,              // contract
-			true,                // commit
 			contractInput,
-			keeper.Erc20GasLimitExecute,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)
