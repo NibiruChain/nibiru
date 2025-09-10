@@ -149,20 +149,6 @@ func (k *Keeper) createFunTokenFromERC20(
 	// 4 | Set bank coin denom metadata in state
 	var bankMetadata bank.Metadata
 	{
-		var symbol string
-		if erc20Info.Symbol != "" {
-			symbol = erc20Info.Symbol
-		} else {
-			symbol = bankDenom
-		}
-
-		var name string
-		if erc20Info.Name != "" {
-			name = erc20Info.Name
-		} else {
-			name = bankDenom
-		}
-
 		displayDenom := bankDenom
 		denomUnits := []*bank.DenomUnit{
 			{
@@ -186,8 +172,8 @@ func (k *Keeper) createFunTokenFromERC20(
 			DenomUnits: denomUnits,
 			Base:       bankDenom,
 			Display:    displayDenom,
-			Name:       name,
-			Symbol:     symbol,
+			Name:       erc20Info.Name,
+			Symbol:     erc20Info.Symbol,
 		}
 	}
 	if _, err = evm.ValidateFunTokenBankMetadata(
