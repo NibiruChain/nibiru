@@ -708,9 +708,14 @@ func (s *StateDB) commitCtx(ctx sdk.Context) error {
 				obj.OriginStorage[key] = dirtyVal
 			}
 		}
-		// TODO: UD-DEBUG: Assume clean to pretend for tests
+		// NOTE: Assume clean to pretend for tests
 		// Reset the dirty count to 0 because all state changes for this dirtied
 		// address in the journal have been committed.
+		//
+		// TODO: https://github.com/NibiruChain/nibiru/issues/2378
+		// This logic should be removed as part of the above ticket.
+		// [feat] Implement a state (ctx) serializable EVM StateDB to make
+		// asynchronous access more safe.
 		s.Journal.dirties[addr] = 0
 	}
 	return nil

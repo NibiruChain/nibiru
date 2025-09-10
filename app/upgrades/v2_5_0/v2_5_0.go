@@ -41,9 +41,9 @@ var Upgrade = upgrades.Upgrade{
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
-			err := UpgradeStNibiContractOnMainnet(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
+			err := UpgradeStNibiEvmMetadata(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
 			if err != nil {
-				panic(fmt.Errorf("v2.5.0 upgrade failure: %w", err))
+				return fromVM, fmt.Errorf("v2.5.0 upgrade failure: %w", err)
 			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
@@ -52,7 +52,7 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
 
-func UpgradeStNibiContractOnMainnet(
+func UpgradeStNibiEvmMetadata(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 	// erc20Addr is the hex address of stNIBI on mainnet
