@@ -80,9 +80,6 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	if evmResp.Failed() {
 		return fmt.Errorf("failed to burn ERC20 tokens: %s", evmResp.VmError)
 	}
-	if err := stateDB.Commit(); err != nil {
-		return sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
-	}
 
 	// 2 | Send Bank Coins from the EVM module to the recipient
 	err = k.Bank.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddress, bankCoins)

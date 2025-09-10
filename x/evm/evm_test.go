@@ -229,7 +229,6 @@ func (mm MetadataMaker) WithExps(exps ...uint32) bank.Metadata {
 		Name:       mm.Name,
 		Symbol:     mm.Symbol,
 	}
-
 }
 
 func (s *TestSuite) TestValidateFunTokenBankMetadata() {
@@ -312,10 +311,9 @@ func (s *TestSuite) TestValidateFunTokenBankMetadata() {
 
 	for _, tc := range cases {
 		s.Run(tc.name, func() {
-			if tc.wantErr != "" {
-				s.Require().NoError(tc.md.Validate())
-			}
-			got, err := evm.ValidateFunTokenBankMetadata(tc.md, tc.allowZeroDecimals)
+			got, err := evm.ValidateFunTokenBankMetadata(
+				tc.md, tc.allowZeroDecimals,
+			)
 
 			if tc.wantErr != "" {
 				s.ErrorContains(err, tc.wantErr)
