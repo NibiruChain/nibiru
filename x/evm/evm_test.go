@@ -2,6 +2,7 @@
 package evm_test
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -204,31 +204,35 @@ func (s *TestSuite) TestWeiConversion() {
 	}
 }
 
-func TestValidateFunTokenBankMetadata(t *testing.T) {
-	// makeMD builds minimal bank metadata for tests.
-	// Base denom is always the first unit (exp=0). Each exponent in exps adds a
-	// display unit using the symbol. The last exponent is what ParseDecimalsFromBank
-	// will return.
-	makeMD := func(base, name, symbol string, exps ...uint32) bank.Metadata {
-		units := []*bank.DenomUnit{{Denom: base, Exponent: 0}}
-		for _, e := range exps {
-			units = append(units, &bank.DenomUnit{Denom: symbol, Exponent: e})
-		}
-		display := symbol
-		if display == "" {
-			// Cosmos requires non-empty Display in Validate(), but the function under
-			// test ignores Validate()’s error, so allow empty to exercise that path.
-			display = ""
-		}
-		return bank.Metadata{
-			DenomUnits: units,
-			Base:       base,
-			Display:    display,
-			Name:       name,
-			Symbol:     symbol,
-		}
+// makeMD builds minimal bank metadata for tests.
+// Base denom is always the first unit (exp=0). Each exponent in exps adds a
+// display unit using the symbol. The last exponent is what ParseDecimalsFromBank
+// will return.
+// Helper struct for making
+type MetadataMaker struct {
+	Base   string
+	Name   string
+	Symbol string
+}
+
+func (mm MetadataMaker) WithExps(exps ...uint32) bank.Metadata {
+	units := []*bank.DenomUnit{{Denom: mm.Base, Exponent: 0}}
+	last_denom := mm.Base
+	for exp_idx, e := range exps {
+		last_denom = fmt.Sprintf("%v_denom-unit-%d", mm.Base, exp_idx+1)
+		units = append(units, &bank.DenomUnit{Denom: last_denom, Exponent: e})
+	}
+	return bank.Metadata{
+		DenomUnits: units,
+		Base:       mm.Base,
+		Display:    last_denom,
+		Name:       mm.Name,
+		Symbol:     mm.Symbol,
 	}
 
+}
+
+func (s *TestSuite) TestValidateFunTokenBankMetadata() {
 	cases := []struct {
 		name              string
 		md                bank.Metadata
@@ -239,56 +243,86 @@ func TestValidateFunTokenBankMetadata(t *testing.T) {
 	}{
 		{
 			name: "happy: name/symbol set, decimals from last denom unit (8)",
-			md:   makeMD("usome", "Some Token", "SOME", 8),
+			md: MetadataMaker{
+				Base:   "usome",
+				Name:   "Some Token",
+				Symbol: "SOME",
+			}.WithExps(8),
 			want: evm.ERC20Metadata{Name: "Some Token", Symbol: "SOME", Decimals: 8},
 		},
+
 		{
 			name: "happy: last unit wins (6, 9, 18 -> 18)",
-			md:   makeMD("ufoo", "Foo", "FOO", 6, 9, 18),
+			md: MetadataMaker{
+				Base:   "ufoo",
+				Name:   "Foo",
+				Symbol: "FOO",
+			}.WithExps(6, 9, 18),
 			want: evm.ERC20Metadata{Name: "Foo", Symbol: "FOO", Decimals: 18},
 		},
 		{
-			name:              "happy: zero decimals allowed",
-			md:                makeMD("ubar", "Bar", "BAR" /* no extra units */),
+			name: "happy: allow_zero_decimals=true",
+			md: MetadataMaker{
+				Base:   "ubar",
+				Name:   "Bar",
+				Symbol: "BAR",
+			}.WithExps( /* no extra units */ ),
 			allowZeroDecimals: true,
 			want:              evm.ERC20Metadata{Name: "Bar", Symbol: "BAR", Decimals: 0},
 		},
 		{
-			name:    "sad: zero decimals not allowed",
-			md:      makeMD("ubaz", "Baz", "BAZ" /* no extra units */),
-			wantErr: `decimals = 0`, // matches: got ERC20.decimals = 0, which is consdiered an error unless "allow_zero_decimals" is true
-		},
-		{
-			name:    "sad: empty name",
-			md:      makeMD("uqqq", "" /*name*/, "QQQ", 18),
-			wantErr: "empty name for ERC20",
-		},
-		{
-			name:    "sad: empty symbol",
-			md:      makeMD("urrr", "Rrr", "" /*symbol*/, 18),
-			wantErr: "empty symbol for ERC20",
-		},
-		{
-			name: "NOTE: bank.Metadata.Validate() error is ignored by function",
-			// Uppercase base denom would fail bank.Metadata.Validate(), but
-			// ValidateFunTokenBankMetadata ignores that error. Expect no error.
-			md:                makeMD("BadDenomUpper", "Name", "SYM" /* no extra units */),
+			name: "happy: allow_zero_decimals=true, upper case bank denoms",
+			md: MetadataMaker{
+				Base:   "DenomUpper",
+				Name:   "Name",
+				Symbol: "SYM",
+			}.WithExps( /* no extra units */ ),
 			allowZeroDecimals: true,
 			want:              evm.ERC20Metadata{Name: "Name", Symbol: "SYM", Decimals: 0},
 			wantErr:           "",
 		},
+		{
+			name: "sad: zero decimals not allowed",
+			md: MetadataMaker{
+				Base:   "ubaz",
+				Name:   "Baz",
+				Symbol: "BAZ",
+			}.WithExps( /* no extra units */ ),
+			wantErr: `ERC20.decimals = 0, which is considered an error unless "allow_zero_decimals" is true`,
+		},
+		{
+			name: "sad: empty name",
+			md: MetadataMaker{
+				Base:   "uqqq",
+				Name:   "", /*name*/
+				Symbol: "QQQ",
+			}.WithExps(18),
+			wantErr: "name field cannot be blank",
+		},
+		{
+			name: "sad: empty symbol",
+			md: MetadataMaker{
+				Base:   "urrr",
+				Name:   "Rrr",
+				Symbol: "", /*symbol*/
+			}.WithExps(18),
+			wantErr: "symbol field cannot be blank",
+		},
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
+			if tc.wantErr != "" {
+				s.Require().NoError(tc.md.Validate())
+			}
 			got, err := evm.ValidateFunTokenBankMetadata(tc.md, tc.allowZeroDecimals)
 
 			if tc.wantErr != "" {
-				assert.ErrorContains(t, err, tc.wantErr)
+				s.ErrorContains(err, tc.wantErr)
 				return
 			}
-			assert.NoError(t, err)
-			assert.Equal(t, tc.want, got)
+			s.NoError(err)
+			s.Equal(tc.want, got)
 		})
 	}
 }

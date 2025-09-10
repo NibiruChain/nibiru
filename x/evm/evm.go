@@ -141,19 +141,24 @@ func ParseDecimalsFromBank(bankCoin bank.Metadata) uint8 {
 func ValidateFunTokenBankMetadata(
 	bc bank.Metadata, allowZeroDecimals bool,
 ) (out ERC20Metadata, err error) {
+	// Bank Coin Denom regex:
+	// ```
+	// reDnmString = `[a-zA-Z][a-zA-Z0-9/:._-]{2,127}`
+	// ```
+	// Denominations can be 3 ~ 128 characters long and support letters, followed
+	// by either a letter, a number or a separator ('/', ':', '.', '_' or '-').
+	err = bc.Validate()
+	if err != nil {
+		err = fmt.Errorf("invalid token metadata: %w", err)
+		return
+	}
 	out = ERC20Metadata{
-		Name:     bc.Name,
-		Symbol:   bc.Symbol,
+		Name:     bc.Name,   // safe: guaranteed to not be blank
+		Symbol:   bc.Symbol, // safe: guaranteed to not be blank
 		Decimals: ParseDecimalsFromBank(bc),
 	}
-	if out.Name == "" {
-		err = fmt.Errorf("empty name for ERC20")
-		return
-	} else if out.Symbol == "" {
-		err = fmt.Errorf("empty symbol for ERC20")
-		return
-	} else if out.Decimals == 0 && !allowZeroDecimals {
-		err = fmt.Errorf(`got ERC20.decimals = 0, which is consdiered an error unless "allow_zero_decimals" is true`)
+	if out.Decimals == 0 && !allowZeroDecimals {
+		err = fmt.Errorf(`got ERC20.decimals = 0, which is considered an error unless "allow_zero_decimals" is true`)
 		return
 	}
 	return out, nil
