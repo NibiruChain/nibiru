@@ -43,7 +43,7 @@ var Upgrade = upgrades.Upgrade{
 		) (module.VersionMap, error) {
 			err := UpgradeStNibiEvmMetadata(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
 			if err != nil {
-				panic(fmt.Errorf("v2.5.0 upgrade failure: %w", err))
+				return fromVM, fmt.Errorf("v2.5.0 upgrade failure: %w", err)
 			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)

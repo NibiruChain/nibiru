@@ -39,7 +39,7 @@ var Upgrade = upgrades.Upgrade{
 		) (module.VersionMap, error) {
 			err := UpgradeV2_7_0(nibiru, ctx)
 			if err != nil {
-				panic(fmt.Errorf("v2.7.0 upgrade failure: %w", err))
+				return fromVM, fmt.Errorf("v2.7.0 upgrade failure: %w", err)
 			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
@@ -62,6 +62,9 @@ func UpgradeV2_7_0(
 ) (err error) {
 	// IMPORTANT: make sure to clear the StateDB before running the upgrade
 	keepers.EvmKeeper.Bank.StateDB = nil
+	defer func() {
+		keepers.EvmKeeper.Bank.StateDB = nil
+	}()
 
 	// 1 | Set evm.Params.CanonicalWnibi to the address live on mainnet
 	wnibiAddrMainnet := appconst.MAINNET_WNIBI_ADDR

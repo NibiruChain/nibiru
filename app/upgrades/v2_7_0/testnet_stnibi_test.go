@@ -289,12 +289,12 @@ func (s *Suite) TestTestnet() {
 		originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
 		s.Nil(originalWnibiAcc)
 
-		beforeEvents := deps.Ctx.EventManager().Events()
+		eventsBeforeUpgrade := deps.Ctx.EventManager().Events()
 
-		err := v2_7_0.UpgradeV2_7_0(&deps.App.PublicKeepers, deps.Ctx)
+		err := deps.RunUpgrade(v2_7_0.Upgrade)
 		s.Require().NoError(err)
 
-		upgradeEvents := testutil.FilterNewEvents(beforeEvents, deps.Ctx.EventManager().Events())
+		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx.EventManager().Events())
 
 		s.T().Log("assertions for WNIBI")
 
@@ -317,17 +317,17 @@ func (s *Suite) TestTestnet() {
 
 		s.T().Log("assertions for stNIBI events")
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventContractDeployed)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(tf.EventSetDenomMetadata)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventTxLog)),
 		)
 		s.Require().NoError(err)

@@ -180,24 +180,24 @@ func (s *Suite) TestUpgrade() {
 			deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName),
 		)
 
-		beforeEvents := deps.Ctx.EventManager().Events()
+		eventsBeforeUpgrade := deps.Ctx.EventManager().Events()
 		err := v2_5_0.UpgradeStNibiEvmMetadata(
 			&deps.App.PublicKeepers, deps.Ctx, funtoken.Erc20Addr.Address,
 		)
 		s.Require().NoError(err)
-		upgradeEvents := testutil.FilterNewEvents(beforeEvents, deps.Ctx.EventManager().Events())
+		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx.EventManager().Events())
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventContractDeployed)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(tf.EventSetDenomMetadata)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventTxLog)),
 		)
 		s.Require().NoError(err)
