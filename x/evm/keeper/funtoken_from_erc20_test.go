@@ -21,146 +21,193 @@ import (
 )
 
 func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
-	deps := evmtest.NewTestDeps()
-
-	// assert that the ERC20 contract is not deployed
-	expectedERC20Addr := crypto.CreateAddress(deps.Sender.EthAddr, deps.NewStateDB().GetNonce(deps.Sender.EthAddr))
-
-	s.T().Log("Deploy ERC20")
-	metadata := evm.ERC20Metadata{
+	// Constants and helpers
+	meta := evm.ERC20Metadata{
 		Name:     "erc20name",
 		Symbol:   "TOKEN",
 		Decimals: 18,
 	}
-	deployResp, err := evmtest.DeployContract(
-		&deps, embeds.SmartContract_ERC20MinterWithMetadataUpdates,
-		metadata.Name, metadata.Symbol, metadata.Decimals,
-	)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedERC20Addr, deployResp.ContractAddr)
 
-	evmObj, _ := deps.NewEVM()
-	actualMetadata, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, deployResp.ContractAddr, nil)
-	s.Require().NoError(err)
-	s.Require().Equal(metadata, *actualMetadata)
+	deployERC20 := func(
+		deps *evmtest.TestDeps,
+	) (expected gethcommon.Address, erc20Addr eth.EIP55Addr) {
+		expected = crypto.CreateAddress(deps.Sender.EthAddr, deps.NewStateDB().GetNonce(deps.Sender.EthAddr))
+		resp, err := evmtest.DeployContract(
+			deps,
+			embeds.SmartContract_ERC20MinterWithMetadataUpdates,
+			meta.Name, meta.Symbol, meta.Decimals,
+		)
+		s.Require().NoError(err)
+		s.Require().Equal(expected, resp.ContractAddr)
 
-	_, err = deps.EvmKeeper.Code(deps.Ctx, &evm.QueryCodeRequest{
-		Address: expectedERC20Addr.String(),
-	})
-	s.Require().NoError(err)
+		// Assert code exists
+		_, err = deps.EvmKeeper.Code(deps.Ctx, &evm.QueryCodeRequest{Address: expected.String()})
+		s.Require().NoError(err)
 
-	erc20Addr := eth.EIP55Addr{
-		Address: deployResp.ContractAddr,
+		// Assert on-chain metadata
+		evmObj, _ := deps.NewEVM()
+		onchain, err := deps.EvmKeeper.FindERC20Metadata(deps.Ctx, evmObj, resp.ContractAddr, nil)
+		s.Require().NoError(err)
+		s.Require().Equal(meta, *onchain)
+
+		return expected, eth.EIP55Addr{Address: resp.ContractAddr}
 	}
 
-	s.Run("sad: insufficient funds to create FunToken mapping", func() {
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-				Sender:    deps.Sender.NibiruAddr.String(),
+	testutil.RunFunctionTestSuite(&s.Suite, []testutil.FunctionTestCase{
+		{
+			Name: "sad: insufficient funds to create FunToken mapping",
+			Test: func() {
+				deps := evmtest.NewTestDeps()
+				_, erc20Addr := deployERC20(&deps)
+
+				_, err := deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20: &erc20Addr,
+						Sender:    deps.Sender.NibiruAddr.String(),
+					},
+				)
+				s.Require().ErrorContains(err, "insufficient funds")
 			},
-		)
-		s.Require().ErrorContains(err, "insufficient funds")
-	})
+		},
+		{
+			Name: "happy: CreateFunToken for the ERC20",
+			Test: func() {
+				deps := evmtest.NewTestDeps()
+				expectedERC20, erc20Addr := deployERC20(&deps)
 
-	s.Run("happy: CreateFunToken for the ERC20", func() {
-		s.Require().NoError(testapp.FundAccount(
-			deps.App.BankKeeper,
-			deps.Ctx,
-			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-		))
+				// Fund for fee
+				s.Require().NoError(testapp.FundAccount(
+					deps.App.BankKeeper,
+					deps.Ctx,
+					deps.Sender.NibiruAddr,
+					deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+				))
 
-		deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-		resp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-				Sender:    deps.Sender.NibiruAddr.String(),
+				deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+
+				resp, err := deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20: &erc20Addr,
+						Sender:    deps.Sender.NibiruAddr.String(),
+					},
+				)
+				s.Require().NoError(err, "erc20 %s", erc20Addr)
+				s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+
+				expectedBankDenom := fmt.Sprintf("erc20/%s", expectedERC20.String())
+				s.Equal(
+					evm.FunToken{
+						Erc20Addr:      erc20Addr,
+						BankDenom:      expectedBankDenom,
+						IsMadeFromCoin: false,
+					},
+					resp.FuntokenMapping,
+				)
+
+				// Event "EventFunTokenCreated" present
+				testutil.RequireContainsTypedEvent(
+					s.T(),
+					deps.Ctx,
+					&evm.EventFunTokenCreated{
+						BankDenom:            expectedBankDenom,
+						Erc20ContractAddress: erc20Addr.String(),
+						Creator:              deps.Sender.NibiruAddr.String(),
+						IsMadeFromCoin:       false,
+					},
+				)
+
+				// Bank metadata created for the new denom
+				gotMeta, _ := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, expectedBankDenom)
+				s.Require().Equal(bank.Metadata{
+					Description: fmt.Sprintf(
+						"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr.String(),
+					),
+					DenomUnits: []*bank.DenomUnit{
+						{Denom: expectedBankDenom, Exponent: 0},
+						{Denom: meta.Symbol, Exponent: uint32(meta.Decimals)},
+					},
+					Base:    expectedBankDenom,
+					Display: meta.Symbol,
+					Name:    meta.Name,
+					Symbol:  meta.Symbol,
+					URI:     "",
+					URIHash: "",
+				}, gotMeta)
 			},
-		)
-		s.Require().NoError(err, "erc20 %s", erc20Addr)
-		s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
+		},
+		{
+			Name: "sad: CreateFunToken for the ERC20: already registered",
+			Test: func() {
+				deps := evmtest.NewTestDeps()
+				_, erc20Addr := deployERC20(&deps)
 
-		expectedBankDenom := fmt.Sprintf("erc20/%s", expectedERC20Addr.String())
-		s.Equal(
-			resp.FuntokenMapping,
-			evm.FunToken{
-				Erc20Addr:      erc20Addr,
-				BankDenom:      expectedBankDenom,
-				IsMadeFromCoin: false,
-			})
+				// First creation
+				s.Require().NoError(testapp.FundAccount(
+					deps.App.BankKeeper,
+					deps.Ctx,
+					deps.Sender.NibiruAddr,
+					deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+				))
+				_, err := deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20: &erc20Addr,
+						Sender:    deps.Sender.NibiruAddr.String(),
+					},
+				)
+				s.Require().NoError(err)
 
-		// Event "EventFunTokenCreated" must present
-		testutil.RequireContainsTypedEvent(
-			s.T(),
-			deps.Ctx,
-			&evm.EventFunTokenCreated{
-				BankDenom:            expectedBankDenom,
-				Erc20ContractAddress: erc20Addr.String(),
-				Creator:              deps.Sender.NibiruAddr.String(),
-				IsMadeFromCoin:       false,
+				// Second attempt (should fail)
+				s.Require().NoError(testapp.FundAccount(
+					deps.App.BankKeeper,
+					deps.Ctx,
+					deps.Sender.NibiruAddr,
+					deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+				))
+				_, err = deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20: &erc20Addr,
+						Sender:    deps.Sender.NibiruAddr.String(),
+					},
+				)
+				s.Require().ErrorContains(err, "funtoken mapping already created")
 			},
-		)
+		},
+		{
+			Name: "sad: CreateFunToken for the ERC20: invalid sender",
+			Test: func() {
+				deps := evmtest.NewTestDeps()
+				_, erc20Addr := deployERC20(&deps)
 
-		bankDenomMetadata, _ := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, expectedBankDenom)
-		s.Require().Equal(bank.Metadata{
-			Description: fmt.Sprintf(
-				"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20Addr.String(),
-			),
-			DenomUnits: []*bank.DenomUnit{
-				{Denom: expectedBankDenom, Exponent: 0},
-				{Denom: metadata.Symbol, Exponent: uint32(metadata.Decimals)},
+				_, err := deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20: &erc20Addr,
+						// Sender omitted
+					},
+				)
+				s.Require().ErrorContains(err, "invalid sender")
 			},
-			Base:    expectedBankDenom,
-			Display: metadata.Symbol,
-			Name:    metadata.Name,
-			Symbol:  metadata.Symbol,
-			URI:     "",
-			URIHash: "",
-		}, bankDenomMetadata)
-	})
-
-	s.Run("sad: CreateFunToken for the ERC20: already registered", func() {
-		// Give the sender funds for the fee
-		s.Require().NoError(testapp.FundAccount(
-			deps.App.BankKeeper,
-			deps.Ctx,
-			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
-		))
-
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-				Sender:    deps.Sender.NibiruAddr.String(),
+		},
+		{
+			Name: "sad: CreateFunToken for the ERC20: missing erc20 address",
+			Test: func() {
+				deps := evmtest.NewTestDeps()
+				// No deploy; pass nil FromErc20
+				_, err := deps.EvmKeeper.CreateFunToken(
+					sdk.WrapSDKContext(deps.Ctx),
+					&evm.MsgCreateFunToken{
+						FromErc20:     nil,
+						FromBankDenom: "",
+						Sender:        deps.Sender.NibiruAddr.String(),
+					},
+				)
+				s.Require().ErrorContains(err, `either the "from_erc20" or "from_bank_denom" must be set`)
 			},
-		)
-		s.ErrorContains(err, "funtoken mapping already created")
-	})
-
-	s.Run("sad: CreateFunToken for the ERC20: invalid sender", func() {
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20: &erc20Addr,
-			},
-		)
-		s.ErrorContains(err, "invalid sender")
-	})
-
-	s.Run("sad: CreateFunToken for the ERC20: missing erc20 address", func() {
-		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
-			&evm.MsgCreateFunToken{
-				FromErc20:     nil,
-				FromBankDenom: "",
-				Sender:        deps.Sender.NibiruAddr.String(),
-			},
-		)
-		s.ErrorContains(err, "either the \"from_erc20\" or \"from_bank_denom\" must be set")
+		},
 	})
 }
 

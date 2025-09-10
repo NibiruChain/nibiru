@@ -135,25 +135,26 @@ func ParseDecimalsFromBank(bankCoin bank.Metadata) uint8 {
 	return decimals
 }
 
+// Checks that the necessary ERC20 metadata fields can be parsed from the given
+// Bank Coin metadata for a FunToken mapping. ERC20.decimals can only be zero if
+// "allowZeroDecimals" is true.
 func ValidateFunTokenBankMetadata(
 	bc bank.Metadata, allowZeroDecimals bool,
 ) (out ERC20Metadata, err error) {
-	bc.Validate()
 	out = ERC20Metadata{
 		Name:     bc.Name,
 		Symbol:   bc.Symbol,
 		Decimals: ParseDecimalsFromBank(bc),
 	}
 	if out.Name == "" {
-		err = fmt.Errorf("TODO")
+		err = fmt.Errorf("empty name for ERC20")
 		return
 	} else if out.Symbol == "" {
-		err = fmt.Errorf("TODO")
+		err = fmt.Errorf("empty symbol for ERC20")
 		return
 	} else if out.Decimals == 0 && !allowZeroDecimals {
-		err = fmt.Errorf("TODO")
+		err = fmt.Errorf(`got ERC20.decimals = 0, which is consdiered an error unless "allow_zero_decimals" is true`)
 		return
 	}
 	return out, nil
-
 }

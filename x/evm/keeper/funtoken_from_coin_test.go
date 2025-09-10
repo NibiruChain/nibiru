@@ -187,7 +187,6 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 					)
 					s.Require().ErrorContains(err, "funtoken mapping already created")
 				})
-
 			},
 		},
 		{
@@ -242,8 +241,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 				bankMetadata.DenomUnits = bankMetadata.DenomUnits[:1]
 				allowZeroDecimals := false
 				_, err := evm.ValidateFunTokenBankMetadata(bankMetadata, allowZeroDecimals)
-				// TODO: UD-DEBUG
-				s.Require().ErrorContains(err, "TODO")
+				s.Require().ErrorContains(err, "ERC20.decimals = 0")
 
 				deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 
@@ -261,11 +259,9 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 					},
 				)
 				s.Require().ErrorContains(err, "metadata unsuitable to create FunToken mapping")
-
 			},
 		},
 	})
-
 }
 
 // TestERC20TransferThenPrecompileSend
