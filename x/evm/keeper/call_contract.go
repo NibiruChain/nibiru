@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// CallContractWithInput invokes a smart contract with the given [contractInput]
+// CallContract invokes a smart contract with the given [contractInput]
 // or deploys a new contract.
 //
 // Parameters:
@@ -23,20 +23,18 @@ import (
 //   - fromAcc: The Ethereum address of the account initiating the contract call.
 //   - contract: Pointer to the Ethereum address of the contract. Nil if new
 //     contract is deployed.
-//   - commit: Boolean flag indicating whether to commit the transaction (true)
-//     or simulate it (false).
 //   - contractInput: Hexadecimal-encoded bytes use as input data to the call.
 //
 // Note: This function handles both contract method calls and simulations,
 // depending on the 'commit' parameter. It uses a default gas limit.
-func (k Keeper) CallContractWithInput(
+func (k Keeper) CallContract(
 	ctx sdk.Context,
 	evmObj *vm.EVM,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
-	commit bool,
 	contractInput []byte,
 	gasLimit uint64,
+	commit bool,
 	weiValue *big.Int,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	// This is a `defer` pattern to add behavior that runs in the case that the
@@ -45,17 +43,14 @@ func (k Keeper) CallContractWithInput(
 	nonce := k.GetAccNonce(ctx, fromAcc)
 
 	unusedBigInt := big.NewInt(0)
-	var value *big.Int
 	if weiValue == nil {
-		value = unusedBigInt
-	} else {
-		value = weiValue
+		weiValue = unusedBigInt
 	}
 	evmMsg := core.Message{
 		To:               contract,
 		From:             fromAcc,
 		Nonce:            nonce,
-		Value:            value, // amount
+		Value:            weiValue, // amount
 		GasLimit:         gasLimit,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
@@ -72,7 +67,7 @@ func (k Keeper) CallContractWithInput(
 	// sent by a user
 	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
 	evmResp, err = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, commit, txConfig.TxHash,
+		ctx, evmMsg, evmObj, commit /*commit*/, txConfig.TxHash,
 	)
 	if evmResp != nil {
 		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "CallContractWithInput")

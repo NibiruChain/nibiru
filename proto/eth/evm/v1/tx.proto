@@ -263,6 +263,14 @@ message MsgCreateFunToken {
 
   // Sender: Address for the signer of the transaction.
   string sender = 3;
+
+  // Optional flag to allow the `FunToken` mapping to be created with 0 decimals
+  // in the ERC20 sense. Often times, tokens are meant to behave like money and
+  // be divisible, meaning "decimals = 0" is often a mistake. This field defaults
+  // to false as a safety guard against accidental creation of FunTokens with
+  // missing metadata.
+  // Set this to true if the token is truly intended to have 0 decimals.
+  bool allow_zero_decimals = 4;
 }
 
 message MsgCreateFunTokenResponse {

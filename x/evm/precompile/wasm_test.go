@@ -21,6 +21,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -54,14 +55,14 @@ func (s *WasmSuite) TestInstantiate() {
 	)
 	s.Require().NoError(err)
 
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		true,
 		contractInput,
 		WasmGasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 
@@ -74,6 +75,7 @@ func (s *WasmSuite) TestInstantiate() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(vals[0].(string))
+	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 }
 
 func (s *WasmSuite) TestExecute() {
@@ -99,14 +101,14 @@ func (s *WasmSuite) TestExecute() {
 			[]precompile.WasmBankCoin{},
 		)
 		s.Require().NoError(err)
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
-			true,
 			contractInput,
 			WasmGasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)
@@ -134,15 +136,15 @@ func (s *WasmSuite) TestExecute() {
 		)
 		s.Require().NoError(err)
 
-		evmObj, _ = deps.NewEVM()
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		// evmObj, _ = deps.NewEVM()
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
-			true,
 			contractInput,
 			WasmGasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 
@@ -186,14 +188,14 @@ func (s *WasmSuite) TestQueryRaw() {
 	s.Require().NoError(err)
 
 	evmObj, _ := deps.NewEVM()
-	queryResp, err := deps.EvmKeeper.CallContractWithInput(
+	queryResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		false, // commit
 		contractInput,
 		WasmGasLimitQuery,
+		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
 
@@ -227,14 +229,14 @@ func (s *WasmSuite) TestQuerySmart() {
 	s.Require().NoError(err)
 
 	evmObj, _ := deps.NewEVM()
-	queryResp, err := deps.EvmKeeper.CallContractWithInput(
+	queryResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		false, // commit
 		contractInput,
 		WasmGasLimitQuery,
+		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
 
@@ -396,14 +398,14 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			s.Require().NoError(err)
 			evmObj, _ := deps.NewEVM()
 
-			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			ethTxResp, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
-				true,
 				contractInput,
 				WasmGasLimitExecute,
+				evm.COMMIT_ETH_TX, /*commit*/
 				nil,
 			)
 
@@ -535,14 +537,14 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 			)
 			s.Require().NoError(err)
 			evmObj, _ := deps.NewEVM()
-			ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+			ethTxResp, err := deps.EvmKeeper.CallContract(
 				deps.Ctx,
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
-				true,
 				contractInput,
 				WasmGasLimitExecute,
+				evm.COMMIT_ETH_TX, /*commit*/
 				nil,
 			)
 
@@ -588,14 +590,14 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 		executeMsgs,
 	)
 	s.Require().NoError(err)
-	ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+	ethTxResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
-		true,
 		contractInput,
 		WasmGasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 
@@ -604,6 +606,8 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	s.Require().Contains(err.Error(), "unknown variant")
 
 	// Verify that no state changes occurred
+	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
+	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 }
 
@@ -660,14 +664,14 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)
@@ -752,14 +756,14 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)

@@ -68,14 +68,14 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		return deps.EvmKeeper.CallContractWithInput(
+		return deps.EvmKeeper.CallContract(
 			ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
-			false,
 			contractInput,
 			OracleGasLimitQuery,
+			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
 	}
@@ -134,14 +134,14 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
-			false,
 			contractInput,
 			OracleGasLimitQuery,
+			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
 		s.NoError(err)

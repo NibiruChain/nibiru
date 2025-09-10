@@ -18,7 +18,7 @@ import (
 )
 
 func (k *Keeper) createFunTokenFromCoin(
-	ctx sdk.Context, bankDenom string,
+	ctx sdk.Context, bankDenom string, allowZeroDecimals bool,
 ) (funtoken *evm.FunToken, err error) {
 	// 1 | Coin already registered with FunToken?
 	if funtokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)); len(funtokens) > 0 {
@@ -32,7 +32,11 @@ func (k *Keeper) createFunTokenFromCoin(
 	}
 
 	// 3 | deploy ERC20 for metadata
-	erc20Addr, err := k.deployERC20ForBankCoin(ctx, bankMetadata)
+	erc20Addr, err := k.deployERC20ForBankCoin(
+		ctx,
+		bankMetadata,
+		allowZeroDecimals,
+	)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to deploy ERC20 for bank coin")
 	}
@@ -59,23 +63,19 @@ func (k *Keeper) createFunTokenFromCoin(
 }
 
 func (k *Keeper) deployERC20ForBankCoin(
-	ctx sdk.Context, bankCoin bank.Metadata,
+	ctx sdk.Context, bankCoin bank.Metadata, allowZeroDecimals bool,
 ) (erc20Addr gethcommon.Address, err error) {
 	erc20Addr = crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS))
 
-	// bank.Metadata validation guarantees that both "Base" and "Display" denoms
-	// pass "sdk.ValidateDenom" and that the "DenomUnits" slice has exponents in
-	// ascending order with at least one element, which must be the base
-	// denomination and have exponent 0.
-	decimals := uint8(0)
-	if len(bankCoin.DenomUnits) > 0 {
-		decimalsIdx := len(bankCoin.DenomUnits) - 1
-		decimals = uint8(bankCoin.DenomUnits[decimalsIdx].Exponent)
+	erc20Info, err := evm.ValidateFunTokenBankMetadata(bankCoin, allowZeroDecimals)
+	if err != nil {
+		err = fmt.Errorf(`metadata unsuitable to create FunToken mapping for Bank Coin "%s": %w. Fix this with "MsgSudoSetDenomMetadata" or "MsgSetDenomMetadata"`, bankCoin.Base, err)
+		return
 	}
 
 	// pass empty method name to deploy the contract
 	packedArgs, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack(
-		"", bankCoin.Name, bankCoin.Symbol, decimals,
+		"", erc20Info.Name, erc20Info.Symbol, erc20Info.Decimals,
 	)
 	if err != nil {
 		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to pack ABI args")
@@ -107,8 +107,10 @@ func (k *Keeper) deployERC20ForBankCoin(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
-		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, true /*commit*/, input, Erc20GasLimitDeploy, nil,
+	evmResp, err := k.CallContract(
+		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
 	)
 	if err != nil {
 		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
@@ -116,7 +118,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 
 	err = stateDB.Commit()
 	if err != nil {
-		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to commit stateDB")
+		return gethcommon.Address{}, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// Emit the logs from the EVM Contract deploy execution

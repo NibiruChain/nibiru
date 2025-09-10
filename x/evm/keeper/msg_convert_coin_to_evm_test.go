@@ -124,14 +124,14 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		true,                                // commit
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -153,14 +153,14 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.T().Log("sad: Convert more erc-20 to back to bank coin, insufficient funds")
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	_, err = deps.EvmKeeper.CallContractWithInput(
+	_, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
-		true,                                // commit
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().ErrorContains(err, "transfer amount exceeds balance")
@@ -311,14 +311,14 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
+	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,              /*evmObj*/
 		deps.Sender.EthAddr, /*fromAcc*/
 		&testContractAddr,   /*contract*/
-		true,                /*commit*/
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -386,14 +386,14 @@ Sender calls "nativeSendThenPrecompileSend".
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
-	evmResp, err = deps.EvmKeeper.CallContractWithInput(
+	evmResp, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
 		contractInput,
 		evmtest.DefaultEthCallGasLimit,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)
@@ -507,14 +507,14 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 	s.Require().NoError(err)
 	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	evmObj, _ := deps.NewEVM()
-	evpResp, err := deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
@@ -641,14 +641,14 @@ func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 		big.NewInt(9e6),
 	)
 	s.Require().NoError(err)
-	evpResp, err := deps.EvmKeeper.CallContractWithInput(
+	evpResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
-		true,
 		contractInput,
 		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
 	s.Require().NoError(err)

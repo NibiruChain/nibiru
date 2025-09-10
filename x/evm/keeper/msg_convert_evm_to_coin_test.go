@@ -9,6 +9,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
@@ -16,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
@@ -26,20 +26,6 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 	// Create EVM for balance assertions
 	evmObj, _ := deps.NewEVM()
 
-	// Set bank metadata for the denom
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "IBC-testE2C",
-	})
-
 	// Fund sender for FunToken creation fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -47,6 +33,23 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		deps.Sender.NibiruAddr,
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
 	))
+
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+		DenomUnits: []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+			{
+				Denom:    "TESTEVM2COIN",
+				Exponent: 18,
+			},
+		},
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    bankDenom,
+		Symbol:  "IBC-testE2C",
+	})
 
 	// Create FunToken mapping from bank coin
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
@@ -247,14 +250,14 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		)
 		s.Require().NoError(err)
 
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&deployResp2.ContractAddr,
-			true, /* commit */
 			input,
-			keeper.Erc20GasLimitExecute,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
 			nil,
 		)
 		s.Require().NoError(err)
@@ -290,23 +293,35 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	})
 }
 
-func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
-	deps := evmtest.NewTestDeps()
-	bankDenom := "utest"
-
-	// Set bank metadata for the denom
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+func denomToSafeMetadata(bankDenom string, s *suite.Suite) bank.Metadata {
+	bankMeta := bank.Metadata{
 		DenomUnits: []*bank.DenomUnit{
 			{
 				Denom:    bankDenom,
 				Exponent: 0,
 			},
+			{
+				Denom:    "TEST",
+				Exponent: 18,
+			},
 		},
 		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
+		Display: "TEST",
+		Name:    "Name for " + bankDenom,
 		Symbol:  "TEST",
-	})
+	}
+	s.Require().NoError(bankMeta.Validate())
+	return bankMeta
+}
+
+func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
+	deps := evmtest.NewTestDeps()
+	bankDenom := "utest"
+
+	// Set bank metadata for the denom
+	bankMeta := denomToSafeMetadata(bankDenom, &s.Suite)
+
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMeta)
 
 	s.T().Log("Setup: Create FunToken and fund account")
 	s.Require().NoError(testapp.FundAccount(
@@ -378,18 +393,8 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 	bankDenom := "umulti"
 
 	// Set bank metadata for the denom
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
-		DenomUnits: []*bank.DenomUnit{
-			{
-				Denom:    bankDenom,
-				Exponent: 0,
-			},
-		},
-		Base:    bankDenom,
-		Display: bankDenom,
-		Name:    bankDenom,
-		Symbol:  "MULTI",
-	})
+	bankMeta := denomToSafeMetadata(bankDenom, &s.Suite)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMeta)
 
 	// Setup FunToken
 	s.Require().NoError(testapp.FundAccount(

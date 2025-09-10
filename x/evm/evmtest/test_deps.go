@@ -86,6 +86,25 @@ func (deps TestDeps) GoCtx() context.Context {
 	return sdk.WrapSDKContext(deps.Ctx)
 }
 
+func (deps *TestDeps) MimicEthereumTx(
+	s *suite.Suite,
+	doTx func(evmObj *vm.EVM, sdb *statedb.StateDB),
+) {
+	sdb := deps.EvmKeeper.NewStateDB(
+		deps.Ctx,
+		statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
+	)
+	evmObj := deps.EvmKeeper.NewEVM(
+		deps.Ctx,
+		MOCK_GETH_MESSAGE,
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
+		sdb,
+	)
+	doTx(evmObj, sdb)
+	s.Require().NoError(sdb.Commit())
+}
+
 func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	var (
 		ctx         = deps.Ctx
@@ -98,7 +117,8 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	newCompiledContract := embeds.SmartContract_WNIBI
 	// empty method name means deploy with the constructor
 	packedArgs, err := newCompiledContract.ABI.Pack("")
-	s.NoError(err, "failed to pack ABI args")
+	s.Require().NoError(err, "failed to pack ABI args")
+
 	contractInput := append(newCompiledContract.Bytecode, packedArgs...)
 
 	// Rebuild evmObj with new evmMsg for contract creation.
@@ -128,12 +148,14 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	}()
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
-	evmResp, err := deps.EvmKeeper.CallContractWithInput(
-		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
-		keeper.Erc20GasLimitDeploy, evmMsg.Value,
+	evmResp, err := deps.EvmKeeper.CallContract(
+		ctx, evmObj, evmMsg.From, nil, contractInput,
+		keeper.Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		evmMsg.Value,
 	)
 	s.Require().NoError(err, "failed to deploy WNIBI contract")
-	s.Require().Len(evmResp.VmError, 0, "VM Error deploying WNIBI")
+	s.Require().Empty(evmResp.VmError, "VM Error deploying WNIBI")
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&evm.EventContractDeployed{
