@@ -7,6 +7,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -146,12 +147,50 @@ func (k *Keeper) createFunTokenFromERC20(
 	}
 
 	// 4 | Set bank coin denom metadata in state
-	bankMetadata := erc20Info.ToBankMetadata(bankDenom, erc20)
+	var bankMetadata bank.Metadata
+	{
+		var symbol string
+		if erc20Info.Symbol != "" {
+			symbol = erc20Info.Symbol
+		} else {
+			symbol = bankDenom
+		}
 
-	err = bankMetadata.Validate()
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate bank metadata: %w", err)
-	} else if _, err = evm.ValidateFunTokenBankMetadata(
+		var name string
+		if erc20Info.Name != "" {
+			name = erc20Info.Name
+		} else {
+			name = bankDenom
+		}
+
+		displayDenom := bankDenom
+		denomUnits := []*bank.DenomUnit{
+			{
+				Denom:    bankDenom,
+				Exponent: 0,
+			},
+		}
+		if erc20Info.Decimals > 0 {
+			// Bank denom "erc20/{addr}" is ~48 chars. Adding 19 more keeps the
+			// length far under the limit of 127 from "sdk.ValidateDenom()".
+			displayDenom = fmt.Sprintf("decimals_denom_for-%s", bankDenom)
+			denomUnits = append(denomUnits, &bank.DenomUnit{
+				Denom:    displayDenom,
+				Exponent: uint32(erc20Info.Decimals),
+			})
+		}
+		bankMetadata = bank.Metadata{
+			Description: fmt.Sprintf(
+				`ERC20 token "%s" represented as a Bank Coin with a corresponding FunToken mapping`, erc20.Hex(),
+			),
+			DenomUnits: denomUnits,
+			Base:       bankDenom,
+			Display:    displayDenom,
+			Name:       name,
+			Symbol:     symbol,
+		}
+	}
+	if _, err = evm.ValidateFunTokenBankMetadata(
 		bankMetadata,
 		allowZeroDecimals,
 	); err != nil {

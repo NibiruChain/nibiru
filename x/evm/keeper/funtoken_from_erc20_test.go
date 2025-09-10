@@ -97,6 +97,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
 				s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 
 				expectedBankDenom := fmt.Sprintf("erc20/%s", expectedERC20.String())
+				expecetedDisplayDenom := fmt.Sprintf("decimals_denom_for-%s", expectedBankDenom)
 				s.Equal(
 					evm.FunToken{
 						Erc20Addr:      erc20Addr,
@@ -126,10 +127,10 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
 					),
 					DenomUnits: []*bank.DenomUnit{
 						{Denom: expectedBankDenom, Exponent: 0},
-						{Denom: meta.Symbol, Exponent: uint32(meta.Decimals)},
+						{Denom: expecetedDisplayDenom, Exponent: uint32(meta.Decimals)},
 					},
 					Base:    expectedBankDenom,
-					Display: meta.Symbol,
+					Display: expecetedDisplayDenom,
 					Name:    meta.Name,
 					Symbol:  meta.Symbol,
 					URI:     "",

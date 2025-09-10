@@ -468,10 +468,25 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 // If the mapping is generated from an ERC20, this tx creates a bank coin to go
 // with it, and if the mapping's generated from a coin, the EVM module
 // deploys an ERC20 contract that for which it will be the owner.
+//
+// ## Mapping an ERC20 Token a Newly Generated Bank Coin
+//
+// When an ERC20 token is used to create a FunToken mapping and corresponding
+// Bank Coin, it must produce valid "bank.Metadata"
+//
+// Constraints:
+//   - The first argument of DenomUnits is required and the official base unit
+//     onchain, meaning the denom must be equivalent to bank.Metadata.Base.
+//   - Coin `bank.Metadata.Display` must be a denom of one of the
+//     `bank.Metadata.DenomUnits`. It is taken by Cosmos-SDK clients like wallets
+//     to be "bank.DenomUnit" client takes the exponent from to display wallet
+//     balances.
+//
+// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
+// they mean for external clients like wallets.
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
-	var funtoken *evm.FunToken
 	err = msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -484,6 +499,7 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
+	var funtoken *evm.FunToken
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":

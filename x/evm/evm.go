@@ -72,69 +72,6 @@ type ERC20Metadata struct {
 	Decimals uint8
 }
 
-// ToBankMetadata produces the "bank.Metadata" corresponding to a FunToken
-// mapping created from an ERC20 token.
-//
-// The first argument of DenomUnits is required and the official base unit
-// onchain, meaning the denom must be equivalent to bank.Metadata.Base.
-//
-// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
-// they mean for external clients like wallets.
-func (erc20Info ERC20Metadata) ToBankMetadata(
-	bankDenom string, erc20 gethcommon.Address,
-) bank.Metadata {
-	var symbol string
-	if erc20Info.Symbol != "" {
-		symbol = erc20Info.Symbol
-	} else {
-		symbol = bankDenom
-	}
-
-	var name string
-	if erc20Info.Name != "" {
-		name = erc20Info.Name
-	} else {
-		name = bankDenom
-	}
-
-	denomUnits := []*bank.DenomUnit{
-		{
-			Denom:    bankDenom,
-			Exponent: 0,
-		},
-	}
-	display := symbol
-	if erc20Info.Decimals > 0 {
-		denomUnits = append(denomUnits, &bank.DenomUnit{
-			Denom:    display,
-			Exponent: uint32(erc20Info.Decimals),
-		})
-	}
-	return bank.Metadata{
-		Description: fmt.Sprintf(
-			"ERC20 token \"%s\" represented as a Bank Coin with a corresponding FunToken mapping", erc20.String(),
-		),
-		DenomUnits: denomUnits,
-		Base:       bankDenom,
-		Display:    display,
-		Name:       name,
-		Symbol:     symbol,
-	}
-}
-
-func ParseDecimalsFromBank(bankCoin bank.Metadata) uint8 {
-	// bank.Metadata validation guarantees that both "Base" and "Display" denoms
-	// pass "sdk.ValidateDenom" and that the "DenomUnits" slice has exponents in
-	// ascending order with at least one element, which must be the base
-	// denomination and have exponent 0.
-	decimals := uint8(0)
-	if len(bankCoin.DenomUnits) > 0 {
-		decimalsIdx := len(bankCoin.DenomUnits) - 1
-		decimals = uint8(bankCoin.DenomUnits[decimalsIdx].Exponent)
-	}
-	return decimals
-}
-
 // Checks that the necessary ERC20 metadata fields can be parsed from the given
 // Bank Coin metadata for a FunToken mapping. ERC20.decimals can only be zero if
 // "allowZeroDecimals" is true.
@@ -152,10 +89,21 @@ func ValidateFunTokenBankMetadata(
 		err = fmt.Errorf("invalid token metadata: %w", err)
 		return
 	}
+
+	// bank.Metadata validation guarantees that both "Base" and "Display" denoms
+	// pass "sdk.ValidateDenom" and that the "DenomUnits" slice has exponents in
+	// ascending order with at least one element, which must be the base
+	// denomination and have exponent 0.
+	decimals := uint8(0)
+	if len(bc.DenomUnits) > 0 {
+		decimalsIdx := len(bc.DenomUnits) - 1
+		decimals = uint8(bc.DenomUnits[decimalsIdx].Exponent)
+	}
+
 	out = ERC20Metadata{
 		Name:     bc.Name,   // safe: guaranteed to not be blank
 		Symbol:   bc.Symbol, // safe: guaranteed to not be blank
-		Decimals: ParseDecimalsFromBank(bc),
+		Decimals: decimals,
 	}
 	if out.Decimals == 0 && !allowZeroDecimals {
 		err = fmt.Errorf(`got ERC20.decimals = 0, which is considered an error unless "allow_zero_decimals" is true`)
