@@ -39,7 +39,7 @@ func (s *Suite) TestMainnet() {
 	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
-	err := v2_7_0.UpgradeAddWNIBIToNibiruEvm(&deps.App.PublicKeepers, deps.Ctx)
+	err := deps.RunUpgrade(v2_7_0.Upgrade)
 	s.Require().NoError(err)
 
 	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
@@ -72,7 +72,7 @@ func (s *Suite) TestOtherNibirus() {
 	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
-	err := v2_7_0.UpgradeAddWNIBIToNibiruEvm(&deps.App.PublicKeepers, deps.Ctx)
+	err := deps.RunUpgrade(v2_7_0.Upgrade)
 	s.Require().NoError(err)
 
 	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)

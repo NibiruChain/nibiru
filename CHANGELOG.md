@@ -57,6 +57,8 @@ handling for NIBI via WNIBI.
 - [#2372](https://github.com/NibiruChain/nibiru/pull/2372) - feat(tokenfactory-cli): add CLI commands for set denom functions
 - [#2375](https://github.com/NibiruChain/nibiru/pull/2375) - feat(evm): Inject WNIBI.sol for non-mainnet networks in the v2.7.0 upgrade handler
 - [#2379](https://github.com/NibiruChain/nibiru/pull/2379) - fix(evm): disallow permissionless creation of FunToken mappings when tokens do not already have metadata.
+- [#2381](https://github.com/NibiruChain/nibiru/pull/2381) - feat(evm): Overwrite
+  ERC20 metadata for stNIBI on Nibiru Testnet 2, and make the contract upgradeable.
 
 ### Dependencies
 - Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))

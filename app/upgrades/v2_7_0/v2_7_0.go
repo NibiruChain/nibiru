@@ -37,9 +37,9 @@ var Upgrade = upgrades.Upgrade{
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
-			err := UpgradeAddWNIBIToNibiruEvm(nibiru, ctx)
+			err := UpgradeV2_7_0(nibiru, ctx)
 			if err != nil {
-				panic(fmt.Errorf("v2.7.0 upgrade failure: %w", err))
+				return fromVM, fmt.Errorf("v2.7.0 upgrade failure: %w", err)
 			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
@@ -48,13 +48,24 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
 
-// UpgradeAddWNIBIToNibiruEvm adds the canonical WNIBI contract address to the
-// EVM module parameters. Then, if the instance of Nibiru is NOT mainnet, inject
-// the WNIBI.sol contract into state at the same address used on mainnet.
-func UpgradeAddWNIBIToNibiruEvm(
+// UpgradeV2_7_0 adds the canonical WNIBI contract address to the EVM module
+// parameters.
+//
+// 2. Then, if the instance of Nibiru is NOT mainnet, inject the
+// WNIBI.sol contract into state at the same address used on mainnet.
+//
+// 3. And finally, only on Testnet 2, it modifies the ERC20 metadata for a stNIBI
+// deployment from Eris.
+func UpgradeV2_7_0(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 ) (err error) {
+	// IMPORTANT: make sure to clear the StateDB before running the upgrade
+	keepers.EvmKeeper.Bank.StateDB = nil
+	defer func() {
+		keepers.EvmKeeper.Bank.StateDB = nil
+	}()
+
 	// 1 | Set evm.Params.CanonicalWnibi to the address live on mainnet
 	wnibiAddrMainnet := appconst.MAINNET_WNIBI_ADDR
 	evmParams := keepers.EvmKeeper.GetParams(ctx)
@@ -122,6 +133,12 @@ func UpgradeAddWNIBIToNibiruEvm(
 
 	if acc := keepers.EvmKeeper.GetAccount(ctx, appconst.MAINNET_WNIBI_ADDR); acc == nil || !acc.IsContract() {
 		err = fmt.Errorf("v2.7.0 state corruption: WNIBI is not a contract according to the EVM StateDB")
+		return err
+	}
+
+	err = UpgradeStNibiContractOnTestnet(keepers, ctx)
+	if err != nil {
+		err = fmt.Errorf("v2.7.0 failed on testnet 2: %w", err)
 		return err
 	}
 

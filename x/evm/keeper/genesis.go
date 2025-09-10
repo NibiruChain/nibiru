@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/collections"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -52,6 +53,36 @@ func (k *Keeper) InitGenesis(
 	return []abci.ValidatorUpdate{}
 }
 
+func (k *Keeper) ExportGenesisContractAccount(
+	ctx sdk.Context, contract auth.AccountI,
+) (genAcc evm.GenesisAccount, isOk bool) {
+	ethAcct, ok := contract.(eth.EthAccountI)
+	if !ok {
+		isOk = false
+		return
+	} else {
+		address := ethAcct.EthAddress()
+		codeHash := ethAcct.GetCodeHash()
+		code, err := k.EvmState.ContractBytecode.Get(ctx, codeHash.Bytes())
+		if err != nil {
+			// Not a contract
+			isOk = false
+			return
+		}
+		var storage evm.Storage
+
+		k.ForEachStorage(ctx, address, func(key, value gethcommon.Hash) bool {
+			storage = append(storage, evm.NewStateFromEthHashes(key, value))
+			return true
+		})
+		return evm.GenesisAccount{
+			Address: address.String(),
+			Code:    eth.BytesToHex(code),
+			Storage: storage,
+		}, ok
+	}
+}
+
 // ExportGenesis exports genesis state of the EVM module
 func (k *Keeper) ExportGenesis(ctx sdk.Context) *evm.GenesisState {
 	var genesisAccounts []evm.GenesisAccount
@@ -60,26 +91,9 @@ func (k *Keeper) ExportGenesis(ctx sdk.Context) *evm.GenesisState {
 	// TODO: find the way to get eth contract addresses from the evm keeper
 	allAccounts := k.accountKeeper.GetAllAccounts(ctx)
 	for _, acc := range allAccounts {
-		ethAcct, ok := acc.(eth.EthAccountI)
+		genAcc, ok := k.ExportGenesisContractAccount(ctx, acc)
 		if ok {
-			address := ethAcct.EthAddress()
-			codeHash := ethAcct.GetCodeHash()
-			code, err := k.EvmState.ContractBytecode.Get(ctx, codeHash.Bytes())
-			if err != nil {
-				// Not a contract
-				continue
-			}
-			var storage evm.Storage
-
-			k.ForEachStorage(ctx, address, func(key, value gethcommon.Hash) bool {
-				storage = append(storage, evm.NewStateFromEthHashes(key, value))
-				return true
-			})
-			genesisAccounts = append(genesisAccounts, evm.GenesisAccount{
-				Address: address.String(),
-				Code:    eth.BytesToHex(code),
-				Storage: storage,
-			})
+			genesisAccounts = append(genesisAccounts, genAcc)
 		}
 	}
 
