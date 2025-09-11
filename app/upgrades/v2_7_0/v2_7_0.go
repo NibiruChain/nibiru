@@ -22,7 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-const UpgradeName = "v2.7.0"
+const UpgradeName = "v2.7.0-rc1"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
