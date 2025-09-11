@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
 
-// TestEthLogs checks that eth txs as well as funtoken txs produce tx_logs events and update tx index properly.
+// TestLogs checks that eth txs as well as funtoken txs produce tx_logs events and update tx index properly.
 // To check that, we send a series of transactions:
 // - 1: simple eth transfer
 // - 2: deploying erc20 contract
