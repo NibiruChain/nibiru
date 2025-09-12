@@ -10,9 +10,12 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
 type AnteHandlerOptions struct {
@@ -22,6 +25,9 @@ type AnteHandlerOptions struct {
 	DevGasBankKeeper devgasante.BankKeeper
 	EvmKeeper        *evmkeeper.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
+
+	OracleKeeper  oraclekeeper.Keeper
+	StakingKeeper stakingkeeper.Keeper
 
 	TxCounterStoreKey types.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig
