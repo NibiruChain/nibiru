@@ -1,6 +1,7 @@
 package evmtest
 
 import (
+	"fmt"
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -37,7 +38,12 @@ type ArgsExecuteContract struct {
 	GasLimit        *big.Int
 }
 
-func CreateContractMsgEthereumTx(
+type ArgsEthTx struct {
+	CreateContract  *ArgsCreateContract
+	ExecuteContract *ArgsExecuteContract
+}
+
+func msgEthTxCreateContract(
 	args ArgsCreateContract,
 ) (msgEthereumTx *evm.MsgEthereumTx, err error) {
 	gasLimit := args.GasLimit
@@ -63,13 +69,27 @@ func CreateContractMsgEthereumTx(
 	return msgEthereumTx, msgEthereumTx.Sign(gethSigner, args.EthAcc.KeyringSigner)
 }
 
-func ExecuteContractMsgEthereumTx(args ArgsExecuteContract) (msgEthereumTx *evm.MsgEthereumTx, err error) {
+func NewMsgEthereumTx(
+	args ArgsEthTx,
+) (msgEthereumTx *evm.MsgEthereumTx, err error) {
+	if args.ExecuteContract != nil {
+		return msgEthereumTxExecuteContract(*args.ExecuteContract)
+	}
+	if args.CreateContract != nil {
+		return msgEthTxCreateContract(*args.CreateContract)
+	}
+	return nil, fmt.Errorf("missing args for NewMsgEthereumTx")
+}
+
+func msgEthereumTxExecuteContract(
+	args ArgsExecuteContract,
+) (msgEthereumTx *evm.MsgEthereumTx, err error) {
 	gasLimit := args.GasLimit
 	if gasLimit == nil {
 		gasLimit = new(big.Int).SetUint64(gethparams.TxGas)
 	}
 
-	coreTx := gethcore.NewTx(&gethcore.AccessListTx{
+	coreTx := gethcore.NewTx(&gethcore.LegacyTx{
 		GasPrice: args.GasPrice,
 		Gas:      gasLimit.Uint64(),
 		To:       args.ContractAddress,

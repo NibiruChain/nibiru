@@ -54,11 +54,12 @@ gen-proto-rs:
 lint: 
   #!/usr/bin/env bash
   echo "Running golangci-lint with docker!"
+  image_version="v2.4.0"
   docker run --rm \
     -v "$(pwd)":/app \
-    -v ~/.cache/golangci-lint/v2.1.6:/root/.cache \
+    -v ~/.cache/golangci-lint/$image_version:/root/.cache \
     -w /app \
-    golangci/golangci-lint:v2.1.6 \
+    golangci/golangci-lint:$image_version \
     golangci-lint run -v --fix 2>&1
 
 # Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
