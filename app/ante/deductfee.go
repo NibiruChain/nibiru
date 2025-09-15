@@ -171,7 +171,6 @@ func DeductFees(accountKeeper authante.AccountKeeper, evmKeeper *evmkeeper.Keepe
 		}
 
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "insufficient balance across supported gas tokens to cover %s", fees[0].Amount)
-
 	} else {
 		return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFee, "fee denom must be %s, got %s", appconst.BondDenom, fees[0].Denom)
 	}

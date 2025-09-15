@@ -88,7 +88,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 
 		evmObj := anteDec.evmKeeper.NewEVM(ctx, keeper.MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB /*statedb*/)
 		wnibiBal, err := anteDec.evmKeeper.ERC20().BalanceOf(wnibi.Address, fromAddr, ctx, evmObj)
-		
+
 		cost := txData.Cost()
 		if err == nil {
 			if wnibiBal.Cmp(cost) >= 0 {
