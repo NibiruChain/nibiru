@@ -90,10 +90,8 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		wnibiBal, err := anteDec.evmKeeper.ERC20().BalanceOf(wnibi.Address, fromAddr, ctx, evmObj)
 
 		cost := txData.Cost()
-		if err == nil {
-			if wnibiBal.Cmp(cost) >= 0 {
-				continue
-			}
+		if wnibi.Address != (gethcommon.Address{}) && err == nil && wnibiBal.Cmp(cost) >= 0 {
+			continue
 		}
 
 		return ctx, sdkioerrors.Wrapf(

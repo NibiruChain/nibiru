@@ -2,7 +2,6 @@
 package evmante
 
 import (
-	"fmt"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -169,20 +168,24 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 		return nil
 	}
 
-	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
+	err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
 		ctx, fees, gethcommon.BytesToAddress(feePayer),
-	); err == nil {
+	)
+	if err == nil {
 		return nil
+	}
+	if !sdkioerrors.IsOf(err, sdkerrors.ErrInsufficientFunds) {
+		return err
 	}
 
 	acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
 	if acc == nil {
 		return sdkerrors.ErrUnknownAddress.Wrapf("fee payer address: %s does not exist", feePayer)
 	}
-	err := ante.DeductFeesWithWNIBI(ctx, anteDec.accountKeeper, anteDec.evmKeeper, acc, fees)
+	err = ante.DeductFeesWithWNIBI(ctx, anteDec.accountKeeper, anteDec.evmKeeper, acc, fees)
 	if err == nil {
 		return nil
 	}
 
-	return fmt.Errorf("insufficient balance across supported gas tokens to cover %s", fees[0].Amount)
+	return sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "insufficient balance across supported gas tokens to cover %s", fees[0].Amount)
 }

@@ -16,7 +16,7 @@ describe("WNIBI used as gas tests", () => {
 
             // Send some WNIBI to account2 to use as gas token
             {
-                let tx = await wnibi.transfer(account2, parseUnits("10", 18))
+                let tx = await wnibi.transfer(account2.address, parseUnits("10", 18))
                 await tx.wait()
                 const wnibiBal = await wnibi.balanceOf(account2.address)
                 expect(wnibiBal).toEqual(parseUnits("10", 18))
@@ -24,7 +24,12 @@ describe("WNIBI used as gas tests", () => {
 
             {
                 const alice = Wallet.createRandom()
-                let tx = await wnibi.connect(account2).transfer(alice, parseUnits("1", 18))
+                // Ensure non-zero fees so WNIBI balance drops below 9 after transfer
+                const feeOverrides = {
+                    maxFeePerGas: parseUnits("1", "gwei"),
+                    maxPriorityFeePerGas: parseUnits("0", "gwei"),
+                }
+                let tx = await wnibi.connect(account2).transfer(alice.address, parseUnits("1", 18), feeOverrides)
                 await tx.wait()
                 const wnibiBal = await wnibi.balanceOf(alice.address)
                 expect(wnibiBal).toEqual(parseUnits("1", 18))
