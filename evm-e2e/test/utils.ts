@@ -1,5 +1,6 @@
 import { wnibiCaller } from "@nibiruchain/evm-core"
 import {
+  ethers,
   ContractFactory,
   ContractTransactionResponse,
   parseEther,
@@ -104,4 +105,34 @@ export const deployContractWNIBI = async (): Promise<{
 
 export const numberToHex = (num: Number) => {
   return "0x" + num.toString(16)
+}
+
+export const deployContractWNIBIIfNeeded = async (
+  maybeAddress?: string
+): Promise<{
+  contract: WNIBI & DeploymentTx
+}> => {
+  const { abi, bytecode } = WNIBI_JSON
+  const factory = new ContractFactory(abi, bytecode, account)
+
+  let contract: ethers.Contract
+
+  if (maybeAddress) {
+    try {
+      const code = await account.provider.getCode(maybeAddress)
+      if (code !== "0x") {
+        // Contract already deployed
+        console.log(`Contract already deployed at ${maybeAddress}`)
+        contract = new ethers.Contract(maybeAddress, abi, account)
+        return { contract: contract as unknown as WNIBI & DeploymentTx }
+      }
+    } catch (error) {
+      console.warn(`Failed to check code at ${maybeAddress}:`, error)
+      // Fall through to deploy new contract
+    }
+  }
+
+  contract = (await factory.deploy()) as ethers.Contract
+  await contract.waitForDeployment()
+  return { contract: contract as unknown as WNIBI & DeploymentTx }
 }

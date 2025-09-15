@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -180,4 +182,19 @@ func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccoun
 	}
 
 	return nil
+}
+
+var MOCK_GETH_MESSAGE = core.Message{
+	To:               nil,
+	From:             evm.EVM_MODULE_ADDRESS,
+	Nonce:            0,
+	Value:            evm.Big0, // amount
+	GasLimit:         0,
+	GasPrice:         evm.Big0,
+	GasFeeCap:        evm.Big0,
+	GasTipCap:        evm.Big0,
+	Data:             []byte{},
+	AccessList:       gethcore.AccessList{},
+	SkipNonceChecks:  false,
+	SkipFromEOACheck: false,
 }

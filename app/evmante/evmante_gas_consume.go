@@ -2,6 +2,7 @@
 package evmante
 
 import (
+	"fmt"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -9,6 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
@@ -17,18 +19,21 @@ import (
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    *EVMKeeper
-	maxGasWanted uint64
+	evmKeeper     *EVMKeeper
+	accountKeeper evm.AccountKeeper
+	maxGasWanted  uint64
 }
 
 // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator
 func NewAnteDecEthGasConsume(
 	k *EVMKeeper,
+	ak evm.AccountKeeper,
 	maxGasWanted uint64,
 ) AnteDecEthGasConsume {
 	return AnteDecEthGasConsume{
-		evmKeeper:    k,
-		maxGasWanted: maxGasWanted,
+		evmKeeper:     k,
+		accountKeeper: ak,
+		maxGasWanted:  maxGasWanted,
 	}
 }
 
@@ -123,7 +128,6 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			minPriority = priority
 		}
 	}
-
 	ctx.EventManager().EmitEvents(events)
 
 	blockGasLimit := eth.BlockGasLimit(ctx)
@@ -167,8 +171,18 @@ func (anteDec AnteDecEthGasConsume) deductFee(
 
 	if err := anteDec.evmKeeper.DeductTxCostsFromUserBalance(
 		ctx, fees, gethcommon.BytesToAddress(feePayer),
-	); err != nil {
-		return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+	); err == nil {
+		return nil
 	}
-	return nil
+
+	acc := anteDec.accountKeeper.GetAccount(ctx, feePayer)
+	if acc == nil {
+		return sdkerrors.ErrUnknownAddress.Wrapf("fee payer address: %s does not exist", feePayer)
+	}
+	err := ante.DeductFeesWithWNIBI(ctx, anteDec.accountKeeper, anteDec.evmKeeper, acc, fees)
+	if err == nil {
+		return nil
+	}
+
+	return fmt.Errorf("insufficient balance across supported gas tokens to cover %s", fees[0].Amount)
 }
