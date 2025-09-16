@@ -10,9 +10,11 @@ jobs:
     steps:
       - uses: seferov/pr-lint-action@v1.2.0
         with:
-          # taken from https://gist.github.com/marcojahn/482410b728c31b221b70ea6d2c433f0c
-          title-regex: '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.]+\))?(!)?: ([\w ])+([\s\S]*)'
+          # V2: Includes Nibiru-specific qualifiers and allows for
+          title-regex: '^(evm|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.\/]+\))?(!)?: ([\w ])+([\s\S]*)'
+          # V1: Old regex taken from Gist: https://gist.github.com/marcojahn/482410b728c31b221b70ea6d2c433f0c
+          # title-regex: '^(evm|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.]+\))?(!)?: ([\w ])+([\s\S]*)'
           # title-regex-flags (Optional)
-          title-regex-flags: "g" 
+          title-regex-flags: "g"
           # error-message (Optional)
-          error-message: "Please follow conventional commit style: https://www.conventionalcommits.org/en/v1.0.0/" 
+          error-message: "Please follow conventional commit style: https://www.conventionalcommits.org/en/v1.0.0/"
