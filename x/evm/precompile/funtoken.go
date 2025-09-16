@@ -13,13 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -54,7 +53,7 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
-	evm *vm.EVM,
+	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
 	// Note that we use "trueCaller" here to differentiate between a delegate
 	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
@@ -67,28 +66,25 @@ func (p precompileFunToken) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
+	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
-
-	// Gracefully handles "out of gas"
-	defer HandleOutOfGasPanic(&err)()
 
 	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
 
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, trueCaller, readonly, evm)
+		bz, err = p.sendToBank(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_balance:
-		bz, err = p.balance(startResult, contract, evm)
+		bz, err = p.balance(startResult, contract, evmObj)
 	case FunTokenMethod_bankBalance:
 		bz, err = p.bankBalance(startResult, contract)
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evm)
+		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_bankMsgSend:
 		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
 	case FunTokenMethod_getErc20Address:
@@ -102,7 +98,7 @@ func (p precompileFunToken) Run(
 	// Gas consumed by a local gas meter
 	contract.UseGas(
 		startResult.CacheCtx.GasMeter().GasConsumed(),
-		evm.Config.Tracer,
+		evmObj.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
 	if err != nil {

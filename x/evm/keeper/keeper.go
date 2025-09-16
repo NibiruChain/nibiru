@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -112,23 +111,6 @@ func (k Keeper) BaseFeeWeiPerGas(_ sdk.Context) *big.Int {
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
-}
-
-// HandleOutOfGasPanic gracefully captures "out of gas" panic and just sets the value to err
-func HandleOutOfGasPanic(err *error, format string) func() {
-	return func() {
-		if r := recover(); r != nil {
-			switch r.(type) {
-			case sdk.ErrorOutOfGas:
-				*err = vm.ErrOutOfGas
-			default:
-				panic(r)
-			}
-		}
-		if err != nil && *err != nil && format != "" {
-			*err = fmt.Errorf("%s: %w", format, *err)
-		}
-	}
 }
 
 // IsSimulation checks if the context is a simulation context.

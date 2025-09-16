@@ -58,7 +58,7 @@ var (
 // with the return reason.
 func NewRevertError(revertReason []byte) error {
 	if len(revertReason) == 0 {
-		return fmt.Errorf("execution reverted with no reason")
+		return fmt.Errorf("execution reverted")
 	}
 
 	reason, err := abi.UnpackRevert(revertReason)

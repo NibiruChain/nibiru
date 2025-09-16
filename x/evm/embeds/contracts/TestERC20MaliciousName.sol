@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TestERC20MaliciousName is ERC20 {
-    constructor(string memory name, string memory symbol, uint8 decimals_)
-    ERC20(name, symbol) {
-        _mint(msg.sender, 1000000 * 10**18);
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 // decimals_
+    ) ERC20(_name, _symbol) {
+        _mint(msg.sender, 1000000 * 10 ** 18);
     }
 
     function name() public view virtual override returns (string memory) {
@@ -28,3 +31,4 @@ contract TestERC20MaliciousName is ERC20 {
         assert(result != 0);
     }
 }
+

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	grpccodes "google.golang.org/grpc/codes"
@@ -429,7 +430,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, false /*commit*/, txConfig.TxHash)
 		if err != nil {
-			if errors.Is(err, core.ErrIntrinsicGas) {
+			if strings.Contains(err.Error(), core.ErrIntrinsicGas.Error()) {
 				return true, nil, nil // Special case, raise gas limit
 			}
 			return true, nil, fmt.Errorf("error applying EVM message to StateDB: %w", err) // Bail out
@@ -457,7 +458,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 			}
 
 			if result.VmError == vm.ErrOutOfGas.Error() {
-				return nil, fmt.Errorf("gas required exceeds allowance (%d)", gasCap)
+				return nil, fmt.Errorf("gas required gas limit (%d)", gasCap)
 			}
 
 			return nil, fmt.Errorf("estimate gas VMError: %s", result.VmError)

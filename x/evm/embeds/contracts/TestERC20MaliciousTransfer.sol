@@ -4,12 +4,18 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TestERC20MaliciousTransfer is ERC20 {
-    constructor(string memory name, string memory symbol, uint8 decimals_)
-    ERC20(name, symbol) {
-        _mint(msg.sender, 1000000 * 10**18);
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 // decimals_
+    ) ERC20(_name, _symbol) {
+        _mint(msg.sender, 1000000 * 10 ** 18);
     }
 
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool) {
         _gasIntensiveOperation();
         return super.transfer(recipient, amount);
     }
@@ -27,3 +33,4 @@ contract TestERC20MaliciousTransfer is ERC20 {
         assert(result != 0);
     }
 }
+

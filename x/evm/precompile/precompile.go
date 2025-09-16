@@ -239,16 +239,3 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 
 	OracleMethod_queryExchangeRate: false,
 }
-
-func HandleOutOfGasPanic(err *error) func() {
-	return func() {
-		if r := recover(); r != nil {
-			switch r.(type) {
-			case sdk.ErrorOutOfGas:
-				*err = vm.ErrOutOfGas
-			default:
-				panic(r)
-			}
-		}
-	}
-}
