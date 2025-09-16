@@ -1,0 +1,22 @@
+# Include all patterns from .gitignore
+!.gitignore
+
+# Additional patterns specific to Cursor
+.env*
+**/credentials/*
+**/secrets/*
+private/
+confidential/
+
+# Large binary files and datasets
+*.bin
+*.dat
+*.db
+*.sqlite
+*.sqlite3
+
+# Exclude large generated files
+node_modules/
+dist/
+.cache/ 
+
