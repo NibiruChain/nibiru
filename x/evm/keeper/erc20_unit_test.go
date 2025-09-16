@@ -1,13 +1,22 @@
 package keeper
 
 import (
+	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type UnitSuite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
+}
+
+func TestUnit(t *testing.T) {
+	suite.Run(t, new(UnitSuite))
 }
 
 // TestERC20GasLimit - EIP-150: why 63/64 gas forwarding?
@@ -62,7 +71,10 @@ func (s *UnitSuite) TestERC20GasLimit() {
 		)
 		got := getCallGasLimit63_64(ctx, maxU64)
 		want := maxU64 - maxU64/64
-		s.Equal(want, got)
+		s.Equal(
+			fmt.Sprintf("%d", want),
+			fmt.Sprintf("%d", got),
+		)
 	})
 
 	s.Run("getCallGasLimit63_64 boundary cases", func() {

@@ -131,6 +131,9 @@ func HandleOutOfGasPanic(errp *error, format string) func() {
 				}
 				// else: preserve existing detailed error
 			case strings.Contains(fmt.Sprint(perr), vm.ErrOutOfGas.Error()):
+				if errp == nil {
+					errp = new(error)
+				}
 				*errp = fmt.Errorf("%s: %w", perr, vm.ErrOutOfGas)
 			default:
 				// Non-OOG panics are not handled here

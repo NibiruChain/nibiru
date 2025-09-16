@@ -4,7 +4,6 @@ package keeper
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -30,7 +29,7 @@ const (
 // protection against recursive calls ERC20 -> precompile -> ERC20.
 func getCallGasLimit63_64(ctx sdk.Context, gasLimit uint64) uint64 {
 	availableGas := ctx.GasMeter().GasRemaining()
-	callGas := availableGas - uint64(math.Floor(float64(availableGas)/64))
+	callGas := availableGas - (availableGas / 64)
 	return min(callGas, gasLimit)
 }
 

@@ -94,11 +94,13 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 						Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
 					},
 				})
+				s.Require().NotNilf(ethTxMsg, "err: %v", err)
 				s.NoError(err)
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
 				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+				s.Require().NotNilf(resp, "err: %v", err)
 				s.Require().ErrorContains(
 					err,
 					core.ErrIntrinsicGas.Error(),
