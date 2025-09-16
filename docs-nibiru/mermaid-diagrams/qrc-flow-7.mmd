@@ -1,0 +1,54 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    classDef classical fill:#ff7675,stroke:#d63031,color:white,stroke-width:2px
+    classDef quantum fill:#00b894,stroke:#00826a,color:white,stroke-width:2px
+    classDef problem fill:#6c5ce7,stroke:#4834d4,color:white,stroke-width:2px
+    classDef example fill:#81ecec,stroke:#00cec9,color:black,stroke-width:2px
+
+    subgraph Classical["❌ Classical Approach"]
+        E1["ECDSA"]
+        E2["Based on<br/>Elliptic Curves"]
+        E3["Vulnerable to<br/>Quantum Attacks"]
+        E1 --> E2 --> E3
+    end
+
+    subgraph Modern["✅ Quantum-Resistant"]
+        M1["ML-DSA"]
+        M2["Based on<br/>Lattices"]
+        M1 --> M2
+    end
+
+    subgraph Problems["🔒 Core Problems"]
+        P1["MLWE Problem"]
+        P2["MSIS Problem"]
+
+        EX1["Like a puzzle with<br/>imperfect pieces"]
+        EX2["Like balancing<br/>many scales at once"]
+
+        P1 --- EX1
+        P2 --- EX2
+    end
+
+    Classical --> Modern
+    M2 --> Problems
+
+    class E1,E2,E3 classical
+    class M1,M2 quantum
+    class P1,P2 problem
+    class EX1,EX2 example

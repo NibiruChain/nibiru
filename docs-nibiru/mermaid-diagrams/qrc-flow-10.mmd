@@ -1,0 +1,49 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    classDef input fill:#4834d4,stroke:#2d1d8f,color:white,stroke-width:2px
+    classDef process fill:#00b894,stroke:#00826a,color:white,stroke-width:2px
+    classDef output fill:#ff7675,stroke:#d63031,color:white,stroke-width:2px
+
+    subgraph Inputs["1️⃣ Inputs"]
+        I1["Message"]
+        I2["Secret Key s1"]
+        I3["Matrix A"]
+    end
+
+    subgraph Process["2️⃣ Generation Steps"]
+        P1["Generate mask y"]
+        P2["Compute w = Ay"]
+        P3["Create challenge c"]
+        P4["Compute z = y + cs1"]
+        P5["Generate hint h"]
+
+        P1 --> P2 --> P3 --> P4 --> P5
+    end
+
+    subgraph Output["3️⃣ Signature"]
+        O1["Final Signature<br/>(c, z, h)"]
+    end
+
+    Inputs --> Process
+    Process --> Output
+
+    class I1,I2,I3 input
+    class P1,P2,P3,P4,P5 process
+    class O1 output
+

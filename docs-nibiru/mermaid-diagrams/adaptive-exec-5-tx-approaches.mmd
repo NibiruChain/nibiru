@@ -1,0 +1,41 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+graph LR
+    classDef default fill:#FFFFFF,stroke:#17A0BF,stroke-width:2px,rx:12px,ry:12px
+    classDef title fill:#17A0BF,stroke:#17A0BF,stroke-width:3px,rx:14px,ry:14px,color:#FFFFFF,font-weight:bold
+    classDef box fill:#F7FAFC,stroke:#17A0BF,stroke-width:2px,rx:12px,ry:12px
+    classDef highlight fill:#EBF8FF,stroke:#17A0BF,stroke-width:3px,rx:12px,ry:12px
+
+    TPA["Transaction Processing Approaches"]:::title
+    
+    TPA --> OM["Optimistic Model
+    • Uses rollbacks
+    • Relies on cached states"]:::box
+    
+    TPA --> DM["Deterministic Model
+    • Pre-computes DAG
+    • Pre-calculates dependencies
+    • Sequential execution"]:::box
+    
+    TPA --> Adaptive["Adaptive Execution
+    • Dynamic contention tracking
+    • Transaction reordering
+    • High contention priority
+    • Single-version serialization"]:::highlight
+
+    linkStyle default stroke:#63B3ED,stroke-width:2px,stroke-dasharray: 5 5

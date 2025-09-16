@@ -1,0 +1,34 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+graph TD
+  subgraph GroupedApproach["Validator Clustering"]
+    subgraph G1["Group 1"]
+      GV1[V1] --- GV2[V2]
+      GV2 --- GV3[V3]
+      GL1[("👑 Group Leader")]
+    end
+
+    subgraph G2["Group 2"]
+      GV4[V4] --- GV5[V5]
+      GV5 --- GV6[V6]
+      GL2[("👑 Group Leader")]
+    end
+
+    GL1 ---|"Reduced messages"| GL2
+    note2["✅ Efficient Communication"]
+  end

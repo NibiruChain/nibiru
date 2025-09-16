@@ -1,0 +1,49 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    classDef foundation fill:#6366f1,stroke:#4f46e5,color:white,stroke-width:2px
+    classDef parameter fill:#10b981,stroke:#059669,color:white,stroke-width:2px
+    classDef tradeoff fill:#f43f5e,stroke:#e11d48,color:white,stroke-width:2px
+
+    subgraph Foundation["🏗️ Mathematical Foundation"]
+        F1["Lattice-Based<br/>Cryptography"]
+        F2["Ring R = Z[X]/(X^n + 1)"]
+        F1 --> F2
+    end
+
+    subgraph Params["⚙️ Parameter Choices"]
+        P1["n = 256<br/>ML-DSA-256"]
+        P2["n = 512<br/>ML-DSA-512"]
+    end
+
+    subgraph Tradeoffs["⚖️ Tradeoffs"]
+        T1["Lower n (256)"]
+        T2["Higher n (512)"]
+
+        L1["• Faster computation<br/>• Smaller signatures<br/>• Lower security"]
+        L2["• Stronger security<br/>• Larger signatures<br/>• More computation"]
+
+        T1 --> L1
+        T2 --> L2
+    end
+
+    Foundation --> Params --> Tradeoffs
+
+    class F1,F2 foundation
+    class P1,P2 parameter
+    class T1,T2,L1,L2 tradeoff

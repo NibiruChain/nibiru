@@ -1,0 +1,50 @@
+html, body {
+  font-family: 'Ethos Nova', 'Montserrat', 'Exo 2', Inter, Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  /* color: rgba(0, 0, 0, .65); */
+  padding: 16px;
+  background-color: #F9F4E9; /* overrides commandline option -b */
+}
+
+svg {
+  --bg-color: #F9F4E9;
+  --cream: var(--bg-color);
+  --main: #F2BDD6;
+  --rounded: 1rem;
+  /* --cream: #EFF1F5; */
+  --font-family: 'Ethos Nova', 'Montserrat', 'Exo 2', Inter, Helvetica Neue, Helvetica, Arial, sans-serif;
+
+  font-family: var(--font-family) !important;
+  font-weight: 500;
+
+  foreignObject {
+    /* border-radius: var(--rounded); */
+  }
+  rect {
+    border-radius: var(--rounded);
+  }
+  .flowchart-link {
+    stroke: var(--main) !important;
+  }
+}
+
+/* fix for mermaid.cli #3 - uncomment to get png width option working */
+#container > svg {
+  max-width: 100% !important;
+  background-color: var(--cream) !important;
+}
+
+#my-svg {
+  background-color: var(--cream) !important;
+  color: black !important;
+  p {
+    color: black !important;
+  }
+  letter-spacing: -0.02rem;
+}
+
+#my-svg .label {
+  font-family: var(--font-family);
+  color: black !important;
+}

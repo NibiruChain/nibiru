@@ -1,0 +1,40 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart TD
+    subgraph AE["Adaptive Execution: Resource Conflicts"]
+        T[(Incoming Transactions)]:::bgBoxMain --> SCG
+        SCG[Static Conflict Graph Analysis]:::bgBoxMain
+    end
+    
+    SCG --> Check{Resource Conflict?}:::bgBoxMain
+
+    Check --> L1["True Conflict<br>(Same Resource)"]:::inevitable
+    L1 --> IN["Inevitable Delay<br>Must Process Sequentially"]:::inevitable
+    
+    Check --> L2["No Conflict<br>(Different Resources)"]:::free
+    L2 --> RE["Independent Operations<br>Free to Reorder"]:::free
+    
+    Check --> L3["False Dependency<br>(Unnecessary Wait)"]:::harmful
+    L3 --> HD["Harmful Delay<br>Can Be Optimized"]:::harmful
+    
+    classDef bgBoxMain fill:#e1f3ff,stroke:#7C9CBF,stroke-width:2px,rx:10,ry:10
+    classDef harmful fill:#ffe6e6,stroke:#ff9999,stroke-width:2px,rx:10,ry:10
+    classDef free fill:#e6ffe6,stroke:#99cc99,stroke-width:2px,rx:10,ry:10
+    classDef inevitable fill:#c4dcd7,stroke:#17A0BF,stroke-width:2px,rx:10,ry:10
+
+    style AE fill:#c4dcd7,stroke:#17A0BF,stroke-width:2px,rx:10,ry:10

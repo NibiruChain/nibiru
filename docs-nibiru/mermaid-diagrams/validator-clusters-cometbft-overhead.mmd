@@ -1,0 +1,24 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+graph LR
+    subgraph Traditional["Traditional CometBFT"]
+        V1[Validator 1] ---|"n² messages"| V2[Validator 2]
+        V1 ---|"n² messages"| V3[Validator 3]
+        V2 ---|"n² messages"| V3
+        note1["❌ High Communication Overhead"]
+    end

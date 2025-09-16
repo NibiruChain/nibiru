@@ -1,0 +1,54 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+graph TD
+    subgraph AdaptiveExecution["Adaptive Execution"]
+        KF[/"Key Features"/]
+        KF --> RCE["✓ Real-time<br/>contention estimation"]
+        KF --> FEO["✓ Flexible<br/>execution order"]
+        KF --> PCA["✓ Proactive<br/>conflict avoidance"]
+    end
+    
+    subgraph Traditional["Traditional Approaches"]
+        direction LR
+        OCC["Optimistic Control<br/>(OCC)"]
+        MVCC["Multi-Version Control<br/>(MVCC)"]
+        DE["Deterministic<br/>Execution"]
+    end
+    
+    subgraph Problems["Key Problems"]
+        direction LR
+        OCC --> |results in| HRO["⚠ High rollback<br/>overhead"]
+        MVCC --> |results in| HSO["⚠ High storage<br/>overhead"]
+        DE --> |results in| ROC["⚠ Rigid ordering<br/>constraints"]
+    end
+
+classDef default fill:#fff,stroke:#5B9BD5,stroke-width:2px,rx:5,ry:5;
+classDef solution fill:#f0f9ff,stroke:#4285F4,stroke-width:3px,rx:15,ry:15;
+classDef feature fill:#e3f2fd,stroke:#4285F4,stroke-width:2px,rx:10,ry:10,color:#0D47A1;
+classDef problem fill:#ffebee,stroke:#E57373,stroke-width:2px,rx:10,ry:10,color:#C62828;
+classDef approach fill:#fff3e0,stroke:#FB8C00,stroke-width:2px,rx:10,ry:10,color:#E65100;
+classDef keyFeatures fill:#e3f2fd,stroke:#4285F4,stroke-width:3px,color:#0D47A1;
+
+class AdaptiveExecution,Traditional,Problems solution;
+class RCE,FEO,PCA feature;
+class HRO,HSO,ROC problem;
+class OCC,MVCC,DE approach;
+class KF keyFeatures;
+
+linkStyle default stroke-width:2px,stroke:#4285F4
+linkStyle 3,4,5 stroke:#E57373,stroke-width:2px,stroke-dasharray:5

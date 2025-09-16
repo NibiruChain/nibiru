@@ -1,0 +1,47 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart TD
+    classDef algorithm fill:#6366f1,stroke:#4f46e5,color:white,stroke-width:2px
+    classDef crypto fill:#f43f5e,stroke:#e11d48,color:white,stroke-width:2px
+    classDef result fill:#10b981,stroke:#059669,color:white,stroke-width:2px
+
+    %% Main components
+    QC["👨‍💻 Quantum Computer"]
+
+    S["Shor's Algorithm<br/>Breaks Digital Signatures"]
+    G["Grover's Algorithm<br/>Weakens Hash Functions"]
+
+    E["ECDSA<br/>Used for Signatures"]
+    K["Keccak-256<br/>Used for Hashing"]
+
+    %% Example with Ethereum
+    EA["Example: Attacking an Ethereum Address"]
+    EX1["1. Find Public Key<br/>Using Grover's"]
+    EX2["2. Find Private Key<br/>Using Shor's"]
+
+    %% Connections
+    QC --> S & G
+    S -->|"Completely breaks"| E
+    G -->|"Reduces security by half"| K
+
+    EA --> EX1 --> EX2
+
+    %% Styling
+    class S,G algorithm
+    class E,K crypto
+    class EA,EX1,EX2 result

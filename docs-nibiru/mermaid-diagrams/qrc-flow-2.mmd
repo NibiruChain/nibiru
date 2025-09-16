@@ -1,0 +1,46 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    subgraph HASH[" HASH "]
+        direction LR
+        HF["Hash Functions"] --> O["One-way"]
+        HF --> N["Non-reversible"]
+    end
+    
+    subgraph ECC[" ECC "]
+        direction LR
+        EC["Elliptic Curve
+        Cryptography (ECC)"] --> A["Asymmetric"]
+        EC --> P["Partial Reversibility"]
+    end
+    
+    EVM["EVM Cryptography
+    Primitives"] --> HF
+    EVM --> EC
+    
+    %% Styling
+    classDef evm fill:#e6e9ff,stroke:#9999ff,stroke-width:2px
+    classDef main fill:#e6e9ff,stroke:#9999ff,stroke-width:2px
+    classDef prop fill:#e6e9ff,stroke:#9999ff,stroke-width:1px
+    classDef section fill:#f0fff0,stroke:#cccccc,stroke-width:1px
+    
+    class EVM evm
+    class HF,EC main
+    class O,N,A,P prop
+    class HASH,ECC section
+

@@ -1,0 +1,40 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "Docs | Nibiru",
+  "main": "index.js",
+  "scripts": {
+    "build": "yarn fetch-mainnet-versions && vuepress build docs",
+    "dev": "yarn fetch-mainnet-versions && vuepress dev docs",
+    "dev:legacy": "NODE_OPTIONS=--openssl-legacy-provider vuepress dev docs",
+    "dev-no-cache": "vuepress dev docs --no-cache",
+    "serve": "yarn dev",
+    "export": "bash export.sh",
+    "import": "bash import.sh",
+    "install:fresh": "yarn install --frozen-lockfile --check-files",
+    "docgen-nibijs": "yarn exec ./docs/scripts/docgen-ts.sh",
+    "docgen-nibijs:clone": "yarn_exec_arg1=\"--clone\" yarn exec ./docs/scripts/docgen-ts.sh",
+    "fetch-mainnet-versions": "node ./docs/scripts/fetch-mainnet-versions.js"
+  },
+  "author": "Nibiru Chain",
+  "license": "ISC",
+  "dependencies": {
+    "@nibiruchain/ui-nibi": "^1.4.4",
+    "@nibiruchain/vuepress-theme-cosmos": "./docs/.vuepress/theme",
+    "chalk": "^2.0.0",
+    "commander": "^2.0.0",
+    "markdown-it": "^13.0.1",
+    "markdown-it-attrs": "^4.1.6",
+    "markdown-it-katex": "^2.0.3",
+    "node-fetch": "2",
+    "vue": "2.7.14",
+    "vuepress-plugin-sitemap": "^1.0.0",
+    "web-vitals": "^4.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.12",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4",
+    "vuepress": "^1.9.9"
+  }
+}

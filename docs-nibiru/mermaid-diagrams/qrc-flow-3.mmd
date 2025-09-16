@@ -1,0 +1,56 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    Root["🔐 Ethereum Cryptographic
+    Primitives"] --> Branch(( ))
+    Branch --> ECC
+    Branch --> Hash
+
+    subgraph ECC["Elliptic Curve Cryptography"]
+        direction LR
+        E1["⚙️ Algorithms
+        ECDSA, EdDSA
+        (secp256k1)"] -->
+        E2["🔑 Use Cases
+        • Transaction signing
+        • Signature verification
+        • Public key generation"]
+    end
+
+    subgraph Hash["Hash Functions"]
+        direction LR
+        H1["⚡ Algorithm
+        Keccak-256"] -->
+        H2["🔒 Property
+        Irreversible (one-way)"] -->
+        H3["📦 Use Cases
+        • Block header hashing
+        • Transaction hashing
+        • Address generation
+        • EVM tries"]
+    end
+
+    classDef default fill:#fff,stroke:#2d3748,stroke-width:1px,rx:10,ry:10
+    classDef root fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,rx:10,ry:10
+    classDef section fill:#fff8e1,stroke:#ffa000,stroke-width:1px,rx:10,ry:10
+    classDef branch fill:none,stroke:none
+
+    class Root root
+    class ECC,Hash section
+    class Branch branch
+    linkStyle default stroke:#3f51b5,stroke-width:2px

@@ -1,0 +1,54 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart TB
+    subgraph Security["Cryptographic Security Properties"]
+        direction TB
+
+        subgraph CR["Collision Resistance"]
+            direction LR
+            C1["Input1"] --> |"hash()"| CH1["Hash A"]
+            C2["Input2"] --> |"hash()"| CH1
+            note1["Finding two different inputs
+            that produce same hash
+            Security: 128-bit"]
+        end
+
+        subgraph PR1["First Preimage Resistance"]
+            direction LR
+            H["Known Hash"] --> |"reverse?"| I["❌ Find Original Input"]
+            note2["Given hash, cannot find
+            original input
+            Security: 256-bit"]
+        end
+
+        subgraph PR2["Second Preimage Resistance"]
+            direction LR
+            KI["Known Input"] --> |"hash()"| KH["Hash"]
+            AI["Alternative Input"] --> |"hash()"| KH
+            note3["Cannot find different input
+            producing same hash as known input
+            Security: 256-bit"]
+        end
+    end
+
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px
+    classDef section fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,rx:10,ry:10
+    classDef note fill:#fff3e0,stroke:#ff9800,stroke-width:1px
+
+    class CR,PR1,PR2 section
+    class note1,note2,note3 note

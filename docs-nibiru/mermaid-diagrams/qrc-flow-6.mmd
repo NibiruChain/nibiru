@@ -1,0 +1,50 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart TD
+    classDef challenge fill:#FF7675,stroke:#D63031,color:white
+    classDef solution fill:#74B9FF,stroke:#0984E3,color:white
+    classDef implementation fill:#55EFC4,stroke:#00B894,color:white
+    classDef container fill:none,stroke:#6C5CE7,stroke-width:2px
+
+    subgraph CurrentChallenge["🚨 Current Challenge"]
+        direction TB
+        A[("Quantum Computing<br/>Progress")] -->|Threatens| B["Classical<br/>Cryptography"]
+        B -->|Examples| C["ECDSA &<br/>Keccak-256"]
+        D["Google's Willow<br/>Chip"] -->|Demonstrates<br/>Threat|A
+    end
+
+    subgraph QRCThesis["💡 Nibiru's QRC Thesis"]
+        direction TB
+        E["Proactive<br/>Innovation"] -->|Leads to| F["Quantum-Resistant<br/>Solutions"]
+        F -->|Primary<br/>Focus| G["Lattice-based<br/>Cryptography"]
+        G -->|Example| H["ML-DSA"]
+    end
+
+    subgraph Roadmap["🗺️ Implementation Roadmap"]
+        direction LR
+        I["Phase 1:<br/>Replace ECDSA"] -->|Then| J["Phase 2:<br/>Address Keccak-256"]
+        J -->|Goal| K["Future-Proof<br/>Systems"]
+    end
+
+    A -->|Drives Need for| E
+    F -->|Enables| I
+
+    class A,B,C,D challenge
+    class E,F,G,H solution
+    class I,J,K implementation
+    class CurrentChallenge,QRCThesis,Roadmap container

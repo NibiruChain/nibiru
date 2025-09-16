@@ -1,0 +1,51 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+  %% Custom styles
+  classDef current fill:#6366f1,stroke:#4f46e5,color:white,stroke-width:2px
+  classDef threat fill:#f43f5e,stroke:#e11d48,color:white,stroke-width:2px
+  classDef solution fill:#10b981,stroke:#059669,color:white,stroke-width:2px
+  classDef container fill:none,stroke:#818cf8,stroke-width:3px,stroke-dasharray: 5 5
+  
+  subgraph Today["Current Security"]
+      A[/"ECC<br/>Digital Signatures"/]
+      B[/"Keccak-256<br/>Hashing"/]
+  end
+
+  subgraph Threat["Quantum Threats"]
+      C[("Shor's<br/>Algorithm")]
+      D[("Grover's<br/>Algorithm")]
+  end
+
+  subgraph Solution["Quantum-Safe Future"]
+      E[\ML-DSA<br/>Signatures\]
+      F[\Enhanced<br/>Hash Functions\]
+  end
+
+  %% Connections with custom styling
+  A --> |"threatens"|C
+  B --> |"weakens"|D
+  C --> |"replaced by"|E
+  D --> |"upgraded to"|F
+
+  %% Apply styles
+  class A,B current
+  class C,D threat
+  class E,F solution
+  class Today,Threat,Solution container
+

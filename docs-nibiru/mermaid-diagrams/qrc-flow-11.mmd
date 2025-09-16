@@ -1,0 +1,40 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#7C9CBF',
+    'primaryTextColor': '#000000',
+    'primaryBorderColor': '#17A0BF',
+    'lineColor': '#17A0BF',
+    'fontSize': '16px'
+  }
+}}%%
+
+flowchart LR
+    classDef input fill:#4834d4,stroke:#2d1d8f,color:white,stroke-width:2px
+    classDef process fill:#00b894,stroke:#00826a,color:white,stroke-width:2px
+    classDef result fill:#ff7675,stroke:#d63031,color:white,stroke-width:2px
+
+    subgraph Start["1️⃣ Start With"]
+        I1["Signature"]
+        I2["Message"]
+        I3["Public Key"]
+    end
+
+    subgraph Verify["2️⃣ Verify Two Things"]
+        V1["1. Challenge<br/>Matches"]
+        V2["2. Reconstruction<br/>Works"]
+    end
+
+    subgraph Result["3️⃣ Conclude"]
+        R1["✅ Valid"]
+        R2["❌ Invalid"]
+    end
+
+    Start --> Verify
+    V1 & V2 --> R1
+    V1 & V2 --> R2
+
+    class I1,I2,I3 input
+    class V1,V2 process
+    class R1,R2 result
+

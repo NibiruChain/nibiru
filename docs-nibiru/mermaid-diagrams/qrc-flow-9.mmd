@@ -1,0 +1,33 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#F2BDD6'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#F2BDD6'
+    lineColor: '#F2BDD6'
+    fontSize: '16px'
+    secondaryTextColor: '#000000'
+
+    mainBkg: '#F7DBE4'
+    secondBkg: '#F7DBE4'
+    # --------------- unused ---------------
+    background: '#F7DBE4'
+---
+
+flowchart LR
+    classDef input fill:#4834d4,stroke:#2d1d8f,color:white,stroke-width:2px
+    classDef process fill:#00b894,stroke:#00826a,color:white,stroke-width:2px
+    classDef output fill:#ff7675,stroke:#d63031,color:white,stroke-width:2px
+
+    S1["1. Generate Seed ρ"] -->
+    S2["2. Create Matrix A<br/>from seed"] -->
+    S3["3. Sample Secret<br/>Polynomials"] -->
+    S4["4. Compute<br/>t = As1 + s2"]
+
+    S4 --> K1["Public Key<br/>(ρ, t1)"]
+    S4 --> K2["Private Key<br/>(s1, s2, ...)"]
+
+    class S1 input
+    class S2,S3,S4 process
+    class K1,K2 output

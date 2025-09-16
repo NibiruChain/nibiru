@@ -1,0 +1,47 @@
+Mermaid diagrams used in the neighboring ./funtoken.md file.
+
+Creating a FunToken mapping from a Bank Coin
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Nibiru EVM
+    participant Bank Module
+    participant New ERC20 Contract
+
+    User->>Nibiru EVM: Broadcast evm.MsgCreateFunToken
+    Nibiru EVM->>Nibiru EVM: Use existing Bank Coin<br/>Handle createFunTokenFromCoin
+
+    Nibiru EVM->>Bank Module: Get CoinMetadata for bank denom
+    Bank Module-->>Nibiru EVM: Return CoinMetadata
+
+    Nibiru EVM->>Nibiru EVM: Generate ERC20 deployment bytecode
+    Note over Nibiru EVM: Use CoinMetadata for:<br/>name, symbol, decimals
+
+    Nibiru EVM->>New ERC20 Contract: Deploy contract
+    New ERC20 Contract-->>Nibiru EVM: Return contract address
+
+    Nibiru EVM->>Nibiru EVM: Store FunToken mapping
+    Note over Nibiru EVM: Mapping includes:<br/>ERC20 address, bank denom,<br/>isMadeFromCoin = true
+
+    Nibiru EVM-->>User: Return MsgCreateFunTokenResponse
+```
+
+Creating a FunToken mapping from an ERC20 
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Nibiru EVM
+    participant ERC20 Contract
+    participant Bank Module
+
+    User->>Nibiru EVM: Broadcast evm.MsgCreateFunToken
+    Nibiru EVM->>Nibiru EVM: Use existing ERC20 contract<br/>Handle createFunTokenFromERC20
+
+    Nibiru EVM->>ERC20 Contract: Get ERC20.name(), ERC20.symbol, ERC20.decimals
+    Nibiru EVM->>Nibiru EVM: Store FunToken mapping
+    Note over Nibiru EVM,Nibiru EVM: Mapping includes:<br/>ERC20 address, bank denom,<br/>isMadeFromCoin = false
+    
+    Nibiru EVM-->>User: Return MsgCreateFunTokenResponse
+```

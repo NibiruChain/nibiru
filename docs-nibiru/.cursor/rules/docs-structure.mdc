@@ -1,0 +1,51 @@
+---
+description: Defines the repo structure, philosophy, and maps out the purpose of each directories
+globs: *.md, config.js
+alwaysApply: false
+---
+# Nibiru Docs Strucutre
+
+## Directory Purpose Summary:
+
+Note that the official navigation is managed by [config.js](mdc:docs/.vuepress/config.js) since this is a Vuepress app.
+
+- **docs/use:** User guides, user tutorials.
+- **docs/dev:** Developer guides, developer tutorials, reference docs.
+- **docs/run-nodes:** Node operation guides, node reference docs.
+- **docs/concepts:** Core conceptual explainers.
+- **docs/learn:** Non-core conceptual explainers.
+- **docs/ecosystem:** General ecosystem explainers and additional context.
+
+## Documentation Types
+
+Define these types explicitly for use in content generation:
+
+### 1. Explainers (Conceptual Docs)
+- **Purpose:** Clarify underlying concepts and provide context, answering "what" and "why."
+- **Examples:** Protocol overviews, consensus mechanisms, ecosystem introductions.
+- **Use in Directories:**
+  - `docs/concepts`: For foundational or core Nibiru concepts.
+  - `docs/learn`: Non-core, supplementary explanations.
+  - `docs/ecosystem`: Broader ecosystem context not fitting clearly elsewhere.
+
+### 2. Guides (How-To Docs)
+- **Purpose:** Provide step-by-step, problem-solving guidance for specific tasks.
+- **Examples:** Installation instructions, troubleshooting steps, operational procedures.
+- **Use in Directories:**
+  - `docs/use`: For end-user guides.
+  - `docs/dev`: Developer-oriented task solutions.
+  - `docs/run-nodes`: Full node operation guides.
+
+### 3. Tutorials (Learning Docs)
+- **Purpose:** Walkthroughs designed to teach foundational skills and build familiarity through hands-on practice.
+- **Examples:** Building a simple dApp, deploying your first node.
+- **Use in Directories:**
+  - `docs/dev`: Developer-focused tutorials for onboarding.
+  - `docs/use`: Tutorials geared toward user-level interactions.
+
+### 4. Reference (Information Docs)
+- **Purpose:** Provide precise, structured, easily searchable information for quick lookup.
+- **Examples:** API endpoints, CLI commands, configuration parameters.
+- **Use in Directories:**
+  - `docs/dev`: API specifications, SDK reference, CLI commands.
+  - `docs/run-nodes`: Node-specific configurations, command references.
