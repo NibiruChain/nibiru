@@ -113,7 +113,7 @@ const (
 )
 
 var (
-	// DefaultNodeHome default home directories for the application daemon
+	// DefaultNodeHome: home directories for the application daemon
 	DefaultNodeHome string
 
 	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
