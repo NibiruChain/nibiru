@@ -1,0 +1,54 @@
+# .cursorignore
+#
+# ## .cursorignore Syntax Exmaple
+# It's generally close to .gitignore syntax with. Examples:
+# config.json     # Specific file
+# dist/           # Directory
+# *.log           # File extension
+# **/logs         # Nested directories
+# !app/           # Exclude from ignore (negate)
+#
+# -----------------------------------------------------------------
+# Files in the .gitignore are ignored by default.
+# To intentionally NOT ignore patterns from .gitignore, uncomment the following:
+# !.gitignore
+
+# Additional patterns specific to Cursor
+.env*
+**/credentials/*
+**/secrets/*
+private/
+confidential/
+
+# Large binary files and datasets
+*.bin
+*.dat
+*.db
+*.sqlite
+*.sqlite3
+
+# Exclude large generated files
+node_modules/
+dist/
+.cache/ 
+
+# -----------------------------------------------------------------
+# Custom Nibiru ignore files
+# -----------------------------------------------------------------
+
+# Keep these for sure.
+# x/evm/
+# x/sudo/
+# x/tokenfactory/
+
+
+# Boilerplate
+*.pb.go
+api/*
+
+# Stick to EVM
+x/devgas/*
+x/epochs/*
+x/genmsg/*
+x/inflation/*
+x/oracle/*
