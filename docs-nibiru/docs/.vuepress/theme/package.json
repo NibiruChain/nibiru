@@ -22,7 +22,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@nibiruchain/cosmos-ui": "../cosmos-ui",
+    "@nibiruchain/cosmos-ui": "0.0.2",
     "algoliasearch": "^4.2.0",
     "axios": "^0.24.0",
     "cheerio": "^1.0.0-rc.3",

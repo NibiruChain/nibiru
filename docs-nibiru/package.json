@@ -18,6 +18,9 @@
   },
   "author": "Nibiru Chain",
   "license": "ISC",
+  "resolutions": {
+    "**/cheerio": "1.0.0-rc.12"
+  },
   "dependencies": {
     "@nibiruchain/ui-nibi": "^1.4.4",
     "@nibiruchain/vuepress-theme-cosmos": "./docs/.vuepress/theme",

@@ -1137,8 +1137,10 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@nibiruchain/cosmos-ui@../cosmos-ui":
-  version "0.0.1"
+"@nibiruchain/cosmos-ui@0.0.2":
+  version "0.0.2"
+  resolved "https://npm.pkg.github.com/download/@nibiruchain/cosmos-ui/0.0.2/65b4f2fe58c350dceb4631bef1c76493bed79647#65b4f2fe58c350dceb4631bef1c76493bed79647"
+  integrity sha512-qLHwIq+RIJOeyXKdwDWxJlUV7upPlHJxZwXoJlqtne2OrutabEF/nG1VBPGsmbNB3ugwwtT1aWYi/fd3NiN3qw==
   dependencies:
     algoliasearch "^4.1.0"
     axios "^0.21.1"
@@ -1162,7 +1164,7 @@
 "@nibiruchain/vuepress-theme-cosmos@./docs/.vuepress/theme":
   version "0.0.186"
   dependencies:
-    "@nibiruchain/cosmos-ui" "../cosmos-ui"
+    "@nibiruchain/cosmos-ui" "0.0.2"
     algoliasearch "^4.2.0"
     axios "^0.24.0"
     cheerio "^1.0.0-rc.3"
@@ -2893,7 +2895,7 @@ cheerio-select@^2.1.0:
     domhandler "^5.0.3"
     domutils "^3.0.1"
 
-cheerio@^1.0.0-rc.3:
+cheerio@1.0.0-rc.12, cheerio@^1.0.0-rc.3:
   version "1.0.0-rc.12"
   resolved "https://registry.yarnpkg.com/cheerio/-/cheerio-1.0.0-rc.12.tgz#788bf7466506b1c6bf5fae51d24a2c4d62e47683"
   integrity sha512-VqR8m68vM46BNnuZ5NtnGBKIE/DfN0cRIzg9n40EIq9NOv90ayxLBXA8fXC5gquFRGJSTRqBq25Jt2ECLR431Q==

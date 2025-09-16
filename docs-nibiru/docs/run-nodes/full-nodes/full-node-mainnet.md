@@ -115,6 +115,8 @@ Block `24130375`:   [v2.4.0](https://github.com/NibiruChain/nibiru/releases/tag/
 
 Block `24477075`:   [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0)
 
+Block `27836608`:   [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0)
+
 
 <!-- ::/UPGRADES -->
 
