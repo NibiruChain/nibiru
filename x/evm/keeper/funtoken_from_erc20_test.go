@@ -609,7 +609,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		"error in a nested call gives back a response with evmResp.Failed()",
 	)
 
-	wantErr := "ApplyEvmMsg: intrinsic gas too low: provided msg.Gas"
+	wantErr := "ApplyEvmMsg: out of gas"
 	s.ErrorContains(deps.Ctx.LastErrApplyEvmMsg(), wantErr)
 	s.ErrorContains(err, wantErr)
 	s.Contains(evmResp.VmError, wantErr)

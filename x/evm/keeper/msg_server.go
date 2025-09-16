@@ -352,8 +352,8 @@ func (k *Keeper) ApplyEvmMsg(
 	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
 		return nil, fmt.Errorf(
-			"ApplyEvmMsg: %s: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
-			core.ErrIntrinsicGas, gasRemaining, intrinsicGasCost,
+			"ApplyEvmMsg: %s: %s: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
+			vm.ErrOutOfGas, core.ErrIntrinsicGas, gasRemaining, intrinsicGasCost,
 		)
 	}
 	if tracer != nil && tracer.OnGasChange != nil {

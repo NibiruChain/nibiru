@@ -100,14 +100,11 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
 				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
-				s.Require().NotNilf(resp, "err: %v", err)
 				s.Require().ErrorContains(
-					err,
-					core.ErrIntrinsicGas.Error(),
-					"resp: %s\nblock header: %s",
-					resp.String(),
-					deps.Ctx.BlockHeader().ProposerAddress,
+					err, core.ErrIntrinsicGas.Error(),
+					"resp: %+v", resp,
 				)
+				s.Require().Nilf(resp, "err: %v", err)
 			},
 		},
 	}
