@@ -4,7 +4,7 @@ const themes = require("vuepress/config")
  * to submit issues. */
 const GITHUB_REPO = "NibiruChain/website-help"
 
-const metaImgUrl = "https://nibiru.fi/nibiru-twitter-meta-tag.png"
+const metaImgUrl = "https://nibiru.fi/nibiru-meta-tag.png"
 
 module.exports = themes.defineConfig4CustomTheme({
   globalLayout: "../theme/layouts/Layout.vue",
@@ -228,7 +228,8 @@ module.exports = themes.defineConfig4CustomTheme({
                   path: "/use/bridge.html",
                 },
                 {
-                  title: "Guide: Withdraw/Deposit with Centralized Exchanges (EVM)",
+                  title:
+                    "Guide: Withdraw/Deposit with Centralized Exchanges (EVM)",
                   path: "/use/cex.html",
                 },
               ],

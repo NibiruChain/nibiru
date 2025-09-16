@@ -15,7 +15,7 @@ durable adoption. {synopsis}
 Prepared by [The Nibiru Team](https://nibiru.fi/team)
 
 - You can find the [full list of Nibiru Ecosystem Updates here](https://nibiru.fi/docs/ecosystem/updates/).
-- Authors: [Harvey Liu](https://nibiru.fi/team/harvey-liu), [Brandon Suzuki](https://nibiru.fi/team/brandon-suzuki), [Unique Divine](https://nibiru.fi/team/unique-divine), [Jonathan Chang](https://nibiru.fi/team/jonathan-chang), [Erick Pinos](https://nibiru.fi/team/erick-pinos), [Gabe Whitlatch](https://nibiru.fi/team/gabe-whitlatch), 
+- Authors: [Harvey Liu](https://nibiru.fi/team/harvey-liu), [Brandon Suzuki](https://nibiru.fi/team/brandon-suzuki), [Unique Divine](https://nibiru.fi/team/unique-divine), [Jonathan Chang](https://nibiru.fi/team/jonathan-chang), [Erick Pinos](https://nibiru.fi/team/erick-pinos), [Kevin Yang](https://nibiru.fi/team/kevin-yang), [Gabe Whitlatch](https://nibiru.fi/team/gabe-whitlatch).
 
 ## 1 | Key Takeaways / TL;DR
 
@@ -44,25 +44,36 @@ of stNIBI, SyrupUSDC, and Sai Liquidity Provision (SLP) vaults.
 
 #### Table of Contents
 
-- [1 | Key Takeaways / TL;DR](#1--key-takeaways--tldr)
-- [2 | Product Development & Ecosystem Updates](#2--product-development--ecosystem-updates)
-  - [2.1 - Key Deployments](#21---key-deployments)
-  - [2.2 - Network Upgrades on Mainnet](#22---network-upgrades-on-mainnet)
-  - [2.3 - App Ecosystem: New Deployments](#23---app-ecosystem-new-deployments)
-  - [2.4 - App Ecosystem: Existing App Highlights](#24---app-ecosystem-existing-app-highlights)
-- [3 | Near-Term Execution Plans](#3--near-term-execution-plans)
-  - [3.1 - Sai Perps Nears Launch on Nibiru](#31---sai-perps-nears-launch-on-nibiru)
-  - [3.2 - Onchain Usage Campaigns | Nibiru EVM Points Program (Update)](#32---onchain-usage-campaigns--nibiru-evm-points-program-update)
-- [4 - Lagrange Point, NibiruBFT, and the Nibiru Execution Engine](#4---lagrange-point-nibirubft-and-the-nibiru-execution-engine)
-  - [4.1 - NibiruBFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, &](#41---nibirubft---validator-clusters-bls-signatures-multi-lane-blocks-)
-  - [4.2 Nibiru Adaptive Execution: The Next Evolution of PARE](#42-nibiru-adaptive-execution-the-next-evolution-of-pare)
-  - [4.3 MultiVM Architecture: Seamless EVM & Wasm (and More)](#43-multivm-architecture-seamless-evm--wasm-and-more)
-  - [4.4 Quantum-Resistant Cryptography (QRC)](#44-quantum-resistant-cryptography-qrc)
-  - [4.5 The Road to Nibiru V3](#45-the-road-to-nibiru-v3)
-- [5 - Why Nibiru Is Betting on Yield, RWAs & Structured Products to Lead Real Adoption](#5---why-nibiru-is-betting-on-yield-rwas--structured-products-to-lead-real-adoption)
-    - [Real-World Assets have Shown Tangible Progress](#real-world-assets-have-shown-tangible-progress)
-    - [Structured Products](#structured-products)
-- [6 | Legal Disclosure](#6--legal-disclosure)
+- [Nibiru Ecosystem Update #3 - May 2025](#nibiru-ecosystem-update-3---may-2025)
+  - [1 | Key Takeaways / TL;DR](#1--key-takeaways--tldr)
+      - [Table of Contents](#table-of-contents)
+      - [Legal Terms for this Document](#legal-terms-for-this-document)
+  - [2 | Product Development \& Ecosystem Updates](#2--product-development--ecosystem-updates)
+    - [2.1 - Key Deployments](#21---key-deployments)
+      - [Bridge to Nibiru: Simplified With LayerZero \& Stargate](#bridge-to-nibiru-simplified-with-layerzero--stargate)
+      - [Oku.Trade for Advanced Trading](#okutrade-for-advanced-trading)
+      - [Syrup for Sustainable High Yields](#syrup-for-sustainable-high-yields)
+      - [LayerBank for Borrowing](#layerbank-for-borrowing)
+      - [Abracadabra for Stableswap and Leveraged Yields](#abracadabra-for-stableswap-and-leveraged-yields)
+      - [BIMA for Bitcoin-Backed Lending](#bima-for-bitcoin-backed-lending)
+      - [Sai Perps Exchange](#sai-perps-exchange)
+      - [Element NFT Marketplace](#element-nft-marketplace)
+    - [2.2 - Network Upgrades on Mainnet](#22---network-upgrades-on-mainnet)
+    - [2.3 - App Ecosystem: New Deployments](#23---app-ecosystem-new-deployments)
+    - [2.4 - App Ecosystem: Existing App Highlights](#24---app-ecosystem-existing-app-highlights)
+  - [3 | Near-Term Execution Plans](#3--near-term-execution-plans)
+    - [3.1 - Sai Perps Nears Launch on Nibiru](#31---sai-perps-nears-launch-on-nibiru)
+    - [3.2 - Onchain Usage Campaigns | Nibiru EVM Points Program (Update)](#32---onchain-usage-campaigns--nibiru-evm-points-program-update)
+  - [4 - Lagrange Point, NibiruBFT, and the Nibiru Execution Engine](#4---lagrange-point-nibirubft-and-the-nibiru-execution-engine)
+    - [4.1 - NibiruBFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, \&](#41---nibirubft---validator-clusters-bls-signatures-multi-lane-blocks-)
+    - [4.2 Nibiru Adaptive Execution: The Next Evolution of PARE](#42-nibiru-adaptive-execution-the-next-evolution-of-pare)
+    - [4.3 MultiVM Architecture: Seamless EVM \& Wasm (and More)](#43-multivm-architecture-seamless-evm--wasm-and-more)
+    - [4.4 Quantum-Resistant Cryptography (QRC)](#44-quantum-resistant-cryptography-qrc)
+    - [4.5 The Road to Nibiru V3](#45-the-road-to-nibiru-v3)
+  - [5 - Why Nibiru Is Betting on Yield, RWAs \& Structured Products to Lead Real Adoption](#5---why-nibiru-is-betting-on-yield-rwas--structured-products-to-lead-real-adoption)
+      - [Real-World Assets have Shown Tangible Progress](#real-world-assets-have-shown-tangible-progress)
+      - [Structured Products](#structured-products)
+  - [6 | Legal Disclosure](#6--legal-disclosure)
 
 #### Legal Terms for this Document
 
@@ -148,60 +159,60 @@ The flagship NFT marketplace on Nibiru, Element aggregates listings, simplifies 
 
 ### 2.3 - App Ecosystem: New Deployments
 
-| **Project** | **Description** | **Status** |
-| --- | --- | --- |
-| [Algebra](http://algebra.finance/) | DEX Engine | Licensed to use their service integrations and tooling on Nibiru |
-| [Band](https://www.bandprotocol.com/) | Cross-chain data oracle platform with real world data and APIs | Launched on Mainnet |
-| [Gelato](https://www.gelato.network/) | Enterprise-grade rollup infrastructure | Deployed on Mainnet |
-| [Element](https://element.market/) | NFT Marketplace | Live on Mainnet |
-| [Friendly](https://www.friendly.market/) | Lending Platform | Live on Testnet |
-| [Hyperlane](https://www.usenexus.org/) | Permissionless interoperability protocol | In Development |
-| [Gamma](https://app.gamma.xyz/discover) |  | In Development |
-| [Merkl](http://merkl.xyz/) | Protocol and platform for streaming incentives onchain | In Development |
-| [ProtoFire](https://protofire.io/) | Smart-contract based multisig wallet. SAFE deployment.  | Launched on Mainnet |
-| [Stargate](https://stargate.finance/) | Fully composable liquidity transport protocol / bridge | Launching USDC, USDT, wETH on Mainnet. |
-| [Supra](https://supra.com/) | Extreme throughput, native oracle services. | Launched on Mainnet |
-| [Unstoppable Domains](https://unstoppabledomains.com/) | Decentralized domain names | Live on Mainnet. 300+ domains minted |
-| [B² Network (uBTC)](https://www.bsquared.network/) | Bitcoin with proof-of-stake rewards from B² Network, an EVM compatible, Bitcoin Layer 2 Network | Will be supported via Hyperlane |
+| **Project**                                            | **Description**                                                                                 | **Status**                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [Algebra](http://algebra.finance/)                     | DEX Engine                                                                                      | Licensed to use their service integrations and tooling on Nibiru |
+| [Band](https://www.bandprotocol.com/)                  | Cross-chain data oracle platform with real world data and APIs                                  | Launched on Mainnet                                              |
+| [Gelato](https://www.gelato.network/)                  | Enterprise-grade rollup infrastructure                                                          | Deployed on Mainnet                                              |
+| [Element](https://element.market/)                     | NFT Marketplace                                                                                 | Live on Mainnet                                                  |
+| [Friendly](https://www.friendly.market/)               | Lending Platform                                                                                | Live on Testnet                                                  |
+| [Hyperlane](https://www.usenexus.org/)                 | Permissionless interoperability protocol                                                        | In Development                                                   |
+| [Gamma](https://app.gamma.xyz/discover)                |                                                                                                 | In Development                                                   |
+| [Merkl](http://merkl.xyz/)                             | Protocol and platform for streaming incentives onchain                                          | In Development                                                   |
+| [ProtoFire](https://protofire.io/)                     | Smart-contract based multisig wallet. SAFE deployment.                                          | Launched on Mainnet                                              |
+| [Stargate](https://stargate.finance/)                  | Fully composable liquidity transport protocol / bridge                                          | Launching USDC, USDT, wETH on Mainnet.                           |
+| [Supra](https://supra.com/)                            | Extreme throughput, native oracle services.                                                     | Launched on Mainnet                                              |
+| [Unstoppable Domains](https://unstoppabledomains.com/) | Decentralized domain names                                                                      | Live on Mainnet. 300+ domains minted                             |
+| [B² Network (uBTC)](https://www.bsquared.network/)     | Bitcoin with proof-of-stake rewards from B² Network, an EVM compatible, Bitcoin Layer 2 Network | Will be supported via Hyperlane                                  |
 
 ### 2.4 - App Ecosystem: Existing App Highlights
 
-| **Project** | **Description** | **Status** |
-| --- | --- | --- |
-| [Abracadabra](https://abracadabra.money/) | Lending/Leveraged Yield Farming Product Suite | Passed [Abracadabra Improvement Proposal (AIP-62)](https://forum.abracadabra.money/t/rfc-deploy-mimswap-and-abracadabra-on-nibiru-chain/4819/3) |
-| [Astrovault](https://astrovault.io/) | Cross-Chain Value Capture Spot DEX | Launched on Mainnet, $116k in liquidity |
-| [Aviatrix](https://www.aviatrix.xyz/) | Aviation-Themed Crash Game | NIBI supported for wagering |
-| [Balanced Network](https://balanced.network/) | Cross-Chain Swaps and RWA Backed Stablecoin Platform | Working on Mainnet Beta |
-| [Bima](https://bima.money/) | Liquid Staking Bitcoin | Working on Mainnet Beta |
-| [BRKT](https://www.brkt.gg/) | Binary & Bracket-Style Prediction Market | Live on Mainnet, Markets TBD |
-| [DTrinity](https://dtrinity.org/) | Subsidized Borrowing and Stablecoin | In Development |
-| [Eris Protocol (stNIBI)](https://www.erisprotocol.com/) | Liquid Staking Platform and Slow Burn Arbitrage Protocol. | Live on Mainnet, $800k in TVL |
-| [Euclid Protocol](https://www.euclidprotocol.io/) | Unified Liquidity Layer using Virtual Routing and Forwarding (VRF) | Live on Testnet |
-| [Every Finance](https://www.every.finance/) | Managed funds, volatility targeting products and index funds | In Development |
-| [Galaxy Exchange](https://galaxy.exchange/) / [Swing](https://swing.xyz/) | Cross-Chain Bridging & Swap Protocol | Live on Mainnet <br><br>Bridging NIBI earns points as part of Swing Points Program. |
-| [Gemach AI](https://gemach.io/) | DeFAI agent | Live on Mainnet. Supports several dapps and swapping. |
-| [Gemach Lend](https://gemach.io/) | Lending Platform | In Development |
-| [GBot](https://gemach.io/) | Telegram wallet/sniper bot | In Development |
-| [HiYield](https://www.hiyield.xyz/) | Tokenized Treasury Bills | Live on Testnet |
-| [Ichi](https://ichi.org/) | Automated Liquidity Strategies for DeFi Yield | Partnership Signed. In Development |
-| [LayerBank](https://layerbank.finance/) | EVM-based Cross-Chain Lending Platform | In Development |
-| [LayerZero](https://layerzero.network/) | Omnichain Interoperability Protocol | Launched on Mainnet |
-| [MIMSwap](https://app.abracadabra.money/#/pools) | Stableswap AMM in the Abracadabra Ecosystem | [Proposal (AIP-62)](https://forum.abracadabra.money/t/rfc-deploy-mimswap-and-abracadabra-on-nibiru-chain/4819/3) Passed. In Development |
-| [Nebula](https://nebulalending.io/) | Lending Platform | Live on Testnet |
-| [Oku Trade](https://oku.trade/) | DEX Aggregator / Uniswap V3 Deployer | Live on Testnet with native Uniswap V3 contracts. Mainnet Ready. |
-| [OmniPump](https://www.omnipump.io/) | Launchpad for Fair Launches and Memecoins | Launched on Mainnet |
-| [OmniSwap](http://omniswap.ai/) | AMM DEX | Launched on Mainnet |
-| [OpenEden](https://openeden.com/tbill) | Tokenized T-Bills | Will be available via LayerZero |
-| [OpenMark](https://x.com/OpenMarkNFT) | NFT Marketplace | Launched on Mainnet |
-| [PRDT](https://prdt.finance/) | Fast Paced Prediction Market | Live on Testnet |
-| [Routescan Explorer](https://routescan.io/) | EVM Explorer built by the team powering the Explorers for Avalanche and Optimism | Launched EVM Testnet Explorer and EVM Mainnet Explorer |
-| [Sai](https://sai.fun/) | Competitive perpetual futures DEX enabling the creation of markets on any asset | Contracts on testnet. App development soon to reach mainnet in early Q2. |
-| [SilverSwap](https://silverswap.io/) | Uniswap V4-based Spot DEX | Deployed contracts on mainnet. Soon to launch app. |
-| [Swify](https://x.com/SwifyFoundation) | Concentrated Liquidity Spot DEX | Live on Testnet. Mainnet Ready |
-| [Syrup](https://syrup.fi/) | Tokenized Private Credit | Will be available via LayerZero |
-| [TanX](https://tanx.fi/) | Non-Custodial Orderbook Spot DEX | In Development |
-| [Virtual Labs (VDEX)](https://virtuallabs.network/) | Perps Platform | In Development |
-| [Via Labs](https://vialabs.io/) | Bridged USDC | Launched on Mainnet |
+| **Project**                                                               | **Description**                                                                  | **Status**                                                                                                                                      |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Abracadabra](https://abracadabra.money/)                                 | Lending/Leveraged Yield Farming Product Suite                                    | Passed [Abracadabra Improvement Proposal (AIP-62)](https://forum.abracadabra.money/t/rfc-deploy-mimswap-and-abracadabra-on-nibiru-chain/4819/3) |
+| [Astrovault](https://astrovault.io/)                                      | Cross-Chain Value Capture Spot DEX                                               | Launched on Mainnet, $116k in liquidity                                                                                                         |
+| [Aviatrix](https://www.aviatrix.xyz/)                                     | Aviation-Themed Crash Game                                                       | NIBI supported for wagering                                                                                                                     |
+| [Balanced Network](https://balanced.network/)                             | Cross-Chain Swaps and RWA Backed Stablecoin Platform                             | Working on Mainnet Beta                                                                                                                         |
+| [Bima](https://bima.money/)                                               | Liquid Staking Bitcoin                                                           | Working on Mainnet Beta                                                                                                                         |
+| [BRKT](https://www.brkt.gg/)                                              | Binary & Bracket-Style Prediction Market                                         | Live on Mainnet, Markets TBD                                                                                                                    |
+| [DTrinity](https://dtrinity.org/)                                         | Subsidized Borrowing and Stablecoin                                              | In Development                                                                                                                                  |
+| [Eris Protocol (stNIBI)](https://www.erisprotocol.com/)                   | Liquid Staking Platform and Slow Burn Arbitrage Protocol.                        | Live on Mainnet, $800k in TVL                                                                                                                   |
+| [Euclid Protocol](https://www.euclidprotocol.io/)                         | Unified Liquidity Layer using Virtual Routing and Forwarding (VRF)               | Live on Testnet                                                                                                                                 |
+| [Every Finance](https://www.every.finance/)                               | Managed funds, volatility targeting products and index funds                     | In Development                                                                                                                                  |
+| [Galaxy Exchange](https://galaxy.exchange/) / [Swing](https://swing.xyz/) | Cross-Chain Bridging & Swap Protocol                                             | Live on Mainnet <br><br>Bridging NIBI earns points as part of Swing Points Program.                                                             |
+| [Gemach AI](https://gemach.io/)                                           | DeFAI agent                                                                      | Live on Mainnet. Supports several dapps and swapping.                                                                                           |
+| [Gemach Lend](https://gemach.io/)                                         | Lending Platform                                                                 | In Development                                                                                                                                  |
+| [GBot](https://gemach.io/)                                                | Telegram wallet/sniper bot                                                       | In Development                                                                                                                                  |
+| [HiYield](https://www.hiyield.xyz/)                                       | Tokenized Treasury Bills                                                         | Live on Testnet                                                                                                                                 |
+| [Ichi](https://ichi.org/)                                                 | Automated Liquidity Strategies for DeFi Yield                                    | Partnership Signed. In Development                                                                                                              |
+| [LayerBank](https://layerbank.finance/)                                   | EVM-based Cross-Chain Lending Platform                                           | In Development                                                                                                                                  |
+| [LayerZero](https://layerzero.network/)                                   | Omnichain Interoperability Protocol                                              | Launched on Mainnet                                                                                                                             |
+| [MIMSwap](https://app.abracadabra.money/#/pools)                          | Stableswap AMM in the Abracadabra Ecosystem                                      | [Proposal (AIP-62)](https://forum.abracadabra.money/t/rfc-deploy-mimswap-and-abracadabra-on-nibiru-chain/4819/3) Passed. In Development         |
+| [Nebula](https://nebulalending.io/)                                       | Lending Platform                                                                 | Live on Testnet                                                                                                                                 |
+| [Oku Trade](https://oku.trade/)                                           | DEX Aggregator / Uniswap V3 Deployer                                             | Live on Testnet with native Uniswap V3 contracts. Mainnet Ready.                                                                                |
+| [OmniPump](https://www.omnipump.io/)                                      | Launchpad for Fair Launches and Memecoins                                        | Launched on Mainnet                                                                                                                             |
+| [OmniSwap](http://omniswap.ai/)                                           | AMM DEX                                                                          | Launched on Mainnet                                                                                                                             |
+| [OpenEden](https://openeden.com/tbill)                                    | Tokenized T-Bills                                                                | Will be available via LayerZero                                                                                                                 |
+| [OpenMark](https://x.com/OpenMarkNFT)                                     | NFT Marketplace                                                                  | Launched on Mainnet                                                                                                                             |
+| [PRDT](https://prdt.finance/)                                             | Fast Paced Prediction Market                                                     | Live on Testnet                                                                                                                                 |
+| [Routescan Explorer](https://routescan.io/)                               | EVM Explorer built by the team powering the Explorers for Avalanche and Optimism | Launched EVM Testnet Explorer and EVM Mainnet Explorer                                                                                          |
+| [Sai](https://sai.fun/)                                                   | Competitive perpetual futures DEX enabling the creation of markets on any asset  | Contracts on testnet. App development soon to reach mainnet in early Q2.                                                                        |
+| [SilverSwap](https://silverswap.io/)                                      | Uniswap V4-based Spot DEX                                                        | Deployed contracts on mainnet. Soon to launch app.                                                                                              |
+| [Swify](https://x.com/SwifyFoundation)                                    | Concentrated Liquidity Spot DEX                                                  | Live on Testnet. Mainnet Ready                                                                                                                  |
+| [Syrup](https://syrup.fi/)                                                | Tokenized Private Credit                                                         | Will be available via LayerZero                                                                                                                 |
+| [TanX](https://tanx.fi/)                                                  | Non-Custodial Orderbook Spot DEX                                                 | In Development                                                                                                                                  |
+| [Virtual Labs (VDEX)](https://virtuallabs.network/)                       | Perps Platform                                                                   | In Development                                                                                                                                  |
+| [Via Labs](https://vialabs.io/)                                           | Bridged USDC                                                                     | Launched on Mainnet                                                                                                                             |
 
 ## 3 | Near-Term Execution Plans
 

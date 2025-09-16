@@ -6,7 +6,7 @@ order: 4
 
 A brief sneak peek at onging and upcoming improvements to Nibiru. {synopsis}
 
-<img style="border-radius: 1.5rem;" src="../../img/2024-roadmap-nibiru.png">
+<img style="border-radius: 1.5rem;" src="../../img/2025-roadmap-nibiru.png">
 
 **Table of Contents**
 
@@ -21,7 +21,7 @@ environment while enjoying the benefits of improved scalability, faster time to
 finality, interblockchain composability (IBC), and modularity with Wasm smart
 contracts—all with a lower barrier to entry—is a major plus.
 
-EVM public mainnet will come to Nibiru Chain in 2025.  Nibiru will enable full EVM
+EVM public mainnet is now live (2025).  Nibiru enables full EVM
 compatibility by adapting the Ethereum protocol logic from Geth ([Go-Ethereum](https://github.com/ethereum/go-ethereum/blob/b946b7a13b749c99979e312c83dce34cac8dd7b1/core/types/transaction.go#L43-L48)) to make Nibiru's full nodes operate as execution environments for both Wasm and the EVM simultaneously.
 
 <!-- In this way, Nibiru helps alleviate what's commonly referred to as "the -->

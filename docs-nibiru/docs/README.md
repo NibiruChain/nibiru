@@ -7,8 +7,8 @@ description: "Whitepaper and product documentation for Nibiru, a blazingly fast 
 # Nibiru
 
 Nibiru is a breakthrough L1 blockchain and smart contract ecosystem
-providing superior throughput and unparalleled security. Nibiru  aims to be the
-most **developer-friendly and user-friendly** smart contract platform in Web3. 
+providing superior throughput and unparalleled security. Nibiru aims to be the
+most **developer-friendly and user-friendly** smart contract platform in Web3.
 
 <!--
 "If there are two evils in this world, they're centralization and complexity." — George Hotz
@@ -113,8 +113,8 @@ production-grade smart contracts.
   <HeroBoxes :boxes="boxesEnd" />
 </template>
 
-<a href="./ecosystem/future/">
-<img style="border-radius: 1.5rem;" src="./img/2024-roadmap-nibiru.png">
+<a href="./future/">
+<img style="border-radius: 1.5rem;" src="./img/2025-roadmap-nibiru.png">
 </a>
 
 ## Nibiru Ecosystem: Featured Apps
@@ -128,13 +128,13 @@ Explore a more comprehensive set of projects building on Nibiru in our [Ecosyste
   completely on-chain, completely non-custodially, and with minimal gas fees.
 
 - [**Astrovault**](https://nibiru.fi/ecosystem/apps/astrovault): A unique
-exchange prioritizing efficiency, low-friction trading, and rewards.
+  exchange prioritizing efficiency, low-friction trading, and rewards.
 
 - [**Nibiru Oracle**](./ecosystem/oracle/index.md): Nibiru accurately prices assets
   using a native, system of decentralized oracles. Both external APIs and smart
   contracts can tap into the Oracle Module for secure, low-latency feeds.
 
-<!-- 
+<!--
 - [**Coded Estate**](https://codedestate.com/):  Coded Estate is about bringing
   homes on chain, rentals on chain, and democratizing access into the real estate
   system.  Coded Estate is reimagining ownership, decentralized allowing
@@ -169,7 +169,6 @@ Validators stake **NIBI**, the protocol's native token used for gas,
 governance, and "mining". Users can delegate NIBI to validators that record and
 verify transactions in exchange for rewards.
 -->
-
 
 ## Contribution Guidelines
 
