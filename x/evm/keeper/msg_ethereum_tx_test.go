@@ -45,14 +45,15 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(err)
 				s.T().Log("create eth tx msg, increase gas limit")
 				gasLimit := big.NewInt(1_500_000)
-				args := evmtest.ArgsCreateContract{
-					EthAcc:        ethAcc,
-					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
-					GasPrice:      big.NewInt(1),
-					Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
-					GasLimit:      gasLimit,
-				}
-				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
+				ethTxMsg, err := evmtest.NewMsgEthereumTx(evmtest.ArgsEthTx{
+					CreateContract: &evmtest.ArgsCreateContract{
+						EthAcc:        ethAcc,
+						EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
+						GasPrice:      big.NewInt(1),
+						Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+						GasLimit:      gasLimit,
+					},
+				})
 				s.Require().NoError(err)
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
@@ -85,25 +86,25 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 
 				s.T().Log("create eth tx msg, default create contract gas")
 				gasLimit := gethparams.TxGasContractCreation
-				args := evmtest.ArgsCreateContract{
-					EthAcc:        ethAcc,
-					EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
-					GasPrice:      big.NewInt(1),
-					Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
-				}
-				ethTxMsg, err := evmtest.CreateContractMsgEthereumTx(args)
+				ethTxMsg, err := evmtest.NewMsgEthereumTx(evmtest.ArgsEthTx{
+					CreateContract: &evmtest.ArgsCreateContract{
+						EthAcc:        ethAcc,
+						EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
+						GasPrice:      big.NewInt(1),
+						Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+					},
+				})
+				s.Require().NotNilf(ethTxMsg, "err: %v", err)
 				s.NoError(err)
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
 				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
 				s.Require().ErrorContains(
-					err,
-					core.ErrIntrinsicGas.Error(),
-					"resp: %s\nblock header: %s",
-					resp,
-					deps.Ctx.BlockHeader().ProposerAddress,
+					err, core.ErrIntrinsicGas.Error(),
+					"resp: %+v", resp,
 				)
+				s.Require().Nilf(resp, "err: %v", err)
 			},
 		},
 	}
@@ -137,16 +138,18 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 
 	gasLimit := big.NewInt(1000_000)
-	args := evmtest.ArgsExecuteContract{
-		EthAcc:          ethAcc,
-		EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
-		GasPrice:        big.NewInt(1),
-		Nonce:           deps.NewStateDB().GetNonce(ethAcc.EthAddr),
-		GasLimit:        gasLimit,
-		ContractAddress: &contractAddr,
-		Data:            input,
+	argsEthTx := evmtest.ArgsEthTx{
+		ExecuteContract: &evmtest.ArgsExecuteContract{
+			EthAcc:          ethAcc,
+			EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
+			GasPrice:        big.NewInt(1),
+			Nonce:           deps.NewStateDB().GetNonce(ethAcc.EthAddr),
+			GasLimit:        gasLimit,
+			ContractAddress: &contractAddr,
+			Data:            input,
+		},
 	}
-	ethTxMsg, err := evmtest.ExecuteContractMsgEthereumTx(args)
+	ethTxMsg, err := evmtest.NewMsgEthereumTx(argsEthTx)
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())

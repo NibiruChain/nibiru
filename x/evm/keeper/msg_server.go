@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package keeper
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"context"
@@ -66,18 +67,33 @@ func (k *Keeper) EthereumTx(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err = k.ApplyEvmMsg(
+
+	var applyErr error
+	evmResp, applyErr = k.ApplyEvmMsg(
 		ctx,
 		*evmMsg,
 		evmObj,
 		evm.COMMIT_ETH_TX, /*commit*/
 		txConfig.TxHash,
 	)
-	if evmResp != nil {
-		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
+
+	if applyErr != nil {
+		if evmResp == nil {
+			// Consensus error - return immediately, skipping the
+			// "evm.SafeConsumeGas" call we do for
+			ctx.WithLastErrApplyEvmMsg(applyErr)
+			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
+		} else {
+			// Execution error - log but continue processing
+			ctx.WithLastErrApplyEvmMsg(applyErr)
+		}
 	}
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "error applying ethereum core message")
+
+	if evmResp != nil {
+		gasErr := evm.SafeConsumeGas(ctx, evmResp.GasUsed, "execute EthereumTx")
+		if gasErr != nil {
+			return nil, gasErr
+		}
 	}
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
@@ -105,6 +121,13 @@ func (k *Keeper) EthereumTx(
 
 	k.EvmState.BlockTxIndex.Set(ctx, uint64(txConfig.TxIndex)+1)
 
+	if evmResp.Failed() && ctx.LastErrApplyEvmMsg() != nil {
+		evmResp.VmError = fmt.Sprintf(
+			"%s: %s",
+			evmResp.VmError,
+			ctx.LastErrApplyEvmMsg(),
+		)
+	}
 	return evmResp, nil
 }
 
@@ -328,10 +351,9 @@ func (k *Keeper) ApplyEvmMsg(
 	// don't go through Ante Handler.
 	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
-		return nil, sdkioerrors.Wrapf(
-			core.ErrIntrinsicGas,
-			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
-			gasRemaining, intrinsicGasCost,
+		return nil, fmt.Errorf(
+			"ApplyEvmMsg: %s: %s: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
+			vm.ErrOutOfGas, core.ErrIntrinsicGas, gasRemaining, intrinsicGasCost,
 		)
 	}
 	if tracer != nil && tracer.OnGasChange != nil {
@@ -349,6 +371,11 @@ func (k *Keeper) ApplyEvmMsg(
 		}
 	}
 
+	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
+	}
+
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
@@ -360,11 +387,6 @@ func (k *Keeper) ApplyEvmMsg(
 		evm.PRECOMPILE_ADDRS,
 		msg.AccessList, // accessList
 	)
-
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
-	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
-	}
 
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.

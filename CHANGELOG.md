@@ -47,6 +47,10 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+- [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
+
+## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
+
 - [#2345](https://github.com/NibiruChain/nibiru/pull/2345) - feat(evm): add
 "eth.evm.v1.MsgConvertEvmToCoin" tx for ERC20 to bank coin conversions with a
 non-Ethereum transaction. This change introduces new message types, CLI commands,
