@@ -1,0 +1,20 @@
+# Configuration Schema: https://developers.google.com/gemini-code-assist/docs/customize-gemini-behavior-github#configuration-schema
+
+have_fun: true
+# ignore_patterns: A list of glob patterns for files and directories that Gemini
+# Code Assist should ignore. Files matching any pattern in this list will be
+# skipped during interactions. [Glob
+# patterns](https://code.visualstudio.com/docs/editor/glob-patterns)
+ignore_patterns: ["**/*.pb.go", "x/evm/embeds/abi/*", "api/*", "node_modules"]
+code_review:
+  disable: false
+  # comment_severity_threshold: enum{ LOW, MEDIUM, HIGH, CRITICAL}
+  comment_severity_threshold: MEDIUM
+  # max_review_comments: The maximum number of review comments to consider. Use
+  # -1 for unlimited. Default: -1.
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: false
+    code_review: true
+    include_drafts: true
