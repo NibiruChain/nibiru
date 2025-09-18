@@ -7,10 +7,12 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
@@ -440,7 +442,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20MaliciousName() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 		},
 	)
-	s.Require().ErrorContains(err, "gas required exceeds allowance")
+	s.Require().ErrorContains(err, "gas required exceeds gas limit")
 }
 
 // TestFunTokenFromERC20MaliciousTransfer creates a funtoken from a contract
@@ -497,7 +499,7 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
-	s.Require().ErrorContains(err, "gas required exceeds allowance")
+	s.Require().ErrorContains(err, "gas required exceeds gas limit")
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
 	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
@@ -530,7 +532,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		Address: deployResp.ContractAddr,
 	}
 
-	s.T().Log("happy: CreateFunToken for ERC20 with infinite recursion")
+	s.T().Log("happy: CreateFunToken for ERC20 for infinite recursion test")
 	_, err = deps.EvmKeeper.CreateFunToken(
 		sdk.WrapSDKContext(deps.Ctx),
 		&evm.MsgCreateFunToken{
@@ -540,29 +542,58 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	)
 	s.Require().NoError(err)
 
-	s.T().Log("happy: call attackBalance()")
+	s.T().Log("fixed: mitigated attack: calling attackBalance() should fail bounded (63/64)")
 	contractInput, err := embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackBalance")
 	s.Require().NoError(err)
-	evmObj, _ := deps.NewEVM()
-	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
-		evmObj,
-		deps.Sender.EthAddr, /*from*/
-		&erc20Addr.Address,  /*to*/
-		contractInput,
-		10_000_000,
-		evm.COMMIT_ETH_TX, /*commit*/
-		nil,
-	)
+	_, _ = deps.NewEVM()
+	msgEthTx, err := evmtest.NewMsgEthereumTx(evmtest.ArgsEthTx{
+		ExecuteContract: &evmtest.ArgsExecuteContract{
+			EthAcc:          deps.Sender,
+			EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
+			ContractAddress: &erc20Addr.Address,
+			Data:            contractInput,
+			GasPrice:        big.NewInt(1),
+			Nonce:           deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr),
+			GasLimit:        big.NewInt(10_000_000),
+		},
+	})
 	s.Require().NoError(err)
-	s.Require().NotZero(evmResp.GasUsed)
-	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
-	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
 
-	s.T().Log("sad: call attackTransfer()")
+	evmResp, err := deps.EvmKeeper.EthereumTx(deps.GoCtx(), msgEthTx)
+	s.Require().ErrorContains(err, "error refunding leftover gas")
+	s.Require().Nil(evmResp)
+
+	// Fund the fee collector to account for leftover gas in `RefundGas` of the
+	// successful transaction
+	err = testapp.FundModuleAccount(
+		deps.App.BankKeeper,
+		deps.Ctx,
+		auth.FeeCollectorName,
+		sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 5_000_000)),
+	)
+	s.NoError(err)
+
+	evmResp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), msgEthTx)
+	s.Require().NoError(err)
+	s.Require().NotNil(evmResp)
+
+	errMsg := "running EthereumTx should consume gas even if it fails"
+	s.NotZero(evmResp.GasUsed, errMsg)
+	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed(), errMsg)
+	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed, errMsg)
+
+	s.Contains(evmResp.VmError, "execution reverted")
+	s.Contains(evmResp.VmError, "less than intrinsic gas cost")
+	s.ErrorContains(
+		deps.Ctx.LastErrApplyEvmMsg(),
+		"less than intrinsic gas cost",
+		"should fail due to runaway recursion (out of gas or revert)",
+	)
+
+	s.T().Log("fixed: mitigated attack: call attackTransfer() should run out of gas")
 	contractInput, err = embeds.SmartContract_TestInfiniteRecursionERC20.ABI.Pack("attackTransfer")
 	s.Require().NoError(err)
-	evmObj, _ = deps.NewEVM()
+	evmObj, _ := deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContract(
 		deps.Ctx,
 		evmObj,
@@ -574,9 +605,18 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		nil,
 	)
 	s.Require().ErrorContains(err, "execution reverted")
-	s.Require().NotZero(evmResp.GasUsed)
-	s.Require().NotZero(deps.Ctx.GasMeter().GasConsumed())
-	s.Require().Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
+	s.Require().NotNil(evmResp,
+		"error in a nested call gives back a response with evmResp.Failed()",
+	)
+
+	wantErr := "ApplyEvmMsg: out of gas"
+	s.ErrorContains(deps.Ctx.LastErrApplyEvmMsg(), wantErr)
+	s.ErrorContains(err, wantErr)
+	s.Contains(evmResp.VmError, wantErr)
+
+	s.NotZero(evmResp.GasUsed)
+	s.NotZero(deps.Ctx.GasMeter().GasConsumed())
+	s.Greater(deps.Ctx.GasMeter().GasConsumed(), evmResp.GasUsed)
 }
 
 // TestSendERC20WithFee creates a funtoken from a malicious contract which charges a 10% fee on any transfer.

@@ -4,7 +4,6 @@ package keeper
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -28,9 +27,9 @@ const (
 
 // getCallGas returns the gas limit for a call to an ERC20 contract following 63/64 rule (EIP-150)
 // protection against recursive calls ERC20 -> precompile -> ERC20.
-func getCallGasWithLimit(ctx sdk.Context, gasLimit uint64) uint64 {
+func getCallGasLimit63_64(ctx sdk.Context, gasLimit uint64) uint64 {
 	availableGas := ctx.GasMeter().GasRemaining()
-	callGas := availableGas - uint64(math.Floor(float64(availableGas)/64))
+	callGas := availableGas - (availableGas / 64)
 	return min(callGas, gasLimit)
 }
 
@@ -72,7 +71,7 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasWithLimit(ctx, evm.Erc20GasLimitExecute),
+	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
 		evm.COMMIT_READONLY, /*commit*/
 		nil)
 }
@@ -106,7 +105,7 @@ func (e erc20Calls) Transfer(
 		sender,
 		&erc20Contract,
 		contractInput,
-		getCallGasWithLimit(ctx, evm.Erc20GasLimitExecute),
+		getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
@@ -181,7 +180,7 @@ func (e erc20Calls) Burn(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasWithLimit(ctx, evm.Erc20GasLimitExecute),
+	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
 		evm.COMMIT_READONLY, /*commit*/
 		nil)
 }
@@ -221,7 +220,7 @@ func (e erc20Calls) loadERC20String(
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		input,
-		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
@@ -265,7 +264,7 @@ func (e erc20Calls) loadERC20Uint8(
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
 		input,
-		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
@@ -309,7 +308,7 @@ func (e erc20Calls) LoadERC20BigInt(
 		evm.EVM_MODULE_ADDRESS,
 		&contract,
 		input,
-		getCallGasWithLimit(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)

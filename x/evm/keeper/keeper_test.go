@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 
@@ -22,12 +23,17 @@ func TestAll(t *testing.T) {
 	suite.Run(t, new(SuiteFunToken))
 }
 
+var (
+	_ suite.SetupAllSuite = (*Suite)(nil)
+	_ suite.SetupAllSuite = (*SuiteFunToken)(nil)
+)
+
 type Suite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 }
 
 type SuiteFunToken struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 }
 
 // ------------------------------------------------------------
