@@ -19,7 +19,7 @@ func NewAnteHandlerEVM(
 		NewEthSigVerificationDecorator(options.EvmKeeper),
 		NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper),
 		CanTransferDecorator{options.EvmKeeper},
-		NewAnteDecEthGasConsume(options.EvmKeeper, options.MaxTxGasWanted),
+		NewAnteDecEthGasConsume(options.EvmKeeper, options.AccountKeeper, options.MaxTxGasWanted),
 		NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),
 		ante.AnteDecoratorGasWanted{},
 		// emit eth tx hash and index at the very last ante handler.
