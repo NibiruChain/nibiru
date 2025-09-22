@@ -304,6 +304,7 @@ message MsgConvertCoinToEvmResponse {}
 message MsgConvertEvmToCoin {
   // Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
   // This is also the address whose ERC20 balance will be deducted.
+  option (cosmos.msg.v1.signer) = "sender";
   string sender = 1;
 
   // Hexadecimal address of the ERC20 token to be converted and sent
