@@ -1,13 +1,13 @@
 package precompile_test
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -19,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // TestSuite: Runs all the tests in the suite.
@@ -82,18 +83,19 @@ func TestWhoAmI(t *testing.T) {
 	deps := evmtest.NewTestDeps(t.TempDir())
 
 	callWhoAmI := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
-		fmt.Printf("arg: %s", arg)
+		t.Logf("arg: %s", arg)
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("whoAmI", arg)
 		require.NoError(t, err)
 		evmObj, _ := deps.NewEVM()
-		return deps.EvmKeeper.CallContractWithInput(
+		return deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 	}
 
@@ -120,7 +122,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("Create FunToken mapping and ERC20")
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address
 
 	s.Require().NoError(testapp.FundAccount(
@@ -134,14 +136,15 @@ func (s *FuntokenSuite) TestHappyPath() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("bankBalance", deps.Sender.EthAddr, funtoken.BankDenom)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		evmResp, err := deps.EvmKeeper.CallContractWithInput(
+		evmResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -168,22 +171,23 @@ func (s *FuntokenSuite) TestHappyPath() {
 		evmtest.AssertERC20BalanceEqualWithDescription(
 			s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(69_420), "expect 69420 balance",
 		)
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
-		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, deps.Sender.EthAddr, big.NewInt(0), "expect the sender to have zero balance")
+		evmtest.AssertBankBalanceEqualWithDescription(s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect x/evm module to escrow all tokens")
 	})
 
 	s.Run("Mint tokens - Fail from non-owner", func() {
 		contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20,
-			false,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
@@ -191,18 +195,24 @@ func (s *FuntokenSuite) TestHappyPath() {
 	s.Run("IFunToken.sendToBank()", func() {
 		randomAcc := testutil.AccAddress()
 
-		input, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_sendToBank), erc20, big.NewInt(420), randomAcc.String())
+		input, err := embeds.SmartContract_FunToken.ABI.Pack(
+			string(precompile.FunTokenMethod_sendToBank),
+			erc20,
+			big.NewInt(420),
+			randomAcc.String(),
+		)
 		s.NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			true, /*commit*/
 			input,
-			keeper.Erc20GasLimitExecute,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError)
@@ -214,10 +224,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(0), "expect 0 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
+			s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(randomAcc), big.NewInt(420), "expect 420 balance",
 		)
 		evmtest.AssertBankBalanceEqualWithDescription(
-			s.T(), deps, evm.EVMBankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
+			s.T(), deps, funtoken.BankDenom, evm.EVM_MODULE_ADDRESS, big.NewInt(69_000), "expect 69000 balance",
 		)
 
 		s.T().Log("Parse the response contract addr and response bytes")
@@ -231,18 +241,21 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("IFuntoken.balance", func() {
-		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(string(precompile.FunTokenMethod_balance), deps.Sender.EthAddr, erc20)
+		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
+			string(precompile.FunTokenMethod_balance), deps.Sender.EthAddr, erc20,
+		)
 		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		evmResp, err := deps.EvmKeeper.CallContractWithInput(
+		evmResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
-			false,                               // commit
 			contractInput,
 			keeper.Erc20GasLimitQuery,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err, evmResp)
 
@@ -253,6 +266,106 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.Equal(deps.Sender.EthAddr, bals.Account)
 		s.Zero(bals.BalanceBank.Cmp(big.NewInt(0)))
 		s.Zero(bals.BalanceERC20.Cmp(big.NewInt(69_000)))
+	})
+
+	s.Run("IFunToken.sendToBank() - WNIBI", func() {
+		erc20Wnibi := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi.Address
+		deps.DeployWNIBI(&s.Suite)
+
+		evmtest.BalanceAssertNIBI{
+			Account:      deps.Sender.EthAddr,
+			BalanceBank:  evm.Big0,
+			BalanceERC20: evm.Big0,
+			Description:  "sender should not have any funds yet",
+			EvmObj:       nil,
+		}.Assert(s.T(), deps)
+
+		s.T().Log("fund the sender with WNIBI")
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			sdk.NewCoins(
+				sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(420)),
+			),
+		))
+		depositWei := evm.NativeToWei(big.NewInt(420))
+		contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
+			"deposit",
+		)
+		s.Require().NoError(err, "ABI packing error in WNIBI.deposit")
+
+		evmObj, _ := deps.NewEVM()
+		ethTxResp, err := deps.EvmKeeper.CallContract(
+			deps.Ctx,
+			evmObj,
+			deps.Sender.EthAddr,
+			&erc20Wnibi,
+			contractInput,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
+			depositWei,
+		)
+		s.Require().NoError(err)
+		s.Require().Empty(ethTxResp.VmError)
+
+		evmtest.BalanceAssertNIBI{
+			Account:      deps.Sender.EthAddr,
+			BalanceBank:  evm.Big0,
+			BalanceERC20: depositWei,
+		}.Assert(s.T(), deps)
+
+		// TODO: [feat] Handle WNIBI as a case in the FunToken precompile sendToBank and sendToEvm methods for v2.7.0
+		// https://github.com/NibiruChain/nibiru/issues/2376
+		s.T().Log("sendToBank with WNIBI: unimplemented ")
+		randomAcc := evmtest.NewEthPrivAcc()
+
+		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *statedb.StateDB) {
+			contractInput, err = embeds.SmartContract_FunToken.ABI.Pack(
+				string(precompile.FunTokenMethod_sendToBank),
+				erc20Wnibi,
+				evm.NativeToWei(big.NewInt(69)),
+				randomAcc.EthAddr.Hex(),
+			)
+			s.Require().NoError(err, "ABI packing error in WNIBI.deposit")
+
+			ethTxResp, err = deps.EvmKeeper.CallContract(
+				deps.Ctx,
+				evmObj,
+				deps.Sender.EthAddr,
+				&precompile.PrecompileAddr_FunToken,
+				contractInput,
+				evm.Erc20GasLimitExecute,
+				evm.COMMIT_ETH_TX, /*commit*/
+				nil,               /*weiValue*/
+			)
+			s.Require().ErrorContains(err, "no FunToken mapping exists for ERC20")
+			// // For later: https://github.com/NibiruChain/nibiru/issues/2376
+			// s.Require().NoError(err)
+			// s.Require().Empty(ethTxResp.VmError)
+		})
+
+		// // For later: https://github.com/NibiruChain/nibiru/issues/2376
+		// evmtest.BalanceAssertNIBI{
+		// 	Account:      deps.Sender.EthAddr,
+		// 	BalanceBank:  evm.Big0,
+		// 	BalanceERC20: evm.NativeToWei(big.NewInt(420 - 69)),
+		// }.Assert(s.T(), deps)
+		// evmtest.BalanceAssertNIBI{
+		// 	Account:      randomAcc.EthAddr,
+		// 	BalanceBank:  big.NewInt(69),
+		// 	BalanceERC20: evm.Big0,
+		// }.Assert(s.T(), deps)
+
+		// s.T().Log("Parse the response contract addr and response bytes")
+		// var sentAmt *big.Int
+		// s.NoError(embeds.SmartContract_FunToken.ABI.UnpackIntoInterface(
+		// 	&sentAmt,
+		// 	string(precompile.FunTokenMethod_sendToBank),
+		// 	ethTxResp.Ret,
+		// ))
+		// s.NotEqual(depositWei.String(), sentAmt.String())
+		// s.Equal(evm.NativeToWei(big.NewInt(69)).String(), sentAmt.String())
 	})
 }
 
@@ -299,14 +412,15 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -321,14 +435,15 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			evm.COMMIT_ETH_TX,                 /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().NotZero(resp.GasUsed)
@@ -343,14 +458,15 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // gasLimit for the entire call
+			evm.COMMIT_ETH_TX,                 /*commit*/
+			nil,
 		)
 		s.Require().ErrorContains(err, "execution reverted")
 		s.Require().NotZero(resp.GasUsed)
@@ -386,14 +502,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		)
 		s.Require().NoError(err)
 
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToEvm VMError")
@@ -432,14 +549,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		)
 		s.Require().NoError(err)
 
-		ethTxResp, err := deps.EvmKeeper.CallContractWithInput(
+		ethTxResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(ethTxResp.VmError, "sendToBank VMError")
@@ -540,14 +658,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Addr,
-			true,
 			contractInput,
-			keeper.Erc20GasLimitExecute,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 
@@ -566,14 +685,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			bob.EthAddr,                         /* from */
 			&precompile.PrecompileAddr_FunToken, /* to */
-			true,                                /* commit */
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, /* gasLimit */
+			evm.COMMIT_ETH_TX,                 /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -598,14 +718,15 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		)
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			alice.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			true,
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
@@ -729,14 +850,15 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 // From address (doesn't matter much for view)
 			&precompile.PrecompileAddr_FunToken, // To the precompile address
-			false,                               // Commit = false (it's a view call)
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm, // Use a reasonable gas limit for queries
+			evm.COMMIT_READONLY,               /*commit*/
+			nil,
 		)
 
 		s.Require().NoError(err, "CallContractWithInput failed")
@@ -761,14 +883,15 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 		s.Require().NoError(err)
 
 		evmObj, _ := deps.NewEVM()
-		resp, err := deps.EvmKeeper.CallContractWithInput(
+		resp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 
 		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
@@ -786,14 +909,15 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 		s.Require().NoError(err) // Packing might succeed even if denom is invalid for SDK
 
 		evmObj, _ := deps.NewEVM()
-		_, err = deps.EvmKeeper.CallContractWithInput(
+		_, err = deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
-			false, // Commit = false
 			contractInput,
 			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 
 		// Expect an error because the Go handler validates the denom

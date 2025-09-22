@@ -484,6 +484,13 @@ type MsgCreateFunToken struct {
 	FromBankDenom string `protobuf:"bytes,2,opt,name=from_bank_denom,json=fromBankDenom,proto3" json:"from_bank_denom,omitempty"`
 	// Sender: Address for the signer of the transaction.
 	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Optional flag to allow the `FunToken` mapping to be created with 0 decimals
+	// in the ERC20 sense. Often times, tokens are meant to behave like money and
+	// be divisible, meaning "decimals = 0" is often a mistake. This field defaults
+	// to false as a safety guard against accidental creation of FunTokens with
+	// missing metadata.
+	// Set this to true if the token is truly intended to have 0 decimals.
+	AllowZeroDecimals bool `protobuf:"varint,4,opt,name=allow_zero_decimals,json=allowZeroDecimals,proto3" json:"allow_zero_decimals,omitempty"`
 }
 
 func (m *MsgCreateFunToken) Reset()         { *m = MsgCreateFunToken{} }
@@ -531,6 +538,13 @@ func (m *MsgCreateFunToken) GetSender() string {
 		return m.Sender
 	}
 	return ""
+}
+
+func (m *MsgCreateFunToken) GetAllowZeroDecimals() bool {
+	if m != nil {
+		return m.AllowZeroDecimals
+	}
+	return false
 }
 
 type MsgCreateFunTokenResponse struct {
@@ -671,6 +685,110 @@ func (m *MsgConvertCoinToEvmResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgConvertCoinToEvmResponse proto.InternalMessageInfo
 
+// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin representation
+type MsgConvertEvmToCoin struct {
+	// Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
+	// This is also the address whose ERC20 balance will be deducted.
+	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Hexadecimal address of the ERC20 token to be converted and sent
+	Erc20Addr github_com_NibiruChain_nibiru_v2_eth.EIP55Addr `protobuf:"bytes,2,opt,name=erc20_addr,json=erc20Addr,proto3,customtype=github.com/NibiruChain/nibiru/v2/eth.EIP55Addr" json:"erc20_addr"`
+	// Amount of ERC20 tokens to convert
+	Amount cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=amount,proto3,customtype=cosmossdk.io/math.Int" json:"amount"`
+	// Recipient address for the bank coins in Ethereum hexadecimal or
+	// nibi-prefixed Bech32 format.
+	//
+	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
+	// because the function that maps between Bech32 and Eth hex addresses is not
+	// bijective for these types of accounts.
+	//
+	// See [bug(evm): nibid q evm account is not symmetric for wasm
+	// addresses](https://github.com/NibiruChain/nibiru/issues/2138)
+	ToAddr string `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
+}
+
+func (m *MsgConvertEvmToCoin) Reset()         { *m = MsgConvertEvmToCoin{} }
+func (m *MsgConvertEvmToCoin) String() string { return proto.CompactTextString(m) }
+func (*MsgConvertEvmToCoin) ProtoMessage()    {}
+func (*MsgConvertEvmToCoin) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{12}
+}
+func (m *MsgConvertEvmToCoin) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgConvertEvmToCoin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgConvertEvmToCoin.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgConvertEvmToCoin) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgConvertEvmToCoin.Merge(m, src)
+}
+func (m *MsgConvertEvmToCoin) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgConvertEvmToCoin) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgConvertEvmToCoin.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgConvertEvmToCoin proto.InternalMessageInfo
+
+func (m *MsgConvertEvmToCoin) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgConvertEvmToCoin) GetToAddr() string {
+	if m != nil {
+		return m.ToAddr
+	}
+	return ""
+}
+
+type MsgConvertEvmToCoinResponse struct {
+}
+
+func (m *MsgConvertEvmToCoinResponse) Reset()         { *m = MsgConvertEvmToCoinResponse{} }
+func (m *MsgConvertEvmToCoinResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgConvertEvmToCoinResponse) ProtoMessage()    {}
+func (*MsgConvertEvmToCoinResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_82a0bfe4f0bab953, []int{13}
+}
+func (m *MsgConvertEvmToCoinResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgConvertEvmToCoinResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgConvertEvmToCoinResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgConvertEvmToCoinResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgConvertEvmToCoinResponse.Merge(m, src)
+}
+func (m *MsgConvertEvmToCoinResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgConvertEvmToCoinResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgConvertEvmToCoinResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgConvertEvmToCoinResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgEthereumTx)(nil), "eth.evm.v1.MsgEthereumTx")
 	proto.RegisterType((*LegacyTx)(nil), "eth.evm.v1.LegacyTx")
@@ -684,6 +802,8 @@ func init() {
 	proto.RegisterType((*MsgCreateFunTokenResponse)(nil), "eth.evm.v1.MsgCreateFunTokenResponse")
 	proto.RegisterType((*MsgConvertCoinToEvm)(nil), "eth.evm.v1.MsgConvertCoinToEvm")
 	proto.RegisterType((*MsgConvertCoinToEvmResponse)(nil), "eth.evm.v1.MsgConvertCoinToEvmResponse")
+	proto.RegisterType((*MsgConvertEvmToCoin)(nil), "eth.evm.v1.MsgConvertEvmToCoin")
+	proto.RegisterType((*MsgConvertEvmToCoinResponse)(nil), "eth.evm.v1.MsgConvertEvmToCoinResponse")
 }
 
 func init() { proto.RegisterFile("eth/evm/v1/tx.proto", fileDescriptor_82a0bfe4f0bab953) }
@@ -797,6 +917,9 @@ type MsgClient interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error)
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
+	// given recipient address as a bank coin.
+	ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error)
 }
 
 type msgClient struct {
@@ -843,6 +966,15 @@ func (c *msgClient) ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEv
 	return out, nil
 }
 
+func (c *msgClient) ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error) {
+	out := new(MsgConvertEvmToCoinResponse)
+	err := c.cc.Invoke(ctx, "/eth.evm.v1.Msg/ConvertEvmToCoin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// EthereumTx defines a method submitting Ethereum transactions.
@@ -859,6 +991,9 @@ type MsgServer interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error)
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
+	// given recipient address as a bank coin.
+	ConvertEvmToCoin(context.Context, *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -876,6 +1011,9 @@ func (*UnimplementedMsgServer) CreateFunToken(ctx context.Context, req *MsgCreat
 }
 func (*UnimplementedMsgServer) ConvertCoinToEvm(ctx context.Context, req *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConvertCoinToEvm not implemented")
+}
+func (*UnimplementedMsgServer) ConvertEvmToCoin(ctx context.Context, req *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConvertEvmToCoin not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -954,6 +1092,24 @@ func _Msg_ConvertCoinToEvm_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ConvertEvmToCoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgConvertEvmToCoin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ConvertEvmToCoin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/eth.evm.v1.Msg/ConvertEvmToCoin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ConvertEvmToCoin(ctx, req.(*MsgConvertEvmToCoin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "eth.evm.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -973,6 +1129,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConvertCoinToEvm",
 			Handler:    _Msg_ConvertCoinToEvm_Handler,
+		},
+		{
+			MethodName: "ConvertEvmToCoin",
+			Handler:    _Msg_ConvertEvmToCoin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1543,6 +1703,16 @@ func (m *MsgCreateFunToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.AllowZeroDecimals {
+		i--
+		if m.AllowZeroDecimals {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.Sender) > 0 {
 		i -= len(m.Sender)
 		copy(dAtA[i:], m.Sender)
@@ -1671,6 +1841,86 @@ func (m *MsgConvertCoinToEvmResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgConvertCoinToEvmResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgConvertEvmToCoin) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgConvertEvmToCoin) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgConvertEvmToCoin) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ToAddr) > 0 {
+		i -= len(m.ToAddr)
+		copy(dAtA[i:], m.ToAddr)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ToAddr)))
+		i--
+		dAtA[i] = 0x22
+	}
+	{
+		size := m.Amount.Size()
+		i -= size
+		if _, err := m.Amount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.Erc20Addr.Size()
+		i -= size
+		if _, err := m.Erc20Addr.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgConvertEvmToCoinResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgConvertEvmToCoinResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgConvertEvmToCoinResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1947,6 +2197,9 @@ func (m *MsgCreateFunToken) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	if m.AllowZeroDecimals {
+		n += 2
+	}
 	return n
 }
 
@@ -1979,6 +2232,36 @@ func (m *MsgConvertCoinToEvm) Size() (n int) {
 }
 
 func (m *MsgConvertCoinToEvmResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgConvertEvmToCoin) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Erc20Addr.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.Amount.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = len(m.ToAddr)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgConvertEvmToCoinResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3859,6 +4142,26 @@ func (m *MsgCreateFunToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Sender = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowZeroDecimals", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.AllowZeroDecimals = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -4139,6 +4442,238 @@ func (m *MsgConvertCoinToEvmResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgConvertCoinToEvmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgConvertEvmToCoin) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgConvertEvmToCoin: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgConvertEvmToCoin: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Addr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Erc20Addr.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ToAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ToAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgConvertEvmToCoinResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgConvertEvmToCoinResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgConvertEvmToCoinResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

@@ -13,13 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
@@ -54,7 +53,7 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileFunToken) Run(
-	evm *vm.EVM,
+	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
 	// Note that we use "trueCaller" here to differentiate between a delegate
 	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
@@ -67,28 +66,25 @@ func (p precompileFunToken) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
+	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
-
-	// Gracefully handles "out of gas"
-	defer HandleOutOfGasPanic(&err)()
 
 	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
 
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, trueCaller, readonly, evm)
+		bz, err = p.sendToBank(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_balance:
-		bz, err = p.balance(startResult, contract, evm)
+		bz, err = p.balance(startResult, contract, evmObj)
 	case FunTokenMethod_bankBalance:
 		bz, err = p.bankBalance(startResult, contract)
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evm)
+		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_bankMsgSend:
 		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
 	case FunTokenMethod_getErc20Address:
@@ -102,7 +98,7 @@ func (p precompileFunToken) Run(
 	// Gas consumed by a local gas meter
 	contract.UseGas(
 		startResult.CacheCtx.GasMeter().GasConsumed(),
-		evm.Config.Tracer,
+		evmObj.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
 	if err != nil {
@@ -159,12 +155,26 @@ func (p precompileFunToken) sendToBank(
 		return nil, err
 	}
 
+	// gotAmount is the actual number of tokens credited to the recipient after
+	// the ERC20 transfer. This may differ from the requested `amount` if the
+	// ERC20 contract charges a fee or reduces the transfer value.
+	//
+	// The Solidity ABI for `sendToBank` expects this return value to be encoded
+	// as a single *big.Int packed into bytes.
+	var gotAmount *big.Int
+
 	erc20, amount, to, err := p.parseArgsSendToBank(args)
 	if err != nil {
 		return nil, ErrInvalidArgs(err)
 	}
 
-	// ERC20 must have FunToken mapping
+	// The "to" argument must be a valid nibi or EVM address
+	toAddr, err := parseToAddr(to)
+	if err != nil {
+		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
+	}
+
+	// ERC20 must have a FunToken mapping with the Bank Coin.
 	funtokens := p.evmKeeper.FunTokens.Collect(
 		ctx, p.evmKeeper.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20),
 	)
@@ -179,14 +189,8 @@ func (p precompileFunToken) sendToBank(
 		return nil, fmt.Errorf("transfer amount must be positive")
 	}
 
-	// The "to" argument must be a valid nibi or EVM address
-	toAddr, err := parseToAddr(to)
-	if err != nil {
-		return nil, fmt.Errorf("recipient address invalid (%s): %w", to, err)
-	}
-
 	// Caller transfers ERC20 to the EVM module account
-	gotAmount, _, err := p.evmKeeper.ERC20().Transfer(
+	gotAmount, _, err = p.evmKeeper.ERC20().Transfer(
 		erc20,                  /*erc20*/
 		caller,                 /*from*/
 		evm.EVM_MODULE_ADDRESS, /*to*/
@@ -196,8 +200,8 @@ func (p precompileFunToken) sendToBank(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error in ERC20.transfer from caller to EVM account: %w: from %s, erc20 %s, amount: %s",
-			err, caller, erc20, amount,
+			"error in ERC20.transfer from caller to EVM account: from %s, erc20 %s, amount: %s: %w",
+			caller, erc20, amount, err,
 		)
 	}
 
@@ -213,10 +217,11 @@ func (p precompileFunToken) sendToBank(
 			return nil, fmt.Errorf("ERC20.Burn: %w", err)
 		}
 	} else {
-		// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
-		// any operation that has the potential to use Bank send methods. This will
-		// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
-		// recorded if wei (NIBI) is transferred.
+		// NOTE: [Security - Nibiru#2095](https://github.com/NibiruChain/nibiru/pull/2095)
+		// The NibiruBankKeeper needs to reference the current [vm.StateDB]
+		// before any operation that has the potential to use Bank send methods.
+		// This will guarantee that [evmkeeper.Keeper.SetAccBalance] journal
+		// changes are recorded if wei (NIBI) is transferred.
 		err = p.evmKeeper.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(coinToSend))
 		if err != nil {
 			return nil, fmt.Errorf("mint failed for module \"%s\" (%s): contract caller %s: %w",
@@ -227,10 +232,11 @@ func (p precompileFunToken) sendToBank(
 
 	// Transfer the bank coin
 	//
-	// NOTE: The NibiruBankKeeper needs to reference the current [vm.StateDB] before
-	// any operation that has the potential to use Bank send methods. This will
-	// guarantee that [evmkeeper.Keeper.SetAccBalance] journal changes are
-	// recorded if wei (NIBI) is transferred.
+	// NOTE: [Security - Nibiru#2095](https://github.com/NibiruChain/nibiru/pull/2095)
+	// The NibiruBankKeeper needs to reference the current [vm.StateDB]
+	// before any operation that has the potential to use Bank send methods.
+	// This will guarantee that [evmkeeper.Keeper.SetAccBalance] journal
+	// changes are recorded if wei (NIBI) is transferred.
 	err = p.evmKeeper.Bank.SendCoinsFromModuleToAccount(
 		ctx,
 		evm.ModuleName,

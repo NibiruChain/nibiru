@@ -11,13 +11,13 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
-type ModuleTestSuite struct{ suite.Suite }
+type Suite struct{ suite.Suite }
 
-func TestModuleTestSuite(t *testing.T) {
-	suite.Run(t, new(ModuleTestSuite))
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *ModuleTestSuite) TestAppModule() {
+func (s *Suite) TestAppModule() {
 	bapp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	appModule := module.NewAppModule(
 		bapp.TokenFactoryKeeper,
@@ -43,12 +43,12 @@ func (s *ModuleTestSuite) TestAppModule() {
 
 		s.T().Log("AppModuleBasic.ValidateGenesis")
 		encCfg := app.MakeEncodingConfig()
-		err = appModule.AppModuleBasic.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
+		err = appModule.ValidateGenesis(cdc, encCfg.TxConfig, jsonBz)
 		s.NoError(err)
 
 		s.T().Log("CLI commands")
-		s.NotNil(appModule.AppModuleBasic.GetTxCmd())
-		s.NotNil(appModule.AppModuleBasic.GetQueryCmd())
+		s.NotNil(appModule.GetTxCmd())
+		s.NotNil(appModule.GetQueryCmd())
 		s.NotEmpty(appModule.QuerierRoute())
 	})
 }

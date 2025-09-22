@@ -338,7 +338,7 @@ NOTE: It's pragmatic to assume that any change prior to v1.0.0 was state machine
 - [#1331](https://github.com/NibiruChain/nibiru/pull/1331) - refactor(perp): create perp v1 type package and module package
 - [#1329](https://github.com/NibiruChain/nibiru/pull/1329) - feat(perp): add PerpKeeperV2 withdraw methods
 - [#1328](https://github.com/NibiruChain/nibiru/pull/1328) - feat(perp): add PerpKeeperV2 swap methods
-- [#1322](https://gitub.com/NibiruChain/nibiru/pull/1322) - build(deps): Bumps github.com/armon/go-metrics from 0.4.0 to 0.4.1.
+- [#1322](https://github.com/NibiruChain/nibiru/pull/1322) - build(deps): Bumps github.com/armon/go-metrics from 0.4.0 to 0.4.1.
 - [#1319](https://github.com/NibiruChain/nibiru/pull/1319) - test: add integration test actions
 - [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(testutil): Use secp256k1 algo for private key generation in common/testutil.
 - [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries.

@@ -44,12 +44,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- 
 NOTE: The brackets around the word "Unreleased" are required to pass the [CI test
 that checks if we updated the changelog. This is a convention from the [keep a
-changelog format](https://keepachangelog.com/en/1.0.0/).  
+changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+- [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
+- [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
+
+## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
+
+- [#2345](https://github.com/NibiruChain/nibiru/pull/2345) - feat(evm): add
+"eth.evm.v1.MsgConvertEvmToCoin" tx for ERC20 to bank coin conversions with a
+non-Ethereum transaction. This change introduces new message types, CLI commands,
+and keeper logic to cover both directions of conversion, including special-case
+handling for NIBI via WNIBI.
+- [#2353](https://github.com/NibiruChain/nibiru/pull/2353) - refactor(oracle): remove dead code from asset registry 
+- [#2371](https://github.com/NibiruChain/nibiru/pull/2371) - feat(evm): fix UnmarshalJSON to accept ASCII hex strings
+- [#2372](https://github.com/NibiruChain/nibiru/pull/2372) - feat(tokenfactory-cli): add CLI commands for set denom functions
+- [#2375](https://github.com/NibiruChain/nibiru/pull/2375) - feat(evm): Inject WNIBI.sol for non-mainnet networks in the v2.7.0 upgrade handler
+- [#2379](https://github.com/NibiruChain/nibiru/pull/2379) - fix(evm): disallow permissionless creation of FunToken mappings when tokens do not already have metadata.
+- [#2381](https://github.com/NibiruChain/nibiru/pull/2381) - feat(evm): Overwrite
+  ERC20 metadata for stNIBI on Nibiru Testnet 2, and make the contract upgradeable.
+
+### Dependencies
+- Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))
+- Bump `pbkdf2` from 3.1.2 to 3.1.3 ([#2356](https://github.com/NibiruChain/nibiru/pull/2356))
+- Bump `sha.js` from 2.4.11 to 2.4.12 ([#2366](https://github.com/NibiruChain/nibiru/pull/2366))
+- Bump `github.com/ulikunitz/xz` from 0.5.11 to 0.5.14 ([#2370](https://github.com/NibiruChain/nibiru/pull/2370))
+- Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2367](https://github.com/NibiruChain/nibiru/pull/2367))
+- Bump `github.com/hashicorp/go-getter` from 1.7.5 to 1.7.9 ([#2364](https://github.com/NibiruChain/nibiru/pull/2364))
+
+## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
+
 - [#2331](https://github.com/NibiruChain/nibiru/pull/2331) - test(evm-e2e): WNIBI tests for deposit, transfer and total supply
-- [#2334](https://gittub.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
+- [#2334](https://github.com/NibiruChain/nibiru/pull/2334) - feat(evm-embeds): Publish new version for `@nibiruchain/solidity@0.0.6`, which updates `NibiruOracleChainLinkLike.sol` to have additional methods used by Aave.
+- [#2340](https://github.com/NibiruChain/nibiru/pull/2340) - fix: evm indexer proper parsing of the start block
+- [#2344](https://github.com/NibiruChain/nibiru/pull/2344) - feat(evm): Add some evm messages into the evm codec.
+- [#2346](https://github.com/NibiruChain/nibiru/pull/2346) - fix(buf-gen-rs): improve Rust proto binding generation script robustness and get it to work with a forked Cosmos-SDK dependency and exit correctly on failure
+- [#2348](https://github.com/NibiruChain/nibiru/pull/2348) - fix(oracle): max expiration a label rather than an invalidation for additional query liveness
+- [#2350](https://github.com/NibiruChain/nibiru/pull/2350) - fix(simapp): sim tests with empty validator set panic
+- [#2352](https://github.com/NibiruChain/nibiru/pull/2352) - chore(token-registry): Add bank coin versions of USDC and USDT from Stargate and LayerZero, and update ErisEvm.sol to fix redeem
+- [#2354](https://github.com/NibiruChain/nibiru/pull/2354) - chore: linter upgrade to v2
+- [#2357](https://github.com/NibiruChain/nibiru/pull/2357) - fix: proper statedb isolation in nibiru bank_extension
+
+### Dependencies
+
+- Bump `form-data` from 4.0.1 to 4.0.4 ([#2347](https://github.com/NibiruChain/nibiru/pull/2347))
+- Bump `golang.org/x/oauth2` from 0.16.0 to 0.27.0 ([#2342](https://github.com/NibiruChain/nibiru/pull/2342))
+- Bump `undici` from 5.28.5 to 5.29.0 ([#2310](https://github.com/NibiruChain/nibiru/pull/2310))
+- Bump `base-x` from 3.0.10 to 3.0.11 ([#2307](https://github.com/NibiruChain/nibiru/pull/2307))
 
 ## [v2.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0) - 2025-06-09
 
@@ -127,7 +170,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - Bump `axios` from 1.7.4 to 1.8.2 ([#2230](https://github.com/NibiruChain/nibiru/pull/2230))
 - Bump `golang.org/x/net` from 0.33.0 to 0.37.0 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
-- chore: upadte golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
+- chore: update golangci-lint version to v1.64.8 ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `[golang.org/x/net](https://github.com/golang/net)` from 0.33.0 to 0.37.0. ([#2233](https://github.com/NibiruChain/nibiru/pull/2233))
 - Bump `github.com/golang/glog` from 1.2.0 to 1.2.4 ([#2182](https://github.com/NibiruChain/nibiru/pull/2182))
 

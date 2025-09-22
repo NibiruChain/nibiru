@@ -14,7 +14,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/params"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -68,7 +67,7 @@ func (k *Keeper) RefundGas(
 // the sender.
 // EIP-3529: refunds are capped to gasUsed / 5
 func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
-	refundAmount := gasUsed / params.RefundQuotientEIP3529
+	refundAmount := gasUsed / gethparams.RefundQuotientEIP3529
 	if refundAmount > availableRefundAmount {
 		// Apply refundAmount counter
 		return availableRefundAmount

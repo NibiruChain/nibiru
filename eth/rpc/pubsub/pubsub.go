@@ -2,10 +2,9 @@
 package pubsub
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
-
-	pkgerrors "github.com/pkg/errors"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
@@ -72,7 +71,7 @@ func (m *memEventBus) AddTopic(name string, src <-chan coretypes.ResultEvent) er
 	m.topicsMux.RUnlock()
 
 	if ok {
-		return pkgerrors.New("topic already registered")
+		return fmt.Errorf("topic already registered")
 	}
 
 	m.topicsMux.Lock()
@@ -101,7 +100,7 @@ func (m *memEventBus) Subscribe(name string) (<-chan coretypes.ResultEvent, Unsu
 	m.topicsMux.RUnlock()
 
 	if !ok {
-		return nil, nil, pkgerrors.Errorf("topic not found: %s", name)
+		return nil, nil, fmt.Errorf("topic not found: %s", name)
 	}
 
 	ch := make(chan coretypes.ResultEvent)

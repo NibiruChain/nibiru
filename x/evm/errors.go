@@ -50,13 +50,15 @@ var (
 
 	// ErrInvalidAccount returns an error if the account is not an EVM compatible account
 	ErrInvalidAccount = sdkioerrors.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
+
+	ErrCanonicalWnibi = "canonical WNIBI address in state is a not a smart contract"
 )
 
 // NewRevertError unpacks the revert return bytes and returns a wrapped error
 // with the return reason.
 func NewRevertError(revertReason []byte) error {
 	if len(revertReason) == 0 {
-		return fmt.Errorf("execution reverted with no reason")
+		return fmt.Errorf("execution reverted")
 	}
 
 	reason, err := abi.UnpackRevert(revertReason)
@@ -72,3 +74,9 @@ func NewRevertError(revertReason []byte) error {
 type RevertError struct {
 	error
 }
+
+// ErrStateDBCommit defines the error message when commit after executing EVM
+// transaction, for example transfer native token to a distribution module
+// account using an evm transaction. Note, the transfer amount cannot be set to
+// 0, otherwise this problem will not be triggered.
+const ErrStateDBCommit = "failed to commit stateDB"

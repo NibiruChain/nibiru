@@ -40,3 +40,10 @@ type StakingKeeper interface {
 	GetHistoricalInfo(ctx context.Context, height int64) (stakingtypes.HistoricalInfo, error)
 	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
 }
+
+type SudoKeeper interface {
+	// CheckPermissions Checks if a contract is contained within the set of sudo
+	// contracts defined in the x/sudo module. These smart contracts are able to
+	// execute certain permissioned functions.
+	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
+}

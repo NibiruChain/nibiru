@@ -16,6 +16,25 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
 
+const (
+	// COMMIT_READONLY: Value to use for "commit" for any EVM queries, tracing,
+	// or other read operations.
+	//
+	// Although counterintuitive, "commit" should be false when we apply multiple
+	// EVM messages to the same `evmObj (*vm.EVM)`. The same VM can be used
+	// for consecutive EVM operations, and "commit" should only occur at the
+	// end when the transaction is successful and will be finalized.
+	COMMIT_READONLY = false
+
+	// COMMIT_ETH_TX: The counterpart to [COMMIT_CALL] used as the value for
+	// "commit" in any Ethereum transaction ("eth.evm.v1.MsgEthereumTx").
+	COMMIT_ETH_TX = true
+
+	// Erc20GasLimitExecute used for transfer, mint and burn.
+	// All must not exceed 200_000
+	Erc20GasLimitExecute uint64 = 200_000
+)
+
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.
 var (
@@ -188,7 +207,7 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 //	Parsed number:  123456789012 * 10^12
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return
-	if weiInt == nil || !(weiInt.Cmp(big.NewInt(0)) > 0) {
+	if weiInt == nil || (weiInt.Cmp(big.NewInt(0)) <= 0) {
 		return weiInt, nil
 	}
 

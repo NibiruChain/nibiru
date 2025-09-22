@@ -2,10 +2,11 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"cosmossdk.io/log"
 
@@ -15,8 +16,13 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
+
+type contextKey string
+
+const SimulationContextKey contextKey = "evm_simulation"
 
 type Keeper struct {
 	cdc codec.BinaryCodec
@@ -39,6 +45,7 @@ type Keeper struct {
 	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
+	sudoKeeper    evm.SudoKeeper
 
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
@@ -106,19 +113,53 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", evm.ModuleName)
 }
 
-// HandleOutOfGasPanic gracefully captures "out of gas" panic and just sets the value to err
-func HandleOutOfGasPanic(err *error, format string) func() {
-	return func() {
-		if r := recover(); r != nil {
-			switch r.(type) {
-			case storetypes.ErrorOutOfGas:
-				*err = vm.ErrOutOfGas
-			default:
-				panic(r)
-			}
-		}
-		if err != nil && *err != nil && format != "" {
-			*err = fmt.Errorf("%s: %w", format, *err)
+// IsSimulation checks if the context is a simulation context.
+func IsSimulation(ctx sdk.Context) bool {
+	if val := ctx.Value(SimulationContextKey); val != nil {
+		if simulation, ok := val.(bool); ok && simulation {
+			return true
 		}
 	}
+	return false
+}
+
+// IsDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
+func IsDeliverTx(ctx sdk.Context) bool {
+	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !IsSimulation(ctx)
+}
+
+func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccount) (err error) {
+	address := gethcommon.HexToAddress(account.Address)
+	accAddress := sdk.AccAddress(address.Bytes())
+	// check that the EVM balance the matches the account balance
+	acc := k.accountKeeper.GetAccount(ctx, accAddress)
+	if acc == nil {
+		err = fmt.Errorf("account not found for address %s", account.Address)
+		return
+	}
+
+	ethAcct, ok := acc.(eth.EthAccountI)
+	if !ok {
+		err = fmt.Errorf("account %s must be an EthAccount interface, got %T",
+			account.Address, acc,
+		)
+		return
+	}
+	code := gethcommon.Hex2Bytes(account.Code)
+	codeHash := crypto.Keccak256Hash(code)
+
+	// we ignore the empty Code hash checking, see ethermint PR#1234
+	if len(account.Code) != 0 && !bytes.Equal(ethAcct.GetCodeHash().Bytes(), codeHash.Bytes()) {
+		err = fmt.Errorf(
+			`the evm state code doesn't match with the codehash: account: "%s" , evm state codehash: "%v", ethAccount codehash: "%v", evm state code: "%s"`,
+			account.Address, codeHash.Hex(), ethAcct.GetCodeHash().Hex(), account.Code)
+		return
+	}
+	k.SetCode(ctx, codeHash.Bytes(), code)
+
+	for _, storage := range account.Storage {
+		k.SetState(ctx, address, gethcommon.HexToHash(storage.Key), gethcommon.HexToHash(storage.Value).Bytes())
+	}
+
+	return nil
 }

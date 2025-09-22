@@ -193,7 +193,7 @@ func NewKeyring(t *testing.T) (
 	algo keyring.SignatureAlgo,
 	nodeDirName string,
 ) {
-	var cdc sdkcodec.Codec = app.MakeEncodingConfig().Codec
+	cdc := app.MakeEncodingConfig().Codec
 	kring = keyring.NewInMemory(cdc)
 	nodeDirName = t.TempDir()
 	algo = hd.Secp256k1

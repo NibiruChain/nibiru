@@ -25,7 +25,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -39,6 +39,8 @@ var (
 	_ ante.GasTx = &MsgEthereumTx{}
 	_ sdk.Msg    = &MsgUpdateParams{}
 	_ sdk.Msg    = &MsgCreateFunToken{}
+	_ sdk.Msg    = &MsgConvertCoinToEvm{}
+	_ sdk.Msg    = &MsgConvertEvmToCoin{}
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
@@ -315,7 +317,7 @@ func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
 		return nil
 	}
 
-	return common.HexToAddress(msg.From).Bytes()
+	return gethcommon.HexToAddress(msg.From).Bytes()
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
@@ -337,11 +339,11 @@ func (msg MsgEthereumTx) AsMessage(
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
-func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (common.Address, error) {
+func (msg *MsgEthereumTx) GetSender(chainID *big.Int) (gethcommon.Address, error) {
 	signer := gethcore.LatestSignerForChainID(chainID)
 	from, err := signer.Sender(msg.AsTransaction())
 	if err != nil {
-		return common.Address{}, err
+		return gethcommon.Address{}, err
 	}
 
 	msg.From = from.Hex()
@@ -419,7 +421,7 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 }
 
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
-func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
+func UnwrapEthereumMsg(tx *sdk.Tx, ethHash gethcommon.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
 		return nil, fmt.Errorf("invalid tx: nil")
 	}
@@ -518,10 +520,20 @@ func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return fmt.Errorf("invalid sender addr")
+		return fmt.Errorf("error in MsgConvertCoinToEvm: invalid sender addr: %w", err)
 	}
-	if m.ToEthAddr.Address.String() == "" || m.ToEthAddr.Size() == 0 {
-		return fmt.Errorf("empty to_eth_addr")
+	if m.ToEthAddr.String() == "" || m.ToEthAddr.Size() == 0 {
+		return fmt.Errorf("error in MsgConvertCoinToEvm: empty to_eth_addr")
+	}
+	if err := m.BankCoin.Validate(); err != nil {
+		return fmt.Errorf("error in MsgConvertCoinToEvm: %w", err)
 	}
 	return nil
+}
+
+// Addrs holds Corresponding nibi-prefixed Bech32 and Ethereum hexadecimal
+// addresses for an account.
+type Addrs struct {
+	Eth    gethcommon.Address
+	Bech32 sdk.AccAddress
 }

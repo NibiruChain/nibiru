@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package keeper
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"context"
@@ -21,10 +22,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
@@ -67,18 +68,33 @@ func (k *Keeper) EthereumTx(
 		k.Bank.StateDB = nil
 	}()
 	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, stateDB)
-	evmResp, err = k.ApplyEvmMsg(
+
+	var applyErr error
+	evmResp, applyErr = k.ApplyEvmMsg(
 		ctx,
 		*evmMsg,
 		evmObj,
-		true, /*commit*/
+		evm.COMMIT_ETH_TX, /*commit*/
 		txConfig.TxHash,
 	)
-	if evmResp != nil {
-		ctx.GasMeter().ConsumeGas(evmResp.GasUsed, "execute ethereum tx")
+
+	if applyErr != nil {
+		if evmResp == nil {
+			// Consensus error - return immediately, skipping the
+			// "evm.SafeConsumeGas" call we do for
+			ctx.WithLastErrApplyEvmMsg(applyErr)
+			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
+		} else {
+			// Execution error - log but continue processing
+			ctx.WithLastErrApplyEvmMsg(applyErr)
+		}
 	}
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "error applying ethereum core message")
+
+	if evmResp != nil {
+		gasErr := evm.SafeConsumeGas(ctx, evmResp.GasUsed, "execute EthereumTx")
+		if gasErr != nil {
+			return nil, gasErr
+		}
 	}
 
 	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
@@ -106,6 +122,13 @@ func (k *Keeper) EthereumTx(
 
 	k.EvmState.BlockTxIndex.Set(ctx, uint64(txConfig.TxIndex)+1)
 
+	if evmResp.Failed() && ctx.LastErrApplyEvmMsg() != nil {
+		evmResp.VmError = fmt.Sprintf(
+			"%s: %s",
+			evmResp.VmError,
+			ctx.LastErrApplyEvmMsg(),
+		)
+	}
 	return evmResp, nil
 }
 
@@ -152,19 +175,19 @@ func (k *Keeper) NewEVM(
 	return evmObj
 }
 
-// GetHashFn implements vm.GetHashFunc for Ethermint. It handles 3 cases:
+// GetHashFn implements [vm.GetHashFunc] for the [vm.EVM] object. It handles 3 cases:
 //  1. The requested height matches the current height from context (and thus same epoch number)
 //  2. The requested height is from a previous height from the same chain epoch
 //  3. The requested height is from a height greater than the latest one
 func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 	return func(height uint64) gethcommon.Hash {
 		h, err := eth.SafeInt64(height)
-		if err != nil {
-			k.Logger(ctx).Error("failed to cast height to int64", "error", err)
-			return gethcommon.Hash{}
-		}
 
 		switch {
+		case err != nil:
+			k.Logger(ctx).Error("failed to cast height to int64", "error", err.Error())
+			return gethcommon.Hash{}
+
 		case ctx.BlockHeight() == h:
 			// Case 1: The requested height matches the one from the context, so
 			// we can retrieve the header hash directly from the context. Note:
@@ -179,7 +202,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			contextBlockHeader := ctx.BlockHeader()
 			header, err := cmttypes.HeaderFromProto(&contextBlockHeader)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 
@@ -199,7 +222,7 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 
 			header, err := cmttypes.HeaderFromProto(&histInfo.Header)
 			if err != nil {
-				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err)
+				k.Logger(ctx).Error("failed to cast tendermint header from proto", "error", err.Error())
 				return gethcommon.Hash{}
 			}
 
@@ -329,10 +352,9 @@ func (k *Keeper) ApplyEvmMsg(
 	// don't go through Ante Handler.
 	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
-		return nil, sdkioerrors.Wrapf(
-			core.ErrIntrinsicGas,
-			"ApplyEvmMsg: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
-			gasRemaining, intrinsicGasCost,
+		return nil, fmt.Errorf(
+			"ApplyEvmMsg: %s: %s: provided msg.Gas (%d) is less than intrinsic gas cost (%d)",
+			vm.ErrOutOfGas, core.ErrIntrinsicGas, gasRemaining, intrinsicGasCost,
 		)
 	}
 	if tracer != nil && tracer.OnGasChange != nil {
@@ -350,6 +372,11 @@ func (k *Keeper) ApplyEvmMsg(
 		}
 	}
 
+	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
+	}
+
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
@@ -361,11 +388,6 @@ func (k *Keeper) ApplyEvmMsg(
 		evm.PRECOMPILE_ADDRS,
 		msg.AccessList, // accessList
 	)
-
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
-	if err != nil {
-		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
-	}
 
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.
@@ -425,7 +447,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		if err := evmStateDB.Commit(); err != nil {
-			return evmResp, sdkioerrors.Wrap(err, "ApplyEvmMsg: failed to commit stateDB")
+			return evmResp, sdkioerrors.Wrapf(err, "ApplyEvmMsg: %s", evm.ErrStateDBCommit)
 		}
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
@@ -443,14 +465,14 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 	} else if cmpSign == 0 {
 		return uint256.NewInt(0), nil
 	} else if cmpSign < 0 {
-		return newWeiInt, fmt.Errorf("Wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
+		return newWeiInt, fmt.Errorf("wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
 	}
 
 	// err if weiInt is too small
 	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
 	if weiInt.Cmp(tenPow12) < 0 {
 		return newWeiInt, fmt.Errorf(
-			"Wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
+			"wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
 	}
 
 	// truncate to highest micronibi amount
@@ -458,7 +480,7 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 		evm.NativeToWei(evm.WeiToNative(weiInt)),
 	)
 	if overflowed {
-		return newWeiInt, fmt.Errorf("Wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
+		return newWeiInt, fmt.Errorf("wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
 	}
 	return newWeiInt, nil
 }
@@ -469,10 +491,25 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 // If the mapping is generated from an ERC20, this tx creates a bank coin to go
 // with it, and if the mapping's generated from a coin, the EVM module
 // deploys an ERC20 contract that for which it will be the owner.
+//
+// ## Mapping an ERC20 Token a Newly Generated Bank Coin
+//
+// When an ERC20 token is used to create a FunToken mapping and corresponding
+// Bank Coin, it must produce valid "bank.Metadata"
+//
+// Constraints:
+//   - The first argument of DenomUnits is required and the official base unit
+//     onchain, meaning the denom must be equivalent to bank.Metadata.Base.
+//   - Coin `bank.Metadata.Display` must be a denom of one of the
+//     `bank.Metadata.DenomUnits`. It is taken by Cosmos-SDK clients like wallets
+//     to be "bank.DenomUnit" client takes the exponent from to display wallet
+//     balances.
+//
+// Decimals for an ERC20 are synonymous to "bank.DenomUnit.Exponent" in what
+// they mean for external clients like wallets.
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
-	var funtoken *evm.FunToken
 	if msg == nil {
 		return nil, common.ErrNilGrpcMsg
 	}
@@ -488,12 +525,21 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
+	var funtoken *evm.FunToken
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
-		funtoken, err = k.createFunTokenFromERC20(ctx, msg.FromErc20.Address)
+		funtoken, err = k.createFunTokenFromERC20(
+			ctx,
+			msg.FromErc20.Address,
+			msg.AllowZeroDecimals,
+		)
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.createFunTokenFromCoin(ctx, msg.FromBankDenom)
+		funtoken, err = k.createFunTokenFromCoin(
+			ctx,
+			msg.FromBankDenom,
+			msg.AllowZeroDecimals,
+		)
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -537,6 +583,17 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 // ConvertCoinToEvm Sends a coin with a valid "FunToken" mapping to the
 // given recipient address ("to_eth_addr") in the corresponding ERC20
 // representation.
+//
+// In Nibiru v2.7.0, one special case was added to this function to handle
+// wrapped NIBI (WNIBI) conversions. How this works is, if the Bank Coin given is
+// NIBI, then WNIBI is treated as the fungible token mapping for the NIBI tokens.
+// This can only happen if WNIBI contract is well-defined (non-empty bytecode at
+// the contract address).
+//
+// If WNIBI is not well-defined, this function falls back to using the "FunToken"
+// mapping if one is present. That cannot happen on mainnet (Eth Chain ID 6900),
+// however it can for local networks and testnets, so we mention it here for
+// completeness.
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
@@ -544,13 +601,24 @@ func (k *Keeper) ConvertCoinToEvm(
 		return nil, common.ErrNilGrpcMsg
 	}
 
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "ConvertCoinToEvm validate basic failed")
+	senderBech32, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: invalid sender addr: %w", err)
+	}
+	if msg.ToEthAddr.String() == "" || msg.ToEthAddr.Size() == 0 {
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: empty to_eth_addr")
+	}
+	if err := msg.BankCoin.Validate(); err != nil {
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: %w", err)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender := sdk.MustAccAddressFromBech32(msg.Sender)
+	if msg.BankCoin.Denom == appconst.BondDenom {
+		return k.convertCoinToEvmForWNIBI(
+			ctx, msg, senderBech32,
+		)
+	}
 
 	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
@@ -564,114 +632,57 @@ func (k *Keeper) ConvertCoinToEvm(
 
 	if fungibleTokenMapping.IsMadeFromCoin {
 		return k.convertCoinToEvmBornCoin(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	} else {
 		return k.convertCoinToEvmBornERC20(
-			ctx, sender, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	}
 }
 
-// Converts Bank Coins for FunToken mapping that was born from a coin
-// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
-// contract and can mint the ERC-20 tokens.
-func (k Keeper) convertCoinToEvmBornCoin(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// 1 | Send Bank Coins to the EVM module
-	err := k.Bank.SendCoinsFromAccountToModule(ctx, sender, evm.ModuleName, sdk.NewCoins(coin))
+// ConvertEvmToCoin Sends an ERC20 token with a valid "FunToken" mapping to the
+// given recipient address as a bank coin.
+func (k *Keeper) ConvertEvmToCoin(
+	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
+) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderBech32, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to send coins to module account")
+		err = fmt.Errorf("invalid sender address: %w", err)
+		return
 	}
+	sender := &evm.Addrs{}
+	sender.Bech32 = senderBech32
+	sender.Eth = eth.NibiruAddrToEthAddr(senderBech32)
 
-	// 2 | Mint ERC20 tokens to the recipient
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", recipient, coin.Amount.BigInt())
-	if err != nil {
-		return nil, err
-	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.Bank.StateDB
-	if stateDB == nil {
-		stateDB = k.NewStateDB(ctx, txConfig)
-	}
-	defer func() {
-		k.Bank.StateDB = nil
-	}()
-
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	evmResp, err := k.CallContractWithInput(
-		ctx,
-		evmObj,
-		evm.EVM_MODULE_ADDRESS,
-		&erc20Addr,
-		true, /*commit*/
-		contractInput,
-		Erc20GasLimitExecute,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if evmResp.Failed() {
-		return nil,
-			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
-	}
-
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Mint event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	toAddrs := &evm.Addrs{}
+	ethAddr, err := eth.NewEIP55AddrFromStr(msg.ToAddr)
 	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
+		// err == nil means this is an Eth addr
+		toAddrs.Eth = ethAddr.Address
+		toAddrs.Bech32 = eth.EthAddrToNibiruAddr(toAddrs.Eth)
+	} else {
+		// Try bech32
+		toAddrs.Bech32, err = sdk.AccAddressFromBech32(msg.ToAddr)
+		if err != nil {
+			err = fmt.Errorf("invalid bech32 or hex address: to_addr=\"%s\": %w", msg.ToAddr, err)
+			return
+		}
+		toAddrs.Eth = eth.NibiruAddrToEthAddr(toAddrs.Bech32)
 	}
 
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
-}
+	if (msg.Erc20Addr.Address == gethcommon.Address{}) {
+		err = fmt.Errorf("empty erc20_addr")
+		return
+	}
 
-// Converts a coin that was originally an ERC20 token, and that was converted to
-// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
-// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
-// the first conversion from ERC-20 to bank coin.
-func (k Keeper) convertCoinToEvmBornERC20(
-	ctx sdk.Context,
-	sender sdk.AccAddress,
-	recipient gethcommon.Address,
-	coin sdk.Coin,
-	funTokenMapping evm.FunToken,
-) (*evm.MsgConvertCoinToEvmResponse, error) {
-	// needs to run first to populate the StateDB on the BankKeeperExtension
+	if msg.Amount.IsNil() || !msg.Amount.IsPositive() {
+		err = fmt.Errorf("amount must be positive: amount=\"%s\"", msg.Amount)
+		return
+	}
+	amount := msg.Amount
+
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
 		stateDB = k.NewStateDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
@@ -680,89 +691,44 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		k.Bank.StateDB = nil
 	}()
 
-	erc20Addr := funTokenMapping.Erc20Addr.Address
-	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
-	if err := k.Bank.SendCoinsFromAccountToModule(
-		ctx,
-		sender,
-		evm.ModuleName,
-		sdk.NewCoins(coin),
-	); err != nil {
-		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
+	erc20 := msg.Erc20Addr
+	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
+	evmParams := k.GetParams(ctx)
+	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
+		_, err = k.ConvertEvmToCoinForWNIBI(
+			ctx, stateDB, erc20, *sender, toAddrs.Bech32,
+			amount,
+			nil, /*evmObj*/
+		)
+	} else {
+		// Find the FunToken mapping for this ERC20
+		funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+		if len(funTokens) != 1 {
+			err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
+			return
+		}
+
+		funtokenMapping := funTokens[0]
+		amountBig := amount.BigInt()
+		if funtokenMapping.IsMadeFromCoin {
+			err = k.convertEvmToCoinForCoinOriginated(
+				ctx, *sender, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		} else {
+			err = k.convertEvmToCoinForERC20Originated(
+				ctx, *sender, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+			)
+		}
 	}
 
-	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
-	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
-	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
-	// in the BC → ERC20 conversion.
-	if err := k.Bank.BurnCoins(ctx, evm.ModuleName, sdk.NewCoins(coin)); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
-	}
-
-	// 2 | EVM sends ERC20 tokens to the "to" account.
-	// This should never fail due to the EVM account lacking ERc20 fund because
-	// the account must have sent the EVM module ERC20 tokens in the mapping
-	// in order to create the coins originally.
-	//
-	// Said another way, if an asset is created as an ERC20 and some amount is
-	// converted to its Bank Coin representation, a balance of the ERC20 is left
-	// inside the EVM module account in order to convert the coins back to
-	// ERC20s.
-	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
 	if err != nil {
-		return nil, err
+		return
 	}
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		To:               &erc20Addr,
-		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
-		Value:            unusedBigInt, // amount
-		GasLimit:         Erc20GasLimitExecute,
-		GasPrice:         unusedBigInt,
-		GasFeeCap:        unusedBigInt,
-		GasTipCap:        unusedBigInt,
-		Data:             contractInput,
-		AccessList:       gethcore.AccessList{},
-		BlobGasFeeCap:    &big.Int{},
-		BlobHashes:       []gethcommon.Hash{},
-		SkipNonceChecks:  true,
-		SkipFromEOACheck: true,
-	}
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
-	_, evmResp, err := k.ERC20().Transfer(
-		erc20Addr,
-		evm.EVM_MODULE_ADDRESS,
-		recipient,
-		coin.Amount.BigInt(),
-		ctx,
-		evmObj,
-	)
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
+	if err = stateDB.Commit(); err != nil {
+		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
-	// Commit the stateDB to the BankKeeperExtension because we don't go through
-	// ApplyEvmMsg at all in this tx.
-	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, "failed to commit stateDB")
-	}
-
-	// Emit event with the actual amount received
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
-		Sender:               sender.String(),
-		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
-		ToEthAddr:            recipient.String(),
-		BankCoin:             coin,
-	})
-
-	// Emit tx logs of Transfer event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
-	}
-
-	return &evm.MsgConvertCoinToEvmResponse{}, nil
+	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

@@ -686,8 +686,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/NibiruChain/collections v0.50.0 h1:zjwZ17G1f/0hoKUeoljIQval0HERF8NmojfQYKEOymw=
 github.com/NibiruChain/collections v0.50.0/go.mod h1:u3NETehzjViSEZLmSjps0Akd8mWVfw3FXSh8lswf5PU=
-github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250506085932-446d68f3e818 h1:UHugC6SXQeWhDIZ1RENb/K+GRphdjXmHEbwrSmu8I/g=
-github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250506085932-446d68f3e818/go.mod h1:gt14Meok2IDCjbDtjwkbUcgVNEpUBDN/4hg9cCUtLgw=
+github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250922051739-24dfb60727ae h1:kOET/52aiM7xCUDh8CT0NB81Db36EqnZEyP8n2hfb8k=
+github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250922051739-24dfb60727ae/go.mod h1:gt14Meok2IDCjbDtjwkbUcgVNEpUBDN/4hg9cCUtLgw=
 github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250506085932-446d68f3e818 h1:Ii2+KML1rQXFPgiVo9iOyAoA0DHkFHp6Il/KkUUE3pk=
 github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250506085932-446d68f3e818/go.mod h1:8DwVTz83/2PSI366FERGbWSH7hL6sB7HbYp8bqksNwM=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3 h1:vWBieiwll6sjQ4OTagJUXwtjw85Crfk3f7kAPik6BD8=

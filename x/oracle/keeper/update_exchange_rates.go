@@ -3,8 +3,6 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/common/omap"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -19,7 +17,6 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 
 	pairVotes := k.getPairVotes(ctx, validatorPerformances, whitelistedPairs)
 
-	k.clearExchangeRates(ctx, pairVotes)
 	k.tallyVotesAndUpdatePrices(ctx, pairVotes, validatorPerformances)
 
 	k.incrementMissCounters(ctx, whitelistedPairs, validatorPerformances)
@@ -93,7 +90,13 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 	}
 }
 
-// getPairVotes returns a map of pairs and votes excluding abstained votes and votes that don't meet the threshold criteria
+// getPairVotes returns a map of pairs and votes excluding abstained votes and
+// votes that don't meet the threshold criteria
+//
+// Returns:
+//   - pairVotes: A filtered collection of valid votes that have passed all
+//     validation criteria. If an asset pair has a value in this map, it is a viable
+//     next value for the module's current exchange rate.
 func (k Keeper) getPairVotes(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
@@ -104,25 +107,6 @@ func (k Keeper) getPairVotes(
 	k.removeInvalidVotes(ctx, pairVotes, whitelistedPairs)
 
 	return pairVotes
-}
-
-// clearExchangeRates removes all exchange rates from the state
-// We remove the price for pair with expired prices or valid votes
-func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
-	params, _ := k.Params.Get(ctx)
-
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		_, isValid := pairVotes[key]
-		previousExchangeRate, _ := k.ExchangeRates.Get(ctx, key)
-		isExpired := previousExchangeRate.CreatedBlock+params.ExpirationBlocks <= uint64(ctx.BlockHeight())
-
-		if isValid || isExpired {
-			err := k.ExchangeRates.Delete(ctx, key)
-			if err != nil {
-				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)
-			}
-		}
-	}
 }
 
 // newValidatorPerformances creates a new map of validators and their performance, excluding validators that are

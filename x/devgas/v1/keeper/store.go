@@ -34,9 +34,9 @@ func NewDevGasStore(
 	primaryKeyEncoder := collections.StringKeyEncoder
 	valueEncoder := collections.ProtoValueEncoder[devgastypes.FeeShare](cdc)
 
-	var namespace collections.Namespace = devgastypes.KeyPrefixFeeShare
-	var namespaceDeployerIdx collections.Namespace = devgastypes.KeyPrefixDeployer
-	var namespaceWithdrawerIdx collections.Namespace = devgastypes.KeyPrefixWithdrawer
+	namespace := devgastypes.KeyPrefixFeeShare
+	namespaceDeployerIdx := devgastypes.KeyPrefixDeployer
+	namespaceWithdrawerIdx := devgastypes.KeyPrefixWithdrawer
 
 	return collections.NewIndexedMap[string, devgastypes.FeeShare](
 		storeKey, namespace, primaryKeyEncoder, valueEncoder,

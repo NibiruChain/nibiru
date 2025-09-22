@@ -18,7 +18,7 @@ func TestFeederDelegation(t *testing.T) {
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.Registry.Pair(denoms.BTC, denoms.USD),
+			Pair:         asset.NewPair(denoms.BTC, denoms.UUSD),
 			ExchangeRate: testExchangeRate,
 		},
 	}
@@ -85,43 +85,43 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
+			Pair:         asset.PAIR_ATOM,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
+			Pair:         asset.PAIR_ETH,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         asset.Registry.Pair(denoms.BTC, denoms.USD),
+			Pair:         asset.NewPair(denoms.BTC, denoms.UUSD),
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.27"),
 		},
 	}
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
-			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
+			Pair:         asset.PAIR_ATOM,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
+			Pair:         asset.PAIR_ETH,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
+			Pair:         asset.PAIR_ETH,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.27"),
 		},
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
 		{
-			Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
+			Pair:         asset.PAIR_ATOM,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.Registry.Pair(denoms.ETH, denoms.USD),
+			Pair:         asset.PAIR_ETH,
 			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
 		},
 		{

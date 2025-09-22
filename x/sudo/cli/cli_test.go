@@ -177,7 +177,7 @@ func (s *TestSuite) TestCmdEditSudoers() {
 		contracts = append(contracts, addr.String())
 	}
 
-	var sender sdk.AccAddress = s.root.addr
+	sender := s.root.addr
 
 	pbMsg := sudotypes.MsgEditSudoers{
 		Action:    "add_contracts",

@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
@@ -21,7 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 func (s *Suite) TestUpgrade() {
@@ -40,9 +40,7 @@ func (s *Suite) TestUpgrade() {
 		}.DefaultBankMetadata()
 
 		// FunToken mapping for stNIBI
-		funtoken = evmtest.CreateFunTokenForBankCoin(
-			deps, originalbankMetadata.Base, &s.Suite,
-		)
+		funtoken evm.FunToken
 
 		// ten holders for testing
 		holders = []gethcommon.Address{
@@ -58,6 +56,65 @@ func (s *Suite) TestUpgrade() {
 			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
 		}
 	)
+
+	{
+		bankDenom := originalbankMetadata.Base
+
+		if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+			s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
+		}
+
+		s.T().Log("Setup: Create a coin in the bank state")
+		bankMetadata := bank.Metadata{
+			DenomUnits: []*bank.DenomUnit{
+				{
+					Denom:    bankDenom,
+					Exponent: 0,
+				},
+			},
+			Base:    bankDenom,
+			Display: bankDenom,
+			Name:    bankDenom,
+			Symbol:  bankDenom,
+		}
+
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+
+		// Give the sender funds for the fee
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx,
+			deps.Sender.NibiruAddr,
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+		))
+
+		s.T().Log("happy: CreateFunToken for the bank coin")
+		createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx),
+			&evm.MsgCreateFunToken{
+				FromBankDenom:     bankDenom,
+				Sender:            deps.Sender.NibiruAddr.String(),
+				AllowZeroDecimals: true,
+			},
+		)
+		s.Require().NoError(err, "bankDenom %s", bankDenom)
+
+		erc20 := createFuntokenResp.FuntokenMapping.Erc20Addr
+		funtoken = evm.FunToken{
+			Erc20Addr:      erc20,
+			BankDenom:      bankDenom,
+			IsMadeFromCoin: true,
+		}
+		s.Equal(funtoken, createFuntokenResp.FuntokenMapping)
+
+		s.T().Log("Expect ERC20 to be deployed")
+		_, err = deps.EvmKeeper.Code(deps.Ctx,
+			&evm.QueryCodeRequest{
+				Address: erc20.String(),
+			},
+		)
+		s.NoError(err)
+	}
 
 	s.T().Log("Adds some tokens in circulation. We'll use these later to create ERC20 holders")
 	s.NoError(
@@ -119,26 +176,28 @@ func (s *Suite) TestUpgrade() {
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
 		s.T().Log("IMPORTANT: Schedule the upgrade")
 		deps.EvmKeeper.Bank.StateDB = nil // IMPORTANT: make sure to clear the StateDB before running the upgrade
-		s.Require().True(deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName))
+		s.Require().True(
+			deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName),
+		)
 
-		beforeEvents := deps.Ctx.EventManager().Events()
-		err := v2_5_0.UpgradeStNibiContractOnMainnet(
+		eventsBeforeUpgrade := deps.Ctx.EventManager().Events()
+		err := v2_5_0.UpgradeStNibiEvmMetadata(
 			&deps.App.PublicKeepers, deps.Ctx, funtoken.Erc20Addr.Address,
 		)
 		s.Require().NoError(err)
-		upgradeEvents := testutil.FilterNewEvents(beforeEvents, deps.Ctx.EventManager().Events())
+		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx.EventManager().Events())
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventContractDeployed)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
-			gogoproto.MessageName(new(tokenfactory.EventSetDenomMetadata)),
+		err = testutil.AssertEventPresent(eventsInUpgrade,
+			gogoproto.MessageName(new(tf.EventSetDenomMetadata)),
 		)
 		s.Require().NoError(err)
 
-		err = testutil.AssertEventPresent(upgradeEvents,
+		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventTxLog)),
 		)
 		s.Require().NoError(err)
@@ -172,14 +231,15 @@ func (s *Suite) TestUpgrade() {
 		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		evmResp, err := deps.EvmKeeper.CallContractWithInput(
+		evmResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
-			false, // commit
 			input,
 			evmkeeper.Erc20GasLimitQuery,
+			evm.COMMIT_READONLY, /*commit*/
+			nil,
 		)
 		s.Require().NoError(err)
 

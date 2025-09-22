@@ -6,8 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ethereum/go-ethereum/core/tracing"
-
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -17,6 +15,7 @@ import (
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
@@ -36,7 +35,7 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileWasm) Run(
-	evm *vm.EVM,
+	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
 	// Note that we use "trueCaller" here to differentiate between a delegate
 	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
@@ -49,13 +48,10 @@ func (p precompileWasm) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
+	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
-
-	// Gracefully handles "out of gas"
-	defer HandleOutOfGasPanic(&err)()
 
 	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
 
@@ -82,7 +78,7 @@ func (p precompileWasm) Run(
 	// meter was initialized....
 	contract.UseGas(
 		startResult.CacheCtx.GasMeter().GasConsumed(),
-		evm.Config.Tracer,
+		evmObj.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
 
@@ -319,12 +315,12 @@ func (p precompileWasm) executeMulti(
 	for i, m := range wasmExecMsgs {
 		wasmContract, e := sdk.AccAddressFromBech32(m.ContractAddr)
 		if e != nil {
-			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: %w", i, e)
 			return
 		}
 		msgArgsCopy := wasm.RawContractMessage(m.MsgArgs)
 		if e := msgArgsCopy.ValidateBasic(); e != nil {
-			err = fmt.Errorf("Execute failed at index %d: error parsing msg args: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: error parsing msg args: %w", i, e)
 			return
 		}
 		var funds sdk.Coins
@@ -336,7 +332,7 @@ func (p precompileWasm) executeMulti(
 		}
 		respBz, e := p.Wasm.Execute(ctx, wasmContract, callerBech32, m.MsgArgs, funds)
 		if e != nil {
-			err = fmt.Errorf("Execute failed at index %d: %w", i, e)
+			err = fmt.Errorf("execute failed at index %d: %w", i, e)
 			return
 		}
 		responses = append(responses, respBz)

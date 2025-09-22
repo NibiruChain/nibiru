@@ -36,6 +36,15 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			genesisTimestamp = time.Unix(appsim.FlagGenesisTimeValue, 0)
 		}
 
+		if len(accs) == 0 {
+			// Fallback to generated accounts if none were passed in
+			// We do this because staking will fail if there are 0 accounts to be
+			// eligible validators, causing a panic during InitChain.
+			//
+			// See https://github.com/NibiruChain/nibiru/issues/2349
+			accs = simtypes.RandomAccounts(r, 3)
+		}
+
 		chainID = config.ChainID
 		switch {
 		case config.ParamsFile != "" && config.GenesisFile != "":
@@ -160,7 +169,11 @@ func AppStateRandomizedFn(
 	)
 	appParams.GetOrGenerate(
 		sims.InitiallyBondedValidators, &numInitiallyBonded, r,
-		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(299) + 1) },
+		func(r *rand.Rand) {
+			// Note that we set numInitiallyBonded to be at least 1, because a chain
+			// with 0 validators is invalid an will panic in InitChain.
+			numInitiallyBonded = max(int64(r.Intn(300)), 1)
+		},
 	)
 
 	if numInitiallyBonded > numAccs {

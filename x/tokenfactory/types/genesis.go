@@ -40,7 +40,7 @@ func (gs GenesisState) Validate() error {
 		if admin := genesisDenom.AuthorityMetadata.Admin; admin != "" {
 			_, err = sdk.AccAddressFromBech32(admin)
 			if err != nil {
-				return fmt.Errorf("%w: %s: admin address (%s): %s",
+				return fmt.Errorf("%s: %s: admin address (%s): %w",
 					ErrInvalidGenesis, ErrInvalidAdmin, admin, err,
 				)
 			}

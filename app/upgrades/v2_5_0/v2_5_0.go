@@ -19,6 +19,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -43,9 +44,10 @@ var Upgrade = upgrades.Upgrade{
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
 			ctx := sdk.UnwrapSDKContext(c)
-			err := UpgradeStNibiContractOnMainnet(nibiru, ctx, MAINNET_STNIBI_ADDR)
+			err := UpgradeStNibiEvmMetadata(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
+
 			if err != nil {
-				panic(fmt.Errorf("v2.5.0 upgrade failure: %w", err))
+				return fromVM, fmt.Errorf("v2.5.0 upgrade failure: %w", err)
 			}
 
 			return mm.RunMigrations(ctx, cfg, fromVM)
@@ -54,10 +56,7 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
 
-// MAINNET_STNIBI_ADDR is the (real) hex address of stNIBI on mainnet.
-var MAINNET_STNIBI_ADDR = gethcommon.HexToAddress("0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b")
-
-func UpgradeStNibiContractOnMainnet(
+func UpgradeStNibiEvmMetadata(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 	// erc20Addr is the hex address of stNIBI on mainnet
@@ -161,14 +160,18 @@ func UpgradeStNibiContractOnMainnet(
 	}()
 	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
 
-	evmResp, err := keepers.EvmKeeper.CallContractWithInput(
-		ctx, evmObj, evmMsg.From, nil, true /*commit*/, contractInput,
+	evmResp, err := keepers.EvmKeeper.CallContract(
+		ctx, evmObj, evmMsg.From, nil, contractInput,
 		evmkeeper.Erc20GasLimitDeploy,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to deploy ERC20 contract: %w", err)
 	} else if len(evmResp.VmError) > 0 {
 		return fmt.Errorf("VM Error in deploy ERC20: %s", evmResp.VmError)
+	} else if err := stateDB.Commit(); err != nil {
+		return fmt.Errorf("%s: %w", evm.ErrStateDBCommit, err)
 	}
 
 	evmLogs = append(evmLogs, evmResp.Logs...)
@@ -185,7 +188,7 @@ func UpgradeStNibiContractOnMainnet(
 	// account's bytecode hash
 	// -------------------------------------------------------------------------
 	fmt.Println("old originalErc20Account", originalErc20Account)
-	fmt.Println("old code hash", originalErc20Account.CodeHash)
+	fmt.Println("old code hash", string(originalErc20Account.CodeHash))
 	fmt.Println("overwriting bytecode hash")
 	newErc20Acc := keepers.EvmKeeper.GetAccount(ctx, newErc20Addr)
 	originalErc20Account.CodeHash = newErc20Acc.CodeHash
@@ -193,7 +196,7 @@ func UpgradeStNibiContractOnMainnet(
 	if err != nil {
 		return fmt.Errorf("overwrite of contract bytecode failed: %w", err)
 	}
-	fmt.Println("new code hash", newErc20Acc.CodeHash)
+	fmt.Println("new code hash", string(newErc20Acc.CodeHash))
 	fmt.Println("new originalErc20Account", originalErc20Account)
 	fmt.Println("overwrote bytecode hash")
 
