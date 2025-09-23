@@ -129,7 +129,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -160,7 +160,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -371,7 +371,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps(s.T().TempDir())
-	funtoken := evmtest.CreateFunTokenForBankCoin(deps, evm.EVMBankDenom, &s.Suite)
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	randomAcc := testutil.AccAddress()
 
 	deployResp, err := evmtest.DeployContract(
@@ -380,7 +380,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-
 	s.Run("Fund sender's wallet", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,

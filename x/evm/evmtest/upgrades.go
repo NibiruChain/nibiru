@@ -22,7 +22,6 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		&deps.App.PublicKeepers,
 		deps.App.GetIBCKeeper().ClientKeeper,
 	)
-
 	// ---- Run the upgrade handler. ----
 
 	var (
@@ -52,7 +51,7 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		return fmt.Errorf("invalid upgrade.Plan: %w", err)
 	}
 
-	fromVm, err = deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx)
+	fromVm = deps.App.ModuleManager.GetVersionMap()
 
 	_, err = upgradeHandler(
 		deps.Ctx,

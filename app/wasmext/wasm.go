@@ -77,6 +77,7 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 type MsgHandlerArgs struct {
 	Router           MessageRouter
 	Ics4Wrapper      wasm.ICS4Wrapper
+	WasmKeeper       wasmkeeper.Keeper
 	ChannelKeeper    wasm.ChannelKeeper
 	CapabilityKeeper wasm.CapabilityKeeper
 	BankKeeper       wasm.Burner
@@ -111,7 +112,7 @@ func WasmMessageHandler(
 	encoders := wasmkeeper.DefaultEncoders(args.Unpacker, args.PortSource)
 	return wasmkeeper.NewMessageHandlerChain(
 		NewSDKMessageHandler(args.Cdc, args.Router, encoders),
-		wasmkeeper.NewIBCRawPacketHandler(args.Ics4Wrapper, args.ChannelKeeper, args.CapabilityKeeper),
+		wasmkeeper.NewIBCRawPacketHandler(args.Ics4Wrapper, args.WasmKeeper, args.ChannelKeeper, args.CapabilityKeeper),
 		wasmkeeper.NewBurnCoinMessageHandler(args.BankKeeper),
 	)
 }

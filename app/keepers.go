@@ -88,7 +88,7 @@ type AppKeepers struct {
 
 func (app *NibiruApp) initNonDepinjectKeepers(
 	appOpts servertypes.AppOptions,
-) (wasmConfig wasmtypes.WasmConfig) {
+) (wasmConfig wasmtypes.NodeConfig) {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	initSubspace(app.paramsKeeper)
 
@@ -202,7 +202,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.icaHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	wasmDir := filepath.Join(homePath, "data")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
 		panic("error while reading wasm config: " + err.Error())
 	}
@@ -249,6 +249,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
+		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
 		govModuleAddr,
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,

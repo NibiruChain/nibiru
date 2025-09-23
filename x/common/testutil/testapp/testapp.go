@@ -3,7 +3,6 @@ package testapp
 import (
 	"encoding/json"
 	"maps"
-	"testing"
 	"time"
 
 	"cosmossdk.io/log"
@@ -81,7 +80,7 @@ func FirstBlockProposer(
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
 // default. See "DefaultSudoers".
 func SetDefaultSudoGenesis(gen wasmapp.GenesisState) {
-	encoding := wasmapp.MakeEncodingConfig(&testing.T{})
+	encoding := nibiruapp.MakeEncodingConfig()
 
 	var sudoGen sudotypes.GenesisState
 	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], &sudoGen)

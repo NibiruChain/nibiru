@@ -3,8 +3,8 @@ module github.com/NibiruChain/nibiru/v2
 go 1.24
 
 require (
-	github.com/CosmWasm/wasmd v0.50.0
-	github.com/CosmWasm/wasmvm/v2 v2.1.0
+	github.com/CosmWasm/wasmd v0.54.2
+	github.com/CosmWasm/wasmvm/v2 v2.2.4
 	github.com/NibiruChain/collections v0.50.0
 
 	// Consenus Engine
@@ -13,7 +13,7 @@ require (
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.50.11
+	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/ibc-go/v8 v8.4.0
 	github.com/ethereum/go-ethereum v1.14.13
 )
@@ -57,15 +57,15 @@ require (
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.1
 	cosmossdk.io/depinject v1.1.0
-	cosmossdk.io/log v1.4.1
+	cosmossdk.io/log v1.5.0
 	cosmossdk.io/store v1.1.1
-	cosmossdk.io/tools/confix v0.1.1
+	cosmossdk.io/tools/confix v0.1.2
 	cosmossdk.io/x/evidence v0.1.1
 	cosmossdk.io/x/feegrant v0.1.1
 	cosmossdk.io/x/tx v0.13.7
-	cosmossdk.io/x/upgrade v0.1.3
+	cosmossdk.io/x/upgrade v0.1.4
 	github.com/cosmos/cosmos-db v1.1.1
-	github.com/cosmos/ibc-go/modules/capability v1.0.0
+	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72
 	github.com/cosmos/rosetta v0.50.11
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -87,7 +87,7 @@ require (
 	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/storage v1.38.0 // indirect
 	cosmossdk.io/x/circuit v0.1.1 // indirect
-	cosmossdk.io/x/nft v0.1.0 // indirect
+	cosmossdk.io/x/nft v0.1.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -105,9 +105,13 @@ require (
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
+	github.com/bytedance/sonic v1.12.3 // indirect
+	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
+	github.com/cloudwego/base64x v0.1.4 // indirect
+	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/cockroachdb/errors v1.11.3 // indirect
@@ -121,7 +125,8 @@ require (
 	github.com/consensys/gnark-crypto v0.12.1 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/iavl v1.2.2 // indirect
+	github.com/cosmos/iavl v1.2.4 // indirect
+	github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.14.0 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
@@ -197,6 +202,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
@@ -245,6 +251,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/urfave/cli/v2 v2.25.7 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
@@ -258,6 +265,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
@@ -277,7 +285,8 @@ require (
 
 replace (
 	cosmossdk.io/store => github.com/NibiruChain/cosmos-sdk/store v1.1.2-0.20250506085932-446d68f3e818
-	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.51.0-nibiru
+
+	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.54.1-0.20250922081616-415bb8722ad1
 	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.50.11-0.20250922051739-24dfb60727ae
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3

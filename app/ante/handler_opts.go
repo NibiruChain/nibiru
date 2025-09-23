@@ -24,7 +24,7 @@ type AnteHandlerOptions struct {
 	AccountKeeper    authkeeper.AccountKeeper
 
 	TxCounterStoreKey store.KVStoreService
-	WasmConfig        *wasmtypes.WasmConfig
+	WasmConfig        *wasmtypes.NodeConfig
 	MaxTxGasWanted    uint64
 }
 
