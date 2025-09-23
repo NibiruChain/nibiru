@@ -4,6 +4,7 @@ package evmtest_test
 import (
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
@@ -12,13 +13,13 @@ import (
 )
 
 func (s *Suite) TestTransferWei() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	randomAcc := evmtest.NewEthPrivAcc()
@@ -41,7 +42,7 @@ func (s *Suite) TestTransferWei() {
 }
 
 func (s *Suite) TestDeployWNIBI() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
 	acc := deps.EvmKeeper.GetAccount(deps.Ctx, evmParams.CanonicalWnibi.Address)

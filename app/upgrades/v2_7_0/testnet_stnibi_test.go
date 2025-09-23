@@ -36,7 +36,7 @@ import (
 //     testnet.
 func (s *Suite) TestTestnet() {
 	var (
-		deps = evmtest.NewTestDeps()
+		deps = evmtest.NewTestDeps(s.T().TempDir())
 
 		// Original creator of the Bank Coin version of the token
 		erisAddr sdk.AccAddress
@@ -154,7 +154,7 @@ func (s *Suite) TestTestnet() {
 		s.Require().NotNil(erc20AuthAcc)
 
 		s.T().Log("Commandeer that account number and bytecode")
-		accNum := erc20AuthAcc.GetAccountNumber()
+		accNum := deps.App.AccountKeeper.NextAccountNumber(deps.Ctx)
 		sequence := erc20AuthAcc.GetSequence()
 		pubkey := erc20AuthAcc.GetPubKey()
 		s.Require().Nil(pubkey, "Contracts don't have public keys")

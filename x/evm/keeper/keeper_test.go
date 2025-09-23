@@ -40,7 +40,7 @@ type SuiteFunToken struct {
 
 // TestIsSimulation verifies the IsSimulation helper function
 func (s *Suite) TestIsSimulation() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	testCases := []struct {
 		name     string
@@ -104,7 +104,7 @@ func (s *Suite) TestIsSimulation() {
 
 // TestIsDeliverTx verifies the isDeliverTx helper function
 func (s *Suite) TestIsDeliverTx() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	testCases := []struct {
 		name     string
@@ -166,7 +166,7 @@ func (s *Suite) TestIsDeliverTx() {
 }
 
 func (s *Suite) TestGetHashFn() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	fn := deps.EvmKeeper.GetHashFn(deps.Ctx)
 	s.Equal(gethcommon.Hash{}, fn(math.MaxInt64+1))
 	s.Equal(gethcommon.BytesToHash(deps.Ctx.HeaderHash()), fn(uint64(deps.Ctx.BlockHeight())))

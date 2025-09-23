@@ -64,31 +64,31 @@ func GenMinValidPerWindow(r *rand.Rand) sdkmath.LegacyDec {
 func RandomizedGenState(simState *module.SimulationState) {
 	var voteThreshold sdkmath.LegacyDec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, voteThresholdKey, &voteThreshold, simState.Rand,
+		voteThresholdKey, &voteThreshold, simState.Rand,
 		func(r *rand.Rand) { voteThreshold = GenVoteThreshold(r) },
 	)
 
 	var rewardBand sdkmath.LegacyDec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, rewardBandKey, &rewardBand, simState.Rand,
+		rewardBandKey, &rewardBand, simState.Rand,
 		func(r *rand.Rand) { rewardBand = GenRewardBand(r) },
 	)
 
 	var slashFraction sdkmath.LegacyDec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, slashFractionKey, &slashFraction, simState.Rand,
+		slashFractionKey, &slashFraction, simState.Rand,
 		func(r *rand.Rand) { slashFraction = GenSlashFraction(r) },
 	)
 
 	var slashWindow uint64
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, slashWindowKey, &slashWindow, simState.Rand,
+		slashWindowKey, &slashWindow, simState.Rand,
 		func(r *rand.Rand) { slashWindow = GenSlashWindow(r) },
 	)
 
 	var minValidPerWindow sdkmath.LegacyDec
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, minValidPerWindowKey, &minValidPerWindow, simState.Rand,
+		minValidPerWindowKey, &minValidPerWindow, simState.Rand,
 		func(r *rand.Rand) { minValidPerWindow = GenMinValidPerWindow(r) },
 	)
 

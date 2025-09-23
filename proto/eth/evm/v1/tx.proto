@@ -14,6 +14,7 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
 
 // Msg defines the evm Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
   // EthereumTx defines a method submitting Ethereum transactions.
   rpc EthereumTx(MsgEthereumTx) returns (MsgEthereumTxResponse) {
     option (google.api.http).post = "/nibiru/evm/v1/ethereum_tx";
@@ -252,6 +253,7 @@ message MsgUpdateParamsResponse {}
 // contract address can be given to create the mapping to a Bank Coin, or the
 // denomination for a Bank Coin can be given to create the mapping to an ERC20.
 message MsgCreateFunToken {
+  option (cosmos.msg.v1.signer) = "sender";
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
@@ -280,6 +282,7 @@ message MsgCreateFunTokenResponse {
 
 // MsgConvertCoinToEvm: Arguments to send a Bank Coin to ERC-20 representation
 message MsgConvertCoinToEvm {
+  option (cosmos.msg.v1.signer) = "sender";
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
@@ -301,6 +304,7 @@ message MsgConvertCoinToEvmResponse {}
 message MsgConvertEvmToCoin {
   // Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
   // This is also the address whose ERC20 balance will be deducted.
+  option (cosmos.msg.v1.signer) = "sender";
   string sender = 1;
 
   // Hexadecimal address of the ERC20 token to be converted and sent

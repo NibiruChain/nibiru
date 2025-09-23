@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -123,7 +124,7 @@ func ValidateFunTokenBankMetadata(
 func HandleOutOfGasPanic(errp *error, format string) func() {
 	return func() {
 		if perr := recover(); perr != nil {
-			_, isOutOfGasPanic := perr.(sdk.ErrorOutOfGas)
+			_, isOutOfGasPanic := perr.(storetypes.ErrorOutOfGas)
 			switch {
 			case isOutOfGasPanic:
 				if errp != nil && *errp == nil {

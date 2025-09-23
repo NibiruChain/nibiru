@@ -20,7 +20,7 @@ import (
 // This test shows that the upgrade edits only the EVM module parameters without
 // deploying anything.
 func (s *Suite) TestMainnet() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	deps.Ctx = deps.Ctx.WithChainID("cataclysm-1") // Pretend to be mainnet
 	s.Equal(
@@ -53,7 +53,7 @@ func (s *Suite) TestMainnet() {
 // "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97". If an account already exists
 // with that address, it gets overwritten to become WNIBI.sol.
 func (s *Suite) TestOtherNibirus() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.NotEqual(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),

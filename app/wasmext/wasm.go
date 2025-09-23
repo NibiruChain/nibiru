@@ -6,7 +6,7 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
@@ -38,13 +38,19 @@ func NibiruWasmOptions(
 }
 
 func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) (*sdk.Result, error) {
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, err
+	if m, ok := msg.(sdk.HasValidateBasic); ok {
+		if err := m.ValidateBasic(); err != nil {
+			return nil, err
+		}
 	}
 
 	// make sure this account can send it
-	for _, acct := range msg.GetSigners() {
-		if !acct.Equals(contractAddr) {
+	signers, _, err := h.cdc.GetMsgV1Signers(msg)
+	if err != nil {
+		return nil, err
+	}
+	for _, acct := range signers {
+		if !contractAddr.Equals(sdk.AccAddress(acct)) {
 			return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
@@ -71,17 +77,20 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 type MsgHandlerArgs struct {
 	Router           MessageRouter
 	Ics4Wrapper      wasm.ICS4Wrapper
+	WasmKeeper       wasmkeeper.Keeper
 	ChannelKeeper    wasm.ChannelKeeper
 	CapabilityKeeper wasm.CapabilityKeeper
 	BankKeeper       wasm.Burner
 	Unpacker         sdkcodec.AnyUnpacker
 	PortSource       wasm.ICS20TransferPortSource
+	Cdc              codec.Codec
 }
 
 // SDKMessageHandler can handles messages that can be encoded into sdk.Message types and routed.
 type SDKMessageHandler struct {
 	router   MessageRouter
 	encoders msgEncoder
+	cdc      codec.Codec
 }
 
 // MessageRouter ADR 031 request type routing
@@ -102,31 +111,33 @@ func WasmMessageHandler(
 ) wasmkeeper.Messenger {
 	encoders := wasmkeeper.DefaultEncoders(args.Unpacker, args.PortSource)
 	return wasmkeeper.NewMessageHandlerChain(
-		NewSDKMessageHandler(args.Router, encoders),
-		wasmkeeper.NewIBCRawPacketHandler(args.Ics4Wrapper, args.ChannelKeeper, args.CapabilityKeeper),
+		NewSDKMessageHandler(args.Cdc, args.Router, encoders),
+		wasmkeeper.NewIBCRawPacketHandler(args.Ics4Wrapper, args.WasmKeeper, args.ChannelKeeper, args.CapabilityKeeper),
 		wasmkeeper.NewBurnCoinMessageHandler(args.BankKeeper),
 	)
 }
 
-func NewSDKMessageHandler(router MessageRouter, encoders msgEncoder) SDKMessageHandler {
+func NewSDKMessageHandler(cdc codec.Codec, router MessageRouter, encoders msgEncoder) SDKMessageHandler {
 	return SDKMessageHandler{
+		cdc:      cdc,
 		router:   router,
 		encoders: encoders,
 	}
 }
 
-func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*sdkcodec.Any, err error) {
 	sdkMsgs, err := h.encoders.Encode(ctx, contractAddr, contractIBCPortID, msg)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	for _, sdkMsg := range sdkMsgs {
 		res, err := h.handleSdkMessage(ctx, contractAddr, sdkMsg)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		// append data
 		data = append(data, res.Data)
+		msgResponses = append(msgResponses, res.MsgResponses)
 		// append events
 		sdkEvents := make([]sdk.Event, len(res.Events))
 		for i := range res.Events {

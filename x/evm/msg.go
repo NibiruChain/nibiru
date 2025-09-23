@@ -11,14 +11,17 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdkioerrors "cosmossdk.io/errors"
+	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	protov2 "google.golang.org/protobuf/proto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
@@ -26,6 +29,8 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	evmapi "github.com/NibiruChain/nibiru/v2/api/eth/evm/v1"
 )
 
 var (
@@ -39,6 +44,17 @@ var (
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
+
+// message type and route constants
+const (
+	// TypeMsgEthereumTx defines the type string of an Ethereum transaction
+	TypeMsgEthereumTx = "ethereum_tx"
+)
+
+var MsgEthereumTxCustomGetSigner = txsigning.CustomGetSigner{
+	MsgType: protov2.MessageName(&evmapi.MsgEthereumTx{}),
+	Fn:      evmapi.EthereumTxGetSigners,
+}
 
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
@@ -188,6 +204,10 @@ func (msg *MsgEthereumTx) GetMsgs() []sdk.Msg {
 	return []sdk.Msg{msg}
 }
 
+func (msg *MsgEthereumTx) GetMsgsV2() ([]protov2.Message, error) {
+	return nil, errors.New("not implemented")
+}
+
 // GetSigners returns the expected signers for an Ethereum transaction message.
 // For such a message, there should exist only a single 'signer'.
 //
@@ -232,7 +252,7 @@ func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.
 	tx := msg.AsTransaction()
 	txHash := ethSigner.Hash(tx)
 
-	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes())
+	sig, _, err := keyringSigner.SignByAddress(from, txHash.Bytes(), signing.SignMode_SIGN_MODE_TEXTUAL)
 	if err != nil {
 		return err
 	}
@@ -345,7 +365,7 @@ func (msg *MsgEthereumTx) UnmarshalBinary(b []byte) error {
 }
 
 // BuildTx builds the Cosmos-SDK [signing.Tx] from ethereum tx ([MsgEthereumTx])
-func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.Tx, error) {
+func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (authsigning.Tx, error) {
 	builder, ok := b.(authtx.ExtensionOptionsTxBuilder)
 	if !ok {
 		return nil, errors.New("unsupported builder")
@@ -398,11 +418,6 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 	}
 
 	return m.Params.Validate()
-}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
 
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
@@ -496,11 +511,6 @@ func (m *MsgCreateFunToken) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgCreateFunToken) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
 // GetSigners returns the expected signers for a MsgConvertCoinToEvm message.
 func (m MsgConvertCoinToEvm) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromBech32(m.Sender)
@@ -521,75 +531,9 @@ func (m *MsgConvertCoinToEvm) ValidateBasic() error {
 	return nil
 }
 
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgConvertCoinToEvm) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
-// GetSigners returns the expected signers for a MsgConvertEvmToCoin message.
-func (m MsgConvertEvmToCoin) GetSigners() []sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(m.Sender)
-	return []sdk.AccAddress{addr}
-}
-
 // Addrs holds Corresponding nibi-prefixed Bech32 and Ethereum hexadecimal
 // addresses for an account.
 type Addrs struct {
 	Eth    gethcommon.Address
 	Bech32 sdk.AccAddress
-}
-
-// Validate does a sanity check of the provided data
-func (m *MsgConvertEvmToCoin) Validate() (
-	sender Addrs,
-	erc20 eth.EIP55Addr,
-	amount sdkmath.Int,
-	toAddr Addrs,
-	err error,
-) {
-	senderBech32, err := sdk.AccAddressFromBech32(m.Sender)
-	if err != nil {
-		err = fmt.Errorf("invalid sender address: %w", err)
-		return
-	}
-	sender.Bech32 = senderBech32
-	sender.Eth = eth.NibiruAddrToEthAddr(senderBech32)
-
-	ethAddr, err := eth.NewEIP55AddrFromStr(m.ToAddr)
-	if err == nil {
-		// err == nil means this is an Eth addr
-		toAddr.Eth = ethAddr.Address
-		toAddr.Bech32 = eth.EthAddrToNibiruAddr(toAddr.Eth)
-	} else {
-		// Try bech32
-		toAddr.Bech32, err = sdk.AccAddressFromBech32(m.ToAddr)
-		if err != nil {
-			err = fmt.Errorf("invalid bech32 or hex address: to_addr=\"%s\": %w", m.ToAddr, err)
-			return
-		}
-		toAddr.Eth = eth.NibiruAddrToEthAddr(toAddr.Bech32)
-	}
-
-	if (m.Erc20Addr.Address == gethcommon.Address{}) {
-		err = fmt.Errorf("empty erc20_addr")
-		return
-	}
-
-	if m.Amount.IsNil() || !m.Amount.IsPositive() {
-		err = fmt.Errorf("amount must be positive: amount=\"%s\"", m.Amount)
-		return
-	}
-
-	return sender, m.Erc20Addr, m.Amount, toAddr, nil
-}
-
-// ValidateBasic does a sanity check of the provided data
-func (m *MsgConvertEvmToCoin) ValidateBasic() error {
-	_, _, _, _, err := m.Validate()
-	return err
-}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgConvertEvmToCoin) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }

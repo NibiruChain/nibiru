@@ -348,7 +348,7 @@ func (tc CmdTestCase) NewCtx(s *CmdSuiteLite) sdkclient.Context {
 		WithKeyring(s.keyring).
 		WithTxConfig(s.testEncCfg.TxConfig).
 		WithCodec(s.testEncCfg.Codec).
-		WithClient(sdktestutilcli.MockTendermintRPC{Client: rpcclientmock.Client{}}).
+		WithClient(sdktestutilcli.MockCometRPC{Client: rpcclientmock.Client{}}).
 		WithAccountRetriever(sdkclient.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")

@@ -3,6 +3,8 @@ package gosdk
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
+
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
@@ -36,7 +38,7 @@ func BroadcastMsgsWithSeq(
 	}
 
 	bondDenom := denoms.NIBI
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(bondDenom, sdk.NewInt(1000))))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(2 * common.TO_MICRO))
 
 	nums, err := args.gosdk.GetAccountNumbers(from.String())
@@ -54,7 +56,7 @@ func BroadcastMsgsWithSeq(
 		WithSequence(seq)
 
 	overwriteSig := true
-	err = sdkclienttx.Sign(txFactory, info.Name, txBuilder, overwriteSig)
+	err = sdkclienttx.Sign(context.Background(), txFactory, info.Name, txBuilder, overwriteSig)
 	if err != nil {
 		return nil, err
 	}

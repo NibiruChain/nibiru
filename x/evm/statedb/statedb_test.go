@@ -133,7 +133,7 @@ func (s *Suite) TestAccount() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			db := deps.NewStateDB()
 			tc.malleate(&deps, db)
 		})
@@ -141,7 +141,7 @@ func (s *Suite) TestAccount() {
 }
 
 func (s *Suite) TestAccountOverride() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := deps.NewStateDB()
 	// test balance carry over when overwritten
 	amount := big.NewInt(1)
@@ -174,7 +174,7 @@ func (s *Suite) TestDBError() {
 		}},
 	}
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		db := deps.NewStateDB()
 		tc.malleate(db)
 		s.Require().NoError(db.Commit())
@@ -252,7 +252,7 @@ func (s *Suite) TestBalance() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			db := deps.NewStateDB()
 			tc.do(db)
 
@@ -305,7 +305,7 @@ func (s *Suite) TestState() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			db := deps.NewStateDB()
 			tc.malleate(db)
 			s.Require().NoError(db.Commit())
@@ -348,7 +348,7 @@ func (s *Suite) TestCode() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			db := deps.NewStateDB()
 			tc.malleate(db)
 
@@ -415,7 +415,7 @@ func (s *Suite) TestRevertSnapshot() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 
 			// do some arbitrary changes to the storage
 			db := deps.NewStateDB()
@@ -459,7 +459,7 @@ func (s *Suite) TestNestedSnapshot() {
 	value1 := common.BigToHash(big.NewInt(1))
 	value2 := common.BigToHash(big.NewInt(2))
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := deps.NewStateDB()
 
 	rev1 := db.Snapshot()
@@ -477,7 +477,7 @@ func (s *Suite) TestNestedSnapshot() {
 }
 
 func (s *Suite) TestInvalidSnapshotId() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := deps.NewStateDB()
 
 	s.Require().Panics(func() {
@@ -553,7 +553,7 @@ func (s *Suite) TestAccessList() {
 	}
 
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		db := deps.NewStateDB()
 		tc.malleate(db)
 	}
@@ -575,7 +575,7 @@ func (s *Suite) TestLog() {
 		LogIndex:  logIdx,
 	}
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := statedb.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
@@ -630,7 +630,7 @@ func (s *Suite) TestRefund() {
 		}, 0, true},
 	}
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		db := deps.NewStateDB()
 		if !tc.expPanic {
 			tc.malleate(db)
@@ -649,7 +649,7 @@ func (s *Suite) TestIterateStorage() {
 	key2 := common.BigToHash(big.NewInt(3))
 	value2 := common.BigToHash(big.NewInt(4))
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	db := deps.NewStateDB()
 	db.SetState(address, key1, value1)
 	db.SetState(address, key2, value2)

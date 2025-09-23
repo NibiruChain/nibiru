@@ -3,7 +3,6 @@ package ante_test
 import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -26,42 +25,38 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		{
 			name: "happy: tx without gas, block gas limit 1000",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
 				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						evmtest.HappyCreateContractTx(deps),
-					},
-				}
+				return evmtest.HappyCreateContractTx(deps)
 			},
 			wantErr: "",
 		},
 		{
 			name: "happy: tx with gas wanted 500, block gas limit 1000",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
 				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						evmtest.HappyCreateContractTx(deps),
-					},
-					Fee: legacytx.StdFee{Gas: 500},
-				}
+				builder := deps.App.GetTxConfig().NewTxBuilder()
+				_ = builder.SetMsgs(
+					evmtest.HappyCreateContractTx(deps),
+				)
+				builder.SetGasLimit(500)
+				return builder.GetTx()
 			},
 			wantErr: "",
 		},
 		{
 			name: "sad: tx with gas wanted 1000, block gas limit 500",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				cp := &tmproto.ConsensusParams{
+				cp := tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{
 						MaxGas: 500,
 					},
@@ -69,12 +64,12 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						evmtest.HappyCreateContractTx(deps),
-					},
-					Fee: legacytx.StdFee{Gas: 1000},
-				}
+				builder := deps.App.GetTxConfig().NewTxBuilder()
+				_ = builder.SetMsgs(
+					evmtest.HappyCreateContractTx(deps),
+				)
+				builder.SetGasLimit(1000)
+				return builder.GetTx()
 			},
 			wantErr: "exceeds block gas limit",
 		},
@@ -82,7 +77,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := ante.AnteDecoratorGasWanted{}
 

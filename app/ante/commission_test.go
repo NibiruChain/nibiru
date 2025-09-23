@@ -117,7 +117,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 			encCfg := app.MakeEncodingConfig()
 			txBuilder, err := sdkclienttx.Factory{}.
 				WithFees(txGasCoins.String()).
-				WithChainID(s.ctx.ChainID()).
+				WithChainID(s.clientCtx.ChainID).
 				WithTxConfig(encCfg.TxConfig).
 				BuildUnsignedTx(tc.txMsgs...)
 			s.NoError(err)

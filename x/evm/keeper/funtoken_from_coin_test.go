@@ -4,6 +4,8 @@ package keeper_test
 import (
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -53,7 +55,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 		{
 			Name: "Compute contract address. FindERC20 should fail",
 			Test: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 				evmObj, _ := deps.NewEVM()
 				metadata, err := deps.EvmKeeper.FindERC20Metadata(
 					deps.Ctx,
@@ -70,7 +72,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 		{
 			Name: "happy: CreateFunToken for the bank coin",
 			Test: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 
 				// Must have funds to pay the fee
 				s.Require().NoError(testapp.FundAccount(
@@ -88,7 +90,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 				s.Require().NoError(err)
 				deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
 
-				deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+				deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 				expectedErc20Addr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, deps.EvmKeeper.GetAccNonce(deps.Ctx, evm.EVM_MODULE_ADDRESS))
 				createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
 					sdk.WrapSDKContext(deps.Ctx),
@@ -192,7 +194,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 		{
 			Name: "sad: insufficient funds to create funtoken",
 			Test: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 
 				bankMetadata := validBankMetadata()
 				deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
@@ -211,7 +213,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 		{
 			Name: "sad: invalid bank coin",
 			Test: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 
 				s.Require().NoError(testapp.FundAccount(
 					deps.App.BankKeeper,
@@ -232,7 +234,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 		{
 			Name: "sad: zero decimals, faulty metadata",
 			Test: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 
 				bankMetadata := validBankMetadata()
 
@@ -283,7 +285,7 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 //   - Alice: 1 EVM, 9 BC
 //   - Module account: 1 BC escrowed (which Alice holds as 1 EVM)
 func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 
 	funToken := s.fundAndCreateFunToken(deps, 10e6)
@@ -299,10 +301,10 @@ func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
 
 	s.T().Logf("Convert bank coin to erc-20: give test contract %d %s (erc20)", int64(10e6), funToken.BankDenom)
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
-			BankCoin:  sdk.NewCoin(funToken.BankDenom, sdk.NewInt(10e6)),
+			BankCoin:  sdk.NewCoin(funToken.BankDenom, sdkmath.NewInt(10e6)),
 			ToEthAddr: eth.EIP55Addr{Address: testContractAddr},
 		},
 	)
@@ -342,7 +344,7 @@ func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
 		big.NewInt(9e6),           /*amount*/
 	)
 	s.Require().NoError(err)
-	deps.Ctx = deps.Ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	deps.Ctx = deps.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
 		deps.Ctx,
@@ -408,7 +410,7 @@ func (s *SuiteFunToken) fundAndCreateFunToken(deps evmtest.TestDeps, bankAmount 
 
 	s.T().Log("Give the sender funds for funtoken creation and funding test contract")
 	tokensToFund := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(
-		sdk.NewCoin(bankDenom, sdk.NewInt(bankAmount)),
+		sdk.NewCoin(bankDenom, sdkmath.NewInt(bankAmount)),
 	)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -420,7 +422,7 @@ func (s *SuiteFunToken) fundAndCreateFunToken(deps evmtest.TestDeps, bankAmount 
 
 	s.T().Log("Create FunToken from coin")
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),

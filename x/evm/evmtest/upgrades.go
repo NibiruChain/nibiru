@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	codec "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
@@ -22,7 +22,6 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		&deps.App.PublicKeepers,
 		deps.App.GetIBCKeeper().ClientKeeper,
 	)
-
 	// ---- Run the upgrade handler. ----
 
 	var (
@@ -52,7 +51,7 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		return fmt.Errorf("invalid upgrade.Plan: %w", err)
 	}
 
-	fromVm = deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx)
+	fromVm = deps.App.ModuleManager.GetVersionMap()
 
 	_, err = upgradeHandler(
 		deps.Ctx,

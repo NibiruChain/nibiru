@@ -3,7 +3,6 @@ package evmmodule_test
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -22,7 +21,7 @@ func TestSuite(t *testing.T) {
 }
 
 func (s *Suite) TestAppModule() {
-	bapp, ctx := testapp.NewNibiruTestAppAndContext()
+	bapp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	appModule := evmmodule.NewAppModule(
 		bapp.EvmKeeper,
 		bapp.AccountKeeper,
@@ -30,8 +29,8 @@ func (s *Suite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(ctx, abci.RequestBeginBlock{})
-		appModule.EndBlock(ctx, abci.RequestEndBlock{})
+		appModule.BeginBlock(ctx)
+		appModule.EndBlock(ctx)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := bapp.AppCodec()

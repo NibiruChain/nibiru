@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -79,7 +80,7 @@ func TestFailToPackABI(t *testing.T) {
 }
 
 func TestWhoAmI(t *testing.T) {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(t.TempDir())
 
 	callWhoAmI := func(arg string) (evmResp *evm.MsgEthereumTxResponse, err error) {
 		t.Logf("arg: %s", arg)
@@ -118,7 +119,7 @@ func TestWhoAmI(t *testing.T) {
 }
 
 func (s *FuntokenSuite) TestHappyPath() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("Create FunToken mapping and ERC20")
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
@@ -128,7 +129,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(69_420))),
 	))
 
 	s.Run("IFunToken.bankBalance()", func() {
@@ -156,10 +157,10 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.Run("ConvertCoinToEvm", func() {
 		_, err := deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(69_420)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: deps.Sender.EthAddr,
 				},
@@ -285,7 +286,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(
-				sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(420)),
+				sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(420)),
 			),
 		))
 		depositWei := evm.NativeToWei(big.NewInt(420))
@@ -369,7 +370,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 }
 
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
 	randomAcc := testutil.AccAddress()
 
@@ -379,22 +380,21 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	)
 	s.Require().NoError(err)
 	contractAddr := deployResp.ContractAddr
-
 	s.Run("Fund sender's wallet", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
 			deps.Sender.NibiruAddr,
-			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
+			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(1000))),
 		))
 	})
 
 	s.Run("Fund contract with erc20 coins", func() {
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			deps.Ctx,
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
-				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
+				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdkmath.NewInt(1000)),
 				ToEthAddr: eth.EIP55Addr{
 					Address: contractAddr,
 				},
@@ -473,7 +473,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 }
 
 func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	s.T().Log("create evmObj")
 	evmObj, _ := deps.NewEVM()
@@ -488,7 +488,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
+		sdk.NewCoins(sdk.NewCoin(bankDenom, sdkmath.NewInt(1234))),
 	)
 	s.Require().NoError(err)
 
@@ -622,7 +622,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 	// 	- burn cosmos token
 	// 	- unescrow erc20 token
 
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	alice := evmtest.NewEthPrivAcc()
 	bob := evmtest.NewEthPrivAcc()
@@ -640,7 +640,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// create fun token from that erc20
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		deps.Ctx,
 		&evm.MsgCreateFunToken{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
@@ -833,8 +833,8 @@ func (out FunTokenBankBalanceReturn) ParseFromResp(
 }
 
 func (s *FuntokenSuite) TestGetErc20Address() {
-	deps := evmtest.NewTestDeps()
-	bankDenom := "testdenom" // Example bank denom
+	deps := evmtest.NewTestDeps(s.T().TempDir())
+	bankDenom := "unibi" // Example bank denom
 
 	s.T().Log("Setup: Create FunToken mapping for unibi")
 	funtokenMapping := evmtest.CreateFunTokenForBankCoin(deps, bankDenom, &s.Suite)

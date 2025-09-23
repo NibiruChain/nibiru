@@ -2,7 +2,6 @@ package evmante_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -20,11 +19,11 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		{
 			name: "sad: non ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						&tf.MsgMint{},
-					},
-				}
+				builder := deps.App.GetTxConfig().NewTxBuilder()
+				_ = builder.SetMsgs(
+					&tf.MsgMint{},
+				)
+				return builder.GetTx()
 			},
 			wantErr: "invalid message",
 		},
@@ -40,7 +39,7 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewEthEmitEventDecorator(deps.App.EvmKeeper)
 

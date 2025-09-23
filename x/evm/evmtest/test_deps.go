@@ -32,8 +32,8 @@ type TestDeps struct {
 	Sender    EthPrivKeyAcc
 }
 
-func NewTestDeps() TestDeps {
-	app, ctx := testapp.NewNibiruTestAppAndContext()
+func NewTestDeps(homeDir string) TestDeps {
+	app, ctx := testapp.NewNibiruTestAppAndContext(homeDir)
 	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
 
 	return TestDeps{

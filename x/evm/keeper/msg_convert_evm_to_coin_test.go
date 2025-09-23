@@ -20,7 +20,7 @@ import (
 )
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "ibc/testevm2coin"
 
 	// Create EVM for balance assertions
@@ -154,7 +154,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 }
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	// Create EVM for balance assertions
 	evmObj, _ := deps.NewEVM()
@@ -315,7 +315,7 @@ func denomToSafeMetadata(bankDenom string, s *suite.Suite) bank.Metadata {
 }
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "utest"
 
 	// Set bank metadata for the denom
@@ -389,7 +389,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 }
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	bankDenom := "umulti"
 
 	// Set bank metadata for the denom
@@ -467,7 +467,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 	toAcc := evmtest.NewEthPrivAcc()
 
 	s.Run("Should error if the ERC20 is WNIBI, but that contract does not exist", func() {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
 			deps.Ctx,
@@ -491,7 +491,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 	})
 
 	s.T().Log("Deploy WNIBI.sol and make it canonical")
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	deployRes, err := evmtest.DeployContract(&deps, embeds.SmartContract_WNIBI)
 	s.Require().NoError(err)
 	wnibi := eth.EIP55Addr{Address: deployRes.ContractAddr}

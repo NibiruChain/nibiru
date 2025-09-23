@@ -27,7 +27,7 @@ import (
 func (s *Suite) TestUpgrade() {
 	s.T().Log("Set up a token with default metadata that mimics stNIBI on mainnet prior to v2.5.0")
 	var (
-		deps = evmtest.NewTestDeps()
+		deps = evmtest.NewTestDeps(s.T().TempDir())
 
 		// Original creator of the Bank Coin version of the token
 		erisAddr = testutil.AccAddress()
@@ -131,7 +131,7 @@ func (s *Suite) TestUpgrade() {
 		for idx, holderAddr := range holders {
 			// Each holder gets balance as a multiple of 20
 			balToFund := big.NewInt(20 * int64(idx+1))
-			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.GoCtx(),
+			_, err := deps.EvmKeeper.ConvertCoinToEvm(deps.Ctx,
 				&evm.MsgConvertCoinToEvm{
 					ToEthAddr: eth.EIP55Addr{Address: holderAddr},
 					Sender:    erisAddr.String(),

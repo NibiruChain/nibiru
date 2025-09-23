@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
@@ -48,7 +48,7 @@ func WithQueryEncodingType(e EncodingType) ExecQueryOption {
 func (chain Network) ExecQuery(
 	cmd *cobra.Command,
 	args []string,
-	result codec.ProtoMarshaler,
+	result proto.Message,
 	opts ...ExecQueryOption,
 ) error {
 	return ExecQuery(chain.Validators[0].ClientCtx, cmd, args, result, opts...)
@@ -59,7 +59,7 @@ func ExecQuery(
 	clientCtx client.Context,
 	cmd *cobra.Command,
 	args []string,
-	result codec.ProtoMarshaler,
+	result proto.Message,
 	opts ...ExecQueryOption,
 ) error {
 	var options queryOptions

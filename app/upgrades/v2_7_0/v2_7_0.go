@@ -1,16 +1,17 @@
 package v2_7_0
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,7 +34,7 @@ var Upgrade = upgrades.Upgrade{
 		clientKeeper clientkeeper.Keeper,
 	) upgradetypes.UpgradeHandler {
 		return func(
-			ctx sdk.Context,
+			ctx context.Context,
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
@@ -58,8 +59,9 @@ var Upgrade = upgrades.Upgrade{
 // deployment from Eris.
 func UpgradeV2_7_0(
 	keepers *keepers.PublicKeepers,
-	ctx sdk.Context,
+	ctx context.Context,
 ) (err error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// IMPORTANT: make sure to clear the StateDB before running the upgrade
 	keepers.EvmKeeper.Bank.StateDB = nil
 	defer func() {
@@ -68,18 +70,18 @@ func UpgradeV2_7_0(
 
 	// 1 | Set evm.Params.CanonicalWnibi to the address live on mainnet
 	wnibiAddrMainnet := appconst.MAINNET_WNIBI_ADDR
-	evmParams := keepers.EvmKeeper.GetParams(ctx)
+	evmParams := keepers.EvmKeeper.GetParams(sdkCtx)
 	evmParams.CanonicalWnibi = eth.EIP55Addr{
 		Address: wnibiAddrMainnet,
 	}
-	err = keepers.EvmKeeper.SetParams(ctx, evmParams)
+	err = keepers.EvmKeeper.SetParams(sdkCtx, evmParams)
 	if err != nil {
 		return
 	}
 
 	//  2 | If this instance of Nibiru is mainnet, early return to stop here
 	//  because WNIBI is already deployed.
-	if keepers.EvmKeeper.EthChainID(ctx).
+	if keepers.EvmKeeper.EthChainID(sdkCtx).
 		Cmp(big.NewInt(appconst.ETH_CHAIN_ID_MAINNET)) == 0 {
 		// WNIBI is already deployed on mainnet. Early return to stop here.
 		return nil
@@ -126,17 +128,17 @@ func UpgradeV2_7_0(
 		return fmt.Errorf("code hash mismatch between auth and evm modules")
 	}
 
-	err = keepers.EvmKeeper.ImportGenesisAccount(ctx, evmGenAcc)
+	err = keepers.EvmKeeper.ImportGenesisAccount(sdkCtx, evmGenAcc)
 	if err != nil {
 		return err
 	}
 
-	if acc := keepers.EvmKeeper.GetAccount(ctx, appconst.MAINNET_WNIBI_ADDR); acc == nil || !acc.IsContract() {
+	if acc := keepers.EvmKeeper.GetAccount(sdkCtx, appconst.MAINNET_WNIBI_ADDR); acc == nil || !acc.IsContract() {
 		err = fmt.Errorf("v2.7.0 state corruption: WNIBI is not a contract according to the EVM StateDB")
 		return err
 	}
 
-	err = UpgradeStNibiContractOnTestnet(keepers, ctx)
+	err = UpgradeStNibiContractOnTestnet(keepers, sdkCtx)
 	if err != nil {
 		err = fmt.Errorf("v2.7.0 failed on testnet 2: %w", err)
 		return err

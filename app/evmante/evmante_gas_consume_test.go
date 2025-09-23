@@ -3,7 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -19,7 +19,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
 		wantErr       string
 		maxGasWanted  uint64
-		gasMeter      sdk.GasMeter
+		gasMeter      storetypes.GasMeter
 	}{
 		{
 			name: "happy: sender with funds",
@@ -58,7 +58,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewAnteDecEthGasConsume(
 				deps.App.EvmKeeper, tc.maxGasWanted,

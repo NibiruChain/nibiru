@@ -7,7 +7,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
@@ -31,18 +30,25 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
-	staking.EndBlocker(ctx, &input.StakingKeeper)
+	_, err = input.StakingKeeper.EndBlocker(ctx)
+	require.NoError(t, err)
 
+	params, err := input.StakingKeeper.GetParams(ctx)
+	require.NoError(t, err)
 	require.Equal(
 		t, input.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(addr)),
-		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
+		sdk.NewCoins(sdk.NewCoin(params.BondDenom, InitTokens.Sub(amt))),
 	)
-	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr).GetBondedTokens())
+	validator, err := input.StakingKeeper.GetValidator(ctx, addr)
+	require.NoError(t, err)
+	require.Equal(t, amt, validator.GetBondedTokens())
 	require.Equal(
 		t, input.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(addr1)),
-		sdk.NewCoins(sdk.NewCoin(input.StakingKeeper.GetParams(ctx).BondDenom, InitTokens.Sub(amt))),
+		sdk.NewCoins(sdk.NewCoin(params.BondDenom, InitTokens.Sub(amt))),
 	)
-	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr1).GetBondedTokens())
+	validator1, err := input.StakingKeeper.GetValidator(ctx, addr1)
+	require.NoError(t, err)
+	require.Equal(t, amt, validator1.GetBondedTokens())
 
 	votePeriodsPerWindow := sdkmath.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -50,9 +56,9 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	// Case 1, no slash
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
-	staking.EndBlocker(input.Ctx, &input.StakingKeeper)
+	_, err = input.StakingKeeper.EndBlocker(ctx)
+	require.NoError(t, err)
 
-	validator, _ := input.StakingKeeper.GetValidator(input.Ctx, ValAddrs[0])
 	require.Equal(t, amt, validator.GetBondedTokens())
 
 	// Case 2, slash
@@ -67,7 +73,8 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Status = stakingtypes.Unbonded
 	validator.Jailed = false
 	validator.Tokens = amt
-	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	err = input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.NoError(t, err)
 
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
@@ -80,7 +87,8 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	validator.Status = stakingtypes.Bonded
 	validator.Jailed = true
 	validator.Tokens = amt
-	input.StakingKeeper.SetValidator(input.Ctx, validator)
+	err = input.StakingKeeper.SetValidator(input.Ctx, validator)
+	require.NoError(t, err)
 
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes+1))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
@@ -130,7 +138,8 @@ func TestInvalidVotesSlashing(t *testing.T) {
 		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, ValAddrs[1], 0))
 	}
 
-	validator := input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	validator, err := input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	require.NoError(t, err)
 	require.Equal(t, testStakingAmt, validator.GetBondedTokens())
 
 	// one more miss vote will inccur ValAddrs[1] slashing
@@ -159,7 +168,8 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 	// input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 
-	validator = input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	validator, err = input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	require.NoError(t, err)
 	require.Equal(t, sdkmath.LegacyOneDec().Sub(slashFraction).MulInt(testStakingAmt).TruncateInt(), validator.GetBondedTokens())
 }
 
@@ -199,7 +209,8 @@ func TestWhitelistSlashing(t *testing.T) {
 	}
 
 	t.Log("valoper0 should not be slashed")
-	validator := input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
+	validator, err := input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
+	require.NoError(t, err)
 	require.Equal(t, testStakingAmt, validator.GetBondedTokens())
 }
 
@@ -263,6 +274,7 @@ func TestAbstainSlashing(t *testing.T) {
 		require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, ValAddrs[1], 0))
 	}
 
-	validator := input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	validator, err := input.StakingKeeper.Validator(input.Ctx, ValAddrs[1])
+	require.NoError(t, err)
 	require.Equal(t, testStakingAmt, validator.GetBondedTokens())
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
-	tmnode "github.com/cometbft/cometbft/node"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	sm "github.com/cometbft/cometbft/state"
 	tmstore "github.com/cometbft/cometbft/store"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -49,7 +49,7 @@ nibid evm-tx-index last-indexed latest
 
 			evmTxIndexer := indexer.NewEVMTxIndexer(evmIndexerDB, logger.With("module", "evmindex"), clientCtx)
 
-			tmdb, err := tmnode.DefaultDBProvider(&tmnode.DBContext{ID: "blockstore", Config: cfg})
+			tmdb, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "blockstore", Config: cfg})
 			if err != nil {
 				return err
 			}
@@ -99,7 +99,7 @@ nibid evm-tx-index last-indexed latest
 			if fromBlock > toBlock {
 				return fmt.Errorf("minBlockNumber must be less or equal to maxBlockNumber")
 			}
-			stateDB, err := tmnode.DefaultDBProvider(&tmnode.DBContext{ID: "state", Config: cfg})
+			stateDB, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "state", Config: cfg})
 			if err != nil {
 				return err
 			}
@@ -116,12 +116,12 @@ nibid evm-tx-index last-indexed latest
 					return fmt.Errorf("block not found %d", height)
 				}
 				slog.Info("Loading block abci responses", "height", height)
-				blockResults, err := stateStore.LoadABCIResponses(height)
+				blockResults, err := stateStore.LoadFinalizeBlockResponse(height)
 				if err != nil {
 					return err
 				}
 				slog.Info("Indexing block evm txs", "height", height)
-				if err := evmTxIndexer.IndexBlock(block, blockResults.DeliverTxs); err != nil {
+				if err := evmTxIndexer.IndexBlock(block, blockResults.TxResults); err != nil {
 					return err
 				}
 				slog.Info("Finished indexing block", "height", height)

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/asset"
@@ -60,11 +59,11 @@ func TestMergeOracleParams(t *testing.T) {
 	// baseParams
 	votePeriod := uint64(10)
 
-	voteThreshold := sdk.NewDecWithPrec(33, 2)
-	changedVoteThreshold := sdk.NewDecWithPrec(50, 2)
+	voteThreshold := sdkmath.LegacyNewDecWithPrec(33, 2)
+	changedVoteThreshold := sdkmath.LegacyNewDecWithPrec(50, 2)
 
-	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
-	changedRewardBand := sdk.NewDecWithPrec(2, 2)
+	oracleRewardBand := sdkmath.LegacyNewDecWithPrec(1, 2)
+	changedRewardBand := sdkmath.LegacyNewDecWithPrec(2, 2)
 
 	whitelist := []asset.Pair{
 		asset.NewPair(denoms.BTC, denoms.NUSD),
@@ -75,14 +74,14 @@ func TestMergeOracleParams(t *testing.T) {
 		asset.NewPair(denoms.ADA, denoms.NUSD),
 	}
 
-	slashFraction := sdk.NewDecWithPrec(1, 2)
-	changedSlashFraction := sdk.NewDecWithPrec(2, 2)
+	slashFraction := sdkmath.LegacyNewDecWithPrec(1, 2)
+	changedSlashFraction := sdkmath.LegacyNewDecWithPrec(2, 2)
 
 	slashWindow := uint64(1000)
 	changedSlashWindow := uint64(2000)
 
-	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	changedMinValidPerWindow := sdk.NewDecWithPrec(2, 4)
+	minValidPerWindow := sdkmath.LegacyNewDecWithPrec(1, 4)
+	changedMinValidPerWindow := sdkmath.LegacyNewDecWithPrec(2, 4)
 
 	twapLoopbackWindow := time.Duration(1000)
 	changedTwapLoopbackWindow := time.Duration(2000)
@@ -90,8 +89,8 @@ func TestMergeOracleParams(t *testing.T) {
 	minVoters := uint64(4)
 	chagedMinVoters := uint64(5)
 
-	minFeeRatio := sdk.NewDecWithPrec(1, 2)
-	changedMinFeeRatio := sdk.NewDecWithPrec(2, 2)
+	minFeeRatio := sdkmath.LegacyNewDecWithPrec(1, 2)
+	changedMinFeeRatio := sdkmath.LegacyNewDecWithPrec(2, 2)
 
 	expirationBlocks := uint64(100)
 	changedExpirationBlocks := uint64(200)

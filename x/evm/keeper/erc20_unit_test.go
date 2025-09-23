@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -45,7 +47,7 @@ func (s *UnitSuite) TestERC20GasLimit() {
 		// (Use a helper that sets GasMeter to a fixed remaining amount.)
 		remaining := uint64(12_800_000)
 		ctx := sdk.Context{}.WithGasMeter(
-			sdk.NewGasMeter(remaining),
+			storetypes.NewGasMeter(remaining),
 		)
 
 		s.Require().Equal(remaining, ctx.GasMeter().GasRemaining())
@@ -61,13 +63,13 @@ func (s *UnitSuite) TestERC20GasLimit() {
 	})
 
 	s.Run("infinite meter + realistic cap => cap", func() {
-		ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+		ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter())
 		s.Equal(uint64(100_000), getCallGasLimit63_64(ctx, 100_000))
 	})
 	s.Run("infinite meter + infinite cap => 63/64 of max u64", func() {
 		maxU64 := ^uint64(0) // MaxUint64
 		ctx := sdk.Context{}.WithGasMeter(
-			sdk.NewGasMeter(maxU64),
+			storetypes.NewGasMeter(maxU64),
 		)
 		got := getCallGasLimit63_64(ctx, maxU64)
 		want := maxU64 - maxU64/64
@@ -86,7 +88,7 @@ func (s *UnitSuite) TestERC20GasLimit() {
 			{1, 1_000_000, 1},      // tiny gas preserved
 			{10_000, 5_000, 5_000}, // cap smaller than 63/64
 		} {
-			ctx := sdk.Context{}.WithGasMeter(sdk.NewGasMeter(tc.remaining))
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewGasMeter(tc.remaining))
 			s.Equal(tc.expect, getCallGasLimit63_64(ctx, tc.limit))
 		}
 	})

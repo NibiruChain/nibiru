@@ -17,8 +17,8 @@ import (
 	"bytes"
 	"fmt"
 
+	store "cosmossdk.io/store/types"
 	"github.com/NibiruChain/collections"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -209,7 +209,7 @@ func OnRunStart(
 	}
 
 	// Switching to a local gas meter to enforce gas limit check for a precompile
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+	cacheCtx = cacheCtx.WithGasMeter(store.NewGasMeter(gasLimit)).
 		WithKVGasConfig(store.KVGasConfig()).
 		WithTransientKVGasConfig(store.TransientGasConfig())
 

@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
@@ -31,11 +30,11 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		{
 			name: "sad: non ethereum tx",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						&tf.MsgMint{},
-					},
-				}
+				builder := deps.App.GetTxConfig().NewTxBuilder()
+				_ = builder.SetMsgs(
+					&tf.MsgMint{},
+				)
+				return builder.GetTx()
 			},
 			wantErr: "invalid message",
 		},
@@ -65,7 +64,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			stateDB := deps.NewStateDB()
 			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.EvmKeeper)
 

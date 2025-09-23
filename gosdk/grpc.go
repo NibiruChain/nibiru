@@ -25,7 +25,7 @@ func GetGRPCConnection(
 	}
 
 	options := []grpc.DialOption{
-		grpc.WithBlock(),
+		grpc.WithBlock(), //nolint:staticcheck
 		grpc.WithTransportCredentials(creds),
 	}
 	timeout := time.Duration(timeoutSeconds) * time.Second
@@ -34,7 +34,7 @@ func GetGRPCConnection(
 	)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, grpcUrl, options...)
+	conn, err := grpc.DialContext(ctx, grpcUrl, options...) //nolint:staticcheck
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot connect to gRPC endpoint %s: %w", grpcUrl, err)

@@ -100,10 +100,6 @@ func CmdEditSudoers() *cobra.Command {
 			from := clientCtx.GetFromAddress()
 			msg.Sender = from.String()
 
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
@@ -145,10 +141,6 @@ func CmdChangeRoot() *cobra.Command {
 			from := clientCtx.GetFromAddress()
 			msg.Sender = from.String()
 			msg.NewRoot = root
-
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

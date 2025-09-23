@@ -7,7 +7,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -20,10 +19,9 @@ import (
 
 func TestQueryParams(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 
 	querier := NewQuerier(input.OracleKeeper)
-	res, err := querier.Params(ctx, &types.QueryParamsRequest{})
+	res, err := querier.Params(input.Ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
@@ -34,7 +32,6 @@ func TestQueryParams(t *testing.T) {
 
 func TestQueryExchangeRate(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdkmath.LegacyNewDec(1700)
@@ -49,11 +46,11 @@ func TestQueryExchangeRate(t *testing.T) {
 	)
 
 	// empty request
-	_, err := querier.ExchangeRate(ctx, nil)
+	_, err := querier.ExchangeRate(input.Ctx, nil)
 	require.Error(t, err)
 
 	// Query to grpc
-	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
+	res, err := querier.ExchangeRate(input.Ctx, &types.QueryExchangeRateRequest{
 		Pair: asset.NewPair(denoms.ETH, denoms.NUSD),
 	})
 	require.NoError(t, err)
@@ -62,18 +59,17 @@ func TestQueryExchangeRate(t *testing.T) {
 
 func TestQueryMissCounter(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	missCounter := uint64(1)
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], missCounter)
 
 	// empty request
-	_, err := querier.MissCounter(ctx, nil)
+	_, err := querier.MissCounter(input.Ctx, nil)
 	require.Error(t, err)
 
 	// Query to grpc
-	res, err := querier.MissCounter(ctx, &types.QueryMissCounterRequest{
+	res, err := querier.MissCounter(input.Ctx, &types.QueryMissCounterRequest{
 		ValidatorAddr: ValAddrs[0].String(),
 	})
 	require.NoError(t, err)
@@ -82,7 +78,6 @@ func TestQueryMissCounter(t *testing.T) {
 
 func TestQueryExchangeRates(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdkmath.LegacyNewDec(1700)
@@ -105,7 +100,7 @@ func TestQueryExchangeRates(t *testing.T) {
 		},
 	)
 
-	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
+	res, err := querier.ExchangeRates(input.Ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
 
 	require.Equal(t, types.ExchangeRateTuples{
@@ -130,15 +125,14 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 		},
 	)
 
-	ctx := sdk.WrapSDKContext(input.Ctx.
+	input.Ctx = input.Ctx.
 		WithBlockTime(input.Ctx.BlockTime().Add(time.Second)).
-		WithBlockHeight(input.Ctx.BlockHeight() + 1),
-	)
+		WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.ETH, denoms.NUSD)})
+	_, err := querier.ExchangeRateTwap(input.Ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.ETH, denoms.NUSD)})
 	require.Error(t, err)
 
-	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
+	res, err := querier.ExchangeRateTwap(input.Ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
 	require.NoError(t, err)
 	require.Equal(t, sdkmath.LegacyMustNewDecFromStr("1700"), res.ExchangeRate)
 }
@@ -238,11 +232,10 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	)
 
 	// Wrap context for querying
-	ctx := sdk.WrapSDKContext(input.Ctx)
 
 	t.Log("Query latest snapshot for BTC")
 	resBTC, err := querier.ExchangeRate(
-		ctx,
+		input.Ctx,
 		&types.QueryExchangeRateRequest{Pair: pairBTC},
 	)
 	require.NoError(t, err)
@@ -253,7 +246,7 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 
 	t.Log("Query latest snapshot for ETH")
 	resETH, err := querier.ExchangeRate(
-		ctx,
+		input.Ctx,
 		&types.QueryExchangeRateRequest{Pair: pairETH},
 	)
 	require.NoError(t, err)
@@ -264,7 +257,7 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 
 	t.Run("Query a pair with no snapshots (should return an error)", func(t *testing.T) {
 		pairATOM := asset.NewPair(denoms.ATOM, denoms.NUSD)
-		_, err = querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
+		_, err = querier.ExchangeRate(input.Ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
 		require.Error(t, err)
 	})
 }
@@ -343,7 +336,7 @@ func TestCalcTwap(t *testing.T) {
 
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 
-			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
+			price, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
 			require.NoError(t, err)
 
 			require.EqualValuesf(t, tc.expectedPrice, price.ExchangeRate,
@@ -354,7 +347,6 @@ func TestCalcTwap(t *testing.T) {
 
 func TestQueryActives(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	queryClient := NewQuerier(input.OracleKeeper)
 
 	rate := sdkmath.LegacyNewDec(1700)
@@ -373,7 +365,7 @@ func TestQueryActives(t *testing.T) {
 		)
 	}
 
-	res, err := queryClient.Actives(ctx, &types.QueryActivesRequest{})
+	res, err := queryClient.Actives(input.Ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 	for _, pair := range res.Actives {
 		require.True(t, targetPairs.Has(pair))
@@ -382,16 +374,15 @@ func TestQueryActives(t *testing.T) {
 
 func TestQueryFeederDelegation(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, ValAddrs[0], Addrs[1])
 
 	// empty request
-	_, err := querier.FeederDelegation(ctx, nil)
+	_, err := querier.FeederDelegation(input.Ctx, nil)
 	require.Error(t, err)
 
-	res, err := querier.FeederDelegation(ctx, &types.QueryFeederDelegationRequest{
+	res, err := querier.FeederDelegation(input.Ctx, &types.QueryFeederDelegationRequest{
 		ValidatorAddr: ValAddrs[0].String(),
 	})
 	require.NoError(t, err)
@@ -401,7 +392,6 @@ func TestQueryFeederDelegation(t *testing.T) {
 
 func TestQueryAggregatePrevote(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
@@ -410,18 +400,18 @@ func TestQueryAggregatePrevote(t *testing.T) {
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[1], prevote2)
 
 	// validator 0 address params
-	res, err := querier.AggregatePrevote(ctx, &types.QueryAggregatePrevoteRequest{
+	res, err := querier.AggregatePrevote(input.Ctx, &types.QueryAggregatePrevoteRequest{
 		ValidatorAddr: ValAddrs[0].String(),
 	})
 	require.NoError(t, err)
 	require.Equal(t, prevote1, res.AggregatePrevote)
 
 	// empty request
-	_, err = querier.AggregatePrevote(ctx, nil)
+	_, err = querier.AggregatePrevote(input.Ctx, nil)
 	require.Error(t, err)
 
 	// validator 1 address params
-	res, err = querier.AggregatePrevote(ctx, &types.QueryAggregatePrevoteRequest{
+	res, err = querier.AggregatePrevote(input.Ctx, &types.QueryAggregatePrevoteRequest{
 		ValidatorAddr: ValAddrs[1].String(),
 	})
 	require.NoError(t, err)
@@ -430,7 +420,6 @@ func TestQueryAggregatePrevote(t *testing.T) {
 
 func TestQueryAggregatePrevotes(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
@@ -445,14 +434,13 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 		return expectedPrevotes[i].Voter <= expectedPrevotes[j].Voter
 	})
 
-	res, err := querier.AggregatePrevotes(ctx, &types.QueryAggregatePrevotesRequest{})
+	res, err := querier.AggregatePrevotes(input.Ctx, &types.QueryAggregatePrevotesRequest{})
 	require.NoError(t, err)
 	require.Equal(t, expectedPrevotes, res.AggregatePrevotes)
 }
 
 func TestQueryAggregateVote(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdkmath.LegacyOneDec()}}, ValAddrs[0])
@@ -461,18 +449,18 @@ func TestQueryAggregateVote(t *testing.T) {
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[1], vote2)
 
 	// empty request
-	_, err := querier.AggregateVote(ctx, nil)
+	_, err := querier.AggregateVote(input.Ctx, nil)
 	require.Error(t, err)
 
 	// validator 0 address params
-	res, err := querier.AggregateVote(ctx, &types.QueryAggregateVoteRequest{
+	res, err := querier.AggregateVote(input.Ctx, &types.QueryAggregateVoteRequest{
 		ValidatorAddr: ValAddrs[0].String(),
 	})
 	require.NoError(t, err)
 	require.Equal(t, vote1, res.AggregateVote)
 
 	// validator 1 address params
-	res, err = querier.AggregateVote(ctx, &types.QueryAggregateVoteRequest{
+	res, err = querier.AggregateVote(input.Ctx, &types.QueryAggregateVoteRequest{
 		ValidatorAddr: ValAddrs[1].String(),
 	})
 	require.NoError(t, err)
@@ -481,7 +469,6 @@ func TestQueryAggregateVote(t *testing.T) {
 
 func TestQueryAggregateVotes(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdkmath.LegacyOneDec()}}, ValAddrs[0])
@@ -496,14 +483,13 @@ func TestQueryAggregateVotes(t *testing.T) {
 		return expectedVotes[i].Voter <= expectedVotes[j].Voter
 	})
 
-	res, err := querier.AggregateVotes(ctx, &types.QueryAggregateVotesRequest{})
+	res, err := querier.AggregateVotes(input.Ctx, &types.QueryAggregateVotesRequest{})
 	require.NoError(t, err)
 	require.Equal(t, expectedVotes, res.AggregateVotes)
 }
 
 func TestQueryVoteTargets(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
@@ -516,7 +502,7 @@ func TestQueryVoteTargets(t *testing.T) {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}
 
-	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})
+	res, err := querier.VoteTargets(input.Ctx, &types.QueryVoteTargetsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, voteTargets, res.VoteTargets)
 }

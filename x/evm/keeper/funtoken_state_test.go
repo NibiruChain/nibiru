@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Suite) TestInsertAndGet() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
 	err := deps.EvmKeeper.FunTokens.SafeInsert(
@@ -31,7 +31,7 @@ func (s *Suite) TestInsertAndGet() {
 }
 
 func (s *Suite) TestCollect() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
 	err := deps.EvmKeeper.FunTokens.SafeInsert(
@@ -60,7 +60,7 @@ func (s *Suite) TestCollect() {
 }
 
 func (s *Suite) TestDelete() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	erc20Addr := gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477")
 	err := deps.EvmKeeper.FunTokens.SafeInsert(

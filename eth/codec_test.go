@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -28,7 +29,7 @@ func (suite *CodecTestSuite) TestRegisterInterfaces() {
 	protoInfos := []ProtoNameInfo{
 		{
 			ProtoName: "cosmos.auth.v1beta1.AccountI",
-			Interface: new(authtypes.AccountI),
+			Interface: new(sdk.AccountI),
 			WantImpls: []string{
 				"/eth.types.v1.EthAccount",
 				"/cosmos.auth.v1beta1.BaseAccount",

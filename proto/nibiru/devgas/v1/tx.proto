@@ -12,6 +12,8 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types";
 
 // Msg defines the fees Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // RegisterFeeShare registers a new contract for receiving transaction fees
   rpc RegisterFeeShare(MsgRegisterFeeShare)
       returns (MsgRegisterFeeShareResponse) {
@@ -33,6 +35,7 @@ service Msg {
 // MsgRegisterFeeShare defines a message that registers a FeeShare
 message MsgRegisterFeeShare {
   option (gogoproto.equal) = false;
+  option (cosmos.msg.v1.signer) = "deployer_address";
   // contract_address in bech32 format
   string contract_address = 1;
   // deployer_address is the bech32 address of message sender. It must be the
@@ -50,6 +53,7 @@ message MsgRegisterFeeShareResponse {}
 // registered FeeShare
 message MsgUpdateFeeShare {
   option (gogoproto.equal) = false;
+  option (cosmos.msg.v1.signer) = "deployer_address";
   // contract_address in bech32 format
   string contract_address = 1;
   // deployer_address is the bech32 address of message sender. It must be the
@@ -66,6 +70,7 @@ message MsgUpdateFeeShareResponse {}
 // MsgCancelFeeShare defines a message that cancels a registered FeeShare
 message MsgCancelFeeShare {
   option (gogoproto.equal) = false;
+  option (cosmos.msg.v1.signer) = "deployer_address";
   // contract_address in bech32 format
   string contract_address = 1;
   // deployer_address is the bech32 address of message sender. It must be the

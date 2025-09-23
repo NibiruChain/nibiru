@@ -243,10 +243,6 @@ $ nibid tx tokenfactory burn-native 100unibi
 				Coin:   burnCoin,
 			}
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

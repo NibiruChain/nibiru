@@ -3,7 +3,6 @@ package tokenfactory_test
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -19,7 +18,7 @@ func TestSuite(t *testing.T) {
 }
 
 func (s *Suite) TestAppModule() {
-	bapp, ctx := testapp.NewNibiruTestAppAndContext()
+	bapp, ctx := testapp.NewNibiruTestAppAndContext(s.T().TempDir())
 	appModule := module.NewAppModule(
 		bapp.TokenFactoryKeeper,
 		bapp.AccountKeeper,
@@ -27,8 +26,10 @@ func (s *Suite) TestAppModule() {
 
 	s.NotPanics(func() {
 		s.T().Log("begin and end block")
-		appModule.BeginBlock(ctx, abci.RequestBeginBlock{})
-		appModule.EndBlock(ctx, abci.RequestEndBlock{})
+		err := appModule.BeginBlock(ctx)
+		s.Require().NoError(err)
+		err = appModule.EndBlock(ctx)
+		s.Require().NoError(err)
 
 		s.T().Log("AppModule.ExportGenesis")
 		cdc := bapp.AppCodec()
@@ -36,7 +37,7 @@ func (s *Suite) TestAppModule() {
 
 		genesis := types.DefaultGenesis()
 		genState := new(types.GenesisState)
-		err := cdc.UnmarshalJSON(jsonBz, genState)
+		err = cdc.UnmarshalJSON(jsonBz, genState)
 		s.NoError(err)
 		s.EqualValues(*genesis, *genState, "exported (got): %s", jsonBz)
 

@@ -99,7 +99,7 @@ func GetAccountNumbers(
 	}
 
 	// register auth interface
-	var acc authtypes.AccountI
+	var acc sdk.AccountI
 	if err := encCfg.InterfaceRegistry.UnpackAny(resp.Account, &acc); err != nil {
 		return nums, err
 	}

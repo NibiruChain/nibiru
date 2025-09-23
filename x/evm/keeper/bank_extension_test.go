@@ -91,7 +91,7 @@ func (scenario GasConsumedInvariantScenario) Run(
 	to evmtest.EthPrivKeyAcc,
 ) (gasConsumed uint64) {
 	bankDenom, nilStateDB := scenario.BankDenom, scenario.NilStateDB
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	if nilStateDB {
 		s.Require().Nil(deps.EvmKeeper.Bank.StateDB)
 	} else {
@@ -191,7 +191,7 @@ func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
 	)
 
 	{
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		s.Nil(deps.EvmKeeper.Bank.StateDB)
 
 		f.Setup(&deps)
@@ -203,7 +203,7 @@ func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
 	}
 
 	{
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		deps.NewStateDB()
 		s.NotNil(deps.EvmKeeper.Bank.StateDB)
 
@@ -325,7 +325,7 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 // nodes and consensus failures. This test adds cases to make sure that invariant
 // is held.
 func (s *Suite) TestStateDBReadonlyInvariant() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	_, _, erc20Contract := evmtest.DeployAndExecuteERC20Transfer(&deps, s.T())
 	to := evmtest.NewEthPrivAcc()
 
@@ -349,7 +349,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 		})
 		s.Require().NoError(err)
 		req := &evm.EthCallRequest{Args: jsonTxArgs}
-		_, err = deps.EvmKeeper.EthCall(deps.GoCtx(), req)
+		_, err = deps.EvmKeeper.EthCall(deps.Ctx, req)
 		s.Require().NoError(err)
 		stateDBs = append(stateDBs, StateDBWithExplanation{
 			StateDB:     deps.App.EvmKeeper.Bank.StateDB,
@@ -433,7 +433,7 @@ func (s *Suite) TestStateDBReadonlyInvariant() {
 // TestSyncStateDBWithAccount_DeliverTxCheck ensures that SyncStateDBWithAccount
 // only syncs during DeliverTx, not during CheckTx, ReCheckTx, or simulations
 func (s *Suite) TestSyncStateDBWithAccount_DeliverTxCheck() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 
 	testAddr := evmtest.NewEthPrivAcc()
 

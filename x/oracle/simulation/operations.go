@@ -56,19 +56,19 @@ func WeightedOperations(
 		weightMsgAggregateExchangeRateVote    int
 		weightMsgDelegateFeedConsent          int
 	)
-	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRatePrevote, &weightMsgAggregateExchangeRatePrevote, nil,
+	appParams.GetOrGenerate(OpWeightMsgAggregateExchangeRatePrevote, &weightMsgAggregateExchangeRatePrevote, nil,
 		func(_ *rand.Rand) {
 			weightMsgAggregateExchangeRatePrevote = params.DefaultWeightMsgSend * 2
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRateVote, &weightMsgAggregateExchangeRateVote, nil,
+	appParams.GetOrGenerate(OpWeightMsgAggregateExchangeRateVote, &weightMsgAggregateExchangeRateVote, nil,
 		func(_ *rand.Rand) {
 			weightMsgAggregateExchangeRateVote = params.DefaultWeightMsgSend * 2
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
+	appParams.GetOrGenerate(OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
 		func(_ *rand.Rand) {
 			weightMsgDelegateFeedConsent = params.DefaultWeightMsgDelegate // TODO: temp fix
 		},
@@ -100,7 +100,10 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		address := sdk.ValAddress(simAccount.Address)
 
 		// ensure the validator exists
-		val := k.StakingKeeper.Validator(ctx, address)
+		val, err := k.StakingKeeper.Validator(ctx, address)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
+		}
 		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "unable to find validator"), nil, nil
 		}
@@ -150,7 +153,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		voteHashMap[address.String()] = exchangeRatesStr
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
@@ -164,7 +167,10 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 		address := sdk.ValAddress(simAccount.Address)
 
 		// ensure the validator exists
-		val := k.StakingKeeper.Validator(ctx, address)
+		val, err := k.StakingKeeper.Validator(ctx, address)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
+		}
 		if val == nil || !val.IsBonded() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRateVote, "unable to find validator"), nil, nil
 		}
@@ -219,7 +225,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }
 
@@ -236,13 +242,19 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 		account := ak.GetAccount(ctx, simAccount.Address)
 
 		// ensure the validator exists
-		val := k.StakingKeeper.Validator(ctx, valAddress)
+		val, err := k.StakingKeeper.Validator(ctx, valAddress)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
+		}
 		if val == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgDelegateFeedConsent, "unable to find validator"), nil, nil
 		}
 
 		// ensure the target address is not a validator
-		val2 := k.StakingKeeper.Validator(ctx, delegateValAddress)
+		val2, err := k.StakingKeeper.Validator(ctx, delegateValAddress)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgAggregateExchangeRatePrevote, "error finding validator"), nil, nil
+		}
 		if val2 != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgDelegateFeedConsent, "unable to delegate to validator"), nil, nil
 		}
@@ -276,6 +288,6 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to deliver tx"), nil, err
 		}
 
-		return simtypes.NewOperationMsg(msg, true, "", nil), nil, nil
+		return simtypes.NewOperationMsg(msg, true, ""), nil, nil
 	}
 }

@@ -18,8 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -31,7 +29,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 		{
 			name: "happy: deploy contract, sufficient gas limit",
 			scenario: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 				ethAcc := deps.Sender
 
 				// Leftover gas fee is refunded within EthereumTx from the FeeCollector
@@ -58,7 +56,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 				s.Require().NoError(
 					err,
 					"resp: %s\nblock header: %s",
@@ -81,7 +79,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 		{
 			name: "sad: deploy contract, exceed gas limit",
 			scenario: func() {
-				deps := evmtest.NewTestDeps()
+				deps := evmtest.NewTestDeps(s.T().TempDir())
 				ethAcc := deps.Sender
 
 				s.T().Log("create eth tx msg, default create contract gas")
@@ -99,7 +97,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 				s.Require().NoError(ethTxMsg.ValidateBasic())
 				s.Equal(ethTxMsg.GetGas(), gasLimit)
 
-				resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+				resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 				s.Require().ErrorContains(
 					err, core.ErrIntrinsicGas.Error(),
 					"resp: %+v", resp,
@@ -115,7 +113,7 @@ func (s *Suite) TestMsgEthereumTx_CreateContract() {
 }
 
 func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	ethAcc := deps.Sender
 
 	// Leftover gas fee is refunded within EthereumTx from the FeeCollector
@@ -153,7 +151,7 @@ func (s *Suite) TestMsgEthereumTx_ExecuteContract() {
 	s.NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 	s.Equal(ethTxMsg.GetGas(), gasLimit.Uint64())
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 	s.Require().NoError(
 		err,
 		"resp: %s\nblock header: %s",
@@ -189,7 +187,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 	}
 
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
+		deps := evmtest.NewTestDeps(s.T().TempDir())
 		ethAcc := deps.Sender
 
 		fundedAmount := evm.NativeToWei(big.NewInt(123)).Int64()
@@ -218,7 +216,7 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 		)
 		s.NoError(err)
 
-		resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+		resp, err := deps.App.EvmKeeper.EthereumTx(deps.Ctx, ethTxMsg)
 		s.Require().NoError(err)
 		s.Require().Empty(resp.VmError)
 
@@ -240,17 +238,17 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 }
 
 func (s *Suite) TestEthereumTx_ABCI() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
 		deps.Ctx,
 		deps.Sender.NibiruAddr,
-		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewInt(69_420))),
 	))
 
-	blockHeader := deps.Ctx.BlockHeader()
 	// blockHeader := tmproto.Header{Height: deps.Ctx.BlockHeight()}
-	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+	_, err := deps.App.BeginBlocker(deps.Ctx)
+	s.Require().NoError(err)
 	to := evmtest.NewEthPrivAcc()
 	evmTxMsg, err := evmtest.TxTransferWei{
 		Deps:      &deps,
@@ -263,15 +261,11 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
 	s.Require().NoError(err)
 
-	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
+	gasInfo, _, err := deps.App.SimDeliver(deps.App.GetTxConfig().TxEncoder(), blockTx)
 	s.Require().NoError(err)
-	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
-	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
-	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx.BlockHeight()})
+	_, err = deps.App.EndBlocker(deps.Ctx)
+	s.Require().NoError(err)
 
-	{
-		r := deliverTxResp
-		s.EqualValuesf(21000, r.GasUsed, "%d", r.GasUsed)
-		s.EqualValuesf(21000, r.GasWanted, "%d", r.GasWanted)
-	}
+	s.EqualValuesf(21000, gasInfo.GasUsed, "%d", gasInfo.GasUsed)
+	s.EqualValuesf(21000, gasInfo.GasWanted, "%d", gasInfo.GasWanted)
 }

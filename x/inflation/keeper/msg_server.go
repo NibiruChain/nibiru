@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
@@ -23,6 +24,13 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 func (ms msgServer) EditInflationParams(
 	goCtx context.Context, msg *types.MsgEditInflationParams,
 ) (resp *types.MsgEditInflationParamsResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// Stateless field validation was already performed in msg.ValidateBasic()
 	// before the current scope is reached.
@@ -38,6 +46,13 @@ func (ms msgServer) EditInflationParams(
 func (ms msgServer) ToggleInflation(
 	goCtx context.Context, msg *types.MsgToggleInflation,
 ) (resp *types.MsgToggleInflationResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// Stateless field validation was already performed in msg.ValidateBasic()
 	// before the current scope is reached.

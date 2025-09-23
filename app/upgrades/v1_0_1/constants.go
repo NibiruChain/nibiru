@@ -1,7 +1,7 @@
 package v1_0_1
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )

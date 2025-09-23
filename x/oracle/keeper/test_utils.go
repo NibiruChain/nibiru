@@ -5,28 +5,31 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
-	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -135,21 +138,22 @@ type TestFixture struct {
 // CreateTestFixture nolint
 // Creates a base app, with 5 accounts,
 func CreateTestFixture(t *testing.T) TestFixture {
-	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
-	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
-	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
-	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
-	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
-	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
-	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
-	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
-	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
+	keyAcc := storetypes.NewKVStoreKey(authtypes.StoreKey)
+	keyBank := storetypes.NewKVStoreKey(banktypes.StoreKey)
+	keyParams := storetypes.NewKVStoreKey(paramstypes.StoreKey)
+	tKeyParams := storetypes.NewTransientStoreKey(paramstypes.TStoreKey)
+	keyOracle := storetypes.NewKVStoreKey(types.StoreKey)
+	keyStaking := storetypes.NewKVStoreKey(stakingtypes.StoreKey)
+	keySlashing := storetypes.NewKVStoreKey(slashingtypes.StoreKey)
+	keyDistr := storetypes.NewKVStoreKey(distrtypes.StoreKey)
+	keySudo := storetypes.NewKVStoreKey(sudotypes.StoreKey)
 
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), metrics.NewNoOpMetrics())
 	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC(), Height: 1}, false, log.NewNopLogger())
+
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
@@ -182,70 +186,59 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
-		keyAcc,
+		runtime.NewKVStoreService(keyAcc),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
-		keyBank,
+		runtime.NewKVStoreService(keyBank),
 		accountKeeper,
 		blackListAddrs,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		log.NewNopLogger(),
 	)
-
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
-	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
+	err := bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
+	require.NoError(t, err)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
-		keyStaking,
+		runtime.NewKVStoreService(keyStaking),
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 	stakingParams := stakingtypes.DefaultParams()
 	stakingParams.BondDenom = denoms.NIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
 
-	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, keySlashing, stakingKeeper, govModuleAddr)
+	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, runtime.NewKVStoreService(keySlashing), stakingKeeper, govModuleAddr)
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
-		keyDistr,
+		runtime.NewKVStoreService(keyDistr),
 		accountKeeper, bankKeeper, stakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
+	distrKeeper.FeePool.Set(ctx, distrtypes.InitialFeePool())
 	distrParams := distrtypes.DefaultParams()
 	distrParams.CommunityTax = sdkmath.LegacyNewDecWithPrec(2, 2)
-	distrKeeper.SetParams(ctx, distrParams)
+	distrKeeper.Params.Set(ctx, distrParams)
 	stakingKeeper.SetHooks(stakingtypes.NewMultiStakingHooks(distrKeeper.Hooks()))
-
-	feeCollectorAcc := authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
-	notBondedPool := authtypes.NewEmptyModuleAccount(stakingtypes.NotBondedPoolName, authtypes.Burner, authtypes.Staking)
-	bondPool := authtypes.NewEmptyModuleAccount(stakingtypes.BondedPoolName, authtypes.Burner, authtypes.Staking)
-	distrAcc := authtypes.NewEmptyModuleAccount(distrtypes.ModuleName)
-	oracleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter)
 
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
-	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
-
-	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
-	accountKeeper.SetModuleAccount(ctx, bondPool)
-	accountKeeper.SetModuleAccount(ctx, notBondedPool)
-	accountKeeper.SetModuleAccount(ctx, distrAcc)
-	accountKeeper.SetModuleAccount(ctx, oracleAcc)
-	accountKeeper.SetModuleAccount(ctx, sudoAcc)
 
 	for _, addr := range Addrs {
-		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
 		err := bankKeeper.SendCoinsFromModuleToAccount(ctx, faucetAccountName, addr, InitCoins)
 		require.NoError(t, err)
 	}
@@ -285,8 +278,10 @@ func NewTestMsgCreateValidator(
 ) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
-		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
-		stakingtypes.Description{}, commission, sdkmath.OneInt(),
+		address.String(), pubKey, sdk.NewCoin(denoms.NIBI, amt),
+		stakingtypes.Description{
+			Moniker: "moniker",
+		}, commission, sdkmath.OneInt(),
 	)
 
 	return msg
@@ -338,7 +333,8 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], testStakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
+	_, err = fixture.StakingKeeper.EndBlocker(fixture.Ctx)
+	require.NoError(t, err)
 
 	return fixture, h
 }
@@ -357,10 +353,10 @@ func MakeAggregatePrevoteAndVote(
 	hash := types.GetAggregateVoteHash(salt, ratesStr, ValAddrs[valIdx])
 
 	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(input.Ctx.WithBlockHeight(height), prevoteMsg)
 	require.NoError(t, err)
 
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(input.Ctx.WithBlockHeight(height+1), voteMsg)
 	require.NoError(t, err)
 }

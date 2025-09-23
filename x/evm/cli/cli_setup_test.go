@@ -32,6 +32,7 @@ type Suite struct {
 func (s *Suite) SetupSuite() {
 	s.encCfg = testutilmod.MakeTestEncodingConfig(evmmodule.AppModuleBasic{})
 	s.keyring = keyring.NewInMemory(s.encCfg.Codec)
+
 	testAccs := sdktestutil.CreateKeyringAccounts(s.T(), s.keyring, 1)
 	s.testAcc = testAccs[0]
 }
@@ -62,7 +63,7 @@ func (tc TestCase) NewCtx(s *Suite) sdkclient.Context {
 		WithKeyring(s.keyring).
 		WithTxConfig(s.encCfg.TxConfig).
 		WithCodec(s.encCfg.Codec).
-		WithClient(sdktestutilcli.MockTendermintRPC{Client: rpcclientmock.Client{}}).
+		WithClient(sdktestutilcli.MockCometRPC{Client: rpcclientmock.Client{}}).
 		WithAccountRetriever(sdkclient.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")

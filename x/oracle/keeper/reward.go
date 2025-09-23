@@ -43,13 +43,21 @@ func (k Keeper) rewardWinners(
 
 	var distributedRewards sdk.Coins
 	for _, validatorPerformance := range validatorPerformances {
-		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
+		validator, err := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
+		// TODO: Handle error
+		if err != nil {
+			panic(err)
+		}
 		if validator == nil {
 			continue
 		}
 
 		rewardPortion, _ := totalRewards.MulDec(sdkmath.LegacyNewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
-		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
+		err = k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
+		// TODO: Handle error
+		if err != nil {
+			panic(err)
+		}
 		distributedRewards = distributedRewards.Add(rewardPortion...)
 	}
 

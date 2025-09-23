@@ -11,6 +11,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	ethutils "github.com/NibiruChain/nibiru/v2/utils"
 )
 
 // AccessList is an EIP-2930 access list that represents the slice of
@@ -233,7 +234,7 @@ func (tx *AccessListTx) AsEthereumData() gethcore.TxData {
 // GetRawSignatureValues returns the V, R, S signature values of the transaction.
 // The return values should not be modified by the caller.
 func (tx *AccessListTx) GetRawSignatureValues() (v, r, s *big.Int) {
-	return rawSignatureValues(tx.V, tx.R, tx.S)
+	return ethutils.RawSignatureValues(tx.V, tx.R, tx.S)
 }
 
 // SetSignatureValues sets the signature values to the transaction.

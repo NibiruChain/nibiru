@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -130,9 +129,9 @@ func (s *TestSuite) TestModuleAddressEVM() {
 
 	// EVM addr module acc and EVM address should be connected
 	// EVM module should have mint perms
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	{
-		resp, err := deps.EvmKeeper.EthAccount(sdk.WrapSDKContext(deps.Ctx), &evm.QueryEthAccountRequest{
+		resp, err := deps.EvmKeeper.EthAccount(deps.Ctx, &evm.QueryEthAccountRequest{
 			Address: evmModuleAddr.Hex(),
 		})
 		s.NoError(err)

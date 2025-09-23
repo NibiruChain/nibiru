@@ -51,12 +51,11 @@ func (s *TestSuite) TestPrivKeyAddressPairs() {
 
 func (s *TestSuite) TestBlankContext() {
 	ctx := testutil.BlankContext("new-kv-store-key")
-	goCtx := sdk.WrapSDKContext(ctx)
 
 	freshGoCtx := context.Background()
 	s.Require().Panics(func() { sdk.UnwrapSDKContext(freshGoCtx) })
 
-	s.Require().NotPanics(func() { sdk.UnwrapSDKContext(goCtx) })
+	s.Require().NotPanics(func() { sdk.UnwrapSDKContext(ctx) })
 }
 
 func (s *TestSuite) TestNullifyFill() {

@@ -29,7 +29,7 @@ func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDeps(s.T().TempDir())
 			anteDec := ante.AnteDecoratorPreventEtheruemTxMsgs{}
 			tx := tc.txSetup(&deps)
 

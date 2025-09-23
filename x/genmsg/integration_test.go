@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -47,8 +48,8 @@ func TestGenmsgInGenesis(t *testing.T) {
 		},
 	)
 
-	app, _ := testapp.NewNibiruTestApp(appGenesis)
-	ctx := app.NewContext(false, tmproto.Header{
+	app, _ := testapp.NewNibiruTestApp(t.TempDir(), appGenesis)
+	ctx := app.NewContextLegacy(false, tmproto.Header{
 		Height: 1,
 	})
 

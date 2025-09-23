@@ -1,6 +1,11 @@
 package keeper
 
 import (
+	"context"
+
+	"cosmossdk.io/collections"
+	"cosmossdk.io/core/address"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -11,7 +16,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
-var _ bankkeeper.Keeper = &NibiruBankKeeper{}
+var (
+	_ bankkeeper.Keeper          = &NibiruBankKeeper{}
+	_ bankkeeper.SchemaProvider  = &NibiruBankKeeper{}
+	_ bankkeeper.HasAddressCodec = &NibiruBankKeeper{}
+)
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
@@ -27,20 +36,19 @@ func (evmKeeper *Keeper) NewStateDB(
 }
 
 func (bk NibiruBankKeeper) InputOutputCoins(
-	ctx sdk.Context,
-	input []banktypes.Input,
+	c context.Context,
+	input banktypes.Input,
 	output []banktypes.Output,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
 			return bk.BaseKeeper.InputOutputCoins(ctx, input, output)
 		},
 		func(ctx sdk.Context) {
-			for _, input := range input {
-				if findEtherBalanceChangeFromCoins(input.Coins) {
-					bk.SyncStateDBWithAccount(ctx, sdk.MustAccAddressFromBech32(input.Address))
-				}
+			if findEtherBalanceChangeFromCoins(input.Coins) {
+				bk.SyncStateDBWithAccount(ctx, sdk.MustAccAddressFromBech32(input.Address))
 			}
 			for _, output := range output {
 				if findEtherBalanceChangeFromCoins(output.Coins) {
@@ -52,11 +60,12 @@ func (bk NibiruBankKeeper) InputOutputCoins(
 }
 
 func (bk NibiruBankKeeper) DelegateCoins(
-	ctx sdk.Context,
+	c context.Context,
 	delegatorAddr sdk.AccAddress,
 	moduleBech32Addr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -71,11 +80,12 @@ func (bk NibiruBankKeeper) DelegateCoins(
 }
 
 func (bk NibiruBankKeeper) UndelegateCoins(
-	ctx sdk.Context,
+	c context.Context,
 	delegatorAddr sdk.AccAddress,
 	moduleBech32Addr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -89,7 +99,8 @@ func (bk NibiruBankKeeper) UndelegateCoins(
 	)
 }
 
-func (bk NibiruBankKeeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+func (bk NibiruBankKeeper) DelegateCoinsFromAccountToModule(c context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -105,7 +116,8 @@ func (bk NibiruBankKeeper) DelegateCoinsFromAccountToModule(ctx sdk.Context, sen
 	)
 }
 
-func (bk NibiruBankKeeper) UndelegateCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+func (bk NibiruBankKeeper) UndelegateCoinsFromModuleToAccount(c context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -122,10 +134,11 @@ func (bk NibiruBankKeeper) UndelegateCoinsFromModuleToAccount(ctx sdk.Context, s
 }
 
 func (bk NibiruBankKeeper) MintCoins(
-	ctx sdk.Context,
+	c context.Context,
 	moduleName string,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -142,10 +155,11 @@ func (bk NibiruBankKeeper) MintCoins(
 }
 
 func (bk NibiruBankKeeper) BurnCoins(
-	ctx sdk.Context,
+	c context.Context,
 	moduleName string,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -206,17 +220,18 @@ func (bk NibiruBankKeeper) ForceGasInvariant(
 		return err
 	}
 
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	AfterOp(ctx)
 	return nil
 }
 
 func (bk NibiruBankKeeper) SendCoins(
-	ctx sdk.Context,
+	c context.Context,
 	fromAddr sdk.AccAddress,
 	toAddr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -255,11 +270,12 @@ func findEtherBalanceChangeFromCoins(coins sdk.Coins) (found bool) {
 }
 
 func (bk NibiruBankKeeper) SendCoinsFromAccountToModule(
-	ctx sdk.Context,
+	c context.Context,
 	senderAddr sdk.AccAddress,
 	recipientModule string,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -277,11 +293,12 @@ func (bk NibiruBankKeeper) SendCoinsFromAccountToModule(
 }
 
 func (bk NibiruBankKeeper) SendCoinsFromModuleToAccount(
-	ctx sdk.Context,
+	c context.Context,
 	senderModule string,
 	recipientAddr sdk.AccAddress,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -299,11 +316,12 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToAccount(
 }
 
 func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
-	ctx sdk.Context,
+	c context.Context,
 	senderModule string,
 	recipientModule string,
 	coins sdk.Coins,
 ) error {
+	ctx := sdk.UnwrapSDKContext(c)
 	return bk.ForceGasInvariant(
 		ctx,
 		func(ctx sdk.Context) error {
@@ -319,4 +337,12 @@ func (bk NibiruBankKeeper) SendCoinsFromModuleToModule(
 			}
 		},
 	)
+}
+
+func (k NibiruBankKeeper) GetSchema() collections.Schema {
+	return k.BaseKeeper.Schema
+}
+
+func (k NibiruBankKeeper) AddressCodec() address.Codec {
+	return k.BaseKeeper.AddressCodec()
 }

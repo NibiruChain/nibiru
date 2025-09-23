@@ -10,7 +10,7 @@ import (
 
 // TestRandom tests the random value generation within the EVM.
 func (s *Suite) TestRandom() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDeps(s.T().TempDir())
 	evmObj, _ := deps.NewEVM()
 	deployResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestRandom)
 	s.Require().NoError(err)

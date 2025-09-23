@@ -40,8 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<!--
-NOTE: The brackets around the word "Unreleased" are required to pass the CI test
+- [#2308](https://github.com/NibiruChain/nibiru/pull/2308) - feat: cosmos v50 upgrade
+<!-- 
+NOTE: The brackets around the word "Unreleased" are required to pass the [CI test
 that checks if we updated the changelog. This is a convention from the [keep a
 changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.

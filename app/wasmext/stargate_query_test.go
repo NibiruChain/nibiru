@@ -75,7 +75,7 @@ func (s *Suite) TestWasmAcceptedStargateQueries() {
 		gotQueryPaths = append(gotQueryPaths, queryPath)
 
 		// Show that the underlying protobuf name and query paths coincide.
-		pbQueryResponseTypeUrl := "/" + proto.MessageName(protobufResponse)
+		pbQueryResponseTypeUrl := "/" + proto.MessageName(protobufResponse())
 		isExceptionPath := exceptionPaths.Has(pbQueryResponseTypeUrl)
 		splitResponse := strings.Split(pbQueryResponseTypeUrl, "Response")
 		assert.Lenf(t, splitResponse, 2, "typeUrl: %v",

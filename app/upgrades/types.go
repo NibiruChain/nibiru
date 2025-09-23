@@ -1,13 +1,15 @@
 package upgrades
 
 import (
-	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"context"
 
-	store "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	store "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+
+	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
+
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
 )
 
 type Upgrade struct {
@@ -32,7 +34,7 @@ func DefaultUpgradeHandler(
 	nibiru *keepers.PublicKeepers,
 	clientKeeper clientkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strings"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	sdkmath "cosmossdk.io/math"
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +28,7 @@ import (
 // - verifies that fungible token is in place and the balance is correct
 func (s *Suite) TestExportInitGenesis() {
 	var (
-		deps = evmtest.NewTestDeps()
+		deps = evmtest.NewTestDeps(s.T().TempDir())
 		// Keep the sender as a variable since "deps" will be reset after we export the genesis
 		depsSender    = deps.Sender
 		erc20Contract = embeds.SmartContract_TestERC20
@@ -215,7 +217,8 @@ amountToSendC: %s`,
 
 	s.T().Log("Init genesis from the exported state for modules [auth, bank, evm]")
 	{
-		deps = evmtest.NewTestDeps()
+		newCtx := deps.App.NewContextLegacy(true, tmproto.Header{Height: 0})
+		deps.Ctx = newCtx
 		deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
 		deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
 		deps.EvmKeeper.InitGenesis(deps.Ctx, *evmGenesisState)

@@ -24,6 +24,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -213,9 +214,9 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 			// the hash from the store for the current chain epoch. This only
 			// applies if the current height is greater than the requested
 			// height.
-			histInfo, found := k.stakingKeeper.GetHistoricalInfo(ctx, h)
-			if !found {
-				k.Logger(ctx).Debug("historical info not found", "height", h)
+			histInfo, err := k.stakingKeeper.GetHistoricalInfo(ctx, h)
+			if err != nil {
+				k.Logger(ctx).Debug("historical info not found", "height", h, "error", err)
 				return gethcommon.Hash{}
 			}
 
@@ -509,6 +510,9 @@ func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
 func (k *Keeper) CreateFunToken(
 	goCtx context.Context, msg *evm.MsgCreateFunToken,
 ) (resp *evm.MsgCreateFunTokenResponse, err error) {
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
 	err = msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -593,13 +597,22 @@ func (k Keeper) FeeForCreateFunToken(ctx sdk.Context) sdk.Coins {
 func (k *Keeper) ConvertCoinToEvm(
 	goCtx context.Context, msg *evm.MsgConvertCoinToEvm,
 ) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
-	err = msg.ValidateBasic()
+	if msg == nil {
+		return nil, common.ErrNilGrpcMsg
+	}
+
+	senderBech32, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: invalid sender addr: %w", err)
+	}
+	if msg.ToEthAddr.String() == "" || msg.ToEthAddr.Size() == 0 {
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: empty to_eth_addr")
+	}
+	if err := msg.BankCoin.Validate(); err != nil {
+		return resp, fmt.Errorf("error in MsgConvertCoinToEvm: %w", err)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	senderBech32 := sdk.MustAccAddressFromBech32(msg.Sender)
 
 	if msg.BankCoin.Denom == appconst.BondDenom {
 		return k.convertCoinToEvmForWNIBI(
@@ -634,10 +647,41 @@ func (k *Keeper) ConvertEvmToCoin(
 	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	senderAddrs, erc20, amount, toAddrs, err := msg.Validate()
+	senderBech32, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
+		err = fmt.Errorf("invalid sender address: %w", err)
 		return
 	}
+	sender := &evm.Addrs{}
+	sender.Bech32 = senderBech32
+	sender.Eth = eth.NibiruAddrToEthAddr(senderBech32)
+
+	toAddrs := &evm.Addrs{}
+	ethAddr, err := eth.NewEIP55AddrFromStr(msg.ToAddr)
+	if err == nil {
+		// err == nil means this is an Eth addr
+		toAddrs.Eth = ethAddr.Address
+		toAddrs.Bech32 = eth.EthAddrToNibiruAddr(toAddrs.Eth)
+	} else {
+		// Try bech32
+		toAddrs.Bech32, err = sdk.AccAddressFromBech32(msg.ToAddr)
+		if err != nil {
+			err = fmt.Errorf("invalid bech32 or hex address: to_addr=\"%s\": %w", msg.ToAddr, err)
+			return
+		}
+		toAddrs.Eth = eth.NibiruAddrToEthAddr(toAddrs.Bech32)
+	}
+
+	if (msg.Erc20Addr.Address == gethcommon.Address{}) {
+		err = fmt.Errorf("empty erc20_addr")
+		return
+	}
+
+	if msg.Amount.IsNil() || !msg.Amount.IsPositive() {
+		err = fmt.Errorf("amount must be positive: amount=\"%s\"", msg.Amount)
+		return
+	}
+	amount := msg.Amount
 
 	stateDB := k.Bank.StateDB
 	if stateDB == nil {
@@ -647,11 +691,12 @@ func (k *Keeper) ConvertEvmToCoin(
 		k.Bank.StateDB = nil
 	}()
 
+	erc20 := msg.Erc20Addr
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
 		_, err = k.ConvertEvmToCoinForWNIBI(
-			ctx, stateDB, erc20, senderAddrs, toAddrs.Bech32,
+			ctx, stateDB, erc20, *sender, toAddrs.Bech32,
 			amount,
 			nil, /*evmObj*/
 		)
@@ -667,11 +712,11 @@ func (k *Keeper) ConvertEvmToCoin(
 		amountBig := amount.BigInt()
 		if funtokenMapping.IsMadeFromCoin {
 			err = k.convertEvmToCoinForCoinOriginated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+				ctx, *sender, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 			)
 		} else {
 			err = k.convertEvmToCoinForERC20Originated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
+				ctx, *sender, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, stateDB,
 			)
 		}
 	}
