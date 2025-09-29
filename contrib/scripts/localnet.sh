@@ -229,18 +229,12 @@ get_auth_accounts_len() {
   cat $CHAIN_DIR/config/genesis.json | jq '.app_state.auth.accounts | length'
 }
 
-get_next_open_account_number() {
-  get_auth_accounts_len
-}
-
-echo_info "Auth accounts length: $(get_auth_accounts_len)"
-
 # ------------------------------------------------------------------------
 # Prepare WNIBI account and merge into genesis
 # ------------------------------------------------------------------------
 
 echo_info "Setting WNIBI auth account_number to next open index"
-NEXT_ACC_NUM=$(get_next_open_account_number)
+NEXT_ACC_NUM=$(get_auth_accounts_len)
 jq ".auth.accounts[0].base_account.account_number=\"${NEXT_ACC_NUM}\"" contrib/wnibi.json > contrib/wnibi.tmp.json
 mv contrib/wnibi.tmp.json contrib/wnibi.json
 

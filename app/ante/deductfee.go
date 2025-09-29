@@ -68,10 +68,6 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		err      error
 	)
 
-	if ctx.BlockHeight() == 0 {
-		return next(ctx, tx, simulate)
-	}
-
 	fee := feeTx.GetFee()
 	if !simulate {
 		fee, priority, err = dfd.txFeeChecker(ctx, tx)
