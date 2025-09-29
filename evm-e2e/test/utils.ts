@@ -107,9 +107,7 @@ export const numberToHex = (num: Number) => {
   return "0x" + num.toString(16)
 }
 
-export const deployContractWNIBIIfNeeded = async (
-  maybeAddress?: string
-): Promise<{
+export const getWNIBI = async (): Promise<{
   contract: WNIBI & DeploymentTx
 }> => {
   const { abi, bytecode } = WNIBI_JSON
@@ -117,22 +115,18 @@ export const deployContractWNIBIIfNeeded = async (
 
   let contract: ethers.Contract
 
-  if (maybeAddress) {
-    try {
-      const code = await account.provider.getCode(maybeAddress)
-      if (code !== "0x") {
-        // Contract already deployed
-        console.log(`Contract already deployed at ${maybeAddress}`)
-        contract = new ethers.Contract(maybeAddress, abi, account)
-        return { contract: contract as unknown as WNIBI & DeploymentTx }
-      }
-    } catch (error) {
-      console.warn(`Failed to check code at ${maybeAddress}:`, error)
-      // Fall through to deploy new contract
+  try {
+    const code = await account.provider.getCode(localnetWNIBIAddress)
+    if (code !== "0x") {
+      // Contract already deployed
+      console.log(`Contract already deployed at ${localnetWNIBIAddress}`)
+      contract = new ethers.Contract(localnetWNIBIAddress, abi, account)
+      return { contract: contract as unknown as WNIBI & DeploymentTx }
     }
+  } catch (error) {
+    console.warn(`Failed to check code at ${localnetWNIBIAddress}:`, error)
+    // Fall through to deploy new contract
   }
-
-  contract = (await factory.deploy()) as ethers.Contract
-  await contract.waitForDeployment()
-  return { contract: contract as unknown as WNIBI & DeploymentTx }
 }
+
+const localnetWNIBIAddress = "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"

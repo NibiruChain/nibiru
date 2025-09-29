@@ -19,6 +19,10 @@ import (
 	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 )
 
+var (
+	_ sdk.AnteDecorator = DeductFeeDecorator{}
+)
+
 // DeductFeeDecorator deducts fees from the fee payer. The fee payer is the fee granter (if specified) or first signer of the tx.
 // If the fee payer does not have the funds to pay for the fees, return an InsufficientFunds error.
 // Call next AnteHandler if fees successfully deducted.
@@ -194,7 +198,7 @@ func DeductFeesWithWNIBI(
 		evmKeeper.Bank.StateDB = nil
 	}()
 
-	evmObj := evmKeeper.NewEVM(ctx, evmkeeper.MOCK_GETH_MESSAGE, evmKeeper.GetEVMConfig(ctx), nil, stateDB)
+	evmObj := evmKeeper.NewEVM(ctx, evm.MOCK_GETH_MESSAGE, evmKeeper.GetEVMConfig(ctx), nil, stateDB)
 	wnibiBal, err := evmKeeper.ERC20().BalanceOf(wnibi.Address, eth.NibiruAddrToEthAddr(acc.GetAddress()), ctx, evmObj)
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to get WNIBI balance for account %s", acc.GetAddress())
