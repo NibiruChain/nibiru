@@ -78,5 +78,17 @@
     "displayName": "sUSDa (Avalon)",
     "symbol": "sUSDa",
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/007_susda-avalon.png"
+  },
+  {
+    "contractAddr": "0x9568f2afd09d845d48cf999244e18b1a9467eadb",
+    "displayName": "Coinbase Wrapped BTC",
+    "symbol": "cbBTC",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/008_cbbtc.png"
+  },
+  {
+    "contractAddr": "0xd59be1da2e9b30b6f7ab27b2d08f841b39c349fa",
+    "displayName": "uBTC",
+    "symbol": "uBTC",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/009_ubtc.png"
   }
 ]

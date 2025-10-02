@@ -48,8 +48,8 @@ See https://github.com/dangoslen/changelog-enforcer.
 -->
 
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
+- [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
 - [#2391](https://github.com/NibiruChain/nibiru/pull/2391) - feat(proto): impl script for gRPC Gateway REST doc generation
-
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
@@ -73,6 +73,7 @@ handling for NIBI via WNIBI.
 - Bump `github.com/ulikunitz/xz` from 0.5.11 to 0.5.14 ([#2370](https://github.com/NibiruChain/nibiru/pull/2370))
 - Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2367](https://github.com/NibiruChain/nibiru/pull/2367))
 - Bump `github.com/hashicorp/go-getter` from 1.7.5 to 1.7.9 ([#2364](https://github.com/NibiruChain/nibiru/pull/2364))
+- Bump `axios` from 1.9.0 to 1.12.1 ([#2383](https://github.com/NibiruChain/nibiru/pull/2383))
 
 ## [v2.6.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.6.0) - 2025-08-05
 
