@@ -1,0 +1,10 @@
+version: v1
+plugins:
+  - plugin: swagger
+    out: openapi
+    # Options described here as flags:
+    # https://github.com/grpc-ecosystem/grpc-gateway/blob/v1.16.0/protoc-gen-swagger/main.go
+    opt:
+      - "logtostderr=true"
+      - "allow_merge=true"
+      - "merge_file_name=api" # Customize the output filename

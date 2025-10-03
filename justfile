@@ -51,6 +51,10 @@ gen-token-registry:
 gen-proto-rs:
   bash proto/buf.gen.rs.sh
 
+# Generate OpenAPI and Swagger files
+gen-proto-openapi:
+  bun run proto/buf-gen-swagger.ts 2>&1 | tee out.txt
+
 lint: 
   #!/usr/bin/env bash
   echo "Running golangci-lint with docker!"
