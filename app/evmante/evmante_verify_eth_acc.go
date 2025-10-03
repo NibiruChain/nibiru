@@ -8,8 +8,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // AnteDecVerifyEthAcc validates an account balance checks
@@ -64,14 +63,14 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		if acct == nil {
 			acc := anteDec.accountKeeper.NewAccountWithAddress(ctx, from)
 			anteDec.accountKeeper.SetAccount(ctx, acc)
-			acct = statedb.NewEmptyAccount()
+			acct = evmstate.NewEmptyAccount()
 		} else if acct.IsContract() {
 			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidType,
 				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
 		}
 
-		if err := keeper.CheckSenderBalance(
-			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
+		if err := evmstate.CheckSenderBalance(
+			acct.BalanceNwei.ToBig(), txData,
 		); err != nil {
 			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
 		}

@@ -29,7 +29,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 				cp := &tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
+				deps.SetCtx(deps.Ctx().WithConsensusParams(cp))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
@@ -46,7 +46,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 				cp := &tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: 1000},
 				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
+				deps.SetCtx(deps.Ctx().WithConsensusParams(cp))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
@@ -66,7 +66,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 						MaxGas: 500,
 					},
 				}
-				deps.Ctx = deps.Ctx.WithConsensusParams(cp)
+				deps.SetCtx(deps.Ctx().WithConsensusParams(cp))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return legacytx.StdTx{
@@ -87,14 +87,14 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 			anteDec := ante.AnteDecoratorGasWanted{}
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
+			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
 			if tc.ctxSetup != nil {
 				tc.ctxSetup(&deps)
 			}
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

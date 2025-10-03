@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -71,7 +71,7 @@ func (p precompileFunToken) Run(
 		return nil, err
 	}
 
-	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
+	abciEventsStartIdx := len(startResult.Ctx.EventManager().Events())
 
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
@@ -97,7 +97,7 @@ func (p precompileFunToken) Run(
 	}
 	// Gas consumed by a local gas meter
 	contract.UseGas(
-		startResult.CacheCtx.GasMeter().GasConsumed(),
+		startResult.Ctx.GasMeter().GasConsumed(),
 		evmObj.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
@@ -109,9 +109,9 @@ func (p precompileFunToken) Run(
 	// https://github.com/NibiruChain/nibiru/issues/2121
 	if isMutation[PrecompileMethod(startResult.Method.Name)] {
 		EmitEventAbciEvents(
-			startResult.CacheCtx,
-			startResult.StateDB,
-			startResult.CacheCtx.EventManager().Events()[abciEventsStartIdx:],
+			startResult.Ctx,
+			startResult.SDB,
+			startResult.Ctx.EventManager().Events()[abciEventsStartIdx:],
 			p.Address(),
 		)
 	}
@@ -126,7 +126,7 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 }
 
 type precompileFunToken struct {
-	evmKeeper *evmkeeper.Keeper
+	evmKeeper *evmstate.Keeper
 }
 
 // sendToBank: Implements "IFunToken.sendToBank"
@@ -150,7 +150,7 @@ func (p precompileFunToken) sendToBank(
 	readOnly bool,
 	evmObj *vm.EVM,
 ) (bz []byte, err error) {
-	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
+	ctx, method, args := startResult.Ctx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func (p precompileFunToken) balance(
 	contract *vm.Contract,
 	evmObj *vm.EVM,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -408,7 +408,7 @@ func (p precompileFunToken) bankBalance(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -557,7 +557,7 @@ func (p precompileFunToken) sendToEvm(
 	readOnly bool,
 	evmObj *vm.EVM,
 ) ([]byte, error) {
-	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
+	ctx, method, args := startResult.Ctx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
@@ -707,7 +707,7 @@ func (p precompileFunToken) bankMsgSend(
 	caller gethcommon.Address,
 	readOnly bool,
 ) ([]byte, error) {
-	ctx, method, args := startResult.CacheCtx, startResult.Method, startResult.Args
+	ctx, method, args := startResult.Ctx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
@@ -755,7 +755,7 @@ func (p precompileFunToken) getErc20Address(
 	start OnRunStartResult,
 	contract *vm.Contract, // Needed for assertContractQuery
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)

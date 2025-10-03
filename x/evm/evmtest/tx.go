@@ -41,7 +41,7 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, *evm
 	err = ethTxMsg.Sign(gethSigner, krSigner)
 	require.NoError(t, err)
 
-	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
 	require.NoError(t, err)
 	require.Empty(t, resp.VmError)
 	return ethTxMsg, resp
@@ -67,7 +67,7 @@ func DeployContract(
 	}
 	bytecodeForCall := append(contract.Bytecode, packedArgs...)
 
-	nonce := deps.EvmKeeper.GetAccNonce(deps.Ctx, deps.Sender.EthAddr)
+	nonce := deps.EvmKeeper.GetAccNonce(deps.Ctx(), deps.Sender.EthAddr)
 	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(
 		evm.JsonTxArgs{
 			Nonce: (*hexutil.Uint64)(&nonce),
@@ -82,7 +82,7 @@ func DeployContract(
 		return nil, sdkioerrors.Wrap(err, "failed to generate and sign eth tx msg")
 	}
 
-	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	resp, err := deps.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to execute ethereum tx")
 	}
@@ -165,12 +165,12 @@ func GenerateEthTxMsgAndSigner(
 		return
 	}
 	res, err := deps.App.EvmKeeper.EstimateGas(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.EthCallRequest{
 			Args:            estimateArgs,
 			GasCap:          srvconfig.DefaultEthCallGasLimit,
 			ProposerAddress: []byte{},
-			ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx).Int64(),
+			ChainId:         deps.App.EvmKeeper.EthChainID(deps.Ctx()).Int64(),
 		},
 	)
 	if err != nil {
@@ -179,7 +179,7 @@ func GenerateEthTxMsgAndSigner(
 	jsonTxArgs.Gas = (*hexutil.Uint64)(&res.Gas)
 
 	evmTxMsg = jsonTxArgs.ToMsgEthTx()
-	gethSigner = gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+	gethSigner = gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 	return evmTxMsg, gethSigner, sender.KeyringSigner, nil
 }
 
@@ -204,7 +204,7 @@ func (tx TxTransferWei) Build() (evmTxMsg *evm.MsgEthereumTx, err error) {
 		deps,
 		gethcore.LegacyTxType,
 		innerTxData,
-		deps.EvmKeeper.GetAccNonce(deps.Ctx, ethAcc.EthAddr),
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
 		&to,
 		amountWei,
 		gasLimit,
@@ -222,7 +222,7 @@ func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
 	if err != nil {
 		return
 	}
-	evmResp, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), evmTxMsg)
+	evmResp, err = deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), evmTxMsg)
 	if err != nil {
 		err = fmt.Errorf("error while transferring wei: %w", err)
 	}

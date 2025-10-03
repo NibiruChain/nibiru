@@ -7,34 +7,34 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
 		wantErr       string
 	}{
 		{
 			name: "happy: sender with funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				sdb.AddBalanceSigned(deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()))
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()))
 			},
 			txSetup: evmtest.HappyCreateContractTx,
 			wantErr: "",
 		},
 		{
 			name:          "sad: sender has insufficient gas balance",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {},
 			txSetup:       evmtest.HappyCreateContractTx,
 			wantErr:       "sender balance < tx cost",
 		},
 		{
 			name: "sad: sender cannot be a contract -> no contract bytecode",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				// Force account to be a smart contract
 				sdb.SetCode(deps.Sender.EthAddr, []byte("evm bytecode stuff"))
 			},
@@ -43,7 +43,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		},
 		{
 			name:          "sad: invalid tx",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {},
 			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
 				return new(evm.MsgEthereumTx)
 			},
@@ -51,7 +51,7 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		},
 		{
 			name:          "sad: empty from addr",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {},
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {},
 			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				tx.From = ""
@@ -69,11 +69,11 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 
 			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
+			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

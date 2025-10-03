@@ -51,7 +51,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "happy: ctx recheck should ignore validation",
 			ctxSetup: func(deps *evmtest.TestDeps) {
-				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
+				deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return evmtest.HappyCreateContractTx(deps)
@@ -125,7 +125,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 				s.Require().NoError(err)
 				txMsg := evmtest.HappyCreateContractTx(deps)
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err = txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -138,7 +138,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx without extension options should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -163,7 +163,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with from value set should fail",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
@@ -174,7 +174,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with fee <> msg fee",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", 5))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -185,7 +185,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 		{
 			name: "sad: tx with gas limit <> msg gas limit",
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx)
+				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
 				gasLimit := uint64(10)
 				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
 				msg := buildEthMsg(chainID, gasLimit, "", nil)
@@ -202,19 +202,19 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
 			if tc.ctxSetup != nil {
 				tc.ctxSetup(&deps)
 			}
 			var err error
 			if tc.paramsSetup != nil {
-				err = deps.EvmKeeper.SetParams(deps.Ctx, tc.paramsSetup(&deps))
+				err = deps.EvmKeeper.SetParams(deps.Ctx(), tc.paramsSetup(&deps))
 			}
 
 			if err == nil {
 				_, err = anteDec.AnteHandle(
-					deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+					deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 				)
 			}
 			if tc.wantErr != "" {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -70,58 +70,53 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 	minPriority := int64(math.MaxInt64)
 	baseFeeMicronibiPerGas := anteDec.evmKeeper.BaseFeeMicronibiPerGas(ctx)
 
-	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrUnknownRequest,
-				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
-			)
-		}
-		from := msgEthTx.GetFrom()
+	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
+	if err != nil {
+		return ctx, err
+	}
 
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
-		if err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
-		}
+	from := msgEthTx.GetFrom()
 
-		if ctx.IsCheckTx() && anteDec.maxGasWanted != 0 {
-			// We can't trust the tx gas limit, because we'll refund the unused gas.
-			if txData.GetGas() > anteDec.maxGasWanted {
-				gasWanted += anteDec.maxGasWanted
-			} else {
-				gasWanted += txData.GetGas()
-			}
+	txData, err := evm.UnpackTxData(msgEthTx.Data)
+	if err != nil {
+		return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
+	}
+
+	if ctx.IsCheckTx() && anteDec.maxGasWanted != 0 {
+		// We can't trust the tx gas limit, because we'll refund the unused gas.
+		if txData.GetGas() > anteDec.maxGasWanted {
+			gasWanted += anteDec.maxGasWanted
 		} else {
 			gasWanted += txData.GetGas()
 		}
+	} else {
+		gasWanted += txData.GetGas()
+	}
 
-		fees, err := keeper.VerifyFee(
-			txData,
-			baseFeeMicronibiPerGas,
-			ctx,
-		)
-		if err != nil {
-			return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
-		}
+	fees, err := evmstate.VerifyFee(
+		txData,
+		baseFeeMicronibiPerGas,
+		ctx,
+	)
+	if err != nil {
+		return ctx, sdkioerrors.Wrapf(err, "failed to verify the fees")
+	}
 
-		if err = anteDec.deductFee(ctx, fees, from); err != nil {
-			return ctx, err
-		}
+	if err = anteDec.deductFee(ctx, fees, from); err != nil {
+		return ctx, err
+	}
 
-		events = append(events,
-			sdk.NewEvent(
-				sdk.EventTypeTx,
-				sdk.NewAttribute(sdk.AttributeKeyFee, fees.String()),
-			),
-		)
+	events = append(events,
+		sdk.NewEvent(
+			sdk.EventTypeTx,
+			sdk.NewAttribute(sdk.AttributeKeyFee, fees.String()),
+		),
+	)
 
-		priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
+	priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
 
-		if priority < minPriority {
-			minPriority = priority
-		}
+	if priority < minPriority {
+		minPriority = priority
 	}
 
 	ctx.EventManager().EmitEvents(events)

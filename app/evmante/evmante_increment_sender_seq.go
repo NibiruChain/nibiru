@@ -34,45 +34,40 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (sdk.Context, error) {
-	for _, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrUnknownRequest,
-				"invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil),
-			)
-		}
-
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
-		if err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
-		}
-
-		// increase sequence of sender
-		acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
-		if acc == nil {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrUnknownAddress,
-				"account %s is nil", gethcommon.BytesToAddress(msgEthTx.GetFrom().Bytes()),
-			)
-		}
-		nonce := acc.GetSequence()
-
-		// we merged the nonce verification to nonce increment, so when tx includes multiple messages
-		// with same sender, they'll be accepted.
-		if txData.GetNonce() != nonce {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrInvalidSequence,
-				"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
-			)
-		}
-
-		if err := acc.SetSequence(nonce + 1); err != nil {
-			return ctx, sdkioerrors.Wrapf(err, "failed to set sequence to %d", acc.GetSequence()+1)
-		}
-
-		issd.accountKeeper.SetAccount(ctx, acc)
+	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
+	if err != nil {
+		return ctx, err
 	}
+
+	txData, err := evm.UnpackTxData(msgEthTx.Data)
+	if err != nil {
+		return ctx, sdkioerrors.Wrap(err, "failed to unpack tx data")
+	}
+
+	// increase sequence of sender
+	acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
+	if acc == nil {
+		return ctx, sdkioerrors.Wrapf(
+			sdkerrors.ErrUnknownAddress,
+			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.GetFrom().Bytes()),
+		)
+	}
+	nonce := acc.GetSequence()
+
+	// we merged the nonce verification to nonce increment, so when tx includes multiple messages
+	// with same sender, they'll be accepted.
+	if txData.GetNonce() != nonce {
+		return ctx, sdkioerrors.Wrapf(
+			sdkerrors.ErrInvalidSequence,
+			"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
+		)
+	}
+
+	if err := acc.SetSequence(nonce + 1); err != nil {
+		return ctx, sdkioerrors.Wrapf(err, "failed to set sequence to %d", acc.GetSequence()+1)
+	}
+
+	issd.accountKeeper.SetAccount(ctx, acc)
 
 	return next(ctx, tx, simulate)
 }

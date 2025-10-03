@@ -4,10 +4,10 @@ package evmante
 import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-type EVMKeeper = evmkeeper.Keeper
+type EVMKeeper = evmstate.Keeper
 
 type protoTxProvider interface {
 	GetProtoTx() *tx.Tx

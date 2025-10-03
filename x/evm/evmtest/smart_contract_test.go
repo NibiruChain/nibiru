@@ -16,7 +16,7 @@ func (s *Suite) TestCreateContractTxMsg() {
 	ethTxMsg, err := evmtest.NewMsgEthereumTx(evmtest.ArgsEthTx{
 		CreateContract: &evmtest.ArgsCreateContract{
 			EthAcc:        ethAcc,
-			EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx),
+			EthChainIDInt: deps.EvmKeeper.EthChainID(deps.Ctx()),
 			GasPrice:      big.NewInt(1),
 			Nonce:         deps.NewStateDB().GetNonce(ethAcc.EthAddr),
 		},
@@ -32,7 +32,7 @@ func (s *Suite) TestExecuteContractTxMsg() {
 	ethTxMsg, err := evmtest.NewMsgEthereumTx(evmtest.ArgsEthTx{
 		ExecuteContract: &evmtest.ArgsExecuteContract{
 			EthAcc:          ethAcc,
-			EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx),
+			EthChainIDInt:   deps.EvmKeeper.EthChainID(deps.Ctx()),
 			GasPrice:        big.NewInt(1),
 			Nonce:           deps.NewStateDB().GetNonce(ethAcc.EthAddr),
 			ContractAddress: &contractAddress,

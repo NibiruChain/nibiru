@@ -16,7 +16,7 @@ func (s *Suite) TestTransferWei() {
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
 	))
@@ -43,12 +43,12 @@ func (s *Suite) TestTransferWei() {
 func (s *Suite) TestDeployWNIBI() {
 	deps := evmtest.NewTestDeps()
 
-	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
-	acc := deps.EvmKeeper.GetAccount(deps.Ctx, evmParams.CanonicalWnibi.Address)
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
+	acc := deps.EvmKeeper.GetAccount(deps.Ctx(), evmParams.CanonicalWnibi.Address)
 	s.Require().True(acc == nil || !acc.IsContract())
 
 	deps.DeployWNIBI(&s.Suite)
-	acc = deps.EvmKeeper.GetAccount(deps.Ctx, evmParams.CanonicalWnibi.Address)
+	acc = deps.EvmKeeper.GetAccount(deps.Ctx(), evmParams.CanonicalWnibi.Address)
 	s.Require().NotNil(acc)
 	s.True(acc.IsContract())
 }

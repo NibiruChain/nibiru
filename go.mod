@@ -36,7 +36,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
-	github.com/holiman/uint256 v1.3.1
+	github.com/holiman/uint256 v1.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rakyll/statik v0.1.7
@@ -261,7 +261,8 @@ replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.4
+	github.com/cosmos/cosmos-sdk => ../nibi-cosm-sdk
+	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.4
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3

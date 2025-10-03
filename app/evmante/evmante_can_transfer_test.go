@@ -7,24 +7,24 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestCanTransferDecorator() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
 		wantErr       string
 	}{
 		{
 			name: "happy: signed tx, sufficient funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				s.NoError(
 					testapp.FundAccount(
 						deps.App.BankKeeper,
-						deps.Ctx,
+						deps.Ctx(),
 						deps.Sender.NibiruAddr,
 						sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100)),
 					),
@@ -34,7 +34,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -51,7 +51,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -87,18 +87,17 @@ func (s *TestSuite) TestCanTransferDecorator() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.NewStateDB()
+			sdb := deps.NewStateDB()
 			anteDec := evmante.CanTransferDecorator{deps.App.EvmKeeper}
 			tx := tc.txSetup(&deps)
 
 			if tc.beforeTxSetup != nil {
-				tc.beforeTxSetup(&deps, stateDB)
-				err := stateDB.Commit()
-				s.Require().NoError(err)
+				tc.beforeTxSetup(&deps, sdb)
+				sdb.Commit()
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

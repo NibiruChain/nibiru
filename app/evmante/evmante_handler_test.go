@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteHandlerEVM() {
@@ -22,14 +22,14 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 		name          string
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
 		ctxSetup      func(deps *evmtest.TestDeps)
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		wantErr       string
 	}{
 		{
 			name: "happy: signed tx, sufficient funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				balanceMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
-				sdb.AddBalanceSigned(
+				AddBalanceSigned(sdb,
 					deps.Sender.EthAddr,
 					evm.NativeToWei(balanceMicronibi),
 				)
@@ -42,18 +42,19 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
 					},
 				}
-				deps.Ctx = deps.Ctx.
+				deps.SetCtx(deps.Ctx().
 					WithMinGasPrices(
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
 					WithIsCheckTx(true).
-					WithConsensusParams(cp)
+					WithConsensusParams(cp),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -69,7 +70,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.NewStateDB()
+			sdb := deps.NewStateDB()
 
 			anteHandlerEVM := evmante.NewAnteHandlerEVM(
 				ante.AnteHandlerOptions{
@@ -91,13 +92,12 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 				tc.ctxSetup(&deps)
 			}
 			if tc.beforeTxSetup != nil {
-				tc.beforeTxSetup(&deps, stateDB)
-				err := stateDB.Commit()
-				s.Require().NoError(err)
+				tc.beforeTxSetup(&deps, sdb)
+				sdb.Commit()
 			}
 
 			_, err := anteHandlerEVM(
-				deps.Ctx, tx, false,
+				deps.Ctx(), tx, false,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

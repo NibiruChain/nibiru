@@ -12,7 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // EvmEventAbciEvent is the string key used to retrieve the "AbciEvent" Ethereum
@@ -33,7 +33,7 @@ const EvmEventAbciEvent = "AbciEvent"
 // the ABCI event.
 func EmitEventAbciEvents(
 	ctx sdk.Context,
-	db *statedb.StateDB,
+	db *evmstate.SDB,
 	abciEvents []sdk.Event,
 	emittingAddr gethcommon.Address,
 ) {

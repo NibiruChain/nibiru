@@ -8,14 +8,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecEthGasConsume() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
 		wantErr       string
 		maxGasWanted  uint64
@@ -23,10 +23,10 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 	}{
 		{
 			name: "happy: sender with funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "",
@@ -35,8 +35,8 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		},
 		{
 			name: "happy: is recheck tx",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
-				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+				deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
 			},
 			txSetup:  evmtest.HappyCreateContractTx,
 			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
@@ -44,10 +44,10 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		},
 		{
 			name: "sad: out of gas",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
-				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
 			txSetup:      evmtest.HappyCreateContractTx,
 			wantErr:      "exceeds block gas limit (0)",
@@ -66,12 +66,14 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 
 			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
-			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
+			deps.SetCtx(deps.Ctx().
+				WithIsCheckTx(true).
+				WithBlockGasMeter(tc.gasMeter),
+			)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

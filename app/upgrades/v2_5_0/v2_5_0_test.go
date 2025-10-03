@@ -19,8 +19,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -60,7 +60,7 @@ func (s *Suite) TestUpgrade() {
 	{
 		bankDenom := originalbankMetadata.Base
 
-		if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+		if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx(), bankDenom) {
 			s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 		}
 
@@ -78,19 +78,19 @@ func (s *Suite) TestUpgrade() {
 			Symbol:  bankDenom,
 		}
 
-		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bankMetadata)
 
 		// Give the sender funds for the fee
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 		))
 
 		s.T().Log("happy: CreateFunToken for the bank coin")
 		createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgCreateFunToken{
 				FromBankDenom:     bankDenom,
 				Sender:            deps.Sender.NibiruAddr.String(),
@@ -108,7 +108,7 @@ func (s *Suite) TestUpgrade() {
 		s.Equal(funtoken, createFuntokenResp.FuntokenMapping)
 
 		s.T().Log("Expect ERC20 to be deployed")
-		_, err = deps.EvmKeeper.Code(deps.Ctx,
+		_, err = deps.EvmKeeper.Code(deps.Ctx(),
 			&evm.QueryCodeRequest{
 				Address: erc20.String(),
 			},
@@ -120,7 +120,7 @@ func (s *Suite) TestUpgrade() {
 	s.NoError(
 		testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			erisAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(originalbankMetadata.Base, 69_420)),
 		),
@@ -143,14 +143,14 @@ func (s *Suite) TestUpgrade() {
 			s.Require().NoError(err)
 
 			// Validate the ERC20 balance of the holder
-			evmObj, _ := deps.NewEVMLessVerboseLogger()
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+			evmObj, _ := deps.NewEVM()
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
 			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
+		evmObj, _ := deps.NewEVM()
+		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx(), evmObj)
 		s.Require().NoError(err)
 		s.Require().Equal("1100", totalSupplyErc20.String())
 	}
@@ -158,15 +158,15 @@ func (s *Suite) TestUpgrade() {
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
 	{
 		compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotSymbol, _ := deps.EvmKeeper.ERC20().LoadERC20Symbol(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotDecimals, _ := deps.EvmKeeper.ERC20().LoadERC20Decimals(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		s.Equal(originalbankMetadata.Name, gotName)
 		s.Equal(originalbankMetadata.Symbol, gotSymbol)
@@ -175,17 +175,16 @@ func (s *Suite) TestUpgrade() {
 
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
 		s.T().Log("IMPORTANT: Schedule the upgrade")
-		deps.EvmKeeper.Bank.StateDB = nil // IMPORTANT: make sure to clear the StateDB before running the upgrade
 		s.Require().True(
 			deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName),
 		)
 
-		eventsBeforeUpgrade := deps.Ctx.EventManager().Events()
+		eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
 		err := v2_5_0.UpgradeStNibiEvmMetadata(
-			&deps.App.PublicKeepers, deps.Ctx, funtoken.Erc20Addr.Address,
+			&deps.App.PublicKeepers, deps.Ctx(), funtoken.Erc20Addr.Address,
 		)
 		s.Require().NoError(err)
-		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx.EventManager().Events())
+		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())
 
 		err = testutil.AssertEventPresent(eventsInUpgrade,
 			gogoproto.MessageName(new(evm.EventContractDeployed)),
@@ -205,21 +204,21 @@ func (s *Suite) TestUpgrade() {
 
 	compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 	s.Run("Confirm that stNIBI has desired metadata after upgrade", func() {
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotSymbol, _ := deps.EvmKeeper.ERC20().LoadERC20Symbol(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotDecimals, _ := deps.EvmKeeper.ERC20().LoadERC20Decimals(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		s.Equal("Liquid Staked NIBI", gotName)
 		s.Equal("stNIBI", gotSymbol)
 		s.Equal(uint8(6), gotDecimals)
 
-		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, funtoken.BankDenom)
+		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx(), funtoken.BankDenom)
 		s.True(ok)
 		s.Equal(2, len(newBankMetadata.DenomUnits))
 		s.Equal("Liquid Staked NIBI", newBankMetadata.Name)
@@ -230,14 +229,14 @@ func (s *Suite) TestUpgrade() {
 	s.Run("New ERC20 impl: owner should be the EVM module", func() {
 		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmkeeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
@@ -251,11 +250,11 @@ func (s *Suite) TestUpgrade() {
 
 	s.Run("Confirm stNIBI ERC20 contract has new holder balances unharmed", func() {
 		// It MUST still be a contract
-		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx, funtoken.Erc20Addr.Address).IsContract())
+		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx(), funtoken.Erc20Addr.Address).IsContract())
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		for idx, holderAddr := range holders {
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
 			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}

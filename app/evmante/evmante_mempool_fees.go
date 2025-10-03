@@ -49,30 +49,24 @@ func (d MempoolGasPriceDecorator) AnteHandle(
 		minGasPrice = baseFeeMicronibiDec
 	}
 
-	for _, msg := range tx.GetMsgs() {
-		ethTx, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrUnknownRequest,
-				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
-			)
-		}
+	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
+	if err != nil {
+		return ctx, err
+	}
 
-		baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
-		effectiveGasPriceDec := sdkmath.LegacyNewDecFromBigInt(
-			evm.WeiToNative(ethTx.EffectiveGasPriceWeiPerGas(baseFeeWei)),
+	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
+	effectiveGasPriceDec := sdkmath.LegacyNewDecFromBigInt(
+		evm.WeiToNative(msgEthTx.EffectiveGasPriceWeiPerGas(baseFeeWei)),
+	)
+	if effectiveGasPriceDec.LT(minGasPrice) {
+		// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
+		return ctx, sdkioerrors.Wrapf(
+			sdkerrors.ErrInsufficientFee,
+			"provided gas price < minimum local gas price (%s < %s). "+
+				"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
+				"(for access list or legacy txs)",
+			effectiveGasPriceDec, minGasPrice,
 		)
-		if effectiveGasPriceDec.LT(minGasPrice) {
-			// if sdk.NewDecFromBigInt(effectiveGasPrice).LT(minGasPrice) {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrInsufficientFee,
-				"provided gas price < minimum local gas price (%s < %s). "+
-					"Please increase the priority tip (for EIP-1559 txs) or the gas prices "+
-					"(for access list or legacy txs)",
-				effectiveGasPriceDec, minGasPrice,
-			)
-		}
 	}
 
 	return next(ctx, tx, simulate)

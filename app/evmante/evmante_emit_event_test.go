@@ -45,17 +45,17 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 			anteDec := evmante.NewEthEmitEventDecorator(deps.App.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
 			}
 			s.Require().NoError(err)
-			events := deps.Ctx.EventManager().Events()
+			events := deps.Ctx().EventManager().Events()
 
 			s.Require().Greater(len(events), 0)
 			event := events[len(events)-1]

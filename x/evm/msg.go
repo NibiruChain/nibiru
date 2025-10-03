@@ -25,7 +25,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -39,6 +38,25 @@ var (
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
+
+// ------------------------------------------------------------
+// MsgEthereumTx: Ethereum/EVM transactions on Nibiru
+// ------------------------------------------------------------
+
+func RequireStandardEVMTxMsg(tx sdk.Tx) (*MsgEthereumTx, error) {
+	txMsgs := tx.GetMsgs()
+	if len(txMsgs) != 1 {
+		return nil, fmt.Errorf("Ethereum transaction must be exaclty one tx msg: got %d", len(txMsgs))
+	}
+	msg, ok := txMsgs[0].(*MsgEthereumTx)
+	if !ok {
+		return nil, sdkioerrors.Wrapf(
+			sdkerrors.ErrUnknownRequest,
+			"invalid message type %T, expected %T", msg, (*MsgEthereumTx)(nil),
+		)
+	}
+	return msg, nil
+}
 
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
@@ -310,8 +328,8 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 	return gethcore.NewTx(txData.AsEthereumData())
 }
 
-// AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(
+// ToGethCoreMsg creates an Go-Ethereum [core.Message] from the msg fields
+func (msg MsgEthereumTx) ToGethCoreMsg(
 	signer gethcore.Signer,
 	baseFeeWei *big.Int,
 ) (*core.Message, error) {
@@ -384,27 +402,6 @@ func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.
 	return tx, nil
 }
 
-// GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
-	addr, _ := sdk.AccAddressFromBech32(m.Authority)
-	return []sdk.AccAddress{addr}
-}
-
-// ValidateBasic does a sanity check of the provided data
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return sdkioerrors.Wrap(err, "invalid authority address")
-	}
-
-	return m.Params.Validate()
-}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
 func UnwrapEthereumMsg(tx *sdk.Tx, ethHash gethcommon.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
@@ -445,7 +442,30 @@ func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 	return &res, nil
 }
 
-var EmptyCodeHash = crypto.Keccak256(nil)
+// ------------------------------------------------------------
+// All other messages
+// ------------------------------------------------------------
+
+// GetSigners returns the expected signers for a MsgUpdateParams message.
+func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
+	addr, _ := sdk.AccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return sdkioerrors.Wrap(err, "invalid authority address")
+	}
+
+	return m.Params.Validate()
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
 
 // BinSearch executes the binary search and hone in on an executable gas limit
 func BinSearch(
