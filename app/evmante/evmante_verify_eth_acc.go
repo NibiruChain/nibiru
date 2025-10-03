@@ -41,6 +41,9 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	for i, msg := range tx.GetMsgs() {
+		// TODO: Branch ctx here with infinite gas meter
+		// Constraint -> Zero gas cost to passs through this function
+
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))

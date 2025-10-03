@@ -63,6 +63,9 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		return next(ctx, tx, simulate)
 	}
 
+	pausedGasMeter := ctx.GasMeter()
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+
 	var (
 		priority int64
 		err      error
@@ -79,7 +82,10 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		return ctx, err
 	}
 
-	newCtx := ctx.WithPriority(priority)
+	// TODO: print gas consumption values to verify this works as expected
+
+	newCtx := ctx.WithPriority(priority).WithGasMeter(pausedGasMeter)
+	fmt.Printf("newCtx.GasMeter().GasConsumed(): %v\n", newCtx.GasMeter().GasConsumed())
 
 	return next(newCtx, tx, simulate)
 }
