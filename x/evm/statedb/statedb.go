@@ -18,9 +18,9 @@ package statedb
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/big"
-	"sort"
 
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,9 +50,11 @@ type StateDB struct {
 
 	// Journal of state modifications. This is the backbone of
 	// Snapshot and RevertToSnapshot.
-	Journal        *journal
-	validRevisions []revision
-	nextRevisionID int
+	Journal *journal
+
+	localState  *LocalState
+	savedStates []*LocalState
+	savedCtxs   []sdk.Context
 
 	stateObjects     map[gethcommon.Address]*stateObject
 	transientStorage transientStorage
@@ -74,14 +76,8 @@ type StateDB struct {
 	// The number of precompiled contract calls within the current transaction
 	multistoreCacheCount uint8
 
-	// The refund counter, also used by state transitioning.
-	refund uint64
-
 	// Per-transaction logs
 	logs []*gethcore.Log
-
-	// Per-transaction access list
-	accessList *accessList
 }
 
 func FromVM(evmObj *vm.EVM) *StateDB {
@@ -90,22 +86,56 @@ func FromVM(evmObj *vm.EVM) *StateDB {
 
 // New creates a new state from a given trie.
 func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
-	return &StateDB{
+	sdb := &StateDB{
 		keeper:       keeper,
 		evmTxCtx:     ctx,
 		stateObjects: make(map[gethcommon.Address]*stateObject),
 		Journal:      newJournal(),
-		accessList:   newAccessList(),
+		localState:   NewLocalState(), // TODO: UD-DEBUG: new local state
+		savedCtxs:    []sdk.Context{},
 		txConfig:     txConfig,
 	}
+	sdb.Snapshot()
+	return sdb
 }
 
-// revision is the identifier of a version of state.
-// it consists of an auto-increment id and a journal index.
-// it's safer to use than using journal index alone.
-type revision struct {
-	id           int
-	journalIndex int
+// Prepare handles the preparatory steps for executing a state transition with.
+// This method must be invoked before state transition.
+//
+// Berlin fork:
+// - Add sender to access list (2929)
+// - Add destination to access list (2929)
+// - Add precompiles to access list (2929)
+// - Add the contents of the optional tx access list (2930)
+//
+// EIPs Included:
+// - Reset access list (Berlin)
+// - Add coinbase to access list (EIP-3651) | Shanghai
+// - Reset transient storage (EIP-1153)
+func (s *StateDB) Prepare(
+	_ gethparams.Rules, // only relevant prior to Shangai and Berlin upgrades
+	sender, coinbase gethcommon.Address,
+	dest *gethcommon.Address,
+	precompiles []gethcommon.Address,
+	txAccesses gethcore.AccessList,
+) {
+	s.AddAddressToAccessList(sender)
+	if dest != nil {
+		s.AddAddressToAccessList(*dest)
+		// If it's a create-tx, the destination will be added inside evm.create
+	}
+	for _, addr := range precompiles {
+		s.AddAddressToAccessList(addr)
+	}
+	for _, el := range txAccesses {
+		s.AddAddressToAccessList(el.Address)
+		for _, key := range el.StorageKeys {
+			s.AddSlotToAccessList(el.Address, key)
+		}
+	}
+	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbse
+	// EIP-1153: Reset transient storage for beginning of tx execution
+	s.transientStorage = make(transientStorage)
 }
 
 // Keeper returns the underlying `Keeper`
@@ -144,20 +174,43 @@ func (s *StateDB) Logs() []*gethcore.Log {
 	return s.logs
 }
 
+// GetRefund returns the current value of the refund counter.
+func (s *StateDB) GetRefund() uint64 {
+	gasRefundBz := func() []byte {
+		if len(s.localState.gasRefund) > 0 {
+			return s.localState.gasRefund
+		}
+		for i := len(s.savedStates) - 1; i >= 0; i-- {
+			bz := s.savedStates[i].gasRefund
+			if len(bz) > 0 {
+				return bz
+			}
+		}
+		return nil
+	}()
+	if gasRefundBz == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint64(gasRefundBz)
+}
+
 // AddRefund adds gas to the refund counter
 func (s *StateDB) AddRefund(gas uint64) {
-	s.Journal.append(refundChange{prev: s.refund})
-	s.refund += gas
+	newGasRefundBz := make([]byte, 8)
+	binary.BigEndian.PutUint64(newGasRefundBz, s.GetRefund()+gas)
+	s.localState.gasRefund = newGasRefundBz
 }
 
 // SubRefund removes gas from the refund counter.
 // This method will panic if the refund counter goes below zero
 func (s *StateDB) SubRefund(gas uint64) {
-	s.Journal.append(refundChange{prev: s.refund})
-	if gas > s.refund {
-		panic(fmt.Sprintf("Refund counter below zero (gas: %d > refund: %d)", gas, s.refund))
+	gasRefund := s.GetRefund()
+	if gas > gasRefund {
+		panic(fmt.Sprintf("Refund counter below zero (gas: %d > refund: %d)", gas, gasRefund))
 	}
-	s.refund -= gas
+	newGasRefundBz := make([]byte, 8)
+	binary.BigEndian.PutUint64(newGasRefundBz, gasRefund-gas)
+	s.localState.gasRefund = newGasRefundBz
 }
 
 // Exist reports whether the given account address exists in the state.
@@ -240,11 +293,6 @@ func (s *StateDB) GetCommittedState(addr gethcommon.Address, hash gethcommon.Has
 		return stateObject.GetCommittedState(hash)
 	}
 	return gethcommon.Hash{}
-}
-
-// GetRefund returns the current value of the refund counter.
-func (s *StateDB) GetRefund() uint64 {
-	return s.refund
 }
 
 // HasSuicided returns if the contract is suicided in current transaction.
@@ -512,134 +560,46 @@ func (s *StateDB) SelfDestruct6780(
 	return prevWei, isSelfDestructed
 }
 
-// PrepareAccessList handles the preparatory steps for executing a state
-// transition with regards to both EIP-2929 and EIP-2930:
-//
-// - Add sender to access list (2929)
-// - Add destination to access list (2929)
-// - Add precompiles to access list (2929)
-// - Add the contents of the optional tx access list (2930)
-//
-// This method should only be called if Yolov3/Berlin/2929+2930 is applicable at the current number.
-func (s *StateDB) PrepareAccessList(
-	sender gethcommon.Address,
-	dst *gethcommon.Address,
-	precompiles []gethcommon.Address,
-	txAccesses gethcore.AccessList,
-) {
-	s.AddAddressToAccessList(sender)
-	if dst != nil {
-		s.AddAddressToAccessList(*dst)
-		// If it's a create-tx, the destination will be added inside evm.create
-	}
-	for _, addr := range precompiles {
-		s.AddAddressToAccessList(addr)
-	}
-	for _, el := range txAccesses {
-		s.AddAddressToAccessList(el.Address)
-		for _, key := range el.StorageKeys {
-			s.AddSlotToAccessList(el.Address, key)
-		}
-	}
-}
-
-// Prepare handles the preparatory steps for executing a state transition with.
-// This method must be invoked before state transition.
-//
-// Berlin fork:
-// - Add sender to access list (2929)
-// - Add destination to access list (2929)
-// - Add precompiles to access list (2929)
-// - Add the contents of the optional tx access list (2930)
-//
-// EIPs Included:
-// - Reset access list (Berlin)
-// - Add coinbase to access list (EIP-3651) | Shanghai
-// - Reset transient storage (EIP-1153)
-func (s *StateDB) Prepare(
-	_ gethparams.Rules, // only relevant prior to Shangai and Berlin upgrades
-	sender, coinbase gethcommon.Address,
-	dest *gethcommon.Address,
-	precompiles []gethcommon.Address,
-	txAccesses gethcore.AccessList,
-) {
-	s.AddAddressToAccessList(sender)
-	if dest != nil {
-		s.AddAddressToAccessList(*dest)
-		// If it's a create-tx, the destination will be added inside evm.create
-	}
-	for _, addr := range precompiles {
-		s.AddAddressToAccessList(addr)
-	}
-	for _, el := range txAccesses {
-		s.AddAddressToAccessList(el.Address)
-		for _, key := range el.StorageKeys {
-			s.AddSlotToAccessList(el.Address, key)
-		}
-	}
-	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbse
-	// EIP-1153: Reset transient storage for beginning of tx execution
-	s.transientStorage = make(transientStorage)
-}
-
-// AddAddressToAccessList adds the given address to the access list
-func (s *StateDB) AddAddressToAccessList(addr gethcommon.Address) {
-	if s.accessList.AddAddress(addr) {
-		s.Journal.append(accessListAddAccountChange{&addr})
-	}
-}
-
-// AddSlotToAccessList adds the given (address, slot)-tuple to the access list
-func (s *StateDB) AddSlotToAccessList(addr gethcommon.Address, slot gethcommon.Hash) {
-	addrMod, slotMod := s.accessList.AddSlot(addr, slot)
-	if addrMod {
-		// In practice, this should not happen, since there is no way to enter the
-		// scope of 'address' without having the 'address' become already added
-		// to the access list (via call-variant, create, etc).
-		// Better safe than sorry, though
-		s.Journal.append(accessListAddAccountChange{&addr})
-	}
-	if slotMod {
-		s.Journal.append(accessListAddSlotChange{
-			address: &addr,
-			slot:    &slot,
-		})
-	}
-}
-
-// AddressInAccessList returns true if the given address is in the access list.
-func (s *StateDB) AddressInAccessList(addr gethcommon.Address) bool {
-	return s.accessList.ContainsAddress(addr)
-}
-
-// SlotInAccessList returns true if the given (address, slot)-tuple is in the access list.
-func (s *StateDB) SlotInAccessList(addr gethcommon.Address, slot gethcommon.Hash) (addressPresent bool, slotPresent bool) {
-	return s.accessList.Contains(addr, slot)
-}
-
 // Snapshot returns an identifier for the current revision of the state.
+// TODO: UD-DEBUG: complete without tests
+// FIXME: ? Are we caching in the right order.
 func (s *StateDB) Snapshot() int {
-
-	id := s.nextRevisionID
-	s.nextRevisionID++
-	s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
-	return id
+	branchedCtx := s.evmTxCtx.WithMultiStore(s.evmTxCtx.MultiStore().CacheMultiStore())
+	s.savedCtxs = append(s.savedCtxs, s.evmTxCtx)
+	s.evmTxCtx = branchedCtx
+	s.savedStates = append(s.savedStates, s.localState)
+	s.localState = NewLocalState()
+	return len(s.savedCtxs) - 1
+	// id := s.nextRevisionID
+	// s.nextRevisionID++
+	// s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
+	// return id
 }
 
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *StateDB) RevertToSnapshot(revid int) {
-	// Find the snapshot in the stack of valid snapshots.
-	idx := sort.Search(len(s.validRevisions), func(i int) bool {
-		return s.validRevisions[i].id >= revid
-	})
-	if idx == len(s.validRevisions) || s.validRevisions[idx].id != revid {
-		panic(fmt.Errorf("revision id %v cannot be reverted", revid))
-	}
-	snapshot := s.validRevisions[idx].journalIndex
+	s.evmTxCtx = s.savedCtxs[revid]
+	s.savedCtxs = s.savedCtxs[:revid]
 
-	// Replay the journal to undo changes and remove invalidated snapshots
-	s.Journal.Revert(s, snapshot)
-	s.validRevisions = s.validRevisions[:idx]
+	s.localState = s.savedStates[revid]
+	s.savedStates = s.savedStates[:revid]
+
+	s.Snapshot()
+
+	// TODO: OLD impl
+
+	// // Find the snapshot in the stack of valid snapshots.
+	// idx := sort.Search(len(s.validRevisions), func(i int) bool {
+	// 	return s.validRevisions[i].id >= revid
+	// })
+	// if idx == len(s.validRevisions) || s.validRevisions[idx].id != revid {
+	// 	panic(fmt.Errorf("revision id %v cannot be reverted", revid))
+	// }
+	// snapshot := s.validRevisions[idx].journalIndex
+
+	// // Replay the journal to undo changes and remove invalidated snapshots
+	// s.Journal.Revert(s, snapshot)
+	// s.validRevisions = s.validRevisions[:idx]
 }
 
 // errorf: wrapper of "fmt.Errorf" specific to the current Go package.
@@ -758,78 +718,6 @@ func (s *StateDB) SavePrecompileCalledJournalChange(
 
 const maxMultistoreCacheCount uint8 = 10
 
-type SnapshotEvmState struct {
-	logs []*gethcore.Log
-
-	Accounts        map[gethcommon.Address]SnapshotAccChange
-	ContractStorage transientStorage
-
-	SurplusWei *big.Int
-}
-
-type SnapshotAccChange byte
-
-var (
-	SNAPSHOT_ACC_STATUS_CREATE SnapshotAccChange = 0x01
-	SNAPSHOT_ACC_STATUS_DELETE SnapshotAccChange = 0x02
-)
-
-// transientStorage is a representation of EIP-1153 "Transient Storage".
-type transientStorage map[gethcommon.Address]Storage
-
-// Set sets the transient-storage `value` for `key` at the given `addr`.
-func (t transientStorage) Set(addr gethcommon.Address, key, value gethcommon.Hash) {
-	if _, ok := t[addr]; !ok {
-		t[addr] = make(Storage)
-	}
-	t[addr][key] = value
-}
-
-// Get gets the transient storage for `key` at the given `addr`.
-func (t transientStorage) Get(addr gethcommon.Address, key gethcommon.Hash) gethcommon.Hash {
-	val, ok := t[addr]
-	if !ok {
-		return gethcommon.Hash{}
-	}
-	return val[key]
-}
-
-// Copy does a deep copy of the transientStorage
-func (t transientStorage) Copy() transientStorage {
-	storage := make(transientStorage)
-	for key, value := range t {
-		storage[key] = value.Copy()
-	}
-	return storage
-}
-
-// GetTransientState gets transient storage ([gethcommon.Hash]) for a given account.
-func (s *StateDB) GetTransientState(
-	addr gethcommon.Address,
-	key gethcommon.Hash,
-) gethcommon.Hash {
-	return s.transientStorage.Get(addr, key)
-}
-
-// SetTransientState sets transient storage for a given account. It
-// adds the change to the journal so that it can be rolled back
-// to its previous value if there is a revert.
-func (s *StateDB) SetTransientState(
-	addr gethcommon.Address,
-	key, value gethcommon.Hash,
-) {
-	prev := s.GetTransientState(addr, key)
-	if prev == value {
-		return
-	}
-	s.Journal.append(transientStorageChange{
-		address:   &addr,
-		key:       key,
-		prevValue: prev,
-	})
-	s.transientStorage.Set(addr, key, prev)
-}
-
 // Witness returns nil.
 //
 // Rationale: In Geth v1.14+, a [stateless.Witness] encompasses the state
@@ -893,4 +781,96 @@ func (s *StateDB) GetStorageRoot(addr gethcommon.Address) (root gethcommon.Hash)
 // This function implements the [vm.StateDB] interface.
 func (s *StateDB) PointCache() *utils.PointCache {
 	return nil
+}
+
+// --------------------------------------------------------
+// LocalState
+// --------------------------------------------------------
+
+type LocalState struct {
+	logs []*gethcore.Log
+
+	Accounts        map[gethcommon.Address]SnapshotAccChange
+	ContractStorage transientStorage
+
+	// Gas refund counter for the state transition. Encoded as `uint64`. It is
+	// valid for this field to be empty.
+	gasRefund  []byte // gasRefund uint64
+	accessList []byte // accessList json []gethcommon.Address
+
+	SurplusWei *big.Int
+}
+
+func NewLocalState() *LocalState {
+	return &LocalState{
+		logs:            []*gethcore.Log{},
+		Accounts:        make(map[gethcommon.Address]SnapshotAccChange),
+		ContractStorage: make(transientStorage),
+		gasRefund:       nil,
+		accessList:      nil,
+		SurplusWei:      big.NewInt(0),
+	}
+}
+
+type SnapshotAccChange byte
+
+var (
+	SNAPSHOT_ACC_STATUS_CREATE SnapshotAccChange = 0x01
+	SNAPSHOT_ACC_STATUS_DELETE SnapshotAccChange = 0x02
+)
+
+// transientStorage is a representation of EIP-1153 "Transient Storage".
+type transientStorage map[gethcommon.Address]Storage
+
+// Set sets the transient-storage `value` for `key` at the given `addr`.
+func (t transientStorage) Set(addr gethcommon.Address, key, value gethcommon.Hash) {
+	if _, ok := t[addr]; !ok {
+		t[addr] = make(Storage)
+	}
+	t[addr][key] = value
+}
+
+// Get gets the transient storage for `key` at the given `addr`.
+func (t transientStorage) Get(addr gethcommon.Address, key gethcommon.Hash) gethcommon.Hash {
+	val, ok := t[addr]
+	if !ok {
+		return gethcommon.Hash{}
+	}
+	return val[key]
+}
+
+// Copy does a deep copy of the transientStorage
+func (t transientStorage) Copy() transientStorage {
+	storage := make(transientStorage)
+	for key, value := range t {
+		storage[key] = value.Copy()
+	}
+	return storage
+}
+
+// GetTransientState gets transient storage ([gethcommon.Hash]) for a given account.
+func (s *StateDB) GetTransientState(
+	addr gethcommon.Address,
+	key gethcommon.Hash,
+) gethcommon.Hash {
+	return s.transientStorage.Get(addr, key)
+}
+
+// SetTransientState sets transient storage for a given account. It
+// adds the change to the journal so that it can be rolled back
+// to its previous value if there is a revert.
+func (s *StateDB) SetTransientState(
+	addr gethcommon.Address,
+	key, value gethcommon.Hash,
+) {
+	prev := s.GetTransientState(addr, key)
+	if prev == value {
+		return
+	}
+	s.Journal.append(transientStorageChange{
+		address:   &addr,
+		key:       key,
+		prevValue: prev,
+	})
+	s.transientStorage.Set(addr, key, prev)
 }

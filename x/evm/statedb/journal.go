@@ -246,25 +246,6 @@ func (ch storageChange) Dirtied() *common.Address {
 }
 
 // ------------------------------------------------------
-// refundChange
-
-// refundChange: [JournalChange] for the global gas refund counter.
-// This tracks changes to the gas refund value during contract execution.
-type refundChange struct {
-	prev uint64
-}
-
-var _ JournalChange = refundChange{}
-
-func (ch refundChange) Revert(s *StateDB) {
-	s.refund = ch.prev
-}
-
-func (ch refundChange) Dirtied() *common.Address {
-	return nil
-}
-
-// ------------------------------------------------------
 // addLogChange
 
 // addLogChange represents [JournalChange] for a new log addition.
@@ -278,54 +259,6 @@ func (ch addLogChange) Revert(s *StateDB) {
 }
 
 func (ch addLogChange) Dirtied() *common.Address {
-	return nil
-}
-
-// ------------------------------------------------------
-// accessListAddAccountChange
-
-// accessListAddAccountChange represents [JournalChange] for when an address
-// is added to the access list. Access lists track warm storage slots for
-// gas cost calculations.
-type accessListAddAccountChange struct {
-	address *common.Address
-}
-
-// When an (address, slot) combination is added, it always results in two
-// journal entries if the address is not already present:
-//  1. `accessListAddAccountChange`: a journal change for the address
-//  2. `accessListAddSlotChange`: a journal change for the (address, slot)
-//     combination.
-//
-// Thus, when reverting, we can safely delete the address, as no storage slots
-// remain once the address entry is reverted.
-func (ch accessListAddAccountChange) Revert(s *StateDB) {
-	s.accessList.DeleteAddress(*ch.address)
-}
-
-func (ch accessListAddAccountChange) Dirtied() *common.Address {
-	return nil
-}
-
-// ------------------------------------------------------
-// accessListAddSlotChange
-
-// accessListAddSlotChange: [JournalChange] implementations for
-type accessListAddSlotChange struct {
-	address *common.Address
-	slot    *common.Hash
-}
-
-// accessListAddSlotChange represents a [JournalChange] for when a storage slot
-// is added to an address's access list entry. This tracks individual storage
-// slots that have been accessed.
-var _ JournalChange = accessListAddSlotChange{}
-
-func (ch accessListAddSlotChange) Revert(s *StateDB) {
-	s.accessList.DeleteSlot(*ch.address, *ch.slot)
-}
-
-func (ch accessListAddSlotChange) Dirtied() *common.Address {
 	return nil
 }
 
