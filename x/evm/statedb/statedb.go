@@ -24,7 +24,7 @@ import (
 
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/stateless"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -54,7 +54,7 @@ type StateDB struct {
 	validRevisions []revision
 	nextRevisionID int
 
-	stateObjects     map[common.Address]*stateObject
+	stateObjects     map[gethcommon.Address]*stateObject
 	transientStorage transientStorage
 
 	txConfig TxConfig
@@ -93,7 +93,7 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 	return &StateDB{
 		keeper:       keeper,
 		evmTxCtx:     ctx,
-		stateObjects: make(map[common.Address]*stateObject),
+		stateObjects: make(map[gethcommon.Address]*stateObject),
 		Journal:      newJournal(),
 		accessList:   newAccessList(),
 		txConfig:     txConfig,
@@ -162,19 +162,19 @@ func (s *StateDB) SubRefund(gas uint64) {
 
 // Exist reports whether the given account address exists in the state.
 // Notably this also returns true for suicided accounts.
-func (s *StateDB) Exist(addr common.Address) bool {
+func (s *StateDB) Exist(addr gethcommon.Address) bool {
 	return s.getStateObject(addr) != nil
 }
 
 // Empty returns whether the state object is either non-existent
 // or empty according to the EIP161 specification (balance = nonce = code = 0)
-func (s *StateDB) Empty(addr common.Address) bool {
+func (s *StateDB) Empty(addr gethcommon.Address) bool {
 	so := s.getStateObject(addr)
 	return so == nil || so.isEmpty()
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
-func (s *StateDB) GetBalance(addr common.Address) *uint256.Int {
+func (s *StateDB) GetBalance(addr gethcommon.Address) *uint256.Int {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		bal := stateObject.Balance()
@@ -187,7 +187,7 @@ func (s *StateDB) GetBalance(addr common.Address) *uint256.Int {
 }
 
 // GetNonce returns the nonce of account, 0 if not exists.
-func (s *StateDB) GetNonce(addr common.Address) uint64 {
+func (s *StateDB) GetNonce(addr gethcommon.Address) uint64 {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.Nonce()
@@ -197,7 +197,7 @@ func (s *StateDB) GetNonce(addr common.Address) uint64 {
 }
 
 // GetCode returns the code of account, nil if not exists.
-func (s *StateDB) GetCode(addr common.Address) []byte {
+func (s *StateDB) GetCode(addr gethcommon.Address) []byte {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.Code()
@@ -206,7 +206,7 @@ func (s *StateDB) GetCode(addr common.Address) []byte {
 }
 
 // GetCodeSize returns the code size of account.
-func (s *StateDB) GetCodeSize(addr common.Address) int {
+func (s *StateDB) GetCodeSize(addr gethcommon.Address) int {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.CodeSize()
@@ -215,31 +215,31 @@ func (s *StateDB) GetCodeSize(addr common.Address) int {
 }
 
 // GetCodeHash returns the code hash of account.
-func (s *StateDB) GetCodeHash(addr common.Address) common.Hash {
+func (s *StateDB) GetCodeHash(addr gethcommon.Address) gethcommon.Hash {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
-		return common.Hash{}
+		return gethcommon.Hash{}
 	}
-	return common.BytesToHash(stateObject.CodeHash())
+	return gethcommon.BytesToHash(stateObject.CodeHash())
 }
 
 // GetState retrieves a value from the given account's storage trie.
-func (s *StateDB) GetState(addr common.Address, hash common.Hash) (value common.Hash) {
+func (s *StateDB) GetState(addr gethcommon.Address, hash gethcommon.Hash) (value gethcommon.Hash) {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		value, _ = stateObject.GetState(hash)
 		return value
 	}
-	return common.Hash{}
+	return gethcommon.Hash{}
 }
 
 // GetCommittedState retrieves a value from the given account's committed storage trie.
-func (s *StateDB) GetCommittedState(addr common.Address, hash common.Hash) common.Hash {
+func (s *StateDB) GetCommittedState(addr gethcommon.Address, hash gethcommon.Hash) gethcommon.Hash {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.GetCommittedState(hash)
 	}
-	return common.Hash{}
+	return gethcommon.Hash{}
 }
 
 // GetRefund returns the current value of the refund counter.
@@ -248,7 +248,7 @@ func (s *StateDB) GetRefund() uint64 {
 }
 
 // HasSuicided returns if the contract is suicided in current transaction.
-func (s *StateDB) HasSuicided(addr common.Address) bool {
+func (s *StateDB) HasSuicided(addr gethcommon.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.SelfDestructed
@@ -260,11 +260,11 @@ func (s *StateDB) HasSuicided(addr common.Address) bool {
 // AddPreimage performs a no-op since the EnablePreimageRecording flag is disabled
 // on the vm.Config during state transitions. No store trie preimages are written
 // to the database.
-func (s *StateDB) AddPreimage(_ common.Hash, _ []byte) {}
+func (s *StateDB) AddPreimage(_ gethcommon.Hash, _ []byte) {}
 
 // getStateObject retrieves a state object given by the address, returning nil if
 // the object is not found.
-func (s *StateDB) getStateObject(addr common.Address) *stateObject {
+func (s *StateDB) getStateObject(addr gethcommon.Address) *stateObject {
 	// Prefer live objects if any is available
 	if obj := s.stateObjects[addr]; obj != nil {
 		return obj
@@ -287,7 +287,7 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 }
 
 // getOrNewStateObject retrieves a state object or create a new state object if nil.
-func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
+func (s *StateDB) getOrNewStateObject(addr gethcommon.Address) *stateObject {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
 		stateObject, _ = s.createObject(addr)
@@ -297,7 +297,7 @@ func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
 
 // createObject creates a new state object. If there is an existing account with
 // the given address, it is overwritten and returned as the second return value.
-func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) {
+func (s *StateDB) createObject(addr gethcommon.Address) (newobj, prev *stateObject) {
 	prev = s.getStateObject(addr)
 
 	newobj = newObject(s, addr, nil)
@@ -323,7 +323,7 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 // 2. tx_create(sha(account ++ nonce)) (note that this gets the address of 1)
 //
 // Carrying over the balance ensures that Ether doesn't disappear.
-func (s *StateDB) CreateAccount(addr common.Address) {
+func (s *StateDB) CreateAccount(addr gethcommon.Address) {
 	newObj, prev := s.createObject(addr)
 	if prev != nil {
 		newObj.setBalance(prev.account.BalanceWei.ToBig())
@@ -335,7 +335,7 @@ func (s *StateDB) CreateAccount(addr common.Address) {
 // state due to funds sent beforehand.
 // This operation sets the 'newContract'-flag, which is required in order to
 // correctly handle EIP-6780 'delete-in-same-transaction' logic.
-func (s *StateDB) CreateContract(addr common.Address) {
+func (s *StateDB) CreateContract(addr gethcommon.Address) {
 	obj := s.getStateObject(addr)
 	if !obj.newContract {
 		obj.newContract = true
@@ -344,7 +344,7 @@ func (s *StateDB) CreateContract(addr common.Address) {
 }
 
 // ForEachStorage iterate the contract storage, the iteration order is not defined.
-func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.Hash) bool) error {
+func (s *StateDB) ForEachStorage(addr gethcommon.Address, cb func(key, value gethcommon.Hash) bool) error {
 	so := s.getStateObject(addr)
 	if so == nil {
 		return nil
@@ -353,7 +353,7 @@ func (s *StateDB) ForEachStorage(addr common.Address, cb func(key, value common.
 	if s.writeToCommitCtxFromCacheCtx != nil {
 		ctx = s.cacheCtx
 	}
-	s.keeper.ForEachStorage(ctx, addr, func(key, value common.Hash) bool {
+	s.keeper.ForEachStorage(ctx, addr, func(key, value gethcommon.Hash) bool {
 		if value, dirty := so.DirtyStorage[key]; dirty {
 			return cb(key, value)
 		}
@@ -375,7 +375,7 @@ func (s *StateDB) setStateObject(object *stateObject) {
 
 // AddBalance adds amount to the account associated with addr.
 func (s *StateDB) AddBalance(
-	addr common.Address,
+	addr gethcommon.Address,
 	wei *uint256.Int,
 	reason tracing.BalanceChangeReason,
 ) (prevWei uint256.Int) {
@@ -387,7 +387,7 @@ func (s *StateDB) AddBalance(
 }
 
 // AddBalanceSigned is only used in tests for convenience.
-func (s *StateDB) AddBalanceSigned(addr common.Address, wei *big.Int) {
+func (s *StateDB) AddBalanceSigned(addr gethcommon.Address, wei *big.Int) {
 	weiSign := wei.Sign()
 	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
 	if isOverflow {
@@ -406,7 +406,7 @@ func (s *StateDB) AddBalanceSigned(addr common.Address, wei *big.Int) {
 
 // SubBalance subtracts amount from the account associated with addr.
 func (s *StateDB) SubBalance(
-	addr common.Address,
+	addr gethcommon.Address,
 	wei *uint256.Int,
 	reason tracing.BalanceChangeReason,
 ) (prevWei uint256.Int) {
@@ -419,7 +419,7 @@ func (s *StateDB) SubBalance(
 	return stateObject.SubBalance(wei.ToBig())
 }
 
-func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int) {
+func (s *StateDB) SetBalanceWei(addr gethcommon.Address, wei *big.Int) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetBalance(wei)
@@ -427,7 +427,7 @@ func (s *StateDB) SetBalanceWei(addr common.Address, wei *big.Int) {
 }
 
 // SetNonce sets the nonce of account.
-func (s *StateDB) SetNonce(addr common.Address, nonce uint64) {
+func (s *StateDB) SetNonce(addr gethcommon.Address, nonce uint64) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetNonce(nonce)
@@ -435,7 +435,7 @@ func (s *StateDB) SetNonce(addr common.Address, nonce uint64) {
 }
 
 // SetCode sets the code of account.
-func (s *StateDB) SetCode(addr common.Address, code []byte) {
+func (s *StateDB) SetCode(addr gethcommon.Address, code []byte) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetCode(crypto.Keccak256Hash(code), code)
@@ -444,13 +444,13 @@ func (s *StateDB) SetCode(addr common.Address, code []byte) {
 
 // SetState sets the contract state.
 func (s *StateDB) SetState(
-	addr common.Address, key, value common.Hash,
-) (prevValue common.Hash) {
+	addr gethcommon.Address, key, value gethcommon.Hash,
+) (prevValue gethcommon.Hash) {
 	stateObject := s.getOrNewStateObject(addr)
 	if stateObject != nil {
 		return stateObject.SetState(key, value)
 	}
-	return common.Hash{}
+	return gethcommon.Hash{}
 }
 
 // SelfDestruct marks the given account as suicided.
@@ -458,7 +458,7 @@ func (s *StateDB) SetState(
 //
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after [SelfDestruct].
-func (s *StateDB) SelfDestruct(addr common.Address) (prevWei uint256.Int) {
+func (s *StateDB) SelfDestruct(addr gethcommon.Address) (prevWei uint256.Int) {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
 		return prevWei
@@ -482,7 +482,7 @@ func (s *StateDB) SelfDestruct(addr common.Address) (prevWei uint256.Int) {
 	return prevWei
 }
 
-func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
+func (s *StateDB) HasSelfDestructed(addr gethcommon.Address) bool {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
 		return false
@@ -499,7 +499,7 @@ func (s *StateDB) HasSelfDestructed(addr common.Address) bool {
 // This method returns the prior balance, along with a boolean which is
 // true iff the object was indeed destructed.
 func (s *StateDB) SelfDestruct6780(
-	addr common.Address,
+	addr gethcommon.Address,
 ) (prevWei uint256.Int, isSelfDestructed bool) {
 	stateObject := s.getStateObject(addr)
 	if stateObject == nil {
@@ -522,9 +522,9 @@ func (s *StateDB) SelfDestruct6780(
 //
 // This method should only be called if Yolov3/Berlin/2929+2930 is applicable at the current number.
 func (s *StateDB) PrepareAccessList(
-	sender common.Address,
-	dst *common.Address,
-	precompiles []common.Address,
+	sender gethcommon.Address,
+	dst *gethcommon.Address,
+	precompiles []gethcommon.Address,
 	txAccesses gethcore.AccessList,
 ) {
 	s.AddAddressToAccessList(sender)
@@ -558,9 +558,9 @@ func (s *StateDB) PrepareAccessList(
 // - Reset transient storage (EIP-1153)
 func (s *StateDB) Prepare(
 	_ gethparams.Rules, // only relevant prior to Shangai and Berlin upgrades
-	sender, coinbase common.Address,
-	dest *common.Address,
-	precompiles []common.Address,
+	sender, coinbase gethcommon.Address,
+	dest *gethcommon.Address,
+	precompiles []gethcommon.Address,
 	txAccesses gethcore.AccessList,
 ) {
 	s.AddAddressToAccessList(sender)
@@ -583,14 +583,14 @@ func (s *StateDB) Prepare(
 }
 
 // AddAddressToAccessList adds the given address to the access list
-func (s *StateDB) AddAddressToAccessList(addr common.Address) {
+func (s *StateDB) AddAddressToAccessList(addr gethcommon.Address) {
 	if s.accessList.AddAddress(addr) {
 		s.Journal.append(accessListAddAccountChange{&addr})
 	}
 }
 
 // AddSlotToAccessList adds the given (address, slot)-tuple to the access list
-func (s *StateDB) AddSlotToAccessList(addr common.Address, slot common.Hash) {
+func (s *StateDB) AddSlotToAccessList(addr gethcommon.Address, slot gethcommon.Hash) {
 	addrMod, slotMod := s.accessList.AddSlot(addr, slot)
 	if addrMod {
 		// In practice, this should not happen, since there is no way to enter the
@@ -608,17 +608,18 @@ func (s *StateDB) AddSlotToAccessList(addr common.Address, slot common.Hash) {
 }
 
 // AddressInAccessList returns true if the given address is in the access list.
-func (s *StateDB) AddressInAccessList(addr common.Address) bool {
+func (s *StateDB) AddressInAccessList(addr gethcommon.Address) bool {
 	return s.accessList.ContainsAddress(addr)
 }
 
 // SlotInAccessList returns true if the given (address, slot)-tuple is in the access list.
-func (s *StateDB) SlotInAccessList(addr common.Address, slot common.Hash) (addressPresent bool, slotPresent bool) {
+func (s *StateDB) SlotInAccessList(addr gethcommon.Address, slot gethcommon.Hash) (addressPresent bool, slotPresent bool) {
 	return s.accessList.Contains(addr, slot)
 }
 
 // Snapshot returns an identifier for the current revision of the state.
 func (s *StateDB) Snapshot() int {
+
 	id := s.nextRevisionID
 	s.nextRevisionID++
 	s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
@@ -757,11 +758,27 @@ func (s *StateDB) SavePrecompileCalledJournalChange(
 
 const maxMultistoreCacheCount uint8 = 10
 
+type SnapshotEvmState struct {
+	logs []*gethcore.Log
+
+	Accounts        map[gethcommon.Address]SnapshotAccChange
+	ContractStorage transientStorage
+
+	SurplusWei *big.Int
+}
+
+type SnapshotAccChange byte
+
+var (
+	SNAPSHOT_ACC_STATUS_CREATE SnapshotAccChange = 0x01
+	SNAPSHOT_ACC_STATUS_DELETE SnapshotAccChange = 0x02
+)
+
 // transientStorage is a representation of EIP-1153 "Transient Storage".
-type transientStorage map[common.Address]Storage
+type transientStorage map[gethcommon.Address]Storage
 
 // Set sets the transient-storage `value` for `key` at the given `addr`.
-func (t transientStorage) Set(addr common.Address, key, value common.Hash) {
+func (t transientStorage) Set(addr gethcommon.Address, key, value gethcommon.Hash) {
 	if _, ok := t[addr]; !ok {
 		t[addr] = make(Storage)
 	}
@@ -769,10 +786,10 @@ func (t transientStorage) Set(addr common.Address, key, value common.Hash) {
 }
 
 // Get gets the transient storage for `key` at the given `addr`.
-func (t transientStorage) Get(addr common.Address, key common.Hash) common.Hash {
+func (t transientStorage) Get(addr gethcommon.Address, key gethcommon.Hash) gethcommon.Hash {
 	val, ok := t[addr]
 	if !ok {
-		return common.Hash{}
+		return gethcommon.Hash{}
 	}
 	return val[key]
 }
@@ -786,11 +803,11 @@ func (t transientStorage) Copy() transientStorage {
 	return storage
 }
 
-// GetTransientState gets transient storage ([common.Hash]) for a given account.
+// GetTransientState gets transient storage ([gethcommon.Hash]) for a given account.
 func (s *StateDB) GetTransientState(
-	addr common.Address,
-	key common.Hash,
-) common.Hash {
+	addr gethcommon.Address,
+	key gethcommon.Hash,
+) gethcommon.Hash {
 	return s.transientStorage.Get(addr, key)
 }
 
@@ -798,8 +815,8 @@ func (s *StateDB) GetTransientState(
 // adds the change to the journal so that it can be rolled back
 // to its previous value if there is a revert.
 func (s *StateDB) SetTransientState(
-	addr common.Address,
-	key, value common.Hash,
+	addr gethcommon.Address,
+	key, value gethcommon.Hash,
 ) {
 	prev := s.GetTransientState(addr, key)
 	if prev == value {
@@ -836,7 +853,7 @@ func (s *StateDB) Witness() *stateless.Witness {
 }
 
 // ↓ If you remove the quotes below, golangci-lint will change the function name
-// to American spelling, "FinFinalizebreaking interface compatibility.
+// to American spelling as "Finalize", breaking interface compatibility.
 
 // "Finalise"  prepares state objects at the end of a transaction execution.
 //
@@ -852,7 +869,7 @@ func (s *StateDB) Witness() *stateless.Witness {
 //   - All writes happen against a cached multistore (`s.cacheCtx`) that gets committed
 //     during `StateDB.Commit`.
 //
-// This function implementsFinalize.StateDB] interface.
+// This function implements the [vm.StateDB] interface.
 func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 	// No-op for now. May add logic for empty account pruning if desired.
 	for addr, obj := range s.stateObjects {
@@ -868,7 +885,7 @@ func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 // root make sense to implement for Nibiru, as it does not use Merkle Patricia
 // Tries.
 // This function implements the [vm.StateDB] interface.
-func (s *StateDB) GetStorageRoot(addr common.Address) (root common.Hash) {
+func (s *StateDB) GetStorageRoot(addr gethcommon.Address) (root gethcommon.Hash) {
 	return root // or panic("unsupported")
 }
 
