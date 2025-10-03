@@ -50,6 +50,9 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
 - [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
 
+### Dependencies
+- Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2390](https://github.com/NibiruChain/nibiru/pull/2390))
+
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
 - [#2345](https://github.com/NibiruChain/nibiru/pull/2345) - feat(evm): add
