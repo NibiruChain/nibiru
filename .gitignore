@@ -28,14 +28,14 @@ logs
 node_modules
 ui-debug.log
 .firebase/
-.idea
+.idea  # IntelliJ based IDEs
 .vscode
 /public/
 .env
 firebase-debug.log
 out-*
 exit-status-*
-.DS_Store
+.DS_Store # Finder (MacOS) folder config 
 .npmrc
 
 ### Node ###
@@ -87,16 +87,12 @@ jspm_packages/
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
-# TypeScript cache
+# TypeScript Caches
 *.tsbuildinfo
-
-# Optional npm cache directory
 .npm
-
-# Optional eslint cache
 .eslintcache
-
-# Optional stylelint cache
+.cache
+*.tsbuildinfo
 .stylelintcache
 
 # Microbundle cache
