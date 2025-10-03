@@ -42,10 +42,10 @@
  * - To include additional entrypoints, tweak `getProtoServiceFiles` or
  *   update `buf-gen-swagger.yaml` options (e.g., tags, enums_as_ints).
  **/
-import Bun from "bun"
+import { join, relative } from "path"
 import { bash, type BashOut } from "@uniquedivine/bash"
 import { newClog } from "@uniquedivine/jiyuu"
-import { join, relative } from "path"
+import Bun from "bun"
 
 const cfg = (() => {
   const dirNibiruRepo = join(__dirname, "..")
@@ -151,10 +151,10 @@ export type GoModEditJSON = {
   Retract?: Array<
     | string
     | {
-        Low: string
-        High?: string
-        Reason?: string
-      }
+      Low: string
+      High?: string
+      Reason?: string
+    }
   > | null
 
   Tool?: Array<{
@@ -193,19 +193,6 @@ const goGetCosmosProto = async (sdkInfo: CosmosSdkInfo): Promise<void> => {
     clogCmd(cmd)
     await bash(cmd)
   }
-
-  // // Find the pinned cosmos-sdk version (from Require or Replace.New)
-  // const sdkFromRequire = (gomod.Require ?? []).find(
-  //   (r) => r.Path === "github.com/cosmos/cosmos-sdk",
-  // )?.Version;
-
-  // const sdkFromReplace = (gomod.Replace ?? []).find(
-  //   (r) => r.Old.Path === "github.com/cosmos/cosmos-sdk",
-  // )?.New.Version;
-
-  // if (sdkFromReplace) {
-
-  // }
 }
 
 // Helper: flatten path separators → dots (dir/dir/file.proto → dir.dir.file.proto)
