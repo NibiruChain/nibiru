@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -126,7 +126,7 @@ func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 }
 
 type precompileFunToken struct {
-	evmKeeper *evmkeeper.Keeper
+	evmKeeper *evmstate.Keeper
 }
 
 // sendToBank: Implements "IFunToken.sendToBank"

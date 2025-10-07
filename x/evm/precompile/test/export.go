@@ -16,9 +16,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // rough gas limits for wasm execution - used in tests only
@@ -309,6 +309,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 	if commit {
-		s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+		s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
 	}
 }

@@ -10,21 +10,21 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	state "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *state.SDB)
 		txSetup       func(deps *evmtest.TestDeps) sdk.Tx
 		wantErr       string
 		wantSeq       uint64
 	}{
 		{
 			name: "happy: single message",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) {
 				balance := big.NewInt(100)
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
@@ -36,7 +36,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		},
 		{
 			name: "happy: two messages",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) {
 				balance := big.NewInt(100)
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
@@ -97,7 +97,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 }
 
 // AddBalanceSigned is only used in tests for convenience.
-func AddBalanceSigned(sdb *statedb.StateDB, addr gethcommon.Address, wei *big.Int) {
+func AddBalanceSigned(sdb *state.SDB, addr gethcommon.Address, wei *big.Int) {
 	weiSign := wei.Sign()
 	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
 	if isOverflow {

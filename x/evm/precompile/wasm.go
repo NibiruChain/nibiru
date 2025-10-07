@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -100,7 +100,7 @@ func (p precompileWasm) Run(
 }
 
 type precompileWasm struct {
-	*evmkeeper.Keeper
+	*evmstate.Keeper
 	Wasm Wasm
 }
 

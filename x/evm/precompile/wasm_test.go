@@ -18,10 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -75,7 +75,7 @@ func (s *WasmSuite) TestInstantiate() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(vals[0].(string))
-	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+	s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
 }
 
 func (s *WasmSuite) TestExecute() {
@@ -607,7 +607,7 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 
 	// Verify that no state changes occurred
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
-	s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+	s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 }
 

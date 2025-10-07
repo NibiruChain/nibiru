@@ -7,20 +7,20 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestCanTransferDecorator() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
 		wantErr       string
 	}{
 		{
 			name: "happy: signed tx, sufficient funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				s.NoError(
 					testapp.FundAccount(
 						deps.App.BankKeeper,

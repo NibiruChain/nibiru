@@ -25,7 +25,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
@@ -36,7 +36,7 @@ type PublicKeepers struct {
 	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
 	AccountKeeper authkeeper.AccountKeeper
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
-	BankKeeper    *evmkeeper.NibiruBankKeeper
+	BankKeeper    *evmstate.NibiruBankKeeper
 	StakingKeeper *stakingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
 	DistrKeeper           distrkeeper.Keeper
@@ -64,7 +64,7 @@ type PublicKeepers struct {
 	SudoKeeper         sudokeeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
-	EvmKeeper          *evmkeeper.Keeper
+	EvmKeeper          *evmstate.Keeper
 
 	// WASM keepers
 	WasmKeeper         wasmkeeper.Keeper

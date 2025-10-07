@@ -26,7 +26,7 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // InitPrecompiles initializes and returns a map of precompiled contracts for the EVM.
@@ -152,9 +152,9 @@ type OnRunStartResult struct {
 	// Method is the ABI method for the precompiled contract call.
 	Method *gethabi.Method
 
-	StateDB *statedb.StateDB
+	StateDB *evmstate.SDB
 
-	PrecompileJournalEntry statedb.PrecompileCalled
+	PrecompileJournalEntry evmstate.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -180,7 +180,7 @@ type OnRunStartResult struct {
 //		// ...
 //		// Use res.Ctx for state changes
 //		// Use res.StateDB.Commit() before any non-EVM state changes
-//		// to guarantee the context and [statedb.StateDB] are in sync.
+//		// to guarantee the context and [evmstate.SDB] are in sync.
 //	}
 //	```
 func OnRunStart(
@@ -191,7 +191,7 @@ func OnRunStart(
 		return res, err
 	}
 
-	stateDB, ok := evm.StateDB.(*statedb.StateDB)
+	stateDB, ok := evm.StateDB.(*evmstate.SDB)
 	if !ok {
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return

@@ -19,8 +19,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -175,7 +175,6 @@ func (s *Suite) TestUpgrade() {
 
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
 		s.T().Log("IMPORTANT: Schedule the upgrade")
-		deps.EvmKeeper.Bank.StateDB = nil // IMPORTANT: make sure to clear the StateDB before running the upgrade
 		s.Require().True(
 			deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName),
 		)
@@ -237,7 +236,7 @@ func (s *Suite) TestUpgrade() {
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmkeeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)

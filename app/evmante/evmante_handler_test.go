@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteHandlerEVM() {
@@ -22,12 +22,12 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 		name          string
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
 		ctxSetup      func(deps *evmtest.TestDeps)
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		wantErr       string
 	}{
 		{
 			name: "happy: signed tx, sufficient funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				balanceMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
 				AddBalanceSigned(sdb,
 					deps.Sender.EthAddr,

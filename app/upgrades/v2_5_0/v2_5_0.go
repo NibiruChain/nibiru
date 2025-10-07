@@ -22,7 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -138,7 +138,7 @@ func UpgradeStNibiEvmMetadata(
 		From:             evm.EVM_MODULE_ADDRESS, // From is the deployer
 		Nonce:            evmModuleNonce,
 		Value:            unusedBigInt, // amount
-		GasLimit:         evmkeeper.Erc20GasLimitDeploy,
+		GasLimit:         evmstate.Erc20GasLimitDeploy,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
 		GasTipCap:        unusedBigInt,
@@ -147,18 +147,14 @@ func UpgradeStNibiEvmMetadata(
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-	stateDB := keepers.EvmKeeper.Bank.StateDB
-	if stateDB == nil {
-		stateDB = keepers.EvmKeeper.NewStateDB(ctx, keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
-	}
-	defer func() {
-		keepers.EvmKeeper.Bank.StateDB = nil
-	}()
-	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
+
+	txConfig := keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{})
+	sdb := keepers.EvmKeeper.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := keepers.EvmKeeper.CallContract(
 		ctx, evmObj, evmMsg.From, nil, contractInput,
-		evmkeeper.Erc20GasLimitDeploy,
+		evmstate.Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)
@@ -166,7 +162,7 @@ func UpgradeStNibiEvmMetadata(
 		return fmt.Errorf("failed to deploy ERC20 contract: %w", err)
 	} else if len(evmResp.VmError) > 0 {
 		return fmt.Errorf("VM Error in deploy ERC20: %s", evmResp.VmError)
-	} else if err := stateDB.Commit(); err != nil {
+	} else if err := sdb.Commit(); err != nil {
 		return fmt.Errorf("%s: %w", evm.ErrStateDBCommit, err)
 	}
 

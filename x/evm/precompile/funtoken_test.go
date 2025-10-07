@@ -15,10 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // TestSuite: Runs all the tests in the suite.
@@ -252,7 +251,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
 			contractInput,
-			keeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
@@ -319,7 +318,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.T().Log("sendToBank with WNIBI: unimplemented ")
 		randomAcc := evmtest.NewEthPrivAcc()
 
-		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *statedb.StateDB) {
+		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *evmstate.SDB) {
 			contractInput, err = embeds.SmartContract_FunToken.ABI.Pack(
 				string(precompile.FunTokenMethod_sendToBank),
 				erc20Wnibi,

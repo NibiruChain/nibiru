@@ -12,10 +12,10 @@ import (
 
 func (s *TestSuite) TestEthSetupContextDecorator() {
 	deps := evmtest.NewTestDeps()
-	stateDB := deps.NewStateDB()
+	sdb := deps.NewStateDB()
 	anteDec := evmante.NewEthSetUpContextDecorator(deps.App.EvmKeeper)
 
-	s.Require().NoError(stateDB.Commit())
+	s.Require().NoError(sdb.Commit())
 	tx := evmtest.HappyCreateContractTx(&deps)
 
 	// Ante handler returns new context

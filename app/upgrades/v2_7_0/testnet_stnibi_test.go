@@ -20,8 +20,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -367,7 +367,7 @@ func (s *Suite) TestTestnet() {
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmkeeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)

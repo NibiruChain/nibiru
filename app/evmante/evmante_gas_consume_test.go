@@ -8,14 +8,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 func (s *TestSuite) TestAnteDecEthGasConsume() {
 	testCases := []struct {
 		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *statedb.StateDB)
+		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
 		txSetup       func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
 		wantErr       string
 		maxGasWanted  uint64
@@ -23,7 +23,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 	}{
 		{
 			name: "happy: sender with funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
@@ -35,7 +35,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		},
 		{
 			name: "happy: is recheck tx",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
 			},
 			txSetup:  evmtest.HappyCreateContractTx,
@@ -44,7 +44,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		},
 		{
 			name: "sad: out of gas",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				gasLimit := happyGasLimit()
 				balance := evm.NativeToWei(new(big.Int).Add(gasLimit, big.NewInt(100)))
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)

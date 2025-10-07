@@ -20,14 +20,13 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 type TestDeps struct {
 	App       *app.NibiruApp
 	Ctx       sdk.Context
-	EvmKeeper *keeper.Keeper
+	EvmKeeper *evmstate.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc
 }
@@ -45,29 +44,29 @@ func NewTestDeps() TestDeps {
 	}
 }
 
-func (deps TestDeps) NewStateDB() *statedb.StateDB {
+func (deps TestDeps) NewStateDB() *evmstate.SDB {
 	return deps.EvmKeeper.NewStateDB(
 		deps.Ctx,
-		statedb.NewEmptyTxConfig(
+		evmstate.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash()),
 		),
 	)
 }
 
-func (deps TestDeps) NewEVM() (*vm.EVM, *statedb.StateDB) {
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
+	sdb := deps.EvmKeeper.NewStateDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
 		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
 		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
-		stateDB,
+		sdb,
 	)
-	return evmObj, stateDB
+	return evmObj, sdb
 }
 
-func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *statedb.StateDB) {
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *evmstate.SDB) {
+	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
@@ -88,11 +87,11 @@ func (deps TestDeps) GoCtx() context.Context {
 
 func (deps *TestDeps) MimicEthereumTx(
 	s *suite.Suite,
-	doTx func(evmObj *vm.EVM, sdb *statedb.StateDB),
+	doTx func(evmObj *vm.EVM, sdb *evmstate.SDB),
 ) {
 	sdb := deps.EvmKeeper.NewStateDB(
 		deps.Ctx,
-		statedb.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
+		evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
 	)
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
@@ -130,7 +129,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 		From:             evm.EVM_MODULE_ADDRESS, // From is the deployer
 		Nonce:            evmModuleNonce,
 		Value:            unusedBigInt, // amount
-		GasLimit:         keeper.Erc20GasLimitDeploy,
+		GasLimit:         evmstate.Erc20GasLimitDeploy,
 		GasPrice:         unusedBigInt,
 		GasFeeCap:        unusedBigInt,
 		GasTipCap:        unusedBigInt,
@@ -139,18 +138,13 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-	stateDB := deps.EvmKeeper.Bank.StateDB
-	if stateDB == nil {
-		stateDB = deps.EvmKeeper.NewStateDB(ctx, deps.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
-	}
-	defer func() {
-		deps.EvmKeeper.Bank.StateDB = nil
-	}()
-	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, stateDB)
+
+	sdb := deps.EvmKeeper.NewStateDB(ctx, deps.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
+	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
 		ctx, evmObj, evmMsg.From, nil, contractInput,
-		keeper.Erc20GasLimitDeploy,
+		evmstate.Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		evmMsg.Value,
 	)
@@ -166,7 +160,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 
 	s.T().Logf("Set WNIBI bytecode hash at address %s", wnibiAddr)
 	tempWnibiAcc := deps.EvmKeeper.GetAccount(ctx, tempWnibiAddr)
-	wnibiAcc := statedb.NewEmptyAccount()
+	wnibiAcc := evmstate.NewEmptyAccount()
 	wnibiAcc.CodeHash = tempWnibiAcc.CodeHash
 	err = deps.EvmKeeper.SetAccount(ctx, wnibiAddr, *wnibiAcc)
 	s.Require().NoError(err, "overwrite of contract bytecode failed")

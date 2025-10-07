@@ -1,0 +1,671 @@
+package evmstate_test
+
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
+
+	xcommon "github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+)
+
+// emptyCodeHash: The hash for empty contract bytecode, or a blank byte
+// array. This is the code hash for a non-existent or empty account.
+var emptyCodeHash []byte = crypto.Keccak256(nil)
+
+// dummy variables for tests
+var (
+	address    common.Address = common.BigToAddress(big.NewInt(101))
+	address2   common.Address = common.BigToAddress(big.NewInt(102))
+	address3   common.Address = common.BigToAddress(big.NewInt(103))
+	blockHash  common.Hash    = common.BigToHash(big.NewInt(9999))
+	errAddress common.Address = common.BigToAddress(big.NewInt(100))
+)
+
+// CollectContractStorage is a helper function that collects all storage key-value pairs
+// for a given contract address using the ForEachStorage method of the StateDB.
+// It returns a map of storage slots to their values.
+func CollectContractStorage(db vm.StateDB) evmstate.Storage {
+	storage := make(evmstate.Storage)
+	sdb := db.(*evmstate.SDB)
+	err := sdb.ForEachStorage(
+		address,
+		func(k, v common.Hash) bool {
+			storage[k] = v
+			return true
+		},
+	)
+	if err != nil {
+		return nil
+	}
+
+	return storage
+}
+
+func (s *Suite) TestAccount() {
+	key1 := common.BigToHash(big.NewInt(1))
+	value1 := common.BigToHash(big.NewInt(2))
+	key2 := common.BigToHash(big.NewInt(3))
+	value2 := common.BigToHash(big.NewInt(4))
+	testCases := []struct {
+		name     string
+		malleate func(deps *evmtest.TestDeps, db *evmstate.SDB)
+	}{
+		{"non-exist account", func(deps *evmtest.TestDeps, db *evmstate.SDB) {
+			s.Require().Equal(false, db.Exist(address))
+			s.Require().Equal(true, db.Empty(address))
+			s.Require().Equal(uint256.NewInt(0), db.GetBalance(address))
+			s.Require().Equal([]byte(nil), db.GetCode(address))
+			s.Require().Equal(common.Hash{}, db.GetCodeHash(address))
+			s.Require().Equal(uint64(0), db.GetNonce(address))
+		}},
+		{"empty account", func(deps *evmtest.TestDeps, db *evmstate.SDB) {
+			db.CreateAccount(address)
+			s.Require().NoError(db.Commit())
+
+			k := db.Keeper()
+			acct := k.GetAccount(deps.Ctx, address)
+			s.Require().EqualValues(evmstate.NewEmptyAccount(), acct)
+			s.Require().Empty(CollectContractStorage(db))
+
+			db = deps.NewStateDB()
+			s.Require().Equal(true, db.Exist(address))
+			s.Require().Equal(true, db.Empty(address))
+			s.Require().Equal(uint256.NewInt(0), db.GetBalance(address))
+			s.Require().Equal([]byte(nil), db.GetCode(address))
+			s.Require().Equal(common.BytesToHash(emptyCodeHash), db.GetCodeHash(address))
+			s.Require().Equal(uint64(0), db.GetNonce(address))
+		}},
+		{"suicide", func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+			// non-exist account.
+			s.Require().False(sdb.HasSuicided(address))
+			sdb.SelfDestruct(address)
+			s.Require().False(sdb.HasSuicided(address))
+
+			// create a contract account
+			sdb.CreateAccount(address)
+			sdb.SetCode(address, []byte("hello world"))
+			AddBalanceSigned(sdb, address, big.NewInt(100))
+			sdb.SetState(address, key1, value1)
+			sdb.SetState(address, key2, value2)
+			s.Require().NoError(sdb.Commit())
+
+			// suicide
+			sdb = deps.NewStateDB()
+			s.Require().False(sdb.HasSuicided(address))
+			sdb.SelfDestruct(address)
+			s.Require().True(sdb.HasSuicided(address))
+
+			// check dirty state
+			s.Require().True(sdb.HasSuicided(address))
+			// balance is cleared
+			s.Require().Equal(uint256.NewInt(0), sdb.GetBalance(address))
+			// but code and state are still accessible in dirty state
+			s.Require().Equal(value1, sdb.GetState(address, key1))
+			s.Require().Equal([]byte("hello world"), sdb.GetCode(address))
+
+			s.Require().NoError(sdb.Commit())
+
+			// not accessible from StateDB anymore
+			sdb = deps.NewStateDB()
+			s.Require().False(sdb.Exist(address))
+			s.Require().Empty(CollectContractStorage(sdb))
+		}},
+	}
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			db := deps.NewStateDB()
+			tc.malleate(&deps, db)
+		})
+	}
+}
+
+func (s *Suite) TestAccountOverride() {
+	deps := evmtest.NewTestDeps()
+	sdb := deps.NewStateDB()
+	// test balance carry over when overwritten
+	amount := big.NewInt(1)
+
+	// init an EOA account, account overridden only happens on EOA account.
+	AddBalanceSigned(sdb, address, amount)
+	sdb.SetNonce(address, 1)
+
+	// override
+	sdb.CreateAccount(address)
+
+	// check balance is not lost
+	s.Require().Equal(uint256.MustFromBig(amount), sdb.GetBalance(address))
+	// but nonce is reset
+	s.Require().Equal(uint64(0), sdb.GetNonce(address))
+}
+
+func (s *Suite) TestDBError() {
+	testCases := []struct {
+		name     string
+		malleate func(vm.StateDB)
+	}{
+		{"set account", func(db vm.StateDB) {
+			db.SetNonce(errAddress, 1)
+		}},
+		{"delete account", func(db vm.StateDB) {
+			db.SetNonce(errAddress, 1)
+			db.SelfDestruct(errAddress)
+			s.Require().True(db.HasSelfDestructed(errAddress))
+		}},
+	}
+	for _, tc := range testCases {
+		deps := evmtest.NewTestDeps()
+		db := deps.NewStateDB()
+		tc.malleate(db)
+		s.Require().NoError(db.Commit())
+	}
+}
+
+func (s *Suite) TestBalance() {
+	// NOTE: no need to test overflow/underflow, that is guaranteed by evm implementation.
+	testCases := []struct {
+		name       string
+		do         func(*evmstate.SDB)
+		expBalance *uint256.Int
+	}{
+		{
+			name: "add balance",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(10))
+			},
+			expBalance: uint256.NewInt(10),
+		},
+		{
+			name: "sub balance",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(10))
+				s.Require().Equal(uint256.NewInt(10), sdb.GetBalance(address))
+				AddBalanceSigned(sdb, address, big.NewInt(-2))
+			},
+			expBalance: uint256.NewInt(8),
+		},
+		{
+			name: "add zero balance",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(0))
+			},
+			expBalance: uint256.NewInt(0),
+		},
+		{
+			name: "sub zero balance",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(0))
+			},
+			expBalance: uint256.NewInt(0),
+		},
+		{
+			name: "overflow on addition",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(69))
+				tooBig := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
+				maybeErr := xcommon.TryCatch(func() {
+					AddBalanceSigned(sdb, address, tooBig)
+				})()
+				s.ErrorContains(maybeErr, "uint256 overflow occurred for big.Int")
+			},
+			expBalance: uint256.NewInt(69),
+		},
+		{
+			name: "overflow on subtraction",
+			do: func(sdb *evmstate.SDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(420))
+				AddBalanceSigned(sdb, address, big.NewInt(-20)) // balance: 400
+
+				// Construct -2^256
+				tooBig := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
+				tooBig.Neg(tooBig)
+
+				maybeErr := xcommon.TryCatch(func() {
+					AddBalanceSigned(sdb, address, tooBig)
+				})()
+
+				s.ErrorContains(maybeErr, "uint256 overflow occurred for big.Int")
+			},
+			expBalance: uint256.NewInt(400),
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			db := deps.NewStateDB()
+			tc.do(db)
+
+			// check dirty state
+			s.Equal(tc.expBalance, db.GetBalance(address))
+			s.Require().NoError(db.Commit())
+
+			// check committed balance too
+			s.Require().Equal(tc.expBalance, db.GetBalance(address))
+		})
+	}
+}
+
+func (s *Suite) TestState() {
+	key1 := common.BigToHash(big.NewInt(1))
+	value1 := common.BigToHash(big.NewInt(1))
+	testCases := []struct {
+		name      string
+		malleate  func(*evmstate.SDB)
+		expStates evmstate.Storage
+	}{
+		{"empty state", func(db *evmstate.SDB) {
+		}, nil},
+		{"set empty value", func(db *evmstate.SDB) {
+			db.SetState(address, key1, common.Hash{})
+		}, evmstate.Storage{}},
+		{"noop state change", func(db *evmstate.SDB) {
+			db.SetState(address, key1, value1)
+			db.SetState(address, key1, common.Hash{})
+		}, evmstate.Storage{}},
+		{"set state", func(db *evmstate.SDB) {
+			// check empty initial state
+			s.Require().Equal(common.Hash{}, db.GetState(address, key1))
+			s.Require().Equal(common.Hash{}, db.GetCommittedState(address, key1))
+
+			// set state
+			db.SetState(address, key1, value1)
+			// query dirty state
+			s.Require().Equal(value1, db.GetState(address, key1))
+			// check committed state is still not exist
+			s.Require().Equal(common.Hash{}, db.GetCommittedState(address, key1))
+
+			// set same value again, should be noop
+			db.SetState(address, key1, value1)
+			s.Require().Equal(value1, db.GetState(address, key1))
+		}, evmstate.Storage{
+			key1: value1,
+		}},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			db := deps.NewStateDB()
+			tc.malleate(db)
+			s.Require().NoError(db.Commit())
+
+			// check committed states in keeper
+			for k, v := range tc.expStates {
+				s.Equal(v, db.GetState(address, k))
+			}
+
+			// check ForEachStorage
+			db = deps.NewStateDB()
+			collected := CollectContractStorage(db)
+			if len(tc.expStates) > 0 {
+				s.Require().Equal(tc.expStates, collected)
+			} else {
+				s.Require().Empty(collected)
+			}
+		})
+	}
+}
+
+func (s *Suite) TestCode() {
+	code := []byte("hello world")
+	codeHash := crypto.Keccak256Hash(code)
+
+	testCases := []struct {
+		name        string
+		malleate    func(vm.StateDB)
+		expCode     []byte
+		expCodeHash common.Hash
+	}{
+		{"non-exist account", func(vm.StateDB) {}, nil, common.Hash{}},
+		{"empty account", func(db vm.StateDB) {
+			db.CreateAccount(address)
+		}, nil, common.BytesToHash(emptyCodeHash)},
+		{"set code", func(db vm.StateDB) {
+			db.SetCode(address, code)
+		}, code, codeHash},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			db := deps.NewStateDB()
+			tc.malleate(db)
+
+			// check dirty state
+			s.Require().Equal(tc.expCode, db.GetCode(address))
+			s.Require().Equal(len(tc.expCode), db.GetCodeSize(address))
+			s.Require().Equal(tc.expCodeHash, db.GetCodeHash(address))
+
+			s.Require().NoError(db.Commit())
+
+			// check again
+			db = deps.NewStateDB()
+			s.Require().Equal(tc.expCode, db.GetCode(address))
+			s.Require().Equal(len(tc.expCode), db.GetCodeSize(address))
+			s.Require().Equal(tc.expCodeHash, db.GetCodeHash(address))
+		})
+	}
+}
+
+func (s *Suite) TestRevertSnapshot() {
+	v1 := common.BigToHash(big.NewInt(1))
+	v2 := common.BigToHash(big.NewInt(2))
+	v3 := common.BigToHash(big.NewInt(3))
+	testCases := []struct {
+		name     string
+		malleate func(vm.StateDB)
+	}{
+		{"set state", func(db vm.StateDB) {
+			db.SetState(address, v1, v3)
+		}},
+		{"set nonce", func(db vm.StateDB) {
+			db.SetNonce(address, 10)
+		}},
+		{"change balance", func(db vm.StateDB) {
+			db.AddBalance(address, uint256.NewInt(10), tracing.BalanceChangeUnspecified)
+			db.SubBalance(address, uint256.NewInt(5), tracing.BalanceChangeUnspecified)
+		}},
+		{"override account", func(db vm.StateDB) {
+			db.CreateAccount(address)
+		}},
+		{"set code", func(db vm.StateDB) {
+			db.SetCode(address, []byte("hello world"))
+		}},
+		{"suicide", func(db vm.StateDB) {
+			db.SetState(address, v1, v2)
+			db.SetCode(address, []byte("hello world"))
+			s.Require().False(db.HasSelfDestructed(address))
+			db.SelfDestruct(address)
+			s.Require().True(db.HasSelfDestructed(address))
+		}},
+		{"add log", func(db vm.StateDB) {
+			db.AddLog(&gethcore.Log{
+				Address: address,
+			})
+		}},
+		{"add refund", func(db vm.StateDB) {
+			db.AddRefund(10)
+			db.SubRefund(5)
+		}},
+		{"access list", func(db vm.StateDB) {
+			db.AddAddressToAccessList(address)
+			db.AddSlotToAccessList(address, v1)
+		}},
+	}
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+
+			// do some arbitrary changes to the storage
+			sdb := deps.NewStateDB()
+			sdb.SetNonce(address, 1)
+			AddBalanceSigned(sdb, address, big.NewInt(100))
+			sdb.SetCode(address, []byte("hello world"))
+			sdb.SetState(address, v1, v2)
+			sdb.SetNonce(address2, 1)
+			s.Require().NoError(sdb.Commit())
+
+			// Store original state values
+			originalNonce := sdb.GetNonce(address)
+			originalBalance := sdb.GetBalance(address)
+			originalCode := sdb.GetCode(address)
+			originalState := sdb.GetState(address, v1)
+			originalNonce2 := sdb.GetNonce(address2)
+
+			// run test
+			rev := sdb.Snapshot()
+			tc.malleate(sdb)
+			sdb.RevertToSnapshot(rev)
+
+			// check empty states after revert
+			s.Require().Zero(sdb.GetRefund())
+			s.Require().Empty(sdb.Logs())
+
+			s.Require().NoError(sdb.Commit())
+
+			// Check again after commit to ensure persistence
+			s.Require().Equal(originalNonce, sdb.GetNonce(address))
+			s.Require().Equal(originalBalance, sdb.GetBalance(address))
+			s.Require().Equal(originalCode, sdb.GetCode(address))
+			s.Require().Equal(originalState, sdb.GetState(address, v1))
+			s.Require().Equal(originalNonce2, sdb.GetNonce(address2))
+		})
+	}
+}
+
+func (s *Suite) TestNestedSnapshot() {
+	key := common.BigToHash(big.NewInt(1))
+	value1 := common.BigToHash(big.NewInt(1))
+	value2 := common.BigToHash(big.NewInt(2))
+
+	deps := evmtest.NewTestDeps()
+	db := deps.NewStateDB()
+
+	rev1 := db.Snapshot()
+	db.SetState(address, key, value1)
+
+	rev2 := db.Snapshot()
+	db.SetState(address, key, value2)
+	s.Require().Equal(value2, db.GetState(address, key))
+
+	db.RevertToSnapshot(rev2)
+	s.Require().Equal(value1, db.GetState(address, key))
+
+	db.RevertToSnapshot(rev1)
+	s.Require().Equal(common.Hash{}, db.GetState(address, key))
+}
+
+func (s *Suite) TestInvalidSnapshotId() {
+	deps := evmtest.NewTestDeps()
+	db := deps.NewStateDB()
+
+	s.Require().Panics(func() {
+		db.RevertToSnapshot(1)
+	})
+}
+
+func (s *Suite) TestAccessList() {
+	value1 := common.BigToHash(big.NewInt(1))
+	value2 := common.BigToHash(big.NewInt(2))
+
+	testCases := []struct {
+		name     string
+		malleate func(vm.StateDB)
+	}{
+		{"add address", func(db vm.StateDB) {
+			s.Require().False(db.AddressInAccessList(address))
+			db.AddAddressToAccessList(address)
+			s.Require().True(db.AddressInAccessList(address))
+
+			addrPresent, slotPresent := db.SlotInAccessList(address, value1)
+			s.Require().True(addrPresent)
+			s.Require().False(slotPresent)
+
+			// add again, should be no-op
+			db.AddAddressToAccessList(address)
+			s.Require().True(db.AddressInAccessList(address))
+		}},
+		{"add slot", func(db vm.StateDB) {
+			addrPresent, slotPresent := db.SlotInAccessList(address, value1)
+			s.Require().False(addrPresent)
+			s.Require().False(slotPresent)
+			db.AddSlotToAccessList(address, value1)
+			addrPresent, slotPresent = db.SlotInAccessList(address, value1)
+			s.Require().True(addrPresent)
+			s.Require().True(slotPresent)
+
+			// add another slot
+			db.AddSlotToAccessList(address, value2)
+			addrPresent, slotPresent = db.SlotInAccessList(address, value2)
+			s.Require().True(addrPresent)
+			s.Require().True(slotPresent)
+
+			// add again, should be noop
+			db.AddSlotToAccessList(address, value2)
+			addrPresent, slotPresent = db.SlotInAccessList(address, value2)
+			s.Require().True(addrPresent)
+			s.Require().True(slotPresent)
+		}},
+		{"prepare access list", func(db vm.StateDB) {
+			al := gethcore.AccessList{{
+				Address:     address3,
+				StorageKeys: []common.Hash{value1},
+			}}
+
+			sender, dest := address, &address2
+			db.Prepare(params.Rules{}, sender, sender, dest, vm.PrecompiledAddressesBerlin, al)
+
+			// check sender and dst
+			s.Require().True(db.AddressInAccessList(address))
+			s.Require().True(db.AddressInAccessList(address2))
+			// check precompiles
+			s.Require().True(db.AddressInAccessList(common.BytesToAddress([]byte{1})))
+			// check AccessList
+			s.Require().True(db.AddressInAccessList(address3))
+			addrPresent, slotPresent := db.SlotInAccessList(address3, value1)
+			s.Require().True(addrPresent)
+			s.Require().True(slotPresent)
+			addrPresent, slotPresent = db.SlotInAccessList(address3, value2)
+			s.Require().True(addrPresent)
+			s.Require().False(slotPresent)
+		}},
+	}
+
+	for _, tc := range testCases {
+		deps := evmtest.NewTestDeps()
+		db := deps.NewStateDB()
+		tc.malleate(db)
+	}
+}
+
+func (s *Suite) TestLog() {
+	txHash := common.BytesToHash([]byte("tx"))
+
+	// use a non-default tx config
+	const (
+		blockNumber = uint64(1)
+		txIdx       = uint(1)
+		logIdx      = uint(1)
+	)
+	txConfig := evmstate.TxConfig{
+		BlockHash: blockHash,
+		TxHash:    txHash,
+		TxIndex:   txIdx,
+		LogIndex:  logIdx,
+	}
+
+	deps := evmtest.NewTestDeps()
+	sdb := evmstate.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
+
+	logData := []byte("hello world")
+	log := &gethcore.Log{
+		Address:     address,
+		Topics:      []common.Hash{},
+		Data:        logData,
+		BlockNumber: blockNumber,
+	}
+	sdb.AddLog(log)
+	s.Require().Equal(1, len(sdb.Logs()))
+
+	wantLog := &gethcore.Log{
+		Address:     log.Address,
+		Topics:      log.Topics,
+		Data:        log.Data,
+		BlockNumber: log.BlockNumber,
+
+		// New fields
+		BlockHash: blockHash,
+		TxHash:    txHash,
+		TxIndex:   txIdx,
+		Index:     logIdx,
+	}
+	s.Require().Equal(wantLog, sdb.Logs()[0])
+
+	// Add a second log and assert values
+	sdb.AddLog(log)
+	wantLog.Index++
+	s.Require().Equal(2, len(sdb.Logs()))
+	gotLog := sdb.Logs()[1]
+	s.Require().Equal(wantLog, gotLog)
+}
+
+func (s *Suite) TestRefund() {
+	testCases := []struct {
+		name      string
+		malleate  func(vm.StateDB)
+		expRefund uint64
+		expPanic  bool
+	}{
+		{"add refund", func(db vm.StateDB) {
+			db.AddRefund(uint64(10))
+		}, 10, false},
+		{"sub refund", func(db vm.StateDB) {
+			db.AddRefund(uint64(10))
+			db.SubRefund(uint64(5))
+		}, 5, false},
+		{"negative refund counter", func(db vm.StateDB) {
+			db.AddRefund(uint64(5))
+			db.SubRefund(uint64(10))
+		}, 0, true},
+	}
+	for _, tc := range testCases {
+		deps := evmtest.NewTestDeps()
+		db := deps.NewStateDB()
+		if !tc.expPanic {
+			tc.malleate(db)
+			s.Require().Equal(tc.expRefund, db.GetRefund())
+		} else {
+			s.Require().Panics(func() {
+				tc.malleate(db)
+			})
+		}
+	}
+}
+
+func (s *Suite) TestIterateStorage() {
+	key1 := common.BigToHash(big.NewInt(1))
+	value1 := common.BigToHash(big.NewInt(2))
+	key2 := common.BigToHash(big.NewInt(3))
+	value2 := common.BigToHash(big.NewInt(4))
+
+	deps := evmtest.NewTestDeps()
+	db := deps.NewStateDB()
+	db.SetState(address, key1, value1)
+	db.SetState(address, key2, value2)
+
+	// ForEachStorage only iterate committed state
+	s.Require().Empty(CollectContractStorage(db))
+
+	s.Require().NoError(db.Commit())
+
+	storage := CollectContractStorage(db)
+	s.Require().Equal(2, len(storage))
+
+	keySet := set.New[common.Hash](key1, key2)
+	valSet := set.New[common.Hash](value1, value2)
+	for _, stateKey := range storage.SortedKeys() {
+		stateValue := deps.EvmKeeper.GetState(deps.Ctx, address, stateKey)
+		s.True(keySet.Has(stateKey))
+		s.True(valSet.Has(stateValue))
+	}
+
+	// break early iteration
+	storage = make(evmstate.Storage)
+	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
+		storage[k] = v
+		// return false to break early
+		return false
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(1, len(storage))
+}

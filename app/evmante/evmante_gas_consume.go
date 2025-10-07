@@ -11,7 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
@@ -97,7 +97,7 @@ func (anteDec AnteDecEthGasConsume) AnteHandle(
 			gasWanted += txData.GetGas()
 		}
 
-		fees, err := keeper.VerifyFee(
+		fees, err := evmstate.VerifyFee(
 			txData,
 			baseFeeMicronibiPerGas,
 			ctx,
