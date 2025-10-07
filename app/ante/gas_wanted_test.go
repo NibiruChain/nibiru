@@ -87,7 +87,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 			anteDec := ante.AnteDecoratorGasWanted{}
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			if tc.ctxSetup != nil {

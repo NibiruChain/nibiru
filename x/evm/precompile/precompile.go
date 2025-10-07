@@ -145,14 +145,14 @@ type OnRunStartResult struct {
 	// as input.
 	Args []any
 
-	// CacheCtx is a cached SDK context that allows isolated state
-	// operations to occur that can be reverted by the EVM's [statedb.StateDB].
-	CacheCtx sdk.Context
+	// Ctx is a cached SDK context that allows isolated state
+	// operations to occur that can be reverted by the EVM's [evmstate.StateDB].
+	Ctx sdk.Context
 
 	// Method is the ABI method for the precompiled contract call.
 	Method *gethabi.Method
 
-	StateDB *evmstate.SDB
+	SDB *evmstate.SDB
 
 	PrecompileJournalEntry evmstate.PrecompileCalled
 }
@@ -197,27 +197,23 @@ func OnRunStart(
 		return
 	}
 
+	ctx := stateDB.GetEvmTxCtx()
+
 	// journalEntry captures the state before precompile execution to enable
 	// proper state reversal if the call fails or if [statedb.JournalChange]
 	// is reverted in general.
-	cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile()
-	if err = stateDB.SavePrecompileCalledJournalChange(journalEntry); err != nil {
-		return res, err
-	}
-	if err = stateDB.CommitCacheCtx(); err != nil {
-		return res, fmt.Errorf("error committing dirty journal entries: %w", err)
-	}
+	// cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile()
 
 	// Switching to a local gas meter to enforce gas limit check for a precompile
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
 		WithKVGasConfig(store.KVGasConfig()).
 		WithTransientKVGasConfig(store.TransientGasConfig())
 
 	return OnRunStartResult{
-		Args:     args,
-		CacheCtx: cacheCtx,
-		Method:   method,
-		StateDB:  stateDB,
+		Args:   args,
+		Ctx:    ctx,
+		Method: method,
+		SDB:    stateDB,
 	}, nil
 }
 

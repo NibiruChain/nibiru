@@ -56,7 +56,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 		"after a state modifying contract call (ERC20.mint), there should be dirty entries",
 	)
 
-	s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
+	evmObj.StateDB.(*evmstate.SDB).Commit()
 	s.Require().EqualValues(0, evmObj.StateDB.(*evmstate.SDB).DebugDirtiesCount())
 }
 
@@ -97,8 +97,7 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	}
 
 	s.T().Log("StateDB.Commit, then Dirties should be gone")
-	err := sdb.Commit()
-	s.NoError(err)
+	sdb.Commit()
 	if sdb.DebugDirtiesCount() != 0 {
 		debugDirtiesCountMismatch(sdb, s.T())
 		s.FailNow("expected 0 dirty journal changes")
@@ -263,7 +262,7 @@ snapshots and see the prior states.`))
 		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7,
 	)
 
-	s.Require().NoError(stateDB.Commit())
+	stateDB.Commit()
 	s.Require().EqualValues(0, stateDB.DebugDirtiesCount())
 	test.AssertWasmCounterState(
 		&s.Suite, deps, helloWorldCounterWasm, 7,

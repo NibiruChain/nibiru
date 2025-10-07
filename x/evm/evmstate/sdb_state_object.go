@@ -8,22 +8,20 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/holiman/uint256"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
 )
-
-var emptyCodeHash = crypto.Keccak256(nil)
 
 // Account represents an Ethereum account as viewed by the Auth module state. The
 // balance is stored in the smallest native unit (e.g., micronibi or unibi).
 // These objects are stored in the storage of auth module.
 type Account struct {
-	// BalanceNative is the micronibi (unibi) balance of the account, which is
-	// the official balance in the x/bank module state
-	BalanceNative *uint256.Int
+	// BalanceNwei is "NIBI wei", or attoNIBI, balance from the x/bank module
+	// state. 10^{18} nwei := 1 NIBI. Equivalently, one micronibi (unibi) is
+	// 10^{12} nwei.
+	BalanceNwei *uint256.Int
+
 	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
 	Nonce uint64
 	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
@@ -49,7 +47,7 @@ type AccountWei struct {
 // unibi to wei.
 func (acc Account) ToWei() AccountWei {
 	return AccountWei{
-		BalanceWei: evm.NativeToWeiU256(acc.BalanceNative),
+		BalanceWei: acc.BalanceNwei,
 		Nonce:      acc.Nonce,
 		CodeHash:   acc.CodeHash,
 	}
@@ -61,23 +59,23 @@ func (acc Account) ToWei() AccountWei {
 // convert from wei to unibi.
 func (acc AccountWei) ToNative() Account {
 	return Account{
-		BalanceNative: evm.WeiToNativeMustU256(acc.BalanceWei.ToBig()),
-		Nonce:         acc.Nonce,
-		CodeHash:      acc.CodeHash,
+		BalanceNwei: acc.BalanceWei,
+		Nonce:       acc.Nonce,
+		CodeHash:    acc.CodeHash,
 	}
 }
 
 // NewEmptyAccount returns an empty account.
 func NewEmptyAccount() *Account {
 	return &Account{
-		BalanceNative: new(uint256.Int),
-		CodeHash:      emptyCodeHash,
+		BalanceNwei: new(uint256.Int),
+		CodeHash:    evm.EmptyCodeHashBz,
 	}
 }
 
 // IsContract returns if the account contains contract code.
 func (acct *Account) IsContract() bool {
-	return (acct != nil) && !bytes.Equal(acct.CodeHash, emptyCodeHash)
+	return (acct != nil) && !bytes.Equal(acct.CodeHash, evm.EmptyCodeHashBz)
 }
 
 // Storage represents in-memory cache/buffer of contract storage.
@@ -156,11 +154,11 @@ func newObject(db *SDB, address common.Address, account *Account) *stateObject {
 	if createdThisBlock {
 		account = &Account{}
 	}
-	if account.BalanceNative == nil {
-		account.BalanceNative = new(uint256.Int)
+	if account.BalanceNwei == nil {
+		account.BalanceNwei = new(uint256.Int)
 	}
 	if account.CodeHash == nil {
-		account.CodeHash = emptyCodeHash
+		account.CodeHash = evm.EmptyCodeHashBz
 	}
 	return &stateObject{
 		sdb:     db,
@@ -177,7 +175,7 @@ func newObject(db *SDB, address common.Address, account *Account) *stateObject {
 func (s *stateObject) isEmpty() bool {
 	return s.account.Nonce == 0 &&
 		s.account.BalanceWei.Sign() == 0 &&
-		bytes.Equal(s.account.CodeHash, emptyCodeHash)
+		bytes.Equal(s.account.CodeHash, evm.EmptyCodeHashBz)
 }
 
 func (s *stateObject) setBalance(amount *big.Int) {
@@ -198,7 +196,7 @@ func (s *stateObject) Code() []byte {
 	if s.code != nil {
 		return s.code
 	}
-	if bytes.Equal(s.CodeHash(), emptyCodeHash) {
+	if bytes.Equal(s.CodeHash(), evm.EmptyCodeHashBz) {
 		return nil
 	}
 	code := s.sdb.keeper.GetCode(s.sdb.evmTxCtx, common.BytesToHash(s.CodeHash()))

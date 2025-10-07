@@ -4,11 +4,8 @@ package evmante
 import (
 	"strconv"
 
-	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).
@@ -32,26 +29,22 @@ func (eeed EthEmitEventDecorator) AnteHandle(
 	// very end of ante handler to be indexed by the consensus engine.
 	txIndex := eeed.evmKeeper.EVMState().BlockTxIndex.GetOr(ctx, 0)
 
-	for i, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, sdkioerrors.Wrapf(
-				sdkerrors.ErrUnknownRequest,
-				"invalid message type %T, expected %T",
-				msg, (*evm.MsgEthereumTx)(nil),
-			)
-		}
-		// Untyped event "pending_ethereum_tx" is emitted for then indexing purposes.
-		// Tendermint tx_search can only search the untyped events.
-		// TxHash and TxIndex values are exposed in the ante handler (before the actual tx execution)
-		// to allow searching for txs which are failed due to "out of block gas limit" error.
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				evm.PendingEthereumTxEvent,
-				sdk.NewAttribute(evm.PendingEthereumTxEventAttrEthHash, msgEthTx.Hash),
-				sdk.NewAttribute(evm.PendingEthereumTxEventAttrIndex, strconv.FormatUint(txIndex+uint64(i), 10)),
-			),
-		)
+	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
+	if err != nil {
+		return ctx, err
 	}
+
+	// Untyped event "pending_ethereum_tx" is emitted for then indexing purposes.
+	// Tendermint tx_search can only search the untyped events.
+	// TxHash and TxIndex values are exposed in the ante handler (before the actual tx execution)
+	// to allow searching for txs which are failed due to "out of block gas limit" error.
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			evm.PendingEthereumTxEvent,
+			sdk.NewAttribute(evm.PendingEthereumTxEventAttrEthHash, msgEthTx.Hash),
+			sdk.NewAttribute(evm.PendingEthereumTxEventAttrIndex, strconv.FormatUint(txIndex, 10)),
+		),
+	)
+
 	return next(ctx, tx, simulate)
 }

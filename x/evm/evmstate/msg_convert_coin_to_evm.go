@@ -48,7 +48,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 
 	// IMPORTANT: make sure to clear the StateDB before running the upgrade
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	sdb := k.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 
 	if sdb.GetCodeSize(erc20.Address) == 0 {
 		err = fmt.Errorf("ConvertCoinToEvm: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
@@ -150,12 +150,6 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		return
 	}
 
-	// Commit the stateDB to the BankKeeperExtension because we don't go through
-	// ApplyEvmMsg at all in this tx.
-	if err := sdb.Commit(); err != nil {
-		return nil, fmt.Errorf("%s: %w", evm.ErrStateDBCommit, err)
-	}
-
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               senderBech32.String(),
 		Erc20ContractAddress: erc20.Hex(),
@@ -206,7 +200,7 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		SkipFromEOACheck: true,
 	}
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	stateDB := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContract(
@@ -226,10 +220,6 @@ func (k Keeper) convertCoinToEvmBornCoin(
 	if evmResp.Failed() {
 		return nil,
 			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
-	}
-
-	if err = stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
@@ -261,7 +251,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 ) (*evm.MsgConvertCoinToEvmResponse, error) {
 	// needs to run first to populate the StateDB on the BankKeeperExtension
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	stateDB := k.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	stateDB := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 
 	erc20Addr := funTokenMapping.Erc20Addr.Address
 	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
@@ -323,12 +313,6 @@ func (k Keeper) convertCoinToEvmBornERC20(
 	)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
-	}
-
-	// Commit the stateDB to the BankKeeperExtension because we don't go through
-	// ApplyEvmMsg at all in this tx.
-	if err := stateDB.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	// Emit event with the actual amount received

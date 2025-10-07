@@ -16,10 +16,10 @@ type NibiruBankKeeper struct {
 	// StateDB *statedb.StateDB // TODO: UD-DEBUG: remove
 }
 
-func (k *Keeper) NewStateDB(
+func (k *Keeper) NewSDB(
 	ctx sdk.Context, txConfig TxConfig,
 ) *SDB {
-	sdb := New(ctx, k, txConfig)
+	sdb := NewSDB(ctx, k, txConfig)
 	// evmKeeper.Bank.StateDB = stateDB
 	return sdb
 }

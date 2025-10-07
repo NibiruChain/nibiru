@@ -21,8 +21,8 @@ import (
 func (s *Suite) TestStateDBBalance() {
 	deps := evmtest.NewTestDeps()
 	{
-		db := deps.NewStateDB()
-		s.Equal("0", db.GetBalance(deps.Sender.EthAddr).String())
+		sdb := deps.NewStateDB()
+		s.Equal("0", sdb.GetBalance(deps.Sender.EthAddr).String())
 
 		s.T().Log("fund account in unibi. See expected wei amount.")
 		err := testapp.FundAccount(
@@ -34,7 +34,7 @@ func (s *Suite) TestStateDBBalance() {
 		s.NoError(err)
 		s.Equal(
 			"42"+strings.Repeat("0", 12),
-			db.GetBalance(deps.Sender.EthAddr).String(),
+			sdb.GetBalance(deps.Sender.EthAddr).String(),
 		)
 		s.Equal(
 			"42",

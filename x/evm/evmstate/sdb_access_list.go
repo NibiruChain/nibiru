@@ -38,13 +38,12 @@ type accessList map[gethcommon.Address]set.Set[gethcommon.Hash]
 var _ json.Marshaler = (*accessList)(nil)
 var _ json.Unmarshaler = (*accessList)(nil)
 
-func (al *accessList) MarshalJSON() (bz []byte, err error) {
+func (al accessList) MarshalJSON() (bz []byte, err error) {
 	accessTupleJson := make(map[gethcommon.Address][]gethcommon.Hash)
-	if al == nil {
+	if len(al) == 0 {
 		return json.Marshal(accessTupleJson)
 	}
-
-	for addr, slotset := range *al {
+	for addr, slotset := range al {
 		accessTupleJson[addr] = slotset.ToSlice()
 	}
 	return json.Marshal(accessTupleJson)
@@ -115,7 +114,7 @@ func (s *SDB) getAccessList() accessList {
 }
 
 func (s *SDB) setAccessList(al accessList) {
-	accessListBz, err := json.Marshal(al)
+	accessListBz, err := al.MarshalJSON()
 	if err != nil {
 		panic(err) // TODO: UD-DEBUG: err mesg
 	}

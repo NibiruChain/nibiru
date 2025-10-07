@@ -57,7 +57,7 @@ func (p precompileOracle) Run(
 	if err != nil {
 		return nil, err
 	}
-	method, args, ctx := startResult.Method, startResult.Args, startResult.CacheCtx
+	method, args, ctx := startResult.Method, startResult.Args, startResult.Ctx
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
@@ -73,7 +73,7 @@ func (p precompileOracle) Run(
 		return
 	}
 	contract.UseGas(
-		startResult.CacheCtx.GasMeter().GasConsumed(),
+		startResult.Ctx.GasMeter().GasConsumed(),
 		evm.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)

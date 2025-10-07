@@ -70,7 +70,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(sdb.Commit())
+			sdb.Commit()
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			_, err := anteDec.AnteHandle(

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
@@ -107,7 +106,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	// 2 | Get existing ERC20 metadata
 	// We use dummy values for the tx config and evm config because we aren't in an actual end user transaction, it's just a state query.
 
-	sdb := k.NewStateDB(ctx, NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash())))
+	sdb := k.NewSDB(ctx, NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash())))
 	evmMsg := core.Message{
 		To:               &erc20,
 		From:             evm.EVM_MODULE_ADDRESS,
@@ -186,11 +185,6 @@ func (k *Keeper) createFunTokenFromERC20(
 		},
 		BankDenom:      bankDenom,
 		IsMadeFromCoin: false,
-	}
-
-	err = sdb.Commit()
-	if err != nil {
-		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
 	}
 
 	return funtoken, k.FunTokens.SafeInsert(

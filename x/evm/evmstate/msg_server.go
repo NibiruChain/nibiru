@@ -58,7 +58,7 @@ func (k *Keeper) EthereumTx(
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	sdb := k.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, sdb)
 
 	var applyErr error
@@ -438,9 +438,7 @@ func (k *Keeper) ApplyEvmMsg(
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
-		if err := evmStateDB.Commit(); err != nil {
-			return evmResp, sdkioerrors.Wrapf(err, "ApplyEvmMsg: %s", evm.ErrStateDBCommit)
-		}
+		evmStateDB.Commit()
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
 
@@ -633,7 +631,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	}
 
 	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	sdb := k.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
 	evmParams := k.GetParams(ctx)
@@ -667,9 +665,7 @@ func (k *Keeper) ConvertEvmToCoin(
 	if err != nil {
 		return
 	}
-	if err = sdb.Commit(); err != nil {
-		return nil, sdkioerrors.Wrap(err, evm.ErrStateDBCommit)
-	}
+	sdb.Commit()
 
 	return &evm.MsgConvertEvmToCoinResponse{}, nil
 }

@@ -149,7 +149,7 @@ func UpgradeStNibiEvmMetadata(
 	}
 
 	txConfig := keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{})
-	sdb := keepers.EvmKeeper.NewStateDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := keepers.EvmKeeper.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := keepers.EvmKeeper.CallContract(
@@ -162,9 +162,8 @@ func UpgradeStNibiEvmMetadata(
 		return fmt.Errorf("failed to deploy ERC20 contract: %w", err)
 	} else if len(evmResp.VmError) > 0 {
 		return fmt.Errorf("VM Error in deploy ERC20: %s", evmResp.VmError)
-	} else if err := sdb.Commit(); err != nil {
-		return fmt.Errorf("%s: %w", evm.ErrStateDBCommit, err)
 	}
+	sdb.Commit()
 
 	evmLogs = append(evmLogs, evmResp.Logs...)
 	_ = ctx.EventManager().EmitTypedEvents(

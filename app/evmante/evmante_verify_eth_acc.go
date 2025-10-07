@@ -70,7 +70,7 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 		}
 
 		if err := evmstate.CheckSenderBalance(
-			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
+			acct.BalanceNwei.ToBig(), txData,
 		); err != nil {
 			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
 		}

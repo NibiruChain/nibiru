@@ -137,10 +137,11 @@ func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*e
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	balanceInt := k.GetEvmGasBalance(ctx, gethcommon.HexToAddress(req.Address))
+	// TODO: UD-DEBUG: Modify to work with EVM or non-EVM addr
+	balanceWei := k.GetWeiBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
-		Balance:    balanceInt.String(),
-		BalanceWei: evm.NativeToWei(balanceInt).String(),
+		Balance:    balanceWei.String(),
+		BalanceWei: balanceWei.String(),
 	}, nil
 }
 
@@ -286,7 +287,7 @@ func (k *Keeper) EthCall(
 	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 
 	// pass false to not commit StateDB
-	sdb := New(ctx, k, txConfig)
+	sdb := NewSDB(ctx, k, txConfig)
 	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, sdb)
 	res, err := k.ApplyEvmMsg(ctx, msg, evm, false /*commit*/, txConfig.TxHash)
 	if err != nil {
@@ -425,7 +426,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		}
 		// pass false to not commit StateDB
 		txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		sdb := New(ctx, &k, txConfig)
+		sdb := NewSDB(ctx, &k, txConfig)
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, sdb)
 		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, false /*commit*/, txConfig.TxHash)
 		if err != nil {
@@ -522,7 +523,7 @@ func (k Keeper) TraceTx(
 		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		sdb := New(ctx, &k, txConfig)
+		sdb := NewSDB(ctx, &k, txConfig)
 		evmObj := k.NewEVM(ctx, *msg, evmCfg, nil /*tracer*/, sdb)
 		rsp, err := k.ApplyEvmMsg(ctx, *msg, evmObj, false /*commit*/, txConfig.TxHash)
 		if err != nil {
@@ -838,7 +839,7 @@ func (k *Keeper) TraceEthTxMsg(
 	ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
-	sdb := New(ctx, k, txConfig)
+	sdb := NewSDB(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer.Hooks, sdb)
 	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, false /*commit*/, txConfig.TxHash)
 	if err != nil {

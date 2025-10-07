@@ -66,7 +66,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 
 			tc.beforeTxSetup(&deps, stateDB)
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
 			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
 			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)

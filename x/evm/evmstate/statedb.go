@@ -2,9 +2,6 @@
 package evmstate
 
 import (
-	"math/big"
-
-	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	"github.com/holiman/uint256"
 
@@ -27,19 +24,19 @@ func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *Account {
 	if acct == nil {
 		return nil
 	}
-
-	acct.BalanceNative = uint256.MustFromBig(k.GetEvmGasBalance(ctx, addr))
+	acct.BalanceNwei = k.GetWeiBalance(ctx, addr)
 	return acct
 }
 
 // GetCode: Loads smart contract bytecode.
 // Implements the `statedb.Keeper` interface.
 func (k *Keeper) GetCode(ctx sdk.Context, codeHash gethcommon.Hash) []byte {
-	codeBz, err := k.EvmState.ContractBytecode.Get(ctx, codeHash.Bytes())
-	if err != nil {
-		panic(err) // TODO: We don't like to panic.
-	}
+	codeBz := k.EvmState.ContractBytecode.GetOr(ctx, codeHash.Bytes(), nil)
 	return codeBz
+	// if err != nil {
+	// 	panic(err) // TODO: We don't like to panic.
+	// }
+	// return codeBz
 }
 
 // ForEachStorage: Iterator over contract storage.
@@ -68,35 +65,64 @@ func (k *Keeper) ForEachStorage(
 // Implements the `statedb.Keeper` interface.
 // Only called by `StateDB.Commit()`.
 func (k *Keeper) SetAccBalance(
-	ctx sdk.Context, addr gethcommon.Address, amountEvmDenom *big.Int,
+	ctx sdk.Context, addr gethcommon.Address, newBal *uint256.Int,
 ) error {
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
-	balance := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
-	delta := new(big.Int).Sub(amountEvmDenom, balance)
-	bk := k.Bank.BaseKeeper
 
-	switch delta.Sign() {
-	case 1:
-		// mint
-		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
-		if err := bk.MintCoins(ctx, evm.ModuleName, coins); err != nil {
-			return err
-		}
-		if err := bk.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, addrBech32, coins); err != nil {
-			return err
-		}
-	case -1:
-		// burn
-		coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
-		if err := bk.SendCoinsFromAccountToModule(ctx, addrBech32, evm.ModuleName, coins); err != nil {
-			return err
-		}
-		if err := bk.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
-			return err
-		}
-	default:
-		// not changed
+	balPre := k.GetWeiBalance(ctx, addr)
+
+	cmpSign := newBal.Cmp(balPre)
+	if cmpSign == 0 {
+		return nil
+	} else if cmpSign > 0 {
+		balDelta := new(uint256.Int).Sub(newBal, balPre)
+		k.Bank.AddWei(ctx, addrBech32, balDelta)
+		return nil
 	}
+	balDelta := new(uint256.Int).Sub(balPre, newBal)
+	if err := k.Bank.SubWei(ctx, addrBech32, balDelta); err != nil {
+		return err // TODO: UD-DEBUG: err msg
+	}
+	return nil
+
+	// balance := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
+	// delta := new(big.Int).Sub(amountEvmDenom, balance)
+	// bk := k.Bank.BaseKeeper
+
+	// switch delta.Sign() {
+	// case 1:
+	// 	// mint
+	// 	coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
+	// 	if err := bk.MintCoins(ctx, evm.ModuleName, coins); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := bk.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, addrBech32, coins); err != nil {
+	// 		return err
+	// 	}
+	// case -1:
+	// 	// burn
+	// 	coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
+	// 	if err := bk.SendCoinsFromAccountToModule(ctx, addrBech32, evm.ModuleName, coins); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := bk.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
+	// 		return err
+	// 	}
+	// default:
+	// 	// not changed
+	// }
+	// return nil
+}
+
+func (k *Keeper) SendWei(
+	ctx sdk.Context, from gethcommon.Address, to gethcommon.Address, amtWei *uint256.Int,
+) error {
+	fromAddr := eth.EthAddrToNibiruAddr(from)
+	toAddr := eth.EthAddrToNibiruAddr(to)
+	if err := k.Bank.SubWei(ctx, fromAddr, amtWei); err != nil {
+		return err
+	}
+	k.Bank.AddWei(ctx, toAddr, amtWei)
 	return nil
 }
 
@@ -127,7 +153,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.BalanceNative.ToBig()); err != nil {
+	if err := k.SetAccBalance(ctx, addr, account.BalanceNwei); err != nil {
 		return err
 	}
 
@@ -172,7 +198,7 @@ func (k *Keeper) DeleteAccount(ctx sdk.Context, addr gethcommon.Address) error {
 	}
 
 	// clear balance
-	if err := k.SetAccBalance(ctx, addr, new(big.Int)); err != nil {
+	if err := k.SetAccBalance(ctx, addr, new(uint256.Int)); err != nil {
 		return err
 	}
 
@@ -195,7 +221,7 @@ func (k *Keeper) getAccountWithoutBalance(ctx sdk.Context, addr gethcommon.Addre
 		return nil
 	}
 
-	codeHash := evm.EmptyCodeHash
+	codeHash := evm.EmptyCodeHashBz
 	ethAcct, ok := acct.(eth.EthAccountI)
 	if ok {
 		codeHash = ethAcct.GetCodeHash().Bytes()

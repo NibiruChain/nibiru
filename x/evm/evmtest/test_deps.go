@@ -45,7 +45,7 @@ func NewTestDeps() TestDeps {
 }
 
 func (deps TestDeps) NewStateDB() *evmstate.SDB {
-	return deps.EvmKeeper.NewStateDB(
+	return deps.EvmKeeper.NewSDB(
 		deps.Ctx,
 		evmstate.NewEmptyTxConfig(
 			gethcommon.BytesToHash(deps.Ctx.HeaderHash()),
@@ -54,7 +54,7 @@ func (deps TestDeps) NewStateDB() *evmstate.SDB {
 }
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
-	sdb := deps.EvmKeeper.NewStateDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	sdb := deps.EvmKeeper.NewSDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
@@ -66,7 +66,7 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
 }
 
 func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *evmstate.SDB) {
-	stateDB := deps.EvmKeeper.NewStateDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	stateDB := deps.EvmKeeper.NewSDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
 	evmObj := deps.EvmKeeper.NewEVM(
 		deps.Ctx,
 		MOCK_GETH_MESSAGE,
@@ -89,7 +89,7 @@ func (deps *TestDeps) MimicEthereumTx(
 	s *suite.Suite,
 	doTx func(evmObj *vm.EVM, sdb *evmstate.SDB),
 ) {
-	sdb := deps.EvmKeeper.NewStateDB(
+	sdb := deps.EvmKeeper.NewSDB(
 		deps.Ctx,
 		evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
 	)
@@ -101,7 +101,7 @@ func (deps *TestDeps) MimicEthereumTx(
 		sdb,
 	)
 	doTx(evmObj, sdb)
-	s.Require().NoError(sdb.Commit())
+	sdb.Commit()
 }
 
 func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
@@ -139,7 +139,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 		SkipFromEOACheck: false,
 	}
 
-	sdb := deps.EvmKeeper.NewStateDB(ctx, deps.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
+	sdb := deps.EvmKeeper.NewSDB(ctx, deps.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := deps.EvmKeeper.CallContract(

@@ -70,12 +70,12 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.NewStateDB()
+			sdb := deps.NewStateDB()
 			anteDec := evmante.NewAnteDecEthIncrementSenderSequence(deps.App.EvmKeeper, deps.App.AccountKeeper)
 
 			if tc.beforeTxSetup != nil {
-				tc.beforeTxSetup(&deps, stateDB)
-				s.Require().NoError(stateDB.Commit())
+				tc.beforeTxSetup(&deps, sdb)
+				sdb.Commit()
 			}
 			tx := tc.txSetup(&deps)
 

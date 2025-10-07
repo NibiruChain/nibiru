@@ -13,13 +13,10 @@ import (
 
 	xcommon "github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
-
-// emptyCodeHash: The hash for empty contract bytecode, or a blank byte
-// array. This is the code hash for a non-existent or empty account.
-var emptyCodeHash []byte = crypto.Keccak256(nil)
 
 // dummy variables for tests
 var (
@@ -59,36 +56,36 @@ func (s *Suite) TestAccount() {
 		name     string
 		malleate func(deps *evmtest.TestDeps, db *evmstate.SDB)
 	}{
-		{"non-exist account", func(deps *evmtest.TestDeps, db *evmstate.SDB) {
-			s.Require().Equal(false, db.Exist(address))
-			s.Require().Equal(true, db.Empty(address))
-			s.Require().Equal(uint256.NewInt(0), db.GetBalance(address))
-			s.Require().Equal([]byte(nil), db.GetCode(address))
-			s.Require().Equal(common.Hash{}, db.GetCodeHash(address))
-			s.Require().Equal(uint64(0), db.GetNonce(address))
+		{"non-exist account", func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+			s.Require().Equal(false, sdb.Exist(address))
+			s.Require().Equal(true, sdb.Empty(address))
+			s.Require().Equal(uint256.NewInt(0), sdb.GetBalance(address))
+			s.Require().Equal([]byte(nil), sdb.GetCode(address))
+			s.Require().Equal(evm.CodeHashForNilAccount, sdb.GetCodeHash(address))
+			s.Require().Equal(uint64(0), sdb.GetNonce(address))
 		}},
-		{"empty account", func(deps *evmtest.TestDeps, db *evmstate.SDB) {
-			db.CreateAccount(address)
-			s.Require().NoError(db.Commit())
+		{"empty account", func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+			sdb.CreateAccount(address)
+			sdb.Commit()
 
-			k := db.Keeper()
+			k := sdb.Keeper()
 			acct := k.GetAccount(deps.Ctx, address)
 			s.Require().EqualValues(evmstate.NewEmptyAccount(), acct)
-			s.Require().Empty(CollectContractStorage(db))
+			s.Require().Empty(CollectContractStorage(sdb))
 
-			db = deps.NewStateDB()
-			s.Require().Equal(true, db.Exist(address))
-			s.Require().Equal(true, db.Empty(address))
-			s.Require().Equal(uint256.NewInt(0), db.GetBalance(address))
-			s.Require().Equal([]byte(nil), db.GetCode(address))
-			s.Require().Equal(common.BytesToHash(emptyCodeHash), db.GetCodeHash(address))
-			s.Require().Equal(uint64(0), db.GetNonce(address))
+			sdb = deps.NewStateDB()
+			s.Require().Equal(true, sdb.Exist(address))
+			s.Require().Equal(true, sdb.Empty(address))
+			s.Require().Equal(uint256.NewInt(0), sdb.GetBalance(address))
+			s.Require().Equal([]byte(nil), sdb.GetCode(address))
+			s.Require().Equal(evm.EmptyCodeHash, sdb.GetCodeHash(address))
+			s.Require().Equal(uint64(0), sdb.GetNonce(address))
 		}},
 		{"suicide", func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 			// non-exist account.
 			s.Require().False(sdb.HasSuicided(address))
 			sdb.SelfDestruct(address)
-			s.Require().False(sdb.HasSuicided(address))
+			s.Require().True(sdb.HasSuicided(address))
 
 			// create a contract account
 			sdb.CreateAccount(address)
@@ -96,7 +93,7 @@ func (s *Suite) TestAccount() {
 			AddBalanceSigned(sdb, address, big.NewInt(100))
 			sdb.SetState(address, key1, value1)
 			sdb.SetState(address, key2, value2)
-			s.Require().NoError(sdb.Commit())
+			sdb.Commit()
 
 			// suicide
 			sdb = deps.NewStateDB()
@@ -111,12 +108,10 @@ func (s *Suite) TestAccount() {
 			// but code and state are still accessible in dirty state
 			s.Require().Equal(value1, sdb.GetState(address, key1))
 			s.Require().Equal([]byte("hello world"), sdb.GetCode(address))
-
-			s.Require().NoError(sdb.Commit())
+			s.Require().True(sdb.Exist(address), "expect suicided accounts to exist based on the vm.StateDB definition")
 
 			// not accessible from StateDB anymore
-			sdb = deps.NewStateDB()
-			s.Require().False(sdb.Exist(address))
+			// s.Require().False(sdb.Exist(address), "expect suicided accounts to exist")
 			s.Require().Empty(CollectContractStorage(sdb))
 		}},
 	}
@@ -164,9 +159,9 @@ func (s *Suite) TestDBError() {
 	}
 	for _, tc := range testCases {
 		deps := evmtest.NewTestDeps()
-		db := deps.NewStateDB()
-		tc.malleate(db)
-		s.Require().NoError(db.Commit())
+		sdb := deps.NewStateDB()
+		tc.malleate(sdb)
+		sdb.Commit()
 	}
 }
 
@@ -242,15 +237,15 @@ func (s *Suite) TestBalance() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.NewStateDB()
-			tc.do(db)
+			sdb := deps.NewStateDB()
+			tc.do(sdb)
 
 			// check dirty state
-			s.Equal(tc.expBalance, db.GetBalance(address))
-			s.Require().NoError(db.Commit())
+			s.Equal(tc.expBalance, sdb.GetBalance(address))
+			sdb.Commit()
 
 			// check committed balance too
-			s.Require().Equal(tc.expBalance, db.GetBalance(address))
+			s.Require().Equal(tc.expBalance, sdb.GetBalance(address))
 		})
 	}
 }
@@ -297,7 +292,7 @@ func (s *Suite) TestState() {
 			deps := evmtest.NewTestDeps()
 			db := deps.NewStateDB()
 			tc.malleate(db)
-			s.Require().NoError(db.Commit())
+			db.Commit()
 
 			// check committed states in keeper
 			for k, v := range tc.expStates {
@@ -326,10 +321,20 @@ func (s *Suite) TestCode() {
 		expCode     []byte
 		expCodeHash common.Hash
 	}{
-		{"non-exist account", func(vm.StateDB) {}, nil, common.Hash{}},
-		{"empty account", func(db vm.StateDB) {
-			db.CreateAccount(address)
-		}, nil, common.BytesToHash(emptyCodeHash)},
+		{
+			"non-exist account",
+			func(vm.StateDB) {},
+			nil,
+			common.Hash{},
+		},
+		{
+			"empty account",
+			func(db vm.StateDB) {
+				db.CreateAccount(address)
+			},
+			nil,
+			common.BytesToHash(evm.EmptyCodeHashBz),
+		},
 		{"set code", func(db vm.StateDB) {
 			db.SetCode(address, code)
 		}, code, codeHash},
@@ -346,7 +351,7 @@ func (s *Suite) TestCode() {
 			s.Require().Equal(len(tc.expCode), db.GetCodeSize(address))
 			s.Require().Equal(tc.expCodeHash, db.GetCodeHash(address))
 
-			s.Require().NoError(db.Commit())
+			db.Commit()
 
 			// check again
 			db = deps.NewStateDB()
@@ -413,7 +418,7 @@ func (s *Suite) TestRevertSnapshot() {
 			sdb.SetCode(address, []byte("hello world"))
 			sdb.SetState(address, v1, v2)
 			sdb.SetNonce(address2, 1)
-			s.Require().NoError(sdb.Commit())
+			sdb.Commit()
 
 			// Store original state values
 			originalNonce := sdb.GetNonce(address)
@@ -431,7 +436,7 @@ func (s *Suite) TestRevertSnapshot() {
 			s.Require().Zero(sdb.GetRefund())
 			s.Require().Empty(sdb.Logs())
 
-			s.Require().NoError(sdb.Commit())
+			sdb.Commit()
 
 			// Check again after commit to ensure persistence
 			s.Require().Equal(originalNonce, sdb.GetNonce(address))
@@ -565,7 +570,7 @@ func (s *Suite) TestLog() {
 	}
 
 	deps := evmtest.NewTestDeps()
-	sdb := evmstate.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
+	sdb := evmstate.NewSDB(deps.Ctx, deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
 	log := &gethcore.Log{
@@ -639,16 +644,16 @@ func (s *Suite) TestIterateStorage() {
 	value2 := common.BigToHash(big.NewInt(4))
 
 	deps := evmtest.NewTestDeps()
-	db := deps.NewStateDB()
-	db.SetState(address, key1, value1)
-	db.SetState(address, key2, value2)
+	sdb := deps.NewStateDB()
+	sdb.SetState(address, key1, value1)
+	sdb.SetState(address, key2, value2)
 
 	// ForEachStorage only iterate committed state
-	s.Require().Empty(CollectContractStorage(db))
+	s.Require().Empty(CollectContractStorage(sdb))
 
-	s.Require().NoError(db.Commit())
+	sdb.Commit()
 
-	storage := CollectContractStorage(db)
+	storage := CollectContractStorage(sdb)
 	s.Require().Equal(2, len(storage))
 
 	keySet := set.New[common.Hash](key1, key2)
@@ -661,7 +666,7 @@ func (s *Suite) TestIterateStorage() {
 
 	// break early iteration
 	storage = make(evmstate.Storage)
-	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
+	err := sdb.ForEachStorage(address, func(k, v common.Hash) bool {
 		storage[k] = v
 		// return false to break early
 		return false

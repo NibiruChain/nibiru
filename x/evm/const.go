@@ -11,6 +11,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core"
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
@@ -40,6 +41,13 @@ const (
 var (
 	BASE_FEE_MICRONIBI = big.NewInt(1)
 	BASE_FEE_WEI       = NativeToWei(BASE_FEE_MICRONIBI)
+
+	// EmptyCodeHashBz is a known hash for empty EVM bytecode.
+	// "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+	EmptyCodeHashBz = crypto.Keccak256(nil)
+	EmptyCodeHash   = gethcommon.BytesToHash(EmptyCodeHashBz)
+
+	CodeHashForNilAccount = gethcommon.Hash{}
 )
 
 var PRECOMPILE_ADDRS []gethcommon.Address =

@@ -75,7 +75,7 @@ func (s *WasmSuite) TestInstantiate() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(vals[0].(string))
-	s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
+	evmObj.StateDB.(*evmstate.SDB).Commit()
 }
 
 func (s *WasmSuite) TestExecute() {
@@ -607,7 +607,7 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 
 	// Verify that no state changes occurred
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
-	s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
+	evmObj.StateDB.(*evmstate.SDB).Commit()
 	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 0)
 }
 

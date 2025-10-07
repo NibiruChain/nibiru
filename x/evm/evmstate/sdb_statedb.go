@@ -87,8 +87,8 @@ func FromVM(evmObj *vm.EVM) *SDB {
 	return evmObj.StateDB.(*SDB)
 }
 
-// New creates a new state from a given trie.
-func New(ctx sdk.Context, keeper *Keeper, txConfig TxConfig) *SDB {
+// NewSDB creates a new state from a given trie.
+func NewSDB(ctx sdk.Context, keeper *Keeper, txConfig TxConfig) *SDB {
 	sdb := &SDB{
 		keeper:       keeper,
 		evmTxCtx:     ctx,
@@ -98,7 +98,6 @@ func New(ctx sdk.Context, keeper *Keeper, txConfig TxConfig) *SDB {
 		savedCtxs:    []sdk.Context{},
 		txConfig:     txConfig,
 	}
-	sdb.Snapshot()
 	return sdb
 }
 
@@ -146,8 +145,8 @@ func (s *SDB) Keeper() *Keeper {
 	return s.keeper
 }
 
-// GetEvmTxContext returns the EVM transaction context.
-func (s *SDB) GetEvmTxContext() sdk.Context {
+// GetEvmTxCtx returns the EVM transaction context.
+func (s *SDB) GetEvmTxCtx() sdk.Context {
 	return s.evmTxCtx
 }
 
@@ -219,14 +218,36 @@ func (s *SDB) SubRefund(gas uint64) {
 // Exist reports whether the given account address exists in the state.
 // Notably this also returns true for suicided accounts.
 func (s *SDB) Exist(addr gethcommon.Address) bool {
-	return s.getStateObject(addr) != nil
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc != nil || s.HasSelfDestructed(addr) {
+		return true
+	}
+	return false
+	// Old impl
+	// return s.getStateObject(addr) != nil
 }
 
 // Empty returns whether the state object is either non-existent
 // or empty according to the EIP161 specification (balance = nonce = code = 0)
 func (s *SDB) Empty(addr gethcommon.Address) bool {
-	so := s.getStateObject(addr)
-	return so == nil || so.isEmpty()
+	// EIP-161: empty iff (nonce == 0) && (balance == 0) && (code == empty)
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil {
+		return true
+	}
+	// Nonce
+	if acc.Nonce != 0 {
+		return false
+	}
+	// Balance
+	if acc.BalanceNwei != nil && !acc.BalanceNwei.IsZero() {
+		return false
+	}
+	// Code hash empty check
+	if len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, evm.EmptyCodeHashBz) {
+		return true
+	}
+	return false
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
@@ -250,7 +271,7 @@ func (s *SDB) GetCode(addr gethcommon.Address) []byte {
 // GetCodeSize returns the code size of account.
 func (s *SDB) GetCodeSize(addr gethcommon.Address) int {
 	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
-	if acc == nil || len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, emptyCodeHash) {
+	if acc == nil || len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, evm.EmptyCodeHashBz) {
 		return 0
 	}
 	return len(s.GetCode(addr))
@@ -259,12 +280,15 @@ func (s *SDB) GetCodeSize(addr gethcommon.Address) int {
 // GetCodeHash returns the code hash of account.
 func (s *SDB) GetCodeHash(addr gethcommon.Address) (codeHash gethcommon.Hash) {
 	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
-	if acc == nil || len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, emptyCodeHash) {
-		codeHash = gethcommon.Hash(emptyCodeHash)
-	} else {
-		codeHash = gethcommon.BytesToHash(acc.CodeHash)
+	if acc == nil {
+		// Non-existent account → zero hash
+		return gethcommon.Hash{}
 	}
-	return codeHash
+	if len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, evm.EmptyCodeHashBz) {
+		// Existing account but no code → empty code hash
+		return gethcommon.Hash(evm.EmptyCodeHashBz)
+	}
+	return gethcommon.BytesToHash(acc.CodeHash)
 }
 
 // GetState retrieves a value from the given account's storage trie.
@@ -274,12 +298,11 @@ func (s *SDB) GetState(addr gethcommon.Address, hash gethcommon.Hash) (value get
 
 // GetCommittedState retrieves a value from the given account's committed storage trie.
 func (s *SDB) GetCommittedState(addr gethcommon.Address, hash gethcommon.Hash) gethcommon.Hash {
-	return s.keeper.GetState(s.evmTxCtx, addr, hash)
-	// stateObject := s.getStateObject(addr)
-	// if stateObject != nil {
-	// 	return stateObject.GetCommittedState(hash)
-	// }
-	// return gethcommon.Hash{}
+	if len(s.savedCtxs) == 0 {
+		// No snapshot yet; use current context
+		return s.keeper.GetState(s.evmTxCtx, addr, hash)
+	}
+	return s.keeper.GetState(s.savedCtxs[0], addr, hash)
 }
 
 // HasSuicided returns if the contract is suicided in current transaction.
@@ -317,24 +340,6 @@ func (s *SDB) getStateObject(addr gethcommon.Address) *stateObject {
 	return obj
 }
 
-// createObject creates a new state object. If there is an existing account with
-// the given address, it is overwritten and returned as the second return value.
-func (s *SDB) createObject(addr gethcommon.Address) (newobj, prev *stateObject) {
-	prev = s.getStateObject(addr)
-
-	newobj = newObject(s, addr, nil)
-	if prev == nil {
-		s.Journal.append(createObjectChange{account: &addr})
-	} else {
-		s.Journal.append(resetObjectChange{prev: prev})
-	}
-	s.setStateObject(newobj)
-	if prev != nil {
-		return newobj, prev
-	}
-	return newobj, nil
-}
-
 // CreateAccount explicitly creates a state object. If a state object with the address
 // already exists the balance is carried over to the new account.
 //
@@ -346,10 +351,22 @@ func (s *SDB) createObject(addr gethcommon.Address) (newobj, prev *stateObject) 
 //
 // Carrying over the balance ensures that Ether doesn't disappear.
 func (s *SDB) CreateAccount(addr gethcommon.Address) {
-	newObj, prev := s.createObject(addr)
-	if prev != nil {
-		newObj.setBalance(prev.account.BalanceWei.ToBig())
+	// Clear balance if there was one for the account
+	accBal := s.GetBalance(addr)
+	if !accBal.IsZero() {
+		err := s.keeper.SendWei(s.evmTxCtx, addr, evm.EVM_MODULE_ADDRESS, accBal)
+		if err != nil {
+			panic(err) // TODO: UD-DEBUG: error msg
+		}
 	}
+
+	// Create new account or reset an existing one.
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil {
+		acc = NewEmptyAccount()
+	}
+	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
 }
 
 // CreateContract is used whenever a contract is created. This may be preceded
@@ -358,11 +375,8 @@ func (s *SDB) CreateAccount(addr gethcommon.Address) {
 // This operation sets the 'newContract'-flag, which is required in order to
 // correctly handle EIP-6780 'delete-in-same-transaction' logic.
 func (s *SDB) CreateContract(addr gethcommon.Address) {
-	obj := s.getStateObject(addr)
-	if !obj.newContract {
-		obj.newContract = true
-		s.Journal.append(createContractChange{account: addr})
-	}
+	s.CreateAccount(addr)
+	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
 }
 
 // ForEachStorage iterate the contract storage, the iteration order is not defined.
@@ -450,13 +464,16 @@ func (s *SDB) SetNonce(addr gethcommon.Address, nonce uint64) {
 func (s *SDB) SetCode(addr gethcommon.Address, code []byte) {
 	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
 	if acc == nil {
-		return
+		acc = NewEmptyAccount() // Lazily create an empty account to attach code
 	}
 
 	codeHash := crypto.Keccak256Hash(code)
 	codeHashBz := codeHash.Bytes()
 	acc.CodeHash = codeHashBz
-	// TODO: UD-DEBUG: Handle case where code hash is already set.
+
+	// Persist account metadata (nonce, code hash)
+	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	// TODO: Persist bytecode only if the code was not already set
 	s.keeper.SetCode(s.evmTxCtx, codeHashBz, code)
 }
 
@@ -478,9 +495,9 @@ func (s *SDB) subBalanceHoldingSupplyConstant(
 }
 
 func (s *SDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccChange) bool {
-	gotChange, found := s.localState.Accounts[addr]
+	gotChange, found := s.localState.AccountChangeMap[addr]
 	for i := len(s.savedStates) - 1; !found && i >= 0; i-- {
-		gotChange, found = s.localState.Accounts[addr]
+		gotChange, found = s.localState.AccountChangeMap[addr]
 	}
 	if !found {
 		return false
@@ -495,7 +512,7 @@ func (s *SDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccCh
 // getStateObject will return a non-nil account after [SelfDestruct].
 func (s *SDB) SelfDestruct(addr gethcommon.Address) (prevWei uint256.Int) {
 
-	s.localState.Accounts[addr] = SNAPSHOT_ACC_STATUS_DELETE
+	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_DELETE
 	prevWei = *s.GetBalance(addr)
 	s.subBalanceHoldingSupplyConstant(addr, &prevWei)
 	return prevWei
@@ -627,22 +644,51 @@ func errorf(format string, args ...any) error {
 // we branch off a cache of the commit context (s.evmTxCtx).
 //
 // [Nibiru-Specific Precompiled Contracts]: https://nibiru.fi/docs/evm/precompiles/nibiru.html
-func (s *SDB) Commit() error {
-	if s.writeToCommitCtxFromCacheCtx != nil {
-		s.writeToCommitCtxFromCacheCtx()
+func (s *SDB) Commit() {
+	// Empty self-destructed accounts
+	{
+		localStates := append(s.savedStates, s.localState)
+		for i := len(localStates) - 1; i >= 0; i-- {
+			localState := localStates[i]
+			for addr, accChange := range localState.AccountChangeMap {
+				if accChange != SNAPSHOT_ACC_STATUS_DELETE {
+					continue
+				}
+				// TODO: Why send to the module? Why not?
+				s.subBalanceHoldingSupplyConstant(addr, s.GetBalance(addr))
+			}
+		}
 	}
-	return s.commitCtx(s.GetEvmTxContext())
+
+	// Finalize all persistent state except `savedCtxs[0]` since it's the
+	// original ctx to be committed by the baseapp.
+	{
+		ctxs := append(s.savedCtxs, s.evmTxCtx)
+		for i := len(ctxs) - 1; i > 0; i-- {
+			ctx := ctxs[i]
+			ctx.MultiStore().(sdk.CacheMultiStore).Write()
+		}
+	}
+
+	return
+	// TODO: UD-DEBUG: cleanup comment
+	// // No-op for now. May add logic for empty account pruning if desired.
+	// for addr, obj := range s.stateObjects {
+	// 	if !obj.isEmpty() {
+	// 		obj.newContract = false
+	// 	} else if obj.isEmpty() && deleteEmptyObjects {
+	// 		delete(s.stateObjects, addr)
+	// 	}
+	// }
 }
 
+// TODO: cleanup - REMOVE
 // CommitCacheCtx is identical to [SDB.Commit], except it:
 // (1) uses the cacheCtx of the [SDB] and
 // (2) does not save mutations of the cacheCtx to the commit context (s.evmTxCtx).
 // The reason for (2) is that the overall EVM transaction (block, not internal)
 // is only finalized when [Commit] is called, not when [CommitCacheCtx] is
 // called.
-func (s *SDB) CommitCacheCtx() error {
-	return s.commitCtx(s.cacheCtx)
-}
 
 // commitCtx writes the dirty journal state changes to the EVM Keeper. The
 // StateDB object cannot be reused after [commitCtx] has completed. A new
@@ -705,27 +751,28 @@ func (s *SDB) CacheCtxForPrecompile() (
 	}
 }
 
-// SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
-// ([PrecompileCalled]) to the [SDB] journal at the end of
-// successful invocation of a precompiled contract. This is necessary to revert
-// intermediate states where an EVM contract augments the multistore with a
-// precompile and an inconsistency occurs between the EVM module and other
-// modules.
-//
-// See [PrecompileCalled] for more info.
-func (s *SDB) SavePrecompileCalledJournalChange(
-	journalChange PrecompileCalled,
-) error {
-	s.Journal.append(journalChange)
-	s.multistoreCacheCount++
-	if s.multistoreCacheCount > maxMultistoreCacheCount {
-		return fmt.Errorf(
-			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d)",
-			maxMultistoreCacheCount,
-		)
-	}
-	return nil
-}
+// TODO: cleanup - REMOVE
+// // SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
+// // ([PrecompileCalled]) to the [SDB] journal at the end of
+// // successful invocation of a precompiled contract. This is necessary to revert
+// // intermediate states where an EVM contract augments the multistore with a
+// // precompile and an inconsistency occurs between the EVM module and other
+// // modules.
+// //
+// // See [PrecompileCalled] for more info.
+// func (s *SDB) SavePrecompileCalledJournalChange(
+// 	journalChange PrecompileCalled,
+// ) error {
+// 	s.Journal.append(journalChange)
+// 	s.multistoreCacheCount++
+// 	if s.multistoreCacheCount > maxMultistoreCacheCount {
+// 		return fmt.Errorf(
+// 			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d)",
+// 			maxMultistoreCacheCount,
+// 		)
+// 	}
+// 	return nil
+// }
 
 const maxMultistoreCacheCount uint8 = 10
 
@@ -763,21 +810,49 @@ func (s *SDB) Witness() *stateless.Witness {
 //   - If the account is non-empty, it clears the `newContract` flag.
 //   - If the account is empty and deleteEmptyObjects is true, it removes it from live state.
 //
-// In Nibiru, [SDB.Finalize] can be a a no-op because:
+// In Nibiru, [SDB.Finalise] can be a a no-op because:
 //   - The Cosmos SDK state machine executes each transaction atomically.
 //   - All writes happen against a cached multistore (`s.cacheCtx`) that gets committed
 //     during `StateDB.Commit`.
 //
 // This function implements the [vm.StateDB] interface.
 func (s *SDB) Finalise(deleteEmptyObjects bool) {
-	// No-op for now. May add logic for empty account pruning if desired.
-	for addr, obj := range s.stateObjects {
-		if !obj.isEmpty() {
-			obj.newContract = false
-		} else if obj.isEmpty() && deleteEmptyObjects {
-			delete(s.stateObjects, addr)
+
+	// Empty self-destructed accounts
+	{
+		localStates := append(s.savedStates, s.localState)
+		for i := len(localStates) - 1; i >= 0; i-- {
+			localState := localStates[i]
+			for addr, accChange := range localState.AccountChangeMap {
+				if accChange != SNAPSHOT_ACC_STATUS_DELETE {
+					continue
+				}
+				// TODO: Why send to the module? Why not?
+				s.subBalanceHoldingSupplyConstant(addr, s.GetBalance(addr))
+			}
 		}
 	}
+
+	// Finalize all persistent state except `savedCtxs[0]` since it's the
+	// original ctx to be committed by the baseapp.
+	{
+		ctxs := append(s.savedCtxs, s.evmTxCtx)
+		for i := len(ctxs) - 1; i > 0; i-- {
+			ctx := ctxs[i]
+			ctx.MultiStore().(sdk.CacheMultiStore).Write()
+		}
+	}
+
+	return
+	// TODO: UD-DEBUG: cleanup comment
+	// // No-op for now. May add logic for empty account pruning if desired.
+	// for addr, obj := range s.stateObjects {
+	// 	if !obj.isEmpty() {
+	// 		obj.newContract = false
+	// 	} else if obj.isEmpty() && deleteEmptyObjects {
+	// 		delete(s.stateObjects, addr)
+	// 	}
+	// }
 }
 
 // GetStorageRoot returns an empty state hash. This is done because a storage
@@ -801,8 +876,8 @@ func (s *SDB) PointCache() *utils.PointCache {
 type LocalState struct {
 	logs []*gethcore.Log
 
-	Accounts        map[gethcommon.Address]SnapshotAccChange
-	ContractStorage transientStorage
+	AccountChangeMap map[gethcommon.Address]SnapshotAccChange
+	ContractStorage  transientStorage
 
 	// Gas refund counter for the state transition. Encoded as `uint64`. It is
 	// valid for this field to be empty.
@@ -814,12 +889,12 @@ type LocalState struct {
 
 func NewLocalState() *LocalState {
 	return &LocalState{
-		logs:            []*gethcore.Log{},
-		Accounts:        make(map[gethcommon.Address]SnapshotAccChange),
-		ContractStorage: make(transientStorage),
-		gasRefund:       nil,
-		accessList:      nil,
-		SurplusWei:      big.NewInt(0),
+		logs:             []*gethcore.Log{},
+		AccountChangeMap: make(map[gethcommon.Address]SnapshotAccChange),
+		ContractStorage:  make(transientStorage),
+		gasRefund:        nil,
+		accessList:       nil,
+		SurplusWei:       big.NewInt(0),
 	}
 }
 
@@ -864,7 +939,7 @@ func (s *SDB) GetTransientState(
 	addr gethcommon.Address,
 	key gethcommon.Hash,
 ) gethcommon.Hash {
-	return s.transientStorage.Get(addr, key)
+	return s.localState.ContractStorage.Get(addr, key)
 }
 
 // SetTransientState sets transient storage for a given account. It
@@ -874,14 +949,5 @@ func (s *SDB) SetTransientState(
 	addr gethcommon.Address,
 	key, value gethcommon.Hash,
 ) {
-	prev := s.GetTransientState(addr, key)
-	if prev == value {
-		return
-	}
-	s.Journal.append(transientStorageChange{
-		address:   &addr,
-		key:       key,
-		prevValue: prev,
-	})
-	s.transientStorage.Set(addr, key, prev)
+	s.localState.ContractStorage.Set(addr, key, value)
 }

@@ -87,7 +87,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:       "420",
 					BalanceWei:    "420" + strings.Repeat("0", 12),
-					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					CodeHash:      evm.EmptyCodeHash.Hex(),
 					Nonce:         0,
 					EthAddress:    deps.Sender.EthAddr.String(),
 					Bech32Address: deps.Sender.NibiruAddr.String(),
@@ -112,7 +112,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:       "420",
 					BalanceWei:    "420" + strings.Repeat("0", 12),
-					CodeHash:      gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					CodeHash:      evm.EmptyCodeHash.Hex(),
 					Nonce:         0,
 					EthAddress:    deps.Sender.EthAddr.String(),
 					Bech32Address: deps.Sender.NibiruAddr.String(),
@@ -130,7 +130,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				wantResp = &evm.QueryEthAccountResponse{
 					Balance:    "0",
 					BalanceWei: "0",
-					CodeHash:   gethcommon.BytesToHash(evm.EmptyCodeHash).Hex(),
+					CodeHash:   evm.EmptyCodeHash.Hex(),
 					Nonce:      0,
 				}
 				return req, wantResp
@@ -320,7 +320,7 @@ func (s *Suite) TestQueryStorage() {
 				storageValue := gethcommon.BytesToHash([]byte("value"))
 
 				sdb.SetState(addr, storageKey, storageValue)
-				s.NoError(sdb.Commit())
+				sdb.Commit()
 
 				wantResp = &evm.QueryStorageResponse{
 					Value: storageValue.String(),
@@ -393,7 +393,7 @@ func (s *Suite) TestQueryCode() {
 				sdb := deps.NewStateDB()
 				contractBytecode := []byte("bytecode")
 				sdb.SetCode(addr, contractBytecode)
-				s.Require().NoError(sdb.Commit())
+				sdb.Commit()
 
 				s.NotNil(sdb.Keeper().GetAccount(deps.Ctx, addr))
 				s.NotNil(sdb.GetCode(addr))

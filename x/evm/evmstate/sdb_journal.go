@@ -103,45 +103,6 @@ func (j *journal) Length() int {
 }
 
 // ------------------------------------------------------
-// createObjectChange
-
-// createObjectChange: [JournalChange] implementation for when
-// a new account (called an "object" in this context) is created in state.
-type createObjectChange struct {
-	account *common.Address
-}
-
-var _ JournalChange = createObjectChange{}
-
-func (ch createObjectChange) Revert(s *SDB) {
-	delete(s.stateObjects, *ch.account)
-}
-
-func (ch createObjectChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
-// resetObjectChange
-
-// resetObjectChange: [JournalChange] for an account that needs its
-// original state reset. This is used when an account's state is being replaced
-// and we need to revert to the previous version.
-type resetObjectChange struct {
-	prev *stateObject
-}
-
-var _ JournalChange = resetObjectChange{}
-
-func (ch resetObjectChange) Revert(s *SDB) {
-	s.setStateObject(ch.prev)
-}
-
-func (ch resetObjectChange) Dirtied() *common.Address {
-	return nil
-}
-
-// ------------------------------------------------------
 // suicideChange
 
 type suicideChange struct {

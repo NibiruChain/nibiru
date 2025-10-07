@@ -202,7 +202,7 @@ func (s *TestSuite) TestEthValidateBasicDecorator() {
 			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.EvmKeeper)
 
 			tx := tc.txSetup(&deps)
-			s.Require().NoError(stateDB.Commit())
+			stateDB.Commit()
 
 			if tc.ctxSetup != nil {
 				tc.ctxSetup(&deps)

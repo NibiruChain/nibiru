@@ -34,7 +34,7 @@ func (s *Suite) TestERC20Calls() {
 			evmObj,
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(sdb.Commit())
+		sdb.Commit()
 
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(69_420), "expect 69420 tokens")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(0), "expect zero tokens")
@@ -63,7 +63,7 @@ func (s *Suite) TestERC20Calls() {
 			evmObj,
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(sdb.Commit())
+		sdb.Commit()
 		evmtest.AssertERC20BalanceEqualWithDescription(
 			s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(9_420), "expect nonzero balance")
 		evmtest.AssertERC20BalanceEqualWithDescription(
@@ -81,7 +81,7 @@ func (s *Suite) TestERC20Calls() {
 			evmObj,
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(sdb.Commit())
+		sdb.Commit()
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(3_420), "expect 3420 tokens")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(60_000), "expect 60000 tokens")
 	})
@@ -96,7 +96,7 @@ func (s *Suite) TestERC20Calls() {
 			evmObj,
 		)
 		s.Require().NoError(err)
-		s.Require().NoError(sdb.Commit())
+		sdb.Commit()
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, deps.Sender.EthAddr, big.NewInt(3_420), "expect 3420 tokens")
 		evmtest.AssertERC20BalanceEqualWithDescription(s.T(), deps, evmObj, erc20, evm.EVM_MODULE_ADDRESS, big.NewInt(54_000), "expect 54000 tokens")
 	})

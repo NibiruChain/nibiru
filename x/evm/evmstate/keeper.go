@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/holiman/uint256"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -89,12 +90,12 @@ func NewKeeper(
 	}
 }
 
-// GetEvmGasBalance: Used in the EVM Ante Handler,
+// GetWeiBalance: Used in the EVM Ante Handler,
 // "github.com/NibiruChain/nibiru/v2/app/evmante": Load account's balance of gas
 // tokens for EVM execution in EVM denom units.
-func (k *Keeper) GetEvmGasBalance(ctx sdk.Context, addr gethcommon.Address) (balance *big.Int) {
+func (k *Keeper) GetWeiBalance(ctx sdk.Context, addr gethcommon.Address) (balance *uint256.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
-	return k.Bank.GetBalance(ctx, nibiruAddr, evm.EVMBankDenom).Amount.BigInt()
+	return k.Bank.GetWeiBalance(ctx, nibiruAddr)
 }
 
 func (k Keeper) EthChainID(ctx sdk.Context) *big.Int {

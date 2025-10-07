@@ -309,6 +309,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 	if commit {
-		s.Require().NoError(evmObj.StateDB.(*evmstate.SDB).Commit())
+		evmObj.StateDB.(*evmstate.SDB).Commit()
 	}
 }

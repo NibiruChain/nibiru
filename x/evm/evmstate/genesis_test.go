@@ -130,9 +130,7 @@ amountToSendC: %s`,
 		s.T().Log("Transfer ERC-20 tokens to user B")
 		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserB, amountToSendB, deps.Ctx, evmObj)
 		s.Require().NoError(err)
-		s.NoError(
-			sdb.Commit(),
-		)
+		sdb.Commit()
 	}
 
 	s.T().Logf("Create FunToken from the er20 %s", erc20Addr)

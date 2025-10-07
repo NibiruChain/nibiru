@@ -52,7 +52,7 @@ func (p precompileWasm) Run(
 		return nil, err
 	}
 
-	abciEventsStartIdx := len(startResult.CacheCtx.EventManager().Events())
+	abciEventsStartIdx := len(startResult.Ctx.EventManager().Events())
 
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
@@ -76,7 +76,7 @@ func (p precompileWasm) Run(
 	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
 	// meter was initialized....
 	contract.UseGas(
-		startResult.CacheCtx.GasMeter().GasConsumed(),
+		startResult.Ctx.GasMeter().GasConsumed(),
 		evmObj.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)
@@ -89,9 +89,9 @@ func (p precompileWasm) Run(
 	// https://github.com/NibiruChain/nibiru/issues/2121
 	if isMutation[PrecompileMethod(startResult.Method.Name)] {
 		EmitEventAbciEvents(
-			startResult.CacheCtx,
-			startResult.StateDB,
-			startResult.CacheCtx.EventManager().Events()[abciEventsStartIdx:],
+			startResult.Ctx,
+			startResult.SDB,
+			startResult.Ctx.EventManager().Events()[abciEventsStartIdx:],
 			p.Address(),
 		)
 	}
@@ -158,7 +158,7 @@ func (p precompileWasm) execute(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -196,7 +196,7 @@ func (p precompileWasm) query(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -242,7 +242,7 @@ func (p precompileWasm) instantiate(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -293,7 +293,7 @@ func (p precompileWasm) executeMulti(
 	caller gethcommon.Address,
 	readOnly bool,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
@@ -362,7 +362,7 @@ func (p precompileWasm) queryRaw(
 	start OnRunStartResult,
 	contract *vm.Contract,
 ) (bz []byte, err error) {
-	method, args, ctx := start.Method, start.Args, start.CacheCtx
+	method, args, ctx := start.Method, start.Args, start.Ctx
 	defer func() {
 		if err != nil {
 			err = ErrMethodCalled(method, err)
