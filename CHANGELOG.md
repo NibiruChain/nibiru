@@ -50,6 +50,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
 - [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
 - [#2391](https://github.com/NibiruChain/nibiru/pull/2391) - feat(proto): impl script for gRPC Gateway REST doc generation
+- [#2394](https://github.com/NibiruChain/nibiru/pull/2394) - feat(proto): REST API doc generation for bank, auth, and txs
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
