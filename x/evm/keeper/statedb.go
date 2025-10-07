@@ -149,6 +149,11 @@ func (k *Keeper) SetState(
 // SetCode: Setter for smart contract bytecode. Delete if code is empty.
 // Implements the `statedb.Keeper` interface.
 // Only called by `StateDB.Commit()`.
+// ------------------------------------------------------
+// codeChange
+// codeChange: [JournalChange] for an update to an account's code (smart contract
+// bytecode). The previous code and hash for the code are stored to enable
+// reversion.
 func (k *Keeper) SetCode(ctx sdk.Context, codeHash, code []byte) {
 	k.EvmState.SetAccCode(ctx, codeHash, code)
 }

@@ -18,10 +18,13 @@ package statedb
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"math/big"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -227,81 +230,61 @@ func (s *StateDB) Empty(addr gethcommon.Address) bool {
 }
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
+// This function implements the [vm.StateDB] interface.
 func (s *StateDB) GetBalance(addr gethcommon.Address) *uint256.Int {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		bal := stateObject.Balance()
-		if bal == nil {
-			return uint256.NewInt(0)
-		}
-		return bal
-	}
-	return uint256.NewInt(0)
+	addrBech32 := eth.EthAddrToNibiruAddr(addr)
+	return s.keeper.BK().GetWeiBalance(s.evmTxCtx, addrBech32)
 }
 
 // GetNonce returns the nonce of account, 0 if not exists.
+// This function implements the [vm.StateDB] interface.
 func (s *StateDB) GetNonce(addr gethcommon.Address) uint64 {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		return stateObject.Nonce()
-	}
-
-	return 0
+	return s.keeper.GetAccNonce(s.evmTxCtx, addr)
 }
 
 // GetCode returns the code of account, nil if not exists.
 func (s *StateDB) GetCode(addr gethcommon.Address) []byte {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		return stateObject.Code()
-	}
-	return nil
+	return s.keeper.GetCode(s.evmTxCtx, s.GetCodeHash(addr))
 }
 
 // GetCodeSize returns the code size of account.
 func (s *StateDB) GetCodeSize(addr gethcommon.Address) int {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		return stateObject.CodeSize()
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil || len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, emptyCodeHash) {
+		return 0
 	}
-	return 0
+	return len(s.GetCode(addr))
 }
 
 // GetCodeHash returns the code hash of account.
-func (s *StateDB) GetCodeHash(addr gethcommon.Address) gethcommon.Hash {
-	stateObject := s.getStateObject(addr)
-	if stateObject == nil {
-		return gethcommon.Hash{}
+func (s *StateDB) GetCodeHash(addr gethcommon.Address) (codeHash gethcommon.Hash) {
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil || len(acc.CodeHash) == 0 || bytes.Equal(acc.CodeHash, emptyCodeHash) {
+		codeHash = gethcommon.Hash(emptyCodeHash)
+	} else {
+		codeHash = gethcommon.BytesToHash(acc.CodeHash)
 	}
-	return gethcommon.BytesToHash(stateObject.CodeHash())
+	return codeHash
 }
 
 // GetState retrieves a value from the given account's storage trie.
 func (s *StateDB) GetState(addr gethcommon.Address, hash gethcommon.Hash) (value gethcommon.Hash) {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		value, _ = stateObject.GetState(hash)
-		return value
-	}
-	return gethcommon.Hash{}
+	return s.keeper.GetState(s.evmTxCtx, addr, hash)
 }
 
 // GetCommittedState retrieves a value from the given account's committed storage trie.
 func (s *StateDB) GetCommittedState(addr gethcommon.Address, hash gethcommon.Hash) gethcommon.Hash {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		return stateObject.GetCommittedState(hash)
-	}
-	return gethcommon.Hash{}
+	return s.keeper.GetState(s.evmTxCtx, addr, hash)
+	// stateObject := s.getStateObject(addr)
+	// if stateObject != nil {
+	// 	return stateObject.GetCommittedState(hash)
+	// }
+	// return gethcommon.Hash{}
 }
 
 // HasSuicided returns if the contract is suicided in current transaction.
 func (s *StateDB) HasSuicided(addr gethcommon.Address) bool {
-	stateObject := s.getStateObject(addr)
-	if stateObject != nil {
-		return stateObject.SelfDestructed
-	}
-	return false
+	return s.HasSelfDestructed(addr)
 }
 
 // AddPreimage records a SHA3 preimage seen by the VM.
@@ -332,15 +315,6 @@ func (s *StateDB) getStateObject(addr gethcommon.Address) *stateObject {
 	obj := newObject(s, addr, account)
 	s.setStateObject(obj)
 	return obj
-}
-
-// getOrNewStateObject retrieves a state object or create a new state object if nil.
-func (s *StateDB) getOrNewStateObject(addr gethcommon.Address) *stateObject {
-	stateObject := s.getStateObject(addr)
-	if stateObject == nil {
-		stateObject, _ = s.createObject(addr)
-	}
-	return stateObject
 }
 
 // createObject creates a new state object. If there is an existing account with
@@ -417,88 +391,101 @@ func (s *StateDB) setStateObject(object *stateObject) {
 	s.stateObjects[object.Address()] = object
 }
 
+// TODO: Handle surplus
+
 /*
  * SETTERS
  */
 
 // AddBalance adds amount to the account associated with addr.
+// It is used to add funds to the destination account of a transfer.
 func (s *StateDB) AddBalance(
 	addr gethcommon.Address,
 	wei *uint256.Int,
 	reason tracing.BalanceChangeReason,
 ) (prevWei uint256.Int) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject == nil {
-		return prevWei // 0 default
+	prevWei = *s.GetBalance(addr)
+	if wei.Sign() == 0 {
+		return
 	}
-	return stateObject.AddBalance(wei)
+	addrBech32 := eth.EthAddrToNibiruAddr(addr)
+	s.keeper.BK().AddWei(s.evmTxCtx, addrBech32, wei)
+	// TODO: add sdb tracing logger?
+	return
 }
 
-// AddBalanceSigned is only used in tests for convenience.
-func (s *StateDB) AddBalanceSigned(addr gethcommon.Address, wei *big.Int) {
-	weiSign := wei.Sign()
-	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
-	if isOverflow {
-		// TODO: Is there a better strategy than panicking here?
-		panic(fmt.Errorf(
-			"uint256 overflow occurred for big.Int value %s", wei))
-	}
-
-	reason := tracing.BalanceChangeTransfer
-	if weiSign >= 0 {
-		s.AddBalance(addr, weiAbs, reason)
-	} else {
-		s.SubBalance(addr, weiAbs, reason)
-	}
-}
+// TODO: feat: flag needed to mute events?
 
 // SubBalance subtracts amount from the account associated with addr.
+// It is used to remove funds from the origin account of a transfer.
 func (s *StateDB) SubBalance(
 	addr gethcommon.Address,
 	wei *uint256.Int,
 	reason tracing.BalanceChangeReason,
 ) (prevWei uint256.Int) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject == nil {
-		return prevWei // 0 default
-	} else if wei.IsZero() {
-		return *stateObject.Balance()
+	prevWei = *s.GetBalance(addr)
+	if wei.Sign() == 0 {
+		return
 	}
-	return stateObject.SubBalance(wei.ToBig())
-}
 
-func (s *StateDB) SetBalanceWei(addr gethcommon.Address, wei *big.Int) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		stateObject.SetBalance(wei)
-	}
+	addrBech32 := eth.EthAddrToNibiruAddr(addr)
+	s.keeper.BK().SubWei(s.evmTxCtx, addrBech32, wei)
+	// TODO: add sdb tracing logger?
+	return
 }
 
 // SetNonce sets the nonce of account.
+// The nonce is a counter of the number of transactions sent from an account.
 func (s *StateDB) SetNonce(addr gethcommon.Address, nonce uint64) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		stateObject.SetNonce(nonce)
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil {
+		return
 	}
+	acc.Nonce = nonce
+	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
 }
 
 // SetCode sets the code of account.
+// This function implements the [vm.StateDB] interface.
 func (s *StateDB) SetCode(addr gethcommon.Address, code []byte) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		stateObject.SetCode(crypto.Keccak256Hash(code), code)
+	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	if acc == nil {
+		return
 	}
+
+	codeHash := crypto.Keccak256Hash(code)
+	codeHashBz := codeHash.Bytes()
+	acc.CodeHash = codeHashBz
+	// TODO: UD-DEBUG: Handle case where code hash is already set.
+	s.keeper.SetCode(s.evmTxCtx, codeHashBz, code)
 }
 
 // SetState sets the contract state.
 func (s *StateDB) SetState(
 	addr gethcommon.Address, key, value gethcommon.Hash,
 ) (prevValue gethcommon.Hash) {
-	stateObject := s.getOrNewStateObject(addr)
-	if stateObject != nil {
-		return stateObject.SetState(key, value)
+	prevValue = s.GetState(addr, key)
+	s.keeper.SetState(s.evmTxCtx, addr, key, value.Bytes())
+	return
+}
+
+func (s *StateDB) subBalanceHoldingSupplyConstant(
+	addr gethcommon.Address,
+	wei *uint256.Int,
+) {
+	s.SubBalance(addr, wei, tracing.BalanceDecreaseSelfdestruct)
+	s.AddBalance(evm.EVM_MODULE_ADDRESS, wei, tracing.BalanceIncreaseSelfdestruct)
+}
+
+func (s *StateDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccChange) bool {
+	gotChange, found := s.localState.Accounts[addr]
+	for i := len(s.savedStates) - 1; !found && i >= 0; i-- {
+		gotChange, found = s.localState.Accounts[addr]
 	}
-	return gethcommon.Hash{}
+	if !found {
+		return false
+	}
+	return gotChange == change
 }
 
 // SelfDestruct marks the given account as suicided.
@@ -507,35 +494,50 @@ func (s *StateDB) SetState(
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after [SelfDestruct].
 func (s *StateDB) SelfDestruct(addr gethcommon.Address) (prevWei uint256.Int) {
-	stateObject := s.getStateObject(addr)
-	if stateObject == nil {
-		return prevWei
-	}
-	prevWei = *(stateObject.Balance())
-	// Regardless of whether it is already destructed or not, we do have to
-	// journal the balance-change, if we set it to zero here.
-	if !stateObject.Balance().IsZero() {
-		stateObject.account.BalanceWei = new(uint256.Int)
-	}
-	// If it is already marked as self-destructed, we do not need to add it
-	// for journalling a second time.
-	if !stateObject.SelfDestructed {
-		s.Journal.append(suicideChange{
-			account:     &addr,
-			prev:        stateObject.SelfDestructed,
-			prevbalance: new(big.Int).Set(prevWei.ToBig()),
-		})
-		stateObject.SelfDestructed = true
-	}
+
+	s.localState.Accounts[addr] = SNAPSHOT_ACC_STATUS_DELETE
+	prevWei = *s.GetBalance(addr)
+	s.subBalanceHoldingSupplyConstant(addr, &prevWei)
 	return prevWei
+
+	// OLD IMPL
+
+	// stateObject := s.getStateObject(addr)
+	// if stateObject == nil {
+	// 	return prevWei
+	// }
+	// prevWei = *(stateObject.Balance())
+	// // Regardless of whether it is already destructed or not, we do have to
+	// // journal the balance-change, if we set it to zero here.
+	// if !stateObject.Balance().IsZero() {
+	// 	stateObject.account.BalanceWei = new(uint256.Int)
+	// }
+	// // If it is already marked as self-destructed, we do not need to add it
+	// // for journalling a second time.
+	// if !stateObject.SelfDestructed {
+	// 	s.Journal.append(suicideChange{
+	// 		account:     &addr,
+	// 		prev:        stateObject.SelfDestructed,
+	// 		prevbalance: new(big.Int).Set(prevWei.ToBig()),
+	// 	})
+	// 	stateObject.SelfDestructed = true
+	// }
+	// return prevWei
 }
 
+// TODO: UD-DEBUG: SelfDestruct impl first
 func (s *StateDB) HasSelfDestructed(addr gethcommon.Address) bool {
-	stateObject := s.getStateObject(addr)
-	if stateObject == nil {
-		return false
-	}
-	return stateObject.SelfDestructed
+	return s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_DELETE)
+	// s.localState
+	// stateObject := s.getStateObject(addr)
+	// if stateObject == nil {
+	// 	return false
+	// }
+	// return stateObject.SelfDestructed
+}
+
+func (s *StateDB) IsCreatedThisBlock(addr gethcommon.Address) bool {
+	return s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_CREATE)
 }
 
 // SelfDestruct6780 calls [SelfDesrtuct] only if the [stateObject] corresponding to
@@ -549,15 +551,24 @@ func (s *StateDB) HasSelfDestructed(addr gethcommon.Address) bool {
 func (s *StateDB) SelfDestruct6780(
 	addr gethcommon.Address,
 ) (prevWei uint256.Int, isSelfDestructed bool) {
-	stateObject := s.getStateObject(addr)
-	if stateObject == nil {
-		isSelfDestructed = false
-	} else if stateObject.createdThisBlock {
-		prevWei, isSelfDestructed = s.SelfDestruct(addr), true
-	} else {
-		prevWei, isSelfDestructed = *(stateObject.Balance()), false
+
+	if s.IsCreatedThisBlock(addr) {
+		prevWei = s.SelfDestruct(addr)
+		isSelfDestructed = true
+		return
 	}
-	return prevWei, isSelfDestructed
+
+	return *s.GetBalance(addr), s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_DELETE)
+
+	// stateObject := s.getStateObject(addr)
+	// if stateObject == nil {
+	// 	isSelfDestructed = false
+	// } else if stateObject.createdThisBlock {
+	// 	prevWei, isSelfDestructed = s.SelfDestruct(addr), true
+	// } else {
+	// 	prevWei, isSelfDestructed = *(stateObject.Balance()), false
+	// }
+	// return prevWei, isSelfDestructed
 }
 
 // Snapshot returns an identifier for the current revision of the state.

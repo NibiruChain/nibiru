@@ -6,7 +6,6 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
@@ -15,14 +14,14 @@ var _ bankkeeper.Keeper = &NibiruBankKeeper{}
 
 type NibiruBankKeeper struct {
 	bankkeeper.BaseKeeper
-	StateDB *statedb.StateDB
+	// StateDB *statedb.StateDB // TODO: UD-DEBUG: remove
 }
 
 func (evmKeeper *Keeper) NewStateDB(
 	ctx sdk.Context, txConfig statedb.TxConfig,
 ) *statedb.StateDB {
 	stateDB := statedb.New(ctx, evmKeeper, txConfig)
-	evmKeeper.Bank.StateDB = stateDB
+	// evmKeeper.Bank.StateDB = stateDB
 	return stateDB
 }
 
@@ -235,14 +234,15 @@ func (bk *NibiruBankKeeper) SyncStateDBWithAccount(
 	ctx sdk.Context, acc sdk.AccAddress,
 ) {
 	// If there's no StateDB set, it means we're not in an EthereumTx.
-	if bk.StateDB == nil || !IsDeliverTx(ctx) {
+	if !IsDeliverTx(ctx) {
+		// if bk.StateDB == nil || !IsDeliverTx(ctx) {
 		return
 	}
 
-	balanceWei := evm.NativeToWei(
-		bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
-	)
-	bk.StateDB.SetBalanceWei(eth.NibiruAddrToEthAddr(acc), balanceWei)
+	// balanceWei := evm.NativeToWei(
+	// 	bk.GetBalance(ctx, acc, evm.EVMBankDenom).Amount.BigInt(),
+	// )
+	// bk.StateDB.SetBalanceWei(eth.NibiruAddrToEthAddr(acc), balanceWei)
 }
 
 func findEtherBalanceChangeFromCoins(coins sdk.Coins) (found bool) {

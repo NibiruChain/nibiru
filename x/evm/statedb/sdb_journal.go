@@ -184,68 +184,6 @@ func (ch balanceChange) Dirtied() *common.Address {
 }
 
 // ------------------------------------------------------
-// nonceChange
-
-// nonceChange: [JournalChange] for an update to the nonce of an account.
-// The nonce is a counter of the number of transactions sent from an account.
-type nonceChange struct {
-	account *common.Address
-	prev    uint64
-}
-
-var _ JournalChange = nonceChange{}
-
-func (ch nonceChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setNonce(ch.prev)
-}
-
-func (ch nonceChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
-// codeChange
-
-// codeChange: [JournalChange] for an update to an account's code (smart contract
-// bytecode). The previous code and hash for the code are stored to enable
-// reversion.
-type codeChange struct {
-	account            *common.Address
-	prevcode, prevhash []byte
-}
-
-var _ JournalChange = codeChange{}
-
-func (ch codeChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setCode(common.BytesToHash(ch.prevhash), ch.prevcode)
-}
-
-func (ch codeChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
-// storageChange
-
-// storageChange: [JournalChange] for the modification of a single key and value
-// within a contract's storage.
-type storageChange struct {
-	account       *common.Address
-	key, prevalue common.Hash
-	origin        common.Hash
-}
-
-var _ JournalChange = storageChange{}
-
-func (ch storageChange) Revert(s *StateDB) {
-	s.getStateObject(*ch.account).setState(ch.key, ch.prevalue, ch.origin)
-}
-
-func (ch storageChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
 // addLogChange
 
 // addLogChange represents [JournalChange] for a new log addition.

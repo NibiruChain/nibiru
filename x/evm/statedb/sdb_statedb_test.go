@@ -95,40 +95,40 @@ func (s *Suite) TestAccount() {
 			s.Require().Equal(common.BytesToHash(emptyCodeHash), db.GetCodeHash(address))
 			s.Require().Equal(uint64(0), db.GetNonce(address))
 		}},
-		{"suicide", func(deps *evmtest.TestDeps, db *statedb.StateDB) {
+		{"suicide", func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 			// non-exist account.
-			s.Require().False(db.HasSuicided(address))
-			db.SelfDestruct(address)
-			s.Require().False(db.HasSuicided(address))
+			s.Require().False(sdb.HasSuicided(address))
+			sdb.SelfDestruct(address)
+			s.Require().False(sdb.HasSuicided(address))
 
 			// create a contract account
-			db.CreateAccount(address)
-			db.SetCode(address, []byte("hello world"))
-			db.AddBalanceSigned(address, big.NewInt(100))
-			db.SetState(address, key1, value1)
-			db.SetState(address, key2, value2)
-			s.Require().NoError(db.Commit())
+			sdb.CreateAccount(address)
+			sdb.SetCode(address, []byte("hello world"))
+			AddBalanceSigned(sdb, address, big.NewInt(100))
+			sdb.SetState(address, key1, value1)
+			sdb.SetState(address, key2, value2)
+			s.Require().NoError(sdb.Commit())
 
 			// suicide
-			db = deps.NewStateDB()
-			s.Require().False(db.HasSuicided(address))
-			db.SelfDestruct(address)
-			s.Require().True(db.HasSuicided(address))
+			sdb = deps.NewStateDB()
+			s.Require().False(sdb.HasSuicided(address))
+			sdb.SelfDestruct(address)
+			s.Require().True(sdb.HasSuicided(address))
 
 			// check dirty state
-			s.Require().True(db.HasSuicided(address))
+			s.Require().True(sdb.HasSuicided(address))
 			// balance is cleared
-			s.Require().Equal(uint256.NewInt(0), db.GetBalance(address))
+			s.Require().Equal(uint256.NewInt(0), sdb.GetBalance(address))
 			// but code and state are still accessible in dirty state
-			s.Require().Equal(value1, db.GetState(address, key1))
-			s.Require().Equal([]byte("hello world"), db.GetCode(address))
+			s.Require().Equal(value1, sdb.GetState(address, key1))
+			s.Require().Equal([]byte("hello world"), sdb.GetCode(address))
 
-			s.Require().NoError(db.Commit())
+			s.Require().NoError(sdb.Commit())
 
 			// not accessible from StateDB anymore
-			db = deps.NewStateDB()
-			s.Require().False(db.Exist(address))
-			s.Require().Empty(CollectContractStorage(db))
+			sdb = deps.NewStateDB()
+			s.Require().False(sdb.Exist(address))
+			s.Require().Empty(CollectContractStorage(sdb))
 		}},
 	}
 	for _, tc := range testCases {
@@ -142,21 +142,21 @@ func (s *Suite) TestAccount() {
 
 func (s *Suite) TestAccountOverride() {
 	deps := evmtest.NewTestDeps()
-	db := deps.NewStateDB()
+	sdb := deps.NewStateDB()
 	// test balance carry over when overwritten
 	amount := big.NewInt(1)
 
 	// init an EOA account, account overridden only happens on EOA account.
-	db.AddBalanceSigned(address, amount)
-	db.SetNonce(address, 1)
+	AddBalanceSigned(sdb, address, amount)
+	sdb.SetNonce(address, 1)
 
 	// override
-	db.CreateAccount(address)
+	sdb.CreateAccount(address)
 
 	// check balance is not lost
-	s.Require().Equal(uint256.MustFromBig(amount), db.GetBalance(address))
+	s.Require().Equal(uint256.MustFromBig(amount), sdb.GetBalance(address))
 	// but nonce is reset
-	s.Require().Equal(uint64(0), db.GetNonce(address))
+	s.Require().Equal(uint64(0), sdb.GetNonce(address))
 }
 
 func (s *Suite) TestDBError() {
@@ -190,41 +190,41 @@ func (s *Suite) TestBalance() {
 	}{
 		{
 			name: "add balance",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(10))
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(10))
 			},
 			expBalance: uint256.NewInt(10),
 		},
 		{
 			name: "sub balance",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(10))
-				s.Require().Equal(uint256.NewInt(10), db.GetBalance(address))
-				db.AddBalanceSigned(address, big.NewInt(-2))
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(10))
+				s.Require().Equal(uint256.NewInt(10), sdb.GetBalance(address))
+				AddBalanceSigned(sdb, address, big.NewInt(-2))
 			},
 			expBalance: uint256.NewInt(8),
 		},
 		{
 			name: "add zero balance",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(0))
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(0))
 			},
 			expBalance: uint256.NewInt(0),
 		},
 		{
 			name: "sub zero balance",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(0))
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(0))
 			},
 			expBalance: uint256.NewInt(0),
 		},
 		{
 			name: "overflow on addition",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(69))
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(69))
 				tooBig := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
 				maybeErr := xcommon.TryCatch(func() {
-					db.AddBalanceSigned(address, tooBig)
+					AddBalanceSigned(sdb, address, tooBig)
 				})()
 				s.ErrorContains(maybeErr, "uint256 overflow occurred for big.Int")
 			},
@@ -232,16 +232,16 @@ func (s *Suite) TestBalance() {
 		},
 		{
 			name: "overflow on subtraction",
-			do: func(db *statedb.StateDB) {
-				db.AddBalanceSigned(address, big.NewInt(420))
-				db.AddBalanceSigned(address, big.NewInt(-20)) // balance: 400
+			do: func(sdb *statedb.StateDB) {
+				AddBalanceSigned(sdb, address, big.NewInt(420))
+				AddBalanceSigned(sdb, address, big.NewInt(-20)) // balance: 400
 
 				// Construct -2^256
 				tooBig := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
 				tooBig.Neg(tooBig)
 
 				maybeErr := xcommon.TryCatch(func() {
-					db.AddBalanceSigned(address, tooBig)
+					AddBalanceSigned(sdb, address, tooBig)
 				})()
 
 				s.ErrorContains(maybeErr, "uint256 overflow occurred for big.Int")
@@ -418,38 +418,38 @@ func (s *Suite) TestRevertSnapshot() {
 			deps := evmtest.NewTestDeps()
 
 			// do some arbitrary changes to the storage
-			db := deps.NewStateDB()
-			db.SetNonce(address, 1)
-			db.AddBalanceSigned(address, big.NewInt(100))
-			db.SetCode(address, []byte("hello world"))
-			db.SetState(address, v1, v2)
-			db.SetNonce(address2, 1)
-			s.Require().NoError(db.Commit())
+			sdb := deps.NewStateDB()
+			sdb.SetNonce(address, 1)
+			AddBalanceSigned(sdb, address, big.NewInt(100))
+			sdb.SetCode(address, []byte("hello world"))
+			sdb.SetState(address, v1, v2)
+			sdb.SetNonce(address2, 1)
+			s.Require().NoError(sdb.Commit())
 
 			// Store original state values
-			originalNonce := db.GetNonce(address)
-			originalBalance := db.GetBalance(address)
-			originalCode := db.GetCode(address)
-			originalState := db.GetState(address, v1)
-			originalNonce2 := db.GetNonce(address2)
+			originalNonce := sdb.GetNonce(address)
+			originalBalance := sdb.GetBalance(address)
+			originalCode := sdb.GetCode(address)
+			originalState := sdb.GetState(address, v1)
+			originalNonce2 := sdb.GetNonce(address2)
 
 			// run test
-			rev := db.Snapshot()
-			tc.malleate(db)
-			db.RevertToSnapshot(rev)
+			rev := sdb.Snapshot()
+			tc.malleate(sdb)
+			sdb.RevertToSnapshot(rev)
 
 			// check empty states after revert
-			s.Require().Zero(db.GetRefund())
-			s.Require().Empty(db.Logs())
+			s.Require().Zero(sdb.GetRefund())
+			s.Require().Empty(sdb.Logs())
 
-			s.Require().NoError(db.Commit())
+			s.Require().NoError(sdb.Commit())
 
 			// Check again after commit to ensure persistence
-			s.Require().Equal(originalNonce, db.GetNonce(address))
-			s.Require().Equal(originalBalance, db.GetBalance(address))
-			s.Require().Equal(originalCode, db.GetCode(address))
-			s.Require().Equal(originalState, db.GetState(address, v1))
-			s.Require().Equal(originalNonce2, db.GetNonce(address2))
+			s.Require().Equal(originalNonce, sdb.GetNonce(address))
+			s.Require().Equal(originalBalance, sdb.GetBalance(address))
+			s.Require().Equal(originalCode, sdb.GetCode(address))
+			s.Require().Equal(originalState, sdb.GetState(address, v1))
+			s.Require().Equal(originalNonce2, sdb.GetNonce(address2))
 		})
 	}
 }
@@ -576,7 +576,7 @@ func (s *Suite) TestLog() {
 	}
 
 	deps := evmtest.NewTestDeps()
-	db := statedb.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
+	sdb := statedb.New(deps.Ctx, deps.App.EvmKeeper, txConfig)
 
 	logData := []byte("hello world")
 	log := &gethcore.Log{
@@ -585,8 +585,8 @@ func (s *Suite) TestLog() {
 		Data:        logData,
 		BlockNumber: blockNumber,
 	}
-	db.AddLog(log)
-	s.Require().Equal(1, len(db.Logs()))
+	sdb.AddLog(log)
+	s.Require().Equal(1, len(sdb.Logs()))
 
 	wantLog := &gethcore.Log{
 		Address:     log.Address,
@@ -600,13 +600,13 @@ func (s *Suite) TestLog() {
 		TxIndex:   txIdx,
 		Index:     logIdx,
 	}
-	s.Require().Equal(wantLog, db.Logs()[0])
+	s.Require().Equal(wantLog, sdb.Logs()[0])
 
 	// Add a second log and assert values
-	db.AddLog(log)
+	sdb.AddLog(log)
 	wantLog.Index++
-	s.Require().Equal(2, len(db.Logs()))
-	gotLog := db.Logs()[1]
+	s.Require().Equal(2, len(sdb.Logs()))
+	gotLog := sdb.Logs()[1]
 	s.Require().Equal(wantLog, gotLog)
 }
 

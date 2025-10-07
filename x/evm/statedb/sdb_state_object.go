@@ -180,38 +180,6 @@ func (s *stateObject) isEmpty() bool {
 		bytes.Equal(s.account.CodeHash, emptyCodeHash)
 }
 
-// AddBalance adds amount to s's balance.
-// It is used to add funds to the destination account of a transfer.
-func (s *stateObject) AddBalance(amount *uint256.Int) (prevWei uint256.Int) {
-	if amount.Sign() == 0 {
-		if s.isEmpty() {
-			s.touch()
-		}
-		return *(s.Balance())
-	}
-	return s.SetBalance(new(big.Int).Add(s.Balance().ToBig(), amount.ToBig()))
-}
-
-// SubBalance removes amount from s's balance.
-// It is used to remove funds from the origin account of a transfer.
-func (s *stateObject) SubBalance(amount *big.Int) (prevWei uint256.Int) {
-	if amount.Sign() == 0 {
-		return *s.Balance()
-	}
-	return s.SetBalance(new(big.Int).Sub(s.Balance().ToBig(), amount))
-}
-
-// SetBalance update account balance and returns the previous balance.
-func (s *stateObject) SetBalance(amount *big.Int) (prevWei uint256.Int) {
-	prevWei = *s.account.BalanceWei
-	s.db.Journal.append(balanceChange{
-		account: &s.address,
-		prevWei: (&prevWei).Clone(),
-	})
-	s.setBalance(amount)
-	return prevWei
-}
-
 func (s *stateObject) setBalance(amount *big.Int) {
 	s.account.BalanceWei = uint256.MustFromBig(amount)
 }
@@ -244,36 +212,6 @@ func (s *stateObject) CodeSize() int {
 	return len(s.Code())
 }
 
-// SetCode set contract code to account
-func (s *stateObject) SetCode(codeHash common.Hash, code []byte) {
-	prevcode := s.Code()
-	s.db.Journal.append(codeChange{
-		account:  &s.address,
-		prevhash: s.CodeHash(),
-		prevcode: prevcode,
-	})
-	s.setCode(codeHash, code)
-}
-
-func (s *stateObject) setCode(codeHash common.Hash, code []byte) {
-	s.code = code
-	s.account.CodeHash = codeHash[:]
-	s.DirtyCode = true
-}
-
-// SetNonce set nonce to account
-func (s *stateObject) SetNonce(nonce uint64) {
-	s.db.Journal.append(nonceChange{
-		account: &s.address,
-		prev:    s.account.Nonce,
-	})
-	s.setNonce(nonce)
-}
-
-func (s *stateObject) setNonce(nonce uint64) {
-	s.account.Nonce = nonce
-}
-
 // CodeHash returns the code hash of account
 func (s *stateObject) CodeHash() []byte {
 	return s.account.CodeHash
@@ -282,60 +220,6 @@ func (s *stateObject) CodeHash() []byte {
 // Balance returns the balance of account
 func (s *stateObject) Balance() *uint256.Int {
 	return s.account.BalanceWei
-}
-
-// Nonce returns the nonce of account
-func (s *stateObject) Nonce() uint64 {
-	return s.account.Nonce
-}
-
-// GetCommittedState query the committed state
-func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
-	if value, cached := s.OriginStorage[key]; cached {
-		return value
-	}
-	// If no live objects are available, load it from keeper
-	value := s.db.keeper.GetState(s.db.evmTxCtx, s.Address(), key)
-	s.OriginStorage[key] = value
-	return value
-}
-
-// GetState query the current state (including dirty state)
-func (s *stateObject) GetState(key common.Hash) (val, origin common.Hash) {
-	origin = s.GetCommittedState(key)
-	if value, dirty := s.DirtyStorage[key]; dirty {
-		return value, origin
-	}
-	return origin, origin
-}
-
-// SetState sets the contract state
-func (s *stateObject) SetState(key common.Hash, value common.Hash) (prev common.Hash) {
-	// If the new value is the same as old, don't set
-	prev, origin := s.GetState(key)
-	if prev == value {
-		return prev
-	}
-	// New value is different, update and journal the change
-	s.db.Journal.append(storageChange{
-		account:  &s.address,
-		key:      key,
-		prevalue: prev,
-		origin:   origin,
-	})
-	s.setState(key, value, origin)
-	return prev
-}
-
-// setState updates a value in account dirty storage. The dirtiness will be
-// removed if the value being set equals to the original value.
-func (s *stateObject) setState(key, value, origin common.Hash) {
-	// If storage slot is set back to its original value, undo the dirty marker
-	if value == origin {
-		delete(s.DirtyStorage, key)
-		return
-	}
-	s.DirtyStorage[key] = value
 }
 
 // Copied from /core/state/journal.go in geth v1.14

@@ -8,6 +8,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
@@ -58,29 +60,47 @@ func (s *Suite) TestCommitRemovesDirties() {
 	s.Require().EqualValues(0, evmObj.StateDB.(*statedb.StateDB).DebugDirtiesCount())
 }
 
+// AddBalanceSigned is only used in tests for convenience.
+func AddBalanceSigned(sdb *statedb.StateDB, addr gethcommon.Address, wei *big.Int) {
+	weiSign := wei.Sign()
+	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
+	if isOverflow {
+		// TODO: Is there a better strategy than panicking here?
+		panic(fmt.Errorf(
+			"uint256 overflow occurred for big.Int value %s", wei))
+	}
+
+	reason := tracing.BalanceChangeTransfer
+	if weiSign >= 0 {
+		sdb.AddBalance(addr, weiAbs, reason)
+	} else {
+		sdb.SubBalance(addr, weiAbs, reason)
+	}
+}
+
 func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	deps := evmtest.NewTestDeps()
 	evmObj, _ := deps.NewEVM()
-	stateDB := evmObj.StateDB.(*statedb.StateDB)
+	sdb := evmObj.StateDB.(*statedb.StateDB)
 
 	randomAcc := evmtest.NewEthPrivAcc().EthAddr
 	balDelta := evm.NativeToWei(big.NewInt(4))
 	// 2 dirties from [createObjectChange, balanceChange]
-	stateDB.AddBalanceSigned(randomAcc, balDelta)
+	AddBalanceSigned(sdb, randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
-	stateDB.AddBalanceSigned(randomAcc, balDelta)
+	AddBalanceSigned(sdb, randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
-	stateDB.AddBalanceSigned(randomAcc, balDelta)
-	if stateDB.DebugDirtiesCount() != 4 {
-		debugDirtiesCountMismatch(stateDB, s.T())
+	AddBalanceSigned(sdb, randomAcc, balDelta)
+	if sdb.DebugDirtiesCount() != 4 {
+		debugDirtiesCountMismatch(sdb, s.T())
 		s.FailNow("expected 4 dirty journal changes")
 	}
 
 	s.T().Log("StateDB.Commit, then Dirties should be gone")
-	err := stateDB.Commit()
+	err := sdb.Commit()
 	s.NoError(err)
-	if stateDB.DebugDirtiesCount() != 0 {
-		debugDirtiesCountMismatch(stateDB, s.T())
+	if sdb.DebugDirtiesCount() != 0 {
+		debugDirtiesCountMismatch(sdb, s.T())
 		s.FailNow("expected 0 dirty journal changes")
 	}
 }

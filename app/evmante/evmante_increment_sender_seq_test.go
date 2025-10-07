@@ -1,9 +1,13 @@
 package evmante_test
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -22,7 +26,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: single message",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return evmtest.HappyTransferTx(deps, 0)
@@ -34,7 +38,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			name: "happy: two messages",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balance := big.NewInt(100)
-				sdb.AddBalanceSigned(deps.Sender.EthAddr, balance)
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				txMsgOne := evmtest.HappyTransferTx(deps, 0)
@@ -89,5 +93,23 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 				s.Require().Equal(tc.wantSeq, seq)
 			}
 		})
+	}
+}
+
+// AddBalanceSigned is only used in tests for convenience.
+func AddBalanceSigned(sdb *statedb.StateDB, addr gethcommon.Address, wei *big.Int) {
+	weiSign := wei.Sign()
+	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
+	if isOverflow {
+		// TODO: Is there a better strategy than panicking here?
+		panic(fmt.Errorf(
+			"uint256 overflow occurred for big.Int value %s", wei))
+	}
+
+	reason := tracing.BalanceChangeTransfer
+	if weiSign >= 0 {
+		sdb.AddBalance(addr, weiAbs, reason)
+	} else {
+		sdb.SubBalance(addr, weiAbs, reason)
 	}
 }

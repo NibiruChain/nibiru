@@ -29,7 +29,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			name: "happy: signed tx, sufficient funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *statedb.StateDB) {
 				balanceMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
-				sdb.AddBalanceSigned(
+				AddBalanceSigned(sdb,
 					deps.Sender.EthAddr,
 					evm.NativeToWei(balanceMicronibi),
 				)

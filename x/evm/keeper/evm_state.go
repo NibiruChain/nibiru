@@ -158,7 +158,8 @@ func (state EvmState) CalcBloomFromLogs(
 	return bloom
 }
 
-// GetAccNonce returns the sequence number of an account, returns 0 if not exists.
+// GetAccNonce returns the sequence number of an account, returns 0 if the
+// account does not exist.
 func (k Keeper) GetAccNonce(ctx sdk.Context, addr gethcommon.Address) uint64 {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())
 	acct := k.accountKeeper.GetAccount(ctx, nibiruAddr)

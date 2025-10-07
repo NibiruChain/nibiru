@@ -39,7 +39,8 @@ func (esc EthSetupContextDecorator) AnteHandle(
 	// We need to setup an empty gas config so that the gas is consistent with Ethereum.
 	newCtx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).
 		WithKVGasConfig(storetypes.GasConfig{}).
-		WithTransientKVGasConfig(storetypes.GasConfig{})
+		WithTransientKVGasConfig(storetypes.GasConfig{}).
+		WithIsEvmTx(true)
 
 	return next(newCtx, tx, simulate)
 }

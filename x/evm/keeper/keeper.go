@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -51,6 +52,12 @@ type Keeper struct {
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.
 	tracer string
+}
+
+var _ bankkeeper.SendKeeper = (*NibiruBankKeeper)(nil)
+
+func (k *Keeper) BK() bankkeeper.Keeper {
+	return k.Bank
 }
 
 // NewKeeper is a constructor for an x/evm [Keeper]. This function is necessary

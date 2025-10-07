@@ -25,20 +25,20 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
-// AccessList is an EIP-2930 access list. The specification requires unique slots
+// accessList is an EIP-2930 access list. The specification requires unique slots
 // per address, fast membership testing with O(1) lookups, and order
 // independence.
 //
 // Invariant:
-//   - addr ∉ map               => not present in AccessList
+//   - addr ∉ map               => not present in accessList
 //   - map[addr] -> nil | empty => address present, zero slots
 //   - map[addr] -> slots       => address + N slots
-type AccessList map[gethcommon.Address]set.Set[gethcommon.Hash]
+type accessList map[gethcommon.Address]set.Set[gethcommon.Hash]
 
-var _ json.Marshaler = (*AccessList)(nil)
-var _ json.Unmarshaler = (*AccessList)(nil)
+var _ json.Marshaler = (*accessList)(nil)
+var _ json.Unmarshaler = (*accessList)(nil)
 
-func (al *AccessList) MarshalJSON() (bz []byte, err error) {
+func (al *accessList) MarshalJSON() (bz []byte, err error) {
 	accessTupleJson := make(map[gethcommon.Address][]gethcommon.Hash)
 	if al == nil {
 		return json.Marshal(accessTupleJson)
@@ -51,13 +51,13 @@ func (al *AccessList) MarshalJSON() (bz []byte, err error) {
 }
 
 // TODO: UD-DEBUG: test
-func (al *AccessList) UnmarshalJSON(bz []byte) (err error) {
+func (al *accessList) UnmarshalJSON(bz []byte) (err error) {
 	var accessTupleJson map[gethcommon.Address][]gethcommon.Hash
 	if err := json.Unmarshal(bz, &accessTupleJson); err != nil {
 		return err // TODO: UD-DEBUG: err msg
 	}
 	if *al == nil {
-		*al = make(AccessList)
+		*al = make(accessList)
 	}
 	for addr, slots := range accessTupleJson {
 		(*al)[addr] = set.New(slots...)
@@ -91,7 +91,7 @@ func (s *StateDB) AddSlotToAccessList(addr gethcommon.Address, slot gethcommon.H
 	s.setAccessList(al)
 }
 
-func (s *StateDB) getAccessList() AccessList {
+func (s *StateDB) getAccessList() accessList {
 	accessListBz := func() []byte {
 		if len(s.localState.accessList) > 0 {
 			return s.localState.accessList
@@ -105,16 +105,16 @@ func (s *StateDB) getAccessList() AccessList {
 		return nil
 	}()
 	if len(accessListBz) == 0 {
-		return make(AccessList)
+		return make(accessList)
 	}
-	var al AccessList
+	var al accessList
 	if err := json.Unmarshal(accessListBz, &al); err != nil {
 		panic(err) // TODO: UD-DEBUG: err mesg
 	}
 	return al
 }
 
-func (s *StateDB) setAccessList(al AccessList) {
+func (s *StateDB) setAccessList(al accessList) {
 	accessListBz, err := json.Marshal(al)
 	if err != nil {
 		panic(err) // TODO: UD-DEBUG: err mesg
@@ -151,7 +151,7 @@ func (s *StateDB) SlotInAccessList(
 
 // AddAddress adds an address to the access list, and returns 'true' if the operation
 // caused a change (addr was not previously in the list).
-func (al AccessList) AddAddress(addr gethcommon.Address) bool {
+func (al accessList) AddAddress(addr gethcommon.Address) bool {
 	if _, present := al[addr]; present {
 		return false
 	}
@@ -164,7 +164,7 @@ func (al AccessList) AddAddress(addr gethcommon.Address) bool {
 // - address added
 // - slot added
 // For any 'true' value returned, a corresponding journal entry must be made.
-func (al AccessList) AddSlot(
+func (al accessList) AddSlot(
 	addr gethcommon.Address, slot gethcommon.Hash,
 ) (addrChange bool, slotChange bool) {
 	slotset, addrPresent := al[addr]

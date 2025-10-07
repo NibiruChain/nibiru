@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -490,7 +489,10 @@ func (s *Suite) TestSyncStateDBWithAccount_DeliverTxCheck() {
 
 			// Set initial balance to 0 in StateDB
 			ethAddr := eth.NibiruAddrToEthAddr(testAddr.NibiruAddr)
-			deps.EvmKeeper.Bank.StateDB.SetBalanceWei(ethAddr, big.NewInt(0))
+			s.Equal(
+				"0",
+				deps.EvmKeeper.BK().GetWeiBalance(deps.Ctx, testAddr.NibiruAddr).String(),
+			)
 
 			// Apply context modifications
 			testCtx := tc.setupContext(deps.Ctx)
