@@ -36,7 +36,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 		{
 			name: "happy: is recheck tx",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
-				deps.Ctx = deps.Ctx.WithIsReCheckTx(true)
+				deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
 			},
 			txSetup:  evmtest.HappyCreateContractTx,
 			gasMeter: eth.NewInfiniteGasMeterWithLimit(0),
@@ -68,10 +68,12 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			tx := tc.txSetup(&deps)
 			stateDB.Commit()
 
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
-			deps.Ctx = deps.Ctx.WithBlockGasMeter(tc.gasMeter)
+			deps.SetCtx(deps.Ctx().
+				WithIsCheckTx(true).
+				WithBlockGasMeter(tc.gasMeter),
+			)
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

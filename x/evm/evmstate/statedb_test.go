@@ -21,24 +21,45 @@ import (
 func (s *Suite) TestStateDBBalance() {
 	deps := evmtest.NewTestDeps()
 	{
+		// Check initial balance with StateDB
 		sdb := deps.NewStateDB()
 		s.Equal("0", sdb.GetBalance(deps.Sender.EthAddr).String())
 
 		s.T().Log("fund account in unibi. See expected wei amount.")
 		err := testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			sdb.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 42)),
 		)
 		s.NoError(err)
+		wantWeiBal := "42" + strings.Repeat("0", 12)
 		s.Equal(
-			"42"+strings.Repeat("0", 12),
-			sdb.GetBalance(deps.Sender.EthAddr).String(),
+			wantWeiBal,
+			deps.App.BankKeeper.GetWeiBalance(sdb.Ctx(), deps.Sender.NibiruAddr).String(),
+			"expect wei bal using sdb.Ctx",
 		)
 		s.Equal(
 			"42",
-			deps.App.BankKeeper.GetBalance(deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom).Amount.String(),
+			deps.App.BankKeeper.GetBalance(sdb.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom).Amount.String(),
+			"expect micronibi bal using Bank.GetBalance",
+		)
+		s.Equal(
+			wantWeiBal,
+			sdb.GetBalance(deps.Sender.EthAddr).String(),
+			"expect wei bal using sdb",
+		)
+
+		s.Equal(
+			"0",
+			deps.EvmKeeper.GetWeiBalance(deps.Ctx(), deps.Sender.EthAddr).String(),
+			"expect unmodified wei bal using deps.Ctx (before snapshot)",
+		)
+		sdb.Commit()
+		s.Equal(
+			wantWeiBal,
+			deps.EvmKeeper.GetWeiBalance(deps.Ctx(), deps.Sender.EthAddr).String(),
+			"expect synced wei bal using deps.Ctx after commit)",
 		)
 	}
 
@@ -76,13 +97,13 @@ func (s *Suite) TestStateDBBalance() {
 		toNibiAddr := eth.EthAddrToNibiruAddr(to)
 		err := testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 8)),
 		)
 		s.NoError(err)
 		err = deps.App.BankKeeper.SendCoins(
-			deps.Ctx, deps.Sender.NibiruAddr,
+			deps.Ctx(), deps.Sender.NibiruAddr,
 			toNibiAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 3)),
 		)

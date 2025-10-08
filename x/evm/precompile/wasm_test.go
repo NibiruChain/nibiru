@@ -56,7 +56,7 @@ func (s *WasmSuite) TestInstantiate() {
 	s.Require().NoError(err)
 
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -102,7 +102,7 @@ func (s *WasmSuite) TestExecute() {
 		)
 		s.Require().NoError(err)
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
@@ -138,7 +138,7 @@ func (s *WasmSuite) TestExecute() {
 
 		// evmObj, _ = deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
@@ -189,7 +189,7 @@ func (s *WasmSuite) TestQueryRaw() {
 
 	evmObj, _ := deps.NewEVM()
 	queryResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -230,7 +230,7 @@ func (s *WasmSuite) TestQuerySmart() {
 
 	evmObj, _ := deps.NewEVM()
 	queryResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -399,7 +399,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			evmObj, _ := deps.NewEVM()
 
 			ethTxResp, err := deps.EvmKeeper.CallContract(
-				deps.Ctx,
+				deps.Ctx(),
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
@@ -425,7 +425,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(100))),
 	))
@@ -538,7 +538,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 			s.Require().NoError(err)
 			evmObj, _ := deps.NewEVM()
 			ethTxResp, err := deps.EvmKeeper.CallContract(
-				deps.Ctx,
+				deps.Ctx(),
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
@@ -591,7 +591,7 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	)
 	s.Require().NoError(err)
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -640,7 +640,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 	s.Run("Send 10 NIBI to test contract manually", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			eth.EthAddrToNibiruAddr(testContractAddr),
 			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
 		))
@@ -665,7 +665,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
@@ -676,10 +676,10 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 		)
 		s.Require().NoError(err)
 
-		balanceAlice := deps.App.BankKeeper.GetBalance(deps.Ctx, alice.NibiruAddr, evm.EVMBankDenom)
+		balanceAlice := deps.App.BankKeeper.GetBalance(deps.Ctx(), alice.NibiruAddr, evm.EVMBankDenom)
 		s.Require().Equal(balanceAlice.Amount.BigInt(), big.NewInt(1e6))
 
-		balanceTestContract := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
+		balanceTestContract := deps.App.BankKeeper.GetBalance(deps.Ctx(), eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
 		s.Require().Equal(balanceTestContract.Amount.BigInt(), big.NewInt(9e6))
 	})
 }
@@ -715,7 +715,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 	s.Run("Mint 10 NIBI to test contract", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			eth.EthAddrToNibiruAddr(testContractAddr),
 			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
 		))
@@ -725,7 +725,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 	s.Run("create validator", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			validator.NibiruAddr,
 			sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(10e6))),
 		))
@@ -741,7 +741,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 		s.Require().NoError(err)
 
 		stakingMsgServer := stakingkeeper.NewMsgServerImpl(deps.App.StakingKeeper)
-		resp, err := stakingMsgServer.CreateValidator(deps.Ctx, createValMsg)
+		resp, err := stakingMsgServer.CreateValidator(deps.Ctx(), createValMsg)
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 	})
@@ -757,7 +757,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
@@ -768,19 +768,19 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 		)
 		s.Require().NoError(err)
 
-		testContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
+		testContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx(), eth.EthAddrToNibiruAddr(testContractAddr), evm.EVMBankDenom)
 		s.Require().Equal(testContractBalance.Amount.BigInt(), big.NewInt(5e6))
 
-		wasmContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, wasmContract, evm.EVMBankDenom)
+		wasmContractBalance := deps.App.BankKeeper.GetBalance(deps.Ctx(), wasmContract, evm.EVMBankDenom)
 		s.Require().Equal(wasmContractBalance.Amount.BigInt(), big.NewInt(0))
 
-		delegations := deps.App.StakingKeeper.GetAllDelegatorDelegations(deps.Ctx, wasmContract)
+		delegations := deps.App.StakingKeeper.GetAllDelegatorDelegations(deps.Ctx(), wasmContract)
 		s.Require().Equal(len(delegations), 1)
 		s.Require().Equal(sdk.ValAddress(validator.NibiruAddr).String(), delegations[0].ValidatorAddress)
 
 		// after converting the wasm contract address to an eth address, check the balances
 		wasmContractEthAddr := eth.NibiruAddrToEthAddr(wasmContract)
-		balance := deps.App.BankKeeper.GetBalance(deps.Ctx, eth.EthAddrToNibiruAddr(wasmContractEthAddr), evm.EVMBankDenom)
+		balance := deps.App.BankKeeper.GetBalance(deps.Ctx(), eth.EthAddrToNibiruAddr(wasmContractEthAddr), evm.EVMBankDenom)
 		s.Require().Equal(big.NewInt(0), balance.Amount.BigInt())
 	})
 }

@@ -34,7 +34,7 @@ func (s *AnteTestSuite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

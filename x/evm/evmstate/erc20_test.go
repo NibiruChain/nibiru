@@ -18,7 +18,7 @@ func (s *Suite) TestERC20Calls() {
 		evmObj, _ := deps.NewEVM()
 		_, err := deps.EvmKeeper.ERC20().Mint(
 			erc20, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
-			big.NewInt(69_420), deps.Ctx, evmObj,
+			big.NewInt(69_420), deps.Ctx(), evmObj,
 		)
 		s.ErrorContains(err, "Ownable: caller is not the owner")
 	})
@@ -30,7 +30,7 @@ func (s *Suite) TestERC20Calls() {
 			evm.EVM_MODULE_ADDRESS, /*sender*/
 			evm.EVM_MODULE_ADDRESS, /*recipient*/
 			big.NewInt(69_420),     /*amount*/
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 		)
 		s.Require().NoError(err)
@@ -44,7 +44,7 @@ func (s *Suite) TestERC20Calls() {
 		evmObj, _ := deps.NewEVM()
 		_, _, err := deps.EvmKeeper.ERC20().Transfer(
 			erc20, deps.Sender.EthAddr, evm.EVM_MODULE_ADDRESS,
-			big.NewInt(9_420), deps.Ctx, evmObj,
+			big.NewInt(9_420), deps.Ctx(), evmObj,
 		)
 		s.ErrorContains(err, "ERC20: transfer amount exceeds balance")
 		// balances unchanged
@@ -59,7 +59,7 @@ func (s *Suite) TestERC20Calls() {
 			evm.EVM_MODULE_ADDRESS, /*sender*/
 			deps.Sender.EthAddr,    /*recipient*/
 			big.NewInt(9_420),      /*amount*/
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 		)
 		s.Require().NoError(err)
@@ -77,7 +77,7 @@ func (s *Suite) TestERC20Calls() {
 			erc20,               /*erc20Addr*/
 			deps.Sender.EthAddr, /*sender*/
 			big.NewInt(6_000),   /*amount*/
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 		)
 		s.Require().NoError(err)
@@ -92,7 +92,7 @@ func (s *Suite) TestERC20Calls() {
 			erc20,                  /*erc20Addr*/
 			evm.EVM_MODULE_ADDRESS, /*sender*/
 			big.NewInt(6_000),      /*amount*/
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 		)
 		s.Require().NoError(err)

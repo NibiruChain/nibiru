@@ -21,10 +21,7 @@ import (
 	"math/big"
 	"sort"
 
-	store "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
 )
 
 // JournalChange, also called a "journal entry", is a modification entry in the
@@ -123,85 +120,6 @@ func (ch suicideChange) Revert(s *SDB) {
 
 func (ch suicideChange) Dirtied() *common.Address {
 	return ch.account
-}
-
-// ------------------------------------------------------
-// balanceChange
-
-// balanceChange: [JournalChange] for an update to the wei balance of an account.
-type balanceChange struct {
-	account *common.Address
-	prevWei *uint256.Int
-}
-
-var _ JournalChange = balanceChange{}
-
-func (ch balanceChange) Revert(s *SDB) {
-	s.getStateObject(*ch.account).setBalance(ch.prevWei.ToBig())
-}
-
-func (ch balanceChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
-// addLogChange
-
-// addLogChange represents [JournalChange] for a new log addition.
-// When reverted, it removes the last log from the accumulated logs list.
-type addLogChange struct{}
-
-var _ JournalChange = addLogChange{}
-
-func (ch addLogChange) Revert(s *SDB) {
-	s.logs = s.logs[:len(s.logs)-1]
-}
-
-func (ch addLogChange) Dirtied() *common.Address {
-	return nil
-}
-
-// ------------------------------------------------------
-// PrecompileSnapshotBeforeRun
-
-// PrecompileCalled: Precompiles can alter persistent storage of other
-// modules. These changes to persistent storage are not reverted by a `Revert` of
-// [JournalChange] by default, as it generally manages only changes to accounts
-// and Bank balances for ether (NIBI).
-//
-// As a workaround to make state changes from precompiles reversible, we store
-// [PrecompileCalled] snapshots that sync and record the prior state
-// of the other modules, allowing precompile calls to truly be reverted.
-//
-// As a simple example, suppose that a transaction calls a precompile.
-//  1. If the precompile changes the state in the Bank Module or Wasm module
-//  2. The call gets reverted (`revert()` in Solidity), which shoud restore the
-//     state to a in-memory snapshot recorded on the StateDB journal.
-//  3. This could cause a problem where changes to the rest of the blockchain state
-//     are still in effect following the reversion in the EVM state DB.
-type PrecompileCalled struct {
-	MultiStore store.CacheMultiStore
-	Events     sdk.Events
-}
-
-var _ JournalChange = PrecompileCalled{}
-
-// Revert rolls back the [SDB] cache context to the state it was in prior to
-// the precompile call. Modifications to this cache context are pushed to the
-// commit context (s.evmTxCtx) when [SDB.Commit] is executed.
-func (ch PrecompileCalled) Revert(s *SDB) {
-	s.cacheCtx = s.cacheCtx.WithMultiStore(ch.MultiStore)
-	// Rewrite the `writeCacheCtxFn` using the same logic as sdk.Context.CacheCtx
-	s.writeToCommitCtxFromCacheCtx = func() {
-		s.evmTxCtx.EventManager().EmitEvents(ch.Events)
-		// TODO: Check correctness of the emitted events
-		// https://github.com/NibiruChain/nibiru/issues/2096
-		ch.MultiStore.Write()
-	}
-}
-
-func (ch PrecompileCalled) Dirtied() *common.Address {
-	return nil
 }
 
 // ------------------------------------------------------

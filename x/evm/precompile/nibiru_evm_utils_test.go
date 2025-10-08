@@ -74,19 +74,19 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 	db := deps.NewStateDB()
 
 	s.T().Log("Mint coins to generate ABCI events")
-	startIdx := len(deps.Ctx.EventManager().Events())
+	startIdx := len(deps.Ctx().EventManager().Events())
 	dbStartIdx := len(db.Logs())
-	err := deps.App.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName,
+	err := deps.App.BankKeeper.MintCoins(deps.Ctx(), evm.ModuleName,
 		sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 420_000)),
 	)
 	s.NoError(err)
 
-	abciEvents := deps.Ctx.EventManager().Events()[startIdx:]
+	abciEvents := deps.Ctx().EventManager().Events()[startIdx:]
 	s.Lenf(abciEvents, 2, "%+s", abciEvents)
 
 	emittingAddr := precompile.PrecompileAddr_Wasm
-	precompile.EmitEventAbciEvents(deps.Ctx, db, abciEvents, emittingAddr)
-	blockNumber := uint64(deps.Ctx.BlockHeight())
+	precompile.EmitEventAbciEvents(deps.Ctx(), db, abciEvents, emittingAddr)
+	blockNumber := uint64(deps.Ctx().BlockHeight())
 	evmAddrBech32 := eth.EthAddrToNibiruAddr(evm.EVM_MODULE_ADDRESS)
 	type Want struct {
 		EventLog gethcore.Log

@@ -71,9 +71,9 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			tx := tc.txSetup(&deps)
 			stateDB.Commit()
 
-			deps.Ctx = deps.Ctx.WithIsCheckTx(true)
+			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

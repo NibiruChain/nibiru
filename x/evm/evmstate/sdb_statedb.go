@@ -25,7 +25,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/stateless"
@@ -78,9 +77,6 @@ type SDB struct {
 
 	// The number of precompiled contract calls within the current transaction
 	multistoreCacheCount uint8
-
-	// Per-transaction logs
-	logs []*gethcore.Log
 }
 
 func FromVM(evmObj *vm.EVM) *SDB {
@@ -88,9 +84,9 @@ func FromVM(evmObj *vm.EVM) *SDB {
 }
 
 // NewSDB creates a new state from a given trie.
-func NewSDB(ctx sdk.Context, keeper *Keeper, txConfig TxConfig) *SDB {
+func NewSDB(ctx sdk.Context, k *Keeper, txConfig TxConfig) *SDB {
 	sdb := &SDB{
-		keeper:       keeper,
+		keeper:       k,
 		evmTxCtx:     ctx,
 		stateObjects: make(map[gethcommon.Address]*stateObject),
 		Journal:      newJournal(),
@@ -98,6 +94,9 @@ func NewSDB(ctx sdk.Context, keeper *Keeper, txConfig TxConfig) *SDB {
 		savedCtxs:    []sdk.Context{},
 		txConfig:     txConfig,
 	}
+	// Initial snapshot is required to guarantee that `RevertToSnapshot(0)` is
+	// possible
+	sdb.Snapshot()
 	return sdb
 }
 
@@ -145,35 +144,41 @@ func (s *SDB) Keeper() *Keeper {
 	return s.keeper
 }
 
-// GetEvmTxCtx returns the EVM transaction context.
-func (s *SDB) GetEvmTxCtx() sdk.Context {
+// Ctx returns the EVM transaction context.
+func (s *SDB) Ctx() sdk.Context {
 	return s.evmTxCtx
 }
 
-// GetCacheContext: Getter for testing purposes.
-func (s *SDB) GetCacheContext() *sdk.Context {
-	if s.writeToCommitCtxFromCacheCtx == nil {
-		return nil
-	}
-	return &s.cacheCtx
+// SetCtx overwrites the EVM transaction context.
+func (s *SDB) SetCtx(ctx sdk.Context) {
+	s.evmTxCtx = ctx
 }
 
 // AddLog adds to the EVM's event log for the current transaction.
 // [AddLog] uses the [TxConfig] to populate the tx hash, block hash, tx index,
 // and event log index.
-func (s *SDB) AddLog(log *gethcore.Log) {
-	s.Journal.append(addLogChange{})
+func (s *SDB) AddLog(ethLog *gethcore.Log) {
+	// TODO: UD-DEBUG: clean
+	// s.Journal.append(addLogChange{})
+	// ethLog.TxHash = s.txConfig.TxHash
+	// ethLog.BlockHash = s.txConfig.BlockHash
+	// ethLog.TxIndex = s.txConfig.TxIndex
+	// ethLog.Index = s.txConfig.LogIndex + uint(len(s.logs))
+	// s.logs = append(s.logs, ethLog)
 
-	log.TxHash = s.txConfig.TxHash
-	log.BlockHash = s.txConfig.BlockHash
-	log.TxIndex = s.txConfig.TxIndex
-	log.Index = s.txConfig.LogIndex + uint(len(s.logs))
-	s.logs = append(s.logs, log)
+	ethLog.TxHash = s.txConfig.TxHash
+	ethLog.BlockHash = s.txConfig.BlockHash
+	ethLog.TxIndex = s.txConfig.TxIndex
+	ethLog.Index = s.txConfig.LogIndex + uint(len(s.Logs()))
+	s.localState.logs = append(s.localState.logs, ethLog)
 }
 
-// Logs returns the event logs of current transaction.
-func (s *SDB) Logs() []*gethcore.Log {
-	return s.logs
+// Logs returns the per-transaction event logs.
+func (s *SDB) Logs() (allLogs []*gethcore.Log) {
+	for _, ls := range append(s.savedStates, s.localState) {
+		allLogs = append(allLogs, ls.logs...)
+	}
+	return allLogs
 }
 
 // GetRefund returns the current value of the refund counter.
@@ -342,6 +347,7 @@ func (s *SDB) getStateObject(addr gethcommon.Address) *stateObject {
 
 // CreateAccount explicitly creates a state object. If a state object with the address
 // already exists the balance is carried over to the new account.
+// TODO: Check that account balances are meant to be preserved across account reset.
 //
 // CreateAccount is called during the EVM CREATE operation. The situation might arise that
 // a contract does the following:
@@ -353,18 +359,19 @@ func (s *SDB) getStateObject(addr gethcommon.Address) *stateObject {
 func (s *SDB) CreateAccount(addr gethcommon.Address) {
 	// Clear balance if there was one for the account
 	accBal := s.GetBalance(addr)
-	if !accBal.IsZero() {
-		err := s.keeper.SendWei(s.evmTxCtx, addr, evm.EVM_MODULE_ADDRESS, accBal)
-		if err != nil {
-			panic(err) // TODO: UD-DEBUG: error msg
-		}
-	}
+	// if !accBal.IsZero() {
+	// 	err := s.keeper.SendWei(s.evmTxCtx, addr, evm.EVM_MODULE_ADDRESS, accBal)
+	// 	if err != nil {
+	// 		panic(err) // TODO: UD-DEBUG: error msg
+	// 	}
+	// }
 
 	// Create new account or reset an existing one.
 	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
 	if acc == nil {
 		acc = NewEmptyAccount()
 	}
+	acc.BalanceNwei = accBal
 	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
 }
@@ -604,8 +611,20 @@ func (s *SDB) Snapshot() int {
 	// return id
 }
 
+// SnapshotRevertIdx returns the current snapshot revert index. The original
+// snapshot has revert index 0, and each subsequent snapshot afterward increments
+// this value by 1.
+func (s *SDB) SnapshotRevertIdx() int {
+	return len(s.savedCtxs) - 1
+}
+
 // RevertToSnapshot reverts all state changes made since the given revision.
 func (s *SDB) RevertToSnapshot(revid int) {
+	if currRevId := s.SnapshotRevertIdx(); revid > currRevId {
+		// Only snapshot to valid reversion indices. Panic under same conditions
+		// as Geth.
+		panic(fmt.Errorf("revision id %v cannot be reverted: current id is %d", revid, currRevId))
+	}
 	s.evmTxCtx = s.savedCtxs[revid]
 	s.savedCtxs = s.savedCtxs[:revid]
 
@@ -654,8 +673,15 @@ func (s *SDB) Commit() {
 				if accChange != SNAPSHOT_ACC_STATUS_DELETE {
 					continue
 				}
+				// Handle funds for the self-destructed account
 				// TODO: Why send to the module? Why not?
 				s.subBalanceHoldingSupplyConstant(addr, s.GetBalance(addr))
+				// Delete self-destructed account from global state
+				addrBech32 := eth.EthAddrToNibiruAddr(addr)
+				acct := s.keeper.accountKeeper.GetAccount(s.evmTxCtx, addrBech32)
+				if acct != nil {
+					s.keeper.accountKeeper.RemoveAccount(s.evmTxCtx, acct)
+				}
 			}
 		}
 	}
@@ -737,18 +763,6 @@ func (s *SDB) commitCtx(ctx sdk.Context) error {
 		s.Journal.dirties[addr] = 0
 	}
 	return nil
-}
-
-func (s *SDB) CacheCtxForPrecompile() (
-	sdk.Context, PrecompileCalled,
-) {
-	if s.writeToCommitCtxFromCacheCtx == nil {
-		s.cacheCtx, s.writeToCommitCtxFromCacheCtx = s.evmTxCtx.CacheContext()
-	}
-	return s.cacheCtx, PrecompileCalled{
-		MultiStore: s.cacheCtx.MultiStore().(store.CacheMultiStore).Copy(),
-		Events:     s.cacheCtx.EventManager().Events(),
-	}
 }
 
 // TODO: cleanup - REMOVE

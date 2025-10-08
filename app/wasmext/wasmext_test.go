@@ -61,7 +61,7 @@ func (s *Suite) TestEvmFilter() {
 
 	s.T().Log("Dispatch the Eth tx msg from Wasm (unsuccessfully)")
 	_, _, err = wasmMsgHandler.DispatchMsg(
-		deps.Ctx,
+		deps.Ctx(),
 		wasmContractAddr,
 		"ibcport-unused",
 		wasmvm.CosmosMsg{
@@ -74,7 +74,7 @@ func (s *Suite) TestEvmFilter() {
 	s.Require().ErrorContains(err, "Wasm VM to EVM call pattern is not yet supported")
 
 	coins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 420)) // arbitrary constant
-	err = testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins)
+	err = testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, coins)
 	s.NoError(err)
 	txMsg := &bank.MsgSend{
 		FromAddress: deps.Sender.NibiruAddr.String(),
@@ -84,7 +84,7 @@ func (s *Suite) TestEvmFilter() {
 	protoValueBz, err = deps.App.AppCodec().Marshal(txMsg)
 	s.NoError(err)
 	_, _, err = wasmMsgHandler.DispatchMsg(
-		deps.Ctx,
+		deps.Ctx(),
 		wasmContractAddr,
 		"ibcport-unused",
 		wasmvm.CosmosMsg{

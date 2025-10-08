@@ -84,10 +84,10 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 	{
 		// 69 seconds + 420 nanoseconds === 69000 milliseconds for the
 		// return value from the UnixMilli() function
-		deps.Ctx = deps.Ctx.WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69)
-		deps.App.OracleKeeper.SetPrice(deps.Ctx, "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
+		deps.SetCtx(deps.Ctx().WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69))
+		deps.App.OracleKeeper.SetPrice(deps.Ctx(), "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
 
-		resp, err := runQuery(deps.Ctx)
+		resp, err := runQuery(deps.Ctx())
 		s.NoError(err)
 
 		// Check the response
@@ -102,10 +102,10 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 
 	s.T().Log("Query from a later time")
 	{
-		secondsLater := deps.Ctx.BlockTime().Add(100 * time.Second)
-		resp, err := runQuery(deps.Ctx.
+		secondsLater := deps.Ctx().BlockTime().Add(100 * time.Second)
+		resp, err := runQuery(deps.Ctx().
 			WithBlockTime(secondsLater).
-			WithBlockHeight(deps.Ctx.BlockHeight() + 50),
+			WithBlockHeight(deps.Ctx().BlockHeight() + 50),
 		)
 		s.NoError(err)
 
@@ -123,10 +123,10 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 
 	s.T().Log("test IOracle.chainLinkLatestRoundData")
 	{
-		secondsLater := deps.Ctx.BlockTime().Add(100 * time.Second)
-		ctx := deps.Ctx.
+		secondsLater := deps.Ctx().BlockTime().Add(100 * time.Second)
+		ctx := deps.Ctx().
 			WithBlockTime(secondsLater).
-			WithBlockHeight(deps.Ctx.BlockHeight() + 50)
+			WithBlockHeight(deps.Ctx().BlockHeight() + 50)
 
 		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
 			string(precompile.OracleMethod_chainLinkLatestRoundData),
@@ -157,8 +157,8 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		// In this case, 0.067 = 67 * 10^{15}.
 		s.Equal(out[1].(*big.Int), big.NewInt(67_000_000_000_000_000))
 		// startedAt, updatedAt : created at block timestamp
-		s.Equal(out[2].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
-		s.Equal(out[3].(*big.Int), new(big.Int).SetInt64(deps.Ctx.BlockTime().Unix()))
+		s.Equal(out[2].(*big.Int), new(big.Int).SetInt64(deps.Ctx().BlockTime().Unix()))
+		s.Equal(out[3].(*big.Int), new(big.Int).SetInt64(deps.Ctx().BlockTime().Unix()))
 		// answeredInRound
 		s.Equal(out[4].(*big.Int), big.NewInt(420))
 	}

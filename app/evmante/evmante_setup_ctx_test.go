@@ -20,7 +20,7 @@ func (s *TestSuite) TestEthSetupContextDecorator() {
 
 	// Ante handler returns new context
 	newCtx, err := anteDec.AnteHandle(
-		deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+		deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 	)
 	s.Require().NoError(err)
 

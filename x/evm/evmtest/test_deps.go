@@ -25,10 +25,12 @@ import (
 
 type TestDeps struct {
 	App       *app.NibiruApp
-	Ctx       sdk.Context
 	EvmKeeper *evmstate.Keeper
 	GenState  *evm.GenesisState
 	Sender    EthPrivKeyAcc
+
+	sdb     *evmstate.SDB
+	ctxInit sdk.Context
 }
 
 func NewTestDeps() TestDeps {
@@ -37,7 +39,7 @@ func NewTestDeps() TestDeps {
 
 	return TestDeps{
 		App:       app,
-		Ctx:       ctx,
+		ctxInit:   ctx,
 		EvmKeeper: app.EvmKeeper,
 		GenState:  evm.DefaultGenesisState(),
 		Sender:    NewEthPrivAcc(),
@@ -45,20 +47,55 @@ func NewTestDeps() TestDeps {
 }
 
 func (deps TestDeps) NewStateDB() *evmstate.SDB {
-	return deps.EvmKeeper.NewSDB(
-		deps.Ctx,
-		evmstate.NewEmptyTxConfig(
-			gethcommon.BytesToHash(deps.Ctx.HeaderHash()),
-		),
-	)
+	if deps.sdb == nil {
+		deps.sdb = deps.EvmKeeper.NewSDB(
+			deps.Ctx(),
+			evmstate.NewEmptyTxConfig(
+				gethcommon.BytesToHash(deps.Ctx().HeaderHash()),
+			),
+		)
+	}
+	return deps.sdb
+}
+
+func (deps TestDeps) Commit() {
+	if deps.sdb != nil {
+		deps.sdb.Commit()
+		deps.sdb = nil
+	}
+}
+
+// Ctx returns the current EVM state DB context if one it is initialized and
+// falls back to the initial ctx from when the [TestDeps] instance was
+// constructed.
+func (deps TestDeps) Ctx() sdk.Context {
+	if deps.sdb == nil {
+		return deps.ctxInit
+	}
+	return deps.sdb.Ctx()
+}
+
+// SetCtx overwrites the current context.
+func (deps *TestDeps) SetCtx(ctx sdk.Context) {
+	if deps.sdb == nil {
+		deps.ctxInit = ctx
+		return
+	}
+	deps.sdb.SetCtx(ctx)
+}
+
+// CtxInit returns the initial context from when the [TestDeps] instance was
+// constructed.
+func (deps TestDeps) CtxInit() sdk.Context {
+	return deps.ctxInit
 }
 
 func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
-	sdb := deps.EvmKeeper.NewSDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	sdb := deps.NewStateDB()
 	evmObj := deps.EvmKeeper.NewEVM(
-		deps.Ctx,
+		deps.Ctx(),
 		MOCK_GETH_MESSAGE,
-		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx()),
 		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
 		sdb,
 	)
@@ -66,47 +103,37 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
 }
 
 func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *evmstate.SDB) {
-	stateDB := deps.EvmKeeper.NewSDB(deps.Ctx, evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())))
+	sdb := deps.NewStateDB()
 	evmObj := deps.EvmKeeper.NewEVM(
-		deps.Ctx,
+		deps.Ctx(),
 		MOCK_GETH_MESSAGE,
-		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
+		deps.EvmKeeper.GetEVMConfig(deps.Ctx()),
 		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
-		stateDB,
+		sdb,
 	)
-	return evmObj, stateDB
+	return evmObj, sdb
 }
 
 func (deps *TestDeps) GethSigner() gethcore.Signer {
-	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 }
 
 func (deps TestDeps) GoCtx() context.Context {
-	return sdk.WrapSDKContext(deps.Ctx)
+	return sdk.WrapSDKContext(deps.Ctx())
 }
 
 func (deps *TestDeps) MimicEthereumTx(
 	s *suite.Suite,
 	doTx func(evmObj *vm.EVM, sdb *evmstate.SDB),
 ) {
-	sdb := deps.EvmKeeper.NewSDB(
-		deps.Ctx,
-		evmstate.NewEmptyTxConfig(gethcommon.BytesToHash(deps.Ctx.HeaderHash())),
-	)
-	evmObj := deps.EvmKeeper.NewEVM(
-		deps.Ctx,
-		MOCK_GETH_MESSAGE,
-		deps.EvmKeeper.GetEVMConfig(deps.Ctx),
-		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
-		sdb,
-	)
+	evmObj, sdb := deps.NewEVM()
 	doTx(evmObj, sdb)
 	sdb.Commit()
 }
 
 func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	var (
-		ctx         = deps.Ctx
+		ctx         = deps.Ctx()
 		wnibiAddr   = deps.EvmKeeper.GetParams(ctx).CanonicalWnibi.Address
 		evmAccState = deps.EvmKeeper.EvmState.AccState
 	)

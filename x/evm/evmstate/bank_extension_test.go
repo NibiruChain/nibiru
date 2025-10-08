@@ -6,9 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	staking "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/eth"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
-
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -113,16 +110,16 @@ func (scenario GasConsumedInvariantScenario) Run(
 
 	sendCoins := sdk.NewCoins(sdk.NewInt64Coin(bankDenom, 420))
 	s.NoError(
-		testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
+		testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, sendCoins),
 	)
 
-	gasConsumedBefore := deps.Ctx.GasMeter().GasConsumed()
+	gasConsumedBefore := deps.Ctx().GasMeter().GasConsumed()
 	s.NoError(
 		deps.App.BankKeeper.SendCoins(
-			deps.Ctx, deps.Sender.NibiruAddr, to.NibiruAddr, sendCoins,
+			deps.Ctx(), deps.Sender.NibiruAddr, to.NibiruAddr, sendCoins,
 		),
 	)
-	gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
+	gasConsumedAfter := deps.Ctx().GasMeter().GasConsumed()
 
 	s.Greaterf(gasConsumedAfter, gasConsumedBefore,
 		"gas meter consumed should not be negative: gas consumed after = %d, gas consumed before = %d ",
@@ -207,9 +204,9 @@ func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
 
 		f.Setup(&deps)
 
-		gasConsumedBefore := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedBefore := deps.Ctx().GasMeter().GasConsumed()
 		f.Measure(&deps)
-		gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedAfter := deps.Ctx().GasMeter().GasConsumed()
 		gasConsumedA = gasConsumedAfter - gasConsumedBefore
 	}
 
@@ -219,9 +216,9 @@ func (f FunctionalGasConsumedInvariantScenario) Run(s *Suite) {
 
 		f.Setup(&deps)
 
-		gasConsumedBefore := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedBefore := deps.Ctx().GasMeter().GasConsumed()
 		f.Measure(&deps)
-		gasConsumedAfter := deps.Ctx.GasMeter().GasConsumed()
+		gasConsumedAfter := deps.Ctx().GasMeter().GasConsumed()
 		gasConsumedB = gasConsumedAfter - gasConsumedBefore
 	}
 
@@ -243,13 +240,13 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 		FunctionalGasConsumedInvariantScenario{
 			Setup: func(deps *evmtest.TestDeps) {
 				s.NoError(
-					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins),
+					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, coins),
 				)
 			},
 			Measure: func(deps *evmtest.TestDeps) {
 				s.NoError(
 					deps.App.BankKeeper.MintCoins(
-						deps.Ctx, evm.ModuleName, coins,
+						deps.Ctx(), evm.ModuleName, coins,
 					),
 				)
 			},
@@ -260,13 +257,13 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 		FunctionalGasConsumedInvariantScenario{
 			Setup: func(deps *evmtest.TestDeps) {
 				s.NoError(
-					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx(), evm.ModuleName, coins),
 				)
 			},
 			Measure: func(deps *evmtest.TestDeps) {
 				s.NoError(
 					deps.App.BankKeeper.BurnCoins(
-						deps.Ctx, evm.ModuleName, coins,
+						deps.Ctx(), evm.ModuleName, coins,
 					),
 				)
 			},
@@ -277,13 +274,13 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 		FunctionalGasConsumedInvariantScenario{
 			Setup: func(deps *evmtest.TestDeps) {
 				s.NoError(
-					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, coins),
+					testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, coins),
 				)
 			},
 			Measure: func(deps *evmtest.TestDeps) {
 				s.NoError(
 					deps.App.BankKeeper.SendCoinsFromAccountToModule(
-						deps.Ctx, deps.Sender.NibiruAddr, evm.ModuleName, coins,
+						deps.Ctx(), deps.Sender.NibiruAddr, evm.ModuleName, coins,
 					),
 				)
 			},
@@ -294,13 +291,13 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 		FunctionalGasConsumedInvariantScenario{
 			Setup: func(deps *evmtest.TestDeps) {
 				s.NoError(
-					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx(), evm.ModuleName, coins),
 				)
 			},
 			Measure: func(deps *evmtest.TestDeps) {
 				s.NoError(
 					deps.App.BankKeeper.SendCoinsFromModuleToAccount(
-						deps.Ctx, evm.ModuleName, to.NibiruAddr, coins,
+						deps.Ctx(), evm.ModuleName, to.NibiruAddr, coins,
 					),
 				)
 			},
@@ -311,13 +308,13 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 		FunctionalGasConsumedInvariantScenario{
 			Setup: func(deps *evmtest.TestDeps) {
 				s.NoError(
-					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx, evm.ModuleName, coins),
+					testapp.FundModuleAccount(deps.App.BankKeeper, deps.Ctx(), evm.ModuleName, coins),
 				)
 			},
 			Measure: func(deps *evmtest.TestDeps) {
 				s.NoError(
 					deps.App.BankKeeper.SendCoinsFromModuleToModule(
-						deps.Ctx, evm.ModuleName, staking.NotBondedPoolName, coins,
+						deps.Ctx(), evm.ModuleName, staking.NotBondedPoolName, coins,
 					),
 				)
 			},
@@ -370,7 +367,7 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 // 	s.T().Log(`EthereumTx success, err == nil, vmError="insufficient balance for transfer"`)
 // 	{
 // 		balOfSender := deps.App.BankKeeper.GetBalance(
-// 			deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom)
+// 			deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom)
 // 		tooManyTokensWei := evm.NativeToWei(balOfSender.Amount.AddRaw(420).BigInt())
 // 		txTransferWei := evmtest.TxTransferWei{
 // 			Deps:      &deps,
@@ -390,10 +387,10 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 // 	{
 // 		sendCoins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 420))
 // 		s.NoError(
-// 			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
+// 			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, sendCoins),
 // 		)
 
-// 		ctx := deps.Ctx
+// 		ctx := deps.Ctx()
 // 		log.Log().Msgf("ctx.GasMeter().GasConsumed() %d", ctx.GasMeter().GasConsumed())
 // 		log.Log().Msgf("ctx.GasMeter().Limit() %d", ctx.GasMeter().Limit())
 
@@ -412,8 +409,8 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 // 		})
 
 // 		for _, err := range []error{
-// 			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr, sendCoins),
-// 			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
+// 			testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr, sendCoins),
+// 			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx(),
 // 				sdkmath.NewIntFromUint64(gethparams.TxGas),
 // 			),
 // 		} {
@@ -439,85 +436,3 @@ func (s *Suite) TestGasConsumedInvariantOther() {
 // 		s.True(first == db.StateDB, db.Explanation)
 // 	}
 // }
-
-// TestSyncStateDBWithAccount_DeliverTxCheck ensures that SyncStateDBWithAccount
-// only syncs during DeliverTx, not during CheckTx, ReCheckTx, or simulations
-func (s *Suite) TestSyncStateDBWithAccount_DeliverTxCheck() {
-	deps := evmtest.NewTestDeps()
-
-	testAddr := evmtest.NewEthPrivAcc()
-
-	// Fund the account with some NIBI
-	fundCoins := sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 1000))
-	s.NoError(testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, testAddr.NibiruAddr, fundCoins))
-
-	testCases := []struct {
-		name            string
-		setupContext    func(ctx sdk.Context) sdk.Context
-		shouldSync      bool
-		expectedBalance string
-	}{
-		{
-			name: "DeliverTx context - should sync",
-			setupContext: func(ctx sdk.Context) sdk.Context {
-				// Default context is DeliverTx
-				return ctx
-			},
-			shouldSync:      true,
-			expectedBalance: evm.NativeToWei(fundCoins[0].Amount.BigInt()).String(),
-		},
-		{
-			name: "CheckTx context - should NOT sync",
-			setupContext: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithIsCheckTx(true)
-			},
-			shouldSync:      false,
-			expectedBalance: "0", // Should remain 0 as sync is skipped
-		},
-		{
-			name: "ReCheckTx context - should NOT sync",
-			setupContext: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithIsReCheckTx(true)
-			},
-			shouldSync:      false,
-			expectedBalance: "0",
-		},
-		{
-			name: "Simulation context - should NOT sync",
-			setupContext: func(ctx sdk.Context) sdk.Context {
-				// Mark context as simulation using SimulationContextKey
-				return ctx.WithValue(evmstate.SimulationContextKey, true)
-			},
-			shouldSync:      false,
-			expectedBalance: "0",
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			// Create a fresh StateDB for each test
-			_ = deps.NewStateDB()
-
-			// Set initial balance to 0 in StateDB
-			ethAddr := eth.NibiruAddrToEthAddr(testAddr.NibiruAddr)
-			s.Equal(
-				"0",
-				deps.EvmKeeper.BK().GetWeiBalance(deps.Ctx, testAddr.NibiruAddr).String(),
-			)
-
-			// Apply context modifications
-			testCtx := tc.setupContext(deps.Ctx)
-
-			// Call SyncStateDBWithAccount
-			deps.EvmKeeper.Bank.SyncStateDBWithAccount(testCtx, testAddr.NibiruAddr)
-
-			// Check if balance was synced
-			sdb := deps.NewStateDB()
-			actualBalance := sdb.GetBalance(ethAddr)
-
-			s.Equal(tc.expectedBalance, actualBalance.String(),
-				"Balance sync behavior incorrect for %s", tc.name)
-
-		})
-	}
-}

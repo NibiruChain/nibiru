@@ -33,7 +33,7 @@ const (
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
-	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
+	wasmCodes := deployWasmBytecode(s, deps.Ctx(), deps.Sender.NibiruAddr, deps.App)
 
 	instantiateArgs := []struct {
 		InstantiateMsg []byte
@@ -62,7 +62,7 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 
 		wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(deps.App.WasmKeeper)
 		contractAddr, _, err := wasmPermissionedKeeper.Instantiate(
-			deps.Ctx,
+			deps.Ctx(),
 			wasmCode.codeId,
 			deps.Sender.NibiruAddr,
 			deps.Sender.NibiruAddr,
@@ -160,7 +160,7 @@ func AssertWasmCounterState(
 		}
 `)
 
-	resp, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx, wasmContract, msgArgsBz)
+	resp, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx(), wasmContract, msgArgsBz)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(resp)
 
@@ -192,7 +192,7 @@ func AssertWasmCounterStateWithEvm(
 	s.Require().NoError(err)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -297,7 +297,7 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,

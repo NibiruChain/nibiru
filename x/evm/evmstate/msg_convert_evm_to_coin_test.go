@@ -29,12 +29,12 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 	// Fund sender for FunToken creation fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 	))
 
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bank.Metadata{
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bank.Metadata{
 		DenomUnits: []*bank.DenomUnit{
 			{
 				Denom:    bankDenom,
@@ -53,7 +53,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 
 	// Create FunToken mapping from bank coin
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -67,14 +67,14 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 	amountToConvert := sdk.NewInt64Coin(bankDenom, 1000)
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(amountToConvert),
 	))
 
 	// Convert bank coins to ERC20 tokens first
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			ToEthAddr: eth.EIP55Addr{Address: deps.Sender.EthAddr},
@@ -97,7 +97,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		convertAmount := sdkmath.NewInt(500)
 
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
@@ -117,7 +117,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		}.Assert(s.T(), deps, evmObjAfter)
 
 		// Check recipient received bank coins
-		recipientBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, toAddr, bankDenom)
+		recipientBalance := deps.App.BankKeeper.GetBalance(deps.Ctx(), toAddr, bankDenom)
 		s.Require().Equal(sdk.NewInt64Coin(bankDenom, 500), recipientBalance)
 	})
 
@@ -125,7 +125,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		convertAmount := sdkmath.NewInt(1000) // More than available (500)
 
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
@@ -140,7 +140,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_CoinOriginatedToken() {
 		invalidErc20 := gethcommon.HexToAddress("0x1234567890123456789012345678901234567890")
 
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: invalidErc20},
@@ -169,14 +169,14 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	// Fund sender for FunToken creation fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 	))
 
 	// Create FunToken mapping from ERC20
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
 			Sender:    deps.Sender.NibiruAddr.String(),
@@ -200,7 +200,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 	s.Run("happy: convert ERC20 to bank coins", func() {
 		convertAmount := sdkmath.NewInt(100000)
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
@@ -221,12 +221,12 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		}.Assert(s.T(), deps, evmObjAfter)
 
 		// Check recipient received bank coins
-		recipientBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, toAddr, bankDenom)
+		recipientBalance := deps.App.BankKeeper.GetBalance(deps.Ctx(), toAddr, bankDenom)
 		s.Require().Equal(sdk.NewInt64Coin(bankDenom, 100000), recipientBalance)
 
 		// Check EVM module holds the ERC20 tokens
 		evmModuleBalance, err := deps.EvmKeeper.ERC20().BalanceOf(
-			erc20Addr, evm.EVM_MODULE_ADDRESS, deps.Ctx, evmObj,
+			erc20Addr, evm.EVM_MODULE_ADDRESS, deps.Ctx(), evmObj,
 		)
 		s.Require().NoError(err)
 		s.Require().Equal(big.NewInt(100000), evmModuleBalance)
@@ -251,7 +251,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		s.Require().NoError(err)
 
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&deployResp2.ContractAddr,
@@ -265,13 +265,13 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		s.T().Log("Create FunToken for new ERC20")
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			newSender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 		))
 
 		_, err = deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgCreateFunToken{
 				FromErc20: &eth.EIP55Addr{Address: deployResp2.ContractAddr},
 				Sender:    newSender.NibiruAddr.String(),
@@ -281,7 +281,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 
 		s.T().Log("Convert without approval should succeed")
 		_, err = deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    newSender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: deployResp2.ContractAddr},
@@ -321,18 +321,18 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	// Set bank metadata for the denom
 	bankMeta := denomToSafeMetadata(bankDenom, &s.Suite)
 
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMeta)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bankMeta)
 
 	s.T().Log("Setup: Create FunToken and fund account")
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewInt64Coin(bankDenom, 1000)),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()).Add(sdk.NewInt64Coin(bankDenom, 1000)),
 	))
 
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -344,7 +344,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 
 	s.T().Log("Convert bank coins to ERC20 first")
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			ToEthAddr: eth.EIP55Addr{Address: deps.Sender.EthAddr},
@@ -357,9 +357,9 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	toAddr := evmtest.NewEthPrivAcc().NibiruAddr
 	convertAmount := sdkmath.NewInt(200)
 
-	deps.Ctx = deps.Ctx.WithEventManager(sdk.NewEventManager())
+	deps.SetCtx(deps.Ctx().WithEventManager(sdk.NewEventManager()))
 	_, err = deps.EvmKeeper.ConvertEvmToCoin(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgConvertEvmToCoin{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
@@ -370,7 +370,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	s.Require().NoError(err)
 
 	s.T().Log("Check EventConvertEvmToCoin was emitted")
-	testutil.RequireContainsTypedEvent(s.T(), deps.Ctx, &evm.EventConvertEvmToCoin{
+	testutil.RequireContainsTypedEvent(s.T(), deps.Ctx(), &evm.EventConvertEvmToCoin{
 		Sender:               deps.Sender.NibiruAddr.String(),
 		Erc20ContractAddress: erc20Addr.Hex(),
 		ToAddress:            toAddr.String(),
@@ -383,7 +383,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	// The main EventConvertEvmToCoin event is properly emitted which confirms the functionality works
 	// testutil.RequireContainsTypedEvent(
 	// 	s.T(),
-	// 	deps.Ctx,
+	// 	deps.Ctx(),
 	// 	&evm.EventTxLog{},
 	// )
 }
@@ -394,18 +394,18 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 
 	// Set bank metadata for the denom
 	bankMeta := denomToSafeMetadata(bankDenom, &s.Suite)
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMeta)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bankMeta)
 
 	// Setup FunToken
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx).Add(sdk.NewInt64Coin(bankDenom, 10000)),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()).Add(sdk.NewInt64Coin(bankDenom, 10000)),
 	))
 
 	createFunTokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -417,7 +417,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 
 	// Convert bank coins to ERC20
 	_, err = deps.EvmKeeper.ConvertCoinToEvm(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgConvertCoinToEvm{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			ToEthAddr: eth.EIP55Addr{Address: deps.Sender.EthAddr},
@@ -437,7 +437,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 		amount := sdkmath.NewInt(int64((i + 1) * 1000))
 
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
@@ -448,7 +448,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {
 		s.Require().NoError(err)
 
 		// Check recipient balance
-		balance := deps.App.BankKeeper.GetBalance(deps.Ctx, recipient, bankDenom)
+		balance := deps.App.BankKeeper.GetBalance(deps.Ctx(), recipient, bankDenom)
 		s.Require().Equal(sdk.NewCoin(bankDenom, amount), balance)
 	}
 
@@ -470,7 +470,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		deps := evmtest.NewTestDeps()
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 5_000)),
 		))
@@ -479,7 +479,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		erc20Addr := defaultWnibiAddr
 		amount := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: erc20Addr,
@@ -496,10 +496,10 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 	s.Require().NoError(err)
 	wnibi := eth.EIP55Addr{Address: deployRes.ContractAddr}
 
-	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
 	evmParams.CanonicalWnibi = wnibi
 	s.NoError(
-		deps.EvmKeeper.SetParams(deps.Ctx, evmParams),
+		deps.EvmKeeper.SetParams(deps.Ctx(), evmParams),
 	)
 
 	s.T().Log("Wrap some NIBI to get a WNIBI balance")
@@ -507,7 +507,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		// Convert half of the sender's 5000 micronibi into WNIBI
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 5_000)),
 		))
@@ -518,7 +518,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		s.Require().Equal(new(big.Int).Mul(wnibiAmount, big.NewInt(2)).String(), senderBal.String())
 
 		for _, err := range []error{
-			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx,
+			testapp.FundFeeCollector(deps.App.BankKeeper, deps.Ctx(),
 				sdkmath.NewIntFromUint64(gethparams.TxGas*5),
 			),
 		} {
@@ -534,7 +534,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		s.Require().NoErrorf(err, "resp: %#v, wnibiAmount %s", resp, wnibiAmount)
 		s.Require().Empty(resp.VmError, "resp: %#v, wnibiAmount %s", resp, wnibiAmount)
 
-		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx, evmObj)
+		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx(), evmObj)
 		s.NoError(err)
 		s.Require().Equal(wnibiAmount.String(), wnibiBal.String())
 	}
@@ -543,7 +543,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		erc20Addr := wnibi
 		amount := sdkmath.NewIntFromBigInt(evm.NativeToWei(big.NewInt(420)))
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: erc20Addr,
@@ -554,7 +554,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ForWNIBI() {
 		s.Require().NoError(err)
 
 		evmObj, sdb := deps.NewEVM()
-		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx, evmObj)
+		wnibiBal, err := deps.EvmKeeper.ERC20().BalanceOf(wnibi.Address, deps.Sender.EthAddr, deps.Ctx(), evmObj)
 		s.NoError(err)
 		s.Require().Equal(evm.NativeToWei(big.NewInt(2_500-420)).String(), wnibiBal.String())
 

@@ -18,17 +18,17 @@ func (s *Suite) TestRandom() {
 
 	// highjacked LoadERC20BigInt method as it perfectly fits the need of this test
 	random1, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
-		deps.Ctx, evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
+		deps.Ctx(), evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(random1)
 	s.Require().NotZero(random1.Int64())
 
 	// Update block time to check that random changes
-	deps.Ctx = deps.Ctx.WithBlockTime(deps.Ctx.BlockTime().Add(1 * time.Second))
+	deps.SetCtx(deps.Ctx().WithBlockTime(deps.Ctx().BlockTime().Add(1 * time.Second)))
 	evmObj, _ = deps.NewEVM()
 	random2, err := deps.EvmKeeper.ERC20().LoadERC20BigInt(
-		deps.Ctx, evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
+		deps.Ctx(), evmObj, embeds.SmartContract_TestRandom.ABI, randomContractAddr, "getRandom",
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(random1)

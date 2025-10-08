@@ -24,7 +24,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				s.NoError(
 					testapp.FundAccount(
 						deps.App.BankKeeper,
-						deps.Ctx,
+						deps.Ctx(),
 						deps.Sender.NibiruAddr,
 						sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100)),
 					),
@@ -34,7 +34,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -51,7 +51,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -97,7 +97,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

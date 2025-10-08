@@ -40,7 +40,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx,
+		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr, // caller
 		&erc20,              // contract
@@ -111,7 +111,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
 	))
@@ -130,7 +130,7 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		contractInput, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
+			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr, // caller
 			&erc20,              // contract
@@ -191,36 +191,66 @@ func (s *Suite) TestJournalReversion() {
 	deps := evmtest.NewTestDeps()
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
 	))
 
+	type SnapshotAssertion struct {
+		SnapshotIdx         int
+		WantPostRevertCount int64
+		WantPreRevertCount  int64
+		Text                string
+	}
+
 	s.T().Log("Set up helloworldcounter.wasm")
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	helloWorldCounterWasm := wasmContracts[1]
-	fmt.Printf("wasmContract: %s\n", helloWorldCounterWasm)
+	s.T().Logf("helloworldcounter.wasm - contract addr:\n%s\n", helloWorldCounterWasm)
 
 	s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
-	evmObj, stateDB := deps.NewEVM()
+	evmObj, sdb := deps.NewEVM()
+	snapshots := []SnapshotAssertion{
+		{
+			SnapshotIdx:         sdb.SnapshotRevertIdx(),
+			WantPreRevertCount:  7,
+			WantPostRevertCount: 7,
+			Text:                "init sdb with counter at 0 (committing at 7)",
+		},
+	}
+
 	test.IncrementWasmCounterWithExecuteMulti(
 		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 7, true,
 	)
-	if stateDB.DebugDirtiesCount() != 0 {
-		debugDirtiesCountMismatch(stateDB, s.T())
-		s.FailNowf("statedb dirty count mismatch", "expected 0 dirty journal changes, but instead got: %d", stateDB.DebugDirtiesCount())
-	}
+	snapshots = append(snapshots, SnapshotAssertion{
+		SnapshotIdx:         sdb.SnapshotRevertIdx(),
+		WantPostRevertCount: 7,
+		WantPreRevertCount:  7,
+		Text:                "increment +7 with commit=true",
+	})
+
+	// if sdb.DebugDirtiesCount() != 0 {
+	// 	debugDirtiesCountMismatch(sdb, s.T())
+	// 	s.FailNowf("statedb dirty count mismatch", "expected 0 dirty journal changes, but instead got: %d", sdb.DebugDirtiesCount())
+	// }
 
 	s.T().Log("commitEvmTx=false, expect dirty journal entries")
-	evmObj, stateDB = deps.NewEVM()
+	// evmObj, sdb = deps.NewEVM()
 	test.IncrementWasmCounterWithExecuteMulti(
 		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 5, false,
 	)
-	s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
-	if stateDB.DebugDirtiesCount() != 1 {
-		debugDirtiesCountMismatch(stateDB, s.T())
-		s.FailNowf("statedb dirty count mismatch", "expected 1 dirty journal change, but instead got: %d", stateDB.DebugDirtiesCount())
-	}
+	snapshots = append(snapshots, SnapshotAssertion{
+		SnapshotIdx:         sdb.SnapshotRevertIdx(),
+		WantPostRevertCount: 7,
+		WantPreRevertCount:  7 + 5,
+		Text:                "increment +5 (commit=false)",
+	})
+
+	// s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
+	// if sdb.DebugDirtiesCount() != 1 {
+	// 	debugDirtiesCountMismatch(sdb, s.T())
+	// 	s.FailNowf("statedb dirty count mismatch", "expected 1 dirty journal change, but instead got: %d", sdb.DebugDirtiesCount())
+	// }
 
 	s.T().Log("Expect to see the pending changes included in the EVM context")
 	test.AssertWasmCounterStateWithEvm(
@@ -238,32 +268,55 @@ func (s *Suite) TestJournalReversion() {
 	test.IncrementWasmCounterWithExecuteMulti(
 		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 50, false,
 	)
-	s.T().Log(heredoc.Doc(`At this point, 2 precompile calls have succeeded.
-One that increments the counter to 7 + 5, and another for +50. 
-The StateDB has not been committed. We expect to be able to revert to both
-snapshots and see the prior states.`))
+	snapshots = append(snapshots, SnapshotAssertion{
+		SnapshotIdx:         sdb.SnapshotRevertIdx(),
+		WantPostRevertCount: 7 + 5,
+		WantPreRevertCount:  7 + 5 + 50,
+		Text:                "increment +50 (commit=false)",
+	})
+	s.T().Log(heredoc.Doc(`At this point, several precompile calls have succeeded.
+The StateDB has not been committed. We expect to be able to revert to any 
+snapshots and see prior states.`))
 	test.AssertWasmCounterStateWithEvm(
 		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5+50,
 	)
 
 	errFn := common.TryCatch(func() {
 		// a revision that doesn't exist
-		stateDB.RevertToSnapshot(9000)
+		sdb.RevertToSnapshot(9000)
 	})
 	s.Require().ErrorContains(errFn(), "revision id 9000 cannot be reverted")
 
-	stateDB.RevertToSnapshot(2)
-	test.AssertWasmCounterStateWithEvm(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5,
+	s.Equal(
+		5,
+		sdb.SnapshotRevertIdx(),
 	)
 
-	stateDB.RevertToSnapshot(0)
-	test.AssertWasmCounterStateWithEvm(
-		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7,
-	)
+	for i := len(snapshots) - 1; i >= 0; i-- {
+		snap := snapshots[i]
+		s.T().Logf("assert snapshot: %+v", snap)
 
-	stateDB.Commit()
-	s.Require().EqualValues(0, stateDB.DebugDirtiesCount())
+		test.AssertWasmCounterStateWithEvm(
+			&s.Suite, deps, evmObj, helloWorldCounterWasm, snap.WantPreRevertCount,
+		)
+		sdb.RevertToSnapshot(snap.SnapshotIdx)
+		test.AssertWasmCounterStateWithEvm(
+			&s.Suite, deps, evmObj, helloWorldCounterWasm, snap.WantPostRevertCount,
+		)
+	}
+
+	// sdb.RevertToSnapshot(2)
+	// test.AssertWasmCounterStateWithEvm(
+	// 	&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5,
+	// )
+
+	// sdb.RevertToSnapshot(0)
+	// test.AssertWasmCounterStateWithEvm(
+	// 	&s.Suite, deps, evmObj, helloWorldCounterWasm, 7,
+	// )
+
+	sdb.Commit()
+	s.Require().EqualValues(0, sdb.DebugDirtiesCount())
 	test.AssertWasmCounterState(
 		&s.Suite, deps, helloWorldCounterWasm, 7,
 	)

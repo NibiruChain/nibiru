@@ -80,7 +80,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -89,7 +89,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 			s.Require().NoError(err)
 
 			if tc.wantSeq > 0 {
-				seq := deps.App.AccountKeeper.GetAccount(deps.Ctx, deps.Sender.NibiruAddr).GetSequence()
+				seq := deps.App.AccountKeeper.GetAccount(deps.Ctx(), deps.Sender.NibiruAddr).GetSequence()
 				s.Require().Equal(tc.wantSeq, seq)
 			}
 		})

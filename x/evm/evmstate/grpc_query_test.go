@@ -77,7 +77,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
-				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
+				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
@@ -102,7 +102,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				// fund account with 420 tokens
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
-				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx, ethAddr.Bytes(), coins)
+				err := testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
@@ -170,7 +170,7 @@ func (s *Suite) TestQueryEvmAccount() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.EthAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -216,7 +216,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: default values",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx(), 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				_, err := sdk.ConsAddressFromBech32(valopers[0].OperatorAddress)
 				s.ErrorContains(err, "expected nibivalcons, got nibivaloper")
@@ -238,7 +238,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 			name:  "happy: with nonce",
 			setup: func(deps *evmtest.TestDeps) {},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx, 1)
+				valopers := deps.App.StakingKeeper.GetValidators(deps.Ctx(), 1)
 				valAddrBz := valopers[0].GetOperator().Bytes()
 				consAddr := sdk.ConsAddress(valAddrBz)
 
@@ -248,7 +248,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 				valAddr := sdk.AccAddress(valAddrBz)
 				s.NoError(testapp.FundAccount(
 					deps.App.BankKeeper,
-					deps.Ctx, valAddr,
+					deps.Ctx(), valAddr,
 					coinsToSend,
 				))
 
@@ -257,10 +257,10 @@ func (s *Suite) TestQueryValidatorAccount() {
 				}
 
 				ak := deps.App.AccountKeeper
-				acc := ak.GetAccount(deps.Ctx, valAddr)
+				acc := ak.GetAccount(deps.Ctx(), valAddr)
 				s.NoError(acc.SetAccountNumber(420), "acc: ", acc.String())
 				s.NoError(acc.SetSequence(69), "acc: ", acc.String())
-				ak.SetAccount(deps.Ctx, acc)
+				ak.SetAccount(deps.Ctx(), acc)
 
 				wantResp = &evm.QueryValidatorAccountResponse{
 					AccountAddress: sdk.AccAddress(valAddrBz).String(),
@@ -280,7 +280,7 @@ func (s *Suite) TestQueryValidatorAccount() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.ValidatorAccount(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -355,7 +355,7 @@ func (s *Suite) TestQueryStorage() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 
 			gotResp, err := deps.EvmKeeper.Storage(goCtx, req)
 			if tc.wantErr != "" {
@@ -395,7 +395,7 @@ func (s *Suite) TestQueryCode() {
 				sdb.SetCode(addr, contractBytecode)
 				sdb.Commit()
 
-				s.NotNil(sdb.Keeper().GetAccount(deps.Ctx, addr))
+				s.NotNil(sdb.Keeper().GetAccount(deps.Ctx(), addr))
 				s.NotNil(sdb.GetCode(addr))
 
 				wantResp = &evm.QueryCodeResponse{
@@ -414,7 +414,7 @@ func (s *Suite) TestQueryCode() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 
 			gotResp, err := deps.EvmKeeper.Code(goCtx, req)
 			if tc.wantErr != "" {
@@ -433,10 +433,10 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
-	err := deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err := deps.EvmKeeper.SetParams(deps.Ctx(), want)
 	s.NoError(err)
 
-	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
+	gotResp, err := deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx()), nil)
 	s.NoError(err)
 	got := gotResp.Params
 	s.Require().NoError(err)
@@ -446,9 +446,9 @@ func (s *Suite) TestQueryParams() {
 
 	// Empty params to test the setter
 	want.EVMChannels = []string{"channel-420"}
-	err = deps.EvmKeeper.SetParams(deps.Ctx, want)
+	err = deps.EvmKeeper.SetParams(deps.Ctx(), want)
 	s.NoError(err)
-	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx), nil)
+	gotResp, err = deps.EvmKeeper.Params(sdk.WrapSDKContext(deps.Ctx()), nil)
 	s.Require().NoError(err)
 	got = gotResp.Params
 
@@ -498,7 +498,7 @@ func (s *Suite) TestQueryEthCall() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			gotResp, err := deps.App.EvmKeeper.EthCall(sdk.WrapSDKContext(deps.Ctx), req)
+			gotResp, err := deps.App.EvmKeeper.EthCall(sdk.WrapSDKContext(deps.Ctx()), req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
@@ -549,18 +549,19 @@ func (s *Suite) TestQueryBalance() {
 
 				// fund account with 420 tokens
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 420)}
-				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				err := chain.BankKeeper.MintCoins(deps.Ctx(), evm.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx(), evm.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 			},
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
 				req = &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				}
+				wantBal := "420" + strings.Repeat("0", 12)
 				wantResp = &evm.QueryBalanceResponse{
-					Balance:    "420",
+					Balance:    wantBal,
 					BalanceWei: "420" + strings.Repeat("0", 12),
 				}
 				return req, wantResp
@@ -576,7 +577,7 @@ func (s *Suite) TestQueryBalance() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.Balance(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -615,7 +616,7 @@ func (s *Suite) TestQueryBaseFee() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.BaseFee(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -668,14 +669,14 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				chain := deps.App
 				ethAddr := deps.Sender.EthAddr
 				coins := sdk.Coins{sdk.NewInt64Coin(evm.EVMBankDenom, 1000)}
-				err := chain.BankKeeper.MintCoins(deps.Ctx, evm.ModuleName, coins)
+				err := chain.BankKeeper.MintCoins(deps.Ctx(), evm.ModuleName, coins)
 				s.NoError(err)
 				err = chain.BankKeeper.SendCoinsFromModuleToAccount(
-					deps.Ctx, evm.ModuleName, ethAddr.Bytes(), coins)
+					deps.Ctx(), evm.ModuleName, ethAddr.Bytes(), coins)
 				s.Require().NoError(err)
 
 				// assert balance of 1000 * 10^12 wei
-				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx), &evm.QueryBalanceRequest{
+				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx()), &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				s.Equal("1000", resp.Balance)
@@ -736,7 +737,7 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.EstimateGas(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -799,7 +800,7 @@ func (s *Suite) TestTraceTx() {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.TraceTx(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -879,7 +880,7 @@ func (s *Suite) TestTraceBlock() {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.TraceBlock(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -977,7 +978,7 @@ func (s *Suite) TestTraceCall() {
 				tc.setup(&deps)
 			}
 			req, _ := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.TraceCall(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -1011,7 +1012,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 			name: "happy: token mapping exists from cosmos coin -> ERC20 token",
 			setup: func(deps *evmtest.TestDeps) {
 				_ = deps.EvmKeeper.FunTokens.SafeInsert(
-					deps.Ctx,
+					deps.Ctx(),
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
 					true,
@@ -1038,7 +1039,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 			name: "happy: token mapping exists from ERC20 token -> cosmos coin",
 			setup: func(deps *evmtest.TestDeps) {
 				_ = deps.EvmKeeper.FunTokens.SafeInsert(
-					deps.Ctx,
+					deps.Ctx(),
 					gethcommon.HexToAddress("0xAEf9437FF23D48D73271a41a8A094DEc9ac71477"),
 					"unibi",
 					true,
@@ -1070,7 +1071,7 @@ func (s *Suite) TestQueryFunTokenMapping() {
 				tc.setup(&deps)
 			}
 			req, wantResp := tc.scenario(&deps)
-			goCtx := sdk.WrapSDKContext(deps.Ctx)
+			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.FunTokenMapping(goCtx, req)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

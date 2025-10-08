@@ -13,8 +13,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 // TestVerifyFee asserts that the result of VerifyFee is the effective fee
@@ -134,7 +134,7 @@ func (s *Suite) TestRefundGas() {
 	feeCollectorInitialBalance := big.NewInt(40_000)
 	fundFeeCollectorEvmBal := func(deps *evmtest.TestDeps, s *Suite, bal *big.Int) {
 		err := testapp.FundModuleAccount(
-			deps.App.BankKeeper, deps.Ctx, auth.FeeCollectorName,
+			deps.App.BankKeeper, deps.Ctx(), auth.FeeCollectorName,
 			sdk.NewCoins(sdk.NewCoin(
 				evm.EVMBankDenom, sdkmath.NewIntFromBigInt(bal),
 			)),
@@ -212,16 +212,16 @@ func (s *Suite) TestRefundGas() {
 		tc := getTestCase(&deps)
 		s.Run(tc.name, func() {
 			fromBalBefore := deps.App.BankKeeper.GetBalance(
-				deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom,
+				deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
 			).Amount.BigInt()
 			feeCollectorBalBefore := deps.App.BankKeeper.GetBalance(
-				deps.Ctx,
+				deps.Ctx(),
 				auth.NewModuleAddress(auth.FeeCollectorName),
 				evm.EVMBankDenom,
 			).Amount.BigInt()
 
 			err := deps.EvmKeeper.RefundGas(
-				deps.Ctx, tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
+				deps.Ctx(), tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -232,10 +232,10 @@ func (s *Suite) TestRefundGas() {
 			// refund amount is leftoverGas * weiPerGas * micronibiPerWei
 			// msgFrom should have balance
 			fromBalAfter := deps.App.BankKeeper.GetBalance(
-				deps.Ctx, deps.Sender.NibiruAddr, evm.EVMBankDenom,
+				deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
 			).Amount.BigInt()
 			feeCollectorBalAfter := deps.App.BankKeeper.GetBalance(
-				deps.Ctx,
+				deps.Ctx(),
 				auth.NewModuleAddress(auth.FeeCollectorName),
 				evm.EVMBankDenom,
 			).Amount.BigInt()

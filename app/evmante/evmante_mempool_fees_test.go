@@ -27,11 +27,12 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 			name: "happy: min gas price is not zero, sufficient fee",
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
-				deps.Ctx = deps.Ctx.
+				deps.SetCtx(deps.Ctx().
 					WithMinGasPrices(
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
-					WithIsCheckTx(true)
+					WithIsCheckTx(true),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
@@ -43,11 +44,12 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 			name: "sad: insufficient fee",
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 2)
-				deps.Ctx = deps.Ctx.
+				deps.SetCtx(deps.Ctx().
 					WithMinGasPrices(
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
-					WithIsCheckTx(true)
+					WithIsCheckTx(true),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
@@ -59,11 +61,12 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 			name: "sad: tx with non evm message",
 			ctxSetup: func(deps *evmtest.TestDeps) {
 				gasPrice := sdk.NewInt64Coin("unibi", 1)
-				deps.Ctx = deps.Ctx.
+				deps.SetCtx(deps.Ctx().
 					WithMinGasPrices(
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
-					WithIsCheckTx(true)
+					WithIsCheckTx(true),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				gasLimit := uint64(10)
@@ -91,7 +94,7 @@ func (s *TestSuite) TestMempoolGasFeeDecorator() {
 			}
 
 			_, err := anteDec.AnteHandle(
-				deps.Ctx, tx, false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

@@ -8,8 +8,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -95,7 +95,7 @@ func (s *Suite) TestIsSimulation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			testCtx := tc.setup(deps.Ctx)
+			testCtx := tc.setup(deps.Ctx())
 			result := evmstate.IsSimulation(testCtx)
 			s.Equal(tc.expected, result, "IsSimulation result incorrect for %s", tc.name)
 		})
@@ -158,7 +158,7 @@ func (s *Suite) TestIsDeliverTx() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			testCtx := tc.setup(deps.Ctx)
+			testCtx := tc.setup(deps.Ctx())
 			result := evmstate.IsDeliverTx(testCtx)
 			s.Equal(tc.expected, result, "IsDeliverTx result incorrect for %s", tc.name)
 		})
@@ -167,9 +167,9 @@ func (s *Suite) TestIsDeliverTx() {
 
 func (s *Suite) TestGetHashFn() {
 	deps := evmtest.NewTestDeps()
-	fn := deps.EvmKeeper.GetHashFn(deps.Ctx)
+	fn := deps.EvmKeeper.GetHashFn(deps.Ctx())
 	s.Equal(gethcommon.Hash{}, fn(math.MaxInt64+1))
-	s.Equal(gethcommon.BytesToHash(deps.Ctx.HeaderHash()), fn(uint64(deps.Ctx.BlockHeight())))
-	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx.BlockHeight())+1))
-	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx.BlockHeight())-1))
+	s.Equal(gethcommon.BytesToHash(deps.Ctx().HeaderHash()), fn(uint64(deps.Ctx().BlockHeight())))
+	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())+1))
+	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())-1))
 }

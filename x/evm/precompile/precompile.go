@@ -153,8 +153,6 @@ type OnRunStartResult struct {
 	Method *gethabi.Method
 
 	SDB *evmstate.SDB
-
-	PrecompileJournalEntry evmstate.PrecompileCalled
 }
 
 // OnRunStart prepares the execution environment for a precompiled contract call.
@@ -197,7 +195,7 @@ func OnRunStart(
 		return
 	}
 
-	ctx := stateDB.GetEvmTxCtx()
+	ctx := stateDB.Ctx()
 
 	// journalEntry captures the state before precompile execution to enable
 	// proper state reversal if the call fails or if [statedb.JournalChange]

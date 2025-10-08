@@ -42,18 +42,19 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
 					},
 				}
-				deps.Ctx = deps.Ctx.
+				deps.SetCtx(deps.Ctx().
 					WithMinGasPrices(
 						sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice)),
 					).
 					WithIsCheckTx(true).
-					WithConsensusParams(cp)
+					WithConsensusParams(cp),
+				)
 			},
 			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
-				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx))
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 
@@ -96,7 +97,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			}
 
 			_, err := anteHandlerEVM(
-				deps.Ctx, tx, false,
+				deps.Ctx(), tx, false,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

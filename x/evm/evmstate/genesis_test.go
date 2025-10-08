@@ -103,7 +103,7 @@ func (s *Suite) TestExportInitGenesis() {
 
 		evmObj, sdb := deps.NewEVM()
 		totalSupply, err = deps.EvmKeeper.ERC20().LoadERC20BigInt(
-			deps.Ctx, evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
+			deps.Ctx(), evmObj, erc20Contract.ABI, erc20Addr, "totalSupply",
 		)
 		s.Require().NoError(err)
 		s.Require().Equal("1000000"+strings.Repeat("0", 18), totalSupply.String())
@@ -124,11 +124,11 @@ amountToSendC: %s`,
 		))
 
 		s.T().Log("Transfer ERC-20 tokens to [userA, userB]")
-		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserA, amountToSendA, deps.Ctx, evmObj)
+		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserA, amountToSendA, deps.Ctx(), evmObj)
 		s.Require().NoError(err)
 
 		s.T().Log("Transfer ERC-20 tokens to user B")
-		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserB, amountToSendB, deps.Ctx, evmObj)
+		_, _, err = deps.EvmKeeper.ERC20().Transfer(erc20Addr, deps.Sender.EthAddr, toUserB, amountToSendB, deps.Ctx(), evmObj)
 		s.Require().NoError(err)
 		sdb.Commit()
 	}
@@ -139,16 +139,16 @@ amountToSendC: %s`,
 		// needs funds for that.
 		err := testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(
-				sdk.NewCoin(evm.EVMBankDenom, deps.EvmKeeper.GetParams(deps.Ctx).CreateFuntokenFee),
+				sdk.NewCoin(evm.EVMBankDenom, deps.EvmKeeper.GetParams(deps.Ctx()).CreateFuntokenFee),
 			),
 		)
 		s.Require().NoError(err)
 
 		createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgCreateFunToken{
 				FromErc20: &eth.EIP55Addr{Address: erc20Addr},
 				Sender:    deps.Sender.NibiruAddr.String(),
@@ -192,7 +192,7 @@ amountToSendC: %s`,
 	s.T().Log("Send fungible token coins from bank to evm")
 	{
 		_, err := deps.EvmKeeper.ConvertEvmToCoin(
-			deps.Ctx,
+			deps.Ctx(),
 			&evm.MsgConvertEvmToCoin{
 				Sender:    deps.Sender.NibiruAddr.String(),
 				Erc20Addr: ft.Erc20Addr,
@@ -207,23 +207,23 @@ amountToSendC: %s`,
 
 	s.T().Log("Export genesis")
 
-	evmGenesisState := deps.EvmKeeper.ExportGenesis(deps.Ctx)
-	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx)
-	bankGensisState := deps.App.BankKeeper.ExportGenesis(deps.Ctx)
+	evmGenesisState := deps.EvmKeeper.ExportGenesis(deps.Ctx())
+	authGenesisState := deps.App.AccountKeeper.ExportGenesis(deps.Ctx())
+	bankGensisState := deps.App.BankKeeper.ExportGenesis(deps.Ctx())
 
 	s.T().Log("Init genesis from the exported state for modules [auth, bank, evm]")
 	{
 		deps = evmtest.NewTestDeps()
-		deps.App.AccountKeeper.InitGenesis(deps.Ctx, *authGenesisState)
-		deps.App.BankKeeper.InitGenesis(deps.Ctx, bankGensisState)
-		deps.EvmKeeper.InitGenesis(deps.Ctx, *evmGenesisState)
+		deps.App.AccountKeeper.InitGenesis(deps.Ctx(), *authGenesisState)
+		deps.App.BankKeeper.InitGenesis(deps.Ctx(), bankGensisState)
+		deps.EvmKeeper.InitGenesis(deps.Ctx(), *evmGenesisState)
 
 		s.T().Log("Assert balances for users A, B, C, the sender and the EVM")
 		assertBalsAfterConvert(deps)
 
 		s.T().Log("Check that fungible token mapping is in place")
-		iter := deps.EvmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(deps.Ctx, ft.BankDenom)
-		funTokens := deps.EvmKeeper.FunTokens.Collect(deps.Ctx, iter)
+		iter := deps.EvmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(deps.Ctx(), ft.BankDenom)
+		funTokens := deps.EvmKeeper.FunTokens.Collect(deps.Ctx(), iter)
 		s.Require().Len(funTokens, 1)
 		s.Equal(ft.Erc20Addr.Hex(), funTokens[0].Erc20Addr.String())
 		s.Equal(ft.BankDenom, funTokens[0].BankDenom)
