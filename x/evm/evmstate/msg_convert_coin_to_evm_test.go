@@ -128,7 +128,6 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
@@ -157,7 +156,6 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ = deps.NewEVM()
 	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		alice.EthAddr,                       // from
 		&precompile.PrecompileAddr_FunToken, // to
@@ -315,7 +313,6 @@ func (s *SuiteFunToken) TestNativeSendThenPrecompileSend() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,              /*evmObj*/
 		deps.Sender.EthAddr, /*fromAcc*/
 		&testContractAddr,   /*contract*/
@@ -390,7 +387,6 @@ Sender calls "nativeSendThenPrecompileSend".
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ = deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
@@ -511,7 +507,6 @@ func (s *SuiteFunToken) TestPrecompileSendToBankThenErc20Transfer() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evpResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
@@ -645,7 +640,6 @@ func (s *SuiteFunToken) TestPrecompileSelfCallRevert() {
 	)
 	s.Require().NoError(err)
 	evpResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&testContractAddr,
@@ -720,6 +714,12 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 			sdk.NewCoins(unibi(big.NewInt(42069))),
 		)
 		s.NoError(err)
+		evmtest.BalanceAssertNIBI{
+			Account:      deps.Sender.EthAddr,
+			BalanceBank:  big.NewInt(42_069),
+			BalanceERC20: big.NewInt(0),
+		}.Assert(s.T(), deps)
+		deps.Commit()
 
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
 			deps.GoCtx(),
@@ -743,11 +743,13 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 			Account:      deps.Sender.EthAddr,
 			BalanceBank:  big.NewInt(42_000),
 			BalanceERC20: big.NewInt(0),
+			Description:  "sender converted 69 bank coins and sent them away ",
 		}.Assert(s.T(), deps)
 		evmtest.BalanceAssertNIBI{
 			Account:      someoneElse.EthAddr,
 			BalanceBank:  big.NewInt(0),
 			BalanceERC20: evm.NativeToWei(big.NewInt(69)),
+			Description:  "someone else receives 69 tokens in EVM",
 		}.Assert(s.T(), deps)
 
 		testutil.RequireContainsTypedEvent(

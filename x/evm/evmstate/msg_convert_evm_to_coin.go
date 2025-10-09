@@ -64,7 +64,6 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 
 	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContract(
-		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Addr,
@@ -196,14 +195,12 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 // It can only be called from the logic:
 //   - (1) Inside of "eth.evm.v1.MsgConvertEvmToCoin"
 //   - (2) Or inside the of FunToken precompile "sendToBank"
-func (k Keeper) ConvertEvmToCoinForWNIBI(
-	ctx sdk.Context,
-	stateDB *SDB,
+func (k Keeper) convertEvmToCoinForWNIBI(
+	sdb *SDB,
 	erc20 eth.EIP55Addr,
 	sender evm.Addrs,
 	toAddrBech32 sdk.AccAddress,
 	amount sdkmath.Int,
-	evmObj *vm.EVM,
 ) (withdrawWei *uint256.Int, err error) {
 	withdrawWei, err = ParseWeiAsMultipleOfMicronibi(amount.BigInt())
 	if err != nil {
@@ -226,33 +223,31 @@ func (k Keeper) ConvertEvmToCoinForWNIBI(
 		return
 	}
 
-	if evmObj == nil {
-		unusedBigInt := big.NewInt(0)
-		evmMsg := core.Message{
-			To:               &erc20.Address,
-			From:             sender.Eth,
-			Nonce:            k.GetAccNonce(ctx, sender.Eth),
-			Value:            unusedBigInt,
-			GasLimit:         evm.Erc20GasLimitExecute,
-			GasPrice:         unusedBigInt,
-			GasFeeCap:        unusedBigInt,
-			GasTipCap:        unusedBigInt,
-			Data:             contractInput,
-			AccessList:       gethcore.AccessList{},
-			BlobGasFeeCap:    &big.Int{},
-			BlobHashes:       []gethcommon.Hash{},
-			SkipNonceChecks:  false,
-			SkipFromEOACheck: false,
-		}
-		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &erc20.Address,
+		From:             sender.Eth,
+		Nonce:            k.GetAccNonce(sdb.Ctx(), sender.Eth),
+		Value:            unusedBigInt,
+		GasLimit:         evm.Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  false,
+		SkipFromEOACheck: false,
 	}
+	evmObj := k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
 
-	if stateDB.GetCodeSize(erc20.Address) == 0 {
+	if sdb.GetCodeSize(erc20.Address) == 0 {
 		err = fmt.Errorf("ConvertEvmToCoin: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
 		return
 	}
 
-	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, ctx, evmObj)
+	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, sdb.Ctx(), evmObj)
 	if err != nil {
 		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
 		return
@@ -265,7 +260,6 @@ func (k Keeper) ConvertEvmToCoinForWNIBI(
 	}
 
 	evmResp, err := k.CallContract(
-		ctx,
 		evmObj,
 		sender.Eth,               /* fromAcc */
 		&erc20.Address,           /* contract */
@@ -281,7 +275,7 @@ func (k Keeper) ConvertEvmToCoinForWNIBI(
 		return withdrawWei, err
 	}
 
-	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, ctx, evmObj)
+	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, sender.Eth, sdb.Ctx(), evmObj)
 	if err != nil {
 		err = fmt.Errorf("ConvertEvmToCoin: failed to query ERC20 balance: %w", err)
 		return
@@ -294,13 +288,13 @@ func (k Keeper) ConvertEvmToCoinForWNIBI(
 	withdrawnMicronibi := sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromBigInt(
 		evm.WeiToNative(withdrawWei.ToBig()),
 	))
-	if err := k.Bank.SendCoins(ctx, sender.Bech32, toAddrBech32,
+	if err := k.Bank.SendCoins(sdb.Ctx(), sender.Bech32, toAddrBech32,
 		sdk.NewCoins(withdrawnMicronibi),
 	); err != nil {
 		return withdrawWei, err
 	}
 
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
 		Sender:               sender.Bech32.String(),
 		Erc20ContractAddress: erc20.Hex(),
 		ToAddress:            toAddrBech32.String(),

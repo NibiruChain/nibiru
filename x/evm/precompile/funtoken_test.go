@@ -86,7 +86,6 @@ func TestWhoAmI(t *testing.T) {
 		require.NoError(t, err)
 		evmObj, _ := deps.NewEVM()
 		return deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -135,7 +134,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -178,7 +176,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20,
@@ -203,7 +200,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -246,7 +242,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
@@ -295,7 +290,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Wnibi,
@@ -328,7 +322,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.Require().NoError(err, "ABI packing error in WNIBI.deposit")
 
 			ethTxResp, err = deps.EvmKeeper.CallContract(
-				deps.Ctx(),
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_FunToken,
@@ -411,7 +404,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -434,7 +426,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -457,7 +448,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -501,7 +491,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		s.Require().NoError(err)
 
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -548,7 +537,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		s.Require().NoError(err)
 
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -657,7 +645,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Addr,
@@ -684,7 +671,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			bob.EthAddr,                         /* from */
 			&precompile.PrecompileAddr_FunToken, /* to */
@@ -717,7 +703,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			alice.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -849,7 +834,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 // From address (doesn't matter much for view)
 			&precompile.PrecompileAddr_FunToken, // To the precompile address
@@ -882,7 +866,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -908,7 +891,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,

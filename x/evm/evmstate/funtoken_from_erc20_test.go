@@ -254,7 +254,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,      /*from*/
 			&deployResp.ContractAddr, /*to*/
@@ -276,7 +275,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
@@ -306,7 +304,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
@@ -490,7 +487,6 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&precompile.PrecompileAddr_FunToken,
@@ -595,7 +591,6 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	s.Require().NoError(err)
 	evmObj, _ := deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
@@ -667,7 +662,6 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,                 /*from*/
 		&precompile.PrecompileAddr_FunToken, /*to*/
@@ -747,7 +741,6 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&deployResp.ContractAddr,

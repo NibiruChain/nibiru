@@ -157,7 +157,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
-		ctx, evmObj, evmMsg.From, nil, contractInput,
+		evmObj, evmMsg.From, nil, contractInput,
 		evmstate.Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		evmMsg.Value,

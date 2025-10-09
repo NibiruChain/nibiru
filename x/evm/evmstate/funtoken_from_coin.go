@@ -102,7 +102,7 @@ func (k *Keeper) deployERC20ForBankCoin(
 	stateDB := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
 	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
 	evmResp, err := k.CallContract(
-		ctx, evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy,
+		evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		nil,
 	)

@@ -56,7 +56,6 @@ func (s *WasmSuite) TestInstantiate() {
 	s.Require().NoError(err)
 
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -102,7 +101,6 @@ func (s *WasmSuite) TestExecute() {
 		)
 		s.Require().NoError(err)
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
@@ -138,7 +136,6 @@ func (s *WasmSuite) TestExecute() {
 
 		// evmObj, _ = deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Wasm,
@@ -189,7 +186,6 @@ func (s *WasmSuite) TestQueryRaw() {
 
 	evmObj, _ := deps.NewEVM()
 	queryResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -230,7 +226,6 @@ func (s *WasmSuite) TestQuerySmart() {
 
 	evmObj, _ := deps.NewEVM()
 	queryResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -399,7 +394,6 @@ func (s *WasmSuite) TestSadArgsExecute() {
 			evmObj, _ := deps.NewEVM()
 
 			ethTxResp, err := deps.EvmKeeper.CallContract(
-				deps.Ctx(),
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
@@ -538,7 +532,6 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 			s.Require().NoError(err)
 			evmObj, _ := deps.NewEVM()
 			ethTxResp, err := deps.EvmKeeper.CallContract(
-				deps.Ctx(),
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_Wasm,
@@ -591,7 +584,6 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 	)
 	s.Require().NoError(err)
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -665,7 +657,6 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,
@@ -757,7 +748,6 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&testContractAddr,

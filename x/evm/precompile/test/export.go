@@ -192,7 +192,6 @@ func AssertWasmCounterStateWithEvm(
 	s.Require().NoError(err)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -297,7 +296,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,

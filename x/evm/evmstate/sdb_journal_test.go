@@ -38,7 +38,6 @@ func (s *Suite) TestCommitRemovesDirties() {
 	input, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 	s.Require().NoError(err)
 	_, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr, // caller
 		&erc20,              // contract
@@ -132,7 +131,6 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		contractInput, err := deps.EvmKeeper.ERC20().ABI.Pack("mint", deps.Sender.EthAddr, big.NewInt(69_420))
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr, // caller
 			&erc20,              // contract
@@ -288,7 +286,7 @@ snapshots and see prior states.`))
 	s.Require().ErrorContains(errPanic, "revision id 9000 cannot be reverted")
 
 	s.Equal(
-		snapshots[len(snapshots)-1].SnapshotIdx,
+		snapshots[len(snapshots)-1].SnapshotIdx+1, // plus 1 comes from the wasm counter query, which was an EVM precompile query
 		sdb.SnapshotRevertIdx(),
 		"snapshot index must be the same since we've only done read operations since the last snapshot",
 	)

@@ -362,7 +362,6 @@ func (s *Suite) TestTestnet() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,

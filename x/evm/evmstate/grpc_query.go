@@ -284,12 +284,11 @@ func (k *Keeper) EthCall(
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
 
-	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-
 	// pass false to not commit StateDB
+	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
 	sdb := NewSDB(ctx, k, txConfig)
 	evm := k.NewEVM(ctx, msg, evmCfg, nil /*tracer*/, sdb)
-	res, err := k.ApplyEvmMsg(ctx, msg, evm, false /*commit*/, txConfig.TxHash)
+	res, err := k.ApplyEvmMsg(msg, evm, false /*commit*/)
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -425,10 +424,13 @@ func (k Keeper) EstimateGasForEvmCallType(
 				WithTransientKVGasConfig(storetypes.GasConfig{})
 		}
 		// pass false to not commit StateDB
-		txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-		sdb := NewSDB(ctx, &k, txConfig)
+		sdb := NewSDB(
+			ctx,
+			&k,
+			NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
+		)
 		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, sdb)
-		rsp, err = k.ApplyEvmMsg(tmpCtx, evmMsg, evmObj, false /*commit*/, txConfig.TxHash)
+		rsp, err = k.ApplyEvmMsg(evmMsg, evmObj, false /*commit*/)
 		if err != nil {
 			if strings.Contains(err.Error(), core.ErrIntrinsicGas.Error()) {
 				return true, nil, nil // Special case, raise gas limit
@@ -525,7 +527,7 @@ func (k Keeper) TraceTx(
 			WithTransientKVGasConfig(storetypes.GasConfig{})
 		sdb := NewSDB(ctx, &k, txConfig)
 		evmObj := k.NewEVM(ctx, *msg, evmCfg, nil /*tracer*/, sdb)
-		rsp, err := k.ApplyEvmMsg(ctx, *msg, evmObj, false /*commit*/, txConfig.TxHash)
+		rsp, err := k.ApplyEvmMsg(*msg, evmObj, false /*commit*/)
 		if err != nil {
 			continue
 		}
@@ -841,7 +843,7 @@ func (k *Keeper) TraceEthTxMsg(
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 	sdb := NewSDB(ctx, k, txConfig)
 	evmObj := k.NewEVM(ctx, msg, evmCfg, tracer.Hooks, sdb)
-	res, err := k.ApplyEvmMsg(ctx, msg, evmObj, false /*commit*/, txConfig.TxHash)
+	res, err := k.ApplyEvmMsg(msg, evmObj, false /*commit*/)
 	if err != nil {
 		return nil, 0, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
