@@ -25,13 +25,12 @@ import (
 // tokens that were originally bank coins back into coin form. The EVM module
 // owns the ERC20 contract and will burn the tokens
 func (k Keeper) convertEvmToCoinForCoinOriginated(
-	ctx sdk.Context,
+	sdb *SDB,
 	sender evm.Addrs,
 	toAddress sdk.AccAddress,
 	erc20Addr gethcommon.Address,
 	amount *big.Int,
 	bankDenom string,
-	stateDB *SDB,
 ) error {
 	bankCoins := sdk.NewCoins(sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(amount)))
 
@@ -48,7 +47,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	evmMsg := core.Message{
 		To:               &erc20Addr,
 		From:             evm.EVM_MODULE_ADDRESS,
-		Nonce:            k.GetAccNonce(ctx, evm.EVM_MODULE_ADDRESS),
+		Nonce:            k.GetAccNonce(sdb.Ctx(), evm.EVM_MODULE_ADDRESS),
 		Value:            unusedBigInt,
 		GasLimit:         evm.Erc20GasLimitExecute,
 		GasPrice:         unusedBigInt,
@@ -62,7 +61,7 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		SkipFromEOACheck: true,
 	}
 
-	evmObj := k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+	evmObj := k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
 	evmResp, err := k.CallContract(
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
@@ -80,13 +79,13 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	}
 
 	// 2 | Send Bank Coins from the EVM module to the recipient
-	err = k.Bank.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddress, bankCoins)
+	err = k.Bank.SendCoinsFromModuleToAccount(sdb.Ctx(), evm.ModuleName, toAddress, bankCoins)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to send coins from module to account")
 	}
 
 	// Emit event
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
 		Sender:               sender.Bech32.String(),
 		Erc20ContractAddress: erc20Addr.Hex(),
 		ToAddress:            toAddress.String(),
@@ -95,9 +94,9 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 	})
 
 	// Emit tx logs of Burn event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
+		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
 	}
 
 	return nil
@@ -107,13 +106,12 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 // were originally ERC20. The EVM module doesn't own the ERC20 contract, so it
 // transfers tokens to itself and mints bank coins
 func (k Keeper) convertEvmToCoinForERC20Originated(
-	ctx sdk.Context,
+	sdb *SDB,
 	sender evm.Addrs,
 	toAddress sdk.AccAddress,
 	erc20Addr gethcommon.Address,
 	amount *big.Int,
 	bankDenom string,
-	stateDB *SDB,
 ) error {
 	// 1 | Transfer ERC20 tokens from sender to EVM module
 	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", evm.EVM_MODULE_ADDRESS, amount)
@@ -127,7 +125,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		evmMsg := core.Message{
 			From:             sender.Eth,
 			To:               &evm.EVM_MODULE_ADDRESS,
-			Nonce:            k.GetAccNonce(ctx, sender.Eth),
+			Nonce:            k.GetAccNonce(sdb.Ctx(), sender.Eth),
 			Value:            unusedBigInt,
 			GasLimit:         evm.Erc20GasLimitExecute,
 			GasPrice:         unusedBigInt,
@@ -140,7 +138,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 			SkipNonceChecks:  true,
 			SkipFromEOACheck: true,
 		}
-		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, stateDB)
+		evmObj = k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
 	}
 
 	balIncrease, evmResp, err := k.ERC20().Transfer(
@@ -148,7 +146,7 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		sender.Eth,             /*sender*/
 		evm.EVM_MODULE_ADDRESS, /*recipient*/
 		amount,                 /*amount*/
-		ctx,
+		sdb.Ctx(),
 		evmObj,
 	)
 	if err != nil {
@@ -161,19 +159,19 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	bankCoin := sdk.NewCoin(bankDenom, sdkmath.NewIntFromBigInt(balIncrease))
 
 	// 2 | Mint Bank Coins to the recipient
-	err = k.Bank.MintCoins(ctx, evm.ModuleName, sdk.NewCoins(bankCoin))
+	err = k.Bank.MintCoins(sdb.Ctx(), evm.ModuleName, sdk.NewCoins(bankCoin))
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to mint coins")
 	}
 
 	// 3 | Send the minted coins to the recipient
-	err = k.Bank.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, toAddress, sdk.NewCoins(bankCoin))
+	err = k.Bank.SendCoinsFromModuleToAccount(sdb.Ctx(), evm.ModuleName, toAddress, sdk.NewCoins(bankCoin))
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to send coins to recipient")
 	}
 
 	// Emit event
-	_ = ctx.EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertEvmToCoin{
 		Sender:               sender.Bech32.String(),
 		Erc20ContractAddress: erc20Addr.Hex(),
 		ToAddress:            toAddress.String(),
@@ -182,9 +180,9 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 	})
 
 	// Emit tx logs of Transfer event
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(ctx, 0)))
+		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
 	}
 
 	return nil

@@ -635,17 +635,27 @@ func (k *Keeper) ConvertCoinToEvm(
 func (k *Keeper) ConvertEvmToCoin(
 	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddrs, erc20, amount, toAddrs, err := msg.Validate()
 	if err != nil {
 		return
 	}
 
-	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	var sdb *SDB
+	{
+		// Isolate ctx scope so we don't use it by mistake.
+		ctx := sdk.UnwrapSDKContext(goCtx)
+		txConfig := k.TxConfig(ctx, gethcommon.Hash{})
+		sdb = k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	}
+
+	defer func() {
+		if err == nil {
+			sdb.Commit()
+		}
+	}()
 
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
-	evmParams := k.GetParams(ctx)
+	evmParams := k.GetParams(sdb.Ctx())
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
 		_, err = k.convertEvmToCoinForWNIBI(
 			sdb, erc20, senderAddrs, toAddrs.Bech32,
@@ -653,7 +663,7 @@ func (k *Keeper) ConvertEvmToCoin(
 		)
 	} else {
 		// Find the FunToken mapping for this ERC20
-		funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+		funTokens := k.FunTokens.Collect(sdb.Ctx(), k.FunTokens.Indexes.ERC20Addr.ExactMatch(sdb.Ctx(), erc20.Address))
 		if len(funTokens) != 1 {
 			err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
 			return
@@ -663,21 +673,16 @@ func (k *Keeper) ConvertEvmToCoin(
 		amountBig := amount.BigInt()
 		if funtokenMapping.IsMadeFromCoin {
 			err = k.convertEvmToCoinForCoinOriginated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, sdb,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
 			)
 		} else {
 			err = k.convertEvmToCoinForERC20Originated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, sdb,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
 			)
 		}
 	}
 
-	if err != nil {
-		return
-	}
-	sdb.Commit()
-
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
+	return &evm.MsgConvertEvmToCoinResponse{}, err
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
