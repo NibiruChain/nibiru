@@ -15,6 +15,9 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
+// TODO: Refactor to add compile-time safety for the following interface.
+// var _ evmante.AnteOptionsEVM = (*AnteHandlerOptions)(nil)
+
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
 	IBCKeeper        *ibckeeper.Keeper
@@ -55,3 +58,7 @@ func AnteHandlerError(shortDesc string) error {
 }
 
 type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)
+
+func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
+	return opts.MaxTxGasWanted
+}

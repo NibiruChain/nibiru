@@ -153,7 +153,7 @@ func UpgradeStNibiEvmMetadata(
 	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := keepers.EvmKeeper.CallContract(
-		ctx, evmObj, evmMsg.From, nil, contractInput,
+		evmObj, evmMsg.From, nil, contractInput,
 		evmstate.Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		nil,

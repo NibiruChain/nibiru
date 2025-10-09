@@ -251,7 +251,6 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_ERC20OriginatedToken() {
 		s.Require().NoError(err)
 
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,
 			&deployResp2.ContractAddr,

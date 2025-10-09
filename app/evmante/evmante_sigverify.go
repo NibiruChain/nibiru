@@ -10,6 +10,7 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // EthSigVerificationDecorator validates an ethereum signatures
@@ -22,6 +23,42 @@ func NewEthSigVerificationDecorator(k *EVMKeeper) EthSigVerificationDecorator {
 	return EthSigVerificationDecorator{
 		evmKeeper: k,
 	}
+}
+
+var _ EvmAnteHandler = EthSigVerification
+
+func EthSigVerification(
+	sdb *evmstate.SDB,
+	k *evmstate.Keeper,
+	msgEthTx *evm.MsgEthereumTx,
+	simulate bool,
+	opts AnteOptionsEVM,
+) (err error) {
+
+	chainID := k.EthChainID(sdb.Ctx())
+	ethCfg := evm.EthereumConfig(chainID)
+	blockNum := big.NewInt(sdb.Ctx().BlockHeight())
+	signer := gethcore.MakeSigner(
+		ethCfg,
+		blockNum,
+		evm.ParseBlockTimeUnixU64(sdb.Ctx()),
+	)
+
+	ethTx := msgEthTx.AsTransaction()
+
+	sender, err := signer.Sender(ethTx)
+	if err != nil {
+		return sdkioerrors.Wrapf(
+			sdkerrors.ErrorInvalidSigner,
+			"couldn't retrieve sender address from the ethereum transaction: %s",
+			err.Error(),
+		)
+	}
+
+	// set up the sender to the transaction field if not already
+	msgEthTx.From = sender.Hex()
+
+	return nil
 }
 
 // AnteHandle validates checks that the registered chain id is the same as the
@@ -52,13 +89,6 @@ func (esvd EthSigVerificationDecorator) AnteHandle(
 		}
 
 		ethTx := msgEthTx.AsTransaction()
-		// if !ethTx.Protected() {
-		// 	return ctx, errors.Wrapf(
-		// 		sdkerrors.ErrNotSupported,
-		// 		"rejected unprotected Ethereum transaction. "+
-		// 			"Please EIP155 sign your transaction to protect it against replay-attacks",
-		// 	)
-		// }
 
 		sender, err := signer.Sender(ethTx)
 		if err != nil {

@@ -470,8 +470,8 @@ func (s *Suite) TestInvalidSnapshotId() {
 }
 
 func (s *Suite) TestAccessList() {
-	value1 := common.BigToHash(big.NewInt(1))
-	value2 := common.BigToHash(big.NewInt(2))
+	v1 := common.BigToHash(big.NewInt(1))
+	v2 := common.BigToHash(big.NewInt(2))
 
 	testCases := []struct {
 		name     string
@@ -482,7 +482,7 @@ func (s *Suite) TestAccessList() {
 			db.AddAddressToAccessList(taddr)
 			s.Require().True(db.AddressInAccessList(taddr))
 
-			addrPresent, slotPresent := db.SlotInAccessList(taddr, value1)
+			addrPresent, slotPresent := db.SlotInAccessList(taddr, v1)
 			s.Require().True(addrPresent)
 			s.Require().False(slotPresent)
 
@@ -491,55 +491,62 @@ func (s *Suite) TestAccessList() {
 			s.Require().True(db.AddressInAccessList(taddr))
 		}},
 		{"add slot", func(db vm.StateDB) {
-			addrPresent, slotPresent := db.SlotInAccessList(taddr, value1)
+			addrPresent, slotPresent := db.SlotInAccessList(taddr, v1)
 			s.Require().False(addrPresent)
 			s.Require().False(slotPresent)
-			db.AddSlotToAccessList(taddr, value1)
-			addrPresent, slotPresent = db.SlotInAccessList(taddr, value1)
+			db.AddSlotToAccessList(taddr, v1)
+			addrPresent, slotPresent = db.SlotInAccessList(taddr, v1)
 			s.Require().True(addrPresent)
 			s.Require().True(slotPresent)
 
 			// add another slot
-			db.AddSlotToAccessList(taddr, value2)
-			addrPresent, slotPresent = db.SlotInAccessList(taddr, value2)
+			db.AddSlotToAccessList(taddr, v2)
+			addrPresent, slotPresent = db.SlotInAccessList(taddr, v2)
 			s.Require().True(addrPresent)
 			s.Require().True(slotPresent)
 
 			// add again, should be noop
-			db.AddSlotToAccessList(taddr, value2)
-			addrPresent, slotPresent = db.SlotInAccessList(taddr, value2)
+			db.AddSlotToAccessList(taddr, v2)
+			addrPresent, slotPresent = db.SlotInAccessList(taddr, v2)
 			s.Require().True(addrPresent)
 			s.Require().True(slotPresent)
 		}},
 		{"prepare access list", func(db vm.StateDB) {
 			al := gethcore.AccessList{{
 				Address:     address3,
-				StorageKeys: []common.Hash{value1},
+				StorageKeys: []common.Hash{v1},
 			}}
 
 			sender, dest := taddr, &taddr2
 			db.Prepare(params.Rules{}, sender, sender, dest, vm.PrecompiledAddressesBerlin, al)
 
-			// check sender and dst
-			s.Require().True(db.AddressInAccessList(taddr))
-			s.Require().True(db.AddressInAccessList(taddr2))
-			// check precompiles
-			s.Require().True(db.AddressInAccessList(common.BytesToAddress([]byte{1})))
-			// check AccessList
-			s.Require().True(db.AddressInAccessList(address3))
-			addrPresent, slotPresent := db.SlotInAccessList(address3, value1)
-			s.Require().True(addrPresent)
-			s.Require().True(slotPresent)
-			addrPresent, slotPresent = db.SlotInAccessList(address3, value2)
-			s.Require().True(addrPresent)
-			s.Require().False(slotPresent)
+			s.T().Log("check arg: sender and dst")
+			s.True(db.AddressInAccessList(sender), "expect sender from Prepare in access list")
+			s.True(db.AddressInAccessList(*dest), "expect dest from Prepare")
+
+			s.T().Log("check arg: precompiles")
+			s.True(
+				db.AddressInAccessList(common.BytesToAddress([]byte{1})),
+				"expect precompile in access list",
+			)
+
+			s.T().Log("check arg: AccessList")
+			s.True(db.AddressInAccessList(address3))
+			addrPresent, slotPresent := db.SlotInAccessList(address3, v1)
+			s.True(addrPresent, "present slot")
+			s.True(slotPresent, "present slot")
+			addrPresent, slotPresent = db.SlotInAccessList(address3, v2)
+			s.True(addrPresent, "missing slot")
+			s.False(slotPresent, "missing slot")
 		}},
 	}
 
 	for _, tc := range testCases {
-		deps := evmtest.NewTestDeps()
-		db := deps.NewStateDB()
-		tc.malleate(db)
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			db := deps.NewStateDB()
+			tc.malleate(db)
+		})
 	}
 }
 

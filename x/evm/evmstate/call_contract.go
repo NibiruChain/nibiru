@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -35,16 +34,19 @@ import (
 //     Errors.
 //   - err: Error with
 func (k Keeper) CallContract(
-	ctx sdk.Context,
+	// ctx sdk.Context, // TODO: UD-DEBUG: CallContract - Remove passed ctx
 	evmObj *vm.EVM,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,
 	contractInput []byte,
 	gasLimit uint64,
-	commit bool,
+	commit bool, // TODO: UD-DEBUG: CallContract - Remove commit
 	weiValue *big.Int,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	nonce := k.GetAccNonce(ctx, fromAcc)
+	var (
+		sdb   = evmObj.StateDB.(*SDB)
+		nonce = sdb.GetNonce(fromAcc)
+	)
 
 	unusedBigInt := big.NewInt(0)
 	if weiValue == nil {
@@ -67,28 +69,24 @@ func (k Keeper) CallContract(
 		SkipFromEOACheck: false,
 	}
 
-	// Generating TxConfig with an empty tx hash as there is no actual eth tx
-	// sent by a user
-	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-
 	var applyErr error
 	evmResp, applyErr = k.ApplyEvmMsg(
-		ctx, evmMsg, evmObj, commit /*commit*/, txConfig.TxHash,
+		evmMsg, evmObj, commit, /*commit*/
 	)
 	if applyErr != nil {
-		ctx.WithLastErrApplyEvmMsg(applyErr)
+		sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 		return nil, applyErr
 	}
 
 	if evmResp != nil {
-		gasErr := evm.SafeConsumeGas(ctx, evmResp.GasUsed, "CallContract")
+		gasErr := evm.SafeConsumeGas(sdb.Ctx(), evmResp.GasUsed, "CallContract")
 		if gasErr != nil {
 			return nil, gasErr
 		}
 	}
 
 	if evmResp != nil && evmResp.Failed() {
-		if lastEvmErr := ctx.LastErrApplyEvmMsg(); lastEvmErr != nil {
+		if lastEvmErr := sdb.Ctx().LastErrApplyEvmMsg(); lastEvmErr != nil {
 			evmResp.VmError += ": " + lastEvmErr.Error()
 		}
 		if strings.Contains(evmResp.VmError, vm.ErrOutOfGas.Error()) {

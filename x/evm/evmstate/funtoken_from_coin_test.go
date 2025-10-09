@@ -345,7 +345,6 @@ func (s *SuiteFunToken) TestERC20TransferThenPrecompileSend() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ = deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr, // from
 		&testContractAddr,   // to

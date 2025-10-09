@@ -2,6 +2,7 @@ package precompile_test
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -56,9 +58,18 @@ func (s *OracleSuite) TestOracle_FailToPackABI() {
 	}
 }
 
+type BlockT struct {
+	Time   time.Time
+	Height int64
+}
+
+func (block BlockT) String() string {
+	return fmt.Sprintf("BlockT{TimeUnix:%d, Height:%d}", block.Time.Unix(), block.Height)
+}
+
 func (s *OracleSuite) TestOracle_HappyPath() {
 	deps := evmtest.NewTestDeps()
-	runQuery := func(ctx sdk.Context) (
+	runQuery := func(deps *evmtest.TestDeps) (
 		resp *evm.MsgEthereumTxResponse,
 		err error,
 	) {
@@ -69,7 +80,6 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		return deps.EvmKeeper.CallContract(
-			ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
@@ -87,7 +97,7 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		deps.SetCtx(deps.Ctx().WithBlockTime(time.Unix(69, 420)).WithBlockHeight(69))
 		deps.App.OracleKeeper.SetPrice(deps.Ctx(), "unibi:uusd", sdk.MustNewDecFromStr("0.067"))
 
-		resp, err := runQuery(deps.Ctx())
+		resp, err := runQuery(&deps)
 		s.NoError(err)
 
 		// Check the response
@@ -100,13 +110,29 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
 	}
 
+	getBlock := func(deps evmtest.TestDeps) BlockT {
+		return BlockT{
+			Time:   deps.Ctx().BlockTime(),
+			Height: deps.Ctx().BlockHeight(),
+		}
+	}
+	setBlock := func(deps *evmtest.TestDeps, block BlockT) {
+		deps.SetCtx(
+			deps.Ctx().
+				WithBlockTime(block.Time).
+				WithBlockHeight(block.Height),
+		)
+	}
+
 	s.T().Log("Query from a later time")
 	{
-		secondsLater := deps.Ctx().BlockTime().Add(100 * time.Second)
-		resp, err := runQuery(deps.Ctx().
-			WithBlockTime(secondsLater).
-			WithBlockHeight(deps.Ctx().BlockHeight() + 50),
-		)
+		blockBefore := getBlock(deps)
+		newBlock := BlockT{
+			Time:   deps.Ctx().BlockTime().Add(100 * time.Second),
+			Height: deps.Ctx().BlockHeight() + 50,
+		}
+		setBlock(&deps, newBlock)
+		resp, err := runQuery(&deps)
 		s.NoError(err)
 
 		// Check the response
@@ -119,14 +145,20 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Equal(out[0].(*big.Int), big.NewInt(67_000_000_000_000_000))
 		s.Equal(fmt.Sprintf("%d", out[1].(uint64)), "69000")
 		s.Equal(fmt.Sprintf("%d", out[2].(uint64)), "69")
+
+		setBlock(&deps, blockBefore)
 	}
 
 	s.T().Log("test IOracle.chainLinkLatestRoundData")
 	{
-		secondsLater := deps.Ctx().BlockTime().Add(100 * time.Second)
-		ctx := deps.Ctx().
-			WithBlockTime(secondsLater).
-			WithBlockHeight(deps.Ctx().BlockHeight() + 50)
+		blockBefore := getBlock(deps)
+		newBlock := BlockT{
+			Time:   deps.Ctx().BlockTime().Add(100 * time.Second),
+			Height: deps.Ctx().BlockHeight() + 50,
+		}
+		setBlock(&deps, newBlock)
+		log.Printf("DEBUG: blockBefore: %+v\n", blockBefore)
+		log.Printf("DEBUG: newBlock: %+v\n", newBlock)
 
 		contractInput, err := embeds.SmartContract_Oracle.ABI.Pack(
 			string(precompile.OracleMethod_chainLinkLatestRoundData),
@@ -135,7 +167,6 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_Oracle,
@@ -157,15 +188,16 @@ func (s *OracleSuite) TestOracle_HappyPath() {
 		// In this case, 0.067 = 67 * 10^{15}.
 		s.Equal(out[1].(*big.Int), big.NewInt(67_000_000_000_000_000))
 		// startedAt, updatedAt : created at block timestamp
-		s.Equal(out[2].(*big.Int), new(big.Int).SetInt64(deps.Ctx().BlockTime().Unix()))
-		s.Equal(out[3].(*big.Int), new(big.Int).SetInt64(deps.Ctx().BlockTime().Unix()))
+		blockBeforeTsBig := new(big.Int).SetInt64(blockBefore.Time.Unix())
+		s.Equal(out[2].(*big.Int), blockBeforeTsBig)
+		s.Equal(out[3].(*big.Int), blockBeforeTsBig)
 		// answeredInRound
 		s.Equal(out[4].(*big.Int), big.NewInt(420))
 	}
 }
 
 type OracleSuite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 }
 
 // TestPrecompileSuite: Runs all the tests in the suite.

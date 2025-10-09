@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 type TestDeps struct {
@@ -46,19 +46,33 @@ func NewTestDeps() TestDeps {
 	}
 }
 
-func (deps TestDeps) NewStateDB() *evmstate.SDB {
+// NewStateDB returns the current [*evmstate.SDB] pointer for the [*TestDeps]
+// instance. This function mutates the [*TestDeps] and initializes the state DB
+// it one is not set already.
+func (deps *TestDeps) NewStateDB() *evmstate.SDB {
 	if deps.sdb == nil {
 		deps.sdb = deps.EvmKeeper.NewSDB(
 			deps.Ctx(),
-			evmstate.NewEmptyTxConfig(
-				gethcommon.BytesToHash(deps.Ctx().HeaderHash()),
-			),
+			deps.EvmKeeper.TxConfig(deps.Ctx(), deps.Ctx().EvmTxHash()),
 		)
 	}
 	return deps.sdb
 }
 
-func (deps TestDeps) Commit() {
+func (deps TestDeps) IsEqualSDB(otherSdb *evmstate.SDB) bool {
+	return deps.sdb == otherSdb
+}
+
+func (deps TestDeps) IsActiveStateTransition() bool {
+	return deps.sdb != nil
+}
+
+// Commit mutates the [*TestDeps], committing changes from the current
+// [*evmstate.SDB] and resetting it to nil. You can think of this like saving
+// previous changes and potentially starting a new Etheruem tx is starting
+// because reverting the old state DB is no longer possible after
+// [*TestDeps.Commit]
+func (deps *TestDeps) Commit() {
 	if deps.sdb != nil {
 		deps.sdb.Commit()
 		deps.sdb = nil
@@ -157,7 +171,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
-		ctx, evmObj, evmMsg.From, nil, contractInput,
+		evmObj, evmMsg.From, nil, contractInput,
 		evmstate.Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/
 		evmMsg.Value,

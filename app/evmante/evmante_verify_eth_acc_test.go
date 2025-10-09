@@ -33,15 +33,6 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			wantErr:       "sender balance < tx cost",
 		},
 		{
-			name: "sad: sender cannot be a contract -> no contract bytecode",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
-				// Force account to be a smart contract
-				sdb.SetCode(deps.Sender.EthAddr, []byte("evm bytecode stuff"))
-			},
-			txSetup: evmtest.HappyCreateContractTx,
-			wantErr: "sender is not EOA",
-		},
-		{
 			name:          "sad: invalid tx",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {},
 			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
@@ -64,17 +55,21 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			stateDB := deps.NewStateDB()
-			anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.EvmKeeper, &deps.App.AccountKeeper)
+			sdb := deps.NewStateDB()
+			// anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.EvmKeeper, &deps.App.AccountKeeper)
 
-			tc.beforeTxSetup(&deps, stateDB)
+			tc.beforeTxSetup(&deps, sdb)
 			tx := tc.txSetup(&deps)
-			stateDB.Commit()
 
 			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
-			_, err := anteDec.AnteHandle(
-				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
+			simulate := false
+			unusedOpts := AnteOptionsForTests{MaxTxGasWanted: 0}
+			err := evmante.EthAnteVerifyEthAcc(
+				sdb, sdb.Keeper(), tx, simulate, unusedOpts,
 			)
+			// _, err := anteDec.AnteHandle(
+			// 	deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
+			// )
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return

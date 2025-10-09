@@ -46,7 +46,7 @@ var (
 func RequireStandardEVMTxMsg(tx sdk.Tx) (*MsgEthereumTx, error) {
 	txMsgs := tx.GetMsgs()
 	if len(txMsgs) != 1 {
-		return nil, fmt.Errorf("Ethereum transaction must be exaclty one tx msg: got %d", len(txMsgs))
+		return nil, fmt.Errorf("Ethereum transaction must be exactly one tx msg: got %d", len(txMsgs))
 	}
 	msg, ok := txMsgs[0].(*MsgEthereumTx)
 	if !ok {
@@ -242,7 +242,7 @@ func (msg MsgEthereumTx) GetSignBytes() []byte {
 // The function will fail if the sender address is not defined for the msg or if
 // the sender is not registered on the keyring
 func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.Signer) error {
-	from := msg.GetFrom()
+	from := msg.FromAddrBech32()
 	if from.Empty() {
 		return fmt.Errorf("sender address not defined for message")
 	}
@@ -308,14 +308,17 @@ func (msg MsgEthereumTx) EffectiveGasCapWei(baseFeeWei *big.Int) *big.Int {
 	return txData.EffectiveGasFeeCapWei(baseFeeWei)
 }
 
-// GetFrom loads the ethereum sender address from the sigcache and returns an
+// FromAddrBech32 loads the ethereum sender address from the sigcache and returns an
 // sdk.AccAddress from its bytes
-func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
+func (msg *MsgEthereumTx) FromAddrBech32() sdk.AccAddress {
 	if msg.From == "" {
 		return nil
 	}
+	return msg.FromAddr().Bytes()
+}
 
-	return gethcommon.HexToAddress(msg.From).Bytes()
+func (msg *MsgEthereumTx) FromAddr() gethcommon.Address {
+	return gethcommon.HexToAddress(msg.From)
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields

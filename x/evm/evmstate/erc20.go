@@ -71,9 +71,13 @@ func (e erc20Calls) Mint(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
+	return e.CallContract(evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
 		evm.COMMIT_READONLY, /*commit*/
 		nil)
+}
+
+func SDBFromEVM(evmObj *vm.EVM) *SDB {
+	return evmObj.StateDB.(*SDB)
 }
 
 /*
@@ -100,7 +104,6 @@ func (e erc20Calls) Transfer(
 		return balanceIncrease, nil, err
 	}
 	resp, err = e.CallContract(
-		ctx,
 		evmObj,
 		sender,
 		&erc20Contract,
@@ -180,7 +183,7 @@ func (e erc20Calls) Burn(
 	if err != nil {
 		return nil, err
 	}
-	return e.CallContract(ctx, evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
+	return e.CallContract(evmObj, sender, &erc20Contract, contractInput, getCallGasLimit63_64(ctx, evm.Erc20GasLimitExecute),
 		evm.COMMIT_READONLY, /*commit*/
 		nil)
 }
@@ -215,7 +218,6 @@ func (e erc20Calls) loadERC20String(
 		return out, err
 	}
 	evmResp, err := e.CallContract(
-		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
@@ -259,7 +261,6 @@ func (e erc20Calls) loadERC20Uint8(
 		return out, err
 	}
 	evmResp, err := e.CallContract(
-		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&erc20Contract,
@@ -303,7 +304,6 @@ func (e erc20Calls) LoadERC20BigInt(
 		return nil, err
 	}
 	evmResp, err := e.CallContract(
-		ctx,
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&contract,

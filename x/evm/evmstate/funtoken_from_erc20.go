@@ -106,7 +106,7 @@ func (k *Keeper) createFunTokenFromERC20(
 	// 2 | Get existing ERC20 metadata
 	// We use dummy values for the tx config and evm config because we aren't in an actual end user transaction, it's just a state query.
 
-	sdb := k.NewSDB(ctx, NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash())))
+	sdb := k.NewSDB(ctx, k.TxConfig(ctx, ctx.EvmTxHash()))
 	evmMsg := core.Message{
 		To:               &erc20,
 		From:             evm.EVM_MODULE_ADDRESS,

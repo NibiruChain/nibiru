@@ -58,16 +58,14 @@ func (k *Keeper) EthereumTx(
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := k.NewSDB(ctx, txConfig)
 	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, sdb)
 
 	var applyErr error
 	evmResp, applyErr = k.ApplyEvmMsg(
-		ctx,
 		*evmMsg,
 		evmObj,
 		evm.COMMIT_ETH_TX, /*commit*/
-		txConfig.TxHash,
 	)
 
 	if applyErr != nil {
@@ -272,16 +270,17 @@ func (k Keeper) GetHashFn(ctx sdk.Context) vm.GetHashFunc {
 // For internal calls like funtokens, user does not specify gas limit explicitly.
 // In this case we don't apply any caps for refund and refund 100%
 func (k *Keeper) ApplyEvmMsg(
-	ctx sdk.Context,
 	msg core.Message,
 	evmObj *vm.EVM,
 	commit bool,
-	txHash gethcommon.Hash,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	var (
+		sdb              = evmObj.StateDB.(*SDB) // retains doc comments
 		contractCreation = msg.To == nil
 		rules            = evmObj.ChainConfig().Rules(
-			big.NewInt(ctx.BlockHeight()), false, evm.ParseBlockTimeUnixU64(ctx),
+			big.NewInt(sdb.Ctx().BlockHeight()),
+			false,
+			evm.ParseBlockTimeUnixU64(sdb.Ctx()),
 		)
 		// gasRemaining represents a running tally of remaining gas
 		// available for EVM execution. Gas remaining starts starts at
@@ -295,7 +294,6 @@ func (k *Keeper) ApplyEvmMsg(
 		// runs out of gas, with unused gas potentially being refunded to the sender.
 		gasRemaining = msg.GasLimit
 		tracer       = evmObj.Config.Tracer
-		evmStateDB   = evmObj.StateDB.(*SDB) // retains doc comments
 	)
 
 	// Required: Allow the tracer to capture tx level events pertaining to gas consumption.
@@ -318,7 +316,7 @@ func (k *Keeper) ApplyEvmMsg(
 				}
 				tracer.OnTxEnd(&gethcore.Receipt{
 					GasUsed: localEvmResp.GasUsed,
-					TxHash:  txHash,
+					TxHash:  sdb.TxCfg().TxHash,
 				}, err)
 			}()
 		}
@@ -372,7 +370,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// access list preparation is moved from ante handler to here, because it's
 	// needed when `ApplyMessage` is called under contexts where ante handlers
 	// are not run, for example `eth_call` and `eth_estimateGas`.
-	evmStateDB.Prepare(
+	sdb.Prepare(
 		rules,
 		msg.From,                // sender
 		evmObj.Context.Coinbase, // coinbase
@@ -384,7 +382,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// take over the nonce management from evm:
 	// - reset sender's nonce to msg.Nonce() before calling evm.
 	// - increase sender's nonce by one no matter the result.
-	evmStateDB.SetNonce(msg.From, msg.Nonce)
+	sdb.SetNonce(msg.From, msg.Nonce)
 
 	var (
 		returnBz []byte
@@ -408,7 +406,7 @@ func (k *Keeper) ApplyEvmMsg(
 		)
 	}
 	// Increment nonce after processing the message
-	evmStateDB.SetNonce(msg.From, msg.Nonce+1)
+	sdb.SetNonce(msg.From, msg.Nonce+1)
 
 	// EVM execution error needs to be available for the JSON-RPC client
 	var vmError string
@@ -419,7 +417,7 @@ func (k *Keeper) ApplyEvmMsg(
 	// process gas refunds (we refund a portion of the unused gas)
 	gasUsed := msg.GasLimit - gasRemaining
 	// please see https://eips.ethereum.org/EIPS/eip-3529 for why we do refunds
-	refundAmount := gasToRefund(evmStateDB.GetRefund(), gasUsed)
+	refundAmount := gasToRefund(sdb.GetRefund(), gasUsed)
 	gasRemaining += refundAmount
 	gasUsed -= refundAmount
 
@@ -427,8 +425,8 @@ func (k *Keeper) ApplyEvmMsg(
 		GasUsed: gasUsed,
 		VmError: vmError,
 		Ret:     returnBz,
-		Logs:    evm.NewLogsFromEth(evmStateDB.Logs()),
-		Hash:    txHash.Hex(),
+		Logs:    evm.NewLogsFromEth(sdb.Logs()),
+		Hash:    sdb.TxCfg().TxHash.Hex(),
 	}
 
 	if gasRemaining > msg.GasLimit { // rare case of overflow
@@ -438,7 +436,7 @@ func (k *Keeper) ApplyEvmMsg(
 
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
-		evmStateDB.Commit()
+		sdb.Commit()
 		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
 	}
 
@@ -589,34 +587,47 @@ func (k *Keeper) ConvertCoinToEvm(
 		return
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderBech32 := sdk.MustAccAddressFromBech32(msg.Sender)
-
-	if msg.BankCoin.Denom == appconst.BondDenom {
-		return k.convertCoinToEvmForWNIBI(
-			ctx, msg, senderBech32,
-		)
+	var sdb *SDB
+	{
+		// Isolate ctx scope so we don't use it by mistake.
+		ctx := sdk.UnwrapSDKContext(goCtx)
+		txConfig := k.TxConfig(ctx, ctx.EvmTxHash())
+		sdb = k.NewSDB(ctx, txConfig)
 	}
 
-	funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, msg.BankCoin.Denom))
+	defer func() {
+		if err == nil {
+			sdb.Commit()
+		}
+	}()
+
+	if msg.BankCoin.Denom == appconst.BondDenom {
+		resp, err = k.convertCoinToEvmForWNIBI(
+			sdb, msg, senderBech32,
+		)
+		return
+	}
+
+	funTokens := k.FunTokens.Collect(sdb.Ctx(), k.FunTokens.Indexes.BankDenom.ExactMatch(sdb.Ctx(), msg.BankCoin.Denom))
 	if len(funTokens) == 0 {
 		return nil, fmt.Errorf("funtoken for bank denom \"%s\" does not exist", msg.BankCoin.Denom)
 	}
 	if len(funTokens) > 1 {
 		return nil, fmt.Errorf("multiple funtokens for bank denom \"%s\" found", msg.BankCoin.Denom)
 	}
-
 	fungibleTokenMapping := funTokens[0]
 
 	if fungibleTokenMapping.IsMadeFromCoin {
-		return k.convertCoinToEvmBornCoin(
-			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		resp, err = k.convertCoinToEvmBornCoin(
+			sdb, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	} else {
-		return k.convertCoinToEvmBornERC20(
-			ctx, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
+		resp, err = k.convertCoinToEvmBornERC20(
+			sdb, senderBech32, msg.ToEthAddr.Address, msg.BankCoin, fungibleTokenMapping,
 		)
 	}
+	return
 }
 
 // ConvertEvmToCoin Sends an ERC20 token with a valid "FunToken" mapping to the
@@ -624,26 +635,35 @@ func (k *Keeper) ConvertCoinToEvm(
 func (k *Keeper) ConvertEvmToCoin(
 	goCtx context.Context, msg *evm.MsgConvertEvmToCoin,
 ) (resp *evm.MsgConvertEvmToCoinResponse, err error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddrs, erc20, amount, toAddrs, err := msg.Validate()
 	if err != nil {
 		return
 	}
 
-	txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	var sdb *SDB
+	{
+		// Isolate ctx scope so we don't use it by mistake.
+		ctx := sdk.UnwrapSDKContext(goCtx)
+		txConfig := k.TxConfig(ctx, ctx.EvmTxHash())
+		sdb = k.NewSDB(ctx, txConfig)
+	}
+
+	defer func() {
+		if err == nil {
+			sdb.Commit()
+		}
+	}()
 
 	// If the erc20 is WNIBI, attempt to unwrap the WNIBI
-	evmParams := k.GetParams(ctx)
+	evmParams := k.GetParams(sdb.Ctx())
 	if erc20.Hex() == evmParams.CanonicalWnibi.Hex() {
-		_, err = k.ConvertEvmToCoinForWNIBI(
-			ctx, sdb, erc20, senderAddrs, toAddrs.Bech32,
+		_, err = k.convertEvmToCoinForWNIBI(
+			sdb, erc20, senderAddrs, toAddrs.Bech32,
 			amount,
-			nil, /*evmObj*/
 		)
 	} else {
 		// Find the FunToken mapping for this ERC20
-		funTokens := k.FunTokens.Collect(ctx, k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, erc20.Address))
+		funTokens := k.FunTokens.Collect(sdb.Ctx(), k.FunTokens.Indexes.ERC20Addr.ExactMatch(sdb.Ctx(), erc20.Address))
 		if len(funTokens) != 1 {
 			err = fmt.Errorf("no FunToken mapping exists for ERC20 \"%s\"", erc20.Hex())
 			return
@@ -653,21 +673,16 @@ func (k *Keeper) ConvertEvmToCoin(
 		amountBig := amount.BigInt()
 		if funtokenMapping.IsMadeFromCoin {
 			err = k.convertEvmToCoinForCoinOriginated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, sdb,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
 			)
 		} else {
 			err = k.convertEvmToCoinForERC20Originated(
-				ctx, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom, sdb,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
 			)
 		}
 	}
 
-	if err != nil {
-		return
-	}
-	sdb.Commit()
-
-	return &evm.MsgConvertEvmToCoinResponse{}, nil
+	return &evm.MsgConvertEvmToCoinResponse{}, err
 }
 
 // EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case

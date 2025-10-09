@@ -271,7 +271,7 @@ func (s *Suite) TestEthereumTx_ABCI() {
 
 	{
 		r := deliverTxResp
-		s.EqualValuesf(21000, r.GasUsed, "%d", r.GasUsed)
-		s.EqualValuesf(21000, r.GasWanted, "%d", r.GasWanted)
+		s.EqualValuesf(21000, r.GasUsed, `gasUsed="%d", resp: %#v`, r.GasUsed, r)
+		s.EqualValuesf(21000, r.GasWanted, `gasWanted="%d", resp: %#v`, r.GasWanted, r)
 	}
 }

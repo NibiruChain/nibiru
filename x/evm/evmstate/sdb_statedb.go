@@ -20,6 +20,7 @@ package evmstate
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"math/big"
@@ -64,9 +65,6 @@ type SDB struct {
 	savedCtxs []sdk.Context
 
 	txConfig TxConfig
-
-	// The number of precompiled contract calls within the current transaction
-	multistoreCacheCount uint8
 }
 
 func FromVM(evmObj *vm.EVM) *SDB {
@@ -86,6 +84,10 @@ func NewSDB(ctx sdk.Context, k *Keeper, txConfig TxConfig) *SDB {
 	// possible
 	sdb.Snapshot()
 	return sdb
+}
+
+func (s SDB) TxCfg() TxConfig {
+	return s.txConfig
 }
 
 // Prepare handles the preparatory steps for executing a state transition with.
@@ -126,7 +128,7 @@ func (s *SDB) Prepare(
 
 	// EIP-1153: Reset transient storage for beginning of tx execution
 	// See core/state/statedb.go from geth.
-	s.localState = NewLocalState()
+	s.localState.ContractStorage = make(transientStorage)
 }
 
 // Keeper returns the underlying `Keeper`
@@ -161,6 +163,11 @@ func (s *SDB) Logs() (allLogs []*gethcore.Log) {
 		allLogs = append(allLogs, ls.logs...)
 	}
 	return allLogs
+}
+
+func (s *SDB) LogsJson() (jsonBz []byte) {
+	jsonBz, _ = json.MarshalIndent(s.Logs(), "", "  ")
+	return
 }
 
 // GetRefund returns the current value of the refund counter.
@@ -455,7 +462,6 @@ func (s *SDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccCh
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after [SelfDestruct].
 func (s *SDB) SelfDestruct(addr gethcommon.Address) (prevWei uint256.Int) {
-
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_DELETE
 	prevWei = *s.GetBalance(addr)
 	s.subBalanceHoldingSupplyConstant(addr, &prevWei)
@@ -512,7 +518,6 @@ func (s *SDB) IsCreatedThisBlock(addr gethcommon.Address) bool {
 func (s *SDB) SelfDestruct6780(
 	addr gethcommon.Address,
 ) (prevWei uint256.Int, isSelfDestructed bool) {
-
 	if s.IsCreatedThisBlock(addr) {
 		prevWei = s.SelfDestruct(addr)
 		isSelfDestructed = true
@@ -715,7 +720,6 @@ func (s *SDB) Witness() *stateless.Witness {
 //
 // This function implements the [vm.StateDB] interface.
 func (s *SDB) Finalise(deleteEmptyObjects bool) {
-
 	// Empty self-destructed accounts
 	{
 		localStates := append(s.savedStates, s.localState)

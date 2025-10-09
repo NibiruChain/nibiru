@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
@@ -223,6 +224,19 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 	))
 
+	blockHash := evm.EmptyHash
+	ethTxHash := evm.EmptyHash
+	s.Equal(
+		evmstate.TxConfig{
+			BlockHash: blockHash,
+			TxHash:    ethTxHash,
+			TxIndex:   0,
+			LogIndex:  0,
+		},
+		deps.EvmKeeper.TxConfig(deps.Ctx(), ethTxHash),
+		"expect starter tx config before any EVM txs happen",
+	)
+
 	s.T().Log("Deploy ERC20")
 	metadata := evm.ERC20Metadata{
 		Name:     "erc20name",
@@ -234,6 +248,16 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
 	s.Require().NoError(err)
+	s.Equal(
+		evmstate.TxConfig{
+			BlockHash: blockHash,
+			TxHash:    ethTxHash,
+			TxIndex:   1,
+			LogIndex:  1,
+		},
+		deps.EvmKeeper.TxConfig(deps.Ctx(), ethTxHash),
+		"expect updated tx config after EVM tx. Deployed contract",
+	)
 
 	s.T().Log("CreateFunToken for the ERC20")
 	resp, err := deps.EvmKeeper.CreateFunToken(
@@ -254,7 +278,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,      /*from*/
 			&deployResp.ContractAddr, /*to*/
@@ -276,7 +299,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
@@ -306,7 +328,6 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx(),
 			evmObj,
 			deps.Sender.EthAddr,                 /*from*/
 			&precompile.PrecompileAddr_FunToken, /*to*/
@@ -351,12 +372,23 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		)
 
 		// Event "EventTxLog" must present with OwnershipTransferred event
-		emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+		// emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
 		signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
 		fromAddress := gethcommon.BytesToHash(evm.EVM_MODULE_ADDRESS.Bytes()).Hex()
 		toAddress := gethcommon.BytesToHash(deps.Sender.EthAddr.Bytes()).Hex()
 		amountBase64 := gethcommon.LeftPadBytes(big.NewInt(1).Bytes(), 32)
 
+		txCfg := evmstate.TxConfig{
+			BlockHash: blockHash,
+			TxHash:    ethTxHash,
+			TxIndex:   1,
+			LogIndex:  1,
+		}
+		s.Equal(
+			txCfg,
+			deps.EvmKeeper.TxConfig(deps.Ctx(), ethTxHash),
+			"expect tx config unaltered because no EVM txs have occured since we deployed the ERC20 contract",
+		)
 		testutil.RequireContainsTypedEvent(
 			s.T(),
 			deps.Ctx(),
@@ -371,10 +403,10 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 						},
 						Data:        amountBase64,
 						BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
-						TxHash:      emptyHash,
-						TxIndex:     0,
-						BlockHash:   emptyHash,
-						Index:       0,
+						TxHash:      ethTxHash.Hex(),
+						TxIndex:     uint64(txCfg.TxIndex),
+						BlockHash:   blockHash.Hex(),
+						Index:       uint64(txCfg.LogIndex),
 						Removed:     false,
 					},
 				},
@@ -490,7 +522,6 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		evm.EVM_MODULE_ADDRESS,
 		&precompile.PrecompileAddr_FunToken,
@@ -595,7 +626,6 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	s.Require().NoError(err)
 	evmObj, _ := deps.NewEVM()
 	evmResp, err = deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr, /*from*/
 		&erc20Addr.Address,  /*to*/
@@ -667,7 +697,6 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,                 /*from*/
 		&precompile.PrecompileAddr_FunToken, /*to*/
@@ -747,7 +776,6 @@ func (s *SuiteFunToken) TestFindMKRMetadata() {
 	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx(),
 		evmObj,
 		deps.Sender.EthAddr,
 		&deployResp.ContractAddr,

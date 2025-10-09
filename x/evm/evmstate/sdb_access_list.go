@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/set"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
@@ -35,8 +34,10 @@ import (
 //   - map[addr] -> slots       => address + N slots
 type accessList map[gethcommon.Address]set.Set[gethcommon.Hash]
 
-var _ json.Marshaler = (*accessList)(nil)
-var _ json.Unmarshaler = (*accessList)(nil)
+var (
+	_ json.Marshaler   = (*accessList)(nil)
+	_ json.Unmarshaler = (*accessList)(nil)
+)
 
 func (al accessList) MarshalJSON() (bz []byte, err error) {
 	accessTupleJson := make(map[gethcommon.Address][]gethcommon.Hash)

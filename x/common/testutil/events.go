@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -87,7 +88,13 @@ func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.
 		}
 	}
 
-	t.Errorf("event not found, event: %+v, found events: %+v", event, foundEvents)
+	eventJsonBz, errA := json.MarshalIndent(event, "", "  ")
+	foundEventsJsonBz, errB := json.MarshalIndent(foundEvents, "", "  ")
+	if errA == nil && errB == nil {
+		t.Errorf("event not found,\nevent: %+s,\nfound events: %+s", eventJsonBz, foundEventsJsonBz)
+	} else {
+		t.Errorf("event not found,\nevent: %+s,\nfound events: %+s", event, foundEvents)
+	}
 }
 
 // EventHasAttributeValue parses the given ABCI event at a key to see if it

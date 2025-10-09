@@ -189,18 +189,13 @@ func OnRunStart(
 		return res, err
 	}
 
-	stateDB, ok := evm.StateDB.(*evmstate.SDB)
+	sdb, ok := evm.StateDB.(*evmstate.SDB)
 	if !ok {
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
 	}
 
-	ctx := stateDB.Ctx()
-
-	// journalEntry captures the state before precompile execution to enable
-	// proper state reversal if the call fails or if [statedb.JournalChange]
-	// is reverted in general.
-	// cacheCtx, journalEntry := stateDB.CacheCtxForPrecompile()
+	ctx := sdb.Ctx()
 
 	// Switching to a local gas meter to enforce gas limit check for a precompile
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit)).
@@ -211,7 +206,7 @@ func OnRunStart(
 		Args:   args,
 		Ctx:    ctx,
 		Method: method,
-		SDB:    stateDB,
+		SDB:    sdb,
 	}, nil
 }
 
