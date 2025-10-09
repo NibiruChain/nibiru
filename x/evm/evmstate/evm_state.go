@@ -130,7 +130,11 @@ func (state EvmState) SetAccState(
 }
 
 // GetState: Implements `statedb.Keeper` interface: Loads smart contract state.
-func (k *Keeper) GetState(ctx sdk.Context, addr gethcommon.Address, stateKey gethcommon.Hash) gethcommon.Hash {
+func (k *Keeper) GetState(
+	ctx sdk.Context,
+	addr gethcommon.Address,
+	stateKey gethcommon.Hash,
+) gethcommon.Hash {
 	return gethcommon.BytesToHash(k.EvmState.AccState.GetOr(
 		ctx,
 		collections.Join(addr, stateKey),

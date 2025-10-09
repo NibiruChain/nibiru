@@ -3,8 +3,6 @@ package evmstate_test
 import (
 	"fmt"
 	"math/big"
-	"strings"
-	"testing"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,13 +49,14 @@ func (s *Suite) TestCommitRemovesDirties() {
 	)
 	s.Require().NoError(err)
 
-	s.Less(
-		0, evmObj.StateDB.(*evmstate.SDB).DebugDirtiesCount(),
-		"after a state modifying contract call (ERC20.mint), there should be dirty entries",
-	)
+	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
+	// s.Less(
+	// 	0, evmObj.StateDB.(*evmstate.SDB).DebugDirtiesCount(),
+	// 	"after a state modifying contract call (ERC20.mint), there should be dirty entries",
+	// )
 
 	evmObj.StateDB.(*evmstate.SDB).Commit()
-	s.Require().EqualValues(0, evmObj.StateDB.(*evmstate.SDB).DebugDirtiesCount())
+	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
 }
 
 // AddBalanceSigned is only used in tests for convenience.
@@ -91,23 +90,26 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	AddBalanceSigned(sdb, randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
 	AddBalanceSigned(sdb, randomAcc, balDelta)
-	if sdb.DebugDirtiesCount() != 4 {
-		debugDirtiesCountMismatch(sdb, s.T())
-		s.FailNow("expected 4 dirty journal changes")
-	}
+	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
+	// if sdb.DebugDirtiesCount() != 4 {
+	// 	debugDirtiesCountMismatch(sdb, s.T())
+	// 	s.FailNow("expected 4 dirty journal changes")
+	// }
 
 	s.T().Log("StateDB.Commit, then Dirties should be gone")
 	sdb.Commit()
-	if sdb.DebugDirtiesCount() != 0 {
-		debugDirtiesCountMismatch(sdb, s.T())
-		s.FailNow("expected 0 dirty journal changes")
-	}
+	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
+	// if sdb.DebugDirtiesCount() != 0 {
+	// 	debugDirtiesCountMismatch(sdb, s.T())
+	// 	s.FailNow("expected 0 dirty journal changes")
+	// }
 }
 
 func (s *Suite) TestContractCallsAnotherContract() {
 	deps := evmtest.NewTestDeps()
 	evmObj, _ := deps.NewEVM()
-	stateDB := evmObj.StateDB.(*evmstate.SDB)
+	// TODO: UD-DEBUG: refactor: sdb not needed here?
+	// sdb := evmObj.StateDB.(*evmstate.SDB)
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -157,10 +159,8 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			uint256.NewInt(0),
 		)
 		s.Require().NoError(err)
-		if stateDB.DebugDirtiesCount() != 2 {
-			debugDirtiesCountMismatch(stateDB, s.T())
-			s.FailNowf("expected 2 dirty journal changes", "%#v", stateDB.Journal)
-		}
+		// TODO: UD-DEBUG: New assertion needed for test to replace dirty journal
+		// checks
 	})
 
 	s.Run("Transfer 69_000 tokens", func() {
@@ -281,15 +281,16 @@ snapshots and see prior states.`))
 		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5+50,
 	)
 
-	errFn := common.TryCatch(func() {
+	errPanic := common.TryCatch(func() {
 		// a revision that doesn't exist
 		sdb.RevertToSnapshot(9000)
-	})
-	s.Require().ErrorContains(errFn(), "revision id 9000 cannot be reverted")
+	})()
+	s.Require().ErrorContains(errPanic, "revision id 9000 cannot be reverted")
 
 	s.Equal(
-		5,
+		snapshots[len(snapshots)-1].SnapshotIdx,
 		sdb.SnapshotRevertIdx(),
+		"snapshot index must be the same since we've only done read operations since the last snapshot",
 	)
 
 	for i := len(snapshots) - 1; i >= 0; i-- {
@@ -316,39 +317,7 @@ snapshots and see prior states.`))
 	// )
 
 	sdb.Commit()
-	s.Require().EqualValues(0, sdb.DebugDirtiesCount())
 	test.AssertWasmCounterState(
 		&s.Suite, deps, helloWorldCounterWasm, 7,
 	)
-}
-
-func debugDirtiesCountMismatch(db *evmstate.SDB, t *testing.T) {
-	lines := []string{}
-	dirties := db.DebugDirties()
-	stateObjects := db.DebugStateObjects()
-	for addr, dirtyCount := range dirties {
-		lines = append(lines, fmt.Sprintf("Dirty addr: %s, dirtyCount=%d", addr, dirtyCount))
-
-		// Inspect the actual state object
-		maybeObj := stateObjects[addr]
-		if maybeObj == nil {
-			lines = append(lines, "  no state object found!")
-			continue
-		}
-		obj := *maybeObj
-
-		lines = append(lines, fmt.Sprintf("  balance: %s", obj.Balance()))
-		lines = append(lines, fmt.Sprintf("  suicided: %v", obj.SelfDestructed))
-		lines = append(lines, fmt.Sprintf("  dirtyCode: %v", obj.DirtyCode))
-
-		// Print storage state
-		lines = append(lines, fmt.Sprintf("  len(obj.DirtyStorage) entries: %d", len(obj.DirtyStorage)))
-		for k, v := range obj.DirtyStorage {
-			lines = append(lines, fmt.Sprintf("    key: %s, value: %s", k.Hex(), v.Hex()))
-			origVal := obj.OriginStorage[k]
-			lines = append(lines, fmt.Sprintf("    origin value: %s", origVal.Hex()))
-		}
-	}
-
-	t.Log("debugDirtiesCountMismatch:\n", strings.Join(lines, "\n"))
 }

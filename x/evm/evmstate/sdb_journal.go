@@ -17,10 +17,6 @@ package evmstate
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
 import (
-	"bytes"
-	"math/big"
-	"sort"
-
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -49,32 +45,12 @@ func newJournal() *journal {
 	}
 }
 
-// sortedDirties sort the dirty addresses for deterministic iteration
-func (j *journal) sortedDirties() []common.Address {
-	keys := make([]common.Address, 0, len(j.dirties))
-	for k := range j.dirties {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return bytes.Compare(keys[i].Bytes(), keys[j].Bytes()) < 0
-	})
-	return keys
-}
-
 // append inserts a new modification entry to the end of the change journal.
 func (j *journal) append(entry JournalChange) {
 	j.entries = append(j.entries, entry)
 	if addr := entry.Dirtied(); addr != nil {
 		j.dirties[*addr]++
 	}
-}
-
-// dirty explicitly sets an address to dirty, even if the change entries would
-// otherwise suggest it as clean. It is copied directly from go-ethereum. In the
-// words of the library authors, "this method is an ugly hack to handle the
-// RIPEMD precompile consensus exception." - geth/core/state/journal.go
-func (j *journal) dirty(addr common.Address) {
-	j.dirties[addr]++
 }
 
 // Revert undoes a batch of journalled modifications along with any Reverted
@@ -97,94 +73,4 @@ func (j *journal) Revert(statedb *SDB, snapshot int) {
 // Length returns the current number of entries in the journal.
 func (j *journal) Length() int {
 	return len(j.entries)
-}
-
-// ------------------------------------------------------
-// suicideChange
-
-type suicideChange struct {
-	account     *common.Address
-	prev        bool // whether account had already suicided
-	prevbalance *big.Int
-}
-
-var _ JournalChange = suicideChange{}
-
-func (ch suicideChange) Revert(s *SDB) {
-	obj := s.getStateObject(*ch.account)
-	if obj != nil {
-		obj.SelfDestructed = ch.prev
-		obj.setBalance(ch.prevbalance)
-	}
-}
-
-func (ch suicideChange) Dirtied() *common.Address {
-	return ch.account
-}
-
-// ------------------------------------------------------
-// transientStorageChange represents a [JournalChange] for whenver a transient
-// storage slot changes.
-var _ JournalChange = transientStorageChange{}
-
-// transientStorageChange: [JournalChange] implementation for whenver a transient
-// storage slot changes
-type transientStorageChange struct {
-	address        *common.Address
-	key, prevValue common.Hash
-}
-
-func (ch transientStorageChange) Revert(s *SDB) {
-	s.transientStorage.Set(*ch.address, ch.key, ch.prevValue)
-}
-
-func (ch transientStorageChange) Dirtied() *common.Address {
-	return nil
-}
-
-var _ JournalChange = touchChange{}
-
-// touchChange is a journal entry that marks an account as 'touched'.
-//
-// This is necessary to comply with EIP-161, which defines that accounts must be
-// considered for deletion at the end of a transaction if they remain empty
-// (balance, nonce, and code are all zero) and were not accessed during the
-// transaction.
-//
-// Calling 'touch' ensures that the account is retained in state for the duration
-// of the transaction, even if it remains empty. This helps prevent unintended
-// deletions of accounts that are interacted with but have no effective state
-// changes.
-//
-// No actual state is reverted during a `touchChange.revert()` — its presence in
-// the journal is only meaningful for dirtiness tracking and snapshot
-// consistency.
-type touchChange struct {
-	account common.Address
-}
-
-// Revert is an intentional no-op. To revert a [touchChange], do nothing.
-func (ch touchChange) Revert(s *SDB) {}
-
-func (ch touchChange) Dirtied() *common.Address {
-	return &ch.account
-}
-
-// createContractChange represents an account becoming a contract-account.
-// This event happens prior to executing initcode. The journal-event simply
-// manages the created-flag, in order to allow same-tx destruction.
-type createContractChange struct {
-	account common.Address
-}
-
-func (ch createContractChange) Revert(s *SDB) {
-	obj := s.getStateObject(ch.account)
-	if obj == nil {
-		return
-	}
-	obj.newContract = false
-}
-
-func (ch createContractChange) Dirtied() *common.Address {
-	return nil
 }

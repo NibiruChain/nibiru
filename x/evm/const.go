@@ -46,6 +46,7 @@ var (
 	// "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 	EmptyCodeHashBz = crypto.Keccak256(nil)
 	EmptyCodeHash   = gethcommon.BytesToHash(EmptyCodeHashBz)
+	EmptyHash       = gethcommon.Hash{} // Blank hash != Blank code hash
 
 	CodeHashForNilAccount = gethcommon.Hash{}
 )

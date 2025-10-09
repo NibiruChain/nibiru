@@ -28,15 +28,13 @@ func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *Account {
 	return acct
 }
 
-// GetCode: Loads smart contract bytecode.
+// GetCode: Loads smart contract bytecode associated with the given code hash.
 // Implements the `statedb.Keeper` interface.
 func (k *Keeper) GetCode(ctx sdk.Context, codeHash gethcommon.Hash) []byte {
-	codeBz := k.EvmState.ContractBytecode.GetOr(ctx, codeHash.Bytes(), nil)
-	return codeBz
-	// if err != nil {
-	// 	panic(err) // TODO: We don't like to panic.
-	// }
-	// return codeBz
+	if codeHash == evm.EmptyCodeHash {
+		return nil
+	}
+	return k.EvmState.ContractBytecode.GetOr(ctx, codeHash.Bytes(), nil)
 }
 
 // ForEachStorage: Iterator over contract storage.
@@ -44,7 +42,7 @@ func (k *Keeper) GetCode(ctx sdk.Context, codeHash gethcommon.Hash) []byte {
 func (k *Keeper) ForEachStorage(
 	ctx sdk.Context,
 	addr gethcommon.Address,
-	stopIter func(key, value gethcommon.Hash) bool,
+	stopIter func(key, value gethcommon.Hash) (keepGoing bool),
 ) {
 	iter := k.EvmState.AccState.Iterate(
 		ctx,

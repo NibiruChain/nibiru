@@ -102,18 +102,6 @@ func (deps TestDeps) NewEVM() (*vm.EVM, *evmstate.SDB) {
 	return evmObj, sdb
 }
 
-func (deps TestDeps) NewEVMLessVerboseLogger() (*vm.EVM, *evmstate.SDB) {
-	sdb := deps.NewStateDB()
-	evmObj := deps.EvmKeeper.NewEVM(
-		deps.Ctx(),
-		MOCK_GETH_MESSAGE,
-		deps.EvmKeeper.GetEVMConfig(deps.Ctx()),
-		logger.NewStructLogger(&logger.Config{Debug: false}).Hooks(),
-		sdb,
-	)
-	return evmObj, sdb
-}
-
 func (deps *TestDeps) GethSigner() gethcore.Signer {
 	return gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 }
@@ -165,8 +153,7 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-
-	sdb := deps.EvmKeeper.NewSDB(ctx, deps.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
+	sdb := deps.NewStateDB()
 	evmObj := deps.EvmKeeper.NewEVM(ctx, evmMsg, deps.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := deps.EvmKeeper.CallContract(

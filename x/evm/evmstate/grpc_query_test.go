@@ -679,8 +679,9 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				resp, _ := deps.App.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx()), &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				})
-				s.Equal("1000", resp.Balance)
-				s.Require().Equal("1000"+strings.Repeat("0", 12), resp.BalanceWei)
+				wantBal := "1000" + strings.Repeat("0", 12)
+				s.Equal(wantBal, resp.Balance)
+				s.Require().Equal(wantBal, resp.BalanceWei)
 
 				// Send Eth call to transfer from the account - 5 * 10^12 wei
 				recipient := evmtest.NewEthPrivAcc().EthAddr

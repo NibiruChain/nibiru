@@ -12,7 +12,6 @@ import (
 	"github.com/holiman/uint256"
 
 	xcommon "github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -26,26 +25,6 @@ var (
 	blockHash  common.Hash    = common.BigToHash(big.NewInt(9999))
 	errAddress common.Address = common.BigToAddress(big.NewInt(100))
 )
-
-// CollectContractStorage is a helper function that collects all storage key-value pairs
-// for a given contract address using the ForEachStorage method of the StateDB.
-// It returns a map of storage slots to their values.
-func CollectContractStorage(db vm.StateDB) evmstate.Storage {
-	storage := make(evmstate.Storage)
-	sdb := db.(*evmstate.SDB)
-	err := sdb.ForEachStorage(
-		taddr,
-		func(k, v common.Hash) bool {
-			storage[k] = v
-			return true
-		},
-	)
-	if err != nil {
-		return nil
-	}
-
-	return storage
-}
 
 func (s *Suite) TestAccount() {
 	key1 := common.BigToHash(big.NewInt(1))
@@ -71,7 +50,7 @@ func (s *Suite) TestAccount() {
 			k := sdb.Keeper()
 			acct := k.GetAccount(deps.Ctx(), taddr)
 			s.Require().EqualValues(evmstate.NewEmptyAccount(), acct)
-			s.Require().Empty(CollectContractStorage(sdb))
+			s.Require().Empty(sdb.GetStorageForOneContract(taddr))
 
 			sdb = deps.NewStateDB()
 			s.Require().Equal(true, sdb.Exist(taddr))
@@ -267,17 +246,17 @@ func (s *Suite) TestState() {
 	testCases := []struct {
 		name      string
 		malleate  func(*evmstate.SDB)
-		expStates evmstate.Storage
+		expStates evmstate.StorageForOneContract
 	}{
 		{"empty state", func(db *evmstate.SDB) {
 		}, nil},
 		{"set empty value", func(db *evmstate.SDB) {
 			db.SetState(taddr, key1, common.Hash{})
-		}, evmstate.Storage{}},
+		}, evmstate.StorageForOneContract{}},
 		{"noop state change", func(db *evmstate.SDB) {
 			db.SetState(taddr, key1, value1)
 			db.SetState(taddr, key1, common.Hash{})
-		}, evmstate.Storage{}},
+		}, evmstate.StorageForOneContract{}},
 		{"set state", func(db *evmstate.SDB) {
 			// check empty initial state
 			s.Require().Equal(common.Hash{}, db.GetState(taddr, key1))
@@ -293,7 +272,7 @@ func (s *Suite) TestState() {
 			// set same value again, should be noop
 			db.SetState(taddr, key1, value1)
 			s.Require().Equal(value1, db.GetState(taddr, key1))
-		}, evmstate.Storage{
+		}, evmstate.StorageForOneContract{
 			key1: value1,
 		}},
 	}
@@ -301,18 +280,18 @@ func (s *Suite) TestState() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			db := deps.NewStateDB()
-			tc.malleate(db)
-			db.Commit()
+			sdb := deps.NewStateDB()
+			tc.malleate(sdb)
+			sdb.Commit()
 
-			// check committed states in keeper
+			s.T().Logf("check committed states in keeper. case (%s)", tc.name)
 			for k, v := range tc.expStates {
-				s.Equal(v, db.GetState(taddr, k))
+				s.Equal(v, sdb.GetState(taddr, k))
 			}
 
-			// check ForEachStorage
-			db = deps.NewStateDB()
-			collected := CollectContractStorage(db)
+			s.T().Logf("check entire contract storage using GetStorageForOneContract. case (%s)", tc.name)
+			sdb = deps.NewStateDB()
+			collected := sdb.GetStorageForOneContract(taddr)
 			if len(tc.expStates) > 0 {
 				s.Require().Equal(tc.expStates, collected)
 			} else {
@@ -648,40 +627,122 @@ func (s *Suite) TestRefund() {
 	}
 }
 
-func (s *Suite) TestIterateStorage() {
-	key1 := common.BigToHash(big.NewInt(1))
-	value1 := common.BigToHash(big.NewInt(2))
-	key2 := common.BigToHash(big.NewInt(3))
-	value2 := common.BigToHash(big.NewInt(4))
+func (s *Suite) TestSetStateAndSetTransientState() {
+	hasher := func(i int64) common.Hash {
+		return common.BigToHash(big.NewInt(i))
+	}
+	k1, v1 := hasher(11), hasher(1)
+	k2, v2 := hasher(12), hasher(2)
+	k3, v3 := hasher(13), hasher(3)
+
+	s.Require().NotEqual(evm.EmptyCodeHash, evm.EmptyHash, "note important inequality")
 
 	deps := evmtest.NewTestDeps()
 	sdb := deps.NewStateDB()
-	sdb.SetState(taddr, key1, value1)
-	sdb.SetState(taddr, key2, value2)
+	snapshotA := sdb.SnapshotRevertIdx()
+	s.T().Logf("Initial condition: Make snapshotA (idx=%d)", snapshotA)
 
-	// ForEachStorage only iterate committed state
-	s.Require().Empty(CollectContractStorage(sdb))
-
-	sdb.Commit()
-
-	storage := CollectContractStorage(sdb)
-	s.Require().Equal(2, len(storage))
-
-	keySet := set.New[common.Hash](key1, key2)
-	valSet := set.New[common.Hash](value1, value2)
-	for _, stateKey := range storage.SortedKeys() {
-		stateValue := deps.EvmKeeper.GetState(deps.Ctx(), taddr, stateKey)
-		s.True(keySet.Has(stateKey))
-		s.True(valSet.Has(stateValue))
+	helpMsg := "expect empty state initial condition"
+	s.T().Log(helpMsg)
+	for _, kn := range []common.Hash{k1, k2, k3} {
+		s.Equal(
+			evm.EmptyHash,
+			sdb.GetState(taddr, kn),
+			helpMsg,
+		)
+		s.Equal(
+			evm.EmptyHash,
+			sdb.GetTransientState(taddr, kn),
+			helpMsg,
+		)
+		s.Equal(
+			evm.EmptyHash,
+			sdb.GetCommittedState(taddr, kn),
+			"committed state was empty before tx",
+		)
 	}
 
-	// break early iteration
-	storage = make(evmstate.Storage)
-	err := sdb.ForEachStorage(taddr, func(k, v common.Hash) bool {
-		storage[k] = v
-		// return false to break early
-		return false
-	})
-	s.Require().NoError(err)
-	s.Require().Equal(1, len(storage))
+	s.T().Log("Make B changes - SetState({k1=v1, k2=v2}), SetTransientState({k3=v3})")
+	sdb.SetState(taddr, k1, v1)
+	sdb.SetState(taddr, k2, v2)
+	sdb.SetTransientState(taddr, k3, v3)
+
+	assertBStates := func(sdb *evmstate.SDB) {
+		s.T().Log("Assert B changes - SetState({k1=v1, k2=v2}), SetTransientState({k3=v3})")
+		// Persistent state
+		s.Equal(v1, sdb.GetState(taddr, k1))
+		s.Equal(v2, sdb.GetState(taddr, k2))
+		s.Equal(evm.EmptyHash, sdb.GetTransientState(taddr, k1))
+		s.Equal(evm.EmptyHash, sdb.GetTransientState(taddr, k2))
+		// Transient state
+		s.Equal(evm.EmptyHash, sdb.GetState(taddr, k3))
+		s.Equal(v3, sdb.GetTransientState(taddr, k3))
+	}
+	assertBEmptyCommittedStates := func(sdb *evmstate.SDB) {
+		s.T().Log("Committed state must match pre-transaction (empty)")
+		for _, kn := range []common.Hash{k1, k2, k3} {
+			s.Equal(
+				evm.EmptyHash,
+				sdb.GetCommittedState(taddr, kn),
+				"committed state was empty before tx",
+			)
+		}
+	}
+
+	assertBStates(sdb)
+	assertBEmptyCommittedStates(sdb)
+	snapshotB := sdb.Snapshot()
+
+	s.T().Log("Make C changes - after snapshot B, modify existing, add new")
+	k4, v4 := hasher(14), hasher(4)
+	k5, v5 := hasher(15), hasher(5)
+	sdb.SetState(taddr, k1, v4)          // Modify existing state
+	sdb.SetState(taddr, k4, v4)          // Add new state
+	sdb.SetTransientState(taddr, k3, v5) // Modify existing transient
+	sdb.SetTransientState(taddr, k5, v5) // Add new transient
+
+	s.T().Log("Assert C changes")
+	s.Equal(v4, sdb.GetState(taddr, k1), "state k1 should be v4 after C changes")
+	s.Equal(v2, sdb.GetState(taddr, k2), "state k2 should still be v2")
+	s.Equal(v4, sdb.GetState(taddr, k4), "state k4 should be v4")
+	s.Equal(v5, sdb.GetTransientState(taddr, k3), "transient k3 should be v5")
+	s.Equal(v5, sdb.GetTransientState(taddr, k5), "transient k5 should be v5")
+
+	s.T().Log("Revert to snapshot B -> should see B state")
+	sdb.RevertToSnapshot(snapshotB)
+	s.Equal(v1, sdb.GetState(taddr, k1), "after revert: state k1 should be v1")
+	s.Equal(v2, sdb.GetState(taddr, k2), "after revert: state k2 should be v2")
+	s.Equal(evm.EmptyHash, sdb.GetState(taddr, k4), "after revert: state k4 should be empty")
+	s.Equal(v3, sdb.GetTransientState(taddr, k3), "after revert: transient k3 should be v3")
+	s.Equal(evm.EmptyHash, sdb.GetTransientState(taddr, k5), "after revert: transient k5 should be empty")
+
+	// Committed state should still be empty
+	s.Equal(evm.EmptyHash, sdb.GetCommittedState(taddr, k1), "after revert: committed k1 should be empty")
+
+	s.T().Log("Revert to snapshot A -> should see A state")
+	sdb.RevertToSnapshot(snapshotA)
+
+	// Should be back to initial empty state
+	helpMsg = "after revert to A"
+	for _, kn := range []common.Hash{k1, k2, k3, k4, k5} {
+		s.Equal(evm.EmptyHash, sdb.GetState(taddr, kn), helpMsg)
+		s.Equal(evm.EmptyHash, sdb.GetTransientState(taddr, kn), helpMsg)
+		s.Equal(evm.EmptyHash, sdb.GetCommittedState(taddr, kn), helpMsg)
+	}
+
+	s.T().Log("Re-apply B changes for finalization test")
+	sdb.SetState(taddr, k1, v1)
+	sdb.SetState(taddr, k2, v2)
+	sdb.SetTransientState(taddr, k3, v3)
+
+	assertBStates(sdb)
+	assertBEmptyCommittedStates(sdb)
+
+	s.T().Log("Commit/Finalise: should not affect contract storage")
+	sdb.Commit()
+	assertBStates(sdb)
+	s.T().Log("Committed state changes after finalization!")
+	s.Equal(v1, sdb.GetCommittedState(taddr, k1), "expect k1 -> v1")
+	s.Equal(v2, sdb.GetCommittedState(taddr, k2), "expect k2 -> v2")
+	s.Equal(evm.EmptyHash, sdb.GetCommittedState(taddr, k3), "expect k3 -> empty (transient)")
 }

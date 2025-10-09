@@ -18,7 +18,7 @@ import (
 // Test Suite struct definitions
 
 // TestAll: Runs all the tests in the suite.
-func TestAll(t *testing.T) {
+func Test(t *testing.T) {
 	suite.Run(t, new(Suite))
 	suite.Run(t, new(SuiteFunToken))
 }

@@ -5,20 +5,20 @@ package evmstate
 import (
 	"bytes"
 	"fmt"
-	"math/big"
 	"sort"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 )
 
-// Account represents an Ethereum account as viewed by the Auth module state. The
-// balance is stored in the smallest native unit (e.g., micronibi or unibi).
-// These objects are stored in the storage of auth module.
+// Account represents an Ethereum account according to the Auth and Bank module
+// state.
 type Account struct {
 	// BalanceNwei is "NIBI wei", or attoNIBI, balance from the x/bank module
-	// state. 10^{18} nwei := 1 NIBI. Equivalently, one micronibi (unibi) is
+	// state. It has the same relationship with NIBI
+	// that wei has with ETH on Ethereum.
+	// Therefore, 10^{18} nwei := 1 NIBI. Equivalently, one micronibi (unibi) is
 	// 10^{12} nwei.
 	BalanceNwei *uint256.Int
 
@@ -26,43 +26,6 @@ type Account struct {
 	Nonce uint64
 	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
 	CodeHash []byte
-}
-
-// AccountWei represents an Ethereum account as viewed by the EVM. This struct is
-// derived from an `Account` but represents balances in wei, which is necessary
-// for correct operation within the EVM. The EVM expects and operates on wei
-// values, which are 10^12 times larger than the native unibi value due to the
-// definition of NIBI as "ether".
-type AccountWei struct {
-	BalanceWei *uint256.Int
-	// Nonce is the number of transactions sent from this account or, for contract accounts, the number of contract-creations made by this account
-	Nonce uint64
-	// CodeHash is the hash of the contract code for this account, or nil if it's not a contract account
-	CodeHash []byte
-}
-
-// ToWei converts an Account (native representation) to AccountWei (EVM
-// representation). This conversion is necessary when moving from the Cosmos SDK
-// context to the EVM context. It multiplies the balance by 10^12 to convert from
-// unibi to wei.
-func (acc Account) ToWei() AccountWei {
-	return AccountWei{
-		BalanceWei: acc.BalanceNwei,
-		Nonce:      acc.Nonce,
-		CodeHash:   acc.CodeHash,
-	}
-}
-
-// ToNative converts an AccountWei (EVM representation) back to an Account
-// (native representation). This conversion is necessary when moving from the EVM
-// context back to the Cosmos SDK context. It divides the balance by 10^12 to
-// convert from wei to unibi.
-func (acc AccountWei) ToNative() Account {
-	return Account{
-		BalanceNwei: acc.BalanceWei,
-		Nonce:       acc.Nonce,
-		CodeHash:    acc.CodeHash,
-	}
 }
 
 // NewEmptyAccount returns an empty account.
@@ -78,12 +41,17 @@ func (acct *Account) IsContract() bool {
 	return (acct != nil) && !bytes.Equal(acct.CodeHash, evm.EmptyCodeHashBz)
 }
 
-// Storage represents in-memory cache/buffer of contract storage.
-type Storage map[common.Hash]common.Hash
+// StorageForOneContract represents an in-memory cache of contract storage.
+// In the EVM, contract storage is the mapping from slot key -> slot value, where
+// both are 32-byte arrays of type [gethcommon.Hash].
+//
+// This concept comes from the Ethereum Yellow Paper §4.1: Each account
+// maintains a mapping from 256-bit words to 256-bit words, called "storage".
+type StorageForOneContract map[gethcommon.Hash]gethcommon.Hash
 
 // SortedKeys sort the keys for deterministic iteration
-func (s Storage) SortedKeys() []common.Hash {
-	keys := make([]common.Hash, 0, len(s))
+func (s StorageForOneContract) SortedKeys() []gethcommon.Hash {
+	keys := make([]gethcommon.Hash, 0, len(s))
 	for k := range s {
 		keys = append(keys, k)
 	}
@@ -93,21 +61,24 @@ func (s Storage) SortedKeys() []common.Hash {
 	return keys
 }
 
-func (s Storage) Copy() Storage {
-	cpy := make(Storage, len(s))
+func (s StorageForOneContract) Copy() StorageForOneContract {
+	cpy := make(StorageForOneContract, len(s))
 	for key, value := range s {
 		cpy[key] = value
 	}
 	return cpy
 }
 
-func (s Storage) String() (str string) {
+func (s StorageForOneContract) String() (str string) {
 	for key, value := range s {
 		str += fmt.Sprintf("%X : %X\n", key, value)
 	}
 	return
 }
 
+// TODO: UD-DEBUG: What can be extracted from the stateObject docs and brought
+// over.
+//
 // stateObject represents the state of a Nibiru EVM account.
 // It encapsulates both the account data (balance, nonce, code) and the contract
 // storage state. stateObject serves as an in-memory cache and staging area for
@@ -124,114 +95,23 @@ func (s Storage) String() (str string) {
 // - Provide a layer of abstraction between the EVM and the underlying storage.
 // - Enable features like state reverting and snapshotting.
 // - Optimize performance by minimizing direct access to the underlying storage.
-type stateObject struct {
-	sdb *SDB
+// type stateObject struct {
+// 	sdb *SDB
+// 	account AccountWei
+// 	code    []byte
+// 	// state storage
+// 	OriginStorage StorageForOneContract
+// 	DirtyStorage  StorageForOneContract
+// 	address gethcommon.Address
+// }
 
-	account AccountWei
-	code    []byte
-
-	// state storage
-	OriginStorage Storage
-	DirtyStorage  Storage
-
-	address common.Address
-
-	// flags
-	DirtyCode        bool
-	SelfDestructed   bool // True if the stateObject has been self destructed
-	createdThisBlock bool // True if the stateObject was created this block
-	// This is an EIP-6780 flag indicating whether the object is eligible for
-	// self-destruct according to EIP-6780. The flag could be set either when
-	// the contract is just created within the current transaction, or when the
-	// object was previously existent and is being deployed as a contract within
-	// the current transaction.
-	newContract bool
-}
-
-// newObject creates a state object.
-func newObject(db *SDB, address common.Address, account *Account) *stateObject {
-	createdThisBlock := account == nil
-	if createdThisBlock {
-		account = &Account{}
-	}
-	if account.BalanceNwei == nil {
-		account.BalanceNwei = new(uint256.Int)
-	}
-	if account.CodeHash == nil {
-		account.CodeHash = evm.EmptyCodeHashBz
-	}
-	return &stateObject{
-		sdb:     db,
-		address: address,
-		// Reflect the micronibi (unibi) balance in wei
-		account:          account.ToWei(),
-		OriginStorage:    make(Storage),
-		DirtyStorage:     make(Storage),
-		createdThisBlock: createdThisBlock,
-	}
-}
-
-// isEmpty returns whether the account is considered isEmpty.
-func (s *stateObject) isEmpty() bool {
-	return s.account.Nonce == 0 &&
-		s.account.BalanceWei.Sign() == 0 &&
-		bytes.Equal(s.account.CodeHash, evm.EmptyCodeHashBz)
-}
-
-func (s *stateObject) setBalance(amount *big.Int) {
-	s.account.BalanceWei = uint256.MustFromBig(amount)
-}
-
+// TODO: Read up on EIP-6780 and make sure it's honored.
 //
-// Attribute accessors
-//
-
-// Address returns the address of the contract/account
-func (s *stateObject) Address() common.Address {
-	return s.address
-}
-
-// Code returns the contract code associated with this object, if any.
-func (s *stateObject) Code() []byte {
-	if s.code != nil {
-		return s.code
-	}
-	if bytes.Equal(s.CodeHash(), evm.EmptyCodeHashBz) {
-		return nil
-	}
-	code := s.sdb.keeper.GetCode(s.sdb.evmTxCtx, common.BytesToHash(s.CodeHash()))
-	s.code = code
-	return code
-}
-
-// CodeSize returns the size of the contract code associated with this object,
-// or zero if none.
-func (s *stateObject) CodeSize() int {
-	return len(s.Code())
-}
-
-// CodeHash returns the code hash of account
-func (s *stateObject) CodeHash() []byte {
-	return s.account.CodeHash
-}
-
-// Balance returns the balance of account
-func (s *stateObject) Balance() *uint256.Int {
-	return s.account.BalanceWei
-}
+// (deleted) is an EIP-6780 flag indicating whether the object is eligible for
+// self-destruct according to EIP-6780. The flag could be set either when
+// the contract is just created within the current transaction, or when the
+// object was previously existent and is being deployed as a contract within
+// the current transaction.
 
 // Copied from /core/state/journal.go in geth v1.14
-var ripemd = common.HexToAddress("0000000000000000000000000000000000000003")
-
-// Copied from /core/state/state_object.go in geth v1.14
-func (s *stateObject) touch() {
-	addr := s.address
-	s.sdb.Journal.append(touchChange{
-		account: addr,
-	})
-	if addr == ripemd {
-		// Explicitly put it in the dirty-cache, which is otherwise generated
-		// from flattened journals.
-		s.sdb.Journal.dirty(addr)
-	}
-}
+var ripemd = gethcommon.HexToAddress("0000000000000000000000000000000000000003")

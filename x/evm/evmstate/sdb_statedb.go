@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"maps"
 	"math/big"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -49,31 +50,20 @@ type SDB struct {
 
 	// evmTxCtx is the persistent context used for official `StateDB.Commit` calls.
 	evmTxCtx sdk.Context
-
-	// Journal of state modifications. This is the backbone of
-	// Snapshot and RevertToSnapshot.
-	Journal *journal
-
-	localState  *LocalState
-	savedStates []*LocalState
-	savedCtxs   []sdk.Context
-
-	stateObjects     map[gethcommon.Address]*stateObject
-	transientStorage transientStorage
-
-	txConfig TxConfig
-
 	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
 	// multi-store cached and a new event manager. The cached context
 	// (`cacheCtx`) is written to the persistent context (`ctx`) when
 	// `writeCacheCtx` is called.
-	cacheCtx sdk.Context
 
-	// writeToCommitCtxFromCacheCtx is the "write" function received from
-	// `s.evmTxCtx.CacheContext()`. It saves mutations on s.cacheCtx to the StateDB's
-	// commit context (s.evmTxCtx). This synchronizes the multistore and event manager
-	// of the two contexts.
-	writeToCommitCtxFromCacheCtx func()
+	// TODO: UD-DEBUG: Docs needed.
+	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
+	localState *LocalState
+	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
+	savedStates []*LocalState
+	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
+	savedCtxs []sdk.Context
+
+	txConfig TxConfig
 
 	// The number of precompiled contract calls within the current transaction
 	multistoreCacheCount uint8
@@ -86,13 +76,11 @@ func FromVM(evmObj *vm.EVM) *SDB {
 // NewSDB creates a new state from a given trie.
 func NewSDB(ctx sdk.Context, k *Keeper, txConfig TxConfig) *SDB {
 	sdb := &SDB{
-		keeper:       k,
-		evmTxCtx:     ctx,
-		stateObjects: make(map[gethcommon.Address]*stateObject),
-		Journal:      newJournal(),
-		localState:   NewLocalState(), // TODO: UD-DEBUG: new local state
-		savedCtxs:    []sdk.Context{},
-		txConfig:     txConfig,
+		keeper:     k,
+		evmTxCtx:   ctx,
+		localState: NewLocalState(), // TODO: UD-DEBUG: new local state
+		savedCtxs:  []sdk.Context{},
+		txConfig:   txConfig,
 	}
 	// Initial snapshot is required to guarantee that `RevertToSnapshot(0)` is
 	// possible
@@ -135,8 +123,10 @@ func (s *SDB) Prepare(
 		}
 	}
 	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbse
+
 	// EIP-1153: Reset transient storage for beginning of tx execution
-	s.transientStorage = make(transientStorage)
+	// See core/state/statedb.go from geth.
+	s.localState = NewLocalState()
 }
 
 // Keeper returns the underlying `Keeper`
@@ -158,14 +148,6 @@ func (s *SDB) SetCtx(ctx sdk.Context) {
 // [AddLog] uses the [TxConfig] to populate the tx hash, block hash, tx index,
 // and event log index.
 func (s *SDB) AddLog(ethLog *gethcore.Log) {
-	// TODO: UD-DEBUG: clean
-	// s.Journal.append(addLogChange{})
-	// ethLog.TxHash = s.txConfig.TxHash
-	// ethLog.BlockHash = s.txConfig.BlockHash
-	// ethLog.TxIndex = s.txConfig.TxIndex
-	// ethLog.Index = s.txConfig.LogIndex + uint(len(s.logs))
-	// s.logs = append(s.logs, ethLog)
-
 	ethLog.TxHash = s.txConfig.TxHash
 	ethLog.BlockHash = s.txConfig.BlockHash
 	ethLog.TxIndex = s.txConfig.TxIndex
@@ -297,16 +279,15 @@ func (s *SDB) GetCodeHash(addr gethcommon.Address) (codeHash gethcommon.Hash) {
 }
 
 // GetState retrieves a value from the given account's storage trie.
-func (s *SDB) GetState(addr gethcommon.Address, hash gethcommon.Hash) (value gethcommon.Hash) {
-	return s.keeper.GetState(s.evmTxCtx, addr, hash)
+func (s *SDB) GetState(
+	addr gethcommon.Address,
+	slotKey gethcommon.Hash,
+) (stateValue gethcommon.Hash) {
+	return s.keeper.GetState(s.evmTxCtx, addr, slotKey)
 }
 
 // GetCommittedState retrieves a value from the given account's committed storage trie.
 func (s *SDB) GetCommittedState(addr gethcommon.Address, hash gethcommon.Hash) gethcommon.Hash {
-	if len(s.savedCtxs) == 0 {
-		// No snapshot yet; use current context
-		return s.keeper.GetState(s.evmTxCtx, addr, hash)
-	}
 	return s.keeper.GetState(s.savedCtxs[0], addr, hash)
 }
 
@@ -320,30 +301,6 @@ func (s *SDB) HasSuicided(addr gethcommon.Address) bool {
 // on the vm.Config during state transitions. No store trie preimages are written
 // to the database.
 func (s *SDB) AddPreimage(_ gethcommon.Hash, _ []byte) {}
-
-// getStateObject retrieves a state object given by the address, returning nil if
-// the object is not found.
-func (s *SDB) getStateObject(addr gethcommon.Address) *stateObject {
-	// Prefer live objects if any is available
-	if obj := s.stateObjects[addr]; obj != nil {
-		return obj
-	}
-
-	// If no live objects are available, load it from keeper
-	ctx := s.evmTxCtx
-	if s.writeToCommitCtxFromCacheCtx != nil {
-		ctx = s.cacheCtx
-	}
-	account := s.keeper.GetAccount(ctx, addr)
-	if account == nil {
-		return nil
-	}
-
-	// Insert into the live set
-	obj := newObject(s, addr, account)
-	s.setStateObject(obj)
-	return obj
-}
 
 // CreateAccount explicitly creates a state object. If a state object with the address
 // already exists the balance is carried over to the new account.
@@ -384,32 +341,6 @@ func (s *SDB) CreateAccount(addr gethcommon.Address) {
 func (s *SDB) CreateContract(addr gethcommon.Address) {
 	s.CreateAccount(addr)
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
-}
-
-// ForEachStorage iterate the contract storage, the iteration order is not defined.
-func (s *SDB) ForEachStorage(addr gethcommon.Address, cb func(key, value gethcommon.Hash) bool) error {
-	so := s.getStateObject(addr)
-	if so == nil {
-		return nil
-	}
-	ctx := s.evmTxCtx
-	if s.writeToCommitCtxFromCacheCtx != nil {
-		ctx = s.cacheCtx
-	}
-	s.keeper.ForEachStorage(ctx, addr, func(key, value gethcommon.Hash) bool {
-		if value, dirty := so.DirtyStorage[key]; dirty {
-			return cb(key, value)
-		}
-		if len(value) > 0 {
-			return cb(key, value)
-		}
-		return true
-	})
-	return nil
-}
-
-func (s *SDB) setStateObject(object *stateObject) {
-	s.stateObjects[object.Address()] = object
 }
 
 // TODO: Handle surplus
@@ -489,7 +420,13 @@ func (s *SDB) SetState(
 	addr gethcommon.Address, key, value gethcommon.Hash,
 ) (prevValue gethcommon.Hash) {
 	prevValue = s.GetState(addr, key)
-	s.keeper.SetState(s.evmTxCtx, addr, key, value.Bytes())
+	var valueBz []byte
+	if value == evm.EmptyHash {
+		valueBz = nil
+	} else {
+		valueBz = value.Bytes()
+	}
+	s.keeper.SetState(s.evmTxCtx, addr, key, valueBz)
 	return
 }
 
@@ -604,11 +541,7 @@ func (s *SDB) Snapshot() int {
 	s.evmTxCtx = branchedCtx
 	s.savedStates = append(s.savedStates, s.localState)
 	s.localState = NewLocalState()
-	return len(s.savedCtxs) - 1
-	// id := s.nextRevisionID
-	// s.nextRevisionID++
-	// s.validRevisions = append(s.validRevisions, revision{id, s.Journal.Length()})
-	// return id
+	return s.SnapshotRevertIdx()
 }
 
 // SnapshotRevertIdx returns the current snapshot revert index. The original
@@ -715,55 +648,6 @@ func (s *SDB) Commit() {
 // The reason for (2) is that the overall EVM transaction (block, not internal)
 // is only finalized when [Commit] is called, not when [CommitCacheCtx] is
 // called.
-
-// commitCtx writes the dirty journal state changes to the EVM Keeper. The
-// StateDB object cannot be reused after [commitCtx] has completed. A new
-// object needs to be created from the EVM.
-func (s *SDB) commitCtx(ctx sdk.Context) error {
-	for _, addr := range s.Journal.sortedDirties() {
-		obj := s.getStateObject(addr)
-		if obj == nil {
-			s.Journal.dirties[addr] = 0
-			continue
-		}
-		if obj.SelfDestructed {
-			// Invariant: After [StateDB.Suicide] for some address, the
-			// corresponding account's state object is only available until the
-			// state is committed.
-			if err := s.keeper.DeleteAccount(ctx, obj.Address()); err != nil {
-				return errorf("failed to delete account: %w", err)
-			}
-			delete(s.stateObjects, addr)
-		} else {
-			if obj.code != nil && obj.DirtyCode {
-				s.keeper.SetCode(ctx, obj.CodeHash(), obj.code)
-			}
-			if err := s.keeper.SetAccount(ctx, obj.Address(), obj.account.ToNative()); err != nil {
-				return errorf("failed to set account: %w", err)
-			}
-			for _, key := range obj.DirtyStorage.SortedKeys() {
-				dirtyVal := obj.DirtyStorage[key]
-				// Values that match origin storage are not dirty.
-				if dirtyVal == obj.OriginStorage[key] {
-					continue
-				}
-				// Persist committed changes
-				s.keeper.SetState(ctx, obj.Address(), key, dirtyVal.Bytes())
-				obj.OriginStorage[key] = dirtyVal
-			}
-		}
-		// NOTE: Assume clean to pretend for tests
-		// Reset the dirty count to 0 because all state changes for this dirtied
-		// address in the journal have been committed.
-		//
-		// TODO: https://github.com/NibiruChain/nibiru/issues/2378
-		// This logic should be removed as part of the above ticket.
-		// [feat] Implement a state (ctx) serializable EVM StateDB to make
-		// asynchronous access more safe.
-		s.Journal.dirties[addr] = 0
-	}
-	return nil
-}
 
 // TODO: cleanup - REMOVE
 // // SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
@@ -920,12 +804,12 @@ var (
 )
 
 // transientStorage is a representation of EIP-1153 "Transient Storage".
-type transientStorage map[gethcommon.Address]Storage
+type transientStorage map[gethcommon.Address]StorageForOneContract
 
 // Set sets the transient-storage `value` for `key` at the given `addr`.
 func (t transientStorage) Set(addr gethcommon.Address, key, value gethcommon.Hash) {
 	if _, ok := t[addr]; !ok {
-		t[addr] = make(Storage)
+		t[addr] = make(StorageForOneContract)
 	}
 	t[addr][key] = value
 }
@@ -948,12 +832,61 @@ func (t transientStorage) Copy() transientStorage {
 	return storage
 }
 
+// CopyForContract returns a deep copy of one [StorageForOneContract] map for a
+// given smart contract. Returns an empty map if contract does not have transient
+// storage.
+func (t transientStorage) CopyForContract(
+	addr gethcommon.Address,
+) StorageForOneContract {
+	if contStore, ok := t[addr]; ok {
+		return contStore.Copy()
+	}
+	return make(StorageForOneContract)
+}
+
 // GetTransientState gets transient storage ([gethcommon.Hash]) for a given account.
 func (s *SDB) GetTransientState(
 	addr gethcommon.Address,
 	key gethcommon.Hash,
-) gethcommon.Hash {
-	return s.localState.ContractStorage.Get(addr, key)
+) (stateVal gethcommon.Hash) {
+	stateVal = s.localState.ContractStorage.Get(addr, key)
+	if stateVal != evm.EmptyHash {
+		return stateVal
+	}
+	for i := len(s.savedStates) - 1; i >= 0; i-- {
+		stateVal = s.savedStates[i].ContractStorage.Get(addr, key)
+		if stateVal != evm.EmptyHash {
+			return stateVal
+		}
+	}
+	return stateVal
+}
+
+func (s *SDB) GetTransientStorageForOneContract(
+	addr gethcommon.Address,
+) StorageForOneContract {
+	stor := make(StorageForOneContract)
+	states := append(s.savedStates, s.localState)
+	for _, localState := range states {
+		if localState == nil {
+			continue
+		}
+		maps.Copy(stor, localState.ContractStorage.CopyForContract(addr))
+	}
+	return stor
+}
+
+func (s *SDB) GetStorageForOneContract(
+	addr gethcommon.Address,
+) StorageForOneContract {
+	stor := make(StorageForOneContract)
+	s.keeper.ForEachStorage(
+		s.Ctx(), addr,
+		func(key, value gethcommon.Hash) (keepGoing bool) {
+			stor[key] = value
+			return true
+		})
+	return stor
 }
 
 // SetTransientState sets transient storage for a given account. It

@@ -143,13 +143,13 @@ func (s *Suite) TestUpgrade() {
 			s.Require().NoError(err)
 
 			// Validate the ERC20 balance of the holder
-			evmObj, _ := deps.NewEVMLessVerboseLogger()
+			evmObj, _ := deps.NewEVM()
 			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
 			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx(), evmObj)
 		s.Require().NoError(err)
 		s.Require().Equal("1100", totalSupplyErc20.String())
@@ -158,7 +158,7 @@ func (s *Suite) TestUpgrade() {
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
 	{
 		compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
 			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
@@ -204,7 +204,7 @@ func (s *Suite) TestUpgrade() {
 
 	compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 	s.Run("Confirm that stNIBI has desired metadata after upgrade", func() {
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
 			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
@@ -229,7 +229,7 @@ func (s *Suite) TestUpgrade() {
 	s.Run("New ERC20 impl: owner should be the EVM module", func() {
 		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
 			deps.Ctx(),
 			evmObj,
@@ -252,7 +252,7 @@ func (s *Suite) TestUpgrade() {
 		// It MUST still be a contract
 		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx(), funtoken.Erc20Addr.Address).IsContract())
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		for idx, holderAddr := range holders {
 			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
