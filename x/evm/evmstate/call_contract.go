@@ -34,7 +34,6 @@ import (
 //     Errors.
 //   - err: Error with
 func (k Keeper) CallContract(
-	// ctx sdk.Context, // TODO: UD-DEBUG: CallContract - Remove passed ctx
 	evmObj *vm.EVM,
 	fromAcc gethcommon.Address,
 	contract *gethcommon.Address,

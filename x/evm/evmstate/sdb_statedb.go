@@ -86,6 +86,12 @@ func NewSDB(ctx sdk.Context, k *Keeper, txConfig TxConfig) *SDB {
 	return sdb
 }
 
+func (k *Keeper) NewSDB(
+	ctx sdk.Context, txConfig TxConfig,
+) *SDB {
+	return NewSDB(ctx, k, txConfig)
+}
+
 func (s SDB) TxCfg() TxConfig {
 	return s.txConfig
 }

@@ -29,14 +29,15 @@ func NewAnteHandlerEVM(
 				EthAnteCanTransfer,
 				EthAnteGasConsume,
 				EthAnteIncrementNonce,
+				EthAnteFiniteGasLimitForABCIDeliverTx,
 			},
 		},
 		// NewEthSigVerificationDecorator(options.EvmKeeper),
 		// NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper),
 		// CanTransferDecorator{options.EvmKeeper},
 		// NewAnteDecEthGasConsume(options.EvmKeeper, options.MaxTxGasWanted),
-		NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),
-		ante.AnteDecoratorGasWanted{},
+		// NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),
+		// ante.AnteDecBlockGasWanted{},
 		// emit eth tx hash and index at the very last ante handler.
 		NewEthEmitEventDecorator(options.EvmKeeper),
 	)

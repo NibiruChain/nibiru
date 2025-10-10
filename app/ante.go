@@ -90,6 +90,6 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		ante.AnteDecoratorGasWanted{},
+		ante.AnteDecBlockGasWanted{},
 	)
 }

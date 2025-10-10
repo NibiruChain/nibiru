@@ -149,7 +149,7 @@ func UpgradeStNibiEvmMetadata(
 	}
 
 	txConfig := keepers.EvmKeeper.TxConfig(ctx, gethcommon.Hash{})
-	sdb := keepers.EvmKeeper.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := keepers.EvmKeeper.NewSDB(ctx, txConfig)
 	evmObj := keepers.EvmKeeper.NewEVM(ctx, evmMsg, keepers.EvmKeeper.GetEVMConfig(ctx), nil, sdb)
 
 	evmResp, err := keepers.EvmKeeper.CallContract(

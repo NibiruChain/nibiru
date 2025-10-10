@@ -2,7 +2,6 @@
 package evmante
 
 import (
-	"log"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -228,10 +227,6 @@ func EthAnteGasConsume(
 	opts AnteOptionsEVM,
 ) (err error) {
 	gasWanted := uint64(0)
-
-	log.Printf("sdb.Ctx().IsReCheckTx(): %v\n", sdb.Ctx().IsReCheckTx())
-	log.Printf("sdb.Ctx().IsCheckTx(): %v\n", sdb.Ctx().IsCheckTx())
-
 	if sdb.Ctx().IsReCheckTx() {
 		// Then, the limit for gas consumed was already checked during CheckTx so
 		// there's no need to verify it again during ReCheckTx
@@ -314,5 +309,25 @@ func EthAnteGasConsume(
 	sdb.SetCtx(newCtx)
 
 	// we know that we have enough gas on the pool to cover the intrinsic gas
+	return nil
+}
+
+var _ EvmAnteHandler = EthAnteFiniteGasLimitForABCIDeliverTx
+
+// The final [EvmAnteHandler] called before the start of the Ethereum tx. This
+// sets a finite gas meter with a limit so that the "BaseApp" can properly record
+// the gas wanted field for [sdk.GasInfo]. This becomes the gas wanted field for
+// the ABCI deliver tx result.
+func EthAnteFiniteGasLimitForABCIDeliverTx(
+	sdb *evmstate.SDB,
+	k *evmstate.Keeper,
+	msgEthTx *evm.MsgEthereumTx,
+	simulate bool,
+	opts AnteOptionsEVM,
+) (err error) {
+	sdb.SetCtx(
+		sdb.Ctx().
+			WithGasMeter(sdk.NewGasMeter(msgEthTx.GetGas())),
+	)
 	return nil
 }

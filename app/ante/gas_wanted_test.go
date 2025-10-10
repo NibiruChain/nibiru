@@ -84,7 +84,7 @@ func (s *AnteTestSuite) TestGasWantedDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			stateDB := deps.NewStateDB()
-			anteDec := ante.AnteDecoratorGasWanted{}
+			anteDec := ante.AnteDecBlockGasWanted{}
 
 			tx := tc.txSetup(&deps)
 			stateDB.Commit()
