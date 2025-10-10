@@ -40,6 +40,9 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 
 		// ERC20 contract taken to be WNIBI.sol
 		erc20 = evmParams.CanonicalWnibi
+
+		// Logs emitted from all EVM operations
+		evmLogs = []evm.Log{}
 	)
 
 	// -------------------------------------------------------------------------
@@ -105,6 +108,7 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		err = fmt.Errorf("failed to convert NIBI to WNIBI via WNIBI.deposit: VmError: %s", evmResp.VmError)
 		return resp, err
 	}
+	evmLogs = append(evmLogs, evmResp.Logs...)
 
 	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, sdb.Ctx(), evmObj)
 	if err != nil {
@@ -143,12 +147,14 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 		)
 		return
 	}
+	evmLogs = append(evmLogs, evmResp.Logs...)
 
 	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
 		Sender:               senderBech32.String(),
 		Erc20ContractAddress: erc20.Hex(),
 		ToEthAddr:            msg.ToEthAddr.Hex(),
 		BankCoin:             msg.BankCoin,
+		EvmLogs:              evm.LogsToLogLite(evmLogs),
 	})
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
@@ -218,13 +224,8 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		Erc20ContractAddress: erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
 		BankCoin:             coin,
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
 	})
-
-	if !sdb.Ctx().IsEvmTx() {
-		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
-		// Emit tx logs of Mint event
-		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }
@@ -251,7 +252,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
 	}
 
-	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
+	// 2 | In the FunToken ERC20 → BC conversion process that preceded this
 	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
 	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
 	// in the BC → ERC20 conversion.
@@ -259,7 +260,7 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
 	}
 
-	// 2 | EVM sends ERC20 tokens to the "to" account.
+	// 3 | EVM sends ERC20 tokens to the "to" account.
 	// This should never fail due to the EVM account lacking ERc20 fund because
 	// the account must have sent the EVM module ERC20 tokens in the mapping
 	// in order to create the coins originally.
@@ -308,13 +309,8 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
 		ToEthAddr:            recipient.String(),
 		BankCoin:             coin,
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
 	})
-
-	if !sdb.Ctx().IsEvmTx() {
-		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
-		// Emit tx logs of Transfer event
-		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
 }

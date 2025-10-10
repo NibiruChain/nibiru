@@ -43,11 +43,8 @@ var (
 	amountToSend = evm.NativeToWei(big.NewInt(1))
 )
 
-var testContractAddress gethcommon.Address
-
 type BackendSuite struct {
 	suite.Suite
-	cfg                 testnetwork.Config
 	network             *testnetwork.Network
 	node                *testnetwork.Validator
 	fundedAccPrivateKey *ecdsa.PrivateKey
@@ -65,23 +62,23 @@ func TestBackendSuite(t *testing.T) {
 }
 
 func (s *BackendSuite) SetupSuite() {
+	s.T().Log("------------- SetupSuite: BEGIN ------------- ")
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
-	homeDir := s.T().TempDir()
-	s.cfg = testnetwork.BuildNetworkConfig(genState)
-	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
-	s.Require().NoError(err)
+	cfg := testnetwork.BuildNetworkConfig(genState)
+	network := testnetwork.New(&s.Suite, cfg)
+	s.Require().NotNil(network, "Network should not be nil")
 	s.network = network
 	s.node = network.Validators[0]
 	s.ethChainID = appconst.GetEthChainID(s.node.ClientCtx.ChainID)
 	s.backend = s.node.EthRpcBackend
 	s.SuccessfulTxs = make(map[string]SuccessfulTx)
-	_, err = s.network.WaitForHeight(10)
+	_, err := s.network.WaitForHeight(10)
 	s.NoError(err)
 
-	s.T().Log("Funding `s.fundedAccEthAddr`")
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.fundedAccPrivateKey = testAccPrivateKey
 	s.fundedAccEthAddr = crypto.PubkeyToAddress(testAccPrivateKey.PublicKey)
+	s.T().Logf("SetupSuite: Funding `s.fundedAccEthAddr`: %s", s.fundedAccEthAddr.Hex())
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 
@@ -90,21 +87,21 @@ func (s *BackendSuite) SetupSuite() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp.TxHash)
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 	s.T().Logf(
 		"s.fundedEthAccAddr: %s, funds: %s, s.node.Address: %s",
 		s.fundedAccEthAddr, funds, s.node.Address,
 	)
 
-	// Send Transfer TX and use the results in the tests
 	s.Require().NoError(err)
 	transferTxHash := s.SendNibiViaEthTransfer(recipient, amountToSend, true /*waitForNextBlock*/)
+	s.T().Logf("SetupSuite: Send Transfer TX and use the results in the tests\ntransfer tx hash: %s", transferTxHash.Hex())
 	{
 		blockNumber, blockHash, txReceipt, err := WaitForReceipt(s, transferTxHash)
-		s.NotNil(blockNumber)
-		s.NotNil(blockHash)
-		s.NoError(err)
+		s.NotNil(blockNumber, "expect block number")
+		s.NotNil(blockHash, "expect block hash")
 		s.Require().NotNil(txReceipt)
+		s.Require().NoError(err)
 		s.Require().Equal(transferTxHash, txReceipt.TxHash)
 		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
 		s.SuccessfulTxs["transfer"] = SuccessfulTx{
@@ -115,15 +112,14 @@ func (s *BackendSuite) SetupSuite() {
 		}
 	}
 
-	// Deploy test erc20 contract
-	deployContractTxHash, contractAddress := s.DeployTestContract(true)
-	testContractAddress = contractAddress
+	s.T().Log("SetupSuite: Deploy test erc20 contract")
+	deployContractTxHash, _ := s.DeployTestContract(true)
 	{
 		blockNumber, blockHash, txReceipt, err := WaitForReceipt(s, deployContractTxHash)
-		s.NotNil(blockNumber)
-		s.NotNil(blockHash)
-		s.NoError(err)
+		s.NotNil(blockNumber, "expect block number")
+		s.NotNil(blockHash, "expect block hash")
 		s.Require().NotNil(txReceipt)
+		s.Require().NoError(err)
 		blockNumberRpc := rpc.NewBlockNumber(blockNumber)
 		s.SuccessfulTxs["deployContract"] = SuccessfulTx{
 			BlockNumber:    blockNumber,
@@ -133,12 +129,13 @@ func (s *BackendSuite) SetupSuite() {
 		}
 	}
 
-	for _, tx := range s.SuccessfulTxs {
+	for txName, tx := range s.SuccessfulTxs {
 		s.T().Logf(
-			"SuccessfulTx{ BlockNumber: %s, BlockHash: %s, TxHash: %s }",
-			tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex(),
+			"SuccessfulTx(%s){ BlockNumber: %s, BlockHash: %s, TxHash: %s }",
+			txName, tx.BlockNumber, tx.BlockHash.Hex(), tx.Receipt.TxHash.Hex(),
 		)
 	}
+	s.T().Log("------------- SetupSuite: END   ------------- ")
 }
 
 func (s *BackendSuite) SuccessfulTxTransfer() SuccessfulTx {
@@ -208,7 +205,7 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	txHash, err := s.backend.SendRawTransaction(txBz)
 	s.Require().NoError(err)
 	if waitForNextBlock {
-		s.Require().NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 	}
 	return txHash
 }
@@ -225,7 +222,8 @@ func WaitForReceipt(
 	receipt *rpcapi.TransactionReceipt,
 	err error,
 ) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
 	ticker := time.NewTicker(500 * time.Millisecond)

@@ -109,10 +109,10 @@ func (k *Keeper) deployERC20ForBankCoin(
 		return gethcommon.Address{}, sdkioerrors.Wrap(err, "failed to deploy ERC20 contract")
 	}
 
-	// Emit the logs from the EVM Contract deploy execution
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(ctx, evmResp, uint64(0))
+	if !sdb.Ctx().IsEvmTx() {
+		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
+		// Emit the logs from the EVM Contract deploy execution
+		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	}
 
 	return erc20Addr, nil

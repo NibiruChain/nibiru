@@ -4,8 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sdkmath "cosmossdk.io/math"
-	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	bankcli "github.com/NibiruChain/nibiru/v2/x/bank/client/cli"
 
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"

@@ -5,17 +5,16 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ EvmAnteHandler = EthAnteVerifyEthAcc
+var _ EvmAnteStep = AnteStepVerifyEthAcc
 
-// EthAnteVerifyEthAcc validates checks that the sender balance is greater than the total
+// AnteStepVerifyEthAcc validates checks that the sender balance is greater than the total
 // transaction cost. The account will be set to store if it doesn't exist, i.e.
 // cannot be found on store.
 //
@@ -23,14 +22,13 @@ var _ EvmAnteHandler = EthAnteVerifyEthAcc
 // - any of the msgs is not a MsgEthereumTx
 // - from address is empty
 // - account balance is lower than the transaction cost
-func EthAnteVerifyEthAcc(
+func AnteStepVerifyEthAcc(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
-
 	txData, err := evm.UnpackTxData(msgEthTx.Data)
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", 0)
@@ -53,9 +51,9 @@ func EthAnteVerifyEthAcc(
 	return nil
 }
 
-var _ EvmAnteHandler = EthAnteCanTransfer
+var _ EvmAnteStep = AnteStepCanTransfer
 
-func EthAnteCanTransfer(
+func AnteStepCanTransfer(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
@@ -108,71 +106,4 @@ func EthAnteCanTransfer(
 		}
 	}
 	return nil
-}
-
-// AnteDecVerifyEthAcc validates an account balance checks
-type AnteDecVerifyEthAcc struct {
-	evmKeeper     *EVMKeeper
-	accountKeeper evm.AccountKeeper
-}
-
-// NewAnteDecVerifyEthAcc creates a new EthAccountVerificationDecorator
-func NewAnteDecVerifyEthAcc(k *EVMKeeper, ak evm.AccountKeeper) AnteDecVerifyEthAcc {
-	return AnteDecVerifyEthAcc{
-		evmKeeper:     k,
-		accountKeeper: ak,
-	}
-}
-
-// AnteHandle validates checks that the sender balance is greater than the total
-// transaction cost. The account will be set to store if it doesn't exist, i.e.
-// cannot be found on store.
-//
-// This AnteHandler decorator will fail if:
-// - any of the msgs is not a MsgEthereumTx
-// - from address is empty
-// - account balance is lower than the transaction cost
-func (anteDec AnteDecVerifyEthAcc) AnteHandle(
-	ctx sdk.Context,
-	tx sdk.Tx,
-	simulate bool,
-	next sdk.AnteHandler,
-) (newCtx sdk.Context, err error) {
-	for i, msg := range tx.GetMsgs() {
-		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
-		if !ok {
-			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
-		}
-
-		txData, err := evm.UnpackTxData(msgEthTx.Data)
-		if err != nil {
-			return ctx, sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", i)
-		}
-
-		// sender address should be in the tx cache from the previous AnteHandle call
-		from := msgEthTx.FromAddrBech32()
-		if from.Empty() {
-			return ctx, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
-		}
-
-		// check whether the sender address is EOA
-		fromAddr := gethcommon.BytesToAddress(from)
-		acct := anteDec.evmKeeper.GetAccount(ctx, fromAddr)
-
-		if acct == nil {
-			acc := anteDec.accountKeeper.NewAccountWithAddress(ctx, from)
-			anteDec.accountKeeper.SetAccount(ctx, acc)
-			acct = evmstate.NewEmptyAccount()
-		} else if acct.IsContract() {
-			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrInvalidType,
-				"the sender is not EOA: address %s, codeHash <%s>", fromAddr, acct.CodeHash)
-		}
-
-		if err := evmstate.CheckSenderBalance(
-			acct.BalanceNwei, txData,
-		); err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
-		}
-	}
-	return next(ctx, tx, simulate)
 }

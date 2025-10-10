@@ -19,8 +19,11 @@ const (
 	// proto.MessageName(new(evm.EventTxLog))
 	TypeUrlEventTxLog = "eth.evm.v1.EventTxLog"
 
-	// proto.MessageName(new(evm.TypeUrlEventEthereumTx))
+	// proto.MessageName(new(evm.EventEthereumTx))
 	TypeUrlEventEthereumTx = "eth.evm.v1.EventEthereumTx"
+
+	// proto.MessageName(new(evm.EventFunTokenCreated))
+	TypeUrlEventFunToken = "eth.evm.v1.EventFunTokenCreated"
 
 	// Untyped events and attribuges
 
@@ -75,6 +78,20 @@ func EventEthereumTxFromABCIEvent(event abci.Event) (*EventEthereumTx, error) {
 	if !ok {
 		return nil, sdkioerrors.Wrapf(
 			err, "failed to parse event of type %s", TypeUrlEventEthereumTx)
+	}
+	return typedEvent, nil
+}
+
+func EventFunTokenCreatedFromABCIEvent(event abci.Event) (*EventFunTokenCreated, error) {
+	typedProtoEvent, err := sdk.ParseTypedEvent(event)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventFunToken)
+	}
+	typedEvent, ok := (typedProtoEvent).(*EventFunTokenCreated)
+	if !ok {
+		return nil, sdkioerrors.Wrapf(
+			err, "failed to parse event of type %s", TypeUrlEventFunToken)
 	}
 	return typedEvent, nil
 }

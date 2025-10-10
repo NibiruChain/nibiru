@@ -20,6 +20,10 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
+// ----------------------------------------------------------------------
+// Query using CLI commands
+// ----------------------------------------------------------------------
+
 // ExecQueryOption defines a type which customizes a CLI query operation.
 type ExecQueryOption func(queryOption *queryOptions)
 
@@ -45,17 +49,17 @@ func WithQueryEncodingType(e EncodingType) ExecQueryOption {
 	}
 }
 
-func (chain Network) ExecQuery(
+func (chain Network) ExecQueryCmd(
 	cmd *cobra.Command,
 	args []string,
 	result codec.ProtoMarshaler,
 	opts ...ExecQueryOption,
 ) error {
-	return ExecQuery(chain.Validators[0].ClientCtx, cmd, args, result, opts...)
+	return ExecQueryCmd(chain.Validators[0].ClientCtx, cmd, args, result, opts...)
 }
 
-// ExecQuery executes a CLI query onto the provided Network.
-func ExecQuery(
+// ExecQueryCmd executes a CLI query onto the provided Network.
+func ExecQueryCmd(
 	clientCtx client.Context,
 	cmd *cobra.Command,
 	args []string,
@@ -92,7 +96,7 @@ func ExecQuery(
 
 func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracletypes.QueryExchangeRateResponse, error) {
 	var queryResp oracletypes.QueryExchangeRateResponse
-	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
+	if err := ExecQueryCmd(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
@@ -100,7 +104,7 @@ func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracle
 
 func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {
 	var queryResp sdk.TxResponse
-	if err := ExecQuery(
+	if err := ExecQueryCmd(
 		ctx,
 		cli.QueryTxCmd(),
 		[]string{
@@ -116,7 +120,7 @@ func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {
 
 func QuerySudoers(clientCtx client.Context) (*sudotypes.QuerySudoersResponse, error) {
 	var queryResp sudotypes.QuerySudoersResponse
-	if err := ExecQuery(
+	if err := ExecQueryCmd(
 		clientCtx,
 		sudocli.CmdQuerySudoers(),
 		[]string{},

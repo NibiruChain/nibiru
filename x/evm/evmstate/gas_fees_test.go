@@ -2,7 +2,9 @@
 package evmstate_test
 
 import (
+	"fmt"
 	"math/big"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -128,7 +130,7 @@ func (s *Suite) TestRefundGas() {
 		// (Optional) Expected error message that occurs from RefundGas
 		wantErr string
 		// refund amount is leftoverGas * weiPerGas * micronibiPerWei
-		wantRefundAmt *big.Int
+		wantRefundAmt string
 	}
 
 	feeCollectorInitialBalance := big.NewInt(40_000)
@@ -146,34 +148,43 @@ func (s *Suite) TestRefundGas() {
 		func(deps *evmtest.TestDeps) testCase {
 			fundFeeCollectorEvmBal(deps, s, feeCollectorInitialBalance)
 			return testCase{
-				name:          "happy: geth tx gas, base fee normal",
-				msgFrom:       deps.Sender.EthAddr,
-				leftoverGas:   gethparams.TxGas,
-				weiPerGas:     evm.BASE_FEE_WEI,
-				wantErr:       "",
-				wantRefundAmt: new(big.Int).SetUint64(gethparams.TxGas),
+				name:        "happy: geth tx gas, base fee normal",
+				msgFrom:     deps.Sender.EthAddr,
+				leftoverGas: gethparams.TxGas,
+				weiPerGas:   evm.BASE_FEE_WEI,
+				wantErr:     "",
+				// wantRefundAmt = 21000 * 10^{12}
+				wantRefundAmt: fmt.Sprintf("%d", gethparams.TxGas) + strings.Repeat("0", 12),
 			}
 		},
 		func(deps *evmtest.TestDeps) testCase {
 			fundFeeCollectorEvmBal(deps, s, feeCollectorInitialBalance)
 			return testCase{
-				name:          "happy: minimum wei per gas -> 0 refund",
-				msgFrom:       deps.Sender.EthAddr,
-				leftoverGas:   gethparams.TxGas,
-				weiPerGas:     big.NewInt(1),
-				wantErr:       "",
-				wantRefundAmt: new(big.Int).SetUint64(0),
+				name:        "happy: wei per gas of 1 -> 0 refund",
+				msgFrom:     deps.Sender.EthAddr,
+				leftoverGas: gethparams.TxGas,
+				weiPerGas:   big.NewInt(1),
+				wantErr:     "",
+				// wantRefundAmt = 21000 * 1
+				wantRefundAmt: fmt.Sprintf("%d", gethparams.TxGas),
 			}
 		},
 		func(deps *evmtest.TestDeps) testCase {
 			fundFeeCollectorEvmBal(deps, s, feeCollectorInitialBalance)
 			return testCase{
-				name:          "happy: wei per gas slightly below default base fee",
-				msgFrom:       deps.Sender.EthAddr,
-				leftoverGas:   gethparams.TxGas,
-				weiPerGas:     new(big.Int).Sub(evm.BASE_FEE_WEI, big.NewInt(1)),
-				wantErr:       "",
-				wantRefundAmt: new(big.Int).SetUint64(20_999),
+				name:        "happy: wei per gas slightly below default base fee",
+				msgFrom:     deps.Sender.EthAddr,
+				leftoverGas: gethparams.TxGas,
+				weiPerGas:   new(big.Int).Sub(evm.BASE_FEE_WEI, big.NewInt(1)),
+				wantErr:     "",
+				// wantRefundAmt = 21000 * (10^{12} - 1)
+				wantRefundAmt: new(big.Int).Mul(
+					big.NewInt(21_000),
+					new(big.Int).Sub(
+						new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
+						big.NewInt(1),
+					),
+				).String(),
 			}
 		},
 		func(deps *evmtest.TestDeps) testCase {
@@ -184,7 +195,7 @@ func (s *Suite) TestRefundGas() {
 				leftoverGas:   gethparams.TxGas,
 				weiPerGas:     new(big.Int).Quo(evm.BASE_FEE_WEI, big.NewInt(10)),
 				wantErr:       "",
-				wantRefundAmt: new(big.Int).SetUint64(2100),
+				wantRefundAmt: "2100" + strings.Repeat("0", 12),
 			}
 		},
 		func(deps *evmtest.TestDeps) testCase {
@@ -194,7 +205,7 @@ func (s *Suite) TestRefundGas() {
 				msgFrom:     deps.Sender.EthAddr,
 				leftoverGas: gethparams.TxGas,
 				weiPerGas:   evm.BASE_FEE_WEI,
-				wantErr:     "failed to refund 21000 leftover gas (21000unibi)",
+				wantErr:     "fee collector account failed to refund",
 			}
 		},
 		func(deps *evmtest.TestDeps) testCase {
@@ -211,17 +222,13 @@ func (s *Suite) TestRefundGas() {
 		deps := evmtest.NewTestDeps()
 		tc := getTestCase(&deps)
 		s.Run(tc.name, func() {
-			fromBalBefore := deps.App.BankKeeper.GetBalance(
-				deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
-			).Amount.BigInt()
-			feeCollectorBalBefore := deps.App.BankKeeper.GetBalance(
-				deps.Ctx(),
-				auth.NewModuleAddress(auth.FeeCollectorName),
-				evm.EVMBankDenom,
-			).Amount.BigInt()
+			sdb := deps.NewStateDB()
+
+			fromBalBefore := sdb.GetBalance(deps.Sender.EthAddr)
+			feeCollectorBalBefore := sdb.GetBalance(evm.FEE_COLLECTOR_ADDR)
 
 			err := deps.EvmKeeper.RefundGas(
-				deps.Ctx(), tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
+				deps.NewStateDB(), tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -231,23 +238,17 @@ func (s *Suite) TestRefundGas() {
 
 			// refund amount is leftoverGas * weiPerGas * micronibiPerWei
 			// msgFrom should have balance
-			fromBalAfter := deps.App.BankKeeper.GetBalance(
-				deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
-			).Amount.BigInt()
-			feeCollectorBalAfter := deps.App.BankKeeper.GetBalance(
-				deps.Ctx(),
-				auth.NewModuleAddress(auth.FeeCollectorName),
-				evm.EVMBankDenom,
-			).Amount.BigInt()
+			fromBalAfter := sdb.GetBalance(deps.Sender.EthAddr)
+			feeCollectorBalAfter := sdb.GetBalance(evm.FEE_COLLECTOR_ADDR)
 
 			s.Equal(
-				new(big.Int).Sub(fromBalAfter, fromBalBefore).String(),
-				tc.wantRefundAmt.String(),
+				tc.wantRefundAmt,
+				new(big.Int).Sub(fromBalAfter.ToBig(), fromBalBefore.ToBig()).String(),
 				"sender balance did not get refunded as expected",
 			)
 			s.Equal(
-				new(big.Int).Sub(feeCollectorBalAfter, feeCollectorBalBefore).String(),
-				new(big.Int).Neg(tc.wantRefundAmt).String(),
+				tc.wantRefundAmt,
+				new(big.Int).Sub(feeCollectorBalBefore.ToBig(), feeCollectorBalAfter.ToBig()).String(),
 				"fee collector did not refund as expected",
 			)
 		})

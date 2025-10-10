@@ -6,10 +6,8 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/holiman/uint256"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -24,7 +22,7 @@ import (
 
 // RefundGas transfers the leftover gas to the sender of the message.
 func (k *Keeper) RefundGas(
-	ctx sdk.Context,
+	sdb *SDB,
 	msgFrom gethcommon.Address,
 	leftoverGas uint64,
 	weiPerGas *big.Int,
@@ -34,30 +32,45 @@ func (k *Keeper) RefundGas(
 		new(big.Int).SetUint64(leftoverGas),
 		weiPerGas,
 	)
-	leftoverMicronibi := evm.WeiToNative(leftoverWei)
 
-	switch leftoverMicronibi.Sign() {
+	switch leftoverWei.Sign() {
 	case -1:
 		// Should be impossible since leftoverGas is a uint64. Reaching this case
 		// would imply a critical error in the effective gas calculation.
 		return sdkioerrors.Wrapf(evm.ErrInvalidRefund,
-			"refunded amount value cannot be negative %s", leftoverMicronibi,
+			"refunded amount value cannot be negative %s", leftoverWei,
 		)
 	case 1:
-		refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}
+		wei := uint256.MustFromBig(leftoverWei)
 
-		// Refund to sender from the fee collector module account. This account
-		// manages the collection of gas fees.
-		err := k.Bank.SendCoinsFromModuleToAccount(
-			ctx,
-			authtypes.FeeCollectorName, // sender
-			msgFrom.Bytes(),            // recipient
-			refundedCoins,
-		)
-		if err != nil {
-			err = sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
-			return sdkioerrors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
+		if balFeeColl := sdb.GetBalance(evm.FEE_COLLECTOR_ADDR); balFeeColl.Cmp(wei) < 0 {
+			err := sdkioerrors.Wrapf(
+				sdkerrors.ErrInsufficientFunds,
+				"fee collector account failed to refund: refund=\"%s wei\" (attonibi), leftover gas=\"%d\"",
+				wei, leftoverGas,
+			)
+			return err
 		}
+
+		sdb.SubBalance(evm.FEE_COLLECTOR_ADDR, wei, tracing.BalanceIncreaseGasReturn)
+		sdb.AddBalance(msgFrom, wei, tracing.BalanceIncreaseGasReturn)
+
+		sdb.Commit()
+
+		// refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}
+
+		// // Refund to sender from the fee collector module account. This account
+		// // manages the collection of gas fees.
+		// err := k.Bank.SendCoinsFromModuleToAccount(
+		// 	sdb.Ctx(),
+		// 	authtypes.FeeCollectorName, // sender
+		// 	msgFrom.Bytes(),            // recipient
+		// 	refundedCoins,
+		// )
+		// if err != nil {
+		// 	err = sdkioerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
+		// 	return sdkioerrors.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
+		// }
 	default:
 		// no refund
 	}
@@ -118,6 +131,8 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	}
 
 	sdb.SubBalance(from, costInWei, tracing.BalanceDecreaseGasBuy)
+	sdb.AddBalance(evm.FEE_COLLECTOR_ADDR, costInWei, tracing.BalanceDecreaseGasBuy)
+
 	return nil
 }
 

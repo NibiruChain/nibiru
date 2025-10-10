@@ -2,6 +2,8 @@
 package evmante
 
 import (
+	"log"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
@@ -14,31 +16,26 @@ func NewAnteHandlerEVM(
 	options ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		// outermost AnteDecorator. SetUpContext must be called first
-		NewEthSetUpContextDecorator(options.EvmKeeper),
-		NewMempoolGasPriceDecorator(options.EvmKeeper),
-		NewEthValidateBasicDecorator(options.EvmKeeper),
+		// NewEthSetUpContextDecorator(options.EvmKeeper),
+		// NewEthValidateBasicDecorator(options.EvmKeeper),
 		NewEthStateHandlers{
 			EVMKeeper: options.EvmKeeper,
 			Opts:      options,
-			Body: []EvmAnteHandler{
+			Body: []EvmAnteStep{
+				AnteStepSetupCtx, // outermost AnteDecorator. AnteStepSetupCtx must be called first
 				EthSigVerification,
-				EthAnteBlockGasMeter,
-				// TODO: UD-DEBUG: Handlers to impl
-				EthAnteVerifyEthAcc,
-				EthAnteCanTransfer,
-				EthAnteGasConsume,
-				EthAnteIncrementNonce,
+				AnteStepValidateBasic,
+				AnteStepMempoolGasPrice,
+				AnteStepBlockGasMeter,
+				AnteStepVerifyEthAcc,
+				AnteStepCanTransfer,
+				AnteStepGasWanted,
+				AnteStepDeductGas,
+				AnteStepIncrementNonce,
+				AnteStepEmitPendingEvent,
+				AnteStepFiniteGasLimitForABCIDeliverTx,
 			},
 		},
-		// NewEthSigVerificationDecorator(options.EvmKeeper),
-		// NewAnteDecVerifyEthAcc(options.EvmKeeper, options.AccountKeeper),
-		// CanTransferDecorator{options.EvmKeeper},
-		// NewAnteDecEthGasConsume(options.EvmKeeper, options.MaxTxGasWanted),
-		NewAnteDecEthIncrementSenderSequence(options.EvmKeeper, options.AccountKeeper),
-		ante.AnteDecoratorGasWanted{},
-		// emit eth tx hash and index at the very last ante handler.
-		NewEthEmitEventDecorator(options.EvmKeeper),
 	)
 }
 
@@ -47,7 +44,6 @@ func NewAnteHandlerEVM(
 func (handlerGroup NewEthStateHandlers) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
-
 	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
 	if err != nil {
 		return ctx, err
@@ -58,12 +54,15 @@ func (handlerGroup NewEthStateHandlers) AnteHandle(
 		handlerGroup.EVMKeeper,
 		handlerGroup.TxConfig(ctx, msgEthTx.AsTransaction().Hash()),
 	)
+	log.Printf(
+		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ IsCheckTx %v, IsDeliverTx %v  ReCheckTx%v }",
+		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.IsDeliverTx(), sdb.Ctx().IsReCheckTx())
 	sdb.SetCtx(
 		sdb.Ctx().
 			WithIsEvmTx(true).
 			WithEvmTxHash(sdb.TxCfg().TxHash),
 	)
-	for _, evmHandler := range handlerGroup.Body {
+	for idx, evmHandler := range handlerGroup.Body {
 		err = evmHandler(
 			sdb,
 			handlerGroup.EVMKeeper,
@@ -72,24 +71,32 @@ func (handlerGroup NewEthStateHandlers) AnteHandle(
 			handlerGroup.Opts,
 		)
 		if err != nil {
+			log.Printf("EthState AnteHandle Body elem %d failed: %s", idx, err)
 			return ctx, err
 		}
-
+		log.Printf("EthState AnteHandle Body elem %d passed", idx)
 	}
 
+	log.Printf(
+		"EthState AnteHandle END (SUCCESS):\ntxhash: %s\n{ IsCheckTx %v, ReCheckTx %v, IsDeliverTx %v }",
+		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.Ctx().IsReCheckTx(), sdb.IsDeliverTx())
+	if evmstate.IsDeliverTx(sdb.Ctx()) {
+		sdb.Commit() // Persist
+	}
 	return sdb.Ctx(), nil
 }
 
 // NewEthStateHandlers combines multiple ante handler preflight checks as a single
-// EVM state transition. Each of the [EvmAnteHandler] functions are performed
+// EVM state transition. Each of the [EvmAnteStep] functions are performed
 // sequentially using the same EVM state db pointer and context(s).
 type NewEthStateHandlers struct {
 	*EVMKeeper
-	Opts AnteOptionsEVM
-	Body []EvmAnteHandler
+	Opts      AnteOptionsEVM
+	Body      []EvmAnteStep
+	Preflight []sdk.AnteHandler
 }
 
-type EvmAnteHandler = func(
+type EvmAnteStep = func(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
@@ -97,9 +104,9 @@ type EvmAnteHandler = func(
 	opts AnteOptionsEVM,
 ) (err error)
 
-var _ EvmAnteHandler = EthAnteTemplate
+var _ EvmAnteStep = AnteStepTemplate
 
-func EthAnteTemplate(
+func AnteStepTemplate(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
@@ -108,3 +115,5 @@ func EthAnteTemplate(
 ) (err error) {
 	return nil
 }
+
+type EVMKeeper = evmstate.Keeper

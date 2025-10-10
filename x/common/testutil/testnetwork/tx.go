@@ -102,10 +102,7 @@ func (network *Network) ExecTxCmd(
 		return nil, fmt.Errorf("failed to execute tx: %w", err)
 	}
 
-	err = network.WaitForNextBlock()
-	if err != nil {
-		return nil, err
-	}
+	network.WaitForNextBlock()
 
 	txResp := new(sdk.TxResponse)
 	clientCtx.Codec.MustUnmarshalJSON(rawResp.Bytes(), txResp)

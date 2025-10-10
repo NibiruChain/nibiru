@@ -19,9 +19,10 @@ package evmstate
 import (
 	"encoding/json"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/common/set"
 )
 
 // accessList is an EIP-2930 access list. The specification requires unique slots

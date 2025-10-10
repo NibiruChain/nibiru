@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
@@ -12,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -29,28 +28,10 @@ func NewAnteHandler(
 		}
 
 		var anteHandler sdk.AnteHandler
-		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
-		if ok {
-			opts := txWithExtensions.GetExtensionOptions()
-			if len(opts) > 0 {
-				switch typeURL := opts[0].GetTypeUrl(); typeURL {
-				case "/eth.evm.v1.ExtensionOptionsEthereumTx":
-					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = evmante.NewAnteHandlerEVM(options)
-				default:
-					return ctx, fmt.Errorf(
-						"rejecting tx with unsupported extension option: %s", typeURL)
-				}
-
-				return anteHandler(ctx, tx, sim)
-			}
-		}
-
-		switch tx.(type) {
-		case sdk.Tx:
+		if !evm.IsEthTx(tx) {
 			anteHandler = NewAnteHandlerNonEVM(options)
-		default:
-			return ctx, fmt.Errorf("invalid tx type (%T) in AnteHandler", tx)
+		} else {
+			anteHandler = evmante.NewAnteHandlerEVM(options)
 		}
 		return anteHandler(ctx, tx, sim)
 	}
@@ -90,6 +71,6 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		ante.AnteDecoratorGasWanted{},
+		ante.AnteDecBlockGasWanted{},
 	)
 }

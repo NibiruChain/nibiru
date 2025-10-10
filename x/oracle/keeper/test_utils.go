@@ -6,6 +6,8 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/v2/x/bank"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -30,8 +32,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
@@ -137,6 +137,7 @@ type TestFixture struct {
 func CreateTestFixture(t *testing.T) TestFixture {
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
+	tkeyBank := sdk.NewTransientStoreKey(bankkeeper.StoreKeyTransient)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
@@ -191,6 +192,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
 		keyBank,
+		tkeyBank,
 		accountKeeper,
 		blackListAddrs,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

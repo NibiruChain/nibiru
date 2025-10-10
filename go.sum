@@ -671,6 +671,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/NibiruChain/collections v0.5.0 h1:33pXpVTe1PK/tfdZlAJF1JF7AdzGNARG+iL9G/z3X7k=
 github.com/NibiruChain/collections v0.5.0/go.mod h1:43L6yjuF0BMre/mw4gqn/kUOZz1c2Y3huZ/RQfBFrOQ=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.5 h1:NaG0CImdkdBujyMtH4KhRPG+WGJULzAn1GCwcmbjlJw=
+github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.5/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3 h1:vWBieiwll6sjQ4OTagJUXwtjw85Crfk3f7kAPik6BD8=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
 github.com/NibiruChain/wasmd v0.44.0-nibiru h1:b+stNdbMFsl0+o4KedXyF83qRnEpB/jCiTGZZgv2h2U=
@@ -2881,7 +2883,6 @@ gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.0/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
 gotest.tools/v3 v3.5.1 h1:EENdUnS3pdur5nybKYIh2Vfgc8IUNBjxDPSjtiJcOzU=
 gotest.tools/v3 v3.5.1/go.mod h1:isy3WKz7GK6uNw/sbHzfKBLvlvXwUyV06n6brMxxopU=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=

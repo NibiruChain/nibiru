@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evm
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"math/big"

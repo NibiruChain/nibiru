@@ -82,26 +82,28 @@ const (
 
 // prefix bytes for the EVM persistent store
 const (
-	KeyPrefixAccCodes collections.Namespace = iota + 1
-	KeyPrefixAccState
-	KeyPrefixParams
-	KeyPrefixEthAddrIndex
+	KeyPrefixAccCodes     collections.Namespace = 1
+	KeyPrefixAccState     collections.Namespace = 2
+	KeyPrefixParams       collections.Namespace = 3
+	KeyPrefixEthAddrIndex collections.Namespace = 4
 
 	// KV store prefix for `FunToken` mappings
-	KeyPrefixFunTokens
+	KeyPrefixFunTokens collections.Namespace = 5
 	// KV store prefix for indexing `FunToken` by ERC-20 address
-	KeyPrefixFunTokenIdxErc20
+	KeyPrefixFunTokenIdxErc20 collections.Namespace = 6
 	// KV store prefix for indexing `FunToken` by bank coin denomination
-	KeyPrefixFunTokenIdxBankDenom
+	KeyPrefixFunTokenIdxBankDenom collections.Namespace = 7
+
+	KeyPrefixNetWeiBlockDelta collections.Namespace = 8
 )
 
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only
 // remain for current block, and have more gas efficient read and write access.
 const (
-	NamespaceBlockBloom collections.Namespace = iota + 1
-	NamespaceBlockTxIndex
-	NamespaceBlockLogSize
-	NamespaceBlockGasUsed
+	NamespaceBlockBloom   collections.Namespace = 1
+	NamespaceBlockTxIndex collections.Namespace = 2
+	NamespaceBlockLogSize collections.Namespace = 3
+	NamespaceBlockGasUsed collections.Namespace = 4
 )
 
 var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
@@ -131,13 +133,17 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS      gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+	EVM_MODULE_ADDRESS        gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	FEE_COLLECTOR_ADDR        gethcommon.Address
+	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
 
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }
 
 // NativeToWei converts a "unibi" amount to "wei" units for the EVM.

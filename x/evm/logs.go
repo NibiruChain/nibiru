@@ -48,6 +48,14 @@ func (log *Log) ToEthereum() *gethcore.Log {
 	}
 }
 
+func (log Log) ToLogLite() LogLite {
+	return LogLite{
+		Address: log.Address,
+		Topics:  log.Topics,
+		Data:    log.Data,
+	}
+}
+
 func NewLogsFromEth(ethlogs []*gethcore.Log) []Log {
 	var logs []Log //nolint: prealloc
 	for _, ethlog := range ethlogs {
@@ -64,6 +72,14 @@ func LogsToEthereum(logs []Log) []*gethcore.Log {
 		ethLogs = append(ethLogs, logs[i].ToEthereum())
 	}
 	return ethLogs
+}
+
+func LogsToLogLite(logs []Log) []LogLite {
+	liteLogs := make([]LogLite, len(logs))
+	for i, l := range logs {
+		liteLogs[i] = l.ToLogLite()
+	}
+	return liteLogs
 }
 
 // NewLogFromEth creates a new Log instance from an Ethereum type Log.

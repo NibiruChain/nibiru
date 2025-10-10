@@ -353,7 +353,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	s.Require().NoError(err)
 
 	s.T().Log("Convert ERC20 back to bank coins and check events")
-	toAddr := evmtest.NewEthPrivAcc().NibiruAddr
+	toAcc := evmtest.NewEthPrivAcc()
 	convertAmount := sdkmath.NewInt(200)
 
 	deps.SetCtx(deps.Ctx().WithEventManager(sdk.NewEventManager()))
@@ -363,7 +363,7 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 			Sender:    deps.Sender.NibiruAddr.String(),
 			Erc20Addr: eth.EIP55Addr{Address: erc20Addr},
 			Amount:    convertAmount,
-			ToAddr:    toAddr.String(),
+			ToAddr:    toAcc.NibiruAddr.String(),
 		},
 	)
 	s.Require().NoError(err)
@@ -372,19 +372,19 @@ func (s *SuiteFunToken) TestConvertEvmToCoin_Events() {
 	testutil.RequireContainsTypedEvent(s.T(), deps.Ctx(), &evm.EventConvertEvmToCoin{
 		Sender:               deps.Sender.NibiruAddr.String(),
 		Erc20ContractAddress: erc20Addr.Hex(),
-		ToAddress:            toAddr.String(),
+		ToAddress:            toAcc.NibiruAddr.String(),
 		BankCoin:             sdk.NewCoin(bankDenom, convertAmount),
 		SenderEthAddr:        deps.Sender.EthAddr.Hex(),
+		EvmLogs: []evm.LogLite{
+			// This path calls the "ERC20.burnFromAuthority" method.
+			evmtest.LogLiteEventErc20Transfer(
+				erc20Addr,
+				deps.Sender.EthAddr,  // from
+				gethcommon.Address{}, // to zero addr <- burning an ERC20
+				convertAmount.BigInt(),
+			),
+		},
 	})
-
-	// Check EventTxLog was emitted
-	// Note: EventTxLog check is commented out as it may have timing issues with the event manager
-	// The main EventConvertEvmToCoin event is properly emitted which confirms the functionality works
-	// testutil.RequireContainsTypedEvent(
-	// 	s.T(),
-	// 	deps.Ctx(),
-	// 	&evm.EventTxLog{},
-	// )
 }
 
 func (s *SuiteFunToken) TestConvertEvmToCoin_MultipleRecipients() {

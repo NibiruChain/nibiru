@@ -5,12 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 func (s *TestSuite) TestEthAnteBlockGasMeter() {
@@ -152,7 +153,7 @@ func (s *TestSuite) TestEthAnteBlockGasMeter() {
 			tx := tc.beforeTxSetup(&deps, sdb)
 			sdb.Commit()
 
-			err := evmante.EthAnteBlockGasMeter(
+			err := evmante.AnteStepBlockGasMeter(
 				sdb,
 				sdb.Keeper(),
 				tx,
@@ -168,7 +169,7 @@ func (s *TestSuite) TestEthAnteBlockGasMeter() {
 	}
 }
 
-func (s *TestSuite) TestAnteDecEthGasConsume() {
+func (s *TestSuite) TestEthAnteGasWanted() {
 	testCases := []struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx
@@ -215,7 +216,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			)
 
 			simulate := false
-			err := evmante.EthAnteGasConsume(
+			err := evmante.AnteStepGasWanted(
 				sdb,
 				sdb.Keeper(),
 				tx,
@@ -229,14 +230,4 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			s.Require().NoError(err)
 		})
 	}
-}
-
-var _ evmante.AnteOptionsEVM = (*AnteOptionsForTests)(nil)
-
-type AnteOptionsForTests struct {
-	MaxTxGasWanted uint64
-}
-
-func (opts AnteOptionsForTests) GetMaxTxGasWanted() uint64 {
-	return opts.MaxTxGasWanted
 }

@@ -59,6 +59,7 @@ func AnteHandlerError(shortDesc string) error {
 
 type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)
 
+// Implements the evmante.AnteOptionsEVM interface.
 func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
 	return opts.MaxTxGasWanted
 }

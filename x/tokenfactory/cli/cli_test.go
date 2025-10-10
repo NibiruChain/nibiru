@@ -63,13 +63,12 @@ func (s *TestSuite) SetupSuite() {
 	genState := genesis.NewTestGenesisState(encodingConfig.Codec)
 	cfg := testnetwork.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
-	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
-	s.NoError(err)
+	network := testnetwork.New(&s.Suite, cfg)
 
 	s.cfg = cfg
 	s.network = network
 	s.val = network.Validators[0]
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 }
 
 func (s *TestSuite) CreateDenomTest() {
@@ -83,7 +82,7 @@ func (s *TestSuite) CreateDenomTest() {
 			return
 		}
 		s.Require().NoError(err)
-		s.NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 	}
 
 	createDenom("nusd", false)
@@ -93,7 +92,7 @@ func (s *TestSuite) CreateDenomTest() {
 
 	denomResp := new(types.QueryDenomsResponse)
 	s.NoError(
-		s.network.ExecQuery(
+		s.network.ExecQueryCmd(
 			cli.CmdQueryDenoms(), []string{creator.String()}, denomResp,
 		),
 	)
@@ -117,7 +116,7 @@ func (s *TestSuite) MintBurnTest() {
 			return
 		}
 		s.Require().NoError(err)
-		s.NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 	}
 
 	burn := func(coin string, burnFrom string, wantErr bool) {
@@ -129,7 +128,7 @@ func (s *TestSuite) MintBurnTest() {
 			return
 		}
 		s.Require().NoError(err)
-		s.NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 	}
 
 	t := s.T()
@@ -175,7 +174,7 @@ func (s *TestSuite) ChangeAdminTest() {
 	s.T().Log("Verify current admin is creator")
 	infoResp := new(types.QueryDenomInfoResponse)
 	s.NoError(
-		s.network.ExecQuery(
+		s.network.ExecQueryCmd(
 			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
 		),
 	)
@@ -190,7 +189,7 @@ func (s *TestSuite) ChangeAdminTest() {
 	s.T().Log("Verify new admin is in state")
 	infoResp = new(types.QueryDenomInfoResponse)
 	s.NoError(
-		s.network.ExecQuery(
+		s.network.ExecQueryCmd(
 			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
 		),
 	)
@@ -200,7 +199,7 @@ func (s *TestSuite) ChangeAdminTest() {
 func (s *TestSuite) TestQueryModuleParams() {
 	paramResp := new(types.QueryParamsResponse)
 	s.NoError(
-		s.network.ExecQuery(
+		s.network.ExecQueryCmd(
 			cli.NewQueryCmd(), []string{"params"}, paramResp,
 		),
 	)

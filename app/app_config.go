@@ -129,7 +129,6 @@ var (
 		//   HistoricalEntries param > 0
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
-		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		genutiltypes.ModuleName,
 		// NOTE (SetOrderInitGenesis requirement): genutils must occur after
@@ -163,6 +162,12 @@ var (
 		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
 		tftypes.ModuleName,
+
+		// NOTE (EndBlocker requirement): EVM corrects invariants for x/bank in
+		// its end block hook. Crisis enforces [sdk.Invariant] checks, like the
+		// total supply of coins and wei. This means crisis needs to come after
+		// the EVM.
+		crisistypes.ModuleName,
 
 		// Everything else should be before genmsg
 		genmsg.ModuleName,

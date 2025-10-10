@@ -19,6 +19,8 @@ import (
 )
 
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)
+var _ suite.SetupTestSuite = (*TestSuite)(nil)
+var _ suite.SetupAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
@@ -27,13 +29,22 @@ type TestSuite struct {
 	network *testnetwork.Network
 }
 
+func TestOracleHeavy(t *testing.T) {
+	testutil.RetrySuiteRunIfDbClosed(t, func() {
+		suite.Run(t, new(TestSuite))
+	}, 2)
+}
+
+func (s *TestSuite) TearDownSuite() {
+	s.T().Log("tearing down integration test suite")
+	s.network.Cleanup()
+}
+
 func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 }
 
 func (s *TestSuite) SetupTest() {
-	homeDir := s.T().TempDir()
-
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
@@ -47,15 +58,8 @@ func (s *TestSuite) SetupTest() {
 		return gs
 	}())
 
-	network, err := testnetwork.New(
-		s.T(),
-		homeDir,
-		s.cfg,
-	)
-	s.Require().NoError(err)
-	s.network = network
-
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network = testnetwork.New(&s.Suite, s.cfg)
+	s.network.WaitForNextBlock()
 }
 
 func (s *TestSuite) TestSuccessfulVoting() {
@@ -120,7 +124,7 @@ func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdkmath.LegacyDec) []st
 			Validator: val.ValAddress.String(),
 		})
 		s.Require().NoError(err)
-		s.NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 
 		strVotes[i] = pricesStr
 	}
@@ -171,15 +175,4 @@ func (s *TestSuite) currentPrices() map[asset.Pair]sdkmath.LegacyDec {
 	}
 
 	return prices
-}
-
-func TestIntegrationTestSuite(t *testing.T) {
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(TestSuite))
-	}, 2)
-}
-
-func (s *TestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
 }

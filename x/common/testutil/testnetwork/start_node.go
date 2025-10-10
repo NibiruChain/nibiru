@@ -12,10 +12,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	ethrpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
 
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
+	"google.golang.org/grpc"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
@@ -25,7 +27,7 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 )
 
-func startNodeAndServers(cfg Config, val *Validator) error {
+func startNodeAndServers(cfg Config, val *Validator, valIdx uint) error {
 	logger := val.Ctx.Logger
 	evmServerCtxLogger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	tmCfg := val.Ctx.Config
@@ -168,5 +170,36 @@ func startNodeAndServers(cfg Config, val *Validator) error {
 		val.Ctx.Logger = logger // set back to normal setting
 	}
 
+	// Fact: In "network.go" during the [New] function that constructs the
+	//   network, we "only allow the first validator to expose an RPC, APi, and
+	//   gRPC server/client due to Tendermint in-process constraints."
+	//
+	// Fact: The server-side gRPC setup only runs if gRPC is enabled.
+	//   That is becuase of the block with `if val.App.Config.GRPC.Enable {}`
+	if valIdx == 0 {
+		grpcClientConn, err := ConnectGrpcToVal(val)
+		if err != nil {
+			return fmt.Errorf("failed to make grpc connection with the node: %w", err)
+		}
+		val.grpcClientConn = grpcClientConn
+		querier, err := gosdk.NewQuerier(grpcClientConn, val.RPCClient)
+		if err != nil {
+			return err
+		}
+		val.Querier = &querier
+	}
+
 	return nil
 }
+
+func ConnectGrpcToVal(val *Validator) (*grpc.ClientConn, error) {
+	grpcUrl := val.AppConfig.GRPC.Address
+	// Note that 5 seconds was too short for oracle tests, which spin up several
+	// networks in one suite.
+	timeoutSeconds := int64(10)
+	return gosdk.GetGRPCConnection(
+		grpcUrl, true, timeoutSeconds,
+	)
+}
+
+func (node *Validator) GrpcClientConn() *grpc.ClientConn { return node.grpcClientConn }

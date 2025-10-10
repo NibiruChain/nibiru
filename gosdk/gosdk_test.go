@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/gosdk/gosdktest"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
@@ -22,11 +23,11 @@ import (
 // --------------------------------------------------
 
 var (
-	_ suite.SetupAllSuite    = (*TestSuite)(nil)
-	_ suite.TearDownAllSuite = (*TestSuite)(nil)
+	_ suite.SetupAllSuite    = (*Suite)(nil)
+	_ suite.TearDownAllSuite = (*Suite)(nil)
 )
 
-type TestSuite struct {
+type Suite struct {
 	suite.Suite
 
 	nibiruSdk *gosdk.NibiruSDK
@@ -36,44 +37,42 @@ type TestSuite struct {
 	val       *testnetwork.Validator
 }
 
-func TestSuite_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+func TestGosdk(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *TestSuite) RPCEndpoint() string {
+func (s *Suite) RPCEndpoint() string {
 	return s.val.RPCAddress
 }
 
 // SetupSuite implements the suite.SetupAllSuite interface. This function runs
 // prior to all of the other tests in the suite.
-func (s *TestSuite) SetupSuite() {
+func (s *Suite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
-	nibiru, err := gosdk.CreateBlockchain(s.T())
+	nibiru, err := gosdktest.CreateBlockchain(&s.Suite)
 	s.NoError(err)
 	s.network = nibiru.Network
 	s.cfg = nibiru.Cfg
 	s.val = nibiru.Val
 	s.grpcConn = nibiru.GrpcConn
-}
 
-func ConnectGrpcToVal(val *testnetwork.Validator) (*grpc.ClientConn, error) {
-	grpcUrl := val.AppConfig.GRPC.Address
-	return gosdk.GetGRPCConnection(
-		grpcUrl, true, 5,
+	s.NotNil(
+		s.val.Querier,
+		"NewQuerier should be used in network setup",
 	)
 }
 
-func (s *TestSuite) ConnectGrpc() {
-	grpcConn, err := ConnectGrpcToVal(s.val)
+func (s *Suite) ConnectGrpc() {
+	grpcConn, err := testnetwork.ConnectGrpcToVal(s.val)
 	s.NoError(err)
 	s.NotNil(grpcConn)
 	s.grpcConn = grpcConn
 }
 
-func (s *TestSuite) TestNewNibiruSdk() {
+func (s *Suite) TestNewNibiruSdk() {
 	rpcEndpt := s.val.RPCAddress
 	nibiruSdk, err := gosdk.NewNibiruSdk(s.cfg.ChainID, s.grpcConn, rpcEndpt)
 	s.NoError(err)
@@ -85,31 +84,30 @@ func (s *TestSuite) TestNewNibiruSdk() {
 	})
 	s.Run("DoTestBroadcastMsgsGrpc", func() {
 		for t := 0; t < 4; t++ {
-			s.NoError(s.network.WaitForNextBlock())
+			s.network.WaitForNextBlock()
 		}
 		s.DoTestBroadcastMsgsGrpc()
 	})
 	s.Run("DoTestNewQueryClient", func() {
-		_, err := gosdk.NewQuerier(s.grpcConn)
-		s.NoError(err)
+		s.NotNil(s.val.Querier)
 	})
 }
 
 // FIXME: Q: What is the node home for a local validator?
-func (s *TestSuite) UsefulPrints() {
+func (s *Suite) UsefulPrints() {
 	tmCfgRootDir := s.val.Ctx.Config.RootDir
 	fmt.Printf("tmCfgRootDir: %v\n", tmCfgRootDir)
 	fmt.Printf("s.val.Dir: %v\n", s.val.Dir)
 	fmt.Printf("s.val.ClientCtx.KeyringDir: %v\n", s.val.ClientCtx.KeyringDir)
 }
 
-func (s *TestSuite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex string) {
+func (s *Suite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex string) {
 	s.NotNil(txResp)
 	s.EqualValues(txResp.Code, 0)
 	return txResp.TxHash
 }
 
-func (s *TestSuite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSend sdk.Msg) {
+func (s *Suite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSend sdk.Msg) {
 	from = s.val.Address
 	to = testutil.AccAddress()
 	amt = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 420))
@@ -117,7 +115,7 @@ func (s *TestSuite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSe
 	return from, to, amt, msgSend
 }
 
-func (s *TestSuite) DoTestBroadcastMsgs() (txHashHex string) {
+func (s *Suite) DoTestBroadcastMsgs() (txHashHex string) {
 	from, _, _, msgSend := s.msgSendVars()
 	txResp, err := s.nibiruSdk.BroadcastMsgs(
 		from, msgSend,
@@ -126,7 +124,7 @@ func (s *TestSuite) DoTestBroadcastMsgs() (txHashHex string) {
 	return s.AssertTxResponseSuccess(txResp)
 }
 
-func (s *TestSuite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
+func (s *Suite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
 	from, _, _, msgSend := s.msgSendVars()
 	txResp, err := s.nibiruSdk.BroadcastMsgsGrpc(
 		from, msgSend,
@@ -141,18 +139,15 @@ func (s *TestSuite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
 	return txHashHex
 }
 
-func (s *TestSuite) TearDownSuite() {
+func (s *Suite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *TestSuite) DoTestGetGrpcConnection_NoNetwork() {
+func (s *Suite) DoTestGetGrpcConnection_NoNetwork() {
 	grpcConn, err := gosdk.GetGRPCConnection(
 		gosdk.NETWORK_INFO_DEFAULT.GrpcEndpoint+"notendpoint", true, 2,
 	)
 	s.Error(err)
 	s.Nil(grpcConn)
-
-	_, err = gosdk.NewQuerier(grpcConn)
-	s.Error(err)
 }

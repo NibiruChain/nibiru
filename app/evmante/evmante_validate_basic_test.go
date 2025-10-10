@@ -5,246 +5,106 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthValidateBasicDecorator() {
-	testCases := []struct {
-		name        string
-		ctxSetup    func(deps *evmtest.TestDeps)
-		txSetup     func(deps *evmtest.TestDeps) sdk.Tx
-		paramsSetup func(deps *evmtest.TestDeps) evm.Params
-		wantErr     string
-	}{
+func (s *TestSuite) TestAnteStepValidateBasic() {
+	evmAnteStep := evmante.AnteStepValidateBasic
+	priorSteps := []evmante.EvmAnteStep{
+		evmante.EthSigVerification,
+	}
+	testCases := []AnteTC{
 		{
-			name: "happy: properly built eth tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "",
-		},
-		{
-			name: "sad: fail to set params",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtest.HappyCreateContractTx(deps)
-			},
-			paramsSetup: func(deps *evmtest.TestDeps) evm.Params {
-				return evm.Params{
-					CreateFuntokenFee: sdk.NewInt(-1),
-				}
-			},
-			wantErr: "createFuntokenFee cannot be negative: -1",
-		},
-		{
-			name: "happy: ctx recheck should ignore validation",
-			ctxSetup: func(deps *evmtest.TestDeps) {
-				deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtest.HappyCreateContractTx(deps)
-			},
-			wantErr: "",
-		},
-		{
-			name: "sad: fail chain id basic validation",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return evmtest.HappyCreateContractTx(deps)
-			},
-			wantErr: "invalid chain-id",
-		},
-		{
-			name: "sad: tx not implementing protoTxProvider",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+			Name:        "happy: valid ethereum transaction after signature verification",
+			PriorSteps:  priorSteps,
+			EvmAnteStep: evmAnteStep,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
+				// Create a properly signed transaction like in EthSigVerification tests
 				tx := evmtest.HappyCreateContractTx(deps)
-				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
-				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "didn't implement interface protoTxProvider",
-		},
-		{
-			name: "sad: eth tx with memo should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				txBuilder.SetMemo("memo")
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "invalid request",
-		},
-		{
-			name: "sad: eth tx with fee payer should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				txBuilder.SetFeePayer(testutil.AccAddress())
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "invalid request",
-		},
-		{
-			name: "sad: eth tx with fee granter should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				txBuilder.SetFeeGranter(testutil.AccAddress())
-				tx, err := evmtest.HappyCreateContractTx(deps).BuildTx(txBuilder, eth.EthBaseDenom)
-				s.Require().NoError(err)
-				return tx
-			},
-			wantErr: "invalid request",
-		},
-		{
-			name: "sad: eth tx with signatures should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				sigV2 := signing.SignatureV2{
-					PubKey: deps.Sender.PrivKey.PubKey(),
-					Data: &signing.SingleSignatureData{
-						SignMode:  deps.App.GetTxConfig().SignModeHandler().DefaultMode(),
-						Signature: nil,
-					},
-					Sequence: 0,
-				}
-				err := txBuilder.SetSignatures(sigV2)
-				s.Require().NoError(err)
-				txMsg := evmtest.HappyCreateContractTx(deps)
-
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
-				err = txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
-				s.Require().NoError(err)
+				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
+				s.Require().NoError(err, "Failed to sign transaction")
 
-				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
+				// Run EthSigVerification to set the From field
+				err = evmante.EthSigVerification(
+					sdb, deps.App.EvmKeeper, tx, false, ANTE_OPTIONS_UNUSED)
+				s.Require().NoError(err, "EthSigVerification failed")
+				return tx
+			},
+			WantErr: "",
+		},
+		{
+			Name:        "sad: unsigned tx",
+			PriorSteps:  priorSteps,
+			EvmAnteStep: evmAnteStep,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
+				tx := evmtest.HappyCreateContractTx(deps)
+				return tx
+			},
+			WantPriorStepErr: "couldn't retrieve sender address from the ethereum transaction: invalid transaction v, r, s values: tx intended signer does not match the given signer",
+		},
+		{
+			Name:        "happy: ReCheckTx skips validation",
+			EvmAnteStep: evmAnteStep,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
+				tx := evmtest.HappyCreateContractTx(deps)
+				sdb.SetCtx(sdb.Ctx().WithIsReCheckTx(true))
+				return tx
+			},
+			WantErr: "",
+		},
+		{
+			Name:        "sad: invalid chain id in prior step (EthSigVerification)",
+			PriorSteps:  priorSteps,
+			EvmAnteStep: evmAnteStep,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
+				tx := evmtest.HappyCreateContractTx(deps)
+				invalidSigner := gethcore.LatestSignerForChainID(InvalidChainID)
+				err := tx.Sign(invalidSigner, deps.Sender.KeyringSigner)
 				s.Require().NoError(err)
 				return tx
 			},
-			wantErr: "tx AuthInfo SignerInfos should be empty",
+			WantPriorStepErr: "invalid chain id for signer",
 		},
 		{
-			name: "sad: tx without extension options should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
-				gasLimit := uint64(10)
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
-				return buildTx(deps, false, msg, gasLimit, fees)
-			},
-			wantErr: "for eth tx length of ExtensionOptions should be 1",
-		},
-		{
-			name: "sad: tx with non evm message",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				gasLimit := uint64(10)
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := &banktypes.MsgSend{
-					FromAddress: deps.Sender.NibiruAddr.String(),
-					ToAddress:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
+			Name:        "sad: gas limit below intrinsic cost",
+			PriorSteps:  priorSteps,
+			EvmAnteStep: evmAnteStep,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
+				lowGas := gethparams.TxGas - 1
+				args := &evm.EvmTxArgs{
+					ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+					Nonce:    0,
+					Amount:   big.NewInt(1),
+					GasLimit: lowGas,
+					GasPrice: big.NewInt(1),
+					To:       nil,
 				}
-				return buildTx(deps, true, msg, gasLimit, fees)
-			},
-			wantErr: "invalid message",
-		},
-		{
-			name: "sad: tx with from value set should fail",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
-				gasLimit := uint64(10)
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := buildEthMsg(chainID, gasLimit, deps.Sender.NibiruAddr.String(), nil)
-				return buildTx(deps, true, msg, gasLimit, fees)
-			},
-			wantErr: "invalid From",
-		},
-		{
-			name: "sad: tx with fee <> msg fee",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
-				gasLimit := uint64(10)
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", 5))
-				msg := buildEthMsg(chainID, gasLimit, "", nil)
-				return buildTx(deps, true, msg, gasLimit, fees)
-			},
-			wantErr: "invalid AuthInfo Fee Amount",
-		},
-		{
-			name: "sad: tx with gas limit <> msg gas limit",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				chainID := deps.App.EvmKeeper.EthChainID(deps.Ctx())
-				gasLimit := uint64(10)
-				fees := sdk.NewCoins(sdk.NewInt64Coin("unibi", int64(gasLimit)))
-				msg := buildEthMsg(chainID, gasLimit, "", nil)
-				return buildTx(deps, true, msg, 5, fees)
-			},
-			wantErr: "invalid AuthInfo Fee GasLimit",
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
-			stateDB := deps.NewStateDB()
-			anteDec := evmante.NewEthValidateBasicDecorator(deps.App.EvmKeeper)
-
-			tx := tc.txSetup(&deps)
-			stateDB.Commit()
-
-			if tc.ctxSetup != nil {
-				tc.ctxSetup(&deps)
-			}
-			var err error
-			if tc.paramsSetup != nil {
-				err = deps.EvmKeeper.SetParams(deps.Ctx(), tc.paramsSetup(&deps))
-			}
-
-			if err == nil {
-				_, err = anteDec.AnteHandle(
-					deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
+				msgEthTx := evm.NewTx(args)
+				signer := gethcore.LatestSignerForChainID(
+					deps.App.EvmKeeper.EthChainID(deps.Ctx()),
 				)
-			}
-			if tc.wantErr != "" {
-				s.Require().ErrorContains(err, tc.wantErr)
-				return
-			}
-			s.Require().NoError(err)
-		})
+				msgEthTx.From = deps.Sender.EthAddr.Hex()
+				err := msgEthTx.Sign(signer, deps.Sender.KeyringSigner)
+				s.Require().NoError(err)
+				return msgEthTx
+			},
+			WantErr: "gas limit must exceed the lowest possible intrinsic gas cost",
+		},
 	}
+
+	RunAnteTCs(&s.Suite, testCases)
 }
 
-func buildEthMsg(
-	chainID *big.Int,
-	gasLimit uint64,
-	from string,
-	to *common.Address,
-) *evm.MsgEthereumTx {
-	ethContractCreationTxParams := &evm.EvmTxArgs{
-		ChainID:  chainID,
-		Nonce:    1,
-		Amount:   big.NewInt(10),
-		GasLimit: gasLimit,
-		GasPrice: big.NewInt(1),
-		To:       to,
-	}
-	tx := evm.NewTx(ethContractCreationTxParams)
-	tx.From = from
-	return tx
-}
-
+// buildTx constructs a Cosmos SDK tx (optionally with Ethereum extension options)
+// from a given sdk.Msg, gasLimit and fees, using the test deps' tx config.
 func buildTx(
 	deps *evmtest.TestDeps,
 	ethExtentions bool,

@@ -14,8 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -54,8 +55,6 @@ type Keeper struct {
 	// value is used, a no operation tracer is set.
 	tracer string
 }
-
-var _ bankkeeper.SendKeeper = (*NibiruBankKeeper)(nil)
 
 func (k *Keeper) BK() bankkeeper.Keeper {
 	return k.Bank
@@ -134,6 +133,10 @@ func IsSimulation(ctx sdk.Context) bool {
 // IsDeliverTx checks if we're in DeliverTx, NOT in CheckTx, ReCheckTx, or simulation
 func IsDeliverTx(ctx sdk.Context) bool {
 	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !IsSimulation(ctx)
+}
+
+func (sdb SDB) IsDeliverTx() bool {
+	return IsDeliverTx(sdb.Ctx())
 }
 
 func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccount) (err error) {

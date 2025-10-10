@@ -2,11 +2,8 @@
 package evmante
 
 import (
-	sdkioerrors "cosmossdk.io/errors"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
 // EthSetupContextDecorator is adapted from SetUpContextDecorator from cosmos-sdk, it ignores gas consumption
@@ -27,16 +24,8 @@ func (esc EthSetupContextDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	// all transactions must implement GasTx
-	_, ok := tx.(authante.GasTx)
-	if !ok {
-		return ctx, sdkioerrors.Wrapf(
-			sdkerrors.ErrInvalidType,
-			"invalid transaction type %T, expected GasTx", tx,
-		)
-	}
-
-	// We need to setup an empty gas config so that the gas is consistent with Ethereum.
+	// Set an empty gas config so that gas payment and refund is consistent with
+	// Ethereum.
 	newCtx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter()).
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{}).

@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
+func (s *TestSuite) TestEthAnteVerifyEthAcc() {
 	testCases := []struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
@@ -56,7 +56,6 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			sdb := deps.NewStateDB()
-			// anteDec := evmante.NewAnteDecVerifyEthAcc(deps.App.EvmKeeper, &deps.App.AccountKeeper)
 
 			tc.beforeTxSetup(&deps, sdb)
 			tx := tc.txSetup(&deps)
@@ -64,12 +63,9 @@ func (s *TestSuite) TestAnteDecoratorVerifyEthAcc_CheckTx() {
 			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
 			simulate := false
 			unusedOpts := AnteOptionsForTests{MaxTxGasWanted: 0}
-			err := evmante.EthAnteVerifyEthAcc(
+			err := evmante.AnteStepVerifyEthAcc(
 				sdb, sdb.Keeper(), tx, simulate, unusedOpts,
 			)
-			// _, err := anteDec.AnteHandle(
-			// 	deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
-			// )
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return

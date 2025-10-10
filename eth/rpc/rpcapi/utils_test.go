@@ -24,7 +24,7 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 
 	s.assertTxLogsMatch([]*gethcore.Log{
 		{
-			Address: testContractAddress,
+			Address: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
 			Topics: []gethcommon.Hash{
 				gethcrypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 				gethcommon.Address{}.Hash(),

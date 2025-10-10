@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkstore "github.com/cosmos/cosmos-sdk/store/types"
@@ -44,6 +45,8 @@ type EvmState struct {
 	BlockTxIndex collections.ItemTransient[uint64]
 	// BlockBloom: Bloom filters.
 	BlockBloom collections.ItemTransient[[]byte]
+
+	NetWeiBlockDelta collections.Item[sdkmath.Int]
 }
 
 func (k *Keeper) EVMState() EvmState { return k.EvmState }
@@ -82,6 +85,11 @@ func NewEvmState(
 			storeKeyTransient,
 			evm.NamespaceBlockTxIndex,
 			collections.Uint64ValueEncoder,
+		),
+		NetWeiBlockDelta: collections.NewItem(
+			storeKey,
+			evm.KeyPrefixNetWeiBlockDelta,
+			eth.SignedIntValueEncoder,
 		),
 	}
 }
