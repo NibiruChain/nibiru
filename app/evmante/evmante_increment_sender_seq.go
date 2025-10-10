@@ -9,6 +9,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 // AnteDecEthIncrementSenderSequence increments the sequence of the signers.
@@ -45,11 +46,11 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 	}
 
 	// increase sequence of sender
-	acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.GetFrom())
+	acc := issd.accountKeeper.GetAccount(ctx, msgEthTx.FromAddrBech32())
 	if acc == nil {
 		return ctx, sdkioerrors.Wrapf(
 			sdkerrors.ErrUnknownAddress,
-			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.GetFrom().Bytes()),
+			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.FromAddrBech32().Bytes()),
 		)
 	}
 	nonce := acc.GetSequence()
@@ -70,4 +71,42 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 	issd.accountKeeper.SetAccount(ctx, acc)
 
 	return next(ctx, tx, simulate)
+}
+
+var _ EvmAnteHandler = EthAnteIncrementNonce
+
+func EthAnteIncrementNonce(
+	sdb *evmstate.SDB,
+	k *evmstate.Keeper,
+	msgEthTx *evm.MsgEthereumTx,
+	simulate bool,
+	opts AnteOptionsEVM,
+) (err error) {
+	acc := k.GetAccount(sdb.Ctx(), msgEthTx.FromAddr())
+	if acc == nil {
+		return sdkioerrors.Wrapf(
+			sdkerrors.ErrUnknownAddress,
+			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.FromAddrBech32().Bytes()),
+		)
+	}
+
+	nonce := acc.Nonce
+
+	// we merged the nonce verification to nonce increment, so when tx includes multiple messages
+	// with same sender, they'll be accepted.
+	txData, err := evm.UnpackTxData(msgEthTx.Data)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to unpack tx data")
+	}
+	if txData.GetNonce() != nonce {
+		return sdkioerrors.Wrapf(
+			sdkerrors.ErrInvalidSequence,
+			"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
+		)
+	}
+
+	newNonce := nonce + 1
+	sdb.SetNonce(msgEthTx.FromAddr(), newNonce)
+
+	return nil
 }

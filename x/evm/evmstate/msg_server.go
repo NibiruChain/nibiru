@@ -58,7 +58,7 @@ func (k *Keeper) EthereumTx(
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	sdb := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+	sdb := k.NewSDB(ctx, txConfig)
 	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, sdb)
 
 	var applyErr error
@@ -592,8 +592,8 @@ func (k *Keeper) ConvertCoinToEvm(
 	{
 		// Isolate ctx scope so we don't use it by mistake.
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-		sdb = k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+		txConfig := k.TxConfig(ctx, ctx.EvmTxHash())
+		sdb = k.NewSDB(ctx, txConfig)
 	}
 
 	defer func() {
@@ -644,8 +644,8 @@ func (k *Keeper) ConvertEvmToCoin(
 	{
 		// Isolate ctx scope so we don't use it by mistake.
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		txConfig := k.TxConfig(ctx, gethcommon.Hash{})
-		sdb = k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
+		txConfig := k.TxConfig(ctx, ctx.EvmTxHash())
+		sdb = k.NewSDB(ctx, txConfig)
 	}
 
 	defer func() {

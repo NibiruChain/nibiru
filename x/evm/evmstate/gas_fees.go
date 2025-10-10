@@ -2,17 +2,19 @@
 package evmstate
 
 import (
+	"fmt"
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/holiman/uint256"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
@@ -78,7 +80,7 @@ func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
 // CheckSenderBalance validates that the tx cost value is positive and that the
 // sender has enough funds to pay for the fees and value of the transaction.
 func CheckSenderBalance(
-	balanceWei *big.Int,
+	balanceWei *uint256.Int,
 	txData evm.TxData,
 ) error {
 	cost := txData.Cost()
@@ -90,7 +92,7 @@ func CheckSenderBalance(
 		)
 	}
 
-	if balanceWei.Cmp(big.NewInt(0)) < 0 || balanceWei.Cmp(cost) < 0 {
+	if balanceWei.ToBig().Cmp(cost) < 0 {
 		return sdkioerrors.Wrapf(
 			sdkerrors.ErrInsufficientFunds,
 			"sender balance < tx cost (%s < %s)", balanceWei, cost,
@@ -103,21 +105,19 @@ func CheckSenderBalance(
 // an error if the specified sender address does not exist or the account balance
 // is not sufficient.
 func (k *Keeper) DeductTxCostsFromUserBalance(
-	ctx sdk.Context,
-	fees sdk.Coins,
+	sdb *SDB,
+	costInWei *uint256.Int,
 	from gethcommon.Address,
 ) error {
-	// fetch sender account
-	signerAcc, err := authante.GetSignerAcc(ctx, k.accountKeeper, from.Bytes())
-	if err != nil {
-		return sdkioerrors.Wrapf(err, "account not found for sender %s", from)
-	}
+	// fetch sender balance
+	balWei := sdb.GetBalance(from)
 
 	// deduct the full gas cost from the user balance
-	if err := authante.DeductFees(k.Bank, ctx, signerAcc, fees); err != nil {
-		return sdkioerrors.Wrapf(err, "failed to deduct full gas cost %s from the user %s balance", fees, from)
+	if balWei.Cmp(costInWei) < 0 {
+		return fmt.Errorf(`insufficient funds: failed to deduct full gas cost %s: balance="%s", user="%s"`, costInWei, balWei, from)
 	}
 
+	sdb.SubBalance(from, costInWei, tracing.BalanceDecreaseGasBuy)
 	return nil
 }
 
@@ -142,7 +142,7 @@ func VerifyFee(
 	txData evm.TxData,
 	baseFeeMicronibi *big.Int,
 	ctx sdk.Context,
-) (sdk.Coins, error) {
+) (effFeeWei *uint256.Int, err error) {
 	var (
 		isContractCreation = txData.GetTo() == nil
 		isCheckTx          = ctx.IsCheckTx()
@@ -185,14 +185,12 @@ func VerifyFee(
 	}
 
 	baseFeeWei := evm.NativeToWei(baseFeeMicronibi)
-	feeAmtMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
-	bankDenom := evm.EVMBankDenom
-	if feeAmtMicronibi.Sign() == 0 {
+	feeAmtWei := txData.EffectiveFeeWei(baseFeeWei)
+	if feeAmtWei.Sign() <= 0 {
 		// zero fee, no need to deduct
-		return sdk.Coins{{Denom: bankDenom, Amount: sdkmath.ZeroInt()}}, nil
+		return uint256.NewInt(0), nil
 	}
-
-	return sdk.Coins{{Denom: bankDenom, Amount: sdkmath.NewIntFromBigInt(feeAmtMicronibi)}}, nil
+	return uint256.MustFromBig(feeAmtWei), nil
 }
 
 func Rules(ctx sdk.Context) gethparams.Rules {

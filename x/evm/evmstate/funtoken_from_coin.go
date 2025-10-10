@@ -98,9 +98,8 @@ func (k *Keeper) deployERC20ForBankCoin(
 		SkipFromEOACheck: false,
 	}
 	evmCfg := k.GetEVMConfig(ctx)
-	txConfig := k.TxConfig(ctx, gethcommon.BigToHash(big.NewInt(0)))
-	stateDB := k.NewSDB(ctx, txConfig) // TODO: UD-DEBUG: SDB refactor
-	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, stateDB)
+	sdb := k.NewSDB(ctx, k.TxConfig(ctx, ctx.EvmTxHash()))
+	evmObj := k.NewEVM(ctx, evmMsg, evmCfg, nil /*tracer*/, sdb)
 	evmResp, err := k.CallContract(
 		evmObj, evm.EVM_MODULE_ADDRESS, nil, input, Erc20GasLimitDeploy,
 		evm.COMMIT_ETH_TX, /*commit*/

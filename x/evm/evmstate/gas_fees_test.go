@@ -26,31 +26,31 @@ func (s *Suite) TestVerifyFee() {
 		name             string
 		txData           evm.TxData
 		baseFeeMicronibi *big.Int
-		wantCoinAmt      string
+		wantWeiAmt       string
 		wantErr          string
 	}
 
 	for _, getTestCase := range []func() testCase{
 		func() testCase {
 			txData := evmtest.ValidLegacyTx()
-			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(nil))
+			effFeeWei := txData.EffectiveFeeWei(nil)
 			return testCase{
 				name:             "happy: legacy tx",
 				txData:           txData,
 				baseFeeMicronibi: baseFeeMicronibi,
-				wantCoinAmt:      effectiveFeeMicronibi.String(),
+				wantWeiAmt:       effFeeWei.String(),
 				wantErr:          "",
 			}
 		},
 		func() testCase {
 			txData := evmtest.ValidLegacyTx()
 			txData.GasLimit = gethparams.TxGas - 1
-			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(nil))
+			effFeeWei := txData.EffectiveFeeWei(nil)
 			return testCase{
 				name:             "sad: gas limit lower than global tx gas cost",
 				txData:           txData,
 				baseFeeMicronibi: baseFeeMicronibi,
-				wantCoinAmt:      effectiveFeeMicronibi.String(),
+				wantWeiAmt:       effFeeWei.String(),
 				wantErr:          "gas limit too low",
 			}
 		},
@@ -65,13 +65,13 @@ func (s *Suite) TestVerifyFee() {
 			)
 			txData.GasPrice = &lowGasPrice
 
-			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(baseFeeWei))
+			effFeeWei := txData.EffectiveFeeWei(baseFeeWei)
 
 			return testCase{
 				name:             "happy: gas fee cap lower than base fee",
 				txData:           txData,
 				baseFeeMicronibi: baseFeeMicronibi,
-				wantCoinAmt:      effectiveFeeMicronibi.String(),
+				wantWeiAmt:       effFeeWei.String(),
 				wantErr:          "",
 			}
 		},
@@ -86,8 +86,8 @@ func (s *Suite) TestVerifyFee() {
 
 			// Expect a cost to be 0
 			wantCoinAmt := "0"
-			effectiveFeeMicronibi := evm.WeiToNative(txData.EffectiveFeeWei(nil))
-			s.Require().Equal(wantCoinAmt, effectiveFeeMicronibi.String())
+			effFeeWei := txData.EffectiveFeeWei(nil)
+			s.Require().Equal(wantCoinAmt, effFeeWei.String())
 
 			return testCase{
 				// This is impossible because base fee is 1 unibi, however this
@@ -95,7 +95,7 @@ func (s *Suite) TestVerifyFee() {
 				name:             "happy: the impossible zero case",
 				txData:           txData,
 				baseFeeMicronibi: baseFeeMicronibi,
-				wantCoinAmt:      "0",
+				wantWeiAmt:       "0",
 				wantErr:          "",
 			}
 		},
@@ -103,7 +103,7 @@ func (s *Suite) TestVerifyFee() {
 		tc := getTestCase()
 		ctx := sdk.Context{}.WithIsCheckTx(true)
 		s.Run(tc.name, func() {
-			gotCoins, err := evmstate.VerifyFee(
+			gotWeiFee, err := evmstate.VerifyFee(
 				tc.txData, tc.baseFeeMicronibi, ctx,
 			)
 			if tc.wantErr != "" {
@@ -111,7 +111,7 @@ func (s *Suite) TestVerifyFee() {
 				return
 			}
 			s.Require().NoError(err)
-			s.Equal(tc.wantCoinAmt, gotCoins.AmountOf(evm.EVMBankDenom).String())
+			s.Equal(tc.wantWeiAmt, gotWeiFee.String())
 		})
 	}
 }

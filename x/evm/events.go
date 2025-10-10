@@ -33,6 +33,10 @@ const (
 	PendingEthereumTxEventAttrIndex   = "index"
 )
 
+func AttributeKeyFeePayerEvm(ethAddr gethcommon.Address) sdk.Attribute {
+	return sdk.NewAttribute("fee_payer_evm", ethAddr.Hex())
+}
+
 func EventTxLogFromABCIEvent(event abci.Event) (*EventTxLog, error) {
 	typedProtoEvent, err := sdk.ParseTypedEvent(event)
 	if err != nil {

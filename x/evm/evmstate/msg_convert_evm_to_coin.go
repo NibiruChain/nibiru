@@ -93,10 +93,10 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		SenderEthAddr:        sender.Eth.Hex(),
 	})
 
-	// Emit tx logs of Burn event
-	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
+	// Emit tx logs of Burn event if it's an EVM tx
+	if !sdb.Ctx().IsEvmTx() {
+		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
+		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	}
 
 	return nil
@@ -179,10 +179,9 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		SenderEthAddr:        sender.Eth.Hex(),
 	})
 
-	// Emit tx logs of Transfer event
-	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
+	if !sdb.Ctx().IsEvmTx() {
+		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
+		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	}
 
 	return nil

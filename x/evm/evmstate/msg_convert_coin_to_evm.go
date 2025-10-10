@@ -45,9 +45,6 @@ func (k *Keeper) convertCoinToEvmForWNIBI(
 	// -------------------------------------------------------------------------
 	// STEP 1: Sender deposits NIBI and receives WNIBI
 	// -------------------------------------------------------------------------
-
-	// IMPORTANT: make sure to clear the StateDB before running the upgrade
-
 	if sdb.GetCodeSize(erc20.Address) == 0 {
 		err = fmt.Errorf("ConvertCoinToEvm: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
 		return
@@ -223,10 +220,10 @@ func (k Keeper) convertCoinToEvmBornCoin(
 		BankCoin:             coin,
 	})
 
-	// Emit tx logs of Mint event
-	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
+	if !sdb.Ctx().IsEvmTx() {
+		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
+		// Emit tx logs of Mint event
+		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil
@@ -254,10 +251,10 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
 	}
 
-	// 3 | In the FunToken ERC20 ΓåÆ BC conversion process that preceded this
+	// 3 | In the FunToken ERC20 → BC conversion process that preceded this
 	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
 	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
-	// in the BC ΓåÆ ERC20 conversion.
+	// in the BC → ERC20 conversion.
 	if err := k.Bank.BurnCoins(sdb.Ctx(), evm.ModuleName, sdk.NewCoins(coin)); err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
 	}
@@ -313,10 +310,10 @@ func (k Keeper) convertCoinToEvmBornERC20(
 		BankCoin:             coin,
 	})
 
-	// Emit tx logs of Transfer event
-	err = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	if err == nil {
-		k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(k.EvmState.BlockTxIndex.GetOr(sdb.Ctx(), 0)))
+	if !sdb.Ctx().IsEvmTx() {
+		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
+		// Emit tx logs of Transfer event
+		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	}
 
 	return &evm.MsgConvertCoinToEvmResponse{}, nil

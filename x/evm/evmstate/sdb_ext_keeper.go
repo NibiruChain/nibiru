@@ -16,7 +16,7 @@ import (
 // StateDB Keeper implementation
 // ----------------------------------------------------------------------------
 
-// GetAccount: Ethereum account getter for a [state.Account].
+// GetAccount: Ethereum account getter for an [evmstate.Account].
 // Implements the `statedb.Keeper` interface.
 // Returns nil if the account does not exist or has the wrong type.
 func (k *Keeper) GetAccount(ctx sdk.Context, addr gethcommon.Address) *Account {

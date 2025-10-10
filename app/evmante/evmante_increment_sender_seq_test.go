@@ -3,67 +3,42 @@ package evmante_test
 import (
 	"fmt"
 	"math/big"
+	"slices"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	state "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 	testCases := []struct {
-		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *state.SDB)
-		txSetup       func(deps *evmtest.TestDeps) sdk.Tx
-		wantErr       string
-		wantSeq       uint64
+		name    string
+		txSetup func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx
+		wantErr string
+		wantSeq uint64
 	}{
 		{
 			name: "happy: single message",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) {
+			txSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx {
 				balance := big.NewInt(100)
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
 				return evmtest.HappyTransferTx(deps, 0)
 			},
 			wantErr: "",
 			wantSeq: 1,
 		},
 		{
-			name: "happy: two messages",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) {
-				balance := big.NewInt(100)
-				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				txMsgOne := evmtest.HappyTransferTx(deps, 0)
-				txMsgTwo := evmtest.HappyTransferTx(deps, 1)
-
-				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
-				s.Require().NoError(txBuilder.SetMsgs(txMsgOne, txMsgTwo))
-
-				tx := txBuilder.GetTx()
-				return tx
-			},
-			wantErr: "",
-			wantSeq: 2,
-		},
-		{
 			name: "sad: account does not exists",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+			txSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx {
 				return evmtest.HappyTransferTx(deps, 0)
 			},
 			wantErr: "unknown address",
-		},
-		{
-			name:    "sad: tx with non evm message",
-			txSetup: evmtest.NonEvmMsgTx,
-			wantErr: "invalid message",
 		},
 	}
 
@@ -71,26 +46,42 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			sdb := deps.NewStateDB()
-			anteDec := evmante.NewAnteDecEthIncrementSenderSequence(deps.App.EvmKeeper, deps.App.AccountKeeper)
 
-			if tc.beforeTxSetup != nil {
-				tc.beforeTxSetup(&deps, sdb)
-				sdb.Commit()
-			}
-			tx := tc.txSetup(&deps)
-
-			_, err := anteDec.AnteHandle(
-				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
+			msgEthTx := tc.txSetup(&deps, sdb)
+			simulate := false
+			unusedOpts := AnteOptionsForTests{}
+			err := evmante.EthAnteIncrementNonce(
+				sdb,
+				sdb.Keeper(),
+				msgEthTx,
+				simulate,
+				unusedOpts,
 			)
+
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
 			}
 			s.Require().NoError(err)
 
+			s.True(deps.IsEqualSDB(sdb), "deps and sdb MUST still be connected.")
 			if tc.wantSeq > 0 {
-				seq := deps.App.AccountKeeper.GetAccount(deps.Ctx(), deps.Sender.NibiruAddr).GetSequence()
-				s.Require().Equal(tc.wantSeq, seq)
+
+				acct := deps.EvmKeeper.GetAccount(sdb.Ctx(), deps.Sender.EthAddr)
+				s.NotNil(acct)
+
+				acct1 := deps.App.AccountKeeper.GetAccount(deps.Ctx(), deps.Sender.NibiruAddr)
+				s.Require().NotNil(acct1, "deps.Ctx(), after commit - Cosmos SDK account should exist")
+				acct2 := deps.App.AccountKeeper.GetAccount(sdb.Ctx(), deps.Sender.NibiruAddr)
+				s.Require().NotNil(acct1, "sdb.Ctx(), after commit - Cosmos SDK account should exist")
+
+				nonces := []uint64{
+					acct.Nonce,
+					acct1.GetSequence(),
+					acct2.GetSequence(),
+				}
+				s.Require().Equal(slices.Repeat([]uint64{tc.wantSeq}, 3), nonces,
+					"nonces must match no matter what query or context is used.")
 			}
 		})
 	}
@@ -109,6 +100,13 @@ func AddBalanceSigned(sdb *state.SDB, addr gethcommon.Address, wei *big.Int) {
 	reason := tracing.BalanceChangeTransfer
 	if weiSign >= 0 {
 		sdb.AddBalance(addr, weiAbs, reason)
+		if acc := sdb.Keeper().GetAccount(sdb.Ctx(), addr); acc == nil {
+			acc = evmstate.NewEmptyAccount()
+			acc.BalanceNwei = weiAbs
+			fmt.Printf("About to call SetAccount with addr: %v, acc: %v\n", addr, acc)
+			err := sdb.Keeper().SetAccount(sdb.Ctx(), addr, *acc)
+			fmt.Printf("SetAccount result: %v\n", err)
+		}
 	} else {
 		sdb.SubBalance(addr, weiAbs, reason)
 	}

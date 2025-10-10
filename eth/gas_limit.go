@@ -32,13 +32,10 @@ func BlockGasLimit(ctx sdk.Context) (gasLimit uint64) {
 	// https://github.com/cometbft/cometbft/blob/v0.37.2/proto/tendermint/types/params.proto#L25-L27
 	if maxGas == -1 {
 		return math.MaxUint64
+	} else if maxGas < -1 {
+		return 0
 	}
-
-	if maxGas > 0 {
-		return uint64(maxGas) // #nosec G701 -- maxGas is int64 type. It can never be greater than math.MaxUint64
-	}
-
-	return 0
+	return uint64(maxGas) // #nosec G701 -- maxGas is int64 type. It can never be greater than math.MaxUint64
 }
 
 // NewInfiniteGasMeterWithLimit returns a reference to a new infiniteGasMeter.

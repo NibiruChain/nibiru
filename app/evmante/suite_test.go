@@ -8,10 +8,11 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 )
 
 type TestSuite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 
 	encCfg app.EncodingConfig
 }
@@ -21,6 +22,7 @@ func TestAppTestSuite(t *testing.T) {
 }
 
 func (s *TestSuite) SetupSuite() {
+	s.LogRoutingSuite.SetupSuite()
 	s.encCfg = app.MakeEncodingConfig()
 }
 

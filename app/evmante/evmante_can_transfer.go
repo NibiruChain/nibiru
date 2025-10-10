@@ -13,8 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// CanTransferDecorator checks if the sender is allowed to transfer funds according to the EVM block
-// context rules.
+// CanTransferDecorator checks if the sender is allowed to transfer funds according to the EVM block context rules.
 type CanTransferDecorator struct {
 	*EVMKeeper
 }

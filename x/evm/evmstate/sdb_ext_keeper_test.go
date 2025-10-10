@@ -52,8 +52,8 @@ func (s *Suite) TestStateDBBalance() {
 
 		s.Equal(
 			"0",
-			deps.EvmKeeper.GetWeiBalance(deps.Ctx(), deps.Sender.EthAddr).String(),
-			"expect unmodified wei bal using deps.Ctx (before snapshot)",
+			deps.EvmKeeper.GetWeiBalance(deps.CtxInit(), deps.Sender.EthAddr).String(),
+			"expect unmodified wei bal using deps.CtxInit() that was made before the snapshot",
 		)
 		sdb.Commit()
 		s.Equal(

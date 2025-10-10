@@ -20,6 +20,7 @@ package evmstate
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"math/big"
@@ -64,9 +65,6 @@ type SDB struct {
 	savedCtxs []sdk.Context
 
 	txConfig TxConfig
-
-	// The number of precompiled contract calls within the current transaction
-	multistoreCacheCount uint8
 }
 
 func FromVM(evmObj *vm.EVM) *SDB {
@@ -165,6 +163,11 @@ func (s *SDB) Logs() (allLogs []*gethcore.Log) {
 		allLogs = append(allLogs, ls.logs...)
 	}
 	return allLogs
+}
+
+func (s *SDB) LogsJson() (jsonBz []byte) {
+	jsonBz, _ = json.MarshalIndent(s.Logs(), "", "  ")
+	return
 }
 
 // GetRefund returns the current value of the refund counter.
