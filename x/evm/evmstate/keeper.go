@@ -136,6 +136,10 @@ func IsDeliverTx(ctx sdk.Context) bool {
 	return !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !IsSimulation(ctx)
 }
 
+func (sdb SDB) IsDeliverTx() bool {
+	return IsDeliverTx(sdb.Ctx())
+}
+
 func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccount) (err error) {
 	address := gethcommon.HexToAddress(account.Address)
 	accAddress := sdk.AccAddress(address.Bytes())

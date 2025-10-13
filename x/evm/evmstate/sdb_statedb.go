@@ -652,6 +652,17 @@ func (s *SDB) Commit() {
 	// }
 }
 
+// RootCtx returns the root context captured when the SDB was constructed.
+// It is the base (anchor) context, and subsequent snapshots branch from it.
+// Only the root context is ultimately committed by the baseapp.
+//
+// Only in [SDB.Commit] does the [SDB] write changes from all of the branched
+// contexts, ultimately updating the root ctx to have the changes made to the
+// current branched ctx ([SDB.Ctx]).
+func (s *SDB) RootCtx() sdk.Context {
+	return s.savedCtxs[0]
+}
+
 // TODO: cleanup - REMOVE
 // CommitCacheCtx is identical to [SDB.Commit], except it:
 // (1) uses the cacheCtx of the [SDB] and

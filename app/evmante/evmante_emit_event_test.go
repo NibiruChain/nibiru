@@ -77,3 +77,60 @@ func (s *TestSuite) TestEthEmitEventDecorator() {
 		})
 	}
 }
+
+func (s *TestSuite) TestEthAnteEmitPendingEthTxEvent() {
+	testCases := []struct {
+		name    string
+		txSetup func(deps *evmtest.TestDeps) evm.Tx
+		wantErr string
+	}{
+		{
+			name: "happy: eth tx emitted event",
+			txSetup: func(deps *evmtest.TestDeps) evm.Tx {
+				tx := evmtest.HappyCreateContractTx(deps)
+				return tx
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := evmtest.NewTestDeps()
+			sdb := deps.NewStateDB()
+
+			tx := tc.txSetup(&deps)
+			simulate := false
+			err := evmante.EthAnteTemplate(
+				sdb,
+				sdb.Keeper(),
+				tx,
+				simulate,
+				ANTE_OPTIONS_UNUSED,
+			)
+
+			// sdb.Commit()
+
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.Require().NoError(err)
+			events := deps.Ctx().EventManager().Events()
+
+			s.Require().Greater(len(events), 0)
+			event := events[len(events)-1]
+			s.Require().Equal(evm.PendingEthereumTxEvent, event.Type)
+
+			// TX hash attr must present
+			attr, ok := event.GetAttribute(evm.PendingEthereumTxEventAttrEthHash)
+			s.Require().True(ok, "tx hash attribute not found")
+			s.Require().Equal(tx.Hash, attr.Value)
+
+			// TX index attr must present
+			attr, ok = event.GetAttribute(evm.PendingEthereumTxEventAttrIndex)
+			s.Require().True(ok, "tx index attribute not found")
+			s.Require().Equal("0", attr.Value)
+		})
+	}
+}

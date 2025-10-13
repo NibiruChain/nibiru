@@ -1,11 +1,14 @@
 package rpcapi_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,15 +36,27 @@ func (s *BackendSuite) TestLogs() {
 	defer testMutex.Unlock()
 
 	// Start with fresh block
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
+
+	debugLogs := make(map[string]string)
 
 	s.T().Log("TX1: Send simple nibi transfer")
 	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
 	txHashFirst := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
+	debugLogs["s.fundedAccEthAddr"] = s.fundedAccEthAddr.Hex()
+	debugLogs["addr of recipient from tx 1"] = randomEthAddr.Hex()
+	debugLogs["tx hash of tx 1"] = txHashFirst.Hex()
 
 	s.T().Log("TX2: Deploy ERC20 contract")
-	_, erc20ContractAddr := s.DeployTestContract(false)
-	erc20Addr, _ := eth.NewEIP55AddrFromStr(erc20ContractAddr.String())
+	_, erc20AddrTx2 := s.DeployTestContract(false)
+	erc20Addr, _ := eth.NewEIP55AddrFromStr(erc20AddrTx2.String())
+	debugLogs["erc20 addr deployed in tx 2"] = erc20Addr.Hex()
+
+	var (
+		txHash3 string // Tx hash hex of TX3
+		txHash4 string // Tx hash hex of TX4
+		txHash5 string // Tx hash hex of TX5
+	)
 
 	s.T().Log("TX3: Create FunToken from ERC20")
 	nonce := s.getCurrentNonce(eth.NibiruAddrToEthAddr(s.node.Address))
@@ -56,11 +71,15 @@ func (s *BackendSuite) TestLogs() {
 		txResp.Code,
 		fmt.Sprintf("Failed to create FunToken from ERC20. RawLog: %s", txResp.RawLog),
 	)
+	txHash3 = txResp.TxHash
 
 	s.T().Log("TX4: Create FunToken from unibi coin")
 	nonce++
 	erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS)+1)
+	debugLogs["erc20FromCoinAddr (assumed funtoken address)"] = erc20FromCoinAddr.Hex()
+	debugLogs["s.node.EthAddress"] = s.node.EthAddress.Hex()
 
+	// Query the EVM params for the WNIBI address
 	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
 		Sender:        s.node.Address.String(),
 		FromBankDenom: evm.EVMBankDenom,
@@ -72,6 +91,9 @@ func (s *BackendSuite) TestLogs() {
 		txResp.Code,
 		fmt.Sprintf("Failed to create FunToken from unibi coin. RawLog: %s", txResp.RawLog),
 	)
+	txHash4 = txResp.TxHash
+
+	// TODO: UD-DEBUG: Move or use Querier from gosdk so you can use it here.
 
 	s.T().Log("TX5: Convert coin to EVM")
 	nonce++
@@ -89,6 +111,7 @@ func (s *BackendSuite) TestLogs() {
 		txResp.Code,
 		fmt.Sprintf("Failed converting coin to evm. RawLog: %s", txResp.RawLog),
 	)
+	txHash5 = txResp.TxHash
 
 	s.T().Log("TX6: Send erc20 token to coin using precompile")
 	randomNibiAddress := testutil.AccAddress()
@@ -111,13 +134,51 @@ func (s *BackendSuite) TestLogs() {
 		false,
 	)
 
-	// Wait for all txs to be included in a block
+	s.T().Log("Wait for all txs to be included in a block")
 	blockNumFirstTx, _, _, err := WaitForReceipt(s, txHashFirst)
 	s.NoError(err)
 	blockNumLastTx, _, _, err := WaitForReceipt(s, txHashLast)
 	s.NoError(err)
 	s.Require().NotNil(blockNumFirstTx)
 	s.Require().NotNil(blockNumLastTx)
+
+	txResults := make(map[string]abci.ResponseDeliverTx)
+	for idxRaw, txHash := range []string{txHash3, txHash4, txHash5} {
+		idx := idxRaw + 3
+		resTx, err := s.node.Querier.TxByHash(txHash)
+		s.NoError(err, "expect Querier.TxByHash to succeed for tx%d", idx)
+		txResJson, _ := json.MarshalIndent(resTx.TxResult, "", "  ")
+		s.T().Logf("txResp for tx%d: %s", idx, txResJson)
+		txResults[txHash] = resTx.TxResult
+	}
+
+	s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX3")
+	tx3FunTokenCreatedEvent := new(evm.EventFunTokenCreated)
+	{
+		eventName := proto.MessageName(tx3FunTokenCreatedEvent)
+		events := testutil.FindAbciEventsOfType(txResults[txHash3].Events, eventName)
+		s.Require().Lenf(events, 1, "expect %s", eventName)
+
+		event, _ := evm.EventFunTokenCreatedFromABCIEvent(events[0])
+		tx3FunTokenCreatedEvent = event
+	}
+
+	s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX4")
+	tx4FunTokenCreatedEvent := new(evm.EventFunTokenCreated)
+	{
+		eventName := proto.MessageName(tx4FunTokenCreatedEvent)
+		events := testutil.FindAbciEventsOfType(txResults[txHash4].Events, eventName)
+		s.Require().Lenf(events, 1, "expect %s", eventName)
+
+		event, _ := evm.EventFunTokenCreatedFromABCIEvent(events[0])
+		tx4FunTokenCreatedEvent = event
+	}
+
+	debugLogs["evm.FEE_COLLECTOR_ADDR"] = evm.FEE_COLLECTOR_ADDR.Hex()
+	debugLogs["evm.EVM_MODULE_ADDRESS"] = evm.EVM_MODULE_ADDRESS.Hex()
+
+	debugLogsBz, _ := json.MarshalIndent(debugLogs, "", "  ")
+	s.T().Logf("debugLogs: %s", debugLogsBz)
 
 	// Check tx logs for each tx
 	testCases := []TxLogsTestCase{
@@ -131,7 +192,7 @@ func (s *BackendSuite) TestLogs() {
 			Logs: []*gethcore.Log{
 				// minting initial balance to the account
 				{
-					Address: erc20ContractAddr,
+					Address: erc20AddrTx2,
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 						gethcommon.Address{}.Hash(),
@@ -147,11 +208,12 @@ func (s *BackendSuite) TestLogs() {
 			ExpectEthTx: false,
 		},
 		{
-			TxInfo: "TX4 - create FunToken from unibi coin, no eth tx, logs for contract deployment",
+			TxInfo: "TX4 - create FunToken from bank coin, no eth tx, logs for contract deployment",
 			Logs: []*gethcore.Log{
 				// contract ownership to evm module
 				{
-					Address: erc20FromCoinAddr,
+					Address: gethcommon.HexToAddress(
+						tx4FunTokenCreatedEvent.Erc20ContractAddress),
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)")),
 						gethcommon.Address{}.Hash(),
@@ -166,7 +228,8 @@ func (s *BackendSuite) TestLogs() {
 			Logs: []*gethcore.Log{
 				// minting to the account
 				{
-					Address: erc20FromCoinAddr,
+					Address: gethcommon.HexToAddress(
+						tx4FunTokenCreatedEvent.Erc20ContractAddress),
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 						gethcommon.Address{}.Hash(),
@@ -181,7 +244,7 @@ func (s *BackendSuite) TestLogs() {
 			Logs: []*gethcore.Log{
 				// transfer from account to evm module
 				{
-					Address: erc20ContractAddr,
+					Address: erc20AddrTx2,
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 						s.fundedAccEthAddr.Hash(),
@@ -261,12 +324,15 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			if !tc.ExpectEthTx {
 				s.Fail("unexpected EventEthereumTx event for non-eth tx, %s", tc.TxInfo)
 			}
+			eventJsonBz, err := json.MarshalIndent(event, "", "  ")
+			s.NoError(err)
 			ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
-			s.Require().NoError(err)
-			s.Require().Equal(
+			s.Require().NoErrorf(err, "event: %s", eventJsonBz)
+			s.Require().Equalf(
 				fmt.Sprintf("%d", ethTxIndex),
 				ethereumTx.Index,
-				"tx index mismatch, %s", tc.TxInfo,
+				"tx index mismatch, TxInfo: \"%s\", event: %s",
+				tc.TxInfo, eventJsonBz,
 			)
 		}
 	}
@@ -281,11 +347,15 @@ func (s *BackendSuite) assertTxLogsMatch(
 	actualLogs []*gethcore.Log,
 	txInfo string,
 ) {
+	actualJson, _ := json.MarshalIndent(actualLogs, "", "  ")
+	expectedJson, _ := json.MarshalIndent(expectedLogs, "", "  ")
+
 	for idx, expectedLog := range expectedLogs {
 		actualLog := actualLogs[idx]
-		s.Require().Equal(
+		s.Require().Equalf(
 			expectedLog.Address,
-			actualLog.Address, fmt.Sprintf("log contract address mismatch, log index %d, %s", idx, txInfo),
+			actualLog.Address,
+			"log contract address mismatch, log index %d, %s\nACTUAL logs: %s\nEXPECTED logs: %s", idx, txInfo, actualJson, expectedJson,
 		)
 
 		s.Require().Equal(

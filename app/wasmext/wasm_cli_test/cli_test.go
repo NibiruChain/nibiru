@@ -35,7 +35,6 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testnetwork.Config
 	network *testnetwork.Network
 }
 
@@ -44,12 +43,11 @@ func (s *TestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig.Codec)
-	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
-	network, err := testnetwork.New(s.T(), s.T().TempDir(), s.cfg)
-	s.Require().NoError(err)
+	cfg := testnetwork.BuildNetworkConfig(genesisState)
+	network := testnetwork.New(&s.Suite, cfg)
 
 	s.network = network
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 }
 
 func (s *TestSuite) TearDownSuite() {
@@ -63,8 +61,7 @@ func (s *TestSuite) TestWasmHappyPath() {
 	_, err := s.deployWasmContract("testdata/cw_nameservice.wasm")
 	s.Require().NoError(err)
 
-	err = s.network.WaitForNextBlock()
-	s.Require().NoError(err)
+	s.network.WaitForNextBlock()
 
 	s.requiredDeployedContractsLen(1)
 }
@@ -86,7 +83,7 @@ func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 
 	resp := &sdk.TxResponse{}
 	err = codec.UnmarshalJSON(out.Bytes(), resp)
@@ -127,7 +124,7 @@ func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 func (s *TestSuite) requiredDeployedContractsLen(total int) {
 	val := s.network.Validators[0]
 	var queryCodeResponse types.QueryCodesResponse
-	err := testnetwork.ExecQuery(
+	err := testnetwork.ExecQueryCmd(
 		val.ClientCtx,
 		wasmcli.GetCmdListCode(),
 		[]string{},

@@ -215,7 +215,7 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			)
 
 			simulate := false
-			err := evmante.EthAnteGasConsume(
+			err := evmante.EthAnteGasWanted(
 				sdb,
 				sdb.Keeper(),
 				tx,
@@ -229,14 +229,4 @@ func (s *TestSuite) TestAnteDecEthGasConsume() {
 			s.Require().NoError(err)
 		})
 	}
-}
-
-var _ evmante.AnteOptionsEVM = (*AnteOptionsForTests)(nil)
-
-type AnteOptionsForTests struct {
-	MaxTxGasWanted uint64
-}
-
-func (opts AnteOptionsForTests) GetMaxTxGasWanted() uint64 {
-	return opts.MaxTxGasWanted
 }

@@ -7,20 +7,17 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestCanTransferDecorator() {
-	testCases := []struct {
-		name          string
-		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
-		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
-		wantErr       string
-	}{
+	testCases := []AnteTC{
 		{
-			name: "happy: signed tx, sufficient funds",
-			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+			Name:           "happy: signed tx, sufficient funds",
+			EvmAnteHandler: evmante.EthAnteCanTransfer,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
 				s.NoError(
 					testapp.FundAccount(
 						deps.App.BankKeeper,
@@ -29,8 +26,7 @@ func (s *TestSuite) TestCanTransferDecorator() {
 						sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100)),
 					),
 				)
-			},
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
+
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
@@ -41,13 +37,16 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 
-				return tx
+				evmTx, err := evm.RequireStandardEVMTxMsg(tx)
+				s.NoError(err)
+				return evmTx
 			},
-			wantErr: "",
+			WantErr: "",
 		},
 		{
-			name: "sad: signed tx, insufficient funds",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
+			Name:           "sad: signed tx, insufficient funds",
+			EvmAnteHandler: evmante.EthAnteCanTransfer,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
@@ -58,52 +57,29 @@ func (s *TestSuite) TestCanTransferDecorator() {
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 
-				return tx
+				evmTx, err := evm.RequireStandardEVMTxMsg(tx)
+				s.NoError(err)
+				return evmTx
 			},
-			wantErr: "insufficient funds",
+			WantErr: "insufficient funds",
 		},
 		{
-			name: "sad: unsigned tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
+			Name:           "sad: unsigned tx",
+			EvmAnteHandler: evmante.EthAnteCanTransfer,
+			TxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx {
 				txMsg := evmtest.HappyTransferTx(deps, 0)
 				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
 
 				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
 				s.Require().NoError(err)
 
-				return tx
+				evmTx, err := evm.RequireStandardEVMTxMsg(tx)
+				s.NoError(err)
+				return evmTx
 			},
-			wantErr: "invalid transaction",
-		},
-		{
-			name: "sad: tx with non evm message",
-			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
-				return evmtest.NonEvmMsgTx(deps).(sdk.FeeTx)
-			},
-			wantErr: "invalid message",
+			WantErr: "invalid transaction",
 		},
 	}
 
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
-			sdb := deps.NewStateDB()
-			anteDec := evmante.CanTransferDecorator{deps.App.EvmKeeper}
-			tx := tc.txSetup(&deps)
-
-			if tc.beforeTxSetup != nil {
-				tc.beforeTxSetup(&deps, sdb)
-				sdb.Commit()
-			}
-
-			_, err := anteDec.AnteHandle(
-				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
-			)
-			if tc.wantErr != "" {
-				s.Require().ErrorContains(err, tc.wantErr)
-				return
-			}
-			s.Require().NoError(err)
-		})
-	}
+	RunAnteTCs(&s.Suite, testCases)
 }

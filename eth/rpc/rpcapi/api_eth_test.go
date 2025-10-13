@@ -49,7 +49,7 @@ var (
 
 type NodeSuite struct {
 	suite.Suite
-	cfg     testnetwork.Config
+
 	network *testnetwork.Network
 	node    *testnetwork.Validator
 
@@ -188,10 +188,8 @@ func (s *NodeSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
-	homeDir := s.T().TempDir()
-	s.cfg = testnetwork.BuildNetworkConfig(genState)
-	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
-	s.Require().NoError(err)
+	cfg := testnetwork.BuildNetworkConfig(genState)
+	network := testnetwork.New(&s.Suite, cfg)
 
 	s.network = network
 	s.node = network.Validators[0]
@@ -204,11 +202,11 @@ func (s *NodeSuite) SetupSuite() {
 	s.fundedAccNibiAddr = eth.EthAddrToNibiruAddr(s.fundedAccEthAddr)
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000)) // 10 NIBI
-	_, err = testnetwork.FillWalletFromValidator(
+	_, err := testnetwork.FillWalletFromValidator(
 		s.fundedAccNibiAddr, funds, s.node, eth.EthBaseDenom,
 	)
 	s.Require().NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 }
 
 // Test_ChainID EVM method: eth_chainId
@@ -346,7 +344,7 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
 	s.Require().NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 
 	senderBalanceBeforeWei, err := s.ethClient.BalanceAt(
 		context.Background(), s.fundedAccEthAddr, nil,
@@ -383,10 +381,10 @@ func (s *NodeSuite) Test_SimpleTransferTransaction() {
 	s.NoError(err)
 	err = s.ethClient.SendTransaction(context.Background(), tx)
 	s.Require().NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 
-	s.NoError(s.network.WaitForNextBlock())
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
+	s.network.WaitForNextBlock()
 
 	txReceipt, err := s.ethClient.TransactionReceipt(blankCtx, tx.Hash())
 	s.NoError(err)
@@ -453,7 +451,7 @@ func (s *NodeSuite) Test_SmartContract() {
 		s.fundedAccNibiAddr, funds, s.network.Validators[0], eth.EthBaseDenom,
 	)
 	s.Require().NoError(err)
-	s.NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 
 	grpcUrl := s.network.Validators[0].AppConfig.GRPC.Address
 	grpcConn, err := gosdk.GetGRPCConnection(grpcUrl, true, 5)
@@ -490,7 +488,7 @@ func (s *NodeSuite) Test_SmartContract() {
 
 		s.T().Log("Wait a few blocks so the tx won't be pending")
 		for range 5 {
-			_ = s.network.WaitForNextBlock()
+			s.network.WaitForNextBlock()
 		}
 
 		s.T().Log("Assert: tx NOT pending")
@@ -556,7 +554,7 @@ func (s *NodeSuite) Test_SmartContract() {
 			fmt.Sprintf("0x%X", txBz),
 		)
 		s.Require().NoError(err)
-		_ = s.network.WaitForNextBlock()
+		s.network.WaitForNextBlock()
 
 		var resTxHash gethcommon.Hash
 		err = json.Unmarshal(res, &resTxHash)

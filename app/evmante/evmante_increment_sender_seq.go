@@ -2,6 +2,8 @@
 package evmante
 
 import (
+	"fmt"
+
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -53,6 +55,7 @@ func (issd AnteDecEthIncrementSenderSequence) AnteHandle(
 			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.FromAddrBech32().Bytes()),
 		)
 	}
+	ctx.Priority()
 	nonce := acc.GetSequence()
 
 	// we merged the nonce verification to nonce increment, so when tx includes multiple messages
@@ -82,6 +85,11 @@ func EthAnteIncrementNonce(
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
+	var (
+		txNonce    uint64 // Nonce specified by the tx payload.
+		stateNonce uint64 // Nonce of the account in the current execution ctx
+	)
+
 	acc := k.GetAccount(sdb.Ctx(), msgEthTx.FromAddr())
 	if acc == nil {
 		return sdkioerrors.Wrapf(
@@ -89,8 +97,7 @@ func EthAnteIncrementNonce(
 			"account %s is nil", gethcommon.BytesToAddress(msgEthTx.FromAddrBech32().Bytes()),
 		)
 	}
-
-	nonce := acc.Nonce
+	stateNonce = acc.Nonce
 
 	// we merged the nonce verification to nonce increment, so when tx includes multiple messages
 	// with same sender, they'll be accepted.
@@ -98,14 +105,25 @@ func EthAnteIncrementNonce(
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to unpack tx data")
 	}
-	if txData.GetNonce() != nonce {
-		return sdkioerrors.Wrapf(
-			sdkerrors.ErrInvalidSequence,
-			"invalid nonce; got %d, expected %d", txData.GetNonce(), nonce,
-		)
+	txNonce = txData.GetNonce()
+
+	switch {
+	case sdb.Ctx().IsCheckTx():
+		if txNonce < stateNonce {
+			return fmt.Errorf(
+				"invalid nonce; got %d, should be expected %d or higher with pending txs in the same block", txNonce, stateNonce,
+			)
+		}
+	case sdb.Ctx().IsReCheckTx() || sdb.IsDeliverTx():
+		if txNonce != stateNonce {
+			return fmt.Errorf(
+				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
+			)
+		}
+	default:
 	}
 
-	newNonce := nonce + 1
+	newNonce := stateNonce + 1
 	sdb.SetNonce(msgEthTx.FromAddr(), newNonce)
 
 	return nil

@@ -30,7 +30,6 @@ func EthAnteVerifyEthAcc(
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
-
 	txData, err := evm.UnpackTxData(msgEthTx.Data)
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", 0)

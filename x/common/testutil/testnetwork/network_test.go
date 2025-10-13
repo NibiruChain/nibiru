@@ -39,18 +39,13 @@ func (s *TestSuite) SetupSuite() {
 	encConfig := app.MakeEncodingConfig()
 	cfg := new(testnetwork.Config)
 	*cfg = testnetwork.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig.Codec))
-	network, err := testnetwork.New(
-		s.T(),
-		s.T().TempDir(),
-		*cfg,
-	)
-	s.Require().NoError(err)
+	network := testnetwork.New(&s.Suite, *cfg)
 	s.network = network
 
 	cfg.AbsorbListenAddresses(network.Validators[0])
 	s.cfg = cfg
 
-	_, err = s.network.WaitForHeight(1)
+	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 

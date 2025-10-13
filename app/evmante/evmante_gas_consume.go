@@ -2,6 +2,8 @@
 package evmante
 
 import (
+	"fmt"
+	"log"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -169,7 +171,7 @@ type AnteDecEthGasConsume struct {
 // 	return nil
 // }
 
-var _ EvmAnteHandler = EthAnteGasConsume
+var _ EvmAnteHandler = EthAnteGasWanted
 
 type AnteOptionsEVM interface {
 	GetMaxTxGasWanted() uint64
@@ -219,7 +221,61 @@ func EthAnteBlockGasMeter(
 	return nil
 }
 
-func EthAnteGasConsume(
+func EthAnteDeductGas(
+	sdb *evmstate.SDB,
+	k *evmstate.Keeper,
+	msgEthTx *evm.MsgEthereumTx,
+	simulate bool,
+	opts AnteOptionsEVM,
+) (err error) {
+	from := msgEthTx.FromAddrBech32()
+	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(sdb.Ctx())
+	txData, err := evm.UnpackTxData(msgEthTx.Data)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "failed to unpack tx data")
+	}
+	fees, err := evmstate.VerifyFee(
+		txData,
+		baseFeeMicronibiPerGas,
+		sdb.Ctx(),
+	)
+	if err != nil {
+		return sdkioerrors.Wrapf(err, "failed to verify the fees")
+	}
+
+	fmt.Printf("EthAnteDeductGas Pre: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
+	log.Printf("EthAnteDeductGas Pre: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
+	err = func(sdb *evmstate.SDB, effFeeWei *uint256.Int, feePayer sdk.AccAddress) error {
+		if fees.IsZero() {
+			return nil
+		}
+
+		if err := k.DeductTxCostsFromUserBalance(
+			sdb, effFeeWei, gethcommon.BytesToAddress(feePayer),
+		); err != nil {
+			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
+		}
+		return nil
+	}(sdb, fees, from)
+	if err != nil {
+		return err
+	}
+
+	msgEthTx.FromAddrBech32()
+	sdb.Ctx().EventManager().EmitEvent(sdk.NewEvent(
+		sdk.EventTypeTx,
+		sdk.NewAttribute(sdk.AttributeKeyFee, fees.String()),
+		sdk.NewAttribute(sdk.AttributeKeyFeePayer, from.String()),
+		evm.AttributeKeyFeePayerEvm(msgEthTx.FromAddr()),
+	))
+
+	fmt.Printf("EthAnteDeductGas Post: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
+	log.Printf("EthAnteDeductGas Post: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
+
+	return nil
+}
+
+func EthAnteGasWanted(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
@@ -240,62 +296,31 @@ func EthAnteGasConsume(
 		return nil
 	}
 
-	var events sdk.Events
-
 	// Use the lowest priority of all the messages as the final one.
 	minPriority := int64(math.MaxInt64)
 	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(sdb.Ctx())
-
-	from := msgEthTx.FromAddrBech32()
 
 	txData, err := evm.UnpackTxData(msgEthTx.Data)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "failed to unpack tx data")
 	}
 
-	fees, err := evmstate.VerifyFee(
-		txData,
-		baseFeeMicronibiPerGas,
-		sdb.Ctx(),
-	)
-	if err != nil {
-		return sdkioerrors.Wrapf(err, "failed to verify the fees")
-	}
-
-	err = func(sdb *evmstate.SDB, effFeeWei *uint256.Int, feePayer sdk.AccAddress) error {
-
-		if fees.IsZero() {
-			return nil
+	if sdb.Ctx().IsCheckTx() && opts.GetMaxTxGasWanted() != 0 {
+		// We can't trust the tx gas limit, because we'll refund the unused gas.
+		if txData.GetGas() > opts.GetMaxTxGasWanted() {
+			gasWanted += opts.GetMaxTxGasWanted()
+		} else {
+			gasWanted += txData.GetGas()
 		}
-
-		if err := k.DeductTxCostsFromUserBalance(
-			sdb, effFeeWei, gethcommon.BytesToAddress(feePayer),
-		); err != nil {
-			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
-		}
-		return nil
-	}(sdb, fees, from)
-	if err != nil {
-		return err
+	} else {
+		gasWanted += txData.GetGas()
 	}
-
-	msgEthTx.FromAddrBech32()
-	events = append(events,
-		sdk.NewEvent(
-			sdk.EventTypeTx,
-			sdk.NewAttribute(sdk.AttributeKeyFee, fees.String()),
-			sdk.NewAttribute(sdk.AttributeKeyFeePayer, from.String()),
-			evm.AttributeKeyFeePayerEvm(msgEthTx.FromAddr()),
-		),
-	)
 
 	priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
 
 	if priority < minPriority {
 		minPriority = priority
 	}
-
-	sdb.Ctx().EventManager().EmitEvents(events)
 
 	// Set tx GasMeter with a limit of GasWanted (i.e. gas limit from the Ethereum tx).
 	// The gas consumed will be then reset to the gas used by the state transition

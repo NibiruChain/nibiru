@@ -32,8 +32,6 @@ func (s *TestSuite) SetupSuite() {
 }
 
 func (s *TestSuite) SetupTest() {
-	homeDir := s.T().TempDir()
-
 	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
@@ -47,15 +45,8 @@ func (s *TestSuite) SetupTest() {
 		return gs
 	}())
 
-	network, err := testnetwork.New(
-		s.T(),
-		homeDir,
-		s.cfg,
-	)
-	s.Require().NoError(err)
-	s.network = network
-
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network = testnetwork.New(&s.Suite, s.cfg)
+	s.network.WaitForNextBlock()
 }
 
 func (s *TestSuite) TestSuccessfulVoting() {
@@ -120,7 +111,7 @@ func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdkmath.LegacyDec) []st
 			Validator: val.ValAddress.String(),
 		})
 		s.Require().NoError(err)
-		s.NoError(s.network.WaitForNextBlock())
+		s.network.WaitForNextBlock()
 
 		strVotes[i] = pricesStr
 	}

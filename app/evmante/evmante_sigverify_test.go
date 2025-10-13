@@ -3,13 +3,11 @@ package evmante_test
 import (
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var InvalidChainID = big.NewInt(987654321)
@@ -17,31 +15,20 @@ var InvalidChainID = big.NewInt(987654321)
 func (s *TestSuite) TestEthSigVerificationDecorator() {
 	testCases := []struct {
 		name    string
-		txSetup func(deps *evmtest.TestDeps) sdk.Tx
+		txSetup func(deps *evmtest.TestDeps) evm.Tx
 		wantErr string
 	}{
 		{
 			name: "sad: unsigned tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+			txSetup: func(deps *evmtest.TestDeps) evm.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				return tx
 			},
 			wantErr: "couldn't retrieve sender address from the ethereum transaction: invalid transaction v, r, s values: tx intended signer does not match the given signer",
 		},
 		{
-			name: "sad: non ethereum tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
-				return legacytx.StdTx{
-					Msgs: []sdk.Msg{
-						&tf.MsgMint{},
-					},
-				}
-			},
-			wantErr: "invalid message",
-		},
-		{
 			name: "sad: ethereum tx invalid chain id",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+			txSetup: func(deps *evmtest.TestDeps) evm.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := gethcore.LatestSignerForChainID(InvalidChainID)
 				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
@@ -52,7 +39,7 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		},
 		{
 			name: "happy: signed ethereum tx",
-			txSetup: func(deps *evmtest.TestDeps) sdk.Tx {
+			txSetup: func(deps *evmtest.TestDeps) evm.Tx {
 				tx := evmtest.HappyCreateContractTx(deps)
 				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 				err := tx.Sign(gethSigner, deps.Sender.KeyringSigner)
@@ -67,14 +54,18 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
 			sdb := deps.NewStateDB()
-			anteDec := evmante.NewEthSigVerificationDecorator(deps.App.EvmKeeper)
+			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
 
 			tx := tc.txSetup(&deps)
-			sdb.Commit()
 
-			deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
-			_, err := anteDec.AnteHandle(
-				deps.Ctx(), tx, false, evmtest.NextNoOpAnteHandler,
+			simulate := false
+
+			err := evmante.EthSigVerification(
+				sdb,
+				sdb.Keeper(),
+				tx,
+				simulate,
+				ANTE_OPTIONS_UNUSED,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
@@ -84,3 +75,5 @@ func (s *TestSuite) TestEthSigVerificationDecorator() {
 		})
 	}
 }
+
+var ANTE_OPTIONS_UNUSED = AnteOptionsForTests{MaxTxGasWanted: 0}

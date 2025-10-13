@@ -221,7 +221,7 @@ func (s *Suite) TestRefundGas() {
 			).Amount.BigInt()
 
 			err := deps.EvmKeeper.RefundGas(
-				deps.Ctx(), tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
+				deps.NewStateDB(), tc.msgFrom, tc.leftoverGas, tc.weiPerGas,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

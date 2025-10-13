@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/gosdk/gosdktest"
 	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
@@ -51,7 +52,7 @@ func (s *TestSuite) SetupSuite() {
 
 	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
-	nibiru, err := gosdk.CreateBlockchain(s.T())
+	nibiru, err := gosdktest.CreateBlockchain(&s.Suite)
 	s.NoError(err)
 	s.network = nibiru.Network
 	s.cfg = nibiru.Cfg
@@ -59,15 +60,8 @@ func (s *TestSuite) SetupSuite() {
 	s.grpcConn = nibiru.GrpcConn
 }
 
-func ConnectGrpcToVal(val *testnetwork.Validator) (*grpc.ClientConn, error) {
-	grpcUrl := val.AppConfig.GRPC.Address
-	return gosdk.GetGRPCConnection(
-		grpcUrl, true, 5,
-	)
-}
-
 func (s *TestSuite) ConnectGrpc() {
-	grpcConn, err := ConnectGrpcToVal(s.val)
+	grpcConn, err := testnetwork.ConnectGrpcToVal(s.val)
 	s.NoError(err)
 	s.NotNil(grpcConn)
 	s.grpcConn = grpcConn
@@ -85,13 +79,12 @@ func (s *TestSuite) TestNewNibiruSdk() {
 	})
 	s.Run("DoTestBroadcastMsgsGrpc", func() {
 		for t := 0; t < 4; t++ {
-			s.NoError(s.network.WaitForNextBlock())
+			s.network.WaitForNextBlock()
 		}
 		s.DoTestBroadcastMsgsGrpc()
 	})
 	s.Run("DoTestNewQueryClient", func() {
-		_, err := gosdk.NewQuerier(s.grpcConn)
-		s.NoError(err)
+		s.NotNil(s.val.Querier)
 	})
 }
 
@@ -153,6 +146,8 @@ func (s *TestSuite) DoTestGetGrpcConnection_NoNetwork() {
 	s.Error(err)
 	s.Nil(grpcConn)
 
-	_, err = gosdk.NewQuerier(grpcConn)
-	s.Error(err)
+	s.NotNil(
+		s.val.Querier,
+		"NewQuerier should be used in network setup",
+	)
 }

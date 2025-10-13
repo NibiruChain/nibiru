@@ -58,6 +58,28 @@ func AssertEventsPresent(events sdk.Events, eventTypes []string) (err error) {
 	return
 }
 
+// FindAbciEventsOfType searches  through events to find types you care about.
+func FindAbciEventsOfType(events []abci.Event, eventType string) []abci.Event {
+	eventsFound := []abci.Event{}
+	for _, e := range events {
+		if e.Type == eventType {
+			eventsFound = append(eventsFound, e)
+		}
+	}
+	return eventsFound
+}
+
+// FindEventsOfType searches  through events to find types you care about.
+func FindEventsOfType(events sdk.Events, eventType string) []sdk.Event {
+	eventsFound := []sdk.Event{}
+	for _, e := range events {
+		if e.Type == eventType {
+			eventsFound = append(eventsFound, e)
+		}
+	}
+	return eventsFound
+}
+
 // RequireNotHasTypedEvent: Error if an event type matches the proto.Message name
 func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	name := proto.MessageName(event)

@@ -131,13 +131,17 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS      gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+	EVM_MODULE_ADDRESS        gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	FEE_COLLECTOR_ADDR        gethcommon.Address
+	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
 
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }
 
 // NativeToWei converts a "unibi" amount to "wei" units for the EVM.

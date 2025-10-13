@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	appserver "github.com/NibiruChain/nibiru/v2/app/server"
+	"github.com/NibiruChain/nibiru/v2/gosdk"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -97,6 +98,9 @@ type Validator struct {
 	Logger Logger
 
 	tmNode *node.Node
+
+	Querier        *gosdk.Querier
+	grpcClientConn *grpc.ClientConn
 
 	// API exposes the app's REST and gRPC interfaces, allowing clients to
 	// read from state and broadcast txs. The API server connects to the

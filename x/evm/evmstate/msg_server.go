@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"math/big"
 	"strconv"
 
@@ -36,30 +37,43 @@ func (k *Keeper) EthereumTx(
 	// error is non-nil, creating a concise way to add extra information.
 	defer func() {
 		if err != nil {
+			log.Printf("UD-DEBUG EthereumTx ERROR: %v", err)
 			err = fmt.Errorf("EthereumTx error: %w", err)
 		}
 	}()
 
+	log.Printf("UD-DEBUG EthereumTx START: hash=%s", txMsg.Hash)
 	if err := txMsg.ValidateBasic(); err != nil {
+		log.Printf("UD-DEBUG EthereumTx ValidateBasic FAILED: %v", err)
 		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
 	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
+	log.Printf("UD-DEBUG EthereumTx ValidateBasic PASSED")
+	coreTx := txMsg.AsTransaction()
 
-	tx := txMsg.AsTransaction()
-	txConfig := k.TxConfig(ctx, tx.Hash())
-	evmCfg := k.GetEVMConfig(ctx)
+	var sdb *SDB
+	{
+		ctx := sdk.UnwrapSDKContext(goCtx)
+		txConfig := k.TxConfig(ctx, coreTx.Hash())
+		log.Printf("UD-DEBUG EthereumTx txConfig and evmCfg created")
+		sdb = k.NewSDB(ctx, txConfig)
+	}
+	log.Printf("sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 
 	// get the signer according to the chain rules from the config and block height
+	evmCfg := k.GetEVMConfig(sdb.Ctx())
 	evmMsg, err := core.TransactionToMessage(
-		tx, gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
+		coreTx,
+		gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
 	)
 	if err != nil {
+		log.Printf("UD-DEBUG EthereumTx TransactionToMessage FAILED: %v", err)
 		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
 	}
+	log.Printf("UD-DEBUG EthereumTx TransactionToMessage PASSED")
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	sdb := k.NewSDB(ctx, txConfig)
-	evmObj := k.NewEVM(ctx, *evmMsg, evmCfg, nil /*tracer*/, sdb)
+	evmObj := k.NewEVM(sdb.Ctx(), *evmMsg, evmCfg, nil /*tracer*/, sdb)
+	log.Printf("UD-DEBUG EthereumTx SDB and EVM created")
 
 	var applyErr error
 	evmResp, applyErr = k.ApplyEvmMsg(
@@ -72,22 +86,27 @@ func (k *Keeper) EthereumTx(
 		if evmResp == nil {
 			// Consensus error - return immediately, skipping the
 			// "evm.SafeConsumeGas" call we do for
-			ctx.WithLastErrApplyEvmMsg(applyErr)
+			log.Printf("UD-DEBUG EthereumTx CONSENSUS ERROR: %v", applyErr)
+			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
 		} else {
 			// Execution error - log but continue processing
-			ctx.WithLastErrApplyEvmMsg(applyErr)
+			log.Printf("UD-DEBUG EthereumTx EXECUTION ERROR: %v", applyErr)
+			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 		}
 	}
+	log.Printf("UD-DEBUG EthereumTx ApplyEvmMsg SUCCESS")
 
 	if evmResp != nil {
-		gasErr := evm.SafeConsumeGas(ctx, evmResp.GasUsed, "execute EthereumTx")
+		gasErr := evm.SafeConsumeGas(sdb.Ctx(), evmResp.GasUsed, "execute EthereumTx")
 		if gasErr != nil {
+			log.Printf("UD-DEBUG EthereumTx GAS CONSUMPTION ERROR: %v", gasErr)
 			return nil, gasErr
 		}
+		log.Printf("UD-DEBUG EthereumTx GAS CONSUMPTION SUCCESS")
 	}
 
-	k.updateBlockBloom(ctx, evmResp, uint64(txConfig.LogIndex))
+	k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(sdb.TxCfg().LogIndex))
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
@@ -96,29 +115,37 @@ func (k *Keeper) EthereumTx(
 		refundGas = evmMsg.GasLimit - evmResp.GasUsed
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
-	if err = k.RefundGas(ctx, evmMsg.From, refundGas, weiPerGas); err != nil {
+	if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
+		log.Printf("UD-DEBUG EthereumTx GAS REFUND ERROR: %v", err)
 		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
 	}
+	log.Printf("UD-DEBUG EthereumTx GAS REFUND SUCCESS")
 
-	err = k.EmitEthereumTxEvents(ctx, tx.To(), tx.Type(), *evmMsg, evmResp)
-	if err != nil {
+	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
+	if err := txEvents.EmitEvents(sdb.RootCtx()); err != nil {
+		log.Printf("UD-DEBUG EthereumTx EMIT EVENTS ERROR: %v", err)
 		return nil, sdkioerrors.Wrap(err, "error emitting ethereum tx events")
 	}
+	log.Printf("UD-DEBUG EthereumTx EMIT EVENTS SUCCESS")
 
-	err = ctx.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	err = sdb.RootCtx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err != nil {
+		log.Printf("UD-DEBUG EthereumTx EMIT TX LOG ERROR: %v", err)
 		return nil, sdkioerrors.Wrap(err, "error emitting tx log event")
 	}
+	log.Printf("UD-DEBUG EthereumTx EMIT TX LOG SUCCESS")
 
-	k.EvmState.BlockTxIndex.Set(ctx, uint64(txConfig.TxIndex)+1)
+	k.EvmState.BlockTxIndex.Set(sdb.RootCtx(), uint64(sdb.TxCfg().TxIndex)+1)
 
-	if evmResp.Failed() && ctx.LastErrApplyEvmMsg() != nil {
+	if evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil {
 		evmResp.VmError = fmt.Sprintf(
 			"%s: %s",
 			evmResp.VmError,
-			ctx.LastErrApplyEvmMsg(),
+			sdb.Ctx().LastErrApplyEvmMsg(),
 		)
+		log.Printf("UD-DEBUG EthereumTx TX FAILED with VM error: %s", evmResp.VmError)
 	}
+	log.Printf("UD-DEBUG EthereumTx TX SUCCESS: hash=%s, gasUsed=%d", evmResp.Hash, evmResp.GasUsed)
 	return evmResp, nil
 }
 
@@ -685,14 +712,63 @@ func (k *Keeper) ConvertEvmToCoin(
 	return &evm.MsgConvertEvmToCoinResponse{}, err
 }
 
-// EmitEthereumTxEvents emits all types of EVM events applicable to a particular execution case
-func (k *Keeper) EmitEthereumTxEvents(
+// TxEvents represents ABCI events that are emitted an Ethereum tx. Nil fields
+// repesent intentional omission
+type TxEvents struct {
+	EventEthereumTx       evm.EventEthereumTx // Typed event: eth.evm.v1.EventEthereumTx
+	EventMessage          sdk.Event           // Untyped event: "message", used for tendermint subscription
+	EventContractDeployed *evm.EventContractDeployed
+	EventContractExecuted *evm.EventContractExecuted
+	EventTransfer         *evm.EventTransfer
+}
+
+// EmitEthereumTxEvents emits all EVM events applicable to a particular execution case
+func (txevents TxEvents) EmitEvents(
+	ctx sdk.Context,
+) error {
+	// We consider only the EventEthereumTx as essential enough to fail the tx
+	// because it's crucial to the functionality of the EVM indexer and queries
+	// in the EVM JSON-RPC API.
+	err := ctx.EventManager().EmitTypedEvent(&txevents.EventEthereumTx)
+	if err != nil {
+		return sdkioerrors.Wrap(err, "EmitEthereumTxEvents: failed to emit event ethereum tx")
+	}
+
+	ctx.EventManager().EmitEvent(
+		txevents.EventMessage,
+	)
+
+	{
+		event := txevents.EventContractDeployed
+		if event != nil {
+			_ = ctx.EventManager().EmitTypedEvent(event)
+		}
+	}
+	{
+		event := txevents.EventContractExecuted
+		if event != nil {
+			_ = ctx.EventManager().EmitTypedEvent(event)
+		}
+	}
+	{
+		event := txevents.EventTransfer
+		if event != nil {
+			_ = ctx.EventManager().EmitTypedEvent(event)
+		}
+	}
+
+	return nil
+}
+
+// GetEvmTxEvents emits all types of EVM events applicable to a particular execution case
+func (k *Keeper) GetEvmTxEvents(
 	ctx sdk.Context,
 	recipient *gethcommon.Address,
 	txType uint8,
 	msg core.Message,
 	evmResp *evm.MsgEthereumTxResponse,
-) error {
+) (events TxEvents) {
+
 	// Typed event: eth.evm.v1.EventEthereumTx
 	eventEthereumTx := &evm.EventEthereumTx{
 		EthHash: evmResp.Hash,
@@ -708,44 +784,37 @@ func (k *Keeper) EmitEthereumTxEvents(
 	if evmResp.Failed() {
 		eventEthereumTx.VmError = evmResp.VmError
 	}
-	err := ctx.EventManager().EmitTypedEvent(eventEthereumTx)
-	if err != nil {
-		return sdkioerrors.Wrap(err, "EmitEthereumTxEvents: failed to emit event ethereum tx")
-	}
-
-	// Untyped event: "message", used for tendermint subscription
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.From.Hex()),
-			sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", txType)),
-		),
+	events.EventEthereumTx = *eventEthereumTx
+	events.EventMessage = sdk.NewEvent(
+		sdk.EventTypeMessage,
+		sdk.NewAttribute(sdk.AttributeKeyModule, evm.ModuleName),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.From.Hex()),
+		sdk.NewAttribute(evm.MessageEventAttrTxType, fmt.Sprintf("%d", txType)),
 	)
 
 	// Emit typed events
 	if !evmResp.Failed() {
 		if recipient == nil { // contract creation
 			contractAddr := crypto.CreateAddress(msg.From, msg.Nonce)
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractDeployed{
+			events.EventContractDeployed = &evm.EventContractDeployed{
 				Sender:       msg.From.Hex(),
 				ContractAddr: contractAddr.String(),
-			})
+			}
 		} else if len(msg.Data) > 0 { // contract executed
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventContractExecuted{
+			events.EventContractExecuted = &evm.EventContractExecuted{
 				Sender:       msg.From.Hex(),
 				ContractAddr: msg.To.String(),
-			})
+			}
 		} else if msg.Value.Cmp(big.NewInt(0)) > 0 { // evm transfer
-			_ = ctx.EventManager().EmitTypedEvent(&evm.EventTransfer{
+			events.EventTransfer = &evm.EventTransfer{
 				Sender:    msg.From.Hex(),
 				Recipient: msg.To.Hex(),
 				Amount:    msg.Value.String(),
-			})
+			}
 		}
 	}
 
-	return nil
+	return events
 }
 
 // updateBlockBloom updates transient block bloom filter

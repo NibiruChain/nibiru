@@ -34,6 +34,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
@@ -68,6 +69,8 @@ type Network struct {
 	Config     Config
 	Validators []*Validator
 	Logger     Logger
+
+	*suite.Suite
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
@@ -137,7 +140,17 @@ Example:
 	network, err := testnetwork.New(s.T(), s.T().TempDir(), cfg)
 	s.Require().NoError(err)
 */
-func New(logger Logger, baseDir string, cfg Config) (network *Network, err error) {
+func New(testPtr *suite.Suite, cfg Config) (network *Network) {
+	var (
+		// Logger refers to logger for the [TestPtr]
+		logger Logger = testPtr.T()
+		// Base dir or "home" dir. This stores the node, gentxs, and everything
+		baseDir string = testPtr.T().TempDir()
+		// Return error logged if we fail to start the network. Used in the defer
+		// statement below.
+		rerr error
+	)
+
 	// only one caller/test can create and use a network at a time
 	logger.Log("acquiring test network lock")
 	lock.Lock()
@@ -145,8 +158,12 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 	// This is a `defer` pattern to add behavior that runs in the case that the error is
 	// non-nil, creating a concise way to add extra information.
 	defer func() {
-		if err != nil {
-			err = fmt.Errorf("error starting test network: %w", err)
+		if rerr != nil {
+			rerr = fmt.Errorf("error starting test network: %w", rerr)
+			testPtr.Require().NoError(rerr)
+		}
+		if network == nil {
+			panic("Mistakes were made")
 		}
 	}()
 
@@ -155,6 +172,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		BaseDir:    baseDir,
 		Validators: make([]*Validator, cfg.NumValidators),
 		Config:     cfg,
+		Suite:      testPtr,
 	}
 
 	logger.Log("preparing test network...")
@@ -203,14 +221,16 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 				var err error
 				apiListenAddr, _, err = server.FreeTCPAddr()
 				if err != nil {
-					return nil, fmt.Errorf("failed to get free TCP address for API: %w", err)
+					rerr = fmt.Errorf("failed to get free TCP address for API: %w", err)
+					return
 				}
 			}
 
 			appCfg.API.Address = apiListenAddr
 			apiURL, err := url.Parse(apiListenAddr)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse API listen address: %w", err)
+				rerr = fmt.Errorf("failed to parse API listen address: %w", err)
+				return
 			}
 			apiAddr = fmt.Sprintf("http://%s:%s", apiURL.Hostname(), apiURL.Port())
 
@@ -219,7 +239,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			} else {
 				rpcAddr, _, err := server.FreeTCPAddr()
 				if err != nil {
-					return nil, err
+					rerr = err
+					return
 				}
 				tmCfg.RPC.ListenAddress = rpcAddr
 			}
@@ -229,7 +250,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			} else {
 				_, grpcPort, err := server.FreeTCPAddr()
 				if err != nil {
-					return nil, err
+					rerr = err
+					return
 				}
 				appCfg.GRPC.Address = fmt.Sprintf("0.0.0.0:%s", grpcPort)
 			}
@@ -237,7 +259,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 			_, grpcWebPort, err := server.FreeTCPAddr()
 			if err != nil {
-				return nil, err
+				rerr = err
+				return
 			}
 			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
@@ -247,7 +270,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			} else {
 				_, jsonRPCPort, err := server.FreeTCPAddr()
 				if err != nil {
-					return nil, err
+					rerr = err
+					return
 				}
 				appCfg.JSONRPC.Address = fmt.Sprintf("0.0.0.0:%s", jsonRPCPort)
 			}
@@ -268,12 +292,14 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o755)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create node configuration directory: %w", err)
+			rerr = fmt.Errorf("failed to create node configuration directory: %w", err)
+			return
 		}
 
 		err = os.MkdirAll(clientDir, 0o755)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create node client directory: %w", err)
+			rerr = fmt.Errorf("failed to create node client directory: %w", err)
+			return
 		}
 
 		tmCfg.SetRoot(nodeDir)
@@ -282,13 +308,15 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		proxyAddr, _, err := server.FreeTCPAddr()
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 		tmCfg.ProxyApp = proxyAddr
 
 		p2pAddr, _, err := server.FreeTCPAddr()
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		tmCfg.P2P.ListenAddress = p2pAddr
@@ -297,7 +325,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize node validator files: %w", err)
+			rerr = fmt.Errorf("failed to initialize node validator files: %w", err)
+			return
 		}
 
 		nodeIDs[valIdx] = nodeID
@@ -305,13 +334,15 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create new keyring: %w", err)
+			rerr = fmt.Errorf("failed to create new keyring: %w", err)
+			return
 		}
 
 		keyringAlgos, _ := kb.SupportedAlgorithms()
 		algo, err := keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse signing algorithm: %w", err)
+			rerr = fmt.Errorf("failed to parse signing algorithm: %w", err)
+			return
 		}
 
 		var mnemonic string
@@ -323,19 +354,22 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		ethAddr := common.BytesToAddress(addr.Bytes())
 
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		info := map[string]string{"secret": secret}
 		infoBz, err := json.Marshal(info)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		// save private key seed words
 		err = writeFile(fmt.Sprintf("%v.json", "key_seed"), clientDir, infoBz)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		balances := sdk.NewCoins(
@@ -351,7 +385,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		commission, err := sdkmath.LegacyNewDecFromStr("0.05")
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
@@ -363,12 +398,14 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 			sdkmath.OneInt(),
 		)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		p2pURL, err := url.Parse(p2pAddr)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[valIdx], p2pURL.Hostname(), p2pURL.Port())
@@ -376,7 +413,8 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 		txBuilder.SetFeeAmount(fee)    // Arbitrary fee
 		txBuilder.SetGasLimit(1000000) // Need at least 100386
@@ -391,16 +429,19 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 
 		err = tx.Sign(txFactory, nodeDirName, txBuilder, true)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		txBz, err := cfg.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 		err = writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz)
 		if err != nil {
-			return nil, err
+			rerr = err
+			return
 		}
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
@@ -435,27 +476,29 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 		}
 	}
 
-	err = initGenFiles(cfg, genAccounts, genBalances, genFiles)
-	if err != nil {
-		return nil, err
+	rerr = initGenFiles(cfg, genAccounts, genBalances, genFiles)
+	if rerr != nil {
+		return
 	}
-	err = collectGenFiles(cfg, network.Validators, network.BaseDir)
-	if err != nil {
-		return nil, err
+	rerr = collectGenFiles(cfg, network.Validators, network.BaseDir)
+	if rerr != nil {
+		return
 	}
 
 	logger.Log("starting test network...")
 	for idx, v := range network.Validators {
 		err := startNodeAndServers(cfg, v)
 		if err != nil {
-			return nil, fmt.Errorf("failed to start node: %w", err)
+			rerr = fmt.Errorf("failed to start node: %w", err)
+			return
 		}
 		logger.Log("started validator", idx)
 	}
 
 	height, err := network.LatestHeight()
 	if err != nil {
-		return nil, err
+		rerr = err
+		return
 	}
 
 	logger.Log("started test network at height:", height)
@@ -464,7 +507,7 @@ func New(logger Logger, baseDir string, cfg Config) (network *Network, err error
 	// any defer in a test would not be called.
 	server.TrapSignal(network.Cleanup)
 
-	return network, err
+	return network
 }
 
 // LatestHeight returns the latest height of the network or an error if the
@@ -538,9 +581,10 @@ func (n *Network) WaitForNextBlockVerbose() (int64, error) {
 	return newBlock, err
 }
 
-func (n *Network) WaitForNextBlock() error {
+func (n *Network) WaitForNextBlock() {
 	_, err := n.WaitForNextBlockVerbose()
-	return err
+	n.NoError(err)
+	return
 }
 
 // WaitForDuration waits for at least the duration provided in blockchain time.

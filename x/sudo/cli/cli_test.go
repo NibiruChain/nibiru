@@ -126,10 +126,8 @@ func (s *TestSuite) SetupSuite() {
 		addr:       rootAddr,
 		passphrase: "secure-password",
 	}
-	homeDir := s.T().TempDir()
 	s.cfg = testnetwork.BuildNetworkConfig(gen)
-	network, err := testnetwork.New(s.T(), homeDir, s.cfg)
-	s.Require().NoError(err)
+	network := testnetwork.New(&s.Suite, s.cfg)
 
 	s.network = network
 	s.FundRoot(s.root)
