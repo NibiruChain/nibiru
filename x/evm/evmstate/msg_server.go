@@ -768,7 +768,6 @@ func (k *Keeper) GetEvmTxEvents(
 	msg core.Message,
 	evmResp *evm.MsgEthereumTxResponse,
 ) (events TxEvents) {
-
 	// Typed event: eth.evm.v1.EventEthereumTx
 	eventEthereumTx := &evm.EventEthereumTx{
 		EthHash: evmResp.Hash,

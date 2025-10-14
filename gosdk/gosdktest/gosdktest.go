@@ -3,11 +3,12 @@ package gosdktest
 import (
 	"google.golang.org/grpc"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
-	"github.com/stretchr/testify/suite"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"

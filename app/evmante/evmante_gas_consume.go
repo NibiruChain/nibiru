@@ -20,8 +20,8 @@ import (
 // AnteDecEthGasConsume validates enough intrinsic gas for the transaction and
 // gas consumption.
 type AnteDecEthGasConsume struct {
-	evmKeeper    *EVMKeeper
-	maxGasWanted uint64
+	EvmKeeper    *EVMKeeper
+	MaxGasWanted uint64
 }
 
 // // NewAnteDecEthGasConsume creates a new EthGasConsumeDecorator

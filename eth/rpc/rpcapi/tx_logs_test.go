@@ -162,6 +162,11 @@ func (s *BackendSuite) TestLogs() {
 		event, _ := evm.EventFunTokenCreatedFromABCIEvent(events[0])
 		tx3FunTokenCreatedEvent = event
 	}
+	s.Equal(
+		erc20AddrTx2.Hex(),
+		tx3FunTokenCreatedEvent.Erc20ContractAddress,
+		"The ERC20 from TX2 and TX3 must match",
+	)
 
 	s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX4")
 	tx4FunTokenCreatedEvent := new(evm.EventFunTokenCreated)

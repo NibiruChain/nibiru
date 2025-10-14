@@ -5,12 +5,13 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 var _ EvmAnteHandler = EthAnteVerifyEthAcc

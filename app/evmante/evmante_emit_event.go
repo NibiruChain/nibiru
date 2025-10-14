@@ -5,9 +5,10 @@ package evmante
 import (
 	"strconv"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).

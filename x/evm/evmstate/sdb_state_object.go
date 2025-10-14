@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 // Account represents an Ethereum account according to the Auth and Bank module
@@ -112,6 +113,3 @@ func (s StorageForOneContract) String() (str string) {
 // the contract is just created within the current transaction, or when the
 // object was previously existent and is being deployed as a contract within
 // the current transaction.
-
-// Copied from /core/state/journal.go in geth v1.14
-var ripemd = gethcommon.HexToAddress("0000000000000000000000000000000000000003")

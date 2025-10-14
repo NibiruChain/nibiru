@@ -145,7 +145,7 @@ func New(testPtr *suite.Suite, cfg Config) (network *Network) {
 		// Logger refers to logger for the [TestPtr]
 		logger Logger = testPtr.T()
 		// Base dir or "home" dir. This stores the node, gentxs, and everything
-		baseDir string = testPtr.T().TempDir()
+		baseDir = testPtr.T().TempDir()
 		// Return error logged if we fail to start the network. Used in the defer
 		// statement below.
 		rerr error
@@ -584,7 +584,6 @@ func (n *Network) WaitForNextBlockVerbose() (int64, error) {
 func (n *Network) WaitForNextBlock() {
 	_, err := n.WaitForNextBlockVerbose()
 	n.NoError(err)
-	return
 }
 
 // WaitForDuration waits for at least the duration provided in blockchain time.

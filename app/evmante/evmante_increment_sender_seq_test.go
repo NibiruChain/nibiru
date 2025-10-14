@@ -12,20 +12,19 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
-	state "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 	testCases := []struct {
 		name    string
-		txSetup func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx
+		txSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx
 		wantErr string
 		wantSeq uint64
 	}{
 		{
 			name: "happy: single message",
-			txSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx {
+			txSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx {
 				balance := big.NewInt(100)
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, balance)
 				return evmtest.HappyTransferTx(deps, 0)
@@ -35,7 +34,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 		},
 		{
 			name: "sad: account does not exists",
-			txSetup: func(deps *evmtest.TestDeps, sdb *state.SDB) *evm.MsgEthereumTx {
+			txSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx {
 				return evmtest.HappyTransferTx(deps, 0)
 			},
 			wantErr: "unknown address",
@@ -66,7 +65,6 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 
 			s.True(deps.IsEqualSDB(sdb), "deps and sdb MUST still be connected.")
 			if tc.wantSeq > 0 {
-
 				acct := deps.EvmKeeper.GetAccount(sdb.Ctx(), deps.Sender.EthAddr)
 				s.NotNil(acct)
 
@@ -88,7 +86,7 @@ func (s *TestSuite) TestAnteDecEthIncrementSenderSequence() {
 }
 
 // AddBalanceSigned is only used in tests for convenience.
-func AddBalanceSigned(sdb *state.SDB, addr gethcommon.Address, wei *big.Int) {
+func AddBalanceSigned(sdb *evmstate.SDB, addr gethcommon.Address, wei *big.Int) {
 	weiSign := wei.Sign()
 	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
 	if isOverflow {

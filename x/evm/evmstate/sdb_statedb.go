@@ -25,8 +25,6 @@ import (
 	"maps"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/stateless"
@@ -37,6 +35,9 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 var _ vm.StateDB = &SDB{}
@@ -317,7 +318,7 @@ func (s *SDB) AddPreimage(_ gethcommon.Hash, _ []byte) {}
 
 // CreateAccount explicitly creates a state object. If a state object with the address
 // already exists the balance is carried over to the new account.
-// TODO: Check that account balances are meant to be preserved across account reset.
+// FIXME: TODO: Check that account balances are meant to be preserved across account reset.
 //
 // CreateAccount is called during the EVM CREATE operation. The situation might arise that
 // a contract does the following:
@@ -342,7 +343,10 @@ func (s *SDB) CreateAccount(addr gethcommon.Address) {
 		acc = NewEmptyAccount()
 	}
 	acc.BalanceNwei = accBal
-	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	err := s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	if err != nil {
+		panic(sdbErrorf("%w", err))
+	}
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
 }
 
@@ -394,7 +398,11 @@ func (s *SDB) SubBalance(
 	}
 
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
-	s.keeper.BK().SubWei(s.evmTxCtx, addrBech32, wei)
+	err := s.keeper.BK().SubWei(s.evmTxCtx, addrBech32, wei)
+	if err != nil {
+		panic(sdbErrorf("%w", err))
+	}
+
 	// TODO: add sdb tracing logger?
 	return
 }
@@ -407,7 +415,10 @@ func (s *SDB) SetNonce(addr gethcommon.Address, nonce uint64) {
 		return
 	}
 	acc.Nonce = nonce
-	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	err := s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	if err != nil {
+		panic(sdbErrorf("%w", err))
+	}
 }
 
 // SetCode sets the code of account.
@@ -423,7 +434,11 @@ func (s *SDB) SetCode(addr gethcommon.Address, code []byte) {
 	acc.CodeHash = codeHashBz
 
 	// Persist account metadata (nonce, code hash)
-	s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	err := s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	if err != nil {
+		panic(sdbErrorf("%w", err))
+	}
+
 	// TODO: Persist bytecode only if the code was not already set
 	s.keeper.SetCode(s.evmTxCtx, codeHashBz, code)
 }
@@ -567,7 +582,7 @@ func (s *SDB) RevertToSnapshot(revid int) {
 	if currRevId := s.SnapshotRevertIdx(); revid > currRevId {
 		// Only snapshot to valid reversion indices. Panic under same conditions
 		// as Geth.
-		panic(fmt.Errorf("revision id %v cannot be reverted: current id is %d", revid, currRevId))
+		panic(sdbErrorf("revision id %v cannot be reverted: current id is %d", revid, currRevId))
 	}
 	s.evmTxCtx = s.savedCtxs[revid]
 	s.savedCtxs = s.savedCtxs[:revid]
@@ -576,25 +591,10 @@ func (s *SDB) RevertToSnapshot(revid int) {
 	s.savedStates = s.savedStates[:revid]
 
 	s.Snapshot()
-
-	// TODO: OLD impl
-
-	// // Find the snapshot in the stack of valid snapshots.
-	// idx := sort.Search(len(s.validRevisions), func(i int) bool {
-	// 	return s.validRevisions[i].id >= revid
-	// })
-	// if idx == len(s.validRevisions) || s.validRevisions[idx].id != revid {
-	// 	panic(fmt.Errorf("revision id %v cannot be reverted", revid))
-	// }
-	// snapshot := s.validRevisions[idx].journalIndex
-
-	// // Replay the journal to undo changes and remove invalidated snapshots
-	// s.Journal.Revert(s, snapshot)
-	// s.validRevisions = s.validRevisions[:idx]
 }
 
-// errorf: wrapper of "fmt.Errorf" specific to the current Go package.
-func errorf(format string, args ...any) error {
+// sdbErrorf: wrapper of "fmt.Errorf" specific to the current Go package.
+func sdbErrorf(format string, args ...any) error {
 	return fmt.Errorf("StateDB error: "+format, args...)
 }
 
@@ -639,17 +639,6 @@ func (s *SDB) Commit() {
 			ctx.MultiStore().(sdk.CacheMultiStore).Write()
 		}
 	}
-
-	return
-	// TODO: UD-DEBUG: cleanup comment
-	// // No-op for now. May add logic for empty account pruning if desired.
-	// for addr, obj := range s.stateObjects {
-	// 	if !obj.isEmpty() {
-	// 		obj.newContract = false
-	// 	} else if obj.isEmpty() && deleteEmptyObjects {
-	// 		delete(s.stateObjects, addr)
-	// 	}
-	// }
 }
 
 // RootCtx returns the root context captured when the SDB was constructed.
@@ -683,18 +672,7 @@ func (s *SDB) RootCtx() sdk.Context {
 // func (s *SDB) SavePrecompileCalledJournalChange(
 // 	journalChange PrecompileCalled,
 // ) error {
-// 	s.Journal.append(journalChange)
-// 	s.multistoreCacheCount++
-// 	if s.multistoreCacheCount > maxMultistoreCacheCount {
-// 		return fmt.Errorf(
-// 			"exceeded maximum number Nibiru-specific precompiled contract calls in one transaction (%d)",
-// 			maxMultistoreCacheCount,
-// 		)
-// 	}
-// 	return nil
 // }
-
-const maxMultistoreCacheCount uint8 = 10
 
 // Witness returns nil.
 //
@@ -761,17 +739,6 @@ func (s *SDB) Finalise(deleteEmptyObjects bool) {
 			ctx.MultiStore().(sdk.CacheMultiStore).Write()
 		}
 	}
-
-	return
-	// TODO: UD-DEBUG: cleanup comment
-	// // No-op for now. May add logic for empty account pruning if desired.
-	// for addr, obj := range s.stateObjects {
-	// 	if !obj.isEmpty() {
-	// 		obj.newContract = false
-	// 	} else if obj.isEmpty() && deleteEmptyObjects {
-	// 		delete(s.stateObjects, addr)
-	// 	}
-	// }
 }
 
 // GetStorageRoot returns an empty state hash. This is done because a storage
