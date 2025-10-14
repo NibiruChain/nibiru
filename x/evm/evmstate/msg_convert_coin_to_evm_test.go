@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evmstate_test
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"math/big"
@@ -48,6 +49,12 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed())
 
 	s.T().Log("Check typed event ConvertCoinToEvm")
+	s.T().Log("Event should contain evm log with Transfer event")
+	emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
+	signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
+	fromAddress := emptyHash // Mint
+	toAddress := gethcommon.BytesToHash(alice.EthAddr.Bytes()).Hex()
+	amountBase64 := gethcommon.LeftPadBytes(big.NewInt(10).Bytes(), 32)
 	testutil.RequireContainsTypedEvent(
 		s.T(),
 		deps.Ctx(),
@@ -56,21 +63,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 			Erc20ContractAddress: funToken.Erc20Addr.String(),
 			ToEthAddr:            alice.EthAddr.String(),
 			BankCoin:             sdk.NewCoin(funToken.BankDenom, sdk.NewInt(10)),
-		},
-	)
-
-	s.T().Log("Check typed event EventTxLog with Transfer event")
-	emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
-	signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
-	fromAddress := emptyHash // Mint
-	toAddress := gethcommon.BytesToHash(alice.EthAddr.Bytes()).Hex()
-	amountBase64 := gethcommon.LeftPadBytes(big.NewInt(10).Bytes(), 32)
-
-	testutil.RequireContainsTypedEvent(
-		s.T(),
-		deps.Ctx(),
-		&evm.EventTxLog{
-			Logs: []evm.Log{
+			EvmLogs: []evm.LogLite{
 				{
 					Address: funToken.Erc20Addr.Hex(),
 					Topics: []string{
@@ -78,13 +71,7 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 						fromAddress,
 						toAddress,
 					},
-					Data:        amountBase64,
-					BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
-					TxHash:      emptyHash,
-					TxIndex:     0,
-					BlockHash:   emptyHash,
-					Index:       1,
-					Removed:     false,
+					Data: amountBase64,
 				},
 			},
 		},
@@ -752,6 +739,11 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 			Description:  "someone else receives 69 tokens in EVM",
 		}.Assert(s.T(), deps)
 
+		wnibiContract := deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi
+		wnibiDepositAmt := new(big.Int).Mul(
+			big.NewInt(69),
+			new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
+		)
 		testutil.RequireContainsTypedEvent(
 			s.T(),
 			deps.Ctx(),
@@ -760,6 +752,24 @@ func (s *SuiteFunToken) TestConvertCoinToEvmForWNIBI() {
 				Erc20ContractAddress: erc20Addr.Hex(),
 				ToEthAddr:            someoneElse.EthAddr.Hex(),
 				BankCoin:             unibi(big.NewInt(69)),
+				EvmLogs: []evm.LogLite{
+					evmtest.LogLiteEventWnibiDeposit(
+						wnibiContract.Address,
+						deps.Sender.EthAddr, // from
+						wnibiDepositAmt,
+					),
+					evmtest.LogLiteEventWnibiDeposit(
+						wnibiContract.Address,
+						deps.Sender.EthAddr,
+						wnibiDepositAmt,
+					),
+					evmtest.LogLiteEventErc20Transfer(
+						wnibiContract.Address,
+						deps.Sender.EthAddr, // from
+						someoneElse.EthAddr, // to
+						wnibiDepositAmt,
+					),
+				},
 			},
 		)
 

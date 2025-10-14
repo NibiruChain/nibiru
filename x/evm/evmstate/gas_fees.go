@@ -32,14 +32,13 @@ func (k *Keeper) RefundGas(
 		new(big.Int).SetUint64(leftoverGas),
 		weiPerGas,
 	)
-	leftoverMicronibi := evm.WeiToNative(leftoverWei)
 
-	switch leftoverMicronibi.Sign() {
+	switch leftoverWei.Sign() {
 	case -1:
 		// Should be impossible since leftoverGas is a uint64. Reaching this case
 		// would imply a critical error in the effective gas calculation.
 		return sdkioerrors.Wrapf(evm.ErrInvalidRefund,
-			"refunded amount value cannot be negative %s", leftoverMicronibi,
+			"refunded amount value cannot be negative %s", leftoverWei,
 		)
 	case 1:
 		wei := uint256.MustFromBig(leftoverWei)
@@ -55,6 +54,8 @@ func (k *Keeper) RefundGas(
 
 		sdb.SubBalance(evm.FEE_COLLECTOR_ADDR, wei, tracing.BalanceIncreaseGasReturn)
 		sdb.AddBalance(msgFrom, wei, tracing.BalanceIncreaseGasReturn)
+
+		sdb.Commit()
 
 		// refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}
 

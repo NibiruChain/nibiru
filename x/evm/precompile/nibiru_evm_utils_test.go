@@ -82,7 +82,7 @@ func (s *UtilsSuite) TestEmitEventAbciEvent() {
 	s.NoError(err)
 
 	abciEvents := deps.Ctx().EventManager().Events()[startIdx:]
-	s.Lenf(abciEvents, 2, "%+s", abciEvents)
+	s.Lenf(abciEvents, 3, "%+s", abciEvents)
 
 	emittingAddr := precompile.PrecompileAddr_Wasm
 	precompile.EmitEventAbciEvents(deps.Ctx(), db, abciEvents, emittingAddr)

@@ -247,6 +247,11 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		&deps, embeds.SmartContract_ERC20MinterWithMetadataUpdates,
 		metadata.Name, metadata.Symbol, metadata.Decimals,
 	)
+	s.Len(
+		deployResp.TxResp.Logs,
+		1,
+		"expect eth logs from deploy contract",
+	)
 	s.Require().NoError(err)
 	s.Equal(
 		evmstate.TxConfig{
@@ -356,6 +361,17 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		s.Require().NoError(err)
 		s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed())
 
+		txCfg := evmstate.TxConfig{
+			BlockHash: blockHash,
+			TxHash:    ethTxHash,
+			TxIndex:   1,
+			LogIndex:  1,
+		}
+		s.Equal(
+			txCfg,
+			deps.EvmKeeper.TxConfig(deps.Ctx(), ethTxHash),
+			"expect tx config unaltered because no EVM txs have occured since we deployed the ERC20 contract",
+		)
 		// Event "EventConvertCoinToEvm" must present
 		testutil.RequireContainsTypedEvent(
 			s.T(),
@@ -368,47 +384,13 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 					Denom:  bankDemon,
 					Amount: sdk.NewInt(1),
 				},
-			},
-		)
-
-		// Event "EventTxLog" must present with OwnershipTransferred event
-		// emptyHash := gethcommon.BytesToHash(make([]byte, 32)).Hex()
-		signature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")).Hex()
-		fromAddress := gethcommon.BytesToHash(evm.EVM_MODULE_ADDRESS.Bytes()).Hex()
-		toAddress := gethcommon.BytesToHash(deps.Sender.EthAddr.Bytes()).Hex()
-		amountBase64 := gethcommon.LeftPadBytes(big.NewInt(1).Bytes(), 32)
-
-		txCfg := evmstate.TxConfig{
-			BlockHash: blockHash,
-			TxHash:    ethTxHash,
-			TxIndex:   1,
-			LogIndex:  1,
-		}
-		s.Equal(
-			txCfg,
-			deps.EvmKeeper.TxConfig(deps.Ctx(), ethTxHash),
-			"expect tx config unaltered because no EVM txs have occured since we deployed the ERC20 contract",
-		)
-		testutil.RequireContainsTypedEvent(
-			s.T(),
-			deps.Ctx(),
-			&evm.EventTxLog{
-				Logs: []evm.Log{
-					{
-						Address: deployResp.ContractAddr.Hex(),
-						Topics: []string{
-							signature,
-							fromAddress,
-							toAddress,
-						},
-						Data:        amountBase64,
-						BlockNumber: 1, // we are in simulation, no real block numbers or tx hashes
-						TxHash:      ethTxHash.Hex(),
-						TxIndex:     uint64(txCfg.TxIndex),
-						BlockHash:   blockHash.Hex(),
-						Index:       uint64(txCfg.LogIndex),
-						Removed:     false,
-					},
+				EvmLogs: []evm.LogLite{
+					evmtest.LogLiteEventErc20Transfer(
+						deployResp.ContractAddr, // contract
+						evm.EVM_MODULE_ADDRESS,  // from
+						deps.Sender.EthAddr,     // to
+						big.NewInt(1),
+					),
 				},
 			},
 		)

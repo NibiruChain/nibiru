@@ -33,7 +33,7 @@ const EvmEventAbciEvent = "AbciEvent"
 // the ABCI event.
 func EmitEventAbciEvents(
 	ctx sdk.Context,
-	db *evmstate.SDB,
+	sdb *evmstate.SDB,
 	abciEvents []sdk.Event,
 	emittingAddr gethcommon.Address,
 ) {
@@ -51,7 +51,7 @@ func EmitEventAbciEvents(
 			{Key: "eventType", Value: abciEvent.Type},
 		}, abciEvent.Attributes...))
 		nonIndexedArgs, _ := event.Inputs.NonIndexed().Pack(string(attrsBz))
-		db.AddLog(&gethcore.Log{
+		sdb.AddLog(&gethcore.Log{
 			Address:     emittingAddr,
 			Topics:      topics,
 			Data:        nonIndexedArgs,

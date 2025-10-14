@@ -106,7 +106,8 @@ func (k *Keeper) EthereumTx(
 		log.Printf("UD-DEBUG EthereumTx GAS CONSUMPTION SUCCESS")
 	}
 
-	k.updateBlockBloom(sdb.Ctx(), evmResp, uint64(sdb.TxCfg().LogIndex))
+	log.Printf("sdb.TxCfg(): %+v\n", sdb.TxCfg())
+	sdb.updateBlockBloom(evmResp)
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
@@ -817,11 +818,12 @@ func (k *Keeper) GetEvmTxEvents(
 }
 
 // updateBlockBloom updates transient block bloom filter
-func (k *Keeper) updateBlockBloom(
-	ctx sdk.Context,
+func (sdb *SDB) updateBlockBloom(
 	evmResp *evm.MsgEthereumTxResponse,
-	logIndex uint64,
 ) {
+	ctx := sdb.RootCtx()
+	k := sdb.Keeper()
+	logIndex := uint64(sdb.TxCfg().LogIndex)
 	if len(evmResp.Logs) > 0 {
 		logs := evm.LogsToEthereum(evmResp.Logs)
 		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())

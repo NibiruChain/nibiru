@@ -91,13 +91,8 @@ func (k Keeper) convertEvmToCoinForCoinOriginated(
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoins[0],
 		SenderEthAddr:        sender.Eth.Hex(),
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
 	})
-
-	// Emit tx logs of Burn event if it's an EVM tx
-	if !sdb.Ctx().IsEvmTx() {
-		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
-		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	}
 
 	return nil
 }
@@ -177,12 +172,8 @@ func (k Keeper) convertEvmToCoinForERC20Originated(
 		ToAddress:            toAddress.String(),
 		BankCoin:             bankCoin,
 		SenderEthAddr:        sender.Eth.Hex(),
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
 	})
-
-	if !sdb.Ctx().IsEvmTx() {
-		// Only emit Ethereum tx logs manually when it's not an Ethereum tx.
-		_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
-	}
 
 	return nil
 }
@@ -282,6 +273,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		return
 	}
 
+	// TODO: UD-DEBUG: feat: Update WNIBI functions to work with 18 decimals.
 	withdrawnMicronibi := sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromBigInt(
 		evm.WeiToNative(withdrawWei.ToBig()),
 	))
@@ -297,6 +289,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 		ToAddress:            toAddrBech32.String(),
 		BankCoin:             withdrawnMicronibi,
 		SenderEthAddr:        sender.Eth.Hex(),
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
 	})
 
 	return withdrawWei, nil

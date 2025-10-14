@@ -4,8 +4,9 @@ package evmstate
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 )
 
 // Keeper provide underlying storage of StateDB

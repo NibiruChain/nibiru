@@ -1,7 +1,7 @@
 package evmstate
 
 import (
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 )
 
 var (

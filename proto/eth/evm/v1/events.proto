@@ -57,6 +57,7 @@ message EventConvertCoinToEvm {
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
+  repeated eth.evm.v1.LogLite evm_logs = 5 [(gogoproto.nullable) = false];
 }
 
 // EventTransfer defines event for EVM transfer
@@ -89,4 +90,5 @@ message EventConvertEvmToCoin {
     (gogoproto.nullable) = false
   ];
   string sender_eth_addr = 6;
+  repeated eth.evm.v1.LogLite evm_logs = 7 [(gogoproto.nullable) = false];
 }

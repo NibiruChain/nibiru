@@ -101,15 +101,13 @@ func (s *TestSuite) TestEthAnteEmitPendingEthTxEvent() {
 
 			tx := tc.txSetup(&deps)
 			simulate := false
-			err := evmante.EthAnteTemplate(
+			err := evmante.EthAnteEmitPendingEvent(
 				sdb,
 				sdb.Keeper(),
 				tx,
 				simulate,
 				ANTE_OPTIONS_UNUSED,
 			)
-
-			// sdb.Commit()
 
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)
