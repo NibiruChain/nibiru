@@ -90,5 +90,11 @@
     "displayName": "uBTC",
     "symbol": "uBTC",
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/009_ubtc.png"
+  },
+  {
+    "contractAddr": "0x1d1715ecE22A6Ab6349196e7054E61de3Ac2Ea3D",
+    "displayName": "ynETH MAX",
+    "symbol": "ynETHx",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/010_ynethx.svg"
   }
 ]
