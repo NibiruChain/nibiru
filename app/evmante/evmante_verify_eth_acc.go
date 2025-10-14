@@ -41,6 +41,9 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	for i, msg := range tx.GetMsgs() {
+		// TODO: Branch ctx here with infinite gas meter
+		// Constraint -> Zero gas cost to passs through this function
+
 		msgEthTx, ok := msg.(*evm.MsgEthereumTx)
 		if !ok {
 			return ctx, sdkioerrors.Wrapf(sdkerrors.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evm.MsgEthereumTx)(nil))
@@ -72,9 +75,32 @@ func (anteDec AnteDecVerifyEthAcc) AnteHandle(
 
 		if err := keeper.CheckSenderBalance(
 			evm.NativeToWei(acct.BalanceNative.ToBig()), txData,
-		); err != nil {
-			return ctx, sdkioerrors.Wrap(err, "failed to check sender balance")
+		); err == nil {
+			continue
 		}
+
+		wnibi := anteDec.evmKeeper.GetParams(ctx).CanonicalWnibi
+
+		stateDB := anteDec.evmKeeper.Bank.StateDB
+		if stateDB == nil {
+			stateDB = anteDec.evmKeeper.NewStateDB(ctx, anteDec.evmKeeper.TxConfig(ctx, gethcommon.Hash{}))
+		}
+		defer func() {
+			anteDec.evmKeeper.Bank.StateDB = nil
+		}()
+
+		evmObj := anteDec.evmKeeper.NewEVM(ctx, evm.MOCK_GETH_MESSAGE, anteDec.evmKeeper.GetEVMConfig(ctx), nil /*tracer*/, stateDB /*statedb*/)
+		wnibiBal, err := anteDec.evmKeeper.ERC20().BalanceOf(wnibi.Address, fromAddr, ctx, evmObj)
+
+		cost := txData.Cost()
+		if wnibi.Address != (gethcommon.Address{}) && err == nil && wnibiBal.Cmp(cost) >= 0 {
+			continue
+		}
+
+		return ctx, sdkioerrors.Wrapf(
+			sdkerrors.ErrInsufficientFunds,
+			"sender balance < tx cost (%s < %s)", acct.BalanceNative.ToBig(), cost,
+		)
 	}
 	return next(ctx, tx, simulate)
 }

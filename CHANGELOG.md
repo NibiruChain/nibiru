@@ -66,6 +66,7 @@ handling for NIBI via WNIBI.
 - [#2379](https://github.com/NibiruChain/nibiru/pull/2379) - fix(evm): disallow permissionless creation of FunToken mappings when tokens do not already have metadata.
 - [#2381](https://github.com/NibiruChain/nibiru/pull/2381) - feat(evm): Overwrite
   ERC20 metadata for stNIBI on Nibiru Testnet 2, and make the contract upgradeable.
+- [#2384](https://github.com/NibiruChain/nibiru/pull/2384) - feat: Multi VM Gas Token Flexibility
 
 ### Dependencies
 - Bump `base-x` from 3.0.10 to 3.0.11 ([#2355](https://github.com/NibiruChain/nibiru/pull/2355))

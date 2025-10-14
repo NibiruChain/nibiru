@@ -222,11 +222,26 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
+add_genesis_param '.app_state.bank.supply[0].amount = "30000420000000"'
+
+# Simple helpers for auth accounts in genesis
+get_auth_accounts_len() {
+  cat $CHAIN_DIR/config/genesis.json | jq '.app_state.auth.accounts | length'
+}
 
 # ------------------------------------------------------------------------
+# Prepare WNIBI account and merge into genesis
+# ------------------------------------------------------------------------
+
+echo_info "Setting WNIBI auth account_number to next open index"
+NEXT_ACC_NUM=$(get_auth_accounts_len)
+jq ".auth.accounts[0].base_account.account_number=\"${NEXT_ACC_NUM}\"" contrib/wnibi.json > contrib/wnibi.tmp.json
+mv contrib/wnibi.tmp.json contrib/wnibi.json
+
+jq --slurpfile evm contrib/wnibi.json '.app_state.evm = $evm[0].evm | .app_state.auth.accounts += $evm[0].auth.accounts |.app_state.bank.balances += $evm[0].bank.balances' $CHAIN_DIR/config/genesis.json > $CHAIN_DIR/config/genesis_tmp.json
+mv $CHAIN_DIR/config/genesis_tmp.json $CHAIN_DIR/config/genesis.json
+
 # Gentx
-# ------------------------------------------------------------------------
-
 echo_info "Adding gentx validator..."
 if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"

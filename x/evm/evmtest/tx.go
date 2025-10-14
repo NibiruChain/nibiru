@@ -47,6 +47,26 @@ func ExecuteNibiTransfer(deps *TestDeps, t *testing.T) (*evm.MsgEthereumTx, *evm
 	return ethTxMsg, resp
 }
 
+func ExecuteNibiTransferTo(deps *TestDeps, t *testing.T, recipient gethcommon.Address, value *hexutil.Big) (*evm.MsgEthereumTx, *evm.MsgEthereumTxResponse) {
+	nonce := deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
+
+	txArgs := evm.JsonTxArgs{
+		From:  &deps.Sender.EthAddr,
+		To:    &recipient,
+		Nonce: (*hexutil.Uint64)(&nonce),
+		Value: value,
+	}
+	ethTxMsg, gethSigner, krSigner, err := GenerateEthTxMsgAndSigner(txArgs, deps, deps.Sender)
+	require.NoError(t, err)
+	err = ethTxMsg.Sign(gethSigner, krSigner)
+	require.NoError(t, err)
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx), ethTxMsg)
+	require.NoError(t, err)
+	require.Empty(t, resp.VmError)
+	return ethTxMsg, resp
+}
+
 type DeployContractResult struct {
 	TxResp       *evm.MsgEthereumTxResponse
 	EthTxMsg     *evm.MsgEthereumTx
