@@ -150,6 +150,43 @@ func NewNibiruTestApp(customGenesisOverride nibiruapp.GenesisState) (
 	return app, gen
 }
 
+// AddTestAddrsIncremental generates `numAddrs` new addresses in a simple
+// incremental manner, adds them as BaseAccounts in the AccountKeeper, and
+// optionally funds them with `coins`. It returns their addresses as
+// `[]sdk.ValAddress`, which you can treat as potential validators if needed.
+func AddTestAddrsIncremental(
+	nibiruApp *app.NibiruApp,
+	ctx sdk.Context,
+	numAddrs int,
+	coins sdk.Coins,
+) []sdk.ValAddress {
+	var valAddrs []sdk.ValAddress
+
+	for i := 0; i < numAddrs; i++ {
+		// 1. Generate a new private key
+		pk := secp256k1.GenPrivKey()
+
+		// 2. Derive an account address from the pubkey
+		accAddr := sdk.AccAddress(pk.PubKey().Address())
+
+		// 3. Create a new base account object
+		acc := nibiruApp.AccountKeeper.NewAccountWithAddress(ctx, accAddr)
+		nibiruApp.AccountKeeper.SetAccount(ctx, acc)
+
+		// 4. If the function call passed a non-empty `coins`, fund the new account
+		if !coins.IsZero() {
+			if err := FundAccount(nibiruApp.BankKeeper, ctx, accAddr, coins); err != nil {
+				panic(err)
+			}
+		}
+
+		// 5. Convert to ValAddress for convenience
+		valAddrs = append(valAddrs, sdk.ValAddress(accAddr))
+	}
+
+	return valAddrs
+}
+
 // FundAccount is a utility function that funds an account by minting and
 // sending the coins to the address. This should be used for testing purposes
 // only!

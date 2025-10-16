@@ -437,6 +437,8 @@ func NewNibiruApp(
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
+		StakingKeeper:     *app.StakingKeeper,
+		OracleKeeper:      app.OracleKeeper,
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
