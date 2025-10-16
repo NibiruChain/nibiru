@@ -1,4 +1,4 @@
-name: Integration tests
+name: "Integration tests"
 
 on:
   workflow_dispatch: # Runs on manual calls
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
-  integration-tests:
+  heavy-tests:
     # Job that runs all tests and publishes code coverage reports.
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -67,12 +67,17 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
           key: go-mod-cache-${{ hashFiles('**/go.sum') }}
 
-      - name: "Run all integration tests."
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        run: make test-coverage-integration
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
 
-      - name: "Upload coverage reports to Codecov"
+      - name: "Run all heavy tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: just test-cover-heavy
+
+      # - name: "Upload coverage reports to Codecov"
+      #   if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+      #   uses: codecov/codecov-action@v5
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
