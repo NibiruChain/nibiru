@@ -90,7 +90,7 @@ func NewKeeper(
 }
 
 // GetWeiBalance: Used in the EVM Ante Handler,
-// "github.com/NibiruChain/nibiru/v2/app/evmante": Load account's balance of gas
+// "github.com/NibiruChain/nibiru/v2/x/evm/evmante": Load account's balance of gas
 // tokens for EVM execution in EVM denom units.
 func (k *Keeper) GetWeiBalance(ctx sdk.Context, addr gethcommon.Address) (balance *uint256.Int) {
 	nibiruAddr := sdk.AccAddress(addr.Bytes())

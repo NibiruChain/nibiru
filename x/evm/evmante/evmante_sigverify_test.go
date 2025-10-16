@@ -5,14 +5,14 @@ import (
 
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 var InvalidChainID = big.NewInt(987654321)
 
-func (s *TestSuite) TestEthSigVerificationDecorator() {
+func (s *Suite) TestEthSigVerificationDecorator() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps) evm.Tx

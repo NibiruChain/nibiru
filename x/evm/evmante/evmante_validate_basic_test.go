@@ -9,15 +9,15 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestAnteStepValidateBasic() {
+func (s *Suite) TestAnteStepValidateBasic() {
 	evmAnteStep := evmante.AnteStepValidateBasic
-	priorSteps := []evmante.EvmAnteStep{
+	priorSteps := []evmante.AnteStep{
 		evmante.EthSigVerification,
 	}
 	testCases := []AnteTC{
@@ -96,7 +96,7 @@ func (s *TestSuite) TestAnteStepValidateBasic() {
 				s.Require().NoError(err)
 				return msgEthTx
 			},
-			WantErr: "gas limit must exceed the lowest possible intrinsic gas cost",
+			WantErr: "tx gas limit is less than intrinsic gas cost",
 		},
 	}
 

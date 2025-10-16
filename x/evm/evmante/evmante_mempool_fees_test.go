@@ -4,11 +4,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestMempoolGasFeeDecorator() {
+func (s *Suite) TestMempoolGasFeeDecorator() {
 	testCases := []struct {
 		name     string
 		txSetup  func(deps *evmtest.TestDeps) sdk.Tx

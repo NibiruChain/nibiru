@@ -1,13 +1,13 @@
 package evmante_test
 
 import (
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthAnteEmitPendingEvent() {
+func (s *Suite) TestEthAnteEmitPendingEvent() {
 	testCases := []AnteTC{
 		{
 			Name:        "happy: eth tx emitted event",

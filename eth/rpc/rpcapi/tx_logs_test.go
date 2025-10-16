@@ -93,8 +93,6 @@ func (s *BackendSuite) TestLogs() {
 	)
 	txHash4 = txResp.TxHash
 
-	// TODO: UD-DEBUG: Move or use Querier from gosdk so you can use it here.
-
 	s.T().Log("TX5: Convert coin to EVM")
 	nonce++
 	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgConvertCoinToEvm{

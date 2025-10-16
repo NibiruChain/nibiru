@@ -43,7 +43,7 @@ var (
 // MsgEthereumTx: Ethereum/EVM transactions on Nibiru
 // ------------------------------------------------------------
 
-// A type alias to save some typing. An Ethereum transactionas an SDK message.
+// A type alias to save some typing. An Ethereum transaction an SDK message.
 type Tx = *MsgEthereumTx
 
 func RequireStandardEVMTxMsg(tx sdk.Tx) (*MsgEthereumTx, error) {

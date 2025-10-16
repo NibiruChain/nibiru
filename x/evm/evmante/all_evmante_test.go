@@ -10,14 +10,14 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestAnteHandlerEVM() {
+func (s *Suite) TestAnteHandlerEVM() {
 	testCases := []struct {
 		name          string
 		txSetup       func(deps *evmtest.TestDeps) sdk.FeeTx
@@ -72,7 +72,7 @@ func (s *TestSuite) TestAnteHandlerEVM() {
 			deps := evmtest.NewTestDeps()
 			sdb := deps.NewStateDB()
 
-			anteHandlerEVM := evmante.NewAnteHandlerEVM(
+			anteHandlerEVM := evmante.NewAnteHandlerEvm(
 				ante.AnteHandlerOptions{
 					HandlerOptions: authante.HandlerOptions{
 						AccountKeeper:          deps.App.AccountKeeper,

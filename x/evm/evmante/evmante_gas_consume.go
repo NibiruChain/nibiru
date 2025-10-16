@@ -21,13 +21,13 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepGasWanted
+var _ AnteStep = AnteStepGasWanted
 
 type AnteOptionsEVM interface {
 	GetMaxTxGasWanted() uint64
 }
 
-var _ EvmAnteStep = AnteStepBlockGasMeter
+var _ AnteStep = AnteStepBlockGasMeter
 
 // AnteStepBlockGasMeter validates that the transaction gas limit does not exceed
 // the block gas limit, ensuring each the tx doesn't consume more gas than the
@@ -216,10 +216,14 @@ func AnteStepGasWanted(
 	// Set the context gas meter with the transaction's gas limit.
 	// The infinite gas meter with limit allows tracking gas consumption up to the
 	// specified limit without hard failures during the ante handler phase.
-	// The gas consumed will be reset to the actual gas used by the EVM state transition.
 	//
-	// FIXME: use a custom gas configuration that doesn't add any additional gas and only
-	// takes into account the gas consumed at the end of the EVM transaction.
+	// Gas consumption follows a two-phase approach:
+	// 1. Ante handlers use infinite gas meters to avoid premature failures
+	// 2. EVM execution tracks actual gas consumption separately via gasRemaining
+	// 3. Only the final consumed amount is recorded via SafeConsumeGas
+	//
+	// This design ensures that Cosmos gas accounting reflects actual EVM gas usage
+	// without double-counting or premature gas failures during validation.
 	newCtx := sdb.Ctx().
 		WithGasMeter(eth.NewInfiniteGasMeterWithLimit(gasWanted)).
 		WithPriority(minPriority)
@@ -229,7 +233,7 @@ func AnteStepGasWanted(
 	return nil
 }
 
-var _ EvmAnteStep = AnteStepFiniteGasLimitForABCIDeliverTx
+var _ AnteStep = AnteStepFiniteGasLimitForABCIDeliverTx
 
 // AnteStepFiniteGasLimitForABCIDeliverTx is the final EvmAnteHandler called
 // before the start of the Ethereum transaction execution. This handler sets a

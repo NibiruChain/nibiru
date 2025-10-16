@@ -3,18 +3,19 @@ package evmante
 
 import (
 	"fmt"
+	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	// gethcore "github.com/ethereum/go-ethereum/core/types"
-	gethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepValidateBasic
+var _ AnteStep = AnteStepValidateBasic
 
 // AnteStepValidateBasic performs basic validation of Ethereum transactions
 // within the EVM state transition. This handler validates transaction structure,
@@ -54,11 +55,33 @@ func AnteStepValidateBasic(
 		return sdkioerrors.Wrap(err, "failed to unpack MsgEthereumTx Data")
 	}
 
-	// Validate gas limit is reasonable
+	// Tx gas limit must be at least enough for the intrinsic gas cost.
 	gasLimit := msgEthTx.GetGas()
-	if gasLimit < gethparams.TxGas {
+
+	// Compute actual intrinsic gas (same as in ApplyEvmMsg)
+	rules := k.GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
+		big.NewInt(sdb.Ctx().BlockHeight()),
+		false,
+		evm.ParseBlockTimeUnixU64(sdb.Ctx()),
+	)
+	contractCreation := txData.GetTo() == nil
+	intrinsicGasCost, err := core.IntrinsicGas(
+		txData.GetData(),
+		txData.GetAccessList(),
+		contractCreation,
+		rules.IsHomestead,
+		rules.IsIstanbul,
+		rules.IsShanghai,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to compute intrinsic gas: %w", err)
+	}
+
+	// Validate against actual intrinsic gas
+	if gasLimit < intrinsicGasCost {
 		return fmt.Errorf(
-			"gas limit must exceed the lowest possible intrinsic gas cost of %d, got gas limit %d.", gethparams.TxGas, gasLimit,
+			"%s: provided msg.Gas (%d) for the tx gas limit is less than intrinsic gas cost (%d).",
+			vm.ErrOutOfGas, gasLimit, intrinsicGasCost,
 		)
 	}
 

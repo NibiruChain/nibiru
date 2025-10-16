@@ -50,15 +50,15 @@ var _ vm.StateDB = &SDB{}
 type SDB struct {
 	keeper *Keeper
 
-	// evmTxCtx is the persistent context used for official `StateDB.Commit` calls.
+	// evmTxCtx is the current context for the EVM transaction. It manages
+	// MultiVM state and is safe to modify because it only writes changes to  the
+	// root context (the one that created the [SDB]) when [SDB.Commit] is called.
 	evmTxCtx sdk.Context
-	// cacheCtx: An sdk.Context produced from the [StateDB.ctx] with the
-	// multi-store cached and a new event manager. The cached context
-	// (`cacheCtx`) is written to the persistent context (`ctx`) when
-	// `writeCacheCtx` is called.
 
 	// TODO: UD-DEBUG: Docs needed.
 	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
+	// Optimizes performance by minimizing direct access to the underlying
+	// storage for uncommitted mutations produced by the [SDB].
 	localState *LocalState
 	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
 	savedStates []*LocalState
@@ -784,6 +784,9 @@ func NewLocalState() *LocalState {
 	}
 }
 
+// SnapshotAccChange tracks changes in an account. Changes include:
+// - an account marked for deletion (suicided).
+// - an account created during the current EVM tx.
 type SnapshotAccChange byte
 
 var (

@@ -9,13 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthAnteIncrementNonce() {
+func (s *Suite) TestEthAnteIncrementNonce() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx

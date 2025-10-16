@@ -8,9 +8,9 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -30,9 +30,9 @@ func NewAnteHandler(
 		var anteHandler sdk.AnteHandler
 		if !evm.IsEthTx(tx) {
 			anteHandler = NewAnteHandlerNonEVM(options)
-		} else {
-			anteHandler = evmante.NewAnteHandlerEVM(options)
+			return anteHandler(ctx, tx, sim)
 		}
+		anteHandler = evmante.NewAnteHandlerEvm(options)
 		return anteHandler(ctx, tx, sim)
 	}
 }

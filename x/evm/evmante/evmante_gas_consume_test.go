@@ -7,14 +7,14 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *TestSuite) TestEthAnteBlockGasMeter() {
+func (s *Suite) TestEthAnteBlockGasMeter() {
 	type TestCase struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx
@@ -169,7 +169,7 @@ func (s *TestSuite) TestEthAnteBlockGasMeter() {
 	}
 }
 
-func (s *TestSuite) TestEthAnteGasWanted() {
+func (s *Suite) TestEthAnteGasWanted() {
 	testCases := []struct {
 		name          string
 		beforeTxSetup func(deps *evmtest.TestDeps, sdb *evmstate.SDB) *evm.MsgEthereumTx

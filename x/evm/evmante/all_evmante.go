@@ -1,8 +1,13 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evmante
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"log"
+	"path"
+	"reflect"
+	"runtime"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -11,37 +16,45 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-// NewAnteHandlerEVM creates the default ante handler for Ethereum transactions
-func NewAnteHandlerEVM(
+// NewAnteHandlerEvm creates the [sdk.AnteHandler] for Ethereum transactions. An
+// Ethereum transaction on Nibiru is an instance of [*evm.MsgEthereumTx],
+// sometimes given the alias [evm.Tx].
+func NewAnteHandlerEvm(
 	options ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
+	steps := []AnteStep{
+		AnteStepSetupCtx, // outermost AnteDecorator. AnteStepSetupCtx must be called first
+		EthSigVerification,
+		AnteStepValidateBasic,
+		AnteStepMempoolGasPrice,
+		AnteStepBlockGasMeter,
+		AnteStepVerifyEthAcc,
+		AnteStepCanTransfer,
+		AnteStepGasWanted,
+		AnteStepDeductGas,
+		AnteStepIncrementNonce,
+		AnteStepEmitPendingEvent,
+		AnteStepFiniteGasLimitForABCIDeliverTx,
+	}
+
+	stepNames := make([]string, len(steps))
+	for idx, step := range steps {
+		stepNames[idx] = shortFuncName(step)
+	}
+
 	return sdk.ChainAnteDecorators(
-		// NewEthSetUpContextDecorator(options.EvmKeeper),
-		// NewEthValidateBasicDecorator(options.EvmKeeper),
-		NewEthStateHandlers{
+		AnteHandlerEvm{
 			EVMKeeper: options.EvmKeeper,
 			Opts:      options,
-			Body: []EvmAnteStep{
-				AnteStepSetupCtx, // outermost AnteDecorator. AnteStepSetupCtx must be called first
-				EthSigVerification,
-				AnteStepValidateBasic,
-				AnteStepMempoolGasPrice,
-				AnteStepBlockGasMeter,
-				AnteStepVerifyEthAcc,
-				AnteStepCanTransfer,
-				AnteStepGasWanted,
-				AnteStepDeductGas,
-				AnteStepIncrementNonce,
-				AnteStepEmitPendingEvent,
-				AnteStepFiniteGasLimitForABCIDeliverTx,
-			},
+			Steps:     steps,
+			StepNames: stepNames,
 		},
 	)
 }
 
 // AnteHandle creates an EVM from the message and calls the BlockContext
 // CanTransfer function to see if the address can execute the transaction.
-func (handlerGroup NewEthStateHandlers) AnteHandle(
+func (handlerGroup AnteHandlerEvm) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
@@ -62,7 +75,8 @@ func (handlerGroup NewEthStateHandlers) AnteHandle(
 			WithIsEvmTx(true).
 			WithEvmTxHash(sdb.TxCfg().TxHash),
 	)
-	for idx, evmHandler := range handlerGroup.Body {
+
+	for idx, evmHandler := range handlerGroup.Steps {
 		err = evmHandler(
 			sdb,
 			handlerGroup.EVMKeeper,
@@ -71,10 +85,14 @@ func (handlerGroup NewEthStateHandlers) AnteHandle(
 			handlerGroup.Opts,
 		)
 		if err != nil {
-			log.Printf("EthState AnteHandle Body elem %d failed: %s", idx, err)
+			log.Printf("AnteHandlerEvm step %v failed: %s",
+				handlerGroup.StepNames[idx], err,
+			)
 			return ctx, err
 		}
-		log.Printf("EthState AnteHandle Body elem %d passed", idx)
+		log.Printf("AnteHandlerEvm step %v passed",
+			handlerGroup.StepNames[idx],
+		)
 	}
 
 	log.Printf(
@@ -86,17 +104,17 @@ func (handlerGroup NewEthStateHandlers) AnteHandle(
 	return sdb.Ctx(), nil
 }
 
-// NewEthStateHandlers combines multiple ante handler preflight checks as a single
-// EVM state transition. Each of the [EvmAnteStep] functions are performed
+// AnteHandlerEvm combines multiple ante handler preflight checks as a single
+// EVM state transition. Each of the [AnteStep] functions are performed
 // sequentially using the same EVM state db pointer and context(s).
-type NewEthStateHandlers struct {
+type AnteHandlerEvm struct {
 	*EVMKeeper
+	Steps     []AnteStep
+	StepNames []string
 	Opts      AnteOptionsEVM
-	Body      []EvmAnteStep
-	Preflight []sdk.AnteHandler
 }
 
-type EvmAnteStep = func(
+type AnteStep = func(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
 	msgEthTx *evm.MsgEthereumTx,
@@ -104,7 +122,7 @@ type EvmAnteStep = func(
 	opts AnteOptionsEVM,
 ) (err error)
 
-var _ EvmAnteStep = AnteStepTemplate
+var _ AnteStep = AnteStepTemplate
 
 func AnteStepTemplate(
 	sdb *evmstate.SDB,
@@ -117,3 +135,13 @@ func AnteStepTemplate(
 }
 
 type EVMKeeper = evmstate.Keeper
+
+// shortFuncName parses the function name for the given [AnteStep]. This is
+// used for semantically rich logging in the EVM ante handler.
+func shortFuncName(fn AnteStep) string {
+	pc := reflect.ValueOf(fn).Pointer()
+	full := runtime.FuncForPC(pc).Name() // e.g. "github.com/./evmante.AnteStepSetupCtx"
+	// strip path prefix; keep last package + symbol
+	last := path.Base(strings.ReplaceAll(full, "\\", "/"))
+	return last // e.g. "evmante.AnteStepSetupCtx"
+}

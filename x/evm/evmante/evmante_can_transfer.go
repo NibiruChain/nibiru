@@ -1,7 +1,9 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evmante
 
+// Copyright (c) 2023-2024 Nibi, Inc.
+
 import (
+	"fmt"
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -12,14 +14,13 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepVerifyEthAcc
+var _ AnteStep = AnteStepVerifyEthAcc
 
 // AnteStepVerifyEthAcc validates checks that the sender balance is greater than the total
 // transaction cost. The account will be set to store if it doesn't exist, i.e.
 // cannot be found on store.
 //
 // This AnteHandler decorator will fail if:
-// - any of the msgs is not a MsgEthereumTx
 // - from address is empty
 // - account balance is lower than the transaction cost
 func AnteStepVerifyEthAcc(
@@ -40,8 +41,26 @@ func AnteStepVerifyEthAcc(
 		return sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
 	}
 
-	// TODO: UD-DEBUG: Still need to set account in the store if it doesn't exist?
 	fromAddr := msgEthTx.FromAddr()
+
+	// Create account if it doesn't exist but has a balance.
+	//
+	// This is necessary because EVM state transitions (via AddBalance) can create
+	// balances in the bank store without creating corresponding accounts in the
+	// account store. This creates an inconsistent state where a sender can have
+	// a balance (visible to GetBalance) but no account (visible to GetAccount).
+	//
+	// [AnteStepIncrementNonce] expects the account to exist, so we must create
+	// it here to maintain logical consistency: if someone has a balance, they
+	// should have an account.
+	if acc := k.GetAccount(sdb.Ctx(), fromAddr); acc == nil {
+		// Create account if it doesn't exist but has a balance
+		emptyAcc := evmstate.NewEmptyAccount()
+		if err := k.SetAccount(sdb.Ctx(), fromAddr, *emptyAcc); err != nil {
+			return fmt.Errorf("failed to create account: %w", err)
+		}
+	}
+
 	if err := evmstate.CheckSenderBalance(
 		sdb.GetBalance(fromAddr), txData,
 	); err != nil {
@@ -51,7 +70,7 @@ func AnteStepVerifyEthAcc(
 	return nil
 }
 
-var _ EvmAnteStep = AnteStepCanTransfer
+var _ AnteStep = AnteStepCanTransfer
 
 func AnteStepCanTransfer(
 	sdb *evmstate.SDB,

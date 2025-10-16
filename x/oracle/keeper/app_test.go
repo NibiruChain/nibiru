@@ -18,9 +18,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
-var _ suite.TearDownAllSuite = (*TestSuite)(nil)
-var _ suite.SetupTestSuite = (*TestSuite)(nil)
-var _ suite.SetupAllSuite = (*TestSuite)(nil)
+var (
+	_ suite.TearDownAllSuite = (*TestSuite)(nil)
+	_ suite.SetupTestSuite   = (*TestSuite)(nil)
+	_ suite.SetupAllSuite    = (*TestSuite)(nil)
+)
 
 type TestSuite struct {
 	suite.Suite

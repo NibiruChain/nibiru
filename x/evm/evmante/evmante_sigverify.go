@@ -12,7 +12,7 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = EthSigVerification
+var _ AnteStep = EthSigVerification
 
 // AnteHandle validates checks that the registered chain id is the same as the
 // one on the message, and that the signer address matches the one defined on the

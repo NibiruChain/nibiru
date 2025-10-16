@@ -11,7 +11,7 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepEmitPendingEvent
+var _ AnteStep = AnteStepEmitPendingEvent
 
 func AnteStepEmitPendingEvent(
 	sdb *evmstate.SDB,

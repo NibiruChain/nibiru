@@ -11,32 +11,32 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-type TestSuite struct {
+type Suite struct {
 	testutil.LogRoutingSuite
 
 	encCfg app.EncodingConfig
 }
 
-func TestAppTestSuite(t *testing.T) {
-	suite.Run(t, new(TestSuite))
+func TestEvmante(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *TestSuite) SetupSuite() {
+func (s *Suite) SetupSuite() {
 	s.LogRoutingSuite.SetupSuite()
 	s.encCfg = app.MakeEncodingConfig()
 }
 
 type AnteTC struct {
 	Name             string
-	PriorSteps       []evmante.EvmAnteStep
-	EvmAnteStep      evmante.EvmAnteStep
+	PriorSteps       []evmante.AnteStep
+	EvmAnteStep      evmante.AnteStep
 	TxSetup          func(deps *evmtest.TestDeps, sdb *evmstate.SDB) evm.Tx
 	MaxGasWanted     uint64
 	WantErr          string
@@ -113,7 +113,7 @@ func (opts AnteOptionsForTests) GetMaxTxGasWanted() uint64 {
 	return opts.MaxTxGasWanted
 }
 
-func (s *TestSuite) TestGenesis() {
+func (s *Suite) TestGenesis() {
 	getDefaultStakingGenesis := func() *stakingtypes.GenesisState {
 		genStaking := new(stakingtypes.GenesisState)
 		s.encCfg.Codec.MustUnmarshalJSON(

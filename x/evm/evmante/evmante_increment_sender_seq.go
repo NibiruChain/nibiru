@@ -12,7 +12,7 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepIncrementNonce
+var _ AnteStep = AnteStepIncrementNonce
 
 // AnteStepIncrementNonce increments the sequence (nonce) of the sender account
 // and validates that the transaction nonce matches the expected account nonce.

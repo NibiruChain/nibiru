@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-var _ EvmAnteStep = AnteStepSetupCtx
+var _ AnteStep = AnteStepSetupCtx
 
 // Set an empty gas config so that gas payment and refund is consistent with
 // Ethereum.
@@ -32,7 +32,7 @@ func AnteStepSetupCtx(
 	return nil
 }
 
-var _ EvmAnteStep = AnteStepMempoolGasPrice
+var _ AnteStep = AnteStepMempoolGasPrice
 
 func AnteStepMempoolGasPrice(
 	sdb *evmstate.SDB,

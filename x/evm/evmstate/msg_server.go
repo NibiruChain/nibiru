@@ -362,12 +362,13 @@ func (k *Keeper) ApplyEvmMsg(
 		return nil, sdkioerrors.Wrap(err, "ApplyEvmMsg: intrinsic gas overflowed")
 	}
 
-	// Check if the provided gas in the message is enough to cover the intrinsic
-	// gas, the base gas cost before execution occurs (gethparams.TxGas, contract
-	// creation, and cost per byte of the data payload).
+	// Check if the provided gas in the message is enough to cover the
+	// intrinsic gas, the base gas cost before execution occurs
+	// (gethparams.TxGas, contract creation, and cost per byte of the data
+	// payload).
 	//
-	// Should check again even if it is checked on Ante Handler, because eth_call
-	// don't go through Ante Handler.
+	// Should check again even if it is checked on Ante Handler, because
+	// "eth_call" does not go through Ante Handler.
 	if gasRemaining < intrinsicGasCost {
 		// eth_estimateGas will check for this exact error
 		return nil, fmt.Errorf(
