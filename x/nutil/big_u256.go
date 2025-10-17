@@ -8,12 +8,10 @@ import (
 	"github.com/holiman/uint256"
 )
 
-var (
-	// WeiPerUnibi is a big.Int for 10^{12}. Each "unibi" (micronibi) is 10^{12}
-	// wei because 1 NIBI = 10^{18} wei.
-	WeiPerUnibi = sdkmath.NewIntFromBigInt(
-		new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
-	)
+// WeiPerUnibi is a big.Int for 10^{12}. Each "unibi" (micronibi) is 10^{12}
+// wei because 1 NIBI = 10^{18} wei.
+var WeiPerUnibi = sdkmath.NewIntFromBigInt(
+	new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
 )
 
 // WeiPerUnibiU256 is a uint256.Int for 10^{12}. Each "unibi" (micronibi) is
@@ -22,12 +20,30 @@ func WeiPerUnibiU256() *uint256.Int {
 	return uint256.MustFromBig(WeiPerUnibi.BigInt())
 }
 
-// TODO: UD-DEBUG: test
+// ParseNibiBalance splits a NIBI amount in wei into unibi (bank units) and wei
+// remainder. Used by keeper to normalize the dual-balance model at the 10^12
+// boundary.
+//   - This is the inverse of GetWeiBalance aggregation: (unibi × 10^12) + wei.
+//   - Example: ParseNibiBalance(2×10^12 + 3) → (2, 3)
+//
+// ### Returns:
+//   - amtUnibi: bank balance in unibi (micro-NIBI; 10^{-6} NIBI)
+//   - amtWei: remainder in wei, where 0 ≤ amtWei < 10^{12}
 func ParseNibiBalance(wei sdkmath.Int) (amtUnibi, amtWei sdkmath.Int) {
 	return wei.Quo(WeiPerUnibi), wei.Mod(WeiPerUnibi)
 }
 
-// TODO: UD-DEBUG: test
+// ParseNibiBalanceFromParts normalizes (unibi, wei) into canonical form.
+// Computes total wei as (unibi × 10^{12}) + wei, then splits into normalized parts.
+//
+// Returns:
+//   - amtUnibi: normalized unibi (micro-NIBI; 10^-6 NIBI)
+//   - amtWei: normalized remainder, where 0 ≤ amtWei < 10^{12}
+//
+// Used by keeper to carry/borrow across the 10^{12} boundary, keeping bank and
+// wei-store synchronized.
+//
+// Example: ParseNibiBalanceFromParts(5, 2×10^{12} + 3) → (7, 3)
 func ParseNibiBalanceFromParts(unibi, wei sdkmath.Int) (amtUnibi, amtWei sdkmath.Int) {
 	unibiPartInWei := unibi.Mul(WeiPerUnibi)
 	totalWei := unibiPartInWei.Add(wei)

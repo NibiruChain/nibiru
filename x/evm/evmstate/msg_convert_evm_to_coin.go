@@ -274,7 +274,7 @@ func (k Keeper) convertEvmToCoinForWNIBI(
 	}
 
 	// TODO: UD-DEBUG: feat: Update WNIBI functions to work with 18 decimals.
-	withdrawnMicronibi := sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromBigInt(
+	withdrawnMicronibi := sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewIntFromBigInt(
 		evm.WeiToNative(withdrawWei.ToBig()),
 	))
 	if err := k.Bank.SendCoins(sdb.Ctx(), sender.Bech32, toAddrBech32,

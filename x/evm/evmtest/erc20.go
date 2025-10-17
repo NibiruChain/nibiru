@@ -145,7 +145,7 @@ func (bals BalanceAssertNIBI) Assert(t *testing.T, deps TestDeps) {
 	}
 
 	AssertBankBalanceEqualWithDescription(
-		t, deps, appconst.BondDenom, bals.Account, bals.BalanceBank,
+		t, deps, appconst.DENOM_UNIBI, bals.Account, bals.BalanceBank,
 		"(bank)"+bals.Description,
 	)
 	if bals.BalanceERC20 != nil {

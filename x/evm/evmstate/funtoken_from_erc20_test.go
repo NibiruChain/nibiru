@@ -582,7 +582,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 		deps.App.BankKeeper,
 		deps.Ctx(),
 		auth.FeeCollectorName,
-		sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 5_000_000)),
+		sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 5_000_000)),
 	)
 	s.NoError(err)
 

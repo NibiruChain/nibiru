@@ -631,7 +631,7 @@ func (k *Keeper) ConvertCoinToEvm(
 		}
 	}()
 
-	if msg.BankCoin.Denom == appconst.BondDenom {
+	if msg.BankCoin.Denom == appconst.DENOM_UNIBI {
 		resp, err = k.convertCoinToEvmForWNIBI(
 			sdb, msg, senderBech32,
 		)

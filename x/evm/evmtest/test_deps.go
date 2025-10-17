@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -211,4 +212,14 @@ func (deps *TestDeps) DeployWNIBI(s *suite.Suite) {
 			ContractAddr: wnibiAddr.Hex(),
 		},
 	)
+}
+
+// Ensures that the Bech32 address prefix is configured to "nibi" instead of a
+// another one like "cosmos", which will panic on Nibiru.
+func EnsureNibiruPrefix() {
+	csdkConfig := sdk.GetConfig()
+	nibiruPrefix := appconst.AccountAddressPrefix
+	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
+		app.SetPrefixes(nibiruPrefix)
+	}
 }

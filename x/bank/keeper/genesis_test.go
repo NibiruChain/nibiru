@@ -1,10 +1,13 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/holiman/uint256"
 )
 
 func (suite *KeeperTestSuite) TestExportGenesis() {
@@ -37,6 +40,13 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 
 	suite.Require().NoError(suite.bankKeeper.SetParams(ctx, types.DefaultParams()))
 
+	// Seed a couple of wei-store balances then export
+	a0, _ := sdk.AccAddressFromBech32("nibi16xk72qeyy59px3cu63c2frl6vw5h2q6rg635z0")
+	a1, _ := sdk.AccAddressFromBech32("nibi1zv4n28t9f9tadlha9umlfdppnh95qd65uge4gt")
+	// Use AddWei to set wei-store small values without crossing threshold
+	suite.bankKeeper.AddWei(ctx, a0, uint256.NewInt(7))
+	suite.bankKeeper.AddWei(ctx, a1, uint256.NewInt(420))
+
 	exportGenesis := suite.bankKeeper.ExportGenesis(ctx)
 
 	suite.Require().Len(exportGenesis.Params.SendEnabled, 0)
@@ -44,11 +54,20 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 	suite.Require().Equal(expTotalSupply, exportGenesis.Supply)
 	suite.Require().Subset(exportGenesis.Balances, expectedBalances)
 	suite.Require().Equal(expectedMetadata, exportGenesis.DenomMetadata)
+
+	// Assert wei_balances exported and contain our entries
+	// Order should be ascending by address; just verify presence and values
+	found := map[string]string{}
+	for _, wb := range exportGenesis.WeiBalances {
+		found[wb.AddrBech32] = fmt.Sprintf("%d", wb.WeiStoreBal)
+	}
+	suite.Require().Equal("7", found[a0.String()])
+	suite.Require().Equal("420", found[a1.String()])
 }
 
 func (suite *KeeperTestSuite) getTestBalancesAndSupply() ([]types.Balance, sdk.Coins) {
-	addr2, _ := sdk.AccAddressFromBech32("cosmos1f9xjhxm0plzrh9cskf4qee4pc2xwp0n0556gh0")
-	addr1, _ := sdk.AccAddressFromBech32("cosmos1t5u0jfg3ljsjrh2m9e47d4ny2hea7eehxrzdgd")
+	addr2, _ := sdk.AccAddressFromBech32("nibi124hwhl9vjk8g659cy9220qdwaw0asan50xzwyx")
+	addr1, _ := sdk.AccAddressFromBech32("nibi1jxsk9yla447rs98sccjfcng4d3ax6ptnxhjmpu")
 	addr1Balance := sdk.Coins{sdk.NewInt64Coin("testcoin3", 10)}
 	addr2Balance := sdk.Coins{sdk.NewInt64Coin("testcoin1", 32), sdk.NewInt64Coin("testcoin2", 34)}
 
@@ -65,21 +84,40 @@ func (suite *KeeperTestSuite) TestInitGenesis() {
 	m := types.Metadata{Description: sdk.DefaultBondDenom, Base: sdk.DefaultBondDenom, Display: sdk.DefaultBondDenom}
 	g := types.DefaultGenesisState()
 	g.DenomMetadata = []types.Metadata{m}
+	// Add wei_balances entries (< 1e12)
+	g.WeiBalances = []types.WeiBalance{
+		{AddrBech32: "nibi16xk72qeyy59px3cu63c2frl6vw5h2q6rg635z0", WeiStoreBal: 7},
+		{AddrBech32: "nibi1zv4n28t9f9tadlha9umlfdppnh95qd65uge4gt", WeiStoreBal: 420},
+	}
+
 	bk := suite.bankKeeper
 	bk.InitGenesis(suite.ctx, g)
 
 	m2, found := bk.GetDenomMetaData(suite.ctx, m.Base)
 	suite.Require().True(found)
 	suite.Require().Equal(m, m2)
+
+	// Validate wei store balances initialized
+	addr0, _ := sdk.AccAddressFromBech32(g.WeiBalances[0].AddrBech32)
+	addr1, _ := sdk.AccAddressFromBech32(g.WeiBalances[1].AddrBech32)
+	suite.Require().Equal("7", bk.GetWeiBalance(suite.ctx, addr0).String())
+	suite.Require().Equal("420", bk.GetWeiBalance(suite.ctx, addr1).String())
 }
 
 func (suite *KeeperTestSuite) TestTotalSupply() {
 	// Prepare some test data.
 	defaultGenesis := types.DefaultGenesisState()
+
+	addrs := []string{
+		"nibi16xk72qeyy59px3cu63c2frl6vw5h2q6rg635z0",
+		"nibi1zv4n28t9f9tadlha9umlfdppnh95qd65uge4gt",
+		"nibi1jc42gyjugezx7s2drl6vgrgwd34skcgelgdnr2",
+	}
+
 	balances := []types.Balance{
-		{Coins: sdk.NewCoins(sdk.NewCoin("foocoin", sdk.NewInt(1))), Address: "cosmos1f9xjhxm0plzrh9cskf4qee4pc2xwp0n0556gh0"},
-		{Coins: sdk.NewCoins(sdk.NewCoin("barcoin", sdk.NewInt(1))), Address: "cosmos1t5u0jfg3ljsjrh2m9e47d4ny2hea7eehxrzdgd"},
-		{Coins: sdk.NewCoins(sdk.NewCoin("foocoin", sdk.NewInt(10)), sdk.NewCoin("barcoin", sdk.NewInt(20))), Address: "cosmos1m3h30wlvsf8llruxtpukdvsy0km2kum8g38c8q"},
+		{Coins: sdk.NewCoins(sdk.NewCoin("foocoin", sdk.NewInt(1))), Address: addrs[0]},
+		{Coins: sdk.NewCoins(sdk.NewCoin("barcoin", sdk.NewInt(1))), Address: addrs[1]},
+		{Coins: sdk.NewCoins(sdk.NewCoin("foocoin", sdk.NewInt(10)), sdk.NewCoin("barcoin", sdk.NewInt(20))), Address: addrs[2]},
 	}
 	totalSupply := sdk.NewCoins(sdk.NewCoin("foocoin", sdk.NewInt(11)), sdk.NewCoin("barcoin", sdk.NewInt(21)))
 

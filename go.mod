@@ -264,7 +264,7 @@ replace (
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
 
 	// Production replace for Cosmos-SDK. Uncomment to use.
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.5
+	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 	// Local replace for Cosmos-SDK. Uncomment to use.
 	// github.com/cosmos/cosmos-sdk => ../nibi-cosm-sdk
 

@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 // RegisterInvariants registers the bank module invariants

@@ -211,7 +211,7 @@ type NibiruApp struct {
 
 func init() {
 	SetPrefixes(appconst.AccountAddressPrefix)
-	sdk.DefaultBondDenom = appconst.BondDenom
+	sdk.DefaultBondDenom = appconst.DENOM_UNIBI
 
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {

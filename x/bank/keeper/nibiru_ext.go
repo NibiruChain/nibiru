@@ -18,9 +18,51 @@ const StoreKeyTransient = "transient_" + bank.ModuleName
 
 var _ NibiruExtKeeper = (*BaseSendKeeper)(nil)
 
+// NibiruExtKeeper exposes Nibiru-specific balance operations and accounting.
+//
+// Dual-balance model
+//   - Bank balance (micro-denom): The canonical x/bank balance is stored in the
+//     chain's micro-denomination "unibi" (micro-NIBI; 10^-6 NIBI).
+//   - Sub-unit store (wei remainder): A separate KV store tracks the remainder
+//     of each account's NIBI at higher precision ("wei"), where
+//     WeiPerUnibi = 10^12. Together they represent a unified balance with
+//     18 decimals (10^6 * 10^12 = 10^18).
+//
+// Aggregation
+//   - GetWeiBalance(ctx, addr) returns the aggregate balance in wei:
+//     agg_wei = (unibi * 10^12) + wei_store
+//     The return type is uint256 to match EVM semantics.
+//
+// Normalization (carry/borrow at the 10^12 boundary)
+//   - When adding or subtracting wei, we normalize at the 10^12 boundary:
+//     if wei_store >= 10^12 → carry 1 unibi to x/bank and keep remainder
+//     if wei_store < 0      → borrow 1+ unibi from x/bank to make wei_store ≥ 0
+//     Callers never manipulate x/bank units directly; AddWei/SubWei perform the
+//     carry/borrow and keep both stores consistent.
+//
+// Supply accounting
+//   - WeiBlockDelta(ctx) tracks the net wei added via AddWei/SubWei within the
+//     current block (transient). The EVM module uses this value each block to
+//     maintain supply invariants (e.g., reconcile protocol mints/burns/fees).
+//   - SumWeiStoreBals(ctx) iterates the entire wei remainder store and sums it,
+//     intended only for the crisis invariant that validates total supply.
+//
+// Events
+//   - AddWei/SubWei emit bank.EventWeiChange with a reason code.
+//   - x/bank coin transfers that affect "unibi" also emit a WeiChange event
+//     so downstream consumers can detect changes to the aggregated wei balance.
 type NibiruExtKeeper interface {
+	// AddWei increases an account’s balance by amtWei (in wei), performing
+	// normalization at the 10^12 boundary as needed. No-op for nil/zero input.
 	AddWei(ctx sdk.Context, addr sdk.AccAddress, amtWei *uint256.Int)
+
+	// GetWeiBalance returns the full account balance in wei:
+	// (bank_unibi * 10^12) + wei_store.
 	GetWeiBalance(ctx sdk.Context, addr sdk.AccAddress) (bal *uint256.Int)
+
+	// SubWei decreases an account’s balance by amtWei (in wei). If the wei
+	// remainder store is insufficient, it borrows from the x/bank “unibi”
+	// balance. Returns an error if the aggregate wei balance is insufficient.
 	SubWei(ctx sdk.Context, addr sdk.AccAddress, amtWei *uint256.Int) error
 
 	// WeiBlockDelta is the net sum of all calls of [AddWei] and [SubWei] in
@@ -29,53 +71,39 @@ type NibiruExtKeeper interface {
 	// invariant using [WeiBlockDelta] every block.
 	WeiBlockDelta(ctx sdk.Context) sdkmath.Int
 
-	// Iterates across the entire wei store, summing all of the balances to
-	// evaluate the [TotalSupply] [sdk.Invariant] for the crisis module.
-	// This function is can be heavy to run and should not be used outside of
-	// that invariant check.
+	// SumWeiStoreBals iterates across the entire wei store, summing all of the
+	// balances to evaluate the [TotalSupply] [sdk.Invariant] for the crisis
+	// module. This function is can be heavy to run and should not be used
+	// outside of that invariant check.
 	SumWeiStoreBals(ctx sdk.Context) sdkmath.Int
 }
 
+// Constants and namespaces for the dual-balance model.
 const (
-	DENOM_UNIBI = appconst.BondDenom
+	DENOM_UNIBI = appconst.DENOM_UNIBI
 
 	// NAMESPACE_BALANCE_WEI is the store prefix for the wei balance store.
-	NAMESPACE_BALANCE_WEI         collections.Namespace = 15
-	NAMESPACE_WEI_BLOCK_DELTA     collections.Namespace = 16
+	// For each address:
+	//   agg_wei(addr) = bank_balance_unibi(addr) * 10^12 + wei_store(addr)
+	// The wei remainder is always kept in [0, 10^12) after normalization.
+	NAMESPACE_BALANCE_WEI collections.Namespace = 15
+
+	// NAMESPACE_WEI_BLOCK_DELTA is the transient prefix tracking the net wei
+	// delta (AddWei − SubWei) within the current block. Used by the EVM module
+	// to reconcile protocol-level supply changes during EndBlock.
+	NAMESPACE_WEI_BLOCK_DELTA collections.Namespace = 16
+
+	// NAMESPACE_WEI_COMMITTED_DELTA holds historical committed deltas when
+	// persisted. It should not be used in hot paths and exists for debugging
+	// or invariant verification workflows.
 	NAMESPACE_WEI_COMMITTED_DELTA collections.Namespace = 17
 )
 
-func (k BaseSendKeeper) getWeiStoreBalance(
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-) (storeBal *uint256.Int) {
-	balInt := k.weiStore.GetOr(ctx, addr, sdkmath.ZeroInt())
-	return uint256.MustFromBig(balInt.BigInt())
-}
-
-// TODO: UD-DEBUG: Test
-func (k BaseSendKeeper) setWeiStoreBalance(
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-	newStoreBal *uint256.Int,
-) {
-	weiStoreBalPre := k.getWeiStoreBalance(ctx, addr)
-	if weiStoreBalPre.Eq(newStoreBal) || newStoreBal == nil {
-		return // Early return with safety from `nil`. The store can only take
-		// values that can be marshaled to and from bytes safely.
-	}
-
-	if newStoreBal.Eq(uint256.NewInt(0)) {
-		// Error only occurs if we "delete" a key that was not present, which is
-		// not an error here.
-		_ = k.weiStore.Delete(ctx, addr)
-		return
-	}
-
-	k.weiStore.Insert(ctx, addr, sdkmath.NewIntFromBigInt(newStoreBal.ToBig()))
-}
-
-// GetWeiBalance -> aggregate both
+// GetWeiBalance returns the full account balance in units wei:
+// (bank_unibi * 10^12) + wei_store.
+// It is an official reflection of the account's total balance of NIBI.
+// This "wei balance" is an aggregation of the "unibi" bank coins
+// and wei store of NIBI, which is bounded within the range [0, 10^{12}).
 func (k BaseSendKeeper) GetWeiBalance(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
@@ -99,7 +127,8 @@ func (k BaseSendKeeper) GetWeiBalance(
 	)
 }
 
-// TODO: UD-DEBUG: test
+// AddWei increases an account’s balance by amtWei (in wei), performing
+// normalization at the 10^12 boundary as needed. No-op for nil/zero input.
 func (k BaseSendKeeper) AddWei(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
@@ -134,9 +163,9 @@ func (k BaseSendKeeper) AddWei(
 	)
 }
 
-// TODO: gasless Wei balance changes?
-// TODO: Test event emission for balance changes?
-
+// SubWei decreases an account’s balance by amtWei (in wei). If the wei
+// remainder store is insufficient, it borrows from the x/bank “unibi”
+// balance. Returns an error if the aggregate wei balance is insufficient.
 func (k BaseSendKeeper) SubWei(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
@@ -159,7 +188,7 @@ func (k BaseSendKeeper) SubWei(
 		if balPre.Cmp(amtWei) < 0 {
 			return fmt.Errorf(
 				"SubWeiError: insufficient funds { balance: %s, amtWei: %s }",
-				amtWei, balPre,
+				balPre, amtWei,
 			)
 		}
 
@@ -186,7 +215,6 @@ func (k BaseSendKeeper) SubWei(
 
 // TODO: UD-DEBUG: Test marshaling and unmarshaling of zero coins and positive
 // coins with "unibi" as a sanity check.
-// TODO: UD-DEBUG: test setNibiBalanceFromWei -> AddWei tests, SubWei tests
 func (k BaseSendKeeper) setNibiBalanceFromWei(
 	ctx sdk.Context, addr sdk.AccAddress, wei *uint256.Int,
 ) {
@@ -198,7 +226,8 @@ func (k BaseSendKeeper) setNibiBalanceFromWei(
 	}
 
 	amtUnibi, amtWei := nutil.ParseNibiBalance(sdkmath.NewIntFromBigInt(wei.ToBig()))
-	// The bank coin `sdk.NewCoin(DENOM_UNIBI, amtUnibi)`  is guaranteed valid since it's amount is a u256 and denom is "unibi".
+	// The bank coin `sdk.NewCoin(DENOM_UNIBI, amtUnibi)`  is guaranteed to be
+	// valid since it's amount is a u256 and denom is "unibi".
 	_ = k.setBalance(ctx, addr, sdk.NewCoin(DENOM_UNIBI, amtUnibi))
 	k.setWeiStoreBalance(ctx, addr, uint256.MustFromBig(amtWei.BigInt()))
 }
@@ -231,6 +260,36 @@ func eventsForSendCoins(
 		sdk.NewAttribute(bank.AttributeKeySender, fromAddrStr),
 	))
 	return events
+}
+
+func (k BaseSendKeeper) getWeiStoreBalance(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+) (storeBal *uint256.Int) {
+	balInt := k.weiStore.GetOr(ctx, addr, sdkmath.ZeroInt())
+	return uint256.MustFromBig(balInt.BigInt())
+}
+
+func (k BaseSendKeeper) setWeiStoreBalance(
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	newStoreBal *uint256.Int,
+) {
+	weiStoreBalPre := k.getWeiStoreBalance(ctx, addr)
+	if weiStoreBalPre.Eq(newStoreBal) || newStoreBal == nil {
+		// Early return with safety from `nil`. The store can only take
+		// values that can be marshaled to and from bytes safely.
+		return
+	}
+
+	if newStoreBal.Eq(uint256.NewInt(0)) {
+		// Error only occurs if we "delete" a key that was not present, which is
+		// not an error here.
+		_ = k.weiStore.Delete(ctx, addr)
+		return
+	}
+
+	k.weiStore.Insert(ctx, addr, sdkmath.NewIntFromBigInt(newStoreBal.ToBig()))
 }
 
 // WeiBlockDelta is the net sum of all calls of [AddWei] and [SubWei] in the

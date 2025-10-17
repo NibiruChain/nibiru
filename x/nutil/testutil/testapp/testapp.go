@@ -188,7 +188,7 @@ func FundFeeCollector(
 		bk,
 		ctx,
 		auth.FeeCollectorName,
-		sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, amount)),
+		sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, amount)),
 	)
 }
 
@@ -216,7 +216,7 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 	codec.MustUnmarshalJSON(genesisState[banktypes.ModuleName], &bankGenesis)
 	bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.BondDenom, sdkmath.NewIntFromUint64(1e14))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewIntFromUint64(1e14))),
 	})
 
 	genesisState, err = genesisStateWithValSet(codec, genesisState, valSet, []auth.GenesisAccount{acc}, bankGenesis.Balances...)
@@ -274,13 +274,13 @@ func genesisStateWithValSet(
 
 	for range delegations {
 		// add delegated tokens to total supply
-		totalSupply = totalSupply.Add(sdk.NewCoin(appconst.BondDenom, sdk.DefaultPowerReduction))
+		totalSupply = totalSupply.Add(sdk.NewCoin(appconst.DENOM_UNIBI, sdk.DefaultPowerReduction))
 	}
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
 		Address: auth.NewModuleAddress(stakingtypes.BondedPoolName).String(),
-		Coins:   sdk.Coins{sdk.NewCoin(appconst.BondDenom, sdk.DefaultPowerReduction)},
+		Coins:   sdk.Coins{sdk.NewCoin(appconst.DENOM_UNIBI, sdk.DefaultPowerReduction)},
 	})
 
 	// update total supply

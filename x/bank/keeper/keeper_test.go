@@ -27,6 +27,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/bank/exported"
 	"github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	banktestutil "github.com/NibiruChain/nibiru/v2/x/bank/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 const (
@@ -79,6 +80,15 @@ type KeeperTestSuite struct {
 	msgServer   banktypes.MsgServer
 
 	encCfg moduletestutil.TestEncodingConfig
+}
+
+var (
+	_ suite.SetupTestSuite = (*KeeperTestSuite)(nil)
+	_ suite.SetupAllSuite  = (*KeeperTestSuite)(nil)
+)
+
+func (suite *KeeperTestSuite) SetupSuite() {
+	evmtest.EnsureNibiruPrefix()
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -211,7 +221,7 @@ func (suite *KeeperTestSuite) TestGetAuthority() {
 	}
 
 	tests := map[string]string{
-		"some random account":    "cosmos139f7kncmglres2nf3h4hc4tade85ekfr8sulz5",
+		"some random account":    "nibi18n9hmkprnw8amh09zafgt2pe0xnd7hvp3mdp54",
 		"gov module account":     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		"another module account": authtypes.NewModuleAddress(minttypes.ModuleName).String(),
 	}
