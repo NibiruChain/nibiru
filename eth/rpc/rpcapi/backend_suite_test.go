@@ -44,7 +44,7 @@ var (
 )
 
 type BackendSuite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 	network             *testnetwork.Network
 	node                *testnetwork.Validator
 	fundedAccPrivateKey *ecdsa.PrivateKey
@@ -63,6 +63,7 @@ func TestBackendSuite(t *testing.T) {
 
 func (s *BackendSuite) SetupSuite() {
 	s.T().Log("------------- SetupSuite: BEGIN ------------- ")
+	s.LogRoutingSuite.SetupSuite()
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
 	cfg := testnetwork.BuildNetworkConfig(genState)
 	network := testnetwork.New(&s.Suite, cfg)

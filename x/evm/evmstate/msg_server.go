@@ -50,18 +50,18 @@ func (k *Keeper) EthereumTx(
 		case err != nil:
 			err = fmt.Errorf("EthereumTx error: %w", err)
 			if evmResp != nil {
-				log.Printf("[EVM] TX TRUE FAILURE { stage=%q, txhash=\"%s\", gasUsed=%d }", stage, txMsg.Hash, evmResp.GasUsed)
+				log.Printf(`[EVM] TX TRUE FAILURE { stage=%q, txhash="%s", gasUsed=%d, err="%s" }`, stage, txMsg.Hash, evmResp.GasUsed, err)
 			} else {
-				log.Printf("[EVM] TX TRUE FAILURE { stage=%q, txhash=\"%s\" }", stage, txMsg.Hash)
+				log.Printf(`[EVM] TX TRUE FAILURE { stage=%q, txhash="%s", err="%s" }`, stage, txMsg.Hash, err)
 			}
 		case evmResp != nil && evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil:
-			log.Printf("[EVM] TX executed but failed { txhash=\"%s\", gasUsed=%d, vmError=\"%s\" }", txMsg.Hash, evmResp.GasUsed, evmResp.VmError)
+			log.Printf(`[EVM] TX executed but failed { txhash="%s", gasUsed=%d, vmError="%v" }`, txMsg.Hash, evmResp.GasUsed, evmResp.VmError)
 		default:
-			log.Printf("[EVM] TX TRUE SUCCESS { txhash=%s, gasUsed=%d }", txMsg.Hash, evmResp.GasUsed)
+			log.Printf(`[EVM] TX TRUE SUCCESS { txhash="%s", gasUsed=%d }`, txMsg.Hash, evmResp.GasUsed)
 		}
 	}()
 
-	log.Printf("[EVM] TX START { txhash=%s }", txMsg.Hash)
+	log.Printf(`[EVM] TX START { txhash="%s" }`, txMsg.Hash)
 	coreTx, _, err := txMsg.Validate()
 	if err != nil {
 		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")

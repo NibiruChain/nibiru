@@ -40,6 +40,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -141,6 +142,7 @@ Example:
 	s.Require().NoError(err)
 */
 func New(testPtr *suite.Suite, cfg Config) (network *Network) {
+	testutil.BeforeIntegrationSuite(testPtr.T())
 	var (
 		// Logger refers to logger for the [TestPtr]
 		logger Logger = testPtr.T()
