@@ -6,8 +6,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
 // MintAndAllocateInflation mints and allocates tokens based on the polynomial

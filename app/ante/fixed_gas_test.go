@@ -15,8 +15,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 

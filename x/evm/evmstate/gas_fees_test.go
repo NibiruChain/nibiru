@@ -13,10 +13,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 // TestVerifyFee asserts that the result of VerifyFee is the effective fee

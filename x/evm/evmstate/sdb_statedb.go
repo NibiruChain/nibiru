@@ -77,7 +77,7 @@ func NewSDB(ctx sdk.Context, k *Keeper, txConfig TxConfig) *SDB {
 	sdb := &SDB{
 		keeper:     k,
 		evmTxCtx:   ctx,
-		localState: NewLocalState(), // TODO: UD-DEBUG: new local state
+		localState: NewLocalState(),
 		savedCtxs:  []sdk.Context{},
 		txConfig:   txConfig,
 	}
@@ -559,8 +559,6 @@ func (s *SDB) SelfDestruct6780(
 }
 
 // Snapshot returns an identifier for the current revision of the state.
-// TODO: UD-DEBUG: complete without tests
-// FIXME: ? Are we caching in the right order.
 func (s *SDB) Snapshot() int {
 	branchedCtx := s.evmTxCtx.WithMultiStore(s.evmTxCtx.MultiStore().CacheMultiStore())
 	s.savedCtxs = append(s.savedCtxs, s.evmTxCtx)
@@ -651,28 +649,6 @@ func (s *SDB) Commit() {
 func (s *SDB) RootCtx() sdk.Context {
 	return s.savedCtxs[0]
 }
-
-// TODO: cleanup - REMOVE
-// CommitCacheCtx is identical to [SDB.Commit], except it:
-// (1) uses the cacheCtx of the [SDB] and
-// (2) does not save mutations of the cacheCtx to the commit context (s.evmTxCtx).
-// The reason for (2) is that the overall EVM transaction (block, not internal)
-// is only finalized when [Commit] is called, not when [CommitCacheCtx] is
-// called.
-
-// TODO: cleanup - REMOVE
-// // SavePrecompileCalledJournalChange adds a snapshot of the commit multistore
-// // ([PrecompileCalled]) to the [SDB] journal at the end of
-// // successful invocation of a precompiled contract. This is necessary to revert
-// // intermediate states where an EVM contract augments the multistore with a
-// // precompile and an inconsistency occurs between the EVM module and other
-// // modules.
-// //
-// // See [PrecompileCalled] for more info.
-// func (s *SDB) SavePrecompileCalledJournalChange(
-// 	journalChange PrecompileCalled,
-// ) error {
-// }
 
 // Witness returns nil.
 //

@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

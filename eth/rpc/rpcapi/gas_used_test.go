@@ -8,11 +8,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 // TestGasUsedTransfers verifies that gas used is correctly calculated for simple transfers.

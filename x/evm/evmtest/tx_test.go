@@ -6,9 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func (s *Suite) TestTransferWei() {

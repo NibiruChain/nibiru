@@ -10,9 +10,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 	"github.com/NibiruChain/nibiru/v2/gosdk/gosdktest"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -52,8 +52,7 @@ func (s *Suite) SetupSuite() {
 
 	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
-	nibiru, err := gosdktest.CreateBlockchain(&s.Suite)
-	s.NoError(err)
+	nibiru := gosdktest.CreateBlockchain(&s.Suite)
 	s.network = nibiru.Network
 	s.cfg = nibiru.Cfg
 	s.val = nibiru.Val

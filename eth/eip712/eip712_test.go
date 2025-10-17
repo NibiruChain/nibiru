@@ -19,8 +19,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth/eip712"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

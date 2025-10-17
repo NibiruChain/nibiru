@@ -11,11 +11,11 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 type Suite struct {

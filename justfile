@@ -178,7 +178,10 @@ test-cover-g2:
   echo "Running Group 2 tests..."
   echo "Paths: app, cmd, gosdk, token-registry"
   # Group 2
-  go test ./app/... ./cmd/... ./gosdk/... ./token-registry/... \
+  go test ./app/... \
+      ./cmd/... \
+      ./gosdk/... \
+      ./token-registry/... \
     -tags=pebbledb -covermode=atomic -race \
     -coverprofile=coverage.group2.out
 
@@ -190,7 +193,7 @@ test-cover-g3:
   echo "Paths: (all x/* except evm)"
   echo "Reproduce of modules with command: ls x/ | grep -v -E 'evm|README.md' "
   go test ./x/bank/...  \
-    ./x/common/... \
+    ./x/nutil/... \
     ./x/devgas/... \
     ./x/epochs/... \
     ./x/genmsg/... \

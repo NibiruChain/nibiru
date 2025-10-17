@@ -20,11 +20,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -137,7 +137,7 @@ func (s *TestSuite) SetupSuite() {
 func (s *TestSuite) FundRoot(root Account) {
 	val := s.network.Validators[0]
 	funds := sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NIBI, 420*common.TO_MICRO),
+		sdk.NewInt64Coin(denoms.NIBI, 420*nutil.TO_MICRO),
 	)
 	feeDenom := denoms.NIBI
 

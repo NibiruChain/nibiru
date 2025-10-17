@@ -14,11 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 // TestEthLogs checks that eth txs as well as funtoken txs produce tx_logs events and update tx index properly.

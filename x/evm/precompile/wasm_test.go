@@ -14,14 +14,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 

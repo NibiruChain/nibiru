@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
 	"github.com/stretchr/testify/suite"
 )

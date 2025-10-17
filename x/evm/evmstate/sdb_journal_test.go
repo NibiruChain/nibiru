@@ -12,13 +12,13 @@ import (
 	"github.com/holiman/uint256"
 
 	serverconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile/test"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func (s *Suite) TestCommitRemovesDirties() {
@@ -279,7 +279,7 @@ snapshots and see prior states.`))
 		&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5+50,
 	)
 
-	errPanic := common.TryCatch(func() {
+	errPanic := nutil.TryCatch(func() {
 		// a revision that doesn't exist
 		sdb.RevertToSnapshot(9000)
 	})()

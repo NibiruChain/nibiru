@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 // TestSuite: Runs all the tests in the suite.

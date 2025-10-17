@@ -18,9 +18,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 func TestEventSubscriber(t *testing.T) {

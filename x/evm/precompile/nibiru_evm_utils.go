@@ -10,9 +10,9 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
 
 // EvmEventAbciEvent is the string key used to retrieve the "AbciEvent" Ethereum

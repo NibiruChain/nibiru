@@ -13,7 +13,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 var _ Keeper = (*BaseKeeper)(nil)
@@ -243,7 +243,7 @@ func (k BaseKeeper) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	supplyStore := prefix.NewStore(store, types.SupplyKey)
 
-	bz := supplyStore.Get(common.UnsafeStrToBytes(denom))
+	bz := supplyStore.Get(nutil.UnsafeStrToBytes(denom))
 	if bz == nil {
 		return sdk.Coin{
 			Denom:  denom,
@@ -267,7 +267,7 @@ func (k BaseKeeper) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
 func (k BaseKeeper) HasSupply(ctx sdk.Context, denom string) bool {
 	store := ctx.KVStore(k.storeKey)
 	supplyStore := prefix.NewStore(store, types.SupplyKey)
-	return supplyStore.Has(common.UnsafeStrToBytes(denom))
+	return supplyStore.Has(nutil.UnsafeStrToBytes(denom))
 }
 
 // GetDenomMetaData retrieves the denomination metadata. returns the metadata and true if the denom exists,
@@ -276,7 +276,7 @@ func (k BaseKeeper) GetDenomMetaData(ctx sdk.Context, denom string) (types.Metad
 	store := ctx.KVStore(k.storeKey)
 	store = prefix.NewStore(store, types.DenomMetadataPrefix)
 
-	bz := store.Get(common.UnsafeStrToBytes(denom))
+	bz := store.Get(nutil.UnsafeStrToBytes(denom))
 	if bz == nil {
 		return types.Metadata{}, false
 	}
@@ -291,7 +291,7 @@ func (k BaseKeeper) GetDenomMetaData(ctx sdk.Context, denom string) (types.Metad
 func (k BaseKeeper) HasDenomMetaData(ctx sdk.Context, denom string) bool {
 	store := ctx.KVStore(k.storeKey)
 	store = prefix.NewStore(store, types.DenomMetadataPrefix)
-	return store.Has(common.UnsafeStrToBytes(denom))
+	return store.Has(nutil.UnsafeStrToBytes(denom))
 }
 
 // GetAllDenomMetaData retrieves all denominations metadata
@@ -516,7 +516,7 @@ func (k BaseKeeper) setSupply(ctx sdk.Context, coin sdk.Coin) {
 
 	// Bank invariants and IBC requires to remove zero coins.
 	if coin.IsZero() {
-		supplyStore.Delete(common.UnsafeStrToBytes(coin.GetDenom()))
+		supplyStore.Delete(nutil.UnsafeStrToBytes(coin.GetDenom()))
 	} else {
 		supplyStore.Set([]byte(coin.GetDenom()), intBytes)
 	}

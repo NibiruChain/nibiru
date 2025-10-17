@@ -17,7 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 
@@ -31,8 +31,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 )
 
 // testMutex is used to synchronize the tests which are broadcasting transactions concurrently

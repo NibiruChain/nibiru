@@ -16,10 +16,10 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 )
 
 // commonArgs is args for CLI test commands.

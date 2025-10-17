@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"math/big"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/bank/collections"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 // StoreKeyTransient defines the transient store key
@@ -39,22 +39,10 @@ type NibiruExtKeeper interface {
 const (
 	DENOM_UNIBI = appconst.BondDenom
 
-	// NAMEPSACE_BALANCE_WEI is the store prefix for the wei balance store.
-	NAMEPSACE_BALANCE_WEI         collections.Namespace = 15
+	// NAMESPACE_BALANCE_WEI is the store prefix for the wei balance store.
+	NAMESPACE_BALANCE_WEI         collections.Namespace = 15
 	NAMESPACE_WEI_BLOCK_DELTA     collections.Namespace = 16
 	NAMESPACE_WEI_COMMITTED_DELTA collections.Namespace = 17
-)
-
-var (
-	// WeiPerUnibi is a big.Int for 10^{12}. Each "unibi" (micronibi) is 10^{12}
-	// wei because 1 NIBI = 10^{18} wei.
-	WeiPerUnibi = sdkmath.NewIntFromBigInt(
-		new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil),
-	)
-
-	// WeiPerUnibi is a uint256.Int for 10^{12}. Each "unibi" (micronibi) is 10^{12}
-	// wei because 1 NIBI = 10^{18} wei.
-	WeiPerUnibiU256 = uint256.MustFromBig(WeiPerUnibi.BigInt())
 )
 
 func (k BaseSendKeeper) getWeiStoreBalance(
@@ -73,30 +61,18 @@ func (k BaseSendKeeper) setWeiStoreBalance(
 ) {
 	weiStoreBalPre := k.getWeiStoreBalance(ctx, addr)
 	if weiStoreBalPre.Eq(newStoreBal) || newStoreBal == nil {
-		return
+		return // Early return with safety from `nil`. The store can only take
+		// values that can be marshaled to and from bytes safely.
 	}
 
 	if newStoreBal.Eq(uint256.NewInt(0)) {
 		// Error only occurs if we "delete" a key that was not present, which is
 		// not an error here.
 		_ = k.weiStore.Delete(ctx, addr)
+		return
 	}
 
 	k.weiStore.Insert(ctx, addr, sdkmath.NewIntFromBigInt(newStoreBal.ToBig()))
-}
-
-func BigToU256Safe(x *big.Int) (*uint256.Int, error) {
-	if x.Sign() < 0 || x.BitLen() > 256 {
-		return nil, fmt.Errorf("TODO") // out of range for uint256
-	} else if x.BitLen() > 256 {
-		return nil, fmt.Errorf("TODO") // out of range for uint256
-	}
-	// Most libs have a helper; otherwise zero-pad to 32 bytes then load.
-	num, isOverflow := uint256.FromBig(x) // typically returns (*Int, ok) or (*Int, overflow)
-	if isOverflow {
-		return nil, fmt.Errorf("TODO") // out of range for uint256
-	}
-	return num, nil
 }
 
 // GetWeiBalance -> aggregate both
@@ -112,27 +88,15 @@ func (k BaseSendKeeper) GetWeiBalance(
 		if balSdkInt.LT(sdkmath.ZeroInt()) {
 			balSdkInt = sdkmath.ZeroInt()
 		}
+		// MustFromBig is safehere because the supply of NIBI (10^{18} wei) is on
+		// the order of billions, way beneath the threshold for safe u256 math.
 		storeBalUnibi = uint256.MustFromBig(balSdkInt.BigInt())
 	}
 
-	return uint256.MustFromBig(
-		new(big.Int).Add(
-			new(big.Int).Mul(storeBalUnibi.ToBig(), WeiPerUnibi.BigInt()),
-			storeBalWei.ToBig(),
-		),
+	return new(uint256.Int).Add(
+		new(uint256.Int).Mul(storeBalUnibi, nutil.WeiPerUnibiU256()),
+		storeBalWei,
 	)
-}
-
-// TODO: UD-DEBUG: test
-func ParseNibiBalance(wei sdkmath.Int) (amtUnibi, amtWei sdkmath.Int) {
-	return wei.Quo(WeiPerUnibi), wei.Mod(WeiPerUnibi)
-}
-
-// TODO: UD-DEBUG: test
-func ParseNibiBalanceFromParts(unibi, wei sdkmath.Int) (amtUnibi, amtWei sdkmath.Int) {
-	unibiPartInWei := unibi.Mul(WeiPerUnibi)
-	totalWei := unibiPartInWei.Add(wei)
-	return ParseNibiBalance(totalWei)
 }
 
 // TODO: UD-DEBUG: test
@@ -147,7 +111,7 @@ func (k BaseSendKeeper) AddWei(
 
 	weiStoreBalPre := k.getWeiStoreBalance(ctx, addr)
 	newWeiStoreBal := new(uint256.Int).Add(weiStoreBalPre, amtWei)
-	if newWeiStoreBal.Cmp(WeiPerUnibiU256) < 0 {
+	if newWeiStoreBal.Cmp(nutil.WeiPerUnibiU256()) < 0 {
 		k.setWeiStoreBalance(ctx, addr, newWeiStoreBal)
 	} else {
 		balPre := k.GetWeiBalance(ctx, addr)
@@ -171,7 +135,7 @@ func (k BaseSendKeeper) AddWei(
 }
 
 // TODO: gasless Wei balance changes?
-// TODO: event emission for balance changes?
+// TODO: Test event emission for balance changes?
 
 func (k BaseSendKeeper) SubWei(
 	ctx sdk.Context,
@@ -182,22 +146,24 @@ func (k BaseSendKeeper) SubWei(
 		return nil
 	}
 
-	// case: amtWei < 10^{12} and weiBalPre >= amtWei
 	// weiBalPre is bounded, so we only need to check Cmp
 	weiStoreBalPre := k.getWeiStoreBalance(ctx, addr)
 	if weiStoreBalPre.Cmp(amtWei) >= 0 {
+		// case(happy): amtWei < 10^{12} and weiBalPre >= amtWei
 		k.setWeiStoreBalance(ctx, addr,
 			new(uint256.Int).Sub(weiStoreBalPre, amtWei),
 		)
-		return nil
 	} else {
-		// case: aggBal < amtWei -> error
+		// case(error): aggBal < amtWei -> error
 		balPre := k.GetWeiBalance(ctx, addr)
 		if balPre.Cmp(amtWei) < 0 {
-			return fmt.Errorf("TODO") // TODO: UD-DEBUG: err msg
+			return fmt.Errorf(
+				"SubWeiError: insufficient funds { balance: %s, amtWei: %s }",
+				amtWei, balPre,
+			)
 		}
 
-		// case (happy): aggBal >= amtWei
+		// case(happy): aggBal >= amtWei
 		k.setNibiBalanceFromWei(ctx, addr,
 			new(uint256.Int).Sub(balPre, amtWei),
 		)
@@ -218,19 +184,21 @@ func (k BaseSendKeeper) SubWei(
 	return nil
 }
 
-// TODO: UD-DEBUG: test
+// TODO: UD-DEBUG: Test marshaling and unmarshaling of zero coins and positive
+// coins with "unibi" as a sanity check.
+// TODO: UD-DEBUG: test setNibiBalanceFromWei -> AddWei tests, SubWei tests
 func (k BaseSendKeeper) setNibiBalanceFromWei(
 	ctx sdk.Context, addr sdk.AccAddress, wei *uint256.Int,
 ) {
-	// fmt.Errorf("invalid wei amount: cannot set negative balance %s", wei)
-	if wei == nil || wei.Cmp(WeiPerUnibiU256) < 0 {
+	if wei == nil || wei.Cmp(nutil.WeiPerUnibiU256()) < 0 {
 		// Error on setBalance with a zero coin is impossible
 		_ = k.setBalance(ctx, addr, sdk.NewInt64Coin(DENOM_UNIBI, 0))
 		k.setWeiStoreBalance(ctx, addr, wei)
+		return
 	}
 
-	amtUnibi, amtWei := ParseNibiBalance(sdkmath.NewIntFromBigInt(wei.ToBig()))
-	// This bank coin is guaranteed valid since it's amount is a u256 and denom is "unibi".
+	amtUnibi, amtWei := nutil.ParseNibiBalance(sdkmath.NewIntFromBigInt(wei.ToBig()))
+	// The bank coin `sdk.NewCoin(DENOM_UNIBI, amtUnibi)`  is guaranteed valid since it's amount is a u256 and denom is "unibi".
 	_ = k.setBalance(ctx, addr, sdk.NewCoin(DENOM_UNIBI, amtUnibi))
 	k.setWeiStoreBalance(ctx, addr, uint256.MustFromBig(amtWei.BigInt()))
 }

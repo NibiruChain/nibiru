@@ -8,11 +8,11 @@ import (
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func (s *Suite) TestCanTransfer() {

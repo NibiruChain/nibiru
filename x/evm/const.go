@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
 
 const (

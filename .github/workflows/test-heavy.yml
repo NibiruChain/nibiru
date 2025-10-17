@@ -76,6 +76,10 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: just test-cover-heavy
 
+      # TODO: https://github.com/NibiruChain/nibiru/issues/2399 - [test] Refactor
+      # heavy tests to avoid OOM panics and combine coverage reports with custom
+      # gocovmerge #2399
+      
       # - name: "Upload coverage reports to Codecov"
       #   if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
       #   uses: codecov/codecov-action@v5

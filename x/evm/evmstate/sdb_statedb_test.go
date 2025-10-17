@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	xcommon "github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	xcommon "github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 // dummy variables for tests

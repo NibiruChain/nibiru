@@ -94,7 +94,7 @@ func NewBaseSendKeeper(
 		authority:      authority,
 		weiStore: collections.NewMap(
 			storeKey,
-			NAMEPSACE_BALANCE_WEI,
+			NAMESPACE_BALANCE_WEI,
 			collections.AccAddressKeyEncoder,
 			collections.IntValueEncoder,
 		),

@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	geth "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/nmath"
 )
 
 // JsonTxArgs represents the arguments to construct a new transaction

@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 

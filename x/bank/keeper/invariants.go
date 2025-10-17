@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -47,7 +48,7 @@ func NonnegativeBalanceInvariant(k ViewKeeper) sdk.Invariant {
 	}
 }
 
-// TotalSupply returns an sdk.Invariant that checks supply accounting.
+// TotalSupply returns an [sdk.Invariant] that checks supply accounting.
 //
 // ### Summary
 //   - Verifies that the sum of all account balances (excluding UNIBI)
@@ -103,7 +104,7 @@ func TotalSupply(k Keeper) sdk.Invariant {
 		totalBalOfUnibi := totalBalOfCoins.AmountOf(DENOM_UNIBI)
 		supplyOfUnibiCoins := supplyOfCoins.AmountOf(DENOM_UNIBI)
 
-		supplyOfUnibiCoinsInWei := WeiPerUnibi.Mul(supplyOfUnibiCoins)
+		supplyOfUnibiCoinsInWei := nutil.WeiPerUnibi.Mul(supplyOfUnibiCoins)
 
 		// All other supplies are in coins only
 		// Compare all other coins aside from NIBI by subtracting it from
@@ -119,7 +120,7 @@ func TotalSupply(k Keeper) sdk.Invariant {
 		if !brokenOthers {
 			brokenStatusMsg = "invariant PASSED"
 		} else {
-			brokenStatusMsg = "sum of non-NIBI coins is broken. We don't require NIBI to match for this invariant because some of it becomes wei (attonibi), enabling 18 decimal math in the EVM."
+			brokenStatusMsg = "sum of non-NIBI coins is broken. Note that we don't require NIBI to match for this invariant because some of it becomes wei (attonibi), enabling 18 decimal math in the EVM."
 		}
 
 		return sdk.FormatInvariant(types.ModuleName, "total supply",

@@ -6,14 +6,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilMsg error = common.ErrNilGrpcMsg
+var errNilMsg error = nutil.ErrNilGrpcMsg
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,
