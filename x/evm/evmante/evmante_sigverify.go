@@ -36,7 +36,10 @@ func EthSigVerification(
 		evm.ParseBlockTimeUnixU64(sdb.Ctx()),
 	)
 
-	ethTx := msgEthTx.AsTransaction()
+	ethTx, err := msgEthTx.AsTransactionSafe()
+	if err != nil {
+		return err
+	}
 
 	sender, err := signer.Sender(ethTx)
 	if err != nil {

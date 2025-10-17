@@ -160,48 +160,75 @@ func (msg MsgEthereumTx) Route() string { return RouterKey }
 
 func (msg MsgEthereumTx) Type() string { return proto.MessageName(new(MsgEthereumTx)) }
 
-// ValidateBasic implements the sdk.Msg interface. It performs basic validation
-// checks of a Transaction. If returns an error if validation fails.
+// ValidateBasic implements the [sdk.Msg] interface. It performs basic
+// (stateless) validation checks of a Transaction. If returns an error if
+// validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
+	_, _, err := msg.Validate()
+	return err
+}
+
+// Validate performs stateless validation for the transaction. Here, "stateless"
+// means validation that does not depend on the blockchain state.
+func (msg MsgEthereumTx) Validate() (
+	coreTx *gethcore.Transaction,
+	txData TxData,
+	// Using rerr as the var name instead of "err" makes it easier to manage
+	// local scope without introducing bugs.
+	rerr error,
+) {
+	defer func() {
+		if rerr != nil {
+			rerr = fmt.Errorf("MsgEthereumTx ValidateError: %w", rerr)
+		}
+	}()
 	if msg.From != "" {
 		if err := eth.ValidateAddress(msg.From); err != nil {
-			return sdkioerrors.Wrap(err, "invalid from address")
+			rerr = sdkioerrors.Wrap(err, "invalid from address")
+			return
 		}
 	}
 
 	// Validate Size_ field, should be kept empty
 	if msg.Size_ != 0 {
-		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
+		rerr = sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
+		return
 	}
 
-	txData, err := UnpackTxData(msg.Data)
-	if err != nil {
-		return sdkioerrors.Wrap(err, "failed to unpack tx data")
+	txData, rerr = UnpackTxData(msg.Data)
+	if rerr != nil {
+		rerr = sdkioerrors.Wrap(rerr, "failed to unpack tx data")
+		return
 	}
 
 	gas := txData.GetGas()
 
 	// prevent txs with 0 gas to fill up the mempool
 	if gas == 0 {
-		return sdkioerrors.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
+		rerr = sdkioerrors.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
+		return
 	}
 
 	// prevent gas limit from overflow
 	if g := new(big.Int).SetUint64(gas); !g.IsInt64() {
-		return sdkioerrors.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
+		rerr = sdkioerrors.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
+		return
 	}
 
 	if err := txData.Validate(); err != nil {
-		return sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
+		rerr = sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
+		return
 	}
 
 	// Validate EthHash field after validated txData to avoid panic
-	txHash := msg.AsTransaction().Hash().Hex()
+	coreTx = msg.AsTransaction()
+	txHash := coreTx.Hash().Hex()
 	if msg.Hash != txHash {
-		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		rerr = sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		return
 	}
 
-	return nil
+	return coreTx, txData, nil
 }
 
 // GetMsgs returns a single MsgEthereumTx as sdk.Msg.
@@ -332,6 +359,18 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 	}
 
 	return gethcore.NewTx(txData.AsEthereumData())
+}
+
+// AsTransactionSafe creates an Ethereum transaction of type
+// (*gethcore.Transaction) without silently skipping the tx data error.
+func (msg MsgEthereumTx) AsTransactionSafe() (
+	coreTx *gethcore.Transaction, err error,
+) {
+	txData, err := UnpackTxData(msg.Data)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert to *gethcore.Transaction: %w", err)
+	}
+	return gethcore.NewTx(txData.AsEthereumData()), nil
 }
 
 // ToGethCoreMsg creates an Go-Ethereum [core.Message] from the msg fields

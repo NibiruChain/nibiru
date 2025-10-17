@@ -33,28 +33,44 @@ var _ evm.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(
 	goCtx context.Context, txMsg *evm.MsgEthereumTx,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
-	// This is a `defer` pattern to add behavior that runs in the case that the
-	// error is non-nil, creating a concise way to add extra information.
+	var (
+		// Debugging string that communicates where the tx failed
+		stage = "validate_basic"
+		// Stateful object that represents and mutates the world state during EVM
+		// execution. The [SDB] (State DB) is the EVM's connection to the chain
+		// state.
+		sdb *SDB
+	)
+
+	// Defer block: Adds behavior to run after the function scope returns.
+	// Return values are assigned to the local vars (evmResp, err) before we
+	// enter this defer scope.
 	defer func() {
-		if err != nil {
-			log.Printf("UD-DEBUG EthereumTx ERROR: %v", err)
+		switch {
+		case err != nil:
 			err = fmt.Errorf("EthereumTx error: %w", err)
+			if evmResp != nil {
+				log.Printf("[EVM] TX TRUE FAILURE { stage=%q, txhash=\"%s\", gasUsed=%d }", stage, txMsg.Hash, evmResp.GasUsed)
+			} else {
+				log.Printf("[EVM] TX TRUE FAILURE { stage=%q, txhash=\"%s\" }", stage, txMsg.Hash)
+			}
+		case evmResp != nil && evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil:
+			log.Printf("[EVM] TX executed but failed { txhash=\"%s\", gasUsed=%d, vmError=\"%s\" }", txMsg.Hash, evmResp.GasUsed, evmResp.VmError)
+		default:
+			log.Printf("[EVM] TX TRUE SUCCESS { txhash=%s, gasUsed=%d }", txMsg.Hash, evmResp.GasUsed)
 		}
 	}()
 
-	log.Printf("UD-DEBUG EthereumTx START: hash=%s", txMsg.Hash)
-	if err := txMsg.ValidateBasic(); err != nil {
-		log.Printf("UD-DEBUG EthereumTx ValidateBasic FAILED: %v", err)
+	log.Printf("[EVM] TX START { txhash=%s }", txMsg.Hash)
+	coreTx, _, err := txMsg.Validate()
+	if err != nil {
 		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
 	}
-	log.Printf("UD-DEBUG EthereumTx ValidateBasic PASSED")
-	coreTx := txMsg.AsTransaction()
 
-	var sdb *SDB
+	// Initialize SDB
 	{
 		ctx := sdk.UnwrapSDKContext(goCtx)
 		txConfig := k.TxConfig(ctx, coreTx.Hash())
-		log.Printf("UD-DEBUG EthereumTx txConfig and evmCfg created")
 		sdb = k.NewSDB(ctx, txConfig)
 	}
 	log.Printf("sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
@@ -66,14 +82,13 @@ func (k *Keeper) EthereumTx(
 		gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
 	)
 	if err != nil {
-		log.Printf("UD-DEBUG EthereumTx TransactionToMessage FAILED: %v", err)
+		stage = "core_tx_to_msg"
 		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
 	}
-	log.Printf("UD-DEBUG EthereumTx TransactionToMessage PASSED")
 
 	// ApplyEvmMsg - Perform the EVM State transition
+	stage = "apply_evm_msg"
 	evmObj := k.NewEVM(sdb.Ctx(), *evmMsg, evmCfg, nil /*tracer*/, sdb)
-	log.Printf("UD-DEBUG EthereumTx SDB and EVM created")
 
 	var applyErr error
 	evmResp, applyErr = k.ApplyEvmMsg(
@@ -86,28 +101,38 @@ func (k *Keeper) EthereumTx(
 		if evmResp == nil {
 			// Consensus error - return immediately, skipping the
 			// "evm.SafeConsumeGas" call we do for
-			log.Printf("UD-DEBUG EthereumTx CONSENSUS ERROR: %v", applyErr)
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
 		} else {
 			// Execution error - log but continue processing
-			log.Printf("UD-DEBUG EthereumTx EXECUTION ERROR: %v", applyErr)
+			log.Printf("EthereumTx: execution error { stage=%q, applyErr=%q }", stage, applyErr)
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 		}
 	}
-	log.Printf("UD-DEBUG EthereumTx ApplyEvmMsg SUCCESS")
 
 	if evmResp != nil {
-		gasErr := evm.SafeConsumeGas(sdb.Ctx(), evmResp.GasUsed, "execute EthereumTx")
+		stage = "safe_consume_gas"
+		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
 		if gasErr != nil {
-			log.Printf("UD-DEBUG EthereumTx GAS CONSUMPTION ERROR: %v", gasErr)
 			return nil, gasErr
 		}
-		log.Printf("UD-DEBUG EthereumTx GAS CONSUMPTION SUCCESS")
 	}
 
-	log.Printf("sdb.TxCfg(): %+v\n", sdb.TxCfg())
-	sdb.updateBlockBloom(evmResp)
+	stage = "post_execution_gas_refund"
+
+	// Update transient block bloom filter and block log size.
+	{
+		// Note that we MUST use the root ctx here to persist changes. The
+		// sdb.Ctx() is already committed, meaning we propagated changes from
+		// the sdb.Ctx() to mutate sdb.RootCtx(), the official tx state
+		ctx := sdb.RootCtx()
+		logIndex := uint64(sdb.TxCfg().LogIndex)
+		if len(evmResp.Logs) > 0 {
+			gethLogs := evm.LogsToEthereum(evmResp.Logs)
+			k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, gethLogs).Bytes())
+			k.EvmState.BlockLogSize.Set(ctx, logIndex+uint64(len(gethLogs)))
+		}
+	}
 
 	// refund gas in order to match the Ethereum gas consumption instead of the
 	// default SDK one.
@@ -117,25 +142,23 @@ func (k *Keeper) EthereumTx(
 	}
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
 	if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
-		log.Printf("UD-DEBUG EthereumTx GAS REFUND ERROR: %v", err)
 		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
 	}
-	log.Printf("UD-DEBUG EthereumTx GAS REFUND SUCCESS")
 
+	stage = "post_execution_events_and_tx_index"
 	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
-	if err := txEvents.EmitEvents(sdb.RootCtx()); err != nil {
-		log.Printf("UD-DEBUG EthereumTx EMIT EVENTS ERROR: %v", err)
+	err = txEvents.EmitEvents(sdb.RootCtx())
+	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "error emitting ethereum tx events")
 	}
-	log.Printf("UD-DEBUG EthereumTx EMIT EVENTS SUCCESS")
-
 	err = sdb.RootCtx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err != nil {
-		log.Printf("UD-DEBUG EthereumTx EMIT TX LOG ERROR: %v", err)
 		return nil, sdkioerrors.Wrap(err, "error emitting tx log event")
 	}
-	log.Printf("UD-DEBUG EthereumTx EMIT TX LOG SUCCESS")
 
+	// Increment to the next tx index. This MUST occur after
+	// "txEvents.EmitEvents" because it's meant to emit abci.Events for the
+	// current tx.
 	k.EvmState.BlockTxIndex.Set(sdb.RootCtx(), uint64(sdb.TxCfg().TxIndex)+1)
 
 	if evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil {
@@ -144,9 +167,7 @@ func (k *Keeper) EthereumTx(
 			evmResp.VmError,
 			sdb.Ctx().LastErrApplyEvmMsg(),
 		)
-		log.Printf("UD-DEBUG EthereumTx TX FAILED with VM error: %s", evmResp.VmError)
 	}
-	log.Printf("UD-DEBUG EthereumTx TX SUCCESS: hash=%s, gasUsed=%d", evmResp.Hash, evmResp.GasUsed)
 	return evmResp, nil
 }
 
@@ -816,18 +837,4 @@ func (k *Keeper) GetEvmTxEvents(
 	}
 
 	return events
-}
-
-// updateBlockBloom updates transient block bloom filter
-func (sdb *SDB) updateBlockBloom(
-	evmResp *evm.MsgEthereumTxResponse,
-) {
-	ctx := sdb.RootCtx()
-	k := sdb.Keeper()
-	logIndex := uint64(sdb.TxCfg().LogIndex)
-	if len(evmResp.Logs) > 0 {
-		logs := evm.LogsToEthereum(evmResp.Logs)
-		k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, logs).Bytes())
-		k.EvmState.BlockLogSize.Set(ctx, logIndex+uint64(len(logs)))
-	}
 }

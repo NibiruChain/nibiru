@@ -44,6 +44,8 @@ type AnteTC struct {
 	OnEnd            func(sdb *evmstate.SDB, tx evm.Tx)
 }
 
+// TEST_TX_HASH: Constant used to test that a tx hash propagates through the
+// ante handler and is not simply the empty hash (gethcommon.Hash{}).
 var TEST_TX_HASH gethcommon.Hash = gethcommon.BigToHash(big.NewInt(42))
 
 func RunAnteTCs(s *suite.Suite, tcs []AnteTC) {
