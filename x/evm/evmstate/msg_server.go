@@ -21,11 +21,11 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 var _ evm.MsgServer = &Keeper{}
@@ -412,7 +412,7 @@ func (k *Keeper) ApplyEvmMsg(
 		}
 	}
 
-	msgWei, err := ParseWeiAsMultipleOfMicronibi(msg.Value)
+	msgWei, err := nutil.U256SafeFromBig(msg.Value)
 	if err != nil {
 		return nil, sdkioerrors.Wrapf(err, "ApplyEvmMsg: invalid wei amount %s", msg.Value)
 	}
@@ -487,40 +487,10 @@ func (k *Keeper) ApplyEvmMsg(
 	// The dirty states in `StateDB` is either committed or discarded after return
 	if commit {
 		sdb.Commit()
-		evmObj.StateDB.Finalise( /*deleteEmptyObjects*/ false)
+		sdb.Finalise(true)
 	}
 
 	return evmResp, nil
-}
-
-func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (
-	newWeiInt *uint256.Int, err error,
-) {
-	// if "weiValue" is nil, 0, or negative, early return
-	cmpSign := weiInt.Cmp(big.NewInt(0))
-	if weiInt == nil {
-		return (*uint256.Int)(nil), nil
-	} else if cmpSign == 0 {
-		return uint256.NewInt(0), nil
-	} else if cmpSign < 0 {
-		return newWeiInt, fmt.Errorf("wei parsing error: negative wei value cannot be a uint256 (%s)", weiInt)
-	}
-
-	// err if weiInt is too small
-	tenPow12 := new(big.Int).Exp(big.NewInt(10), big.NewInt(12), nil)
-	if weiInt.Cmp(tenPow12) < 0 {
-		return newWeiInt, fmt.Errorf(
-			"wei parsing error: wei amount is too small (%s), cannot transfer less than 1 micronibi. 1 NIBI == 10^6 micronibi == 10^18 wei", weiInt)
-	}
-
-	// truncate to highest micronibi amount
-	newWeiInt, overflowed := uint256.FromBig(
-		evm.NativeToWei(evm.WeiToNative(weiInt)),
-	)
-	if overflowed {
-		return newWeiInt, fmt.Errorf("wei parsing error: overflow occurred in conversion from big.Int to uint256.Int for wei value %s", weiInt)
-	}
-	return newWeiInt, nil
 }
 
 // CreateFunToken is a gRPC transaction message for creating fungible token
@@ -720,14 +690,13 @@ func (k *Keeper) ConvertEvmToCoin(
 		}
 
 		funtokenMapping := funTokens[0]
-		amountBig := amount.BigInt()
 		if funtokenMapping.IsMadeFromCoin {
 			err = k.convertEvmToCoinForCoinOriginated(
-				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amount, funtokenMapping.BankDenom,
 			)
 		} else {
 			err = k.convertEvmToCoinForERC20Originated(
-				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amountBig, funtokenMapping.BankDenom,
+				sdb, senderAddrs, toAddrs.Bech32, erc20.Address, amount, funtokenMapping.BankDenom,
 			)
 		}
 	}

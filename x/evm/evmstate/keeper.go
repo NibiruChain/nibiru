@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evmstate
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"bytes"
@@ -58,6 +59,15 @@ type Keeper struct {
 
 func (k *Keeper) BK() bankkeeper.Keeper {
 	return k.Bank
+}
+
+var (
+	_ bankkeeper.NibiruExtKeeper = (*NibiruBankKeeper)(nil)
+	_ bankkeeper.Keeper          = (*NibiruBankKeeper)(nil)
+)
+
+type NibiruBankKeeper struct {
+	bankkeeper.BaseKeeper
 }
 
 // NewKeeper is a constructor for an x/evm [Keeper]. This function is necessary

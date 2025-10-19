@@ -48,14 +48,7 @@ func (s *Suite) TestCommitRemovesDirties() {
 	)
 	s.Require().NoError(err)
 
-	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
-	// s.Less(
-	// 	0, evmObj.StateDB.(*evmstate.SDB).DebugDirtiesCount(),
-	// 	"after a state modifying contract call (ERC20.mint), there should be dirty entries",
-	// )
-
 	evmObj.StateDB.(*evmstate.SDB).Commit()
-	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
 }
 
 // AddBalanceSigned is only used in tests for convenience.
@@ -63,7 +56,9 @@ func AddBalanceSigned(sdb *evmstate.SDB, addr gethcommon.Address, wei *big.Int) 
 	weiSign := wei.Sign()
 	weiAbs, isOverflow := uint256.FromBig(new(big.Int).Abs(wei))
 	if isOverflow {
-		// TODO: Is there a better strategy than panicking here?
+		// Panic is appropriate here: uint256 max value (2^256-1) is astronomically larger
+		// than any realistic NIBI amount (max supply ~1.5B NIBI = 1.5e27 wei).
+		// This overflow would indicate a serious bug in the system.
 		panic(fmt.Errorf(
 			"uint256 overflow occurred for big.Int value %s", wei))
 	}
@@ -89,26 +84,14 @@ func (s *Suite) TestCommitRemovesDirties_OnlyStateDB() {
 	AddBalanceSigned(sdb, randomAcc, balDelta)
 	// 1 dirties from [balanceChange]
 	AddBalanceSigned(sdb, randomAcc, balDelta)
-	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
-	// if sdb.DebugDirtiesCount() != 4 {
-	// 	debugDirtiesCountMismatch(sdb, s.T())
-	// 	s.FailNow("expected 4 dirty journal changes")
-	// }
 
 	s.T().Log("StateDB.Commit, then Dirties should be gone")
 	sdb.Commit()
-	// TODO: UD-DEBUG: test: assertion needed to replace dirty journals
-	// if sdb.DebugDirtiesCount() != 0 {
-	// 	debugDirtiesCountMismatch(sdb, s.T())
-	// 	s.FailNow("expected 0 dirty journal changes")
-	// }
 }
 
 func (s *Suite) TestContractCallsAnotherContract() {
 	deps := evmtest.NewTestDeps()
 	evmObj, _ := deps.NewEVM()
-	// TODO: UD-DEBUG: refactor: sdb not needed here?
-	// sdb := evmObj.StateDB.(*evmstate.SDB)
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -157,11 +140,9 @@ func (s *Suite) TestContractCallsAnotherContract() {
 			uint256.NewInt(0),
 		)
 		s.Require().NoError(err)
-		// TODO: UD-DEBUG: New assertion needed for test to replace dirty journal
-		// checks
 	})
 
-	s.Run("Transfer 69_000 tokens", func() {
+	s.Run("Contract calls itself (should fail)", func() {
 		// The contract calling itself is invalid in this context.
 		// Note the comment in vm.Contract:
 		//
@@ -206,7 +187,7 @@ func (s *Suite) TestJournalReversion() {
 	helloWorldCounterWasm := wasmContracts[1]
 	s.T().Logf("helloworldcounter.wasm - contract addr:\n%s\n", helloWorldCounterWasm)
 
-	s.T().Log("commitEvmTx=true, expect 0 dirty journal entries")
+	s.T().Log("commitEvmTx=true, expect clean state")
 	evmObj, sdb := deps.NewEVM()
 	snapshots := []SnapshotAssertion{
 		{
@@ -227,13 +208,7 @@ func (s *Suite) TestJournalReversion() {
 		Text:                "increment +7 with commit=true",
 	})
 
-	// if sdb.DebugDirtiesCount() != 0 {
-	// 	debugDirtiesCountMismatch(sdb, s.T())
-	// 	s.FailNowf("statedb dirty count mismatch", "expected 0 dirty journal changes, but instead got: %d", sdb.DebugDirtiesCount())
-	// }
-
-	s.T().Log("commitEvmTx=false, expect dirty journal entries")
-	// evmObj, sdb = deps.NewEVM()
+	s.T().Log("commitEvmTx=false, expect pending state changes")
 	test.IncrementWasmCounterWithExecuteMulti(
 		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 5, false,
 	)
@@ -243,12 +218,6 @@ func (s *Suite) TestJournalReversion() {
 		WantPreRevertCount:  7 + 5,
 		Text:                "increment +5 (commit=false)",
 	})
-
-	// s.T().Log("Expect exactly 1 dirty journal entry for the precompile snapshot")
-	// if sdb.DebugDirtiesCount() != 1 {
-	// 	debugDirtiesCountMismatch(sdb, s.T())
-	// 	s.FailNowf("statedb dirty count mismatch", "expected 1 dirty journal change, but instead got: %d", sdb.DebugDirtiesCount())
-	// }
 
 	s.T().Log("Expect to see the pending changes included in the EVM context")
 	test.AssertWasmCounterStateWithEvm(
@@ -303,16 +272,6 @@ snapshots and see prior states.`))
 			&s.Suite, deps, evmObj, helloWorldCounterWasm, snap.WantPostRevertCount,
 		)
 	}
-
-	// sdb.RevertToSnapshot(2)
-	// test.AssertWasmCounterStateWithEvm(
-	// 	&s.Suite, deps, evmObj, helloWorldCounterWasm, 7+5,
-	// )
-
-	// sdb.RevertToSnapshot(0)
-	// test.AssertWasmCounterStateWithEvm(
-	// 	&s.Suite, deps, evmObj, helloWorldCounterWasm, 7,
-	// )
 
 	sdb.Commit()
 	test.AssertWasmCounterState(

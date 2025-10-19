@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/cosmos/gogoproto/proto"
+	"github.com/holiman/uint256"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -608,7 +609,7 @@ type Addrs struct {
 func (m *MsgConvertEvmToCoin) Validate() (
 	sender Addrs,
 	erc20 eth.EIP55Addr,
-	amount sdkmath.Int,
+	amount *uint256.Int,
 	toAddr Addrs,
 	err error,
 ) {
@@ -644,8 +645,9 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		err = fmt.Errorf("amount must be positive: amount=\"%s\"", m.Amount)
 		return
 	}
+	amountU256 := uint256.MustFromBig(m.Amount.BigInt())
 
-	return sender, m.Erc20Addr, m.Amount, toAddr, nil
+	return sender, m.Erc20Addr, amountU256, toAddr, nil
 }
 
 // ValidateBasic does a sanity check of the provided data

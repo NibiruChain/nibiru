@@ -48,10 +48,10 @@ func TraceNibiTransfer() string {
 	}`, gethparams.TxGas)
 }
 
-// TraceERC20Transfer returns a hardcoded JSON string representing the expected
-// trace output of a successful ERC-20 token transfer (an EVM tx).
-// Used to test the correctness of "TraceTx" and "TraceBlock".
-func TraceERC20Transfer() string {
+// TraceOutputERC20Transfer returns a hardcoded JSON string representing the
+// expected trace output of a successful ERC-20 token transfer (an EVM tx). Used
+// to test the correctness of "TraceTx" and "TraceBlock".
+func TraceOutputERC20Transfer() string {
 	return `{
 	   "gas": 35062,
 	   "failed": false,
@@ -787,7 +787,7 @@ func (s *Suite) TestTraceTx() {
 					Msg:          txMsg,
 					Predecessors: predecessors,
 				}
-				wantResp = TraceERC20Transfer()
+				wantResp = TraceOutputERC20Transfer()
 				return req, wantResp
 			},
 			wantErr: "",
@@ -867,7 +867,7 @@ func (s *Suite) TestTraceBlock() {
 						txMsg,
 					},
 				}
-				wantResp = "[{\"result\":" + TraceERC20Transfer() // no end as it's trimmed
+				wantResp = "[{\"result\":" + TraceOutputERC20Transfer() // no end as it's trimmed
 				return req, wantResp
 			},
 			wantErr: "",
@@ -965,7 +965,7 @@ func (s *Suite) TestTraceCall() {
 				req = &evm.QueryTraceTxRequest{
 					Msg: txArgs.ToMsgEthTx(),
 				}
-				wantResp = TraceERC20Transfer()
+				wantResp = TraceOutputERC20Transfer()
 				return req, wantResp
 			},
 			wantErr: "",

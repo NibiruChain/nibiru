@@ -239,9 +239,9 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	s.Require().LessOrEqual(balAfterU64, balBeforeU64, "balance must have decreased")
 	gasUsedFromAllTxs := receiptContractCreation.GasUsed + receiptFirstTransfer.GasUsed + receiptSecondTransfer.GasUsed
 
-	// TODO: UD-DEBUG: Tighten this assertion to look at gas refunded and use
-	// exact equality. This can be tested with ABCI tests like the one in the
 	// "x/evm/evmstate/msg_ethereum_tx_test.go" file.
+	// Light assertion is fine here. We test EIP-3529 refudn logic thoroughly
+	// inside of "x/evm/evmstate".
 	s.Require().LessOrEqual(
 		gasUsedFromAllTxs,
 		balBefore.Uint64()-balAfter.Uint64(),

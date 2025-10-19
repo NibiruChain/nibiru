@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -72,23 +73,33 @@ func (s *Suite) TestStateDBBalance() {
 			AmountWei: evm.NativeToWei(big.NewInt(12)),
 		}.Run()
 		s.Require().NoError(err)
-		db := deps.NewStateDB()
+		sdb := deps.NewStateDB()
 		s.Equal(
 			"30"+strings.Repeat("0", 12),
-			db.GetBalance(deps.Sender.EthAddr).String(),
+			sdb.GetBalance(deps.Sender.EthAddr).String(),
 		)
 		s.Equal(
 			"12"+strings.Repeat("0", 12),
-			db.GetBalance(to).String(),
+			sdb.GetBalance(to).String(),
 		)
+		balSender := sdb.GetBalance(deps.Sender.EthAddr)
+		balTo := sdb.GetBalance(to)
 
-		s.T().Log("Send via EVM transfer with too little wei. Should error")
+		s.T().Log("Send via EVM transfer with small wei amount. No error")
 		_, err = evmtest.TxTransferWei{
 			Deps:      &deps,
 			To:        to,
 			AmountWei: big.NewInt(12),
 		}.Run()
-		s.Require().ErrorContains(err, "wei amount is too small")
+		s.Require().NoError(err)
+		s.Equal(
+			new(uint256.Int).Sub(balSender, uint256.NewInt(12)).String(),
+			sdb.GetBalance(deps.Sender.EthAddr).String(),
+		)
+		s.Equal(
+			new(uint256.Int).Add(balTo, uint256.NewInt(12)).String(),
+			sdb.GetBalance(to).String(),
+		)
 	}
 
 	s.T().Log("Send via bank transfer from account to account. See expected wei amounts.")

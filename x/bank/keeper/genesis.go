@@ -9,7 +9,7 @@ import (
 
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/v2/x/bank/collections"
+	"github.com/NibiruChain/collections"
 )
 
 // InitGenesis initializes the bank module's state from a given genesis state.

@@ -1,18 +1,3 @@
-// The "evm/statedb" package implements a go-ethereum [vm.StateDB] with state
-// management and journal changes specific to the Nibiru EVM.
-//
-// This package plays a critical role in managing the state of accounts,
-// contracts, and storage while handling atomicity, caching, and state
-// modifications. It ensures that state transitions made during the
-// execution of smart contracts are either committed or reverted based
-// on transaction outcomes.
-//
-// StateDB structs used to store anything within the state tree, including
-// accounts, contracts, and contract storage.
-// Note that Nibiru's state tree is an IAVL tree, which differs from the Merkle
-// Patricia Trie structure seen on Ethereum mainnet.
-//
-// StateDBs also take care of caching and handling nested states.
 package evmstate
 
 // Copyright (c) 2023-2024 Nibi, Inc.
@@ -23,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -38,24 +22,43 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
 
 var _ vm.StateDB = &SDB{}
 
-// SDB structs within the ethereum protocol are used to store anything
-// within the merkle trie. StateDBs take care of caching and storing
-// nested states. It's the general query interface to retrieve:
-// * Contracts
-// * Accounts
+// SDB is the Nibiru EVM implementation of the EVM interpreter's [vm.StateDB]. It
+// manages all state changes and snapshotting within the context of an Ethereum
+// transaction.
+//
+// The [SDB] manages EVM *and* non-EVM state reachable via the [sdk.Context] by
+// branching the world state with "CacheMultiStore" snapshots. There are no
+// journal entries.
+//
+// ### Model:
+//   - Each [SDB] represents one Ethereum transaction's execution scope.
+//   - Snapshot() creates a new world-state branch (cached multistore) and a
+//     fresh LocalState layer for EVM-specific metadata (logs, refunds, access
+//     list, transient storage).
+//   - RevertToSnapshot(n) restores the exact prior world state by jumping to snapshot n.
+//   - Commit() writes cached branches back toward the root Context; BaseApp
+//     later commits the root.
+//
+// ### Notes:
+//   - Nibiru uses IAVL-backed KV stores, not MPT/Verkle; we don't compute
+//     Ethereum storage roots.
+//   - Read paths (balances/accounts) consult the active branched Context; no
+//     journals are needed.
+//   - This design mirrors database snapshotting: revert == restore snapshot, not
+//     "undo logs".
 type SDB struct {
 	keeper *Keeper
 
 	// evmTxCtx is the current context for the EVM transaction. It manages
-	// MultiVM state and is safe to modify because it only writes changes to  the
+	// MultiVM state and is safe to modify because it only writes changes to the
 	// root context (the one that created the [SDB]) when [SDB.Commit] is called.
 	evmTxCtx sdk.Context
 
-	// TODO: UD-DEBUG: Docs needed.
 	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
 	// Optimizes performance by minimizing direct access to the underlying
 	// storage for uncommitted mutations produced by the [SDB].
@@ -111,7 +114,7 @@ func (s SDB) TxCfg() TxConfig {
 // - Add coinbase to access list (EIP-3651) | Shanghai
 // - Reset transient storage (EIP-1153)
 func (s *SDB) Prepare(
-	_ gethparams.Rules, // only relevant prior to Shangai and Berlin upgrades
+	_ gethparams.Rules, // only relevant prior to Shanghai and Berlin upgrades
 	sender, coinbase gethcommon.Address,
 	dest *gethcommon.Address,
 	precompiles []gethcommon.Address,
@@ -131,7 +134,7 @@ func (s *SDB) Prepare(
 			s.AddSlotToAccessList(el.Address, key)
 		}
 	}
-	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbse
+	s.AddAddressToAccessList(coinbase) // Shaghai: EIP-3651: warm coinbase
 
 	// EIP-1153: Reset transient storage for beginning of tx execution
 	// See core/state/statedb.go from geth.
@@ -224,8 +227,6 @@ func (s *SDB) Exist(addr gethcommon.Address) bool {
 		return true
 	}
 	return false
-	// Old impl
-	// return s.getStateObject(addr) != nil
 }
 
 // Empty returns whether the state object is either non-existent
@@ -316,10 +317,6 @@ func (s *SDB) HasSuicided(addr gethcommon.Address) bool {
 // to the database.
 func (s *SDB) AddPreimage(_ gethcommon.Hash, _ []byte) {}
 
-// CreateAccount explicitly creates a state object. If a state object with the address
-// already exists the balance is carried over to the new account.
-// FIXME: TODO: Check that account balances are meant to be preserved across account reset.
-//
 // CreateAccount is called during the EVM CREATE operation. The situation might arise that
 // a contract does the following:
 //
@@ -328,14 +325,12 @@ func (s *SDB) AddPreimage(_ gethcommon.Hash, _ []byte) {}
 //
 // Carrying over the balance ensures that Ether doesn't disappear.
 func (s *SDB) CreateAccount(addr gethcommon.Address) {
-	// Clear balance if there was one for the account
+	// Clear balance if there was one for the account. This is to preserve the
+	// behavior from geth in core/vm/evm.go (~500-515). It's possible that
+	// contract code is deployed to a pre-existent account with non-zero balance.
+	// If that happens, balance is preserved and the account of the same address
+	// is silently overwritten.
 	accBal := s.GetBalance(addr)
-	// if !accBal.IsZero() {
-	// 	err := s.keeper.SendWei(s.evmTxCtx, addr, evm.EVM_MODULE_ADDRESS, accBal)
-	// 	if err != nil {
-	// 		panic(err) // TODO: UD-DEBUG: error msg
-	// 	}
-	// }
 
 	// Create new account or reset an existing one.
 	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
@@ -360,8 +355,6 @@ func (s *SDB) CreateContract(addr gethcommon.Address) {
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_CREATE
 }
 
-// TODO: Handle surplus
-
 /*
  * SETTERS
  */
@@ -379,11 +372,8 @@ func (s *SDB) AddBalance(
 	}
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
 	s.keeper.BK().AddWei(s.evmTxCtx, addrBech32, wei)
-	// TODO: add sdb tracing logger?
 	return
 }
-
-// TODO: feat: flag needed to mute events?
 
 // SubBalance subtracts amount from the account associated with addr.
 // It is used to remove funds from the origin account of a transfer.
@@ -403,7 +393,6 @@ func (s *SDB) SubBalance(
 		panic(sdbErrorf("%w", err))
 	}
 
-	// TODO: add sdb tracing logger?
 	return
 }
 
@@ -439,7 +428,7 @@ func (s *SDB) SetCode(addr gethcommon.Address, code []byte) {
 		panic(sdbErrorf("%w", err))
 	}
 
-	// TODO: Persist bytecode only if the code was not already set
+	// Persist bytecode to storage
 	s.keeper.SetCode(s.evmTxCtx, codeHashBz, code)
 }
 
@@ -458,18 +447,15 @@ func (s *SDB) SetState(
 	return
 }
 
-func (s *SDB) subBalanceHoldingSupplyConstant(
-	addr gethcommon.Address,
-	wei *uint256.Int,
-) {
-	s.SubBalance(addr, wei, tracing.BalanceDecreaseSelfdestruct)
-	s.AddBalance(evm.EVM_MODULE_ADDRESS, wei, tracing.BalanceIncreaseSelfdestruct)
-}
-
+// hasSnapshotAccStatus checks whether the given address was marked with the
+// specified account-change flag (e.g., CREATE or DELETE) in the current or any
+// previous snapshot. It searches from the most recent state (localState) back
+// through saved snapshots, returning true if the latest matching change equals
+// the given "change".
 func (s *SDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccChange) bool {
 	gotChange, found := s.localState.AccountChangeMap[addr]
 	for i := len(s.savedStates) - 1; !found && i >= 0; i-- {
-		gotChange, found = s.localState.AccountChangeMap[addr]
+		gotChange, found = s.savedStates[i].AccountChangeMap[addr]
 	}
 	if !found {
 		return false
@@ -480,82 +466,50 @@ func (s *SDB) hasSnapshotAccStatus(addr gethcommon.Address, change SnapshotAccCh
 // SelfDestruct marks the given account as suicided.
 // This clears the account balance.
 //
+// When the SELFDESTRUCT is called, it does so with a "beneficiary", and the EVM
+// interpreter adds the the equivalent balance from the self destructing account
+// to the beneficiary, preserving the supply of ether.
+//
 // The account's state object is still available until the state is committed,
 // getStateObject will return a non-nil account after [SelfDestruct].
 func (s *SDB) SelfDestruct(addr gethcommon.Address) (prevWei uint256.Int) {
 	s.localState.AccountChangeMap[addr] = SNAPSHOT_ACC_STATUS_DELETE
 	prevWei = *s.GetBalance(addr)
-	s.subBalanceHoldingSupplyConstant(addr, &prevWei)
+	s.SubBalance(addr, &prevWei, tracing.BalanceDecreaseSelfdestruct)
 	return prevWei
-
-	// OLD IMPL
-
-	// stateObject := s.getStateObject(addr)
-	// if stateObject == nil {
-	// 	return prevWei
-	// }
-	// prevWei = *(stateObject.Balance())
-	// // Regardless of whether it is already destructed or not, we do have to
-	// // journal the balance-change, if we set it to zero here.
-	// if !stateObject.Balance().IsZero() {
-	// 	stateObject.account.BalanceWei = new(uint256.Int)
-	// }
-	// // If it is already marked as self-destructed, we do not need to add it
-	// // for journalling a second time.
-	// if !stateObject.SelfDestructed {
-	// 	s.Journal.append(suicideChange{
-	// 		account:     &addr,
-	// 		prev:        stateObject.SelfDestructed,
-	// 		prevbalance: new(big.Int).Set(prevWei.ToBig()),
-	// 	})
-	// 	stateObject.SelfDestructed = true
-	// }
-	// return prevWei
 }
 
-// TODO: UD-DEBUG: SelfDestruct impl first
+// HasSelfDestructed returns true if the most recent account change status says
+// that the contract is deleted.
 func (s *SDB) HasSelfDestructed(addr gethcommon.Address) bool {
 	return s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_DELETE)
-	// s.localState
-	// stateObject := s.getStateObject(addr)
-	// if stateObject == nil {
-	// 	return false
-	// }
-	// return stateObject.SelfDestructed
 }
 
-func (s *SDB) IsCreatedThisBlock(addr gethcommon.Address) bool {
+// IsCreatedThisTx returns true if the given account was created within the
+// execution scope of the current [SDB]. An [SDB] corresponds to one EVM
+// transaction.
+func (s *SDB) IsCreatedThisTx(addr gethcommon.Address) bool {
 	return s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_CREATE)
 }
 
-// SelfDestruct6780 calls [SelfDesrtuct] only if the [stateObject] corresponding to
+// SelfDestruct6780 calls [SDB.SelfDestruct] only if the account corresponding to
 // the given "addr" was created this block.
 //
 // SelfDestruct6780 is post-EIP6780 selfdestruct, which means that it's a
 // send-all-to-beneficiary, unless the contract was created in this same
-// transaction, in which case it will be destructed.
-// This method returns the prior balance, along with a boolean which is
-// true iff the object was indeed destructed.
+// transaction, in which case it will be destructed. This method returns the
+// prior balance, along with a boolean which is true if and only if the object
+// was indeed destructed.
 func (s *SDB) SelfDestruct6780(
 	addr gethcommon.Address,
 ) (prevWei uint256.Int, isSelfDestructed bool) {
-	if s.IsCreatedThisBlock(addr) {
+	if s.IsCreatedThisTx(addr) {
 		prevWei = s.SelfDestruct(addr)
 		isSelfDestructed = true
 		return
 	}
 
 	return *s.GetBalance(addr), s.hasSnapshotAccStatus(addr, SNAPSHOT_ACC_STATUS_DELETE)
-
-	// stateObject := s.getStateObject(addr)
-	// if stateObject == nil {
-	// 	isSelfDestructed = false
-	// } else if stateObject.createdThisBlock {
-	// 	prevWei, isSelfDestructed = s.SelfDestruct(addr), true
-	// } else {
-	// 	prevWei, isSelfDestructed = *(stateObject.Balance()), false
-	// }
-	// return prevWei, isSelfDestructed
 }
 
 // Snapshot returns an identifier for the current revision of the state.
@@ -609,14 +563,18 @@ func (s *SDB) Commit() {
 	// Empty self-destructed accounts
 	{
 		localStates := append(s.savedStates, s.localState)
+		seenAddrs := set.New[gethcommon.Address]()
 		for i := len(localStates) - 1; i >= 0; i-- {
 			localState := localStates[i]
 			for addr, accChange := range localState.AccountChangeMap {
+				if seenAddrs.Has(addr) {
+					continue
+				}
+				seenAddrs.Add(addr)
 				if accChange != SNAPSHOT_ACC_STATUS_DELETE {
 					continue
 				}
 				// Handle funds for the self-destructed account
-				// TODO: Why send to the module? Why not?
 				s.subBalanceHoldingSupplyConstant(addr, s.GetBalance(addr))
 				// Delete self-destructed account from global state
 				addrBech32 := eth.EthAddrToNibiruAddr(addr)
@@ -637,6 +595,16 @@ func (s *SDB) Commit() {
 			ctx.MultiStore().(sdk.CacheMultiStore).Write()
 		}
 	}
+}
+
+// Empty an account balance to prepare it for deletion while holding supply
+// constant.
+func (s *SDB) subBalanceHoldingSupplyConstant(
+	addr gethcommon.Address,
+	wei *uint256.Int,
+) {
+	s.SubBalance(addr, wei, tracing.BalanceDecreaseSelfdestruct)
+	s.AddBalance(evm.EVM_MODULE_ADDRESS, wei, tracing.BalanceIncreaseSelfdestruct)
 }
 
 // RootCtx returns the root context captured when the SDB was constructed.
@@ -672,8 +640,8 @@ func (s *SDB) Witness() *stateless.Witness {
 	return nil
 }
 
-// ↓ If you remove the quotes below, golangci-lint will change the function name
-// to American spelling as "Finalize", breaking interface compatibility.
+// ↓ NOTE:If you remove the quotes below, golangci-lint will change the function
+// name to the American spelling, "Finalize", breaking interface compatibility.
 
 // "Finalise"  prepares state objects at the end of a transaction execution.
 //
@@ -691,30 +659,7 @@ func (s *SDB) Witness() *stateless.Witness {
 //
 // This function implements the [vm.StateDB] interface.
 func (s *SDB) Finalise(deleteEmptyObjects bool) {
-	// Empty self-destructed accounts
-	{
-		localStates := append(s.savedStates, s.localState)
-		for i := len(localStates) - 1; i >= 0; i-- {
-			localState := localStates[i]
-			for addr, accChange := range localState.AccountChangeMap {
-				if accChange != SNAPSHOT_ACC_STATUS_DELETE {
-					continue
-				}
-				// TODO: Why send to the module? Why not?
-				s.subBalanceHoldingSupplyConstant(addr, s.GetBalance(addr))
-			}
-		}
-	}
-
-	// Finalize all persistent state except `savedCtxs[0]` since it's the
-	// original ctx to be committed by the baseapp.
-	{
-		ctxs := append(s.savedCtxs, s.evmTxCtx)
-		for i := len(ctxs) - 1; i > 0; i-- {
-			ctx := ctxs[i]
-			ctx.MultiStore().(sdk.CacheMultiStore).Write()
-		}
-	}
+	// Intentional no-op
 }
 
 // GetStorageRoot returns an empty state hash. This is done because a storage
@@ -726,6 +671,7 @@ func (s *SDB) GetStorageRoot(addr gethcommon.Address) (root gethcommon.Hash) {
 }
 
 // PointCache returns the point cache used by verkle tree.
+// [SDB.PointCache] is unused on Nibiru (no Verkle); return nil.
 // This function implements the [vm.StateDB] interface.
 func (s *SDB) PointCache() *utils.PointCache {
 	return nil
@@ -735,18 +681,37 @@ func (s *SDB) PointCache() *utils.PointCache {
 // LocalState
 // --------------------------------------------------------
 
+// LocalState represents the local state changes for a single EVM transaction
+// snapshot. It serves as the backbone of the StateDB's snapshot and revert
+// functionality, optimizing performance by minimizing direct access to the
+// underlying storage for uncommitted mutations.
+//
+// The LocalState is used in a hierarchical manner:
+//   - Each SDB instance has a current `localState` for active changes
+//   - Historical states are stored in `savedStates []*LocalState` for snapshots
+//   - When a snapshot is taken, the current localState is saved and a new one is created
+//   - When reverting, the current localState is discarded and a previous one is restored
+//
+// This design enables efficient state management for EVM operations like:
+//   - Nested contract calls with snapshot/revert semantics
+//   - Gas refund tracking across transaction execution
+//   - Access list management for EIP-2930 transactions
+//   - Transient storage (EIP-1153) for contract-to-contract communication
+//   - Account lifecycle tracking (creation/deletion)
 type LocalState struct {
+	// logs contains event logs emitted during the current transaction scope
 	logs []*gethcore.Log
 
+	// AccountChangeMap tracks account lifecycle changes (CREATE/DELETE flags)
 	AccountChangeMap map[gethcommon.Address]SnapshotAccChange
-	ContractStorage  transientStorage
+	// ContractStorage provides transient storage for EIP-1153 compliance
+	ContractStorage transientStorage
 
-	// Gas refund counter for the state transition. Encoded as `uint64`. It is
-	// valid for this field to be empty.
-	gasRefund  []byte // gasRefund uint64
-	accessList []byte // accessList json []gethcommon.Address
-
-	SurplusWei *big.Int
+	// gasRefund is the gas refund counter for the state transition, encoded as
+	// uint64 in big-endian format. It is valid for this field to be empty.
+	gasRefund []byte
+	// accessList is the EIP-2930 access list, JSON-encoded for persistence
+	accessList []byte
 }
 
 func NewLocalState() *LocalState {
@@ -756,17 +721,21 @@ func NewLocalState() *LocalState {
 		ContractStorage:  make(transientStorage),
 		gasRefund:        nil,
 		accessList:       nil,
-		SurplusWei:       big.NewInt(0),
 	}
 }
 
 // SnapshotAccChange tracks changes in an account. Changes include:
-// - an account marked for deletion (suicided).
-// - an account created during the current EVM tx.
+//   - an account marked for deletion (suicided).
+//   - an account created during the current EVM tx.
 type SnapshotAccChange byte
 
 var (
 	SNAPSHOT_ACC_STATUS_CREATE SnapshotAccChange = 0x01
+	// SNAPSHOT_ACC_STATUS_DELETE ("deleted") is an EIP-6780 flag indicating
+	// whether the object is eligible for self-destruct according to EIP-6780.
+	// The flag could be set either when the contract is just created within the
+	// current transaction, or when the object was previously existent and is
+	// being deployed as a contract within the current transaction.
 	SNAPSHOT_ACC_STATUS_DELETE SnapshotAccChange = 0x02
 )
 

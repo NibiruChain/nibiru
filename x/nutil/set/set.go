@@ -16,7 +16,7 @@ func (set Set[T]) Has(s T) bool {
 }
 
 func (set Set[T]) Len() int {
-	return len(set.ToSlice())
+	return len(set)
 }
 
 func (set Set[T]) ToSlice() []T {
@@ -39,4 +39,16 @@ func (set Set[T]) AddMulti(sMulti ...T) {
 	for _, s := range sMulti {
 		set[s] = struct{}{}
 	}
+}
+
+func (set Set[T]) Equals(other Set[T]) bool {
+	if len(set) != len(other) {
+		return false
+	}
+	for _, item := range set.ToSlice() {
+		if !other.Has(item) {
+			return false
+		}
+	}
+	return true
 }

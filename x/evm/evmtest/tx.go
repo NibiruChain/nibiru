@@ -229,6 +229,17 @@ func (tx TxTransferWei) Run() (evmResp *evm.MsgEthereumTxResponse, err error) {
 	return evmResp, err
 }
 
+func (tx TxTransferWei) ToJsonTxArgs() (jsonTxArgs *evm.JsonTxArgs, jsonBz []byte) {
+	jsonTxArgs = &evm.JsonTxArgs{
+		From:  &tx.Deps.Sender.EthAddr,
+		To:    &tx.To,
+		Value: (*hexutil.Big)(tx.AmountWei),
+		Gas:   (*hexutil.Uint64)(&tx.GasLimit),
+	}
+	jsonBz, _ = json.Marshal(jsonTxArgs)
+	return jsonTxArgs, jsonBz
+}
+
 // --------------------------------------------------
 // Templates
 // --------------------------------------------------

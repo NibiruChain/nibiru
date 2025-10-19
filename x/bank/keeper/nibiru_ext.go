@@ -8,8 +8,9 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/holiman/uint256"
 
+	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/bank/collections"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
@@ -213,8 +214,22 @@ func (k BaseSendKeeper) SubWei(
 	return nil
 }
 
-// TODO: UD-DEBUG: Test marshaling and unmarshaling of zero coins and positive
-// coins with "unibi" as a sanity check.
+// setNibiBalanceFromWei decomposes a wei amount into unibi (bank) and wei
+// (store) components. This function maintains the dual-balance model for NIBI:
+//
+//	```
+//	total_wei (NIBI) = (bank_unibi * 10^{12}) + wei_store.
+//	```
+//
+// Normalizes so wei_store ∈ [0, 10^12) and bank stores the remainder as unibi
+// coins.
+//
+// Args:
+//   - ctx: SDK context for state operations
+//   - addr: Account address to update
+//   - wei: Total wei amount (nil/zero → zero balance)
+//
+// Note: Internal function. Use AddWei/SubWei for proper event emission and delta tracking.
 func (k BaseSendKeeper) setNibiBalanceFromWei(
 	ctx sdk.Context, addr sdk.AccAddress, wei *uint256.Int,
 ) {

@@ -208,6 +208,9 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 // multiple of 1 micronibi (10^12 wei). It returns the truncated value and an
 // error if the input value is too small.
 //
+// This function is NOT used in production and docmuments wei balance conversion
+// semantics from before Nibiru v2.8.0.
+//
 // Args:
 //   - weiInt (*big.Int): The amount of wei to be parsed.
 //
@@ -218,8 +221,10 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 //
 // Example:
 //
+//	```
 //	Input  number:  123456789012345678901234567890
-//	Parsed number:  123456789012 * 10^12
+//	Parsed number:  123456789012 * 10^{12}
+//	```
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return
 	if weiInt == nil || (weiInt.Cmp(big.NewInt(0)) <= 0) {

@@ -132,12 +132,14 @@ func (k Keeper) ValidatorAccount(
 // Returns:
 //   - A pointer to the QueryBalanceResponse object containing the balance.
 //   - An error if the balance retrieval process encounters any issues.
+//
+// TODO: https://github.com/NibiruChain/nibiru/issues/2401
+// [feat] The "/eth.evm.v1.Query/Balance" query should work with Ethereum hex and nibi-prefixed Bech32 address formats, similar to the precompiles
 func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// TODO: UD-DEBUG: Modify to work with EVM or non-EVM addr
 	balanceWei := k.GetWeiBalance(ctx, gethcommon.HexToAddress(req.Address))
 	return &evm.QueryBalanceResponse{
 		Balance:    balanceWei.String(),

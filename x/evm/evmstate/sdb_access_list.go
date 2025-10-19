@@ -18,9 +18,9 @@ package evmstate
 
 import (
 	"encoding/json"
+	"fmt"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
@@ -51,31 +51,23 @@ func (al accessList) MarshalJSON() (bz []byte, err error) {
 	return json.Marshal(accessTupleJson)
 }
 
-// TODO: UD-DEBUG: test
 func (al *accessList) UnmarshalJSON(bz []byte) (err error) {
 	var accessTupleJson map[gethcommon.Address][]gethcommon.Hash
 	if err := json.Unmarshal(bz, &accessTupleJson); err != nil {
-		return err // TODO: UD-DEBUG: err msg
+		return fmt.Errorf("accessList error: %w", err)
 	}
 	if *al == nil {
-		*al = make(accessList)
+		*al = make(accessList) // Safe: initializes if nil
 	}
 	for addr, slots := range accessTupleJson {
-		(*al)[addr] = set.New(slots...)
+		(*al)[addr] = set.New(slots...) // Safe: set.New handles empty slices
 	}
 	return nil
 }
 
-// type AccessList struct {
-// 	// Addrs is a map from address to slot index, the slice index of
-// 	// `AccessList.Slots`. The index "-1" is a sentinel value meaning the address
-// 	// is tracked but does not yet have any slots.
-
-// 	Addrs map[gethcommon.Address]int `json:"addrs"`
-// 	Slots []set.Set[gethcommon.Hash] `json:"slots"`
-// }
-
-// AddAddressToAccessList adds the given address to the access list
+// AddAddressToAccessList adds the given address to the access list. This
+// operation is safe to perform even if the ccess list fork is not active yet.
+// This function implements the [vm.StateDB] interface.
 func (s *SDB) AddAddressToAccessList(addr gethcommon.Address) {
 	al := s.getAccessList()
 	defer s.setAccessList(al)
@@ -85,7 +77,10 @@ func (s *SDB) AddAddressToAccessList(addr gethcommon.Address) {
 	al[addr] = set.New[gethcommon.Hash]()
 }
 
-// AddSlotToAccessList adds the given (address, slot)-tuple to the access list
+// AddSlotToAccessList adds the given (address, slot)-tuple to the access list.
+// This operation is safe to perform even if the ccess list fork is not active
+// yet.
+// This function implements the [vm.StateDB] interface.
 func (s *SDB) AddSlotToAccessList(addr gethcommon.Address, slot gethcommon.Hash) {
 	al := s.getAccessList()
 	_, _ = al.AddSlot(addr, slot)
@@ -110,7 +105,10 @@ func (s *SDB) getAccessList() accessList {
 	}
 	var al accessList
 	if err := json.Unmarshal(accessListBz, &al); err != nil {
-		panic(err) // TODO: UD-DEBUG: err mesg
+		// Safe: Since [accessList] has only private access, we guard against
+		// malformatted data and verified that's the case with tests. This panic
+		// should be logically impossible.
+		panic(err)
 	}
 	return al
 }
@@ -118,7 +116,10 @@ func (s *SDB) getAccessList() accessList {
 func (s *SDB) setAccessList(al accessList) {
 	accessListBz, err := al.MarshalJSON()
 	if err != nil {
-		panic(err) // TODO: UD-DEBUG: err mesg
+		// Safe: Since [accessList] has only private access, we guard against
+		// malformatted data and verified that's the case with tests. This panic
+		// should be logically impossible.
+		panic(err)
 	}
 	s.localState.accessList = accessListBz
 }
@@ -186,33 +187,22 @@ func (al accessList) AddSlot(
 	return false, false
 }
 
-// PrepareAccessList handles the preparatory steps for executing a state
-// transition with regards to both EIP-2929 and EIP-2930:
-//
-// - Add sender to access list (2929)
-// - Add destination to access list (2929)
-// - Add precompiles to access list (2929)
-// - Add the contents of the optional tx access list (2930)
-//
-// This method should only be called if Yolov3/Berlin/2929+2930 is applicable at the current number.
-func (s *SDB) PrepareAccessList(
-	sender gethcommon.Address,
-	dst *gethcommon.Address,
-	precompiles []gethcommon.Address,
-	txAccesses gethcore.AccessList,
+// Equals returns true if the two access lists are equal. This
+// function is for testing purposes.
+func (al accessList) Equals(other accessList) (
+	isEqual bool, inequalityReason string,
 ) {
-	s.AddAddressToAccessList(sender)
-	if dst != nil {
-		s.AddAddressToAccessList(*dst)
-		// If it's a create-tx, the destination will be added inside evm.create
+	if len(al) != len(other) {
+		return false, "mismatch in number of keys"
 	}
-	for _, addr := range precompiles {
-		s.AddAddressToAccessList(addr)
-	}
-	for _, el := range txAccesses {
-		s.AddAddressToAccessList(el.Address)
-		for _, key := range el.StorageKeys {
-			s.AddSlotToAccessList(el.Address, key)
+	for addr, list := range al {
+		listOther, ok := other[addr]
+		if !ok {
+			return false, fmt.Sprintf("other has missing key { addr: %s }", addr)
+		}
+		if !listOther.Equals(list) {
+			return false, fmt.Sprintf("slots mismatch for key { addr: %s }", addr)
 		}
 	}
+	return true, ""
 }

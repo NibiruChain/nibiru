@@ -75,7 +75,7 @@ func (s *Suite) TestAccount() {
 			sdb.Commit()
 			helpMsg := "created the account as a contract after self destruct"
 			s.False(sdb.HasSuicided(taddr), helpMsg)
-			s.True(sdb.IsCreatedThisBlock(taddr), helpMsg)
+			s.True(sdb.IsCreatedThisTx(taddr), helpMsg)
 
 			// suicide
 			deps.Commit() // Resets the sdb, so this new object doesn't have lingering state
@@ -101,8 +101,6 @@ func (s *Suite) TestAccount() {
 			s.Equal("0", sdb.GetBalance(taddr).String(), helpMsg)
 			s.False(sdb.Exist(taddr), helpMsg)
 			s.Require().Equal(true, sdb.Empty(taddr), helpMsg)
-			// TODO: UD-DEBUG: Need storage checks?
-			// s.Require().Empty(CollectContractStorage(sdb))
 		}},
 	}
 	for _, tc := range testCases {

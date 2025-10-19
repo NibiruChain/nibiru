@@ -141,7 +141,7 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	}
 }
 
-func (s *TestSuite) TestWeiConversion() {
+func (s *TestSuite) TestParseWeiAsMultipleOfMicronibi() {
 	{
 		unibiAmt := big.NewInt(420)
 		s.Equal(

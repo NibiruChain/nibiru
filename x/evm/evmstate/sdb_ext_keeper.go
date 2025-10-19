@@ -58,15 +58,13 @@ func (k *Keeper) ForEachStorage(
 	}
 }
 
-// SetAccBalance update account's balance, compare with current balance first,
-// then decide to mint or burn.
-// Implements the `statedb.Keeper` interface.
-// Only called by `StateDB.Commit()`.
-func (k *Keeper) SetAccBalance(
+// setAccBalance update account's balance, comparing with current balance first,
+// then decides to ad or subtract based on what's needed.
+// Implements the [Keeper] interface.
+func (k *Keeper) setAccBalance(
 	ctx sdk.Context, addr gethcommon.Address, newBal *uint256.Int,
 ) error {
 	addrBech32 := eth.EthAddrToNibiruAddr(addr)
-
 	balPre := k.GetWeiBalance(ctx, addr)
 
 	cmpSign := newBal.Cmp(balPre)
@@ -79,37 +77,9 @@ func (k *Keeper) SetAccBalance(
 	}
 	balDelta := new(uint256.Int).Sub(balPre, newBal)
 	if err := k.Bank.SubWei(ctx, addrBech32, balDelta); err != nil {
-		return err // TODO: UD-DEBUG: err msg
+		return err
 	}
 	return nil
-
-	// balance := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
-	// delta := new(big.Int).Sub(amountEvmDenom, balance)
-	// bk := k.Bank.BaseKeeper
-
-	// switch delta.Sign() {
-	// case 1:
-	// 	// mint
-	// 	coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(delta)))
-	// 	if err := bk.MintCoins(ctx, evm.ModuleName, coins); err != nil {
-	// 		return err
-	// 	}
-	// 	if err := bk.SendCoinsFromModuleToAccount(ctx, evm.ModuleName, addrBech32, coins); err != nil {
-	// 		return err
-	// 	}
-	// case -1:
-	// 	// burn
-	// 	coins := sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(new(big.Int).Neg(delta))))
-	// 	if err := bk.SendCoinsFromAccountToModule(ctx, addrBech32, evm.ModuleName, coins); err != nil {
-	// 		return err
-	// 	}
-	// 	if err := bk.BurnCoins(ctx, evm.ModuleName, coins); err != nil {
-	// 		return err
-	// 	}
-	// default:
-	// 	// not changed
-	// }
-	// return nil
 }
 
 func (k *Keeper) SendWei(
@@ -151,7 +121,7 @@ func (k *Keeper) SetAccount(
 
 	k.accountKeeper.SetAccount(ctx, acct)
 
-	if err := k.SetAccBalance(ctx, addr, account.BalanceNwei); err != nil {
+	if err := k.setAccBalance(ctx, addr, account.BalanceNwei); err != nil {
 		return err
 	}
 
@@ -196,7 +166,7 @@ func (k *Keeper) DeleteAccount(ctx sdk.Context, addr gethcommon.Address) error {
 	}
 
 	// clear balance
-	if err := k.SetAccBalance(ctx, addr, new(uint256.Int)); err != nil {
+	if err := k.setAccBalance(ctx, addr, new(uint256.Int)); err != nil {
 		return err
 	}
 
