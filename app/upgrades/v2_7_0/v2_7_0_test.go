@@ -22,29 +22,29 @@ import (
 func (s *Suite) TestMainnet() {
 	deps := evmtest.NewTestDeps()
 
-	deps.Ctx = deps.Ctx.WithChainID("cataclysm-1") // Pretend to be mainnet
+	deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1")) // Pretend to be mainnet
 	s.Equal(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),
-		deps.EvmKeeper.EthChainID(deps.Ctx).String(),
+		deps.EvmKeeper.EthChainID(deps.Ctx()).String(),
 	)
 
 	// Initial condition - evm.Params.CanonicalWnibi not set
 	{
 		evmParams := evm.DefaultParams()
 		evmParams.CanonicalWnibi = eth.EIP55Addr{Address: gethcommon.Address{}}
-		err := deps.EvmKeeper.SetParams(deps.Ctx, evmParams)
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), evmParams)
 		s.Require().NoError(err)
 	}
 
-	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
+	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
 	err := deps.RunUpgrade(v2_7_0.Upgrade)
 	s.Require().NoError(err)
 
-	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
 	s.Equal(appconst.MAINNET_WNIBI_ADDR.Hex(), evmParams.CanonicalWnibi.Hex())
-	newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
+	newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(newWnibiAcc)
 }
 
@@ -57,7 +57,7 @@ func (s *Suite) TestOtherNibirus() {
 
 	s.NotEqual(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),
-		deps.EvmKeeper.EthChainID(deps.Ctx).String(),
+		deps.EvmKeeper.EthChainID(deps.Ctx()).String(),
 		"expect chain not to be Nibiru mainnet",
 	)
 
@@ -65,27 +65,27 @@ func (s *Suite) TestOtherNibirus() {
 	{
 		evmParams := evm.DefaultParams()
 		evmParams.CanonicalWnibi = eth.EIP55Addr{Address: gethcommon.Address{}}
-		err := deps.EvmKeeper.SetParams(deps.Ctx, evmParams)
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), evmParams)
 		s.Require().NoError(err)
 	}
 
-	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
+	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
 	err := deps.RunUpgrade(v2_7_0.Upgrade)
 	s.Require().NoError(err)
 
-	evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
 	s.Equal(appconst.MAINNET_WNIBI_ADDR.Hex(), evmParams.CanonicalWnibi.Hex())
 
 	contract := appconst.MAINNET_WNIBI_ADDR
-	newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, contract)
+	newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), contract)
 	s.NotNil(newWnibiAcc)
 	s.True(newWnibiAcc.IsContract())
 
 	evmObj, _ := deps.NewEVM()
 	erc20Info, err := deps.EvmKeeper.FindERC20Metadata(
-		deps.Ctx, evmObj, contract, embeds.SmartContract_WNIBI.ABI,
+		deps.Ctx(), evmObj, contract, embeds.SmartContract_WNIBI.ABI,
 	)
 	s.NoError(err)
 	s.Equal("Wrapped Nibiru", erc20Info.Name)

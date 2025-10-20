@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/cosmos/gogoproto/proto"
+	"github.com/holiman/uint256"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -25,7 +26,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -39,6 +39,28 @@ var (
 
 	_ codectypes.UnpackInterfacesMessage = MsgEthereumTx{}
 )
+
+// ------------------------------------------------------------
+// MsgEthereumTx: Ethereum/EVM transactions on Nibiru
+// ------------------------------------------------------------
+
+// A type alias to save some typing. An Ethereum transaction an SDK message.
+type Tx = *MsgEthereumTx
+
+func RequireStandardEVMTxMsg(tx sdk.Tx) (*MsgEthereumTx, error) {
+	txMsgs := tx.GetMsgs()
+	if len(txMsgs) != 1 {
+		return nil, fmt.Errorf("Ethereum transaction must be exactly one tx msg: got %d", len(txMsgs))
+	}
+	msg, ok := txMsgs[0].(*MsgEthereumTx)
+	if !ok {
+		return nil, sdkioerrors.Wrapf(
+			sdkerrors.ErrUnknownRequest,
+			"invalid message type %T, expected %T", msg, (*MsgEthereumTx)(nil),
+		)
+	}
+	return msg, nil
+}
 
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
@@ -139,48 +161,75 @@ func (msg MsgEthereumTx) Route() string { return RouterKey }
 
 func (msg MsgEthereumTx) Type() string { return proto.MessageName(new(MsgEthereumTx)) }
 
-// ValidateBasic implements the sdk.Msg interface. It performs basic validation
-// checks of a Transaction. If returns an error if validation fails.
+// ValidateBasic implements the [sdk.Msg] interface. It performs basic
+// (stateless) validation checks of a Transaction. If returns an error if
+// validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
+	_, _, err := msg.Validate()
+	return err
+}
+
+// Validate performs stateless validation for the transaction. Here, "stateless"
+// means validation that does not depend on the blockchain state.
+func (msg MsgEthereumTx) Validate() (
+	coreTx *gethcore.Transaction,
+	txData TxData,
+	// Using rerr as the var name instead of "err" makes it easier to manage
+	// local scope without introducing bugs.
+	rerr error,
+) {
+	defer func() {
+		if rerr != nil {
+			rerr = fmt.Errorf("MsgEthereumTx ValidateError: %w", rerr)
+		}
+	}()
 	if msg.From != "" {
 		if err := eth.ValidateAddress(msg.From); err != nil {
-			return sdkioerrors.Wrap(err, "invalid from address")
+			rerr = sdkioerrors.Wrap(err, "invalid from address")
+			return
 		}
 	}
 
 	// Validate Size_ field, should be kept empty
 	if msg.Size_ != 0 {
-		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
+		rerr = sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "tx size is deprecated")
+		return
 	}
 
-	txData, err := UnpackTxData(msg.Data)
-	if err != nil {
-		return sdkioerrors.Wrap(err, "failed to unpack tx data")
+	txData, rerr = UnpackTxData(msg.Data)
+	if rerr != nil {
+		rerr = sdkioerrors.Wrap(rerr, "failed to unpack tx data")
+		return
 	}
 
 	gas := txData.GetGas()
 
 	// prevent txs with 0 gas to fill up the mempool
 	if gas == 0 {
-		return sdkioerrors.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
+		rerr = sdkioerrors.Wrap(sdkerrors.ErrInvalidGasLimit, "gas limit must not be zero")
+		return
 	}
 
 	// prevent gas limit from overflow
 	if g := new(big.Int).SetUint64(gas); !g.IsInt64() {
-		return sdkioerrors.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
+		rerr = sdkioerrors.Wrap(core.ErrGasUintOverflow, "gas limit must be less than math.MaxInt64")
+		return
 	}
 
 	if err := txData.Validate(); err != nil {
-		return sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
+		rerr = sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
+		return
 	}
 
 	// Validate EthHash field after validated txData to avoid panic
-	txHash := msg.AsTransaction().Hash().Hex()
+	coreTx = msg.AsTransaction()
+	txHash := coreTx.Hash().Hex()
 	if msg.Hash != txHash {
-		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		rerr = sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid tx hash %s, expected: %s", msg.Hash, txHash)
+		return
 	}
 
-	return nil
+	return coreTx, txData, nil
 }
 
 // GetMsgs returns a single MsgEthereumTx as sdk.Msg.
@@ -224,7 +273,7 @@ func (msg MsgEthereumTx) GetSignBytes() []byte {
 // The function will fail if the sender address is not defined for the msg or if
 // the sender is not registered on the keyring
 func (msg *MsgEthereumTx) Sign(ethSigner gethcore.Signer, keyringSigner keyring.Signer) error {
-	from := msg.GetFrom()
+	from := msg.FromAddrBech32()
 	if from.Empty() {
 		return fmt.Errorf("sender address not defined for message")
 	}
@@ -290,14 +339,17 @@ func (msg MsgEthereumTx) EffectiveGasCapWei(baseFeeWei *big.Int) *big.Int {
 	return txData.EffectiveGasFeeCapWei(baseFeeWei)
 }
 
-// GetFrom loads the ethereum sender address from the sigcache and returns an
+// FromAddrBech32 loads the ethereum sender address from the sigcache and returns an
 // sdk.AccAddress from its bytes
-func (msg *MsgEthereumTx) GetFrom() sdk.AccAddress {
+func (msg *MsgEthereumTx) FromAddrBech32() sdk.AccAddress {
 	if msg.From == "" {
 		return nil
 	}
+	return msg.FromAddr().Bytes()
+}
 
-	return gethcommon.HexToAddress(msg.From).Bytes()
+func (msg *MsgEthereumTx) FromAddr() gethcommon.Address {
+	return gethcommon.HexToAddress(msg.From)
 }
 
 // AsTransaction creates an Ethereum Transaction type from the msg fields
@@ -310,8 +362,20 @@ func (msg MsgEthereumTx) AsTransaction() *gethcore.Transaction {
 	return gethcore.NewTx(txData.AsEthereumData())
 }
 
-// AsMessage creates an Ethereum core.Message from the msg fields
-func (msg MsgEthereumTx) AsMessage(
+// AsTransactionSafe creates an Ethereum transaction of type
+// (*gethcore.Transaction) without silently skipping the tx data error.
+func (msg MsgEthereumTx) AsTransactionSafe() (
+	coreTx *gethcore.Transaction, err error,
+) {
+	txData, err := UnpackTxData(msg.Data)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert to *gethcore.Transaction: %w", err)
+	}
+	return gethcore.NewTx(txData.AsEthereumData()), nil
+}
+
+// ToGethCoreMsg creates an Go-Ethereum [core.Message] from the msg fields
+func (msg MsgEthereumTx) ToGethCoreMsg(
 	signer gethcore.Signer,
 	baseFeeWei *big.Int,
 ) (*core.Message, error) {
@@ -384,27 +448,6 @@ func (msg *MsgEthereumTx) BuildTx(b client.TxBuilder, evmDenom string) (signing.
 	return tx, nil
 }
 
-// GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
-	addr, _ := sdk.AccAddressFromBech32(m.Authority)
-	return []sdk.AccAddress{addr}
-}
-
-// ValidateBasic does a sanity check of the provided data
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return sdkioerrors.Wrap(err, "invalid authority address")
-	}
-
-	return m.Params.Validate()
-}
-
-// GetSignBytes implements the LegacyMsg interface.
-func (m MsgUpdateParams) GetSignBytes() []byte {
-	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
-}
-
 // UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
 func UnwrapEthereumMsg(tx *sdk.Tx, ethHash gethcommon.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
@@ -445,7 +488,30 @@ func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
 	return &res, nil
 }
 
-var EmptyCodeHash = crypto.Keccak256(nil)
+// ------------------------------------------------------------
+// All other messages
+// ------------------------------------------------------------
+
+// GetSigners returns the expected signers for a MsgUpdateParams message.
+func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	//#nosec G703 -- gosec raises a warning about a non-handled error which we deliberately ignore here
+	addr, _ := sdk.AccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return sdkioerrors.Wrap(err, "invalid authority address")
+	}
+
+	return m.Params.Validate()
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
+}
 
 // BinSearch executes the binary search and hone in on an executable gas limit
 func BinSearch(
@@ -543,7 +609,7 @@ type Addrs struct {
 func (m *MsgConvertEvmToCoin) Validate() (
 	sender Addrs,
 	erc20 eth.EIP55Addr,
-	amount sdkmath.Int,
+	amount *uint256.Int,
 	toAddr Addrs,
 	err error,
 ) {
@@ -579,8 +645,9 @@ func (m *MsgConvertEvmToCoin) Validate() (
 		err = fmt.Errorf("amount must be positive: amount=\"%s\"", m.Amount)
 		return
 	}
+	amountU256 := uint256.MustFromBig(m.Amount.BigInt())
 
-	return sender, m.Erc20Addr, m.Amount, toAddr, nil
+	return sender, m.Erc20Addr, amountU256, toAddr, nil
 }
 
 // ValidateBasic does a sanity check of the provided data

@@ -16,12 +16,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	tf "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -58,8 +58,8 @@ func (s *Suite) TestTestnet() {
 	)
 
 	s.T().Log(`Set chain to nibiru-testnet-2 (EVM 6911)`)
-	deps.Ctx = deps.Ctx.WithChainID("nibiru-testnet-2")
-	gotEthChainId := deps.EvmKeeper.EthChainID(deps.Ctx).String()
+	deps.SetCtx(deps.Ctx().WithChainID("nibiru-testnet-2"))
+	gotEthChainId := deps.EvmKeeper.EthChainID(deps.Ctx()).String()
 	s.NotEqual(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),
 		gotEthChainId,
@@ -82,7 +82,7 @@ func (s *Suite) TestTestnet() {
 	{
 		evmParams := evm.DefaultParams()
 		evmParams.CanonicalWnibi = eth.EIP55Addr{Address: gethcommon.Address{}}
-		err := deps.EvmKeeper.SetParams(deps.Ctx, evmParams)
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), evmParams)
 		s.Require().NoError(err)
 	}
 
@@ -90,7 +90,7 @@ func (s *Suite) TestTestnet() {
 
 	bankDenom := originalbankMetadata.Base
 	{
-		if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+		if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx(), bankDenom) {
 			s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 		}
 
@@ -108,19 +108,19 @@ func (s *Suite) TestTestnet() {
 			Symbol:  bankDenom,
 		}
 
-		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bankMetadata)
 
 		// Give the sender funds for the fee
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
-			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 		))
 
 		s.T().Log("happy: CreateFunToken for the bank coin")
 		createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgCreateFunToken{
 				FromBankDenom:     bankDenom,
 				Sender:            deps.Sender.NibiruAddr.String(),
@@ -138,7 +138,7 @@ func (s *Suite) TestTestnet() {
 		s.Equal(tempFuntoken, createFuntokenResp.FuntokenMapping)
 
 		s.T().Log("Expect ERC20 to be deployed")
-		_, err = deps.EvmKeeper.Code(deps.Ctx,
+		_, err = deps.EvmKeeper.Code(deps.Ctx(),
 			&evm.QueryCodeRequest{
 				Address: erc20.String(),
 			},
@@ -148,7 +148,7 @@ func (s *Suite) TestTestnet() {
 		s.Require().NotEqual(erc20.Hex(), v2_7_0.TESTNET_STNIBI_ADDR.Hex(), "current temporary FunToken shouldn't yet mirror the Testnet state")
 
 		erc20AuthAcc := deps.App.AccountKeeper.GetAccount(
-			deps.Ctx,
+			deps.Ctx(),
 			eth.EthAddrToNibiruAddr(erc20.Address),
 		)
 		s.Require().NotNil(erc20AuthAcc)
@@ -159,7 +159,7 @@ func (s *Suite) TestTestnet() {
 		pubkey := erc20AuthAcc.GetPubKey()
 		s.Require().Nil(pubkey, "Contracts don't have public keys")
 
-		tempErc20GenAcc, isOk := deps.EvmKeeper.ExportGenesisContractAccount(deps.Ctx, erc20AuthAcc)
+		tempErc20GenAcc, isOk := deps.EvmKeeper.ExportGenesisContractAccount(deps.Ctx(), erc20AuthAcc)
 		s.Require().True(isOk, "expect contract defined in auth module")
 
 		s.T().Log("Inject in auth - testnet stNIBI EVM contract")
@@ -179,7 +179,7 @@ func (s *Suite) TestTestnet() {
 			},
 			CodeHash: stnibiEvmTestnetAuthAccI.GetCodeHash().Hex(),
 		}
-		deps.App.AccountKeeper.SetAccount(deps.Ctx, &stnibiEvmTestnetAuthAcc)
+		deps.App.AccountKeeper.SetAccount(deps.Ctx(), &stnibiEvmTestnetAuthAcc)
 
 		s.T().Log("Inject in EVM - testnet stNIBI EVM contract")
 		authAcc := stnibiEvmTestnetAuthAcc
@@ -191,10 +191,10 @@ func (s *Suite) TestTestnet() {
 		)
 		s.Require().Equal(codeHashAuth, codeHashEvm, "code hash mismatch between auth and evm modules")
 
-		err = deps.EvmKeeper.ImportGenesisAccount(deps.Ctx, evmGenAcc)
+		err = deps.EvmKeeper.ImportGenesisAccount(deps.Ctx(), evmGenAcc)
 		s.Require().NoError(err)
 
-		contract := deps.EvmKeeper.GetAccount(deps.Ctx, v2_7_0.TESTNET_STNIBI_ADDR)
+		contract := deps.EvmKeeper.GetAccount(deps.Ctx(), v2_7_0.TESTNET_STNIBI_ADDR)
 		s.Require().NotNil(contract)
 		s.Require().True(contract.IsContract(), "expect testnet stNIBI to be an EVM contract ")
 
@@ -208,10 +208,10 @@ func (s *Suite) TestTestnet() {
 		}
 
 		// The reason tempFuntoken has prefix "temp"
-		err = deps.EvmKeeper.FunTokens.Delete(deps.Ctx, tempFuntoken.ID())
+		err = deps.EvmKeeper.FunTokens.Delete(deps.Ctx(), tempFuntoken.ID())
 		s.Require().NoError(err)
 		err = deps.EvmKeeper.FunTokens.SafeInsert(
-			deps.Ctx,
+			deps.Ctx(),
 			funtoken.Erc20Addr.Address,
 			funtoken.BankDenom,
 			funtoken.IsMadeFromCoin,
@@ -223,7 +223,7 @@ func (s *Suite) TestTestnet() {
 	s.NoError(
 		testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			erisAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(originalbankMetadata.Base, 69_420)),
 		),
@@ -251,14 +251,14 @@ func (s *Suite) TestTestnet() {
 			s.Require().NoError(err)
 
 			// Validate the ERC20 balance of the holder
-			evmObj, _ := deps.NewEVMLessVerboseLogger()
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+			evmObj, _ := deps.NewEVM()
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
 			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
-		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx, evmObj)
+		evmObj, _ := deps.NewEVM()
+		totalSupplyErc20, err := deps.EvmKeeper.ERC20().TotalSupply(funtoken.Erc20Addr.Address, deps.Ctx(), evmObj)
 		s.Require().NoError(err)
 		s.Require().Equal("120", totalSupplyErc20.String())
 	}
@@ -266,15 +266,15 @@ func (s *Suite) TestTestnet() {
 	s.T().Log("Confirm that stNIBI has faulty metadata prior to the upgrade")
 	{
 		compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotSymbol, _ := deps.EvmKeeper.ERC20().LoadERC20Symbol(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotDecimals, _ := deps.EvmKeeper.ERC20().LoadERC20Decimals(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		s.Equal(originalbankMetadata.Name, gotName)
 		s.Equal(originalbankMetadata.Symbol, gotSymbol)
@@ -286,29 +286,29 @@ func (s *Suite) TestTestnet() {
 			deps.App.UpgradeKeeper.HasHandler(v2_7_0.Upgrade.UpgradeName),
 		)
 
-		originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, appconst.MAINNET_WNIBI_ADDR)
+		originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 		s.Nil(originalWnibiAcc)
 
-		eventsBeforeUpgrade := deps.Ctx.EventManager().Events()
+		eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
 
 		err := deps.RunUpgrade(v2_7_0.Upgrade)
 		s.Require().NoError(err)
 
-		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx.EventManager().Events())
+		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())
 
 		s.T().Log("assertions for WNIBI")
 
-		evmParams := deps.EvmKeeper.GetParams(deps.Ctx)
+		evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
 		s.Equal(appconst.MAINNET_WNIBI_ADDR.Hex(), evmParams.CanonicalWnibi.Hex())
 
 		contract := appconst.MAINNET_WNIBI_ADDR
-		newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx, contract)
+		newWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), contract)
 		s.NotNil(newWnibiAcc)
 		s.True(newWnibiAcc.IsContract())
 
 		evmObj, _ := deps.NewEVM()
 		erc20Info, err := deps.EvmKeeper.FindERC20Metadata(
-			deps.Ctx, evmObj, contract, embeds.SmartContract_WNIBI.ABI,
+			deps.Ctx(), evmObj, contract, embeds.SmartContract_WNIBI.ABI,
 		)
 		s.NoError(err)
 		s.Equal("Wrapped Nibiru", erc20Info.Name)
@@ -335,21 +335,21 @@ func (s *Suite) TestTestnet() {
 
 	compiledContract := embeds.SmartContract_ERC20MinterWithMetadataUpdates
 	s.Run("Confirm that stNIBI has desired metadata after upgrade", func() {
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		gotName, _ := deps.EvmKeeper.ERC20().LoadERC20Name(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotSymbol, _ := deps.EvmKeeper.ERC20().LoadERC20Symbol(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		gotDecimals, _ := deps.EvmKeeper.ERC20().LoadERC20Decimals(
-			deps.Ctx, evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
+			deps.Ctx(), evmObj, compiledContract.ABI, funtoken.Erc20Addr.Address,
 		)
 		s.Equal("Liquid Staked NIBI", gotName)
 		s.Equal("stNIBI", gotSymbol)
 		s.Equal(uint8(6), gotDecimals)
 
-		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx, funtoken.BankDenom)
+		newBankMetadata, ok := deps.App.BankKeeper.GetDenomMetaData(deps.Ctx(), funtoken.BankDenom)
 		s.True(ok)
 		s.Equal(2, len(newBankMetadata.DenomUnits))
 		s.Equal("Liquid Staked NIBI", newBankMetadata.Name)
@@ -360,14 +360,13 @@ func (s *Suite) TestTestnet() {
 	s.Run("New ERC20 impl: owner should be the EVM module", func() {
 		input, err := compiledContract.ABI.Pack("owner")
 		s.Require().NoError(err)
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmkeeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
@@ -381,11 +380,11 @@ func (s *Suite) TestTestnet() {
 
 	s.Run("Confirm stNIBI ERC20 contract has new holder balances unharmed", func() {
 		// It MUST still be a contract
-		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx, funtoken.Erc20Addr.Address).IsContract())
+		s.Require().True(deps.EvmKeeper.GetAccount(deps.Ctx(), funtoken.Erc20Addr.Address).IsContract())
 
-		evmObj, _ := deps.NewEVMLessVerboseLogger()
+		evmObj, _ := deps.NewEVM()
 		for idx, holderAddr := range holders {
-			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx, evmObj)
+			balErc20, err := deps.EvmKeeper.ERC20().BalanceOf(funtoken.Erc20Addr.Address, holderAddr, deps.Ctx(), evmObj)
 			s.Require().NoError(err)
 			s.Require().Equal(strconv.Itoa(20*(idx+1)), balErc20.String())
 		}

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	EthBaseDenom = appconst.BondDenom
+	EthBaseDenom = appconst.DENOM_UNIBI
 	// EIP155ChainID_Testnet: Chain ID for a testnet Nibiru following the
 	// format proposed by Vitalik in EIP155.
 	EIP155ChainID_Testnet = "nibirutest_420-1"

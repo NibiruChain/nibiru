@@ -7,12 +7,11 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
+	cmtlog "github.com/cometbft/cometbft/libs/log"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -33,12 +32,12 @@ var _ eth.EVMTxIndexer = &EVMTxIndexer{}
 // EVMTxIndexer implements a eth tx indexer on a KV db.
 type EVMTxIndexer struct {
 	db        dbm.DB
-	logger    log.Logger
+	logger    cmtlog.Logger
 	clientCtx client.Context
 }
 
 // NewEVMTxIndexer creates the EVMTxIndexer
-func NewEVMTxIndexer(db dbm.DB, logger log.Logger, clientCtx client.Context) *EVMTxIndexer {
+func NewEVMTxIndexer(db dbm.DB, logger cmtlog.Logger, clientCtx client.Context) *EVMTxIndexer {
 	return &EVMTxIndexer{db, logger, clientCtx}
 }
 
@@ -73,7 +72,7 @@ func (indexer *EVMTxIndexer) IndexBlock(block *cmttypes.Block, txResults []*abci
 			continue
 		}
 
-		if !isEthTx(tx) {
+		if !evm.IsEthTx(tx) {
 			continue
 		}
 
@@ -216,19 +215,6 @@ func (indexer *EVMTxIndexer) CloseDBAndExit() error {
 		return sdkioerrors.Wrap(err, "CloseDBAndExit")
 	}
 	return nil
-}
-
-// isEthTx check if the tx is an eth tx
-func isEthTx(tx sdk.Tx) bool {
-	extTx, ok := tx.(authante.HasExtensionOptionsTx)
-	if !ok {
-		return false
-	}
-	opts := extTx.GetExtensionOptions()
-	if len(opts) != 1 || opts[0].GetTypeUrl() != "/eth.evm.v1.ExtensionOptionsEthereumTx" {
-		return false
-	}
-	return true
 }
 
 // saveTxResult index the txResult into the kv db batch

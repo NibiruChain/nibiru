@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )

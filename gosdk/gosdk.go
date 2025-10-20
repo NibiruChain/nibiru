@@ -34,11 +34,16 @@ func NewNibiruSdk(
 	EnsureNibiruPrefix()
 	encCfg := app.MakeEncodingConfig()
 	keyring := keyring.NewInMemory(encCfg.Codec)
-	queryClient, err := NewQuerier(grpcConn)
-	if err != nil {
-		return NibiruSDK{}, err
+
+	var cometRpc cmtrpcclient.Client
+	{
+		cometRpcHttp, err := NewRPCClient(rpcEndpt, "/websocket")
+		if err != nil {
+			return NibiruSDK{}, err
+		}
+		cometRpc = cometRpcHttp
 	}
-	cometRpc, err := NewRPCClient(rpcEndpt, "/websocket")
+	queryClient, err := NewQuerier(grpcConn, cometRpc)
 	if err != nil {
 		return NibiruSDK{}, err
 	}

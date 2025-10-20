@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 )
 
@@ -57,7 +57,7 @@ func (p precompileOracle) Run(
 	if err != nil {
 		return nil, err
 	}
-	method, args, ctx := startResult.Method, startResult.Args, startResult.CacheCtx
+	method, args, ctx := startResult.Method, startResult.Args, startResult.Ctx
 
 	switch PrecompileMethod(method.Name) {
 	case OracleMethod_queryExchangeRate:
@@ -73,7 +73,7 @@ func (p precompileOracle) Run(
 		return
 	}
 	contract.UseGas(
-		startResult.CacheCtx.GasMeter().GasConsumed(),
+		startResult.Ctx.GasMeter().GasConsumed(),
 		evm.Config.Tracer,
 		tracing.GasChangeCallPrecompiledContract,
 	)

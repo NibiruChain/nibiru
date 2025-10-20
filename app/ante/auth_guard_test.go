@@ -124,7 +124,7 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 			s.Require().NoError(err)
 
 			_, err = anteDec.AnteHandle(
-				deps.Ctx, txBuilder.GetTx(), false, evmtest.NextNoOpAnteHandler,
+				deps.Ctx(), txBuilder.GetTx(), false, evmtest.NextNoOpAnteHandler,
 			)
 			if tc.wantErr != "" {
 				s.Require().ErrorContains(err, tc.wantErr)

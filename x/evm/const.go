@@ -11,9 +11,10 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core"
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
 
 const (
@@ -40,6 +41,14 @@ const (
 var (
 	BASE_FEE_MICRONIBI = big.NewInt(1)
 	BASE_FEE_WEI       = NativeToWei(BASE_FEE_MICRONIBI)
+
+	// EmptyCodeHashBz is a known hash for empty EVM bytecode.
+	// "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+	EmptyCodeHashBz = crypto.Keccak256(nil)
+	EmptyCodeHash   = gethcommon.BytesToHash(EmptyCodeHashBz)
+	EmptyHash       = gethcommon.Hash{} // Blank hash != Blank code hash
+
+	CodeHashForNilAccount = gethcommon.Hash{}
 )
 
 var PRECOMPILE_ADDRS []gethcommon.Address =
@@ -73,26 +82,28 @@ const (
 
 // prefix bytes for the EVM persistent store
 const (
-	KeyPrefixAccCodes collections.Namespace = iota + 1
-	KeyPrefixAccState
-	KeyPrefixParams
-	KeyPrefixEthAddrIndex
+	KeyPrefixAccCodes     collections.Namespace = 1
+	KeyPrefixAccState     collections.Namespace = 2
+	KeyPrefixParams       collections.Namespace = 3
+	KeyPrefixEthAddrIndex collections.Namespace = 4
 
 	// KV store prefix for `FunToken` mappings
-	KeyPrefixFunTokens
+	KeyPrefixFunTokens collections.Namespace = 5
 	// KV store prefix for indexing `FunToken` by ERC-20 address
-	KeyPrefixFunTokenIdxErc20
+	KeyPrefixFunTokenIdxErc20 collections.Namespace = 6
 	// KV store prefix for indexing `FunToken` by bank coin denomination
-	KeyPrefixFunTokenIdxBankDenom
+	KeyPrefixFunTokenIdxBankDenom collections.Namespace = 7
+
+	KeyPrefixNetWeiBlockDelta collections.Namespace = 8
 )
 
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only
 // remain for current block, and have more gas efficient read and write access.
 const (
-	NamespaceBlockBloom collections.Namespace = iota + 1
-	NamespaceBlockTxIndex
-	NamespaceBlockLogSize
-	NamespaceBlockGasUsed
+	NamespaceBlockBloom   collections.Namespace = 1
+	NamespaceBlockTxIndex collections.Namespace = 2
+	NamespaceBlockLogSize collections.Namespace = 3
+	NamespaceBlockGasUsed collections.Namespace = 4
 )
 
 var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()
@@ -122,13 +133,17 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS      gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+	EVM_MODULE_ADDRESS        gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	FEE_COLLECTOR_ADDR        gethcommon.Address
+	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
 
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }
 
 // NativeToWei converts a "unibi" amount to "wei" units for the EVM.
@@ -193,6 +208,9 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 // multiple of 1 micronibi (10^12 wei). It returns the truncated value and an
 // error if the input value is too small.
 //
+// This function is NOT used in production and docmuments wei balance conversion
+// semantics from before Nibiru v2.8.0.
+//
 // Args:
 //   - weiInt (*big.Int): The amount of wei to be parsed.
 //
@@ -203,8 +221,10 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 //
 // Example:
 //
+//	```
 //	Input  number:  123456789012345678901234567890
-//	Parsed number:  123456789012 * 10^12
+//	Parsed number:  123456789012 * 10^{12}
+//	```
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return
 	if weiInt == nil || (weiInt.Cmp(big.NewInt(0)) <= 0) {

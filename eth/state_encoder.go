@@ -3,6 +3,7 @@ package eth
 import (
 	fmt "fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
@@ -24,6 +25,8 @@ var (
 
 	// keEthHash: Implements a `collections.KeyEncoder` for an Ethereum hash.
 	KeyEncoderEthHash collections.KeyEncoder[gethcommon.Hash] = keEthHash{}
+
+	SignedIntValueEncoder collections.ValueEncoder[sdkmath.Int] = veSignedInt{}
 )
 
 // collections ValueEncoder[[]byte]
@@ -42,6 +45,7 @@ func (veEthAddr) Decode(bz []byte) gethcommon.Address       { return gethcommon.
 func (veEthAddr) Stringify(value gethcommon.Address) string { return value.Hex() }
 func (veEthAddr) Name() string                              { return "gethcommon.Address" }
 
+// keBytes: Implements a `collections.KeyEncoder` for raw bytes.
 type keBytes struct{}
 
 // Encode encodes the type T into bytes.
@@ -71,3 +75,40 @@ func (keEthHash) Decode(bz []byte) (int, gethcommon.Hash) {
 	return gethcommon.HashLength, gethcommon.BytesToHash(bz)
 }
 func (keEthHash) Stringify(value gethcommon.Hash) string { return value.Hex() }
+
+// ------------------------------------------
+// SignedIntValueEncoder
+// ------------------------------------------
+
+type veSignedInt struct{}
+
+// Encode encodes the value T into bytes.
+// Encode(value T) []byte
+func (veSignedInt) Encode(v sdkmath.Int) []byte {
+	bz, err := v.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("invalid math.Int %s: %w", v, err))
+	}
+	return bz
+}
+
+// Decode returns the type T given its bytes representation.
+// Decode(b []byte) T
+func (veSignedInt) Decode(bz []byte) sdkmath.Int {
+	n := new(sdkmath.Int)
+	err := n.Unmarshal(bz)
+	if err != nil {
+		panic(fmt.Errorf("decoding math.Int from bytes failed: %w", err))
+	}
+	return *n
+}
+
+// Stringify returns a string representation of T.
+func (veSignedInt) Stringify(v sdkmath.Int) string {
+	return v.String()
+}
+
+// Name returns the name of the object.
+func (veSignedInt) Name() string {
+	return "math.Int (signed)"
+}

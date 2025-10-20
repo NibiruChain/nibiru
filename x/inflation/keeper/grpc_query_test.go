@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )

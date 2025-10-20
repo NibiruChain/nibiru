@@ -18,8 +18,17 @@ import (
 
 const (
 	BinaryName = "nibiru"
-	// BondDenom is the Bank Coin denomination for staking, governance, and gas.
-	BondDenom = "unibi"
+
+	// DENOM_UNIBI is the micro-denomination used by x/bank for NIBI balances.
+	// One unibi = 10^{-6} NIBI. [DENOM_UNIBI] is the Bank Coin denomination for
+	// staking, governance, and gas.
+	//
+	// The aggregate, 18 decimal, EVM-facing precision comes from combining this
+	// with the wei remainder store at 10^{12} wei per unibi. Equivalently, wei
+	// is defined as attoNIBI. Thus,
+	// 1 NIBI = 10^{18} attoNIBI = 10 = 10^{18} wei = 10^{6} microNIBI.
+	DENOM_UNIBI = "unibi"
+
 	// AccountAddressPrefix: Bech32 prefix for Nibiru accounts.
 	AccountAddressPrefix = "nibi"
 )

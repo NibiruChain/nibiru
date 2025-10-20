@@ -20,7 +20,7 @@ func (s *BackendSuite) TestGetCode() {
 	}{
 		{
 			name:         "happy: valid contract address",
-			contractAddr: testContractAddress,
+			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			codeFound:    true,
 		},
@@ -60,7 +60,7 @@ func (s *BackendSuite) TestGetProof() {
 	}{
 		{
 			name:         "happy: balance of the contract deployer",
-			contractAddr: testContractAddress,
+			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
 			address:      s.fundedAccEthAddr,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,                        // _balances is the first slot in ERC20
@@ -102,7 +102,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 	}{
 		{
 			name:         "happy: balance of the contract deployer",
-			contractAddr: testContractAddress,
+			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
 			address:      s.fundedAccEthAddr,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			// _balances is the first slot in ERC20

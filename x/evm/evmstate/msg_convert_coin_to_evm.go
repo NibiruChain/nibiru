@@ -1,0 +1,316 @@
+// Copyright (c) 2023-2024 Nibi, Inc.
+package evmstate
+
+import (
+	"fmt"
+	"math/big"
+
+	sdkioerrors "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+)
+
+func (k *Keeper) convertCoinToEvmForWNIBI(
+	sdb *SDB,
+	msg *evm.MsgConvertCoinToEvm,
+	senderBech32 sdk.AccAddress,
+) (resp *evm.MsgConvertCoinToEvmResponse, err error) {
+	balMicronibi := k.Bank.GetBalance(sdb.Ctx(), senderBech32, msg.BankCoin.Denom)
+	if balMicronibi.IsLT(msg.BankCoin) {
+		err = fmt.Errorf(
+			"ConvertCoinToEvm: insufficient funds to convert NIBI into WNIBI, balance %s, msg.BankCoin %s", balMicronibi, msg.BankCoin,
+		)
+		return
+	}
+
+	var (
+		// Check if WNIBI is well-defined (non-zero bytecode size).
+		// If it is, convert NIBI -> WNIBI (Bank Coin -> ERC20)
+		evmParams = k.GetParams(sdb.Ctx())
+
+		senderEthAddr = eth.NibiruAddrToEthAddr(senderBech32)
+
+		// ERC20 contract taken to be WNIBI.sol
+		erc20 = evmParams.CanonicalWnibi
+
+		// Logs emitted from all EVM operations
+		evmLogs = []evm.Log{}
+	)
+
+	// -------------------------------------------------------------------------
+	// STEP 1: Sender deposits NIBI and receives WNIBI
+	// -------------------------------------------------------------------------
+	if sdb.GetCodeSize(erc20.Address) == 0 {
+		err = fmt.Errorf("ConvertCoinToEvm: %s: canonical WNIBI %s", evm.ErrCanonicalWnibi, erc20.Hex())
+		return
+	}
+
+	depositWei := evm.NativeToWei(
+		msg.BankCoin.Amount.BigInt(),
+	)
+
+	contractInput, err := embeds.SmartContract_WNIBI.ABI.Pack(
+		"deposit",
+	)
+	if err != nil {
+		err = fmt.Errorf("ABI packing error in WNIBI.deposit: %w", err)
+		return resp, err
+	}
+
+	var evmObj *vm.EVM
+	{
+		unusedBigInt := big.NewInt(0)
+		evmMsg := core.Message{
+			To:               &erc20.Address,
+			From:             senderEthAddr,
+			Nonce:            k.GetAccNonce(sdb.Ctx(), senderEthAddr),
+			Value:            depositWei,
+			GasLimit:         evm.Erc20GasLimitExecute,
+			GasPrice:         unusedBigInt,
+			GasFeeCap:        unusedBigInt,
+			GasTipCap:        unusedBigInt,
+			Data:             contractInput,
+			AccessList:       gethcore.AccessList{},
+			BlobGasFeeCap:    &big.Int{},
+			BlobHashes:       []gethcommon.Hash{},
+			SkipNonceChecks:  false,
+			SkipFromEOACheck: false,
+		}
+		evmObj = k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
+	}
+
+	wnibiBalBefore, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, sdb.Ctx(), evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertCoinToEvm: failed to query ERC20 balance: %w", err)
+		return
+	}
+
+	evmResp, err := k.CallContract(
+		evmObj,
+		senderEthAddr,  /* fromAcc */
+		&erc20.Address, /* contract */
+		contractInput,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
+		depositWei,
+	)
+	if err != nil {
+		return resp, fmt.Errorf("failed to convert NIBI to WNIBI via WNIBI.deposit: %w", err)
+	} else if evmResp.Failed() {
+		err = fmt.Errorf("failed to convert NIBI to WNIBI via WNIBI.deposit: VmError: %s", evmResp.VmError)
+		return resp, err
+	}
+	evmLogs = append(evmLogs, evmResp.Logs...)
+
+	wnibiBalAfter, err := k.ERC20().BalanceOf(erc20.Address, senderEthAddr, sdb.Ctx(), evmObj)
+	if err != nil {
+		err = fmt.Errorf("ConvertCoinToEvm: failed to query ERC20 balance: %w", err)
+		return
+	}
+
+	if new(big.Int).Sub(wnibiBalAfter, wnibiBalBefore).Cmp(depositWei) != 0 {
+		err = fmt.Errorf("WNIBI deposit failed: deposit amount %s, balBefore %s, balAfter %s", depositWei, wnibiBalBefore, wnibiBalAfter)
+		return
+	}
+
+	// -------------------------------------------------------------------------
+	// STEP 2: Sender transfers WNIBI to intended recipient
+	// -------------------------------------------------------------------------
+	balIncrease, evmResp, err := k.ERC20().Transfer(
+		erc20.Address,         /*erc20Contract*/
+		senderEthAddr,         /*sender*/
+		msg.ToEthAddr.Address, /*recipient*/
+		depositWei,            /*amount*/
+		sdb.Ctx(),             /*ctx*/
+		evmObj,                /*evmObj*/
+	)
+	if err != nil {
+		return resp, fmt.Errorf("failed to convert WNIBI to NIBI: %w", err)
+	} else if evmResp.Failed() {
+		err = fmt.Errorf("failed to convert WNIBI to NIBI: VmError: %s", evmResp.VmError)
+		return resp, err
+	} else if balIncrease.Cmp(depositWei) != 0 {
+		err = fmt.Errorf(
+			"ConvertCoinToEvm: transfer of WNIBI succeeded but did not deliver the correct number of tokens: transfer amount %s, balance increase %s, senderHex %s, recipient %s",
+			depositWei,
+			balIncrease,
+			senderEthAddr,
+			msg.ToEthAddr.Hex(),
+		)
+		return
+	}
+	evmLogs = append(evmLogs, evmResp.Logs...)
+
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               senderBech32.String(),
+		Erc20ContractAddress: erc20.Hex(),
+		ToEthAddr:            msg.ToEthAddr.Hex(),
+		BankCoin:             msg.BankCoin,
+		EvmLogs:              evm.LogsToLogLite(evmLogs),
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// Converts Bank Coins for FunToken mapping that was born from a coin
+// (IsMadeFromCoin=true) into the ERC20 tokens. EVM module owns the ERC-20
+// contract and can mint the ERC-20 tokens.
+func (k Keeper) convertCoinToEvmBornCoin(
+	sdb *SDB,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	funTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	// 1 | Send Bank Coins to the EVM module
+	err := k.Bank.SendCoinsFromAccountToModule(sdb.Ctx(), sender, evm.ModuleName, sdk.NewCoins(coin))
+	if err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to send coins to module account")
+	}
+
+	// 2 | Mint ERC20 tokens to the recipient
+	erc20Addr := funTokenMapping.Erc20Addr.Address
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("mint", recipient, coin.Amount.BigInt())
+	if err != nil {
+		return nil, err
+	}
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(sdb.Ctx(), evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         evm.Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
+	}
+
+	evmObj := k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
+	evmResp, err := k.CallContract(
+		evmObj,
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Addr,
+		contractInput,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if evmResp.Failed() {
+		return nil,
+			fmt.Errorf("failed to mint erc-20 tokens of contract %s", erc20Addr.String())
+	}
+
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
+		Erc20ContractAddress: erc20Addr.String(),
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}
+
+// Converts a coin that was originally an ERC20 token, and that was converted to
+// a bank coin, back to an ERC20 token. EVM module does not own the ERC-20
+// contract and cannot mint the ERC-20 tokens. EVM module has escrowed tokens in
+// the first conversion from ERC-20 to bank coin.
+func (k Keeper) convertCoinToEvmBornERC20(
+	sdb *SDB,
+	sender sdk.AccAddress,
+	recipient gethcommon.Address,
+	coin sdk.Coin,
+	funTokenMapping evm.FunToken,
+) (*evm.MsgConvertCoinToEvmResponse, error) {
+	erc20Addr := funTokenMapping.Erc20Addr.Address
+	// 1 | Caller transfers Bank Coins to be converted to ERC20 tokens.
+	if err := k.Bank.SendCoinsFromAccountToModule(
+		sdb.Ctx(),
+		sender,
+		evm.ModuleName,
+		sdk.NewCoins(coin),
+	); err != nil {
+		return nil, sdkioerrors.Wrap(err, "error sending Bank Coins to the EVM")
+	}
+
+	// 2 | In the FunToken ERC20 → BC conversion process that preceded this
+	// TxMsg, the Bank Coins were minted. Consequently, to preserve an invariant
+	// on the sum of the FunToken's bank and ERC20 supply, we burn the coins here
+	// in the BC → ERC20 conversion.
+	if err := k.Bank.BurnCoins(sdb.Ctx(), evm.ModuleName, sdk.NewCoins(coin)); err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to burn coins")
+	}
+
+	// 3 | EVM sends ERC20 tokens to the "to" account.
+	// This should never fail due to the EVM account lacking ERc20 fund because
+	// the account must have sent the EVM module ERC20 tokens in the mapping
+	// in order to create the coins originally.
+	//
+	// Said another way, if an asset is created as an ERC20 and some amount is
+	// converted to its Bank Coin representation, a balance of the ERC20 is left
+	// inside the EVM module account in order to convert the coins back to
+	// ERC20s.
+	contractInput, err := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI.Pack("transfer", recipient, coin.Amount.BigInt())
+	if err != nil {
+		return nil, err
+	}
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		To:               &erc20Addr,
+		From:             evm.EVM_MODULE_ADDRESS,
+		Nonce:            k.GetAccNonce(sdb.Ctx(), evm.EVM_MODULE_ADDRESS),
+		Value:            unusedBigInt, // amount
+		GasLimit:         evm.Erc20GasLimitExecute,
+		GasPrice:         unusedBigInt,
+		GasFeeCap:        unusedBigInt,
+		GasTipCap:        unusedBigInt,
+		Data:             contractInput,
+		AccessList:       gethcore.AccessList{},
+		BlobGasFeeCap:    &big.Int{},
+		BlobHashes:       []gethcommon.Hash{},
+		SkipNonceChecks:  true,
+		SkipFromEOACheck: true,
+	}
+	evmObj := k.NewEVM(sdb.Ctx(), evmMsg, k.GetEVMConfig(sdb.Ctx()), nil /*tracer*/, sdb)
+	_, evmResp, err := k.ERC20().Transfer(
+		erc20Addr,
+		evm.EVM_MODULE_ADDRESS,
+		recipient,
+		coin.Amount.BigInt(),
+		sdb.Ctx(),
+		evmObj,
+	)
+	if err != nil {
+		return nil, sdkioerrors.Wrap(err, "failed to transfer ERC-20 tokens")
+	}
+
+	// Emit event with the actual amount received
+	_ = sdb.Ctx().EventManager().EmitTypedEvent(&evm.EventConvertCoinToEvm{
+		Sender:               sender.String(),
+		Erc20ContractAddress: funTokenMapping.Erc20Addr.String(),
+		ToEthAddr:            recipient.String(),
+		BankCoin:             coin,
+		EvmLogs:              evm.LogsToLogLite(evmResp.Logs),
+	})
+
+	return &evm.MsgConvertCoinToEvmResponse{}, nil
+}

@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
@@ -26,7 +26,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 	fixture, msgServer := Setup(t)
 	votePeriod := fixture.OracleKeeper.VotePeriod(fixture.Ctx)
 
-	rewards := sdk.NewInt64Coin("reward", 1*common.TO_MICRO)
+	rewards := sdk.NewInt64Coin("reward", 1*nutil.TO_MICRO)
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdkmath.LegacyNewDec(int64(periods))).
 		QuoDec(sdkmath.LegacyNewDec(int64(validators)))

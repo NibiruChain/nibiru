@@ -10,6 +10,8 @@ import (
 	rpccore "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 // subscribeAndPublish: Helper function used to perform concurrent subscription
@@ -42,10 +44,10 @@ func subscribeAndPublish(t *testing.T, eb EventBus, topic string, topicChan chan
 }
 
 type SuitePubsub struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 }
 
-func TestSuitePubsub(t *testing.T) {
+func TestPubsub(t *testing.T) {
 	suite.Run(t, new(SuitePubsub))
 }
 

@@ -60,12 +60,6 @@ func UpgradeV2_7_0(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 ) (err error) {
-	// IMPORTANT: make sure to clear the StateDB before running the upgrade
-	keepers.EvmKeeper.Bank.StateDB = nil
-	defer func() {
-		keepers.EvmKeeper.Bank.StateDB = nil
-	}()
-
 	// 1 | Set evm.Params.CanonicalWnibi to the address live on mainnet
 	wnibiAddrMainnet := appconst.MAINNET_WNIBI_ADDR
 	evmParams := keepers.EvmKeeper.GetParams(ctx)

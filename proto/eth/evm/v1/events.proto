@@ -57,6 +57,7 @@ message EventConvertCoinToEvm {
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
+  repeated eth.evm.v1.LogLite evm_logs = 5 [(gogoproto.nullable) = false];
 }
 
 // EventTransfer defines event for EVM transfer
@@ -89,4 +90,29 @@ message EventConvertEvmToCoin {
     (gogoproto.nullable) = false
   ];
   string sender_eth_addr = 6;
+  repeated eth.evm.v1.LogLite evm_logs = 7 [(gogoproto.nullable) = false];
+}
+
+// EventWeiBlockDelta is an event emitted when there is a non-zero value for
+// block delta (change) in wei in the EVM end block handler.
+message EventWeiBlockDelta {
+  // net_wei_block_delta is the new sum of all "wei_block_delta" changes up to
+  // this point. It is the value for "NetWeiBlockDelta" in the EVM state.
+  string net_wei_block_delta = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // WeiBlockDelta is the net sum of all calls of "AddWei" and "SubWei" in the
+  // current block. There is no guarantee in the functional sense that the EVM
+  // State DB will add the same amount it subtracts. It is possible for the total
+  // amount of wei (NIBI) across all accounts to diverge from the initial supply.
+  // "WeiBlockDelta" is a mechanism for recording that if it happens.
+  string wei_block_delta = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // block_number for which this event is emitted during EVM EndBlock
+  uint64 block_number = 3;
 }
