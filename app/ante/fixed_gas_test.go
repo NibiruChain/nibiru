@@ -15,8 +15,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
@@ -65,7 +65,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 			},
 			expectedGas: 1042,
@@ -77,7 +77,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 				&oracletypes.MsgAggregateExchangeRatePrevote{
 					Hash:      "",
@@ -100,7 +100,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 			},
 			expectedGas: 1042,
@@ -112,7 +112,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 				&oracletypes.MsgAggregateExchangeRateVote{
 					Salt:          "dummySalt",
@@ -172,7 +172,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 				&oracletypes.MsgAggregateExchangeRatePrevote{
 					Hash:      "",
@@ -189,12 +189,12 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 100)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 100)),
 				},
 				&bank.MsgSend{
 					FromAddress: addr.String(),
 					ToAddress:   addr.String(),
-					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 200)),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 200)),
 				},
 			},
 			expectedGas: 67193,
@@ -209,7 +209,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
 			// msg and signatures
-			feeAmount := sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 150))
+			feeAmount := sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 150))
 			gasLimit := testdata.NewTestGasLimit()
 			suite.txBuilder.SetFeeAmount(feeAmount)
 			suite.txBuilder.SetGasLimit(gasLimit)
@@ -225,7 +225,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 
 			err = testapp.FundAccount(
 				suite.app.BankKeeper, suite.ctx, addr,
-				sdk.NewCoins(sdk.NewInt64Coin(appconst.BondDenom, 1000)),
+				sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 1000)),
 			)
 			suite.Require().NoError(err)
 

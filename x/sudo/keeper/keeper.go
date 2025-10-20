@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 

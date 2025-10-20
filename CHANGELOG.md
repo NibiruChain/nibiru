@@ -51,6 +51,8 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
 - [#2395](https://github.com/NibiruChain/nibiru/pull/2395) - chore: erc20 token registry new token: ynETHx
 - [#2391](https://github.com/NibiruChain/nibiru/pull/2391) - feat(proto): impl script for gRPC Gateway REST doc generation
+- [#2397](https://github.com/NibiruChain/nibiru/pull/2397) - feat(epic-evm): rearchitecture for StateDB safety, fix for consensus failures, performance improvements, consistent simulations, and nonce resolution for pending txs in the mempool
+
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 

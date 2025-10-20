@@ -132,7 +132,7 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	// EVM module should have mint perms
 	deps := evmtest.NewTestDeps()
 	{
-		resp, err := deps.EvmKeeper.EthAccount(sdk.WrapSDKContext(deps.Ctx), &evm.QueryEthAccountRequest{
+		resp, err := deps.EvmKeeper.EthAccount(sdk.WrapSDKContext(deps.Ctx()), &evm.QueryEthAccountRequest{
 			Address: evmModuleAddr.Hex(),
 		})
 		s.NoError(err)
@@ -141,7 +141,7 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	}
 }
 
-func (s *TestSuite) TestWeiConversion() {
+func (s *TestSuite) TestParseWeiAsMultipleOfMicronibi() {
 	{
 		unibiAmt := big.NewInt(420)
 		s.Equal(

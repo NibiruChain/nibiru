@@ -10,7 +10,7 @@ import (
 
 	wasmbinding "github.com/NibiruChain/nibiru/v2/app/wasmext"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"

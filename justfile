@@ -12,6 +12,9 @@ install-clean:
   rm -rf temp
   just install
 
+install-covtool:
+    go install github.com/wa
+
 # Build the `nibid` binary.
 build: 
   make build
@@ -58,7 +61,7 @@ gen-proto-openapi:
 lint: 
   #!/usr/bin/env bash
   echo "Running golangci-lint with docker!"
-  image_version="v2.4.0"
+  image_version="v2.5.0"
   docker run --rm \
     -v "$(pwd)":/app \
     -v ~/.cache/golangci-lint/$image_version:/root/.cache \
@@ -158,6 +161,52 @@ test-unit:
 test-coverage-unit:
   make test-coverage-unit
 
+# Heavy tests for the EVM and EVM JSON-RPC
+test-cover-g1:
+  #!/usr/bin/env bash
+  echo "------------------------------------------------"
+  echo "Running Group 1 tests..."
+  echo "Paths: eth, x/evm"
+  go test ./eth/... ./x/evm/... \
+    -tags=pebbledb -covermode=atomic -race \
+    -coverprofile=coverage.group1.out
+
+# Heavy tests for app, cmd, gosdk, token-registry
+test-cover-g2:
+  #!/usr/bin/env bash
+  echo "------------------------------------------------"
+  echo "Running Group 2 tests..."
+  echo "Paths: app, cmd, gosdk, token-registry"
+  # Group 2
+  go test ./app/... \
+      ./cmd/... \
+      ./gosdk/... \
+      ./token-registry/... \
+    -tags=pebbledb -covermode=atomic -race \
+    -coverprofile=coverage.group2.out
+
+# Heavy tests for all x/* modules besides EVM
+test-cover-g3:
+  #!/usr/bin/env bash
+  echo "------------------------------------------------"
+  echo "Running Group 3 tests..."
+  echo "Paths: (all x/* except evm)"
+  echo "Reproduce of modules with command: ls x/ | grep -v -E 'evm|README.md' "
+  go test ./x/bank/...  \
+    ./x/nutil/... \
+    ./x/devgas/... \
+    ./x/epochs/... \
+    ./x/genmsg/... \
+    ./x/inflation/... \
+    ./x/oracle/... \
+    ./x/sudo/... \
+    ./x/tokenfactory/... \
+    -tags=pebbledb -covermode=atomic -race \
+    -coverprofile=coverage.group3.out
+
 # Run Go tests, including live network tests + coverage
-test-coverage-integration:
-  make test-coverage-integration
+test-cover-heavy:
+  #!/usr/bin/env bash
+  just test-cover-g1
+  just test-cover-g2
+  just test-cover-g3

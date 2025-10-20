@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evm
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	"math/big"
@@ -11,7 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/nmath"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/nmath"
 )
 
 // BigIntMax returns max(x,y).

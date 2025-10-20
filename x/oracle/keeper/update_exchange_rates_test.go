@@ -15,8 +15,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
@@ -357,8 +357,8 @@ func TestOracleExchangeRate(t *testing.T) {
 		{Pair: asset.PAIR_BTC, ExchangeRate: sdkmath.LegacyZeroDec()},
 	}, 3)
 
-	ethUsdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.TO_MICRO)
-	atomUsdRewards := sdk.NewInt64Coin("ATOMREWARD", 1*common.TO_MICRO)
+	ethUsdRewards := sdk.NewInt64Coin("ETHREWARD", 1*nutil.TO_MICRO)
+	atomUsdRewards := sdk.NewInt64Coin("ATOMREWARD", 1*nutil.TO_MICRO)
 
 	AllocateRewards(t, input, sdk.NewCoins(ethUsdRewards), 1)
 	AllocateRewards(t, input, sdk.NewCoins(atomUsdRewards), 1)

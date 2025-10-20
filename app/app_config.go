@@ -52,12 +52,12 @@ import (
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
-	"github.com/NibiruChain/nibiru/v2/x/common"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -78,7 +78,7 @@ var (
 		evmtypes.ModuleName,
 		epochstypes.ModuleName,
 		sudotypes.ModuleName,
-		common.TreasuryPoolModuleAccount,
+		nutil.TreasuryPoolModuleAccount,
 		wasmtypes.ModuleName,
 		tftypes.ModuleName,
 	}
@@ -99,7 +99,7 @@ var (
 		{Account: evmtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: epochstypes.ModuleName},
 		{Account: sudotypes.ModuleName},
-		{Account: common.TreasuryPoolModuleAccount},
+		{Account: nutil.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
 		{Account: tftypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 	}
@@ -129,7 +129,6 @@ var (
 		//   HistoricalEntries param > 0
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
-		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		genutiltypes.ModuleName,
 		// NOTE (SetOrderInitGenesis requirement): genutils must occur after
@@ -163,6 +162,12 @@ var (
 		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
 		tftypes.ModuleName,
+
+		// NOTE (EndBlocker requirement): EVM corrects invariants for x/bank in
+		// its end block hook. Crisis enforces [sdk.Invariant] checks, like the
+		// total supply of coins and wei. This means crisis needs to come after
+		// the EVM.
+		crisistypes.ModuleName,
 
 		// Everything else should be before genmsg
 		genmsg.ModuleName,

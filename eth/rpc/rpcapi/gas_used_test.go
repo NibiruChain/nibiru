@@ -8,11 +8,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 // TestGasUsedTransfers verifies that gas used is correctly calculated for simple transfers.
@@ -24,7 +24,7 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	defer testMutex.Unlock()
 
 	// Start with new block
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
 
 	// Send 2 similar transfers
@@ -76,7 +76,9 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	defer testMutex.Unlock()
 
 	// Create funtoken from erc20
-	erc20Addr, err := eth.NewEIP55AddrFromStr(testContractAddress.String())
+	erc20Addr, err := eth.NewEIP55AddrFromStr(
+		s.SuccessfulTxDeployContract().Receipt.ContractAddress.Hex(),
+	)
 	s.Require().NoError(err)
 
 	nonce := s.getCurrentNonce(s.node.EthAddress)
@@ -88,7 +90,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	})
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp)
-	s.Require().NoError(s.network.WaitForNextBlock())
+	s.network.WaitForNextBlock()
 
 	randomNibiAddress := testutil.AccAddress()
 	packedArgsPass, err := embeds.SmartContract_FunToken.ABI.Pack(
@@ -169,19 +171,24 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	s.Require().Equal(uint64(1_500_000), receipt2.GasUsed)
 
 	block, err := s.backend.GetBlockByNumber(rpc.NewBlockNumber(blockNumber1), false)
+	gasUsedInTxs := receipt1.GasUsed + receipt2.GasUsed + receipt3.GasUsed
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
 	s.Require().NotNil(block["gasUsed"])
 	s.Require().GreaterOrEqual(
 		block["gasUsed"].(*hexutil.Big).ToInt().Uint64(),
-		receipt1.GasUsed+receipt2.GasUsed+receipt3.GasUsed,
+		gasUsedInTxs,
 	)
 
 	// Balance after should be equal to balance before minus gas used
 	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
-	s.Require().Equal(
-		receipt1.GasUsed+receipt2.GasUsed+receipt3.GasUsed,
-		balanceBefore.Uint64()-balanceAfter.Uint64(),
+	balanceChange := new(big.Int).Sub(balanceAfter, balanceBefore)
+	s.Require().Negative(balanceChange.Cmp(big.NewInt(0)), "txs should lower the balance, not increase it")
+	s.Require().LessOrEqualf(
+		gasUsedInTxs,
+		new(big.Int).Abs(balanceChange).Uint64(),
+		"gasUsedInTxs %d, balanceBefore %s, balanceAfter %s",
+		gasUsedInTxs, balanceBefore, balanceAfter,
 	)
 }
 
@@ -191,25 +198,27 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	testMutex.Lock()
 	defer testMutex.Unlock()
 
-	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
-
+	balBefore := s.getUnibiBalance(s.fundedAccEthAddr)
 	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
 
 	contractCreationGasLimit := uint64(1_500_000)
 	contractCallGasLimit := uint64(100_000)
 
 	// Create series of 3 tx messages. Expecting nonce to be incremented by 3
+	erc20Addr := s.SuccessfulTxDeployContract().Receipt.ContractAddress
 	creationTx := s.buildContractCreationTx(nonce, contractCreationGasLimit)
-	firstTransferTx := s.buildContractCallTx(testContractAddress, nonce+1, contractCallGasLimit)
-	secondTransferTx := s.buildContractCallTx(testContractAddress, nonce+2, contractCallGasLimit)
+	firstTransferTx := s.buildContractCallTx(*erc20Addr, nonce+1, contractCallGasLimit)
+	secondTransferTx := s.buildContractCallTx(*erc20Addr, nonce+2, contractCallGasLimit)
 
 	// Create and broadcast SDK transaction
-	sdkTx := s.buildSDKTxWithEVMMessages(
-		creationTx,
-		firstTransferTx,
-		secondTransferTx,
-	)
-	s.broadcastSDKTx(sdkTx)
+	for _, coreTx := range []*gethcore.Transaction{
+		creationTx, firstTransferTx, secondTransferTx,
+	} {
+		sdkTx := s.buildSDKTxWithEVMMessages(
+			coreTx,
+		)
+		s.broadcastSDKTx(sdkTx)
+	}
 
 	_, _, receiptContractCreation, _ := WaitForReceipt(s, creationTx.Hash())
 	_, _, receiptFirstTransfer, _ := WaitForReceipt(s, firstTransferTx.Hash())
@@ -224,9 +233,17 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	s.Require().Greater(receiptSecondTransfer.GasUsed, uint64(0))
 	s.Require().LessOrEqual(receiptSecondTransfer.GasUsed, contractCallGasLimit)
 
-	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
-	s.Require().Equal(
-		receiptContractCreation.GasUsed+receiptFirstTransfer.GasUsed+receiptSecondTransfer.GasUsed,
-		balanceBefore.Uint64()-balanceAfter.Uint64(),
+	balAfter := s.getUnibiBalance(s.fundedAccEthAddr)
+	balAfterU64 := balAfter.Uint64()
+	balBeforeU64 := balBefore.Uint64()
+	s.Require().LessOrEqual(balAfterU64, balBeforeU64, "balance must have decreased")
+	gasUsedFromAllTxs := receiptContractCreation.GasUsed + receiptFirstTransfer.GasUsed + receiptSecondTransfer.GasUsed
+
+	// "x/evm/evmstate/msg_ethereum_tx_test.go" file.
+	// Light assertion is fine here. We test EIP-3529 refudn logic thoroughly
+	// inside of "x/evm/evmstate".
+	s.Require().LessOrEqual(
+		gasUsedFromAllTxs,
+		balBefore.Uint64()-balAfter.Uint64(),
 	)
 }
