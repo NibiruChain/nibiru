@@ -53,6 +53,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2391](https://github.com/NibiruChain/nibiru/pull/2391) - feat(proto): impl script for gRPC Gateway REST doc generation
 - [#2397](https://github.com/NibiruChain/nibiru/pull/2397) - feat(epic-evm): rearchitecture for StateDB safety, fix for consensus failures, performance improvements, consistent simulations, and nonce resolution for pending txs in the mempool
 - [#2405](https://github.com/NibiruChain/nibiru/pull/2405) - chore: additional coin logos which could be used externally
+- [#2406](https://github.com/NibiruChain/nibiru/pull/2406) - chore: added monad logo svg
 
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
