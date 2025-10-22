@@ -25,6 +25,10 @@ type MsgClient interface {
 	// EditSudoers updates the "Sudoers" state
 	EditSudoers(ctx context.Context, in *MsgEditSudoers, opts ...grpc.CallOption) (*MsgEditSudoersResponse, error)
 	ChangeRoot(ctx context.Context, in *MsgChangeRoot, opts ...grpc.CallOption) (*MsgChangeRootResponse, error)
+	// EditZeroGasActors updates the "ZeroGasActors" state. Zero gas actors are
+	// a set of accounts that can execute zero gas transactions against a
+	// whitelisted  set of smart contracts.
+	EditZeroGasActors(ctx context.Context, in *MsgEditZeroGasActors, opts ...grpc.CallOption) (*MsgEditZeroGasActorsResponse, error)
 }
 
 type msgClient struct {
@@ -53,6 +57,15 @@ func (c *msgClient) ChangeRoot(ctx context.Context, in *MsgChangeRoot, opts ...g
 	return out, nil
 }
 
+func (c *msgClient) EditZeroGasActors(ctx context.Context, in *MsgEditZeroGasActors, opts ...grpc.CallOption) (*MsgEditZeroGasActorsResponse, error) {
+	out := new(MsgEditZeroGasActorsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.sudo.v1.Msg/EditZeroGasActors", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -60,6 +73,10 @@ type MsgServer interface {
 	// EditSudoers updates the "Sudoers" state
 	EditSudoers(context.Context, *MsgEditSudoers) (*MsgEditSudoersResponse, error)
 	ChangeRoot(context.Context, *MsgChangeRoot) (*MsgChangeRootResponse, error)
+	// EditZeroGasActors updates the "ZeroGasActors" state. Zero gas actors are
+	// a set of accounts that can execute zero gas transactions against a
+	// whitelisted  set of smart contracts.
+	EditZeroGasActors(context.Context, *MsgEditZeroGasActors) (*MsgEditZeroGasActorsResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -72,6 +89,9 @@ func (UnimplementedMsgServer) EditSudoers(context.Context, *MsgEditSudoers) (*Ms
 }
 func (UnimplementedMsgServer) ChangeRoot(context.Context, *MsgChangeRoot) (*MsgChangeRootResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeRoot not implemented")
+}
+func (UnimplementedMsgServer) EditZeroGasActors(context.Context, *MsgEditZeroGasActors) (*MsgEditZeroGasActorsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditZeroGasActors not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -122,6 +142,24 @@ func _Msg_ChangeRoot_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_EditZeroGasActors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgEditZeroGasActors)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).EditZeroGasActors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.sudo.v1.Msg/EditZeroGasActors",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).EditZeroGasActors(ctx, req.(*MsgEditZeroGasActors))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +174,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangeRoot",
 			Handler:    _Msg_ChangeRoot_Handler,
+		},
+		{
+			MethodName: "EditZeroGasActors",
+			Handler:    _Msg_EditZeroGasActors_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

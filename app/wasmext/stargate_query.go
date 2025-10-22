@@ -7,7 +7,7 @@ import (
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -133,7 +133,7 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.oracle.v1.Query/Params":            new(oracle.QueryParamsResponse),
 
 		// nibiru sudo
-		"/nibiru.sudo.v1.Query/QuerySudoers": new(sudotypes.QuerySudoersResponse),
+		"/nibiru.sudo.v1.Query/QuerySudoers": new(sudo.QuerySudoersResponse),
 
 		// nibiru devgas
 		"/nibiru.devgas.v1.Query/FeeShares":             new(devgas.QueryFeeSharesResponse),

@@ -6,13 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	sudomodule "github.com/NibiruChain/nibiru/v2/x/sudo"
-	sudo "github.com/NibiruChain/nibiru/v2/x/sudo/types"
-
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/cosmos/cosmos-sdk/crypto"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -108,7 +107,7 @@ func (s *TestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
 
 	// configure the custom sudo genesis
-	sudoGenesis := sudomodule.DefaultGenesis()
+	sudoGenesis := sudo.DefaultGenesis()
 
 	// Set the root user
 	privKeys, addrs := testutil.PrivKeyAddressPairs(1)

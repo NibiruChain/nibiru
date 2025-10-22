@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QueryClient interface {
 	QuerySudoers(ctx context.Context, in *QuerySudoersRequest, opts ...grpc.CallOption) (*QuerySudoersResponse, error)
+	QueryZeroGasActors(ctx context.Context, in *QueryZeroGasActorsRequest, opts ...grpc.CallOption) (*QueryZeroGasActorsResponse, error)
 }
 
 type queryClient struct {
@@ -42,11 +43,21 @@ func (c *queryClient) QuerySudoers(ctx context.Context, in *QuerySudoersRequest,
 	return out, nil
 }
 
+func (c *queryClient) QueryZeroGasActors(ctx context.Context, in *QueryZeroGasActorsRequest, opts ...grpc.CallOption) (*QueryZeroGasActorsResponse, error) {
+	out := new(QueryZeroGasActorsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.sudo.v1.Query/QueryZeroGasActors", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
 type QueryServer interface {
 	QuerySudoers(context.Context, *QuerySudoersRequest) (*QuerySudoersResponse, error)
+	QueryZeroGasActors(context.Context, *QueryZeroGasActorsRequest) (*QueryZeroGasActorsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedQueryServer struct {
 
 func (UnimplementedQueryServer) QuerySudoers(context.Context, *QuerySudoersRequest) (*QuerySudoersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QuerySudoers not implemented")
+}
+func (UnimplementedQueryServer) QueryZeroGasActors(context.Context, *QueryZeroGasActorsRequest) (*QueryZeroGasActorsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryZeroGasActors not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -88,6 +102,24 @@ func _Query_QuerySudoers_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_QueryZeroGasActors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryZeroGasActorsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryZeroGasActors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.sudo.v1.Query/QueryZeroGasActors",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryZeroGasActors(ctx, req.(*QueryZeroGasActorsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QuerySudoers",
 			Handler:    _Query_QuerySudoers_Handler,
+		},
+		{
+			MethodName: "QueryZeroGasActors",
+			Handler:    _Query_QueryZeroGasActors_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

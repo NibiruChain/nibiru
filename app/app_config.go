@@ -59,7 +59,7 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -77,7 +77,7 @@ var (
 
 		evmtypes.ModuleName,
 		epochstypes.ModuleName,
-		sudotypes.ModuleName,
+		sudo.ModuleName,
 		nutil.TreasuryPoolModuleAccount,
 		wasmtypes.ModuleName,
 		tftypes.ModuleName,
@@ -98,7 +98,7 @@ var (
 
 		{Account: evmtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: epochstypes.ModuleName},
-		{Account: sudotypes.ModuleName},
+		{Account: sudo.ModuleName},
 		{Account: nutil.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
 		{Account: tftypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
@@ -144,7 +144,7 @@ var (
 		epochstypes.ModuleName,
 		oracletypes.ModuleName,
 		inflationtypes.ModuleName,
-		sudotypes.ModuleName,
+		sudo.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -288,7 +288,7 @@ func init() {
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 			{
-				Name:   sudotypes.ModuleName,
+				Name:   sudo.ModuleName,
 				Config: appconfig.WrapAny(&sudomodulev1.Module{}),
 			},
 			{

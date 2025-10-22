@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -18,8 +18,8 @@ import (
 // GetTxCmd returns a cli command for this module's transactions
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("x/%s transaction subcommands", types.ModuleName),
+		Use:                        sudo.ModuleName,
+		Short:                      fmt.Sprintf("x/%s transaction subcommands", sudo.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -37,9 +37,9 @@ func GetTxCmd() *cobra.Command {
 // GetQueryCmd returns a cli command for this module's queries
 func GetQueryCmd() *cobra.Command {
 	moduleQueryCmd := &cobra.Command{
-		Use: types.ModuleName,
+		Use: sudo.ModuleName,
 		Short: fmt.Sprintf(
-			"Query commands for the x/%s module", types.ModuleName),
+			"Query commands for the x/%s module", sudo.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -85,7 +85,7 @@ func CmdEditSudoers() *cobra.Command {
 				return err
 			}
 
-			msg := new(types.MsgEditSudoers)
+			msg := new(sudo.MsgEditSudoers)
 
 			// marshals contents into the proto.Message to which 'msg' points.
 			contents, err := os.ReadFile(args[0])
@@ -133,7 +133,7 @@ func CmdChangeRoot() *cobra.Command {
 				return err
 			}
 
-			msg := new(types.MsgChangeRoot)
+			msg := new(sudo.MsgChangeRoot)
 
 			// marshals contents into the proto.Message to which 'msg' points.
 			root := args[0]
@@ -170,9 +170,9 @@ func CmdQuerySudoers() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := sudo.NewQueryClient(clientCtx)
 
-			req := new(types.QuerySudoersRequest)
+			req := new(sudo.QuerySudoersRequest)
 			resp, err := queryClient.QuerySudoers(
 				cmd.Context(), req,
 			)

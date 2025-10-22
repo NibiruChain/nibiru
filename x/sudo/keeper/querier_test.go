@@ -1,23 +1,19 @@
 package keeper_test
 
 import (
-	"testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-func TestQuerySudoers(t *testing.T) {
+func (s *Suite) TestQuerySudoers() {
 	for _, tc := range []struct {
 		name  string
-		state types.Sudoers
+		state sudo.Sudoers
 	}{
 		{
 			name: "happy 1",
-			state: types.Sudoers{
+			state: sudo.Sudoers{
 				Root:      "alice",
 				Contracts: []string{"contractA", "contractB"},
 			},
@@ -25,7 +21,7 @@ func TestQuerySudoers(t *testing.T) {
 
 		{
 			name: "happy 2 (empty)",
-			state: types.Sudoers{
+			state: sudo.Sudoers{
 				Root:      "",
 				Contracts: []string(nil),
 			},
@@ -33,36 +29,34 @@ func TestQuerySudoers(t *testing.T) {
 
 		{
 			name: "happy 3",
-			state: types.Sudoers{
+			state: sudo.Sudoers{
 				Root:      "",
 				Contracts: []string{"boop", "blap"},
 			},
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
+		s.Run(tc.name, func() {
+			_, k, ctx := setup()
 
-			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
+			k.Sudoers.Set(ctx, tc.state)
 
-			req := new(types.QuerySudoersRequest)
-			querier := keeper.NewQuerier(nibiru.SudoKeeper)
-			resp, err := querier.QuerySudoers(
+			req := new(sudo.QuerySudoersRequest)
+			resp, err := k.QuerySudoers(
 				sdk.WrapSDKContext(ctx), req,
 			)
-			require.NoError(t, err)
+			s.Require().NoError(err)
 
 			outSudoers := resp.Sudoers
-			require.EqualValues(t, tc.state, outSudoers)
+			s.Require().EqualValues(tc.state, outSudoers)
 		})
 	}
 
-	t.Run("nil request should error", func(t *testing.T) {
-		nibiru, ctx := setup()
-		var req *types.QuerySudoersRequest = nil
-		querier := keeper.NewQuerier(nibiru.SudoKeeper)
-		_, err := querier.QuerySudoers(
+	s.Run("nil request should not error", func() {
+		_, k, ctx := setup()
+		var req *sudo.QuerySudoersRequest = nil
+		_, err := k.QuerySudoers(
 			sdk.WrapSDKContext(ctx), req,
 		)
-		require.Error(t, err)
+		s.Require().NoError(err)
 	})
 }

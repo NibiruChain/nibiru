@@ -38,7 +38,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: ante.OracleMessageGas,
+			expectedGas: ante.OracleModuleTxGas,
 			expectedErr: nil,
 		},
 		{
@@ -51,7 +51,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: ante.OracleMessageGas,
+			expectedGas: ante.OracleModuleTxGas,
 			expectedErr: nil,
 		},
 		{
@@ -139,7 +139,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: ante.OracleMessageGas,
+			expectedGas: ante.OracleModuleTxGas,
 			expectedErr: nil,
 		},
 		{
@@ -157,7 +157,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: ante.OracleMessageGas,
+			expectedGas: ante.OracleModuleTxGas,
 			expectedErr: nil,
 		},
 		{

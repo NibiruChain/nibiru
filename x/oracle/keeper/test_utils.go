@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -56,7 +56,7 @@ var ModuleBasics = module.NewBasicManager(
 	distr.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	params.AppModuleBasic{},
-	sudo.AppModuleBasic{},
+	sudomodule.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint
@@ -144,7 +144,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
-	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
+	keySudo := sdk.NewKVStoreKey(sudo.StoreKey)
 
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
@@ -237,7 +237,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
-	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
+	sudoAcc := authtypes.NewEmptyModuleAccount(sudo.ModuleName)
 
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
