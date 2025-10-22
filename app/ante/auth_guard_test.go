@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
+func (s *Suite) TestAnteDecoratorAuthzGuard() {
 	testCases := []struct {
 		name    string
 		txMsg   func() sdk.Msg

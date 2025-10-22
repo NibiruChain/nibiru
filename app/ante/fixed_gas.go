@@ -1,20 +1,25 @@
 package ante
 
 import (
+	"log"
+
 	sdkioerrors "cosmossdk.io/errors"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 const (
 	OracleModuleTxGas = 500
-	OracleSaiWasmGas  = 0
+	ZeroTxGas         = 0
 )
 
 var (
 	_ sdk.AnteDecorator = AnteDecoratorEnsureSinglePostPriceMessage{}
-	_ sdk.AnteDecorator = AnteDecoratorSaiOracle{}
+	_ sdk.AnteDecorator = AnteDecSaiOracle{}
 )
 
 // AnteDecoratorEnsureSinglePostPriceMessage ensures that there is only one
@@ -58,16 +63,51 @@ func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// AnteDecoratorSaiOracle checks for Wasm execute contract calls from a set of
+// AnteDecSaiOracle checks for Wasm execute contract calls from a set of
 // known senders to the Sai oracle contract(s) and lowers gas costs using a fixed
 // gas meter.
-type AnteDecoratorSaiOracle struct{}
+type AnteDecSaiOracle struct {
+	keepers.PublicKeepers
+}
 
-func (anteDec AnteDecoratorSaiOracle) AnteHandle(
+func (anteDec AnteDecSaiOracle) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	return
+	goCtx := sdk.WrapSDKContext(ctx)
+	resp, _ := anteDec.SudoKeeper.QueryZeroGasActors(goCtx, nil)
+	zeroGasActors := resp.Actors
+	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
+		return ctx, nil
+	}
+
+	zeroGasSenders := set.New(zeroGasActors.Senders...)
+	zeroGasContracts := set.New(zeroGasActors.Contracts...)
+	log.Printf("UD-DEBUG: AnteDecSaiOracle ctx.ChainID(): %v\n", ctx.ChainID())
+
+	for idx, msg := range tx.GetMsgs() {
+		if idx == 0 {
+			fromAddr := msg.GetSigners()[0]
+			if !zeroGasSenders.Has(fromAddr.String()) {
+				return next(ctx, tx, simulate)
+				// return ctx, nil
+			}
+		}
+
+		msgExec, ok := msg.(*wasm.MsgExecuteContract)
+		if !ok {
+			return next(ctx, tx, simulate)
+			// return ctx, nil
+		}
+
+		if !zeroGasContracts.Has(msgExec.Contract) {
+			return next(ctx, tx, simulate)
+			// return ctx, nil
+		}
+	}
+
+	newCtx = ctx.WithGasMeter(NewFixedGasMeter(ZeroTxGas))
+	return next(newCtx, tx, simulate)
 }

@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
@@ -25,6 +26,10 @@ func (rmd AnteDecoratorPreventEtheruemTxMsgs) AnteHandle(
 				"MsgEthereumTx needs to be contained within a tx with 'ExtensionOptionsEthereumTx' option",
 			)
 		}
+	}
+
+	if ctx.ChainID() == "" {
+		ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
 	}
 	return next(ctx, tx, simulate)
 }

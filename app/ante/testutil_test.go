@@ -1,9 +1,11 @@
 package ante_test
 
 import (
+	"log"
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
@@ -19,12 +21,17 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
-// AnteTestSuite is a test suite to be used with ante handler tests.
-type AnteTestSuite struct {
-	suite.Suite
+func TestAnte(t *testing.T) {
+	suite.Run(t, new(Suite))
+}
+
+// Suite is a test suite to be used with ante handler tests.
+type Suite struct {
+	testutil.LogRoutingSuite
 
 	app         *app.NibiruApp
 	anteHandler sdk.AnteHandler
@@ -34,26 +41,27 @@ type AnteTestSuite struct {
 }
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
-func (suite *AnteTestSuite) SetupTest() {
-	suite.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
+func (s *Suite) SetupTest() {
+	s.app, _ = testapp.NewNibiruTestApp(app.GenesisState{})
 	chainId := "test-chain-id"
-	ctx := suite.app.NewContext(true, tmproto.Header{
+	baseapp.SetChainID(chainId)(s.app.BaseApp)
+	ctx := s.app.NewContext(true, tmproto.Header{
 		Height:  1,
 		ChainID: chainId,
 		Time:    time.Now().UTC(),
 	})
-	suite.ctx = ctx
+	s.ctx = ctx
 
 	// Set up TxConfig
-	suite.clientCtx = client.Context{}.
-		WithTxConfig(suite.app.GetTxConfig()).
+	s.clientCtx = client.Context{}.
+		WithTxConfig(s.app.GetTxConfig()).
 		WithChainID(chainId).
-		WithLegacyAmino(suite.app.LegacyAmino())
+		WithLegacyAmino(s.app.LegacyAmino())
 
-	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
-	suite.Require().NoError(err)
-	params := suite.app.AccountKeeper.GetParams(ctx)
-	suite.Require().NoError(params.Validate())
+	err := s.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	s.Require().NoError(err)
+	params := s.app.AccountKeeper.GetParams(ctx)
+	s.Require().NoError(params.Validate())
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
@@ -61,45 +69,54 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewValidateBasicDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
-		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
+		ante.NewValidateMemoDecorator(s.app.AccountKeeper),
 		nibiruante.AnteDecoratorEnsureSinglePostPriceMessage{},
 		nibiruante.AnteDecoratorStakingCommission{},
-		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
-		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
+		ante.NewConsumeGasForTxSizeDecorator(s.app.AccountKeeper),
+		ante.NewDeductFeeDecorator(s.app.AccountKeeper, s.app.BankKeeper, s.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
 
 		// SetPubKeyDecorator must be called before all signature verification decorators
-		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
-		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
-		ante.NewSigGasConsumeDecorator(suite.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
-		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, suite.app.GetTxConfig().SignModeHandler()),
-		ante.NewIncrementSequenceDecorator(suite.app.AccountKeeper),
-		ibcante.NewRedundantRelayDecorator(suite.app.GetIBCKeeper()),
+		ante.NewSetPubKeyDecorator(s.app.AccountKeeper),
+		ante.NewValidateSigCountDecorator(s.app.AccountKeeper),
+		ante.NewSigGasConsumeDecorator(s.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
+		ante.NewSigVerificationDecorator(s.app.AccountKeeper, s.app.GetTxConfig().SignModeHandler()),
+		ante.NewIncrementSequenceDecorator(s.app.AccountKeeper),
+		ibcante.NewRedundantRelayDecorator(s.app.GetIBCKeeper()),
 	}
 
-	suite.anteHandler = sdk.ChainAnteDecorators(anteDecorators...)
+	s.anteHandler = sdk.ChainAnteDecorators(anteDecorators...)
 }
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.
-func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []uint64, accSeqs []uint64, chainID string) (xauthsigning.Tx, error) {
+func (s *Suite) CreateTestTx(
+	txBuilder client.TxBuilder,
+	privs []cryptotypes.PrivKey,
+	accNums []uint64,
+	accSeqs []uint64,
+	chainID string,
+	txCfg client.TxConfig,
+) (xauthsigning.Tx, error) {
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
+	log.Printf("s.clientCtx.ChainID: %v\n", s.clientCtx.ChainID)
 	var sigsV2 []signing.SignatureV2
 	for i, priv := range privs {
 		sigV2 := signing.SignatureV2{
 			PubKey: priv.PubKey(),
 			Data: &signing.SingleSignatureData{
-				SignMode:  suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(),
+				SignMode:  txCfg.SignModeHandler().DefaultMode(),
 				Signature: nil,
 			},
 			Sequence: accSeqs[i],
 		}
 
 		sigsV2 = append(sigsV2, sigV2)
-		acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress(priv.PubKey().Address()))
-		err := acc.SetAccountNumber(uint64(i) + 100)
-		suite.Require().NoError(err)
+		// TODO: UD-DEBUG: REMOVED: Don't create new accounts here - use the existing ones
+		// acc := s.app.AccountKeeper.NewAccountWithAddress(s.ctx, sdk.AccAddress(priv.PubKey().Address()))
+		// err := acc.SetAccountNumber(uint64(i) + 100)
+		// s.Require().NoError(err)
 	}
-	err := suite.txBuilder.SetSignatures(sigsV2...)
+	err := txBuilder.SetSignatures(sigsV2...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,22 +130,23 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 			Sequence:      accSeqs[i],
 		}
 		sigV2, err := tx.SignWithPrivKey(
-			suite.clientCtx.TxConfig.SignModeHandler().DefaultMode(), signerData,
-			suite.txBuilder, priv, suite.clientCtx.TxConfig, accSeqs[i])
+			txCfg.SignModeHandler().DefaultMode(),
+			signerData,
+			txBuilder,
+			priv,
+			txCfg,
+			accSeqs[i],
+		)
 		if err != nil {
 			return nil, err
 		}
 
 		sigsV2 = append(sigsV2, sigV2)
 	}
-	err = suite.txBuilder.SetSignatures(sigsV2...)
+	err = txBuilder.SetSignatures(sigsV2...)
 	if err != nil {
 		return nil, err
 	}
 
-	return suite.txBuilder.GetTx(), nil
-}
-
-func TestAnteTestSuite(t *testing.T) {
-	suite.Run(t, new(AnteTestSuite))
+	return txBuilder.GetTx(), nil
 }
