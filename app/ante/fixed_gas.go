@@ -1,8 +1,6 @@
 package ante
 
 import (
-	"log"
-
 	sdkioerrors "cosmossdk.io/errors"
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,16 +16,16 @@ const (
 )
 
 var (
-	_ sdk.AnteDecorator = AnteDecoratorEnsureSinglePostPriceMessage{}
+	_ sdk.AnteDecorator = AnteDecEnsureSinglePostPriceMessage{}
 	_ sdk.AnteDecorator = AnteDecSaiOracle{}
 )
 
-// AnteDecoratorEnsureSinglePostPriceMessage ensures that there is only one
+// AnteDecEnsureSinglePostPriceMessage ensures that there is only one
 // oracle vote message in the transaction and sets the gas meter to a fixed
 // value.
-type AnteDecoratorEnsureSinglePostPriceMessage struct{}
+type AnteDecEnsureSinglePostPriceMessage struct{}
 
-func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
+func (anteDec AnteDecEnsureSinglePostPriceMessage) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
@@ -80,31 +78,31 @@ func (anteDec AnteDecSaiOracle) AnteHandle(
 	resp, _ := anteDec.SudoKeeper.QueryZeroGasActors(goCtx, nil)
 	zeroGasActors := resp.Actors
 	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
-		return ctx, nil
+		return next(ctx, tx, simulate)
 	}
 
 	zeroGasSenders := set.New(zeroGasActors.Senders...)
 	zeroGasContracts := set.New(zeroGasActors.Contracts...)
-	log.Printf("UD-DEBUG: AnteDecSaiOracle ctx.ChainID(): %v\n", ctx.ChainID())
 
 	for idx, msg := range tx.GetMsgs() {
 		if idx == 0 {
-			fromAddr := msg.GetSigners()[0]
+			signers := msg.GetSigners()
+			if len(signers) == 0 {
+				return next(ctx, tx, simulate)
+			}
+			fromAddr := signers[0]
 			if !zeroGasSenders.Has(fromAddr.String()) {
 				return next(ctx, tx, simulate)
-				// return ctx, nil
 			}
 		}
 
 		msgExec, ok := msg.(*wasm.MsgExecuteContract)
 		if !ok {
 			return next(ctx, tx, simulate)
-			// return ctx, nil
 		}
 
 		if !zeroGasContracts.Has(msgExec.Contract) {
 			return next(ctx, tx, simulate)
-			// return ctx, nil
 		}
 	}
 

@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
@@ -30,8 +28,6 @@ func NewAnteHandler(
 			return ctx, err
 		}
 
-		fmt.Printf("UD-DEBUG NewAnteHandler ctx.ChainID: %v\n", ctx.ChainID())
-
 		var anteHandler sdk.AnteHandler
 		if !evm.IsEthTx(tx) {
 			anteHandler = NewAnteHandlerNonEVM(keepers.PublicKeepers, options)
@@ -48,8 +44,8 @@ func NewAnteHandlerNonEVM(
 	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
-		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
+		ante.AnteDecPreventEthereumTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
 		ante.AnteDecSaiOracle{PublicKeepers: pk},
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
@@ -61,7 +57,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
+		ante.AnteDecEnsureSinglePostPriceMessage{},
 		ante.AnteDecoratorStakingCommission{},
 		// ----------- Ante Handlers: Gas
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),

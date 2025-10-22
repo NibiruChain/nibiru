@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -93,7 +94,7 @@ type Account struct {
 	passphrase string
 }
 
-func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
+func TestSudoIntegration(t *testing.T) {
 	testutil.RetrySuiteRunIfDbClosed(t, func() {
 		suite.Run(t, new(TestSuite))
 	}, 2)
@@ -255,7 +256,7 @@ func (s *TestSuite) Test_ZCmdChangeRoot() {
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
 // the EditSudoders fn marshals and unmarshals properly from JSON.
 // This unmarshaling is used in the main body of the CmdEditSudoers command.
-func (s *TestSuite) TestMarshal_EditSudoers() {
+func (s *Suite) TestMarshal_EditSudoers() {
 	t := s.T()
 
 	t.Log("create valid example json for the message")
@@ -286,4 +287,259 @@ func (s *TestSuite) TestMarshal_EditSudoers() {
 func (s *TestSuite) TearDownSuite() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
+}
+
+// ———————————————————————————————————————————————————————————————————
+// CLI Tests using TestVars helper
+// ———————————————————————————————————————————————————————————————————
+
+func (s *Suite) TestCliCmdEditSudoers() {
+	testVars := SetupTestVars(s.T())
+	tempDir := s.T().TempDir()
+
+	// Create temporary JSON files for testing
+	addContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
+		"action":    "add_contracts",
+		"contracts": []string{testutil.AccAddress().String(), testutil.AccAddress().String()},
+	})
+	removeContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
+		"action":    "remove_contracts",
+		"contracts": []string{testutil.AccAddress().String()},
+	})
+	invalidActionJSON := s.createTempJSONFile(tempDir, map[string]any{
+		"action":    "invalid_action",
+		"contracts": []string{testutil.AccAddress().String()},
+	})
+	invalidAddressJSON := s.createTempJSONFile(tempDir, map[string]any{
+		"action":    "add_contracts",
+		"contracts": []string{"invalid-address"},
+	})
+
+	testCases := []TestCase{
+		{
+			name: "happy: edit sudoers add contracts",
+			args: []string{
+				"edit-sudoers",
+				addContractsJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "happy: edit sudoers remove contracts",
+			args: []string{
+				"edit-sudoers",
+				removeContractsJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "sad: invalid action type",
+			args: []string{
+				"edit-sudoers",
+				invalidActionJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "invalid action type",
+		},
+		{
+			name: "sad: invalid contract address",
+			args: []string{
+				"edit-sudoers",
+				invalidAddressJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "decoding bech32 failed",
+		},
+		{
+			name: "sad: file not found",
+			args: []string{
+				"edit-sudoers",
+				"nonexistent.json",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "no such file or directory",
+		},
+		{
+			name: "sad: missing args",
+			args: []string{
+				"edit-sudoers",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "accepts 1 arg(s), received 0",
+		},
+		{
+			name: "sad: too many args",
+			args: []string{
+				"edit-sudoers",
+				addContractsJSON,
+				"extra-arg",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "accepts 1 arg(s), received 2",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc.RunTxCmd(s, testVars)
+	}
+}
+
+func (s *Suite) TestCliCmdChangeRoot() {
+	testVars := SetupTestVars(s.T())
+	newRootAddr := testutil.AccAddress().String()
+
+	testCases := []TestCase{
+		{
+			name: "happy: change root",
+			args: []string{
+				"change-root",
+				newRootAddr,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "sad: invalid new root address",
+			args: []string{
+				"change-root",
+				"invalid-address",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "decoding bech32 failed",
+		},
+		{
+			name: "sad: missing args",
+			args: []string{
+				"change-root",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "accepts 1 arg(s), received 0",
+		},
+		{
+			name: "sad: too many args",
+			args: []string{
+				"change-root",
+				newRootAddr,
+				"extra-arg",
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "accepts 1 arg(s), received 2",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc.RunTxCmd(s, testVars)
+	}
+}
+
+func (s *Suite) TestCliCmdEditZeroGasActors() {
+	testVars := SetupTestVars(s.T())
+
+	// Generate test addresses
+	validSender1 := testutil.AccAddress().String()
+	validSender2 := testutil.AccAddress().String()
+	validContract1 := "0x1234567890123456789012345678901234567890"
+	validContract2 := "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
+
+	// Happy path: Valid JSON with both senders and contracts
+	validJSON := fmt.Sprintf(`{"senders":["%s","%s"],"contracts":["%s","%s"]}`,
+		validSender1, validSender2, validContract1, validContract2)
+
+	// Sad path: Not JSON string
+	notJSON := "this is not a json string"
+
+	// Sad path: Valid JSON but wrong structure (array instead of object)
+	wrongStructureJSON := `["sender1", "sender2"]`
+
+	// Sad path: Valid JSON structure but invalid sender address
+	invalidSenderJSON := fmt.Sprintf(`{"senders":["invalid-address"],"contracts":["%s"]}`, validContract1)
+
+	testCases := []TestCase{
+		{
+			name: "happy: edit zero gas actors with valid JSON",
+			args: []string{
+				"edit-zero-gas",
+				validJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "sad: not a JSON string",
+			args: []string{
+				"edit-zero-gas",
+				notJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "is not a JSON string",
+		},
+		{
+			name: "sad: JSON with wrong structure",
+			args: []string{
+				"edit-zero-gas",
+				wrongStructureJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "failed to unpack actors json string",
+		},
+		{
+			name: "sad: JSON with invalid sender address",
+			args: []string{
+				"edit-zero-gas",
+				invalidSenderJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "ZeroGasActors stateless validation error",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc.RunTxCmd(s, testVars)
+	}
+}
+
+func (s *Suite) TestCliCmdQuerySudoers() {
+	testVars := SetupTestVars(s.T())
+
+	testCases := []TestCase{
+		{
+			name: "happy: query sudoers state",
+			args: []string{
+				"state",
+			},
+			wantErr: "",
+		},
+		{
+			name: "sad: too many args",
+			args: []string{
+				"state",
+				"extra-arg",
+			},
+			wantErr: `unknown command "extra-arg"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc.RunQueryCmd(s, testVars)
+	}
+}
+
+// Helper function to create temporary JSON files for testing
+func (s *Suite) createTempJSONFile(tempDir string, data any) string {
+	jsonData, err := json.Marshal(data)
+	s.Require().NoError(err)
+
+	// Create a temporary file
+	tmpFile, err := os.CreateTemp(tempDir, "sudo_test_*.json")
+	s.Require().NoError(err)
+	defer tmpFile.Close()
+
+	// Write JSON data to the file
+	_, err = tmpFile.Write(jsonData)
+	s.Require().NoError(err)
+
+	// Return the file path
+	return tmpFile.Name()
 }

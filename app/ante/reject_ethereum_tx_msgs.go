@@ -10,13 +10,13 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// AnteDecoratorPreventEtheruemTxMsgs prevents invalid msg types from being executed
-type AnteDecoratorPreventEtheruemTxMsgs struct{}
+// AnteDecPreventEthereumTxMsgs prevents invalid msg types from being executed
+type AnteDecPreventEthereumTxMsgs struct{}
 
 // AnteHandle rejects messages that requires ethereum-specific authentication.
 // For example `MsgEthereumTx` requires fee to be deducted in the antehandler in
 // order to perform the refund.
-func (rmd AnteDecoratorPreventEtheruemTxMsgs) AnteHandle(
+func (anteDec AnteDecPreventEthereumTxMsgs) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {

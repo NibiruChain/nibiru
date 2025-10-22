@@ -39,9 +39,6 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 		return AnteHandlerError("sign mode handler")
 	}
 	opts.SigGasConsumer = NibiruSigVerificationGasConsumer
-	// if opts.SigGasConsumer == nil {
-	// 	opts.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
-	// }
 	if opts.WasmConfig == nil {
 		return AnteHandlerError("wasm config")
 	}

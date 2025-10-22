@@ -30,7 +30,7 @@ func (s *Suite) TestAnteDecoratorPreventEtheruemTxMsgs() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := ante.AnteDecoratorPreventEtheruemTxMsgs{}
+			anteDec := ante.AnteDecPreventEthereumTxMsgs{}
 			tx := tc.txSetup(&deps)
 
 			_, err := anteDec.AnteHandle(
