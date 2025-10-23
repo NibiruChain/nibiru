@@ -26,6 +26,7 @@ func (k Keeper) QuerySudoers(
 func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
 	return k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
 }
+
 func (k Keeper) QueryZeroGasActors(
 	goCtx context.Context,
 	_ *sudo.QueryZeroGasActorsRequest,

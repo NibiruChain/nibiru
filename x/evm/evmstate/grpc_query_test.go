@@ -1017,13 +1017,23 @@ func (s *Suite) TestTraceBlock() {
 					"expect result.%s field to be present: { got: %s, want: %s }",
 					k, gotTraceRes, wantResp,
 				)
-				if strings.HasPrefix(gotV, "0x") {
-					// Hex addresses aren't case sensitive. Normalize to lower
-					// case for
-					v = strings.ToLower(v)
-					gotV = strings.ToLower(gotV)
+
+				switch k {
+				case "from", "to":
+					// Compare as addresses (case-insensitive, byte-equal)
+					s.Equalf(
+						gethcommon.HexToAddress(v),
+						gethcommon.HexToAddress(gotV),
+						`mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name,
+					)
+				default:
+					// If it's hex, ignore case; else exact
+					if strings.HasPrefix(gotV, "0x") {
+						v = strings.ToLower(v)
+						gotV = strings.ToLower(gotV)
+					}
+					s.Equalf(v, gotV, `mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name)
 				}
-				s.Equalf(v, gotV, `mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name)
 			}
 		})
 	}
