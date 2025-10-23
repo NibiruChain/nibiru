@@ -4,60 +4,55 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-type MsgServer struct {
-	keeper Keeper
-}
-
-func NewMsgServer(keeper Keeper) *MsgServer {
-	return &MsgServer{keeper: keeper}
-}
-
 // Ensure the interface is properly implemented at compile time
-var _ sudotypes.MsgServer = MsgServer{}
+var _ sudo.MsgServer = (*Keeper)(nil)
 
 // EditSudoers adds or removes sudo contracts from state.
-func (m MsgServer) EditSudoers(
-	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
-) (*sudotypes.MsgEditSudoersResponse, error) {
+func (k Keeper) EditSudoers(
+	goCtx context.Context, msg *sudo.MsgEditSudoers,
+) (*sudo.MsgEditSudoersResponse, error) {
 	switch msg.RootAction() {
-	case sudotypes.AddContracts:
-		return m.keeper.AddContracts(goCtx, msg)
-	case sudotypes.RemoveContracts:
-		return m.keeper.RemoveContracts(goCtx, msg)
+	case sudo.AddContracts:
+		return k.AddContracts(goCtx, msg)
+	case sudo.RemoveContracts:
+		return k.RemoveContracts(goCtx, msg)
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
 	}
 }
 
-func (m MsgServer) ChangeRoot(ctx context.Context, msg *sudotypes.MsgChangeRoot) (*sudotypes.MsgChangeRootResponse, error) {
-	sdkContext := sdk.UnwrapSDKContext(ctx)
+func (k Keeper) ChangeRoot(
+	goCtx context.Context,
+	msg *sudo.MsgChangeRoot,
+) (*sudo.MsgChangeRootResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pbSudoers, err := m.keeper.Sudoers.Get(sdkContext)
+	pbSudoers, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sudoers: %w", err)
 	}
 
-	err = m.validateRootPermissions(pbSudoers, msg)
+	err = validateRootPermissions(pbSudoers, msg)
 	if err != nil {
 		return nil, err
 	}
 
 	pbSudoers.Root = msg.NewRoot
-	m.keeper.Sudoers.Set(sdkContext, pbSudoers)
+	k.Sudoers.Set(ctx, pbSudoers)
 
-	return &sudotypes.MsgChangeRootResponse{}, nil
+	return &sudo.MsgChangeRootResponse{}, nil
 }
 
-func (m MsgServer) validateRootPermissions(pbSudoers sudotypes.Sudoers, msg *sudotypes.MsgChangeRoot) error {
+func validateRootPermissions(
+	pbSudoers sudo.Sudoers,
+	msg *sudo.MsgChangeRoot,
+) error {
 	root, err := sdk.AccAddressFromBech32(pbSudoers.Root)
 	if err != nil {
 		return fmt.Errorf("failed to parse root address: %w", err)
@@ -69,38 +64,73 @@ func (m MsgServer) validateRootPermissions(pbSudoers sudotypes.Sudoers, msg *sud
 	}
 
 	if !root.Equals(sender) {
-		return sudotypes.ErrUnauthorized
+		return sudo.ErrUnauthorized
 	}
 
 	return nil
+}
+
+func (k Keeper) EditZeroGasActors(
+	goCtx context.Context,
+	msg *sudo.MsgEditZeroGasActors,
+) (*sudo.MsgEditZeroGasActorsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.CheckPermissions(msg.GetSigners()[0], ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	actors := sudo.ZeroGasActors{}
+	seenSenders := set.New[string]()
+	seenContracts := set.New[string]()
+	for _, sender := range msg.Actors.Senders {
+		if seenSenders.Has(sender) {
+			continue
+		}
+		actors.Senders = append(actors.Senders, sender)
+		seenSenders.Add(sender)
+	}
+	for _, contract := range msg.Actors.Contracts {
+		if seenContracts.Has(contract) {
+			continue
+		}
+		actors.Contracts = append(actors.Contracts, contract)
+		seenContracts.Add(contract)
+	}
+
+	k.ZeroGasActors.Set(ctx, actors)
+
+	return &sudo.MsgEditZeroGasActorsResponse{}, nil
 }
 
 // ————————————————————————————————————————————————————————————————————————————
 // Encoder for the Sudoers type
 // ————————————————————————————————————————————————————————————————————————————
 
-func SudoersValueEncoder(cdc codec.BinaryCodec) collections.ValueEncoder[sudotypes.Sudoers] {
-	return collections.ProtoValueEncoder[sudotypes.Sudoers](cdc)
-}
-
 type Sudoers struct {
 	Root      string          `json:"root"`
 	Contracts set.Set[string] `json:"contracts"`
 }
 
-func (sudo Sudoers) String() string {
-	r := sudo.ToPb()
+func (sudoers Sudoers) String() string {
+	r := sudoers.ToPb()
 	return r.String()
 }
 
-func (sudo Sudoers) ToPb() sudotypes.Sudoers {
-	return sudotypes.Sudoers{
-		Root:      sudo.Root,
-		Contracts: sudo.Contracts.ToSlice(),
+func (sudoers Sudoers) ToPb() sudo.Sudoers {
+	return sudo.Sudoers{
+		Root:      sudoers.Root,
+		Contracts: sudoers.Contracts.ToSlice(),
 	}
 }
 
-func SudoersFromPb(pbSudoers sudotypes.Sudoers) Sudoers {
+func SudoersFromPb(pbSudoers sudo.Sudoers) Sudoers {
 	return Sudoers{
 		Root:      pbSudoers.Root,
 		Contracts: set.New[string](pbSudoers.Contracts...),
@@ -108,7 +138,7 @@ func SudoersFromPb(pbSudoers sudotypes.Sudoers) Sudoers {
 }
 
 // AddContracts adds contract addresses to the sudoer set.
-func (sudo *Sudoers) AddContracts(
+func (sudoers *Sudoers) AddContracts(
 	contracts []string,
 ) (out set.Set[string], err error) {
 	for _, contractStr := range contracts {
@@ -116,13 +146,13 @@ func (sudo *Sudoers) AddContracts(
 		if err != nil {
 			return out, err
 		}
-		sudo.Contracts.Add(contract.String())
+		sudoers.Contracts.Add(contract.String())
 	}
-	return sudo.Contracts, err
+	return sudoers.Contracts, err
 }
 
-func (sudo *Sudoers) RemoveContracts(contracts []string) {
+func (sudoers *Sudoers) RemoveContracts(contracts []string) {
 	for _, contract := range contracts {
-		sudo.Contracts.Remove(contract)
+		sudoers.Contracts.Remove(contract)
 	}
 }

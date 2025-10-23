@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
-func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
+func (s *Suite) TestAnteDecoratorStakingCommission() {
 	// nextAnteHandler: A no-op next handler to make this a unit test.
 	var nextAnteHandler sdk.AnteHandler = func(
 		ctx sdk.Context, tx sdk.Tx, simulate bool,

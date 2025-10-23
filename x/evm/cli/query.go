@@ -47,8 +47,8 @@ func CmdQueryFunToken() *cobra.Command {
 			fmt.Sprintf(`Query evm fungible token mapping.
 
 Examples:
-$ %s query %s get-fun-token ibc/abcdef
-$ %s query %s get-fun-token 0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6
+%s query %s get-fun-token ibc/abcdef
+%s query %s get-fun-token 0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6
 `,
 				version.AppName, evm.ModuleName,
 				version.AppName, evm.ModuleName,

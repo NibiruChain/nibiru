@@ -41,7 +41,7 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -295,7 +295,7 @@ func TestAppImportExport(t *testing.T) {
 		{oldApp.GetKey(epochstypes.StoreKey), newApp.GetKey(epochstypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(inflationtypes.StoreKey), newApp.GetKey(inflationtypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(oracletypes.StoreKey), newApp.GetKey(oracletypes.StoreKey), [][]byte{}},
-		{oldApp.GetKey(sudotypes.StoreKey), newApp.GetKey(sudotypes.StoreKey), [][]byte{}},
+		{oldApp.GetKey(sudo.StoreKey), newApp.GetKey(sudo.StoreKey), [][]byte{}},
 		{oldApp.GetKey(tokenfactorytypes.StoreKey), newApp.GetKey(tokenfactorytypes.StoreKey), [][]byte{}},
 	}
 

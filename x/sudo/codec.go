@@ -1,4 +1,4 @@
-package types
+package sudo
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,6 +16,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* interface */ (*sdk.Msg)(nil),
 		/* implementations */
 		&MsgEditSudoers{},
+		&MsgEditZeroGasActors{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

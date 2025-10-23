@@ -13,7 +13,7 @@ import (
 // transient store for BaseFee calculation.
 type AnteDecBlockGasWanted struct{}
 
-func (gwd AnteDecBlockGasWanted) AnteHandle(
+func (anteDec AnteDecBlockGasWanted) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)

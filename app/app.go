@@ -99,7 +99,7 @@ import (
 	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -153,7 +153,7 @@ var (
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
-		sudo.AppModuleBasic{},
+		sudomodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
@@ -175,7 +175,7 @@ var (
 
 		evm.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		epochstypes.ModuleName:          {},
-		sudotypes.ModuleName:            {},
+		sudo.ModuleName:                 {},
 		nutil.TreasuryPoolModuleAccount: {},
 		wasmtypes.ModuleName:            {authtypes.Burner},
 		tokenfactorytypes.ModuleName:    {authtypes.Minter, authtypes.Burner},

@@ -21,16 +21,23 @@ jobs:
         with:
           filters: |
             evm-changes:
-              - "**.go"
-              - "**.proto"
-              - "go.mod"
-              - "go.sum"
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
               - "**go.mod"
               - "**go.sum"
-              - "contrib/docker/*"
+              - "contrib/docker-compose/*"
               - "**.ts"
               - "**.js"
               - "**.json"
+
+      - name: skip-tests
+        if: steps.check_evm_changes.outputs.evm-changes == 'false'
+        run: |
+          echo "job: e2e-evm was skipped since relevant files were not changed."
 
       - name: Set up Go
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
