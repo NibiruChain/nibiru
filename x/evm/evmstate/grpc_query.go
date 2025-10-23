@@ -690,29 +690,43 @@ func (k Keeper) TraceBlock(
 		big.NewInt(ctx.BlockHeight()),
 		evm.ParseBlockTimeUnixU64(ctx),
 	)
-	txsLength := len(req.Txs)
-	results := make([]*evm.TxTraceResult, 0, txsLength)
 
-	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
-
+	// NOTE: Nibiru EVM uses exclusively native tracers and considers JS tracers
+	// out of scope.
+	//
+	// Geth differentiates between native tracers and JS tracers.
+	// Native tracers are the defaults like the "callTracer" and others have low
+	// overhead and return errors if any of the txs fail tracing.
+	//
+	// JS tracers (geth only) have high overhead. Tracing for them runs a
+	// parallel process that generates statesin one thread and traces txs in
+	// separate worker threads. JS tracers store tracing errors for each tx as
+	// fields of the returned trace result instead of failing the query.
+	var (
+		results  = make([]evm.TxTraceResult, len(req.Txs))
+		txConfig = NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+		// Transaction data as an EVM message to be traced.
+		msg *core.Message
+	)
 	for i, tx := range req.Txs {
 		result := evm.TxTraceResult{}
 		ethTx := tx.AsTransaction()
-		txConfig.TxHash = ethTx.Hash()
+		result.TxHash = ethTx.Hash()
+		txConfig.TxHash = result.TxHash
 		txConfig.TxIndex = uint(i)
-		msg, err := core.TransactionToMessage(ethTx, signer, evmCfg.BaseFeeWei)
-		if err != nil {
-			result.Error = err.Error()
-			continue
-		}
+		// Here in "core.TransactionToMessage", the resulting msg is guaranteed
+		// not to be nil, and potential signer errors are not relevant for
+		// tracing, as this is only a query.
+		msg, _ = core.TransactionToMessage(ethTx, signer, evmCfg.BaseFeeWei)
 		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
 		if err != nil {
-			result.Error = err.Error()
-		} else {
-			txConfig.LogIndex = logIndex
-			result.Result = traceResult
+			// Since Nibiru uses native tracers from geth, failure to trace any
+			// tx means block tracing fails too.
+			return nil, fmt.Errorf("trace tx error { txhash: %s, blockHeight: %d }: %w", ethTx.Hash().Hex(), ctx.BlockHeight(), err)
 		}
-		results = append(results, &result)
+		txConfig.LogIndex = logIndex
+		result.Result = traceResult
+		results[i] = result
 	}
 
 	resultData, err := json.Marshal(results)

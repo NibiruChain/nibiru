@@ -97,7 +97,7 @@ func CmdQueryAccount() *cobra.Command {
 			offline, _ := cmd.Flags().GetBool("offline")
 
 			if offline {
-				var addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+				addrEth := eth.NibiruAddrToEthAddr(addrBech32)
 				resp := new(evm.QueryEthAccountResponse)
 				resp.EthAddress = addrEth.Hex()
 				resp.Bech32Address = addrBech32.String()

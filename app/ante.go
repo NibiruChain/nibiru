@@ -47,7 +47,7 @@ func NewAnteHandlerNonEVM(
 		ante.AnteDecPreventEthereumTxMsgs{}, // reject MsgEthereumTxs
 		ante.AnteDecAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
-		ante.AnteDecSaiOracle{PublicKeepers: pk},
+		ante.AnteDecZeroGasActors{PublicKeepers: pk},
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
 		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
