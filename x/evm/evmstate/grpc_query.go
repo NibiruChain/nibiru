@@ -711,7 +711,8 @@ func (k Keeper) TraceBlock(
 	for i, tx := range req.Txs {
 		result := evm.TxTraceResult{}
 		ethTx := tx.AsTransaction()
-		txConfig.TxHash = ethTx.Hash()
+		result.TxHash = ethTx.Hash()
+		txConfig.TxHash = result.TxHash
 		txConfig.TxIndex = uint(i)
 		// Here in "core.TransactionToMessage", the resulting msg is guaranteed
 		// not to be nil, and potential signer errors are not relevant for

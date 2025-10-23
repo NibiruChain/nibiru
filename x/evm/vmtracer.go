@@ -67,7 +67,9 @@ func NewDefaultTracer() *tracers.Tracer {
 	}
 }
 
-// TxTraceResult is the result of a single transaction trace during a block trace.
+// TxTraceResult is the result of a single transaction trace during a block
+// trace. This is a duplicate of the private result struct from geth in
+// "eth/tracers/api.go".
 type TxTraceResult struct {
 	TxHash gethcommon.Hash `json:"txHash"`           // transaction hash
 	Result any             `json:"result,omitempty"` // Trace results produced by the tracer
