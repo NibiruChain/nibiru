@@ -55,6 +55,8 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2405](https://github.com/NibiruChain/nibiru/pull/2405) - chore: additional coin logos which could be used externally
 - [#2406](https://github.com/NibiruChain/nibiru/pull/2406) - chore: added monad logo svg
 - [#2407](https://github.com/NibiruChain/nibiru/pull/2407) - feat(sudo-ante): implement zero gas actors for invoking whitelisted contract
+- [#2409](https://github.com/NibiruChain/nibiru/pull/2409) - fix(evm-trace-block): handle native tracer errors JSON-RPC errors for "debug_traceBlockByNumber". Fixes [Nibiru#2400 bug](https://github.com/NibiruChain/nibiru/issues/2400)
+
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
