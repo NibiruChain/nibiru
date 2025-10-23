@@ -18,6 +18,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
@@ -48,33 +49,29 @@ var _ evm.QueryServer = &Keeper{}
 func (k Keeper) EthAccount(
 	goCtx context.Context, req *evm.QueryEthAccountRequest,
 ) (*evm.QueryEthAccountResponse, error) {
-	isBech32, err := req.Validate()
+	addrBech32, err := req.Validate()
 	if err != nil {
 		return nil, err
 	}
-
-	var addrEth gethcommon.Address
-	var addrBech32 sdk.AccAddress
-	if isBech32 {
-		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
-		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
-	} else {
-		addrEth = gethcommon.HexToAddress(req.Address)
-		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	acct := k.getAccountWithoutBalance(ctx, addrEth)
-	if acct == nil {
-		return nil, fmt.Errorf("account not found for %s", addrEth.Hex())
+
+	balWei := k.Bank.GetWeiBalance(ctx, addrBech32)
+
+	var addrEthHex string
+	acct := NewEmptyAccount()
+	if len(addrBech32.Bytes()) == appconst.ADDR_LEN_EOA {
+		addrEth := eth.NibiruAddrToEthAddr(addrBech32)
+		acctMaybe := k.GetAccount(ctx, addrEth)
+		if acctMaybe != nil {
+			acct = acctMaybe
+		}
+		addrEthHex = addrEth.Hex()
 	}
-	balNative := k.Bank.GetBalance(ctx, addrBech32, evm.EVMBankDenom).Amount.BigInt()
 
 	return &evm.QueryEthAccountResponse{
-		EthAddress:    addrEth.Hex(),
+		EthAddress:    addrEthHex,
 		Bech32Address: addrBech32.String(),
-		Balance:       balNative.String(),
-		BalanceWei:    evm.NativeToWei(balNative).String(),
+		BalanceWei:    balWei.String(),
 		CodeHash:      gethcommon.BytesToHash(acct.CodeHash).Hex(),
 		Nonce:         acct.Nonce,
 	}, nil
@@ -136,28 +133,13 @@ func (k Keeper) Balance(
 	goCtx context.Context,
 	req *evm.QueryBalanceRequest,
 ) (*evm.QueryBalanceResponse, error) {
-	isBech32, err := req.Validate()
+	addrBech32, err := req.Validate()
 	if err != nil {
 		return nil, err
 	}
-	if isBech32 {
-	}
-
-	var addrEth gethcommon.Address
-	var addrBech32 sdk.AccAddress
-	if isBech32 {
-		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
-		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
-	} else {
-		addrEth = gethcommon.HexToAddress(req.Address)
-		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	balanceWei := k.Bank.GetWeiBalance(ctx, addrBech32)
 	return &evm.QueryBalanceResponse{
-		Balance:    balanceWei.String(),
-		BalanceWei: balanceWei.String(),
+		BalanceWei: k.Bank.GetWeiBalance(ctx, addrBech32).String(),
 	}, nil
 }
 

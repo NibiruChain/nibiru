@@ -2,8 +2,6 @@
 package evm
 
 import (
-	"fmt"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -31,29 +29,13 @@ func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker
 	return nil
 }
 
-func (req *QueryEthAccountRequest) Validate() (isBech32 bool, err error) {
+func (req *QueryEthAccountRequest) Validate() (addrBech32 sdk.AccAddress, err error) {
 	if req == nil {
-		return isBech32, nutil.ErrNilGrpcMsg
+		err = nutil.ErrNilGrpcMsg
+		return
 	}
-
-	ethAddrErr := eth.ValidateAddress(req.Address)
-	_, bech32AddrErr := sdk.AccAddressFromBech32(req.Address)
-
-	switch {
-	case ethAddrErr == nil:
-		isBech32 = false
-		return isBech32, nil
-	case bech32AddrErr == nil:
-		isBech32 = true
-		return isBech32, nil
-	default:
-		return isBech32, status.Error(
-			codes.InvalidArgument,
-			fmt.Errorf(
-				"could not parse address as Nibiru Bech32 or Ethereum hexadecimal: {{ Ethereum error: %w, bech32 error: %w }}", ethAddrErr, bech32AddrErr,
-			).Error(),
-		)
-	}
+	addrBech32, err = eth.NibiruAddrFromStr(req.Address)
+	return addrBech32, err
 }
 
 func (req *QueryValidatorAccountRequest) Validate() (
@@ -72,23 +54,13 @@ func (req *QueryValidatorAccountRequest) Validate() (
 	return consAddr, nil
 }
 
-func (req *QueryBalanceRequest) Validate() (isBech32 bool, err error) {
+func (req *QueryBalanceRequest) Validate() (addrBech32 sdk.AccAddress, err error) {
 	if req == nil {
 		err = nutil.ErrNilGrpcMsg
 		return
 	}
-
-	reqAcc := &QueryEthAccountRequest{Address: req.Address}
-	isBech32, err = reqAcc.Validate()
-	if err != nil {
-		err = status.Error(
-			codes.InvalidArgument,
-			err.Error(),
-		)
-		return
-	}
-
-	return isBech32, nil
+	addrBech32, err = eth.NibiruAddrFromStr(req.Address)
+	return addrBech32, err
 }
 
 func (req *QueryStorageRequest) Validate() error {
