@@ -133,7 +133,8 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.oracle.v1.Query/Params":            new(oracle.QueryParamsResponse),
 
 		// nibiru sudo
-		"/nibiru.sudo.v1.Query/QuerySudoers": new(sudo.QuerySudoersResponse),
+		"/nibiru.sudo.v1.Query/QuerySudoers":       new(sudo.QuerySudoersResponse),
+		"/nibiru.sudo.v1.Query/QueryZeroGasActors": new(sudo.QueryZeroGasActorsResponse),
 
 		// nibiru devgas
 		"/nibiru.devgas.v1.Query/FeeShares":             new(devgas.QueryFeeSharesResponse),
