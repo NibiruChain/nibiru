@@ -25,8 +25,8 @@ service Query {
     option (google.api.http).get = "/nibiru/evm/v1/validator_account/{cons_address}";
   }
 
-  // Balance queries the balance of a the EVM denomination for a single
-  // EthAccount.
+  // Balance queries the balance of the NIBI (ether for the EVM) in units of wei
+  // for a single EthAccount. 1 wei == 1 attoNIBI == 10^{-18} NIBI.
   rpc Balance(QueryBalanceRequest) returns (QueryBalanceResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/balances/{address}";
   }
@@ -82,7 +82,7 @@ service Query {
   }
 }
 
-// QueryEthAccountRequest is the request type for the Query/Account RPC method.
+// QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 message QueryEthAccountRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -91,19 +91,23 @@ message QueryEthAccountRequest {
   string address = 1;
 }
 
-// QueryEthAccountResponse is the response type for the Query/EthAccount RPC method.
+// QueryEthAccountResponse: Response type for "/eth.evm.v1.Query/EthAccount"
 message QueryEthAccountResponse {
-  // balance is the balance of unibi (micronibi).
-  string balance = 1;
-  // balance_wei is the balance of wei (attoether, where NIBI is ether).
+  // DEPRECATED: "balance". The balance of unibi (microNIBI).
+  reserved 1;
+  // balance_wei is the balance of wei (attoNIBI, since NIBI is ether).
   string balance_wei = 2;
-  // code_hash is the hex-formatted code bytes from the EOA.
+  // code_hash is the hex-encoded hash of the contract bytecode for the
+  // account. Ethereum defines a code hash as the keccack 256 hash of the bytes.
+  // Note that externally owned accounts (EOAs) have the empty/nil code hash
+  // (`crypto.Keccak256(nil)`).
   string code_hash = 3;
   // nonce is the account's sequence number.
   uint64 nonce = 4;
 
-  // eth_address: The hexadecimal-encoded string representing the 20 byte address
-  // of a Nibiru EVM account.
+  // eth_address: The hexadecimal-encoded string representing the 20 byte
+  // address of a Nibiru EVM account. Note that this field may be empty if the
+  // account queried is a Wasm contract (32 byte address).
   string eth_address = 5;
 
   // bech32_address is the nibi-prefixed address of the account that can receive
@@ -132,7 +136,7 @@ message QueryValidatorAccountResponse {
   uint64 account_number = 3;
 }
 
-// QueryBalanceRequest is the request type for the Query/Balance RPC method.
+// QueryBalanceRequest: Response type for "/eth.evm.v1.Query/Balance"
 message QueryBalanceRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -141,11 +145,12 @@ message QueryBalanceRequest {
   string address = 1;
 }
 
-// QueryBalanceResponse is the response type for the Query/Balance RPC method.
+// QueryBalanceResponse: Response type for "/eth.evm.v1.Query/Balance"
 message QueryBalanceResponse {
-  // balance is the balance of the EVM denomination
-  string balance = 1;
-  // balance is the balance of the EVM denomination in units of wei.
+  // DEPRECATED: balance. The balance of unibi (microNIBI).
+  reserved 1;
+  // balance is the balance of the EVM denomination in units of wei. 1 wei is 1
+  // attoNIBI.
   string balance_wei = 2;
 }
 
@@ -247,7 +252,10 @@ message QueryTraceTxRequest {
   // block_hash of requested transaction
   string block_hash = 6;
   // block_time of requested transaction
-  google.protobuf.Timestamp block_time = 7 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  google.protobuf.Timestamp block_time = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true
+  ];
   // proposer_address is the proposer of the requested block
   bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ConsAddress"];
   // chain_id is the the eip155 chain id parsed from the requested block header
@@ -273,7 +281,10 @@ message QueryTraceBlockRequest {
   // block_hash (hex) of the traced block
   string block_hash = 6;
   // block_time of the traced block
-  google.protobuf.Timestamp block_time = 7 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  google.protobuf.Timestamp block_time = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true
+  ];
   // proposer_address is the address of the requested block
   bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ConsAddress"];
   // chain_id is the eip155 chain id parsed from the requested block header
@@ -312,7 +323,7 @@ message QueryFunTokenMappingRequest {
 
 message QueryFunTokenMappingResponse {
   option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;  
+  option (gogoproto.goproto_getters) = false;
 
   // fun_token is a mapping between the Bank Coin and the ERC20 contract address
   eth.evm.v1.FunToken fun_token = 1;
