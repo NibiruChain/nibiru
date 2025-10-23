@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 func (m QueryTraceTxRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
@@ -33,7 +33,7 @@ func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker
 
 func (req *QueryEthAccountRequest) Validate() (isBech32 bool, err error) {
 	if req == nil {
-		return isBech32, common.ErrNilGrpcMsg
+		return isBech32, nutil.ErrNilGrpcMsg
 	}
 
 	ethAddrErr := eth.ValidateAddress(req.Address)
@@ -74,7 +74,7 @@ func (req *QueryValidatorAccountRequest) Validate() (
 
 func (req *QueryBalanceRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -88,7 +88,7 @@ func (req *QueryBalanceRequest) Validate() error {
 
 func (req *QueryStorageRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 	if err := eth.ValidateAddress(req.Address); err != nil {
 		return status.Error(
@@ -101,7 +101,7 @@ func (req *QueryStorageRequest) Validate() error {
 
 func (req *QueryCodeRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -115,14 +115,14 @@ func (req *QueryCodeRequest) Validate() error {
 
 func (req *EthCallRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 	return nil
 }
 
 func (req *QueryTraceTxRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {
@@ -133,7 +133,7 @@ func (req *QueryTraceTxRequest) Validate() error {
 
 func (req *QueryTraceBlockRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {

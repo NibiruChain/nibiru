@@ -11,14 +11,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 // TestSuite: Runs all the tests in the suite.
@@ -87,7 +86,6 @@ func TestWhoAmI(t *testing.T) {
 		require.NoError(t, err)
 		evmObj, _ := deps.NewEVM()
 		return deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -126,7 +124,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420))),
 	))
@@ -136,7 +134,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -156,7 +153,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 	s.Run("ConvertCoinToEvm", func() {
 		_, err := deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
 				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(69_420)),
@@ -179,7 +176,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 		evmObj, _ := deps.NewEVM()
 		s.Require().NoError(err)
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20,
@@ -204,7 +200,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -247,12 +242,11 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		evmResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
 			contractInput,
-			keeper.Erc20GasLimitQuery,
+			evmstate.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
@@ -268,7 +262,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("IFunToken.sendToBank() - WNIBI", func() {
-		erc20Wnibi := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi.Address
+		erc20Wnibi := deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi.Address
 		deps.DeployWNIBI(&s.Suite)
 
 		evmtest.BalanceAssertNIBI{
@@ -282,7 +276,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.T().Log("fund the sender with WNIBI")
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(
 				sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(420)),
@@ -296,7 +290,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 
 		evmObj, _ := deps.NewEVM()
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Wnibi,
@@ -319,7 +312,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 		s.T().Log("sendToBank with WNIBI: unimplemented ")
 		randomAcc := evmtest.NewEthPrivAcc()
 
-		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *statedb.StateDB) {
+		deps.MimicEthereumTx(&s.Suite, func(evmObj *vm.EVM, sdb *evmstate.SDB) {
 			contractInput, err = embeds.SmartContract_FunToken.ABI.Pack(
 				string(precompile.FunTokenMethod_sendToBank),
 				erc20Wnibi,
@@ -329,7 +322,6 @@ func (s *FuntokenSuite) TestHappyPath() {
 			s.Require().NoError(err, "ABI packing error in WNIBI.deposit")
 
 			ethTxResp, err = deps.EvmKeeper.CallContract(
-				deps.Ctx,
 				evmObj,
 				deps.Sender.EthAddr,
 				&precompile.PrecompileAddr_FunToken,
@@ -383,7 +375,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	s.Run("Fund sender's wallet", func() {
 		s.Require().NoError(testapp.FundAccount(
 			deps.App.BankKeeper,
-			deps.Ctx,
+			deps.Ctx(),
 			deps.Sender.NibiruAddr,
 			sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000))),
 		))
@@ -391,7 +383,7 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 
 	s.Run("Fund contract with erc20 coins", func() {
 		_, err = deps.EvmKeeper.ConvertCoinToEvm(
-			sdk.WrapSDKContext(deps.Ctx),
+			sdk.WrapSDKContext(deps.Ctx()),
 			&evm.MsgConvertCoinToEvm{
 				Sender:   deps.Sender.NibiruAddr.String(),
 				BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewInt(1000)),
@@ -412,7 +404,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -435,7 +426,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -458,7 +448,6 @@ func (s *FuntokenSuite) TestPrecompileLocalGas() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&contractAddr,
@@ -486,7 +475,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	s.T().Log("2) Fund the sender with some ulibi on the bank side")
 	err := testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
 		sdk.NewCoins(sdk.NewCoin(bankDenom, sdk.NewInt(1234))),
 	)
@@ -502,7 +491,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		s.Require().NoError(err)
 
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -549,7 +537,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 		s.Require().NoError(err)
 
 		ethTxResp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -629,8 +616,8 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// Fund user so they can create funtoken from an ERC20
 	s.Require().NoError(testapp.FundAccount(
-		deps.App.BankKeeper, deps.Ctx, deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+		deps.App.BankKeeper, deps.Ctx(), deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 	))
 
 	// Deploy an ERC20 with 18 decimals
@@ -640,7 +627,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 
 	// create fun token from that erc20
 	_, err = deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			Sender:    deps.Sender.NibiruAddr.String(),
 			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
@@ -658,7 +645,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&erc20Addr,
@@ -685,7 +671,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			bob.EthAddr,                         /* from */
 			&precompile.PrecompileAddr_FunToken, /* to */
@@ -718,7 +703,6 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromERC20() {
 		s.Require().NoError(err)
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			alice.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -850,7 +834,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,                 // From address (doesn't matter much for view)
 			&precompile.PrecompileAddr_FunToken, // To the precompile address
@@ -883,7 +866,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		resp, err := deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,
@@ -909,7 +891,6 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		evmObj, _ := deps.NewEVM()
 		_, err = deps.EvmKeeper.CallContract(
-			deps.Ctx,
 			evmObj,
 			deps.Sender.EthAddr,
 			&precompile.PrecompileAddr_FunToken,

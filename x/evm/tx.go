@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.
@@ -77,4 +78,17 @@ func (m *MsgEthereumTxResponse) Revert() []byte {
 		return nil
 	}
 	return common.CopyBytes(m.Ret)
+}
+
+// IsEthTx check if the tx is an eth tx
+func IsEthTx(tx sdk.Tx) bool {
+	extTx, ok := tx.(authante.HasExtensionOptionsTx)
+	if !ok {
+		return false
+	}
+	opts := extTx.GetExtensionOptions()
+	if len(opts) != 1 || opts[0].GetTypeUrl() != "/eth.evm.v1.ExtensionOptionsEthereumTx" {
+		return false
+	}
+	return true
 }

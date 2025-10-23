@@ -1,20 +1,8 @@
 name: EVM E2E tests
 
+# Run on PRs
 on:
   pull_request:
-    paths:
-      [
-        "**.go",
-        "**.proto",
-        "go.mod",
-        "go.sum",
-        "**go.mod",
-        "**go.sum",
-        "contrib/docker/*",
-        "**.ts",
-        "**.js",
-        "**.json",
-      ]
 
 # Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
@@ -27,7 +15,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: "Check for EVM-related changes"
+        id: check_evm_changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            evm-changes:
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
+              - "**go.mod"
+              - "**go.sum"
+              - "contrib/docker-compose/*"
+              - "**.ts"
+              - "**.js"
+              - "**.json"
+
+      - name: skip-tests
+        if: steps.check_evm_changes.outputs.evm-changes == 'false'
+        run: |
+          echo "job: e2e-evm was skipped since relevant files were not changed."
+
       - name: Set up Go
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: 1.24
@@ -36,48 +49,57 @@ jobs:
       # Use GitHub actions output paramters to get go paths. For more info, see
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
       - name: "Set output variables for go cache"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         id: go-cache-paths
         run: |
           echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
           echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
       - name: "Go build cache"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         uses: actions/cache@v4
         with:
           path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
           key: go-build-cache-${{ hashFiles('**/go.sum') }}
 
       - name: "Go mod cache"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         uses: actions/cache@v4
         with:
           path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
           key: go-mod-cache-${{ hashFiles('**/go.sum') }}
 
       - name: "Install just"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
       - name: "Build the nibid binary"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: |
           just install
 
       - name: Setup NodeJS with npm caching
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "lts/jod"
           cache-dependency-path: "evm-e2e/package-lock.json"
 
       - name: "just install"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: just install
         working-directory: "evm-e2e"
 
       - name: "Launch localnet"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: |
           just localnet --no-build &
           sleep 10
 
       - name: "Run tests (just test)"
+        if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: |
           just install
           just test

@@ -41,7 +41,7 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		plan = upgradetypes.Plan{
 			Name:                upgrade.UpgradeName,
 			Time:                time.Time{}, // Time "zero" == unset on purpose
-			Height:              deps.Ctx.BlockHeight(),
+			Height:              deps.Ctx().BlockHeight(),
 			Info:                "Testing Upgrade " + upgrade.UpgradeName,
 			UpgradedClientState: (*codec.Any)(nil),
 		}
@@ -52,10 +52,10 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 		return fmt.Errorf("invalid upgrade.Plan: %w", err)
 	}
 
-	fromVm = deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx)
+	fromVm = deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx())
 
 	_, err = upgradeHandler(
-		deps.Ctx,
+		deps.Ctx(),
 		plan,
 		fromVm,
 	)

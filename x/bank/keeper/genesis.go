@@ -1,0 +1,102 @@
+package keeper
+
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/collections"
+)
+
+// InitGenesis initializes the bank module's state from a given genesis state.
+func (k BaseKeeper) InitGenesis(ctx sdk.Context, genState *types.GenesisState) {
+	if err := k.SetParams(ctx, genState.Params); err != nil {
+		panic(err)
+	}
+
+	for _, se := range genState.GetAllSendEnabled() {
+		k.SetSendEnabled(ctx, se.Denom, se.Enabled)
+	}
+
+	totalSupply := sdk.Coins{}
+	genState.Balances = types.SanitizeGenesisBalances(genState.Balances)
+
+	for _, balance := range genState.Balances {
+		addr := balance.GetAddress()
+
+		if err := k.initBalances(ctx, addr, balance.Coins); err != nil {
+			panic(fmt.Errorf("error on setting balances %w", err))
+		}
+
+		totalSupply = totalSupply.Add(balance.Coins...)
+	}
+
+	if !genState.Supply.Empty() && !genState.Supply.IsEqual(totalSupply) {
+		panic(fmt.Errorf("genesis supply is incorrect, expected %v, got %v", genState.Supply, totalSupply))
+	}
+
+	for _, supply := range totalSupply {
+		k.setSupply(ctx, supply)
+	}
+
+	for _, meta := range genState.DenomMetadata {
+		k.SetDenomMetaData(ctx, meta)
+	}
+
+	// Initialize wei remainder store balances from genesis (if provided).
+	// Each entry must be < 1e12 and non-negative. Zero values are omitted.
+	for _, wb := range genState.WeiBalances {
+		if wb.WeiStoreBal == 0 {
+			continue
+		}
+		if err := wb.Validate(); err != nil {
+			panic(fmt.Errorf("invalid wei_balances: %w", err))
+		}
+		k.setWeiStoreBalance(
+			ctx,
+			sdk.MustAccAddressFromBech32(wb.AddrBech32),
+			new(uint256.Int).SetUint64(wb.WeiStoreBal),
+		)
+	}
+}
+
+// ExportGenesis returns the bank module's genesis state.
+func (k BaseKeeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
+	totalSupply, _, err := k.GetPaginatedTotalSupply(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(fmt.Errorf("unable to fetch total supply %v", err))
+	}
+
+	rv := types.NewGenesisState(
+		k.GetParams(ctx),
+		k.GetAccountsBalances(ctx),
+		totalSupply,
+		k.GetAllDenomMetaData(ctx),
+		k.GetAllSendEnabledEntries(ctx),
+	)
+
+	// Export non-zero wei remainder store balances, sorted by address ascending.
+	{
+		weiBalances := []types.WeiBalance{}
+		iter := k.weiStore.Iterate(ctx, collections.Range[sdk.AccAddress]{})
+		defer iter.Close()
+		for _, kv := range iter.KeyValues() {
+			addr := kv.Key
+			bal := kv.Value
+			if !bal.IsZero() {
+				weiBalances = append(weiBalances, types.WeiBalance{
+					AddrBech32:  addr.String(),
+					WeiStoreBal: bal.Uint64(),
+				})
+			}
+		}
+		// The underlying iterator yields keys in ascending order; if that ever changes,
+		// we can sort here. Assign collected balances to the exported state.
+		rv.WeiBalances = weiBalances
+	}
+	return rv
+}

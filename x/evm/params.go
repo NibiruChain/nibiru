@@ -22,7 +22,7 @@ const (
 	// state transitions as the analog to "ether". 1 ether in solidity means 1
 	// NIBI on Nibru EVM, implying that the EVMBankDenom is "unibi", the coin
 	// base of the NIBI token.
-	EVMBankDenom = appconst.BondDenom
+	EVMBankDenom = appconst.DENOM_UNIBI
 )
 
 // DefaultParams returns default evm parameters

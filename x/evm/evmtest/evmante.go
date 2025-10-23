@@ -21,7 +21,7 @@ var NextNoOpAnteHandler sdk.AnteHandler = func(
 func HappyTransferTx(deps *TestDeps, nonce uint64) *evm.MsgEthereumTx {
 	to := NewEthPrivAcc().EthAddr
 	evmTxArgs := &evm.EvmTxArgs{
-		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
 		Nonce:    nonce,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),
@@ -68,7 +68,7 @@ func BuildTx(
 
 func HappyCreateContractTx(deps *TestDeps) *evm.MsgEthereumTx {
 	evmTxArgs := &evm.EvmTxArgs{
-		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx),
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
 		Nonce:    1,
 		Amount:   big.NewInt(10),
 		GasLimit: GasLimitCreateContract().Uint64(),

@@ -9,9 +9,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudo "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	sudo "github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 

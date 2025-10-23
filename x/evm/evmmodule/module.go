@@ -25,16 +25,17 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/bank/exported"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/bank"
+	"github.com/NibiruChain/nibiru/v2/x/bank/exported"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 
@@ -117,12 +118,12 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 // AppModule implements an application module for the evm module.
 type AppModule struct {
 	AppModuleBasic
-	keeper *evmkeeper.Keeper
+	keeper *evmstate.Keeper
 	ak     evm.AccountKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(k *evmkeeper.Keeper, ak evm.AccountKeeper) AppModule {
+func NewAppModule(k *evmstate.Keeper, ak evm.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
@@ -209,9 +210,10 @@ func init() {
 type NibiruBankInputs struct {
 	depinject.In
 
-	Config *bankmodulev1.Module
-	Cdc    codec.Codec
-	Key    *store.KVStoreKey
+	Config       *bankmodulev1.Module
+	Cdc          codec.Codec
+	Key          *store.KVStoreKey
+	TransientKey *store.TransientStoreKey
 
 	AccountKeeper banktypes.AccountKeeper
 
@@ -222,7 +224,7 @@ type NibiruBankInputs struct {
 type NibiruBankOutputs struct {
 	depinject.Out
 
-	BankKeeper *evmkeeper.NibiruBankKeeper
+	BankKeeper *evmstate.NibiruBankKeeper
 	Module     appmodule.AppModule
 }
 
@@ -248,15 +250,15 @@ func ProvideNibiruBankModule(in NibiruBankInputs) NibiruBankOutputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
-	nibiruBankKeeper := &evmkeeper.NibiruBankKeeper{
+	nibiruBankKeeper := &evmstate.NibiruBankKeeper{
 		BaseKeeper: bankkeeper.NewBaseKeeper(
 			in.Cdc,
 			in.Key,
+			in.TransientKey,
 			in.AccountKeeper,
 			blockedAddresses,
 			authority.String(),
 		),
-		StateDB: nil,
 	}
 	m := bank.NewAppModule(in.Cdc, nibiruBankKeeper, in.AccountKeeper, in.LegacySubspace)
 
@@ -280,7 +282,7 @@ type EvmInputs struct {
 type EvmOutputs struct {
 	depinject.Out
 
-	Keeper *evmkeeper.Keeper
+	Keeper *evmstate.Keeper
 	Module appmodule.AppModule
 }
 
@@ -291,7 +293,7 @@ func ProvideModule(in EvmInputs) EvmOutputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
-	k := evmkeeper.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, in.BankKeeper.(*evmkeeper.NibiruBankKeeper), in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+	k := evmstate.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, in.BankKeeper.(*evmstate.NibiruBankKeeper), in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
 
 	m := NewAppModule(&k, in.AccountKeeper)
 

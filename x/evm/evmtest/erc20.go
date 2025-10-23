@@ -14,8 +14,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func AssertERC20BalanceEqualWithDescription(
@@ -26,7 +26,7 @@ func AssertERC20BalanceEqualWithDescription(
 	expectedBalance *big.Int,
 	description string,
 ) {
-	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx, evmObj)
+	actualBalance, err := deps.EvmKeeper.ERC20().BalanceOf(erc20, account, deps.Ctx(), evmObj)
 	var errSuffix string
 	if description == "" {
 		errSuffix = description
@@ -48,7 +48,7 @@ func AssertBankBalanceEqualWithDescription(
 	description string,
 ) {
 	bech32Addr := eth.EthAddrToNibiruAddr(account)
-	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx, bech32Addr, denom).Amount.BigInt()
+	actualBalance := deps.App.BankKeeper.GetBalance(deps.Ctx(), bech32Addr, denom).Amount.BigInt()
 	var errSuffix string
 	if description == "" {
 		errSuffix = description
@@ -65,7 +65,7 @@ func AssertBankBalanceEqualWithDescription(
 func CreateFunTokenForBankCoin(
 	deps TestDeps, bankDenom string, s *suite.Suite,
 ) (funtoken evm.FunToken) {
-	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx, bankDenom) {
+	if deps.App.BankKeeper.HasDenomMetaData(deps.Ctx(), bankDenom) {
 		s.Failf("setting bank.DenomMetadata would overwrite existing denom \"%s\"", bankDenom)
 	}
 
@@ -89,19 +89,19 @@ func CreateFunTokenForBankCoin(
 	err := bankMetadata.Validate()
 	s.Require().NoError(err)
 
-	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx, bankMetadata)
+	deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), bankMetadata)
 
 	// Give the sender funds for the fee
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
-		deps.Ctx,
+		deps.Ctx(),
 		deps.Sender.NibiruAddr,
-		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx),
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
 	))
 
 	s.T().Log("happy: CreateFunToken for the bank coin")
 	createFuntokenResp, err := deps.EvmKeeper.CreateFunToken(
-		sdk.WrapSDKContext(deps.Ctx),
+		sdk.WrapSDKContext(deps.Ctx()),
 		&evm.MsgCreateFunToken{
 			FromBankDenom: bankDenom,
 			Sender:        deps.Sender.NibiruAddr.String(),
@@ -118,7 +118,7 @@ func CreateFunTokenForBankCoin(
 	s.Equal(funtoken, createFuntokenResp.FuntokenMapping)
 
 	s.T().Log("Expect ERC20 to be deployed")
-	_, err = deps.EvmKeeper.Code(deps.Ctx,
+	_, err = deps.EvmKeeper.Code(deps.Ctx(),
 		&evm.QueryCodeRequest{
 			Address: erc20.String(),
 		},
@@ -145,11 +145,11 @@ func (bals BalanceAssertNIBI) Assert(t *testing.T, deps TestDeps) {
 	}
 
 	AssertBankBalanceEqualWithDescription(
-		t, deps, appconst.BondDenom, bals.Account, bals.BalanceBank,
+		t, deps, appconst.DENOM_UNIBI, bals.Account, bals.BalanceBank,
 		"(bank)"+bals.Description,
 	)
 	if bals.BalanceERC20 != nil {
-		erc20 := deps.EvmKeeper.GetParams(deps.Ctx).CanonicalWnibi
+		erc20 := deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi
 		AssertERC20BalanceEqualWithDescription(
 			t, deps, evmObj, erc20.Address, bals.Account, bals.BalanceERC20,
 			"(erc20_WNIBI)"+bals.Description,

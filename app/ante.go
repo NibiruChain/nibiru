@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
@@ -10,8 +8,10 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/app/evmante"
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 )
 
 // NewAnteHandler returns and AnteHandler that checks and increments sequence
@@ -29,41 +29,25 @@ func NewAnteHandler(
 		}
 
 		var anteHandler sdk.AnteHandler
-		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
-		if ok {
-			opts := txWithExtensions.GetExtensionOptions()
-			if len(opts) > 0 {
-				switch typeURL := opts[0].GetTypeUrl(); typeURL {
-				case "/eth.evm.v1.ExtensionOptionsEthereumTx":
-					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = evmante.NewAnteHandlerEVM(options)
-				default:
-					return ctx, fmt.Errorf(
-						"rejecting tx with unsupported extension option: %s", typeURL)
-				}
-
-				return anteHandler(ctx, tx, sim)
-			}
+		if !evm.IsEthTx(tx) {
+			anteHandler = NewAnteHandlerNonEVM(keepers.PublicKeepers, options)
+			return anteHandler(ctx, tx, sim)
 		}
-
-		switch tx.(type) {
-		case sdk.Tx:
-			anteHandler = NewAnteHandlerNonEVM(options)
-		default:
-			return ctx, fmt.Errorf("invalid tx type (%T) in AnteHandler", tx)
-		}
+		anteHandler = evmante.NewAnteHandlerEvm(options)
 		return anteHandler(ctx, tx, sim)
 	}
 }
 
 // NewAnteHandlerNonEVM: Default ante handler for non-EVM transactions.
 func NewAnteHandlerNonEVM(
+	pk keepers.PublicKeepers,
 	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
-		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
+		ante.AnteDecPreventEthereumTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
+		ante.AnteDecSaiOracle{PublicKeepers: pk},
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
 		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
@@ -73,7 +57,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
+		ante.AnteDecEnsureSinglePostPriceMessage{},
 		ante.AnteDecoratorStakingCommission{},
 		// ----------- Ante Handlers: Gas
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),
@@ -90,6 +74,6 @@ func NewAnteHandlerNonEVM(
 		authante.NewSigVerificationDecorator(opts.AccountKeeper, opts.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(opts.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(opts.IBCKeeper),
-		ante.AnteDecoratorGasWanted{},
+		ante.AnteDecBlockGasWanted{},
 	)
 }

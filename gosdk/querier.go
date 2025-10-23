@@ -1,6 +1,7 @@
 package gosdk
 
 import (
+	"context"
 	"errors"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -12,10 +13,15 @@ import (
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	xoracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtcoretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 type Querier struct {
 	ClientConn *grpc.ClientConn
+
+	cmtRpc cmtrpcclient.Client
 
 	// Smart Contracts
 	EVM  evm.QueryClient
@@ -31,6 +37,7 @@ type Querier struct {
 
 func NewQuerier(
 	grpcConn *grpc.ClientConn,
+	cmtRpc cmtrpcclient.Client,
 ) (Querier, error) {
 	if grpcConn == nil {
 		return Querier{}, errors.New(
@@ -39,6 +46,7 @@ func NewQuerier(
 
 	return Querier{
 		ClientConn: grpcConn,
+		cmtRpc:     cmtRpc,
 
 		EVM:  evm.NewQueryClient(grpcConn),
 		Wasm: wasm.NewQueryClient(grpcConn),
@@ -49,4 +57,14 @@ func NewQuerier(
 		Oracle:       xoracle.NewQueryClient(grpcConn),
 		TokenFactory: tokenfactory.NewQueryClient(grpcConn),
 	}, nil
+}
+
+func (q Querier) TxByHash(txHashHex string) (*cmtcoretypes.ResultTx, error) {
+	goCtx := context.Background()
+	txHashBz, err := TxHashHexToBytes(txHashHex)
+	if err != nil {
+		return nil, err
+	}
+	prove := false
+	return q.cmtRpc.Tx(goCtx, txHashBz, prove)
 }

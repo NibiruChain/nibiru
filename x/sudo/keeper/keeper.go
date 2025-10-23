@@ -9,12 +9,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 type Keeper struct {
-	Sudoers collections.Item[sudotypes.Sudoers]
+	Sudoers       collections.Item[sudo.Sudoers]
+	ZeroGasActors collections.Item[sudo.ZeroGasActors]
 }
 
 func NewKeeper(
@@ -22,7 +23,16 @@ func NewKeeper(
 	storeKey types.StoreKey,
 ) Keeper {
 	return Keeper{
-		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),
+		Sudoers: collections.NewItem(
+			storeKey,
+			sudo.NamespaceSudoers,
+			collections.ProtoValueEncoder[sudo.Sudoers](cdc),
+		),
+		ZeroGasActors: collections.NewItem(
+			storeKey,
+			sudo.NamespaceZeroGasActors,
+			collections.ProtoValueEncoder[sudo.ZeroGasActors](cdc),
+		),
 	}
 }
 
@@ -53,9 +63,9 @@ func (k Keeper) senderHasPermission(sender string, root string) error {
 // AddContracts executes a MsgEditSudoers message with action type
 // "add_contracts". This adds contract addresses to the sudoer set.
 func (k Keeper) AddContracts(
-	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
-) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
-	if msg.RootAction() != sudotypes.AddContracts {
+	goCtx context.Context, msg *sudo.MsgEditSudoers,
+) (msgResp *sudo.MsgEditSudoersResponse, err error) {
+	if msg.RootAction() != sudo.AddContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
@@ -79,8 +89,8 @@ func (k Keeper) AddContracts(
 	}
 	pbSudoers := Sudoers{Root: sudoersBefore.Root, Contracts: contracts}.ToPb()
 	k.Sudoers.Set(ctx, pbSudoers)
-	msgResp = new(sudotypes.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&sudotypes.EventUpdateSudoers{
+	msgResp = new(sudo.MsgEditSudoersResponse)
+	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{
 		Sudoers: pbSudoers,
 		Action:  msg.Action,
 	})
@@ -91,9 +101,9 @@ func (k Keeper) AddContracts(
 // ————————————————————————————————————————————————————————————————————————————
 
 func (k Keeper) RemoveContracts(
-	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
-) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
-	if msg.RootAction() != sudotypes.RemoveContracts {
+	goCtx context.Context, msg *sudo.MsgEditSudoers,
+) (msgResp *sudo.MsgEditSudoersResponse, err error) {
+	if msg.RootAction() != sudo.RemoveContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
@@ -119,8 +129,8 @@ func (k Keeper) RemoveContracts(
 	pbSudoers = sudoers.ToPb()
 	k.Sudoers.Set(ctx, pbSudoers)
 
-	msgResp = new(sudotypes.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&sudotypes.EventUpdateSudoers{
+	msgResp = new(sudo.MsgEditSudoersResponse)
+	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{
 		Sudoers: pbSudoers,
 		Action:  msg.Action,
 	})
@@ -142,8 +152,36 @@ func (k Keeper) CheckPermissions(
 	if !hasPermission {
 		return fmt.Errorf(
 			"%s: insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			sudotypes.ErrUnauthorized, contract, contracts,
+			sudo.ErrUnauthorized, contract, contracts,
 		)
 	}
 	return nil
+}
+
+// InitGenesis initializes the module's state from a provided genesis state JSON.
+func (k Keeper) InitGenesis(ctx sdk.Context, genState sudo.GenesisState) {
+	if err := genState.Validate(); err != nil {
+		panic(err)
+	}
+	k.Sudoers.Set(ctx, genState.Sudoers)
+	if genState.ZeroGasActors != nil {
+		k.ZeroGasActors.Set(ctx, *genState.ZeroGasActors)
+	}
+}
+
+// ExportGenesis returns the module's exported genesis state.
+// This fn assumes [Keeper.InitGenesis] has already been called.
+func (k Keeper) ExportGenesis(ctx sdk.Context) *sudo.GenesisState {
+	pbSudoers, err := k.Sudoers.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	// Get ZeroGasActors, use default if not set
+	zeroGasActors := k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
+
+	return &sudo.GenesisState{
+		Sudoers:       pbSudoers,
+		ZeroGasActors: &zeroGasActors,
+	}
 }

@@ -33,7 +33,6 @@ ui-debug.log
 /public/
 .env
 firebase-debug.log
-out-*
 exit-status-*
 .DS_Store # Finder (MacOS) folder config 
 .npmrc

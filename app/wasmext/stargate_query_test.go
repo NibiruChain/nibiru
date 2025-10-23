@@ -10,13 +10,13 @@ import (
 
 	wasmbinding "github.com/NibiruChain/nibiru/v2/app/wasmext"
 
-	"github.com/NibiruChain/nibiru/v2/x/common/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -43,7 +43,7 @@ func (s *Suite) TestWasmAcceptedStargateQueries() {
 		devgas.GrpcQueryServiceDesc(),
 		inflation.GrpcQueryServiceDesc(),
 		oracle.GrpcQueryServiceDesc(),
-		sudotypes.GrpcQueryServiceDesc(),
+		sudo.GrpcQueryServiceDesc(),
 		tokenfactory.GrpcQueryServiceDesc(),
 	}
 	stargateQueryPaths := set.New[string]()

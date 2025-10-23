@@ -10,8 +10,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 type msgServer struct {
@@ -183,7 +183,7 @@ func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOr
 
 	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
 	if err != nil {
-		return nil, sudotypes.ErrUnauthorized
+		return nil, sudo.ErrUnauthorized
 	}
 
 	params, err := ms.Params.Get(ctx)
