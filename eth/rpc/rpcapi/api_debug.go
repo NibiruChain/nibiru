@@ -85,7 +85,8 @@ func (a *DebugAPI) TraceBlockByNumber(height rpc.BlockNumber, config *evm.TraceC
 	// Get Tendermint Block
 	resBlock, err := a.backend.TendermintBlockByNumber(height)
 	if err != nil {
-		a.logger.Debug("get block failed", "height", height, "error", err.Error())
+		err = fmt.Errorf("%s { blockHeight: %d }", err, height)
+		a.logger.Debug("get block failed", "error", err.Error())
 		return nil, err
 	}
 

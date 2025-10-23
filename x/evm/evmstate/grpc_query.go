@@ -697,8 +697,19 @@ func (k Keeper) TraceBlock(
 	txsLength := len(req.Txs)
 	results := make([]*evm.TxTraceResult, 0, txsLength)
 
-	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
+	// Geth differentiates between native tracers and JS tracers.
+	// Native tracers are the defaults like the "callTracer" and others have low
+	// overhead and return errors if any of the txs fail tracing.
+	//
+	// NOTE: Nibiru EVM uses exclusively native tracers and considers JS tracers
+	// out of scope.
+	//
+	// JS tracers (geth only) have high overhead. Tracing for them runs a
+	// parallel process that generates statesin one thread and traces txs in
+	// separate worker threads. JS tracers store tracing errors for each tx as
+	// fields of the returned trace result instead of failing the query.
 
+	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes()))
 	for i, tx := range req.Txs {
 		result := evm.TxTraceResult{}
 		ethTx := tx.AsTransaction()
@@ -711,11 +722,12 @@ func (k Keeper) TraceBlock(
 		}
 		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
 		if err != nil {
-			result.Error = err.Error()
-		} else {
-			txConfig.LogIndex = logIndex
-			result.Result = traceResult
+			// Since Nibiru uses native tracers from geth, failure to trace any
+			// tx means block tracing fails too.
+			return nil, fmt.Errorf("trace tx error { txhash: %s, blockHeight: %d }: %w", ethTx.Hash().Hex(), ctx.BlockHeight(), err)
 		}
+		txConfig.LogIndex = logIndex
+		result.Result = traceResult
 		results = append(results, &result)
 	}
 
