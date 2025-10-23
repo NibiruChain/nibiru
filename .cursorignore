@@ -43,7 +43,7 @@ dist/
 
 
 # Boilerplate
-*.pb.go
+# *.pb.go
 api/*
 
 # Stick to EVM

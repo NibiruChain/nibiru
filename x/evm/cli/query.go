@@ -9,9 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
@@ -92,7 +89,7 @@ func CmdQueryAccount() *cobra.Command {
 				Address: args[0],
 			}
 
-			isBech32, err := req.Validate()
+			addrBech32, err := req.Validate()
 			if err != nil {
 				return err
 			}
@@ -100,17 +97,7 @@ func CmdQueryAccount() *cobra.Command {
 			offline, _ := cmd.Flags().GetBool("offline")
 
 			if offline {
-				var addrEth gethcommon.Address
-				var addrBech32 sdk.AccAddress
-
-				if isBech32 {
-					addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
-					addrEth = eth.NibiruAddrToEthAddr(addrBech32)
-				} else {
-					addrEth = gethcommon.HexToAddress(req.Address)
-					addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
-				}
-
+				var addrEth = eth.NibiruAddrToEthAddr(addrBech32)
 				resp := new(evm.QueryEthAccountResponse)
 				resp.EthAddress = addrEth.Hex()
 				resp.Bech32Address = addrBech32.String()
