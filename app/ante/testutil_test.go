@@ -67,7 +67,6 @@ func (s *Suite) SetupTest() {
 		ante.NewSetUpContextDecorator(),
 		ante.NewExtensionOptionsDecorator(nil),
 		ante.NewValidateBasicDecorator(),
-		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(s.app.AccountKeeper),
 		nibiruante.AnteDecEnsureSinglePostPriceMessage{},

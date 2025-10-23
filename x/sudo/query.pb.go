@@ -67,7 +67,7 @@ func (m *QuerySudoersRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySudoersRequest proto.InternalMessageInfo
 
-// QueryZeroGasActorsResponse is the response type for the gRPC query method,
+// QuerySudoersResponse is the response type for the gRPC query method,
 // "/nibiru.sudo.v1.Query/QuerySudoers"
 type QuerySudoersResponse struct {
 	Sudoers Sudoers `protobuf:"bytes,1,opt,name=sudoers,proto3" json:"sudoers"`
@@ -246,6 +246,9 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	QuerySudoers(ctx context.Context, in *QuerySudoersRequest, opts ...grpc.CallOption) (*QuerySudoersResponse, error)
+	// QueryZeroGasActors returns the "ZeroGasActors" state. Zero gas actors are
+	// a set of accounts that can execute zero gas transactions against a
+	// whitelisted  set of smart contracts.
 	QueryZeroGasActors(ctx context.Context, in *QueryZeroGasActorsRequest, opts ...grpc.CallOption) (*QueryZeroGasActorsResponse, error)
 }
 
@@ -278,6 +281,9 @@ func (c *queryClient) QueryZeroGasActors(ctx context.Context, in *QueryZeroGasAc
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	QuerySudoers(context.Context, *QuerySudoersRequest) (*QuerySudoersResponse, error)
+	// QueryZeroGasActors returns the "ZeroGasActors" state. Zero gas actors are
+	// a set of accounts that can execute zero gas transactions against a
+	// whitelisted  set of smart contracts.
 	QueryZeroGasActors(context.Context, *QueryZeroGasActorsRequest) (*QueryZeroGasActorsResponse, error)
 }
 

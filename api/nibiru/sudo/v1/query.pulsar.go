@@ -1637,7 +1637,7 @@ func (*QuerySudoersRequest) Descriptor() ([]byte, []int) {
 	return file_nibiru_sudo_v1_query_proto_rawDescGZIP(), []int{0}
 }
 
-// QueryZeroGasActorsResponse is the response type for the gRPC query method,
+// QuerySudoersResponse is the response type for the gRPC query method,
 // "/nibiru.sudo.v1.Query/QuerySudoers"
 type QuerySudoersResponse struct {
 	state         protoimpl.MessageState
