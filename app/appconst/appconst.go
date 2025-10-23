@@ -12,6 +12,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	db "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/version"
 )
@@ -31,6 +32,13 @@ const (
 
 	// AccountAddressPrefix: Bech32 prefix for Nibiru accounts.
 	AccountAddressPrefix = "nibi"
+
+	// ADDR_LEN_EOA is the length (number of bytes) of an [e]xternally [o]wned
+	// [a]ccount.
+	ADDR_LEN_EOA = 20 // wasm.SDKAddrLen
+	// ADDR_LEN_WASM_CONTRACT is the length (number of bytes) of a wasm contract
+	// address.
+	ADDR_LEN_WASM_CONTRACT = wasm.ContractAddrLen
 )
 
 var (

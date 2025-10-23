@@ -53,6 +53,7 @@ func GetQueryCmd() *cobra.Command {
 	// Add subcommands
 	cmds := []*cobra.Command{
 		CmdQuerySudoers(),
+		CmdQueryZeroGasActors(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -226,6 +227,36 @@ func CmdQuerySudoers() *cobra.Command {
 
 			req := new(sudo.QuerySudoersRequest)
 			resp, err := queryClient.QuerySudoers(
+				cmd.Context(), req,
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryZeroGasActors() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "zero-gas-actors",
+		Short: "displays the ZeroGasActors state of the x/sudo module",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := sudo.NewQueryClient(clientCtx)
+
+			req := new(sudo.QueryZeroGasActorsRequest)
+			resp, err := queryClient.QueryZeroGasActors(
 				cmd.Context(), req,
 			)
 			if err != nil {

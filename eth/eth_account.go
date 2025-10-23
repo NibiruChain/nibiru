@@ -3,6 +3,7 @@ package eth
 
 import (
 	"bytes"
+	"fmt"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -18,6 +19,24 @@ func EthAddrToNibiruAddr(ethAddr gethcommon.Address) sdk.AccAddress {
 
 func NibiruAddrToEthAddr(nibiruAddr sdk.AccAddress) gethcommon.Address {
 	return gethcommon.BytesToAddress(nibiruAddr.Bytes())
+}
+
+// NibiruAddrFromStr parses the input string as an [sdk.AccAddress]. The argument
+// can be an "0x" Ethereum hexadecimal or "nibi"-prefixed Bech32 address.
+func NibiruAddrFromStr(addr string) (sdk.AccAddress, error) {
+	errEthAddr := ValidateAddress(addr)
+	addrBech32Maybe, errBech32 := sdk.AccAddressFromBech32(addr)
+	switch {
+	case errEthAddr == nil:
+		return EthAddrToNibiruAddr(gethcommon.HexToAddress(addr)), nil
+	case errBech32 == nil:
+		return addrBech32Maybe, nil
+	default:
+		return sdk.AccAddress{}, fmt.Errorf(
+			"could not parse address as Nibiru Bech32 or Ethereum hexadecimal: { given: %q, Ethereum error: %s, bech32 error: %s }",
+			addr, errEthAddr, errBech32,
+		)
+	}
 }
 
 var (

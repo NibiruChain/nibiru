@@ -534,18 +534,13 @@ func (p precompileFunToken) parseArgsWhoAmI(args []any) (
 		return
 	}
 	req := &evm.QueryEthAccountRequest{Address: who}
-	isBech32, e := req.Validate()
+	addrBech32, e := req.Validate()
 	if e != nil {
 		err = e
 		return
 	}
-	if isBech32 {
-		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
-		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
-	} else {
-		addrEth = gethcommon.HexToAddress(req.Address)
-		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
-	}
+	addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+
 	return addrEth, addrBech32, nil
 }
 

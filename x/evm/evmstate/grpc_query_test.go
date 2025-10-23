@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -85,7 +86,6 @@ func (s *Suite) TestQueryEvmAccount() {
 					Address: deps.Sender.EthAddr.Hex(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
-					Balance:       "420",
 					BalanceWei:    "420" + strings.Repeat("0", 12),
 					CodeHash:      evm.EmptyCodeHash.Hex(),
 					Nonce:         0,
@@ -110,7 +110,6 @@ func (s *Suite) TestQueryEvmAccount() {
 					Address: deps.Sender.NibiruAddr.String(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
-					Balance:       "420",
 					BalanceWei:    "420" + strings.Repeat("0", 12),
 					CodeHash:      evm.EmptyCodeHash.Hex(),
 					Nonce:         0,
@@ -128,7 +127,6 @@ func (s *Suite) TestQueryEvmAccount() {
 					Address: InvalidEthAddr(),
 				}
 				wantResp = &evm.QueryEthAccountResponse{
-					Balance:    "0",
 					BalanceWei: "0",
 					CodeHash:   evm.EmptyCodeHash.Hex(),
 					Nonce:      0,
@@ -144,10 +142,16 @@ func (s *Suite) TestQueryEvmAccount() {
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.EthAddr.String(),
 				}
-				wantResp = nil
+				wantResp = &evm.QueryEthAccountResponse{
+					BalanceWei:    "0",
+					CodeHash:      evm.EmptyCodeHash.Hex(),
+					EthAddress:    ethAcc.EthAddr.Hex(),
+					Bech32Address: ethAcc.NibiruAddr.String(),
+					Nonce:         0,
+				}
 				return req, wantResp
 			},
-			wantErr: "account not found for",
+			wantErr: "",
 		},
 		{
 			name: "happy: nonexistent account (bech32 input)",
@@ -156,10 +160,40 @@ func (s *Suite) TestQueryEvmAccount() {
 				req = &evm.QueryEthAccountRequest{
 					Address: ethAcc.NibiruAddr.String(),
 				}
-				wantResp = nil
+				wantResp = &evm.QueryEthAccountResponse{
+					BalanceWei:    "0",
+					CodeHash:      evm.EmptyCodeHash.Hex(),
+					EthAddress:    ethAcc.EthAddr.Hex(),
+					Bech32Address: ethAcc.NibiruAddr.String(),
+					Nonce:         0,
+				}
 				return req, wantResp
 			},
-			wantErr: "account not found for",
+			wantErr: "",
+		},
+		{
+			name: "happy: wasm contract has blank Eth address",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				wasmContractAddr, err := sdk.AccAddressFromBech32(
+					// Address for the Eris deplyoment on mainnet
+					"nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m",
+				)
+				s.Require().NoError(err)
+				s.Equal(appconst.ADDR_LEN_WASM_CONTRACT, len(wasmContractAddr))
+				s.NotEqual(appconst.ADDR_LEN_EOA, len(wasmContractAddr))
+				req = &evm.QueryEthAccountRequest{
+					Address: wasmContractAddr.String(),
+				}
+				wantResp = &evm.QueryEthAccountResponse{
+					BalanceWei:    "0",
+					CodeHash:      evm.EmptyCodeHash.Hex(),
+					EthAddress:    "", // <- MUST be blank
+					Bech32Address: wasmContractAddr.String(),
+					Nonce:         0,
+				}
+				return req, wantResp
+			},
+			wantErr: "",
 		},
 	}
 
@@ -525,7 +559,7 @@ func (s *Suite) TestQueryBalance() {
 				}
 				return req, wantResp
 			},
-			wantErr: "InvalidArgument",
+			wantErr: "not a valid ethereum hex address",
 		},
 		{
 			name: "happy: zero balance",
@@ -534,7 +568,6 @@ func (s *Suite) TestQueryBalance() {
 					Address: evmtest.NewEthPrivAcc().EthAddr.String(),
 				}
 				wantResp = &evm.QueryBalanceResponse{
-					Balance:    "0",
 					BalanceWei: "0",
 				}
 				return req, wantResp
@@ -559,9 +592,7 @@ func (s *Suite) TestQueryBalance() {
 				req = &evm.QueryBalanceRequest{
 					Address: deps.Sender.EthAddr.Hex(),
 				}
-				wantBal := "420" + strings.Repeat("0", 12)
 				wantResp = &evm.QueryBalanceResponse{
-					Balance:    wantBal,
 					BalanceWei: "420" + strings.Repeat("0", 12),
 				}
 				return req, wantResp
@@ -680,7 +711,6 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 					Address: deps.Sender.EthAddr.Hex(),
 				})
 				wantBal := "1000" + strings.Repeat("0", 12)
-				s.Equal(wantBal, resp.Balance)
 				s.Require().Equal(wantBal, resp.BalanceWei)
 
 				// Send Eth call to transfer from the account - 5 * 10^12 wei
