@@ -4,6 +4,7 @@ package evm
 import (
 	"os"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/eth/tracers"
@@ -68,8 +69,9 @@ func NewDefaultTracer() *tracers.Tracer {
 
 // TxTraceResult is the result of a single transaction trace during a block trace.
 type TxTraceResult struct {
-	Result any    `json:"result,omitempty"` // Trace results produced by the tracer
-	Error  string `json:"error,omitempty"`  // Trace failure produced by the tracer
+	TxHash gethcommon.Hash `json:"txHash"`           // transaction hash
+	Result any             `json:"result,omitempty"` // Trace results produced by the tracer
+	Error  string          `json:"error,omitempty"`  // Trace failure produced by the tracer
 }
 
 // NewNoOpTracer creates a no-op vm.Tracer
