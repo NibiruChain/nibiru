@@ -63,6 +63,9 @@ feat(evm/grpc-query): Update the "/eth.evm.v1.Query/Balance" query to work with
 address when Wasm contract addresses are queried because 32-byte address space
 (wasm contract length) is not uniquely identified in 20-byte space (EOA length).
 
+### Dependencies
+- Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2390](https://github.com/NibiruChain/nibiru/pull/2390))
+
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
 - [#2345](https://github.com/NibiruChain/nibiru/pull/2345) - feat(evm): add
