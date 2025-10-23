@@ -55,7 +55,6 @@ func (k Keeper) EthAccount(
 
 	var addrEth gethcommon.Address
 	var addrBech32 sdk.AccAddress
-
 	if isBech32 {
 		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
 		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
@@ -127,20 +126,35 @@ func (k Keeper) ValidatorAccount(
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
-//   - req: The QueryBalanceRequest object containing the Ethereum address.
+//   - req: The QueryBalanceRequest object containing the Ethereum hex address or
+//     nibi-prefixed Bech32 address.
 //
 // Returns:
 //   - A pointer to the QueryBalanceResponse object containing the balance.
 //   - An error if the balance retrieval process encounters any issues.
-//
-// TODO: https://github.com/NibiruChain/nibiru/issues/2401
-// [feat] The "/eth.evm.v1.Query/Balance" query should work with Ethereum hex and nibi-prefixed Bech32 address formats, similar to the precompiles
-func (k Keeper) Balance(goCtx context.Context, req *evm.QueryBalanceRequest) (*evm.QueryBalanceResponse, error) {
-	if err := req.Validate(); err != nil {
+func (k Keeper) Balance(
+	goCtx context.Context,
+	req *evm.QueryBalanceRequest,
+) (*evm.QueryBalanceResponse, error) {
+	isBech32, err := req.Validate()
+	if err != nil {
 		return nil, err
 	}
+	if isBech32 {
+	}
+
+	var addrEth gethcommon.Address
+	var addrBech32 sdk.AccAddress
+	if isBech32 {
+		addrBech32 = sdk.MustAccAddressFromBech32(req.Address)
+		addrEth = eth.NibiruAddrToEthAddr(addrBech32)
+	} else {
+		addrEth = gethcommon.HexToAddress(req.Address)
+		addrBech32 = eth.EthAddrToNibiruAddr(addrEth)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	balanceWei := k.GetWeiBalance(ctx, gethcommon.HexToAddress(req.Address))
+	balanceWei := k.Bank.GetWeiBalance(ctx, addrBech32)
 	return &evm.QueryBalanceResponse{
 		Balance:    balanceWei.String(),
 		BalanceWei: balanceWei.String(),

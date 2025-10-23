@@ -72,18 +72,23 @@ func (req *QueryValidatorAccountRequest) Validate() (
 	return consAddr, nil
 }
 
-func (req *QueryBalanceRequest) Validate() error {
+func (req *QueryBalanceRequest) Validate() (isBech32 bool, err error) {
 	if req == nil {
-		return nutil.ErrNilGrpcMsg
+		err = nutil.ErrNilGrpcMsg
+		return
 	}
 
-	if err := eth.ValidateAddress(req.Address); err != nil {
-		return status.Error(
+	reqAcc := &QueryEthAccountRequest{Address: req.Address}
+	isBech32, err = reqAcc.Validate()
+	if err != nil {
+		err = status.Error(
 			codes.InvalidArgument,
-			ErrZeroAddress.Error(),
+			err.Error(),
 		)
+		return
 	}
-	return nil
+
+	return isBech32, nil
 }
 
 func (req *QueryStorageRequest) Validate() error {

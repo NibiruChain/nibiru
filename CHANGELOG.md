@@ -55,6 +55,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2405](https://github.com/NibiruChain/nibiru/pull/2405) - chore: additional coin logos which could be used externally
 - [#2406](https://github.com/NibiruChain/nibiru/pull/2406) - chore: added monad logo svg
 - [#2407](https://github.com/NibiruChain/nibiru/pull/2407) - feat(sudo-ante): implement zero gas actors for invoking whitelisted contract
+- [#2410](https://github.com/NibiruChain/nibiru/pull/2410) - feat(evm/grpc-query): Update the "/eth.evm.v1.Query/Balance" query should work with Ethereum hex and nibi-prefixed Bech32 address formats, similar to the precompiles
 
 ## [v2.7.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.7.0) - 2025-09-15
 
