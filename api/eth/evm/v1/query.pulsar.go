@@ -11954,7 +11954,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// QueryEthAccountRequest is the request type for the Query/Account RPC method.
+// QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 type QueryEthAccountRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11991,7 +11991,7 @@ func (x *QueryEthAccountRequest) GetAddress() string {
 	return ""
 }
 
-// QueryEthAccountResponse is the response type for the Query/EthAccount RPC method.
+// QueryEthAccountResponse: Response type for "/eth.evm.v1.Query/EthAccount"
 type QueryEthAccountResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -11999,7 +11999,10 @@ type QueryEthAccountResponse struct {
 
 	// balance_wei is the balance of wei (attoNIBI, since NIBI is ether).
 	BalanceWei string `protobuf:"bytes,2,opt,name=balance_wei,json=balanceWei,proto3" json:"balance_wei,omitempty"`
-	// code_hash is the hex-formatted code bytes from the EOA.
+	// code_hash is the hex-encoded hash of the contract bytecode for the
+	// account. Ethereum defines a code hash as the keccack 256 hash of the bytes.
+	// Note that externally owned accounts (EOAs) have the empty/nil code hash
+	// (`crypto.Keccak256(nil)`).
 	CodeHash string `protobuf:"bytes,3,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
 	// nonce is the account's sequence number.
 	Nonce uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -12161,7 +12164,7 @@ func (x *QueryValidatorAccountResponse) GetAccountNumber() uint64 {
 	return 0
 }
 
-// QueryBalanceRequest is the request type for the Query/Balance RPC method.
+// QueryBalanceRequest: Response type for "/eth.evm.v1.Query/Balance"
 type QueryBalanceRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -12198,7 +12201,7 @@ func (x *QueryBalanceRequest) GetAddress() string {
 	return ""
 }
 
-// QueryBalanceResponse is the response type for the Query/Balance RPC method.
+// QueryBalanceResponse: Response type for "/eth.evm.v1.Query/Balance"
 type QueryBalanceResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

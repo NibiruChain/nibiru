@@ -36,7 +36,7 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryEthAccountRequest is the request type for the Query/Account RPC method.
+// QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 type QueryEthAccountRequest struct {
 	// address is the Ethereum hex address or nibi Bech32 address to query the account for.
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
@@ -75,11 +75,14 @@ func (m *QueryEthAccountRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryEthAccountRequest proto.InternalMessageInfo
 
-// QueryEthAccountResponse is the response type for the Query/EthAccount RPC method.
+// QueryEthAccountResponse: Response type for "/eth.evm.v1.Query/EthAccount"
 type QueryEthAccountResponse struct {
 	// balance_wei is the balance of wei (attoNIBI, since NIBI is ether).
 	BalanceWei string `protobuf:"bytes,2,opt,name=balance_wei,json=balanceWei,proto3" json:"balance_wei,omitempty"`
-	// code_hash is the hex-formatted code bytes from the EOA.
+	// code_hash is the hex-encoded hash of the contract bytecode for the
+	// account. Ethereum defines a code hash as the keccack 256 hash of the bytes.
+	// Note that externally owned accounts (EOAs) have the empty/nil code hash
+	// (`crypto.Keccak256(nil)`).
 	CodeHash string `protobuf:"bytes,3,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
 	// nonce is the account's sequence number.
 	Nonce uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -265,7 +268,7 @@ func (m *QueryValidatorAccountResponse) GetAccountNumber() uint64 {
 	return 0
 }
 
-// QueryBalanceRequest is the request type for the Query/Balance RPC method.
+// QueryBalanceRequest: Response type for "/eth.evm.v1.Query/Balance"
 type QueryBalanceRequest struct {
 	// address is the ethereum hex address to query the balance for.
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
@@ -304,7 +307,7 @@ func (m *QueryBalanceRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBalanceRequest proto.InternalMessageInfo
 
-// QueryBalanceResponse is the response type for the Query/Balance RPC method.
+// QueryBalanceResponse: Response type for "/eth.evm.v1.Query/Balance"
 type QueryBalanceResponse struct {
 	// balance is the balance of the EVM denomination in units of wei. 1 wei is 1
 	// attoNIBI.
@@ -1451,8 +1454,8 @@ type QueryClient interface {
 	// ValidatorAccount queries an Ethereum account's from a validator consensus
 	// Address.
 	ValidatorAccount(ctx context.Context, in *QueryValidatorAccountRequest, opts ...grpc.CallOption) (*QueryValidatorAccountResponse, error)
-	// Balance queries the balance of a the EVM denomination for a single
-	// EthAccount.
+	// Balance queries the balance of the NIBI (ether for the EVM) in units of wei
+	// for a single EthAccount. 1 wei == 1 attoNIBI == 10^{-18} NIBI.
 	Balance(ctx context.Context, in *QueryBalanceRequest, opts ...grpc.CallOption) (*QueryBalanceResponse, error)
 	// Storage queries the balance of all coins for a single account.
 	Storage(ctx context.Context, in *QueryStorageRequest, opts ...grpc.CallOption) (*QueryStorageResponse, error)
@@ -1609,8 +1612,8 @@ type QueryServer interface {
 	// ValidatorAccount queries an Ethereum account's from a validator consensus
 	// Address.
 	ValidatorAccount(context.Context, *QueryValidatorAccountRequest) (*QueryValidatorAccountResponse, error)
-	// Balance queries the balance of a the EVM denomination for a single
-	// EthAccount.
+	// Balance queries the balance of the NIBI (ether for the EVM) in units of wei
+	// for a single EthAccount. 1 wei == 1 attoNIBI == 10^{-18} NIBI.
 	Balance(context.Context, *QueryBalanceRequest) (*QueryBalanceResponse, error)
 	// Storage queries the balance of all coins for a single account.
 	Storage(context.Context, *QueryStorageRequest) (*QueryStorageResponse, error)
