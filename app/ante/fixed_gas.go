@@ -17,7 +17,7 @@ const (
 
 var (
 	_ sdk.AnteDecorator = AnteDecEnsureSinglePostPriceMessage{}
-	_ sdk.AnteDecorator = AnteDecSaiOracle{}
+	_ sdk.AnteDecorator = AnteDecZeroGasActors{}
 )
 
 // AnteDecEnsureSinglePostPriceMessage ensures that there is only one
@@ -61,22 +61,20 @@ func (anteDec AnteDecEnsureSinglePostPriceMessage) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// AnteDecSaiOracle checks for Wasm execute contract calls from a set of
-// known senders to the Sai oracle contract(s) and lowers gas costs using a fixed
-// gas meter.
-type AnteDecSaiOracle struct {
+// AnteDecZeroGasActors checks for Wasm execute contract calls from a set of
+// known senders to the whitelisted contract(s), giving those transactions zero
+// gas costs using a fixed gas meter.
+type AnteDecZeroGasActors struct {
 	keepers.PublicKeepers
 }
 
-func (anteDec AnteDecSaiOracle) AnteHandle(
+func (anteDec AnteDecZeroGasActors) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	goCtx := sdk.WrapSDKContext(ctx)
-	resp, _ := anteDec.SudoKeeper.QueryZeroGasActors(goCtx, nil)
-	zeroGasActors := resp.Actors
+	zeroGasActors := anteDec.SudoKeeper.GetZeroGasActors(ctx)
 	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
 		return next(ctx, tx, simulate)
 	}

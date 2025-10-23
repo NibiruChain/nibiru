@@ -23,13 +23,16 @@ func (k Keeper) QuerySudoers(
 	}, err
 }
 
+func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
+	return k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
+}
+
 func (k Keeper) QueryZeroGasActors(
 	goCtx context.Context,
 	_ *sudo.QueryZeroGasActorsRequest,
 ) (resp *sudo.QueryZeroGasActorsResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	actors := k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
 	return &sudo.QueryZeroGasActorsResponse{
-		Actors: actors,
+		Actors: k.GetZeroGasActors(ctx),
 	}, nil
 }

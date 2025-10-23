@@ -49,6 +49,40 @@ func TraceNibiTransfer() string {
 	}`, gethparams.TxGas)
 }
 
+func TraceResCallTracer_ERC20Transfer(
+	fromAddr, toAddr gethcommon.Address,
+) (traceResFields map[string]string) {
+	gas := hexutil.Uint64(51_250)
+	gasUsed := hexutil.Uint64(34_150)
+
+	f := make(map[string]string)
+	f["from"] = fromAddr.Hex()
+	f["gas"] = gas.String()
+	f["gasUsed"] = gasUsed.String()
+	f["to"] = toAddr.Hex()
+	f["value"] = hexutil.Uint64(0).String()
+	f["type"] = "CALL"
+	return f
+}
+
+func TraceResCallTracer_NibiTransfer(
+	fromAddr, toAddr gethcommon.Address,
+) (traceResFields map[string]string) {
+	f := make(map[string]string)
+
+	gas := hexutil.Uint64(gethparams.TxGas) // <- 21000 == 0x5208
+	gasUsed := hexutil.Uint64(gethparams.TxGas)
+
+	f["from"] = fromAddr.Hex()
+	f["gas"] = gas.String()
+	f["gasUsed"] = gasUsed.String()
+	f["to"] = toAddr.Hex()
+	f["input"] = "0x"
+	f["value"] = hexutil.Uint64(0).String()
+	f["type"] = "CALL"
+	return f
+}
+
 // TraceOutputERC20Transfer returns a hardcoded JSON string representing the
 // expected trace output of a successful ERC-20 token transfer (an EVM tx). Used
 // to test the correctness of "TraceTx" and "TraceBlock".
@@ -786,13 +820,13 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 
 func (s *Suite) TestTraceTx() {
 	type In = *evm.QueryTraceTxRequest
-	type Out = string
+	type Out = map[string]string
 
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: nil query",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				return nil, ""
+				return nil, nil
 			},
 			wantErr: "InvalidArgument",
 		},
@@ -803,7 +837,12 @@ func (s *Suite) TestTraceTx() {
 				req = &evm.QueryTraceTxRequest{
 					Msg: txMsg,
 				}
-				wantResp = TraceNibiTransfer()
+				toAddr := txMsg.AsTransaction().To()
+				s.Require().NotNil(toAddr)
+				wantResp = TraceResCallTracer_NibiTransfer(
+					deps.Sender.EthAddr, // fromAddr
+					*toAddr,             // toAddr
+				)
 				return req, wantResp
 			},
 			wantErr: "",
@@ -811,13 +850,15 @@ func (s *Suite) TestTraceTx() {
 		{
 			name: "happy: trace erc-20 transfer tx",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, predecessors, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
-
+				txMsg, predecessors, erc20Addr := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceTxRequest{
 					Msg:          txMsg,
 					Predecessors: predecessors,
 				}
-				wantResp = TraceOutputERC20Transfer()
+				wantResp = TraceResCallTracer_ERC20Transfer(
+					deps.Sender.EthAddr, // fromAddr
+					erc20Addr,           // toAddr
+				)
 				return req, wantResp
 			},
 			wantErr: "",
@@ -830,7 +871,7 @@ func (s *Suite) TestTraceTx() {
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
-			req, _ := tc.scenario(&deps)
+			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.TraceTx(goCtx, req)
 			if tc.wantErr != "" {
@@ -841,34 +882,52 @@ func (s *Suite) TestTraceTx() {
 			s.Assert().NotNil(gotResp)
 			s.Assert().NotNil(gotResp.Data)
 			s.Require().True(json.Valid(gotResp.Data), "expected json.RawMessage")
+			s.T().Logf("gotResp.Data: %s", gotResp.Data)
 
-			// // Replace spaces in want resp
-			// re := regexp.MustCompile(`[\s\n\r]+`)
-			// wantResp = re.ReplaceAllString(wantResp, "")
-			// actualResp := string(gotResp.Data)
-			// if len(actualResp) > 1000 {
-			// 	actualResp = actualResp[:len(wantResp)]
-			// }
-			// // FIXME: Why does this trace sometimes have gas 35050 and sometimes 35062?
-			// // s.Equal(wantResp, actualResp)
-			// replaceTimes := 1
-			// hackedWantResp := strings.Replace(wantResp, "35062", "35050", replaceTimes)
-			// s.True(
-			// 	wantResp == actualResp || hackedWantResp == actualResp,
-			// 	"got \"%s\", want \"%s\"", actualResp, wantResp,
-			// )
+			// TraceTx returns a single TxTraceResult object.
+			gotTraceRes := make(map[string]string)
+			s.Require().NoError(
+				json.Unmarshal(gotResp.Data, &gotTraceRes),
+				"expect map[string]string for TxTraceResult.Result field",
+			)
+
+			// Field-by-field comparison with address normalization (EIP-55 vs lowercase)
+			for k, v := range wantResp {
+				gotV, ok := gotTraceRes[k]
+				s.Require().Truef(ok,
+					"expect result.%s field to be present: { got: %s, want: %s }",
+					k, gotTraceRes, wantResp,
+				)
+
+				switch k {
+				case "from", "to":
+					// Compare as addresses (case-insensitive, byte-equal)
+					s.Equalf(
+						gethcommon.HexToAddress(v),
+						gethcommon.HexToAddress(gotV),
+						`mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name,
+					)
+				default:
+					// If it's hex, ignore case; else exact
+					if strings.HasPrefix(gotV, "0x") {
+						v = strings.ToLower(v)
+						gotV = strings.ToLower(gotV)
+					}
+					s.Equalf(v, gotV, `mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name)
+				}
+			}
 		})
 	}
 }
 
 func (s *Suite) TestTraceBlock() {
 	type In = *evm.QueryTraceBlockRequest
-	type Out = string
+	type Out = map[string]string
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: nil query",
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				return nil, ""
+				return nil, nil
 			},
 			wantErr: "InvalidArgument",
 		},
@@ -882,7 +941,13 @@ func (s *Suite) TestTraceBlock() {
 						txMsg,
 					},
 				}
-				wantResp = "[{\"result\":" + TraceNibiTransfer() + "}]"
+
+				toAddr := txMsg.AsTransaction().To()
+				s.Require().NotNil(toAddr)
+				wantResp = TraceResCallTracer_NibiTransfer(
+					deps.Sender.EthAddr, // fromAddr
+					*toAddr,             // toAddr
+				)
 				return req, wantResp
 			},
 			wantErr: "",
@@ -891,13 +956,16 @@ func (s *Suite) TestTraceBlock() {
 			name:  "happy: trace erc-20 transfer tx",
 			setup: nil,
 			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
-				txMsg, _, _ := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
+				txMsg, _, erc20Addr := evmtest.DeployAndExecuteERC20Transfer(deps, s.T())
 				req = &evm.QueryTraceBlockRequest{
 					Txs: []*evm.MsgEthereumTx{
 						txMsg,
 					},
 				}
-				wantResp = "[{\"result\":" + TraceOutputERC20Transfer() // no end as it's trimmed
+				wantResp = TraceResCallTracer_ERC20Transfer(
+					deps.Sender.EthAddr, // fromAddr
+					erc20Addr,           // toAddr
+				)
 				return req, wantResp
 			},
 			wantErr: "",
@@ -910,7 +978,7 @@ func (s *Suite) TestTraceBlock() {
 			if tc.setup != nil {
 				tc.setup(&deps)
 			}
-			req, _ := tc.scenario(&deps)
+			req, wantResp := tc.scenario(&deps)
 			goCtx := sdk.WrapSDKContext(deps.Ctx())
 			gotResp, err := deps.EvmKeeper.TraceBlock(goCtx, req)
 			if tc.wantErr != "" {
@@ -921,21 +989,52 @@ func (s *Suite) TestTraceBlock() {
 			s.Assert().NotNil(gotResp)
 			s.Assert().NotNil(gotResp.Data)
 
-			// Replace spaces in want resp
-			// re := regexp.MustCompile(`[\s\n\r]+`)
-			// wantResp = re.ReplaceAllString(wantResp, "")
-			// actualResp := string(gotResp.Data)
-			// if len(actualResp) > 1000 {
-			// 	actualResp = actualResp[:len(wantResp)]
-			// }
-			// FIXME: Why does this trace sometimes have gas 35050 and sometimes 35062?
-			// s.Equal(wantResp, actualResp)
-			// replaceTimes := 1
-			// hackedWantResp := strings.Replace(wantResp, "35062", "35050", replaceTimes)
-			// s.True(
-			// 	wantResp == actualResp || hackedWantResp == actualResp,
-			// 	"got \"%s\", want \"%s\"", actualResp, wantResp,
-			// )
+			var (
+				// Trace results encoded in the TraceBlock response.
+				gotTraceResults []evm.TxTraceResult
+				gotTraceResBz   []byte // raw bytes corresponding to "gotTraceRes"
+				// JSON object for the "result" [evm.TxTraceResult]
+				gotTraceRes map[string]string
+			)
+			s.Require().Truef(json.Valid(gotResp.Data),
+				"expect valid JSON data. { got: %s }", gotResp.Data)
+			err = json.Unmarshal(gotResp.Data, &gotTraceResults)
+			s.Require().NoErrorf(err,
+				"expect %T in the data field of the response", gotTraceResults)
+			s.Require().Greater(len(gotTraceResults), 0)
+
+			gotTraceResBz, err = json.Marshal(gotTraceResults[0].Result)
+			s.Require().NoError(err, "result field should be JSON-able")
+
+			err = json.Unmarshal(gotTraceResBz, &gotTraceRes)
+			s.Require().NoErrorf(err,
+				"expect map[string]string for TxTraceResult.Result field, got %s",
+				gotTraceResults[0].Result)
+
+			for k, v := range wantResp {
+				gotV, ok := gotTraceRes[k]
+				s.Require().Truef(ok,
+					"expect result.%s field to be present: { got: %s, want: %s }",
+					k, gotTraceRes, wantResp,
+				)
+
+				switch k {
+				case "from", "to":
+					// Compare as addresses (case-insensitive, byte-equal)
+					s.Equalf(
+						gethcommon.HexToAddress(v),
+						gethcommon.HexToAddress(gotV),
+						`mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name,
+					)
+				default:
+					// If it's hex, ignore case; else exact
+					if strings.HasPrefix(gotV, "0x") {
+						v = strings.ToLower(v)
+						gotV = strings.ToLower(gotV)
+					}
+					s.Equalf(v, gotV, `mismatch in trace result { key: %s, testCase: "%s" }`, k, tc.name)
+				}
+			}
 		})
 	}
 }
@@ -1015,9 +1114,11 @@ func (s *Suite) TestTraceCall() {
 				s.Require().ErrorContains(err, tc.wantErr)
 				return
 			}
-			s.Assert().NoError(err)
-			s.Assert().NotNil(gotResp)
-			s.Assert().NotNil(gotResp.Data)
+			s.NoError(err)
+			s.NotNil(gotResp)
+			s.NotNil(gotResp.Data)
+			s.Require().Truef(json.Valid(gotResp.Data),
+				"expect valid JSON data. { got: %s }", gotResp.Data)
 		})
 	}
 }
