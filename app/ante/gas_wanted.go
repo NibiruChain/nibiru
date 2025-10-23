@@ -9,11 +9,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
-// AnteDecoratorGasWanted keeps track of the gasWanted amount on the current block in
+// AnteDecBlockGasWanted keeps track of the gasWanted amount on the current block in
 // transient store for BaseFee calculation.
-type AnteDecoratorGasWanted struct{}
+type AnteDecBlockGasWanted struct{}
 
-func (gwd AnteDecoratorGasWanted) AnteHandle(
+func (anteDec AnteDecBlockGasWanted) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)

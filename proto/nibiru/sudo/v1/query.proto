@@ -4,21 +4,40 @@ package nibiru.sudo.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-
 import "nibiru/sudo/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/sudo/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/sudo";
 
 // Query defines the gRPC querier service.
 service Query {
   rpc QuerySudoers(QuerySudoersRequest) returns (QuerySudoersResponse) {
     option (google.api.http).get = "/nibiru/sudo/sudoers";
   }
+
+  // QueryZeroGasActors returns the "ZeroGasActors" state. Zero gas actors are
+  // a set of accounts that can execute zero gas transactions against a
+  // whitelisted  set of smart contracts.
+  rpc QueryZeroGasActors(QueryZeroGasActorsRequest) returns (QueryZeroGasActorsResponse) {
+    option (google.api.http).get = "/nibiru/sudo/zero_gas_actors";
+  }
 }
 
+// QuerySudoersRequest is the request type for the gRPC query method,
+// "/nibiru.sudo.v1.Query/QuerySudoers".
 message QuerySudoersRequest {}
 
-// QuerySudoersResponse indicates the successful execution of MsgEditSudeors.
+// QuerySudoersResponse is the response type for the gRPC query method,
+// "/nibiru.sudo.v1.Query/QuerySudoers"
 message QuerySudoersResponse {
-  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryZeroGasActorsRequest is the request type for the gRPC query method,
+// "/nibiru.sudo.v1.Query/QueryZeroGasActors"
+message QueryZeroGasActorsRequest {}
+
+// QueryZeroGasActorsResponse is the response type for the gRPC query method,
+// "/nibiru.sudo.v1.Query/QueryZeroGasActors"
+message QueryZeroGasActorsResponse {
+  nibiru.sudo.v1.ZeroGasActors actors = 1 [(gogoproto.nullable) = false];
 }

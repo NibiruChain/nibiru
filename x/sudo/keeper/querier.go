@@ -3,36 +3,36 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // Ensure the interface is properly implemented at compile time
-var _ types.QueryServer = Querier{}
+var _ sudo.QueryServer = (*Keeper)(nil)
 
-type Querier struct {
-	keeper Keeper
-}
-
-func NewQuerier(k Keeper) types.QueryServer {
-	return Querier{keeper: k}
-}
-
-func (q Querier) QuerySudoers(
+func (k Keeper) QuerySudoers(
 	goCtx context.Context,
-	req *types.QuerySudoersRequest,
-) (resp *types.QuerySudoersResponse, err error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
+	req *sudo.QuerySudoersRequest,
+) (resp *sudo.QuerySudoersResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	sudoers, err := q.keeper.Sudoers.Get(ctx)
+	sudoers, err := k.Sudoers.Get(ctx)
 
-	return &types.QuerySudoersResponse{
+	return &sudo.QuerySudoersResponse{
 		Sudoers: sudoers,
 	}, err
+}
+
+func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
+	return k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
+}
+
+func (k Keeper) QueryZeroGasActors(
+	goCtx context.Context,
+	_ *sudo.QueryZeroGasActorsRequest,
+) (resp *sudo.QueryZeroGasActorsResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	return &sudo.QueryZeroGasActorsResponse{
+		Actors: k.GetZeroGasActors(ctx),
+	}, nil
 }

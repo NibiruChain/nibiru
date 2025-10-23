@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/asset"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 )
 
 // NOTE: we don't need to implement proto interface on this file
@@ -148,7 +148,7 @@ func (pb ExchangeRateVotes) StandardDeviation(median sdkmath.LegacyDec) (standar
 
 	variance := sum.QuoInt64(int64(n))
 
-	standardDeviation, err := common.SqrtDec(variance)
+	standardDeviation, err := nutil.SqrtDec(variance)
 	if err != nil {
 		return sdkmath.LegacyZeroDec()
 	}

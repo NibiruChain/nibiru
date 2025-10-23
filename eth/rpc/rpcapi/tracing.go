@@ -142,8 +142,8 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	config *evm.TraceConfig,
 	block *tmrpctypes.ResultBlock,
 ) ([]*evm.TxTraceResult, error) {
-	txs := block.Block.Txs
-	txsLength := len(txs)
+	blockTxs := block.Block.Txs
+	txsLength := len(blockTxs)
 
 	if txsLength == 0 {
 		// If there are no transactions return empty array
@@ -153,10 +153,10 @@ func (b *Backend) TraceBlock(height rpc.BlockNumber,
 	txDecoder := b.clientCtx.TxConfig.TxDecoder()
 
 	var txsMessages []*evm.MsgEthereumTx
-	for i, tx := range txs {
-		decodedTx, err := txDecoder(tx)
+	for i, blockTx := range blockTxs {
+		decodedTx, err := txDecoder(blockTx)
 		if err != nil {
-			b.logger.Error("failed to decode transaction", "hash", txs[i].Hash(), "error", err.Error())
+			b.logger.Error("failed to decode transaction", "hash", blockTxs[i].Hash(), "error", err.Error())
 			continue
 		}
 

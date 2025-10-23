@@ -12,8 +12,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/v2/x/common"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
 func BroadcastMsgsWithSeq(
@@ -37,7 +37,7 @@ func BroadcastMsgsWithSeq(
 
 	bondDenom := denoms.NIBI
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(bondDenom, sdk.NewInt(1000))))
-	txBuilder.SetGasLimit(uint64(2 * common.TO_MICRO))
+	txBuilder.SetGasLimit(uint64(2 * nutil.TO_MICRO))
 
 	nums, err := args.gosdk.GetAccountNumbers(from.String())
 	if err != nil {

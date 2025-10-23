@@ -12,16 +12,33 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	db "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/version"
 )
 
 const (
 	BinaryName = "nibiru"
-	// BondDenom is the Bank Coin denomination for staking, governance, and gas.
-	BondDenom = "unibi"
+
+	// DENOM_UNIBI is the micro-denomination used by x/bank for NIBI balances.
+	// One unibi = 10^{-6} NIBI. [DENOM_UNIBI] is the Bank Coin denomination for
+	// staking, governance, and gas.
+	//
+	// The aggregate, 18 decimal, EVM-facing precision comes from combining this
+	// with the wei remainder store at 10^{12} wei per unibi. Equivalently, wei
+	// is defined as attoNIBI. Thus,
+	// 1 NIBI = 10^{18} attoNIBI = 10 = 10^{18} wei = 10^{6} microNIBI.
+	DENOM_UNIBI = "unibi"
+
 	// AccountAddressPrefix: Bech32 prefix for Nibiru accounts.
 	AccountAddressPrefix = "nibi"
+
+	// ADDR_LEN_EOA is the length (number of bytes) of an [e]xternally [o]wned
+	// [a]ccount.
+	ADDR_LEN_EOA = 20 // wasm.SDKAddrLen
+	// ADDR_LEN_WASM_CONTRACT is the length (number of bytes) of a wasm contract
+	// address.
+	ADDR_LEN_WASM_CONTRACT = wasm.ContractAddrLen
 )
 
 var (

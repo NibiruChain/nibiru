@@ -86,7 +86,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
-	"github.com/NibiruChain/nibiru/v2/x/common"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
@@ -96,10 +95,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -153,7 +153,7 @@ var (
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
-		sudo.AppModuleBasic{},
+		sudomodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
 		tokenfactory.AppModuleBasic{},
@@ -173,12 +173,12 @@ var (
 		ibcfeetypes.ModuleName:         {},
 		icatypes.ModuleName:            {},
 
-		evm.ModuleName:                   {authtypes.Minter, authtypes.Burner},
-		epochstypes.ModuleName:           {},
-		sudotypes.ModuleName:             {},
-		common.TreasuryPoolModuleAccount: {},
-		wasmtypes.ModuleName:             {authtypes.Burner},
-		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+		evm.ModuleName:                  {authtypes.Minter, authtypes.Burner},
+		epochstypes.ModuleName:          {},
+		sudo.ModuleName:                 {},
+		nutil.TreasuryPoolModuleAccount: {},
+		wasmtypes.ModuleName:            {authtypes.Burner},
+		tokenfactorytypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -211,7 +211,7 @@ type NibiruApp struct {
 
 func init() {
 	SetPrefixes(appconst.AccountAddressPrefix)
-	sdk.DefaultBondDenom = appconst.BondDenom
+	sdk.DefaultBondDenom = appconst.DENOM_UNIBI
 
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {

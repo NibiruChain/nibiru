@@ -16,9 +16,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/evm/statedb"
 )
 
 // rough gas limits for wasm execution - used in tests only
@@ -33,7 +33,7 @@ const (
 func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 	contracts []sdk.AccAddress,
 ) {
-	wasmCodes := deployWasmBytecode(s, deps.Ctx, deps.Sender.NibiruAddr, deps.App)
+	wasmCodes := deployWasmBytecode(s, deps.Ctx(), deps.Sender.NibiruAddr, deps.App)
 
 	instantiateArgs := []struct {
 		InstantiateMsg []byte
@@ -62,7 +62,7 @@ func SetupWasmContracts(deps *evmtest.TestDeps, s *suite.Suite) (
 
 		wasmPermissionedKeeper := wasmkeeper.NewDefaultPermissionKeeper(deps.App.WasmKeeper)
 		contractAddr, _, err := wasmPermissionedKeeper.Instantiate(
-			deps.Ctx,
+			deps.Ctx(),
 			wasmCode.codeId,
 			deps.Sender.NibiruAddr,
 			deps.Sender.NibiruAddr,
@@ -160,7 +160,7 @@ func AssertWasmCounterState(
 		}
 `)
 
-	resp, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx, wasmContract, msgArgsBz)
+	resp, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx(), wasmContract, msgArgsBz)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(resp)
 
@@ -192,7 +192,6 @@ func AssertWasmCounterStateWithEvm(
 	s.Require().NoError(err)
 
 	evmResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -297,7 +296,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 
 	ethTxResp, err := deps.EvmKeeper.CallContract(
-		deps.Ctx,
 		evmObj,
 		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_Wasm,
@@ -309,6 +307,6 @@ func IncrementWasmCounterWithExecuteMulti(
 	s.Require().NoError(err)
 	s.Require().NotEmpty(ethTxResp.Ret)
 	if commit {
-		s.Require().NoError(evmObj.StateDB.(*statedb.StateDB).Commit())
+		evmObj.StateDB.(*evmstate.SDB).Commit()
 	}
 }

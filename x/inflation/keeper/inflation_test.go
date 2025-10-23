@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func TestMintAndAllocateInflation(t *testing.T) {
@@ -68,7 +68,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 			t.Logf("setting root account to %s", tc.rootAccount)
-			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
 				Root:      tc.rootAccount,
 				Contracts: []string{},
 			})

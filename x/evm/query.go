@@ -2,15 +2,13 @@
 package evm
 
 import (
-	"fmt"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/common"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 func (m QueryTraceTxRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
@@ -31,29 +29,13 @@ func (m QueryTraceBlockRequest) UnpackInterfaces(unpacker codectypes.AnyUnpacker
 	return nil
 }
 
-func (req *QueryEthAccountRequest) Validate() (isBech32 bool, err error) {
+func (req *QueryEthAccountRequest) Validate() (addrBech32 sdk.AccAddress, err error) {
 	if req == nil {
-		return isBech32, common.ErrNilGrpcMsg
+		err = nutil.ErrNilGrpcMsg
+		return
 	}
-
-	ethAddrErr := eth.ValidateAddress(req.Address)
-	_, bech32AddrErr := sdk.AccAddressFromBech32(req.Address)
-
-	switch {
-	case ethAddrErr == nil:
-		isBech32 = false
-		return isBech32, nil
-	case bech32AddrErr == nil:
-		isBech32 = true
-		return isBech32, nil
-	default:
-		return isBech32, status.Error(
-			codes.InvalidArgument,
-			fmt.Errorf(
-				"could not parse address as Nibiru Bech32 or Ethereum hexadecimal: {{ Ethereum error: %w, bech32 error: %w }}", ethAddrErr, bech32AddrErr,
-			).Error(),
-		)
-	}
+	addrBech32, err = eth.NibiruAddrFromStr(req.Address)
+	return addrBech32, err
 }
 
 func (req *QueryValidatorAccountRequest) Validate() (
@@ -72,23 +54,18 @@ func (req *QueryValidatorAccountRequest) Validate() (
 	return consAddr, nil
 }
 
-func (req *QueryBalanceRequest) Validate() error {
+func (req *QueryBalanceRequest) Validate() (addrBech32 sdk.AccAddress, err error) {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		err = nutil.ErrNilGrpcMsg
+		return
 	}
-
-	if err := eth.ValidateAddress(req.Address); err != nil {
-		return status.Error(
-			codes.InvalidArgument,
-			ErrZeroAddress.Error(),
-		)
-	}
-	return nil
+	addrBech32, err = eth.NibiruAddrFromStr(req.Address)
+	return addrBech32, err
 }
 
 func (req *QueryStorageRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 	if err := eth.ValidateAddress(req.Address); err != nil {
 		return status.Error(
@@ -101,7 +78,7 @@ func (req *QueryStorageRequest) Validate() error {
 
 func (req *QueryCodeRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if err := eth.ValidateAddress(req.Address); err != nil {
@@ -115,14 +92,14 @@ func (req *QueryCodeRequest) Validate() error {
 
 func (req *EthCallRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 	return nil
 }
 
 func (req *QueryTraceTxRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {
@@ -133,7 +110,7 @@ func (req *QueryTraceTxRequest) Validate() error {
 
 func (req *QueryTraceBlockRequest) Validate() error {
 	if req == nil {
-		return common.ErrNilGrpcMsg
+		return nutil.ErrNilGrpcMsg
 	}
 
 	if req.TraceConfig != nil && req.TraceConfig.Limit < 0 {

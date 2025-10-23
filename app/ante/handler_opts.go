@@ -12,15 +12,18 @@ import (
 
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	evmkeeper "github.com/NibiruChain/nibiru/v2/x/evm/keeper"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
+
+// TODO: Refactor to add compile-time safety for the following interface.
+// var _ evmante.AnteOptionsEVM = (*AnteHandlerOptions)(nil)
 
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
 	IBCKeeper        *ibckeeper.Keeper
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
-	EvmKeeper        *evmkeeper.Keeper
+	EvmKeeper        *evmstate.Keeper
 	AccountKeeper    authkeeper.AccountKeeper
 
 	TxCounterStoreKey types.StoreKey
@@ -35,9 +38,7 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 	if opts.SignModeHandler == nil {
 		return AnteHandlerError("sign mode handler")
 	}
-	if opts.SigGasConsumer == nil {
-		opts.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
-	}
+	opts.SigGasConsumer = NibiruSigVerificationGasConsumer
 	if opts.WasmConfig == nil {
 		return AnteHandlerError("wasm config")
 	}
@@ -55,3 +56,8 @@ func AnteHandlerError(shortDesc string) error {
 }
 
 type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)
+
+// Implements the evmante.AnteOptionsEVM interface.
+func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
+	return opts.MaxTxGasWanted
+}

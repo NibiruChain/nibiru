@@ -13,7 +13,7 @@ require (
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.47.11-nibiru.4
+	github.com/cosmos/cosmos-sdk v0.47.11-nibiru.5
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.14.13
 )
@@ -30,13 +30,13 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/gogo/protobuf v1.3.3
-	github.com/golang/mock v1.6.0 // indirect
+	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.4
 	github.com/google/gofuzz v1.2.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
-	github.com/holiman/uint256 v1.3.1
+	github.com/holiman/uint256 v1.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rakyll/statik v0.1.7
@@ -69,6 +69,7 @@ require (
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/net v0.39.0
 	golang.org/x/text v0.24.0
+	gotest.tools/v3 v3.5.1
 )
 
 require (
@@ -261,7 +262,12 @@ replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/cosmos-sdk v0.47.11-nibiru.4
+
+	// Production replace for Cosmos-SDK. Uncomment to use.
+	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
+	// Local replace for Cosmos-SDK. Uncomment to use.
+	// github.com/cosmos/cosmos-sdk => ../nibi-cosm-sdk
+
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3

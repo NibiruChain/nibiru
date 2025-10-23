@@ -6,11 +6,13 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/v2/x/common/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/bank"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -30,8 +32,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
@@ -56,7 +56,7 @@ var ModuleBasics = module.NewBasicManager(
 	distr.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	params.AppModuleBasic{},
-	sudo.AppModuleBasic{},
+	sudomodule.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint
@@ -137,13 +137,14 @@ type TestFixture struct {
 func CreateTestFixture(t *testing.T) TestFixture {
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
+	tkeyBank := sdk.NewTransientStoreKey(bankkeeper.StoreKeyTransient)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
 	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
-	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
+	keySudo := sdk.NewKVStoreKey(sudo.StoreKey)
 
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
@@ -191,6 +192,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
 		keyBank,
+		tkeyBank,
 		accountKeeper,
 		blackListAddrs,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -235,7 +237,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
-	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
+	sudoAcc := authtypes.NewEmptyModuleAccount(sudo.ModuleName)
 
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)

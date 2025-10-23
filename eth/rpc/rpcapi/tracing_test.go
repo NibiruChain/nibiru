@@ -95,6 +95,7 @@ func (s *BackendSuite) TestTraceBlock() {
 		tmBlock     *tmrpctypes.ResultBlock
 		txCount     int
 		traceConfig *evm.TraceConfig
+		wantErr     bool
 	}{
 		{
 			name:        "happy: TraceBlock, no txs, tracer: default",
@@ -124,6 +125,18 @@ func (s *BackendSuite) TestTraceBlock() {
 			txCount:     1,
 			traceConfig: traceConfigDefaultTracer(),
 		},
+		{
+			name:        "sad: TraceBlock with ultra small timeout, causing tracer to stop too early",
+			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
+			tmBlock:     tmBlockWithTx,
+			txCount:     1,
+			traceConfig: func() *evm.TraceConfig {
+				cfg := traceConfigCallTracer()
+				cfg.Timeout = "1ns" // Force immediate timeout
+				return cfg
+			}(),
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -135,6 +148,10 @@ func (s *BackendSuite) TestTraceBlock() {
 					tc.traceConfig,
 					tc.tmBlock,
 				)
+				if tc.wantErr {
+					s.Require().Error(err, tc.wantErr)
+					return
+				}
 				s.Require().NoError(err)
 				resRes = append(resRes, txTraceResults)
 			}
@@ -146,7 +163,11 @@ func (s *BackendSuite) TestTraceBlock() {
 					rpc.BlockNumber(tc.tmBlock.Block.Height),
 					tc.traceConfig,
 				)
-				s.NoError(err)
+				if tc.wantErr {
+					s.Require().Error(err)
+					return
+				}
+				s.Require().NoError(err)
 
 				var txTraceResults []*evm.TxTraceResult
 				err = json.Unmarshal(resJson, &txTraceResults)

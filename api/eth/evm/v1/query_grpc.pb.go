@@ -28,8 +28,8 @@ type QueryClient interface {
 	// ValidatorAccount queries an Ethereum account's from a validator consensus
 	// Address.
 	ValidatorAccount(ctx context.Context, in *QueryValidatorAccountRequest, opts ...grpc.CallOption) (*QueryValidatorAccountResponse, error)
-	// Balance queries the balance of a the EVM denomination for a single
-	// EthAccount.
+	// Balance queries the balance of the NIBI (ether for the EVM) in units of wei
+	// for a single EthAccount. 1 wei == 1 attoNIBI == 10^{-18} NIBI.
 	Balance(ctx context.Context, in *QueryBalanceRequest, opts ...grpc.CallOption) (*QueryBalanceResponse, error)
 	// Storage queries the balance of all coins for a single account.
 	Storage(ctx context.Context, in *QueryStorageRequest, opts ...grpc.CallOption) (*QueryStorageResponse, error)
@@ -188,8 +188,8 @@ type QueryServer interface {
 	// ValidatorAccount queries an Ethereum account's from a validator consensus
 	// Address.
 	ValidatorAccount(context.Context, *QueryValidatorAccountRequest) (*QueryValidatorAccountResponse, error)
-	// Balance queries the balance of a the EVM denomination for a single
-	// EthAccount.
+	// Balance queries the balance of the NIBI (ether for the EVM) in units of wei
+	// for a single EthAccount. 1 wei == 1 attoNIBI == 10^{-18} NIBI.
 	Balance(context.Context, *QueryBalanceRequest) (*QueryBalanceResponse, error)
 	// Storage queries the balance of all coins for a single account.
 	Storage(context.Context, *QueryStorageRequest) (*QueryStorageResponse, error)
