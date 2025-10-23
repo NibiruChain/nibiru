@@ -16,8 +16,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudocli "github.com/NibiruChain/nibiru/v2/x/sudo/cli"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
 )
 
 // ----------------------------------------------------------------------
@@ -118,8 +118,8 @@ func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {
 	return &queryResp, nil
 }
 
-func QuerySudoers(clientCtx client.Context) (*sudotypes.QuerySudoersResponse, error) {
-	var queryResp sudotypes.QuerySudoersResponse
+func QuerySudoers(clientCtx client.Context) (*sudo.QuerySudoersResponse, error) {
+	var queryResp sudo.QuerySudoersResponse
 	if err := ExecQueryCmd(
 		clientCtx,
 		sudocli.CmdQuerySudoers(),

@@ -35,7 +35,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
@@ -80,14 +80,14 @@ func FirstBlockProposer(
 func SetDefaultSudoGenesis(gen wasmapp.GenesisState) {
 	encoding := wasmapp.MakeEncodingConfig()
 
-	var sudoGen sudotypes.GenesisState
-	encoding.Codec.MustUnmarshalJSON(gen[sudotypes.ModuleName], &sudoGen)
+	var sudoGen sudo.GenesisState
+	encoding.Codec.MustUnmarshalJSON(gen[sudo.ModuleName], &sudoGen)
 	if err := sudoGen.Validate(); err != nil {
-		sudoGen.Sudoers = sudotypes.Sudoers{
+		sudoGen.Sudoers = sudo.Sudoers{
 			Root:      testutil.ADDR_SUDO_ROOT,
 			Contracts: []string{testutil.ADDR_SUDO_ROOT},
 		}
-		gen[sudotypes.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
+		gen[sudo.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
 	}
 }
 
@@ -115,13 +115,13 @@ func NewNibiruTestApp(customGenesisOverride nibiruapp.GenesisState) (
 	)
 
 	// Set happy genesis: sudo
-	sudoGenesis := sudotypes.GenesisState{
-		Sudoers: sudotypes.Sudoers{
+	sudoGenesis := sudo.GenesisState{
+		Sudoers: sudo.Sudoers{
 			Root:      testutil.ADDR_SUDO_ROOT,
 			Contracts: []string{testutil.ADDR_SUDO_ROOT},
 		},
 	}
-	gen[sudotypes.ModuleName] = app.AppCodec().MustMarshalJSON(&sudoGenesis)
+	gen[sudo.ModuleName] = app.AppCodec().MustMarshalJSON(&sudoGenesis)
 
 	// Set happy genesis: gov
 	// Set short voting period to allow fast gov proposals in tests

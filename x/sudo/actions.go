@@ -1,4 +1,4 @@
-package types
+package sudo
 
 import "github.com/NibiruChain/nibiru/v2/x/nutil/set"
 

@@ -85,7 +85,7 @@ func (s *Suite) TestStateDBBalance() {
 		balSender := sdb.GetBalance(deps.Sender.EthAddr)
 		balTo := sdb.GetBalance(to)
 
-		s.T().Log("Send via EVM transfer with small wei amount. No error")
+		s.T().Log("Send via EVM transfer with small wei amount | happy")
 		_, err = evmtest.TxTransferWei{
 			Deps:      &deps,
 			To:        to,

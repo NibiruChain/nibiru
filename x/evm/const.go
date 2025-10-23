@@ -223,7 +223,7 @@ func NativeToWeiU256(evmDenomAmount *uint256.Int) (weiAmount *uint256.Int) {
 //
 //	```
 //	Input  number:  123456789012345678901234567890
-//	Parsed number:  123456789012 * 10^{12}
+//	Parsed number:  123456789012345678 * 10^{12}
 //	```
 func ParseWeiAsMultipleOfMicronibi(weiInt *big.Int) (newWeiInt *big.Int, err error) {
 	// if "weiValue" is nil, 0, or negative, early return

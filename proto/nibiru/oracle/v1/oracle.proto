@@ -1,10 +1,10 @@
 syntax = "proto3";
 package nibiru.oracle.v1;
 
-import "gogoproto/gogo.proto";
-import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
@@ -13,13 +13,13 @@ message Params {
   option (gogoproto.equal) = true;
 
   // VotePeriod defines the number of blocks during which voting takes place.
-  uint64 vote_period = 1 [ (gogoproto.moretags) = "yaml:\"vote_period\"" ];
+  uint64 vote_period = 1 [(gogoproto.moretags) = "yaml:\"vote_period\""];
 
   // VoteThreshold specifies the minimum proportion of votes that must be
   // received for a ballot to pass.
   string vote_threshold = 2 [
     (gogoproto.moretags) = "yaml:\"vote_threshold\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -33,7 +33,7 @@ message Params {
   // deviation, the band is taken to be 1 standard deviation.a price
   string reward_band = 3 [
     (gogoproto.moretags) = "yaml:\"reward_band\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -41,14 +41,14 @@ message Params {
   // Ex. '["unibi:uusd","ubtc:uusd"]'
   repeated string whitelist = 4 [
     (gogoproto.moretags) = "yaml:\"whitelist\"",
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair"
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair"
   ];
   // SlashFraction returns the proportion of an oracle's stake that gets
   // slashed in the event of slashing. `SlashFraction` specifies the exact
   // penalty for failing a voting period.
   string slash_fraction = 5 [
     (gogoproto.moretags) = "yaml:\"slash_fraction\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -56,10 +56,10 @@ message Params {
   // "slash window". After each slash window, all oracles that have missed more
   // than the penalty threshold are slashed. Missing the penalty threshold is
   // synonymous with submitting fewer valid votes than `MinValidPerWindow`.
-  uint64 slash_window = 6 [ (gogoproto.moretags) = "yaml:\"slash_window\"" ];
+  uint64 slash_window = 6 [(gogoproto.moretags) = "yaml:\"slash_window\""];
   string min_valid_per_window = 7 [
     (gogoproto.moretags) = "yaml:\"min_valid_per_window\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -75,18 +75,17 @@ message Params {
 
   // The minimum number of voters (i.e. oracle validators) per pair for it to be
   // considered a passing ballot. Recommended at least 4.
-  uint64 min_voters = 9 [ (gogoproto.moretags) = "yaml:\"min_voters\"" ];
+  uint64 min_voters = 9 [(gogoproto.moretags) = "yaml:\"min_voters\""];
 
   // The validator fee ratio that is given to validators every epoch.
   string validator_fee_ratio = 10 [
     (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
-  uint64 expiration_blocks = 11
-      [ (gogoproto.moretags) = "yaml:\"expiration_blocks\"" ];
+  uint64 expiration_blocks = 11 [(gogoproto.moretags) = "yaml:\"expiration_blocks\""];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
@@ -97,9 +96,9 @@ message AggregateExchangeRatePrevote {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
-  string voter = 2 [ (gogoproto.moretags) = "yaml:\"voter\"" ];
-  uint64 submit_block = 3 [ (gogoproto.moretags) = "yaml:\"submit_block\"" ];
+  string hash = 1 [(gogoproto.moretags) = "yaml:\"hash\""];
+  string voter = 2 [(gogoproto.moretags) = "yaml:\"voter\""];
+  uint64 submit_block = 3 [(gogoproto.moretags) = "yaml:\"submit_block\""];
 }
 
 // MsgAggregateExchangeRateVote - struct for voting on
@@ -114,7 +113,7 @@ message AggregateExchangeRateVote {
     (gogoproto.nullable) = false
   ];
 
-  string voter = 2 [ (gogoproto.moretags) = "yaml:\"voter\"" ];
+  string voter = 2 [(gogoproto.moretags) = "yaml:\"voter\""];
 }
 
 // ExchangeRateTuple - struct to store interpreted exchange rates data to store
@@ -124,14 +123,13 @@ message ExchangeRateTuple {
 
   string pair = 1 [
     (gogoproto.moretags) = "yaml:\"pair\"",
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/v2/x/common/asset.Pair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
   string exchange_rate = 2 [
     (gogoproto.moretags) = "yaml:\"exchange_rate\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -140,17 +138,17 @@ message ExchangeRateTuple {
 message ExchangeRateAtBlock {
   string exchange_rate = 1 [
     (gogoproto.moretags) = "yaml:\"exchange_rate\"",
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
-  uint64 created_block = 2 [ (gogoproto.moretags) = "yaml:\"created_block\"" ];
+  uint64 created_block = 2 [(gogoproto.moretags) = "yaml:\"created_block\""];
 
   // Block timestamp for the block where the oracle came to consensus for this
   // price. This timestamp is a conventional Unix millisecond time, i.e. the
-  // number of milliseconds elapsed since January 1, 1970 UTC. 
-  int64 block_timestamp_ms = 3 [ (gogoproto.moretags) = "yaml:\"block_timestamp_ms\"" ];
+  // number of milliseconds elapsed since January 1, 1970 UTC.
+  int64 block_timestamp_ms = 3 [(gogoproto.moretags) = "yaml:\"block_timestamp_ms\""];
 }
 
 // Rewards defines a credit object towards validators
@@ -162,5 +160,5 @@ message Rewards {
   // distributed.
   uint64 vote_periods = 2;
   // Coins defines the amount of coins to distribute in a single vote period.
-  repeated cosmos.base.v1beta1.Coin coins = 3 [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin coins = 3 [(gogoproto.nullable) = false];
 }

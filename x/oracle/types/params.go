@@ -9,26 +9,15 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 )
 
-// Parameter keys
-var (
-	KeyVotePeriod         = []byte("VotePeriod")
-	KeyVoteThreshold      = []byte("VoteThreshold")
-	KeyMinVoters          = []byte("MinVoters")
-	KeyRewardBand         = []byte("RewardBand")
-	KeyWhitelist          = []byte("Whitelist")
-	KeySlashFraction      = []byte("SlashFraction")
-	KeySlashWindow        = []byte("SlashWindow")
-	KeyMinValidPerWindow  = []byte("MinValidPerWindow")
-	KeyTwapLookbackWindow = []byte("TwapLookbackWindow")
-	KeyValidatorFeeRatio  = []byte("ValidatorFeeRatio")
-)
-
 // Default parameter values
 // Assumes block times are 2s
 const (
+	// The default [Params] "vote_period". Vote period is in units of blocks, so
+	// the value of 30 corresponds to 30-block vote periods, taking roughly 1
+	// minute on Nibiru with block times ~2s.
 	DefaultVotePeriod       = 30   // vote every 1 minute
 	DefaultSlashWindow      = 3600 // 2 hours
-	DefaultMinVoters        = 4    // minimum of 4 voters for a pair to become valid
+	DefaultMinVoters        = 1    // minimum voters for a pair to become valid
 	DefaultExpirationBlocks = 900  // 30 minutes
 )
 

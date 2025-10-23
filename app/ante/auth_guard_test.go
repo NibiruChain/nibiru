@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
+func (s *Suite) TestAnteDecoratorAuthzGuard() {
 	testCases := []struct {
 		name    string
 		txMsg   func() sdk.Msg
@@ -115,7 +115,7 @@ func (s *AnteTestSuite) TestAnteDecoratorAuthzGuard() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			deps := evmtest.NewTestDeps()
-			anteDec := ante.AnteDecoratorAuthzGuard{}
+			anteDec := ante.AnteDecAuthzGuard{}
 
 			txBuilder, err := sdkclienttx.Factory{}.
 				WithChainID(s.ctx.ChainID()).

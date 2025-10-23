@@ -12,7 +12,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {
@@ -40,7 +40,7 @@ func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to parse address: %w", err)
 			}
 
-			sudoGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			sudoGenState := sudo.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 			sudoGenState.Sudoers.Root = addr.String()
 
 			sudoGenStateBz, err := clientCtx.Codec.MarshalJSON(sudoGenState)
@@ -48,7 +48,7 @@ func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to marshal market genesis state: %w", err)
 			}
 
-			appState[types.ModuleName] = sudoGenStateBz
+			appState[sudo.ModuleName] = sudoGenStateBz
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {

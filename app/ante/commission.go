@@ -14,7 +14,7 @@ var _ sdk.AnteDecorator = (*AnteDecoratorStakingCommission)(nil)
 // maximum staking commission for validators on the network.
 type AnteDecoratorStakingCommission struct{}
 
-func (a AnteDecoratorStakingCommission) AnteHandle(
+func (anteDec AnteDecoratorStakingCommission) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {

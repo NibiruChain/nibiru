@@ -8,6 +8,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
@@ -29,7 +30,7 @@ func NewAnteHandler(
 
 		var anteHandler sdk.AnteHandler
 		if !evm.IsEthTx(tx) {
-			anteHandler = NewAnteHandlerNonEVM(options)
+			anteHandler = NewAnteHandlerNonEVM(keepers.PublicKeepers, options)
 			return anteHandler(ctx, tx, sim)
 		}
 		anteHandler = evmante.NewAnteHandlerEvm(options)
@@ -39,12 +40,14 @@ func NewAnteHandler(
 
 // NewAnteHandlerNonEVM: Default ante handler for non-EVM transactions.
 func NewAnteHandlerNonEVM(
+	pk keepers.PublicKeepers,
 	opts ante.AnteHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		ante.AnteDecoratorPreventEtheruemTxMsgs{}, // reject MsgEthereumTxs
-		ante.AnteDecoratorAuthzGuard{},            // disable certain messages in authz grant "generic"
+		ante.AnteDecPreventEthereumTxMsgs{}, // reject MsgEthereumTxs
+		ante.AnteDecAuthzGuard{},            // disable certain messages in authz grant "generic"
 		authante.NewSetUpContextDecorator(),
+		ante.AnteDecSaiOracle{PublicKeepers: pk},
 		wasmkeeper.NewLimitSimulationGasDecorator(opts.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(opts.TxCounterStoreKey),
 		// TODO: bug(security): Authz is unsafe. Let's include a guard to make
@@ -54,7 +57,7 @@ func NewAnteHandlerNonEVM(
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
-		ante.AnteDecoratorEnsureSinglePostPriceMessage{},
+		ante.AnteDecEnsureSinglePostPriceMessage{},
 		ante.AnteDecoratorStakingCommission{},
 		// ----------- Ante Handlers: Gas
 		authante.NewConsumeGasForTxSizeDecorator(opts.AccountKeeper),

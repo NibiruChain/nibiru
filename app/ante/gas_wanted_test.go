@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *AnteTestSuite) TestGasWantedDecorator() {
+func (s *Suite) TestGasWantedDecorator() {
 	testCases := []struct {
 		name     string
 		ctxSetup func(deps *evmtest.TestDeps)

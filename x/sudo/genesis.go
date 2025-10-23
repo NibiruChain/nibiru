@@ -1,40 +1,46 @@
 package sudo
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"encoding/json"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// InitGenesis initializes the module's state from a provided genesis state JSON.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	if err := genState.Validate(); err != nil {
-		panic(err)
+func (gen *GenesisState) Validate() error {
+	if gen.Sudoers.Contracts == nil {
+		return ErrGenesis("nil contract state must be []string")
+	} else if err := gen.Sudoers.Validate(); err != nil {
+		return ErrGenesis(err.Error())
 	}
-	k.Sudoers.Set(ctx, genState.Sudoers)
-}
-
-// ExportGenesis returns the module's exported genesis state.
-// This fn assumes InitGenesis has already been called.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	pbSudoers, err := k.Sudoers.Get(ctx)
-	if err != nil {
-		panic(err)
+	if gen.ZeroGasActors != nil {
+		err := gen.ZeroGasActors.Validate()
+		if err != nil {
+			return ErrGenesis(err.Error())
+		}
 	}
-
-	return &types.GenesisState{
-		Sudoers: pbSudoers,
-	}
+	return nil
 }
 
 // DefaultGenesis: A blank genesis state. The DefaultGenesis is invalid because
 // it does not specify a "Sudoers.Root".
-func DefaultGenesis() *types.GenesisState {
-	return &types.GenesisState{
-		Sudoers: types.Sudoers{
+func DefaultGenesis() *GenesisState {
+	return &GenesisState{
+		Sudoers: Sudoers{
 			Root:      "",
 			Contracts: []string{},
 		},
 	}
+}
+
+func GetGenesisStateFromAppState(
+	cdc codec.JSONCodec,
+	appState map[string]json.RawMessage,
+) *GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return &genesisState
 }

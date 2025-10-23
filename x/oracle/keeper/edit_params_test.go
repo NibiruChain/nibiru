@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
-	sudotypes "github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func TestMsgServer_EditOracleParams(t *testing.T) {
@@ -32,10 +32,10 @@ func TestMsgServer_EditOracleParams(t *testing.T) {
 
 	_, err := msgServer.EditOracleParams(goCtx, &msg)
 	require.Error(t, err)
-	require.EqualError(t, sudotypes.ErrUnauthorized, err.Error())
+	require.EqualError(t, sudo.ErrUnauthorized, err.Error())
 
 	// Case 2: user is authorized to edit oracle params
-	app.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+	app.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
 		Root: bob.String(),
 		Contracts: []string{
 			alice.String(),

@@ -2,21 +2,30 @@ package ante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
-const OracleMessageGas = 500
+const (
+	OracleModuleTxGas = 500
+	ZeroTxGas         = 0
+)
 
-var _ sdk.AnteDecorator = AnteDecoratorEnsureSinglePostPriceMessage{}
+var (
+	_ sdk.AnteDecorator = AnteDecEnsureSinglePostPriceMessage{}
+	_ sdk.AnteDecorator = AnteDecSaiOracle{}
+)
 
-// AnteDecoratorEnsureSinglePostPriceMessage ensures that there is only one
+// AnteDecEnsureSinglePostPriceMessage ensures that there is only one
 // oracle vote message in the transaction and sets the gas meter to a fixed
 // value.
-type AnteDecoratorEnsureSinglePostPriceMessage struct{}
+type AnteDecEnsureSinglePostPriceMessage struct{}
 
-func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
+func (anteDec AnteDecEnsureSinglePostPriceMessage) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
@@ -40,14 +49,63 @@ func (gd AnteDecoratorEnsureSinglePostPriceMessage) AnteHandle(
 			return ctx, sdkioerrors.Wrap(ErrOracleAnte, "a transaction cannot have more than a single oracle vote and prevote message")
 		}
 
-		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
+		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleModuleTxGas))
 	} else if hasOraclePreVoteMsg || hasOracleVoteMsg {
 		if len(msgs) > 1 {
 			return ctx, sdkioerrors.Wrap(ErrOracleAnte, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages")
 		}
 
-		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
+		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleModuleTxGas))
 	}
 
 	return next(ctx, tx, simulate)
+}
+
+// AnteDecSaiOracle checks for Wasm execute contract calls from a set of
+// known senders to the Sai oracle contract(s) and lowers gas costs using a fixed
+// gas meter.
+type AnteDecSaiOracle struct {
+	keepers.PublicKeepers
+}
+
+func (anteDec AnteDecSaiOracle) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
+	goCtx := sdk.WrapSDKContext(ctx)
+	resp, _ := anteDec.SudoKeeper.QueryZeroGasActors(goCtx, nil)
+	zeroGasActors := resp.Actors
+	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
+		return next(ctx, tx, simulate)
+	}
+
+	zeroGasSenders := set.New(zeroGasActors.Senders...)
+	zeroGasContracts := set.New(zeroGasActors.Contracts...)
+
+	for idx, msg := range tx.GetMsgs() {
+		if idx == 0 {
+			signers := msg.GetSigners()
+			if len(signers) == 0 {
+				return next(ctx, tx, simulate)
+			}
+			fromAddr := signers[0]
+			if !zeroGasSenders.Has(fromAddr.String()) {
+				return next(ctx, tx, simulate)
+			}
+		}
+
+		msgExec, ok := msg.(*wasm.MsgExecuteContract)
+		if !ok {
+			return next(ctx, tx, simulate)
+		}
+
+		if !zeroGasContracts.Has(msgExec.Contract) {
+			return next(ctx, tx, simulate)
+		}
+	}
+
+	newCtx = ctx.WithGasMeter(NewFixedGasMeter(ZeroTxGas))
+	return next(newCtx, tx, simulate)
 }

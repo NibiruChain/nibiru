@@ -2,6 +2,7 @@ package ante
 
 import (
 	"fmt"
+	"math"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
@@ -28,11 +29,11 @@ func (g *fixedGasMeter) GasConsumedToLimit() sdk.Gas {
 }
 
 func (g *fixedGasMeter) Limit() sdk.Gas {
-	return g.consumed
+	return math.MaxUint64 // unconfined
 }
 
 func (g *fixedGasMeter) GasRemaining() storetypes.Gas {
-	return g.consumed
+	return math.MaxUint64 // unconfined
 }
 
 // ConsumeGas is a no-op because the fixed gas meter stays fixed.
@@ -41,12 +42,14 @@ func (g *fixedGasMeter) ConsumeGas(sdk.Gas, string) {}
 // RefundGas is a no-op because the fixed gas meter stays fixed.
 func (g *fixedGasMeter) RefundGas(sdk.Gas, string) {}
 
+// IsPastLimit returns false since the gas limit is not confined.
 func (g *fixedGasMeter) IsPastLimit() bool {
-	return false
+	return false // unconfined
 }
 
+// IsOutOfGas returns false since the gas limit is not confined.
 func (g *fixedGasMeter) IsOutOfGas() bool {
-	return false
+	return false // unconfined
 }
 
 func (g *fixedGasMeter) String() string {

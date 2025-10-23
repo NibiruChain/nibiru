@@ -10,12 +10,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// AnteDecoratorAuthzGuard filters autz messages
-type AnteDecoratorAuthzGuard struct{}
+// AnteDecAuthzGuard filters autz messages
+type AnteDecAuthzGuard struct{}
 
 // AnteHandle rejects "authz grant generic --msg-type '/eth.evm.v1.MsgEthereumTx'"
 // Also rejects authz exec tx.json with any MsgEthereumTx inside
-func (rmd AnteDecoratorAuthzGuard) AnteHandle(
+func (anteDec AnteDecAuthzGuard) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {

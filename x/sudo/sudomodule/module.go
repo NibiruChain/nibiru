@@ -1,4 +1,4 @@
-package sudo
+package sudomodule
 
 import (
 	"context"
@@ -18,10 +18,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
 
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
@@ -46,29 +46,29 @@ func NewAppModuleBasic(binaryCodec codec.BinaryCodec) AppModuleBasic {
 }
 
 func (AppModuleBasic) Name() string {
-	return types.ModuleName
+	return sudo.ModuleName
 }
 
 func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
-	types.RegisterInterfaces(interfaceRegistry)
+	sudo.RegisterInterfaces(interfaceRegistry)
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterLegacyAminoCodec(aminoCodec)
+	sudo.RegisterLegacyAminoCodec(aminoCodec)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(DefaultGenesis())
+	return cdc.MustMarshalJSON(sudo.DefaultGenesis())
 }
 
 // ValidateGenesis performs genesis state validation for the capability module.
 func (AppModuleBasic) ValidateGenesis(
 	cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage,
 ) error {
-	var genState types.GenesisState
+	var genState sudo.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", sudo.ModuleName, err)
 	}
 	return genState.Validate()
 }
@@ -77,7 +77,7 @@ func (AppModuleBasic) ValidateGenesis(
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(
 	clientCtx client.Context, mux *runtime.ServeMux,
 ) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+	if err := sudo.RegisterQueryHandlerClient(context.Background(), mux, sudo.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
@@ -127,8 +127,8 @@ func (am AppModule) IsAppModule() {}
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), sudokeeper.NewQuerier(am.keeper))
-	types.RegisterMsgServer(cfg.MsgServer(), sudokeeper.NewMsgServer(am.keeper))
+	sudo.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	sudo.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -138,18 +138,18 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage,
 ) []abci.ValidatorUpdate {
-	var genState types.GenesisState
+	var genState sudo.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	InitGenesis(ctx, am.keeper, genState)
+	am.keeper.InitGenesis(ctx, genState)
 
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	genState := ExportGenesis(ctx, am.keeper)
+	genState := am.keeper.ExportGenesis(ctx)
 	return cdc.MustMarshalJSON(genState)
 }
 

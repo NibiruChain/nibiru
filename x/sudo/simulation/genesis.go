@@ -8,14 +8,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/v2/x/sudo/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func RandomizedGenState(simState *module.SimulationState) {
 	rootAddress := simState.Accounts[simState.Rand.Intn(len(simState.Accounts))].Address
 
-	genState := types.GenesisState{
-		Sudoers: types.Sudoers{
+	genState := sudo.GenesisState{
+		Sudoers: sudo.Sudoers{
 			Root:      rootAddress.String(),
 			Contracts: []string{},
 		},
@@ -26,5 +26,5 @@ func RandomizedGenState(simState *module.SimulationState) {
 		panic(err)
 	}
 	fmt.Printf("Selected randomly generated x/sudo parameters:\n%s\n", bz)
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&genState)
+	simState.GenState[sudo.ModuleName] = simState.Cdc.MustMarshalJSON(&genState)
 }
