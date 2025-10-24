@@ -47,6 +47,8 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
+## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-24
+
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
 - [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
 - [#2395](https://github.com/NibiruChain/nibiru/pull/2395) - chore: erc20 token registry new token: ynETHx
