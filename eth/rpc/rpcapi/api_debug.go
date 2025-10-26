@@ -3,25 +3,14 @@ package rpcapi
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
-	"os/user"
-	"path/filepath"
 	"runtime" // #nosec G702
 	"runtime/debug"
-	"runtime/pprof"
-	"runtime/trace"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	pkgerrors "github.com/pkg/errors"
 
 	"github.com/cosmos/cosmos-sdk/server"
 
@@ -42,7 +31,6 @@ type DebugAPI struct {
 	ctx     *server.Context
 	logger  log.Logger
 	backend *Backend
-	handler *HandlerT
 }
 
 // NewImplDebugAPI creates a new API definition for the tracing methods of the
@@ -55,17 +43,7 @@ func NewImplDebugAPI(
 		ctx:     ctx,
 		logger:  ctx.Logger.With("module", "debug"),
 		backend: backend,
-		handler: new(HandlerT),
 	}
-}
-
-// HandlerT keeps track of the cpu profiler and trace execution
-type HandlerT struct {
-	cpuFilename   string
-	cpuFile       io.WriteCloser
-	mu            sync.Mutex
-	traceFilename string
-	traceFile     io.WriteCloser
 }
 
 // TraceTransaction returns the structured logs created during the execution of EVM
@@ -137,23 +115,17 @@ func (a *DebugAPI) TraceCall(
 // file. It uses a profile rate of 1 for most accurate information. If a different rate is
 // desired, set the rate and write the profile manually.
 func (a *DebugAPI) BlockProfile(file string, nsec uint) error {
-	a.logger.Debug("debug_blockProfile", "file", file, "nsec", nsec)
-	runtime.SetBlockProfileRate(1)
-	defer runtime.SetBlockProfileRate(0)
-
-	time.Sleep(time.Duration(nsec) * time.Second)
-	return writeProfile("block", file, a.logger)
+	methodName := "debug_blockProfile"
+	a.logger.Debug(methodName, "file", file, "nsec", nsec)
+	return ErrNotImplemented(methodName)
 }
 
 // CpuProfile turns on CPU profiling for nsec seconds and writes
 // profile data to file.
 func (a *DebugAPI) CpuProfile(file string, nsec uint) error { //nolint: golint, stylecheck, revive
-	a.logger.Debug("debug_cpuProfile", "file", file, "nsec", nsec)
-	if err := a.StartCPUProfile(file); err != nil {
-		return err
-	}
-	time.Sleep(time.Duration(nsec) * time.Second)
-	return a.StopCPUProfile()
+	methodName := "debug_cpuProfile"
+	a.logger.Debug(methodName, "file", file, "nsec", nsec)
+	return ErrNotImplemented(methodName)
 }
 
 // GcStats returns GC statistics.
@@ -167,12 +139,9 @@ func (a *DebugAPI) GcStats() *debug.GCStats {
 // GoTrace turns on tracing for nsec seconds and writes
 // trace data to file.
 func (a *DebugAPI) GoTrace(file string, nsec uint) error {
-	a.logger.Debug("debug_goTrace", "file", file, "nsec", nsec)
-	if err := a.StartGoTrace(file); err != nil {
-		return err
-	}
-	time.Sleep(time.Duration(nsec) * time.Second)
-	return a.StopGoTrace()
+	methodName := "debug_goTrace"
+	a.logger.Debug(methodName, "file", file, "nsec", nsec)
+	return ErrNotImplemented(methodName)
 }
 
 // MemStats returns detailed runtime memory statistics.
@@ -186,135 +155,64 @@ func (a *DebugAPI) MemStats() *runtime.MemStats {
 // SetBlockProfileRate sets the rate of goroutine block profile data collection.
 // rate 0 disables block profiling.
 func (a *DebugAPI) SetBlockProfileRate(rate int) {
-	a.logger.Debug("debug_setBlockProfileRate", "rate", rate)
-	runtime.SetBlockProfileRate(rate)
+	a.logger.Debug(noOpMethod("debug_setBlockProfileRate"), "rate", rate)
 }
 
 // Stacks returns a printed representation of the stacks of all goroutines.
 func (a *DebugAPI) Stacks() string {
-	a.logger.Debug("debug_stacks")
-	buf := new(bytes.Buffer)
-	err := pprof.Lookup("goroutine").WriteTo(buf, 2)
-	if err != nil {
-		a.logger.Error("Failed to create stacks", "error", err.Error())
-	}
-	return buf.String()
-}
-
-// StartCPUProfile turns on CPU profiling, writing to the given file.
-func (a *DebugAPI) StartCPUProfile(file string) error {
-	a.logger.Debug("debug_startCPUProfile", "file", file)
-	a.handler.mu.Lock()
-	defer a.handler.mu.Unlock()
-
-	switch {
-	case isCPUProfileConfigurationActivated(a.ctx):
-		a.logger.Debug("CPU profiling already in progress using the configuration file")
-		return errors.New("CPU profiling already in progress using the configuration file")
-	case a.handler.cpuFile != nil:
-		a.logger.Debug("CPU profiling already in progress")
-		return errors.New("CPU profiling already in progress")
-	default:
-		fp, err := ExpandHome(file)
-		if err != nil {
-			a.logger.Debug("failed to get filepath for the CPU profile file", "error", err.Error())
-			return err
-		}
-		f, err := os.Create(fp)
-		if err != nil {
-			a.logger.Debug("failed to create CPU profile file", "error", err.Error())
-			return err
-		}
-		if err := pprof.StartCPUProfile(f); err != nil {
-			a.logger.Debug("cpu profiling already in use", "error", err.Error())
-			if err := f.Close(); err != nil {
-				a.logger.Debug("failed to close cpu profile file")
-				return fmt.Errorf("failed to close cpu profile file: %w", err)
-			}
-			return err
-		}
-
-		a.logger.Info("CPU profiling started", "profile", file)
-		a.handler.cpuFile = f
-		a.handler.cpuFilename = file
-		return nil
-	}
-}
-
-// StopCPUProfile stops an ongoing CPU profile.
-func (a *DebugAPI) StopCPUProfile() error {
-	a.logger.Debug("debug_stopCPUProfile")
-	a.handler.mu.Lock()
-	defer a.handler.mu.Unlock()
-
-	switch {
-	case isCPUProfileConfigurationActivated(a.ctx):
-		a.logger.Debug("CPU profiling already in progress using the configuration file")
-		return errors.New("CPU profiling already in progress using the configuration file")
-	case a.handler.cpuFile != nil:
-		a.logger.Info("Done writing CPU profile", "profile", a.handler.cpuFilename)
-		pprof.StopCPUProfile()
-		if err := a.handler.cpuFile.Close(); err != nil {
-			a.logger.Debug("failed to close cpu file")
-			return fmt.Errorf("failed to close cpu file: %w", err)
-		}
-		a.handler.cpuFile = nil
-		a.handler.cpuFilename = ""
-		return nil
-	default:
-		a.logger.Debug("CPU profiling not in progress")
-		return errors.New("CPU profiling not in progress")
-	}
+	a.logger.Debug(noOpMethod("debug_stacks"))
+	return ""
 }
 
 // WriteBlockProfile writes a goroutine blocking profile to the given file.
 func (a *DebugAPI) WriteBlockProfile(file string) error {
-	a.logger.Debug("debug_writeBlockProfile", "file", file)
-	return writeProfile("block", file, a.logger)
+	methodName := "debug_writeBlockProfile"
+	a.logger.Debug(methodName, "file", file)
+	return ErrNotImplemented(methodName)
 }
 
 // WriteMemProfile writes an allocation profile to the given file.
 // Note that the profiling rate cannot be set through the API,
 // it must be set on the command line.
 func (a *DebugAPI) WriteMemProfile(file string) error {
-	a.logger.Debug("debug_writeMemProfile", "file", file)
-	return writeProfile("heap", file, a.logger)
+	methodName := "debug_writeMemProfile"
+	a.logger.Debug(methodName, "file", file)
+	return ErrNotImplemented(methodName)
 }
 
 // MutexProfile turns on mutex profiling for nsec seconds and writes profile data to file.
 // It uses a profile rate of 1 for most accurate information. If a different rate is
 // desired, set the rate and write the profile manually.
 func (a *DebugAPI) MutexProfile(file string, nsec uint) error {
-	a.logger.Debug("debug_mutexProfile", "file", file, "nsec", nsec)
-	runtime.SetMutexProfileFraction(1)
-	time.Sleep(time.Duration(nsec) * time.Second)
-	defer runtime.SetMutexProfileFraction(0)
-	return writeProfile("mutex", file, a.logger)
+	methodName := "debug_mutexProfile"
+	a.logger.Debug(methodName, "file", file, "nsec", nsec)
+	return ErrNotImplemented(methodName)
 }
+
+func noOpMethod(method string) string { return fmt.Sprintf("%v (no-op)", method) }
 
 // SetMutexProfileFraction sets the rate of mutex profiling.
 func (a *DebugAPI) SetMutexProfileFraction(rate int) {
-	a.logger.Debug("debug_setMutexProfileFraction", "rate", rate)
-	runtime.SetMutexProfileFraction(rate)
+	a.logger.Debug(noOpMethod("debug_setMutexProfileFraction"), "rate", rate)
 }
 
 // WriteMutexProfile writes a goroutine blocking profile to the given file.
 func (a *DebugAPI) WriteMutexProfile(file string) error {
-	a.logger.Debug("debug_writeMutexProfile", "file", file)
-	return writeProfile("mutex", file, a.logger)
+	methodName := "debug_writeMutexProfile"
+	a.logger.Debug(methodName, "file", file)
+	return ErrNotImplemented(methodName)
 }
 
 // FreeOSMemory forces a garbage collection.
 func (a *DebugAPI) FreeOSMemory() {
-	a.logger.Debug("debug_freeOSMemory")
-	debug.FreeOSMemory()
+	a.logger.Debug(noOpMethod("debug_freeOSMemory"))
 }
 
 // SetGCPercent sets the garbage collection target percentage. It returns the previous
 // setting. A negative value disables GC.
 func (a *DebugAPI) SetGCPercent(v int) int {
-	a.logger.Debug("debug_setGCPercent", "percent", v)
-	return debug.SetGCPercent(v)
+	a.logger.Debug(noOpMethod("debug_setGCPercent"), "percent", v)
+	return -1
 }
 
 // GetHeaderRlp retrieves the RLP encoded for of a single header.
@@ -362,7 +260,7 @@ func (a *DebugAPI) GetBadBlocks(ctx context.Context) ([]*getheth.BadBlockArgs, e
 }
 
 func ErrNotImplemented(method string) error {
-	return fmt.Errorf("method is not implemented: %v", method)
+	return fmt.Errorf("method %q is intentionally disabled or not implemented", method)
 }
 
 // GetRawBlock returns an RLP-encoded block
@@ -475,108 +373,4 @@ func (a *DebugAPI) TraceChain(
 	fnName := "debug_traceChain"
 	a.logger.Debug(fnName)
 	return nil, ErrNotImplemented(fnName)
-}
-
-// StartGoTrace turns on tracing, writing to the given file.
-func (a *DebugAPI) StartGoTrace(file string) error {
-	a.logger.Debug("debug_startGoTrace", "file", file)
-	a.handler.mu.Lock()
-	defer a.handler.mu.Unlock()
-
-	if a.handler.traceFile != nil {
-		a.logger.Debug("trace already in progress")
-		return errors.New("trace already in progress")
-	}
-	fp, err := ExpandHome(file)
-	if err != nil {
-		a.logger.Debug("failed to get filepath for the CPU profile file", "error", err.Error())
-		return err
-	}
-	f, err := os.Create(fp)
-	if err != nil {
-		a.logger.Debug("failed to create go trace file", "error", err.Error())
-		return err
-	}
-	if err := trace.Start(f); err != nil {
-		a.logger.Debug("Go tracing already started", "error", err.Error())
-		if err := f.Close(); err != nil {
-			a.logger.Debug("failed to close trace file")
-			return pkgerrors.Wrap(err, "failed to close trace file")
-		}
-
-		return err
-	}
-	a.handler.traceFile = f
-	a.handler.traceFilename = file
-	a.logger.Info("Go tracing started", "dump", a.handler.traceFilename)
-	return nil
-}
-
-// StopGoTrace stops an ongoing trace.
-func (a *DebugAPI) StopGoTrace() error {
-	a.logger.Debug("debug_stopGoTrace")
-	a.handler.mu.Lock()
-	defer a.handler.mu.Unlock()
-
-	trace.Stop()
-	if a.handler.traceFile == nil {
-		a.logger.Debug("trace not in progress")
-		return errors.New("trace not in progress")
-	}
-	a.logger.Info("Done writing Go trace", "dump", a.handler.traceFilename)
-	if err := a.handler.traceFile.Close(); err != nil {
-		a.logger.Debug("failed to close trace file")
-		return pkgerrors.Wrap(err, "failed to close trace file")
-	}
-	a.handler.traceFile = nil
-	a.handler.traceFilename = ""
-	return nil
-}
-
-// isCPUProfileConfigurationActivated: Checks if the "cpu-profile" flag was set
-func isCPUProfileConfigurationActivated(ctx *server.Context) bool {
-	// TODO: use same constants as server/start.go
-	// constant declared in start.go cannot be imported (cyclical dependency)
-	const flagCPUProfile = "cpu-profile"
-	if cpuProfile := ctx.Viper.GetString(flagCPUProfile); cpuProfile != "" {
-		return true
-	}
-	return false
-}
-
-// ExpandHome expands home directory in file paths.
-// ~someuser/tmp will not be expanded.
-func ExpandHome(p string) (string, error) {
-	if strings.HasPrefix(p, "~/") || strings.HasPrefix(p, "~\\") {
-		usr, err := user.Current()
-		if err != nil {
-			return p, err
-		}
-		home := usr.HomeDir
-		p = home + p[1:]
-	}
-	return filepath.Clean(p), nil
-}
-
-// writeProfile writes the data to a file
-func writeProfile(name, file string, log log.Logger) error {
-	p := pprof.Lookup(name)
-	log.Info("Writing profile records", "count", p.Count(), "type", name, "dump", file)
-	fp, err := ExpandHome(file)
-	if err != nil {
-		return err
-	}
-	f, err := os.Create(fp)
-	if err != nil {
-		return err
-	}
-
-	if err := p.WriteTo(f, 0); err != nil {
-		if err := f.Close(); err != nil {
-			return err
-		}
-		return err
-	}
-
-	return f.Close()
 }

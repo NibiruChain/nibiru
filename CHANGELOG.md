@@ -62,6 +62,8 @@ feat(evm/grpc-query): Update the "/eth.evm.v1.Query/Balance" query to work with
 "0x" Ethereum hex and "nibi"-prefixed Bech32 address formats. Return no Eth
 address when Wasm contract addresses are queried because 32-byte address space
 (wasm contract length) is not uniquely identified in 20-byte space (EOA length).
+- [#2412](https://github.com/NibiruChain/nibiru/pull/2412) - fix(evm-rpc): remove
+  unsafe debug API methods. 
 
 ### Dependencies
 - Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2390](https://github.com/NibiruChain/nibiru/pull/2390))
