@@ -79,7 +79,7 @@ jobs:
       - name: "Merge coverage reports with gocovermerge"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          go install github.com/Unique-Divine/jiyuu/gocovmerge@latest
+          go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
           gocovmerge -o coverage.out \
             coverage.group1.out coverage.group2.out coverage.group3.out
       
