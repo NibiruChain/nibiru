@@ -17,25 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
 
-var Upgrades = []upgrades.Upgrade{
-	upgrades.Upgrade1_0_1,
-	upgrades.Upgrade1_0_2,
-	upgrades.Upgrade1_0_3,
-	upgrades.Upgrade1_1_0,
-	upgrades.Upgrade1_2_0,
-	upgrades.Upgrade1_3_0,
-	upgrades.Upgrade1_4_0,
-	upgrades.Upgrade1_5_0,
-	upgrades.Upgrade2_0_0,
-	upgrades.Upgrade2_1_0,
-	upgrades.Upgrade2_2_0,
-	upgrades.Upgrade2_3_0,
-	upgrades.Upgrade2_4_0,
-	upgrades.Upgrade2_5_0,
-	upgrades.Upgrade2_6_0,
-	upgrades.Upgrade2_7_0,
-	upgrades.Upgrade2_8_0,
-}
+var Upgrades = upgrades.AllUpgrades
 
 func (app *NibiruApp) setupUpgrades() {
 	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57

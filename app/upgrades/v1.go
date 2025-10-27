@@ -21,22 +21,21 @@ import (
 )
 
 var (
-	// pretty much a no-op store upgrade to test the upgrade process and include the
-	// newer version of rocksdb
+	// Tests the upgrade process and move to newer version of rocksdb
 	Upgrade1_0_1 = Upgrade{
 		UpgradeName:          "v1.0.1",
 		CreateUpgradeHandler: DefaultUpgradeHandler,
 		StoreUpgrades:        store.StoreUpgrades{},
 	}
 
-	// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
+	// Newer version of the Cosmos-SDK
 	Upgrade1_0_2 = Upgrade{
 		UpgradeName:          "v1.0.2",
 		CreateUpgradeHandler: DefaultUpgradeHandler,
 		StoreUpgrades:        store.StoreUpgrades{},
 	}
 
-	// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
+	// Newer version of the Cosmos-SDK
 	Upgrade1_0_3 = Upgrade{
 		UpgradeName:          "v1.0.3",
 		CreateUpgradeHandler: DefaultUpgradeHandler,

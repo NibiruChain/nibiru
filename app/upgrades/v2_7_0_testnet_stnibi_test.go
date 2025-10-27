@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	v2_7_0 "github.com/NibiruChain/nibiru/v2/app/upgrades"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -46,7 +46,7 @@ func (s *Suite2_7_0) TestTestnet() {
 
 		// Metadata used for both faulty token formats of the stNIBI FunToken
 		// mapping of
-		originalbankMetadata = v2_7_0.OldTestnetStnibi()
+		originalbankMetadata = upgrades.OldTestnetStnibi()
 
 		// some ERC20 holders of stNIBI to make sure the upgrade doesn't corrupt
 		// any EVM state
@@ -145,7 +145,7 @@ func (s *Suite2_7_0) TestTestnet() {
 		)
 		s.NoError(err)
 
-		s.Require().NotEqual(erc20.Hex(), v2_7_0.TESTNET_STNIBI_ADDR.Hex(), "current temporary FunToken shouldn't yet mirror the Testnet state")
+		s.Require().NotEqual(erc20.Hex(), upgrades.TESTNET_STNIBI_ADDR.Hex(), "current temporary FunToken shouldn't yet mirror the Testnet state")
 
 		erc20AuthAcc := deps.App.AccountKeeper.GetAccount(
 			deps.Ctx(),
@@ -164,7 +164,7 @@ func (s *Suite2_7_0) TestTestnet() {
 
 		s.T().Log("Inject in auth - testnet stNIBI EVM contract")
 		stnibiEvmTestnetGenAcc := evm.GenesisAccount{
-			Address: v2_7_0.TESTNET_STNIBI_ADDR.Hex(),
+			Address: upgrades.TESTNET_STNIBI_ADDR.Hex(),
 			Code:    tempErc20GenAcc.Code,
 			Storage: tempErc20GenAcc.Storage,
 		}
@@ -172,7 +172,7 @@ func (s *Suite2_7_0) TestTestnet() {
 		stnibiEvmTestnetAuthAccI := erc20AuthAcc.(eth.EthAccountI)
 		stnibiEvmTestnetAuthAcc := eth.EthAccount{
 			BaseAccount: &auth.BaseAccount{
-				Address:       eth.EthAddrToNibiruAddr(v2_7_0.TESTNET_STNIBI_ADDR).String(),
+				Address:       eth.EthAddrToNibiruAddr(upgrades.TESTNET_STNIBI_ADDR).String(),
 				PubKey:        nil,
 				AccountNumber: accNum,
 				Sequence:      sequence,
@@ -194,15 +194,15 @@ func (s *Suite2_7_0) TestTestnet() {
 		err = deps.EvmKeeper.ImportGenesisAccount(deps.Ctx(), evmGenAcc)
 		s.Require().NoError(err)
 
-		contract := deps.EvmKeeper.GetAccount(deps.Ctx(), v2_7_0.TESTNET_STNIBI_ADDR)
+		contract := deps.EvmKeeper.GetAccount(deps.Ctx(), upgrades.TESTNET_STNIBI_ADDR)
 		s.Require().NotNil(contract)
 		s.Require().True(contract.IsContract(), "expect testnet stNIBI to be an EVM contract ")
 
-		s.T().Logf(`Clean up and write this to be the FunToken mapping: bank coin "%s", erc20 "%s"`, bankDenom, v2_7_0.TESTNET_STNIBI_ADDR)
+		s.T().Logf(`Clean up and write this to be the FunToken mapping: bank coin "%s", erc20 "%s"`, bankDenom, upgrades.TESTNET_STNIBI_ADDR)
 
 		// This mapping mimics testnet stNIBI exactly.
 		funtoken = evm.FunToken{
-			Erc20Addr:      eth.EIP55Addr{Address: v2_7_0.TESTNET_STNIBI_ADDR},
+			Erc20Addr:      eth.EIP55Addr{Address: upgrades.TESTNET_STNIBI_ADDR},
 			BankDenom:      tempFuntoken.BankDenom,
 			IsMadeFromCoin: tempFuntoken.IsMadeFromCoin,
 		}
@@ -231,7 +231,7 @@ func (s *Suite2_7_0) TestTestnet() {
 
 	s.T().Log("sanity check FunToken mapping for testnet stNIBI")
 	s.Equal(funtoken.BankDenom, originalbankMetadata.Base)
-	s.Equal(funtoken.Erc20Addr.Hex(), v2_7_0.TESTNET_STNIBI_ADDR.Hex())
+	s.Equal(funtoken.Erc20Addr.Hex(), upgrades.TESTNET_STNIBI_ADDR.Hex())
 	s.Equal(funtoken.IsMadeFromCoin, true)
 
 	s.T().Logf("evm.EVM_MODULE_ADDRESS %s", evm.EVM_MODULE_ADDRESS)
@@ -283,7 +283,7 @@ func (s *Suite2_7_0) TestTestnet() {
 
 	s.Run("Perform upgrade to stNIBI ERC20 address inside v2.7.0 on testnet", func() {
 		s.Require().True(
-			deps.App.UpgradeKeeper.HasHandler(v2_7_0.Upgrade2_7_0.UpgradeName),
+			deps.App.UpgradeKeeper.HasHandler(upgrades.Upgrade2_7_0.UpgradeName),
 		)
 
 		originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
@@ -291,7 +291,7 @@ func (s *Suite2_7_0) TestTestnet() {
 
 		eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
 
-		err := deps.RunUpgrade(v2_7_0.Upgrade2_7_0)
+		err := deps.RunUpgrade(upgrades.Upgrade2_7_0)
 		s.Require().NoError(err)
 
 		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())

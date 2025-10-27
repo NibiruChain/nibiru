@@ -6,48 +6,19 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/collections"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
-
-var Upgrade2_5_0 = Upgrade{
-	UpgradeName: "v2.5.0",
-	CreateUpgradeHandler: func(
-		mm *module.Manager,
-		cfg module.Configurator,
-		nibiru *keepers.PublicKeepers,
-		clientKeeper clientkeeper.Keeper,
-	) upgradetypes.UpgradeHandler {
-		return func(
-			ctx sdk.Context,
-			plan upgradetypes.Plan,
-			fromVM module.VersionMap,
-		) (module.VersionMap, error) {
-			err := UpgradeStNibiEvmMetadata(nibiru, ctx, appconst.MAINNET_STNIBI_ADDR)
-			if err != nil {
-				return fromVM, fmt.Errorf("v2.5.0 upgrade failure: %w", err)
-			}
-
-			return mm.RunMigrations(ctx, cfg, fromVM)
-		}
-	},
-	StoreUpgrades: store.StoreUpgrades{},
-}
 
 func UpgradeStNibiEvmMetadata(
 	keepers *keepers.PublicKeepers,

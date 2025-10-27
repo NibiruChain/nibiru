@@ -25,6 +25,26 @@ type Upgrade struct {
 	StoreUpgrades store.StoreUpgrades
 }
 
+var AllUpgrades = []Upgrade{
+	Upgrade1_0_1,
+	Upgrade1_0_2,
+	Upgrade1_0_3,
+	Upgrade1_1_0,
+	Upgrade1_2_0,
+	Upgrade1_3_0,
+	Upgrade1_4_0,
+	Upgrade1_5_0,
+	Upgrade2_0_0,
+	Upgrade2_1_0,
+	Upgrade2_2_0,
+	Upgrade2_3_0,
+	Upgrade2_4_0,
+	Upgrade2_5_0,
+	Upgrade2_6_0,
+	Upgrade2_7_0,
+	Upgrade2_8_0,
+}
+
 // DefaultUpgradeHandler runs module manager migrations without running any other
 // logic that uses the Nibiru keepers. This is the most common value for
 // the "CreateUpgradeHandler" field of an [Upgrade].
