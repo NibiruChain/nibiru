@@ -1,7 +1,7 @@
-package v1_3_0
+package upgrades
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -17,13 +17,47 @@ import (
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
-const UpgradeName = "v1.3.0"
+// pretty much a no-op store upgrade to test the upgrade process and include the
+// newer version of rocksdb
+var Upgrade1_0_1 = Upgrade{
+	UpgradeName:          "v1.0.1",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades:        store.StoreUpgrades{},
+}
 
-var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
+// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
+var Upgrade1_0_2 = Upgrade{
+	UpgradeName:          "v1.0.2",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades:        store.StoreUpgrades{},
+}
+
+// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
+var Upgrade1_0_3 = Upgrade{
+	UpgradeName:          "v1.0.3",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades:        store.StoreUpgrades{},
+}
+
+var Upgrade1_1_0 = Upgrade{
+	UpgradeName:          "v1.1.0",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades: store.StoreUpgrades{
+		Added: []string{inflationtypes.ModuleName},
+	},
+}
+
+var Upgrade1_2_0 = Upgrade{
+	UpgradeName:          "v1.2.0",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades:        store.StoreUpgrades{},
+}
+
+var Upgrade1_3_0 = Upgrade{
+	UpgradeName: "v1.3.0",
 	CreateUpgradeHandler: func(
 		mm *module.Manager,
 		cfg module.Configurator,
@@ -67,7 +101,21 @@ var Upgrade = upgrades.Upgrade{
 			return mm.RunMigrations(ctx, cfg, fromVM)
 		}
 	},
-	StoreUpgrades: types.StoreUpgrades{
+	StoreUpgrades: store.StoreUpgrades{
 		Added: []string{icacontrollertypes.StoreKey, icahosttypes.StoreKey},
 	},
+}
+
+var Upgrade1_4_0 = Upgrade{
+	UpgradeName:          "v1.4.0",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades: store.StoreUpgrades{
+		Added: []string{},
+	},
+}
+
+var Upgrade1_5_0 = Upgrade{
+	UpgradeName:          "v1.5.0",
+	CreateUpgradeHandler: DefaultUpgradeHandler,
+	StoreUpgrades:        store.StoreUpgrades{},
 }

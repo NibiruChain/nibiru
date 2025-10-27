@@ -15,9 +15,6 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
-// TODO: Refactor to add compile-time safety for the following interface.
-// var _ evmante.AnteOptionsEVM = (*AnteHandlerOptions)(nil)
-
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
 	IBCKeeper        *ibckeeper.Keeper

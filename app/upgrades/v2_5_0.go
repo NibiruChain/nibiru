@@ -1,4 +1,4 @@
-package v2_5_0
+package upgrades
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/collections"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -19,17 +19,14 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
-const UpgradeName = "v2.5.0"
-
-var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
+var Upgrade2_5_0 = Upgrade{
+	UpgradeName: "v2.5.0",
 	CreateUpgradeHandler: func(
 		mm *module.Manager,
 		cfg module.Configurator,
@@ -49,7 +46,7 @@ var Upgrade = upgrades.Upgrade{
 			return mm.RunMigrations(ctx, cfg, fromVM)
 		}
 	},
-	StoreUpgrades: storetypes.StoreUpgrades{},
+	StoreUpgrades: store.StoreUpgrades{},
 }
 
 func UpgradeStNibiEvmMetadata(

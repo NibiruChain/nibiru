@@ -1,4 +1,4 @@
-package v2_7_0_test
+package upgrades_test
 
 import (
 	"math/big"
@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
+	v2_7_0 "github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -34,7 +34,7 @@ import (
 //     WNIBI.sol.
 //  3. ERC20 metatadata is overwritten for the FunToken mapping for stNIBI on
 //     testnet.
-func (s *Suite) TestTestnet() {
+func (s *Suite2_7_0) TestTestnet() {
 	var (
 		deps = evmtest.NewTestDeps()
 
@@ -283,7 +283,7 @@ func (s *Suite) TestTestnet() {
 
 	s.Run("Perform upgrade to stNIBI ERC20 address inside v2.7.0 on testnet", func() {
 		s.Require().True(
-			deps.App.UpgradeKeeper.HasHandler(v2_7_0.Upgrade.UpgradeName),
+			deps.App.UpgradeKeeper.HasHandler(v2_7_0.Upgrade2_7_0.UpgradeName),
 		)
 
 		originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
@@ -291,7 +291,7 @@ func (s *Suite) TestTestnet() {
 
 		eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
 
-		err := deps.RunUpgrade(v2_7_0.Upgrade)
+		err := deps.RunUpgrade(v2_7_0.Upgrade2_7_0)
 		s.Require().NoError(err)
 
 		eventsInUpgrade := testutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())

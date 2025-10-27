@@ -20,6 +20,8 @@ type Upgrade struct {
 		ibcKeeperClientKeeper clientkeeper.Keeper,
 	) upgradetypes.UpgradeHandler
 
+	// StoreUpgrades defines a series of transformations to apply the multistore db
+	// upon load
 	StoreUpgrades store.StoreUpgrades
 }
 

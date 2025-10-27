@@ -1,4 +1,4 @@
-package v2_7_0
+package upgrades
 
 import (
 	"encoding/json"
@@ -17,15 +17,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-const UpgradeName = "v2.7.0"
-
-var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
+var Upgrade2_7_0 = Upgrade{
+	UpgradeName: "v2.7.0",
 	CreateUpgradeHandler: func(
 		mm *module.Manager,
 		cfg module.Configurator,
@@ -37,7 +34,7 @@ var Upgrade = upgrades.Upgrade{
 			plan upgradetypes.Plan,
 			fromVM module.VersionMap,
 		) (module.VersionMap, error) {
-			err := UpgradeV2_7_0(nibiru, ctx)
+			err := runUpgrade2_7_0(nibiru, ctx)
 			if err != nil {
 				return fromVM, fmt.Errorf("v2.7.0 upgrade failure: %w", err)
 			}
@@ -48,7 +45,7 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: storetypes.StoreUpgrades{},
 }
 
-// UpgradeV2_7_0 adds the canonical WNIBI contract address to the EVM module
+// runUpgrade2_7_0 adds the canonical WNIBI contract address to the EVM module
 // parameters.
 //
 // 2. Then, if the instance of Nibiru is NOT mainnet, inject the
@@ -56,7 +53,7 @@ var Upgrade = upgrades.Upgrade{
 //
 // 3. And finally, only on Testnet 2, it modifies the ERC20 metadata for a stNIBI
 // deployment from Eris.
-func UpgradeV2_7_0(
+func runUpgrade2_7_0(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 ) (err error) {
