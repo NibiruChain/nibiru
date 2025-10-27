@@ -66,6 +66,7 @@ address when Wasm contract addresses are queried because 32-byte address space
 (wasm contract length) is not uniquely identified in 20-byte space (EOA length).
 - [#2412](https://github.com/NibiruChain/nibiru/pull/2412) - fix(evm-rpc): remove
   unsafe debug API methods. 
+- [#2413](https://github.com/NibiruChain/nibiru/pull/2413) - refactor(upgrades): simplify upgrade handler code to use less abstractions and combine micro-packages
 
 ### Dependencies
 - Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2390](https://github.com/NibiruChain/nibiru/pull/2390))

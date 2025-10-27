@@ -1,4 +1,4 @@
-package v2_5_0_test
+package upgrades_test
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_5_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -176,11 +176,11 @@ func (s *Suite) TestUpgrade() {
 	s.Run(fmt.Sprintf("Perform upgrade on stNIBI ERC20 address: %s", funtoken.Erc20Addr.Address), func() {
 		s.T().Log("IMPORTANT: Schedule the upgrade")
 		s.Require().True(
-			deps.App.UpgradeKeeper.HasHandler(v2_5_0.Upgrade.UpgradeName),
+			deps.App.UpgradeKeeper.HasHandler(upgrades.Upgrade2_5_0.UpgradeName),
 		)
 
 		eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
-		err := v2_5_0.UpgradeStNibiEvmMetadata(
+		err := upgrades.UpgradeStNibiEvmMetadata(
 			&deps.App.PublicKeepers, deps.Ctx(), funtoken.Erc20Addr.Address,
 		)
 		s.Require().NoError(err)

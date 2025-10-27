@@ -1,54 +1,23 @@
-package v2_7_0
+package upgrades
 
 import (
 	"encoding/json"
 	"fmt"
 	"math/big"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-const UpgradeName = "v2.7.0"
-
-var Upgrade = upgrades.Upgrade{
-	UpgradeName: UpgradeName,
-	CreateUpgradeHandler: func(
-		mm *module.Manager,
-		cfg module.Configurator,
-		nibiru *keepers.PublicKeepers,
-		clientKeeper clientkeeper.Keeper,
-	) upgradetypes.UpgradeHandler {
-		return func(
-			ctx sdk.Context,
-			plan upgradetypes.Plan,
-			fromVM module.VersionMap,
-		) (module.VersionMap, error) {
-			err := UpgradeV2_7_0(nibiru, ctx)
-			if err != nil {
-				return fromVM, fmt.Errorf("v2.7.0 upgrade failure: %w", err)
-			}
-
-			return mm.RunMigrations(ctx, cfg, fromVM)
-		}
-	},
-	StoreUpgrades: storetypes.StoreUpgrades{},
-}
-
-// UpgradeV2_7_0 adds the canonical WNIBI contract address to the EVM module
+// runUpgrade2_7_0 adds the canonical WNIBI contract address to the EVM module
 // parameters.
 //
 // 2. Then, if the instance of Nibiru is NOT mainnet, inject the
@@ -56,7 +25,7 @@ var Upgrade = upgrades.Upgrade{
 //
 // 3. And finally, only on Testnet 2, it modifies the ERC20 metadata for a stNIBI
 // deployment from Eris.
-func UpgradeV2_7_0(
+func runUpgrade2_7_0(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,
 ) (err error) {
