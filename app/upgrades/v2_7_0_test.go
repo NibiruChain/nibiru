@@ -1,4 +1,4 @@
-package v2_7_0_test
+package upgrades_test
 
 import (
 	"math/big"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -19,7 +19,7 @@ import (
 // module parameter for the canonical WNIBI address does not exist.
 // This test shows that the upgrade edits only the EVM module parameters without
 // deploying anything.
-func (s *Suite) TestMainnet() {
+func (s *Suite2_7_0) TestMainnet() {
 	deps := evmtest.NewTestDeps()
 
 	deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1")) // Pretend to be mainnet
@@ -39,7 +39,7 @@ func (s *Suite) TestMainnet() {
 	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
-	err := deps.RunUpgrade(v2_7_0.Upgrade)
+	err := deps.RunUpgrade(upgrades.Upgrade2_7_0)
 	s.Require().NoError(err)
 
 	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
@@ -52,7 +52,7 @@ func (s *Suite) TestMainnet() {
 // mainnet, adds WNIBI.sol at address
 // "0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97". If an account already exists
 // with that address, it gets overwritten to become WNIBI.sol.
-func (s *Suite) TestOtherNibirus() {
+func (s *Suite2_7_0) TestOtherNibirus() {
 	deps := evmtest.NewTestDeps()
 
 	s.NotEqual(
@@ -72,7 +72,7 @@ func (s *Suite) TestOtherNibirus() {
 	originalWnibiAcc := deps.EvmKeeper.GetAccount(deps.Ctx(), appconst.MAINNET_WNIBI_ADDR)
 	s.Nil(originalWnibiAcc)
 
-	err := deps.RunUpgrade(v2_7_0.Upgrade)
+	err := deps.RunUpgrade(upgrades.Upgrade2_7_0)
 	s.Require().NoError(err)
 
 	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
@@ -93,10 +93,10 @@ func (s *Suite) TestOtherNibirus() {
 	s.Equal(uint8(18), erc20Info.Decimals)
 }
 
-type Suite struct {
+type Suite2_7_0 struct {
 	suite.Suite
 }
 
 func TestV2_7_0(t *testing.T) {
-	suite.Run(t, new(Suite))
+	suite.Run(t, new(Suite2_7_0))
 }

@@ -1,4 +1,4 @@
-package v2_7_0
+package upgrades
 
 import (
 	"math/big"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_5_0"
 )
 
 // TESTNET_STNIBI_ADDR is the (real) hex address of stNIBI on testnet.
@@ -59,5 +58,5 @@ func UpgradeStNibiContractOnTestnet(
 
 	// This is safe to run because we've used this function to upgrade mainnet
 	// already.
-	return v2_5_0.UpgradeStNibiEvmMetadata(keepers, ctx, TESTNET_STNIBI_ADDR)
+	return UpgradeStNibiEvmMetadata(keepers, ctx, TESTNET_STNIBI_ADDR)
 }
