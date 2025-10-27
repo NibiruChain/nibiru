@@ -52,7 +52,9 @@ var Upgrade2_7_0 = Upgrade{
 // WNIBI.sol contract into state at the same address used on mainnet.
 //
 // 3. And finally, only on Testnet 2, it modifies the ERC20 metadata for a stNIBI
-// deployment from Eris.
+// runUpgrade2_7_0 performs the v2.7.0 on-chain upgrade tasks required to ensure the canonical WNIBI contract is configured and present on non-mainnet instances.
+//
+// It sets the EVM canonical WNIBI address, returns early on mainnet, and for non-mainnet chains injects the canonical WNIBI auth and EVM genesis accounts (preserving an existing account's number and sequence when present), verifies the auth and EVM code hashes match, imports the genesis EVM account into state, validates that the address is a contract in the EVM state, and executes additional Testnet-specific migration steps. Returns an error if any step fails (for example, a code hash mismatch or detected state corruption).
 func runUpgrade2_7_0(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,

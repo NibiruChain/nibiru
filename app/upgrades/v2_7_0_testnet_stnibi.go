@@ -46,6 +46,9 @@ func OldTestnetStnibi() bank.Metadata {
 	}
 }
 
+// UpgradeStNibiContractOnTestnet upgrades the stNIBI EVM metadata when running on the testnet chain.
+// If the current EVM chain ID does not match the testnet chain ID, the function is a no-op and returns nil.
+// Otherwise it calls UpgradeStNibiEvmMetadata with the testnet stNIBI address and returns any error from that operation.
 func UpgradeStNibiContractOnTestnet(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,

@@ -49,6 +49,16 @@ var Upgrade2_5_0 = Upgrade{
 	StoreUpgrades: store.StoreUpgrades{},
 }
 
+// UpgradeStNibiEvmMetadata upgrades the on-chain metadata and bytecode/state for the mainnet stNIBI ERC20.
+//
+// If the provided originalErc20Addr maps to exactly one FunToken and represents a contract, this function:
+// - updates the bank.Metadata for the corresponding bank denom to the Liquid Staked NIBI values,
+// - deploys a new ERC20 contract with the desired name, symbol, and decimals,
+// - replaces the original contract's bytecode with the newly deployed bytecode and copies the new contract's storage into the original contract's storage,
+// - emits deployment and transaction log events, and
+// - verifies the deployed contract exposes the expected name, symbol, and decimals.
+//
+// The function returns nil if no upgrade is necessary (e.g., no mapping or non-contract account) and returns an error when any deployment, account write, or verification step fails.
 func UpgradeStNibiEvmMetadata(
 	keepers *keepers.PublicKeepers,
 	ctx sdk.Context,

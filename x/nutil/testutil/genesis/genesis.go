@@ -19,7 +19,9 @@ import (
 
 // NewTestGenesisState returns [app.GenesisState] using the default genesis as input.
 // The blockchain genesis state is represented as a map from module identifier
-// strings to raw json messages.
+// NewTestGenesisState builds a test-friendly genesis state derived from the application default genesis.
+// 
+// NewTestGenesisState customizes the default genesis for tests: it shortens the governance voting period and sets the minimum deposit to 1 NIBI, applies default sudo genesis values, and adds the wrapped NIBI (WNIBI) genesis accounts to both the EVM and auth modules (assigning a next available account number for the auth account). It panics on JSON marshal/unmarshal failures.
 func NewTestGenesisState(appCodec codec.Codec) app.GenesisState {
 	genState := app.ModuleBasics.DefaultGenesis(appCodec)
 
