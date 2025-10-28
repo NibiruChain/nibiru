@@ -15,44 +15,9 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_0_1"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_0_2"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_0_3"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_1_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_2_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_3_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_4_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v1_5_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_0_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_1_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_2_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_3_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_4_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_5_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_6_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_7_0"
-	"github.com/NibiruChain/nibiru/v2/app/upgrades/v2_8_0"
 )
 
-var Upgrades = []upgrades.Upgrade{
-	v1_0_1.Upgrade,
-	v1_0_2.Upgrade,
-	v1_0_3.Upgrade,
-	v1_1_0.Upgrade,
-	v1_2_0.Upgrade,
-	v1_3_0.Upgrade,
-	v1_4_0.Upgrade,
-	v1_5_0.Upgrade,
-	v2_0_0.Upgrade,
-	v2_1_0.Upgrade,
-	v2_2_0.Upgrade,
-	v2_3_0.Upgrade,
-	v2_4_0.Upgrade,
-	v2_5_0.Upgrade,
-	v2_6_0.Upgrade,
-	v2_7_0.Upgrade,
-	v2_8_0.Upgrade,
-}
+var Upgrades = upgrades.AllUpgrades
 
 func (app *NibiruApp) setupUpgrades() {
 	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57

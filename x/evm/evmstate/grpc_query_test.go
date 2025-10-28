@@ -52,8 +52,8 @@ func TraceNibiTransfer() string {
 func TraceResCallTracer_ERC20Transfer(
 	fromAddr, toAddr gethcommon.Address,
 ) (traceResFields map[string]string) {
-	gas := hexutil.Uint64(51_250)
-	gasUsed := hexutil.Uint64(34_150)
+	gas := hexutil.Uint64(51_046)     // "0xc766"
+	gasUsed := hexutil.Uint64(33_946) // "0x849a"
 
 	f := make(map[string]string)
 	f["from"] = fromAddr.Hex()

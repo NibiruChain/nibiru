@@ -49,7 +49,10 @@ changelog format](https://keepachangelog.com/en/1.0.0/).
 See https://github.com/dangoslen/changelog-enforcer.
 -->
 
-## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-24
+- [#2418](https://github.com/NibiruChain/nibiru/pull/2418) - fix(evmstate/test): stabilize trace tx tests with deterministic ERC20 transfer recipient
+- [#2419](https://github.com/NibiruChain/nibiru/pull/2419) - ci: simplify Go caching in CI to prevent file collisions
+
+## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-28
 
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
 - [#2388](https://github.com/NibiruChain/nibiru/pull/2388) - chore: erc20 token registry new tokens: cbBTC, uBTC
@@ -66,6 +69,10 @@ feat(evm/grpc-query): Update the "/eth.evm.v1.Query/Balance" query to work with
 "0x" Ethereum hex and "nibi"-prefixed Bech32 address formats. Return no Eth
 address when Wasm contract addresses are queried because 32-byte address space
 (wasm contract length) is not uniquely identified in 20-byte space (EOA length).
+- [#2412](https://github.com/NibiruChain/nibiru/pull/2412) - fix(evm-rpc): remove
+  unsafe debug API methods. 
+- [#2413](https://github.com/NibiruChain/nibiru/pull/2413) - refactor(upgrades): simplify upgrade handler code to use less abstractions and combine micro-packages
+- [#2415](https://github.com/NibiruChain/nibiru/pull/2415) - feat: custom ante NewDeductFeeDecorator allowing 0 fee for zero gas actors
 
 ### Dependencies
 - Bump `cipher-base` from 1.0.4 to 1.0.6 ([#2390](https://github.com/NibiruChain/nibiru/pull/2390))

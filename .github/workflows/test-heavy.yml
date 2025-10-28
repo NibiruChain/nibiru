@@ -37,37 +37,19 @@ jobs:
               - "go.sum"
               - "contrib/docker-compose/*"
 
-      - name: Set up Go
+      - name: "Set up Go"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: 1.24
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
           cache: true
 
-      # Use GitHub actions output paramters to get go paths. For more info, see
-      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
-      - name: "Set output variables for go cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        id: go-cache-paths
-        run: |
-          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: "Go build cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
-          key: go-build-cache-${{ hashFiles('**/go.sum') }}
-
-      - name: "Go mod cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
-          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
-
       - name: "Install just"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
@@ -76,12 +58,20 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: just test-cover-heavy
 
-      # TODO: https://github.com/NibiruChain/nibiru/issues/2399 - [test] Refactor
-      # heavy tests to avoid OOM panics and combine coverage reports with custom
-      # gocovmerge #2399
+      - name: "Merge coverage reports with gocovermerge"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: |
+          go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
+          gocovmerge -o coverage.out \
+            coverage.group1.out coverage.group2.out coverage.group3.out
       
-      # - name: "Upload coverage reports to Codecov"
-      #   if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-      #   uses: codecov/codecov-action@v5
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: "Upload coverage reports to Codecov"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # Docs on usable "with" flags for codecov/codecov-action v5:
+        # https://github.com/codecov/codecov-action?tab=readme-ov-file#example-workflowyml-with-codecov-action
+        with:
+          disable_search: true
+          files: coverage.out

@@ -4,7 +4,6 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -14,9 +13,6 @@ import (
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
-
-// TODO: Refactor to add compile-time safety for the following interface.
-// var _ evmante.AnteOptionsEVM = (*AnteHandlerOptions)(nil)
 
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
@@ -54,8 +50,6 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 func AnteHandlerError(shortDesc string) error {
 	return sdkioerrors.Wrapf(sdkerrors.ErrLogic, "%s is required for AnteHandler", shortDesc)
 }
-
-type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)
 
 // Implements the evmante.AnteOptionsEVM interface.
 func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
