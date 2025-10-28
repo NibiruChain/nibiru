@@ -1,6 +1,6 @@
-# Install `nibid` binaries <!-- omit in toc -->
+# Nibiru/INSTALL.md
 
-This guide will explain how to install the Nibiru Chain binary, `nibid`, onto your system.
+This guide will explain how to install the Nibiru binary, `nibid`, onto your system.
 
 #### Table of Contents
 
@@ -39,15 +39,14 @@ After installed, open new terminal to properly load go
 
 ## 4. Clone the Nibiru Repository
 
-```sh
-cd $HOME
+```bash
 git clone https://github.com/NibiruChain/nibiru
 cd nibiru
 ```
 
 On this fresh clone of the repo, simply run
 
-```sh
+```bash
 make build
 make install
 make localnet

@@ -76,12 +76,20 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: just test-cover-heavy
 
-      # TODO: https://github.com/NibiruChain/nibiru/issues/2399 - [test] Refactor
-      # heavy tests to avoid OOM panics and combine coverage reports with custom
-      # gocovmerge #2399
+      - name: "Merge coverage reports with gocovermerge"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: |
+          go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
+          gocovmerge -o coverage.out \
+            coverage.group1.out coverage.group2.out coverage.group3.out
       
-      # - name: "Upload coverage reports to Codecov"
-      #   if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-      #   uses: codecov/codecov-action@v5
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: "Upload coverage reports to Codecov"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # Docs on usable "with" flags for codecov/codecov-action v5:
+        # https://github.com/codecov/codecov-action?tab=readme-ov-file#example-workflowyml-with-codecov-action
+        with:
+          disable_search: true
+          files: coverage.out
