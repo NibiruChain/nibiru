@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- [#2420](https://github.com/NibiruChain/nibiru/pull/2420) - feat: add recursive check for nested authz exec messages and enforce max depth limit
+
 <!--
 NOTE: The brackets around the word "Unreleased" are required to pass the CI test
 that checks if we updated the changelog. This is a convention from the [keep a
