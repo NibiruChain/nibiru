@@ -99,14 +99,47 @@ func DeployContract(
 	}, nil
 }
 
-// DeployAndExecuteERC20Transfer deploys contract, executes transfer and returns tx hash
+// DeployAndExecuteERC20Transfer deploys a test ERC-20, executes one transfer,
+// and returns the transfer tx, the deploy tx (as a predecessor), and the
+// contract address.
+//
+// ## Determinism: Why we use a fixed recipient address
+//
+// Intrinsic gas charges depend on calldata bytes. Since Istanbul (EIP-2028),
+// each zero byte is 4 gas and each non-zero byte is 16 gas (+12 per non-zero
+// byte). In an ERC-20 transfer(address,uint256), the address occupies the last
+// 20 bytes of a 32-byte word (left-padded with zeros). Random recipients change
+// the count of non-zero bytes and make gas/gasUsed assertions flaky.
+//
+// To keep tests stable, this helper uses a fixed recipient address whose byte
+// pattern is constant. The intrinsic gas term is then reproducible.
+//
+// References:
+//   - EIP-2028: https://eips.ethereum.org/EIPS/eip-2028
+//   - Solidity ABI padding rules: https://docs.soliditylang.org/en/latest/abi-spec.html
 func DeployAndExecuteERC20Transfer(
 	deps *TestDeps, t *testing.T,
 ) (
-	erc20Transfer *evm.MsgEthereumTx,
-	predecessors []*evm.MsgEthereumTx,
-	contractAddr gethcommon.Address,
+	erc20Transfer *evm.MsgEthereumTx, // the signed transfer tx
+	predecessors []*evm.MsgEthereumTx, // slice containing the deploy tx
+	contractAddr gethcommon.Address, // ERC20 token being transferred
 ) {
+	var (
+		// Use a deterministic recipient to avoid nondeterministic intrinsic gas from calldata
+		// (non-zero vs zero byte costs). A fixed address ensures stable gas/gasUsed in traces.
+		//
+		// This address, "0x0000000000000000000000000000000000010f2C", has only 3
+		// non-zero bytes in its 20-byte payload (01, 0f, 2c). This means we expect
+		// it to have lower intrinsic gas than a "typical" random address that has
+		// ~20 non-zero bytes. Lower by (20 - 3) * 12 = 204 gas units, based on
+		// EIP-2028 (Istanbul upgrade).
+		//
+		// Istanbul reduced the calldata charge to 4 gas
+		// per zero byte and 16 per non-zero byte, which is why changing the address
+		// bytes moves intrinsic gas in steps of 12.
+		fixedRecipient = gethcommon.BigToAddress(big.NewInt(69_420))
+	)
+
 	// TX 1: Deploy ERC-20 contract
 	deployResp, err := DeployContract(deps, embeds.SmartContract_TestERC20)
 	require.NoError(t, err)
@@ -122,7 +155,7 @@ func DeployAndExecuteERC20Transfer(
 
 	// TX 2: execute ERC-20 contract transfer
 	input, err := contractData.ABI.Pack(
-		"transfer", NewEthPrivAcc().EthAddr, new(big.Int).SetUint64(1000),
+		"transfer", fixedRecipient, new(big.Int).SetUint64(1000),
 	)
 	require.NoError(t, err)
 	nonce = deps.NewStateDB().GetNonce(deps.Sender.EthAddr)
