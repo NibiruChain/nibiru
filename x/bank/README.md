@@ -1,45 +1,55 @@
----
-sidebar_position: 1
----
-
-# `x/bank`
+# Nibiru Bank Module
 
 ## Abstract
 
-This document specifies the bank module of the Cosmos SDK.
+The **Bank** module is responsible for managing all token balances and transfers
+on Nibiru.  It handles multi-asset accounting, module-controlled minting and
+burning, and enforces total supply invariants across the chain.
 
-The bank module is responsible for handling multi-asset coin transfers between
-accounts and tracking special-case pseudo-transfers which must work differently
-with particular kinds of accounts (notably delegating/undelegating for vesting
-accounts). It exposes several interfaces with varying capabilities for secure
-interaction with other modules which must alter user balances.
+Nibiru extends the Cosmos SDK `x/bank` with high-precision accounting for NIBI,
+the chain's native token.  Balances are represented through a **dual-balance
+model** combining standard bank units (`unibi`, 10⁶) and wei sub-units (10¹²) for
+full 18-decimal precision.  This enables accurate integration with Nibiru's EVM
+environment while maintaining Cosmos SDK compatibility.
 
-In addition, the bank module tracks and provides query support for the total
-supply of all assets used in the application.
+The module provides:
+1. Multi-asset bank coin transfers:   The bank module is responsible for handling
+multi-asset coin transfers between accounts and tracking special-case
+pseudo-transfers which must work differently with particular kinds of accounts
+(notably delegating/undelegating for vesting accounts). It exposes several
+interfaces with varying capabilities for secure interaction with other modules
+which must alter user balances.
+1. Secure mechanisms for coin transfers, minting, and burning.
+1. Support for module accounts with scoped permissions.
+1. Accurate total supply tracking with relaxed invariants for NIBI.
+1. gRPC and CLI interfaces for querying balances, supply, and parameters.
 
-This module is used in the Cosmos Hub.
+The `x/bank` module forms the foundation of asset management in Nibiru's multi-VM
+architecture, ensuring all on-chain tokens—including NIBI, staked derivatives,
+and module-held reserves—are handled consistently and securely.
 
-## Contents
+#### Contents
 
-* [Supply](#supply)
-    * [Total Supply](#total-supply)
-* [Module Accounts](#module-accounts)
-    * [Permissions](#permissions)
-* [State](#state)
-* [Params](#params)
-* [Keepers](#keepers)
-* [Messages](#messages)
-* [Events](#events)
-    * [Message Events](#message-events)
-    * [Keeper Events](#keeper-events)
-* [Parameters](#parameters)
-    * [SendEnabled](#sendenabled)
-    * [DefaultSendEnabled](#defaultsendenabled)
-* [Client](#client)
-    * [CLI](#cli)
-    * [Query](#query)
-    * [Transactions](#transactions)
-* [gRPC](#grpc)
+- [Abstract](#abstract)
+- [Contents](#contents)
+- [Supply](#supply)
+  - [Total Supply](#total-supply)
+- [Module Accounts](#module-accounts)
+- [State](#state)
+- [Nibiru Extensions to `x/bank`](#nibiru-extensions-to-xbank)
+- [Module Params](#module-params)
+- [Security Considerations](#security-considerations)
+- [Keepers](#keepers)
+  - [Common Types](#common-types)
+    - [Input](#input)
+    - [Output](#output)
+- [Messages](#messages)
+- [Events](#events)
+- [Parameters](#parameters)
+- [Command Line Interface (CLI)](#command-line-interface-cli)
+  - [CLI Queries](#cli-queries)
+  - [CLI Transactions](#cli-transactions)
+- [gRPC](#grpc)
 
 ## Supply
 
@@ -80,9 +90,6 @@ type ModuleAccount interface {
 }
 ```
 
-> **WARNING!**
-> Any module or message handler that allows either direct or indirect sending of funds must explicitly guarantee those funds cannot be sent to module accounts (unless allowed).
-
 The supply `Keeper` also introduces new wrapper functions for the auth `Keeper`
 and the bank `Keeper` that are related to `ModuleAccount`s in order to be able
 to:
@@ -91,20 +98,6 @@ to:
 * Send coins from and to other `ModuleAccount`s or standard `Account`s
   (`BaseAccount` or `VestingAccount`) by passing only the `Name`.
 * `Mint` or `Burn` coins for a `ModuleAccount` (restricted to its permissions).
-
-### Permissions
-
-Each `ModuleAccount` has a different set of permissions that provide different
-object capabilities to perform certain actions. Permissions need to be
-registered upon the creation of the supply `Keeper` so that every time a
-`ModuleAccount` calls the allowed functions, the `Keeper` can lookup the
-permissions to that specific account and perform or not perform the action.
-
-The available permissions are:
-
-* `Minter`: allows for a module to mint a specific amount of coins.
-* `Burner`: allows for a module to burn a specific amount of coins.
-* `Staking`: allows for a module to delegate and undelegate a specific amount of coins.
 
 ## State
 
@@ -123,7 +116,92 @@ aforementioned state:
 * Balances Index: `0x2 | byte(address length) | []byte(address) | []byte(balance.Denom) -> ProtocolBuffer(balance)`
 * Reverse Denomination to Address Index: `0x03 | byte(denom) | 0x00 | []byte(address) -> 0`
 
-## Params
+Here's a tightened, Google-style rewrite that keeps the key sections you liked and trims the rest for focus and clarity:
+
+---
+
+## Nibiru Extensions to `x/bank`
+
+### What's different on Nibiru
+
+Nibiru extends the Cosmos SDK `x/bank` with a **dual-balance model** for NIBI and precise wei-level accounting.
+
+* **Dual balance:**
+  Balances are split into `unibi` (6 decimals) and a wei remainder store (12 decimals). Together they form a unified 18-decimal balance.
+* **Wei APIs:**
+  `AddWei`, `SubWei`, and `GetWeiBalance` operate in wei. Normalization handles carry and borrow at the 10¹² boundary.
+* **Per-block delta:**
+  `WeiBlockDelta` records the net wei added or subtracted each block for EVM supply reconciliation.
+* **Invariant relaxation:**
+  The total supply invariant ignores NIBI mismatches, allowing minor wei-store differences.
+* **Events:**
+  Any wei-affecting action emits `EventWeiChange` with a reason code.
+
+### Units and notation
+
+| Unit          | Description                    | Scale         |
+| ------------- | ------------------------------ | ------------- |
+| `unibi`       | base x/bank denomination       | 10⁶ = 1 NIBI  |
+| `wei`         | smallest sub-unit for EVM math | 10¹⁸ = 1 NIBI |
+| `WeiPerUnibi` | conversion factor              | 10¹²          |
+
+For account A:
+`agg_wei(A) = unibi_balance(A) * 10¹² + wei_store(A)`
+where `wei_store(A)` ∈ [0, 10¹²).
+
+### Storage layout
+
+| Namespace                            | Key                | Purpose                     |
+| ------------------------------------ | ------------------ | --------------------------- |
+| `NAMESPACE_BALANCE_WEI (15)`         | address → Int      | Per-account wei remainder   |
+| `NAMESPACE_WEI_BLOCK_DELTA (16)`     | transient          | Net Δwei this block         |
+| `NAMESPACE_WEI_COMMITTED_DELTA (17)` | persistent         | Historical deltas for audit |
+| `StoreKeyTransient`                  | `"transient_bank"` | Transient store key         |
+
+### Public API
+
+```go
+type NibiruExtKeeper interface {
+  AddWei(ctx sdk.Context, addr sdk.AccAddress, amtWei *uint256.Int)
+  GetWeiBalance(ctx sdk.Context, addr sdk.AccAddress) *uint256.Int
+  SubWei(ctx sdk.Context, addr sdk.AccAddress, amtWei *uint256.Int) error
+  WeiBlockDelta(ctx sdk.Context) sdkmath.Int
+  SumWeiStoreBals(ctx sdk.Context) sdkmath.Int
+}
+```
+
+### Behavior
+
+* `AddWei` and `SubWei` normalize at 10¹² and no-op on zero.
+* `SubWei` errors if the total wei balance is insufficient.
+* Every successful call updates `WeiBlockDelta` and emits `EventWeiChange`.
+
+### Example flows
+
+**Carry:**
+Start `unibi = 0`, `wei = 0`. `AddWei(1e12 + 420)` → `unibi = 1`, `wei = 420`.
+
+**Borrow:**
+Start `unibi = 2`, `wei = 500`. `SubWei(1e12 + 200)` → `unibi = 1`, `wei = 300`.
+
+**Drain:**
+`SubWei(total balance)` → `unibi = 0`, `wei = 0`.
+
+### Supply invariant
+
+* Checks equality for all **non-NIBI** coins.
+* Reports NIBI totals in both `unibi` and wei, but does not fail on mismatch.
+* Used with `SumWeiStoreBals` and `WeiBlockDelta` to confirm total-supply consistency.
+
+### Integration notes
+
+* EVM modules use the wei APIs; other modules can continue with standard `SendCoins`.
+* Listeners can track `EventWeiChange` to compute full 18-decimal balances.
+* Heavy operations (`SumWeiStoreBals`) should be limited to invariants and crisis checks.
+
+---
+
+## Module Params
 
 The bank module stores it's params in state with the prefix of `0x05`,
 it can be updated with governance or the address with authority.
@@ -134,6 +212,51 @@ it can be updated with governance or the address with authority.
 https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/bank.proto#L12-L23
 ```
 
+## Security Considerations
+
+The bank module holds direct custody over user and module account balances.  
+Errors or misconfigurations can cause permanent loss of funds or halted networks.  
+Nibiru's implementation follows the Cosmos SDK model but adds additional safeguards and precision accounting for NIBI.
+
+### 1. Module Account Restrictions
+
+- Module accounts have special privileges such as minting or burning coins.  
+- **Never allow direct sends to a module account** unless explicitly permitted in its permissions.  
+- Use `SendCoinsFromModuleToAccount` and `SendCoinsFromModuleToModule` for any interaction involving module balances.
+
+> End users and client applications should never target module account addresses directly.
+
+### 2. Minting and Burning Controls
+
+- Only modules with the `Minter` or `Burner` permission can modify supply.  
+- Minting is performed through `MintCoins(ctx, module, amt)`; burning through `BurnCoins(ctx, module, amt)`.  
+- These actions must be deterministic and auditable, as they affect global invariants.  
+- The Nibiru invariant excludes NIBI mismatches caused by wei rounding, but all other assets must remain strictly conserved.
+
+### 3. Invariants and Supply Checks
+
+- The `TotalSupply` invariant ensures total balances equal declared supply for all coins other than NIBI.  
+- NIBI is treated specially due to its dual-balance model (`unibi + wei_store`).  
+- Use invariants to catch silent corruption or bypassed mint/burn paths early.  
+- Heavy supply audits using `SumWeiStoreBals` should be limited to the crisis module.
+
+### 4. Governance and Authority
+
+- Parameter updates (`MsgUpdateParams`, `MsgSetSendEnabled`) can only be signed by the `x/gov` module account.  
+- Governance proposals changing send permissions, mint limits, or default parameters should be reviewed for economic safety.
+
+### 5. Event Integrity
+
+- Every wei-affecting operation (`AddWei`, `SubWei`, or `SendCoins` on NIBI) emits `EventWeiChange`.  
+- Indexers and accounting systems should rely on these events rather than raw bank state for reconciliation.  
+- Missing or malformed events can lead to accounting drift between EVM and SDK modules.
+
+### 6. Operational Recommendations
+
+- **Avoid custom mint/burn logic** in downstream modules—use `x/bank` keepers to preserve invariants.  
+- **Audit all send paths** to ensure module accounts cannot receive tokens unintentionally.  
+- **Enable crisis invariants** in production configurations to catch unexpected supply deltas.
+
 ## Keepers
 
 The bank module provides these exported keeper interfaces that can be
@@ -143,18 +266,6 @@ require.
 
 Best practices dictate careful review of `bank` module code to ensure that
 permissions are limited in the way that you expect.
-
-### Denied Addresses
-
-The `x/bank` module accepts a map of addresses that are considered blocklisted
-from directly and explicitly receiving funds through means such as `MsgSend` and
-`MsgMultiSend` and direct API calls like `SendCoinsFromModuleToAccount`.
-
-Typically, these addresses are module accounts. If these addresses receive funds
-outside the expected rules of the state machine, invariants are likely to be
-broken and could result in a halted network.
-
-By providing the `x/bank` module with a blocklisted set of addresses, an error occurs for the operation if a user or client attempts to directly or indirectly send funds to a blocklisted account, for example, by using [IBC](https://ibc.cosmos.network).
 
 ### Common Types
 
@@ -179,103 +290,6 @@ An output of a multiparty transfer.
 message Output {
   string   address                        = 1;
   repeated cosmos.base.v1beta1.Coin coins = 2;
-}
-```
-
-### BaseKeeper
-
-The base keeper provides full-permission access: the ability to arbitrary modify any account's balance and mint or burn coins.
-
-Restricted permission to mint per module could be achieved by using baseKeeper with `WithMintCoinsRestriction` to give specific restrictions to mint (e.g. only minting certain denom).
-
-```go
-// Keeper defines a module interface that facilitates the transfer of coins
-// between accounts.
-type Keeper interface {
-    SendKeeper
-    WithMintCoinsRestriction(MintingRestrictionFn) BaseKeeper
-
-    InitGenesis(sdk.Context, *types.GenesisState)
-    ExportGenesis(sdk.Context) *types.GenesisState
-
-    GetSupply(ctx sdk.Context, denom string) sdk.Coin
-    HasSupply(ctx sdk.Context, denom string) bool
-    GetPaginatedTotalSupply(ctx sdk.Context, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
-    IterateTotalSupply(ctx sdk.Context, cb func(sdk.Coin) bool)
-    GetDenomMetaData(ctx sdk.Context, denom string) (types.Metadata, bool)
-    HasDenomMetaData(ctx sdk.Context, denom string) bool
-    SetDenomMetaData(ctx sdk.Context, denomMetaData types.Metadata)
-    IterateAllDenomMetaData(ctx sdk.Context, cb func(types.Metadata) bool)
-
-    SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-    SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error
-    SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-    DelegateCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-    UndelegateCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-    MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-    BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-
-    DelegateCoins(ctx sdk.Context, delegatorAddr, moduleAccAddr sdk.AccAddress, amt sdk.Coins) error
-    UndelegateCoins(ctx sdk.Context, moduleAccAddr, delegatorAddr sdk.AccAddress, amt sdk.Coins) error
-
-    // GetAuthority gets the address capable of executing governance proposal messages. Usually the gov module account.
-    GetAuthority() string
-
-    types.QueryServer
-}
-```
-
-### SendKeeper
-
-The send keeper provides access to account balances and the ability to transfer coins between
-accounts. The send keeper does not alter the total supply (mint or burn coins).
-
-```go
-// SendKeeper defines a module interface that facilitates the transfer of coins
-// between accounts without the possibility of creating coins.
-type SendKeeper interface {
-    ViewKeeper
-
-    InputOutputCoins(ctx sdk.Context, inputs []types.Input, outputs []types.Output) error
-    SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-
-    GetParams(ctx sdk.Context) types.Params
-    SetParams(ctx sdk.Context, params types.Params) error
-
-    IsSendEnabledDenom(ctx sdk.Context, denom string) bool
-    SetSendEnabled(ctx sdk.Context, denom string, value bool)
-    SetAllSendEnabled(ctx sdk.Context, sendEnableds []*types.SendEnabled)
-    DeleteSendEnabled(ctx sdk.Context, denom string)
-    IterateSendEnabledEntries(ctx sdk.Context, cb func(denom string, sendEnabled bool) (stop bool))
-    GetAllSendEnabledEntries(ctx sdk.Context) []types.SendEnabled
-
-    IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
-    IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
-
-    BlockedAddr(addr sdk.AccAddress) bool
-}
-```
-
-### ViewKeeper
-
-The view keeper provides read-only access to account balances. The view keeper does not have balance alteration functionality. All balance lookups are `O(1)`.
-
-```go
-// ViewKeeper defines a module interface that facilitates read only access to
-// account balances.
-type ViewKeeper interface {
-    ValidateBalance(ctx sdk.Context, addr sdk.AccAddress) error
-    HasBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) bool
-
-    GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-    GetAccountsBalances(ctx sdk.Context) []types.Balance
-    GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-    LockedCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-    SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-    SpendableCoin(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-
-    IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddress, cb func(coin sdk.Coin) (stop bool))
-    IterateAllBalances(ctx sdk.Context, cb func(address sdk.AccAddress, coin sdk.Coin) (stop bool))
 }
 ```
 
@@ -498,32 +512,54 @@ The default send enabled value controls send transfer capability for all
 coin denominations unless specifically included in the array of `SendEnabled`
 parameters.
 
-## Client
+## Command Line Interface (CLI)
 
-### CLI
 
 A user can query and interact with the `bank` module using the CLI.
 
-#### Query
+### CLI Transactions
+
+The `tx` commands allow users to interact with the `bank` module.
+
+```bash
+nibid tx bank --help
+```
+
+##### send
+
+The `send` command allows users to send funds from one account to another.
+
+```bash
+nibid tx bank send [from_key_or_address] [to_address] [amount] [flags]
+```
+
+Example:
+
+```bash
+nibid tx bank send cosmos1.. cosmos1.. 100stake
+```
+
+
+### CLI Queries
 
 The `query` commands allow users to query `bank` state.
 
-```shell
-simd query bank --help
+```bash
+nibid query bank --help
 ```
 
 ##### balances
 
 The `balances` command allows users to query account balances by address.
 
-```shell
-simd query bank balances [address] [flags]
+```bash
+nibid query bank balances [address] [flags]
 ```
 
 Example:
 
-```shell
-simd query bank balances cosmos1..
+```bash
+nibid query bank balances cosmos1..
 ```
 
 Example Output:
@@ -541,14 +577,14 @@ pagination:
 
 The `denom-metadata` command allows users to query metadata for coin denominations. A user can query metadata for a single denomination using the `--denom` flag or all denominations without it.
 
-```shell
-simd query bank denom-metadata [flags]
+```bash
+nibid query bank denom-metadata [flags]
 ```
 
 Example:
 
-```shell
-simd query bank denom-metadata --denom stake
+```bash
+nibid query bank denom-metadata --denom stake
 ```
 
 Example Output:
@@ -570,14 +606,14 @@ metadata:
 
 The `total` command allows users to query the total supply of coins. A user can query the total supply for a single coin using the `--denom` flag or all coins without it.
 
-```shell
-simd query bank total [flags]
+```bash
+nibid query bank total [flags]
 ```
 
 Example:
 
-```shell
-simd query bank total --denom stake
+```bash
+nibid query bank total --denom stake
 ```
 
 Example Output:
@@ -591,14 +627,14 @@ denom: stake
 
 The `send-enabled` command allows users to query for all or some SendEnabled entries.
 
-```shell
-simd query bank send-enabled [denom1 ...] [flags]
+```bash
+nibid query bank send-enabled [denom1 ...] [flags]
 ```
 
 Example:
 
-```shell
-simd query bank send-enabled
+```bash
+nibid query bank send-enabled
 ```
 
 Example output:
@@ -613,43 +649,21 @@ pagination:
   total: 2 
 ```
 
-#### Transactions
-
-The `tx` commands allow users to interact with the `bank` module.
-
-```shell
-simd tx bank --help
-```
-
-##### send
-
-The `send` command allows users to send funds from one account to another.
-
-```shell
-simd tx bank send [from_key_or_address] [to_address] [amount] [flags]
-```
-
-Example:
-
-```shell
-simd tx bank send cosmos1.. cosmos1.. 100stake
-```
-
 ## gRPC
 
 A user can query the `bank` module using gRPC endpoints.
 
-### Balance
+### Query Balance
 
 The `Balance` endpoint allows users to query account balance by address for a given denomination.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/Balance
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     -d '{"address":"cosmos1..","denom":"stake"}' \
     localhost:9090 \
@@ -667,17 +681,17 @@ Example Output:
 }
 ```
 
-### AllBalances
+### Query AllBalances
 
 The `AllBalances` endpoint allows users to query account balance by address for all denominations.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/AllBalances
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     -d '{"address":"cosmos1.."}' \
     localhost:9090 \
@@ -700,17 +714,17 @@ Example Output:
 }
 ```
 
-### DenomMetadata
+### Query DenomMetadata
 
 The `DenomMetadata` endpoint allows users to query metadata for a single coin denomination.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/DenomMetadata
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     -d '{"denom":"stake"}' \
     localhost:9090 \
@@ -739,17 +753,17 @@ Example Output:
 }
 ```
 
-### DenomsMetadata
+### Query DenomsMetadata
 
 The `DenomsMetadata` endpoint allows users to query metadata for all coin denominations.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/DenomsMetadata
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/DenomsMetadata
@@ -782,17 +796,17 @@ Example Output:
 }
 ```
 
-### DenomOwners
+### Query DenomOwners
 
 The `DenomOwners` endpoint allows users to query metadata for a single coin denomination.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/DenomOwners
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     -d '{"denom":"stake"}' \
     localhost:9090 \
@@ -825,17 +839,17 @@ Example Output:
 }
 ```
 
-### TotalSupply
+### Query TotalSupply
 
 The `TotalSupply` endpoint allows users to query the total supply of all coins.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/TotalSupply
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/TotalSupply
@@ -857,17 +871,17 @@ Example Output:
 }
 ```
 
-### SupplyOf
+### Query SupplyOf
 
 The `SupplyOf` endpoint allows users to query the total supply of a single coin.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/SupplyOf
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     -d '{"denom":"stake"}' \
     localhost:9090 \
@@ -885,17 +899,17 @@ Example Output:
 }
 ```
 
-### Params
+### Query Params
 
 The `Params` endpoint allows users to query the parameters of the `bank` module.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/Params
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/Params
@@ -911,19 +925,19 @@ Example Output:
 }
 ```
 
-### SendEnabled
+### Query SendEnabled
 
 The `SendEnabled` enpoints allows users to query the SendEnabled entries of the `bank` module.
 
 Any denominations NOT returned, use the `Params.DefaultSendEnabled` value.
 
-```shell
+```bash
 cosmos.bank.v1beta1.Query/SendEnabled
 ```
 
 Example:
 
-```shell
+```bash
 grpcurl -plaintext \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/SendEnabled

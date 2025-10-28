@@ -21,7 +21,10 @@ import (
 )
 
 // SendKeeper defines a module interface that facilitates the transfer of coins
-// between accounts without the possibility of creating coins.
+// between accounts without the possibility of creating coins. In other words,
+// the send keeper does not alter the total supply (mint or burn coins).
+// The one exception to this rule is with NIBI, where the supply can be altered
+// by the EVM.
 type SendKeeper interface {
 	ViewKeeper
 
