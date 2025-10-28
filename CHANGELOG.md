@@ -48,6 +48,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 -->
 
 - [#2418](https://github.com/NibiruChain/nibiru/pull/2418) - fix(evmstate/test): stabilize trace tx tests with deterministic ERC20 transfer recipient
+- [#2419](https://github.com/NibiruChain/nibiru/pull/2419) - ci: simplify Go caching in CI to prevent file collisions
 
 ## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-28
 

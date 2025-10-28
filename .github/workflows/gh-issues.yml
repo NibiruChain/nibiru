@@ -25,7 +25,7 @@ jobs:
   label-triage:
     name: "Add GH ticket to project"
     runs-on: ubuntu-latest
-    # The action comes from the "Activty types" for the "issues" webhook event
+    # The action comes from the "Activity types" for the "issues" webhook event
     # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#issues
     if: "github.event.action == 'opened'"
     steps:
