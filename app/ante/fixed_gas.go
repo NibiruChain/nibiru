@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	OracleModuleTxGas = 500
-	ZeroTxGas         = 0
+	OracleModuleTxGas = 500 // Low gas setting for x/oracle data providers
+	ZeroTxGas         = 0   // Zero gas setting added for whitelisted Wasm contracts
 )
 
 var (
