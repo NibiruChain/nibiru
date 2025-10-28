@@ -191,17 +191,18 @@ func (s *Suite) TestDeductFees() {
 	s.Require().NoError(err)
 }
 
-// Additional test: when zero gas actor calls tx, zero gas meter set and fee is not deducted
-// TestZeroGasActorSkipsFeeDeduction validates that when AnteDecZeroGasActors marks
-// a tx as zero-gas (by setting a fixed zero GasMeter), the downstream custom
-// DeductFeeDecorator skips fee deduction entirely:
+// Additional test: when zero gas actor calls tx, zero gas meter set and fee is
+// not deducted TestZeroGasActorSkipsFeeDeduction validates that when
+// AnteDecZeroGasActors marks a tx as zero-gas (by setting a fixed zero
+// GasMeter), the downstream custom DeductFeeDecorator skips fee deduction
+// entirely.
 //   - Setup: configure SudoKeeper.ZeroGasActors with a (sender, contract) pair,
-//     fund the sender, and build a wasm execute tx targeting the whitelisted contract
-//     with a non-zero fee amount to make fee changes observable.
-//   - Exercise: run an ante chain that includes AnteDecZeroGasActors followed by the
-//     DeductFeeDecorator.
-//   - Expectation: the bank balance is unchanged before/after ante execution, proving
-//     that no fees were deducted for zero-gas actors.
+//     fund the sender, and build a wasm execute tx targeting the whitelisted
+//     contract with a non-zero fee amount to make fee changes observable.
+//   - Exercise: run an ante chain that includes AnteDecZeroGasActors followed by
+//     the [ante.DeductFeeDecorator].
+//   - Expectation: the bank balance is unchanged before/after ante execution,
+//     proving that no fees were deducted for zero-gas actors.
 func (s *Suite) TestZeroGasActorSkipsFeeDeduction() {
 	deps := evmtest.NewTestDeps()
 	zeroGasSender := evmtest.NewEthPrivAcc()
