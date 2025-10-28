@@ -40,8 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- [#2420](https://github.com/NibiruChain/nibiru/pull/2420) - feat: add recursive check for nested authz exec messages and enforce max depth limit
-
 <!--
 NOTE: The brackets around the word "Unreleased" are required to pass the CI test
 that checks if we updated the changelog. This is a convention from the [keep a
@@ -51,6 +49,7 @@ See https://github.com/dangoslen/changelog-enforcer.
 
 - [#2418](https://github.com/NibiruChain/nibiru/pull/2418) - fix(evmstate/test): stabilize trace tx tests with deterministic ERC20 transfer recipient
 - [#2419](https://github.com/NibiruChain/nibiru/pull/2419) - ci: simplify Go caching in CI to prevent file collisions
+- [#2420](https://github.com/NibiruChain/nibiru/pull/2420) - feat: add recursive check for nested authz exec messages and enforce max depth limit
 
 ## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-28
 
