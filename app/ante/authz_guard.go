@@ -2,6 +2,8 @@
 package ante
 
 import (
+	"fmt"
+
 	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -9,6 +11,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
+
+const maxNestedMsgs = 2
 
 // AnteDecAuthzGuard filters autz messages
 type AnteDecAuthzGuard struct{}
@@ -46,22 +50,43 @@ func (anteDec AnteDecAuthzGuard) AnteHandle(
 		}
 		// Also reject MsgEthereumTx in exec
 		if msgExec, ok := msg.(*authz.MsgExec); ok {
-			msgsInExec, err := msgExec.GetMessages()
-			if err != nil {
-				return ctx, sdkioerrors.Wrapf(
+			if err := anteDec.checkMsgExecRecursively(msgExec, 0, maxNestedMsgs); err != nil {
+				return ctx, sdkerrors.Wrapf(
 					sdkerrors.ErrInvalidType,
-					"failed getting exec messages %s", err,
+					err.Error(),
 				)
-			}
-			for _, msgInExec := range msgsInExec {
-				if _, ok := msgInExec.(*evm.MsgEthereumTx); ok {
-					return ctx, sdkioerrors.Wrapf(
-						sdkerrors.ErrInvalidType,
-						"MsgEthereumTx needs to be contained within a tx with 'ExtensionOptionsEthereumTx' option",
-					)
-				}
 			}
 		}
 	}
 	return next(ctx, tx, simulate)
+}
+
+func (anteDec AnteDecAuthzGuard) checkMsgExecRecursively(msgExec *authz.MsgExec, depth int, maxDepth int) error {
+	if depth >= maxDepth {
+		return fmt.Errorf("exceeded max nested message depth: %d", maxDepth)
+	}
+
+	msgsInExec, err := msgExec.GetMessages()
+	if err != nil {
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidType,
+			"failed getting exec messages %s", err,
+		)
+	}
+
+	for _, msg := range msgsInExec {
+		if _, ok := msg.(*evm.MsgEthereumTx); ok {
+			return sdkioerrors.Wrapf(
+				sdkerrors.ErrInvalidType,
+				"MsgEthereumTx needs to be contained within a tx with 'ExtensionOptionsEthereumTx' option",
+			)
+		}
+		if nestedExec, ok := msg.(*authz.MsgExec); ok {
+			if err := anteDec.checkMsgExecRecursively(nestedExec, depth+1, maxDepth); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
