@@ -4,7 +4,6 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -51,8 +50,6 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 func AnteHandlerError(shortDesc string) error {
 	return sdkioerrors.Wrapf(sdkerrors.ErrLogic, "%s is required for AnteHandler", shortDesc)
 }
-
-type TxFeeChecker func(ctx sdk.Context, feeTx sdk.FeeTx) (sdk.Coins, int64, error)
 
 // Implements the evmante.AnteOptionsEVM interface.
 func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
