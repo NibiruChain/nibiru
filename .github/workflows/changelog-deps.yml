@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Token with permissions for pushing commits and editting GH issues
+          # Token with permissions for pushing commits and editing GH issues
           token: ${{ secrets.NIBIRU_PM }}
           # to avoid checking out the repo in a detached state
           ref: ${{ github.head_ref }}
