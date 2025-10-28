@@ -98,6 +98,45 @@ func (s *Suite) TestAnteDecoratorAuthzGuard() {
 			wantErr: "ExtensionOptionsEthereumTx",
 		},
 		{
+			name: "sad: nested authz exec with evm message inside",
+			txMsg: func() sdk.Msg {
+				// inner exec contains an EVM message
+				inner := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{
+						&evm.MsgEthereumTx{},
+					},
+				)
+				// outer exec wraps inner
+				outer := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{&inner},
+				)
+				return &outer
+			},
+			wantErr: "ExtensionOptionsEthereumTx",
+		},
+		{
+			name: "sad: nested authz exec exceeds max depth",
+			txMsg: func() sdk.Msg {
+				// Build triple-nested exec without EVM msgs to trigger depth check only
+				lvl3 := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{&banktypes.MsgSend{}},
+				)
+				lvl2 := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{&lvl3},
+				)
+				lvl1 := authz.NewMsgExec(
+					sdk.AccAddress("nibiuser"),
+					[]sdk.Msg{&lvl2},
+				)
+				return &lvl1
+			},
+			wantErr: "exceeded max nested message depth: 2",
+		},
+		{
 			name: "happy: authz exec without evm messages",
 			txMsg: func() sdk.Msg {
 				msgExec := authz.NewMsgExec(
