@@ -116,10 +116,6 @@ aforementioned state:
 * Balances Index: `0x2 | byte(address length) | []byte(address) | []byte(balance.Denom) -> ProtocolBuffer(balance)`
 * Reverse Denomination to Address Index: `0x03 | byte(denom) | 0x00 | []byte(address) -> 0`
 
-Here's a tightened, Google-style rewrite that keeps the key sections you liked and trims the rest for focus and clarity:
-
----
-
 ## Nibiru Extensions to `x/bank`
 
 ### What's different on Nibiru
@@ -536,7 +532,7 @@ nibid tx bank send [from_key_or_address] [to_address] [amount] [flags]
 Example:
 
 ```bash
-nibid tx bank send cosmos1.. cosmos1.. 100stake
+nibid tx bank send nibi1.. nibi1.. 100unibi
 ```
 
 
@@ -559,7 +555,7 @@ nibid query bank balances [address] [flags]
 Example:
 
 ```bash
-nibid query bank balances cosmos1..
+nibid query bank balances nibi1..
 ```
 
 Example Output:
@@ -567,7 +563,7 @@ Example Output:
 ```yml
 balances:
 - amount: "1000000000"
-  denom: stake
+  denom: unibi
 pagination:
   next_key: null
   total: "0"
@@ -584,20 +580,20 @@ nibid query bank denom-metadata [flags]
 Example:
 
 ```bash
-nibid query bank denom-metadata --denom stake
+nibid query bank denom-metadata --denom unibi
 ```
 
 Example Output:
 
 ```yml
 metadata:
-  base: stake
+  base: unibi
   denom_units:
   - aliases:
-    - STAKE
-    denom: stake
+    - UNIBI
+    denom: unibi
   description: native staking token of simulation app
-  display: stake
+  display: unibi
   name: SimApp Token
   symbol: STK
 ```
@@ -613,14 +609,14 @@ nibid query bank total [flags]
 Example:
 
 ```bash
-nibid query bank total --denom stake
+nibid query bank total --denom unibi
 ```
 
 Example Output:
 
 ```yml
 amount: "10000000000"
-denom: stake
+denom: unibi
 ```
 
 ##### send-enabled
@@ -665,7 +661,7 @@ Example:
 
 ```bash
 grpcurl -plaintext \
-    -d '{"address":"cosmos1..","denom":"stake"}' \
+    -d '{"address":"nibi1..","denom":"unibi"}' \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/Balance
 ```
@@ -675,7 +671,7 @@ Example Output:
 ```json
 {
   "balance": {
-    "denom": "stake",
+    "denom": "unibi",
     "amount": "1000000000"
   }
 }
@@ -693,7 +689,7 @@ Example:
 
 ```bash
 grpcurl -plaintext \
-    -d '{"address":"cosmos1.."}' \
+    -d '{"address":"nibi1.."}' \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/AllBalances
 ```
@@ -704,7 +700,7 @@ Example Output:
 {
   "balances": [
     {
-      "denom": "stake",
+      "denom": "unibi",
       "amount": "1000000000"
     }
   ],
@@ -726,7 +722,7 @@ Example:
 
 ```bash
 grpcurl -plaintext \
-    -d '{"denom":"stake"}' \
+    -d '{"denom":"unibi"}' \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/DenomMetadata
 ```
@@ -739,14 +735,14 @@ Example Output:
     "description": "native staking token of simulation app",
     "denomUnits": [
       {
-        "denom": "stake",
+        "denom": "unibi",
         "aliases": [
-          "STAKE"
+          "UNIBI"
         ]
       }
     ],
-    "base": "stake",
-    "display": "stake",
+    "base": "unibi",
+    "display": "unibi",
     "name": "SimApp Token",
     "symbol": "STK"
   }
@@ -778,14 +774,14 @@ Example Output:
       "description": "native staking token of simulation app",
       "denomUnits": [
         {
-          "denom": "stake",
+          "denom": "unibi",
           "aliases": [
-            "STAKE"
+            "UNIBI"
           ]
         }
       ],
-      "base": "stake",
-      "display": "stake",
+      "base": "unibi",
+      "display": "unibi",
       "name": "SimApp Token",
       "symbol": "STK"
     }
@@ -808,7 +804,7 @@ Example:
 
 ```bash
 grpcurl -plaintext \
-    -d '{"denom":"stake"}' \
+    -d '{"denom":"unibi"}' \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/DenomOwners
 ```
@@ -819,16 +815,16 @@ Example Output:
 {
   "denomOwners": [
     {
-      "address": "cosmos1..",
+      "address": "nibi1..",
       "balance": {
-        "denom": "stake",
+        "denom": "unibi",
         "amount": "5000000000"
       }
     },
     {
-      "address": "cosmos1..",
+      "address": "nibi1..",
       "balance": {
-        "denom": "stake",
+        "denom": "unibi",
         "amount": "5000000000"
       }
     },
@@ -861,7 +857,7 @@ Example Output:
 {
   "supply": [
     {
-      "denom": "stake",
+      "denom": "unibi",
       "amount": "10000000000"
     }
   ],
@@ -883,7 +879,7 @@ Example:
 
 ```bash
 grpcurl -plaintext \
-    -d '{"denom":"stake"}' \
+    -d '{"denom":"unibi"}' \
     localhost:9090 \
     cosmos.bank.v1beta1.Query/SupplyOf
 ```
@@ -893,7 +889,7 @@ Example Output:
 ```json
 {
   "amount": {
-    "denom": "stake",
+    "denom": "unibi",
     "amount": "10000000000"
   }
 }
