@@ -18,8 +18,9 @@ import (
 
 var _ Keeper = (*BaseKeeper)(nil)
 
-// Keeper defines a module interface that facilitates the transfer of coins
-// between accounts.
+// Keeper is the public interface for the Bank [BaseKeeper]. [Keeper]  manages
+// transfers between accounts, exposing all operations available in the Bank
+// module.
 type Keeper interface {
 	SendKeeper
 	WithMintCoinsRestriction(MintingRestrictionFn) BaseKeeper
@@ -51,7 +52,15 @@ type Keeper interface {
 	types.QueryServer
 }
 
-// BaseKeeper manages transfers between accounts. It implements the Keeper interface.
+// BaseKeeper manages transfers between accounts, exposing all operations
+// available in the Bank module.
+//
+// The base keeper provides full-permission access: the ability to arbitrary
+// modify any account's balance and mint or burn coins.
+//
+// Restricted permission to mint per module could be achieved by using baseKeeper
+// with `WithMintCoinsRestriction` to give specific restrictions to mint (e.g.
+// only minting certain denom).
 type BaseKeeper struct {
 	BaseSendKeeper
 

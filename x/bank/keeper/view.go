@@ -17,7 +17,8 @@ import (
 var _ ViewKeeper = (*BaseViewKeeper)(nil)
 
 // ViewKeeper defines a module interface that facilitates read only access to
-// account balances.
+// account balances. The view keeper does not have balance alteration
+// functionality. All balance lookups are `O(1)`.
 type ViewKeeper interface {
 	ValidateBalance(ctx sdk.Context, addr sdk.AccAddress) error
 	HasBalance(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coin) bool
@@ -33,7 +34,7 @@ type ViewKeeper interface {
 	IterateAllBalances(ctx sdk.Context, cb func(address sdk.AccAddress, coin sdk.Coin) (stop bool))
 }
 
-// BaseViewKeeper implements a read only keeper implementation of ViewKeeper.
+// BaseViewKeeper implements a read only keeper implementation of [ViewKeeper].
 type BaseViewKeeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
