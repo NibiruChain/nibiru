@@ -1,8 +1,7 @@
 ## Changelog Chunk
-* Merge branch 'main' into ud/oracle-tests
+* changelog
 * evm: rewrite eth_estimateGas for panic safety and performance in [#2424](https://github.com/NibiruChain/nibiru/pull/2424) - ([37dba0a](https://github.com/NibiruChain/nibiru/commit/37dba0aeef545ee7a943556e1132f1aab6f6be68))  by @Unique-Divine
 * chore: remove evm-core-ts and move it to ts-sdk in [#2423](https://github.com/NibiruChain/nibiru/pull/2423) - ([e1401f6](https://github.com/NibiruChain/nibiru/commit/e1401f69237b07d4f35f59e7de54abed2efe925b))  by @cgilbe27
-* test(oracle): refactor oracle tests to not require running full blockchain networks, keeping them fast, deterministic, and stable
 * docs(bank): README fixes
 * docs(bank): improve documentation and add section on Nibiru changes in [#2421](https://github.com/NibiruChain/nibiru/pull/2421) - ([172c008](https://github.com/NibiruChain/nibiru/commit/172c008068f8436081ee571f2fb7c01f607297f3))  by @Unique-Divine
 * feat: add recursive check for nested authz exec messages and enforce … in [#2420](https://github.com/NibiruChain/nibiru/pull/2420) - ([3cdc810](https://github.com/NibiruChain/nibiru/commit/3cdc8107069c149bbfc538a6e3b7b0dd17b9cf2e))  by @expertdicer
