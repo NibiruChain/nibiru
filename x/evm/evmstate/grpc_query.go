@@ -395,10 +395,11 @@ func (k Keeper) EstimateGas(
 					oog, perr = true, vm.ErrOutOfGas
 				} else if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
 					oog, perr = true, vm.ErrOutOfGas
+				} else {
+					// Non-OOG panics are not handled here
+					oog, perr = false, fmt.Errorf(
+						`unexpected panic in eth_estimateGas { gas: %d }: %v`, gas, panicInfo)
 				}
-				// Non-OOG panics are not handled here
-				oog, perr = false, fmt.Errorf(
-					`unexpected panic in eth_estimateGas { gas: %d }: %v`, gas, panicInfo)
 			}
 
 			if oog {
