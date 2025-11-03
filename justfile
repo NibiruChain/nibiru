@@ -46,6 +46,26 @@ gen-embeds:
   go run "gen-abi/main.go"
   log_success "Saved ABI JSON files to $embeds_dir/abi for npm publishing"
 
+# Generates CHANGELOG-UNRELEASED.md based on commits and pull requests.
+gen-changelog:
+  #!/usr/bin/env bash
+  source contrib/bashlib.sh
+  which_ok cargo
+  if ! which_ok git-cliff; then 
+    echo "Installing git-cliff with cargo"
+    cargo install git-cliff
+  fi 
+  
+  which_ok git-cliff
+
+  LAST_VER="v2.7.0"
+  start_branch="$(git branch --show-current)"
+  git checkout main
+  git-cliff "$LAST_VER.." -o CHANGELOG-UNRELEASED.md
+  git checkout "$start_branch"
+  log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
+  git add CHANGELOG-UNRELEASED.md
+
 # Generate the Nibiru Token Registry files
 gen-token-registry:
   go run token-registry/main/main.go
