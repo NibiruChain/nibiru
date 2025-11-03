@@ -123,15 +123,6 @@ const (
 	updateParamsName = "evm/MsgUpdateParams"
 )
 
-type CallType int
-
-const (
-	// CallTypeRPC call type is used on requests to eth_estimateGas rpc API endpoint
-	CallTypeRPC CallType = iota + 1
-	// CallTypeSmart call type is used in case of smart contract methods calls
-	CallTypeSmart
-)
-
 var (
 	EVM_MODULE_ADDRESS        gethcommon.Address
 	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress

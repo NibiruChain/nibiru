@@ -114,36 +114,25 @@ func ValidateFunTokenBankMetadata(
 	return out, nil
 }
 
-// HandleOutOfGasPanic captures an sdk.ErrorOutOfGas panic and folds it into
-// *errp, an error pointer.
-// - If *errp is nil: sets *errp = vm.ErrOutOfGas
-// - If *errp is non-nil: preserves it (do not overwrite)
-// - Always applies `format` wrapping if *errp is non-nil after recovery
-// - Re-panics for any non-OutOfGas panic
-func HandleOutOfGasPanic(errp *error, format string) func() {
-	return func() {
-		if perr := recover(); perr != nil {
-			_, isOutOfGasPanic := perr.(sdk.ErrorOutOfGas)
-			switch {
-			case isOutOfGasPanic:
-				if errp != nil && *errp == nil {
-					*errp = vm.ErrOutOfGas
-				}
-				// else: preserve existing detailed error
-			case strings.Contains(fmt.Sprint(perr), vm.ErrOutOfGas.Error()):
-				if errp == nil {
-					errp = new(error)
-				}
-				*errp = fmt.Errorf("%s: %w", perr, vm.ErrOutOfGas)
-			default:
-				// Non-OOG panics are not handled here
-				panic(perr)
-			}
+// RecoverOutOfGasPanic captures an "out of gas" panic from go-etheruem or the
+// Cosmos-SDK gas meter and returns it error instead, adding panic safety.
+// If the recovered panic is not gas related, this function re-panics to
+// propagate the error info.
+//
+// Rationale: In "eth_estimateGas", OOG is a VM-level execution failure and should
+// not abort the search; unexpected panics should.
+func RecoverOutOfGasPanic(context string) (isOog bool, perr error) {
+	if panicInfo := recover(); panicInfo != nil {
+		if _, isOutOfGasPanic := panicInfo.(sdk.ErrorOutOfGas); isOutOfGasPanic {
+			return true, vm.ErrOutOfGas
 		}
-		if errp != nil && *errp != nil && format != "" {
-			*errp = fmt.Errorf("%s: %w", format, *errp)
+		if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
+			return true, vm.ErrOutOfGas
 		}
+		// Non-OOG panics are not handled here
+		return false, fmt.Errorf("unexpected panic in %s: %v", context, panicInfo)
 	}
+	return false, nil
 }
 
 // Gracefully handles "out of gas"

@@ -295,15 +295,9 @@ func (k *Keeper) EthCall(
 }
 
 // EstimateGas: Implements the gRPC query for "/eth.evm.v1.Query/EstimateGas".
-// EstimateGas implements eth_estimateGas rpc api.
-func (k Keeper) EstimateGas(
-	goCtx context.Context, req *evm.EthCallRequest,
-) (*evm.EstimateGasResponse, error) {
-	return k.EstimateGasForEvmCallType(goCtx, req, evm.CallTypeRPC)
-}
-
-// EstimateGasForEvmCallType estimates the gas cost of a transaction. This can be
-// called with the "eth_estimateGas" JSON-RPC method or smart contract query.
+// This estimates the lowest possible gas limit that allows a transaction to run
+// successfully with the provided context options. This can be called with the
+// "eth_estimateGas" JSON-RPC method.
 //
 // When [EstimateGas] is called from the JSON-RPC client, we need to reset the
 // gas meter before simulating the transaction (tx) to have an accurate gas
@@ -316,16 +310,16 @@ func (k Keeper) EstimateGas(
 // Returns:
 //   - A response containing the estimated gas cost.
 //   - An error if the gas estimation process encounters any issues.
-func (k Keeper) EstimateGasForEvmCallType(
-	goCtx context.Context, req *evm.EthCallRequest, fromType evm.CallType,
+func (k Keeper) EstimateGas(
+	goCtx context.Context, req *evm.EthCallRequest,
 ) (*evm.EstimateGasResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(SimulationContextKey, true)
-	evmCfg := k.GetEVMConfig(ctx)
+	rootCtx := sdk.UnwrapSDKContext(goCtx).
+		WithValue(SimulationContextKey, true)
+	evmCfg := k.GetEVMConfig(rootCtx)
 
 	if req.GasCap < gethparams.TxGas {
 		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "gas cap cannot be lower than %d", gethparams.TxGas)
@@ -338,7 +332,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 	}
 
 	// ApplyMessageWithConfig expect correct nonce set in msg
-	nonce := k.GetAccNonce(ctx, args.GetFrom())
+	nonce := k.GetAccNonce(rootCtx, args.GetFrom())
 	args.Nonce = (*hexutil.Uint64)(&nonce)
 
 	// Binary search the gas requirement, as it may be higher than the amount used
@@ -346,6 +340,17 @@ func (k Keeper) EstimateGasForEvmCallType(
 		lo     = gethparams.TxGas - 1
 		hi     uint64
 		gasCap uint64
+
+		// executable runs one probe at a specific gas limit.
+		//   - Rewrites evmMsg.GasLimit to the probed value.
+		//   - Constructs a fresh SDB on a context with an infinite gas meter and zero
+		//     KV/transient KV gas costs, isolating the probe from store-gas panics.
+		//   - Defers a panic classifier, where SDK/go-ethereum "out of gas"
+		//     panics result in  { vmError=true, err=nil }. Any other panic gets
+		//     bubbled up through the call stack.
+		//   - Returns (vmError, resp, err) where vmError signals VM-level failure
+		//     (incl. OOG/revert), and err signals consensus/unexpected failure.
+		executable func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error)
 	)
 
 	// Determine the highest gas limit can be used during the estimation.
@@ -353,7 +358,7 @@ func (k Keeper) EstimateGasForEvmCallType(
 		hi = uint64(*args.Gas)
 	} else {
 		// Query block gas limit
-		params := ctx.ConsensusParams()
+		params := rootCtx.ConsensusParams()
 		if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
 			hi = uint64(params.Block.MaxGas)
 		} else {
@@ -361,7 +366,6 @@ func (k Keeper) EstimateGasForEvmCallType(
 		}
 	}
 
-	// TODO: Recap the highest gas limit with account's available balance.
 	// Recap the highest gas allowance with specified gascap.
 	if req.GasCap != 0 && hi > req.GasCap {
 		hi = req.GasCap
@@ -375,17 +379,26 @@ func (k Keeper) EstimateGasForEvmCallType(
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
 
-	// NOTE: the errors from the executable below should be consistent with
-	// go-ethereum, so we don't wrap them with the gRPC status code Create a
-	// helper to check if a gas allowance results in an executable transaction.
-	executable := func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
-		// update the message with the new gas value
-		evmMsg = core.Message{
+	executable = func(gas uint64) (vmError bool, rsp *evm.MsgEthereumTxResponse, err error) {
+		defer func() {
+			// Recover OOG panics as a normal VM failure so the binary search can
+			// increase gas. Any non-OOG panic aborts the search with a
+			// contextual error for diagnostics.
+			oog, perr := evm.RecoverOutOfGasPanic(fmt.Sprintf(`eth_estimateGas { gas: %d }`, gas))
+			if oog {
+				vmError, rsp, err = true, nil, nil
+				return
+			} else if perr != nil {
+				err = perr // Unexpected panic -> Abort the search
+				return
+			}
+		}()
+		evmMsg = core.Message{ // update the message with the new gas value
 			To:               evmMsg.To,
 			From:             evmMsg.From,
 			Nonce:            evmMsg.Nonce,
 			Value:            evmMsg.Value,
-			GasLimit:         gas, // <---- This one changed
+			GasLimit:         gas, // <---- This one changes
 			GasPrice:         evmMsg.GasPrice,
 			GasFeeCap:        evmMsg.GasFeeCap,
 			GasTipCap:        evmMsg.GasTipCap,
@@ -397,37 +410,35 @@ func (k Keeper) EstimateGasForEvmCallType(
 			SkipFromEOACheck: evmMsg.SkipFromEOACheck,
 		}
 
-		tmpCtx := ctx
-		if fromType == evm.CallTypeRPC {
-			tmpCtx, _ = ctx.CacheContext()
-
-			acct := k.GetAccount(tmpCtx, evmMsg.From)
-
-			from := evmMsg.From
-			if acct == nil {
-				acc := k.accountKeeper.NewAccountWithAddress(tmpCtx, from[:])
-				k.accountKeeper.SetAccount(tmpCtx, acc)
-				acct = NewEmptyAccount()
-			}
-			// When submitting a transaction, the `EthIncrementSenderSequence` ante handler increases the account nonce
-			acct.Nonce = nonce + 1
-			err = k.SetAccount(tmpCtx, from, *acct)
-			if err != nil {
-				return true, nil, err
-			}
-			// resetting the gasMeter after increasing the sequence to have an accurate gas estimation on EVM extensions transactions
-			gasMeter := eth.NewInfiniteGasMeterWithLimit(evmMsg.GasLimit)
-			tmpCtx = tmpCtx.WithGasMeter(gasMeter).
-				WithKVGasConfig(storetypes.GasConfig{}).
-				WithTransientKVGasConfig(storetypes.GasConfig{})
-		}
-		// pass false to not commit StateDB
-		sdb := NewSDB(
-			ctx,
-			&k,
-			NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash().Bytes())),
+		// Initialize SDB
+		sdb := k.NewSDB(
+			rootCtx,
+			k.TxConfig(rootCtx, rootCtx.EvmTxHash()),
 		)
-		evmObj := k.NewEVM(tmpCtx, evmMsg, evmCfg, nil /*tracer*/, sdb)
+		sdb.SetCtx(
+			sdb.Ctx().
+				WithGasMeter(eth.NewInfiniteGasMeterWithLimit(evmMsg.GasLimit)).
+				WithKVGasConfig(storetypes.GasConfig{}).
+				WithTransientKVGasConfig(storetypes.GasConfig{}),
+		)
+
+		acct := k.GetAccount(sdb.Ctx(), evmMsg.From)
+
+		from := evmMsg.From
+		if acct == nil {
+			acc := k.accountKeeper.NewAccountWithAddress(sdb.Ctx(), from[:])
+			k.accountKeeper.SetAccount(sdb.Ctx(), acc)
+			acct = NewEmptyAccount()
+		}
+		// When submitting a transaction, the `EthIncrementSenderSequence` ante handler increases the account nonce
+		acct.Nonce = nonce + 1
+		err = k.SetAccount(sdb.Ctx(), from, *acct)
+		if err != nil {
+			return true, nil, err
+		}
+
+		// pass false to not commit StateDB
+		evmObj := k.NewEVM(sdb.Ctx(), evmMsg, evmCfg, nil /*tracer*/, sdb)
 		rsp, err = k.ApplyEvmMsg(evmMsg, evmObj, false /*commit*/)
 		if err != nil {
 			if strings.Contains(err.Error(), core.ErrIntrinsicGas.Error()) {
@@ -462,6 +473,8 @@ func (k Keeper) EstimateGasForEvmCallType(
 			}
 
 			return nil, fmt.Errorf("estimate gas VMError: %s", result.VmError)
+		} else if failed && result == nil {
+			return nil, fmt.Errorf(`estimate gas panicked with "out of gas"`)
 		}
 	}
 
