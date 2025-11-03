@@ -1,5 +1,4 @@
 ## Changelog Chunk
-* changelog
 * evm: rewrite eth_estimateGas for panic safety and performance in [#2424](https://github.com/NibiruChain/nibiru/pull/2424) - ([37dba0a](https://github.com/NibiruChain/nibiru/commit/37dba0aeef545ee7a943556e1132f1aab6f6be68))  by @Unique-Divine
 * chore: remove evm-core-ts and move it to ts-sdk in [#2423](https://github.com/NibiruChain/nibiru/pull/2423) - ([e1401f6](https://github.com/NibiruChain/nibiru/commit/e1401f69237b07d4f35f59e7de54abed2efe925b))  by @cgilbe27
 * docs(bank): README fixes

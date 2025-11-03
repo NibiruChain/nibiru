@@ -1,0 +1,39 @@
+--- FAIL: TestOracleVotingSuite (0.05s)
+    --- FAIL: TestOracleVotingSuite/TestOracleVoting (0.05s)
+        app_test.go:219: 
+            	Error Trace:	/home/realu/ki/nibi-chain/x/oracle/keeper/app_test.go:219
+            	Error:      	Not equal: 
+            	            	expected: map[asset.Pair]math.LegacyDec{"btc:usdc":100200.900000000000000000, "nibi:usdc":1.000000000000000000}
+            	            	actual  : map[asset.Pair]math.LegacyDec{"ubtc:unusd":20000.000000000000000000, "xxx:yyy":20000.000000000000000000}
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1,3 +1,3 @@
+            	            	 (map[asset.Pair]math.LegacyDec) (len=2) {
+            	            	- (asset.Pair) (len=8) "btc:usdc": (math.LegacyDec) {
+            	            	+ (asset.Pair) (len=10) "ubtc:unusd": (math.LegacyDec) {
+            	            	   i: (*big.Int)({
+            	            	@@ -5,4 +5,4 @@
+            	            	    abs: (big.nat) (len=2) {
+            	            	-    (big.Word) 16632935683425173504,
+            	            	-    (big.Word) 5431
+            	            	+    (big.Word) 3729424098846048256,
+            	            	+    (big.Word) 1084
+            	            	    }
+            	            	@@ -10,7 +10,8 @@
+            	            	  },
+            	            	- (asset.Pair) (len=9) "nibi:usdc": (math.LegacyDec) {
+            	            	+ (asset.Pair) (len=7) "xxx:yyy": (math.LegacyDec) {
+            	            	   i: (*big.Int)({
+            	            	    neg: (bool) false,
+            	            	-   abs: (big.nat) (len=1) {
+            	            	-    (big.Word) 1000000000000000000
+            	            	+   abs: (big.nat) (len=2) {
+            	            	+    (big.Word) 3729424098846048256,
+            	            	+    (big.Word) 1084
+            	            	    }
+            	Test:       	TestOracleVotingSuite/TestOracleVoting
+FAIL
+FAIL	github.com/NibiruChain/nibiru/v2/x/oracle/keeper	0.507s
+FAIL
