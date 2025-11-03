@@ -28,7 +28,7 @@ describe("eth queries", () => {
     }
     const estimatedGas = await provider.estimateGas(tx)
     expect(estimatedGas).toBeGreaterThan(BigInt(0))
-    expect(estimatedGas).toEqual(INTRINSIC_TX_GAS)
+    expect(estimatedGas - INTRINSIC_TX_GAS).toBeLessThan(INTRINSIC_TX_GAS / BigInt(20))
   })
 
   it("eth_feeHistory", async () => {

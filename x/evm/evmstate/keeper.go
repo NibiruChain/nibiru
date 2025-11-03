@@ -128,7 +128,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // IsSimulation checks if the context is a simulation context.
 func IsSimulation(ctx sdk.Context) bool {
-	if val := ctx.Value(evm.SimulationCtxKey); val != nil {
+	if val := ctx.Value(evm.CtxKeyEvmSimulation); val != nil {
 		if simulation, ok := val.(bool); ok && simulation {
 			return true
 		}

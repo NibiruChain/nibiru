@@ -203,7 +203,7 @@ func GenerateEthTxMsgAndSigner(
 	res, err := deps.App.EvmKeeper.EstimateGas(
 		sdk.WrapSDKContext(
 			deps.Ctx().
-				WithValue(evm.GasEstimateZeroToleranceCtxKey, true),
+				WithValue(evm.CtxKeyGasEstimateZeroTolerance, true),
 		),
 		&evm.EthCallRequest{
 			Args:            estimateArgs,

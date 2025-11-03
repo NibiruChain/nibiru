@@ -58,14 +58,14 @@ func (s *Suite) TestIsSimulation() {
 		{
 			name: "Context with simulation=true",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evm.SimulationCtxKey, true)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: true,
 		},
 		{
 			name: "Context with simulation=false",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evm.SimulationCtxKey, false)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, false)
 			},
 			expected: false,
 		},
@@ -73,14 +73,14 @@ func (s *Suite) TestIsSimulation() {
 			name: "Context with wrong type for simulation key",
 			setup: func(ctx sdk.Context) sdk.Context {
 				// Set a string instead of bool
-				return ctx.WithValue(evm.SimulationCtxKey, "true")
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, "true")
 			},
 			expected: false,
 		},
 		{
 			name: "Context with nil value",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evm.SimulationCtxKey, nil)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, nil)
 			},
 			expected: false,
 		},
@@ -136,14 +136,14 @@ func (s *Suite) TestIsDeliverTx() {
 		{
 			name: "Simulation context",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evm.SimulationCtxKey, true)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: false,
 		},
 		{
 			name: "CheckTx with simulation flag",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithIsCheckTx(true).WithValue(evm.SimulationCtxKey, true)
+				return ctx.WithIsCheckTx(true).WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: false,
 		},
@@ -151,7 +151,7 @@ func (s *Suite) TestIsDeliverTx() {
 			name: "Simulation context with false value",
 			setup: func(ctx sdk.Context) sdk.Context {
 				// Setting simulation to false should be treated as DeliverTx
-				return ctx.WithValue(evm.SimulationCtxKey, false)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, false)
 			},
 			expected: true,
 		},

@@ -264,7 +264,7 @@ func (k *Keeper) EthCall(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
+	ctx = ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 
 	var args evm.JsonTxArgs
 	err := json.Unmarshal(req.Args, &args)
@@ -318,7 +318,7 @@ func (k Keeper) EstimateGas(
 	}
 
 	rootCtx := sdk.UnwrapSDKContext(goCtx).
-		WithValue(evm.SimulationCtxKey, true)
+		WithValue(evm.CtxKeyEvmSimulation, true)
 	evmCfg := k.GetEVMConfig(rootCtx)
 
 	if req.GasCap < gethparams.TxGas {
@@ -469,11 +469,15 @@ func (k Keeper) EstimateGas(
 	}
 
 	// Set smart lower bound based on actual gas used
-	lo = result.GasUsed - 1
+	if result.GasUsed > 0 {
+		lo = result.GasUsed - 1
+	} else {
+		lo = 0
+	}
 
 	// Execute the binary search and hone in on an executable gas limit
 	estimateTolerance := evm.GasEstimateErrorRatioTolerance
-	if rootCtx.Value(evm.GasEstimateZeroToleranceCtxKey) == true {
+	if rootCtx.Value(evm.CtxKeyGasEstimateZeroTolerance) == true {
 		estimateTolerance = 0.00
 	}
 	hi, err = evm.BinSearch(lo, hi, executable, estimateTolerance)
@@ -499,7 +503,7 @@ func (k Keeper) TraceTx(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
+	ctx = ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -596,7 +600,7 @@ func (k Keeper) TraceCall(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
+	ctx = ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -686,7 +690,7 @@ func (k Keeper) TraceBlock(
 		WithConsensusParams(&cmtproto.ConsensusParams{
 			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 		})
-	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
+	ctx = ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 
 	evmCfg := k.GetEVMConfig(ctx)
 

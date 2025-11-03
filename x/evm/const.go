@@ -39,8 +39,8 @@ const (
 type contextKey string
 
 const (
-	SimulationCtxKey               contextKey = "evm_simulation"
-	GasEstimateZeroToleranceCtxKey contextKey = "gas_estimate_zero_tolerance"
+	CtxKeyEvmSimulation            contextKey = "evm_simulation"
+	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
 )
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
