@@ -513,12 +513,33 @@ func (m MsgUpdateParams) GetSignBytes() []byte {
 	return sdk.MustSortJSON(AminoCdc.MustMarshalJSON(&m))
 }
 
+// GasEstimateErrorRatioTolerance is the amount of overestimation eth_estimateGas is
+// allowed to produce in order to speed up calculations.
+const GasEstimateErrorRatioTolerance = 0.015
+
 // BinSearch executes the binary search and hone in on an executable gas limit
 func BinSearch(
-	lo, hi uint64, executable func(uint64) (bool, *MsgEthereumTxResponse, error),
+	lo uint64,
+	hi uint64,
+	executable func(uint64) (bool, *MsgEthereumTxResponse, error),
+	estimateTolernace float64,
 ) (uint64, error) {
 	for lo+1 < hi {
+		// It is a bit pointless to return a perfect estimation, as changing
+		// network conditions require the caller to bump it up anyway. Since
+		// wallets tend to use 20-25% bump, allowing a small approximation
+		// error is fine (as long as it's upwards).
+		if float64(hi-lo)/float64(hi) < estimateTolernace {
+			break
+		}
+
 		mid := (hi + lo) / 2
+		if mid > lo*2 {
+			// Skew the binary search toward lower gas values. Since most transactions
+			// only need slightly more gas than they actually consume (lo ≈ gasUsed),
+			// testing values closer to lo converges faster than standard bisection.
+			mid = lo * 2
+		}
 		failed, _, err := executable(mid)
 		// If this errors, there was a consensus error, and the provided message
 		// call or tx will never be accepted, regardless of how high we set the

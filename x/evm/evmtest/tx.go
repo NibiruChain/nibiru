@@ -138,6 +138,9 @@ func DeployAndExecuteERC20Transfer(
 		// per zero byte and 16 per non-zero byte, which is why changing the address
 		// bytes moves intrinsic gas in steps of 12.
 		fixedRecipient = gethcommon.BigToAddress(big.NewInt(69_420))
+
+		// Deployed ERC20 testing contract
+		deployResp *DeployContractResult
 	)
 
 	// TX 1: Deploy ERC-20 contract
@@ -198,7 +201,10 @@ func GenerateEthTxMsgAndSigner(
 		return
 	}
 	res, err := deps.App.EvmKeeper.EstimateGas(
-		sdk.WrapSDKContext(deps.Ctx()),
+		sdk.WrapSDKContext(
+			deps.Ctx().
+				WithValue(evm.CtxKeyGasEstimateZeroTolerance, true),
+		),
 		&evm.EthCallRequest{
 			Args:            estimateArgs,
 			GasCap:          srvconfig.DefaultEthCallGasLimit,

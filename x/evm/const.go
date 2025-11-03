@@ -36,6 +36,13 @@ const (
 	Erc20GasLimitExecute uint64 = 200_000
 )
 
+type contextKey string
+
+const (
+	CtxKeyEvmSimulation            contextKey = "evm_simulation"
+	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
+)
+
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.
 var (
@@ -121,15 +128,6 @@ func StateKey(address gethcommon.Address, key []byte) []byte {
 const (
 	// Amino names
 	updateParamsName = "evm/MsgUpdateParams"
-)
-
-type CallType int
-
-const (
-	// CallTypeRPC call type is used on requests to eth_estimateGas rpc API endpoint
-	CallTypeRPC CallType = iota + 1
-	// CallTypeSmart call type is used in case of smart contract methods calls
-	CallTypeSmart
 )
 
 var (
