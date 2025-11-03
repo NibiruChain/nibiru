@@ -79,7 +79,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 		return nil, err
 	}
 
-	params, err := ms.Params.Get(ctx)
+	params, err := ms.ModuleParams.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOr
 		return nil, sudo.ErrUnauthorized
 	}
 
-	params, err := ms.Params.Get(ctx)
+	params, err := ms.ModuleParams.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
 	}

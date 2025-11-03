@@ -21,22 +21,22 @@ func TestOracleTallyTiming(t *testing.T) {
 		}, i)
 	}
 
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 
 	params.VotePeriod = 10 // set vote period to 10 for now, for convenience
 	params.ExpirationBlocks = 100
-	input.OracleKeeper.Params.Set(input.Ctx, params)
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, params)
 	require.Equal(t, 1, int(input.Ctx.BlockHeight()))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.PAIR_BTC)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, asset.PAIR_BTC)
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.PAIR_BTC)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, asset.PAIR_BTC)
 	require.NoError(t, err)
 }
 
@@ -55,21 +55,21 @@ func TestOraclePriceExpiration(t *testing.T) {
 		}, i)
 	}
 
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 
 	params.VotePeriod = 10
 	params.ExpirationBlocks = 10
-	input.OracleKeeper.Params.Set(input.Ctx, params)
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, params)
 
 	// Wait for prices to set
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
 	// Check if both prices are set
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair1)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, pair1)
 	require.NoError(t, err)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair2)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, pair2)
 	require.NoError(t, err)
 
 	// Set prices for pair 1
@@ -89,12 +89,12 @@ func TestOraclePriceExpiration(t *testing.T) {
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.ExpirationBlocks+params.VotePeriod) + 1)
 	EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair1)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, pair1)
 	require.NoError(t, err)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, pair2)
+	_, err = input.OracleKeeper.ExchangeRateMap.Get(input.Ctx, pair2)
 	require.NoError(t, err)
 
-	querier := keeper.NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 	{
 		res, err := querier.ExchangeRate(input.Ctx, &types.QueryExchangeRateRequest{
 			Pair: pair1,

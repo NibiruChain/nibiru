@@ -24,7 +24,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 
 	k.rewardWinners(ctx, validatorPerformances)
 
-	params, _ := k.Params.Get(ctx)
+	params, _ := k.ModuleParams.Get(ctx)
 	k.clearVotesAndPrevotes(ctx, params.VotePeriod)
 	k.refreshWhitelist(ctx, params.Whitelist, whitelistedPairs)
 

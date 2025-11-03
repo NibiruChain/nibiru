@@ -31,9 +31,9 @@ func TestOracleThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	fixture, msgServer := Setup(t)
-	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params, _ := fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 	params.ExpirationBlocks = 0
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+	fixture.OracleKeeper.ModuleParams.Set(fixture.Ctx, params)
 
 	// Case 1.
 	// Less than the threshold signs, exchange rate consensus fails
@@ -49,7 +49,7 @@ func TestOracleThreshold(t *testing.T) {
 		require.NoError(t, err2)
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
+	_, err = fixture.OracleKeeper.ExchangeRateMap.Get(fixture.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
 	assert.Error(t, err)
 
 	// Case 2.
@@ -66,11 +66,11 @@ func TestOracleThreshold(t *testing.T) {
 		require.NoError(t, err2)
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
-	rate, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
+	rate, err := fixture.OracleKeeper.ExchangeRateMap.Get(fixture.Ctx, exchangeRates[0].Pair)
 	require.NoError(t, err)
 	assert.Equal(t, testExchangeRate, rate.ExchangeRate)
 
-	querier := NewQuerier(fixture.OracleKeeper)
+	querier := fixture.OracleKeeper
 	assetPair := exchangeRates[0].Pair
 	var priorCreateBlockHeight uint64
 	{
@@ -107,7 +107,7 @@ func TestOracleThreshold(t *testing.T) {
 		require.NoError(t, err2)
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
-	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, assetPair)
+	_, err = fixture.OracleKeeper.ExchangeRateMap.Get(fixture.Ctx, assetPair)
 	assert.NoError(t, err)
 	{
 		resp, err := querier.ExchangeRate(
@@ -216,11 +216,11 @@ func TestOracleTally(t *testing.T) {
 
 func TestOracleRewardBand(t *testing.T) {
 	fixture, msgServer := Setup(t)
-	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params, err := fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 	require.NoError(t, err)
 
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+	fixture.OracleKeeper.ModuleParams.Set(fixture.Ctx, params)
 
 	// clear pairs to reset vote targets
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
@@ -400,7 +400,7 @@ func TestOracleRandomPrices(t *testing.T) {
 
 func TestWhitelistedPairs(t *testing.T) {
 	fixture, msgServer := Setup(t)
-	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params, err := fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 	require.NoError(t, err)
 
 	t.Log("whitelist ONLY atom:usd")
@@ -421,7 +421,7 @@ func TestWhitelistedPairs(t *testing.T) {
 
 	t.Log("whitelist btc:usd for next vote period")
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM, asset.PAIR_BTC}
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+	fixture.OracleKeeper.ModuleParams.Set(fixture.Ctx, params)
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	t.Log("assert: no miss counts for all vals")
@@ -446,7 +446,7 @@ func TestWhitelistedPairs(t *testing.T) {
 
 	t.Log("delete btc:usd for next vote period")
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+	fixture.OracleKeeper.ModuleParams.Set(fixture.Ctx, params)
 	perfs := fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	t.Log("validators 0-3 all voted -> expect win")
