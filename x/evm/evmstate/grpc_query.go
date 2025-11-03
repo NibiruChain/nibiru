@@ -264,7 +264,7 @@ func (k *Keeper) EthCall(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(SimulationContextKey, true)
+	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
 
 	var args evm.JsonTxArgs
 	err := json.Unmarshal(req.Args, &args)
@@ -318,7 +318,7 @@ func (k Keeper) EstimateGas(
 	}
 
 	rootCtx := sdk.UnwrapSDKContext(goCtx).
-		WithValue(SimulationContextKey, true)
+		WithValue(evm.SimulationCtxKey, true)
 	evmCfg := k.GetEVMConfig(rootCtx)
 
 	if req.GasCap < gethparams.TxGas {
@@ -337,9 +337,10 @@ func (k Keeper) EstimateGas(
 
 	// Binary search the gas requirement, as it may be higher than the amount used
 	var (
-		lo     = gethparams.TxGas - 1
-		hi     uint64
-		gasCap uint64
+		// Set smart lower bound based on the gas used in the first execution
+		// (base case).
+		lo uint64
+		hi uint64
 
 		// executable runs one probe at a specific gas limit.
 		//   - Rewrites evmMsg.GasLimit to the probed value.
@@ -354,24 +355,24 @@ func (k Keeper) EstimateGas(
 	)
 
 	// Determine the highest gas limit can be used during the estimation.
+	// Start with block gas limit
+	params := rootCtx.ConsensusParams()
+	if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
+		hi = uint64(params.Block.MaxGas)
+	} else {
+		// Fallback to gasCap if block params not available
+		hi = req.GasCap
+	}
+
+	// Override with user-provided gas limit if it's valid
 	if args.Gas != nil && uint64(*args.Gas) >= gethparams.TxGas {
 		hi = uint64(*args.Gas)
-	} else {
-		// Query block gas limit
-		params := rootCtx.ConsensusParams()
-		if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
-			hi = uint64(params.Block.MaxGas)
-		} else {
-			hi = req.GasCap
-		}
 	}
 
 	// Recap the highest gas allowance with specified gascap.
 	if req.GasCap != 0 && hi > req.GasCap {
 		hi = req.GasCap
 	}
-
-	gasCap = hi
 
 	// convert the tx args to an ethereum message
 	evmMsg, err := args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
@@ -449,33 +450,35 @@ func (k Keeper) EstimateGas(
 		return len(rsp.VmError) > 0, rsp, nil
 	}
 
-	// Execute the binary search and hone in on an executable gas limit
-	hi, err = evm.BinSearch(lo, hi, executable)
+	// BASE CASE:  Jumping straight into binary search is extermely inefficient.
+	// Instead, execute at the highest allowable gas limit first to validate and
+	// set a smarter lower bound.
+	failed, result, err := executable(hi)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("eth call exec error: %w", err)
 	}
-
-	// The gas limit is now the highest gas limit that results in an executable transaction
-	// Reject the transaction as invalid if it still fails at the highest allowance
-	if hi == gasCap {
-		failed, result, err := executable(hi)
-		if err != nil {
-			return nil, fmt.Errorf("eth call exec error: %w", err)
-		}
-
-		if failed && result != nil {
+	// If the base case fails for non-gas reasons, return the error immediately
+	if failed {
+		if result != nil && result.VmError != "" && result.VmError != vm.ErrOutOfGas.Error() {
 			if result.VmError == vm.ErrExecutionReverted.Error() {
 				return nil, fmt.Errorf("estimate gas VMError: %w", evm.NewRevertError(result.Ret))
 			}
-
-			if result.VmError == vm.ErrOutOfGas.Error() {
-				return nil, fmt.Errorf("gas required gas limit (%d)", gasCap)
-			}
-
 			return nil, fmt.Errorf("estimate gas VMError: %s", result.VmError)
-		} else if failed && result == nil {
-			return nil, fmt.Errorf(`estimate gas panicked with "out of gas"`)
 		}
+		return nil, fmt.Errorf("gas required exceeds allowance (%d)", hi)
+	}
+
+	// Set smart lower bound based on actual gas used
+	lo = result.GasUsed - 1
+
+	// Execute the binary search and hone in on an executable gas limit
+	estimateTolerance := evm.GasEstimateErrorRatioTolerance
+	if rootCtx.Value(evm.GasEstimateZeroToleranceCtxKey) == true {
+		estimateTolerance = 0.00
+	}
+	hi, err = evm.BinSearch(lo, hi, executable, estimateTolerance)
+	if err != nil {
+		return nil, err
 	}
 
 	return &evm.EstimateGasResponse{Gas: hi}, nil
@@ -496,7 +499,7 @@ func (k Keeper) TraceTx(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(SimulationContextKey, true)
+	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -593,7 +596,7 @@ func (k Keeper) TraceCall(
 	contextHeight := max(req.BlockNumber, 1)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ctx = ctx.WithValue(SimulationContextKey, true)
+	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(gethcommon.Hex2Bytes(req.BlockHash))
@@ -683,7 +686,7 @@ func (k Keeper) TraceBlock(
 		WithConsensusParams(&cmtproto.ConsensusParams{
 			Block: &cmtproto.BlockParams{MaxGas: req.BlockMaxGas},
 		})
-	ctx = ctx.WithValue(SimulationContextKey, true)
+	ctx = ctx.WithValue(evm.SimulationCtxKey, true)
 
 	evmCfg := k.GetEVMConfig(ctx)
 

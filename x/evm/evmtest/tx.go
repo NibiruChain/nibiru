@@ -201,7 +201,10 @@ func GenerateEthTxMsgAndSigner(
 		return
 	}
 	res, err := deps.App.EvmKeeper.EstimateGas(
-		sdk.WrapSDKContext(deps.Ctx()),
+		sdk.WrapSDKContext(
+			deps.Ctx().
+				WithValue(evm.GasEstimateZeroToleranceCtxKey, true),
+		),
 		&evm.EthCallRequest{
 			Args:            estimateArgs,
 			GasCap:          srvconfig.DefaultEthCallGasLimit,

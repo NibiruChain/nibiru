@@ -36,6 +36,13 @@ const (
 	Erc20GasLimitExecute uint64 = 200_000
 )
 
+type contextKey string
+
+const (
+	SimulationCtxKey               contextKey = "evm_simulation"
+	GasEstimateZeroToleranceCtxKey contextKey = "gas_estimate_zero_tolerance"
+)
+
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.
 var (

@@ -114,9 +114,8 @@ func ValidateFunTokenBankMetadata(
 	return out, nil
 }
 
-// RecoverOutOfGasPanic captures an "out of gas" panic from go-etheruem or the
-// Cosmos-SDK gas meter and returns it error instead, adding panic safety.
-// If the recovered panic is not gas related, this function re-panics to
+// RecoverOutOfGasPanic captures an "out of gas" panic and returns an error
+// instead, adding some safety. If the recovered panic is not gas related, we
 // propagate the error info.
 //
 // Rationale: In "eth_estimateGas", OOG is a VM-level execution failure and should
