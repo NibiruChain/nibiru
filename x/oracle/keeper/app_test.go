@@ -43,7 +43,7 @@ func setupKeeperTest(s *Suite) (
 	nibiruApp, ctx = testapp.NewNibiruTestAppAndContext()
 
 	// Create msg servers
-	msgServer = oraclekeeper.NewMsgServerImpl(nibiruApp.OracleKeeper, nibiruApp.SudoKeeper)
+	msgServer = nibiruApp.OracleKeeper
 	stakingMsgServer := stakingkeeper.NewMsgServerImpl(nibiruApp.StakingKeeper)
 
 	// Generate validators with pubkeys using nutil helpers

@@ -326,7 +326,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	params, _ = fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 
-	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
+	h := fixture.OracleKeeper
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created

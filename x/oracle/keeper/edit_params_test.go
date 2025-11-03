@@ -8,7 +8,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
-	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
@@ -17,7 +16,7 @@ func TestMsgServer_EditOracleParams(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	goCtx := sdk.WrapSDKContext(ctx)
 
-	msgServer := keeper.NewMsgServerImpl(app.OracleKeeper, app.SudoKeeper)
+	msgServer := app.OracleKeeper
 
 	alice := testutil.AccAddress()
 	bob := testutil.AccAddress()

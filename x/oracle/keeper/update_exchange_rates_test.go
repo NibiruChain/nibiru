@@ -133,7 +133,7 @@ func TestOracleTally(t *testing.T) {
 	votes := types.ExchangeRateVotes{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	fixture.OracleKeeper.StakingKeeper = stakingKeeper
-	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
+	h := fixture.OracleKeeper
 
 	for i, rate := range rates {
 		decExchangeRate := sdkmath.LegacyNewDecWithPrec(int64(rate*math.Pow10(OracleDecPrecision)), int64(OracleDecPrecision))
