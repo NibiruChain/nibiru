@@ -3,13 +3,11 @@ package evm
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
@@ -112,26 +110,6 @@ func ValidateFunTokenBankMetadata(
 		return
 	}
 	return out, nil
-}
-
-// RecoverOutOfGasPanic captures an "out of gas" panic and returns an error
-// instead, adding some safety. If the recovered panic is not gas related, we
-// propagate the error info.
-//
-// Rationale: In "eth_estimateGas", OOG is a VM-level execution failure and should
-// not abort the search; unexpected panics should.
-func RecoverOutOfGasPanic(context string) (isOog bool, perr error) {
-	if panicInfo := recover(); panicInfo != nil {
-		if _, isOutOfGasPanic := panicInfo.(sdk.ErrorOutOfGas); isOutOfGasPanic {
-			return true, vm.ErrOutOfGas
-		}
-		if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
-			return true, vm.ErrOutOfGas
-		}
-		// Non-OOG panics are not handled here
-		return false, fmt.Errorf("unexpected panic in %s: %v", context, panicInfo)
-	}
-	return false, nil
 }
 
 // Gracefully handles "out of gas"
