@@ -466,7 +466,7 @@ func (k Keeper) EstimateGas(
 		return len(rsp.VmError) > 0, rsp, nil
 	}
 
-	// BASE CASE:  Jumping straight into binary search is extermely inefficient.
+	// BASE CASE:  Jumping straight into binary search is extremely inefficient.
 	// Instead, execute at the highest allowable gas limit first to validate and
 	// set a smarter lower bound.
 	failed, result, err := executable(hi)

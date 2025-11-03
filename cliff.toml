@@ -1,9 +1,9 @@
 # git-cliff ~ configuration file
 # https://git-cliff.org/docs/configuration
 
-# [remote.github]
-# owner = "orhun"
-# repo = "git-cliff"
+[remote.github]
+owner = "NibiruChain"
+repo = "nibiru"
 # token = ""
 
 [changelog]

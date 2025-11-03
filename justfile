@@ -59,7 +59,7 @@ gen-changelog:
   which_ok git-cliff
 
   LAST_VER="v2.7.0"
-  start_branch="$(git br --show-current)"
+  start_branch="$(git branch --show-current)"
   git checkout main
   git-cliff "$LAST_VER.." -o CHANGELOG-UNRELEASED.md
   git checkout "$start_branch"
